@@ -346,7 +346,7 @@ public class AutofocusUtils {
                   DisplaySettings.Builder dsb = ourWindow_.getDisplaySettings().copyBuilder();
                   ourWindow_.setDisplaySettings(dsb.colorModeGrayscale().
                           build());
-                  SummaryMetadata.Builder smb = gui_.data().getSummaryMetadataBuilder();
+                  SummaryMetadata.Builder smb = gui_.data().summaryMetadataBuilder();
                   Coords dim = Coordinates.builder().z(nrImages).
                           channel(1).stagePosition(1).t(1).build();
                   store.setSummaryMetadata(smb.intendedDimensions(dim).build());

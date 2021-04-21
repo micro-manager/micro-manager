@@ -43,7 +43,7 @@ public interface Studio {
     * implicit, temporary image storage datastore.
     * @return An implementation of the Album API.
     */
-   public Album album();
+   Album album();
 
    /**
     * Provides access to and control of the contents of the Album, the
@@ -51,42 +51,42 @@ public interface Studio {
     * in name.
     * @return An implementation of the Album API.
     */
-   public Album getAlbum();
+   Album getAlbum();
 
    /**
     * Provides access to the compatibility layer that exposes some old 1.4
     * API methods.
     * @return An implementation of the compatibility API.
     */
-   public CompatibilityInterface compat();
+   CompatibilityInterface compat();
 
    /**
     * Provides access to the compatibility layer that exposes some old 1.4
     * API methods. Identical to compat() in all but name.
     * @return An implementation of the compatibility API.
     */
-   public CompatibilityInterface getCompatibilityInterface();
+   CompatibilityInterface getCompatibilityInterface();
 
    /**
     * Provides access to Micro-Manager's logging functions, like logError(),
     * showMessage(), etc.
     * @return Access to Micro-Manager's logging interface.
     */
-   public LogManager logs();
+   LogManager logs();
 
    /**
     * Provides access to Micro-Manager's logging functions, like logError(),
     * showMessage(), etc. Identical to logs() except in name.
     * @return Access to Micro-Manager's logging interface.
     */
-   public LogManager getLogManager();
+   LogManager getLogManager();
 
    /**
     * Provide access to the AcquisitionManager, for running data acquisition
     * using the Micro-Manager acquisition engine.
     * @return AcquisitionManager
     */
-   public AcquisitionManager acquisitions();
+   AcquisitionManager acquisitions();
 
    /**
     * Provide access to the AcquisitionManager, for running data acquisition
@@ -94,14 +94,14 @@ public interface Studio {
     * except in name.
     * @return AcquisitionManager
     */
-   public AcquisitionManager getAcquisitionManager();
+   AcquisitionManager getAcquisitionManager();
 
    /**
     * Provide access to the AlertManager, for creating low-profile, non-
     * interrupting alerts in the user interface.
     * @return AlertManager
     */
-   public AlertManager alerts();
+   AlertManager alerts();
 
    /**
     * Provide access to the AlertManager, for creating low-profile, non-
@@ -109,62 +109,62 @@ public interface Studio {
     * in name.
     * @return AlertManager
     */
-   public AlertManager getAlertManager();
+   AlertManager getAlertManager();
 
    /**
     * Provide access to the AutofocusManager, for performing autofocus
     * operations.
     * @return AutofocusManager
     */
-   public AutofocusManager getAutofocusManager();
+   AutofocusManager getAutofocusManager();
 
    /**
     * Provides access to the Core and its functionality.
     * @return Micro-Manager core object. 
     */
-   public CMMCore core();
+   CMMCore core();
 
    /**
     * Provides access to the Core and its functionality. Identical to core()
     * except in name.
     * @return Micro-Manager core object. 
     */
-   public CMMCore getCMMCore();
+   CMMCore getCMMCore();
 
    /**
     * Provide access to the DataManager instance for accessing Micro-Manager
     * data constructs.
     * @return DataManager instance
     */
-   public DataManager data();
+   DataManager data();
 
    /**
     * Provide access to the DataManager instance for accessing Micro-Manager
     * data constructs. Identical to data() except in name.
     * @return DataManager instance
     */
-   public DataManager getDataManager();
+   DataManager getDataManager();
 
    /**
     * Provides access to the DisplayManager instance for accessing
     * Micro-Manager display constructs.
     * @return DisplayManager instance
     */
-   public DisplayManager displays();
+   DisplayManager displays();
 
    /**
     * Provides access to the DisplayManager instance for accessing
     * Micro-Manager display constructs. Identical to displays() except in name.
     * @return DisplayManager instance
     */
-   public DisplayManager getDisplayManager();
+   DisplayManager getDisplayManager();
 
    /**
     * Provides access to the EventManager instance for subscribing to and
     * posting events on the application-wide EventBus.
     * @return EventManager instance
     */
-   public EventManager events();
+   EventManager events();
 
    /**
     * Provides access to the EventManager instance for subscribing to and
@@ -172,114 +172,128 @@ public interface Studio {
     * except in name.
     * @return EventManager instance
     */
-   public EventManager getEventManager();
+   EventManager getEventManager();
 
    /**
     * Provides access to some utility methods for use in the Beanshell
     * scripting panel.
     * @return ScriptController instance.
     */
-   public ScriptController scripter();
+   ScriptController scripter();
 
    /**
     * Provides access to some utility methods for use in the Beanshell
     * scripting panel. Identical to scripter() except in name.
     * @return ScriptController instance.
     */
-   public ScriptController getScriptController();
+   ScriptController getScriptController();
 
    /**
     * Provides access to the Snap/Live display and associated logic.
     * @return SnapLiveManager instance.
     */
-   public SnapLiveManager live();
+   SnapLiveManager live();
 
    /**
     * Provides access to the Snap/Live display and associated logic. Identical
     * to live() except in name.
     * @return SnapLiveManager instance. 
     */
-   public SnapLiveManager getSnapLiveManager();
+   SnapLiveManager getSnapLiveManager();
 
    /**
     * Provides access to the UserProfile instance for accessing per-user
     * profiles.
     * @return UserProfile instance
     */
-   public UserProfile profile();
+   UserProfile profile();
 
    /**
     * Provides access to the UserProfile instance for accessing per-user
     * profiles. Identical to profile() except in name.
     * @return UserProfile instance
     */
-   public UserProfile getUserProfile();
+   UserProfile getUserProfile();
 
    /**
     * Provides access to the PluginManager for accessing plugin instances.
     * @return PluginManager instance.
     */
-   public PluginManager plugins();
+   PluginManager plugins();
 
    /**
     * Provides access to the PluginManager for accessing plugin instances.
     * Identical to plugins() except in name.
     * @return PluginManager instance.
     */
-   public PluginManager getPluginManager();
+   PluginManager getPluginManager();
 
    /**
     * Provides access to the PositionListManager for interacting with the
     * Stage Position List.
     * @return PositionListManager instance.
     */
-   public PositionListManager positions();
+   PositionListManager positions();
 
    /**
     * Provides access to the PositionListManager for interacting with the
     * Stage Position List. Identical to positions() except in name.
     * @return PositionListManager instance.
     */
-   public PositionListManager getPositionListManager();
+   PositionListManager getPositionListManager();
 
    /**
     * Provides access to the QuickAccessManager for accessing the Quick-Access
     * Panel system.
     * @return QuickAccessManager instance.
     */
-   public QuickAccessManager quickAccess();
+   QuickAccessManager quickAccess();
 
    /**
     * Provides access to the QuickAccessManager for accessing the Quick-Access
     * Panel system. Identical to quickAccess() except in name.
     * @return QuickAccessManager instance.
     */
-   public QuickAccessManager getQuickAccessManager();
+   QuickAccessManager getQuickAccessManager();
 
    /**
     * Provides access to the ShutterManager for controlling the shutter state.
     * @return ShutterManager instance.
     */
-   public ShutterManager shutter();
+   ShutterManager shutter();
 
    /**
     * Provides access to the ShutterManager for controlling the shutter state.
     * Identical to shutter() except in name.
     * @return ShutterManager instance.
     */
-   public ShutterManager getShutterManager();
+   ShutterManager getShutterManager();
 
    /**
     * Provides access to the application API for controlling and updating the
     * GUI.
     * @return Application instance.
     */
-   public Application app();
+   Application app();
 
    /**
     * Provides access to the application API for controlling and updating the
     * GUI. Identical to app() except in name.
     * @return Application instance.
     */
-   public Application getApplication();
+   Application getApplication();
+
+   /**
+    * Provides access to the PropertyManagerAPI.  Provides access to the
+    * PropertyMap.Builder
+    * @return PropertyManager instance
+    */
+   PropertyManager properties();
+
+   /**
+    * Provides access to the PropertyManagerAPI.  Provides access to the
+    * PropertyMap.Builder
+    * @return PropertyManager instance
+    */
+   PropertyManager getPropertyManager();
 }

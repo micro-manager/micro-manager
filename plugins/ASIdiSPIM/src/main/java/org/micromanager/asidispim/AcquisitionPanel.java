@@ -2463,7 +2463,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                 if (acqNum > 0) {
                     name += "_" + acqNum;
                 }
-                SummaryMetadata.Builder smb = gui_.data().getSummaryMetadataBuilder();
+                SummaryMetadata.Builder smb = gui_.data().summaryMetadataBuilder();
                 smb = smb.channelNames(channelNames_).
                         channelGroup(multiChannelPanel_.getChannelGroup()).
                         zStepUm((double) acqSettings.stepSizeUm).
@@ -3166,7 +3166,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
      * @param position - position at which to insert image
      * @param ms - Time stamp to be added to the image metadata
      * @param taggedImg - image + metadata to be added
-     * @throws org.json.JSONException
+     * @throws mmcorej.org.json.JSONException
      * @throws org.micromanager.data.DatastoreFrozenException
      * @throws org.micromanager.data.DatastoreRewriteException
      */

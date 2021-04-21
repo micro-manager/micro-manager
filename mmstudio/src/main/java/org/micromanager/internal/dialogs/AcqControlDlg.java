@@ -108,7 +108,11 @@ import java.util.Enumeration;
 
 /**
  * Time-lapse, channel and z-stack acquisition setup dialog.
- * This dialog specifies all parameters for the MDA acquisition. 
+ * This dialog specifies all parameters for the MDA acquisition.
+ *
+ * TODO: GUI settings and acquisition engine settings are continuously synchronized.
+ * This causes a lot of overhead and a lot of room for bugs.  Separate these better,
+ * and only synchronize when really needed.
  *
  */
 public final class AcqControlDlg extends JFrame implements PropertyChangeListener,
@@ -164,7 +168,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    // persistent properties (app settings), most are only for backward compatibility
    private static final String MDA_SEQUENCE_SETTINGS = "MDA_SEQUENCE_SETTINGS";
    private static final String ACQ_INTERVAL = "acqInterval";
-   private static final String ACQ_TIME_UNIT = "acqTimeInit";
    private static final String ACQ_ZBOTTOM = "acqZbottom";
    private static final String ACQ_ZTOP = "acqZtop";
    private static final String ACQ_ZSTEP = "acqZstep";
@@ -480,10 +483,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       overrideLabel.setForeground(Color.red);
 
       JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
-      disableCustomIntervalsButton.addActionListener((ActionEvent e) -> {
-         acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder().
-                 useCustomIntervals(false).build());
-      });
+      disableCustomIntervalsButton.addActionListener((ActionEvent e) ->
+              acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder().
+              useCustomIntervals(false).build()));
       disableCustomIntervalsButton.setFont(DEFAULT_FONT);
 
       customTimesPanel_.add(overrideLabel, "alignx center, wrap");
@@ -774,9 +776,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JComponent createCloseButton() {
       final JButton closeButton = new JButton("Close");
       closeButton.setFont(DEFAULT_FONT);
-      closeButton.addActionListener((ActionEvent e) -> {
-         close();
-      });
+      closeButton.addActionListener((ActionEvent e) -> close());
       return closeButton;
    }
 
@@ -1096,6 +1096,24 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return ssb.build();
    }
 
+   /**
+    * Updates the dialog (with acqEngine settings) and only returns once this
+    * is actually executed (on the EDT).
+    */
+   public void updateGUIBlocking() {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         try {
+            SwingUtilities.invokeAndWait(() -> {
+               updateGUIContents();
+            });
+         } catch (InterruptedException e) {
+            mmStudio_.logs().logError(e);
+         } catch (InvocationTargetException e) {
+            mmStudio_.logs().logError(e);
+         }
+      }
+   }
+
    public final void updateGUIContents() {
       SequenceSettings sequenceSettings = acqEng_.getSequenceSettings();
       updateGUIFromSequenceSettings(sequenceSettings);
@@ -1311,12 +1329,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (acqFile_ != null) {
          final SequenceSettings settings = mmStudio_.acquisitions().loadSequenceSettings(path);
          try {
-            GUIUtils.invokeAndWait(new Runnable() {
-               @Override
-               public void run() {
-                  acqEng_.setSequenceSettings(settings);
-               }
-            });
+            GUIUtils.invokeAndWait(() -> acqEng_.setSequenceSettings(settings));
          } catch (InterruptedException e) {
             ReportingUtils.logError(e, "Interrupted while updating GUI");
          } catch (InvocationTargetException e) {
@@ -1347,16 +1360,16 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * Asks acqEngine to estimate memory usage, so use this method only after
     * settings have been send to acqEngine.
     * Prompt the user if there may not be enough memory
-    * @return false if user chooses to cancel.
+    * @return true if user chooses to cancel.
     */
-   private boolean warnIfMemoryMayNotBeSufficient() {
+   private boolean warnMemoryMayNotBeSufficient() {
       if (savePanel_.isSelected()) {
-         return true;
+         return false;
       } 
 
       long acqTotalBytes = acqEng_.getTotalMemory();
       if (acqTotalBytes < 0) {
-         return false;
+         return true;
       }
 
       // get memory than can be used within JVM:
@@ -1375,7 +1388,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
          style.append("font-size:" + font.getSize() + "pt;");
          Color c = label.getForeground();
-         style.append(("color:rgb(") + c.getRed() + "," + c.getGreen() + "," + c.getBlue() +")" );
+         style.append(("color:rgb(")).append(c.getRed()).append(",").
+                 append(c.getGreen()).append(",").append(c.getBlue()).append(")");
 
          int availableMemoryMB = (int) (freeRam / (1024 * 1024));
 
@@ -1393,7 +1407,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
          // handle link events
          ep.addHyperlinkListener(e -> {
-            if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                try {
                   Desktop.getDesktop().browse(e.getURL().toURI());
                } catch (IOException | URISyntaxException ex) {
@@ -1406,9 +1420,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
          int answer = JOptionPane.showConfirmDialog(this, ep,
                  "Not enough memory", JOptionPane.YES_NO_OPTION);
-         return answer == JOptionPane.YES_OPTION;
+         return answer != JOptionPane.YES_OPTION;
       }
-      return true;
+      return false;
    }
 
    public Datastore runAcquisition() {
@@ -1417,7 +1431,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          return null;
       }
 
-      if (!warnIfMemoryMayNotBeSufficient()) {
+      if (warnMemoryMayNotBeSufficient()) {
          return null;
       }
 
@@ -1466,7 +1480,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
 
       applySettingsFromGUI();
-      if (! warnIfMemoryMayNotBeSufficient()) {
+      if (warnMemoryMayNotBeSufficient()) {
          return null;
       }
 
@@ -1672,7 +1686,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    @SuppressWarnings("serial")
-   public class ComponentTitledPanel extends JPanel {
+   public static class ComponentTitledPanel extends JPanel {
       public ComponentTitledBorder compTitledBorder;
       public boolean borderSet_ = false;
       public Component titleComponent;

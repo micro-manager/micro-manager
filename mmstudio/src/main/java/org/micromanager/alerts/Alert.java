@@ -32,10 +32,10 @@ public interface Alert {
     * been dismissed (either via their dismiss() method or by the user
     * closing them) are no longer usable.
     */
-   public boolean isUsable();
+   boolean isUsable();
 
    /**
     * Dismiss the Alert, causing it to no longer be visible to the user.
     */
-   public void dismiss();
+   void dismiss();
 }

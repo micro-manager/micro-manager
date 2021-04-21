@@ -118,7 +118,7 @@ public class PtcToolsExecutor extends Thread  {
 
          // temporary store to hold images while calculating mean and stdDev
          Datastore store = studio_.data().createRAMDatastore();
-         final SummaryMetadata.Builder smb = studio_.data().getSummaryMetadataBuilder();
+         final SummaryMetadata.Builder smb = studio_.data().summaryMetadataBuilder();
          final Coords.Builder cb = Coordinates.builder();
          Coords coords = cb.c(1).p(1).
                  t(nrFrames).z(1).build();

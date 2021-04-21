@@ -41,7 +41,7 @@ public interface ApplicationSkin {
    /**
     * Available skins used by the application.
     */
-   public enum SkinMode {
+   enum SkinMode {
       DAY("Day"), 
       NIGHT("Night");
       private final String desc_;
@@ -80,43 +80,43 @@ public interface ApplicationSkin {
     * application-wide event bus.
     * @param mode The mode to use.
     */
-   public void setSkin(SkinMode mode);
+   void setSkin(SkinMode mode);
 
    /**
     * @return the current Micro-Manager skin.
     */
-   public SkinMode getSkin();
+   SkinMode getSkin();
 
    /**
     * Return the current background color for normal GUI elements.
     * @return current background color
     */
-   public Color getBackgroundColor();
+   Color getBackgroundColor();
 
    /**
     * Return the current "lighter" background color for highlighted or
     * otherwise differentiated GUI elements.
     * @return light background color
     */
-   public Color getLightBackgroundColor();
+   Color getLightBackgroundColor();
 
    /**
     * Return the current "disabled" background color.
     * @return "disabled" background color
     */
-   public Color getDisabledBackgroundColor();
+   Color getDisabledBackgroundColor();
 
    /**
     * Return the current color for enabled text.
     * @return current color for enabled text
     */
-   public Color getEnabledTextColor();
+   Color getEnabledTextColor();
 
    /**
     * Return the current color for disabled text.
     * @return current color for disabled text.
     */
-   public Color getDisabledTextColor();
+   Color getDisabledTextColor();
    
    /**
     * If the specified mode is not currently active, then we switch to that
@@ -124,10 +124,10 @@ public interface ApplicationSkin {
     * with a nonstandard look-and-feel.
     * @param mode SkinMode to switch to (but without updating the UI)
     */
-   public void suspendToMode(SkinMode mode);
+   void suspendToMode(SkinMode mode);
    
    /**
     * Restores the mode that was active before suspendToMode was called.
     */
-   public void resume();
+   void resume();
 }
