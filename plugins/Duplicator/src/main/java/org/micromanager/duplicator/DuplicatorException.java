@@ -1,13 +1,9 @@
-
 package org.micromanager.duplicator;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 public class DuplicatorException extends Exception {
-   
-      public DuplicatorException(String text) {
-      super(text);
-   }
+
+  public DuplicatorException(String text) {
+    super(text);
+  }
 }

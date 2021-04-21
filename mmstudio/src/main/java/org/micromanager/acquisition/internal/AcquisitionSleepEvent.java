@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger
 //
@@ -20,18 +20,15 @@
 //
 package org.micromanager.acquisition.internal;
 
-/**
- * This class signals that the acquisition engine is sleeping.
- */
+/** This class signals that the acquisition engine is sleeping. */
 public final class AcquisitionSleepEvent {
-   private double wakeTime_;
+  private double wakeTime_;
 
-   public AcquisitionSleepEvent(double wakeTime) {
-      wakeTime_ = wakeTime;
-   }
+  public AcquisitionSleepEvent(double wakeTime) {
+    wakeTime_ = wakeTime;
+  }
 
-   public double getWakeTime() {
-      return wakeTime_;
-   }
+  public double getWakeTime() {
+    return wakeTime_;
+  }
 }
-

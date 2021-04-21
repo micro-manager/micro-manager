@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Arthur Edelstein and Henry Pinkard, 2011
 //
@@ -20,34 +20,32 @@
 
 package org.micromanager.internal.utils;
 
+import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.SwingUtilities;
 
 /**
- *
- * @author arthur and henry
- * DO NOT USE.  This code is only here so that the DataBrowser plugin can still 
- * compile.  Remove after this dependency in the DataBrowser has been removed.
- * 
+ * @author arthur and henry DO NOT USE. This code is only here so that the DataBrowser plugin can
+ *     still compile. Remove after this dependency in the DataBrowser has been removed.
  * @deprecated
  */
 @Deprecated
 public final class GUIUpdater {
 
-   final AtomicReference<Runnable> latestTask = new AtomicReference<Runnable>();
+  final AtomicReference<Runnable> latestTask = new AtomicReference<Runnable>();
 
-   /*
-    * Post a task for running on the EDT thread. If multiple
-    * tasks pile up, only the most recent will run.
-    */
-   public void post(Runnable task) {
-      if (latestTask.getAndSet(task) == null) {
-         SwingUtilities.invokeLater(new Runnable() {
+  /*
+   * Post a task for running on the EDT thread. If multiple
+   * tasks pile up, only the most recent will run.
+   */
+  public void post(Runnable task) {
+    if (latestTask.getAndSet(task) == null) {
+      SwingUtilities.invokeLater(
+          new Runnable() {
             @Override
             public void run() {
-               latestTask.getAndSet(null).run();
+              latestTask.getAndSet(null).run();
             }
-         });
-      }
-   }
+          });
+    }
+  }
 }

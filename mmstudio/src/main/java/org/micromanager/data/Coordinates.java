@@ -5,26 +5,24 @@
  */
 package org.micromanager.data;
 
-import java.io.IOException;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.internal.DefaultCoords;
 
-/**
- *
- * @author Mark A. Tsuchida
- */
+import java.io.IOException;
+
+/** @author Mark A. Tsuchida */
 public final class Coordinates {
-   private Coordinates() { }
+  private Coordinates() {}
 
-   public static Coords.Builder builder() {
-      return new DefaultCoords.Builder();
-   }
+  public static Coords.Builder builder() {
+    return new DefaultCoords.Builder();
+  }
 
-   public static Coords fromPropertyMap(PropertyMap pmap) throws IOException {
-      Coords.Builder b = builder();
-      for (String axis : pmap.keySet()) {
-         b.index(axis, pmap.getInteger(axis, -1));
-      }
-      return b.build();
-   }
+  public static Coords fromPropertyMap(PropertyMap pmap) throws IOException {
+    Coords.Builder b = builder();
+    for (String axis : pmap.keySet()) {
+      b.index(axis, pmap.getInteger(axis, -1));
+    }
+    return b.build();
+  }
 }

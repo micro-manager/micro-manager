@@ -8,15 +8,10 @@ package org.micromanager.display.internal.link.internal;
 import org.micromanager.display.internal.link.AnchorDidBecomeOutOfSyncEvent;
 import org.micromanager.display.internal.link.LinkAnchor;
 
-/**
- *
- * @author mark
- */
-public class DefaultAnchorDidBecomeOutOfSyncEvent<T>
-      extends AbstractAnchorEvent<T>
-      implements AnchorDidBecomeOutOfSyncEvent<T>
-{
-   public DefaultAnchorDidBecomeOutOfSyncEvent(LinkAnchor<T> anchor) {
-      super(anchor);
-   }
+/** @author mark */
+public class DefaultAnchorDidBecomeOutOfSyncEvent<T> extends AbstractAnchorEvent<T>
+    implements AnchorDidBecomeOutOfSyncEvent<T> {
+  public DefaultAnchorDidBecomeOutOfSyncEvent(LinkAnchor<T> anchor) {
+    super(anchor);
+  }
 }

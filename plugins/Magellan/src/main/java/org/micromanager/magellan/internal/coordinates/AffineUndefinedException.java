@@ -5,10 +5,5 @@
  */
 package org.micromanager.magellan.internal.coordinates;
 
-/**
- *
- * @author henry
- */
-public class AffineUndefinedException extends RuntimeException {
-    
-}
+/** @author henry */
+public class AffineUndefinedException extends RuntimeException {}

@@ -37,136 +37,132 @@ import mmcorej.CMMCore;
 import org.micromanager.plugins.snaponmove.MonitoredValue.MonitoredFloatValue;
 import org.micromanager.plugins.snaponmove.MonitoredValue.MonitoredXYValue;
 
-/**
- * Immutable descriptor of an item to be monitored.
- */
+/** Immutable descriptor of an item to be monitored. */
 abstract class MonitoredItem {
-   private final String deviceLabel_;
+  private final String deviceLabel_;
 
-   class DeviceError extends Exception {
-      public DeviceError(String msg) {
-         super(msg);
+  class DeviceError extends Exception {
+    public DeviceError(String msg) {
+      super(msg);
+    }
+  }
+
+  private MonitoredItem(String deviceLabel) {
+    deviceLabel_ = deviceLabel;
+  }
+
+  String getDeviceLabel() {
+    return deviceLabel_;
+  }
+
+  /**
+   * Return a string uniquely representing the item.
+   *
+   * <p>(This string representation is used for equality, hash computation, and serialization. See
+   * fromString().)
+   *
+   * @return string representation of the item
+   */
+  @Override
+  public String toString() {
+    return deviceLabel_;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == null) {
+      return false;
+    }
+    if (!(other instanceof MonitoredItem)) {
+      return false;
+    }
+    return toString().equals(other.toString());
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  /**
+   * Poll the hardware for the current value of this item.
+   *
+   * @param core the Core instance
+   * @return the retrieved value
+   */
+  abstract MonitoredValue poll(CMMCore core) throws DeviceError;
+
+  static MonitoredItem createZItem(String label) {
+    return new ZMonitoredItem(label);
+  }
+
+  static MonitoredItem createXYItem(String label) {
+    return new XYMonitoredItem(label);
+  }
+
+  private static final String Z_ITEM_SER_PREFIX = "ZPOS,";
+  private static final String XY_ITEM_SER_PREFIX = "XYPOS,";
+
+  /**
+   * Reverse the effect of toString().
+   *
+   * @param serialized serialized string
+   * @return MonitoredItem, or null if parsing failed
+   */
+  static MonitoredItem fromString(String serialized) {
+    // The format is
+    // ZPOS,<device label>
+    // XYPOS,<device label>
+    // Potential extension:
+    // PROP,<device label>,<prop name>
+    if (serialized.startsWith(Z_ITEM_SER_PREFIX)) {
+      String deviceLabel = serialized.substring(Z_ITEM_SER_PREFIX.length());
+      return createZItem(deviceLabel);
+    } else if (serialized.startsWith(XY_ITEM_SER_PREFIX)) {
+      String deviceLabel = serialized.substring(XY_ITEM_SER_PREFIX.length());
+      return createXYItem(deviceLabel);
+    }
+    return null;
+  }
+
+  static class ZMonitoredItem extends MonitoredItem {
+    private ZMonitoredItem(String label) {
+      super(label);
+    }
+
+    @Override
+    public String toString() {
+      return Z_ITEM_SER_PREFIX + super.toString();
+    }
+
+    @Override
+    public MonitoredFloatValue poll(CMMCore core) throws DeviceError {
+      try {
+        return new MonitoredFloatValue(core.getPosition(getDeviceLabel()));
+      } catch (Exception deviceError) {
+        throw new DeviceError(deviceError.getMessage());
       }
-   }
+    }
+  }
 
-   private MonitoredItem(String deviceLabel) {
-      deviceLabel_ = deviceLabel;
-   }
-   
-   String getDeviceLabel() {
-      return deviceLabel_;
-   }
+  static class XYMonitoredItem extends MonitoredItem {
+    private XYMonitoredItem(String label) {
+      super(label);
+    }
 
-   /**
-    * Return a string uniquely representing the item.
-    *
-    * (This string representation is used for equality, hash computation,
-    * and serialization. See fromString().)
-    *
-    * @return string representation of the item
-    */
-   @Override
-   public String toString() {
-      return deviceLabel_;
-   }
+    @Override
+    public String toString() {
+      return XY_ITEM_SER_PREFIX + super.toString();
+    }
 
-   @Override
-   public boolean equals(Object other) {
-      if (other == null) {
-         return false;
+    @Override
+    public MonitoredXYValue poll(CMMCore core) throws DeviceError {
+      try {
+        Point2D.Double xy = core.getXYStagePosition(getDeviceLabel());
+        return new MonitoredXYValue(xy.x, xy.y);
+      } catch (Exception deviceError) {
+        throw new DeviceError(deviceError.getMessage());
       }
-      if (!(other instanceof MonitoredItem)) {
-         return false;
-      }
-      return toString().equals(other.toString());
-   }
-
-   @Override
-   public int hashCode() {
-      return toString().hashCode();
-   }
-
-   /**
-    * Poll the hardware for the current value of this item.
-    * @param core the Core instance
-    * @return the retrieved value
-    */
-   abstract MonitoredValue poll(CMMCore core) throws DeviceError;
-
-   static MonitoredItem createZItem(String label) {
-      return new ZMonitoredItem(label);
-   }
-
-   static MonitoredItem createXYItem(String label) {
-      return new XYMonitoredItem(label);
-   }
-
-   private static final String Z_ITEM_SER_PREFIX = "ZPOS,";
-   private static final String XY_ITEM_SER_PREFIX = "XYPOS,";
-
-   /**
-    * Reverse the effect of toString().
-    *
-    * @param serialized serialized string
-    * @return MonitoredItem, or null if parsing failed
-    */
-   static MonitoredItem fromString(String serialized) {
-      // The format is
-      // ZPOS,<device label>
-      // XYPOS,<device label>
-      // Potential extension:
-      // PROP,<device label>,<prop name>
-      if (serialized.startsWith(Z_ITEM_SER_PREFIX)) {
-         String deviceLabel = serialized.substring(Z_ITEM_SER_PREFIX.length());
-         return createZItem(deviceLabel);
-      }
-      else if (serialized.startsWith(XY_ITEM_SER_PREFIX)) {
-         String deviceLabel = serialized.substring(XY_ITEM_SER_PREFIX.length());
-         return createXYItem(deviceLabel);
-      }
-      return null;
-   }
-
-   static class ZMonitoredItem extends MonitoredItem {
-      private ZMonitoredItem(String label) {
-         super(label);
-      }
-
-      @Override
-      public String toString() {
-         return Z_ITEM_SER_PREFIX + super.toString();
-      }
-
-      @Override
-      public MonitoredFloatValue poll(CMMCore core) throws DeviceError {
-         try {
-            return new MonitoredFloatValue(core.getPosition(getDeviceLabel()));
-         }
-         catch (Exception deviceError) {
-            throw new DeviceError(deviceError.getMessage());
-         }
-      }
-   }
-
-   static class XYMonitoredItem extends MonitoredItem {
-      private XYMonitoredItem(String label) {
-         super(label);
-      }
-
-      @Override
-      public String toString() {
-         return XY_ITEM_SER_PREFIX + super.toString();
-      }
-
-      @Override
-      public MonitoredXYValue poll(CMMCore core) throws DeviceError {
-         try {
-            Point2D.Double xy = core.getXYStagePosition(getDeviceLabel());
-            return new MonitoredXYValue(xy.x, xy.y);
-         }
-         catch (Exception deviceError) {
-            throw new DeviceError(deviceError.getMessage());
-         }
-      }
-   }
+    }
+  }
 }

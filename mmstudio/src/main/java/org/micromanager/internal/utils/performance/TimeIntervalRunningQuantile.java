@@ -13,45 +13,41 @@
 
 package org.micromanager.internal.utils.performance;
 
-/**
- *
- * @author Mark A. Tsuchida
- */
+/** @author Mark A. Tsuchida */
 public class TimeIntervalRunningQuantile implements RunningQuantile {
-   private final RunningQuantile impl_;
-   private long lastNanoTime_ = -1;
+  private final RunningQuantile impl_;
+  private long lastNanoTime_ = -1;
 
-   public static TimeIntervalRunningQuantile create(int size) {
-      return createSimple(size);
-   }
+  public static TimeIntervalRunningQuantile create(int size) {
+    return createSimple(size);
+  }
 
-   public static TimeIntervalRunningQuantile createSimple(int size) {
-      return new TimeIntervalRunningQuantile(
-            SkipListRunningQuantile.create(size));
-   }
+  public static TimeIntervalRunningQuantile createSimple(int size) {
+    return new TimeIntervalRunningQuantile(SkipListRunningQuantile.create(size));
+  }
 
-   private TimeIntervalRunningQuantile(RunningQuantile implementation) {
-      impl_ = implementation;
-   }
+  private TimeIntervalRunningQuantile(RunningQuantile implementation) {
+    impl_ = implementation;
+  }
 
-   @Override
-   public void sample(double value) {
-      impl_.sample(value);
-   }
+  @Override
+  public void sample(double value) {
+    impl_.sample(value);
+  }
 
-   public synchronized void sample() {
-      long now = System.nanoTime();
-      if (lastNanoTime_ < 0) {
-         lastNanoTime_ = now;
-         return;
-      }
-      double intervalMs = (now - lastNanoTime_) / 1e6;
+  public synchronized void sample() {
+    long now = System.nanoTime();
+    if (lastNanoTime_ < 0) {
       lastNanoTime_ = now;
-      impl_.sample(intervalMs);
-   }
+      return;
+    }
+    double intervalMs = (now - lastNanoTime_) / 1e6;
+    lastNanoTime_ = now;
+    impl_.sample(intervalMs);
+  }
 
-   @Override
-   public double getQuantile(double q) {
-      return impl_.getQuantile(q);
-   }
+  @Override
+  public double getQuantile(double q) {
+    return impl_.getQuantile(q);
+  }
 }

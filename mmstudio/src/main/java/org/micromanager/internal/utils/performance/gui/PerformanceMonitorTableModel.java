@@ -13,97 +13,95 @@
 
 package org.micromanager.internal.utils.performance.gui;
 
-import java.util.List;
-import java.util.Map;
-import javax.swing.table.AbstractTableModel;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.performance.AbstractExponentialSmoothing;
 
-/**
- *
- * @author Mark A. Tsuchida
- */
+import javax.swing.table.AbstractTableModel;
+import java.util.List;
+import java.util.Map;
+
+/** @author Mark A. Tsuchida */
 final class PerformanceMonitorTableModel extends AbstractTableModel {
-   private List<Map.Entry<String, ? extends AbstractExponentialSmoothing>> entries_;
+  private List<Map.Entry<String, ? extends AbstractExponentialSmoothing>> entries_;
 
-   private enum Column {
-      COL_STATNAME("Statistic"),
-      COL_AVERAGE("Average"),
-      COL_STDEV("Stdev");
+  private enum Column {
+    COL_STATNAME("Statistic"),
+    COL_AVERAGE("Average"),
+    COL_STDEV("Stdev");
 
-      private final String name_;
+    private final String name_;
 
-      Column(String name) {
-         name_ = name;
-      }
+    Column(String name) {
+      name_ = name;
+    }
 
-      static Column getByPosition(int c) {
-         return values()[c];
-      }
+    static Column getByPosition(int c) {
+      return values()[c];
+    }
 
-      static int getCount() {
-         return values().length;
-      }
+    static int getCount() {
+      return values().length;
+    }
 
-      String getName() {
-         return name_;
-      }
+    String getName() {
+      return name_;
+    }
 
-      Class<?> getColumnClass() {
-         return String.class;
-      }
-   }
+    Class<?> getColumnClass() {
+      return String.class;
+    }
+  }
 
-   @MustCallOnEDT
-   void setData(List<Map.Entry<String, ? extends AbstractExponentialSmoothing>> entries) {
-      entries_ = entries;
-      fireTableStructureChanged();
-   }
+  @MustCallOnEDT
+  void setData(List<Map.Entry<String, ? extends AbstractExponentialSmoothing>> entries) {
+    entries_ = entries;
+    fireTableStructureChanged();
+  }
 
-   @Override
-   public int getRowCount() {
-      if (entries_ == null) {
-         return 0;
-      }
-      return entries_.size();
-   }
+  @Override
+  public int getRowCount() {
+    if (entries_ == null) {
+      return 0;
+    }
+    return entries_.size();
+  }
 
-   @Override
-   public int getColumnCount() {
-      return Column.getCount();
-   }
+  @Override
+  public int getColumnCount() {
+    return Column.getCount();
+  }
 
-   @Override
-   public String getColumnName(int columnIndex) {
-      return Column.getByPosition(columnIndex).getName();
-   }
+  @Override
+  public String getColumnName(int columnIndex) {
+    return Column.getByPosition(columnIndex).getName();
+  }
 
-   @Override
-   public Class<?> getColumnClass(int columnIndex) {
-      return Column.getByPosition(columnIndex).getColumnClass();
-   }
+  @Override
+  public Class<?> getColumnClass(int columnIndex) {
+    return Column.getByPosition(columnIndex).getColumnClass();
+  }
 
-   @Override
-   public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return false;
-   }
+  @Override
+  public boolean isCellEditable(int rowIndex, int columnIndex) {
+    return false;
+  }
 
-   @Override
-   public Object getValueAt(int rowIndex, int columnIndex) {
-      Map.Entry<String, ? extends AbstractExponentialSmoothing> entry = entries_.get(rowIndex);
-      switch (Column.getByPosition(columnIndex)) {
-         case COL_STATNAME:
-            return entry.getKey();
-         case COL_AVERAGE:
-            return String.format("%.3g", entry.getValue().getAverage());
-         case COL_STDEV:
-            return String.format("%.3g", entry.getValue().getStandardDeviation());
-      }
-      throw new IndexOutOfBoundsException();
-   }
+  @Override
+  public Object getValueAt(int rowIndex, int columnIndex) {
+    Map.Entry<String, ? extends AbstractExponentialSmoothing> entry = entries_.get(rowIndex);
+    switch (Column.getByPosition(columnIndex)) {
+      case COL_STATNAME:
+        return entry.getKey();
+      case COL_AVERAGE:
+        return String.format("%.3g", entry.getValue().getAverage());
+      case COL_STDEV:
+        return String.format("%.3g", entry.getValue().getStandardDeviation());
+    }
+    throw new IndexOutOfBoundsException();
+  }
 
-   @Override
-   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-      throw new UnsupportedOperationException("Read only");
-   }
+  @Override
+  public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+    throw new UnsupportedOperationException("Read only");
+  }
 }

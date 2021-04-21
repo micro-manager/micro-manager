@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,14 +20,8 @@
 
 package org.micromanager.data;
 
-/**
- * This class signifies that new summary metadata has been set for a 
- * DataProvider.
- */
+/** This class signifies that new summary metadata has been set for a DataProvider. */
 public interface DataProviderHasNewSummaryMetadataEvent {
-   /**
-    *
-    * @return New summary metadata of the DataProvider.
-    */
-   SummaryMetadata getSummaryMetadata();
+  /** @return New summary metadata of the DataProvider. */
+  SummaryMetadata getSummaryMetadata();
 }

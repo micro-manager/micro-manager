@@ -23,40 +23,36 @@ import ij.ImagePlus;
  * @see MMImagePlus
  * @author Mark A. Tsuchida, based on older version by Chris Weisiger
  */
-public final class MMCompositeImage extends CompositeImage
-      implements IMMImagePlus
-{
-   static MMCompositeImage create(ImageJBridge parent, ImagePlus predecessor) {
-      return new MMCompositeImage(parent, predecessor);
-   }
+public final class MMCompositeImage extends CompositeImage implements IMMImagePlus {
+  static MMCompositeImage create(ImageJBridge parent, ImagePlus predecessor) {
+    return new MMCompositeImage(parent, predecessor);
+  }
 
-   private MMCompositeImage(ImageJBridge parent, ImagePlus predecessor) {
-      super(predecessor, COMPOSITE);
-      // So far we don't use parent reference
-   }
+  private MMCompositeImage(ImageJBridge parent, ImagePlus predecessor) {
+    super(predecessor, COMPOSITE);
+    // So far we don't use parent reference
+  }
 
-   @Override
-   public void setDimensionsWithoutUpdate(
-         int nChannels, int nSlices, int nFrames)
-   {
-      super.nSlices = nSlices;
-      super.nFrames = nFrames;
-      super.nChannels = nChannels;
-      super.dimensionsSet = true;
-   }
+  @Override
+  public void setDimensionsWithoutUpdate(int nChannels, int nSlices, int nFrames) {
+    super.nSlices = nSlices;
+    super.nFrames = nFrames;
+    super.nChannels = nChannels;
+    super.dimensionsSet = true;
+  }
 
-   @Override
-   public int getNChannelsWithoutSideEffect() {
-      return super.nChannels;
-   }
+  @Override
+  public int getNChannelsWithoutSideEffect() {
+    return super.nChannels;
+  }
 
-   @Override
-   public int getNSlicesWithoutSideEffect() {
-      return super.nSlices;
-   }
+  @Override
+  public int getNSlicesWithoutSideEffect() {
+    return super.nSlices;
+  }
 
-   @Override
-   public int getNFramesWithoutSideEffect() {
-      return super.nFrames;
-   }
+  @Override
+  public int getNFramesWithoutSideEffect() {
+    return super.nFrames;
+  }
 }

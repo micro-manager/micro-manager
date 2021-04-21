@@ -6,51 +6,41 @@ import de.embl.rieslab.emu.utils.EmuUtils;
 
 /**
  * UIParameter with integer value.
- * 
- * @author Joran Deschamps
  *
+ * @author Joran Deschamps
  */
-public class IntegerUIParameter extends UIParameter<Integer>{
+public class IntegerUIParameter extends UIParameter<Integer> {
 
-	public IntegerUIParameter(ConfigurablePanel owner, String label, String description, int value) {
-		super(owner, label, description);
-		
-		setValue(value);
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public UIParameterType getType() {
-		return UIParameterType.INTEGER;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean isSuitable(String val) {
-		if(EmuUtils.isInteger(val)){
-			return true;
-		}
-		return false;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected Integer convertValue(String val) {
-		return Integer.parseInt(val);
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getStringValue() {
-		return String.valueOf(getValue());
-	}
+  public IntegerUIParameter(ConfigurablePanel owner, String label, String description, int value) {
+    super(owner, label, description);
 
+    setValue(value);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public UIParameterType getType() {
+    return UIParameterType.INTEGER;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isSuitable(String val) {
+    if (EmuUtils.isInteger(val)) {
+      return true;
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected Integer convertValue(String val) {
+    return Integer.parseInt(val);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getStringValue() {
+    return String.valueOf(getValue());
+  }
 }

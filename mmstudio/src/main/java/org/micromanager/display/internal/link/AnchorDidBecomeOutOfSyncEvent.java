@@ -7,10 +7,5 @@ package org.micromanager.display.internal.link;
 
 import org.micromanager.display.internal.link.internal.LinkAnchorEvent;
 
-
-/**
- *
- * @author mark
- */
-public interface AnchorDidBecomeOutOfSyncEvent<T> extends LinkAnchorEvent<T> {
-}
+/** @author mark */
+public interface AnchorDidBecomeOutOfSyncEvent<T> extends LinkAnchorEvent<T> {}

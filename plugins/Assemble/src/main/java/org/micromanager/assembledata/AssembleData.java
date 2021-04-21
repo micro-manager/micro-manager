@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          AssembleData.java
-//PROJECT:       Micro-Manager  
-//SUBSYSTEM:     AssembleData plugin
-//-----------------------------------------------------------------------------
+// FILE:          AssembleData.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     AssembleData plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
@@ -28,64 +28,60 @@ import org.micromanager.Studio;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-/**
- *
- * @author kthorn
- */
+/** @author kthorn */
 @Plugin(type = MenuPlugin.class)
 public class AssembleData implements PlugIn, MenuPlugin, SciJavaPlugin {
-   public static final String MENUNAME = "Assemble Data";
-   public static final String TOOLTIPDESCRIPTION =
+  public static final String MENUNAME = "Assemble Data";
+  public static final String TOOLTIPDESCRIPTION =
       "Combines one or more data sets into one.  Also combines positions.";
 
-   public static final String VERSIONNUMBER = "0.1";
+  public static final String VERSIONNUMBER = "0.1";
 
-   private Studio studio_;
-   private AssembleDataForm form_;
+  private Studio studio_;
+  private AssembleDataForm form_;
 
-    @Override
-   public void run(String string) {
-      if (form_ != null && !form_.wasDisposed()) {
-         form_.setVisible(true);
-         form_.toFront();
-      } else {
-         form_ = new AssembleDataForm(studio_);
-      }
-   }
+  @Override
+  public void run(String string) {
+    if (form_ != null && !form_.wasDisposed()) {
+      form_.setVisible(true);
+      form_.toFront();
+    } else {
+      form_ = new AssembleDataForm(studio_);
+    }
+  }
 
-   @Override
-   public void onPluginSelected() {
-      run("");
-   }
-   
-   @Override
-   public String getSubMenu() {
-      return "Analysis";
-   }
+  @Override
+  public void onPluginSelected() {
+    run("");
+  }
 
-   
-   @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-   }
+  @Override
+  public String getSubMenu() {
+    return "Analysis";
+  }
 
-   @Override
-   public String getName() {
-      return MENUNAME;
-   }
+  @Override
+  public void setContext(Studio studio) {
+    studio_ = studio;
+  }
 
-   @Override
-   public String getHelpText() {
-      return TOOLTIPDESCRIPTION;
-   }
+  @Override
+  public String getName() {
+    return MENUNAME;
+  }
 
-   @Override
-   public String getVersion() {
-      return VERSIONNUMBER;
-   }
+  @Override
+  public String getHelpText() {
+    return TOOLTIPDESCRIPTION;
+  }
 
-   @Override
-   public String getCopyright() {
-      return "University of California, 2019";
-   }   
+  @Override
+  public String getVersion() {
+    return VERSIONNUMBER;
+  }
+
+  @Override
+  public String getCopyright() {
+    return "University of California, 2019";
+  }
 }

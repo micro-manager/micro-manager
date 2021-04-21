@@ -21,87 +21,91 @@ import java.util.Random;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.IntStream;
 
-/**
- *
- * @author Henry
- */
+/** @author Henry */
 public class DemoModeImageData {
 
-   private static ImagePlus img_;
-   private static int pixelSizeZ_ = 3;
-   private static int imageSizeZ_ = 399;
-   private static int numChannels_ = 6;
+  private static ImagePlus img_;
+  private static int pixelSizeZ_ = 3;
+  private static int imageSizeZ_ = 399;
+  private static int numChannels_ = 6;
 
-   private static Random rand_ = new Random();
+  private static Random rand_ = new Random();
 
-   private static DemoModeImageData singleton_;
+  private static DemoModeImageData singleton_;
 
-   public DemoModeImageData() {
-      singleton_ = this;
-      //make covariance matrix
+  public DemoModeImageData() {
+    singleton_ = this;
+    // make covariance matrix
 
-   }
+  }
 
-   public static int getNumChannels() {
-      return numChannels_;
+  public static int getNumChannels() {
+    return numChannels_;
+  }
 
-   }
-
-   private static IntUnaryOperator pixelIndToGaussProcess(boolean x) {
-      return new IntUnaryOperator() {
-         @Override
-         public int applyAsInt(int t) {
-            rand_.setSeed(t + (x ? 23423 : 0));
-            double gaussian = rand_.nextGaussian();
-            return (int) (gaussian * 20000);
-         }
-      };
-
-   }
-
-   public static byte[] getBytePixelData(int channel, int x, int y, int z, int width, int height) {
-      Random randX = new Random();
-      Random randY = new Random();
-
-      IntStream yStream = IntStream.range(y, y + height).map(pixelIndToGaussProcess(true));
-
-//      for (int yPix = y; yPix < y + height; yPix++) {
-//         randY.setSeed(y);
-//      }
-//      for (int xPix = x; xPix < x + width; xPix++) {
-//         randY.setSeed(x);
-//      }
-      int fullWidth = img_.getWidth();
-      int fullHeight = img_.getHeight();
-      while (x < 0) {
-         x += fullWidth;
+  private static IntUnaryOperator pixelIndToGaussProcess(boolean x) {
+    return new IntUnaryOperator() {
+      @Override
+      public int applyAsInt(int t) {
+        rand_.setSeed(t + (x ? 23423 : 0));
+        double gaussian = rand_.nextGaussian();
+        return (int) (gaussian * 20000);
       }
-      while (y < 0) {
-         y += fullHeight;
-      }
-      while (z < 0) {
-         z += imageSizeZ_;
-      }
-      x = x % fullWidth;
-      y = y % fullHeight;
-      int sliceIndex = (z % imageSizeZ_) / pixelSizeZ_;
-//      int sliceIndex = (z) / pixelSizeZ_;
+    };
+  }
 
-      byte[] fullSlice = (byte[]) img_.getStack().getPixels(numChannels_ * sliceIndex + channel + 1);
-      byte[] pixels = new byte[width * height];
-      for (int line = 0; line < height; line++) {
-         try {
-            if (y + line >= fullHeight) {
-               y -= fullHeight; //reset to top if go over
-            }
-            System.arraycopy(fullSlice, (y + line) * fullWidth + x, pixels, line * width, Math.min(width, fullWidth - x));
-            //Copy rest of line if spill over in x
-            System.arraycopy(fullSlice, (y + line) * fullWidth, pixels, line * width + Math.min(width, fullWidth - x), width - Math.min(width, fullWidth - x));
-         } catch (ArrayIndexOutOfBoundsException e) {
-            e.printStackTrace();
-         }
-      }
-      return pixels;
-   }
+  public static byte[] getBytePixelData(int channel, int x, int y, int z, int width, int height) {
+    Random randX = new Random();
+    Random randY = new Random();
 
+    IntStream yStream = IntStream.range(y, y + height).map(pixelIndToGaussProcess(true));
+
+    //      for (int yPix = y; yPix < y + height; yPix++) {
+    //         randY.setSeed(y);
+    //      }
+    //      for (int xPix = x; xPix < x + width; xPix++) {
+    //         randY.setSeed(x);
+    //      }
+    int fullWidth = img_.getWidth();
+    int fullHeight = img_.getHeight();
+    while (x < 0) {
+      x += fullWidth;
+    }
+    while (y < 0) {
+      y += fullHeight;
+    }
+    while (z < 0) {
+      z += imageSizeZ_;
+    }
+    x = x % fullWidth;
+    y = y % fullHeight;
+    int sliceIndex = (z % imageSizeZ_) / pixelSizeZ_;
+    //      int sliceIndex = (z) / pixelSizeZ_;
+
+    byte[] fullSlice = (byte[]) img_.getStack().getPixels(numChannels_ * sliceIndex + channel + 1);
+    byte[] pixels = new byte[width * height];
+    for (int line = 0; line < height; line++) {
+      try {
+        if (y + line >= fullHeight) {
+          y -= fullHeight; // reset to top if go over
+        }
+        System.arraycopy(
+            fullSlice,
+            (y + line) * fullWidth + x,
+            pixels,
+            line * width,
+            Math.min(width, fullWidth - x));
+        // Copy rest of line if spill over in x
+        System.arraycopy(
+            fullSlice,
+            (y + line) * fullWidth,
+            pixels,
+            line * width + Math.min(width, fullWidth - x),
+            width - Math.min(width, fullWidth - x));
+      } catch (ArrayIndexOutOfBoundsException e) {
+        e.printStackTrace();
+      }
+    }
+    return pixels;
+  }
 }

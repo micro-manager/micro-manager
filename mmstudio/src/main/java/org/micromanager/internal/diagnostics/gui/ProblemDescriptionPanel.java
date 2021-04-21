@@ -11,55 +11,57 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.*;
 
 class ProblemDescriptionPanel extends javax.swing.JPanel {
-   private final ProblemReportController controller_;
+  private final ProblemReportController controller_;
 
-   ProblemDescriptionPanel(ProblemReportController controller) {
-      super(new net.miginfocom.swing.MigLayout(
-              "fillx, filly, insets 0",
-              "[grow, fill]",
-              "[]related[grow, fill]"));
+  ProblemDescriptionPanel(ProblemReportController controller) {
+    super(
+        new net.miginfocom.swing.MigLayout(
+            "fillx, filly, insets 0", "[grow, fill]", "[]related[grow, fill]"));
 
-      controller_ = controller;
+    controller_ = controller;
 
-      final JTextArea descriptionTextArea = makeDescriptionTextArea();
+    final JTextArea descriptionTextArea = makeDescriptionTextArea();
 
-      final JScrollPane scrollPane = new JScrollPane(descriptionTextArea,
-               JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-               JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      controller_.setDescriptionTextArea(descriptionTextArea);
+    final JScrollPane scrollPane =
+        new JScrollPane(
+            descriptionTextArea,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    controller_.setDescriptionTextArea(descriptionTextArea);
 
-      add(new javax.swing.JLabel("Problem Description:"), "gapafter push, wrap");
-      add(scrollPane, "width 400:400, height 200:200");
-   }
+    add(new javax.swing.JLabel("Problem Description:"), "gapafter push, wrap");
+    add(scrollPane, "width 400:400, height 200:200");
+  }
 
-   private JTextArea makeDescriptionTextArea() {
-      final JTextArea textArea = new JTextArea();
-      textArea.setFont(new java.awt.Font(
-               java.awt.Font.MONOSPACED,
-               java.awt.Font.PLAIN,
-               12));
-      textArea.setLineWrap(true);
-      textArea.setWrapStyleWord(true);
+  private JTextArea makeDescriptionTextArea() {
+    final JTextArea textArea = new JTextArea();
+    textArea.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 12));
+    textArea.setLineWrap(true);
+    textArea.setWrapStyleWord(true);
 
-      // Ugly on OS X, but otherwise invisible on Windows
-      textArea.setBorder(new javax.swing.border.LineBorder(java.awt.Color.BLACK));
+    // Ugly on OS X, but otherwise invisible on Windows
+    textArea.setBorder(new javax.swing.border.LineBorder(java.awt.Color.BLACK));
 
-      textArea.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-         public void insertUpdate(javax.swing.event.DocumentEvent e) {
-            controller_.markDescriptionModified();
-         }
-         public void removeUpdate(javax.swing.event.DocumentEvent e) {
-            controller_.markDescriptionModified();
-         }
-         public void changedUpdate(javax.swing.event.DocumentEvent e) {
-            controller_.markDescriptionModified();
-         }
-      });
+    textArea
+        .getDocument()
+        .addDocumentListener(
+            new javax.swing.event.DocumentListener() {
+              public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                controller_.markDescriptionModified();
+              }
 
-      return textArea;
-   }
+              public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                controller_.markDescriptionModified();
+              }
+
+              public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                controller_.markDescriptionModified();
+              }
+            });
+
+    return textArea;
+  }
 }

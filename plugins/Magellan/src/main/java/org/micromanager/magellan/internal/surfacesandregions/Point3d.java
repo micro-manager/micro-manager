@@ -17,17 +17,14 @@
 
 package org.micromanager.magellan.internal.surfacesandregions;
 
-/**
- * this class exists in JDK 1.7, but for now just remaking it
- */
+/** this class exists in JDK 1.7, but for now just remaking it */
 public class Point3d {
-   
-   public double x, y, z;
-   
-   public Point3d(double xx, double yy, double zz) {
-      x = xx;
-      y = yy;
-      z = zz;
-   }
-   
+
+  public double x, y, z;
+
+  public Point3d(double xx, double yy, double zz) {
+    x = xx;
+    y = yy;
+    z = zz;
+  }
 }

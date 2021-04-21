@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API implementation
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -24,14 +24,14 @@ import org.micromanager.data.Datastore;
 import org.micromanager.events.DatastoreClosingEvent;
 
 public final class DefaultDatastoreClosingEvent implements DatastoreClosingEvent {
-   private Datastore store_;
+  private Datastore store_;
 
-   public DefaultDatastoreClosingEvent(Datastore store) {
-      store_ = store;
-   }
+  public DefaultDatastoreClosingEvent(Datastore store) {
+    store_ = store;
+  }
 
-   @Override
-   public Datastore getDatastore() {
-      return store_;
-   }
+  @Override
+  public Datastore getDatastore() {
+    return store_;
+  }
 }

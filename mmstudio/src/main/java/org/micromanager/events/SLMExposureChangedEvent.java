@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,20 +20,16 @@
 
 package org.micromanager.events;
 
-/**
- * This interface signals when the exposure time for a given camera has changed.
- */
+/** This interface signals when the exposure time for a given camera has changed. */
 public interface SLMExposureChangedEvent {
 
-   /**
-    * Name of the (SLM) device for which exposure changed
-    * @return Name of the (SLM) device for which exposure changed
-    */
-   String getDeviceName();
+  /**
+   * Name of the (SLM) device for which exposure changed
+   *
+   * @return Name of the (SLM) device for which exposure changed
+   */
+  String getDeviceName();
 
-   /**
-    *
-    * @return new exposure time of thr (SLM) device
-    */
-   double getNewExposureTime();
+  /** @return new exposure time of thr (SLM) device */
+  double getNewExposureTime();
 }

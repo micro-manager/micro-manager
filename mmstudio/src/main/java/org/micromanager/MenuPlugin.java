@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,29 +20,23 @@
 package org.micromanager;
 
 /**
- * A MenuPlugin is a plugin that should appear under the "Plugins" menu.
- * Note that certain types of plugins automatically appear in certain contexts,
- * and do not need to implement this interface:
- * - All ProcessorPlugins appear under the "On-The-Fly Image Processing"
- *   submenu of the Plugins menu (and, when selected, will bring up the
- *   Image Processing Pipeline window).
- * - All OverlayPlugins appear in the Inspector frame's "Overlays" section.
- * Currently, adding plugins to menus other than the Plugins menu is not
- * supported.
+ * A MenuPlugin is a plugin that should appear under the "Plugins" menu. Note that certain types of
+ * plugins automatically appear in certain contexts, and do not need to implement this interface: -
+ * All ProcessorPlugins appear under the "On-The-Fly Image Processing" submenu of the Plugins menu
+ * (and, when selected, will bring up the Image Processing Pipeline window). - All OverlayPlugins
+ * appear in the Inspector frame's "Overlays" section. Currently, adding plugins to menus other than
+ * the Plugins menu is not supported.
  */
 public interface MenuPlugin extends MMPlugin {
-   /**
-    * Indicate which sub-menu of the Plugins menu this plugin should appear
-    * in. If that sub-menu does not exist, it will be created. If an empty
-    * string is returned, then the plugin will be inserted directly into the
-    * Plugins menu, instead of into a sub-menu.
-    * @return Sub-menu of the Plugins menu hosting this entry
-    */
-   public String getSubMenu();
+  /**
+   * Indicate which sub-menu of the Plugins menu this plugin should appear in. If that sub-menu does
+   * not exist, it will be created. If an empty string is returned, then the plugin will be inserted
+   * directly into the Plugins menu, instead of into a sub-menu.
+   *
+   * @return Sub-menu of the Plugins menu hosting this entry
+   */
+  public String getSubMenu();
 
-   /**
-    * This method will be called when the plugin is selected from the
-    * PluginsMenu.
-    */
-   public void onPluginSelected();
+  /** This method will be called when the plugin is selected from the PluginsMenu. */
+  public void onPluginSelected();
 }

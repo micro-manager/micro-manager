@@ -31,69 +31,69 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class Magellan implements MenuPlugin, SciJavaPlugin {
 
-   public static final String VERSION = "2.2.0";
+  public static final String VERSION = "2.2.0";
 
-   public static final String menuName = "Micro-Magellan";
-   public static final String tooltipDescription = "High throughout, automated micrscopy for slidescanning or volumetric imaging";
+  public static final String menuName = "Micro-Magellan";
+  public static final String tooltipDescription =
+      "High throughout, automated micrscopy for slidescanning or volumetric imaging";
 
-   private static Studio mmAPI_;
-   private static GUI gui_;
+  private static Studio mmAPI_;
+  private static GUI gui_;
 
-   public Magellan() {
-   }
+  public Magellan() {}
 
-   public static Studio getStudio() {
-      return mmAPI_;
-   }
+  public static Studio getStudio() {
+    return mmAPI_;
+  }
 
-//   public static String getConfigFileName() {
-//      try {
-//         return mmAPI_.getInstance().getSysConfigFile();
-//      } catch (Exception e) {
-//         //since this is not an API method
-//         return "";
-//      }    
-//   }
-   @Override
-   public String getSubMenu() {
-      return "";
-   }
+  //   public static String getConfigFileName() {
+  //      try {
+  //         return mmAPI_.getInstance().getSysConfigFile();
+  //      } catch (Exception e) {
+  //         //since this is not an API method
+  //         return "";
+  //      }
+  //   }
+  @Override
+  public String getSubMenu() {
+    return "";
+  }
 
-   @Override
-   public void onPluginSelected() {
-      if (gui_ == null) {
-         gui_ = new GUI(VERSION);
-      } else {
-         gui_.setVisible(true);
-      }
-   }
+  @Override
+  public void onPluginSelected() {
+    if (gui_ == null) {
+      gui_ = new GUI(VERSION);
+    } else {
+      gui_.setVisible(true);
+    }
+  }
 
-   @Override
-   public void setContext(Studio studio) {
-      mmAPI_ = studio;
-   }
+  @Override
+  public void setContext(Studio studio) {
+    mmAPI_ = studio;
+  }
 
-   @Override
-   public String getName() {
-      return "Micro-Magellan";
-   }
+  @Override
+  public String getName() {
+    return "Micro-Magellan";
+  }
 
-   @Override
-   public String getHelpText() {
-      return "";
-   }
+  @Override
+  public String getHelpText() {
+    return "";
+  }
 
-   @Override
-   public String getVersion() {
-      return VERSION;
-   }
+  @Override
+  public String getVersion() {
+    return VERSION;
+  }
 
-   @Override
-   public String getCopyright() {
-      return "Copyright Henry Pinkard 2014-2016";
-   }
+  @Override
+  public String getCopyright() {
+    return "Copyright Henry Pinkard 2014-2016";
+  }
 
-   public static CMMCore getCore() {
-      return mmAPI_.core();
-   }
+  public static CMMCore getCore() {
+    return mmAPI_.core();
+  }
 }

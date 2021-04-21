@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -21,11 +21,11 @@ package org.micromanager.display.overlay;
 
 import org.micromanager.MMGenericPlugin;
 
-
 /**
  * A plugin providing overlays.
  *
- * To create an overlay plugin, annotate your class like this:
+ * <p>To create an overlay plugin, annotate your class like this:
+ *
  * <pre><code>
  * {@literal @}Plugin(type = OverlayPlugin.class,
  *       priority = Prioroty.NORMAL_PRIORITY,      // Suggests order in menu
@@ -39,5 +39,5 @@ import org.micromanager.MMGenericPlugin;
  * @author Chris Weisiger, Mark A. Tsuchida
  */
 public interface OverlayPlugin extends MMGenericPlugin {
-   public Overlay createOverlay();
+  public Overlay createOverlay();
 }

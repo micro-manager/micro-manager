@@ -12,19 +12,22 @@
 package org.micromanager.internal.diagnostics;
 
 class JVMArgumentsInfoSection implements SystemInfo.SystemInfoSection {
-   public String getTitle() { return "JVM arguments"; }
+  public String getTitle() {
+    return "JVM arguments";
+  }
 
-   public String getReport() {
-      StringBuilder sb = new StringBuilder();
+  public String getReport() {
+    StringBuilder sb = new StringBuilder();
 
-      java.lang.management.RuntimeMXBean rtMXB = java.lang.management.ManagementFactory.getRuntimeMXBean();
-      sb.append("JVM arguments:\n");
-      java.util.List<String> args = rtMXB.getInputArguments();
-      for (String a : args) {
-         sb.append("  ").append(a).append('\n');
-      }
-      sb.append("(End JVM args)");
+    java.lang.management.RuntimeMXBean rtMXB =
+        java.lang.management.ManagementFactory.getRuntimeMXBean();
+    sb.append("JVM arguments:\n");
+    java.util.List<String> args = rtMXB.getInputArguments();
+    for (String a : args) {
+      sb.append("  ").append(a).append('\n');
+    }
+    sb.append("(End JVM args)");
 
-      return sb.toString();
-   }
+    return sb.toString();
+  }
 }

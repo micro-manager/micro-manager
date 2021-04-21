@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,12 +20,8 @@
 
 package org.micromanager.events;
 
-/**
- * This event is posted when the shutter is opened or closed.
- */
+/** This event is posted when the shutter is opened or closed. */
 public interface ShutterEvent {
-   /**
-    * @return true if the shutter is open, false if it is closed.
-    */
-   public boolean getShutter();
+  /** @return true if the shutter is open, false if it is closed. */
+  public boolean getShutter();
 }

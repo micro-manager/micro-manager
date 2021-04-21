@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -21,7 +21,7 @@
 package org.micromanager.data;
 
 /**
- * This class signifies that a Datastore has become frozen and cannot be 
- * written to any more (but read actions can still occur).
+ * This class signifies that a Datastore has become frozen and cannot be written to any more (but
+ * read actions can still occur).
  */
 public interface DatastoreFrozenEvent {}

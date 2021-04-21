@@ -13,23 +13,21 @@ import org.micromanager.display.inspector.InspectorPanelPlugin;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
-/**
- *
- * @author mark
- */
-@Plugin(type = InspectorPanelPlugin.class,
-      priority = Priority.HIGH,
-      name = "Comments",
-      description = "View and edit image comments")
+/** @author mark */
+@Plugin(
+    type = InspectorPanelPlugin.class,
+    priority = Priority.HIGH,
+    name = "Comments",
+    description = "View and edit image comments")
 public final class CommentsInspectorPanelPlugin implements InspectorPanelPlugin {
-   @Override
-   public boolean isApplicableToDataViewer(DataViewer viewer) {
-      // TODO We should allow read-only view of non-Datastore DataProvider
-      return viewer.getDataProvider() instanceof Datastore;
-   }
+  @Override
+  public boolean isApplicableToDataViewer(DataViewer viewer) {
+    // TODO We should allow read-only view of non-Datastore DataProvider
+    return viewer.getDataProvider() instanceof Datastore;
+  }
 
-   @Override
-   public InspectorPanelController createPanelController(Studio studio) {
-      return CommentsInspectorPanelController.create();
-   }
+  @Override
+  public InspectorPanelController createPanelController(Studio studio) {
+    return CommentsInspectorPanelController.create();
+  }
 }

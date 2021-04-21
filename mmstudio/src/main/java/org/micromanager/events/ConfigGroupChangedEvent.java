@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,12 +20,10 @@
 
 package org.micromanager.events;
 
-/**
- * This class signifies when a new value is added to a config group.
- */
+/** This class signifies when a new value is added to a config group. */
 public interface ConfigGroupChangedEvent {
 
-   String getNewConfig();
-   String getGroupName();
+  String getNewConfig();
 
+  String getGroupName();
 }

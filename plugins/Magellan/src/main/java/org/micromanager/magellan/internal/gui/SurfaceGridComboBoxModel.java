@@ -24,95 +24,92 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
 
-/**
- *
- * @author Henry
- */
+/** @author Henry */
 public class SurfaceGridComboBoxModel extends DefaultComboBoxModel implements SurfaceGridListener {
-   
-   private static final String DEFAULT_NAME = "(Current field of view)";
-   
-   private SurfaceGridManager manager_;
-   private Object selectedItem_;
-   private final boolean surfacesOnly_, gridsOnly_;
 
-   public SurfaceGridComboBoxModel(boolean surfacesOnly, boolean gridsOnly)  {
-      manager_ = SurfaceGridManager.getInstance();
-      manager_.registerSurfaceGridListener(this);
-      surfacesOnly_ = surfacesOnly;
-      gridsOnly_ = gridsOnly;
-   }
+  private static final String DEFAULT_NAME = "(Current field of view)";
 
-   @Override
-   public Object getSelectedItem() {
-      return selectedItem_;
-   }
+  private SurfaceGridManager manager_;
+  private Object selectedItem_;
+  private final boolean surfacesOnly_, gridsOnly_;
 
-   @Override
-   public void setSelectedItem(Object anItem) {
-     selectedItem_ = anItem;
-   }
+  public SurfaceGridComboBoxModel(boolean surfacesOnly, boolean gridsOnly) {
+    manager_ = SurfaceGridManager.getInstance();
+    manager_.registerSurfaceGridListener(this);
+    surfacesOnly_ = surfacesOnly;
+    gridsOnly_ = gridsOnly;
+  }
 
-   @Override
-   public int getSize() {
-      if (surfacesOnly_) {
-         return manager_.getNumberOfSurfaces();
-      }
-      if (gridsOnly_) {
-         return manager_.getNumberOfGrids();
-      }
-      return Math.max(1, manager_.getNumberOfGrids() + manager_.getNumberOfSurfaces()); 
-   }
+  @Override
+  public Object getSelectedItem() {
+    return selectedItem_;
+  }
 
-   @Override
-   public Object getElementAt(int index) {
-      //default to current location
-      if (!surfacesOnly_ && manager_.getNumberOfSurfaces() == 0 && manager_.getNumberOfGrids() == 0) {
-         return DEFAULT_NAME;
-      }
-      
-      if (index == -1) {
-         return null;
-      }     
-      if (surfacesOnly_) {
-         return manager_.getSurface(index);
-      } else {
-         return manager_.getSurfaceOrGrid(index);
-      }
-   }
+  @Override
+  public void setSelectedItem(Object anItem) {
+    selectedItem_ = anItem;
+  }
 
-   public void update() {
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
+  @Override
+  public int getSize() {
+    if (surfacesOnly_) {
+      return manager_.getNumberOfSurfaces();
+    }
+    if (gridsOnly_) {
+      return manager_.getNumberOfGrids();
+    }
+    return Math.max(1, manager_.getNumberOfGrids() + manager_.getNumberOfSurfaces());
+  }
+
+  @Override
+  public Object getElementAt(int index) {
+    // default to current location
+    if (!surfacesOnly_ && manager_.getNumberOfSurfaces() == 0 && manager_.getNumberOfGrids() == 0) {
+      return DEFAULT_NAME;
+    }
+
+    if (index == -1) {
+      return null;
+    }
+    if (surfacesOnly_) {
+      return manager_.getSurface(index);
+    } else {
+      return manager_.getSurfaceOrGrid(index);
+    }
+  }
+
+  public void update() {
+    SwingUtilities.invokeLater(
+        new Runnable() {
+          @Override
+          public void run() {
             SurfaceGridComboBoxModel.super.fireContentsChanged(manager_, -1, -1);
-         }
-      });
-   }
+          }
+        });
+  }
 
-   @Override
-   public void SurfaceOrGridChanged(XYFootprint f) {
-      //not reflected here
-   }
+  @Override
+  public void SurfaceOrGridChanged(XYFootprint f) {
+    // not reflected here
+  }
 
-   @Override
-   public void SurfaceOrGridDeleted(XYFootprint f) {
-      this.update();
-   }
+  @Override
+  public void SurfaceOrGridDeleted(XYFootprint f) {
+    this.update();
+  }
 
-   @Override
-   public void SurfaceOrGridCreated(XYFootprint f) {
-      this.update();
-   }
+  @Override
+  public void SurfaceOrGridCreated(XYFootprint f) {
+    this.update();
+  }
 
-   @Override
-   public void SurfaceOrGridRenamed(XYFootprint f) {
-      this.update();
-   }
+  @Override
+  public void SurfaceOrGridRenamed(XYFootprint f) {
+    this.update();
+  }
 
-   @Override
-   public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
-      //nothin
-   }
-   
+  @Override
+  public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
+    // nothin
+  }
 }

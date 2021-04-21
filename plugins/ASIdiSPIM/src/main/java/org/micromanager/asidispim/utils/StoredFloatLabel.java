@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          StoredFloatLabel.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          StoredFloatLabel.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -27,81 +27,79 @@ import javax.swing.JLabel;
 import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.internal.utils.NumberUtils;
 
-
 /**
  * Utility class that ties a JLabel to a value stored in the preferences
+ *
  * @author Nico
  */
 @SuppressWarnings("serial")
 public class StoredFloatLabel extends JLabel {
-   private final String prefNode_;
-   private final String prefKey_;
-   private final Prefs prefs_;
-   private final String units_;
+  private final String prefNode_;
+  private final String prefKey_;
+  private final Prefs prefs_;
+  private final String units_;
 
-   /**
-    * Creates a JLabel and overrides the setText methods so that 
-    * changed in the Label will be written to the preferences
-    * Adds a setFloat method for convenience
-    * TODO consider storing float value instead of string. 
- 	 * TODO specify number of decimal points to display/store =&gt; could store as fixed-point value 
-    * 
-    * @param prefNode - Node used to store the value in preferences
-    * @param prefKey - Key used to store the value in preferences
-    * @param defaultValue - default value in case nothing is found in prefs
-    * @param prefs - Global preferences object used in this plugin
-    * @param units - string to be displayed after the float, usually containing units
-    */
-   public StoredFloatLabel(String prefNode, String prefKey, float defaultValue, 
-         Prefs prefs, String units) {
-      super();
-      prefNode_ = prefNode;
-      prefKey_ = prefKey;
-      prefs_ = prefs;
-      units_ = units;
-      super.setText("" + (prefs_.getFloat(prefNode, prefKey, defaultValue)) + units);
-   }
+  /**
+   * Creates a JLabel and overrides the setText methods so that changed in the Label will be written
+   * to the preferences Adds a setFloat method for convenience TODO consider storing float value
+   * instead of string. TODO specify number of decimal points to display/store =&gt; could store as
+   * fixed-point value
+   *
+   * @param prefNode - Node used to store the value in preferences
+   * @param prefKey - Key used to store the value in preferences
+   * @param defaultValue - default value in case nothing is found in prefs
+   * @param prefs - Global preferences object used in this plugin
+   * @param units - string to be displayed after the float, usually containing units
+   */
+  public StoredFloatLabel(
+      String prefNode, String prefKey, float defaultValue, Prefs prefs, String units) {
+    super();
+    prefNode_ = prefNode;
+    prefKey_ = prefKey;
+    prefs_ = prefs;
+    units_ = units;
+    super.setText("" + (prefs_.getFloat(prefNode, prefKey, defaultValue)) + units);
+  }
 
-   /**
-    * Sets the text of the JLabel and stores the value in Preferences
-    * @param txt 
-    */
-   @Override
-   public void setText(String txt) {
-      super.setText(txt);
-      if (prefNode_ != null && prefKey_ != null) {
-         try {
-            prefs_.putFloat(prefNode_, prefKey_,
-                  ((Double) NumberUtils.displayStringToDouble(txt)).floatValue());
-         } catch (ParseException e) {
-            MyDialogUtils.showError(e);
-         }
-      }
-   }
-
-   /**
-    * Convenience method to display a float and store value in prefs 
-    * @param val 
-    */
-   public void setFloat(float val) {
-      super.setText(NumberUtils.doubleToDisplayString(val) + units_);
-      if (prefNode_ != null && prefKey_ != null) {
-         prefs_.putFloat(prefNode_, prefKey_, val);
-      }
-   }
-
-   /**
-    * @return - displayed value as a float
-    */
-   public float getFloat() {
-      String txt = getText();
-      float result = 0;
+  /**
+   * Sets the text of the JLabel and stores the value in Preferences
+   *
+   * @param txt
+   */
+  @Override
+  public void setText(String txt) {
+    super.setText(txt);
+    if (prefNode_ != null && prefKey_ != null) {
       try {
-         result = (float) NumberUtils.displayStringToDouble(txt);
-      } catch (ParseException pe) {
-         // do nothing
+        prefs_.putFloat(
+            prefNode_, prefKey_, ((Double) NumberUtils.displayStringToDouble(txt)).floatValue());
+      } catch (ParseException e) {
+        MyDialogUtils.showError(e);
       }
-      return result;
-   }
-   
+    }
+  }
+
+  /**
+   * Convenience method to display a float and store value in prefs
+   *
+   * @param val
+   */
+  public void setFloat(float val) {
+    super.setText(NumberUtils.doubleToDisplayString(val) + units_);
+    if (prefNode_ != null && prefKey_ != null) {
+      prefs_.putFloat(prefNode_, prefKey_, val);
+    }
+  }
+
+  /** @return - displayed value as a float */
+  public float getFloat() {
+    String txt = getText();
+    float result = 0;
+    try {
+      result = (float) NumberUtils.displayStringToDouble(txt);
+    } catch (ParseException pe) {
+      // do nothing
+    }
+    return result;
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2016
 //
@@ -22,7 +22,7 @@
 package org.micromanager.alerts.internal;
 
 /**
- * This event is posted on the application event bus whenever all alerts have
- * been dismissed by the user.
+ * This event is posted on the application event bus whenever all alerts have been dismissed by the
+ * user.
  */
 public final class NoAlertsAvailableEvent {}

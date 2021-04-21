@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -24,14 +24,14 @@ import org.micromanager.PositionList;
 import org.micromanager.events.NewPositionListEvent;
 
 public final class DefaultNewPositionListEvent implements NewPositionListEvent {
-   private PositionList newList_;
+  private PositionList newList_;
 
-   public DefaultNewPositionListEvent(PositionList newList) {
-      newList_ = newList;
-   }
+  public DefaultNewPositionListEvent(PositionList newList) {
+    newList_ = newList;
+  }
 
-   @Override
-   public PositionList getPositionList() {
-      return newList_;
-   }
+  @Override
+  public PositionList getPositionList() {
+    return newList_;
+  }
 }

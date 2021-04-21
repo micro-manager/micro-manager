@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          PointAndShootAnalysis.java
-//PROJECT:       Micro-Manager  
-//SUBSYSTEM:     PointAndShootAnalysis plugin
-//-----------------------------------------------------------------------------
+// FILE:          PointAndShootAnalysis.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     PointAndShootAnalysis plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
@@ -19,7 +19,6 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-
 package org.micromanager.pointandshootanalysis;
 
 import ij.plugin.PlugIn;
@@ -28,59 +27,55 @@ import org.micromanager.Studio;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 @Plugin(type = MenuPlugin.class)
 public class PointAndShootAnalysis implements PlugIn, MenuPlugin, SciJavaPlugin {
-   Studio studio_;
-   PointAndShootDialog dialog_;
-   
-   @Override
-   public void run(String string) {
-      if (dialog_ != null && !dialog_.wasDisposed()) {
-         dialog_.setVisible(true);
-         dialog_.toFront();
-      } else {
-         dialog_ = new PointAndShootDialog(studio_);
-      }
-   }
+  Studio studio_;
+  PointAndShootDialog dialog_;
 
-   @Override
-   public String getSubMenu() {
-      return "Analysis";
-   }
+  @Override
+  public void run(String string) {
+    if (dialog_ != null && !dialog_.wasDisposed()) {
+      dialog_.setVisible(true);
+      dialog_.toFront();
+    } else {
+      dialog_ = new PointAndShootDialog(studio_);
+    }
+  }
 
-   @Override
-   public void onPluginSelected() {
-      run("");
-   }
+  @Override
+  public String getSubMenu() {
+    return "Analysis";
+  }
 
-   @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-      studio_.events().registerForEvents(this);
-   }
+  @Override
+  public void onPluginSelected() {
+    run("");
+  }
 
-   @Override
-   public String getName() {
-      return "Point and Shoot Analysis";
-   }
+  @Override
+  public void setContext(Studio studio) {
+    studio_ = studio;
+    studio_.events().registerForEvents(this);
+  }
 
-   @Override
-   public String getHelpText() {
-      return "Plugin to analysis data generate by bleaching spots using the Projector plugin Point And Shoot mode";
-   }
+  @Override
+  public String getName() {
+    return "Point and Shoot Analysis";
+  }
 
-   @Override
-   public String getVersion() {
-      return "0.1";
-   }
+  @Override
+  public String getHelpText() {
+    return "Plugin to analysis data generate by bleaching spots using the Projector plugin Point And Shoot mode";
+  }
 
-   @Override
-   public String getCopyright() {
-      return "Regents of the University of California, 2018";
-   }
-   
+  @Override
+  public String getVersion() {
+    return "0.1";
+  }
+
+  @Override
+  public String getCopyright() {
+    return "Regents of the University of California, 2018";
+  }
 }

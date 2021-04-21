@@ -20,48 +20,44 @@ import org.micromanager.display.DisplaySettingsChangedEvent;
 
 /**
  * Standard implementation of {@code NewDisplaySettingsEvent}.
+ *
  * @author Chris Weisiger and Mark A. Tsuchida
  */
-public final class DefaultDisplaySettingsChangedEvent
-      implements DisplaySettingsChangedEvent
-{
-   private final DisplaySettings newSettings_;
-   private final DisplaySettings oldSettings_;
-   private final DataViewer viewer_;
+public final class DefaultDisplaySettingsChangedEvent implements DisplaySettingsChangedEvent {
+  private final DisplaySettings newSettings_;
+  private final DisplaySettings oldSettings_;
+  private final DataViewer viewer_;
 
-   public static DefaultDisplaySettingsChangedEvent create(DataViewer viewer,
-         DisplaySettings oldSettings, DisplaySettings newSettings)
-   {
-      return new DefaultDisplaySettingsChangedEvent(viewer,
-            oldSettings, newSettings);
-   }
+  public static DefaultDisplaySettingsChangedEvent create(
+      DataViewer viewer, DisplaySettings oldSettings, DisplaySettings newSettings) {
+    return new DefaultDisplaySettingsChangedEvent(viewer, oldSettings, newSettings);
+  }
 
-   private DefaultDisplaySettingsChangedEvent(DataViewer viewer,
-         DisplaySettings oldSettings, DisplaySettings newSettings)
-   {
-      viewer_ = viewer;
-      oldSettings_ = oldSettings;
-      newSettings_ = newSettings;
-   }
+  private DefaultDisplaySettingsChangedEvent(
+      DataViewer viewer, DisplaySettings oldSettings, DisplaySettings newSettings) {
+    viewer_ = viewer;
+    oldSettings_ = oldSettings;
+    newSettings_ = newSettings;
+  }
 
-   @Override
-   public DisplaySettings getDisplaySettings() {
-      return newSettings_;
-   }
+  @Override
+  public DisplaySettings getDisplaySettings() {
+    return newSettings_;
+  }
 
-   @Override
-   public DisplaySettings getPreviousDisplaySettings() {
-      return oldSettings_;
-   }
+  @Override
+  public DisplaySettings getPreviousDisplaySettings() {
+    return oldSettings_;
+  }
 
-   @Override
-   public DataViewer getDataViewer() {
-      return viewer_;
-   }
+  @Override
+  public DataViewer getDataViewer() {
+    return viewer_;
+  }
 
-   @Override
-   @Deprecated
-   public DataViewer getDisplay() {
-      return viewer_;
-   }
+  @Override
+  @Deprecated
+  public DataViewer getDisplay() {
+    return viewer_;
+  }
 }

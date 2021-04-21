@@ -7,10 +7,7 @@ package org.micromanager.profile.internal;
 
 import org.micromanager.UserProfile;
 
-/**
- *
- * @author Mark A. Tsuchida
- */
+/** @author Mark A. Tsuchida */
 public interface UserProfileMigrationsRegisteredEvent {
-   void runMigrations(UserProfile profile);
+  void runMigrations(UserProfile profile);
 }

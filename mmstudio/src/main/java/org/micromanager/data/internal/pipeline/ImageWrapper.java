@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API implementation
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -23,18 +23,18 @@ package org.micromanager.data.internal.pipeline;
 import org.micromanager.data.Image;
 
 /**
- * This class serves as a simple wrapper around Images for passing through the
- * pipeline. It exists predominantly so we can tell when we're being told to
- * flush the pipeline (by creating an ImageWrapper with a null image).
+ * This class serves as a simple wrapper around Images for passing through the pipeline. It exists
+ * predominantly so we can tell when we're being told to flush the pipeline (by creating an
+ * ImageWrapper with a null image).
  */
 public final class ImageWrapper {
-   private Image image_;
+  private Image image_;
 
-   public ImageWrapper(Image image) {
-      image_ = image;
-   }
+  public ImageWrapper(Image image) {
+    image_ = image;
+  }
 
-   public Image getImage() {
-      return image_;
-   }
+  public Image getImage() {
+    return image_;
+  }
 }

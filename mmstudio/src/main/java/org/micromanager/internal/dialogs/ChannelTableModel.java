@@ -13,442 +13,447 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Data representation class for the channels list in the MDA dialog.
- */
-public final class ChannelTableModel extends AbstractTableModel  {
+/** Data representation class for the channels list in the MDA dialog. */
+public final class ChannelTableModel extends AbstractTableModel {
 
-   private static final long serialVersionUID = 3290621191844925827L;
-   private final Studio studio_;
-   private final AcquisitionEngine acqEng_;
-   private final MutablePropertyMapView settings_;
-   // Not sure why, but the acqEngine API requires an ArrayList rather than a List
-   private final ArrayList<ChannelSpec> channels_;
-   public final String[] COLUMN_NAMES = new String[]{
-      "Use?",
-      "Configuration",
-      "Exposure",
-      "Z-offset",
-      "Z-stack",
-      "Skip Fr.",
-      "Color"
-   };
-   private final String[] TOOLTIPS = new String[]{
-      "Toggle channel/group on/off",
-      "Choose preset property values for channel or group",
-      "Set exposure time in ms",
-      TooltipTextMaker.addHTMLBreaksForTooltip("Set a Z offset specific to this channel/group (the main "
-      + "object in one of the channels/groups is in a different focal plane from the other channels/groups"),
-      "Collect images in multiple Z planes?",
-      TooltipTextMaker.addHTMLBreaksForTooltip("Setting 'Skip Frame' to a number other than "
-      + "0 will cause the acquisition to 'skip' taking images in "
-      + "that channel (after taking the first image) for the indicated "
-      + "number of time intervals. The 5D-Image Viewer will 'fill in' these skipped "
-      + "frames with the previous image. In some situations it may be "
-      + "desirable to acquire certain channels at lower sampling rates, "
-      + "to reduce photo-toxicity and to save disk space. "),
-      "Select channel/group color for display in viewer"};
+  private static final long serialVersionUID = 3290621191844925827L;
+  private final Studio studio_;
+  private final AcquisitionEngine acqEng_;
+  private final MutablePropertyMapView settings_;
+  // Not sure why, but the acqEngine API requires an ArrayList rather than a List
+  private final ArrayList<ChannelSpec> channels_;
+  public final String[] COLUMN_NAMES =
+      new String[] {
+        "Use?", "Configuration", "Exposure", "Z-offset", "Z-stack", "Skip Fr.", "Color"
+      };
+  private final String[] TOOLTIPS =
+      new String[] {
+        "Toggle channel/group on/off",
+        "Choose preset property values for channel or group",
+        "Set exposure time in ms",
+        TooltipTextMaker.addHTMLBreaksForTooltip(
+            "Set a Z offset specific to this channel/group (the main "
+                + "object in one of the channels/groups is in a different focal plane from the other channels/groups"),
+        "Collect images in multiple Z planes?",
+        TooltipTextMaker.addHTMLBreaksForTooltip(
+            "Setting 'Skip Frame' to a number other than "
+                + "0 will cause the acquisition to 'skip' taking images in "
+                + "that channel (after taking the first image) for the indicated "
+                + "number of time intervals. The 5D-Image Viewer will 'fill in' these skipped "
+                + "frames with the previous image. In some situations it may be "
+                + "desirable to acquire certain channels at lower sampling rates, "
+                + "to reduce photo-toxicity and to save disk space. "),
+        "Select channel/group color for display in viewer"
+      };
 
-   public String getToolTipText(int columnIndex) {
-      return TOOLTIPS[columnIndex];
-   }
+  public String getToolTipText(int columnIndex) {
+    return TOOLTIPS[columnIndex];
+  }
 
-   public ChannelTableModel(Studio studio, AcquisitionEngine eng) {
-      studio_ = studio;
-      acqEng_ = eng;
-      settings_ = studio_.profile().getSettings(ChannelTableModel.class);
-      channels_ = new ArrayList<>(12);
-      cleanUpConfigurationList();
-   }
+  public ChannelTableModel(Studio studio, AcquisitionEngine eng) {
+    studio_ = studio;
+    acqEng_ = eng;
+    settings_ = studio_.profile().getSettings(ChannelTableModel.class);
+    channels_ = new ArrayList<>(12);
+    cleanUpConfigurationList();
+  }
 
-   @Override
-   public int getRowCount() {
-      if (channels_ == null) {
-         return 0;
+  @Override
+  public int getRowCount() {
+    if (channels_ == null) {
+      return 0;
+    } else {
+      return channels_.size();
+    }
+  }
+
+  @Override
+  public int getColumnCount() {
+    return COLUMN_NAMES.length;
+  }
+
+  @Override
+  public String getColumnName(int columnIndex) {
+    return COLUMN_NAMES[columnIndex];
+  }
+
+  @Override
+  public Object getValueAt(int rowIndex, int columnIndex) {
+    if (channels_ != null && rowIndex < channels_.size()) {
+      if (columnIndex == 0) {
+        return channels_.get(rowIndex).useChannel();
+      } else if (columnIndex == 1) {
+        return channels_.get(rowIndex).config();
+      } else if (columnIndex == 2) {
+        return channels_.get(rowIndex).exposure();
+      } else if (columnIndex == 3) {
+        return channels_.get(rowIndex).zOffset();
+      } else if (columnIndex == 4) {
+        return channels_.get(rowIndex).doZStack();
+      } else if (columnIndex == 5) {
+        return channels_.get(rowIndex).skipFactorFrame();
+      } else if (columnIndex == 6) {
+        return channels_.get(rowIndex).color();
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public Class getColumnClass(int c) {
+    return getValueAt(0, c).getClass();
+  }
+
+  @Override
+  public void setValueAt(Object value, int row, int col) {
+    if (row >= channels_.size() || value == null) {
+      return;
+    }
+
+    ChannelSpec channel = channels_.get(row);
+    ChannelSpec.Builder cb = channel.copyBuilder();
+    if (col == 0) {
+      cb.useChannel((Boolean) value);
+    } else if (col == 1) {
+      cb.config(value.toString());
+      ChannelSpec cs =
+          ChannelSpec.fromJSONStream(
+              settings_.getString(
+                  channelProfileKey(acqEng_.getSequenceSettings().channelGroup(), value.toString()),
+                  ""));
+      if (cs == null) {
+        // Our fallback color is the colorblind-friendly color for our
+        // current row index.
+        ChannelDisplaySettings cds =
+            RememberedDisplaySettings.loadChannel(
+                studio_,
+                acqEng_.getSequenceSettings().channelGroup(),
+                value.toString(),
+                new Color(ColorPalettes.getFromDefaultPalette(row).getRGB()));
+        cb.color(cds.getColor());
+        cb.exposure(10.0);
       } else {
-         return channels_.size();
+        cb.color(cs.color());
+        cb.exposure(cs.exposure());
       }
-   }
-
-   @Override
-   public int getColumnCount() {
-      return COLUMN_NAMES.length;
-   }
-
-   @Override
-   public String getColumnName(int columnIndex) {
-      return COLUMN_NAMES[columnIndex];
-   }
-
-   @Override
-   public Object getValueAt(int rowIndex, int columnIndex) {
-      if (channels_ != null && rowIndex < channels_.size()) {
-         if (columnIndex == 0) {
-            return channels_.get(rowIndex).useChannel();
-         } else if (columnIndex == 1) {
-            return channels_.get(rowIndex).config();
-         } else if (columnIndex == 2) {
-            return channels_.get(rowIndex).exposure();
-         } else if (columnIndex == 3) {
-            return channels_.get(rowIndex).zOffset();
-         } else if (columnIndex == 4) {
-            return channels_.get(rowIndex).doZStack();
-         } else if (columnIndex == 5) {
-            return channels_.get(rowIndex).skipFactorFrame();
-         } else if (columnIndex == 6) {
-            return channels_.get(rowIndex).color();
-         }
+      channels_.set(row, cb.build());
+      this.fireTableCellUpdated(row, 2);
+      this.fireTableCellUpdated(row, 6);
+    } else if (col == 2) {
+      cb.exposure(((Double) value));
+      if (AcqControlDlg.getShouldSyncExposure()) {
+        studio_
+            .app()
+            .setChannelExposureTime(
+                acqEng_.getSequenceSettings().channelGroup(), channel.config(), (Double) value);
+      } else {
+        this.setChannelExposureTime(
+            acqEng_.getSequenceSettings().channelGroup(), channel.config(), (Double) value);
       }
-      return null;
-   }
-
-   @Override
-   public Class getColumnClass(int c) {
-      return getValueAt(0, c).getClass();
-   }
-
-   @Override
-   public void setValueAt(Object value, int row, int col) {
-      if (row >= channels_.size() || value == null) {
-         return;
+    } else if (col == 3) {
+      cb.zOffset((Double) value);
+    } else if (col == 4) {
+      cb.doZStack((Boolean) value);
+    } else if (col == 5) {
+      cb.skipFactorFrame((Integer) value);
+    } else if (col == 6) {
+      if (!channel.color().equals(value)) {
+        studio_
+            .events()
+            .post(new ChannelColorEvent(channel.channelGroup(), channel.config(), (Color) value));
       }
+      cb.color((Color) value);
+    }
 
-      ChannelSpec channel = channels_.get(row);
-      ChannelSpec.Builder cb = channel.copyBuilder();
-      if (col == 0) {
-         cb.useChannel((Boolean) value);
-      } else if (col == 1) {
-         cb.config (value.toString());
-         ChannelSpec cs = ChannelSpec.fromJSONStream(
-                 settings_.getString(channelProfileKey(acqEng_.getSequenceSettings().channelGroup(),
-                         value.toString()), ""));
-         if (cs == null) {
-            // Our fallback color is the colorblind-friendly color for our
-            // current row index.
-            ChannelDisplaySettings cds =
-                    RememberedDisplaySettings.loadChannel(studio_,
-                        acqEng_.getSequenceSettings().channelGroup(),
-                        value.toString(), new Color(
-                                ColorPalettes.getFromDefaultPalette(row).getRGB()));
-            cb.color(cds.getColor());
-            cb.exposure(10.0);
-         }
-         else {
-            cb.color(cs.color());
-            cb.exposure(cs.exposure());
-         }
-         channels_.set(row, cb.build());
-         this.fireTableCellUpdated(row, 2);
-         this.fireTableCellUpdated(row, 6);
-      } else if (col == 2) {
-         cb.exposure (((Double) value));
-         if (AcqControlDlg.getShouldSyncExposure()) {
-            studio_.app().setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
-                    channel.config(), (Double) value);
-         } else {
-            this.setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
-                    channel.config(), (Double) value);
-         }
-      } else if (col == 3) {
-         cb.zOffset((Double) value);
-      } else if (col == 4) {
-         cb.doZStack((Boolean) value);
-      } else if (col == 5) {
-         cb.skipFactorFrame((Integer) value);
-      } else if (col == 6) {
-         if (!channel.color().equals(value)) {
-            studio_.events().post(new ChannelColorEvent(
-                    channel.channelGroup(), channel.config(), (Color) value));
-         }
-         cb.color((Color) value);
-      }
+    channel = cb.build();
+    channels_.set(row, channel);
+    storeChannels();
 
-      channel = cb.build();
-      channels_.set(row, channel);
-      storeChannels();
+    this.fireTableChanged(new TableModelEvent(this));
+  }
 
-      this.fireTableChanged(new TableModelEvent(this));
-   }
+  @Override
+  public boolean isCellEditable(int nRow, int nCol) {
+    if (nCol == 4) {
+      return acqEng_.getSequenceSettings().useSlices();
+    }
 
-   @Override
-   public boolean isCellEditable(int nRow, int nCol) {
-      if (nCol == 4) {
-         return acqEng_.getSequenceSettings().useSlices();
-      }
+    return true;
+  }
 
-      return true;
-   }
+  public ArrayList<ChannelSpec> getChannels() {
+    return new ArrayList<>(channels_);
+  }
 
-   public ArrayList<ChannelSpec> getChannels() {
-      return new ArrayList<>(channels_);
-   }
-
-   public void setChannels(ArrayList<ChannelSpec> channels) {
-      channels_.clear();
-      for (ChannelSpec channel : channels) {
-         if (acqEng_.getChannelConfigs().length > 0) {
-            for (String config : acqEng_.getChannelConfigs()) {
-               if (config.equals(channel.config())) {
-                  // Color information is a displaysetting. The ultimate authoraty
-                  // is in RememberedSettings, so look there now
-                  Color c = RememberedDisplaySettings.loadChannel(studio_, channel.channelGroup(),
-                          channel.config(), channel.color()).getColor();
-                  ChannelSpec ch = channel.copyBuilder().color(c).build();
-                  channels_.add(ch);
-                  break;
-               }
-            }
-         }
-      }
-   }
-
-   /**
-    * Adds a new channel to the list in the MDA window
-    */
-   public void addNewChannel() {
-      ChannelSpec.Builder cb = new ChannelSpec.Builder();
+  public void setChannels(ArrayList<ChannelSpec> channels) {
+    channels_.clear();
+    for (ChannelSpec channel : channels) {
       if (acqEng_.getChannelConfigs().length > 0) {
-         for (String config : acqEng_.getChannelConfigs()) {
-            boolean unique = true;
-            for (ChannelSpec chan : channels_) {
-               if (config.equals(chan.config())) {
-                  unique = false;
-               }
-            }
-            if (unique) {
-               cb.config(config);
-               break;
-            }
-         }
-         String config = cb.build().config();
-         if (config.length() == 0) {
-            ReportingUtils.showMessage("No more channels are available\nin this channel group.");
-         } else {
-            // Pick a non-white default color if possible.
-            Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
-            cb.channelGroup(acqEng_.getSequenceSettings().channelGroup());
-            cb.color(RememberedDisplaySettings.loadChannel(studio_,
-                    acqEng_.getSequenceSettings().channelGroup(), config, defaultColor).getColor());
-            cb.exposure(this.getChannelExposureTime(
-                  acqEng_.getSequenceSettings().channelGroup(), config, 10.0));
-            channels_.add(cb.build());
-         }
+        for (String config : acqEng_.getChannelConfigs()) {
+          if (config.equals(channel.config())) {
+            // Color information is a displaysetting. The ultimate authoraty
+            // is in RememberedSettings, so look there now
+            Color c =
+                RememberedDisplaySettings.loadChannel(
+                        studio_, channel.channelGroup(), channel.config(), channel.color())
+                    .getColor();
+            ChannelSpec ch = channel.copyBuilder().color(c).build();
+            channels_.add(ch);
+            break;
+          }
+        }
       }
-      storeChannels();
-   }
+    }
+  }
 
-   public void removeChannel(int chIndex) {
-      if (chIndex >= 0 && chIndex < channels_.size()) {
-         channels_.remove(chIndex);
+  /** Adds a new channel to the list in the MDA window */
+  public void addNewChannel() {
+    ChannelSpec.Builder cb = new ChannelSpec.Builder();
+    if (acqEng_.getChannelConfigs().length > 0) {
+      for (String config : acqEng_.getChannelConfigs()) {
+        boolean unique = true;
+        for (ChannelSpec chan : channels_) {
+          if (config.equals(chan.config())) {
+            unique = false;
+          }
+        }
+        if (unique) {
+          cb.config(config);
+          break;
+        }
       }
-      storeChannels();
-   }
+      String config = cb.build().config();
+      if (config.length() == 0) {
+        ReportingUtils.showMessage("No more channels are available\nin this channel group.");
+      } else {
+        // Pick a non-white default color if possible.
+        Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
+        cb.channelGroup(acqEng_.getSequenceSettings().channelGroup());
+        cb.color(
+            RememberedDisplaySettings.loadChannel(
+                    studio_, acqEng_.getSequenceSettings().channelGroup(), config, defaultColor)
+                .getColor());
+        cb.exposure(
+            this.getChannelExposureTime(
+                acqEng_.getSequenceSettings().channelGroup(), config, 10.0));
+        channels_.add(cb.build());
+      }
+    }
+    storeChannels();
+  }
 
-   /**
-    * Used to change the order of the channels in the MDA window
-    * @param rowIdx Row nr (zero-based) of the row to be moved
-    * @return row nr where the selected row ended up
+  public void removeChannel(int chIndex) {
+    if (chIndex >= 0 && chIndex < channels_.size()) {
+      channels_.remove(chIndex);
+    }
+    storeChannels();
+  }
+
+  /**
+   * Used to change the order of the channels in the MDA window
+   *
+   * @param rowIdx Row nr (zero-based) of the row to be moved
+   * @return row nr where the selected row ended up
+   */
+  public int rowDown(int rowIdx) {
+    if (rowIdx >= 0 && rowIdx < channels_.size() - 1) {
+      ChannelSpec channel = channels_.get(rowIdx);
+      channels_.remove(rowIdx);
+      channels_.add(rowIdx + 1, channel);
+      return rowIdx + 1;
+    }
+    storeChannels();
+    return rowIdx;
+  }
+
+  /**
+   * Used to change the order of the channels in the Window
+   *
+   * @param rowIdx Row nr (0-based) of the row to move up
+   * @return Row nr where this row ended up
+   */
+  public int rowUp(int rowIdx) {
+    if (rowIdx >= 1 && rowIdx < channels_.size()) {
+      ChannelSpec channel = channels_.get(rowIdx);
+      channels_.remove(rowIdx);
+      channels_.add(rowIdx - 1, channel);
+      return rowIdx - 1;
+    }
+    storeChannels();
+    return rowIdx;
+  }
+
+  public String[] getAvailableChannels() {
+    return acqEng_.getChannelConfigs();
+    /*
+    String[] channelsInGroup = acqEng_.getChannelConfigs();
+    ArrayList<String> channels  = new ArrayList<>();
+    for (ChannelSpec cs : channelSpecs) {
+       channels.add(cs.config());
+    }
+    return channels.toArray(new String[0]);
     */
-   public int rowDown(int rowIdx) {
-      if (rowIdx >= 0 && rowIdx < channels_.size() - 1) {
-         ChannelSpec channel = channels_.get(rowIdx);
-         channels_.remove(rowIdx);
-         channels_.add(rowIdx + 1, channel);
-         return rowIdx + 1;
-      }
-      storeChannels();
-      return rowIdx;
-   }
+  }
 
-   /**
-    * Used to change the order of the channels in the Window
-    * @param rowIdx Row nr (0-based) of the row to move up
-    * @return Row nr where this row ended up
-    */
-   public int rowUp(int rowIdx) {
-      if (rowIdx >= 1 && rowIdx < channels_.size()) {
-         ChannelSpec channel = channels_.get(rowIdx);
-         channels_.remove(rowIdx);
-         channels_.add(rowIdx - 1, channel);
-         return rowIdx - 1;
+  /**
+   * Remove all channels from the list which are not compatible with the current acquisition
+   * settings
+   */
+  public void cleanUpConfigurationList() {
+    String channelGroup = "";
+    List<String> configNames = new ArrayList<>(channels_.size());
+    for (Iterator<ChannelSpec> it = channels_.iterator(); it.hasNext(); ) {
+      ChannelSpec cs = it.next();
+      if (!cs.config().contentEquals("")) {
+        channelGroup = cs.channelGroup();
+        configNames.add(cs.config());
+        // write this config to the profile
+        settings_.putString(
+            channelProfileKey(cs.channelGroup(), cs.config()), ChannelSpec.toJSONStream(cs));
+        if (!acqEng_.isConfigAvailable(cs.config())) {
+          it.remove();
+        }
       }
-      storeChannels();
-      return rowIdx;
-   }
+    }
+    // Stores the config names that we had for the old channelGroup
+    settings_.putStringList("CG:" + channelGroup, configNames);
 
-   public String[] getAvailableChannels() {
-      return acqEng_.getChannelConfigs();
-      /*
-      String[] channelsInGroup = acqEng_.getChannelConfigs();
-      ArrayList<String> channels  = new ArrayList<>();
-      for (ChannelSpec cs : channelSpecs) {
-         channels.add(cs.config());
+    // Restore channels from profile
+    String newChannelGroup = acqEng_.getSequenceSettings().channelGroup();
+    if (!channelGroup.equals(newChannelGroup)) {
+      List<String> newConfigNames = settings_.getStringList("CG:" + newChannelGroup);
+      for (String newConfig : newConfigNames) {
+        ChannelSpec cs =
+            ChannelSpec.fromJSONStream(
+                settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
+        if (cs != null) {
+          // Definite data about colors is in RememberedSettings
+          Color csColor =
+              RememberedDisplaySettings.loadChannel(studio_, newChannelGroup, newConfig, cs.color())
+                  .getColor();
+          cs = cs.copyBuilder().color(csColor).build();
+          channels_.add(cs);
+        }
       }
-      return channels.toArray(new String[0]);
-      */
-   }
+      acqEng_.setSequenceSettings(
+          acqEng_.getSequenceSettings().copyBuilder().channels(channels_).build());
+      fireTableDataChanged();
+    }
+  }
 
-   /**
-    * Remove all channels from the list which are not compatible with
-    * the current acquisition settings
-    */
-   public void cleanUpConfigurationList() {
-      String channelGroup = "";
-      List<String> configNames = new ArrayList<>(channels_.size());
-      for (Iterator<ChannelSpec> it = channels_.iterator(); it.hasNext(); ) {
-         ChannelSpec cs = it.next();
-         if (!cs.config().contentEquals("")) {
-            channelGroup = cs.channelGroup();
-            configNames.add(cs.config());
-            // write this config to the profile
-            settings_.putString(channelProfileKey(cs.channelGroup(), cs.config()),
-                    ChannelSpec.toJSONStream(cs));
-            if (!acqEng_.isConfigAvailable(cs.config())) {
-               it.remove();
-            }
-         }
+  /**
+   * reports if the same channel name is used twice
+   *
+   * @return true when the list of channels contains the same channel name twice
+   */
+  public boolean duplicateChannels() {
+    for (int i = 0; i < channels_.size() - 1; i++) {
+      for (int j = i + 1; j < channels_.size(); j++) {
+        if (channels_.get(i).config().equals(channels_.get(j).config())) {
+          return true;
+        }
       }
-      // Stores the config names that we had for the old channelGroup
-      settings_.putStringList("CG:" + channelGroup, configNames);
+    }
+    return false;
+  }
 
-      // Restore channels from profile
-      String newChannelGroup = acqEng_.getSequenceSettings().channelGroup();
-      if (!channelGroup.equals(newChannelGroup)) {
-         List<String> newConfigNames = settings_.getStringList("CG:" + newChannelGroup);
-         for (String newConfig : newConfigNames) {
-            ChannelSpec cs = ChannelSpec.fromJSONStream(
-                    settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
-            if (cs != null) {
-               // Definite data about colors is in RememberedSettings
-               Color csColor = RememberedDisplaySettings.loadChannel(studio_, newChannelGroup, newConfig, cs.color()).getColor();
-               cs = cs.copyBuilder().color(csColor).build();
-               channels_.add(cs);
-            }
-         }
-         acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().
-                 copyBuilder().channels(channels_).build());
-         fireTableDataChanged();
+  /**
+   * Updates the exposure time in the given preset
+   *
+   * @param channelGroup - if it does not match current channelGroup, no action will be taken
+   * @param channel - preset for which to change exposire time
+   * @param exposure - desired exposure time
+   */
+  public void setChannelExposureTime(String channelGroup, String channel, double exposure) {
+    if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) return;
+    for (int row = 0; row < channels_.size(); row++) {
+      ChannelSpec cs = channels_.get(row);
+      if (cs.config().equals(channel)) {
+        channels_.set(row, cs.copyBuilder().exposure(exposure).build());
+        this.fireTableCellUpdated(row, 2);
+        return;
       }
-   }
+    }
+  }
 
-   /**
-    * reports if the same channel name is used twice
-    * @return true when the list of channels contains the same channel name twice
-    */
-   public boolean duplicateChannels() {
-      for (int i = 0; i < channels_.size() - 1; i++) {
-         for (int j = i + 1; j < channels_.size(); j++) {
-            if (channels_.get(i).config().equals(channels_.get(j).config())) {
-               return true;
-            }
-         }
-      }
+  public boolean hasChannel(String channelGroup, String channel) {
+    if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) {
       return false;
-   }
-   
-   /**
-    * Updates the exposure time in the given preset 
-    * 
-    * @param channelGroup - if it does not match current channelGroup, 
-    * no action will be taken
-    * 
-    * @param channel - preset for which to change exposire time
-    * @param exposure - desired exposure time
-    */
-   public void setChannelExposureTime(String channelGroup, String channel, 
-           double exposure) {
-      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup()))
-         return;
-      for (int row = 0; row < channels_.size(); row++) {
-         ChannelSpec cs = channels_.get(row);
-         if (cs.config().equals(channel)) {
-            channels_.set(row, cs.copyBuilder().exposure(exposure).build());
-            this.fireTableCellUpdated(row, 2);
-            return;
-         }
+    }
+    for (ChannelSpec cs : channels_) {
+      if (cs.config().equals(channel)) {
+        return true;
       }
-   }
+    }
+    return false;
+  }
 
-   public boolean hasChannel(String channelGroup, String channel) {
-      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) {
-         return false;
+  /**
+   * Returns the exposure time of the given preset
+   *
+   * @param channelGroup - if it does not match current channelGroup, default exposure will be
+   *     returns
+   * @param channel - preset for which to change exposure time
+   * @param defaultExposure - return when no match was found
+   */
+  public double getChannelExposureTime(
+      String channelGroup, String channel, double defaultExposure) {
+    if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) return defaultExposure;
+    for (ChannelSpec cs : channels_) {
+      if (cs.config().equals(channel)) {
+        return cs.exposure();
       }
-      for (ChannelSpec cs : channels_) {
-         if (cs.config().equals(channel)) {
-            return true;
-         }
-      }
-      return false;
-   }
+    }
+    return defaultExposure;
+  }
 
-   /**
-    * Returns the exposure time of the given preset
-    *
-    * @param channelGroup - if it does not match current channelGroup,
-    * default exposure will be returns
-    * @param channel - preset for which to change exposure time
-    * @param defaultExposure - return when no match was found
-    */
-   public double getChannelExposureTime(String channelGroup, String channel,
-                                      double defaultExposure) {
-      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup()))
-         return defaultExposure;
-      for (ChannelSpec cs : channels_) {
-         if (cs.config().equals(channel)) {
-            return cs.exposure();
-         }
+  /**
+   * Updates the color of the specified channel
+   *
+   * @param channelGroup Channelgroup of the channel
+   * @param channelName Name of the channel
+   * @param color New color of the channel
+   */
+  public void setChannelColor(String channelGroup, String channelName, Color color) {
+    if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) return;
+    for (int row = 0; row < channels_.size(); row++) {
+      ChannelSpec cs = channels_.get(row);
+      if (cs.config().equals(channelName)) {
+        channels_.set(row, cs.copyBuilder().color(color).build());
+        // TODO: should this color also be stored in RememberedSettings?
+        this.fireTableCellUpdated(row, 6);
+        return;
       }
-      return defaultExposure;
-   }
+    }
+    // not found, should be safe to ignore
+  }
 
-   /**
-    * Updates the color of the specified channel
-    *
-    * @param channelGroup  Channelgroup of the channel
-    * @param channelName   Name of the channel
-    * @param color         New color of the channel
-    */
-   public void setChannelColor(String channelGroup, String channelName, Color color) {
-      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup()))
-         return;
-      for (int row = 0; row < channels_.size(); row++) {
-         ChannelSpec cs = channels_.get(row);
-         if (cs.config().equals(channelName)) {
-            channels_.set(row, cs.copyBuilder().color(color).build());
-            // TODO: should this color also be stored in RememberedSettings?
-            this.fireTableCellUpdated(row, 6);
-            return;
-         }
+  public void storeChannels() {
+    String channelGroup = acqEng_.getSequenceSettings().channelGroup();
+    List<String> configNames = new ArrayList<>(channels_.size());
+    for (ChannelSpec cs : channels_) {
+      if (!cs.config().contentEquals("")) {
+        if (cs.channelGroup().isEmpty()) {
+          cs = cs.copyBuilder().channelGroup(channelGroup).build();
+        }
+        configNames.add(cs.config());
+        // write this config to the profile
+        settings_.putString(
+            channelProfileKey(cs.channelGroup(), cs.config()), ChannelSpec.toJSONStream(cs));
       }
-      // not found, should be safe to ignore
-   }
+    }
+    // Stores the config names that we had for the old channelGroup
+    settings_.putStringList("CG:" + channelGroup, configNames);
+    acqEng_.setSequenceSettings(
+        acqEng_.getSequenceSettings().copyBuilder().channels(channels_).build());
+  }
 
-   public void storeChannels() {
-      String channelGroup = acqEng_.getSequenceSettings().channelGroup();
-      List<String> configNames = new ArrayList<>(channels_.size());
-      for (ChannelSpec cs : channels_) {
-         if (!cs.config().contentEquals("")) {
-            if (cs.channelGroup().isEmpty()) {
-               cs = cs.copyBuilder().channelGroup(channelGroup).build();
-            }
-            configNames.add(cs.config());
-            // write this config to the profile
-            settings_.putString(channelProfileKey(cs.channelGroup(), cs.config()),
-                    ChannelSpec.toJSONStream(cs));
-         }
-      }
-      // Stores the config names that we had for the old channelGroup
-      settings_.putStringList("CG:" + channelGroup, configNames);
-      acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder().
-              channels(channels_).build());
-   }
-
-    private static String channelProfileKey(String channelGroup, String config) {
-      return channelGroup + "-" + config;
-   }
+  private static String channelProfileKey(String channelGroup, String config) {
+    return channelGroup + "-" + config;
+  }
 }

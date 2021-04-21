@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -23,13 +23,14 @@ package org.micromanager.events.internal;
 import org.micromanager.events.AutoShutterEvent;
 
 public final class DefaultAutoShutterEvent implements AutoShutterEvent {
-   private boolean isAutoOn_;
-   public DefaultAutoShutterEvent(boolean isOn) {
-      isAutoOn_ = isOn;
-   }
+  private boolean isAutoOn_;
 
-   @Override
-   public boolean getAutoShutter() {
-      return isAutoOn_;
-   }
+  public DefaultAutoShutterEvent(boolean isOn) {
+    isAutoOn_ = isOn;
+  }
+
+  @Override
+  public boolean getAutoShutter() {
+    return isAutoOn_;
+  }
 }

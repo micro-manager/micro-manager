@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2016
 //
@@ -21,7 +21,7 @@
 package org.micromanager.data;
 
 /**
- * An unchecked exception thrown when an attempt is made to overwrite data in
- * a non-rewritable datastore.
+ * An unchecked exception thrown when an attempt is made to overwrite data in a non-rewritable
+ * datastore.
  */
 public class DatastoreRewriteException extends UnsupportedOperationException {}

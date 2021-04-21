@@ -19,6 +19,7 @@ package org.micromanager.internal.utils.performance;
  * @author Mark A. Tsuchida
  */
 public interface RunningQuantile {
-   public void sample(double value);
-   public double getQuantile(double q);
+  public void sample(double value);
+
+  public double getQuantile(double q);
 }

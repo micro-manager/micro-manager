@@ -17,17 +17,13 @@
 
 package org.micromanager.magellan.internal.misc;
 
-/**
- *
- * @author Henry
- */
+/** @author Henry */
 public class LongPoint {
-   
-   public long x_, y_;
-   
-   public LongPoint(long x, long y) {
-      x_ = x;
-      y_ = y;
-   }
-   
+
+  public long x_, y_;
+
+  public LongPoint(long x, long y) {
+    x_ = x;
+    y_ = y;
+  }
 }

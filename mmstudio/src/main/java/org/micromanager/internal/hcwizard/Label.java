@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, October 29, 2006
 //
@@ -22,21 +22,18 @@
 //
 package org.micromanager.internal.hcwizard;
 
-/**
- * Label data for state devices
- *
- */
+/** Label data for state devices */
 public final class Label {
-   String label_;
-   int state_;
-   
-   public Label() {
-      label_ = new String("Undefined");
-      state_ = 0;
-   }
-   
-   public Label(String lab, int pos) {
-      label_ = lab;
-      state_ = pos;
-   }
+  String label_;
+  int state_;
+
+  public Label() {
+    label_ = new String("Undefined");
+    state_ = 0;
+  }
+
+  public Label(String lab, int pos) {
+    label_ = lab;
+    state_ = pos;
+  }
 }

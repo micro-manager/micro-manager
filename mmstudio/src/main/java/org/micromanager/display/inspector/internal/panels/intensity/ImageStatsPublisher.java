@@ -18,40 +18,38 @@ import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
 /**
- * An object (usually data viewer) that computes and makes available histograms
- * and stats for sets of images.
- * <p>
- * TODO: Move this into the API (need to move ImagesAndStats into API first).
- * But first, consider a little more how this should be factored: should it be
- * a "Histogrammable" interface? What about other aspects of display-related
- * image stats (LUT, 8-bit image)? Also, does the event (or stats object) need
- * to include the display settings and/or ROI at the time of the stats compute?
- * <p>
- * Classes implementing this interface must post {@link ImageStatsChangedEvent} on
- * the Swing/EDT event dispatch thread when it switches to a new set of images.
- * Such a class is also responsible for _not_ posting {@code ImageStatsChangedEvent}s
- * containing stats that are no longer valid (e.g. because compute settings
- * changed).
+ * An object (usually data viewer) that computes and makes available histograms and stats for sets
+ * of images.
+ *
+ * <p>TODO: Move this into the API (need to move ImagesAndStats into API first). But first, consider
+ * a little more how this should be factored: should it be a "Histogrammable" interface? What about
+ * other aspects of display-related image stats (LUT, 8-bit image)? Also, does the event (or stats
+ * object) need to include the display settings and/or ROI at the time of the stats compute?
+ *
+ * <p>Classes implementing this interface must post {@link ImageStatsChangedEvent} on the Swing/EDT
+ * event dispatch thread when it switches to a new set of images. Such a class is also responsible
+ * for _not_ posting {@code ImageStatsChangedEvent}s containing stats that are no longer valid (e.g.
+ * because compute settings changed).
  *
  * @author Mark A. Tsuchida
  */
 public interface ImageStatsPublisher extends EventPublisher {
-   public static final class ImageStatsChangedEvent {
-      private final ImagesAndStats stats_;
+  public static final class ImageStatsChangedEvent {
+    private final ImagesAndStats stats_;
 
-      public static ImageStatsChangedEvent create(ImagesAndStats stats) {
-         return new ImageStatsChangedEvent(stats);
-      }
+    public static ImageStatsChangedEvent create(ImagesAndStats stats) {
+      return new ImageStatsChangedEvent(stats);
+    }
 
-      private ImageStatsChangedEvent(ImagesAndStats stats) {
-         stats_ = stats;
-      }
+    private ImageStatsChangedEvent(ImagesAndStats stats) {
+      stats_ = stats;
+    }
 
-      public ImagesAndStats getImagesAndStats() {
-         return stats_;
-      }
-   }
+    public ImagesAndStats getImagesAndStats() {
+      return stats_;
+    }
+  }
 
-   @MustCallOnEDT
-   ImagesAndStats getCurrentImagesAndStats();
+  @MustCallOnEDT
+  ImagesAndStats getCurrentImagesAndStats();
 }

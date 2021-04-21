@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, October 1, 2006
 //
@@ -23,10 +23,9 @@
 package org.micromanager.internal.utils;
 
 public final class MMException extends Exception {
-   private static final long serialVersionUID = 1614553572417963171L;
+  private static final long serialVersionUID = 1614553572417963171L;
 
-   public MMException(String msg) {
-      super(msg);
-   }
-   
+  public MMException(String msg) {
+    super(msg);
+  }
 }

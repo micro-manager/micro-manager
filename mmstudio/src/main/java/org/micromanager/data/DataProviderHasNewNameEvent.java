@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, 2017
 //
@@ -19,14 +19,8 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.data;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 public interface DataProviderHasNewNameEvent {
-   /**
-    *
-    * @return The new name of the DataProvider.
-    */
-   String getNewName();
+  /** @return The new name of the DataProvider. */
+  String getNewName();
 }

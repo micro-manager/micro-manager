@@ -19,10 +19,9 @@ import java.lang.annotation.Target;
 /**
  * An annotation to mark methods that must be called on the EDT.
  *
- * Does not have any functionality or enforcement (yet).
+ * <p>Does not have any functionality or enforcement (yet).
  *
  * @author Mark Tsuchida
  */
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
-public @interface MustCallOnEDT {
-}
+public @interface MustCallOnEDT {}

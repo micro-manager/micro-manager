@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ChannelSpec.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          ChannelSpec.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -21,32 +21,27 @@
 //
 package org.micromanager.asidispim.data;
 
-
 /**
- * Representation of information in channel table of 
- * diSPIM plugin.  Based on org.micromanager.utils.ChannelSpec.java. 
+ * Representation of information in channel table of diSPIM plugin. Based on
+ * org.micromanager.utils.ChannelSpec.java.
  */
 public class ChannelSpec {
-   public static final String DEFAULT_CHANNEL_GROUP = "Channel";
-   public static final double Version = 0.1;
+  public static final String DEFAULT_CHANNEL_GROUP = "Channel";
+  public static final double Version = 0.1;
 
-   // fields that are used
-   public boolean useChannel_; // whether or not to use this group
-   public String group_; // configuration group
-   public String config_; // Configuration setting name
-   
-   // not used yet but may be useful in future
-   //   public double exposure = 10.0; // ms
-   //   public double zOffset = 0.0; // um
-   //   public Color color = Color.gray;
+  // fields that are used
+  public boolean useChannel_; // whether or not to use this group
+  public String group_; // configuration group
+  public String config_; // Configuration setting name
 
-   
-   public ChannelSpec(boolean useChannel, String group, String config){
-      this.useChannel_ = useChannel;
-      this.group_ = group;
-      this.config_ = config;
-   }
-   
-         
-   
+  // not used yet but may be useful in future
+  //   public double exposure = 10.0; // ms
+  //   public double zOffset = 0.0; // um
+  //   public Color color = Color.gray;
+
+  public ChannelSpec(boolean useChannel, String group, String config) {
+    this.useChannel_ = useChannel;
+    this.group_ = group;
+    this.config_ = config;
+  }
 }

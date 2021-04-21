@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2016
 //
@@ -22,20 +22,17 @@
 package org.micromanager.alerts;
 
 /**
- * An Alert is a temporary, undecorated message that is displayed to the user
- * in the Messages window. Alerts can be created via the AlertManager.
+ * An Alert is a temporary, undecorated message that is displayed to the user in the Messages
+ * window. Alerts can be created via the AlertManager.
  */
 public interface Alert {
-   /**
-    * Returns whether or not this Alert is still visible to the user and can
-    * therefore be updated or have more content added to it. Alerts that have
-    * been dismissed (either via their dismiss() method or by the user
-    * closing them) are no longer usable.
-    */
-   boolean isUsable();
+  /**
+   * Returns whether or not this Alert is still visible to the user and can therefore be updated or
+   * have more content added to it. Alerts that have been dismissed (either via their dismiss()
+   * method or by the user closing them) are no longer usable.
+   */
+  boolean isUsable();
 
-   /**
-    * Dismiss the Alert, causing it to no longer be visible to the user.
-    */
-   void dismiss();
+  /** Dismiss the Alert, causing it to no longer be visible to the user. */
+  void dismiss();
 }

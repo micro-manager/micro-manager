@@ -1,6 +1,6 @@
 /* @author - Nico Stuurman,  2012
- * 
- * 
+ *
+ *
 Copyright (c) 2012-2017, Regents of the University of California
 All rights reserved.
 
@@ -31,47 +31,38 @@ either expressed or implied, of the FreeBSD Project.
 
 package edu.ucsf.valelab.gaussianfit.utils;
 
-
 import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import java.util.concurrent.BlockingQueue;
 
+/** @author nico */
+public class ProgressThread implements Runnable {
 
-/**
- *
- * @author nico
- */
-public class ProgressThread  implements Runnable {
+  Thread t_;
+  BlockingQueue<SpotData> sourceList_;
 
-   Thread t_;
-   BlockingQueue<SpotData> sourceList_;
+  public ProgressThread(BlockingQueue<SpotData> sourceList) {
+    sourceList_ = sourceList;
+  }
 
+  public void init() {
+    t_ = new Thread(this);
+    t_.start();
+  }
 
+  public void join() throws InterruptedException {
+    if (t_ != null) t_.join();
+  }
 
-   public ProgressThread(BlockingQueue<SpotData> sourceList) {
-      sourceList_ = sourceList;
-   }
-
-   public void init() {
-      t_ = new Thread(this);
-      t_.start();
-   }
-
-   public void join() throws InterruptedException {
-      if (t_ != null)
-         t_.join();
-   }
-
-   
-   @Override
-   public void run() {
-      int maxNr = sourceList_.size();
-      int size = maxNr;
-      while (sourceList_ != null && size > 0) {
-         ij.IJ.wait(2000);
-         size = sourceList_.size();
-         ij.IJ.showStatus("Fitting remaining Gaussians...");
-         ij.IJ.showProgress(maxNr - size, maxNr);
-      }
-      ij.IJ.showStatus("");
-   }
+  @Override
+  public void run() {
+    int maxNr = sourceList_.size();
+    int size = maxNr;
+    while (sourceList_ != null && size > 0) {
+      ij.IJ.wait(2000);
+      size = sourceList_.size();
+      ij.IJ.showStatus("Fitting remaining Gaussians...");
+      ij.IJ.showProgress(maxNr - size, maxNr);
+    }
+    ij.IJ.showStatus("");
+  }
 }

@@ -61,288 +61,276 @@ import org.micromanager.plugins.snaponmove.ChangeCriterion.ZDistanceCriterion;
 // should not imitate this practice.
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
 
-
-
-
 final class CriterionDialog extends JDialog {
-   private final MainController controller_;
-   private ChangeCriterion result_;
+  private final MainController controller_;
+  private ChangeCriterion result_;
 
-   private final List<JPanel> sectionPanels_ =
-         new ArrayList<JPanel>();
+  private final List<JPanel> sectionPanels_ = new ArrayList<JPanel>();
 
-   private double focusThreshUm_ = 0.1;
-   private double xyThreshUm_ = 0.1;
+  private double focusThreshUm_ = 0.1;
+  private double xyThreshUm_ = 0.1;
 
-   private final JPanel focusPanel_;
-   private final JPanel xyPanel_;
+  private final JPanel focusPanel_;
+  private final JPanel xyPanel_;
 
-   private final JRadioButton focusRadio_;
-   private final JRadioButton xyRadio_;
-   private final JComboBox focusDeviceCombo_;
-   private final JComboBox xyDeviceCombo_;
-   private final JTextField focusThreshField_;
-   private final JTextField xyThreshField_;
-   private final JCheckBox shouldPollCheckBox_;
+  private final JRadioButton focusRadio_;
+  private final JRadioButton xyRadio_;
+  private final JComboBox focusDeviceCombo_;
+  private final JComboBox xyDeviceCombo_;
+  private final JTextField focusThreshField_;
+  private final JTextField xyThreshField_;
+  private final JCheckBox shouldPollCheckBox_;
 
-   CriterionDialog(final MainController controller, final Frame owner) {
-      this(controller, null, owner);
-   }
+  CriterionDialog(final MainController controller, final Frame owner) {
+    this(controller, null, owner);
+  }
 
-   CriterionDialog(final MainController controller,
-           final ChangeCriterion initialCriterion,
-           final Frame owner)
-   {
-      super(owner);
-      controller_ = controller;
+  CriterionDialog(
+      final MainController controller, final ChangeCriterion initialCriterion, final Frame owner) {
+    super(owner);
+    controller_ = controller;
 
-      setModal(true);
-      setResizable(false);
-      setLocationRelativeTo(owner);
+    setModal(true);
+    setResizable(false);
+    setLocationRelativeTo(owner);
 
-      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
-      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
+    super.setIconImage(
+        Toolkit.getDefaultToolkit()
+            .getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
+    WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
-      setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent e) {
+    setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+    addWindowListener(
+        new WindowAdapter() {
+          @Override
+          public void windowClosing(WindowEvent e) {
             handleCancel();
-         }
-      });
+          }
+        });
 
-      setTitle("Edit Movement Detection Criterion");
-      setLayout(new MigLayout("fill",
-              "[fill, grow]",
-              "[]rel[]rel[]unrel[]"));
+    setTitle("Edit Movement Detection Criterion");
+    setLayout(new MigLayout("fill", "[fill, grow]", "[]rel[]rel[]unrel[]"));
 
-      // Radio buttons for section titles
-      final ButtonGroup radioGroup = new ButtonGroup();
+    // Radio buttons for section titles
+    final ButtonGroup radioGroup = new ButtonGroup();
 
-      focusPanel_ = new JPanel(new MigLayout("fill"));
-      focusRadio_ = new JRadioButton("Focus Movement");
-      focusRadio_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+    focusPanel_ = new JPanel(new MigLayout("fill"));
+    focusRadio_ = new JRadioButton("Focus Movement");
+    focusRadio_.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             disableOtherSections(focusPanel_);
             repaint();
-         }
-      });
-      radioGroup.add(focusRadio_);
+          }
+        });
+    radioGroup.add(focusRadio_);
 
-      xyPanel_ = new JPanel(new MigLayout("fill"));
-      xyRadio_ = new JRadioButton("XY Stage Movement");
-      xyRadio_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+    xyPanel_ = new JPanel(new MigLayout("fill"));
+    xyRadio_ = new JRadioButton("XY Stage Movement");
+    xyRadio_.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             disableOtherSections(xyPanel_);
             repaint();
-         }
-      });
-      radioGroup.add(xyRadio_);
+          }
+        });
+    radioGroup.add(xyRadio_);
 
-      // Focus Movement section
-      focusPanel_.setBorder(new ComponentTitledBorder(focusRadio_,
-            focusPanel_, BorderFactory.createEtchedBorder()));
-      focusPanel_.add(new JLabel("Focus Device: "));
-      focusDeviceCombo_ = new JComboBox(getAvailableFocusDevices());
-      focusPanel_.add(focusDeviceCombo_, "wrap");
-      focusPanel_.add(new JLabel("Threshold: "));
-      focusThreshField_ = new JTextField(Double.toString(focusThreshUm_));
-      focusThreshField_.setColumns(5);
-      focusThreshField_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+    // Focus Movement section
+    focusPanel_.setBorder(
+        new ComponentTitledBorder(focusRadio_, focusPanel_, BorderFactory.createEtchedBorder()));
+    focusPanel_.add(new JLabel("Focus Device: "));
+    focusDeviceCombo_ = new JComboBox(getAvailableFocusDevices());
+    focusPanel_.add(focusDeviceCombo_, "wrap");
+    focusPanel_.add(new JLabel("Threshold: "));
+    focusThreshField_ = new JTextField(Double.toString(focusThreshUm_));
+    focusThreshField_.setColumns(5);
+    focusThreshField_.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             double threshUm = focusThreshUm_;
             try {
-               threshUm = Double.parseDouble(focusThreshField_.getText());
-            }
-            catch (NumberFormatException nfe) {
+              threshUm = Double.parseDouble(focusThreshField_.getText());
+            } catch (NumberFormatException nfe) {
             }
             if (threshUm >= 0.0) {
-               focusThreshUm_ = threshUm;
+              focusThreshUm_ = threshUm;
             }
             focusThreshField_.setText(Double.toString(threshUm));
             focusThreshField_.transferFocusUpCycle();
-         }
-      });
-      focusPanel_.add(focusThreshField_, "split 2");
-      focusPanel_.add(new JLabel(" um"), "wrap");
-      add(focusPanel_, "grow, wrap");
-      sectionPanels_.add(focusPanel_);
+          }
+        });
+    focusPanel_.add(focusThreshField_, "split 2");
+    focusPanel_.add(new JLabel(" um"), "wrap");
+    add(focusPanel_, "grow, wrap");
+    sectionPanels_.add(focusPanel_);
 
-      // XY Stage Movement section
-      xyPanel_.setBorder(new ComponentTitledBorder(xyRadio_,
-            xyPanel_, BorderFactory.createEtchedBorder()));
-      xyPanel_.add(new JLabel("XY Stage Device: "));
-      xyDeviceCombo_ = new JComboBox(getAvailableXYStageDevices());
-      xyPanel_.add(xyDeviceCombo_, "wrap");
-      xyPanel_.add(new JLabel("Threshold: "));
-      xyThreshField_ = new JTextField(Double.toString(xyThreshUm_));
-      xyThreshField_.setColumns(5);
-      xyThreshField_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+    // XY Stage Movement section
+    xyPanel_.setBorder(
+        new ComponentTitledBorder(xyRadio_, xyPanel_, BorderFactory.createEtchedBorder()));
+    xyPanel_.add(new JLabel("XY Stage Device: "));
+    xyDeviceCombo_ = new JComboBox(getAvailableXYStageDevices());
+    xyPanel_.add(xyDeviceCombo_, "wrap");
+    xyPanel_.add(new JLabel("Threshold: "));
+    xyThreshField_ = new JTextField(Double.toString(xyThreshUm_));
+    xyThreshField_.setColumns(5);
+    xyThreshField_.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             double threshUm = xyThreshUm_;
             try {
-               threshUm = Double.parseDouble(xyThreshField_.getText());
-            }
-            catch (NumberFormatException nfe) {
+              threshUm = Double.parseDouble(xyThreshField_.getText());
+            } catch (NumberFormatException nfe) {
             }
             if (threshUm >= 0.0) {
-               xyThreshUm_ = threshUm;
+              xyThreshUm_ = threshUm;
             }
             xyThreshField_.setText(Double.toString(threshUm));
             xyThreshField_.transferFocusUpCycle();
-         }
-      });
-      xyPanel_.add(xyThreshField_, "split 2");
-      xyPanel_.add(new JLabel(" um"), "wrap");
-      add(xyPanel_, "grow, wrap");
-      sectionPanels_.add(xyPanel_);
+          }
+        });
+    xyPanel_.add(xyThreshField_, "split 2");
+    xyPanel_.add(new JLabel(" um"), "wrap");
+    add(xyPanel_, "grow, wrap");
+    sectionPanels_.add(xyPanel_);
 
-      shouldPollCheckBox_ = new JCheckBox("Poll this device");
-      add(shouldPollCheckBox_);
+    shouldPollCheckBox_ = new JCheckBox("Poll this device");
+    add(shouldPollCheckBox_);
 
-      final JButton cancelButton = new JButton("Cancel");
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+    final JButton cancelButton = new JButton("Cancel");
+    cancelButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             handleCancel();
-         }
-      });
-      add(cancelButton, "split 2, tag cancel");
-      final JButton okButton = new JButton("OK");
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+          }
+        });
+    add(cancelButton, "split 2, tag cancel");
+    final JButton okButton = new JButton("OK");
+    okButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             handleOK();
-         }
-      });
-      add(okButton, "tag ok, wrap");
+          }
+        });
+    add(okButton, "tag ok, wrap");
 
-      // Initial selection and availability
-      focusRadio_.setEnabled(focusDeviceCombo_.getItemCount() > 0);
-      xyRadio_.setEnabled(xyDeviceCombo_.getItemCount() > 0);
-      if (focusRadio_.isEnabled()) {
-         focusRadio_.setSelected(true);
-         disableOtherSections(focusPanel_);
+    // Initial selection and availability
+    focusRadio_.setEnabled(focusDeviceCombo_.getItemCount() > 0);
+    xyRadio_.setEnabled(xyDeviceCombo_.getItemCount() > 0);
+    if (focusRadio_.isEnabled()) {
+      focusRadio_.setSelected(true);
+      disableOtherSections(focusPanel_);
+    } else if (xyRadio_.isEnabled()) {
+      xyRadio_.setSelected(true);
+      disableOtherSections(xyPanel_);
+    } else {
+      disableOtherSections(null); // Disable all
+      okButton.setEnabled(false);
+    }
+
+    if (initialCriterion != null) {
+      initializeValues(initialCriterion);
+      okButton.setEnabled(true);
+    }
+
+    pack();
+  }
+
+  private void initializeValues(ChangeCriterion criterion) {
+    // Since the device combo boxes are constructed with currently
+    // used devices excluded, we need to add the device given in the
+    // criterion.
+    if (criterion instanceof ZDistanceCriterion) {
+      focusRadio_.setEnabled(true);
+      focusRadio_.setSelected(true);
+      disableOtherSections(focusPanel_);
+      focusDeviceCombo_.addItem(criterion.getMonitoredItem().getDeviceLabel());
+      focusThreshUm_ = ((ZDistanceCriterion) criterion).getDistanceThresholdUm();
+      focusThreshField_.setText(Double.toString(focusThreshUm_));
+    } else if (criterion instanceof XYDistanceCriterion) {
+      xyRadio_.setEnabled(true);
+      xyRadio_.setSelected(true);
+      disableOtherSections(xyPanel_);
+      xyDeviceCombo_.addItem(criterion.getMonitoredItem().getDeviceLabel());
+      xyThreshUm_ = ((XYDistanceCriterion) criterion).getDistanceThresholdUm();
+      xyThreshField_.setText(Double.toString(xyThreshUm_));
+    }
+    shouldPollCheckBox_.setSelected(criterion.requiresPolling());
+  }
+
+  private void handleCancel() {
+    setVisible(false);
+  }
+
+  private void handleOK() {
+    boolean shouldPoll = shouldPollCheckBox_.isSelected();
+    if (focusRadio_.isSelected()) {
+      result_ =
+          ChangeCriterion.createZDistanceCriterion(
+              (String) focusDeviceCombo_.getSelectedItem(),
+              Double.parseDouble(focusThreshField_.getText()),
+              shouldPoll);
+    } else if (xyRadio_.isSelected()) {
+      result_ =
+          ChangeCriterion.createXYDistanceCriterion(
+              (String) xyDeviceCombo_.getSelectedItem(),
+              Double.parseDouble(xyThreshField_.getText()),
+              shouldPoll);
+    }
+    setVisible(false);
+  }
+
+  private void disableOtherSections(JPanel panel) {
+    for (JPanel p : sectionPanels_) {
+      p.setEnabled(p == panel);
+      for (Component c : p.getComponents()) {
+        c.setEnabled(p == panel);
       }
-      else if (xyRadio_.isEnabled()) {
-         xyRadio_.setSelected(true);
-         disableOtherSections(xyPanel_);
+    }
+  }
+
+  ChangeCriterion getResult() {
+    return result_;
+  }
+
+  private String[] getAvailableFocusDevices() {
+    return getAvailableDevicesOfTypeForCriteria(DeviceType.StageDevice, ZDistanceCriterion.class);
+  }
+
+  private String[] getAvailableXYStageDevices() {
+    return getAvailableDevicesOfTypeForCriteria(
+        DeviceType.XYStageDevice, XYDistanceCriterion.class);
+  }
+
+  private String[] getAvailableDevicesOfTypeForCriteria(
+      DeviceType deviceType, Class<? extends ChangeCriterion> criterionClass) {
+    CMMCore core = controller_.getCore();
+    if (core == null) {
+      return new String[] {};
+    }
+
+    List<String> devs = Arrays.asList(core.getLoadedDevicesOfType(deviceType).toArray());
+
+    List<ChangeCriterion> criteria = controller_.getChangeCriteria();
+    Set<String> devsInUse = new HashSet<String>();
+    for (ChangeCriterion c : criteria) {
+      if (criterionClass.isInstance(c)) {
+        devsInUse.add(c.getMonitoredItem().getDeviceLabel());
       }
-      else {
-         disableOtherSections(null); // Disable all
-         okButton.setEnabled(false);
+    }
+
+    List<String> availableDevs = new ArrayList<String>();
+    for (String d : devs) {
+      if (!devsInUse.contains(d)) {
+        availableDevs.add(d);
       }
-
-      if (initialCriterion != null) {
-         initializeValues(initialCriterion);
-         okButton.setEnabled(true);
-      }
-
-      pack();
-   }
-
-   private void initializeValues(ChangeCriterion criterion) {
-      // Since the device combo boxes are constructed with currently
-      // used devices excluded, we need to add the device given in the
-      // criterion.
-      if (criterion instanceof ZDistanceCriterion) {
-         focusRadio_.setEnabled(true);
-         focusRadio_.setSelected(true);
-         disableOtherSections(focusPanel_);
-         focusDeviceCombo_.addItem(
-               criterion.getMonitoredItem().getDeviceLabel());
-         focusThreshUm_ =
-               ((ZDistanceCriterion) criterion).getDistanceThresholdUm();
-         focusThreshField_.setText(Double.toString(focusThreshUm_));
-      }
-      else if (criterion instanceof XYDistanceCriterion) {
-         xyRadio_.setEnabled(true);
-         xyRadio_.setSelected(true);
-         disableOtherSections(xyPanel_);
-         xyDeviceCombo_.addItem(
-               criterion.getMonitoredItem().getDeviceLabel());
-         xyThreshUm_ =
-               ((XYDistanceCriterion) criterion).getDistanceThresholdUm();
-         xyThreshField_.setText(Double.toString(xyThreshUm_));
-      }
-      shouldPollCheckBox_.setSelected(criterion.requiresPolling());
-   }
-
-   private void handleCancel() {
-      setVisible(false);
-   }
-
-   private void handleOK() {
-      boolean shouldPoll = shouldPollCheckBox_.isSelected();
-      if (focusRadio_.isSelected()) {
-         result_ = ChangeCriterion.createZDistanceCriterion(
-               (String) focusDeviceCombo_.getSelectedItem(),
-               Double.parseDouble(focusThreshField_.getText()),
-               shouldPoll);
-      }
-      else if (xyRadio_.isSelected()) {
-         result_ = ChangeCriterion.createXYDistanceCriterion(
-                 (String) xyDeviceCombo_.getSelectedItem(),
-                 Double.parseDouble(xyThreshField_.getText()),
-                 shouldPoll);
-      }
-      setVisible(false);
-   }
-
-   private void disableOtherSections(JPanel panel) {
-      for (JPanel p : sectionPanels_) {
-         p.setEnabled(p == panel);
-         for (Component c : p.getComponents()) {
-            c.setEnabled(p == panel);
-         }
-      }
-   }
-
-   ChangeCriterion getResult() {
-      return result_;
-   }
-
-   private String[] getAvailableFocusDevices() {
-      return getAvailableDevicesOfTypeForCriteria(DeviceType.StageDevice,
-            ZDistanceCriterion.class);
-   }
-
-   private String[] getAvailableXYStageDevices() {
-      return getAvailableDevicesOfTypeForCriteria(DeviceType.XYStageDevice,
-            XYDistanceCriterion.class);
-   }
-
-   private String[] getAvailableDevicesOfTypeForCriteria(
-         DeviceType deviceType,
-         Class<? extends ChangeCriterion> criterionClass)
-   {
-      CMMCore core = controller_.getCore();
-      if (core == null) {
-         return new String[] {};
-      }
-
-      List<String> devs = Arrays.asList(
-              core.getLoadedDevicesOfType(deviceType).toArray());
-
-      List<ChangeCriterion> criteria = controller_.getChangeCriteria();
-      Set<String> devsInUse = new HashSet<String>();
-      for (ChangeCriterion c : criteria) {
-         if (criterionClass.isInstance(c)) {
-            devsInUse.add(c.getMonitoredItem().getDeviceLabel());
-         }
-      }
-
-      List<String> availableDevs = new ArrayList<String>();
-      for (String d : devs) {
-         if (!devsInUse.contains(d)) {
-            availableDevs.add(d);
-         }
-      }
-      return availableDevs.toArray(new String[] {});
-   }
+    }
+    return availableDevs.toArray(new String[] {});
+  }
 }

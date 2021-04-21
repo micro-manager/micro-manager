@@ -19,40 +19,38 @@ import java.lang.management.ThreadMXBean;
 /**
  * Times CPU usage on the current thread.
  *
- * This is intended for use around a time-consuming, single-threaded task.
- * Accuracy is platform-dependent.
- * Recommended for tasks taking 10 ms or longer.
+ * <p>This is intended for use around a time-consuming, single-threaded task. Accuracy is
+ * platform-dependent. Recommended for tasks taking 10 ms or longer.
  *
  * @see WallTimer
  * @author Mark A. Tsuchida
  */
 public final class CPUTimer {
-   private static final ThreadMXBean threadMXB_ =
-         ManagementFactory.getThreadMXBean();
-   private final long threadId_;
-   private final long startNs_;
+  private static final ThreadMXBean threadMXB_ = ManagementFactory.getThreadMXBean();
+  private final long threadId_;
+  private final long startNs_;
 
-   public static CPUTimer createStarted() {
-      return new CPUTimer();
-   }
+  public static CPUTimer createStarted() {
+    return new CPUTimer();
+  }
 
-   private CPUTimer() {
-      threadId_ = Thread.currentThread().getId();
-      startNs_ = getCPUTimeNs();
-   }
+  private CPUTimer() {
+    threadId_ = Thread.currentThread().getId();
+    startNs_ = getCPUTimeNs();
+  }
 
-   public long getNs() {
-      if (Thread.currentThread().getId() != threadId_) {
-         return -1;
-      }
-      return getCPUTimeNs() - startNs_;
-   }
+  public long getNs() {
+    if (Thread.currentThread().getId() != threadId_) {
+      return -1;
+    }
+    return getCPUTimeNs() - startNs_;
+  }
 
-   public double getMs() {
-      return getNs() / 1000000.0;
-   }
+  public double getMs() {
+    return getNs() / 1000000.0;
+  }
 
-   private long getCPUTimeNs() {
-      return threadMXB_.getCurrentThreadCpuTime();
-   }
+  private long getCPUTimeNs() {
+    return threadMXB_.getCurrentThreadCpuTime();
+  }
 }

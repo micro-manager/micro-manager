@@ -5,28 +5,25 @@
  */
 package org.micromanager.display.internal.link.internal;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 class LinkageValuePropagatedEvent {
-   private final LinkEndpoint source_;
-   private final Object value_;
+  private final LinkEndpoint source_;
+  private final Object value_;
 
-   static LinkageValuePropagatedEvent create(LinkEndpoint source, Object value) {
-      return new LinkageValuePropagatedEvent(source, value);
-   }
+  static LinkageValuePropagatedEvent create(LinkEndpoint source, Object value) {
+    return new LinkageValuePropagatedEvent(source, value);
+  }
 
-   private LinkageValuePropagatedEvent(LinkEndpoint source, Object value) {
-      source_ = source;
-      value_ = value;
-   }
+  private LinkageValuePropagatedEvent(LinkEndpoint source, Object value) {
+    source_ = source;
+    value_ = value;
+  }
 
-   LinkEndpoint getSource() {
-      return source_;
-   }
+  LinkEndpoint getSource() {
+    return source_;
+  }
 
-   Object getValue() {
-      return value_;
-   }
+  Object getValue() {
+    return value_;
+  }
 }

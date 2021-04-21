@@ -44,78 +44,78 @@ import org.scijava.plugin.SciJavaPlugin;
 /**
  * MenuPlugin class for Snap-on-Move.
  *
- * Manages unique MainController instance, which does the actual work.
+ * <p>Manages unique MainController instance, which does the actual work.
  */
 @Plugin(type = MenuPlugin.class)
 public class SnapOnMovePlugin implements SciJavaPlugin, MenuPlugin {
-   private Studio studio_;
-   private MainController controller_;
-   private ConfigFrame frame_;
+  private Studio studio_;
+  private MainController controller_;
+  private ConfigFrame frame_;
 
+  @Override
+  public void setContext(Studio studio) {
+    studio_ = studio;
+  }
 
-   @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-   }
+  @Override
+  public void onPluginSelected() {
+    if (controller_ == null) {
+      controller_ = new MainController(studio_);
+      studio_.events().registerForEvents(this);
+    }
 
-   @Override
-   public void onPluginSelected() {
-      if (controller_ == null) {
-         controller_ = new MainController(studio_);
-         studio_.events().registerForEvents(this);
-      }
-
-      if (frame_ == null) {
-         frame_ = new ConfigFrame(controller_);
-         frame_.addWindowListener(new WindowAdapter() {
+    if (frame_ == null) {
+      frame_ = new ConfigFrame(controller_);
+      frame_.addWindowListener(
+          new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
-               frame_ = null;
+              frame_ = null;
             }
-         });
-      }
-      frame_.setVisible(true);
-      frame_.toFront();
-   }
+          });
+    }
+    frame_.setVisible(true);
+    frame_.toFront();
+  }
 
-   @Subscribe
-   public void onShutdown(ShutdownCommencingEvent e) {
-      if (e.isCanceled()) {
-         return;
-      }
+  @Subscribe
+  public void onShutdown(ShutdownCommencingEvent e) {
+    if (e.isCanceled()) {
+      return;
+    }
 
-      frame_.dispose();
-      frame_ = null;
+    frame_.dispose();
+    frame_ = null;
 
-      if (controller_ != null) {
-         controller_.setEnabled(false);
-         controller_ = null;
-      }
-      studio_.events().unregisterForEvents(this);
-   }
+    if (controller_ != null) {
+      controller_.setEnabled(false);
+      controller_ = null;
+    }
+    studio_.events().unregisterForEvents(this);
+  }
 
-   @Override
-   public String getSubMenu() {
-      return "Beta";
-   }
+  @Override
+  public String getSubMenu() {
+    return "Beta";
+  }
 
-   @Override
-   public String getName() {
-      return "Snap-on-Move Preview";
-   }
+  @Override
+  public String getName() {
+    return "Snap-on-Move Preview";
+  }
 
-   @Override
-   public String getHelpText() {
-      return "Update preview image when the stage has moved";
-   }
+  @Override
+  public String getHelpText() {
+    return "Update preview image when the stage has moved";
+  }
 
-   @Override
-   public String getVersion() {
-      return "1.0";
-   }
+  @Override
+  public String getVersion() {
+    return "1.0";
+  }
 
-   @Override
-   public String getCopyright() {
-      return "2016 Open Imaging, Inc.";
-   }
+  @Override
+  public String getCopyright() {
+    return "2016 Open Imaging, Inc.";
+  }
 }

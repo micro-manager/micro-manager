@@ -16,27 +16,26 @@ package org.micromanager.internal.utils.performance;
 /**
  * Compute rolling exponential average of a time series.
  *
- * @see <a href="https://en.wikipedia.org/wiki/Exponential_smoothing">Exponential Smoothing</a> on Wikipedia
+ * @see <a href="https://en.wikipedia.org/wiki/Exponential_smoothing">Exponential Smoothing</a> on
+ *     Wikipedia
  * @see TimeIntervalExponentialSmoothing
  * @author Mark A. Tsuchida
  */
 public final class ExponentialSmoothing extends AbstractExponentialSmoothing {
-   public static ExponentialSmoothing createWithTimeConstantMs(double timeConstantMs) {
-      return new ExponentialSmoothing(timeConstantMs);
-   }
+  public static ExponentialSmoothing createWithTimeConstantMs(double timeConstantMs) {
+    return new ExponentialSmoothing(timeConstantMs);
+  }
 
-   private ExponentialSmoothing(double timeConstantMs)
-   {
-      super(timeConstantMs);
-   }
+  private ExponentialSmoothing(double timeConstantMs) {
+    super(timeConstantMs);
+  }
 
-   public void sample(double x) {
-      if (!isTimingStarted()) {
-         markTime();
-         initializeStats(x);
-      }
-      else {
-         updateStats(markTimeAndGetDeltaTMs(), x);
-      }
-   }
+  public void sample(double x) {
+    if (!isTimingStarted()) {
+      markTime();
+      initializeStats(x);
+    } else {
+      updateStats(markTimeAndGetDeltaTMs(), x);
+    }
+  }
 }

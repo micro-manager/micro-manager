@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          SplitView.java
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// FILE:          SplitView.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
@@ -31,51 +31,51 @@ import org.scijava.plugin.SciJavaPlugin;
 
 import org.micromanager.Studio;
 
-/** 
- * Micro-Manager plugin that can split the acquired image top-down or left-right
- * and display the split image as a two channel image.
+/**
+ * Micro-Manager plugin that can split the acquired image top-down or left-right and display the
+ * split image as a two channel image.
  *
  * @author nico
  */
 @Plugin(type = ProcessorPlugin.class)
 public class SplitView implements ProcessorPlugin, SciJavaPlugin {
-   public static final String MENU_NAME = "Split View";
-   public static final String TOOL_TIP_DESCRIPTION =
+  public static final String MENU_NAME = "Split View";
+  public static final String TOOL_TIP_DESCRIPTION =
       "Split images vertically or horizontally into two channels";
-   private Studio studio_;
+  private Studio studio_;
 
-   @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-   }
+  @Override
+  public void setContext(Studio studio) {
+    studio_ = studio;
+  }
 
-   @Override
-   public ProcessorConfigurator createConfigurator(PropertyMap settings) {
-      return new SplitViewFrame(settings, studio_);
-   }
+  @Override
+  public ProcessorConfigurator createConfigurator(PropertyMap settings) {
+    return new SplitViewFrame(settings, studio_);
+  }
 
-   @Override
-   public ProcessorFactory createFactory(PropertyMap settings) {
-      return new SplitViewFactory(studio_, settings);
-   }
-   
-   @Override
-   public String getName() {
-      return "Split View";
-   }
+  @Override
+  public ProcessorFactory createFactory(PropertyMap settings) {
+    return new SplitViewFactory(studio_, settings);
+  }
 
-   @Override
-   public String getHelpText() {
-      return TOOL_TIP_DESCRIPTION;
-   }
+  @Override
+  public String getName() {
+    return "Split View";
+  }
 
-   @Override
-   public String getVersion() {
-      return "0.2";
-   }
-   
-   @Override
-   public String getCopyright() {
-      return "University of California, 2011-2017";
-   }
+  @Override
+  public String getHelpText() {
+    return TOOL_TIP_DESCRIPTION;
+  }
+
+  @Override
+  public String getVersion() {
+    return "0.2";
+  }
+
+  @Override
+  public String getCopyright() {
+    return "University of California, 2011-2017";
+  }
 }

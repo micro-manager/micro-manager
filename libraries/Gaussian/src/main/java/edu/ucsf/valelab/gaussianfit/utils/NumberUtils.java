@@ -3,8 +3,8 @@
  * Goal is to avoid dependencies on MMJ_.jar
 
  * @author - Nico Stuurman,  2012
- * 
- * 
+ *
+ *
 Copyright (c) 2012-2017, Regents of the University of California
 All rights reserved.
 
@@ -37,36 +37,32 @@ package edu.ucsf.valelab.gaussianfit.utils;
 import java.text.NumberFormat;
 import java.text.ParseException;
 
-/**
- *
- * 
- * 
- * @author nico
- */
+/** @author nico */
 public class NumberUtils {
-   private static final NumberFormat FORMAT;
-   private static final int MAXFRACTIONDIGITS = 4;
-   
-   static {
-		// The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
-		FORMAT = NumberFormat.getInstance();
-      FORMAT.setMaximumFractionDigits(MAXFRACTIONDIGITS);
-   }
-   
-   public static double displayStringToDouble(Object numberString) throws ParseException {
-		return FORMAT.parse((String) numberString).doubleValue();
-	}
-    
-   public static int displayStringToInt(Object numberString) throws ParseException {
-		return FORMAT.parse((String) numberString).intValue();      
-	}
-   
-   public static String doubleToDisplayString(double number) {
-		return doubleToDisplayString(number, MAXFRACTIONDIGITS);
-	}
-   
-   public static String doubleToDisplayString(double number, int significance) {
-      FORMAT.setMaximumFractionDigits(significance);
-		return FORMAT.format(number);
-	}
+  private static final NumberFormat FORMAT;
+  private static final int MAXFRACTIONDIGITS = 4;
+
+  static {
+    // The display is supposed to use local formating (e.g., switch commas with periods in
+    // Locale.GERMANY).
+    FORMAT = NumberFormat.getInstance();
+    FORMAT.setMaximumFractionDigits(MAXFRACTIONDIGITS);
+  }
+
+  public static double displayStringToDouble(Object numberString) throws ParseException {
+    return FORMAT.parse((String) numberString).doubleValue();
+  }
+
+  public static int displayStringToInt(Object numberString) throws ParseException {
+    return FORMAT.parse((String) numberString).intValue();
+  }
+
+  public static String doubleToDisplayString(double number) {
+    return doubleToDisplayString(number, MAXFRACTIONDIGITS);
+  }
+
+  public static String doubleToDisplayString(double number, int significance) {
+    FORMAT.setMaximumFractionDigits(significance);
+    return FORMAT.format(number);
+  }
 }

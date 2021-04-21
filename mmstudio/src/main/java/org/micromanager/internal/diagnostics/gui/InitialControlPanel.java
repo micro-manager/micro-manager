@@ -11,48 +11,48 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-
 
 class InitialControlPanel extends ControlPanel {
-   private final ProblemReportController controller_;
+  private final ProblemReportController controller_;
 
-   InitialControlPanel(ProblemReportController controller) {
-      controller_ = controller;
+  InitialControlPanel(ProblemReportController controller) {
+    controller_ = controller;
 
-      JButton cancelButton = new JButton("Cancel");
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+    JButton cancelButton = new JButton("Cancel");
+    cancelButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             controller_.cancelRequested();
-         }
-      });
+          }
+        });
 
-      JButton startButton = new JButton("Generate Report...");
-      startButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+    JButton startButton = new JButton("Generate Report...");
+    startButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             controller_.startLogCapture();
-         }
-      });
+          }
+        });
 
-      final JCheckBox crashRobustCheckBox =
-         new JCheckBox("Use crash-robust logging");
-      crashRobustCheckBox.setSelected(controller_.getUseCrashRobustLogging());
-      crashRobustCheckBox.setToolTipText("Prevents lost log entries. " +
-            "Uncheck if it masks the problem to be reported.");
-      crashRobustCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+    final JCheckBox crashRobustCheckBox = new JCheckBox("Use crash-robust logging");
+    crashRobustCheckBox.setSelected(controller_.getUseCrashRobustLogging());
+    crashRobustCheckBox.setToolTipText(
+        "Prevents lost log entries. " + "Uncheck if it masks the problem to be reported.");
+    crashRobustCheckBox.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             controller_.setUseCrashRobustLogging(crashRobustCheckBox.isSelected());
-         }
-      });
+          }
+        });
 
-      add(cancelButton, "align left");
-      add(startButton, "align right, wrap");
-      add(crashRobustCheckBox, "align left, span 2");
-   }
+    add(cancelButton, "align left");
+    add(startButton, "align right, wrap");
+    add(crashRobustCheckBox, "align left, span 2");
+  }
 }

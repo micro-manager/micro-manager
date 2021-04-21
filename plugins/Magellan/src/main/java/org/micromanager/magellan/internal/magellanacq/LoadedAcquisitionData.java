@@ -24,45 +24,42 @@ import java.util.Set;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.misc.Log;
 
-/**
- *
- */
+/** */
 public class LoadedAcquisitionData {
 
-   public LoadedAcquisitionData(String dir) {
-      try {
-         MagellanDataManager dataManager = new MagellanDataManager(dir);
+  public LoadedAcquisitionData(String dir) {
+    try {
+      MagellanDataManager dataManager = new MagellanDataManager(dir);
 
-         //Iterate through all image keys and expand scrollbars to appropriate sizes
-         Set<HashMap<String, Integer>> axesList = dataManager.getAxesSet();
-         HashSet<String> axesNames = new HashSet<String>();
-         for (HashMap<String, Integer> ax : axesList) {
-            axesNames.addAll(ax.keySet());
-         }
-         //Hide row and column axes form the viewer
-         if (axesNames.contains(MagellanMD.AXES_GRID_ROW)) {
-            axesNames.remove(MagellanMD.AXES_GRID_ROW);
-         }
-         if (axesNames.contains(MagellanMD.AXES_GRID_COL)) {
-            axesNames.remove(MagellanMD.AXES_GRID_COL);
-         }
-         HashMap<String, Integer> axisMins = new HashMap<String, Integer>();
-         HashMap<String, Integer> axisMaxs = new HashMap<String, Integer>();
-         for (String axis : axesNames) {
-            for (HashMap<String, Integer> ax : axesList) {
-               if (!axisMins.containsKey(axis)) {
-                  axisMins.put(axis, ax.get(axis));
-                  axisMaxs.put(axis, ax.get(axis));
-               }
-               axisMins.put(axis, Math.min(ax.get(axis), axisMins.get(axis)));
-               axisMaxs.put(axis, Math.max(ax.get(axis), axisMaxs.get(axis)));
-            }
-         }
-         dataManager.initializeViewerToLoaded(axisMins, axisMaxs);
-                  
-      } catch (IOException ex) {
-         Log.log("Couldn't open acquisition", true);
+      // Iterate through all image keys and expand scrollbars to appropriate sizes
+      Set<HashMap<String, Integer>> axesList = dataManager.getAxesSet();
+      HashSet<String> axesNames = new HashSet<String>();
+      for (HashMap<String, Integer> ax : axesList) {
+        axesNames.addAll(ax.keySet());
       }
-   }
+      // Hide row and column axes form the viewer
+      if (axesNames.contains(MagellanMD.AXES_GRID_ROW)) {
+        axesNames.remove(MagellanMD.AXES_GRID_ROW);
+      }
+      if (axesNames.contains(MagellanMD.AXES_GRID_COL)) {
+        axesNames.remove(MagellanMD.AXES_GRID_COL);
+      }
+      HashMap<String, Integer> axisMins = new HashMap<String, Integer>();
+      HashMap<String, Integer> axisMaxs = new HashMap<String, Integer>();
+      for (String axis : axesNames) {
+        for (HashMap<String, Integer> ax : axesList) {
+          if (!axisMins.containsKey(axis)) {
+            axisMins.put(axis, ax.get(axis));
+            axisMaxs.put(axis, ax.get(axis));
+          }
+          axisMins.put(axis, Math.min(ax.get(axis), axisMins.get(axis)));
+          axisMaxs.put(axis, Math.max(ax.get(axis), axisMaxs.get(axis)));
+        }
+      }
+      dataManager.initializeViewerToLoaded(axisMins, axisMaxs);
 
+    } catch (IOException ex) {
+      Log.log("Couldn't open acquisition", true);
+    }
+  }
 }

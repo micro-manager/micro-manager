@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MyJavaUtils.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          MyJavaUtils.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -22,14 +22,13 @@ package org.micromanager.asidispim.utils;
 
 /**
  * Collection of utility classes for general use
- * 
+ *
  * @author nico
  */
-public  class MyJavaUtils {
-   
-   public static boolean isMac() {
-      String os = System.getProperty("os.name").toLowerCase();
-      return (os.contains("mac"));
-   }
-   
+public class MyJavaUtils {
+
+  public static boolean isMac() {
+    String os = System.getProperty("os.name").toLowerCase();
+    return (os.contains("mac"));
+  }
 }

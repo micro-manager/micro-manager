@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 // AUTHOR:       Nico Stuurman, nico@cmp.ucsf.edu May 30, 2008
 
@@ -24,48 +24,43 @@ import com.google.common.eventbus.Subscribe;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 
-/**
-*/
-public final class ZWheelListener  {
-   private static final double MOVE_INCREMENT = 0.20;
-   private final Studio studio_;
-   private final ZNavigator zNavigator_;
+/** */
+public final class ZWheelListener {
+  private static final double MOVE_INCREMENT = 0.20;
+  private final Studio studio_;
+  private final ZNavigator zNavigator_;
 
-   public ZWheelListener(final Studio studio, final ZNavigator zNavigator) {
-      studio_ = studio;
-      zNavigator_ = zNavigator;
-   }
-   
+  public ZWheelListener(final Studio studio, final ZNavigator zNavigator) {
+    studio_ = studio;
+    zNavigator_ = zNavigator;
+  }
 
-   /**
-    * Receives mouseWheel events from the display manager and moves the z stage.
-    * ZStageMovements are funneled through zNavigator, which runs separate
-    * executors for each zStage, and combines movement requests if they come in
-    * too fast.
-    * 
-    * @param e DisplayMouseWheelEvent containing a MouseWheel event
-    */
-   @Subscribe
-   public void mouseWheelMoved(DisplayMouseWheelEvent e) {
-      synchronized (this) {
-         // Get needed info from core
-         String zStage = studio_.core().getFocusDevice();
-         if (zStage == null || zStage.equals("")) {
-            return;
-         }
-
-         double moveIncrement = MOVE_INCREMENT;
-         double pixSizeUm = studio_.core().getPixelSizeUm(true);
-         if (pixSizeUm > 0.0) {
-            moveIncrement = 2 * pixSizeUm;
-         }
-         // Get coordinates of event
-         int move = e.getEvent().getWheelRotation();
-         double moveUm = move * moveIncrement;
-
-         zNavigator_.setPosition(zStage, moveUm);
+  /**
+   * Receives mouseWheel events from the display manager and moves the z stage. ZStageMovements are
+   * funneled through zNavigator, which runs separate executors for each zStage, and combines
+   * movement requests if they come in too fast.
+   *
+   * @param e DisplayMouseWheelEvent containing a MouseWheel event
+   */
+  @Subscribe
+  public void mouseWheelMoved(DisplayMouseWheelEvent e) {
+    synchronized (this) {
+      // Get needed info from core
+      String zStage = studio_.core().getFocusDevice();
+      if (zStage == null || zStage.equals("")) {
+        return;
       }
-   }
 
+      double moveIncrement = MOVE_INCREMENT;
+      double pixSizeUm = studio_.core().getPixelSizeUm(true);
+      if (pixSizeUm > 0.0) {
+        moveIncrement = 2 * pixSizeUm;
+      }
+      // Get coordinates of event
+      int move = e.getEvent().getWheelRotation();
+      double moveUm = move * moveIncrement;
 
+      zNavigator_.setPosition(zStage, moveUm);
+    }
+  }
 }

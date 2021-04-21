@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, December 3, 2006
 //               Chris Weisiger, 2015
@@ -25,49 +25,47 @@ package org.micromanager;
 import java.io.File;
 
 /**
- * Provides access to some utility methods for use in the Beanshell scripting
- * panel. Accessible via "mm.scripter()" or "mm.getScriptController()".
+ * Provides access to some utility methods for use in the Beanshell scripting panel. Accessible via
+ * "mm.scripter()" or "mm.getScriptController()".
  */
 public interface ScriptController {
-   /**
-    * This exception signifies that the Beanshell interpreter has a stop
-    * request pending, which prevents most interactions with the system.
-    */
-   public class ScriptStoppedException extends RuntimeException {
-      /**
-       * 
-       * @param message 
-       */
-      public ScriptStoppedException(String message) {
-         super(message);
-      }
-   }
+  /**
+   * This exception signifies that the Beanshell interpreter has a stop request pending, which
+   * prevents most interactions with the system.
+   */
+  public class ScriptStoppedException extends RuntimeException {
+    /** @param message */
+    public ScriptStoppedException(String message) {
+      super(message);
+    }
+  }
 
-   /**
-    * Execute the script located in the given file.
-    * @param file File containing the script to be run.
-    */
-   public void runFile(File file);
+  /**
+   * Execute the script located in the given file.
+   *
+   * @param file File containing the script to be run.
+   */
+  public void runFile(File file);
 
-   /**
-    * Displays text in the scripting console output window.
-    * @param text 
-    * @throws ScriptStoppedException if the script panel has been requested to
-    *         stop execution.
-    */
-   public void message(String text) throws ScriptStoppedException;
-   
-   /**
-    * Clears scripting console output window.
-    * @throws ScriptStoppedException if the script panel has been requested to
-    *         stop execution.
-    */
-   public void clearMessageWindow() throws ScriptStoppedException;
+  /**
+   * Displays text in the scripting console output window.
+   *
+   * @param text
+   * @throws ScriptStoppedException if the script panel has been requested to stop execution.
+   */
+  public void message(String text) throws ScriptStoppedException;
 
-   /**
-    * Clears all methods and variables defined in the script interpreter.
-    * @throws ScriptStoppedException if the script panel has been requested to
-    *         stop execution.
-    */
-   public void resetInterpreter() throws ScriptStoppedException;
+  /**
+   * Clears scripting console output window.
+   *
+   * @throws ScriptStoppedException if the script panel has been requested to stop execution.
+   */
+  public void clearMessageWindow() throws ScriptStoppedException;
+
+  /**
+   * Clears all methods and variables defined in the script interpreter.
+   *
+   * @throws ScriptStoppedException if the script panel has been requested to stop execution.
+   */
+  public void resetInterpreter() throws ScriptStoppedException;
 }

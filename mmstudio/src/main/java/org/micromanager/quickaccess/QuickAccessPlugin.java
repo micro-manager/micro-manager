@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -19,42 +19,36 @@
 
 package org.micromanager.quickaccess;
 
-import java.awt.Dimension;
-import javax.swing.ImageIcon;
 import org.micromanager.MMPlugin;
 
+import javax.swing.*;
+import java.awt.*;
+
 /**
- * QuickAccessPlugins are used for controls that can show up in the Quick-
- * Access Window, which shows frequently-used controls.
+ * QuickAccessPlugins are used for controls that can show up in the Quick- Access Window, which
+ * shows frequently-used controls.
  */
 public abstract class QuickAccessPlugin implements MMPlugin {
-   /**
-    * The width of a single cell in the Quick-Access Window.
-    */
-   public static final int CELL_WIDTH = 120;
+  /** The width of a single cell in the Quick-Access Window. */
+  public static final int CELL_WIDTH = 120;
 
-   /**
-    * The height of a single cell in the Quick-Access Window.
-    */
-   public static final int CELL_HEIGHT = 50;
+  /** The height of a single cell in the Quick-Access Window. */
+  public static final int CELL_HEIGHT = 50;
 
-   /**
-    * Provides a dimension that mostly fills 1 cell in the Quick-Access Window.
-    * This dimension should be used by any "simple" controls (like buttons)
-    * to preserve visual uniformity.
-    */
-   public static Dimension getPaddedCellSize() {
-      return new Dimension(CELL_WIDTH - 10, CELL_HEIGHT - 10);
-   }
+  /**
+   * Provides a dimension that mostly fills 1 cell in the Quick-Access Window. This dimension should
+   * be used by any "simple" controls (like buttons) to preserve visual uniformity.
+   */
+  public static Dimension getPaddedCellSize() {
+    return new Dimension(CELL_WIDTH - 10, CELL_HEIGHT - 10);
+  }
 
-   /**
-    * Provide an icon to use to represent this plugin when configuring the
-    * Quick-Access Window. May be null, in which case a rendering of the
-    * plugin's controls will be used instead. Note that if you want to use a
-    * null icon here, then your plugin *must* create some kind of sensible
-    * control even when there is no configuration (for WidgetPlugins), as
-    * the icon of the control in the configuration mode is derived from a
-    * non-configured control.
-    */
-   public abstract ImageIcon getIcon();
+  /**
+   * Provide an icon to use to represent this plugin when configuring the Quick-Access Window. May
+   * be null, in which case a rendering of the plugin's controls will be used instead. Note that if
+   * you want to use a null icon here, then your plugin *must* create some kind of sensible control
+   * even when there is no configuration (for WidgetPlugins), as the icon of the control in the
+   * configuration mode is derived from a non-configured control.
+   */
+  public abstract ImageIcon getIcon();
 }

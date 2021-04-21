@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          UpdateFromPropertyListenerInterface.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          UpdateFromPropertyListenerInterface.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -21,13 +21,8 @@
 
 package org.micromanager.asidispim.utils;
 
-/**
- *
- * @author Jon
- */
+/** @author Jon */
 public interface UpdateFromPropertyListenerInterface {
-    /**
-    * This function will be called when we refresh state from device property
-    */
-   public void updateFromProperty();
+  /** This function will be called when we refresh state from device property */
+  public void updateFromProperty();
 }

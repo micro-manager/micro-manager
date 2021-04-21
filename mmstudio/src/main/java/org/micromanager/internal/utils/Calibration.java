@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // DESCRIPTION:  Describes a single calibration.
 //
@@ -23,47 +23,46 @@
 //
 package org.micromanager.internal.utils;
 
-import java.text.DecimalFormat;
 import mmcorej.Configuration;
 
+import java.text.DecimalFormat;
+
 public final class Calibration {
-   private Double pixelSize_;
-   private String calibrationName_;
-   private Configuration configuration_;
-   private static DecimalFormat fmt = new DecimalFormat("#0.000");
-   
-   public Calibration() {
-      calibrationName_ = "Undefined";
-      pixelSize_ = 0.0;
-   }
-   
-   public String getVerbose() {
-      return calibrationName_ + "(" + fmt.format(pixelSize_) + ")";
-   }
+  private Double pixelSize_;
+  private String calibrationName_;
+  private Configuration configuration_;
+  private static DecimalFormat fmt = new DecimalFormat("#0.000");
 
-   public void setLabel(String name) {
-      calibrationName_ = name;
-   }
+  public Calibration() {
+    calibrationName_ = "Undefined";
+    pixelSize_ = 0.0;
+  }
 
-   public String getLabel() {
-      return calibrationName_;
-   }
+  public String getVerbose() {
+    return calibrationName_ + "(" + fmt.format(pixelSize_) + ")";
+  }
 
-   public void setPixelSizeUm(double size) {
-      pixelSize_ = size;
-   }
+  public void setLabel(String name) {
+    calibrationName_ = name;
+  }
 
-   public Double getPixelSizeUm() {
-      return pixelSize_;
-   }
+  public String getLabel() {
+    return calibrationName_;
+  }
 
-   public void setConfiguration(Configuration configuration) {
-      configuration_ = configuration;
-   }
+  public void setPixelSizeUm(double size) {
+    pixelSize_ = size;
+  }
 
-   public Configuration getConfiguration() {
-      return configuration_;
-   }
+  public Double getPixelSizeUm() {
+    return pixelSize_;
+  }
 
+  public void setConfiguration(Configuration configuration) {
+    configuration_ = configuration;
+  }
 
+  public Configuration getConfiguration() {
+    return configuration_;
+  }
 }

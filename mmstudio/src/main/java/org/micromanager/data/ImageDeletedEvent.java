@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2016
 //
@@ -20,20 +20,20 @@
 
 package org.micromanager.data;
 
-/**
- * This class signifies that an image has been deleted in the Datastore.
- */
+/** This class signifies that an image has been deleted in the Datastore. */
 public interface ImageDeletedEvent {
-   /**
-    * Provides the Image that was deleted.
-    * @return the Image that was just deleted from the Datastore.
-    */
-   Image getImage();
+  /**
+   * Provides the Image that was deleted.
+   *
+   * @return the Image that was just deleted from the Datastore.
+   */
+  Image getImage();
 
-   /**
-    * Provides the Datastore this image was added to; potentially useful for
-    * code that listens to events from multiple Datastores.
-    * @return the Datastore this image was added to.
-    */
-   Datastore getDatastore();
+  /**
+   * Provides the Datastore this image was added to; potentially useful for code that listens to
+   * events from multiple Datastores.
+   *
+   * @return the Datastore this image was added to.
+   */
+  Datastore getDatastore();
 }

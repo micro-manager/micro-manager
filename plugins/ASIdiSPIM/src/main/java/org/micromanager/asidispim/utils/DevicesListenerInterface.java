@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          DevicesListenerInterface.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          DevicesListenerInterface.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -21,15 +21,8 @@
 
 package org.micromanager.asidispim.utils;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 public interface DevicesListenerInterface {
-   /**
-    * This function will be called when anything in the Devices setup has 
-    * changed
-    */
-   public void devicesChangedAlert();
-
+  /** This function will be called when anything in the Devices setup has changed */
+  public void devicesChangedAlert();
 }

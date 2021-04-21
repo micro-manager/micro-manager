@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MultiChannelShading.java
-//PROJECT:       Micro-Manager  
-//SUBSYSTEM:     MultiChannelShading plugin
-//-----------------------------------------------------------------------------
+// FILE:          MultiChannelShading.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     MultiChannelShading plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Kurt Thorn, Nico Stuurman
 //
@@ -30,52 +30,49 @@ import org.micromanager.Studio;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-/**
- *
- * @author kthorn
- */
+/** @author kthorn */
 @Plugin(type = ProcessorPlugin.class)
 public class MultiChannelShading implements ProcessorPlugin, SciJavaPlugin {
-   public static final String MENUNAME = "Flat-Field Correction";
-   public static final String TOOLTIPDESCRIPTION =
+  public static final String MENUNAME = "Flat-Field Correction";
+  public static final String TOOLTIPDESCRIPTION =
       "Apply dark subtraction and flat-field correction";
 
-   public static final String VERSIONNUMBER = "0.3";
+  public static final String VERSIONNUMBER = "0.3";
 
-   private Studio studio_;
+  private Studio studio_;
 
-   @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-   }
+  @Override
+  public void setContext(Studio studio) {
+    studio_ = studio;
+  }
 
-   @Override
-   public ProcessorConfigurator createConfigurator(PropertyMap settings) {
-      return new MultiChannelShadingMigForm(settings, studio_);
-   }
+  @Override
+  public ProcessorConfigurator createConfigurator(PropertyMap settings) {
+    return new MultiChannelShadingMigForm(settings, studio_);
+  }
 
-   @Override
-   public ProcessorFactory createFactory(PropertyMap settings) {
-      return new MultiChannelShadingFactory(studio_, settings);
-   }
+  @Override
+  public ProcessorFactory createFactory(PropertyMap settings) {
+    return new MultiChannelShadingFactory(studio_, settings);
+  }
 
-   @Override
-   public String getName() {
-      return MENUNAME;
-   }
+  @Override
+  public String getName() {
+    return MENUNAME;
+  }
 
-   @Override
-   public String getHelpText() {
-      return TOOLTIPDESCRIPTION;
-   }
+  @Override
+  public String getHelpText() {
+    return TOOLTIPDESCRIPTION;
+  }
 
-   @Override
-   public String getVersion() {
-      return VERSIONNUMBER;
-   }
+  @Override
+  public String getVersion() {
+    return VERSIONNUMBER;
+  }
 
-   @Override
-   public String getCopyright() {
-      return "University of California, 2014-2016";
-   }   
+  @Override
+  public String getCopyright() {
+    return "University of California, 2014-2016";
+  }
 }

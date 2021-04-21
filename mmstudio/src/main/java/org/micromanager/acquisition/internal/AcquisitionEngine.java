@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, November 1, 2005
 //
@@ -22,10 +22,6 @@
 //
 package org.micromanager.acquisition.internal;
 
-import java.awt.Color;
-import java.nio.channels.Channel;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -35,197 +31,173 @@ import org.micromanager.data.Datastore;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.MMException;
 
+import java.util.ArrayList;
+
 /**
- * The original Acquisition engine interface. This interface is still used
- * by scripts and the AcqDialog and should be retained. The current
- * implementation of the interface is the AcquisitionWrapperEngine,
- * which simply adapters the old interface to an object implementing the
+ * The original Acquisition engine interface. This interface is still used by scripts and the
+ * AcqDialog and should be retained. The current implementation of the interface is the
+ * AcquisitionWrapperEngine, which simply adapters the old interface to an object implementing the
  * new interface, IAcquisitionEngine2010.
  */
 public interface AcquisitionEngine {
 
+  /** Sets the global position list attached to the parent Micro-Manager gui. */
+  public void setPositionList(PositionList posList);
 
-   /**
-    * Sets the global position list attached to the parent Micro-Manager gui.
-    */
-   public void setPositionList(PositionList posList);
+  /** Provides the acquisition engine with the parent Micro-Manager gui. */
+  public void setParentGUI(Studio parent);
 
-   /**
-    * Provides the acquisition engine with the parent Micro-Manager gui.
-    */
-   public void setParentGUI(Studio parent);
+  /** Sets which device will be used as the Z (focus) axis */
+  public void setZStageDevice(String stageLabel_);
 
-   /**
-    * Sets which device will be used as the Z (focus) axis
-    */
-   public void setZStageDevice(String stageLabel_);
+  /** Sets whether the Live window will be updated during acquisition */
+  public void setUpdateLiveWindow(boolean b);
 
-   /**
-    * Sets whether the Live window will be updated during acquisition
-    */
-   public void setUpdateLiveWindow(boolean b);
-   
-   // run-time control
+  // run-time control
 
-   /**
-    * Starts acquisition as defined in the Multi-Dimensional Acquisition Window.
-    * Returns the Datastore for the acquisition.
-    * @throws MMException
-    */
-   public Datastore acquire() throws MMException;
+  /**
+   * Starts acquisition as defined in the Multi-Dimensional Acquisition Window. Returns the
+   * Datastore for the acquisition.
+   *
+   * @throws MMException
+   */
+  public Datastore acquire() throws MMException;
 
-   /**
-    * Return Datastore for current or most recent acquisition, or null if no
-    * acquisition has been run yet.
-    */
-   public Datastore getAcquisitionDatastore();
+  /**
+   * Return Datastore for current or most recent acquisition, or null if no acquisition has been run
+   * yet.
+   */
+  public Datastore getAcquisitionDatastore();
 
-   /**
-    * Stops a running Acquisition
-    * @param   interrupted when set, multifield acquisition will also be stopped
-    */
-   public void stop(boolean interrupted);
+  /**
+   * Stops a running Acquisition
+   *
+   * @param interrupted when set, multifield acquisition will also be stopped
+   */
+  public void stop(boolean interrupted);
 
+  /** Request immediate abort of current task */
+  public boolean abortRequest();
 
-   /**
-    * Request immediate abort of current task
-    */
-   public boolean abortRequest();
+  /** Signals that a running acquisition is done. */
+  public void setFinished();
 
-   /**
-    * Signals that a running acquisition is done.
-    */
-   public void setFinished();
+  /** Returns true when Acquisition is running */
+  public boolean isAcquisitionRunning();
 
-   /**
-    * Returns true when Acquisition is running
-    */
-   public boolean isAcquisitionRunning();
+  boolean isZSliceSettingEnabled();
 
-   boolean isZSliceSettingEnabled();
+  /** Determines if a multi-field acquisition is running */
+  public boolean isMultiFieldRunning();
 
-   /**
-    * Determines if a multi-field acquisition is running
-    */
-   public boolean isMultiFieldRunning();
+  /** Unconditional shutdown. Will stop acuiqistion and multi-field acquisition */
+  public void shutdown();
 
-   /**
-    * Unconditional shutdown.  Will stop acuiqistion and multi-field acquisition
-    */
-   public void shutdown();
+  /** Pause/Unpause a running acquisition */
+  public void setPause(boolean state);
 
-   /**
-    * Pause/Unpause a running acquisition
-    */
-   public void setPause(boolean state);
-   
+  /** Find out which groups are available */
+  public String getFirstConfigGroup();
 
-   /**
-    * Find out which groups are available
-    */
-   public String getFirstConfigGroup();
+  /** Resets the engine */
+  @Deprecated
+  public void clear();
 
+  SequenceSettings getSequenceSettings();
 
-   /**
-    * Resets the engine
-    */
-   @Deprecated
-   public void clear();
+  void setSequenceSettings(SequenceSettings sequenceSettings);
 
-   SequenceSettings getSequenceSettings();
-   void setSequenceSettings(SequenceSettings sequenceSettings);
+  // utility
+  public String getVerboseSummary();
 
+  public boolean isConfigAvailable(String config_);
 
+  /*
+   * Returns the available groups in Micro-Manager's configuration settings.
+   */
+  public String[] getAvailableGroups();
 
+  /**
+   * Find out which channels are currently available for the selected channel group.
+   *
+   * @return - list of channel (preset) names
+   */
+  String[] getChannelConfigs();
 
-   // utility
-   public String getVerboseSummary();
+  /**
+   * Returns the configuration preset group currently selected in the Multi-Dimensional Acquisition
+   * Window
+   */
+  String getChannelGroup();
 
-   public boolean isConfigAvailable(String config_);
+  /**
+   * Set the channel group if the current hardware configuration permits.
+   *
+   * @param newGroup
+   * @return - true if successful
+   */
+  boolean setChannelGroup(String newGroup);
 
-   /*
-    * Returns the available groups in Micro-Manager's configuration settings.
-    */
-   public String[] getAvailableGroups();
+  void setChannel(int row, ChannelSpec sp);
 
-   /**
-    * Find out which channels are currently available for the selected channel group.
-    * @return - list of channel (preset) names
-    */
-   String[] getChannelConfigs();
+  void setChannels(ArrayList<ChannelSpec> channels);
 
-   /**
-    * Returns the configuration preset group currently selected in the Multi-Dimensional Acquisition Window
-    */
-   String getChannelGroup();
+  double getFrameIntervalMs();
 
-   /**
-    * Set the channel group if the current hardware configuration permits.
-    * @param newGroup
-    * @return - true if successful
-    */
-   boolean setChannelGroup(String newGroup);
+  /*
+   * Returns the current z position for the focus drive used by the
+   * acquisition engine.
+   */
+  public double getCurrentZPos();
 
-   void setChannel(int row, ChannelSpec sp);
-   void setChannels(ArrayList<ChannelSpec> channels);
+  /*
+   * Returns true if the acquisition is currently paused.
+   */
+  public boolean isPaused();
 
-   double getFrameIntervalMs();
+  /*
+   * Returns true if abortRequest() has been called -- the acquisition may
+   * still be running.
+   */
+  public boolean abortRequested();
 
-   /*
-    * Returns the current z position for the focus drive used by the
-    * acquisition engine.
-    */
-   public double getCurrentZPos();
+  /*
+   * Returns a time (in milliseconds) indicating when the next image is
+   * expected to be acquired.
+   */
+  public long getNextWakeTime();
 
-   /*
-    * Returns true if the acquisition is currently paused.
-    */
-   public boolean isPaused();
+  /*
+   * Returns true if the acquisition has finished running and no more hardware
+   * events will be run.
+   */
+  public boolean isFinished();
 
-   /*
-    * Returns true if abortRequest() has been called -- the acquisition may
-    * still be running.
-    */
-   public boolean abortRequested();
+  /*
+   * Attach a runnable to the acquisition engine. Each index (f, p, c, s) can
+   * be specified. Passing a value of -1 should result in the runnable being attached
+   * at all values of that index. For example, if the first argument is -1,
+   * then the runnable should execute at every frame.
+   *
+   * Subject to change.
+   */
+  public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable);
 
-   /*
-    * Returns a time (in milliseconds) indicating when the next image is
-    * expected to be acquired.
-    */
-   public long getNextWakeTime();
+  /*
+   * Remove runnables from the acquisition engine
+   */
+  public void clearRunnables();
 
-   /*
-    * Returns true if the acquisition has finished running and no more hardware
-    * events will be run.
-    */
-   public boolean isFinished();
-   
-   /*
-    * Attach a runnable to the acquisition engine. Each index (f, p, c, s) can
-    * be specified. Passing a value of -1 should result in the runnable being attached
-    * at all values of that index. For example, if the first argument is -1,
-    * then the runnable should execute at every frame.
-    *
-    * Subject to change.
-    */
-   public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable);
+  /*
+   * Get the summary metadata for the most recent acquisition.
+   */
+  public JSONObject getSummaryMetadata();
 
+  public String getComment();
 
-   /*
-    * Remove runnables from the acquisition engine
-    */
-   public void clearRunnables();
+  public void addSettingsListener(AcqSettingsListener listener);
 
-   /*
-    * Get the summary metadata for the most recent acquisition.
-    */
-   public JSONObject getSummaryMetadata();
+  public void removeSettingsListener(AcqSettingsListener listener);
 
-   public String getComment();
-
-   public void addSettingsListener(AcqSettingsListener listener);
-
-   public void removeSettingsListener(AcqSettingsListener listener);
-   
-   public void setShouldDisplayImages(boolean shouldDisplay);
+  public void setShouldDisplayImages(boolean shouldDisplay);
 }

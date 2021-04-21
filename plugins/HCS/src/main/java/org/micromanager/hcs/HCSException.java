@@ -1,14 +1,14 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:           HCSException.java
-//PROJECT:        Micro-Manage
-//SUBSYSTEM:      high content screening
-//-----------------------------------------------------------------------------
+// FILE:           HCSException.java
+// PROJECT:        Micro-Manage
+// SUBSYSTEM:      high content screening
+// -----------------------------------------------------------------------------
 //
-//AUTHOR:         Nenad Amodaj, nenad@amodaj.com, June 9, 2008
+// AUTHOR:         Nenad Amodaj, nenad@amodaj.com, June 9, 2008
 //
-//COPYRIGHT:      100X Imaging Inc, www.100ximaging.com, 2008
-//                
-//LICENSE:        This file is distributed under the GPL license.
+// COPYRIGHT:      100X Imaging Inc, www.100ximaging.com, 2008
+//
+// LICENSE:        This file is distributed under the GPL license.
 //                License text is included with the source distribution.
 //
 //                This file is distributed in the hope that it will be useful,
@@ -23,24 +23,25 @@
 package org.micromanager.hcs;
 
 public class HCSException extends Exception {
-   private static final long serialVersionUID = -8829247065013272369L;
-   private Throwable cause;
+  private static final long serialVersionUID = -8829247065013272369L;
+  private Throwable cause;
 
-   /**
-    * Constructs a MMAcqDataException with an explanatory message.
-    * @param message - the reason for the exception.
-    */
-   public HCSException(String message) {
-      super(message);
-   }
+  /**
+   * Constructs a MMAcqDataException with an explanatory message.
+   *
+   * @param message - the reason for the exception.
+   */
+  public HCSException(String message) {
+    super(message);
+  }
 
-   public HCSException(Throwable t) {
-      super(t.getMessage());
-      this.cause = t;
-   }
+  public HCSException(Throwable t) {
+    super(t.getMessage());
+    this.cause = t;
+  }
 
-   @Override
-   public Throwable getCause() {
-      return this.cause;
-   }
+  @Override
+  public Throwable getCause() {
+    return this.cause;
+  }
 }

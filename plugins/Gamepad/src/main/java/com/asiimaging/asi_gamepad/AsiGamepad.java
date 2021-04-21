@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          asi_gamepad.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:      asi gamepad plugin
-//-----------------------------------------------------------------------------
+// FILE:          asi_gamepad.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:      asi gamepad plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Vikram Kopuri
 //
@@ -33,81 +33,79 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class AsiGamepad implements MenuPlugin, SciJavaPlugin {
 
-	public final static String MENU_NAME = "ASI Gamepad";
-	public final static String TOOLTIP_DESCRIPTION = "XBox Controller for MicroManager";
-	public final static String VERSION_STRING = "0.0";
-	public final static String COPYRIGHT_STRING = "Applied Scientific Instrumentation (ASI), 2018";
+  public static final String MENU_NAME = "ASI Gamepad";
+  public static final String TOOLTIP_DESCRIPTION = "XBox Controller for MicroManager";
+  public static final String VERSION_STRING = "0.0";
+  public static final String COPYRIGHT_STRING = "Applied Scientific Instrumentation (ASI), 2018";
 
-	private static AsiGamepadFrame asiGamepadFrame = null;
+  private static AsiGamepadFrame asiGamepadFrame = null;
 
-	private Studio mm_;
+  private Studio mm_;
 
-	@Override
-	public void setContext(Studio mm) {
-		mm_ = mm;
-	}
+  @Override
+  public void setContext(Studio mm) {
+    mm_ = mm;
+  }
 
-	public static AsiGamepadFrame getFrame() {
-		return asiGamepadFrame;
-	}
+  public static AsiGamepadFrame getFrame() {
+    return asiGamepadFrame;
+  }
 
-	@Override
-	public String getCopyright() {
-		return COPYRIGHT_STRING;
-	}
+  @Override
+  public String getCopyright() {
+    return COPYRIGHT_STRING;
+  }
 
-	@Override
-	public void onPluginSelected() {
-		// close frame before re-load if already open
-		dispose();
-		// create brand new instance of plugin frame every time
-		try {
-			asiGamepadFrame = new AsiGamepadFrame(mm_);
-			// gui_.addMMListener(agf_frame);
-			// gui_.addMMBackgroundListener(agf_frame);
-		} catch (Exception e) {
-			mm_.logs().showError(e);
-		}
-	}
+  @Override
+  public void onPluginSelected() {
+    // close frame before re-load if already open
+    dispose();
+    // create brand new instance of plugin frame every time
+    try {
+      asiGamepadFrame = new AsiGamepadFrame(mm_);
+      // gui_.addMMListener(agf_frame);
+      // gui_.addMMBackgroundListener(agf_frame);
+    } catch (Exception e) {
+      mm_.logs().showError(e);
+    }
+  }
 
-	@Override
-	public String getHelpText() {
-		return TOOLTIP_DESCRIPTION;
-	}
+  @Override
+  public String getHelpText() {
+    return TOOLTIP_DESCRIPTION;
+  }
 
-	@Override
-	public String getName() {
-		return MENU_NAME;
-	}
+  @Override
+  public String getName() {
+    return MENU_NAME;
+  }
 
-	@Override
-	public String getVersion() {
-		if(asiGamepadFrame !=null) {
-		return Float.toString(asiGamepadFrame.plugin_ver);
-		}else {
-		return VERSION_STRING;
-		}
-	}
+  @Override
+  public String getVersion() {
+    if (asiGamepadFrame != null) {
+      return Float.toString(asiGamepadFrame.plugin_ver);
+    } else {
+      return VERSION_STRING;
+    }
+  }
 
-	public void dispose() {
-		if (asiGamepadFrame != null && asiGamepadFrame.isDisplayable()) {
-			WindowEvent wev = new WindowEvent(asiGamepadFrame, WindowEvent.WINDOW_CLOSING);
-			//ReportingUtils.logMessage("!!!!closed from main gamepad class!!!!");
-			asiGamepadFrame.dispatchEvent(wev);
-		}
+  public void dispose() {
+    if (asiGamepadFrame != null && asiGamepadFrame.isDisplayable()) {
+      WindowEvent wev = new WindowEvent(asiGamepadFrame, WindowEvent.WINDOW_CLOSING);
+      // ReportingUtils.logMessage("!!!!closed from main gamepad class!!!!");
+      asiGamepadFrame.dispatchEvent(wev);
+    }
+  }
 
-	}
-
-	/**
-	 * Indicate which sub-menu of the Plugins menu this plugin should appear
-	 * in. If that sub-menu does not exist, it will be created. If an empty
-	 * string is returned, then the plugin will be inserted directly into the
-	 * Plugins menu, instead of into a sub-menu.
-	 *
-	 * @return Sub-menu of the Plugins menu hosting this entry
-	 */
-	@Override
-	public String getSubMenu() {
-		return "Device Control";
-	}
+  /**
+   * Indicate which sub-menu of the Plugins menu this plugin should appear in. If that sub-menu does
+   * not exist, it will be created. If an empty string is returned, then the plugin will be inserted
+   * directly into the Plugins menu, instead of into a sub-menu.
+   *
+   * @return Sub-menu of the Plugins menu hosting this entry
+   */
+  @Override
+  public String getSubMenu() {
+    return "Device Control";
+  }
 }

@@ -5,17 +5,13 @@
  */
 package org.micromanager.profile.internal;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public class UserProfileChangedEvent {
-   private static final UserProfileChangedEvent INSTANCE = new UserProfileChangedEvent();
+  private static final UserProfileChangedEvent INSTANCE = new UserProfileChangedEvent();
 
-   public static UserProfileChangedEvent create() {
-      return INSTANCE;
-   }
+  public static UserProfileChangedEvent create() {
+    return INSTANCE;
+  }
 
-   private UserProfileChangedEvent() {
-   }
+  private UserProfileChangedEvent() {}
 }

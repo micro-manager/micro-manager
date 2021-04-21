@@ -17,32 +17,29 @@ package org.micromanager.display.internal.event;
 import java.awt.event.KeyEvent;
 
 /**
- * Used to propagate key-presses through the Guava bus
- * If a consumer wants others to know that the keyEvent led to action,
- * call the "consumed()" function.
+ * Used to propagate key-presses through the Guava bus If a consumer wants others to know that the
+ * keyEvent led to action, call the "consumed()" function.
  *
  * @author Nico
  */
-
 public class DisplayKeyPressEvent {
-    private final KeyEvent keyEvent_;
-    private boolean consumed_;
+  private final KeyEvent keyEvent_;
+  private boolean consumed_;
 
-    public DisplayKeyPressEvent(KeyEvent e) {
-        keyEvent_ = e;
-        consumed_ = false;
-    }
+  public DisplayKeyPressEvent(KeyEvent e) {
+    keyEvent_ = e;
+    consumed_ = false;
+  }
 
-    public KeyEvent getKeyEvent() {
-        return keyEvent_;
-    }
+  public KeyEvent getKeyEvent() {
+    return keyEvent_;
+  }
 
-    public void consume() {
-        consumed_ = true;
-    }
+  public void consume() {
+    consumed_ = true;
+  }
 
-    public boolean wasConsumed() {
-        return consumed_;
-    }
-
+  public boolean wasConsumed() {
+    return consumed_;
+  }
 }

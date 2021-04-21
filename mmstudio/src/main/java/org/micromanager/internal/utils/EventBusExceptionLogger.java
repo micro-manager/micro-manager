@@ -8,25 +8,29 @@ package org.micromanager.internal.utils;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public class EventBusExceptionLogger implements SubscriberExceptionHandler {
-   private static final SubscriberExceptionHandler instance_ =
-         new EventBusExceptionLogger();
+  private static final SubscriberExceptionHandler instance_ = new EventBusExceptionLogger();
 
-   public static SubscriberExceptionHandler getInstance() {
-      return instance_;
-   }
+  public static SubscriberExceptionHandler getInstance() {
+    return instance_;
+  }
 
-   @Override
-   public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
-      String message = "Exception thrown by EventBus subscriber:\n" +
-            "Event: " + sec.getEvent() + "\n" +
-            "EventBus: " + sec.getEventBus() + "\n" +
-            "Subscriber: " + sec.getSubscriber() + "\n" +
-            "Subscriber Method: " + sec.getSubscriberMethod();
-      ReportingUtils.logError(thrwbl, message);
-   }
+  @Override
+  public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
+    String message =
+        "Exception thrown by EventBus subscriber:\n"
+            + "Event: "
+            + sec.getEvent()
+            + "\n"
+            + "EventBus: "
+            + sec.getEventBus()
+            + "\n"
+            + "Subscriber: "
+            + sec.getSubscriber()
+            + "\n"
+            + "Subscriber Method: "
+            + sec.getSubscriberMethod();
+    ReportingUtils.logError(thrwbl, message);
+  }
 }

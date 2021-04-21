@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -25,29 +25,28 @@ import org.micromanager.data.Datastore;
 import org.micromanager.events.AcquisitionSequenceStartedEvent;
 
 public final class DefaultAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
-   private Datastore store_;
-   private Object source_;
-   private SequenceSettings settings_;
+  private Datastore store_;
+  private Object source_;
+  private SequenceSettings settings_;
 
-   public DefaultAcquisitionStartedEvent(Datastore store, Object source,
-         SequenceSettings settings) {
-      store_ = store;
-      source_ = source;
-      settings_ = settings;
-   }
+  public DefaultAcquisitionStartedEvent(Datastore store, Object source, SequenceSettings settings) {
+    store_ = store;
+    source_ = source;
+    settings_ = settings;
+  }
 
-   @Override
-   public Datastore getDatastore() {
-      return store_;
-   }
+  @Override
+  public Datastore getDatastore() {
+    return store_;
+  }
 
-   @Override
-   public Object getSource() {
-      return source_;
-   }
+  @Override
+  public Object getSource() {
+    return source_;
+  }
 
-   @Override
-   public SequenceSettings getSettings() {
-      return settings_;
-   }
+  @Override
+  public SequenceSettings getSettings() {
+    return settings_;
+  }
 }

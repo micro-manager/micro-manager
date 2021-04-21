@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -19,16 +19,13 @@
 
 package org.micromanager.quickaccess;
 
-import javax.swing.JToggleButton;
+import javax.swing.*;
 
 /**
- * This plugin type is used for buttons that can be embedded in the
- * Quick-Access Window. It is similar to the SimpleButtonPlugin, except that
- * its state may be toggled.
+ * This plugin type is used for buttons that can be embedded in the Quick-Access Window. It is
+ * similar to the SimpleButtonPlugin, except that its state may be toggled.
  */
 public abstract class ToggleButtonPlugin extends QuickAccessPlugin {
-   /**
-    * Provide a JToggleButton that will behave as desired by the plugin.
-    */
-   public abstract JToggleButton createButton();
+  /** Provide a JToggleButton that will behave as desired by the plugin. */
+  public abstract JToggleButton createButton();
 }

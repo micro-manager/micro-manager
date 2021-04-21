@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          CameraPanel.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          CameraPanel.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Jon Daniels
 //
@@ -47,245 +47,240 @@ import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.PanelUtils;
 
-
-/**
- *
- * @author jon
- */
+/** @author jon */
 @SuppressWarnings("serial")
-public class CameraPanel extends ListeningJPanel{
-   final private Devices devices_;
-   final private Properties props_;
-   final private Prefs prefs_;
-   final private Cameras cameras_;
-   final private JComboBox camModeCB_;
-   
-   
-   public CameraPanel(final Studio gui, final Devices devices, 
-           final Properties props, final Prefs prefs, 
-           final Cameras cameras) {
-      
-      super(MyStrings.PanelNames.CAMERAS.toString(),
-              new MigLayout(
-              "",
-              "[center]8[center]",
-              "[]8[]"));
-      devices_ = devices;
-      props_ = props;
-      prefs_ = prefs;
-      cameras_ = cameras;
-      
-      PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
+public class CameraPanel extends ListeningJPanel {
+  private final Devices devices_;
+  private final Properties props_;
+  private final Prefs prefs_;
+  private final Cameras cameras_;
+  private final JComboBox camModeCB_;
 
-      // start ROI panel
-      final JPanel roiPanel = new JPanel(new MigLayout(
-            "",
-            "[center]8[center]",
-            "[]8[]"));
-      roiPanel.setBorder(PanelUtils.makeTitledBorder("SPIM Imaging ROI"));
-      
-      final String roiPrefNode = panelName_;
-      final String roiPrefKey = "ROI_Code";
-      final JToggleButton roiUnchanged = makeRoiButton(RoiPresets.UNCHANGED, roiPrefNode, roiPrefKey);
-      roiUnchanged.setMargin(new Insets(4, 12, 4, 12));
-      final Insets inset = new Insets(4, 8, 4, 8);
-      final JToggleButton roiFull = makeRoiButton(RoiPresets.FULL, roiPrefNode, roiPrefKey);
-      roiFull.setMargin(inset);
-      final JToggleButton roiHalf = makeRoiButton(RoiPresets.HALF, roiPrefNode, roiPrefKey);
-      roiHalf.setMargin(inset);
-      final JToggleButton roiQuarter = makeRoiButton(RoiPresets.QUARTER, roiPrefNode, roiPrefKey);
-      roiQuarter.setMargin(inset);
-      final JToggleButton roiEighth = makeRoiButton(RoiPresets.EIGHTH, roiPrefNode, roiPrefKey);
-      roiEighth.setMargin(inset);
-      final JToggleButton roiCustom = makeRoiButton(RoiPresets.CUSTOM, roiPrefNode, roiPrefKey);
-      roiCustom.setMargin(new Insets(4, 20, 4, 20));
-      
-      ButtonGroup roiGroup = new ButtonGroup();
-      roiGroup.add(roiUnchanged);
-      roiGroup.add(roiFull);
-      roiGroup.add(roiHalf);
-      roiGroup.add(roiQuarter);
-      roiGroup.add(roiEighth);
-      roiGroup.add(roiCustom);
-      
-      roiPanel.add(roiUnchanged, "span 2, center, wrap");
-      roiPanel.add(roiFull);
-      roiPanel.add(roiHalf, "wrap");
-      roiPanel.add(roiQuarter);
-      roiPanel.add(roiEighth, "wrap");
-      roiPanel.add(roiCustom, "span 2, center, wrap");
-      
-      final JFormattedTextField offsetX = 
-              pu.makeIntEntryField(MyStrings.PanelNames.CAMERAS.toString(), "OffsetX", 0, 3);
-      final JFormattedTextField offsetY = 
-              pu.makeIntEntryField(MyStrings.PanelNames.CAMERAS.toString(), "OffsetY", 0, 3);
-      
-      final JFormattedTextField width = 
-              pu.makeIntEntryField(MyStrings.PanelNames.CAMERAS.toString(), "Width", 0, 3);
-      final JFormattedTextField height = 
-              pu.makeIntEntryField(MyStrings.PanelNames.CAMERAS.toString(), "Height", 0, 3);
-      
-      roiPanel.add(new JLabel("X offset:"), "right");
-      roiPanel.add(offsetX, "left, wrap");
-      roiPanel.add(new JLabel("Y offset:"), "right");
-      roiPanel.add(offsetY, "left, wrap");
-      roiPanel.add(new JLabel("Width:"), "right");
-      roiPanel.add(width, "left, wrap");
-      roiPanel.add(new JLabel("Height:"), "right");
-      roiPanel.add(height, "left, wrap");
-      
-      JButton getCurrentRoi = new JButton("Get Current ROI");
-      getCurrentRoi.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            Devices.Keys camKey = ASIdiSPIM.getFrame().getAcquisitionPanel().isFirstSideA() ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
+  public CameraPanel(
+      final Studio gui,
+      final Devices devices,
+      final Properties props,
+      final Prefs prefs,
+      final Cameras cameras) {
+
+    super(MyStrings.PanelNames.CAMERAS.toString(), new MigLayout("", "[center]8[center]", "[]8[]"));
+    devices_ = devices;
+    props_ = props;
+    prefs_ = prefs;
+    cameras_ = cameras;
+
+    PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
+
+    // start ROI panel
+    final JPanel roiPanel = new JPanel(new MigLayout("", "[center]8[center]", "[]8[]"));
+    roiPanel.setBorder(PanelUtils.makeTitledBorder("SPIM Imaging ROI"));
+
+    final String roiPrefNode = panelName_;
+    final String roiPrefKey = "ROI_Code";
+    final JToggleButton roiUnchanged = makeRoiButton(RoiPresets.UNCHANGED, roiPrefNode, roiPrefKey);
+    roiUnchanged.setMargin(new Insets(4, 12, 4, 12));
+    final Insets inset = new Insets(4, 8, 4, 8);
+    final JToggleButton roiFull = makeRoiButton(RoiPresets.FULL, roiPrefNode, roiPrefKey);
+    roiFull.setMargin(inset);
+    final JToggleButton roiHalf = makeRoiButton(RoiPresets.HALF, roiPrefNode, roiPrefKey);
+    roiHalf.setMargin(inset);
+    final JToggleButton roiQuarter = makeRoiButton(RoiPresets.QUARTER, roiPrefNode, roiPrefKey);
+    roiQuarter.setMargin(inset);
+    final JToggleButton roiEighth = makeRoiButton(RoiPresets.EIGHTH, roiPrefNode, roiPrefKey);
+    roiEighth.setMargin(inset);
+    final JToggleButton roiCustom = makeRoiButton(RoiPresets.CUSTOM, roiPrefNode, roiPrefKey);
+    roiCustom.setMargin(new Insets(4, 20, 4, 20));
+
+    ButtonGroup roiGroup = new ButtonGroup();
+    roiGroup.add(roiUnchanged);
+    roiGroup.add(roiFull);
+    roiGroup.add(roiHalf);
+    roiGroup.add(roiQuarter);
+    roiGroup.add(roiEighth);
+    roiGroup.add(roiCustom);
+
+    roiPanel.add(roiUnchanged, "span 2, center, wrap");
+    roiPanel.add(roiFull);
+    roiPanel.add(roiHalf, "wrap");
+    roiPanel.add(roiQuarter);
+    roiPanel.add(roiEighth, "wrap");
+    roiPanel.add(roiCustom, "span 2, center, wrap");
+
+    final JFormattedTextField offsetX =
+        pu.makeIntEntryField(MyStrings.PanelNames.CAMERAS.toString(), "OffsetX", 0, 3);
+    final JFormattedTextField offsetY =
+        pu.makeIntEntryField(MyStrings.PanelNames.CAMERAS.toString(), "OffsetY", 0, 3);
+
+    final JFormattedTextField width =
+        pu.makeIntEntryField(MyStrings.PanelNames.CAMERAS.toString(), "Width", 0, 3);
+    final JFormattedTextField height =
+        pu.makeIntEntryField(MyStrings.PanelNames.CAMERAS.toString(), "Height", 0, 3);
+
+    roiPanel.add(new JLabel("X offset:"), "right");
+    roiPanel.add(offsetX, "left, wrap");
+    roiPanel.add(new JLabel("Y offset:"), "right");
+    roiPanel.add(offsetY, "left, wrap");
+    roiPanel.add(new JLabel("Width:"), "right");
+    roiPanel.add(width, "left, wrap");
+    roiPanel.add(new JLabel("Height:"), "right");
+    roiPanel.add(height, "left, wrap");
+
+    JButton getCurrentRoi = new JButton("Get Current ROI");
+    getCurrentRoi.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent ae) {
+            Devices.Keys camKey =
+                ASIdiSPIM.getFrame().getAcquisitionPanel().isFirstSideA()
+                    ? Devices.Keys.CAMERAA
+                    : Devices.Keys.CAMERAB;
             Rectangle roi = cameras_.getCameraROI(camKey);
             offsetX.setValue(roi.x);
             offsetY.setValue(roi.y);
             height.setValue(roi.height);
             width.setValue(roi.width);
-         }
-      });
-      getCurrentRoi.setMargin(new Insets(4, 4, 4, 4));
-      getCurrentRoi.setFocusable(false);
-      roiPanel.add(getCurrentRoi, "span 2, center");
-      
-      // only enable custom fields when custom button is selected
-      
-      final JComponent[] customRoiComponents = {offsetX, offsetY, height, width};
-      PanelUtils.componentsSetEnabled(customRoiComponents, roiCustom.isSelected());
-      
-      ActionListener disableCustomAL = new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            PanelUtils.componentsSetEnabled(customRoiComponents, false); 
-         }
-      };
-      
-      roiUnchanged.addActionListener(disableCustomAL);
-      roiFull.addActionListener(disableCustomAL);
-      roiHalf.addActionListener(disableCustomAL);
-      roiQuarter.addActionListener(disableCustomAL);
-      roiEighth.addActionListener(disableCustomAL);
+          }
+        });
+    getCurrentRoi.setMargin(new Insets(4, 4, 4, 4));
+    getCurrentRoi.setFocusable(false);
+    roiPanel.add(getCurrentRoi, "span 2, center");
 
-      roiCustom.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            PanelUtils.componentsSetEnabled(customRoiComponents, roiCustom.isSelected()); 
-         }
-      });
-      
-      // set the ROI when we first launch the plugin
-      final int prefCode = prefs_.getInt(roiPrefNode, roiPrefKey, 0);
-      setSPIMCameraROI(getRoiPresetFromCode(prefCode));
-      
-      // end ROI subpanel
-      
-      
-      // start camera trigger mode subpanel
-      
-      final JPanel triggerPanel = new JPanel(new MigLayout(
-            "",
-            "[]16[]",
-            "[]"));
-      triggerPanel.setBorder(PanelUtils.makeTitledBorder("Acq. Trigger mode"));
-      CameraModes camModeObject = new CameraModes(devices_, prefs_);
-      // access using pref node MyStrings.PanelNames.SETTINGS.toString() with pref key Properties.Keys.PLUGIN_CAMERA_MODE
-      //     (used to be on Settings panel, now moved but pref location kept the same)
-      camModeCB_ = camModeObject.getComboBox();
-      triggerPanel.add(new JLabel(""));  // add extra space for layout uniformity, can remove without problem
-      triggerPanel.add(camModeCB_, "wrap");
-      
-      // end camera trigger mode subpanel
-     
-      
-      // construct the main panel   
-      super.add(roiPanel);
-      super.add(triggerPanel, "growx, wrap");
-   }//constructor
+    // only enable custom fields when custom button is selected
 
-   /**
-    * @return CameraModes.Keys value from Settings panel (internal, edge,
-    * overlap, pseudo-overlap)
-    */
-   public CameraModes.Keys getSPIMCameraMode() {
-      return (CameraModes.Keys) camModeCB_.getSelectedItem();
-   }
-   
-   private JToggleButton makeRoiButton(RoiPresets roi, String prefNode, String prefKey) {
+    final JComponent[] customRoiComponents = {offsetX, offsetY, height, width};
+    PanelUtils.componentsSetEnabled(customRoiComponents, roiCustom.isSelected());
 
-      class roiListener implements ActionListener {
-         private final String prefNode_;
-         private final String prefKey_;
-         private final int prefCode_;
-         
-         public roiListener(String prefNode, String prefKey, int prefCode) {
-            prefNode_ = prefNode;
-            prefKey_ = prefKey;
-            prefCode_ = prefCode;
-         }
-         
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            prefs_.putInt(prefNode_, prefKey_, prefCode_);
-            setSPIMCameraROI(getRoiPresetFromCode(prefCode_));
-         }
+    ActionListener disableCustomAL =
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent ae) {
+            PanelUtils.componentsSetEnabled(customRoiComponents, false);
+          }
+        };
+
+    roiUnchanged.addActionListener(disableCustomAL);
+    roiFull.addActionListener(disableCustomAL);
+    roiHalf.addActionListener(disableCustomAL);
+    roiQuarter.addActionListener(disableCustomAL);
+    roiEighth.addActionListener(disableCustomAL);
+
+    roiCustom.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent ae) {
+            PanelUtils.componentsSetEnabled(customRoiComponents, roiCustom.isSelected());
+          }
+        });
+
+    // set the ROI when we first launch the plugin
+    final int prefCode = prefs_.getInt(roiPrefNode, roiPrefKey, 0);
+    setSPIMCameraROI(getRoiPresetFromCode(prefCode));
+
+    // end ROI subpanel
+
+    // start camera trigger mode subpanel
+
+    final JPanel triggerPanel = new JPanel(new MigLayout("", "[]16[]", "[]"));
+    triggerPanel.setBorder(PanelUtils.makeTitledBorder("Acq. Trigger mode"));
+    CameraModes camModeObject = new CameraModes(devices_, prefs_);
+    // access using pref node MyStrings.PanelNames.SETTINGS.toString() with pref key
+    // Properties.Keys.PLUGIN_CAMERA_MODE
+    //     (used to be on Settings panel, now moved but pref location kept the same)
+    camModeCB_ = camModeObject.getComboBox();
+    triggerPanel.add(
+        new JLabel("")); // add extra space for layout uniformity, can remove without problem
+    triggerPanel.add(camModeCB_, "wrap");
+
+    // end camera trigger mode subpanel
+
+    // construct the main panel
+    super.add(roiPanel);
+    super.add(triggerPanel, "growx, wrap");
+  } // constructor
+
+  /**
+   * @return CameraModes.Keys value from Settings panel (internal, edge, overlap, pseudo-overlap)
+   */
+  public CameraModes.Keys getSPIMCameraMode() {
+    return (CameraModes.Keys) camModeCB_.getSelectedItem();
+  }
+
+  private JToggleButton makeRoiButton(RoiPresets roi, String prefNode, String prefKey) {
+
+    class roiListener implements ActionListener {
+      private final String prefNode_;
+      private final String prefKey_;
+      private final int prefCode_;
+
+      public roiListener(String prefNode, String prefKey, int prefCode) {
+        prefNode_ = prefNode;
+        prefKey_ = prefKey;
+        prefCode_ = prefCode;
       }
 
-      JToggleButton jtb = new JToggleButton(roi.toString());
-      jtb.setMargin(new Insets(4,4,4,4));
-      roiListener l = new roiListener(prefNode, prefKey, roi.getPrefCode());
-      if (prefs_.getInt(prefNode, prefKey, 0) == roi.getPrefCode()) {
-         jtb.setSelected(true);
-      }
-      jtb.addActionListener(l);
-      return jtb;
-   }
-
-   private void setSPIMCameraROI(RoiPresets roi) {
-      for (Devices.Keys devKey : Devices.SPIM_CAMERAS) {
-         if (devKey != null) {
-            cameras_.setCameraROI(devKey, roi);
-         }
-      }
-   }
-   
-   public static enum RoiPresets {
-      UNCHANGED("Unchanged", 0),
-      FULL("Full", 1),
-      HALF("1/2", 2),
-      QUARTER("1/4", 3),
-      EIGHTH("1/8", 4),
-      CUSTOM("Custom", 5);
-      private final String text;
-      private final int prefCode;
-      RoiPresets(String text, int prefCode) {
-         this.text = text;
-         this.prefCode = prefCode;
-      }
       @Override
-      public String toString() {
-         return text;
+      public void actionPerformed(ActionEvent e) {
+        prefs_.putInt(prefNode_, prefKey_, prefCode_);
+        setSPIMCameraROI(getRoiPresetFromCode(prefCode_));
       }
-      public int getPrefCode() {
-         return prefCode;
+    }
+
+    JToggleButton jtb = new JToggleButton(roi.toString());
+    jtb.setMargin(new Insets(4, 4, 4, 4));
+    roiListener l = new roiListener(prefNode, prefKey, roi.getPrefCode());
+    if (prefs_.getInt(prefNode, prefKey, 0) == roi.getPrefCode()) {
+      jtb.setSelected(true);
+    }
+    jtb.addActionListener(l);
+    return jtb;
+  }
+
+  private void setSPIMCameraROI(RoiPresets roi) {
+    for (Devices.Keys devKey : Devices.SPIM_CAMERAS) {
+      if (devKey != null) {
+        cameras_.setCameraROI(devKey, roi);
       }
-   };
-   
-   private static RoiPresets getRoiPresetFromCode(int prefCode) {
-      if (prefCode == RoiPresets.UNCHANGED.getPrefCode()) {
-         return RoiPresets.UNCHANGED;
-      } else  if (prefCode == RoiPresets.FULL.getPrefCode()) {
-         return RoiPresets.FULL;
-      } else if (prefCode == RoiPresets.HALF.getPrefCode()) {
-         return RoiPresets.HALF;
-      } else if (prefCode == RoiPresets.QUARTER.getPrefCode()) {
-         return RoiPresets.QUARTER;
-      } else if (prefCode == RoiPresets.EIGHTH.getPrefCode()) {
-         return RoiPresets.EIGHTH;
-      } else {
-         return RoiPresets.CUSTOM;
-      }
-   }
-   
+    }
+  }
+
+  public static enum RoiPresets {
+    UNCHANGED("Unchanged", 0),
+    FULL("Full", 1),
+    HALF("1/2", 2),
+    QUARTER("1/4", 3),
+    EIGHTH("1/8", 4),
+    CUSTOM("Custom", 5);
+    private final String text;
+    private final int prefCode;
+
+    RoiPresets(String text, int prefCode) {
+      this.text = text;
+      this.prefCode = prefCode;
+    }
+
+    @Override
+    public String toString() {
+      return text;
+    }
+
+    public int getPrefCode() {
+      return prefCode;
+    }
+  };
+
+  private static RoiPresets getRoiPresetFromCode(int prefCode) {
+    if (prefCode == RoiPresets.UNCHANGED.getPrefCode()) {
+      return RoiPresets.UNCHANGED;
+    } else if (prefCode == RoiPresets.FULL.getPrefCode()) {
+      return RoiPresets.FULL;
+    } else if (prefCode == RoiPresets.HALF.getPrefCode()) {
+      return RoiPresets.HALF;
+    } else if (prefCode == RoiPresets.QUARTER.getPrefCode()) {
+      return RoiPresets.QUARTER;
+    } else if (prefCode == RoiPresets.EIGHTH.getPrefCode()) {
+      return RoiPresets.EIGHTH;
+    } else {
+      return RoiPresets.CUSTOM;
+    }
+  }
 }

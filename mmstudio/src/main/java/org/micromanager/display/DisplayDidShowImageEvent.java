@@ -5,15 +5,15 @@
  */
 package org.micromanager.display;
 
-import java.util.List;
 import org.micromanager.data.Image;
 
-/**
- *
- * @author mark
- */
+import java.util.List;
+
+/** @author mark */
 public interface DisplayDidShowImageEvent {
-   DataViewer getDataViewer();
-   List<Image> getImages();
-   Image getPrimaryImage();
+  DataViewer getDataViewer();
+
+  List<Image> getImages();
+
+  Image getPrimaryImage();
 }

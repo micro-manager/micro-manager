@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,28 +20,19 @@
 
 package org.micromanager.events;
 
-/**
- * This class provides information when a specific property changes.
- */
+/** This class provides information when a specific property changes. */
 public interface PropertyChangedEvent {
 
-   /**
-    * Device to which the changed property belongs
-    * @return Device to which the changed property belongs
-    */
-   String getDevice();
+  /**
+   * Device to which the changed property belongs
+   *
+   * @return Device to which the changed property belongs
+   */
+  String getDevice();
 
-   /**
-    *
-    * @return new value of the property
-    */
-   String getValue();
+  /** @return new value of the property */
+  String getValue();
 
-   /**
-    *
-    * @return Property name (key)
-    */
-   String getProperty();
-
+  /** @return Property name (key) */
+  String getProperty();
 }
-

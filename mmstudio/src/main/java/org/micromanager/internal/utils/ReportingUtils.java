@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Arthur Edelstein, June 2009
 //
@@ -20,345 +20,354 @@
 
 package org.micromanager.internal.utils;
 
-import java.awt.Component;
+import mmcorej.CMMCore;
+import org.micromanager.LogManager;
+import org.micromanager.internal.MMStudio;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Calendar;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
-import mmcorej.CMMCore;
-import org.micromanager.LogManager;
-import org.micromanager.internal.MMStudio;
 
-/**
- *
- * @author arthur
- */
+/** @author arthur */
 public final class ReportingUtils {
 
-   /**
-    * This class acts as a thin wrapper around ReportingUtils to present its
-    * static methods in a non-static context, for use in the API.
-    */
-   public static class Wrapper implements LogManager {
-      @Override
-      public void logMessage(String msg) {
-         ReportingUtils.logMessage(msg);
-      }
+  /**
+   * This class acts as a thin wrapper around ReportingUtils to present its static methods in a
+   * non-static context, for use in the API.
+   */
+  public static class Wrapper implements LogManager {
+    @Override
+    public void logMessage(String msg) {
+      ReportingUtils.logMessage(msg);
+    }
 
-      @Override
-      public void showMessage(String msg) {
-         ReportingUtils.showMessage(msg);
-      }
+    @Override
+    public void showMessage(String msg) {
+      ReportingUtils.showMessage(msg);
+    }
 
-      @Override
-      public void showMessage(String msg, Component parent) {
-         ReportingUtils.showMessage(msg, parent);
-      }
+    @Override
+    public void showMessage(String msg, Component parent) {
+      ReportingUtils.showMessage(msg, parent);
+    }
 
-      @Override
-      public void logError(Exception e, String msg) {
-         ReportingUtils.logError(e, msg);
-      }
+    @Override
+    public void logError(Exception e, String msg) {
+      ReportingUtils.logError(e, msg);
+    }
 
-      @Override
-      public void logError(Exception e) {
-         ReportingUtils.logError(e);
-      }
+    @Override
+    public void logError(Exception e) {
+      ReportingUtils.logError(e);
+    }
 
-      @Override
-      public void logError(String msg) {
-         ReportingUtils.logError(msg);
-      }
+    @Override
+    public void logError(String msg) {
+      ReportingUtils.logError(msg);
+    }
 
-      @Override
-      public void showError(Exception e, String msg) {
-         ReportingUtils.showError(e, msg);
-      }
+    @Override
+    public void showError(Exception e, String msg) {
+      ReportingUtils.showError(e, msg);
+    }
 
-      @Override
-      public void showError(Exception e) {
-         ReportingUtils.showError(e);
-      }
+    @Override
+    public void showError(Exception e) {
+      ReportingUtils.showError(e);
+    }
 
-      @Override
-      public void showError(String msg) {
-         ReportingUtils.showError(msg);
-      }
+    @Override
+    public void showError(String msg) {
+      ReportingUtils.showError(msg);
+    }
 
-      @Override
-      public void showError(Exception e, String msg, Component parent) {
-         ReportingUtils.showError(e, msg, parent);
-      }
+    @Override
+    public void showError(Exception e, String msg, Component parent) {
+      ReportingUtils.showError(e, msg, parent);
+    }
 
-      @Override
-      public void showError(Exception e, Component parent) {
-         ReportingUtils.showError(e, parent);
-      }
+    @Override
+    public void showError(Exception e, Component parent) {
+      ReportingUtils.showError(e, parent);
+    }
 
-      @Override
-      public void showError(String msg, Component parent) {
-         ReportingUtils.showError(msg, parent);
-      }
+    @Override
+    public void showError(String msg, Component parent) {
+      ReportingUtils.showError(msg, parent);
+    }
 
-      @Override
-      public void logDebugMessage(String message) {
-         ReportingUtils.logDebugMessage(message);
-      }
-   }
+    @Override
+    public void logDebugMessage(String message) {
+      ReportingUtils.logDebugMessage(message);
+    }
+  }
 
-   private static final Wrapper staticWrapper_;
-   static {
-      staticWrapper_ = new Wrapper();
-   }
+  private static final Wrapper staticWrapper_;
 
-   public static LogManager getWrapper() {
-      return staticWrapper_;
-   }
+  static {
+    staticWrapper_ = new Wrapper();
+  }
 
-   private static CMMCore core_ = null;
-   private static JFrame owningFrame_;
-   private static boolean show_ = true;
+  public static LogManager getWrapper() {
+    return staticWrapper_;
+  }
 
-   // Intended for setting to the main frame.
-   public static void SetContainingFrame(JFrame f) {
-      owningFrame_ = f;
-   }
+  private static CMMCore core_ = null;
+  private static JFrame owningFrame_;
+  private static boolean show_ = true;
 
-   public static void setCore(CMMCore core) {
-      core_ = core;
-   }
+  // Intended for setting to the main frame.
+  public static void SetContainingFrame(JFrame f) {
+    owningFrame_ = f;
+  }
 
-   public static void showErrorOn(boolean show) {
-      show_ = show;
-   }
+  public static void setCore(CMMCore core) {
+    core_ = core;
+  }
 
-   public static void logMessage(String msg) {
-      if (core_ == null) {
-         System.out.println(msg);
-      } else {
-         core_.logMessage(msg);
-      }
-   }
+  public static void showErrorOn(boolean show) {
+    show_ = show;
+  }
 
-   public static void logDebugMessage(String msg) {
-      if (core_ == null) {
-         System.out.println(msg);
-      } else {
-         core_.logMessage(msg, true);
-      }
-   }
+  public static void logMessage(String msg) {
+    if (core_ == null) {
+      System.out.println(msg);
+    } else {
+      core_.logMessage(msg);
+    }
+  }
 
-   public static void logDebugMessage(Throwable e, String msg) {
-      if (e != null) {
-         String stackTrace = getStackTraceAsString(e);
-         msg = (msg + "\n" + e.toString() + " in " +
-               Thread.currentThread().toString() + "\n" + stackTrace + "\n");
-      }
-      if (core_ == null) {
-         System.out.println(msg);
-      } else {
-         core_.logMessage(msg, true);
-      }
-   }
+  public static void logDebugMessage(String msg) {
+    if (core_ == null) {
+      System.out.println(msg);
+    } else {
+      core_.logMessage(msg, true);
+    }
+  }
 
-   public static void showMessage(final String msg) {
-      JOptionPane.showMessageDialog(null, msg);
-   }
-   
-   public static void showMessage(final String msg, Component parent) {
-      JOptionPane.showMessageDialog(parent, msg);
-   }
+  public static void logDebugMessage(Throwable e, String msg) {
+    if (e != null) {
+      String stackTrace = getStackTraceAsString(e);
+      msg =
+          (msg
+              + "\n"
+              + e.toString()
+              + " in "
+              + Thread.currentThread().toString()
+              + "\n"
+              + stackTrace
+              + "\n");
+    }
+    if (core_ == null) {
+      System.out.println(msg);
+    } else {
+      core_.logMessage(msg, true);
+    }
+  }
 
-   public static void logError(Throwable e, String msg) {
-      if (e != null) {
-         String stackTrace = getStackTraceAsString(e);
-         logMessage(msg + "\n" + e.toString() + " in "
-                 + Thread.currentThread().toString() + "\n" + stackTrace + "\n");
-      } else {
-         logMessage("Error: " + msg);
-      }
-   }
+  public static void showMessage(final String msg) {
+    JOptionPane.showMessageDialog(null, msg);
+  }
 
-   public static void logError(Throwable e) {
-      logError(e, "");
-   }
+  public static void showMessage(final String msg, Component parent) {
+    JOptionPane.showMessageDialog(parent, msg);
+  }
 
-   public static void logError(String msg) {
-      logError(null, msg);
-   }
+  public static void logError(Throwable e, String msg) {
+    if (e != null) {
+      String stackTrace = getStackTraceAsString(e);
+      logMessage(
+          msg
+              + "\n"
+              + e.toString()
+              + " in "
+              + Thread.currentThread().toString()
+              + "\n"
+              + stackTrace
+              + "\n");
+    } else {
+      logMessage("Error: " + msg);
+    }
+  }
 
-   public static void showError(Throwable e, String msg, Component parent) {
-      logError(e, msg);
+  public static void logError(Throwable e) {
+    logError(e, "");
+  }
 
-      if (!show_)
-         return;
+  public static void logError(String msg) {
+    logError(null, msg);
+  }
 
-      String fullMsg;
-      if (e != null && e.getMessage() != null && msg.length() > 0) {
-         fullMsg = "Error: " + msg + "\n" + e.getMessage();
-      } else if (e != null && e.getMessage() != null) {
-         fullMsg = e.getMessage();
-      } else if (msg.length() > 0) {
-         fullMsg = "Error: " + msg;
-      } else if (e != null) {
-         fullMsg = "Error: " + e.getStackTrace()[0];
-      } else {
-         fullMsg = "Unknown error (please check CoreLog.txt file for more information)";
-      }
+  public static void showError(Throwable e, String msg, Component parent) {
+    logError(e, msg);
 
-      ReportingUtils.showErrorMessage(fullMsg, parent);
-   }
+    if (!show_) return;
 
-   private static String formatAlertMessage(String[] lines) {
-      com.google.common.escape.Escaper escaper =
-         com.google.common.html.HtmlEscapers.htmlEscaper();
-      StringBuilder sb = new StringBuilder();
-      sb.append("<html>");
-      for (String line : lines) {
-         sb.append("<div width='640'>");
-         sb.append(escaper.escape(line));
-         sb.append("</div>");
-      }
-      sb.append("</html>");
-      return sb.toString();
-   }
+    String fullMsg;
+    if (e != null && e.getMessage() != null && msg.length() > 0) {
+      fullMsg = "Error: " + msg + "\n" + e.getMessage();
+    } else if (e != null && e.getMessage() != null) {
+      fullMsg = e.getMessage();
+    } else if (msg.length() > 0) {
+      fullMsg = "Error: " + msg;
+    } else if (e != null) {
+      fullMsg = "Error: " + e.getStackTrace()[0];
+    } else {
+      fullMsg = "Unknown error (please check CoreLog.txt file for more information)";
+    }
 
-   private static void showErrorMessage(final String fullMsg,
-         final Component parent) {
-      int maxNrLines = 10;
-      String lines[] = fullMsg.split("\n");
-      if (lines.length < maxNrLines) {
-         final String wrappedMsg = formatAlertMessage(lines);
-         GUIUtils.invokeLater(new Runnable() {
+    ReportingUtils.showErrorMessage(fullMsg, parent);
+  }
+
+  private static String formatAlertMessage(String[] lines) {
+    com.google.common.escape.Escaper escaper = com.google.common.html.HtmlEscapers.htmlEscaper();
+    StringBuilder sb = new StringBuilder();
+    sb.append("<html>");
+    for (String line : lines) {
+      sb.append("<div width='640'>");
+      sb.append(escaper.escape(line));
+      sb.append("</div>");
+    }
+    sb.append("</html>");
+    return sb.toString();
+  }
+
+  private static void showErrorMessage(final String fullMsg, final Component parent) {
+    int maxNrLines = 10;
+    String lines[] = fullMsg.split("\n");
+    if (lines.length < maxNrLines) {
+      final String wrappedMsg = formatAlertMessage(lines);
+      GUIUtils.invokeLater(
+          new Runnable() {
             @Override
             public void run() {
-               JOptionPane.showMessageDialog(parent, wrappedMsg,
-                       "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+              JOptionPane.showMessageDialog(
+                  parent, wrappedMsg, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
             }
-         });
-      } else {
-         JTextArea area = new JTextArea(fullMsg);
-         area.setRows(maxNrLines);
-         area.setColumns(50);
-         area.setLineWrap(true);
-         final JScrollPane pane = new JScrollPane(area);
-         GUIUtils.invokeLater(new Runnable() {
+          });
+    } else {
+      JTextArea area = new JTextArea(fullMsg);
+      area.setRows(maxNrLines);
+      area.setColumns(50);
+      area.setLineWrap(true);
+      final JScrollPane pane = new JScrollPane(area);
+      GUIUtils.invokeLater(
+          new Runnable() {
             @Override
             public void run() {
-               JOptionPane.showMessageDialog(parent, pane,
-                       "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+              JOptionPane.showMessageDialog(
+                  parent, pane, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
             }
-         });
-      }
-   }
+          });
+    }
+  }
 
-   public static void showError(Throwable e) {
-      showError(e, "", MMStudio.getInstance().app().getMainWindow());
-   }
+  public static void showError(Throwable e) {
+    showError(e, "", MMStudio.getInstance().app().getMainWindow());
+  }
 
-   public static void showError(String msg) {
-      showError(null, msg, MMStudio.getInstance().app().getMainWindow());
-   }
+  public static void showError(String msg) {
+    showError(null, msg, MMStudio.getInstance().app().getMainWindow());
+  }
 
-   public static void showError(Throwable e, String msg) {
-      showError(e, msg, MMStudio.getInstance().app().getMainWindow());
-   }
+  public static void showError(Throwable e, String msg) {
+    showError(e, msg, MMStudio.getInstance().app().getMainWindow());
+  }
 
-   public static void showError(Throwable e, Component parent) {
-      showError(e, "", parent);
-   }
+  public static void showError(Throwable e, Component parent) {
+    showError(e, "", parent);
+  }
 
-   public static void showError(String msg, Component parent) {
-      showError(null, msg, parent);
-   }
+  public static void showError(String msg, Component parent) {
+    showError(null, msg, parent);
+  }
 
-   private static String getStackTraceAsString(Throwable aThrowable) {
-      String result = "";
-      for (StackTraceElement line : aThrowable.getStackTrace()) {
-         result += "  at " + line.toString() + "\n";
-      }
-      Throwable cause = aThrowable.getCause();
-      if (cause != null) {
-         return result + "Caused by: " + cause.toString() + "\n" + getStackTraceAsString(cause);
-      } else {
-         return result;
-      }
-   }
-
-   /**
-    * As above, but doesn't require a Throwable; a convenience function for
-    * logging when you want to know where you were called from.
-    */
-   public static String getStackTraceAsString() {
-      return getStackTraceAsString(100);
-   }
-
-   /**
-    * Return the stack trace of the current thread up to the specified limit
-    * of entries.
-    */
-   public static String getStackTraceAsString(int numEntries) {
-      String result = "";
-      StackTraceElement[] lines = Thread.currentThread().getStackTrace();
-      numEntries = Math.min(lines.length, numEntries);
-      for (StackTraceElement line : Arrays.copyOfRange(lines, 0, numEntries)) {
-         result += "  at " + line.toString() + "\n";
-      }
+  private static String getStackTraceAsString(Throwable aThrowable) {
+    String result = "";
+    for (StackTraceElement line : aThrowable.getStackTrace()) {
+      result += "  at " + line.toString() + "\n";
+    }
+    Throwable cause = aThrowable.getCause();
+    if (cause != null) {
+      return result + "Caused by: " + cause.toString() + "\n" + getStackTraceAsString(cause);
+    } else {
       return result;
-   }
+    }
+  }
 
-   /**
-    * Return the caller of the method that called getCaller().
-    */
-   public static String getCaller() {
-      // First is getStackTrace, second is us, third is whoever called us,
-      // fourth is whoever called *them*.
-      return java.lang.Thread.currentThread().getStackTrace()[3].toString();
-   }
+  /**
+   * As above, but doesn't require a Throwable; a convenience function for logging when you want to
+   * know where you were called from.
+   */
+  public static String getStackTraceAsString() {
+    return getStackTraceAsString(100);
+  }
 
-   public static void showError(ActionEvent e) {
-      throw new UnsupportedOperationException("Not yet implemented");
-   }
+  /** Return the stack trace of the current thread up to the specified limit of entries. */
+  public static String getStackTraceAsString(int numEntries) {
+    String result = "";
+    StackTraceElement[] lines = Thread.currentThread().getStackTrace();
+    numEntries = Math.min(lines.length, numEntries);
+    for (StackTraceElement line : Arrays.copyOfRange(lines, 0, numEntries)) {
+      result += "  at " + line.toString() + "\n";
+    }
+    return result;
+  }
 
-   public static void displayNonBlockingMessage(final String message) {
-      if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
+  /** Return the caller of the method that called getCaller(). */
+  public static String getCaller() {
+    // First is getStackTrace, second is us, third is whoever called us,
+    // fourth is whoever called *them*.
+    return java.lang.Thread.currentThread().getStackTrace()[3].toString();
+  }
+
+  public static void showError(ActionEvent e) {
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+
+  public static void displayNonBlockingMessage(final String message) {
+    if (!SwingUtilities.isEventDispatchThread()) {
+      SwingUtilities.invokeLater(
+          new Runnable() {
             @Override
             public void run() {
-               ReportingUtils.displayNonBlockingMessage(message);
+              ReportingUtils.displayNonBlockingMessage(message);
             }
-         });
-         return;
-      }
+          });
+      return;
+    }
 
-      if (null != owningFrame_) {
-         Calendar c = Calendar.getInstance();
-         final JOptionPane optionPane = new JOptionPane(c.getTime().toString() + " " + message, JOptionPane.WARNING_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-         /* the false parameter is for not modal */
-         final JDialog dialog = new JDialog(owningFrame_, "μManager Warning: ", false);
-         optionPane.addPropertyChangeListener(
-                 new PropertyChangeListener() {
+    if (null != owningFrame_) {
+      Calendar c = Calendar.getInstance();
+      final JOptionPane optionPane =
+          new JOptionPane(
+              c.getTime().toString() + " " + message,
+              JOptionPane.WARNING_MESSAGE,
+              JOptionPane.OK_CANCEL_OPTION);
+      /* the false parameter is for not modal */
+      final JDialog dialog = new JDialog(owningFrame_, "μManager Warning: ", false);
+      optionPane.addPropertyChangeListener(
+          new PropertyChangeListener() {
 
-                    @Override
-                    public void propertyChange(PropertyChangeEvent e) {
-                       String prop = e.getPropertyName();
-                       if (dialog.isVisible() && (e.getSource() == optionPane) && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
-                          dialog.setVisible(false);
-                       }
-                    }
-                 });
-         dialog.setContentPane(optionPane);
-         /* adapting the frame size to its content */
-         dialog.pack();
-         dialog.setLocationRelativeTo(owningFrame_);
-         dialog.setVisible(true);
-      }
-   }
+            @Override
+            public void propertyChange(PropertyChangeEvent e) {
+              String prop = e.getPropertyName();
+              if (dialog.isVisible()
+                  && (e.getSource() == optionPane)
+                  && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
+                dialog.setVisible(false);
+              }
+            }
+          });
+      dialog.setContentPane(optionPane);
+      /* adapting the frame size to its content */
+      dialog.pack();
+      dialog.setLocationRelativeTo(owningFrame_);
+      dialog.setVisible(true);
+    }
+  }
 }

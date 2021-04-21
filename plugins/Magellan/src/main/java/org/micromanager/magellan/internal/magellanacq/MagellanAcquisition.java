@@ -11,16 +11,16 @@ import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
  */
 public interface MagellanAcquisition extends ViewerAcquisitionInterface, AcquisitionAPI {
 
-   /**
-    * Get z coordinate corresponding to z index of 0
-     * @return
-    */
-   public double getZOrigin();
+  /**
+   * Get z coordinate corresponding to z index of 0
+   *
+   * @return
+   */
+  public double getZOrigin();
 
-   public double getZStep();
-   
-   public ChannelGroupSettings getChannels();
-   
-   public MagellanGenericAcquisitionSettings getAcquisitionSettings();
+  public double getZStep();
 
+  public ChannelGroupSettings getChannels();
+
+  public MagellanGenericAcquisitionSettings getAcquisitionSettings();
 }

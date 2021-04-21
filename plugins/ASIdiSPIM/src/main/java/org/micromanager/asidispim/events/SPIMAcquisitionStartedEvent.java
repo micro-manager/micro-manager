@@ -20,35 +20,30 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
 import org.micromanager.events.AcquisitionSequenceStartedEvent;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 public class SPIMAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
-   final private Datastore store_;
-   final private SequenceSettings sequence_;
-   final private Object object_;
-   
-   public SPIMAcquisitionStartedEvent(Datastore store, SequenceSettings sequence,
-           Object object) {
-      store_ = store;
-      sequence_ = sequence;
-      object_ = object;
-   }
-   
-   @Override
-   public Datastore getDatastore() {
-      return store_;
-   }
+  private final Datastore store_;
+  private final SequenceSettings sequence_;
+  private final Object object_;
 
-   @Override
-   public Object getSource() {
-      return object_;
-   }
+  public SPIMAcquisitionStartedEvent(Datastore store, SequenceSettings sequence, Object object) {
+    store_ = store;
+    sequence_ = sequence;
+    object_ = object;
+  }
 
-   @Override
-   public SequenceSettings getSettings() {
-      return sequence_;
-   }
-   
+  @Override
+  public Datastore getDatastore() {
+    return store_;
+  }
+
+  @Override
+  public Object getSource() {
+    return object_;
+  }
+
+  @Override
+  public SequenceSettings getSettings() {
+    return sequence_;
+  }
 }

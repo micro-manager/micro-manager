@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -21,8 +21,8 @@
 package org.micromanager.data;
 
 /**
- * This class signifies that the configuration of the application pipeline
- * has changed, giving entities that use that pipeline an opportunity to make
- * a new copy of it (by invoking DataManager.copyApplicationPipeline()).
+ * This class signifies that the configuration of the application pipeline has changed, giving
+ * entities that use that pipeline an opportunity to make a new copy of it (by invoking
+ * DataManager.copyApplicationPipeline()).
  */
 public interface NewPipelineEvent {}

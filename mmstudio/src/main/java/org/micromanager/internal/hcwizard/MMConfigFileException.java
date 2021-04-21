@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, October 29, 2006
 //
@@ -22,24 +22,21 @@
 //
 package org.micromanager.internal.hcwizard;
 
-/**
- * Configuration file I/O errors. 
- *
- */
+/** Configuration file I/O errors. */
 public final class MMConfigFileException extends Exception {
-   private static final long serialVersionUID = 1L;
-   private Throwable cause;
-   
-   public MMConfigFileException(final String message) {
-      super(message);
+  private static final long serialVersionUID = 1L;
+  private Throwable cause;
+
+  public MMConfigFileException(final String message) {
+    super(message);
   }
 
   public MMConfigFileException(final Throwable t) {
-      super(t.getMessage());
-      this.cause = t;
+    super(t.getMessage());
+    this.cause = t;
   }
 
   public Throwable getCause() {
-      return this.cause;
+    return this.cause;
   }
 }

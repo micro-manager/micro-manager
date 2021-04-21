@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, November 7, 2006
 //
@@ -23,101 +23,97 @@
 
 package org.micromanager.internal.hcwizard;
 
-import java.util.ArrayList;
 import mmcorej.DoubleVector;
 
-/**
- * Encapsulation of the preset data for use in the Configuration Wizard. 
- *
- */
+import java.util.ArrayList;
+
+/** Encapsulation of the preset data for use in the Configuration Wizard. */
 public final class ConfigPreset {
-   private String name_;
-   private final ArrayList<Setting> settings_;
-   
-   // these fields are only used when the configuration preset
-   // belongs to the pixelSize group
-   private double pixelSizeUm_ = 0.0;
-   private DoubleVector affineTransform_;
-   
-   public ConfigPreset() {
-      name_ = "Undefined";
-      settings_ = new ArrayList<Setting>();
-   }
-   
-   public ConfigPreset(String name) {
-      name_ = name;
-      settings_ = new ArrayList<Setting>();
-   }
-   
-   public String getName() {
-      return name_;
-   }
-   
-   public boolean addSetting(Setting s) {
-      for (int i=0; i<settings_.size(); i++) {
-         if (getSetting(i).isEqualTo(s))
-            return false;
-         if (getSetting(i).matches(s)) {
-            // replace existing
-            settings_.set(i, s);
-            return true;
-         }
-      }
-      // add new
-      settings_.add(s);
-      return true;
-   }
-   
-   public boolean matchSetting(Setting s) {
-      for (int i=0; i<settings_.size(); i++) {
-         if (getSetting(i).matches(s)) {
-            return true;
-         }
-      }
-      return false;
-   }
-   
-   public boolean removeSetting(Setting s) {
-      for (int i=0; i<settings_.size(); i++) {
-         if (getSetting(i).isEqualTo(s)) {
-            settings_.remove(i);
-            return true;
-         }
-      }
-      return false;
-   }
-   
-   public int getNumberOfSettings() {
-      return settings_.size();
-   }
-   
-   public Setting getSetting(int i) {
-      return settings_.get(i);
-   }
-   
-   @Override
-   public String toString() {
-      return "Preset: " + name_;
-   }
+  private String name_;
+  private final ArrayList<Setting> settings_;
 
-   public void setName(String name) {
-      name_ = name;
-   }
+  // these fields are only used when the configuration preset
+  // belongs to the pixelSize group
+  private double pixelSizeUm_ = 0.0;
+  private DoubleVector affineTransform_;
 
-   public void setPixelSizeUm(double ps) {
-      pixelSizeUm_ = ps;
-   }
-   
-   public double getPixelSize() {
-      return pixelSizeUm_;
-   }
-   
-   public void setAffineTransform(DoubleVector aft) {
-      affineTransform_ = aft;
-   }
-   
-   public DoubleVector getAffineTransform() {
-      return affineTransform_;
-   }
-   
+  public ConfigPreset() {
+    name_ = "Undefined";
+    settings_ = new ArrayList<Setting>();
+  }
+
+  public ConfigPreset(String name) {
+    name_ = name;
+    settings_ = new ArrayList<Setting>();
+  }
+
+  public String getName() {
+    return name_;
+  }
+
+  public boolean addSetting(Setting s) {
+    for (int i = 0; i < settings_.size(); i++) {
+      if (getSetting(i).isEqualTo(s)) return false;
+      if (getSetting(i).matches(s)) {
+        // replace existing
+        settings_.set(i, s);
+        return true;
+      }
+    }
+    // add new
+    settings_.add(s);
+    return true;
+  }
+
+  public boolean matchSetting(Setting s) {
+    for (int i = 0; i < settings_.size(); i++) {
+      if (getSetting(i).matches(s)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean removeSetting(Setting s) {
+    for (int i = 0; i < settings_.size(); i++) {
+      if (getSetting(i).isEqualTo(s)) {
+        settings_.remove(i);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public int getNumberOfSettings() {
+    return settings_.size();
+  }
+
+  public Setting getSetting(int i) {
+    return settings_.get(i);
+  }
+
+  @Override
+  public String toString() {
+    return "Preset: " + name_;
+  }
+
+  public void setName(String name) {
+    name_ = name;
+  }
+
+  public void setPixelSizeUm(double ps) {
+    pixelSizeUm_ = ps;
+  }
+
+  public double getPixelSize() {
+    return pixelSizeUm_;
+  }
+
+  public void setAffineTransform(DoubleVector aft) {
+    affineTransform_ = aft;
+  }
+
+  public DoubleVector getAffineTransform() {
+    return affineTransform_;
+  }
 }

@@ -23,36 +23,34 @@ import ij.ImagePlus;
  * @author Mark A. Tsuchida, based on older version by Chris Weisiger
  */
 public final class MMImagePlus extends ImagePlus implements IMMImagePlus {
-   public static MMImagePlus create(ImageJBridge parent) {
-      return new MMImagePlus(parent);
-   }
+  public static MMImagePlus create(ImageJBridge parent) {
+    return new MMImagePlus(parent);
+  }
 
-   private MMImagePlus(ImageJBridge parent) {
-      // So far we don't use parent reference
-   }
+  private MMImagePlus(ImageJBridge parent) {
+    // So far we don't use parent reference
+  }
 
-   @Override
-   public void setDimensionsWithoutUpdate(
-         int nChannels, int nSlices, int nFrames)
-   {
-      super.nChannels = nChannels;
-      super.nSlices = nSlices;
-      super.nFrames = nFrames;
-      super.dimensionsSet = true;
-   }
+  @Override
+  public void setDimensionsWithoutUpdate(int nChannels, int nSlices, int nFrames) {
+    super.nChannels = nChannels;
+    super.nSlices = nSlices;
+    super.nFrames = nFrames;
+    super.dimensionsSet = true;
+  }
 
-   @Override
-   public int getNChannelsWithoutSideEffect() {
-      return super.nChannels;
-   }
+  @Override
+  public int getNChannelsWithoutSideEffect() {
+    return super.nChannels;
+  }
 
-   @Override
-   public int getNSlicesWithoutSideEffect() {
-      return super.nSlices;
-   }
+  @Override
+  public int getNSlicesWithoutSideEffect() {
+    return super.nSlices;
+  }
 
-   @Override
-   public int getNFramesWithoutSideEffect() {
-      return super.nFrames;
-   }
+  @Override
+  public int getNFramesWithoutSideEffect() {
+    return super.nFrames;
+  }
 }

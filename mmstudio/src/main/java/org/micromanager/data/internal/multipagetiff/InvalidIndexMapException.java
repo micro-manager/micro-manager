@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Multipage TIFF
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Multipage TIFF
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, cweisiger@msg.ucsf.edu
 //
@@ -22,15 +22,13 @@ package org.micromanager.data.internal.multipagetiff;
 
 import java.io.IOException;
 
-/**
- * This exception is thrown when MultipageTiffReader is unable to read the
- * index map in a file.
- */
+/** This exception is thrown when MultipageTiffReader is unable to read the index map in a file. */
 public final class InvalidIndexMapException extends IOException {
-   public InvalidIndexMapException() {
-      super();
-   }
-   public InvalidIndexMapException(Throwable cause) {
-      super(cause);
-   }
+  public InvalidIndexMapException() {
+    super();
+  }
+
+  public InvalidIndexMapException(Throwable cause) {
+    super(cause);
+  }
 }

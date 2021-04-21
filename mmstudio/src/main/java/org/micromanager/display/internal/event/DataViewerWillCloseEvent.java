@@ -7,22 +7,19 @@ package org.micromanager.display.internal.event;
 
 import org.micromanager.display.DataViewer;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public class DataViewerWillCloseEvent {
-   private final DataViewer viewer_;
+  private final DataViewer viewer_;
 
-   public static DataViewerWillCloseEvent create(DataViewer viewer) {
-      return new DataViewerWillCloseEvent(viewer);
-   }
+  public static DataViewerWillCloseEvent create(DataViewer viewer) {
+    return new DataViewerWillCloseEvent(viewer);
+  }
 
-   private DataViewerWillCloseEvent(DataViewer viewer) {
-      viewer_ = viewer;
-   }
+  private DataViewerWillCloseEvent(DataViewer viewer) {
+    viewer_ = viewer;
+  }
 
-   public DataViewer getDataViewer() {
-      return viewer_;
-   }
+  public DataViewer getDataViewer() {
+    return viewer_;
+  }
 }

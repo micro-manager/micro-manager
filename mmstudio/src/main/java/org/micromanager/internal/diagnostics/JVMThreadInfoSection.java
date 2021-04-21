@@ -14,23 +14,30 @@ package org.micromanager.internal.diagnostics;
 import java.lang.management.ThreadInfo;
 
 class JVMThreadInfoSection implements SystemInfo.SystemInfoSection {
-   public String getTitle() { return "Java thread information"; }
+  public String getTitle() {
+    return "Java thread information";
+  }
 
-   public String getReport() {
-      StringBuilder sb = new StringBuilder();
+  public String getReport() {
+    StringBuilder sb = new StringBuilder();
 
-      sb.append("All Java threads:\n");
-      java.lang.management.ThreadMXBean threadMXB = java.lang.management.ManagementFactory.getThreadMXBean();
-      long[] tids = threadMXB.getAllThreadIds();
-      java.util.Arrays.sort(tids);
-      ThreadInfo[] threadInfos = threadMXB.getThreadInfo(tids);
-      for (ThreadInfo tInfo : threadInfos) {
-         sb.append("  id ").append(Long.toString(tInfo.getThreadId())).
-            append(" (\"").append(tInfo.getThreadName()).append("\"): ").
-            append(tInfo.getThreadState().name()).append('\n');
-      }
-      sb.append("(End all Java threads)");
+    sb.append("All Java threads:\n");
+    java.lang.management.ThreadMXBean threadMXB =
+        java.lang.management.ManagementFactory.getThreadMXBean();
+    long[] tids = threadMXB.getAllThreadIds();
+    java.util.Arrays.sort(tids);
+    ThreadInfo[] threadInfos = threadMXB.getThreadInfo(tids);
+    for (ThreadInfo tInfo : threadInfos) {
+      sb.append("  id ")
+          .append(Long.toString(tInfo.getThreadId()))
+          .append(" (\"")
+          .append(tInfo.getThreadName())
+          .append("\"): ")
+          .append(tInfo.getThreadState().name())
+          .append('\n');
+    }
+    sb.append("(End all Java threads)");
 
-      return sb.toString();
-   }
+    return sb.toString();
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, May 2009
 //
@@ -20,9 +20,6 @@
 //
 package org.micromanager.internal.utils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -31,146 +28,142 @@ import org.micromanager.AutofocusPlugin;
 import org.micromanager.MMPlugin;
 import org.micromanager.Studio;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
+
 /**
- * Manages different instances of autofocus devices, both Java plugin and MMCore based.
- * The class is designed to be instantiated in the top level gui and used to obtain
- * the list of available focusing devices, as well as for selecting a default one.
+ * Manages different instances of autofocus devices, both Java plugin and MMCore based. The class is
+ * designed to be instantiated in the top level gui and used to obtain the list of available
+ * focusing devices, as well as for selecting a default one.
  */
 public final class DefaultAutofocusManager implements AutofocusManager {
-   private final Studio studio_;
-   private final Vector<AutofocusPlugin> afs_;
-   private AutofocusPlugin currentAfDevice_;
-   private AutofocusPropertyEditor afDlg_;
-   
-   public DefaultAutofocusManager(Studio studio) {
-      afs_ = new Vector<>();
-      currentAfDevice_ = null;
-      studio_ = studio;
-   }
-   
-   @Override
-   public void setAutofocusMethod(AutofocusPlugin plugin) {
-      currentAfDevice_ = plugin;
-   }
+  private final Studio studio_;
+  private final Vector<AutofocusPlugin> afs_;
+  private AutofocusPlugin currentAfDevice_;
+  private AutofocusPropertyEditor afDlg_;
 
-   @Override
-   public void setAutofocusMethodByName(String name) {
-      for (AutofocusPlugin plugin : afs_) {
-         if (plugin.getName().equals(name)) {
-            currentAfDevice_ = plugin;
-            return;
-         }
+  public DefaultAutofocusManager(Studio studio) {
+    afs_ = new Vector<>();
+    currentAfDevice_ = null;
+    studio_ = studio;
+  }
+
+  @Override
+  public void setAutofocusMethod(AutofocusPlugin plugin) {
+    currentAfDevice_ = plugin;
+  }
+
+  @Override
+  public void setAutofocusMethodByName(String name) {
+    for (AutofocusPlugin plugin : afs_) {
+      if (plugin.getName().equals(name)) {
+        currentAfDevice_ = plugin;
+        return;
       }
-      throw new IllegalArgumentException("Invalid autofocus plugin name " + name);
-   }
+    }
+    throw new IllegalArgumentException("Invalid autofocus plugin name " + name);
+  }
 
-   @Override
-   public AutofocusPlugin getAutofocusMethod() {
-      return currentAfDevice_;
-   }
+  @Override
+  public AutofocusPlugin getAutofocusMethod() {
+    return currentAfDevice_;
+  }
 
-   @Override
-   public List<String> getAllAutofocusMethods() {
-      ArrayList<String> result = new ArrayList<>();
-      for (AutofocusPlugin plugin : afs_) {
-         result.add(plugin.getName());
+  @Override
+  public List<String> getAllAutofocusMethods() {
+    ArrayList<String> result = new ArrayList<>();
+    for (AutofocusPlugin plugin : afs_) {
+      result.add(plugin.getName());
+    }
+    return result;
+  }
+
+  @Override
+  public void refresh() {
+    afs_.clear();
+    CMMCore core = studio_.getCMMCore();
+
+    // first check core autofocus
+    StrVector afDevs = core.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
+    for (int i = 0; i < afDevs.size(); i++) {
+      CoreAutofocus caf = new CoreAutofocus();
+      try {
+        core.setAutoFocusDevice(afDevs.get(i));
+        caf.setContext(studio_);
+        if (caf.getName().length() != 0) {
+          afs_.add(caf);
+          if (currentAfDevice_ == null) currentAfDevice_ = caf;
+        }
+      } catch (Exception e) {
+        ReportingUtils.logError(e);
       }
-      return result;
-   }
+    }
 
-   @Override
-   public void refresh() {
-      afs_.clear();
-      CMMCore core = studio_.getCMMCore();
+    // then check Java
+    for (MMPlugin plugin : studio_.plugins().getAutofocusPlugins().values()) {
+      afs_.add((AutofocusPlugin) plugin);
+    }
 
-      // first check core autofocus
-      StrVector afDevs = core.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
-      for (int i=0; i<afDevs.size(); i++) {
-         CoreAutofocus caf = new CoreAutofocus();
-         try {
-            core.setAutoFocusDevice(afDevs.get(i));
-            caf.setContext(studio_);
-            if (caf.getName().length() != 0) {
-               afs_.add(caf);
-               if (currentAfDevice_ == null)
-                  currentAfDevice_ = caf;
-            }
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
-         }
-      }
-
-      // then check Java
-      for (MMPlugin plugin : studio_.plugins().getAutofocusPlugins().values()) {
-         afs_.add((AutofocusPlugin) plugin);
-      }
-
-      // make sure the current autofocus is still in the list, otherwise set it to something...
-      boolean found = false;
-      if (currentAfDevice_ != null) {
-         for (AutofocusPlugin af : afs_) {
-            if (af.getName().equals(currentAfDevice_.getName())) {
-               found = true;
-               currentAfDevice_ = af;
-            }
-         }
-      }
-      if (!found && afs_.size() > 0)
-         currentAfDevice_ = afs_.get(0);
-  
-      // Show new list in Options Dialog
-      if (afDlg_ != null) 
-         afDlg_.rebuild();
-
-   }
-      
-   public void showOptionsDialog() {
-      if (afDlg_ == null)
-         afDlg_ = new AutofocusPropertyEditor(studio_, this);
-      afDlg_.setVisible(true);
-      if (currentAfDevice_ != null) {
-         currentAfDevice_.applySettings();
-         currentAfDevice_.saveSettings();
-      }
-   }
-
-   public void closeOptionsDialog() {
-      if (afDlg_ != null)
-         afDlg_.cleanup();
-   }
-
-   /**
-    * Returns a list of available af device names
-    * NOTE: we operate based on the "device name" rather than the plugin class
-    * name, because the latter is the same for all autofocus device adapters
-    * (it's always CoreAutofocus).
-    * @return - array of af names
-    */
-   public String[] getAfDevices() {
-      String afDevs[] = new String[afs_.size()];
-      int count = 0;
+    // make sure the current autofocus is still in the list, otherwise set it to something...
+    boolean found = false;
+    if (currentAfDevice_ != null) {
       for (AutofocusPlugin af : afs_) {
-         afDevs[count++] = af.getName();
+        if (af.getName().equals(currentAfDevice_.getName())) {
+          found = true;
+          currentAfDevice_ = af;
+        }
       }
-      return afDevs;
-   }
+    }
+    if (!found && afs_.size() > 0) currentAfDevice_ = afs_.get(0);
 
-   /**
-    * NOTE: we operate based on the "device name" rather than the plugin class
-    * name, because the latter is the same for all autofocus device adapters
-    * (it's always CoreAutofocus).
-    */
-   public boolean hasDevice(String dev) {
-      for (AutofocusPlugin af : afs_) {
-         if (af.getName().equals(dev))
-            return true;
-      }
-      return false;
-   }
+    // Show new list in Options Dialog
+    if (afDlg_ != null) afDlg_.rebuild();
+  }
 
-   public void initialize() {
-      for (AutofocusPlugin afPlugin : afs_) {
-         afPlugin.initialize();
-      }
-   }
+  public void showOptionsDialog() {
+    if (afDlg_ == null) afDlg_ = new AutofocusPropertyEditor(studio_, this);
+    afDlg_.setVisible(true);
+    if (currentAfDevice_ != null) {
+      currentAfDevice_.applySettings();
+      currentAfDevice_.saveSettings();
+    }
+  }
+
+  public void closeOptionsDialog() {
+    if (afDlg_ != null) afDlg_.cleanup();
+  }
+
+  /**
+   * Returns a list of available af device names NOTE: we operate based on the "device name" rather
+   * than the plugin class name, because the latter is the same for all autofocus device adapters
+   * (it's always CoreAutofocus).
+   *
+   * @return - array of af names
+   */
+  public String[] getAfDevices() {
+    String afDevs[] = new String[afs_.size()];
+    int count = 0;
+    for (AutofocusPlugin af : afs_) {
+      afDevs[count++] = af.getName();
+    }
+    return afDevs;
+  }
+
+  /**
+   * NOTE: we operate based on the "device name" rather than the plugin class name, because the
+   * latter is the same for all autofocus device adapters (it's always CoreAutofocus).
+   */
+  public boolean hasDevice(String dev) {
+    for (AutofocusPlugin af : afs_) {
+      if (af.getName().equals(dev)) return true;
+    }
+    return false;
+  }
+
+  public void initialize() {
+    for (AutofocusPlugin afPlugin : afs_) {
+      afPlugin.initialize();
+    }
+  }
 }

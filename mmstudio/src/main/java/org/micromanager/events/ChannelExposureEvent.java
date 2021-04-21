@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -21,38 +21,27 @@
 package org.micromanager.events;
 
 /**
- * This class signals when the exposure time for one of the channels of the
- * current channel group has been changed.
+ * This class signals when the exposure time for one of the channels of the current channel group
+ * has been changed.
  */
 public interface ChannelExposureEvent {
 
-    /**
-    * Return the new exposure time for the channel.
-    */
-    double getNewExposureTime();
+  /** Return the new exposure time for the channel. */
+  double getNewExposureTime();
 
-   /**
-    * Return the name of the channel group in which the modified channel
-    * is located.
-    */
-   String getChannelGroup();
+  /** Return the name of the channel group in which the modified channel is located. */
+  String getChannelGroup();
 
-   /**
-    * Return the channel whose exposure time has changed.
-    */
-    String getChannel();
+  /** Return the channel whose exposure time has changed. */
+  String getChannel();
 
-   /**
-    * Returns true if this channel is the currently-active channel (i.e. the
-    * one used for snaps and live mode, the one whose exposure time is
-    * displayed in the main window).
-    */
-    boolean isMainExposureTime();
+  /**
+   * Returns true if this channel is the currently-active channel (i.e. the one used for snaps and
+   * live mode, the one whose exposure time is displayed in the main window).
+   */
+  boolean isMainExposureTime();
 
-   /**
-    *
-    * @deprecated use {@link #isMainExposureTime()} instead
-    */
-   @Deprecated
-    boolean getIsMainExposureTime();
+  /** @deprecated use {@link #isMainExposureTime()} instead */
+  @Deprecated
+  boolean getIsMainExposureTime();
 }

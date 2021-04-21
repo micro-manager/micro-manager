@@ -13,65 +13,64 @@ package org.micromanager.internal.diagnostics;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
-
 public final class ThreadExceptionLogger implements Thread.UncaughtExceptionHandler {
-   private static boolean setUp_ = false;
-   public static void setUp() {
-      if (setUp_) {
-         return;
-      }
+  private static boolean setUp_ = false;
 
-      Thread.setDefaultUncaughtExceptionHandler(
-            new ThreadExceptionLogger(Thread.getDefaultUncaughtExceptionHandler()));
+  public static void setUp() {
+    if (setUp_) {
+      return;
+    }
 
-      // Be nice: don't disable an existing handler
-      if (System.getProperty("sun.awt.exception.handler") == null) {
-         System.setProperty("sun.awt.exception.handler",
-               ThreadExceptionLogger.class.getName());
-      }
+    Thread.setDefaultUncaughtExceptionHandler(
+        new ThreadExceptionLogger(Thread.getDefaultUncaughtExceptionHandler()));
 
-      setUp_ = true;
-   }
+    // Be nice: don't disable an existing handler
+    if (System.getProperty("sun.awt.exception.handler") == null) {
+      System.setProperty("sun.awt.exception.handler", ThreadExceptionLogger.class.getName());
+    }
 
-   private final Thread.UncaughtExceptionHandler chainedHandler_;
+    setUp_ = true;
+  }
 
-   public ThreadExceptionLogger(Thread.UncaughtExceptionHandler chained) {
-      chainedHandler_ = chained;
-   }
+  private final Thread.UncaughtExceptionHandler chainedHandler_;
 
-   // For instantiation by Swing via sun.awt.exception.handler
-   public ThreadExceptionLogger() {
-      chainedHandler_ = null;
-   }
+  public ThreadExceptionLogger(Thread.UncaughtExceptionHandler chained) {
+    chainedHandler_ = chained;
+  }
 
-   @Override
-   public void uncaughtException(Thread t, Throwable e) {
-      ReportingUtils.logMessage("Thread " + t.getId() + " (" + t.getName() +
-            ") terminated with uncaught exception");
-      logException(e);
-      if (chainedHandler_ != null) {
-         chainedHandler_.uncaughtException(t, e);
-      }
-   }
+  // For instantiation by Swing via sun.awt.exception.handler
+  public ThreadExceptionLogger() {
+    chainedHandler_ = null;
+  }
 
-   // This method is called reflectively via the sun.awt.exception.handler mechanism.
-   public void handle(Throwable e) {
-      ReportingUtils.logMessage("Uncaught exception in AWT/Swing event dispatch thread:");
-      logException(e);
-   }
+  @Override
+  public void uncaughtException(Thread t, Throwable e) {
+    ReportingUtils.logMessage(
+        "Thread " + t.getId() + " (" + t.getName() + ") terminated with uncaught exception");
+    logException(e);
+    if (chainedHandler_ != null) {
+      chainedHandler_.uncaughtException(t, e);
+    }
+  }
 
-   // TODO Factor out (make common with ReportingUtils.logError()).
-   private void logException(Throwable e) {
-      ReportingUtils.logMessage(e.toString());
+  // This method is called reflectively via the sun.awt.exception.handler mechanism.
+  public void handle(Throwable e) {
+    ReportingUtils.logMessage("Uncaught exception in AWT/Swing event dispatch thread:");
+    logException(e);
+  }
 
-      for (StackTraceElement frame : e.getStackTrace()) {
-         ReportingUtils.logMessage("  at " + frame.toString());
-      }
+  // TODO Factor out (make common with ReportingUtils.logError()).
+  private void logException(Throwable e) {
+    ReportingUtils.logMessage(e.toString());
 
-      Throwable cause = e.getCause();
-      if (cause != null) {
-         ReportingUtils.logMessage("Caused by exception:");
-         logException(cause);
-      }
-   }
+    for (StackTraceElement frame : e.getStackTrace()) {
+      ReportingUtils.logMessage("  at " + frame.toString());
+    }
+
+    Throwable cause = e.getCause();
+    if (cause != null) {
+      ReportingUtils.logMessage("Caused by exception:");
+      logException(cause);
+    }
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, December 3, 2006
 //               Chris Weisiger, 2015
@@ -22,63 +22,50 @@
 
 package org.micromanager;
 
-
 import java.awt.geom.AffineTransform;
 
-
 /**
- * Legacy interface that implements some methods from the old 1.4 API.
- * Available in the Beanshell scripting interface as "mm.compat()" or
- * "mm.getCompatibilityInterface()".
+ * Legacy interface that implements some methods from the old 1.4 API. Available in the Beanshell
+ * scripting interface as "mm.compat()" or "mm.getCompatibilityInterface()".
  */
 public interface CompatibilityInterface {
-   /**
-    * Displays an error message and returns true if the run-time Micro-Manager
-    * version is less than the one specified.
-    * Versions in Micro-Manager are of the format:
-    * major.minor.minute date
-    * where ' date' can be omitted
-    * Examples:
-    * 1.4.6
-    * 1.4.6 20110831
-    * When a date is appended to a version number, it will be newer than the
-    * same version without a date
-    * @param version - minimum version needen to run this code
-    * @return true if the run-time Micro-Manager version is less than the
-    * one specified
-    * @throws NumberFormatException if the version number is not in the format
-    * expected.
-    */
-   public boolean versionLessThan(String version) throws NumberFormatException;
+  /**
+   * Displays an error message and returns true if the run-time Micro-Manager version is less than
+   * the one specified. Versions in Micro-Manager are of the format: major.minor.minute date where '
+   * date' can be omitted Examples: 1.4.6 1.4.6 20110831 When a date is appended to a version
+   * number, it will be newer than the same version without a date
+   *
+   * @param version - minimum version needen to run this code
+   * @return true if the run-time Micro-Manager version is less than the one specified
+   * @throws NumberFormatException if the version number is not in the format expected.
+   */
+  public boolean versionLessThan(String version) throws NumberFormatException;
 
-   /**
-    * @return the currently running Micro-Manager version
-    */
-   public String getVersion();
+  /** @return the currently running Micro-Manager version */
+  public String getVersion();
 
-   /**
-    * Retrieve the affine transform describing how the camera image maps to
-    * stage coordinates, for a given pixel size config. This method will pull
-    * information from the profile if available, and failing that will look in
-    * the Java Preferences. Will return null if no transform is found.
-    * @param config The configuration (per core.getCurrentPixelSizeConfig())
-    *        to find the affine transform for.
-    * @return The transform describing how the camera maps to the stage.
-    *
-    * @deprecated - Use core.getPixelSizeAffineByID(config) instead
-    */
-   @Deprecated
-   public AffineTransform getCameraTransform(String config);
+  /**
+   * Retrieve the affine transform describing how the camera image maps to stage coordinates, for a
+   * given pixel size config. This method will pull information from the profile if available, and
+   * failing that will look in the Java Preferences. Will return null if no transform is found.
+   *
+   * @param config The configuration (per core.getCurrentPixelSizeConfig()) to find the affine
+   *     transform for.
+   * @return The transform describing how the camera maps to the stage.
+   * @deprecated - Use core.getPixelSizeAffineByID(config) instead
+   */
+  @Deprecated
+  public AffineTransform getCameraTransform(String config);
 
-   /**
-    * Set a new affine transform for describing how the camera image maps to
-    * the stage coordinates. The value will be stored in the user's profile.
-    * @param transform The new transform to use.
-    * @param config The configuration (per core.getCurrentPixelSizeConfig())
-    *        to set the affine transform for.
-    * @deprecated - Use core.setPixelSizeAffine(config, DoubleVector transform)
-    *                instead
-    */
-   @Deprecated
-   public void setCameraTransform(AffineTransform transform, String config);
+  /**
+   * Set a new affine transform for describing how the camera image maps to the stage coordinates.
+   * The value will be stored in the user's profile.
+   *
+   * @param transform The new transform to use.
+   * @param config The configuration (per core.getCurrentPixelSizeConfig()) to set the affine
+   *     transform for.
+   * @deprecated - Use core.setPixelSizeAffine(config, DoubleVector transform) instead
+   */
+  @Deprecated
+  public void setCameraTransform(AffineTransform transform, String config);
 }

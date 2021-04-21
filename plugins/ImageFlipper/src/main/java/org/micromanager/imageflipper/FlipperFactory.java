@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger
 //
@@ -27,18 +27,20 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
 public class FlipperFactory implements ProcessorFactory {
-   private final PropertyMap settings_;
-   private final Studio studio_;
+  private final PropertyMap settings_;
+  private final Studio studio_;
 
-   public FlipperFactory(PropertyMap settings, Studio studio) {
-      settings_ = settings;
-      studio_ = studio;
-   }
+  public FlipperFactory(PropertyMap settings, Studio studio) {
+    settings_ = settings;
+    studio_ = studio;
+  }
 
-   @Override
-   public Processor createProcessor() {
-      return new FlipperProcessor(studio_, settings_.getString("camera", ""),
-            settings_.getInteger("rotation", 0),
-            settings_.getBoolean("shouldMirror", false));
-   }
+  @Override
+  public Processor createProcessor() {
+    return new FlipperProcessor(
+        studio_,
+        settings_.getString("camera", ""),
+        settings_.getInteger("rotation", 0),
+        settings_.getBoolean("shouldMirror", false));
+  }
 }

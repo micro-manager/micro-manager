@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -21,7 +21,6 @@
 package org.micromanager.data;
 
 /**
- * An unchecked exception thrown when an attempt is made to modify a Datastore
- * that has been frozen.
+ * An unchecked exception thrown when an attempt is made to modify a Datastore that has been frozen.
  */
 public class DatastoreFrozenException extends UnsupportedOperationException {}

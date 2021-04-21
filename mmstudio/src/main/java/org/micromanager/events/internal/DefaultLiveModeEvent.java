@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API implementation
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API implementation
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -23,14 +23,14 @@ package org.micromanager.events.internal;
 import org.micromanager.events.LiveModeEvent;
 
 public final class DefaultLiveModeEvent implements LiveModeEvent {
-   private boolean isOn_;
+  private boolean isOn_;
 
-   public DefaultLiveModeEvent(boolean isOn) {
-      isOn_ = isOn;
-   }
+  public DefaultLiveModeEvent(boolean isOn) {
+    isOn_ = isOn;
+  }
 
-   @Override
-   public boolean isOn() {
-      return isOn_;
-   }
+  @Override
+  public boolean isOn() {
+    return isOn_;
+  }
 }

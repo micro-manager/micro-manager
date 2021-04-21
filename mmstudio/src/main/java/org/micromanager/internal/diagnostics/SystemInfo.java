@@ -15,53 +15,54 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class SystemInfo {
-   public static void dumpAllToCoreLog(boolean includeUnchanging) {
-      List<SystemInfoSection> sections = getAllSections(includeUnchanging);
-      for (SystemInfoSection section : sections) {
-         mmcorej.CMMCore core = org.micromanager.internal.MMStudio.getInstance().core();
-         core.logMessage(section.getReport());
-      }
-   }
+  public static void dumpAllToCoreLog(boolean includeUnchanging) {
+    List<SystemInfoSection> sections = getAllSections(includeUnchanging);
+    for (SystemInfoSection section : sections) {
+      mmcorej.CMMCore core = org.micromanager.internal.MMStudio.getInstance().core();
+      core.logMessage(section.getReport());
+    }
+  }
 
-   public static String getAllAsText(boolean includeUnchanging) {
-      StringBuilder sb = new StringBuilder();
-      List<SystemInfoSection> sections = getAllSections(includeUnchanging);
-      for (SystemInfoSection section : sections) {
-         sb.append(section.getReport());
-      }
-      return sb.toString();
-   }
+  public static String getAllAsText(boolean includeUnchanging) {
+    StringBuilder sb = new StringBuilder();
+    List<SystemInfoSection> sections = getAllSections(includeUnchanging);
+    for (SystemInfoSection section : sections) {
+      sb.append(section.getReport());
+    }
+    return sb.toString();
+  }
 
-   public interface SystemInfoSection {
-      String getTitle();
-      String getReport();
+  public interface SystemInfoSection {
+    String getTitle();
 
-      // In addition to implementing the above methods, implementing classes
-      // must satisfy the following:
-      // - Objects should be immutable (information should be collected at
-      //   construction time)
-      // - Constructors should not throw.
-   }
+    String getReport();
 
-   // Private for the time being
-   private static List<SystemInfoSection> getAllSections(boolean includeUnchanging) {
-      List<SystemInfoSection> sections = new ArrayList<SystemInfoSection>();
+    // In addition to implementing the above methods, implementing classes
+    // must satisfy the following:
+    // - Objects should be immutable (information should be collected at
+    //   construction time)
+    // - Constructors should not throw.
+  }
 
-      if (includeUnchanging) {
-         sections.add(new MMVersionInfoSection());
-         sections.add(new OperatingSystemInfoSection());
-         sections.add(new JVMInfoSection());
-         sections.add(new JVMArgumentsInfoSection());
-         sections.add(new JavaSystemPropertiesInfoSection()); // Strictly speaking, not unchanging.
-         sections.add(new ProcessorInfoSection());
-      }
-      sections.add(new PhysicalMemoryInfoSection());
-      sections.add(new JVMMemoryInfoSection());
-      sections.add(new JVMThreadInfoSection());
-      sections.add(new JVMDeadlockedThreadInfoSection());
-      sections.add(new CoreBasicInfoSection());
-      sections.add(new CorePropertyCacheInfoSection());
+  // Private for the time being
+  private static List<SystemInfoSection> getAllSections(boolean includeUnchanging) {
+    List<SystemInfoSection> sections = new ArrayList<SystemInfoSection>();
 
-      return sections;
-   }
+    if (includeUnchanging) {
+      sections.add(new MMVersionInfoSection());
+      sections.add(new OperatingSystemInfoSection());
+      sections.add(new JVMInfoSection());
+      sections.add(new JVMArgumentsInfoSection());
+      sections.add(new JavaSystemPropertiesInfoSection()); // Strictly speaking, not unchanging.
+      sections.add(new ProcessorInfoSection());
+    }
+    sections.add(new PhysicalMemoryInfoSection());
+    sections.add(new JVMMemoryInfoSection());
+    sections.add(new JVMThreadInfoSection());
+    sections.add(new JVMDeadlockedThreadInfoSection());
+    sections.add(new CoreBasicInfoSection());
+    sections.add(new CorePropertyCacheInfoSection());
+
+    return sections;
+  }
 }

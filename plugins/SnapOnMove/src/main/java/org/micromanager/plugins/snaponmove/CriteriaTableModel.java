@@ -35,33 +35,33 @@ package org.micromanager.plugins.snaponmove;
 import javax.swing.table.AbstractTableModel;
 
 final class CriteriaTableModel extends AbstractTableModel {
-   private static final int NUM_COLUMNS = 1;
+  private static final int NUM_COLUMNS = 1;
 
-   private final MainController controller_;
+  private final MainController controller_;
 
-   CriteriaTableModel(MainController controller) {
-      controller_ = controller;
-   }
+  CriteriaTableModel(MainController controller) {
+    controller_ = controller;
+  }
 
-   @Override
-   public int getRowCount() {
-      return controller_.getChangeCriteria().size();
-   }
+  @Override
+  public int getRowCount() {
+    return controller_.getChangeCriteria().size();
+  }
 
-   @Override
-   public int getColumnCount() {
-      return NUM_COLUMNS;
-   }
+  @Override
+  public int getColumnCount() {
+    return NUM_COLUMNS;
+  }
 
-   @Override
-   public String getColumnName(int col) {
-      // col should always be 0 as we have 1 column
-      return "Movement Criteria";
-   }
+  @Override
+  public String getColumnName(int col) {
+    // col should always be 0 as we have 1 column
+    return "Movement Criteria";
+  }
 
-   @Override
-   public Object getValueAt(int row, int col) {
-      // col should always be 0 as we have 1 column
-      return controller_.getChangeCriteria().get(row).toString();
-   }
+  @Override
+  public Object getValueAt(int row, int col) {
+    // col should always be 0 as we have 1 column
+    return controller_.getChangeCriteria().get(row).toString();
+  }
 }

@@ -12,82 +12,81 @@ import org.micromanager.profile.UserProfileMigration;
 import org.micromanager.profile.UserProfileMigrator;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
-/**
- *
- * @author Mark A. Tsuchida
- */
+/** @author Mark A. Tsuchida */
 public class StartupSettings {
-   private static enum ProfileKey implements UserProfileMigration {
-      SKIP_PROFILE_SELECTION_AT_STARTUP {
-         @Override
-         public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {
-            PropertyMap legacySettings = legacy.getPropertyMap(
-                  "org.micromanager.internal.utils.DefaultUserProfile",
-                  PropertyMaps.emptyPropertyMap());
-            final String legacyKey = "always use the default user profile";
-            if (legacySettings.containsBoolean(legacyKey)) {
-               modern.putBoolean(name(), legacySettings.getBoolean(legacyKey, false));
-            }
-         }
-      },
-
-      SKIP_CONFIG_SELECTION_AT_STARTUP {
-         @Override
-         public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {
-            PropertyMap legacySettings = legacy.getPropertyMap(
-                  "org.micromanager.internal.dialogs.IntroDlg",
-                  PropertyMaps.emptyPropertyMap());
-            final String legacyKey = "whether or not the intro dialog should include a prompt for the config file";
-            if (legacySettings.containsBoolean(legacyKey)) {
-               modern.putBoolean(name(), !legacySettings.getBoolean(legacyKey, true));
-            }
-         }
-      },
-
-      ;
-
+  private static enum ProfileKey implements UserProfileMigration {
+    SKIP_PROFILE_SELECTION_AT_STARTUP {
       @Override
-      public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {}
-   }
-   static {
-      UserProfileMigrator.registerMigrations(StartupSettings.class,
-            ProfileKey.values());
-   }
+      public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {
+        PropertyMap legacySettings =
+            legacy.getPropertyMap(
+                "org.micromanager.internal.utils.DefaultUserProfile",
+                PropertyMaps.emptyPropertyMap());
+        final String legacyKey = "always use the default user profile";
+        if (legacySettings.containsBoolean(legacyKey)) {
+          modern.putBoolean(name(), legacySettings.getBoolean(legacyKey, false));
+        }
+      }
+    },
 
-   private final UserProfile profile_;
+    SKIP_CONFIG_SELECTION_AT_STARTUP {
+      @Override
+      public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {
+        PropertyMap legacySettings =
+            legacy.getPropertyMap(
+                "org.micromanager.internal.dialogs.IntroDlg", PropertyMaps.emptyPropertyMap());
+        final String legacyKey =
+            "whether or not the intro dialog should include a prompt for the config file";
+        if (legacySettings.containsBoolean(legacyKey)) {
+          modern.putBoolean(name(), !legacySettings.getBoolean(legacyKey, true));
+        }
+      }
+    },
+    ;
 
-   public static StartupSettings create(UserProfile profile) {
-      return new StartupSettings(profile);
-   }
+    @Override
+    public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {}
+  }
 
-   private StartupSettings(UserProfile profile) {
-      profile_ = profile;
-   }
+  static {
+    UserProfileMigrator.registerMigrations(StartupSettings.class, ProfileKey.values());
+  }
 
-   public void setSkipProfileSelectionAtStartup(boolean flag) {
-      profile_.getSettings(getClass()).
-            putBoolean(ProfileKey.SKIP_PROFILE_SELECTION_AT_STARTUP.name(),
-                  flag);
-   }
+  private final UserProfile profile_;
 
-   public boolean shouldSkipProfileSelectionAtStartup() {
-      return profile_.getSettings(getClass()).
-            getBoolean(ProfileKey.SKIP_PROFILE_SELECTION_AT_STARTUP.name(),
-                  false);
-   }
+  public static StartupSettings create(UserProfile profile) {
+    return new StartupSettings(profile);
+  }
 
-   public void setSkipConfigSelectionAtStartup(boolean skip) {
-      profile_.getSettings(getClass()).putBoolean(
-            ProfileKey.SKIP_CONFIG_SELECTION_AT_STARTUP.name(), skip);
-   }
+  private StartupSettings(UserProfile profile) {
+    profile_ = profile;
+  }
 
-   public boolean shouldSkipConfigSelectionAtStartup() {
-      return profile_.getSettings(getClass()).
-            getBoolean(ProfileKey.SKIP_CONFIG_SELECTION_AT_STARTUP.name(), false);
-   }
+  public void setSkipProfileSelectionAtStartup(boolean flag) {
+    profile_
+        .getSettings(getClass())
+        .putBoolean(ProfileKey.SKIP_PROFILE_SELECTION_AT_STARTUP.name(), flag);
+  }
 
-   public boolean shouldSkipUserInteractionWithSplashScreen() {
-      return shouldSkipProfileSelectionAtStartup() &&
-            shouldSkipConfigSelectionAtStartup();
-   }
+  public boolean shouldSkipProfileSelectionAtStartup() {
+    return profile_
+        .getSettings(getClass())
+        .getBoolean(ProfileKey.SKIP_PROFILE_SELECTION_AT_STARTUP.name(), false);
+  }
+
+  public void setSkipConfigSelectionAtStartup(boolean skip) {
+    profile_
+        .getSettings(getClass())
+        .putBoolean(ProfileKey.SKIP_CONFIG_SELECTION_AT_STARTUP.name(), skip);
+  }
+
+  public boolean shouldSkipConfigSelectionAtStartup() {
+    return profile_
+        .getSettings(getClass())
+        .getBoolean(ProfileKey.SKIP_CONFIG_SELECTION_AT_STARTUP.name(), false);
+  }
+
+  public boolean shouldSkipUserInteractionWithSplashScreen() {
+    return shouldSkipProfileSelectionAtStartup() && shouldSkipConfigSelectionAtStartup();
+  }
 }

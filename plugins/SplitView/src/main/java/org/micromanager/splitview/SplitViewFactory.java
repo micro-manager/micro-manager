@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          SplitViewProcessor.java
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// FILE:          SplitViewProcessor.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
@@ -19,8 +19,6 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-
-
 package org.micromanager.splitview;
 
 import org.micromanager.data.Processor;
@@ -29,17 +27,18 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
 public class SplitViewFactory implements ProcessorFactory {
-   private final Studio studio_;
-   private final String orientation_;
-   private final int numSplits_;
-   public SplitViewFactory(Studio studio, PropertyMap settings) {
-      studio_ = studio;
-      orientation_ = settings.getString("orientation", SplitViewFrame.LR);
-      numSplits_ = settings.getInteger("splits", 2);
-   }
+  private final Studio studio_;
+  private final String orientation_;
+  private final int numSplits_;
 
-   @Override
-   public Processor createProcessor() {
-      return new SplitViewProcessor(studio_, orientation_, numSplits_);
-   }
+  public SplitViewFactory(Studio studio, PropertyMap settings) {
+    studio_ = studio;
+    orientation_ = settings.getString("orientation", SplitViewFrame.LR);
+    numSplits_ = settings.getInteger("splits", 2);
+  }
+
+  @Override
+  public Processor createProcessor() {
+    return new SplitViewProcessor(studio_, orientation_, numSplits_);
+  }
 }

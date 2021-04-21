@@ -8,23 +8,23 @@ package org.micromanager.display.internal.event;
 import org.micromanager.display.DataViewer;
 
 /**
- * TODO: any external dataviewre that likes to be managed needs to be able
- * to create this event.  Therefore, should this be moved to 
- * org.micromanager.display.event or org.micromanager.event?
+ * TODO: any external dataviewre that likes to be managed needs to be able to create this event.
+ * Therefore, should this be moved to org.micromanager.display.event or org.micromanager.event?
+ *
  * @author mark
  */
 public class DataViewerDidBecomeActiveEvent {
-   private final DataViewer viewer_;
+  private final DataViewer viewer_;
 
-   public static DataViewerDidBecomeActiveEvent create(DataViewer viewer) {
-      return new DataViewerDidBecomeActiveEvent(viewer);
-   }
+  public static DataViewerDidBecomeActiveEvent create(DataViewer viewer) {
+    return new DataViewerDidBecomeActiveEvent(viewer);
+  }
 
-   private DataViewerDidBecomeActiveEvent(DataViewer viewer) {
-      viewer_ = viewer;
-   }
+  private DataViewerDidBecomeActiveEvent(DataViewer viewer) {
+    viewer_ = viewer;
+  }
 
-   public DataViewer getDataViewer() {
-      return viewer_;
-   }
+  public DataViewer getDataViewer() {
+    return viewer_;
+  }
 }

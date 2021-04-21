@@ -10,42 +10,39 @@ import org.micromanager.internal.utils.ReportingUtils;
 // a system-wide EventBus for certain general-purpose events.
 public final class DefaultEventManager implements EventManager {
 
-   private final EventBus bus_;
-   private final LogManager logger_;
-   
-   /**
-    * DefaultEventManager is basically a pass-through to the Google Eventbus
-    * 
-    */
-   public DefaultEventManager() {
-      bus_ = new EventBus(EventBusExceptionLogger.getInstance());
-      logger_ = ReportingUtils.getWrapper();
-   }
+  private final EventBus bus_;
+  private final LogManager logger_;
 
-   @Override
-   public void registerForEvents(Object obj) {
-      try {
-         bus_.register(obj);
-      } catch (IllegalArgumentException iae) {
-         logger_.logError(iae, "Error while registering");
-      }
-   }
+  /** DefaultEventManager is basically a pass-through to the Google Eventbus */
+  public DefaultEventManager() {
+    bus_ = new EventBus(EventBusExceptionLogger.getInstance());
+    logger_ = ReportingUtils.getWrapper();
+  }
 
-   @Override
-   public void unregisterForEvents(Object obj) {
-      try {
-         bus_.unregister(obj);
-      } catch (IllegalArgumentException iae) {
-         logger_.logError(iae, "Error while unregistering");
-      }
-   }
+  @Override
+  public void registerForEvents(Object obj) {
+    try {
+      bus_.register(obj);
+    } catch (IllegalArgumentException iae) {
+      logger_.logError(iae, "Error while registering");
+    }
+  }
 
-   @Override
-   public void post(Object obj) {
-      try {
-         bus_.post(obj);
-      } catch (IllegalArgumentException iae) {
-         logger_.logError(iae, "Error while posting");
-      }
-   }
+  @Override
+  public void unregisterForEvents(Object obj) {
+    try {
+      bus_.unregister(obj);
+    } catch (IllegalArgumentException iae) {
+      logger_.logError(iae, "Error while unregistering");
+    }
+  }
+
+  @Override
+  public void post(Object obj) {
+    try {
+      bus_.post(obj);
+    } catch (IllegalArgumentException iae) {
+      logger_.logError(iae, "Error while posting");
+    }
+  }
 }

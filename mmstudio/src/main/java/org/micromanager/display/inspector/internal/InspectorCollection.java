@@ -6,56 +6,52 @@
 package org.micromanager.display.inspector.internal;
 
 import com.google.common.eventbus.Subscribe;
+import org.micromanager.display.internal.event.InspectorDidCloseEvent;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.micromanager.display.internal.event.InspectorDidCloseEvent;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public class InspectorCollection {
-   private final Set<InspectorController> inspectors_ =
-         new HashSet<InspectorController>();
+  private final Set<InspectorController> inspectors_ = new HashSet<InspectorController>();
 
-   public static InspectorCollection create() {
-      return new InspectorCollection();
-   }
+  public static InspectorCollection create() {
+    return new InspectorCollection();
+  }
 
-   private InspectorCollection() {
-   }
+  private InspectorCollection() {}
 
-   public void addInspector(InspectorController inspector) {
-      inspectors_.add(inspector);
-      inspector.registerForEvents(this);
-   }
+  public void addInspector(InspectorController inspector) {
+    inspectors_.add(inspector);
+    inspector.registerForEvents(this);
+  }
 
-   private void removeInspector(InspectorController inspector) {
-      inspector.unregisterForEvents(this);
-      inspectors_.remove(inspector);
-   }
+  private void removeInspector(InspectorController inspector) {
+    inspector.unregisterForEvents(this);
+    inspectors_.remove(inspector);
+  }
 
-   public boolean hasInspector(InspectorController inspector) {
-      return inspectors_.contains(inspector);
-   }
+  public boolean hasInspector(InspectorController inspector) {
+    return inspectors_.contains(inspector);
+  }
 
-   public List<InspectorController> getAllInspectors() {
-      return new ArrayList<InspectorController>(inspectors_);
-   }
-   
-   public boolean hasInspectorForFrontmostDataViewer() {
-      for (InspectorController inspector : inspectors_) {
-         if (inspector.isAttachedToFrontmostDataViewer()) {
-            return true;
-         }
+  public List<InspectorController> getAllInspectors() {
+    return new ArrayList<InspectorController>(inspectors_);
+  }
+
+  public boolean hasInspectorForFrontmostDataViewer() {
+    for (InspectorController inspector : inspectors_) {
+      if (inspector.isAttachedToFrontmostDataViewer()) {
+        return true;
       }
-      return false;
-   }
+    }
+    return false;
+  }
 
-   @Subscribe
-   public void onEvent(InspectorDidCloseEvent e) {
-      removeInspector(e.getInspector());
-   }
+  @Subscribe
+  public void onEvent(InspectorDidCloseEvent e) {
+    removeInspector(e.getInspector());
+  }
 }

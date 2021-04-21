@@ -15,31 +15,29 @@
 package org.micromanager;
 
 /**
- * Any object that bears an internal event bus to which other objects can
- * subscribe to receive events.
+ * Any object that bears an internal event bus to which other objects can subscribe to receive
+ * events.
  *
  * @author Mark A. Tsuchida
  */
 public interface EventPublisher {
-   /**
-    * Register an object to receive events on the viewer event bus.
-    * <p>
-    * Objects registered by this method will receive events through their
-    * methods bearing a {@code com.google.common.eventbus.Subscribe}
-    * annotation. See Guava Event Bus documentation for how this works.
-    *
-    * @param recipient the object to register
-    *
-    * @see #unregisterForEvents
-    */
-   void registerForEvents(Object recipient);
+  /**
+   * Register an object to receive events on the viewer event bus.
+   *
+   * <p>Objects registered by this method will receive events through their methods bearing a {@code
+   * com.google.common.eventbus.Subscribe} annotation. See Guava Event Bus documentation for how
+   * this works.
+   *
+   * @param recipient the object to register
+   * @see #unregisterForEvents
+   */
+  void registerForEvents(Object recipient);
 
-   /**
-    * Unregister an object from the viewer event bus.
-    *
-    * @param recipient the object to unregister
-    *
-    * @see #registerForEvents
-    */
-   void unregisterForEvents(Object recipient);
+  /**
+   * Unregister an object from the viewer event bus.
+   *
+   * @param recipient the object to unregister
+   * @see #registerForEvents
+   */
+  void unregisterForEvents(Object recipient);
 }

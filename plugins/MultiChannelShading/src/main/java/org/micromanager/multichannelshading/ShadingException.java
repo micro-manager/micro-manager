@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ShadingExcaption.java
-//PROJECT:       Micro-Manager  
-//SUBSYSTEM:     MultiChannelShading plugin
-//-----------------------------------------------------------------------------
+// FILE:          ShadingExcaption.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     MultiChannelShading plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Kurt Thorn, Nico Stuurman
 //
@@ -21,15 +21,11 @@
 
 package org.micromanager.multichannelshading;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 public class ShadingException extends Exception {
-   private static final long serialVersionUID = 1982469123029387598L;
+  private static final long serialVersionUID = 1982469123029387598L;
 
-   public ShadingException(String msg) {
-      super(msg);
-   }
-   
+  public ShadingException(String msg) {
+    super(msg);
+  }
 }

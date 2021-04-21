@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          StatusSubPanel.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          StatusSubPanel.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -36,171 +36,164 @@ import org.micromanager.asidispim.utils.StagePositionUpdater;
 
 import net.miginfocom.swing.MigLayout;
 
-
-/**
- *
- * @author Jon
- */
+/** @author Jon */
 @SuppressWarnings("serial")
 public final class StatusSubPanel extends ListeningJPanel {
-   
-   private final Devices devices_;
-   private final Properties props_;
-   private final Positions positions_;
-   private final StagePositionUpdater stagePosUpdater_; 
-   
-   private final ColorSquare galvoA_;
-   private final ColorSquare galvoB_;
-   private final ColorSquare piezoA_;
-   private final ColorSquare piezoB_;
-   
-   /**
-    * 
-     * @param devices
-     * @param props
-     * @param positions
-     * @param stagePosUpdater
-    */
-   public StatusSubPanel(Devices devices, Properties props, Positions positions,
-         StagePositionUpdater stagePosUpdater) {
-      super (MyStrings.PanelNames.STATUS_SUBPANEL.toString(),
-            new MigLayout(
-              "", 
-              "[right]5[left]",
-              "[]"));
-      
-      devices_ = devices;
-      props_ = props;
-      positions_ = positions;
-      stagePosUpdater_ = stagePosUpdater;
-      
-      galvoA_ = new ColorSquare();
-      super.add(galvoA_);
-      super.add(new JLabel("Scan A"), "wrap");
-      galvoA_.setToolTipText("Black = blanked; Gray = no device; Green = centered;"
+
+  private final Devices devices_;
+  private final Properties props_;
+  private final Positions positions_;
+  private final StagePositionUpdater stagePosUpdater_;
+
+  private final ColorSquare galvoA_;
+  private final ColorSquare galvoB_;
+  private final ColorSquare piezoA_;
+  private final ColorSquare piezoB_;
+
+  /**
+   * @param devices
+   * @param props
+   * @param positions
+   * @param stagePosUpdater
+   */
+  public StatusSubPanel(
+      Devices devices,
+      Properties props,
+      Positions positions,
+      StagePositionUpdater stagePosUpdater) {
+    super(
+        MyStrings.PanelNames.STATUS_SUBPANEL.toString(), new MigLayout("", "[right]5[left]", "[]"));
+
+    devices_ = devices;
+    props_ = props;
+    positions_ = positions;
+    stagePosUpdater_ = stagePosUpdater;
+
+    galvoA_ = new ColorSquare();
+    super.add(galvoA_);
+    super.add(new JLabel("Scan A"), "wrap");
+    galvoA_.setToolTipText(
+        "Black = blanked; Gray = no device; Green = centered;"
             + " Orange = near center; Red = far from center; Pink = making sheet");
-      
-      galvoB_ = new ColorSquare();
-      super.add(galvoB_);
-      super.add(new JLabel("Scan B"), "wrap");
-      galvoB_.setToolTipText("Black = blanked; Gray = no device; Green = centered;"
+
+    galvoB_ = new ColorSquare();
+    super.add(galvoB_);
+    super.add(new JLabel("Scan B"), "wrap");
+    galvoB_.setToolTipText(
+        "Black = blanked; Gray = no device; Green = centered;"
             + " Orange = near center; Red = far from center; Pink = making sheet");
-      
-      piezoA_ = new ColorSquare();
-      super.add(piezoA_);
-      super.add(new JLabel("Piezo A"), "wrap");
-      piezoA_.setToolTipText("Gray = no device; Green = centered;"
-            + " Orange = near center; Red = far from center");
-      
-      piezoB_ = new ColorSquare();
-      super.add(piezoB_);
-      super.add(new JLabel("Piezo B"), "wrap");
-      piezoB_.setToolTipText("Gray = no device; Green = centered;"
-            + " Orange = near center; Red = far from center");
-      
-      super.setOpaque(false);
-     
-   }// constructor
-   
-   
-   /**
-    * Private class to draw colored indicator.  Call setColor(Color c) to update.
-    * @author Jon
-    *
-    */
-   public class ColorSquare extends JPanel {
-      
-      public ColorSquare() {
-         super.setOpaque(true);
-         super.setBackground(Color.LIGHT_GRAY);
-      }
-      
-      public void setColor(Color c) {
-         super.setBackground(c);
-      }
-   }
-   
-   
-   /**
-    * Updates specified galvo/scanner indicator.
-    * @param devKey
-    * @param square
-    */
-   private void updateGalvoSquare(Devices.Keys devKey, ColorSquare square) {
-      final double GALVO_CONSIDERED_CENTER = 0.01d;
-      final double GALVO_CLOSE_TO_CENTER = 0.1d;
-      
-      if (!devices_.isValidMMDevice(devKey)) {
-         square.setColor(Color.LIGHT_GRAY);
-         return;
-      }
-      if (props_.getPropValueString(devKey, Properties.Keys.BEAM_ENABLED)
-            .equals(Properties.Values.NO.toString())) {
-         square.setColor(Color.BLACK);
-         return;
-      }
-      if (props_.getPropValueString(devKey, Properties.Keys.SA_MODE_X)
-            .equals(Properties.Values.SAM_ENABLED.toString())) {
-         square.setColor(Color.PINK);
-         return;
-      }
-      double displacement = Math.max(
+
+    piezoA_ = new ColorSquare();
+    super.add(piezoA_);
+    super.add(new JLabel("Piezo A"), "wrap");
+    piezoA_.setToolTipText(
+        "Gray = no device; Green = centered;" + " Orange = near center; Red = far from center");
+
+    piezoB_ = new ColorSquare();
+    super.add(piezoB_);
+    super.add(new JLabel("Piezo B"), "wrap");
+    piezoB_.setToolTipText(
+        "Gray = no device; Green = centered;" + " Orange = near center; Red = far from center");
+
+    super.setOpaque(false);
+  } // constructor
+
+  /**
+   * Private class to draw colored indicator. Call setColor(Color c) to update.
+   *
+   * @author Jon
+   */
+  public class ColorSquare extends JPanel {
+
+    public ColorSquare() {
+      super.setOpaque(true);
+      super.setBackground(Color.LIGHT_GRAY);
+    }
+
+    public void setColor(Color c) {
+      super.setBackground(c);
+    }
+  }
+
+  /**
+   * Updates specified galvo/scanner indicator.
+   *
+   * @param devKey
+   * @param square
+   */
+  private void updateGalvoSquare(Devices.Keys devKey, ColorSquare square) {
+    final double GALVO_CONSIDERED_CENTER = 0.01d;
+    final double GALVO_CLOSE_TO_CENTER = 0.1d;
+
+    if (!devices_.isValidMMDevice(devKey)) {
+      square.setColor(Color.LIGHT_GRAY);
+      return;
+    }
+    if (props_
+        .getPropValueString(devKey, Properties.Keys.BEAM_ENABLED)
+        .equals(Properties.Values.NO.toString())) {
+      square.setColor(Color.BLACK);
+      return;
+    }
+    if (props_
+        .getPropValueString(devKey, Properties.Keys.SA_MODE_X)
+        .equals(Properties.Values.SAM_ENABLED.toString())) {
+      square.setColor(Color.PINK);
+      return;
+    }
+    double displacement =
+        Math.max(
             Math.abs(positions_.getCachedPosition(devKey, Joystick.Directions.X)),
             Math.abs(positions_.getCachedPosition(devKey, Joystick.Directions.Y)));
-      if ( displacement < GALVO_CONSIDERED_CENTER) {
-         square.setColor(Color.GREEN);
-      } else if (displacement < GALVO_CLOSE_TO_CENTER) {
-         square.setColor(Color.ORANGE);
-      } else {
-         square.setColor(Color.RED);
-      }
-   }
-   
-   /**
-    * Updates specified piezo indicator
-    * @param devKey
-    * @param square
-    */
-   private void updatePiezoSquare(Devices.Keys devKey, ColorSquare square) {
-      final double PIEZO_CONSIDERED_CENTER = 1d;
-      final double PIEZO_CLOSE_TO_CENTER = 10d;
-      
-      if (!devices_.isValidMMDevice(devKey)) {
-         square.setColor(Color.LIGHT_GRAY);
-         return;
-      }
-      double displacement = Math.abs(positions_.getCachedPosition(devKey, Joystick.Directions.NONE));
-      if ( displacement < PIEZO_CONSIDERED_CENTER) {
-         square.setColor(Color.GREEN);
-      } else if (displacement < PIEZO_CLOSE_TO_CENTER) {
-         square.setColor(Color.ORANGE);
-      } else {
-         square.setColor(Color.RED);
-      }
-   }
-   
+    if (displacement < GALVO_CONSIDERED_CENTER) {
+      square.setColor(Color.GREEN);
+    } else if (displacement < GALVO_CLOSE_TO_CENTER) {
+      square.setColor(Color.ORANGE);
+    } else {
+      square.setColor(Color.RED);
+    }
+  }
 
-   /**
-    * Called whenever position updater has new information for us
-    */
-   @Override
-   public final void updateStagePositions() {
-      updateGalvoSquare(Devices.Keys.GALVOA, galvoA_);
-      updateGalvoSquare(Devices.Keys.GALVOB, galvoB_);
-      updatePiezoSquare(Devices.Keys.PIEZOA, piezoA_);
-      updatePiezoSquare(Devices.Keys.PIEZOB, piezoB_);
-   }
-   
-   /**
-    * Called whenever position updater stops
-    */
-   @Override
-   public final void stoppedStagePositions() {
-      Color c = stagePosUpdater_.isPaused() ? Color.WHITE : Color.LIGHT_GRAY;
-      galvoA_.setColor(c);
-      galvoB_.setColor(c);
-      piezoA_.setColor(c);
-      piezoB_.setColor(c);
-   }
-   
+  /**
+   * Updates specified piezo indicator
+   *
+   * @param devKey
+   * @param square
+   */
+  private void updatePiezoSquare(Devices.Keys devKey, ColorSquare square) {
+    final double PIEZO_CONSIDERED_CENTER = 1d;
+    final double PIEZO_CLOSE_TO_CENTER = 10d;
+
+    if (!devices_.isValidMMDevice(devKey)) {
+      square.setColor(Color.LIGHT_GRAY);
+      return;
+    }
+    double displacement = Math.abs(positions_.getCachedPosition(devKey, Joystick.Directions.NONE));
+    if (displacement < PIEZO_CONSIDERED_CENTER) {
+      square.setColor(Color.GREEN);
+    } else if (displacement < PIEZO_CLOSE_TO_CENTER) {
+      square.setColor(Color.ORANGE);
+    } else {
+      square.setColor(Color.RED);
+    }
+  }
+
+  /** Called whenever position updater has new information for us */
+  @Override
+  public final void updateStagePositions() {
+    updateGalvoSquare(Devices.Keys.GALVOA, galvoA_);
+    updateGalvoSquare(Devices.Keys.GALVOB, galvoB_);
+    updatePiezoSquare(Devices.Keys.PIEZOA, piezoA_);
+    updatePiezoSquare(Devices.Keys.PIEZOB, piezoB_);
+  }
+
+  /** Called whenever position updater stops */
+  @Override
+  public final void stoppedStagePositions() {
+    Color c = stagePosUpdater_.isPaused() ? Color.WHITE : Color.LIGHT_GRAY;
+    galvoA_.setColor(c);
+    galvoB_.setColor(c);
+    piezoA_.setColor(c);
+    piezoB_.setColor(c);
+  }
 }

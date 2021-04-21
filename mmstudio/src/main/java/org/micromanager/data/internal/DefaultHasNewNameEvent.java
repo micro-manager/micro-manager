@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API implementation
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, 2017
 //
@@ -22,21 +22,16 @@ package org.micromanager.data.internal;
 
 import org.micromanager.data.DataProviderHasNewNameEvent;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 public class DefaultHasNewNameEvent implements DataProviderHasNewNameEvent {
-   private final String newName_;
-   
-   public DefaultHasNewNameEvent (String newName) {
-      newName_ = newName;
-   }
-   
-   
-   @Override
-   public String getNewName() {
-      return newName_;
-   }
-   
+  private final String newName_;
+
+  public DefaultHasNewNameEvent(String newName) {
+    newName_ = newName;
+  }
+
+  @Override
+  public String getNewName() {
+    return newName_;
+  }
 }

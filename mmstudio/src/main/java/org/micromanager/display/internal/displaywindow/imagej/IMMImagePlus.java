@@ -15,63 +15,57 @@
 package org.micromanager.display.internal.displaywindow.imagej;
 
 /**
- * Common interface of {@code MMImagePlus} and {@code MMCompositeImage},
- * providing access to protected members of {@code ij.ImagePlus}.
+ * Common interface of {@code MMImagePlus} and {@code MMCompositeImage}, providing access to
+ * protected members of {@code ij.ImagePlus}.
  *
  * @author Mark A. Tsuchida
  */
 interface IMMImagePlus {
-   /**
-    * Set the axis extents of this {@code ImagePlus} without triggering a
-    * repaint or window creation.
-    *
-    * This is something that is missing from {@code ImagePlus}'s interface.
-    *
-    * @param nChannels new number of channels
-    * @param nSlices new number of Z slices
-    * @param nFrames new number of time points
-    *
-    * see ij.ImagePlus.setDimensions
-    */
-   public void setDimensionsWithoutUpdate(
-         int nChannels, int nSlices, int nFrames);
+  /**
+   * Set the axis extents of this {@code ImagePlus} without triggering a repaint or window creation.
+   *
+   * <p>This is something that is missing from {@code ImagePlus}'s interface.
+   *
+   * @param nChannels new number of channels
+   * @param nSlices new number of Z slices
+   * @param nFrames new number of time points
+   *     <p>see ij.ImagePlus.setDimensions
+   */
+  public void setDimensionsWithoutUpdate(int nChannels, int nSlices, int nFrames);
 
-   /**
-    * Get the number of channels of this {@code ImagePlus} without altering
-    * the axis extents of this {@code ImagePlus}.
-    *
-    * The provided {@code ImagePlus.getNChannels} method will alter the number
-    * of channels/slices/frames if called under certain conditions.
-    *
-    * @return the extent of the channel axis
-    *
-    * see ij.ImagePlus.getNChannels
-    */
-   public int getNChannelsWithoutSideEffect();
+  /**
+   * Get the number of channels of this {@code ImagePlus} without altering the axis extents of this
+   * {@code ImagePlus}.
+   *
+   * <p>The provided {@code ImagePlus.getNChannels} method will alter the number of
+   * channels/slices/frames if called under certain conditions.
+   *
+   * @return the extent of the channel axis
+   *     <p>see ij.ImagePlus.getNChannels
+   */
+  public int getNChannelsWithoutSideEffect();
 
-   /**
-    * Get the number of Z slices of this {@code ImagePlus} without altering
-    * the axis extents of this {@code ImagePlus}.
-    *
-    * The provided {@code ImagePlus.getNSlices} method will alter the number
-    * of channels/slices/frames if called under certain conditions.
-    *
-    * @return the extent of the Z slice axis
-    *
-    * see ij.ImagePlus.getNSlices
-    */
-   public int getNSlicesWithoutSideEffect();
+  /**
+   * Get the number of Z slices of this {@code ImagePlus} without altering the axis extents of this
+   * {@code ImagePlus}.
+   *
+   * <p>The provided {@code ImagePlus.getNSlices} method will alter the number of
+   * channels/slices/frames if called under certain conditions.
+   *
+   * @return the extent of the Z slice axis
+   *     <p>see ij.ImagePlus.getNSlices
+   */
+  public int getNSlicesWithoutSideEffect();
 
-   /**
-    * Get the number of time points of this {@code ImagePlus} without altering
-    * the axis extents of this {@code ImagePlus}.
-    *
-    * The provided {@code ImagePlus.getNFrames} method will alter the number
-    * of channels/slices/frames if called under certain conditions.
-    *
-    * @return the extent of the time axis
-    *
-    * see ij.ImagePlus.getNFrames
-    */
-   public int getNFramesWithoutSideEffect();
+  /**
+   * Get the number of time points of this {@code ImagePlus} without altering the axis extents of
+   * this {@code ImagePlus}.
+   *
+   * <p>The provided {@code ImagePlus.getNFrames} method will alter the number of
+   * channels/slices/frames if called under certain conditions.
+   *
+   * @return the extent of the time axis
+   *     <p>see ij.ImagePlus.getNFrames
+   */
+  public int getNFramesWithoutSideEffect();
 }

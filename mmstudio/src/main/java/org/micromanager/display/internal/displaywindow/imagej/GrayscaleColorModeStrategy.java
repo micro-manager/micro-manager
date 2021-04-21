@@ -7,38 +7,36 @@ package org.micromanager.display.internal.displaywindow.imagej;
 
 import com.google.common.base.Preconditions;
 import ij.CompositeImage;
-import java.awt.Color;
+
+import java.awt.*;
 import java.util.Collections;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 class GrayscaleColorModeStrategy extends ColorColorModeStrategy {
-   static ColorModeStrategy create(int nChannels) {
-      return new GrayscaleColorModeStrategy(nChannels);
-   }
+  static ColorModeStrategy create(int nChannels) {
+    return new GrayscaleColorModeStrategy(nChannels);
+  }
 
-   static ColorModeStrategy create() {
-      return new GrayscaleColorModeStrategy(1);
-   }
+  static ColorModeStrategy create() {
+    return new GrayscaleColorModeStrategy(1);
+  }
 
-   private GrayscaleColorModeStrategy(int nChannels) {
-      super(Collections.nCopies(nChannels, Color.WHITE));
-   }
+  private GrayscaleColorModeStrategy(int nChannels) {
+    super(Collections.nCopies(nChannels, Color.WHITE));
+  }
 
-   @Override
-   protected int getModeForCompositeImage() {
-      return CompositeImage.GRAYSCALE;
-   }
+  @Override
+  protected int getModeForCompositeImage() {
+    return CompositeImage.GRAYSCALE;
+  }
 
-   @Override
-   public void applyColor(int index, Color color) {
-      Preconditions.checkNotNull(color);
-   }
+  @Override
+  public void applyColor(int index, Color color) {
+    Preconditions.checkNotNull(color);
+  }
 
-   @Override
-   protected Color getColor(int index) {
-      return Color.WHITE;
-   }
+  @Override
+  protected Color getColor(int index) {
+    return Color.WHITE;
+  }
 }

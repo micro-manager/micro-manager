@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -21,46 +21,43 @@
 //
 package org.micromanager.internal.utils;
 
+import javax.swing.*;
 import java.util.HashSet;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 
-/**
- * Simple extension of JMenu whose menu items remained alphabetically
- * ordered.
- */
+/** Simple extension of JMenu whose menu items remained alphabetically ordered. */
 public final class SortedMenu extends JMenu {
-   private HashSet<JMenuItem> unsortedItems_;
-   public SortedMenu(String title) {
-      super(title);
-      unsortedItems_ = new HashSet<JMenuItem>();
-   }
+  private HashSet<JMenuItem> unsortedItems_;
 
-   // Allow users to bypass the sorted nature
-   public JMenuItem addUnsorted(JMenuItem item) {
-      unsortedItems_.add(item);
-      return super.add(item);
-   }
+  public SortedMenu(String title) {
+    super(title);
+    unsortedItems_ = new HashSet<JMenuItem>();
+  }
 
-   @Override
-   public JMenuItem add(JMenuItem item) {
-      // Find the insertion point.
-      for (int i = 0; i < getItemCount(); ++i) {
-         JMenuItem curItem = getItem(i);
-         if (unsortedItems_.contains(curItem)) {
-            // Skip this item because it's outside the sorted logic.
-            continue;
-         }
-         if (curItem == null) {
-            // Separator.
-            continue;
-         }
-         if (item.getText().compareTo(curItem.getText()) < 0) {
-            insert(item, i);
-            return item;
-         }
+  // Allow users to bypass the sorted nature
+  public JMenuItem addUnsorted(JMenuItem item) {
+    unsortedItems_.add(item);
+    return super.add(item);
+  }
+
+  @Override
+  public JMenuItem add(JMenuItem item) {
+    // Find the insertion point.
+    for (int i = 0; i < getItemCount(); ++i) {
+      JMenuItem curItem = getItem(i);
+      if (unsortedItems_.contains(curItem)) {
+        // Skip this item because it's outside the sorted logic.
+        continue;
       }
-      // Add it at the end instead.
-      return super.add(item);
-   }
+      if (curItem == null) {
+        // Separator.
+        continue;
+      }
+      if (item.getText().compareTo(curItem.getText()) < 0) {
+        insert(item, i);
+        return item;
+      }
+    }
+    // Add it at the end instead.
+    return super.add(item);
+  }
 }

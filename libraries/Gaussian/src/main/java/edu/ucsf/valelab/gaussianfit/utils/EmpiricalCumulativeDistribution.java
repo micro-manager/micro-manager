@@ -1,10 +1,10 @@
 /*
  * Utility functions for display of Gaussian fitted data
  * Part of the Localization Microscopy Package
- * 
+ *
  * @author - Nico Stuurman,  2018
- * 
- * 
+ *
+ *
 Copyright (c) 2012-2018, Regents of the University of California
 All rights reserved.
 
@@ -38,25 +38,20 @@ package edu.ucsf.valelab.gaussianfit.utils;
 import java.util.Arrays;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 public class EmpiricalCumulativeDistribution {
-   
-   public static Vector2D[] calculate(double[] values) {
-      Arrays.sort(values);
-      Vector2D[] result = new Vector2D[values.length];
-      final double valuesd = (double) values.length;
-      final double increment = 1d / valuesd;
-      final double halfIncrement = 0.5 * increment;
-      for (int i = 0; i < values.length; i++) {
-         result[i] = new Vector2D(values[i], i * increment + halfIncrement);
-         // result[i] = new Vector2D(values[i], ((double)i + 1d) / valuesd);
-      }
-      
-      return result;
-      
-   }
-   
+
+  public static Vector2D[] calculate(double[] values) {
+    Arrays.sort(values);
+    Vector2D[] result = new Vector2D[values.length];
+    final double valuesd = (double) values.length;
+    final double increment = 1d / valuesd;
+    final double halfIncrement = 0.5 * increment;
+    for (int i = 0; i < values.length; i++) {
+      result[i] = new Vector2D(values[i], i * increment + halfIncrement);
+      // result[i] = new Vector2D(values[i], ((double)i + 1d) / valuesd);
+    }
+
+    return result;
+  }
 }

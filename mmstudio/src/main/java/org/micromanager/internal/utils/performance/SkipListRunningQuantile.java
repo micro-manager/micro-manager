@@ -22,48 +22,46 @@ import java.util.Map;
  * @author Mark A. Tsuchida
  */
 public class SkipListRunningQuantile implements RunningQuantile {
-   private final int size_;
-   private final IndexableOrderedSkipList<Double, Integer> values_;
+  private final int size_;
+  private final IndexableOrderedSkipList<Double, Integer> values_;
 
+  public static SkipListRunningQuantile create(int size) {
+    // A 4-level skip list is reasonable for size 100. Need to auto-select
+    // a good number of levels if using for multiple purposes.
+    return new SkipListRunningQuantile(size, 4);
+  }
 
-   public static SkipListRunningQuantile create(int size) {
-      // A 4-level skip list is reasonable for size 100. Need to auto-select
-      // a good number of levels if using for multiple purposes.
-      return new SkipListRunningQuantile(size, 4);
-   }
+  private SkipListRunningQuantile(int size, int skipListLevels) {
+    size_ = size;
+    values_ = IndexableOrderedSkipList.create(skipListLevels);
+  }
 
-   private SkipListRunningQuantile(int size, int skipListLevels) {
-      size_ = size;
-      values_ = IndexableOrderedSkipList.create(skipListLevels);
-   }
+  @Override
+  public void sample(double value) {
+    values_.insert(value, 0);
+    if (values_.size() > size_) {
+      values_.removeOldest();
+    }
+  }
 
-   @Override
-   public void sample(double value) {
-      values_.insert(value, 0);
-      if (values_.size() > size_) {
-         values_.removeOldest();
-      }
-   }
-
-   @Override
-   public double getQuantile(double q) {
-      if (q < 0.0 || q > 1.0) {
-         throw new IllegalArgumentException("Out of allowed range (0.0-1.0)");
-      }
-      int size = values_.size();
-      if (size == 0) {
-         return 0.0;
-      }
-      if (size == 1) {
-         return values_.get(0).getKey();
-      }
-      double realIndex = q * (size - 1);
-      int floor = (int) Math.floor(realIndex);
-      int ceiling = floor + 1;
-      List<Map.Entry<Double, Integer>> pair = values_.sublist(floor, 2);
-      double quantile =
-            (ceiling - realIndex) * pair.get(0).getKey() +
-            (realIndex - floor) * pair.get(1).getKey();
-      return quantile;
-   }
+  @Override
+  public double getQuantile(double q) {
+    if (q < 0.0 || q > 1.0) {
+      throw new IllegalArgumentException("Out of allowed range (0.0-1.0)");
+    }
+    int size = values_.size();
+    if (size == 0) {
+      return 0.0;
+    }
+    if (size == 1) {
+      return values_.get(0).getKey();
+    }
+    double realIndex = q * (size - 1);
+    int floor = (int) Math.floor(realIndex);
+    int ceiling = floor + 1;
+    List<Map.Entry<Double, Integer>> pair = values_.sublist(floor, 2);
+    double quantile =
+        (ceiling - realIndex) * pair.get(0).getKey() + (realIndex - floor) * pair.get(1).getKey();
+    return quantile;
+  }
 }

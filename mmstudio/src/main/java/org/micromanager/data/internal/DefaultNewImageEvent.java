@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API implementation
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -23,33 +23,30 @@ package org.micromanager.data.internal;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
-import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 
-/**
- * This class signifies that an image has been added to a Datastore.
- */
+/** This class signifies that an image has been added to a Datastore. */
 public final class DefaultNewImageEvent implements DataProviderHasNewImageEvent {
-   private final Image image_;
-   private final DataProvider provider_;
+  private final Image image_;
+  private final DataProvider provider_;
 
-   public DefaultNewImageEvent(Image image, DataProvider provider) {
-      image_ = image;
-      provider_ = provider;
-   }
+  public DefaultNewImageEvent(Image image, DataProvider provider) {
+    image_ = image;
+    provider_ = provider;
+  }
 
-   @Override
-   public Image getImage() {
-      return image_;
-   }
+  @Override
+  public Image getImage() {
+    return image_;
+  }
 
-   @Override
-   public Coords getCoords() {
-      return image_.getCoords();
-   }
+  @Override
+  public Coords getCoords() {
+    return image_.getCoords();
+  }
 
-   @Override
-   public DataProvider getDataProvider() {
-      return provider_;
-   }
+  @Override
+  public DataProvider getDataProvider() {
+    return provider_;
+  }
 }

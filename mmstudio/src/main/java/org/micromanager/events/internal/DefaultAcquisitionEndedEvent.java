@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -24,20 +24,21 @@ import org.micromanager.data.Datastore;
 import org.micromanager.events.AcquisitionEndedEvent;
 
 public final class DefaultAcquisitionEndedEvent implements AcquisitionEndedEvent {
-   private Datastore store_;
-   private Object source_;
-   public DefaultAcquisitionEndedEvent(Datastore store, Object source) {
-      store_ = store;
-      source_ = source;
-   }
+  private Datastore store_;
+  private Object source_;
 
-   @Override
-   public Datastore getStore() {
-      return store_;
-   }
+  public DefaultAcquisitionEndedEvent(Datastore store, Object source) {
+    store_ = store;
+    source_ = source;
+  }
 
-   @Override
-   public Object getSource() {
-      return source_;
-   }
+  @Override
+  public Datastore getStore() {
+    return store_;
+  }
+
+  @Override
+  public Object getSource() {
+    return source_;
+  }
 }

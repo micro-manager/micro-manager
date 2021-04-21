@@ -5,44 +5,40 @@
  */
 package org.micromanager.display.inspector.internal;
 
-import java.awt.Component;
-import javax.swing.JList;
-import javax.swing.JSeparator;
-import javax.swing.ListCellRenderer;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * A {@code ListCellRenderer} allowing separators in a {@code JComboBox}.
  *
- * Simply set the JComboBox's renderer to an instance of this class, then add
- * a {@code JSeparator} as an item in the JComboBox.
- * <p>
- * Note, however, that the separator is selectable (there is no easy way to
- * "disable" items in a JComboBox). In your action handler for the combo box,
- * you will need to ignore such selections and revert to the previous value.
- * <p>
- * TODO Move this to generic GUI utilities
+ * <p>Simply set the JComboBox's renderer to an instance of this class, then add a {@code
+ * JSeparator} as an item in the JComboBox.
+ *
+ * <p>Note, however, that the separator is selectable (there is no easy way to "disable" items in a
+ * JComboBox). In your action handler for the combo box, you will need to ignore such selections and
+ * revert to the previous value.
+ *
+ * <p>TODO Move this to generic GUI utilities
  *
  * @author Mark A. Tsuchida
  */
 class ComboBoxSeparatorRenderer implements ListCellRenderer {
-   private final ListCellRenderer parent_;
+  private final ListCellRenderer parent_;
 
-   public static ComboBoxSeparatorRenderer create(ListCellRenderer parent) {
-      return new ComboBoxSeparatorRenderer(parent);
-   }
+  public static ComboBoxSeparatorRenderer create(ListCellRenderer parent) {
+    return new ComboBoxSeparatorRenderer(parent);
+  }
 
-   private ComboBoxSeparatorRenderer(ListCellRenderer parent) {
-      parent_ = parent;
-   }
+  private ComboBoxSeparatorRenderer(ListCellRenderer parent) {
+    parent_ = parent;
+  }
 
-   @Override
-   public Component getListCellRendererComponent(JList list, Object value,
-         int index, boolean isSelected, boolean cellHasFocus)
-   {
-      if (value instanceof JSeparator) {
-         return (JSeparator) value;
-      }
-      return parent_.getListCellRendererComponent(list, value, index,
-            isSelected, cellHasFocus);
-   }
+  @Override
+  public Component getListCellRendererComponent(
+      JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    if (value instanceof JSeparator) {
+      return (JSeparator) value;
+    }
+    return parent_.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+  }
 }

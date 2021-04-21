@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display implementation
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Display implementation
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -29,40 +29,40 @@ import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = DisplayGearMenuPlugin.class)
 public final class LineProfileItem implements DisplayGearMenuPlugin, SciJavaPlugin {
-   private Studio studio_;
+  private Studio studio_;
 
-   @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-   }
+  @Override
+  public void setContext(Studio studio) {
+    studio_ = studio;
+  }
 
-   @Override
-   public String getName() {
-      return "Line Profile";
-   }
+  @Override
+  public String getName() {
+    return "Line Profile";
+  }
 
-   @Override
-   public String getHelpText() {
-      return "Show a plot of image pixel intensity over the current ROI";
-   }
+  @Override
+  public String getHelpText() {
+    return "Show a plot of image pixel intensity over the current ROI";
+  }
 
-   @Override
-   public String getVersion() {
-      return "1.0";
-   }
+  @Override
+  public String getVersion() {
+    return "1.0";
+  }
 
-   @Override
-   public String getCopyright() {
-      return "Copyright (c) Regents of the University of California";
-   }
+  @Override
+  public String getCopyright() {
+    return "Copyright (c) Regents of the University of California";
+  }
 
-   @Override
-   public String getSubMenu() {
-      return "";
-   }
+  @Override
+  public String getSubMenu() {
+    return "";
+  }
 
-   @Override
-   public void onPluginSelected(DisplayWindow display) {
-      new LineProfile(display);
-   }
+  @Override
+  public void onPluginSelected(DisplayWindow display) {
+    new LineProfile(display);
+  }
 }

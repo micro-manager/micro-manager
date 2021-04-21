@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          SliceTiming.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          SliceTiming.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -21,77 +21,72 @@
 
 package org.micromanager.asidispim.utils;
 
-
 /**
- * Associative container or "plain old data structure" for slice timing information.
- * Public elements so they can be get/set directly, like C/C++ struct
- * Note that this container doesn't work with collections (https://www.artima.com/lejava/articles/equality.html)
- * @author Jon
+ * Associative container or "plain old data structure" for slice timing information. Public elements
+ * so they can be get/set directly, like C/C++ struct Note that this container doesn't work with
+ * collections (https://www.artima.com/lejava/articles/equality.html)
  *
+ * @author Jon
  */
 public class SliceTiming {
-   public float scanDelay;
-   public int scanNum;
-   public float scanPeriod;
-   public float laserDelay;
-   public float laserDuration;
-   public float cameraDelay;
-   public float cameraDuration;
-   public float cameraExposure;  // used to set exposure in Micro-Manager, not the controller timing
-   public float sliceDuration;   // depends on first 7 values by formula, up to users to keep updated
-   public boolean valid;         // marked false to show that there was some error in calculating  
-   /**
-    * Chooses some reasonable defaults (may not be controller defaults).
-    */
-   public SliceTiming() {
-      scanDelay = 0;
-      scanNum = 1;
-      scanPeriod = 10;
-      laserDelay = 0;
-      laserDuration = 1;
-      cameraDelay = 0;
-      cameraDuration = 1;
-      cameraExposure = 1;
-      sliceDuration = 2;
-      valid = true;
-   }
-   
-   /**
-    * copy constructor (unused?)
-     * @param orig
-    */
-   public SliceTiming(SliceTiming orig) {
-      scanDelay = orig.scanDelay;
-      scanNum = orig.scanNum;
-      scanPeriod = orig.scanPeriod;
-      laserDelay = orig.laserDelay;
-      laserDuration = orig.laserDuration;
-      cameraDelay = orig.cameraDelay;
-      cameraDuration = orig.cameraDuration;
-      cameraExposure = orig.cameraExposure;
-      sliceDuration = orig.sliceDuration;
-      valid = orig.valid;
-   }
-   
-   @Override
-   public boolean equals(Object obj) {
-      if ((obj instanceof SliceTiming)) {
-         SliceTiming s = (SliceTiming) obj;
-         return(scanDelay == s.scanDelay
-               && scanNum == s.scanNum
-               && scanPeriod == s.scanPeriod
-               && laserDelay == s.laserDelay
-               && laserDuration == s.laserDuration
-               && cameraDelay == s.cameraDelay
-               && cameraDuration == s.cameraDuration
-               && cameraExposure == s.cameraExposure
-               && sliceDuration == s.sliceDuration
-               && valid == s.valid); 
-      } else {
-         return false;
-      }
-      
-      
-   }
+  public float scanDelay;
+  public int scanNum;
+  public float scanPeriod;
+  public float laserDelay;
+  public float laserDuration;
+  public float cameraDelay;
+  public float cameraDuration;
+  public float cameraExposure; // used to set exposure in Micro-Manager, not the controller timing
+  public float sliceDuration; // depends on first 7 values by formula, up to users to keep updated
+  public boolean valid; // marked false to show that there was some error in calculating
+  /** Chooses some reasonable defaults (may not be controller defaults). */
+  public SliceTiming() {
+    scanDelay = 0;
+    scanNum = 1;
+    scanPeriod = 10;
+    laserDelay = 0;
+    laserDuration = 1;
+    cameraDelay = 0;
+    cameraDuration = 1;
+    cameraExposure = 1;
+    sliceDuration = 2;
+    valid = true;
+  }
 
+  /**
+   * copy constructor (unused?)
+   *
+   * @param orig
+   */
+  public SliceTiming(SliceTiming orig) {
+    scanDelay = orig.scanDelay;
+    scanNum = orig.scanNum;
+    scanPeriod = orig.scanPeriod;
+    laserDelay = orig.laserDelay;
+    laserDuration = orig.laserDuration;
+    cameraDelay = orig.cameraDelay;
+    cameraDuration = orig.cameraDuration;
+    cameraExposure = orig.cameraExposure;
+    sliceDuration = orig.sliceDuration;
+    valid = orig.valid;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if ((obj instanceof SliceTiming)) {
+      SliceTiming s = (SliceTiming) obj;
+      return (scanDelay == s.scanDelay
+          && scanNum == s.scanNum
+          && scanPeriod == s.scanPeriod
+          && laserDelay == s.laserDelay
+          && laserDuration == s.laserDuration
+          && cameraDelay == s.cameraDelay
+          && cameraDuration == s.cameraDuration
+          && cameraExposure == s.cameraExposure
+          && sliceDuration == s.sliceDuration
+          && valid == s.valid);
+    } else {
+      return false;
+    }
+  }
 }

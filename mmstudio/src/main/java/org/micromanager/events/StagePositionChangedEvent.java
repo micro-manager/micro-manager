@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,22 +20,20 @@
 
 package org.micromanager.events;
 
-/**
- * This class signals when a single-axis drive has moved. 
- */
+/** This class signals when a single-axis drive has moved. */
 public interface StagePositionChangedEvent {
 
+  /**
+   * T
+   *
+   * @return he new (current) position of the stage
+   */
+  double getPos();
 
-   /**
-    * T
-    * @return he new (current) position of the stage
-    */
-   double getPos();
-
-   /**
-    * Name of the stage that moved
-    * @return Name of the stage that moved
-    */
-   String getDeviceName();
-
+  /**
+   * Name of the stage that moved
+   *
+   * @return Name of the stage that moved
+   */
+  String getDeviceName();
 }

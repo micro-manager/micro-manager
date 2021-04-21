@@ -12,14 +12,16 @@
 package org.micromanager.internal.diagnostics;
 
 class ProcessorInfoSection implements SystemInfo.SystemInfoSection {
-   public String getTitle() { return "Processor information"; }
+  public String getTitle() {
+    return "Processor information";
+  }
 
-   public String getReport() {
-      StringBuilder sb = new StringBuilder();
+  public String getReport() {
+    StringBuilder sb = new StringBuilder();
 
-      int ncpu = Runtime.getRuntime().availableProcessors();
-      sb.append("Processors available to JVM: ").append(Integer.toString(ncpu));
+    int ncpu = Runtime.getRuntime().availableProcessors();
+    sb.append("Processors available to JVM: ").append(Integer.toString(ncpu));
 
-      return sb.toString();
-   }
+    return sb.toString();
+  }
 }

@@ -1,10 +1,6 @@
-
 package org.micromanager.internal.interfaces;
 
-/**
- *
- * @author Arthur
- */
+/** @author Arthur */
 public interface AcqSettingsListener {
-    public void settingsChanged();
+  public void settingsChanged();
 }

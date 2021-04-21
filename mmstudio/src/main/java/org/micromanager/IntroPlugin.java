@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -19,28 +19,29 @@
 
 package org.micromanager;
 
+import javax.swing.*;
 import java.util.List;
-import javax.swing.Icon;
 
 /**
- * IntroPlugins are used to customize the intro dialog that prompts the user
- * for which config file and profile to use. Only one IntroPlugin can be
- * effectively used at a time; the program will use whichever one was loaded
- * first.
+ * IntroPlugins are used to customize the intro dialog that prompts the user for which config file
+ * and profile to use. Only one IntroPlugin can be effectively used at a time; the program will use
+ * whichever one was loaded first.
  */
 public interface IntroPlugin extends MMPlugin {
-   /**
-    * Provide a "splash" image to display at the top of the intro dialog. If
-    * this method returns null, then the default µManager logo will be used.
-    * @return The image to use at the top of the intro dialog, or null.
-    */
-   public Icon getSplashImage();
+  /**
+   * Provide a "splash" image to display at the top of the intro dialog. If this method returns
+   * null, then the default µManager logo will be used.
+   *
+   * @return The image to use at the top of the intro dialog, or null.
+   */
+  public Icon getSplashImage();
 
-   /**
-    * Provide a list of paths to config files to include in the config file
-    * dropdown menu. These will be provided in addition to any config files
-    * the user has used in the past. This list may be null or empty.
-    * @return List of config files to show to the user, or null.
-    */
-   public List<String> getConfigFilePaths();
+  /**
+   * Provide a list of paths to config files to include in the config file dropdown menu. These will
+   * be provided in addition to any config files the user has used in the past. This list may be
+   * null or empty.
+   *
+   * @return List of config files to show to the user, or null.
+   */
+  public List<String> getConfigFilePaths();
 }

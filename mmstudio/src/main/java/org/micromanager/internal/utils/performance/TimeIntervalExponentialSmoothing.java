@@ -14,32 +14,29 @@
 package org.micromanager.internal.utils.performance;
 
 /**
- * A specialized version of {@link ExponentialSmoothing} for tracking the time
- * interval of recurring events.
+ * A specialized version of {@link ExponentialSmoothing} for tracking the time interval of recurring
+ * events.
  *
  * @author Mark A. Tsuchida
  */
-public final class TimeIntervalExponentialSmoothing
-      extends AbstractExponentialSmoothing
-{
-   public static TimeIntervalExponentialSmoothing createWithTimeConstantMs(double timeConstantMs) {
-      return new TimeIntervalExponentialSmoothing(timeConstantMs);
-   }
+public final class TimeIntervalExponentialSmoothing extends AbstractExponentialSmoothing {
+  public static TimeIntervalExponentialSmoothing createWithTimeConstantMs(double timeConstantMs) {
+    return new TimeIntervalExponentialSmoothing(timeConstantMs);
+  }
 
-   private TimeIntervalExponentialSmoothing(double timeConstantMs) {
-      super(timeConstantMs);
-   }
+  private TimeIntervalExponentialSmoothing(double timeConstantMs) {
+    super(timeConstantMs);
+  }
 
-   public void sample() {
-      if (!isTimingStarted()) {
-         markTime();
-      }
-      double deltaTMs = markTimeAndGetDeltaTMs();
-      if (!isStatsInitialized()) {
-         initializeStats(deltaTMs);
-      }
-      else {
-         updateStats(deltaTMs, deltaTMs);
-      }
-   }
+  public void sample() {
+    if (!isTimingStarted()) {
+      markTime();
+    }
+    double deltaTMs = markTimeAndGetDeltaTMs();
+    if (!isStatsInitialized()) {
+      initializeStats(deltaTMs);
+    } else {
+      updateStats(deltaTMs, deltaTMs);
+    }
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -23,17 +23,17 @@ package org.micromanager.events.internal;
 import java.util.List;
 
 /**
- * This event is posted by the ShutterManager to send out the new list of
- * shutter devices to other entities.
+ * This event is posted by the ShutterManager to send out the new list of shutter devices to other
+ * entities.
  */
 public final class ShutterDevicesEvent {
-   private List<String> devices_;
+  private List<String> devices_;
 
-   public ShutterDevicesEvent(List<String> devices) {
-      devices_ = devices;
-   }
+  public ShutterDevicesEvent(List<String> devices) {
+    devices_ = devices;
+  }
 
-   public List<String> getDevices() {
-      return devices_;
-   }
+  public List<String> getDevices() {
+    return devices_;
+  }
 }

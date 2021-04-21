@@ -7,8 +7,5 @@ package org.micromanager;
 
 import org.scijava.plugin.SciJavaPlugin;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public interface MMGenericPlugin extends SciJavaPlugin {}

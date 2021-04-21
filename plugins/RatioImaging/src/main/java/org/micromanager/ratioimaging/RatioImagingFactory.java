@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          RatioImagingProcessor.java
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// FILE:          RatioImagingProcessor.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
@@ -19,8 +19,6 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-
-
 package org.micromanager.ratioimaging;
 
 import org.micromanager.data.Processor;
@@ -29,16 +27,16 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
 public class RatioImagingFactory implements ProcessorFactory {
-   private final Studio studio_;
-   private final PropertyMap settings_;
-   
-   public RatioImagingFactory(Studio studio, PropertyMap settings) {
-      studio_ = studio;
-      settings_ = settings;
-   }
+  private final Studio studio_;
+  private final PropertyMap settings_;
 
-   @Override
-   public Processor createProcessor() {
-      return new RatioImagingProcessor(studio_, settings_);
-   }
+  public RatioImagingFactory(Studio studio, PropertyMap settings) {
+    studio_ = studio;
+    settings_ = settings;
+  }
+
+  @Override
+  public Processor createProcessor() {
+    return new RatioImagingProcessor(studio_, settings_);
+  }
 }

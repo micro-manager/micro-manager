@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2016
 //
@@ -20,26 +20,27 @@
 
 package org.micromanager.data;
 
-/**
- * This class signifies that an image has been overwritten in the Datastore.
- */
+/** This class signifies that an image has been overwritten in the Datastore. */
 public interface ImageOverwrittenEvent {
-   /**
-    * Provides the newly-added image.
-    * @return the Image that was just added to the Datastore.
-    */
-   Image getNewImage();
+  /**
+   * Provides the newly-added image.
+   *
+   * @return the Image that was just added to the Datastore.
+   */
+  Image getNewImage();
 
-   /**
-    * Provides the image that was overwritten.
-    * @return the Image that was just overwritten in the Datastore.
-    */
-   Image getOldImage();
+  /**
+   * Provides the image that was overwritten.
+   *
+   * @return the Image that was just overwritten in the Datastore.
+   */
+  Image getOldImage();
 
-   /**
-    * Provides the Datastore this image was added to; potentially useful for
-    * code that listens to events from multiple Datastores.
-    * @return the Datastore this image was added to.
-    */
-   Datastore getDatastore();
+  /**
+   * Provides the Datastore this image was added to; potentially useful for code that listens to
+   * events from multiple Datastores.
+   *
+   * @return the Datastore this image was added to.
+   */
+  Datastore getDatastore();
 }

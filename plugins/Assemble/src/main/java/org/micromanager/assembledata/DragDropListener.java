@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          DragDroplistener.java
-//PROJECT:       Micro-Manager  
-//SUBSYSTEM:     PointAndShoot plugin
-//-----------------------------------------------------------------------------
+// FILE:          DragDroplistener.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     PointAndShoot plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
@@ -32,60 +32,56 @@ import java.io.File;
 import java.io.IOException;
 import javax.swing.JTextField;
 
-/**
- *
- * @author nico
- */
-public class DragDropListener implements DropTargetListener{
-   private final JTextField textField_;
-   
-   public DragDropListener(JTextField textField) {
-      textField_ = textField;
-   }
-   
-   @Override
-   public void dragEnter(DropTargetDragEvent dtde) {
-      // throw new UnsupportedOperationException("Not supported yet."); 
-   }
+/** @author nico */
+public class DragDropListener implements DropTargetListener {
+  private final JTextField textField_;
 
-   @Override
-   public void dragOver(DropTargetDragEvent dtde) {
-      // throw new UnsupportedOperationException("Not supported yet."); 
-   }
+  public DragDropListener(JTextField textField) {
+    textField_ = textField;
+  }
 
-   @Override
-   public void dropActionChanged(DropTargetDragEvent dtde) {
-      // throw new UnsupportedOperationException("Not supported yet."); 
-   }
+  @Override
+  public void dragEnter(DropTargetDragEvent dtde) {
+    // throw new UnsupportedOperationException("Not supported yet.");
+  }
 
-   @Override
-   public void dragExit(DropTargetEvent dte) {
-      // throw new UnsupportedOperationException("Not supported yet."); 
-   }
+  @Override
+  public void dragOver(DropTargetDragEvent dtde) {
+    // throw new UnsupportedOperationException("Not supported yet.");
+  }
 
-   @Override
-   public void drop(DropTargetDropEvent dtde) {
-      Transferable tr = dtde.getTransferable();
-      DataFlavor[] flavors = tr.getTransferDataFlavors();
-      try {
-         for (DataFlavor flavor : flavors) {
-            if (flavor.isFlavorJavaFileListType()) {
-               dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-               java.util.List list = (java.util.List) tr.getTransferData(flavor);
-               // we expect only one file.  for now, just use the last one
-               for (int j = 0; j < list.size(); j++) {
-                  File f = (File) list.get(j);
-                  if (f.isDirectory()) {
-                     textField_.setText(f.getPath());
-                  }
-               }
-               dtde.dropComplete(true);
-               return;
+  @Override
+  public void dropActionChanged(DropTargetDragEvent dtde) {
+    // throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public void dragExit(DropTargetEvent dte) {
+    // throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public void drop(DropTargetDropEvent dtde) {
+    Transferable tr = dtde.getTransferable();
+    DataFlavor[] flavors = tr.getTransferDataFlavors();
+    try {
+      for (DataFlavor flavor : flavors) {
+        if (flavor.isFlavorJavaFileListType()) {
+          dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+          java.util.List list = (java.util.List) tr.getTransferData(flavor);
+          // we expect only one file.  for now, just use the last one
+          for (int j = 0; j < list.size(); j++) {
+            File f = (File) list.get(j);
+            if (f.isDirectory()) {
+              textField_.setText(f.getPath());
             }
-         }
-      } catch (UnsupportedFlavorException | IOException usf) {
-         // ignore
+          }
+          dtde.dropComplete(true);
+          return;
+        }
       }
-   }
-
+    } catch (UnsupportedFlavorException | IOException usf) {
+      // ignore
+    }
+  }
 }

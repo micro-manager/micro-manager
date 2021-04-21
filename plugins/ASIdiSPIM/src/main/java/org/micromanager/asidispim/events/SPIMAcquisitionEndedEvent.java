@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-//PROJECT:       diSPIM
-//-----------------------------------------------------------------------------
+// PROJECT:       diSPIM
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
@@ -17,33 +17,29 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
- 
+
 package org.micromanager.asidispim.events;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.events.AcquisitionEndedEvent;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 public class SPIMAcquisitionEndedEvent implements AcquisitionEndedEvent {
-   private final Datastore store_;
-   private final Object object_;
-   
-   public SPIMAcquisitionEndedEvent (Datastore store, Object object) {
-      store_ = store;
-      object_ = object;
-   }
-   
-   @Override
-   public Datastore getStore() {
-      return store_;
-   }
+  private final Datastore store_;
+  private final Object object_;
 
-   @Override
-   public Object getSource() {
-      return object_;
-   }
-   
+  public SPIMAcquisitionEndedEvent(Datastore store, Object object) {
+    store_ = store;
+    object_ = object;
+  }
+
+  @Override
+  public Datastore getStore() {
+    return store_;
+  }
+
+  @Override
+  public Object getSource() {
+    return object_;
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,12 +20,8 @@
 
 package org.micromanager.events;
 
-/**
- * This event is posted when autoshutter is enabled or disabled.
- */
+/** This event is posted when autoshutter is enabled or disabled. */
 public interface AutoShutterEvent {
-   /**
-    * @return true if autoshutter is enabled, false if it is disabled.
-    */
-   public boolean getAutoShutter();
+  /** @return true if autoshutter is enabled, false if it is disabled. */
+  public boolean getAutoShutter();
 }

@@ -36,541 +36,559 @@ import org.micromanager.acqj.api.xystage.XYStagePosition;
 import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
 import org.micromanager.magellan.internal.gui.GUI;
 
-/**
- *
- * @author Henry
- */
+/** @author Henry */
 public abstract class SurfaceInterpolator extends XYFootprint {
 
-   public static final int NUM_XY_TEST_POINTS = 8;
+  public static final int NUM_XY_TEST_POINTS = 8;
 
-   private static final int ABOVE_SURFACE = 0;
-   private static final int BELOW_SURFACE = 1;
+  private static final int ABOVE_SURFACE = 0;
+  private static final int BELOW_SURFACE = 1;
 
-   //surface coordinates are neccessarily associated with the coordinate space of particular xy and z devices
-   private final String zDeviceName_;
-   protected volatile TreeSet<Point3d> points_;
-   private MonotoneChain mChain_;
-   protected volatile Vector2D[] convexHullVertices_;
-   protected volatile Region<Euclidean2D> convexHullRegion_;
-   private volatile int numRows_, numCols_;
-   private volatile List<XYStagePosition> xyPositions_;
-   protected volatile double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
-   protected volatile int boundXPixelMin_, boundXPixelMax_, boundYPixelMin_, boundYPixelMax_;
-   protected volatile int minPixelsPerInterpPoint_ = 1;
-   private ExecutorService executor_;
-   protected volatile SingleResolutionInterpolation currentInterpolation_;
-   private volatile Future currentInterpolationTask_;
-   //Objects for wait/notify sync of calcualtions
-   protected Object xyPositionLock_ = new Object(), interpolationLock_ = new Object(), convexHullLock_ = new Object();
+  // surface coordinates are neccessarily associated with the coordinate space of particular xy and
+  // z devices
+  private final String zDeviceName_;
+  protected volatile TreeSet<Point3d> points_;
+  private MonotoneChain mChain_;
+  protected volatile Vector2D[] convexHullVertices_;
+  protected volatile Region<Euclidean2D> convexHullRegion_;
+  private volatile int numRows_, numCols_;
+  private volatile List<XYStagePosition> xyPositions_;
+  protected volatile double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
+  protected volatile int boundXPixelMin_, boundXPixelMax_, boundYPixelMin_, boundYPixelMax_;
+  protected volatile int minPixelsPerInterpPoint_ = 1;
+  private ExecutorService executor_;
+  protected volatile SingleResolutionInterpolation currentInterpolation_;
+  private volatile Future currentInterpolationTask_;
+  // Objects for wait/notify sync of calcualtions
+  protected Object xyPositionLock_ = new Object(),
+      interpolationLock_ = new Object(),
+      convexHullLock_ = new Object();
 
-   public SurfaceInterpolator(String xyDevice, String zDevice) {
-      super(xyDevice);
-      name_ = manager_.getNewSurfaceName();
-      zDeviceName_ = zDevice;
-      //store points sorted by z coordinate to easily find the top, for generating slice index 0 position
-      points_ = new TreeSet<Point3d>(new Comparator<Point3d>() {
-         @Override
-         public int compare(Point3d p1, Point3d p2) {
-            if (p1.z > p2.z) {
-               return 1;
-            } else if (p1.z < p2.z) {
-               return -1;
-            } else if (p1.x > p2.x) {
-               return 1;
-            } else if (p1.x < p2.x) {
-               return -1;
-            } else if (p1.y > p2.y) {
-               return 1;
-            } else if (p1.y < p2.y) {
-               return -1;
-            } else {
-               return 0;
-            }
-         }
-      });
-      mChain_ = new MonotoneChain(true);
-      executor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
-         @Override
-         public Thread newThread(Runnable r) {
-            return new Thread(r, "Interpolation calculation thread ");
-         }
-      });
+  public SurfaceInterpolator(String xyDevice, String zDevice) {
+    super(xyDevice);
+    name_ = manager_.getNewSurfaceName();
+    zDeviceName_ = zDevice;
+    // store points sorted by z coordinate to easily find the top, for generating slice index 0
+    // position
+    points_ =
+        new TreeSet<Point3d>(
+            new Comparator<Point3d>() {
+              @Override
+              public int compare(Point3d p1, Point3d p2) {
+                if (p1.z > p2.z) {
+                  return 1;
+                } else if (p1.z < p2.z) {
+                  return -1;
+                } else if (p1.x > p2.x) {
+                  return 1;
+                } else if (p1.x < p2.x) {
+                  return -1;
+                } else if (p1.y > p2.y) {
+                  return 1;
+                } else if (p1.y < p2.y) {
+                  return -1;
+                } else {
+                  return 0;
+                }
+              }
+            });
+    mChain_ = new MonotoneChain(true);
+    executor_ =
+        Executors.newSingleThreadExecutor(
+            new ThreadFactory() {
+              @Override
+              public Thread newThread(Runnable r) {
+                return new Thread(r, "Interpolation calculation thread ");
+              }
+            });
+  }
 
-   }
+  public int getMinPixelsPerInterpPoint() {
+    return minPixelsPerInterpPoint_;
+  }
 
-   public int getMinPixelsPerInterpPoint() {
-      return minPixelsPerInterpPoint_;
-   }
+  public String getZDevice() {
+    return zDeviceName_;
+  }
 
-   public String getZDevice() {
-      return zDeviceName_;
-   }
+  public void delete() {
+    executor_.shutdownNow();
+    synchronized (convexHullLock_) {
+      convexHullLock_.notifyAll();
+    }
+    synchronized (interpolationLock_) {
+      interpolationLock_.notifyAll();
+    }
+    synchronized (xyPositionLock_) {
+      xyPositionLock_.notifyAll();
+    }
+  }
 
-   public void delete() {
-      executor_.shutdownNow();
-      synchronized (convexHullLock_) {
-         convexHullLock_.notifyAll();
+  /**
+   * Returns the number of XY positions spanned by the footprint of this surface
+   *
+   * @return
+   */
+  public int getNumPositions() {
+    if (xyPositions_ == null) {
+      return -1;
+    }
+    return xyPositions_.size();
+  }
+
+  /**
+   * Blocks until convex hull vertices have been calculated
+   *
+   * @return
+   * @throws InterruptedException
+   */
+  public Vector2D[] getConvexHullPoints() {
+    // block until convex hull points available
+    synchronized (convexHullLock_) {
+      while (convexHullVertices_ == null) {
+        try {
+          convexHullLock_.wait();
+        } catch (InterruptedException ex) {
+          throw new RuntimeException();
+        }
       }
-      synchronized (interpolationLock_) {
-         interpolationLock_.notifyAll();
-      }
-      synchronized (xyPositionLock_) {
-         xyPositionLock_.notifyAll();
-      }
-   }
+      return convexHullVertices_;
+    }
+  }
 
-   /**
-    * Returns the number of XY positions spanned by the footprint of this
-    * surface
-    *
-    * @return
-    */
-   public int getNumPositions() {
-      if (xyPositions_ == null) {
-         return -1;
+  @Override
+  public List<XYStagePosition> getXYPositions() {
+    return xyPositions_;
+  }
+
+  public SingleResolutionInterpolation getCurentInterpolation() {
+    return currentInterpolation_;
+  }
+
+  public SingleResolutionInterpolation waitForCurentInterpolation() throws InterruptedException {
+    synchronized (interpolationLock_) {
+      if (currentInterpolation_ == null) {
+        while (currentInterpolation_ == null) {
+          interpolationLock_.wait();
+        }
+        return currentInterpolation_;
       }
-      return xyPositions_.size();
-   }
-
-   /**
-    * Blocks until convex hull vertices have been calculated
-    *
-    * @return
-    * @throws InterruptedException
-    */
-   public Vector2D[] getConvexHullPoints() {
-      // block until convex hull points available
-      synchronized (convexHullLock_) {
-         while (convexHullVertices_ == null) {
-            try {
-               convexHullLock_.wait();
-            } catch (InterruptedException ex) {
-               throw new RuntimeException();
-            }
-         }
-         return convexHullVertices_;
-      }
-   }
-
-   @Override
-   public List<XYStagePosition> getXYPositions() {
-      return xyPositions_;
-   }
-
-   public SingleResolutionInterpolation getCurentInterpolation() {
       return currentInterpolation_;
-   }
+    }
+  }
 
-   public SingleResolutionInterpolation waitForCurentInterpolation() throws InterruptedException {
-      synchronized (interpolationLock_) {
-         if (currentInterpolation_ == null) {
-            while (currentInterpolation_ == null) {
-               interpolationLock_.wait();
-            }
-            return currentInterpolation_;
-         }
-         return currentInterpolation_;
+  public boolean isDefinedAtPosition(Point2D.Double[] dispPositionCorners) {
+    // create square region correpsonding to stage pos
+    Region<Euclidean2D> square = getStagePositionRegion(dispPositionCorners);
+    // if convex hull and position have no intersection, delete
+    Region<Euclidean2D> intersection = regionFactory_.intersection(square, convexHullRegion_);
+    if (intersection.isEmpty()) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  /**
+   * tests whether any part of XY stage position is lies above the interpolated surface
+   *
+   * @return true if every part of position is above surface, false otherwise
+   */
+  public boolean isPositionCompletelyAboveSurface(
+      Point2D.Double[] positionCorners,
+      SurfaceInterpolator surface,
+      double zPos,
+      boolean extrapolate) {
+    return testPositionRelativeToSurface(
+        positionCorners, surface, zPos, ABOVE_SURFACE, extrapolate);
+  }
+
+  /**
+   * tests whether any part of XY stage position is lies above the interpolated surface
+   *
+   * @return true if every part of position is above surface, false otherwise
+   */
+  public boolean isPositionCompletelyBelowSurface(
+      Point2D.Double[] positionCorners,
+      SurfaceInterpolator surface,
+      double zPos,
+      boolean extrapolate) {
+    return testPositionRelativeToSurface(
+        positionCorners, surface, zPos, BELOW_SURFACE, extrapolate);
+  }
+
+  /**
+   * test whether XY position is completely abve or completely below surface
+   *
+   * @throws InterruptedException
+   */
+  public boolean testPositionRelativeToSurface(
+      Point2D.Double[] positionCorners,
+      SurfaceInterpolator surface,
+      double zPos,
+      int mode,
+      boolean extrapolate) {
+    boolean towardsSampleIsPositive;
+    try {
+      String zDevice = Magellan.getCore().getFocusDevice();
+      int dir = Magellan.getCore().getFocusDirection(zDevice);
+
+      if (dir > 0) {
+        towardsSampleIsPositive = true;
+      } else if (dir < 0) {
+        towardsSampleIsPositive = false;
+      } else {
+        throw new Exception();
       }
-   }
+    } catch (Exception e) {
+      Log.log(
+          "Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
+      throw new RuntimeException();
+    }
+    // First check position corners before going into a more detailed set of test points
+    for (Point2D.Double point : positionCorners) {
+      float interpVal;
+      if (!surface.getCurentInterpolation().isInterpDefined(point.x, point.y)) {
+        if (extrapolate) {
+          interpVal = surface.getExtrapolatedValue(point.x, point.y);
+        } else {
+          continue;
+        }
+      } else {
+        interpVal = surface.getCurentInterpolation().getInterpolatedValue(point.x, point.y);
+      }
+      if ((towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos >= interpVal)
+          || (towardsSampleIsPositive && mode == BELOW_SURFACE && zPos <= interpVal)
+          || (!towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos <= interpVal)
+          || (!towardsSampleIsPositive && mode == BELOW_SURFACE) && zPos >= interpVal) {
+        return false;
+      }
+    }
+    // then check a grid of points spanning entire position
+    // 9x9 square of points to check for each position
+    // square is aligned with axes in pixel space, so convert to pixel space to generate test points
+    double xSpan = positionCorners[2].getX() - positionCorners[0].getX();
+    double ySpan = positionCorners[2].getY() - positionCorners[0].getY();
+    Point2D.Double pixelSpan = new Point2D.Double();
+    AffineTransform transform = AffineTransformUtils.getAffineTransform(0, 0);
+    try {
+      transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
+    } catch (NoninvertibleTransformException ex) {
+      Log.log("Problem inverting affine transform");
+    }
+    outerloop:
+    for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS) {
+      for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) NUM_XY_TEST_POINTS) {
+        // convert these abritray pixel coordinates back to stage coordinates
+        double[] transformMaxtrix = new double[6];
+        transform.getMatrix(transformMaxtrix);
+        transformMaxtrix[4] = positionCorners[0].getX();
+        transformMaxtrix[5] = positionCorners[0].getY();
+        // create new transform with translation applied
+        transform = new AffineTransform(transformMaxtrix);
+        Point2D.Double stageCoords = new Point2D.Double();
+        transform.transform(new Point2D.Double(x, y), stageCoords);
+        // test point for inclusion of position
+        float interpVal;
+        if (!surface.getCurentInterpolation().isInterpDefined(stageCoords.x, stageCoords.y)) {
+          if (extrapolate) {
+            interpVal = surface.getExtrapolatedValue(stageCoords.x, stageCoords.y);
+          } else {
+            continue;
+          }
+        } else {
+          interpVal =
+              surface.getCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
+        }
+        if ((towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos >= interpVal)
+            || (towardsSampleIsPositive && mode == BELOW_SURFACE && zPos <= interpVal)
+            || (!towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos <= interpVal)
+            || (!towardsSampleIsPositive && mode == BELOW_SURFACE) && zPos >= interpVal) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 
-   public boolean isDefinedAtPosition(Point2D.Double[] dispPositionCorners) {
-      //create square region correpsonding to stage pos
-      Region<Euclidean2D> square = getStagePositionRegion(dispPositionCorners);
-      //if convex hull and position have no intersection, delete
+  private void calculateConvexHullBounds() {
+    // convert convex hull vertices to pixel offsets in an arbitrary pixel space
+    AffineTransform transform = AffineTransformUtils.getAffineTransform(0, 0);
+    boundYPixelMin_ = Integer.MAX_VALUE;
+    boundYPixelMax_ = Integer.MIN_VALUE;
+    boundXPixelMin_ = Integer.MAX_VALUE;
+    boundXPixelMax_ = Integer.MIN_VALUE;
+    boundXMin_ = Double.MAX_VALUE;
+    boundXMax_ = Double.MIN_VALUE;
+    boundYMin_ = Double.MAX_VALUE;
+    boundYMax_ = Double.MIN_VALUE;
+    for (int i = 0; i < convexHullVertices_.length; i++) {
+      // calculate edges of interpolation bounding box
+      // for later use by interpolating function
+      boundXMin_ = Math.min(boundXMin_, convexHullVertices_[i].getX());
+      boundXMax_ = Math.max(boundXMax_, convexHullVertices_[i].getX());
+      boundYMin_ = Math.min(boundYMin_, convexHullVertices_[i].getY());
+      boundYMax_ = Math.max(boundYMax_, convexHullVertices_[i].getY());
+      // also get pixel bounds of convex hull for fitting of XY positions
+      double dx = convexHullVertices_[i].getX() - convexHullVertices_[0].getX();
+      double dy = convexHullVertices_[i].getY() - convexHullVertices_[0].getY();
+      Point2D.Double pixelOffset = new Point2D.Double(); // pixel offset from convex hull vertex 0;
+      try {
+        transform.inverseTransform(new Point2D.Double(dx, dy), pixelOffset);
+      } catch (NoninvertibleTransformException ex) {
+        Log.log("Problem inverting affine transform");
+      }
+      boundYPixelMin_ = (int) Math.min(boundYPixelMin_, pixelOffset.y);
+      boundYPixelMax_ = (int) Math.max(boundYPixelMax_, pixelOffset.y);
+      boundXPixelMin_ = (int) Math.min(boundXPixelMin_, pixelOffset.x);
+      boundXPixelMax_ = (int) Math.max(boundXPixelMax_, pixelOffset.x);
+    }
+  }
+
+  protected abstract void interpolateSurface(LinkedList<Point3d> points)
+      throws InterruptedException;
+
+  /** calculated ad hoc unlike interpolated values which are cached */
+  public abstract float getExtrapolatedValue(double x, double y);
+
+  private void fitXYPositionsToConvexHull(double overlap) throws InterruptedException {
+    int fullTileWidth = (int) Magellan.getCore().getImageWidth();
+    int fullTileHeight = (int) Magellan.getCore().getImageHeight();
+    int overlapX = (int) (Magellan.getCore().getImageWidth() * overlap / 100);
+    int overlapY = (int) (Magellan.getCore().getImageHeight() * overlap / 100);
+    int tileWidthMinusOverlap = fullTileWidth - overlapX;
+    int tileHeightMinusOverlap = fullTileHeight - overlapY;
+    numRows_ =
+        (int) Math.ceil((boundYPixelMax_ - boundYPixelMin_) / (double) tileHeightMinusOverlap);
+    numCols_ =
+        (int) Math.ceil((boundXPixelMax_ - boundXPixelMin_) / (double) tileWidthMinusOverlap);
+
+    // take center of bounding box and create grid
+    int pixelCenterX = boundXPixelMin_ + (boundXPixelMax_ - boundXPixelMin_) / 2;
+    int pixelCenterY = boundYPixelMin_ + (boundYPixelMax_ - boundYPixelMin_) / 2;
+
+    AffineTransform transform = AffineTransformUtils.getAffineTransform(0, 0);
+    ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
+    Point2D.Double gridCenterStageCoords = new Point2D.Double();
+    transform.transform(new Point2D.Double(pixelCenterX, pixelCenterY), gridCenterStageCoords);
+    gridCenterStageCoords.x += convexHullVertices_[0].getX();
+    gridCenterStageCoords.y += convexHullVertices_[0].getY();
+    // set affine transform translation relative to grid center
+    double[] transformMaxtrix = new double[6];
+    transform.getMatrix(transformMaxtrix);
+    transformMaxtrix[4] = gridCenterStageCoords.x;
+    transformMaxtrix[5] = gridCenterStageCoords.y;
+    // create new transform with translation applied
+    transform = new AffineTransform(transformMaxtrix);
+    // add all positions of rectangle around convex hull
+    for (int col = 0; col < numCols_; col++) {
+      double xPixelOffset = (col - (numCols_ - 1) / 2.0) * (tileWidthMinusOverlap);
+      // snaky pattern
+      if (col % 2 == 0) {
+        for (int row = 0; row < numRows_; row++) {
+          if (Thread.interrupted()) {
+            throw new InterruptedException();
+          }
+          double yPixelOffset = (row - (numRows_ - 1) / 2.0) * (tileHeightMinusOverlap);
+          Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
+          Point2D.Double stagePos = new Point2D.Double();
+          transform.transform(pixelPos, stagePos);
+          positions.add(new XYStagePosition(stagePos, row, col));
+        }
+      } else {
+        for (int row = numRows_ - 1; row >= 0; row--) {
+          if (Thread.interrupted()) {
+            throw new InterruptedException();
+          }
+          double yPixelOffset = (row - (numRows_ - 1) / 2.0) * (tileHeightMinusOverlap);
+          Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
+          Point2D.Double stagePos = new Point2D.Double();
+          transform.transform(pixelPos, stagePos);
+          positions.add(new XYStagePosition(stagePos, row, col));
+        }
+      }
+    }
+    // delete positions squares (+padding) that do not overlap convex hull
+    for (int i = positions.size() - 1; i >= 0; i--) {
+      if (Thread.interrupted()) {
+        throw new InterruptedException();
+      }
+      XYStagePosition pos = positions.get(i);
+      // create square region correpsonding to stage pos
+      Region<Euclidean2D> square =
+          getStagePositionRegion(pos.getVisibleTileCorners(overlapX, overlapY));
+      // if convex hull and position have no intersection, delete
       Region<Euclidean2D> intersection = regionFactory_.intersection(square, convexHullRegion_);
       if (intersection.isEmpty()) {
-         return false;
-      } else {
-         return true;
+        positions.remove(i);
       }
-   }
+      square.getBoundarySize();
+    }
+    if (Thread.interrupted()) {
+      throw new InterruptedException();
+    }
+    synchronized (xyPositionLock_) {
+      xyPositions_ = positions;
+      xyPositionLock_.notifyAll();
+    }
 
-   /**
-    * tests whether any part of XY stage position is lies above the interpolated
-    * surface
-    *
-    * @return true if every part of position is above surface, false otherwise
-    */
-   public boolean isPositionCompletelyAboveSurface(Point2D.Double[] positionCorners,
-           SurfaceInterpolator surface, double zPos, boolean extrapolate) {
-      return testPositionRelativeToSurface(positionCorners, surface, zPos, ABOVE_SURFACE,  extrapolate);
-   }
+    // let manger know new parmas caluclated
+    manager_.surfaceOrGridUpdated(this);
+  }
 
-   /**
-    * tests whether any part of XY stage position is lies above the interpolated
-    * surface
-    *
-    * @return true if every part of position is above surface, false otherwise
-    */
-   public boolean isPositionCompletelyBelowSurface(Point2D.Double[] positionCorners,
-           SurfaceInterpolator surface, double zPos, boolean extrapolate) {
-      return testPositionRelativeToSurface(positionCorners, surface, zPos, BELOW_SURFACE,
-              extrapolate);
-   }
+  public synchronized void deleteAllPoints() {
+    points_.clear();
+  }
 
-   /**
-    * test whether XY position is completely abve or completely below surface
-    *
-    * @throws InterruptedException
-    */
-   public boolean testPositionRelativeToSurface(Point2D.Double[] positionCorners,
-           SurfaceInterpolator surface, double zPos, int mode, boolean extrapolate) {
-      boolean towardsSampleIsPositive;
-      try {
-         String zDevice = Magellan.getCore().getFocusDevice();
-         int dir = Magellan.getCore().getFocusDirection(zDevice);
-
-         if (dir > 0) {
-            towardsSampleIsPositive = true;
-         } else if (dir < 0) {
-            towardsSampleIsPositive = false;
-         } else {
-            throw new Exception();
-         }
-      } catch (Exception e) {
-         Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
-         throw new RuntimeException();
+  public synchronized void deletePointsWithinZRange(double zMin, double zMax) {
+    ArrayList<Point3d> toRemove = new ArrayList<Point3d>();
+    for (Point3d point : points_) {
+      if (point.z >= zMin && point.z <= zMax) {
+        toRemove.add(point);
       }
-      //First check position corners before going into a more detailed set of test points
-      for (Point2D.Double point : positionCorners) {
-         float interpVal;
-         if (!surface.getCurentInterpolation().isInterpDefined(point.x, point.y)) {
-            if (extrapolate) {
-               interpVal = surface.getExtrapolatedValue(point.x, point.y);
-            } else {
-               continue;
-            }
-         } else {
-            interpVal = surface.getCurentInterpolation().getInterpolatedValue(point.x, point.y);
-         }
-         if ((towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos >= interpVal)
-                 || (towardsSampleIsPositive && mode == BELOW_SURFACE && zPos <= interpVal)
-                 || (!towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos <= interpVal)
-                 || (!towardsSampleIsPositive && mode == BELOW_SURFACE) && zPos >= interpVal) {
-            return false;
-         }
+    }
+    for (Point3d point : toRemove) {
+      points_.remove(point);
+    }
+
+    updateConvexHullAndInterpolate();
+    manager_.surfaceOrGridUpdated(this);
+  }
+
+  /**
+   * delete closest point within XY tolerance
+   *
+   * @param x
+   * @param y
+   * @param toleranceXY radius in stage space
+   */
+  public synchronized void deleteClosestPoint(
+      double x, double y, double toleranceXY, double zMin, double zMax) {
+    double minDistance = toleranceXY + 1;
+    Point3d minDistancePoint = null;
+    for (Point3d point : points_) {
+      double distance = Math.sqrt((x - point.x) * (x - point.x) + (y - point.y) * (y - point.y));
+      if (distance < minDistance && point.z >= zMin && point.z <= zMax) {
+        minDistance = distance;
+        minDistancePoint = point;
       }
-      //then check a grid of points spanning entire position        
-      //9x9 square of points to check for each position
-      //square is aligned with axes in pixel space, so convert to pixel space to generate test points
-      double xSpan = positionCorners[2].getX() - positionCorners[0].getX();
-      double ySpan = positionCorners[2].getY() - positionCorners[0].getY();
-      Point2D.Double pixelSpan = new Point2D.Double();
-      AffineTransform transform = AffineTransformUtils.getAffineTransform(0, 0);
-      try {
-         transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
-      } catch (NoninvertibleTransformException ex) {
-         Log.log("Problem inverting affine transform");
-      }
-      outerloop:
-      for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS) {
-         for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) NUM_XY_TEST_POINTS) {
-            //convert these abritray pixel coordinates back to stage coordinates
-            double[] transformMaxtrix = new double[6];
-            transform.getMatrix(transformMaxtrix);
-            transformMaxtrix[4] = positionCorners[0].getX();
-            transformMaxtrix[5] = positionCorners[0].getY();
-            //create new transform with translation applied
-            transform = new AffineTransform(transformMaxtrix);
-            Point2D.Double stageCoords = new Point2D.Double();
-            transform.transform(new Point2D.Double(x, y), stageCoords);
-            //test point for inclusion of position
-            float interpVal;
-            if (!surface.getCurentInterpolation().isInterpDefined(stageCoords.x, stageCoords.y)) {
-               if (extrapolate) {
-                  interpVal = surface.getExtrapolatedValue(stageCoords.x, stageCoords.y);
-               } else {
-                  continue;
-               }
-            } else {
-               interpVal = surface.getCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
-            }
-            if ((towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos >= interpVal)
-                    || (towardsSampleIsPositive && mode == BELOW_SURFACE && zPos <= interpVal)
-                    || (!towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos <= interpVal)
-                    || (!towardsSampleIsPositive && mode == BELOW_SURFACE) && zPos >= interpVal) {
-               return false;
-            }
-         }
-      }
-      return true;
-   }
+    }
+    // delete if within tolerance
+    if (minDistance < toleranceXY && minDistancePoint != null) {
+      points_.remove(minDistancePoint);
+    }
 
-   private void calculateConvexHullBounds() {
-      //convert convex hull vertices to pixel offsets in an arbitrary pixel space
-      AffineTransform transform = AffineTransformUtils.getAffineTransform(0, 0);
-      boundYPixelMin_ = Integer.MAX_VALUE;
-      boundYPixelMax_ = Integer.MIN_VALUE;
-      boundXPixelMin_ = Integer.MAX_VALUE;
-      boundXPixelMax_ = Integer.MIN_VALUE;
-      boundXMin_ = Double.MAX_VALUE;
-      boundXMax_ = Double.MIN_VALUE;
-      boundYMin_ = Double.MAX_VALUE;
-      boundYMax_ = Double.MIN_VALUE;
-      for (int i = 0; i < convexHullVertices_.length; i++) {
-         //calculate edges of interpolation bounding box
-         //for later use by interpolating function
-         boundXMin_ = Math.min(boundXMin_, convexHullVertices_[i].getX());
-         boundXMax_ = Math.max(boundXMax_, convexHullVertices_[i].getX());
-         boundYMin_ = Math.min(boundYMin_, convexHullVertices_[i].getY());
-         boundYMax_ = Math.max(boundYMax_, convexHullVertices_[i].getY());
-         //also get pixel bounds of convex hull for fitting of XY positions
-         double dx = convexHullVertices_[i].getX() - convexHullVertices_[0].getX();
-         double dy = convexHullVertices_[i].getY() - convexHullVertices_[0].getY();
-         Point2D.Double pixelOffset = new Point2D.Double(); // pixel offset from convex hull vertex 0;
-         try {
-            transform.inverseTransform(new Point2D.Double(dx, dy), pixelOffset);
-         } catch (NoninvertibleTransformException ex) {
-            Log.log("Problem inverting affine transform");
-         }
-         boundYPixelMin_ = (int) Math.min(boundYPixelMin_, pixelOffset.y);
-         boundYPixelMax_ = (int) Math.max(boundYPixelMax_, pixelOffset.y);
-         boundXPixelMin_ = (int) Math.min(boundXPixelMin_, pixelOffset.x);
-         boundXPixelMax_ = (int) Math.max(boundXPixelMax_, pixelOffset.x);
-      }
-   }
+    updateConvexHullAndInterpolate();
+    manager_.surfaceOrGridUpdated(this);
+  }
 
-   protected abstract void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException;
+  public synchronized void addPoint(double x, double y, double z) {
+    points_.add(new Point3d(x, y, z)); // for interpolation
+    updateConvexHullAndInterpolate();
+    manager_.surfaceOrGridUpdated(this);
+  }
 
-   /**
-    * calculated ad hoc unlike interpolated values which are cached
-    */
-   public abstract float getExtrapolatedValue(double x, double y);
-
-   private void fitXYPositionsToConvexHull(double overlap) throws InterruptedException {
-      int fullTileWidth = (int) Magellan.getCore().getImageWidth();
-      int fullTileHeight = (int) Magellan.getCore().getImageHeight();
-      int overlapX = (int) (Magellan.getCore().getImageWidth() * overlap / 100);
-      int overlapY = (int) (Magellan.getCore().getImageHeight() * overlap / 100);
-      int tileWidthMinusOverlap = fullTileWidth - overlapX;
-      int tileHeightMinusOverlap = fullTileHeight - overlapY;
-      numRows_ = (int) Math.ceil((boundYPixelMax_ - boundYPixelMin_) / (double) tileHeightMinusOverlap);
-      numCols_ = (int) Math.ceil((boundXPixelMax_ - boundXPixelMin_) / (double) tileWidthMinusOverlap);
-
-      //take center of bounding box and create grid
-      int pixelCenterX = boundXPixelMin_ + (boundXPixelMax_ - boundXPixelMin_) / 2;
-      int pixelCenterY = boundYPixelMin_ + (boundYPixelMax_ - boundYPixelMin_) / 2;
-
-      AffineTransform transform = AffineTransformUtils.getAffineTransform(0, 0);
-      ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
-      Point2D.Double gridCenterStageCoords = new Point2D.Double();
-      transform.transform(new Point2D.Double(pixelCenterX, pixelCenterY), gridCenterStageCoords);
-      gridCenterStageCoords.x += convexHullVertices_[0].getX();
-      gridCenterStageCoords.y += convexHullVertices_[0].getY();
-      //set affine transform translation relative to grid center
-      double[] transformMaxtrix = new double[6];
-      transform.getMatrix(transformMaxtrix);
-      transformMaxtrix[4] = gridCenterStageCoords.x;
-      transformMaxtrix[5] = gridCenterStageCoords.y;
-      //create new transform with translation applied
-      transform = new AffineTransform(transformMaxtrix);
-      //add all positions of rectangle around convex hull
-      for (int col = 0; col < numCols_; col++) {
-         double xPixelOffset = (col - (numCols_ - 1) / 2.0) * (tileWidthMinusOverlap);
-         //snaky pattern
-         if (col % 2 == 0) {
-            for (int row = 0; row < numRows_; row++) {
-               if (Thread.interrupted()) {
-                  throw new InterruptedException();
-               }
-               double yPixelOffset = (row - (numRows_ - 1) / 2.0) * (tileHeightMinusOverlap);
-               Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
-               Point2D.Double stagePos = new Point2D.Double();
-               transform.transform(pixelPos, stagePos);
-               positions.add(new XYStagePosition(stagePos, row, col));
-            }
-         } else {
-            for (int row = numRows_ - 1; row >= 0; row--) {
-               if (Thread.interrupted()) {
-                  throw new InterruptedException();
-               }
-               double yPixelOffset = (row - (numRows_ - 1) / 2.0) * (tileHeightMinusOverlap);
-               Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
-               Point2D.Double stagePos = new Point2D.Double();
-               transform.transform(pixelPos, stagePos);
-               positions.add(new XYStagePosition(stagePos, row, col));
-            }
-         }
-      }
-      //delete positions squares (+padding) that do not overlap convex hull
-      for (int i = positions.size() - 1; i >= 0; i--) {
-         if (Thread.interrupted()) {
-            throw new InterruptedException();
-         }
-         XYStagePosition pos = positions.get(i);
-         //create square region correpsonding to stage pos
-         Region<Euclidean2D> square = getStagePositionRegion(
-                 pos.getVisibleTileCorners(overlapX, overlapY));
-         //if convex hull and position have no intersection, delete
-         Region<Euclidean2D> intersection = regionFactory_.intersection(square, convexHullRegion_);
-         if (intersection.isEmpty()) {
-            positions.remove(i);
-         }
-         square.getBoundarySize();
-      }
-      if (Thread.interrupted()) {
-         throw new InterruptedException();
-      }
-      synchronized (xyPositionLock_) {
-         xyPositions_ = positions;
-         xyPositionLock_.notifyAll();
-      }
-
-      //let manger know new parmas caluclated
-      manager_.surfaceOrGridUpdated(this);
-   }
-
-   public synchronized void deleteAllPoints() {
-      points_.clear();
-   }
-
-   public synchronized void deletePointsWithinZRange(double zMin, double zMax) {
-      ArrayList<Point3d> toRemove = new ArrayList<Point3d>();
-      for (Point3d point : points_) {
-         if (point.z >= zMin && point.z <= zMax) {
-            toRemove.add(point);
-         }
-      }
-      for (Point3d point : toRemove) {
-         points_.remove(point);
-      }
-
-      updateConvexHullAndInterpolate();
-      manager_.surfaceOrGridUpdated(this);
-   }
-
-   /**
-    * delete closest point within XY tolerance
-    *
-    * @param x
-    * @param y
-    * @param toleranceXY radius in stage space
-    */
-   public synchronized void deleteClosestPoint(double x, double y, double toleranceXY, double zMin, double zMax) {
-      double minDistance = toleranceXY + 1;
-      Point3d minDistancePoint = null;
-      for (Point3d point : points_) {
-         double distance = Math.sqrt((x - point.x) * (x - point.x) + (y - point.y) * (y - point.y));
-         if (distance < minDistance && point.z >= zMin && point.z <= zMax) {
-            minDistance = distance;
-            minDistancePoint = point;
-         }
-      }
-      //delete if within tolerance
-      if (minDistance < toleranceXY && minDistancePoint != null) {
-         points_.remove(minDistancePoint);
-      }
-
-      updateConvexHullAndInterpolate();
-      manager_.surfaceOrGridUpdated(this);
-   }
-
-   public synchronized void addPoint(double x, double y, double z) {
-      points_.add(new Point3d(x, y, z)); //for interpolation
-      updateConvexHullAndInterpolate();
-      manager_.surfaceOrGridUpdated(this);
-   }
-
-   //redo XY position fitting, but dont need to reinterpolate
-   private void updateXYPositionsOnly(final double overlap) {
-      synchronized (xyPositionLock_) {
-         xyPositions_ = null;
-      }
-      executor_.submit(new Runnable() {
-         @Override
-         public void run() {
+  // redo XY position fitting, but dont need to reinterpolate
+  private void updateXYPositionsOnly(final double overlap) {
+    synchronized (xyPositionLock_) {
+      xyPositions_ = null;
+    }
+    executor_.submit(
+        new Runnable() {
+          @Override
+          public void run() {
             try {
-               fitXYPositionsToConvexHull(overlap);
+              fitXYPositionsToConvexHull(overlap);
             } catch (InterruptedException ex) {
-               //this won't happen
-               return;
+              // this won't happen
+              return;
             }
             manager_.surfaceOrGridUpdated(SurfaceInterpolator.this);
-         }
-      });
-   }
+          }
+        });
+  }
 
-   private synchronized void updateConvexHullAndInterpolate() {
-      //duplicate points for use on caluclation thread
-      final LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
-      if (currentInterpolationTask_ != null && !currentInterpolationTask_.isDone()) {
-         //cancel current interpolation because interpolation points have changed, call does not block
-         currentInterpolationTask_.cancel(true);
-      }
-      //don't want one of the get methods returning a null object thinking it has a value
-      synchronized (convexHullLock_) {
-         convexHullVertices_ = null;
-         convexHullRegion_ = null;
-      }
-      synchronized (interpolationLock_) {
-         currentInterpolation_ = null;
-      }
-      synchronized (xyPositionLock_) {
-         xyPositions_ = null;
-      }
-      numRows_ = 0;
-      numCols_ = 0;
+  private synchronized void updateConvexHullAndInterpolate() {
+    // duplicate points for use on caluclation thread
+    final LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
+    if (currentInterpolationTask_ != null && !currentInterpolationTask_.isDone()) {
+      // cancel current interpolation because interpolation points have changed, call does not block
+      currentInterpolationTask_.cancel(true);
+    }
+    // don't want one of the get methods returning a null object thinking it has a value
+    synchronized (convexHullLock_) {
+      convexHullVertices_ = null;
+      convexHullRegion_ = null;
+    }
+    synchronized (interpolationLock_) {
+      currentInterpolation_ = null;
+    }
+    synchronized (xyPositionLock_) {
+      xyPositions_ = null;
+    }
+    numRows_ = 0;
+    numCols_ = 0;
 
-      currentInterpolationTask_ = executor_.submit(new Runnable() {
-         @Override
-         public void run() {
-            if (points.size() > 2) {
-               try {
-                  //convert xyPoints to a vector2d for convex hull calculation
-                  LinkedList<Vector2D> xyPoints = new LinkedList<Vector2D>();
-                  for (Point3d p : points) {
-                     xyPoints.add(new Vector2D(p.x, p.y));
+    currentInterpolationTask_ =
+        executor_.submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                if (points.size() > 2) {
+                  try {
+                    // convert xyPoints to a vector2d for convex hull calculation
+                    LinkedList<Vector2D> xyPoints = new LinkedList<Vector2D>();
+                    for (Point3d p : points) {
+                      xyPoints.add(new Vector2D(p.x, p.y));
+                    }
+                    ConvexHull2D hull = null;
+                    hull = mChain_.generate(xyPoints);
+                    if (Thread.interrupted()) {
+                      throw new InterruptedException();
+                    }
+                    synchronized (convexHullLock_) {
+                      convexHullVertices_ = hull.getVertices();
+                      convexHullLock_.notifyAll();
+                    }
+                    if (Thread.interrupted()) {
+                      throw new InterruptedException();
+                    }
+                    convexHullRegion_ = hull.createRegion();
+                    if (Thread.interrupted()) {
+                      throw new InterruptedException();
+                    }
+                    calculateConvexHullBounds();
+                    if (Thread.interrupted()) {
+                      throw new InterruptedException();
+                    }
+                    // use the most recently set overlap value for display purposes. When it comes
+                    // time to calc the real thing,
+                    // get it from the acquisition settings
+                    fitXYPositionsToConvexHull(GUI.getTileOverlap());
+                    // Interpolate surface as specified by the subclass method
+                    interpolateSurface(points);
+                    // let manager handle event firing to acquisitions using surface
+                    manager_.surfaceOrGridUpdated(SurfaceInterpolator.this);
+                  } catch (InterruptedException e) {
+                    return;
                   }
-                  ConvexHull2D hull = null;
-                  hull = mChain_.generate(xyPoints);
-                  if (Thread.interrupted()) {
-                     throw new InterruptedException();
-                  }
-                  synchronized (convexHullLock_) {
-                     convexHullVertices_ = hull.getVertices();
-                     convexHullLock_.notifyAll();
-                  }
-                  if (Thread.interrupted()) {
-                     throw new InterruptedException();
-                  }
-                  convexHullRegion_ = hull.createRegion();
-                  if (Thread.interrupted()) {
-                     throw new InterruptedException();
-                  }
-                  calculateConvexHullBounds();
-                  if (Thread.interrupted()) {
-                     throw new InterruptedException();
-                  }
-                  //use the most recently set overlap value for display purposes. When it comes time to calc the real thing, 
-                  //get it from the acquisition settings
-                  fitXYPositionsToConvexHull(GUI.getTileOverlap());
-                  //Interpolate surface as specified by the subclass method
-                  interpolateSurface(points);
-                  //let manager handle event firing to acquisitions using surface
-                  manager_.surfaceOrGridUpdated(SurfaceInterpolator.this);
-               } catch (InterruptedException e) {
-                  return;
-               }
-            }
-         }
-      });
-   }
+                }
+              }
+            });
+  }
 
-   /**
-    * block until a higher resolution surface is available. Might experience
-    * spurious wakeups
-    *
-    * @throws InterruptedException
-    */
-   public void waitForHigherResolutionInterpolation() throws InterruptedException {
-      synchronized (interpolationLock_) {
-         interpolationLock_.wait();
-      }
-   }
+  /**
+   * block until a higher resolution surface is available. Might experience spurious wakeups
+   *
+   * @throws InterruptedException
+   */
+  public void waitForHigherResolutionInterpolation() throws InterruptedException {
+    synchronized (interpolationLock_) {
+      interpolationLock_.wait();
+    }
+  }
 
-   public synchronized List<Point3d> getPoints() {
-      return Arrays.asList(points_.toArray(new Point3d[0]));
-   }
-
+  public synchronized List<Point3d> getPoints() {
+    return Arrays.asList(points_.toArray(new Point3d[0]));
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger
 //
@@ -27,19 +27,20 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
 public class SaverFactory implements ProcessorFactory {
-   private final PropertyMap settings_;
-   private final Studio studio_;
+  private final PropertyMap settings_;
+  private final Studio studio_;
 
-   public SaverFactory(PropertyMap settings, Studio studio) {
-      settings_ = settings;
-      studio_ = studio;
-   }
+  public SaverFactory(PropertyMap settings, Studio studio) {
+    settings_ = settings;
+    studio_ = studio;
+  }
 
-   @Override
-   public Processor createProcessor() {
-      return new SaverProcessor(studio_,
-            settings_.getString("format", SaverPlugin.MULTIPAGE_TIFF),
-            settings_.getString("savePath", null),
-            settings_.getBoolean("shouldDisplay", true));
-   }
+  @Override
+  public Processor createProcessor() {
+    return new SaverProcessor(
+        studio_,
+        settings_.getString("format", SaverPlugin.MULTIPAGE_TIFF),
+        settings_.getString("savePath", null),
+        settings_.getBoolean("shouldDisplay", true));
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,11 +20,10 @@
 
 package org.micromanager.events;
 
-/**
- * This class signals when the exposure time for a given camera has changed.
- */
+/** This class signals when the exposure time for a given camera has changed. */
 public interface ExposureChangedEvent {
 
-   String getCameraName();
-   double getNewExposureTime();
+  String getCameraName();
+
+  double getNewExposureTime();
 }

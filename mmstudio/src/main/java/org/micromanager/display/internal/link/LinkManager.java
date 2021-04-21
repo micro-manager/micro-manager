@@ -5,11 +5,9 @@
  */
 package org.micromanager.display.internal.link;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public interface LinkManager {
-   void registerAnchor(LinkAnchor<?> anchor);
-   void unregisterAnchor(LinkAnchor<?> anchor);
+  void registerAnchor(LinkAnchor<?> anchor);
+
+  void unregisterAnchor(LinkAnchor<?> anchor);
 }

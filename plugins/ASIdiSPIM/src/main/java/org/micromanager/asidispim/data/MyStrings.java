@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MyStrings.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          MyStrings.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -21,44 +21,39 @@
 
 package org.micromanager.asidispim.data;
 
-
-
 /**
  * Contains string constants.
- *  
+ *
  * @author Jon
  */
 public class MyStrings {
-   
-   public static enum PanelNames {
-     DEVICES("Devices"),
-     ACQUSITION("Acquisition"),
-     SETUP("Setup Path "),
-     NAVIGATION("Navigation"),
-     LIGHTSOURCE("Light"),
-     SETTINGS("Settings"),
-     DATAANALYSIS("Data Analysis"),
-     CHANNELS_SUBPANEL("Channels_"),
-     HELP("Help"),
-     TESTING("Testing"),
-     BEAM_SUBPANEL("Beam_"),
-     CAMERA_SUBPANEL("Camera_"),
-     JOYSTICK_SUBPANEL("Joystick_"),
-     STATUS_SUBPANEL("Status_"),
-     AUTOFOCUS("Autofocus"),
-     CAMERAS("Cameras")
-      ;
-      private final String text;
-      PanelNames(String text) {
-         this.text = text;
-      }
-      @Override
-      public String toString() {
-         return text;
-      }
-      
-   }
-   
-  
 
+  public static enum PanelNames {
+    DEVICES("Devices"),
+    ACQUSITION("Acquisition"),
+    SETUP("Setup Path "),
+    NAVIGATION("Navigation"),
+    LIGHTSOURCE("Light"),
+    SETTINGS("Settings"),
+    DATAANALYSIS("Data Analysis"),
+    CHANNELS_SUBPANEL("Channels_"),
+    HELP("Help"),
+    TESTING("Testing"),
+    BEAM_SUBPANEL("Beam_"),
+    CAMERA_SUBPANEL("Camera_"),
+    JOYSTICK_SUBPANEL("Joystick_"),
+    STATUS_SUBPANEL("Status_"),
+    AUTOFOCUS("Autofocus"),
+    CAMERAS("Cameras");
+    private final String text;
+
+    PanelNames(String text) {
+      this.text = text;
+    }
+
+    @Override
+    public String toString() {
+      return text;
+    }
+  }
 }

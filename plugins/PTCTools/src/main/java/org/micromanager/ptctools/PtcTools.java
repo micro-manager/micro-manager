@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          PtcTools.java
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// FILE:          PtcTools.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
@@ -29,55 +29,55 @@ import org.scijava.plugin.SciJavaPlugin;
 
 import org.micromanager.Studio;
 
-/** 
+/**
  * Micro-Manager plugin acuiring a data set for Photon Transfer Curve analysis
  *
  * @author nico
  */
 @Plugin(type = ProcessorPlugin.class)
 public class PtcTools implements MenuPlugin, SciJavaPlugin {
-   public static final String MENU_NAME = "Photon Transfer Curve assistant";
-   public static final String TOOL_TIP_DESCRIPTION =
+  public static final String MENU_NAME = "Photon Transfer Curve assistant";
+  public static final String TOOL_TIP_DESCRIPTION =
       "Helps create a dataset for photon transfer curve analysis";
-   private Studio studio_;
-   private PtcToolsFrame ptcFrame_;
+  private Studio studio_;
+  private PtcToolsFrame ptcFrame_;
 
-   @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-   }
-   
-   @Override
-   public String getName() {
-      return MENU_NAME;
-   }
+  @Override
+  public void setContext(Studio studio) {
+    studio_ = studio;
+  }
 
-   @Override
-   public String getHelpText() {
-      return TOOL_TIP_DESCRIPTION;
-   }
+  @Override
+  public String getName() {
+    return MENU_NAME;
+  }
 
-   @Override
-   public String getVersion() {
-      return "0.1";
-   }
-   
-   @Override
-   public String getCopyright() {
-      return "University of California, 2018";
-   }
+  @Override
+  public String getHelpText() {
+    return TOOL_TIP_DESCRIPTION;
+  }
 
-   @Override
-   public String getSubMenu() {
-      return "Acquisition Tools";
-   }
+  @Override
+  public String getVersion() {
+    return "0.1";
+  }
 
-   @Override
-   public void onPluginSelected() {
-      if (!PtcToolsFrame.WINDOWOPEN) {
-         ptcFrame_ = new PtcToolsFrame(studio_);
-      }
-      ptcFrame_.setVisible(true);
-      ptcFrame_.toFront();  
-   }
+  @Override
+  public String getCopyright() {
+    return "University of California, 2018";
+  }
+
+  @Override
+  public String getSubMenu() {
+    return "Acquisition Tools";
+  }
+
+  @Override
+  public void onPluginSelected() {
+    if (!PtcToolsFrame.WINDOWOPEN) {
+      ptcFrame_ = new PtcToolsFrame(studio_);
+    }
+    ptcFrame_.setVisible(true);
+    ptcFrame_.toFront();
+  }
 }

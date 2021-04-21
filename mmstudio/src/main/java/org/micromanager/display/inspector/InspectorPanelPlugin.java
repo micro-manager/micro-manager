@@ -21,7 +21,8 @@ import org.micromanager.display.DataViewer;
 /**
  * A plugin providing a panel in the Inspector window.
  *
- * To create an inspector plugin, annotate your class like this:
+ * <p>To create an inspector plugin, annotate your class like this:
+ *
  * <pre><code>
  * {@literal @}Plugin(type = InspectorPlugin.class,
  *       priority = Prioroty.NORMAL_PRIORITY,  // Suggests order in inspector
@@ -33,14 +34,13 @@ import org.micromanager.display.DataViewer;
  * </code></pre>
  */
 public interface InspectorPanelPlugin extends MMGenericPlugin {
-   /**
-    * Tell whether the InspectorPanel provided by this plugin is applicable to
-    * a given DataViewer.
-    *
-    * @param viewer the {@code DataViewer} instance
-    * @return true if this plugin works with {@code viewer}
-    */
-   boolean isApplicableToDataViewer(DataViewer viewer);
+  /**
+   * Tell whether the InspectorPanel provided by this plugin is applicable to a given DataViewer.
+   *
+   * @param viewer the {@code DataViewer} instance
+   * @return true if this plugin works with {@code viewer}
+   */
+  boolean isApplicableToDataViewer(DataViewer viewer);
 
-   InspectorPanelController createPanelController(Studio studio);
+  InspectorPanelController createPanelController(Studio studio);
 }

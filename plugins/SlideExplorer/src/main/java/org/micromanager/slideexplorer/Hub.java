@@ -29,789 +29,781 @@ import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
 public class Hub {
-   private final Studio studio_;
+  private final Studio studio_;
 
-   Controller controller_;
-   MultiTileCache cache_;
-   Dimension tileDimensions_;
-   Display display_;
-   Coordinates coords_;
-   ModeManager modeMgr_;
-   int zoomLevel_ = 0;
-   int numZoomLevels_ = 8;
-   public boolean stopTileGrabberThread_;
-   private ImageProcessor blackImg_;
-   private TileGrabberThread tgt_;
-   private boolean running_ = false;
-   private CMMCore core_;
-   private ConfigurationDialog configDialog_;
-   private RoiManager roiManager_;
-   private String surveyPixelSizeConfig_ = "";
-   private String navigatePixelSizeConfig_ = "";
-   private Map<String, OffsetsRow> offsetsData_ = new HashMap<String, OffsetsRow>();
-   private boolean contrastAutoAdjusted_ = false;
+  Controller controller_;
+  MultiTileCache cache_;
+  Dimension tileDimensions_;
+  Display display_;
+  Coordinates coords_;
+  ModeManager modeMgr_;
+  int zoomLevel_ = 0;
+  int numZoomLevels_ = 8;
+  public boolean stopTileGrabberThread_;
+  private ImageProcessor blackImg_;
+  private TileGrabberThread tgt_;
+  private boolean running_ = false;
+  private CMMCore core_;
+  private ConfigurationDialog configDialog_;
+  private RoiManager roiManager_;
+  private String surveyPixelSizeConfig_ = "";
+  private String navigatePixelSizeConfig_ = "";
+  private Map<String, OffsetsRow> offsetsData_ = new HashMap<String, OffsetsRow>();
+  private boolean contrastAutoAdjusted_ = false;
 
-   /*
-    * Hub constructor.
-    */
-   public Hub(Studio app) {
-      studio_ = app;
-      core_ = studio_.getCMMCore();
+  /*
+   * Hub constructor.
+   */
+  public Hub(Studio app) {
+    studio_ = app;
+    core_ = studio_.getCMMCore();
 
-      int width = 950;
-      int height = 600;
+    int width = 950;
+    int height = 600;
 
-      applyVendorSpecificSettings();
+    applyVendorSpecificSettings();
 
-      controller_ = new Controller(studio_, core_);
+    controller_ = new Controller(studio_, core_);
 
-      AffineTransform transform = getCurrentAffineTransform(core_);
+    AffineTransform transform = getCurrentAffineTransform(core_);
 
-      if (transform != null) {
-         controller_.specifyMapRelativeToStage(transform);
-      } else {
-         return;
+    if (transform != null) {
+      controller_.specifyMapRelativeToStage(transform);
+    } else {
+      return;
+    }
+
+    int type = controller_.getImageType();
+    tileDimensions_ = controller_.getTileDimensions();
+
+    cache_ = new MultiTileCache(numZoomLevels_, tileDimensions_);
+
+    blackImg_ = ImageUtils.makeProcessor(type, tileDimensions_.width, tileDimensions_.height);
+
+    coords_ = new Coordinates();
+    coords_.setTileDimensionsOnMap(tileDimensions_);
+    coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
+
+    resize(new Dimension(width, height));
+
+    display_ = new Display(this, type, width, height);
+    display_.setCoords(coords_);
+
+    modeMgr_ = new ModeManager();
+    deployRoiManager();
+
+    startupOffsets();
+
+    configDialog_ = new ConfigurationDialog(core_, this);
+
+    start();
+  }
+
+  public AffineTransform getCurrentAffineTransform(CMMCore core) {
+
+    AffineTransform transform = null;
+    try {
+      transform = AffineUtils.doubleToAffine(core.getPixelSizeAffine());
+    } catch (Exception e) {
+      studio_.logs().logError(e, "Error getting pixel size config");
+    }
+
+    if (transform == null) {
+      int result =
+          JOptionPane.showConfirmDialog(
+              null,
+              "No Pixel Size Calibration available.\n" + "Would you like create one?",
+              "Pixel Size Calibratrion required.",
+              JOptionPane.YES_NO_OPTION);
+      if (result == JOptionPane.YES_OPTION) {
+        try {
+          ((MMStudio) studio_).uiManager().createCalibrationListDlg();
+        } catch (Exception ex) {
+          studio_.logs().showError("Unable to start Pixel Size Calibration.");
+        }
       }
+    }
 
-      int type = controller_.getImageType();
-      tileDimensions_ = controller_.getTileDimensions();
+    return transform;
+  }
 
-      cache_ = new MultiTileCache(numZoomLevels_, tileDimensions_);
+  public final void applyVendorSpecificSettings() {
+    // Keep ASI stages from being too slow.
+    String stage = core_.getXYStageDevice();
+    try {
+      if (core_.hasProperty(stage, "Description")) {
+        String stageDescription = core_.getProperty(stage, "Description");
+        if (stageDescription.contains("ASI XY")) {
+          if (core_.hasProperty(stage, "Error-E(nm)")) {
+            core_.setProperty(stage, "Error-E(nm)", "500");
+          }
+          if (core_.hasProperty(stage, "FinishError-PCROS(nm)")) {
+            core_.setProperty(stage, "FinishError-PCROS(nm)", "500");
+          }
+        }
+      }
+    } catch (Exception e) {
+      studio_.logs().showError(e);
+    }
+  }
 
-      blackImg_ = ImageUtils.makeProcessor(type, tileDimensions_.width, tileDimensions_.height);
+  public final void start() {
 
-      coords_ = new Coordinates();
-      coords_.setTileDimensionsOnMap(tileDimensions_);
-      coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
+    if (!running_) {
+      controller_.setMapOriginToCurrentStagePosition();
+      coords_.setViewCenterInMap(new Point(0, 0));
+      display_.fillWithBlack();
+      stopTileGrabberThread_ = false;
+      // modeMgr_.setMode(ModeManager.SURVEY);
+      tgt_ = new TileGrabberThread();
+      tgt_.start();
+      running_ = true;
+      survey();
+    }
+  }
 
-      resize(new Dimension(width, height));
-
-      display_ = new Display(this, type, width, height);
-      display_.setCoords(coords_);
-
-      modeMgr_ = new ModeManager();
-      deployRoiManager();
-
-      startupOffsets();
-
-      configDialog_ = new ConfigurationDialog(core_, this);
-
-      start();
-   }
-
-
-   public AffineTransform getCurrentAffineTransform(CMMCore core) {
-
-      AffineTransform transform = null;
+  public void stop() {
+    if (running_) {
+      stopTileGrabberThread_ = true;
       try {
-         transform = AffineUtils.doubleToAffine(core.getPixelSizeAffine());
+        tgt_.join();
+      } catch (InterruptedException e) {
+        studio_.logs().showError(e);
       }
-      catch (Exception e) {
-         studio_.logs().logError(e, "Error getting pixel size config");
-      }
+      cache_.clear();
+      running_ = false;
+    }
+  }
 
-      if (transform == null) {
-         int result = JOptionPane.showConfirmDialog(null,
-                 "No Pixel Size Calibration available.\n"
-                 + "Would you like create one?",
-                 "Pixel Size Calibratrion required.",
-                 JOptionPane.YES_NO_OPTION);
-         if (result == JOptionPane.YES_OPTION) {
-            try {
-               ((MMStudio) studio_).uiManager().createCalibrationListDlg();
-            } catch (Exception ex) {
-               studio_.logs().showError("Unable to start Pixel Size Calibration.");
-            }
-         }
-      }
-
-      return transform;
-   }
-
-   public final void applyVendorSpecificSettings() {
-      // Keep ASI stages from being too slow.
-      String stage = core_.getXYStageDevice();
-      try {
-         if (core_.hasProperty(stage, "Description")) {
-            String stageDescription = core_.getProperty(stage, "Description");
-            if (stageDescription.contains("ASI XY")) {
-               if (core_.hasProperty(stage, "Error-E(nm)")) {
-                  core_.setProperty(stage, "Error-E(nm)", "500");
-               }
-               if (core_.hasProperty(stage, "FinishError-PCROS(nm)")) {
-                  core_.setProperty(stage, "FinishError-PCROS(nm)", "500");
-               }
-            }
-         }
-      } catch (Exception e) {
-         studio_.logs().showError(e);
-      }
-   }
-
-   public final void start() {
-
-      if (!running_) {
-         controller_.setMapOriginToCurrentStagePosition();
-         coords_.setViewCenterInMap(new Point(0, 0));
-         display_.fillWithBlack();
-         stopTileGrabberThread_ = false;
-         //modeMgr_.setMode(ModeManager.SURVEY);
-         tgt_ = new TileGrabberThread();
-         tgt_.start();
-         running_ = true;
-         survey();
-      }
-   }
-
-   public void stop() {
-      if (running_) {
-         stopTileGrabberThread_ = true;
-         try {
-            tgt_.join();
-         } catch (InterruptedException e) {
-            studio_.logs().showError(e);
-         }
-         cache_.clear();
-         running_ = false;
-      }
-   }
-
-   public void shutdown() {
-      if (configDialog_ != null) {
-         configDialog_.dispose();
-      }
-      stop();
-   }
-
-   // Methods called when the view changes:
-
-   /*
-    * The size of the display changed.
-    */
-   public final void resize(Dimension newViewDimensionsOnScreen) {
-      coords_.setViewDimensionsOnScreen(newViewDimensionsOnScreen);
-      coords_.setViewDimensionsOffScreen(new Dimension(3 * newViewDimensionsOnScreen.width, 3 * newViewDimensionsOnScreen.height));
-   }
-
-
-   /*
-    * Move view by some displacement dx, dy.
-    */
-   public void panBy(int dx, int dy) {
-      panTo(new Point(-dx, -dy));
-   }
-
-   /*
-    * Move center of view to some target offScreen.
-    */
-   public void panTo(Point panTargetOffScreen) {
-      coords_.panTo(panTargetOffScreen);
-      updateView();
-   }
-
-   /*
-    * Zoom relative to center of view.
-    */
-   public void zoomBy(int zoomStep /* +-1 */) {
-      zoomBy(zoomStep, new Point(0, 0));
-   }
-
-   /*
-    * Zoom relative to some point offScreen.
-    */
-   public void zoomBy(int zoomStep /* +-1 */, Point zoomTargetOffScreen) {
-      zoomTo(zoomLevel_ + zoomStep, zoomTargetOffScreen);
-
-   }
-
-   public void zoomTo(int zoomLevel, Point zoomTargetOffScreen) {
-      int originalZoomLevel = zoomLevel_;
-      zoomLevel_ = zoomLevel;
-
-      if (zoomLevel_ > 0) {
-         zoomLevel_ = 0;
-      }
-      if (zoomLevel_ <= -numZoomLevels_) {
-         zoomLevel_ = -numZoomLevels_ + 1;
-      }
-
-      if (zoomLevel_ != originalZoomLevel) {
-         if (zoomLevel_ > originalZoomLevel) {
-            coords_.zoomIn(zoomTargetOffScreen);
-         } else {
-            coords_.zoomOut(zoomTargetOffScreen);
-         }
-         updateView();
-         display_.update();
-      }
-   }
-
-   public void updateView() {
-      SwingUtilities.invokeLater(new GUIUpdater(null));
-   }
-
-   @Override
-   protected void finalize() throws Throwable {
+  public void shutdown() {
+    if (configDialog_ != null) {
       configDialog_.dispose();
-      shutdown();
-      super.finalize();
-   }
+    }
+    stop();
+  }
 
-   public void navigate(Point offScreenPos) {
-      tgt_.navigate(coords_.offScreenClickToMap(offScreenPos));
-      display_.update();
-   }
+  // Methods called when the view changes:
 
-   public void survey() {
-      tgt_.survey();
-      display_.update();
-   }
+  /*
+   * The size of the display changed.
+   */
+  public final void resize(Dimension newViewDimensionsOnScreen) {
+    coords_.setViewDimensionsOnScreen(newViewDimensionsOnScreen);
+    coords_.setViewDimensionsOffScreen(
+        new Dimension(3 * newViewDimensionsOnScreen.width, 3 * newViewDimensionsOnScreen.height));
+  }
 
-   public void pauseSlideExplorer() {
-      tgt_.pauseSlideExplorer();
-      display_.update();
-   }
+  /*
+   * Move view by some displacement dx, dy.
+   */
+  public void panBy(int dx, int dy) {
+    panTo(new Point(-dx, -dy));
+  }
 
-   public void writeOffsets() {
-   }
+  /*
+   * Move center of view to some target offScreen.
+   */
+  public void panTo(Point panTargetOffScreen) {
+    coords_.panTo(panTargetOffScreen);
+    updateView();
+  }
 
-   void showConfig() {
-      configDialog_.setVisible(true);
-   }
+  /*
+   * Zoom relative to center of view.
+   */
+  public void zoomBy(int zoomStep /* +-1 */) {
+    zoomBy(zoomStep, new Point(0, 0));
+  }
 
-   final void deployRoiManager() {
-      roiManager_ = RoiManager.getInstance();
-      if (roiManager_ == null) {
-         roiManager_ = new RoiManager(this);
+  /*
+   * Zoom relative to some point offScreen.
+   */
+  public void zoomBy(int zoomStep /* +-1 */, Point zoomTargetOffScreen) {
+    zoomTo(zoomLevel_ + zoomStep, zoomTargetOffScreen);
+  }
+
+  public void zoomTo(int zoomLevel, Point zoomTargetOffScreen) {
+    int originalZoomLevel = zoomLevel_;
+    zoomLevel_ = zoomLevel;
+
+    if (zoomLevel_ > 0) {
+      zoomLevel_ = 0;
+    }
+    if (zoomLevel_ <= -numZoomLevels_) {
+      zoomLevel_ = -numZoomLevels_ + 1;
+    }
+
+    if (zoomLevel_ != originalZoomLevel) {
+      if (zoomLevel_ > originalZoomLevel) {
+        coords_.zoomIn(zoomTargetOffScreen);
       } else {
-         roiManager_.setHub(this);
+        coords_.zoomOut(zoomTargetOffScreen);
       }
+      updateView();
+      display_.update();
+    }
+  }
 
-      roiManager_.setVisible(false);
-      display_.setRoiManager(roiManager_);
-   }
+  public void updateView() {
+    SwingUtilities.invokeLater(new GUIUpdater(null));
+  }
 
-   Studio getApp() {
-      return studio_;
-   }
+  @Override
+  protected void finalize() throws Throwable {
+    configDialog_.dispose();
+    shutdown();
+    super.finalize();
+  }
 
-   public Dimension getTileDimensions() {
-      return tileDimensions_;
-   }
+  public void navigate(Point offScreenPos) {
+    tgt_.navigate(coords_.offScreenClickToMap(offScreenPos));
+    display_.update();
+  }
 
-   public Dimension getRoiDimensionsOnMap() {
-      return coords_.getRoiDimensionsOnMap();
-   }
+  public void survey() {
+    tgt_.survey();
+    display_.update();
+  }
 
-   Coordinates getCoordinates() {
-      return coords_;
-   }
+  public void pauseSlideExplorer() {
+    tgt_.pauseSlideExplorer();
+    display_.update();
+  }
 
-   Controller getController() {
-      return controller_;
-   }
+  public void writeOffsets() {}
 
-   public int getMode() {
-      return modeMgr_.getMode();
-   }
+  void showConfig() {
+    configDialog_.setVisible(true);
+  }
 
-   void acquireMosaics() {
-      roiManager_.updateMappings();
-      try {
-         studio_.positions().setPositionList(roiManager_.convertRoiManagerToPositionList());
-         studio_.app().showPositionList();
-      } catch (Exception ex) {
-         studio_.logs().logError(ex);
+  final void deployRoiManager() {
+    roiManager_ = RoiManager.getInstance();
+    if (roiManager_ == null) {
+      roiManager_ = new RoiManager(this);
+    } else {
+      roiManager_.setHub(this);
+    }
+
+    roiManager_.setVisible(false);
+    display_.setRoiManager(roiManager_);
+  }
+
+  Studio getApp() {
+    return studio_;
+  }
+
+  public Dimension getTileDimensions() {
+    return tileDimensions_;
+  }
+
+  public Dimension getRoiDimensionsOnMap() {
+    return coords_.getRoiDimensionsOnMap();
+  }
+
+  Coordinates getCoordinates() {
+    return coords_;
+  }
+
+  Controller getController() {
+    return controller_;
+  }
+
+  public int getMode() {
+    return modeMgr_.getMode();
+  }
+
+  void acquireMosaics() {
+    roiManager_.updateMappings();
+    try {
+      studio_.positions().setPositionList(roiManager_.convertRoiManagerToPositionList());
+      studio_.app().showPositionList();
+    } catch (Exception ex) {
+      studio_.logs().logError(ex);
+    }
+  }
+
+  int getZoomLevel() {
+    return zoomLevel_;
+  }
+
+  public final void startupOffsets() {
+    loadOffsets();
+    try {
+      surveyPixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
+      if (surveyPixelSizeConfig_.length() == 0) {
+        return;
       }
-   }
+      navigatePixelSizeConfig_ = surveyPixelSizeConfig_;
+    } catch (Exception ex) {
+      studio_.logs().showError(ex);
+    }
+    setOffsets(surveyPixelSizeConfig_);
+  }
 
-   int getZoomLevel() {
-      return zoomLevel_;
-   }
+  public Map<String, OffsetsRow> getOffsets() {
+    return offsetsData_;
+  }
 
-   public final void startupOffsets() {
-      loadOffsets();
-      try {
-         surveyPixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
-         if (surveyPixelSizeConfig_.length() == 0) {
-            return;
-         }
-         navigatePixelSizeConfig_ = surveyPixelSizeConfig_;
-      } catch (Exception ex) {
-         studio_.logs().showError(ex);
-      }
+  public void loadOffsets() {
+    StrVector resolutionNames = core_.getAvailablePixelSizeConfigs();
+    for (int i = 0; i < resolutionNames.size(); ++i) {
+      OffsetsRow offsetsRow = new OffsetsRow();
+      offsetsRow.resolutionName = resolutionNames.get(i);
+      offsetsRow.readFromProfile(studio_.profile());
+      offsetsData_.put(offsetsRow.resolutionName, offsetsRow);
+    }
+  }
+
+  public void saveOffsets() {
+    for (OffsetsRow offsetsRow : offsetsData_.values()) {
+      offsetsRow.writeToProfile(studio_.profile());
+    }
+  }
+
+  public void setOffsets(String resolutionSettingName) {
+    setOffsets(offsetsData_.get(resolutionSettingName));
+  }
+
+  public void setOffsets(OffsetsRow offsetsRow) {
+    controller_.setOffsets(offsetsRow.x, offsetsRow.y, offsetsRow.z);
+  }
+
+  public void reapplyOffsets() {
+    if (modeMgr_.getMode() == ModeManager.NAVIGATE) {
+      setOffsets(navigatePixelSizeConfig_);
+    } else if (modeMgr_.getMode() == ModeManager.SURVEY) {
       setOffsets(surveyPixelSizeConfig_);
-   }
+    }
+  }
 
-   public Map<String, OffsetsRow> getOffsets() {
-      return offsetsData_;
-   }
+  public void applyNavigationSystemSettings() {
+    boolean navigationConfigChanged = false;
+    int prevMode = modeMgr_.getMode();
+    modeMgr_.setMode(ModeManager.IDLE);
 
-   public void loadOffsets() {
-      StrVector resolutionNames = core_.getAvailablePixelSizeConfigs();
-      for (int i = 0; i < resolutionNames.size(); ++i) {
-         OffsetsRow offsetsRow = new OffsetsRow();
-         offsetsRow.resolutionName = resolutionNames.get(i);
-         offsetsRow.readFromProfile(studio_.profile());
-         offsetsData_.put(offsetsRow.resolutionName, offsetsRow);
-      }
-   }
+    String curConfig = "";
+    try {
+      curConfig = core_.getCurrentPixelSizeConfig();
+    } catch (Exception ex) {
+      studio_.logs().logError(ex);
+    }
 
-   public void saveOffsets() {
-      for (OffsetsRow offsetsRow : offsetsData_.values()) {
-         offsetsRow.writeToProfile(studio_.profile());
-      }
-   }
+    if (prevMode == ModeManager.NAVIGATE && !curConfig.contentEquals(navigatePixelSizeConfig_)) {
+      navigatePixelSizeConfig_ = curConfig;
+      navigationConfigChanged = true;
+    }
 
-   public void setOffsets(String resolutionSettingName) {
-      setOffsets(offsetsData_.get(resolutionSettingName));
+    if (navigationConfigChanged || prevMode != ModeManager.NAVIGATE) {
+      applySystemSettings(navigatePixelSizeConfig_);
+    }
+  }
 
-   }
+  public void applySurveySystemSettings() {
+    int prevMode = modeMgr_.getMode();
+    modeMgr_.setMode(ModeManager.IDLE);
 
-   public void setOffsets(OffsetsRow offsetsRow) {
-      controller_.setOffsets(offsetsRow.x, offsetsRow.y, offsetsRow.z);
-   }
-
-   public void reapplyOffsets() {
-      if (modeMgr_.getMode() == ModeManager.NAVIGATE) {
-         setOffsets(navigatePixelSizeConfig_);
-      } else if (modeMgr_.getMode() == ModeManager.SURVEY) {
-         setOffsets(surveyPixelSizeConfig_);
-      }
-   }
-
-   public void applyNavigationSystemSettings() {
-      boolean navigationConfigChanged = false;
-      int prevMode = modeMgr_.getMode();
-      modeMgr_.setMode(ModeManager.IDLE);
-
-      String curConfig = "";
+    if (prevMode == ModeManager.NAVIGATE) {
       try {
-         curConfig = core_.getCurrentPixelSizeConfig();
+        navigatePixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
       } catch (Exception ex) {
-         studio_.logs().logError(ex);
+        studio_.logs().showError(ex);
       }
+      applySystemSettings(surveyPixelSizeConfig_);
+    }
+  }
 
+  public void applySystemSettings(String pixelConfig) {
 
-      if (prevMode == ModeManager.NAVIGATE && !curConfig.contentEquals(navigatePixelSizeConfig_)) {
-         navigatePixelSizeConfig_ = curConfig;
-         navigationConfigChanged = true;
+    try {
+      core_.waitForSystem();
+      controller_.rememberZPosition();
+      core_.waitForSystem();
+      boolean autofocusWasOn = isContinuousFocusEnabled();
+      if (autofocusWasOn) {
+        turnOffContinuousAutofocus();
       }
-
-      if (navigationConfigChanged || prevMode != ModeManager.NAVIGATE) {
-         applySystemSettings(navigatePixelSizeConfig_);
-      }
-   }
-
-   public void applySurveySystemSettings() {
-      int prevMode = modeMgr_.getMode();
-      modeMgr_.setMode(ModeManager.IDLE);
-
-      if (prevMode == ModeManager.NAVIGATE) {
-         try {
-            navigatePixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
-         } catch (Exception ex) {
-            studio_.logs().showError(ex);
-         }
-         applySystemSettings(surveyPixelSizeConfig_);
-
-      }
-
-   }
-
-   public void applySystemSettings(String pixelConfig) {
-
-
-      try {
-         core_.waitForSystem();
-         controller_.rememberZPosition();
-         core_.waitForSystem();
-         boolean autofocusWasOn = isContinuousFocusEnabled();
-         if (autofocusWasOn) {
-            turnOffContinuousAutofocus();
-         }
-         //core_.setPixelSizeConfig(pixelConfig);
-         //core_.waitForSystem();
-         setOffsets(pixelConfig);
-         /*try {
-            if (core_.hasProperty("PFS-Offset", "Position")) {
-               if (pixelConfig.equals(surveyPixelSizeConfig_)) {
-                  core_.setProperty("PFS-Offset", "Position", "2.824");
-               } else {
-                  core_.setProperty("PFS-Offset", "Position", "12.355");
-               }
+      // core_.setPixelSizeConfig(pixelConfig);
+      // core_.waitForSystem();
+      setOffsets(pixelConfig);
+      /*try {
+         if (core_.hasProperty("PFS-Offset", "Position")) {
+            if (pixelConfig.equals(surveyPixelSizeConfig_)) {
+               core_.setProperty("PFS-Offset", "Position", "2.824");
+            } else {
+               core_.setProperty("PFS-Offset", "Position", "12.355");
             }
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }*/
-         if (autofocusWasOn) {
-            turnOnContinuousAutofocus();
          }
-
       } catch (Exception ex) {
-         studio_.logs().showError(ex);
+         ReportingUtils.logError(ex);
+      }*/
+      if (autofocusWasOn) {
+        turnOnContinuousAutofocus();
       }
-      coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
-   }
-   
-   public boolean isContinuousFocusEnabled() {
-      boolean result = false;
+
+    } catch (Exception ex) {
+      studio_.logs().showError(ex);
+    }
+    coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
+  }
+
+  public boolean isContinuousFocusEnabled() {
+    boolean result = false;
+    String autofocusDevice = core_.getAutoFocusDevice();
+    if (autofocusDevice.length() > 0) {
+      try {
+        result = core_.isContinuousFocusEnabled();
+      } catch (Exception ex) {
+        studio_.logs().showError(ex);
+      }
+    }
+    return result;
+  }
+
+  public void turnOffContinuousAutofocus() {
+    try {
       String autofocusDevice = core_.getAutoFocusDevice();
       if (autofocusDevice.length() > 0) {
-         try {
-            result = core_.isContinuousFocusEnabled();
-         } catch (Exception ex) {
-         studio_.logs().showError(ex);
+        if (autofocusDevice.equals("PerfectFocus")) {
+          core_.setProperty(autofocusDevice, "State", "off");
+        }
+        core_.waitForDevice(autofocusDevice);
       }
+    } catch (Exception ex) {
+      studio_.logs().showError(ex);
+    }
+  }
+
+  public void turnOnContinuousAutofocus() {
+    // TODO: Make this general.
+    try {
+      String autofocusDevice = core_.getAutoFocusDevice();
+      if (autofocusDevice.length() > 0) {
+        core_.enableContinuousFocus(true);
+        core_.waitForDevice(autofocusDevice);
       }
-      return result;
-   }
+    } catch (Exception ex) {
+      studio_.logs().showError(ex);
+    }
+  }
 
-   public void turnOffContinuousAutofocus() {
-      try {
-         String autofocusDevice = core_.getAutoFocusDevice();
-         if (autofocusDevice.length() > 0) {
-            if (autofocusDevice.equals("PerfectFocus")) {
-               core_.setProperty(autofocusDevice, "State", "off");
-            }
-            core_.waitForDevice(autofocusDevice);
-         }
-      } catch (Exception ex) {
-         studio_.logs().showError(ex);
+  void snap() {
+    studio_.live().snap(true);
+  }
+
+  public boolean setVisible(boolean isVisible) {
+    if (display_ == null) {
+      return false;
+    }
+    return display_.setVisible(isVisible);
+  }
+  /*
+  public class AcqControlDlgMosaic extends AcqControlDlg {
+
+     protected static final long serialVersionUID = 1L;
+
+     public AcqControlDlgMosaic(MMAcquisitionEngineMTMosaic eng, Studio app) {
+        super(eng, null, (DeviceControlGUI) app_);
+
+        //multiPosCheckBox_.setVisible(false);
+        positionsPanel_.setSelected(true);
+        listButton_.setVisible(false);
+        JLabel slideexplorerRoiLabel = new JLabel("(Each SlideExplorer ROI makes one mosaic.)");
+
+        slideexplorerRoiLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+        slideexplorerRoiLabel.setBounds(15, 23, 200, 19);
+        positionsPanel_.add(slideexplorerRoiLabel);
+        positionsPanel_.removeActionListeners();
+        positionsPanel_.addActionListener(new ActionListener() {
+           public void actionPerformed(ActionEvent e) {
+              ReportingUtils.showMessage("To acquire mosaics, you must use multiple positions.\n\n" +
+                    "To use the standard Multi-Dimensional Acquisition, click the Multi-D Acq. button\n" +
+                    "on the main Micro-Manager window.");
+              positionsPanel_.setSelected(true);
+           }
+        });
+
+        setTitle(this.getTitle() + " (SlideExplorer Mosaics)");
+        displayModeCombo_.removeItemAt(2); // Remove the single window option.
+        setVisible(true);
+
+     }
+  }*/
+
+  /*
+   * Draws tiles and the ROI at the end of the Swing Event Dispatcher Thread Queue.
+   */
+
+  class GUIUpdater implements Runnable {
+
+    private Point tileIndex_ = null;
+    private boolean regenerate_ = true;
+
+    GUIUpdater(Point tileIndex) {
+      tileIndex_ = tileIndex;
+    }
+
+    GUIUpdater() {
+      tileIndex_ = null;
+    }
+
+    GUIUpdater(boolean regenerate) {
+      regenerate_ = regenerate;
+    }
+
+    @Override
+    public void run() {
+      if (tileIndex_ == null) {
+        if (regenerate_) {
+          regenerateView();
+        }
+        if (modeMgr_.getMode() == ModeManager.NAVIGATE) {
+          Point offScreenPos = coords_.mapToOffScreen(controller_.getCurrentMapPosition());
+          coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
+          display_.showRoiAt(coords_.offScreenToRoiRect(offScreenPos));
+        } else {
+          display_.hideRoi();
+        }
+      } else {
+        drawTile(tileIndex_);
       }
-   }
-
-   public void turnOnContinuousAutofocus() {
-      //TODO: Make this general.
-      try {
-         String autofocusDevice = core_.getAutoFocusDevice();
-         if (autofocusDevice.length() > 0) {
-            core_.enableContinuousFocus(true);
-            core_.waitForDevice(autofocusDevice);
-         }
-      } catch (Exception ex) {
-         studio_.logs().showError(ex);
+      display_.updateAndDraw(!contrastAutoAdjusted_);
+      if (tileIndex_ != null) {
+        contrastAutoAdjusted_ = true;
       }
-   }
+    }
 
-   void snap() {
-      studio_.live().snap(true);
-   }
+    /*
+     * Draw an individual tile to the view by drawing its corresponding multitile.
+     */
+    public void drawTile(Point tileIndex) {
+      Point3D multiTileIndex = coords_.tileToMultiTile(tileIndex);
+      drawMultiTile(multiTileIndex);
+    }
 
-   public boolean setVisible(boolean isVisible) {
-      if (display_ == null) {
-         return false;
+    /*
+     * Draw a particular multitile to the view.
+     */
+    public void drawMultiTile(Point3D multiTileIndex) {
+      Point offScreenPosition = coords_.multiTileToOffScreen(multiTileIndex);
+      if (cache_.hasImage(multiTileIndex)) {
+        ImageProcessor img = cache_.getImage(multiTileIndex);
+        display_.placeImage(offScreenPosition, img);
+      } else {
+        display_.placeImage(offScreenPosition, blackImg_);
       }
-      return display_.setVisible(isVisible);
-   }
-/*
-   public class AcqControlDlgMosaic extends AcqControlDlg {
+    }
 
-      protected static final long serialVersionUID = 1L;
-
-      public AcqControlDlgMosaic(MMAcquisitionEngineMTMosaic eng, Studio app) {
-         super(eng, null, (DeviceControlGUI) app_);
-
-         //multiPosCheckBox_.setVisible(false);
-         positionsPanel_.setSelected(true);
-         listButton_.setVisible(false);
-         JLabel slideexplorerRoiLabel = new JLabel("(Each SlideExplorer ROI makes one mosaic.)");
-         
-         slideexplorerRoiLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-         slideexplorerRoiLabel.setBounds(15, 23, 200, 19);
-         positionsPanel_.add(slideexplorerRoiLabel);
-         positionsPanel_.removeActionListeners();
-         positionsPanel_.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               ReportingUtils.showMessage("To acquire mosaics, you must use multiple positions.\n\n" +
-                     "To use the standard Multi-Dimensional Acquisition, click the Multi-D Acq. button\n" +
-                     "on the main Micro-Manager window.");
-               positionsPanel_.setSelected(true);
-            }
-         });
-         
-         setTitle(this.getTitle() + " (SlideExplorer Mosaics)");
-         displayModeCombo_.removeItemAt(2); // Remove the single window option.
-         setVisible(true);
-
+    /*
+     * Draw all multitiles needed in the current view.
+     */
+    public void regenerateView() {
+      ArrayList<Point3D> onScreenMultiTiles = coords_.getMultiTilesOnScreen();
+      for (Point3D multiTile : onScreenMultiTiles) {
+        drawMultiTile(multiTile);
       }
-   }*/
-
-   /*
-    * Draws tiles and the ROI at the end of the Swing Event Dispatcher Thread Queue.
-    */
-
-   class GUIUpdater implements Runnable {
-
-      private Point tileIndex_ = null;
-      private boolean regenerate_ = true;
-
-      GUIUpdater(Point tileIndex) {
-         tileIndex_ = tileIndex;
+      ArrayList<Point3D> offScreenMultiTiles = coords_.getMultiTilesOffScreen();
+      for (Point3D multiTile : offScreenMultiTiles) {
+        if (!onScreenMultiTiles.contains(multiTile)) {
+          drawMultiTile(multiTile);
+        }
       }
+    }
+  }
 
-      GUIUpdater() {
-         tileIndex_ = null;
-      }
+  /*
+   * Hardware-bound thread.
+   */
+  class TileGrabberThread extends Thread {
 
-      GUIUpdater(boolean regenerate) {
-         regenerate_ = regenerate;
-      }
+    double tol_;
 
-      @Override
-      public void run() {
-         if (tileIndex_ == null) {
-            if (regenerate_) {
-               regenerateView();
-            }
-            if (modeMgr_.getMode() == ModeManager.NAVIGATE) {
-               Point offScreenPos = coords_.mapToOffScreen(controller_.getCurrentMapPosition());
-               coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
-               display_.showRoiAt(coords_.offScreenToRoiRect(offScreenPos));
-            } else {
-               display_.hideRoi();
-            }
-         } else {
-            drawTile(tileIndex_);
-         }
-         display_.updateAndDraw(!contrastAutoAdjusted_);
-         if (tileIndex_ != null) {
-            contrastAutoAdjusted_ = true;
-         }
-      }
+    public TileGrabberThread() {
+      setName("SlideExplorer hardware thread");
+    }
 
-      /*
-       * Draw an individual tile to the view by drawing its corresponding multitile.
-       */
-      public void drawTile(Point tileIndex) {
-         Point3D multiTileIndex = coords_.tileToMultiTile(tileIndex);
-         drawMultiTile(multiTileIndex);
-      }
+    @Override
+    public void run() {
+      while (stopTileGrabberThread_ == false) {
 
-      /*
-       * Draw a particular multitile to the view.
-       */
-      public void drawMultiTile(Point3D multiTileIndex) {
-         Point offScreenPosition = coords_.multiTileToOffScreen(multiTileIndex);
-         if (cache_.hasImage(multiTileIndex)) {
-            ImageProcessor img = cache_.getImage(multiTileIndex);
-            display_.placeImage(offScreenPosition, img);
-         } else {
-            display_.placeImage(offScreenPosition, blackImg_);
-         }
-      }
-
-      /*
-       * Draw all multitiles needed in the current view.
-       */
-      public void regenerateView() {
-         ArrayList<Point3D> onScreenMultiTiles = coords_.getMultiTilesOnScreen();
-         for (Point3D multiTile : onScreenMultiTiles) {
-            drawMultiTile(multiTile);
-         }
-         ArrayList<Point3D> offScreenMultiTiles = coords_.getMultiTilesOffScreen();
-         for (Point3D multiTile : offScreenMultiTiles) {
-            if (!onScreenMultiTiles.contains(multiTile)) {
-               drawMultiTile(multiTile);
-            }
-         }
-      }
-   }
-
-   /*
-    * Hardware-bound thread.
-    */
-   class TileGrabberThread extends Thread {
-
-      double tol_;
-
-      public TileGrabberThread() {
-         setName("SlideExplorer hardware thread");
-      }
-
-      @Override
-      public void run() {
-         while (stopTileGrabberThread_ == false) {
-
-            if (modeMgr_.getMode() == ModeManager.SURVEY) {
-               ArrayList<Point> missingTiles = findMissingTiles();
-               if (missingTiles.size() > 0) {
-                  try {
-                     Point tile = findBestTile(missingTiles);
-                     acquireNewTile(tile);
-                     SwingUtilities.invokeLater(new GUIUpdater(tile));
-                  } catch (Throwable e) {
-                     studio_.logs().logError(e.getMessage());
-                  }
-               } else {
-                  try {
-                     sleep(20);
-                  } catch (InterruptedException e) {
-                     studio_.logs().logError(e, "tileGrabberThread sleep resulted in an exception.");
-                  }
-               }
-            } else {
-               //SwingUtilities.invokeLater(new GUIUpdater(false));
-               try {
-                  sleep(20);
-               } catch (InterruptedException e) {
-                  studio_.logs().logError(e, "tileGrabberThread sleep resulted in an exception.");
-               }
-            }
-         }
-      }
-
-      public ArrayList<Point> findMissingTiles() {
-         ArrayList<Point> tiles = coords_.getTilesOnScreen();
-         for (int i = tiles.size() - 1; i >= 0; i--) {
-            if (cache_.hasImage(tiles.get(i))) {
-               tiles.remove(i);
-            }
-         }
-         return tiles;
-      }
-
-      public void navigate(Point mapPos) {
-         applyNavigationSystemSettings();
-         modeMgr_.setMode(ModeManager.NAVIGATE);
-         controller_.goToMapPosition(mapPos);
-         updateView();
-      }
-
-      public void survey() {
-         applySurveySystemSettings();
-         modeMgr_.setMode(ModeManager.SURVEY);
-         updateView();
-      }
-
-      public void pauseSlideExplorer() {
-         applyNavigationSystemSettings();
-         modeMgr_.setMode(ModeManager.NAVIGATE);
-         updateView();
-      }
-
-      /*
-       * Grab an image at a given position and cache it in multitiles.
-       */
-      protected void acquireNewTile(final Point tileIndex) {
-         Point mapPosition = coords_.tileToMap(tileIndex);
-
-         if (!cache_.hasImage(tileIndex)) {
-            studio_.getSnapLiveManager().setLiveModeOn(false);
-            final ImageProcessor img = controller_.grabImageAtMapPosition(mapPosition);
-            cache_.addImage(tileIndex, img);
-         }
-      }
-
-      protected Point findBestTile(ArrayList<Point> neededTiles) {
-         ArrayList<Point> nearestTiles = findNearestTiles(neededTiles);
-         //return gravitateToBufferTiles(nearestTiles);
-         return findMostNeighborlyTile(nearestTiles);
-      }
-
-      protected ArrayList<Point> findNearestTiles(ArrayList<Point> neededTiles) {
-         double tileDist;
-         double tol = 0.01;
-         double minDist = java.lang.Double.POSITIVE_INFINITY;
-         ArrayList<Point> nearestTiles = new ArrayList<Point>();
-         Point curTile = coords_.getNearestTileFromMapPosition(controller_.getCurrentMapPosition());
-
-         // Find tile(s) closest to current stage position.
-         for (int i = 0; i < neededTiles.size(); ++i) {
+        if (modeMgr_.getMode() == ModeManager.SURVEY) {
+          ArrayList<Point> missingTiles = findMissingTiles();
+          if (missingTiles.size() > 0) {
             try {
-               Point neededTile = neededTiles.get(i);
-               tileDist = neededTile.distance(curTile);
-               if (tileDist < (minDist + tol)) {
-                  if (tileDist < (minDist - tol)) {
-                     minDist = tileDist;
-                     nearestTiles.clear();
-                  }
-                  nearestTiles.add(neededTile);
-               }
-            } catch (ArrayIndexOutOfBoundsException e) {
-               studio_.logs().logError(e);
-            } catch (NullPointerException e) {
-               studio_.logs().logError(e);
+              Point tile = findBestTile(missingTiles);
+              acquireNewTile(tile);
+              SwingUtilities.invokeLater(new GUIUpdater(tile));
+            } catch (Throwable e) {
+              studio_.logs().logError(e.getMessage());
             }
-         }
-         return nearestTiles;
-      }
-
-      protected Point findMostNeighborlyTile(ArrayList<Point> nearestTiles) {
-         // Among nearestTiles, find tile with =most buffered neighbors.
-         double neighborliness;
-         double maxNeighborliness = -1.0;
-         Point nearbyTile;
-         Point chosenTile = null;
-
-         for (Point candidateTile : nearestTiles) {
-            neighborliness = 0;
-            for (int i = -2; i <= 2; i++) {
-               for (int j = -2; j <= 2; j++) {
-                  if (i != 0 || j != 0) {
-                     nearbyTile = new Point(candidateTile.x + i, candidateTile.y + j);
-                     if (cache_.hasImage(nearbyTile)) {
-                        neighborliness += 1. / Math.pow(nearbyTile.distance(candidateTile), 3.);
-                     }
-                  }
-               }
+          } else {
+            try {
+              sleep(20);
+            } catch (InterruptedException e) {
+              studio_.logs().logError(e, "tileGrabberThread sleep resulted in an exception.");
             }
+          }
+        } else {
+          // SwingUtilities.invokeLater(new GUIUpdater(false));
+          try {
+            sleep(20);
+          } catch (InterruptedException e) {
+            studio_.logs().logError(e, "tileGrabberThread sleep resulted in an exception.");
+          }
+        }
+      }
+    }
 
-            if (neighborliness > maxNeighborliness) {
-               maxNeighborliness = neighborliness;
-               chosenTile = candidateTile;
+    public ArrayList<Point> findMissingTiles() {
+      ArrayList<Point> tiles = coords_.getTilesOnScreen();
+      for (int i = tiles.size() - 1; i >= 0; i--) {
+        if (cache_.hasImage(tiles.get(i))) {
+          tiles.remove(i);
+        }
+      }
+      return tiles;
+    }
+
+    public void navigate(Point mapPos) {
+      applyNavigationSystemSettings();
+      modeMgr_.setMode(ModeManager.NAVIGATE);
+      controller_.goToMapPosition(mapPos);
+      updateView();
+    }
+
+    public void survey() {
+      applySurveySystemSettings();
+      modeMgr_.setMode(ModeManager.SURVEY);
+      updateView();
+    }
+
+    public void pauseSlideExplorer() {
+      applyNavigationSystemSettings();
+      modeMgr_.setMode(ModeManager.NAVIGATE);
+      updateView();
+    }
+
+    /*
+     * Grab an image at a given position and cache it in multitiles.
+     */
+    protected void acquireNewTile(final Point tileIndex) {
+      Point mapPosition = coords_.tileToMap(tileIndex);
+
+      if (!cache_.hasImage(tileIndex)) {
+        studio_.getSnapLiveManager().setLiveModeOn(false);
+        final ImageProcessor img = controller_.grabImageAtMapPosition(mapPosition);
+        cache_.addImage(tileIndex, img);
+      }
+    }
+
+    protected Point findBestTile(ArrayList<Point> neededTiles) {
+      ArrayList<Point> nearestTiles = findNearestTiles(neededTiles);
+      // return gravitateToBufferTiles(nearestTiles);
+      return findMostNeighborlyTile(nearestTiles);
+    }
+
+    protected ArrayList<Point> findNearestTiles(ArrayList<Point> neededTiles) {
+      double tileDist;
+      double tol = 0.01;
+      double minDist = java.lang.Double.POSITIVE_INFINITY;
+      ArrayList<Point> nearestTiles = new ArrayList<Point>();
+      Point curTile = coords_.getNearestTileFromMapPosition(controller_.getCurrentMapPosition());
+
+      // Find tile(s) closest to current stage position.
+      for (int i = 0; i < neededTiles.size(); ++i) {
+        try {
+          Point neededTile = neededTiles.get(i);
+          tileDist = neededTile.distance(curTile);
+          if (tileDist < (minDist + tol)) {
+            if (tileDist < (minDist - tol)) {
+              minDist = tileDist;
+              nearestTiles.clear();
             }
-         }
-
-         return chosenTile;
+            nearestTiles.add(neededTile);
+          }
+        } catch (ArrayIndexOutOfBoundsException e) {
+          studio_.logs().logError(e);
+        } catch (NullPointerException e) {
+          studio_.logs().logError(e);
+        }
       }
-   }
+      return nearestTiles;
+    }
 
-   class ModeManager {
+    protected Point findMostNeighborlyTile(ArrayList<Point> nearestTiles) {
+      // Among nearestTiles, find tile with =most buffered neighbors.
+      double neighborliness;
+      double maxNeighborliness = -1.0;
+      Point nearbyTile;
+      Point chosenTile = null;
 
-      public ModeManager() {
-      }
-      public static final int IDLE = 0;
-      public static final int SURVEY = 1;
-      public static final int NAVIGATE = 2;
-      public static final int MOSAIC5D = 3;
-      protected int mode_ = SURVEY;
-      protected Point2D.Double position_;
+      for (Point candidateTile : nearestTiles) {
+        neighborliness = 0;
+        for (int i = -2; i <= 2; i++) {
+          for (int j = -2; j <= 2; j++) {
+            if (i != 0 || j != 0) {
+              nearbyTile = new Point(candidateTile.x + i, candidateTile.y + j);
+              if (cache_.hasImage(nearbyTile)) {
+                neighborliness += 1. / Math.pow(nearbyTile.distance(candidateTile), 3.);
+              }
+            }
+          }
+        }
 
-      public synchronized void setMode(int mode) {
-         mode_ = mode;
-      }
-
-      public synchronized int getMode() {
-         return mode_;
-      }
-
-      public synchronized void setPosition(Point2D.Double position) {
-         position_ = position;
-      }
-
-      public synchronized Point2D.Double getPosition() {
-         return position_;
-      }
-   }
-
-   public class OffsetsRow {
-
-      public String resolutionName;
-      public double x = 0;
-      public double y = 0;
-      public double z = 0;
-
-      public void writeToProfile(UserProfile profile) {
-         profile.setDouble(this.getClass(), resolutionName + "-xoffset", x);
-         profile.setDouble(this.getClass(), resolutionName + "-yoffset", y);
-         profile.setDouble(this.getClass(), resolutionName + "-zoffset", z);
+        if (neighborliness > maxNeighborliness) {
+          maxNeighborliness = neighborliness;
+          chosenTile = candidateTile;
+        }
       }
 
-      public void readFromProfile(UserProfile profile) {
-         x = profile.getDouble(this.getClass(), resolutionName + "-xoffset", 0.0);
-         y = profile.getDouble(this.getClass(), resolutionName + "-yoffset", 0.0);
-         z = profile.getDouble(this.getClass(), resolutionName + "-zoffset", 0.0);
-      }
-   }
+      return chosenTile;
+    }
+  }
+
+  class ModeManager {
+
+    public ModeManager() {}
+
+    public static final int IDLE = 0;
+    public static final int SURVEY = 1;
+    public static final int NAVIGATE = 2;
+    public static final int MOSAIC5D = 3;
+    protected int mode_ = SURVEY;
+    protected Point2D.Double position_;
+
+    public synchronized void setMode(int mode) {
+      mode_ = mode;
+    }
+
+    public synchronized int getMode() {
+      return mode_;
+    }
+
+    public synchronized void setPosition(Point2D.Double position) {
+      position_ = position;
+    }
+
+    public synchronized Point2D.Double getPosition() {
+      return position_;
+    }
+  }
+
+  public class OffsetsRow {
+
+    public String resolutionName;
+    public double x = 0;
+    public double y = 0;
+    public double z = 0;
+
+    public void writeToProfile(UserProfile profile) {
+      profile.setDouble(this.getClass(), resolutionName + "-xoffset", x);
+      profile.setDouble(this.getClass(), resolutionName + "-yoffset", y);
+      profile.setDouble(this.getClass(), resolutionName + "-zoffset", z);
+    }
+
+    public void readFromProfile(UserProfile profile) {
+      x = profile.getDouble(this.getClass(), resolutionName + "-xoffset", 0.0);
+      y = profile.getDouble(this.getClass(), resolutionName + "-yoffset", 0.0);
+      z = profile.getDouble(this.getClass(), resolutionName + "-zoffset", 0.0);
+    }
+  }
 }

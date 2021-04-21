@@ -16,7 +16,7 @@ modification, are permitted provided that the following conditions are met:
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL REGENTS OF THE UNIVERSITY OF CALIFORNIA BE LIABLE 
+DISCLAIMED. IN NO EVENT SHALL REGENTS OF THE UNIVERSITY OF CALIFORNIA BE LIABLE
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -40,86 +40,80 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
-public class IlluminatePlugin implements MenuPlugin, SciJavaPlugin  {
-    // Provides access to the MicroManager API.
+public class IlluminatePlugin implements MenuPlugin, SciJavaPlugin {
+  // Provides access to the MicroManager API.
 
-    private Studio studio_;
-    public static boolean debugFlag = true;
+  private Studio studio_;
+  public static boolean debugFlag = true;
 
-    @Override
-    public void setContext(Studio studio) {
-        studio_ = studio;
-    }
+  @Override
+  public void setContext(Studio studio) {
+    studio_ = studio;
+  }
 
-    /**
-     * This method is called when the plugin's menu option is selected.
-     */
-    @Override
-    public void onPluginSelected() {
+  /** This method is called when the plugin's menu option is selected. */
+  @Override
+  public void onPluginSelected() {
 
-        // Create copy of the mmCore object to pass to sub-class
-        CMMCore mmCore = studio_.getCMMCore();
-        
-        // Create LED Map
-        IlluminateControllerFrame controller_frame;
+    // Create copy of the mmCore object to pass to sub-class
+    CMMCore mmCore = studio_.getCMMCore();
 
-        // Search for LED Array Device
-        StrVector devices = mmCore.getLoadedDevices();
-        boolean led_array_found = false;
-        String device_name = "";
-        
-        System.out.println("Devices found:");
-        for (int i = 0; i < devices.size(); i++) {
-            try {
-                if ("Illuminate-Led-Array".equals(devices.get(i)))
-                {
-                    led_array_found = true;
-                    device_name = devices.get(i);
-                    System.out.println(devices.get(i));
-                }
-            } catch (Exception ex) {
-                Logger.getLogger(IlluminatePlugin.class.getName()).log(Level.SEVERE, null, ex);
-            }
+    // Create LED Map
+    IlluminateControllerFrame controller_frame;
+
+    // Search for LED Array Device
+    StrVector devices = mmCore.getLoadedDevices();
+    boolean led_array_found = false;
+    String device_name = "";
+
+    System.out.println("Devices found:");
+    for (int i = 0; i < devices.size(); i++) {
+      try {
+        if ("Illuminate-Led-Array".equals(devices.get(i))) {
+          led_array_found = true;
+          device_name = devices.get(i);
+          System.out.println(devices.get(i));
         }
-        if (led_array_found)
-        {
-            try {
-                controller_frame = new IlluminateControllerFrame(mmCore, device_name, debugFlag);
-        } catch (Exception ex) {
-            Logger.getLogger(IlluminatePlugin.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        } else {
-            studio_.logs().showMessage("LED Array not found.  This plugin is no fun without the hardware");
-        }
-
+      } catch (Exception ex) {
+        Logger.getLogger(IlluminatePlugin.class.getName()).log(Level.SEVERE, null, ex);
+      }
     }
-
-    /**
-     * This method determines which sub-menu of the Plugins menu we are placed
-     * into.
-     */
-    @Override
-    public String getSubMenu() {
-        return "Device Control";
+    if (led_array_found) {
+      try {
+        controller_frame = new IlluminateControllerFrame(mmCore, device_name, debugFlag);
+      } catch (Exception ex) {
+        Logger.getLogger(IlluminatePlugin.class.getName()).log(Level.SEVERE, null, ex);
+      }
+    } else {
+      studio_
+          .logs()
+          .showMessage("LED Array not found.  This plugin is no fun without the hardware");
     }
+  }
 
-    @Override
-    public String getName() {
-        return "Illuminate LED Array";
-    }
+  /** This method determines which sub-menu of the Plugins menu we are placed into. */
+  @Override
+  public String getSubMenu() {
+    return "Device Control";
+  }
 
-    @Override
-    public String getHelpText() {
-        return "Illuminate LED Array Plugin";
-    }
+  @Override
+  public String getName() {
+    return "Illuminate LED Array";
+  }
 
-    @Override
-    public String getVersion() {
-        return "0.1";
-    }
+  @Override
+  public String getHelpText() {
+    return "Illuminate LED Array Plugin";
+  }
 
-    @Override
-    public String getCopyright() {
-        return "University of California, 2019";
-    }
+  @Override
+  public String getVersion() {
+    return "0.1";
+  }
+
+  @Override
+  public String getCopyright() {
+    return "University of California, 2019";
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, December 3, 2006
 //               Chris Weisiger, 2015
@@ -22,33 +22,32 @@
 
 package org.micromanager;
 
-
-
 /**
- * This entity provides access to methods for interacting with the Stage
- * PositionList. You can access this class via the Studio.positions() and
- * Studio.getPositionListManager() methods.
+ * This entity provides access to methods for interacting with the Stage PositionList. You can
+ * access this class via the Studio.positions() and Studio.getPositionListManager() methods.
  */
 public interface PositionListManager {
-   /**
-    * Makes this the 'current' PositionList, i.e., the one used by the
-    * Acquisition Protocol, and shown in the PositionListDlg.
-    * @param pl PositionList to be made the current one
-    */
-   void setPositionList(PositionList pl);
+  /**
+   * Makes this the 'current' PositionList, i.e., the one used by the Acquisition Protocol, and
+   * shown in the PositionListDlg.
+   *
+   * @param pl PositionList to be made the current one
+   */
+  void setPositionList(PositionList pl);
 
-   /**
-    * Returns a copy of the current PositionList, the one used by the
-    * Acquisition Protocol
-    * @return copy of the current PositionList
-    */
-   PositionList getPositionList();
+  /**
+   * Returns a copy of the current PositionList, the one used by the Acquisition Protocol
+   *
+   * @return copy of the current PositionList
+   */
+  PositionList getPositionList();
 
-   /**
-    * Adds the current position to the list (same as pressing the "Mark" button
-    * in the XYPositionList with no position selected)
-    * @deprecated since this function completely depends on the PositionListDlg.
-    */
-   @Deprecated
-   void markCurrentPosition();
+  /**
+   * Adds the current position to the list (same as pressing the "Mark" button in the XYPositionList
+   * with no position selected)
+   *
+   * @deprecated since this function completely depends on the PositionListDlg.
+   */
+  @Deprecated
+  void markCurrentPosition();
 }

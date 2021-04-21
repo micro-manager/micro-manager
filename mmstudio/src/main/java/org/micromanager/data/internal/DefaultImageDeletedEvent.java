@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API implementation
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2016
 //
@@ -23,25 +23,23 @@ package org.micromanager.data.internal;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 
-/**
- * This class signifies that an image has been deleted from a Datastore.
- */
+/** This class signifies that an image has been deleted from a Datastore. */
 public final class DefaultImageDeletedEvent implements org.micromanager.data.ImageDeletedEvent {
-   private Image image_;
-   private Datastore store_;
+  private Image image_;
+  private Datastore store_;
 
-   public DefaultImageDeletedEvent(Image image, Datastore store) {
-      image_ = image;
-      store_ = store;
-   }
+  public DefaultImageDeletedEvent(Image image, Datastore store) {
+    image_ = image;
+    store_ = store;
+  }
 
-   @Override
-   public Image getImage() {
-      return image_;
-   }
+  @Override
+  public Image getImage() {
+    return image_;
+  }
 
-   @Override
-   public Datastore getDatastore() {
-      return store_;
-   }
+  @Override
+  public Datastore getDatastore() {
+    return store_;
+  }
 }

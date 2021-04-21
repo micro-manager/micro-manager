@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,28 +20,19 @@
 
 package org.micromanager.events;
 
-/**
- * This class signals when any XY stage is moved.
- */
+/** This class signals when any XY stage is moved. */
 public interface XYStagePositionChangedEvent {
 
+  /**
+   * Name of the (XYStage) device that change position
+   *
+   * @return Name of the (XYStage) device that changed position
+   */
+  String getDeviceName();
 
-   /**
-    * Name of the (XYStage) device that change position
-    * @return Name of the (XYStage) device that changed position
-    */
-   String getDeviceName();
+  /** @return New X position of the stage in microns */
+  double getXPos();
 
-   /**
-    *
-    * @return New X position of the stage in microns
-    */
-   double getXPos();
-
-   /**
-    *
-    * @return New Y position of the stage in microns
-    */
-   double getYPos();
-
+  /** @return New Y position of the stage in microns */
+  double getYPos();
 }

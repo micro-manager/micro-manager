@@ -32,45 +32,43 @@
 
 package org.micromanager.plugins.snaponmove;
 
-/**
- * Value of a monitored item.
- */
+/** Value of a monitored item. */
 abstract class MonitoredValue {
-   static MonitoredFloatValue createFloatValue(double value) {
-      return new MonitoredFloatValue(value);
-   }
+  static MonitoredFloatValue createFloatValue(double value) {
+    return new MonitoredFloatValue(value);
+  }
 
-   static MonitoredXYValue createXYValue(double x, double y) {
-      return new MonitoredXYValue(x, y);
-   }
+  static MonitoredXYValue createXYValue(double x, double y) {
+    return new MonitoredXYValue(x, y);
+  }
 
-   static class MonitoredFloatValue extends MonitoredValue {
-      private final double value_;
+  static class MonitoredFloatValue extends MonitoredValue {
+    private final double value_;
 
-      MonitoredFloatValue(double value) {
-         value_ = value;
-      }
+    MonitoredFloatValue(double value) {
+      value_ = value;
+    }
 
-      double getValue() {
-         return value_;
-      }
-   }
+    double getValue() {
+      return value_;
+    }
+  }
 
-   static class MonitoredXYValue extends MonitoredValue {
-      private final double x_;
-      private final double y_;
+  static class MonitoredXYValue extends MonitoredValue {
+    private final double x_;
+    private final double y_;
 
-      MonitoredXYValue(double x, double y) {
-         x_ = x;
-         y_ = y;
-      }
+    MonitoredXYValue(double x, double y) {
+      x_ = x;
+      y_ = y;
+    }
 
-      double getX() {
-         return x_;
-      }
+    double getX() {
+      return x_;
+    }
 
-      double getY() {
-         return y_;
-      }
-   }
+    double getY() {
+      return y_;
+    }
+  }
 }

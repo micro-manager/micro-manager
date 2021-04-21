@@ -7,17 +7,11 @@ package org.micromanager.display.internal.link.internal;
 
 import org.micromanager.display.internal.link.AnchorDidBecomeInSyncEvent;
 import org.micromanager.display.internal.link.LinkAnchor;
-import org.micromanager.display.internal.link.internal.AbstractAnchorEvent;
 
-/**
- *
- * @author mark
- */
-public class DefaultAnchorDidBecomeInSyncEvent<T>
-      extends AbstractAnchorEvent<T>
-      implements AnchorDidBecomeInSyncEvent<T>
-{
-   public DefaultAnchorDidBecomeInSyncEvent(LinkAnchor<T> anchor) {
-      super(anchor);
-   }
+/** @author mark */
+public class DefaultAnchorDidBecomeInSyncEvent<T> extends AbstractAnchorEvent<T>
+    implements AnchorDidBecomeInSyncEvent<T> {
+  public DefaultAnchorDidBecomeInSyncEvent(LinkAnchor<T> anchor) {
+    super(anchor);
+  }
 }

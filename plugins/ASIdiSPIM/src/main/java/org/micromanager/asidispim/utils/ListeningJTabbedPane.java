@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ListeningJTabbedPane.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          ListeningJTabbedPane.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -24,13 +24,14 @@ package org.micromanager.asidispim.utils;
 import javax.swing.JTabbedPane;
 
 /**
- * Purpose of this class is to have the compiler check the type 
- * of the component being added to the master frame
+ * Purpose of this class is to have the compiler check the type of the component being added to the
+ * master frame
+ *
  * @author nico
  */
 @SuppressWarnings("serial")
 public class ListeningJTabbedPane extends JTabbedPane {
-   public void addLTab(ListeningJPanel panel) {
-      addTab(panel.getPanelName(), panel);
-   }
+  public void addLTab(ListeningJPanel panel) {
+    addTab(panel.getPanelName(), panel);
+  }
 }

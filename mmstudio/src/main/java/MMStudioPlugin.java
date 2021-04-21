@@ -2,7 +2,7 @@
 // FILE:          MMStudioPlugin.java
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, Jul 18, 2005
 //                Mark A. Tsuchida, 2016
@@ -28,136 +28,153 @@ import ij.IJ;
 import ij.Macro;
 import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
-import java.lang.reflect.InvocationTargetException;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import org.micromanager.display.internal.displaywindow.imagej.MMVirtualStack;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
+import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * ImageJ plugin wrapper for Micro-Manager.
  *
- * Note: This class is <i>not</i> part of the MMStudio API.
+ * <p>Note: This class is <i>not</i> part of the MMStudio API.
  */
 public class MMStudioPlugin implements PlugIn, CommandListener {
-   volatile static MMStudio studio_;
+  static volatile MMStudio studio_;
 
-   /**
-    * Run Micro-Manager as an ImageJ plugin
-    * @param arg the plugin argument (not used)
-    */
-   @Override
-   public void run(final String arg) {   
-      final String profileNameAutoStart = parseMacroOptions(); //This must be run from the same thread that the plugin is started in or Macro.getOptions will return null.
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
+  /**
+   * Run Micro-Manager as an ImageJ plugin
+   *
+   * @param arg the plugin argument (not used)
+   */
+  @Override
+  public void run(final String arg) {
+    final String profileNameAutoStart =
+        parseMacroOptions(); // This must be run from the same thread that the plugin is started in
+                             // or Macro.getOptions will return null.
+    SwingUtilities.invokeLater(
+        new Runnable() {
+          @Override
+          public void run() {
             try {
-               if (studio_ == null || !studio_.isProgramRunning()) {
-                  // OS-specific stuff
-                  // TODO Why here and not in MMStudio?
-                  if (JavaUtils.isMac()) {
-                     System.setProperty("apple.laf.useScreenMenuBar", "true");
-                  }
-                  try {
-                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                  }
-                  catch (ClassNotFoundException | IllegalAccessException | 
-                          InstantiationException | UnsupportedLookAndFeelException e) {
-                     ReportingUtils.logError(e, "Failed to set look-and-feel");
-                  }
-
-                  // warn user about old ImageJ version, but do not stop
-                  // TODO Cf. check in MMStudio
-                  IJ.versionLessThan("1.48g");
-
-                  if (!IJ.versionLessThan("1.46e")) {
-                     Executer.addCommandListener(MMStudioPlugin.this);
-                  }
-
-                  studio_ = new MMStudio(true, profileNameAutoStart);
-               }
-            } catch (RuntimeException e) {
-               ReportingUtils.logError(e);
-            } catch (Exception e) {
-               ReportingUtils.logError(e);
-            }
-         }
-      });
-   }
-
-    private static String parseMacroOptions() {
-        //This method parses the optional ImageJ macro options. Currently it only supports the specification of a profile to automatically load like so: run("Micro-Manager Studio", "-profile {MyProfileNameHere}");
-        //This method could be expanded to support other startup arguments in the future.
-        String optionalArgs = Macro.getOptions(); //If, in ImageJ you start this plugin as `run("Micro-Manager Studio", "-profile MyProfile")` then this line will return "-profile MyProfile"
-        String profileNameAutoStart = null; //The name of the user profile that Micro-Manager should start up with. In the case that this is left as null then a splash screen will request that the user select a profile before startup.
-        if (optionalArgs != null) {
-            String args[] = optionalArgs.split(" "); //Split the arg string into space separated array. This matches the way that system arguments are passed in to the `main` method by Java.
-            for (int i=0; i<args.length; i++) { // a library for the parsing of arguments such as apache commons - cli would make this more robust if needed.
-                if (args[i].equals("-profile")) {
-                    if (i < args.length-1) {
-                        i++;
-                        profileNameAutoStart = args[i];
-                    } else {
-                        ReportingUtils.showError("Micro-Manager received no value for the `-profile` startup argument.");
-                    }
-                } else {
-                    ReportingUtils.showError("Micro-Manager received unknown startup argument: " + args[i]);
+              if (studio_ == null || !studio_.isProgramRunning()) {
+                // OS-specific stuff
+                // TODO Why here and not in MMStudio?
+                if (JavaUtils.isMac()) {
+                  System.setProperty("apple.laf.useScreenMenuBar", "true");
                 }
-            }
-        }
-        return profileNameAutoStart;
-    }
+                try {
+                  UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                } catch (ClassNotFoundException
+                    | IllegalAccessException
+                    | InstantiationException
+                    | UnsupportedLookAndFeelException e) {
+                  ReportingUtils.logError(e, "Failed to set look-and-feel");
+                }
 
-   private boolean closed_;
-   private boolean closeStudio() {
-      try {
-         GUIUtils.invokeAndWait(new Runnable() {
+                // warn user about old ImageJ version, but do not stop
+                // TODO Cf. check in MMStudio
+                IJ.versionLessThan("1.48g");
+
+                if (!IJ.versionLessThan("1.46e")) {
+                  Executer.addCommandListener(MMStudioPlugin.this);
+                }
+
+                studio_ = new MMStudio(true, profileNameAutoStart);
+              }
+            } catch (RuntimeException e) {
+              ReportingUtils.logError(e);
+            } catch (Exception e) {
+              ReportingUtils.logError(e);
+            }
+          }
+        });
+  }
+
+  private static String parseMacroOptions() {
+    // This method parses the optional ImageJ macro options. Currently it only supports the
+    // specification of a profile to automatically load like so: run("Micro-Manager Studio",
+    // "-profile {MyProfileNameHere}");
+    // This method could be expanded to support other startup arguments in the future.
+    String optionalArgs =
+        Macro
+            .getOptions(); // If, in ImageJ you start this plugin as `run("Micro-Manager Studio",
+                           // "-profile MyProfile")` then this line will return "-profile MyProfile"
+    String profileNameAutoStart =
+        null; // The name of the user profile that Micro-Manager should start up with. In the case
+              // that this is left as null then a splash screen will request that the user select a
+              // profile before startup.
+    if (optionalArgs != null) {
+      String args[] =
+          optionalArgs.split(
+              " "); // Split the arg string into space separated array. This matches the way that
+                    // system arguments are passed in to the `main` method by Java.
+      for (int i = 0;
+          i < args.length;
+          i++) { // a library for the parsing of arguments such as apache commons - cli would make
+                 // this more robust if needed.
+        if (args[i].equals("-profile")) {
+          if (i < args.length - 1) {
+            i++;
+            profileNameAutoStart = args[i];
+          } else {
+            ReportingUtils.showError(
+                "Micro-Manager received no value for the `-profile` startup argument.");
+          }
+        } else {
+          ReportingUtils.showError("Micro-Manager received unknown startup argument: " + args[i]);
+        }
+      }
+    }
+    return profileNameAutoStart;
+  }
+
+  private boolean closed_;
+
+  private boolean closeStudio() {
+    try {
+      GUIUtils.invokeAndWait(
+          new Runnable() {
             @Override
             public void run() {
-               closed_ = studio_.closeSequence(true);
+              closed_ = studio_.closeSequence(true);
             }
-         });
-      }
-      catch (InterruptedException ex) {
-         closed_ = false;
-         Thread.currentThread().interrupt();
-      }
-      catch (InvocationTargetException ignore) {
-         closed_ = false;
-      }
-      return closed_;
-   }
+          });
+    } catch (InterruptedException ex) {
+      closed_ = false;
+      Thread.currentThread().interrupt();
+    } catch (InvocationTargetException ignore) {
+      closed_ = false;
+    }
+    return closed_;
+  }
 
-
-   /**
-    * Override ImageJ commands for Micro-Manager
-    * @param command
-    * @return command, or null if command is canceled
-    */
-   @Override
-   public String commandExecuting(String command) {
-      if (command.equalsIgnoreCase("Quit") && studio_ != null) {
-         if (closeStudio()) {
-            Executer.removeCommandListener(MMStudioPlugin.this);
-            return command;
-         }
-         return null;
+  /**
+   * Override ImageJ commands for Micro-Manager
+   *
+   * @param command
+   * @return command, or null if command is canceled
+   */
+  @Override
+  public String commandExecuting(String command) {
+    if (command.equalsIgnoreCase("Quit") && studio_ != null) {
+      if (closeStudio()) {
+        Executer.removeCommandListener(MMStudioPlugin.this);
+        return command;
       }
-      else if (command.equals("Crop")) {
-         // Override in-place crop (which won't work) with cropped duplication
-         // TODO Support stack cropping
-         if (IJ.getImage().getStack() instanceof MMVirtualStack) {
-            new Duplicator().run(IJ.getImage()).show();
-            return null;
-         } 
+      return null;
+    } else if (command.equals("Crop")) {
+      // Override in-place crop (which won't work) with cropped duplication
+      // TODO Support stack cropping
+      if (IJ.getImage().getStack() instanceof MMVirtualStack) {
+        new Duplicator().run(IJ.getImage()).show();
+        return null;
       }
-      // TODO We could support some more non-modifying commands
-      return command;
-   }
+    }
+    // TODO We could support some more non-modifying commands
+    return command;
+  }
 }

@@ -20,61 +20,55 @@ package org.micromanager.magellan.internal.gui;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
 
-/**
- *
- * @author Henry
- */
+/** @author Henry */
 public class MultipleAcquisitionTableModel extends AbstractTableModel {
 
-   private static final String[] COLUMNS = {"Name","Description","Status"};
-   private MagellanAcquisitionsManager manager_;
-   private GUI gui_;
-   
-   public MultipleAcquisitionTableModel(MagellanAcquisitionsManager manager, GUI gui) {
-      super();
-      manager_ = manager;
-      gui_ = gui;
-   }
-   
-   @Override
-   public String getColumnName(int index) {
-      return COLUMNS[index];
-   }
+  private static final String[] COLUMNS = {"Name", "Description", "Status"};
+  private MagellanAcquisitionsManager manager_;
+  private GUI gui_;
 
-   @Override
-   public int getRowCount() {
-      return manager_.getNumberOfAcquisitions();
-   }
+  public MultipleAcquisitionTableModel(MagellanAcquisitionsManager manager, GUI gui) {
+    super();
+    manager_ = manager;
+    gui_ = gui;
+  }
 
-   @Override
-   public int getColumnCount() {
-      return COLUMNS.length;
-   }
+  @Override
+  public String getColumnName(int index) {
+    return COLUMNS[index];
+  }
 
-   
-   @Override
-   public Object getValueAt(int rowIndex, int columnIndex) {
-      if (columnIndex == 0) {
-         return manager_.getAcquisitionSettingsName(rowIndex);
-      } else if (columnIndex == 1) {
-         return manager_.getAcquisitionDescription(rowIndex);
-      } else {
-         return manager_.getAcqStatus(rowIndex);
-      }
-   }
+  @Override
+  public int getRowCount() {
+    return manager_.getNumberOfAcquisitions();
+  }
 
-   @Override
-   public void setValueAt(Object value, int row, int col) {
-       if (col == 0) {
-         manager_.getAcquisitionSettings(row).name_ = (String) value;
-      }
-      gui_.storeCurrentAcqSettings();
-   }
-   
-   @Override
-   public boolean isCellEditable(int rowIndex, int colIndex) {
-      return colIndex == 0 ? true : false;
-   }
+  @Override
+  public int getColumnCount() {
+    return COLUMNS.length;
+  }
 
+  @Override
+  public Object getValueAt(int rowIndex, int columnIndex) {
+    if (columnIndex == 0) {
+      return manager_.getAcquisitionSettingsName(rowIndex);
+    } else if (columnIndex == 1) {
+      return manager_.getAcquisitionDescription(rowIndex);
+    } else {
+      return manager_.getAcqStatus(rowIndex);
+    }
+  }
 
+  @Override
+  public void setValueAt(Object value, int row, int col) {
+    if (col == 0) {
+      manager_.getAcquisitionSettings(row).name_ = (String) value;
+    }
+    gui_.storeCurrentAcqSettings();
+  }
+
+  @Override
+  public boolean isCellEditable(int rowIndex, int colIndex) {
+    return colIndex == 0 ? true : false;
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -22,6 +22,5 @@ package org.micromanager.events;
 
 public interface PixelSizeChangedEvent {
 
-   double getNewPixelSizeUm();
-
+  double getNewPixelSizeUm();
 }

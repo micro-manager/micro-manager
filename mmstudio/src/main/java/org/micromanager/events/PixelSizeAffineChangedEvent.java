@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, 2019
 //
@@ -24,6 +24,5 @@ import java.awt.geom.AffineTransform;
 
 public interface PixelSizeAffineChangedEvent {
 
-   AffineTransform getNewPixelSizeAffine();
-
+  AffineTransform getNewPixelSizeAffine();
 }

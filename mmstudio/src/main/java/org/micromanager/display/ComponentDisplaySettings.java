@@ -1,26 +1,26 @@
-
 package org.micromanager.display;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public interface ComponentDisplaySettings {
-   interface Builder {
-      Builder scalingMinimum(long minIntensity);
-      Builder scalingMaximum(long maxIntensity);
-      Builder scalingRange(long minIntensity, long maxIntensity);
-      Builder scalingGamma(double gamma);
+  interface Builder {
+    Builder scalingMinimum(long minIntensity);
 
-      ComponentDisplaySettings build();
-   }
+    Builder scalingMaximum(long maxIntensity);
 
-   long getScalingMinimum();
-   long getScalingMaximum();
-   double getScalingGamma();  
-  
+    Builder scalingRange(long minIntensity, long maxIntensity);
 
-   Builder copyBuilder();
+    Builder scalingGamma(double gamma);
 
-   // TODO Add static builder() in Java 8
+    ComponentDisplaySettings build();
+  }
+
+  long getScalingMinimum();
+
+  long getScalingMaximum();
+
+  double getScalingGamma();
+
+  Builder copyBuilder();
+
+  // TODO Add static builder() in Java 8
 }

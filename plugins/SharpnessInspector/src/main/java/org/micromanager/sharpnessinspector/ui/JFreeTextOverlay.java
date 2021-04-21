@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       PWS Plugin
+// PROJECT:       PWS Plugin
 //
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nick Anthony, 2021
 //
@@ -29,41 +29,44 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.panel.AbstractOverlay;
 import org.jfree.chart.panel.Overlay;
 
-
 /**
  * A Text overlay for a JFreeChart
+ *
  * @author nick
  */
 class JFreeTextOverlay extends AbstractOverlay implements Overlay {
-    private String _text;
-    private boolean _vis = true;
-    private final Font _font = new Font("arial", Font.BOLD, 15);
-    
-    public JFreeTextOverlay(String text) {
-        this._text = text;
+  private String _text;
+  private boolean _vis = true;
+  private final Font _font = new Font("arial", Font.BOLD, 15);
+
+  public JFreeTextOverlay(String text) {
+    this._text = text;
+  }
+
+  public void setVisible(boolean visible) {
+    this._vis = visible;
+  }
+
+  public boolean isVisible() {
+    return this._vis;
+  }
+
+  @Override
+  public void paintOverlay(Graphics2D g2, ChartPanel chartPanel) {
+    if (this._vis) {
+      Shape savedClip = g2.getClip();
+      Rectangle2D dataArea = chartPanel.getScreenDataArea();
+      g2.clip(dataArea);
+      g2.setFont(this._font);
+      FontMetrics metrics = g2.getFontMetrics();
+      int h = metrics.getHeight();
+      int w = metrics.stringWidth(_text);
+      g2.drawString(
+          this._text,
+          (int) Math.round(dataArea.getCenterX() - (w / 2)),
+          (int) Math.round(dataArea.getCenterY() - (h / 2)));
+
+      g2.setClip(savedClip);
     }
-    
-    public void setVisible(boolean visible) {
-        this._vis = visible;
-    }
-    
-    public boolean isVisible() {
-        return this._vis;
-    }
-    
-    @Override
-    public void paintOverlay(Graphics2D g2, ChartPanel chartPanel) {
-        if (this._vis) {
-            Shape savedClip = g2.getClip();
-            Rectangle2D dataArea = chartPanel.getScreenDataArea();
-            g2.clip(dataArea);
-            g2.setFont(this._font);
-            FontMetrics metrics = g2.getFontMetrics();
-            int h = metrics.getHeight();
-            int w = metrics.stringWidth(_text);
-            g2.drawString(this._text, (int) Math.round(dataArea.getCenterX() - (w / 2)), (int) Math.round(dataArea.getCenterY() - (h / 2)));
-            
-            g2.setClip(savedClip);  
-        }
-    }
+  }
 }

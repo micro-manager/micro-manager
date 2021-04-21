@@ -7,12 +7,11 @@ package org.micromanager.display;
 
 import org.micromanager.data.Coords;
 
-/**
- *
- * @author Mark A. Tsuchida
- */
+/** @author Mark A. Tsuchida */
 public interface DisplayPositionChangedEvent {
-   Coords getDisplayPosition();
-   Coords getPreviousDisplayPosition();
-   DataViewer getDataViewer();
+  Coords getDisplayPosition();
+
+  Coords getPreviousDisplayPosition();
+
+  DataViewer getDataViewer();
 }

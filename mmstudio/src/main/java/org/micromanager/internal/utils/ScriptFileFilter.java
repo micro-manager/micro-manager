@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, October 1, 2005
 //
@@ -22,44 +22,40 @@
 //
 package org.micromanager.internal.utils;
 
-import java.io.File;
 import javax.swing.filechooser.FileFilter;
+import java.io.File;
 
-/**
- * File filter class for Open/Save file choosers 
- */
+/** File filter class for Open/Save file choosers */
 public final class ScriptFileFilter extends FileFilter {
-   final private String EXT_BSH;
-   final private String DESCRIPTION;
-   
-   public ScriptFileFilter() {
-      super();
-      EXT_BSH = new String("bsh");
-      DESCRIPTION = new String("BeanShell files (*.bsh)");
-   }
-   
-   @Override
-   public boolean accept(File f){
-      if (f.isDirectory())
-         return true;
-      
-      if (EXT_BSH.equals(getExtension(f)))
-         return true;
-      return false;
-   }
-   
-   public String getDescription(){
-      return DESCRIPTION;
-   }
-   
-   private String getExtension(File f) {
-      String ext = null;
-      String s = f.getName();
-      int i = s.lastIndexOf('.');
-      
-      if (i > 0 &&  i < s.length() - 1) {
-         ext = s.substring(i+1).toLowerCase();
-      }
-      return ext;
-   }
+  private final String EXT_BSH;
+  private final String DESCRIPTION;
+
+  public ScriptFileFilter() {
+    super();
+    EXT_BSH = new String("bsh");
+    DESCRIPTION = new String("BeanShell files (*.bsh)");
+  }
+
+  @Override
+  public boolean accept(File f) {
+    if (f.isDirectory()) return true;
+
+    if (EXT_BSH.equals(getExtension(f))) return true;
+    return false;
+  }
+
+  public String getDescription() {
+    return DESCRIPTION;
+  }
+
+  private String getExtension(File f) {
+    String ext = null;
+    String s = f.getName();
+    int i = s.lastIndexOf('.');
+
+    if (i > 0 && i < s.length() - 1) {
+      ext = s.substring(i + 1).toLowerCase();
+    }
+    return ext;
+  }
 }

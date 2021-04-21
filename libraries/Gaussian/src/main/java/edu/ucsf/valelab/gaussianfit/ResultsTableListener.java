@@ -43,146 +43,143 @@ import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayWindow;
 
+/** @author nico */
 /**
- *
- * @author nico
- */
-/**
- * KeyListener and MouseListenerclass for ResultsTable When user selected a line
- * in the ResulsTable and presses a key, the corresponding image will move to
- * the correct slice and draw the ROI that was used to calculate the Gaussian
- * fit Works only in conjunction with appropriate column names Up and down keys
- * also work as expected
+ * KeyListener and MouseListenerclass for ResultsTable When user selected a line in the ResulsTable
+ * and presses a key, the corresponding image will move to the correct slice and draw the ROI that
+ * was used to calculate the Gaussian fit Works only in conjunction with appropriate column names Up
+ * and down keys also work as expected
  */
 public class ResultsTableListener implements KeyListener, MouseListener {
 
-   private final ImagePlus siPlus_;
-   private final ResultsTable res_;
-   private final TextWindow win_;
-   private final TextPanel tp_;
-   private final DisplayWindow dw_;
-   private final int hBS_;
-   private int key_;
-   private int row_;
+  private final ImagePlus siPlus_;
+  private final ResultsTable res_;
+  private final TextWindow win_;
+  private final TextPanel tp_;
+  private final DisplayWindow dw_;
+  private final int hBS_;
+  private int key_;
+  private int row_;
 
-   public ResultsTableListener(DisplayWindow dw, ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
-      dw_ = dw;
-      siPlus_ = siPlus;
-      res_ = res;
-      win_ = win;
-      tp_ = win.getTextPanel();
-      hBS_ = halfBoxSize;
-      /*
-      t_ = new Timer(200, new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            row_ = tp_.getSelectionStart();
-            if (key_ == KeyEvent.VK_J) {
-               if (row_ > 0) {
-                  row_--;
-                  tp_.setSelection(row_, row_);
-               }
-            } else if (key_ == KeyEvent.VK_K) {
-               if (row_ < tp_.getLineCount() - 1) {
-                  row_++;
-                  tp_.setSelection(row_, row_);
-               }
-            }
-            update();
-         }
-      });
-*/
+  public ResultsTableListener(
+      DisplayWindow dw, ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
+    dw_ = dw;
+    siPlus_ = siPlus;
+    res_ = res;
+    win_ = win;
+    tp_ = win.getTextPanel();
+    hBS_ = halfBoxSize;
+    /*
+          t_ = new Timer(200, new ActionListener() {
+             @Override
+             public void actionPerformed(ActionEvent ae) {
+                row_ = tp_.getSelectionStart();
+                if (key_ == KeyEvent.VK_J) {
+                   if (row_ > 0) {
+                      row_--;
+                      tp_.setSelection(row_, row_);
+                   }
+                } else if (key_ == KeyEvent.VK_K) {
+                   if (row_ < tp_.getLineCount() - 1) {
+                      row_++;
+                      tp_.setSelection(row_, row_);
+                   }
+                }
+                update();
+             }
+          });
+    */
 
-   }
-   
+  }
 
-   @Override
-   public void keyPressed(KeyEvent e) {
-      key_ = e.getKeyCode();
-      interpretKeyPress();
-      //t_.start();
-   }
+  @Override
+  public void keyPressed(KeyEvent e) {
+    key_ = e.getKeyCode();
+    interpretKeyPress();
+    // t_.start();
+  }
 
-   @Override
-   public void keyReleased(KeyEvent e) {
-      //t_.stop();
-   }
+  @Override
+  public void keyReleased(KeyEvent e) {
+    // t_.stop();
+  }
 
-   @Override
-   public void keyTyped(KeyEvent e) {
-      //t_.stop();
-   }
+  @Override
+  public void keyTyped(KeyEvent e) {
+    // t_.stop();
+  }
 
-   @Override
-   public void mouseReleased(MouseEvent e) {
-      update();
-   }
+  @Override
+  public void mouseReleased(MouseEvent e) {
+    update();
+  }
 
-   @Override
-   public void mousePressed(MouseEvent e) {
-   }
+  @Override
+  public void mousePressed(MouseEvent e) {}
 
-   @Override
-   public void mouseClicked(MouseEvent e) {
-   }
+  @Override
+  public void mouseClicked(MouseEvent e) {}
 
-   @Override
-   public void mouseEntered(MouseEvent e) {
-   }
+  @Override
+  public void mouseEntered(MouseEvent e) {}
+  ;
 
-   ;
-   @Override
-   public void mouseExited(MouseEvent e) {
-   }
+  @Override
+  public void mouseExited(MouseEvent e) {}
 
-   private void interpretKeyPress() {
-      row_ = tp_.getSelectionStart();
-      if (key_ == KeyEvent.VK_J) {
-         if (row_ > 0) {
-            row_--;
-            tp_.setSelection(row_, row_);
-         }
-      } else if (key_ == KeyEvent.VK_K) {
-         if (row_ < tp_.getLineCount() - 1) {
-            row_++;
-            tp_.setSelection(row_, row_);
-         }
+  private void interpretKeyPress() {
+    row_ = tp_.getSelectionStart();
+    if (key_ == KeyEvent.VK_J) {
+      if (row_ > 0) {
+        row_--;
+        tp_.setSelection(row_, row_);
       }
-      update();
-   }
+    } else if (key_ == KeyEvent.VK_K) {
+      if (row_ < tp_.getLineCount() - 1) {
+        row_++;
+        tp_.setSelection(row_, row_);
+      }
+    }
+    update();
+  }
 
-   private void update() {
-      if (siPlus_ == null && dw_ == null) {
-         return;
+  private void update() {
+    if (siPlus_ == null && dw_ == null) {
+      return;
+    }
+    int row = tp_.getSelectionStart();
+    if (row >= 0 && row < tp_.getLineCount()) {
+      if (siPlus_.getWindow() != null) {
+        if (siPlus_ != IJ.getImage()) {
+          siPlus_.getWindow().toFront();
+          win_.toFront();
+        }
+      } else {
+        return;
       }
-      int row = tp_.getSelectionStart();
-      if (row >= 0 && row < tp_.getLineCount()) {
-         if (siPlus_.getWindow() != null) {
-            if (siPlus_ != IJ.getImage()) {
-               siPlus_.getWindow().toFront();
-               win_.toFront();
-            }
-         } else {
-            return;
-         }
-         int frame = Integer.parseInt(res_.getStringValue(Terms.FRAME, row));
-         int slice = Integer.parseInt(res_.getStringValue(Terms.SLICE, row));
-         int channel = Integer.parseInt(res_.getStringValue(Terms.CHANNEL, row));
-         int pos = Integer.parseInt(res_.getStringValue(Terms.POSITION, row));
-         int x = Integer.parseInt(res_.getStringValue(Terms.XPIX, row));
-         int y = Integer.parseInt(res_.getStringValue(Terms.YPIX, row));
-         
-         if (dw_ != null) {
-            Coords.CoordsBuilder builder = Coordinates.builder();
-            Coords coords = builder.channel(channel - 1).time(frame - 1).
-                    z(slice - 1).stagePosition(pos - 1).build();
-            dw_.setDisplayPosition(coords);
-         } else if (siPlus_.isHyperStack()) {
-            siPlus_.setPosition(channel, slice, frame);
-         } else {
-            siPlus_.setPosition(Math.max(frame, slice));
-         }
-         siPlus_.setRoi(new Roi(x - hBS_, y - hBS_, 2 * hBS_, 2 * hBS_));
+      int frame = Integer.parseInt(res_.getStringValue(Terms.FRAME, row));
+      int slice = Integer.parseInt(res_.getStringValue(Terms.SLICE, row));
+      int channel = Integer.parseInt(res_.getStringValue(Terms.CHANNEL, row));
+      int pos = Integer.parseInt(res_.getStringValue(Terms.POSITION, row));
+      int x = Integer.parseInt(res_.getStringValue(Terms.XPIX, row));
+      int y = Integer.parseInt(res_.getStringValue(Terms.YPIX, row));
+
+      if (dw_ != null) {
+        Coords.CoordsBuilder builder = Coordinates.builder();
+        Coords coords =
+            builder
+                .channel(channel - 1)
+                .time(frame - 1)
+                .z(slice - 1)
+                .stagePosition(pos - 1)
+                .build();
+        dw_.setDisplayPosition(coords);
+      } else if (siPlus_.isHyperStack()) {
+        siPlus_.setPosition(channel, slice, frame);
+      } else {
+        siPlus_.setPosition(Math.max(frame, slice));
       }
-   }
+      siPlus_.setRoi(new Roi(x - hBS_, y - hBS_, 2 * hBS_, 2 * hBS_));
+    }
+  }
 }

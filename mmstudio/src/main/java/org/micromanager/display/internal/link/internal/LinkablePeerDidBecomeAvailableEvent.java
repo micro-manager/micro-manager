@@ -5,22 +5,19 @@
  */
 package org.micromanager.display.internal.link.internal;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 class LinkablePeerDidBecomeAvailableEvent {
-   private final LinkEndpoint endpoint_;
+  private final LinkEndpoint endpoint_;
 
-   static LinkablePeerDidBecomeAvailableEvent create(LinkEndpoint endpoint) {
-      return new LinkablePeerDidBecomeAvailableEvent(endpoint);
-   }
+  static LinkablePeerDidBecomeAvailableEvent create(LinkEndpoint endpoint) {
+    return new LinkablePeerDidBecomeAvailableEvent(endpoint);
+  }
 
-   private LinkablePeerDidBecomeAvailableEvent(LinkEndpoint endpoint) {
-      endpoint_ = endpoint;
-   }
+  private LinkablePeerDidBecomeAvailableEvent(LinkEndpoint endpoint) {
+    endpoint_ = endpoint;
+  }
 
-   LinkEndpoint getPeer() {
-      return endpoint_;
-   }
+  LinkEndpoint getPeer() {
+    return endpoint_;
+  }
 }

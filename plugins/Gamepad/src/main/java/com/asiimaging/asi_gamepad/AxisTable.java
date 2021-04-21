@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          AxisTable.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     asi gamepad plugin
-//-----------------------------------------------------------------------------
+// FILE:          AxisTable.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     asi gamepad plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Vikram Kopuri
 //
@@ -44,161 +44,147 @@ import com.ivan.xinput.enums.XInputAxis;
 
 public class AxisTable extends JPanel implements TableModelListener {
 
-	private static final long serialVersionUID = 206955328057031300L;
-	private static final String NO_DEVICE = "";
-	private static final String DEVICE = "_Device";
-	private static final String PROPERTY = "_Property";
-	private static final String MULTIPLIER = "_Multiplier";
-	private Studio studio_;
-	private MutablePropertyMapView settings_;
-	public JTable table_;
+  private static final long serialVersionUID = 206955328057031300L;
+  private static final String NO_DEVICE = "";
+  private static final String DEVICE = "_Device";
+  private static final String PROPERTY = "_Property";
+  private static final String MULTIPLIER = "_Multiplier";
+  private Studio studio_;
+  private MutablePropertyMapView settings_;
+  public JTable table_;
 
-	public AxisTable(Studio studio) {
-		super(new GridLayout(1,0));
+  public AxisTable(Studio studio) {
+    super(new GridLayout(1, 0));
 
-		studio_ = studio;
-		settings_ = studio_.profile().getSettings(this.getClass());
+    studio_ = studio;
+    settings_ = studio_.profile().getSettings(this.getClass());
 
-		String[] columnNames = {"Joystick",
-				"Device",
-				"Property",
-				"Multiplier"};
+    String[] columnNames = {"Joystick", "Device", "Property", "Multiplier"};
 
-		Object[][] data= new Object[XInputAxis.values().length][columnNames.length];
+    Object[][] data = new Object[XInputAxis.values().length][columnNames.length];
 
-		int idx=0;
+    int idx = 0;
 
-		for (XInputAxis joystick : XInputAxis.values() ) {
-			data[idx][0]= joystick;
-			data[idx][1]= settings_.getString(joystick.name() + DEVICE, "");
-			data[idx][2]= settings_.getString(joystick.name() + PROPERTY, "");
-			data[idx][3]= settings_.getFloat(joystick.name() + MULTIPLIER, 1.0f);
-			idx++;
-		}
+    for (XInputAxis joystick : XInputAxis.values()) {
+      data[idx][0] = joystick;
+      data[idx][1] = settings_.getString(joystick.name() + DEVICE, "");
+      data[idx][2] = settings_.getString(joystick.name() + PROPERTY, "");
+      data[idx][3] = settings_.getFloat(joystick.name() + MULTIPLIER, 1.0f);
+      idx++;
+    }
 
-		DefaultTableModel model = new DefaultTableModel(data,columnNames){
+    DefaultTableModel model =
+        new DefaultTableModel(data, columnNames) {
 
-			private static final long serialVersionUID = 1313905834950710481L;
+          private static final long serialVersionUID = 1313905834950710481L;
 
-			@Override
-			public boolean isCellEditable(int row, int column) {
-				//First column is readonly
-				return column != 0;
-			}
-		};
+          @Override
+          public boolean isCellEditable(int row, int column) {
+            // First column is readonly
+            return column != 0;
+          }
+        };
 
-		table_ = new JTable(model);
+    table_ = new JTable(model);
 
-		table_.setPreferredScrollableViewportSize(new Dimension(400, XInputAxis.values().length* table_.getRowHeight()));
-		table_.setFillsViewportHeight(true);
+    table_.setPreferredScrollableViewportSize(
+        new Dimension(400, XInputAxis.values().length * table_.getRowHeight()));
+    table_.setFillsViewportHeight(true);
 
-		//Create the scroll pane and add the table to it.
-		JScrollPane scrollPane = new JScrollPane(table_);
+    // Create the scroll pane and add the table to it.
+    JScrollPane scrollPane = new JScrollPane(table_);
 
-		setupCellEditors();
+    setupCellEditors();
 
-		//Add the scroll pane to this panel.
-		add(scrollPane);
+    // Add the scroll pane to this panel.
+    add(scrollPane);
 
-		//Listener
-		table_.getModel().addTableModelListener(this);
+    // Listener
+    table_.getModel().addTableModelListener(this);
+  } // end of constructor
 
-	}// end of constructor
+  /** create and assign celleditor for device column. */
+  public void setupCellEditors() {
+    setupDeviceColumn(table_.getColumnModel().getColumn(1));
+  }
+  /**
+   * setup column's cell editor with a combobox with currently loaded devices
+   *
+   * @param deviceColumn column in table with devices
+   */
+  private void setupDeviceColumn(TableColumn deviceColumn) {
+    // Set up the celleditor for device column.
 
-/**
- * create and assign celleditor for device column.
- */
-	public void setupCellEditors() {
-		setupDeviceColumn(table_.getColumnModel().getColumn(1));
+    ArrayList<String> devices = new ArrayList<>();
+    devices.add(NO_DEVICE);
+    devices.addAll((Arrays.asList(studio_.getCMMCore().getLoadedDevices().toArray())));
+    String[] dummy = new String[devices.size()];
+    JComboBox<String> comboBox = new JComboBox<>(devices.toArray(dummy));
 
-	} 
-/**
- * setup column's cell editor with a combobox with currently loaded devices 
- * @param deviceColumn column in table with devices
- */
-	private void setupDeviceColumn(TableColumn deviceColumn) {
-		//Set up the celleditor for device column.
+    deviceColumn.setCellEditor(new DefaultCellEditor(comboBox));
 
-		ArrayList<String> devices = new ArrayList<>();
-		devices.add(NO_DEVICE);
-		devices.addAll((Arrays.asList(studio_.getCMMCore().getLoadedDevices().toArray())));
-		String[] dummy = new String[devices.size()];
-		JComboBox<String> comboBox = new JComboBox<>(devices.toArray(dummy));
+    // Set up tool tips for the sport cells.
+    DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+    renderer.setToolTipText("Assign Device to Joystick");
+    deviceColumn.setCellRenderer(renderer);
+  } // end of setUpSportColumn
 
-		deviceColumn.setCellEditor(new DefaultCellEditor(comboBox));
+  /** Based on Device selected in column 1, setup cell editor for properties column */
+  @Override
+  public void tableChanged(TableModelEvent arg0) {
 
-		//Set up tool tips for the sport cells.
-		DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
-		renderer.setToolTipText("Assign Device to Joystick");
-		deviceColumn.setCellRenderer(renderer);
-	}//end of setUpSportColumn
+    int row = arg0.getFirstRow();
+    int column = arg0.getColumn();
 
+    DefaultTableModel model = (DefaultTableModel) arg0.getSource();
 
+    if (column == 1) {
+      // if first column was changed , we need to populate 2nd column with properties
+      String devName = (String) model.getValueAt(row, column);
 
-	/**
-	 * Based on Device selected in column 1, setup cell editor for properties column
-	 * 
-	 */
-	@Override
-	public void tableChanged(TableModelEvent arg0) {
+      if (!devName.equals(NO_DEVICE)) {
+        try {
+          JComboBox<String> comboBox =
+              new JComboBox<>(studio_.getCMMCore().getDevicePropertyNames(devName).toArray());
+          table_.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(comboBox));
+          // Set up tool tips for the sport cells.
+          DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+          renderer.setToolTipText("Pick property to control");
+          table_.getColumnModel().getColumn(2).setCellRenderer(renderer);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      } else {
+        table_.getModel().removeTableModelListener(this);
+        table_.getModel().setValueAt("", row, 2);
+        settings_.putString(
+            table_.getValueAt(row, 0) + PROPERTY, (String) table_.getValueAt(row, 2));
+        table_.getModel().addTableModelListener(this);
+      }
+    }
 
-		int row = arg0.getFirstRow();
-		int column = arg0.getColumn();
+    switch (column) {
+      case 1:
+        settings_.putString(
+            table_.getValueAt(row, 0) + DEVICE, (String) table_.getValueAt(row, column));
+        break;
+      case 2:
+        settings_.putString(
+            table_.getValueAt(row, 0) + PROPERTY, (String) table_.getValueAt(row, column));
+        break;
+      case 3:
+        settings_.putFloat(
+            table_.getValueAt(row, 0) + MULTIPLIER, (Float) table_.getValueAt(row, column));
+        break;
+    }
 
-		DefaultTableModel model = (DefaultTableModel) arg0.getSource();
-
-		if(column==1) {
-			// if first column was changed , we need to populate 2nd column with properties
-			String devName = (String) model.getValueAt(row, column);
-
-			if (!devName.equals(NO_DEVICE)) {
-				try {
-					JComboBox<String> comboBox = new JComboBox<>(
-							studio_.getCMMCore().getDevicePropertyNames(devName).toArray());
-					table_.getColumnModel().getColumn(2).setCellEditor(
-							new DefaultCellEditor(comboBox));
-					//Set up tool tips for the sport cells.
-					DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
-					renderer.setToolTipText("Pick property to control");
-					table_.getColumnModel().getColumn(2).setCellRenderer(renderer);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			} else {
-				table_.getModel().removeTableModelListener(this);
-				table_.getModel().setValueAt("", row, 2);
-				settings_.putString(table_.getValueAt(row, 0) + PROPERTY,
-						(String) table_.getValueAt(row, 2));
-				table_.getModel().addTableModelListener(this);
-			}
-		}
-
-		switch (column) {
-			case 1:
-				settings_.putString(table_.getValueAt(row, 0) + DEVICE,
-						(String) table_.getValueAt(row, column));
-				break;
-			case 2:
-				settings_.putString(table_.getValueAt(row, 0) + PROPERTY,
-						(String) table_.getValueAt(row, column));
-				break;
-			case 3:
-				settings_.putFloat(table_.getValueAt(row, 0) + MULTIPLIER,
-						(Float) table_.getValueAt(row, column));
-				break;
-		}
-
-		if (row == -1 && column == -1) {
-			// save the complete table
-			for (int r = 0; r < table_.getModel().getRowCount(); r++) {
-				settings_.putString(table_.getValueAt(r, 0) + DEVICE,
-						(String) table_.getValueAt(r, 1));
-				settings_.putString(table_.getValueAt(r, 0) + PROPERTY,
-						(String) table_.getValueAt(r, 2));
-				settings_.putFloat(table_.getValueAt(r, 0) + MULTIPLIER,
-						(Float) table_.getValueAt(r, 3));
-			}
-		}
-	}//end of tableChanged
-
-}//end of class
+    if (row == -1 && column == -1) {
+      // save the complete table
+      for (int r = 0; r < table_.getModel().getRowCount(); r++) {
+        settings_.putString(table_.getValueAt(r, 0) + DEVICE, (String) table_.getValueAt(r, 1));
+        settings_.putString(table_.getValueAt(r, 0) + PROPERTY, (String) table_.getValueAt(r, 2));
+        settings_.putFloat(table_.getValueAt(r, 0) + MULTIPLIER, (Float) table_.getValueAt(r, 3));
+      }
+    }
+  } // end of tableChanged
+} // end of class

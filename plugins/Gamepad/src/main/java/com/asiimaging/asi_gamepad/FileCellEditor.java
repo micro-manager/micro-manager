@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          filecelleditor.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     asi gamepad plugin
-//-----------------------------------------------------------------------------
+// FILE:          filecelleditor.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     asi gamepad plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Vikram Kopuri
 //
@@ -36,70 +36,62 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellEditor;
 
 /**
- * Custom file editor for the Button assignment table's 3rd column.
- * Presents user with a JFileChooser dialog
+ * Custom file editor for the Button assignment table's 3rd column. Presents user with a
+ * JFileChooser dialog
+ *
  * @author Vikram Kopuri for ASI
  */
+public class FileCellEditor extends AbstractCellEditor implements TableCellEditor {
 
-public class FileCellEditor extends AbstractCellEditor implements TableCellEditor{
+  private static final long serialVersionUID = -4283475330269226460L;
+  JFileChooser my_jfc;
+  File filepicked;
+  JTextField jtf_pick;
+  FileFilter scriptfilter;
 
-	private static final long serialVersionUID = -4283475330269226460L;
-	JFileChooser my_jfc;
-	File filepicked;
-	JTextField jtf_pick;
-	FileFilter scriptfilter;
-	
-	/**
-	 * Ini the JTextField and JFileChooser that are to be supplied on cell edit
-	 */
-	public FileCellEditor() {
+  /** Ini the JTextField and JFileChooser that are to be supplied on cell edit */
+  public FileCellEditor() {
 
-		//filepicked=new File(".");
-		filepicked = new File(System.getProperty("user.dir"));
+    // filepicked=new File(".");
+    filepicked = new File(System.getProperty("user.dir"));
 
-		jtf_pick = new JTextField("Click to Pick Script");
-		
-		scriptfilter = new FileNameExtensionFilter("BeanShell Script","bsh");
+    jtf_pick = new JTextField("Click to Pick Script");
 
-		jtf_pick.addMouseListener(new MouseAdapter() {
+    scriptfilter = new FileNameExtensionFilter("BeanShell Script", "bsh");
 
-			@Override
-			public void mouseClicked(MouseEvent e){
-				//my_jfc = new JFileChooser(new File("."));
-				my_jfc = new JFileChooser();
-				my_jfc.setCurrentDirectory(filepicked);
-				my_jfc.setFileFilter(scriptfilter);
-				if (my_jfc.showOpenDialog(new JDialog()) == JFileChooser.APPROVE_OPTION ) {
-					filepicked=my_jfc.getSelectedFile();
-					jtf_pick.setText(filepicked.toString());
-				}
-			}
+    jtf_pick.addMouseListener(
+        new MouseAdapter() {
 
-		});
-	}
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            // my_jfc = new JFileChooser(new File("."));
+            my_jfc = new JFileChooser();
+            my_jfc.setCurrentDirectory(filepicked);
+            my_jfc.setFileFilter(scriptfilter);
+            if (my_jfc.showOpenDialog(new JDialog()) == JFileChooser.APPROVE_OPTION) {
+              filepicked = my_jfc.getSelectedFile();
+              jtf_pick.setText(filepicked.toString());
+            }
+          }
+        });
+  }
 
-	@Override
-	public Object getCellEditorValue() {
-		return filepicked.toString();
-	}
+  @Override
+  public Object getCellEditorValue() {
+    return filepicked.toString();
+  }
 
+  /**
+   * Implement the one method defined by TableCellEditor. When cell is checked we replace the
+   * cellrenderer object with our new components, in this case a JTextfield
+   */
+  public Component getTableCellEditorComponent(
+      JTable table, Object value, boolean isSelected, int row, int column) {
+    File temp = new File((String) value);
 
-	/**
-	 * Implement the one method defined by TableCellEditor.
-	 * When cell is checked we replace the cellrenderer object with our
-	 * new components, in this case a JTextfield
-	 */
-	public Component getTableCellEditorComponent(JTable table,
-			Object value,
-			boolean isSelected,
-			int row,
-			int column) {
-		File temp=  new File((String) value);
-
-		if(temp.exists()) {
-			filepicked= temp;
-		}
-		return jtf_pick;
-	}
-
-}//end of class
+    if (temp.exists()) {
+      filepicked = temp;
+    }
+    return jtf_pick;
+  }
+} // end of class

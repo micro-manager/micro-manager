@@ -16,90 +16,88 @@ package org.micromanager.internal.utils.performance;
 /**
  * Base implementation for exponential smoothing of time series statistic.
  *
- * This provides a common implementation for {@link ExponentialSmoothing} and
- * {@link TimeIntervalExponentialSmoothing}.
+ * <p>This provides a common implementation for {@link ExponentialSmoothing} and {@link
+ * TimeIntervalExponentialSmoothing}.
  *
- * See https://en.wikipedia.org/wiki/Exponential_smoothing
+ * <p>See https://en.wikipedia.org/wiki/Exponential_smoothing
  *
  * @author Mark A. Tsuchida
  */
 public class AbstractExponentialSmoothing {
-   private final double timeConstantMs_;
+  private final double timeConstantMs_;
 
-   private long lastNanoTime_ = -1;
+  private long lastNanoTime_ = -1;
 
-   private double rollingAverage_;
-   private double rollingSquareAverage_;
-   private long count_;
+  private double rollingAverage_;
+  private double rollingSquareAverage_;
+  private long count_;
 
-   protected AbstractExponentialSmoothing(double timeConstantMs) {
-      timeConstantMs_ = timeConstantMs;
-   }
+  protected AbstractExponentialSmoothing(double timeConstantMs) {
+    timeConstantMs_ = timeConstantMs;
+  }
 
-   public double getTimeConstantMs() {
-      return timeConstantMs_;
-   }
+  public double getTimeConstantMs() {
+    return timeConstantMs_;
+  }
 
-   public long getCount() {
-      return count_;
-   }
+  public long getCount() {
+    return count_;
+  }
 
-   public double getAverage() {
-      return rollingAverage_;
-   }
+  public double getAverage() {
+    return rollingAverage_;
+  }
 
-   public double getStandardDeviation() {
-      return Math.sqrt(rollingSquareAverage_ -
-            rollingAverage_ * rollingAverage_);
-   }
+  public double getStandardDeviation() {
+    return Math.sqrt(rollingSquareAverage_ - rollingAverage_ * rollingAverage_);
+  }
 
-   @Override
-   public String toString() {
-      return String.format("Avg = %g, Stdev = %g", getAverage(), getStandardDeviation());
-   }
+  @Override
+  public String toString() {
+    return String.format("Avg = %g, Stdev = %g", getAverage(), getStandardDeviation());
+  }
 
-   protected boolean isTimingStarted() {
-      return lastNanoTime_ >= 0;
-   }
+  protected boolean isTimingStarted() {
+    return lastNanoTime_ >= 0;
+  }
 
-   protected boolean isStatsInitialized() {
-      return count_ > 0;
-   }
+  protected boolean isStatsInitialized() {
+    return count_ > 0;
+  }
 
-   protected void markTime() {
-      lastNanoTime_ = System.nanoTime();
-   }
+  protected void markTime() {
+    lastNanoTime_ = System.nanoTime();
+  }
 
-   protected double markTimeAndGetDeltaTMs() {
-      if (lastNanoTime_ < 0) {
-         throw new IllegalStateException("Programming error");
-      }
-      long now = System.nanoTime();
-      long deltaTNs = now - lastNanoTime_;
-      lastNanoTime_ = now;
-      return deltaTNs / 1000000.0;
-   }
+  protected double markTimeAndGetDeltaTMs() {
+    if (lastNanoTime_ < 0) {
+      throw new IllegalStateException("Programming error");
+    }
+    long now = System.nanoTime();
+    long deltaTNs = now - lastNanoTime_;
+    lastNanoTime_ = now;
+    return deltaTNs / 1000000.0;
+  }
 
-   protected void initializeStats(double x) {
-      rollingAverage_ = x;
-      rollingSquareAverage_ = x * x;
-      count_ = 1;
-   }
+  protected void initializeStats(double x) {
+    rollingAverage_ = x;
+    rollingSquareAverage_ = x * x;
+    count_ = 1;
+  }
 
-   protected void updateStats(double deltaTMs, double x) {
-      // See https://en.wikipedia.org/wiki/Exponential_smoothing and
-      // https://en.wikipedia.org/wiki/Moving_average#Application_to_measuring_computer_performance
+  protected void updateStats(double deltaTMs, double x) {
+    // See https://en.wikipedia.org/wiki/Exponential_smoothing and
+    // https://en.wikipedia.org/wiki/Moving_average#Application_to_measuring_computer_performance
 
-      final double alpha = alpha(deltaTMs);
-      rollingAverage_ = alpha * x + (1.0 - alpha) * rollingAverage_;
+    final double alpha = alpha(deltaTMs);
+    rollingAverage_ = alpha * x + (1.0 - alpha) * rollingAverage_;
 
-      rollingSquareAverage_ = alpha * (x * x) +
-            (1.0 - alpha) * rollingSquareAverage_;
+    rollingSquareAverage_ = alpha * (x * x) + (1.0 - alpha) * rollingSquareAverage_;
 
-      ++count_;
-   }
+    ++count_;
+  }
 
-   private double alpha(double deltaTMs) {
-      return 1.0 - Math.exp(-deltaTMs / timeConstantMs_);
-   }
+  private double alpha(double deltaTMs) {
+    return 1.0 - Math.exp(-deltaTMs / timeConstantMs_);
+  }
 }

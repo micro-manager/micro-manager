@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2016
 //
@@ -21,16 +21,17 @@
 package org.micromanager.data;
 
 /**
- * This interface is for Storage entities that allow the overwriting and
- * deletion of Images and SummaryMetadata, as per RewritableDatastore.
+ * This interface is for Storage entities that allow the overwriting and deletion of Images and
+ * SummaryMetadata, as per RewritableDatastore.
  */
 public interface RewritableStorage extends Storage {
-   /**
-    * Delete an image from the Storage. Posts an ImageDeletedEvent to the
-    * event bus. Throws an IllegalArgumentException if the provided coordinates
-    * do not correspond to any image in the Storage.
-    * @param coords Coordinates of the image to remove.
-    * @throws IllegalArgumentException if the coords do not match any image.
-    */
-   void deleteImage(Coords coords) throws IllegalArgumentException;
+  /**
+   * Delete an image from the Storage. Posts an ImageDeletedEvent to the event bus. Throws an
+   * IllegalArgumentException if the provided coordinates do not correspond to any image in the
+   * Storage.
+   *
+   * @param coords Coordinates of the image to remove.
+   * @throws IllegalArgumentException if the coords do not match any image.
+   */
+  void deleteImage(Coords coords) throws IllegalArgumentException;
 }

@@ -12,7 +12,7 @@
 package org.micromanager.internal.diagnostics.gui;
 
 public class ControlPanel extends javax.swing.JPanel {
-   ControlPanel() {
-       super(new net.miginfocom.swing.MigLayout("fillx, insets 0"));
-   }
+  ControlPanel() {
+    super(new net.miginfocom.swing.MigLayout("fillx, insets 0"));
+  }
 }

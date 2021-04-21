@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Mark A. Tsuchida, 2016
 //
@@ -23,11 +23,11 @@ package org.micromanager.events;
 /**
  * Autofocus plugins should initialize properties upon receiving this event.
  *
- * The Core is available and the hardware configuration is loaded when this
- * event is received. Note that the autofocus plugin may receive this event
- * multiple times, if the user loads a new hardware configuration.
+ * <p>The Core is available and the hardware configuration is loaded when this event is received.
+ * Note that the autofocus plugin may receive this event multiple times, if the user loads a new
+ * hardware configuration.
+ *
  * @deprecated use
  */
 @Deprecated
-public class AutofocusPluginShouldInitializeEvent {
-}
+public class AutofocusPluginShouldInitializeEvent {}

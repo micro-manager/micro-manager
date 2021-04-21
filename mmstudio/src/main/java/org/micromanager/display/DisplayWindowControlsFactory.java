@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Display API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,20 +20,18 @@
 
 package org.micromanager.display;
 
-import java.awt.Component;
+import java.awt.*;
 import java.util.List;
 
 /**
- * A ControlsFactory is used to provide custom controls for a DisplayWindow.
- * It exposes a method that makes a list of Components, which will be
- * included in the DisplayWindow's controls, underneath the axis scrollbars.
- * This class is necessary because of the user's ability to create duplicates
- * of DisplayWindows, which necessitates being able to duplicate the controls
- * as well. If you do not want to provide any custom controls, then use the
- * DisplayManager.createDisplay() method that does not take a ControlsFactory
- * argument.
+ * A ControlsFactory is used to provide custom controls for a DisplayWindow. It exposes a method
+ * that makes a list of Components, which will be included in the DisplayWindow's controls,
+ * underneath the axis scrollbars. This class is necessary because of the user's ability to create
+ * duplicates of DisplayWindows, which necessitates being able to duplicate the controls as well. If
+ * you do not want to provide any custom controls, then use the DisplayManager.createDisplay()
+ * method that does not take a ControlsFactory argument.
  *
- * Usage example:
+ * <p>Usage example:
  *
  * <pre><code>
  * Datastore store = mm.data().createRAMDatastore();
@@ -49,5 +47,5 @@ import java.util.List;
  * </code></pre>
  */
 public interface DisplayWindowControlsFactory {
-   List<Component> makeControls(DisplayWindow display);
+  List<Component> makeControls(DisplayWindow display);
 }

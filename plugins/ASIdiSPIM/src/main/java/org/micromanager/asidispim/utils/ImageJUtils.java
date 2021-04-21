@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ImageJUtils.java
-//PROJECT:       Micro-Manager 
-//SUBSYSTEM:     ASIdiSPIM plugin
-//-----------------------------------------------------------------------------
+// FILE:          ImageJUtils.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     ASIdiSPIM plugin
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
@@ -19,7 +19,6 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-
 package org.micromanager.asidispim.utils;
 
 import ij.IJ;
@@ -28,47 +27,53 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Utility class for ImageJ interaction
- * 
- * 
+ *
  * @author Jon
  */
 public class ImageJUtils {
-   
-   /**
-    * Make it easy to execute an ImageJ command in its own thread (for speed).
-    * After creating this object with the command (menu item) then call its start() method.
-    * TODO: see if this would be faster using ImageJ's Executer class (http://rsb.info.nih.gov/ij/developer/api/ij/Executer.html)
-    * @author Jon
-    */
-   public static class IJCommandThread extends Thread {
-      private final String command_;
-      private final String args_;
-      public IJCommandThread(String command) {
-         super(command);
-         command_ = command;
-         args_ = "";
-      }
-      public IJCommandThread(String command, String args) {
-         super(command);
-         command_ = command;
-         args_ = args;
-      }
-      @Override
-      public void run() {
-         IJ.run(command_, args_);
-      }
-   }
-   
-   public static void loadToolset() {
-      String spimToolsName = IJ.getDirectory("macros") + File.separator + "toolsets" + 
-              File.separator + "diSPIM_Tools.txt";
-      File spimTools = new File(spimToolsName);
-      if (spimTools.exists()) {
-         IJCommandThread t = new IJCommandThread("Install...", "install=" + spimToolsName);
-         
-         t.start();
-      } else
-         ReportingUtils.logMessage("Failed to find diSPIm macros at " + spimToolsName);
-   }
 
+  /**
+   * Make it easy to execute an ImageJ command in its own thread (for speed). After creating this
+   * object with the command (menu item) then call its start() method. TODO: see if this would be
+   * faster using ImageJ's Executer class
+   * (http://rsb.info.nih.gov/ij/developer/api/ij/Executer.html)
+   *
+   * @author Jon
+   */
+  public static class IJCommandThread extends Thread {
+    private final String command_;
+    private final String args_;
+
+    public IJCommandThread(String command) {
+      super(command);
+      command_ = command;
+      args_ = "";
+    }
+
+    public IJCommandThread(String command, String args) {
+      super(command);
+      command_ = command;
+      args_ = args;
+    }
+
+    @Override
+    public void run() {
+      IJ.run(command_, args_);
+    }
+  }
+
+  public static void loadToolset() {
+    String spimToolsName =
+        IJ.getDirectory("macros")
+            + File.separator
+            + "toolsets"
+            + File.separator
+            + "diSPIM_Tools.txt";
+    File spimTools = new File(spimToolsName);
+    if (spimTools.exists()) {
+      IJCommandThread t = new IJCommandThread("Install...", "install=" + spimToolsName);
+
+      t.start();
+    } else ReportingUtils.logMessage("Failed to find diSPIm macros at " + spimToolsName);
+  }
 }

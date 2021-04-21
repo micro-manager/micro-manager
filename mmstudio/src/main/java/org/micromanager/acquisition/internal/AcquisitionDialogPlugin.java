@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -19,28 +19,29 @@
 
 package org.micromanager.acquisition.internal;
 
-import javax.swing.ImageIcon;
 import org.micromanager.MMPlugin;
 
+import javax.swing.*;
+
 /**
- * This plugin type allows you to override the Multi-Dimensional Acquisition
- * dialog used to perform data acquisition. If an AcquisitionDialogPlugin is
- * installed, then when the user clicks on the "Acquire!" button in the main
- * window, they will be presented with a popup menu of different dialogs they
- * may choose from, which will include plugin-provided options in addition to
- * the built-in dialog. The name of the plugin (as given by MMPlugin.getName()
- * will be used to identify the plugin in the menu).
+ * This plugin type allows you to override the Multi-Dimensional Acquisition dialog used to perform
+ * data acquisition. If an AcquisitionDialogPlugin is installed, then when the user clicks on the
+ * "Acquire!" button in the main window, they will be presented with a popup menu of different
+ * dialogs they may choose from, which will include plugin-provided options in addition to the
+ * built-in dialog. The name of the plugin (as given by MMPlugin.getName() will be used to identify
+ * the plugin in the menu).
  */
 public interface AcquisitionDialogPlugin extends MMPlugin {
-   /**
-    * Provide an ImageIcon for display in the selection menu. May be null.
-    * @return an ImageIcon for use when selecting this plugin, or null.
-    */
-   public ImageIcon getIcon();
+  /**
+   * Provide an ImageIcon for display in the selection menu. May be null.
+   *
+   * @return an ImageIcon for use when selecting this plugin, or null.
+   */
+  public ImageIcon getIcon();
 
-   /**
-    * This method will be invoked when the user selects this plugin from the
-    * dropdown menu of available AcquisitionDialogPlugins.
-    */
-   public void showAcquisitionDialog();
+  /**
+   * This method will be invoked when the user selects this plugin from the dropdown menu of
+   * available AcquisitionDialogPlugins.
+   */
+  public void showAcquisitionDialog();
 }

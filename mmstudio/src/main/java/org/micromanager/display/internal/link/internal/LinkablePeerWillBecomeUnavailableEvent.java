@@ -5,22 +5,19 @@
  */
 package org.micromanager.display.internal.link.internal;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 class LinkablePeerWillBecomeUnavailableEvent {
-   private final LinkEndpoint endpoint_;
+  private final LinkEndpoint endpoint_;
 
-   static LinkablePeerWillBecomeUnavailableEvent create(LinkEndpoint endpoint) {
-      return new LinkablePeerWillBecomeUnavailableEvent(endpoint);
-   }
+  static LinkablePeerWillBecomeUnavailableEvent create(LinkEndpoint endpoint) {
+    return new LinkablePeerWillBecomeUnavailableEvent(endpoint);
+  }
 
-   private LinkablePeerWillBecomeUnavailableEvent(LinkEndpoint endpoint) {
-      endpoint_ = endpoint;
-   }
+  private LinkablePeerWillBecomeUnavailableEvent(LinkEndpoint endpoint) {
+    endpoint_ = endpoint;
+  }
 
-   LinkEndpoint getPeer() {
-      return endpoint_;
-   }
+  LinkEndpoint getPeer() {
+    return endpoint_;
+  }
 }

@@ -7,22 +7,19 @@ package org.micromanager.display.internal.event;
 
 import org.micromanager.display.inspector.internal.InspectorController;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public class InspectorDidCloseEvent {
-   private final InspectorController inspector_;
+  private final InspectorController inspector_;
 
-   public static InspectorDidCloseEvent create(InspectorController inspector) {
-      return new InspectorDidCloseEvent(inspector);
-   }
+  public static InspectorDidCloseEvent create(InspectorController inspector) {
+    return new InspectorDidCloseEvent(inspector);
+  }
 
-   private InspectorDidCloseEvent(InspectorController inspector) {
-      inspector_ = inspector;
-   }
+  private InspectorDidCloseEvent(InspectorController inspector) {
+    inspector_ = inspector;
+  }
 
-   public InspectorController getInspector() {
-      return inspector_;
-   }
+  public InspectorController getInspector() {
+    return inspector_;
+  }
 }

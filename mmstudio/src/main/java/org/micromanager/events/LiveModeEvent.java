@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,19 +20,17 @@
 
 package org.micromanager.events;
 
-/**
- * This class is used to signify that live mode has been turned on or off.
- */
+/** This class is used to signify that live mode has been turned on or off. */
 public interface LiveModeEvent {
-   /**
-    * Informs the caller if live mode is on or off.
-    * @return True if live mode has been turned on, false if it has been turned
-    *         off.
-    */
-   boolean isOn();
+  /**
+   * Informs the caller if live mode is on or off.
+   *
+   * @return True if live mode has been turned on, false if it has been turned off.
+   */
+  boolean isOn();
 
-   @Deprecated
-   default boolean getIsOn() {
-      return isOn();
-   }
+  @Deprecated
+  default boolean getIsOn() {
+    return isOn();
+  }
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -23,12 +23,10 @@ package org.micromanager.events;
 import org.micromanager.PositionList;
 
 /**
- * This event is published when the application's Stage Position List is
- * modified in any way (positions are added, removed, or moved).
+ * This event is published when the application's Stage Position List is modified in any way
+ * (positions are added, removed, or moved).
  */
 public interface NewPositionListEvent {
-   /**
-    * Returns the new stage position list.
-    */
-   public PositionList getPositionList();
+  /** Returns the new stage position list. */
+  public PositionList getPositionList();
 }

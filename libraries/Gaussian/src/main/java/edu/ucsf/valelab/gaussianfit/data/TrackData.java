@@ -1,8 +1,8 @@
 /*
  * This class stores data specific to tracks
- * 
+ *
  * Author: Nico Stuurman, nico.stuurman at ucsf.edu
- * 
+ *
 
 Copyright (c) 2016-2017, Regents of the University of California
 All rights reserved.
@@ -38,64 +38,60 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 public class TrackData implements PointData {
-    private final List<SpotData> spotList_;
-    private int missingAtEnd_;
-    private Point2D.Double center_;
-    
-    public TrackData() {
-       spotList_ = new ArrayList<SpotData>();
-       missingAtEnd_ = 0;
+  private final List<SpotData> spotList_;
+  private int missingAtEnd_;
+  private Point2D.Double center_;
+
+  public TrackData() {
+    spotList_ = new ArrayList<SpotData>();
+    missingAtEnd_ = 0;
+  }
+
+  public void addMissing() {
+    missingAtEnd_++;
+  }
+
+  public void resetMissing() {
+    missingAtEnd_ = 0;
+  }
+
+  public boolean missingMoreThan(int thisMany) {
+    return missingAtEnd_ > thisMany;
+  }
+
+  public int size() {
+    return spotList_.size();
+  }
+
+  public SpotData get(int index) {
+    return spotList_.get(index);
+  }
+
+  public void add(SpotData item) {
+    spotList_.add(item);
+  }
+
+  public void add(TrackData otherTrack) {
+    for (SpotData item : otherTrack.getList()) {
+      spotList_.add(item);
     }
-    
-    public void addMissing() {
-       missingAtEnd_++;
-    } 
-    
-    public void resetMissing() {
-       missingAtEnd_ = 0;
+  }
+
+  public List<SpotData> getList() {
+    return spotList_;
+  }
+
+  public Point2D.Double getCenter() {
+    if (center_ == null) {
+      center_ = ListUtils.avgXYList(ListUtils.spotListToPointList(spotList_));
     }
-    
-    public boolean missingMoreThan(int thisMany) {
-       return missingAtEnd_ > thisMany;
-    }
-    
-    public int size() {
-       return spotList_.size();
-    }
-    
-    public SpotData get(int index) {
-       return spotList_.get(index);
-    }
-    
-    public void add(SpotData item) {
-       spotList_.add(item);
-    }
-    
-    public void add(TrackData otherTrack) {
-       for (SpotData item : otherTrack.getList()) {
-          spotList_.add(item);
-       }
-    }
-    
-    public List<SpotData> getList() {
-       return spotList_;
-    }
-    
-    public Point2D.Double getCenter() {
-       if (center_ == null) {
-          center_ = ListUtils.avgXYList(ListUtils.spotListToPointList(spotList_));
-       }
-       return center_;
-    }
-    
-    @Override
-    public Point2D.Double getPoint() {
-       return getCenter();
-    }
-    
+    return center_;
+  }
+
+  @Override
+  public Point2D.Double getPoint() {
+    return getCenter();
+  }
 }

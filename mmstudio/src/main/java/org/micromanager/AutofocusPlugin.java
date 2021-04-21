@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 //
 // COPYRIGHT:    University of California, San Francisco, 2010
@@ -17,7 +17,6 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-
 package org.micromanager;
 
 import ij.process.ImageProcessor;
@@ -32,128 +31,137 @@ import org.micromanager.internal.utils.PropertyItem;
  */
 public interface AutofocusPlugin extends MMPlugin {
 
-   /**
-    * Initializes the plugin.  Can be called multiple times, for instance
-    * after a change in hardware configuration. Conversely, the plugin
-    * can trust that the hardware never changes without a call to this function.
-    */
-   void initialize();
+  /**
+   * Initializes the plugin. Can be called multiple times, for instance after a change in hardware
+   * configuration. Conversely, the plugin can trust that the hardware never changes without a call
+   * to this function.
+   */
+  void initialize();
 
-   /**
-    * Pushes setting to the hardware or software autofocus
-    */
-   void applySettings();
-   
-   /**
-    * Stores settings
-    */
-   void saveSettings();
+  /** Pushes setting to the hardware or software autofocus */
+  void applySettings();
 
-   /**
-    * Runs a full, one-shot autofocus protocol. Blocks until focusing is
-    * finished.
-    * @return focus score
-    * @throws java.lang.Exception
-    */
-   double fullFocus() throws Exception;
+  /** Stores settings */
+  void saveSettings();
 
-   /**
-    * Runs a single, incremental focusing step.
-    * @return focus score
-    * @throws java.lang.Exception
-    */
-    double incrementalFocus() throws Exception;
-   
-   /**
-    * Returns the number of images acquired
-    * @return number of images for autofocussing
-    */
-   int getNumberOfImages();
+  /**
+   * Runs a full, one-shot autofocus protocol. Blocks until focusing is finished.
+   *
+   * @return focus score
+   * @throws java.lang.Exception
+   */
+  double fullFocus() throws Exception;
 
-   /**
-    * Returns a detailed status of the autofocus plugin/device.
-    * @return description of the autofocus Status
-    */
-   String getVerboseStatus();
+  /**
+   * Runs a single, incremental focusing step.
+   *
+   * @return focus score
+   * @throws java.lang.Exception
+   */
+  double incrementalFocus() throws Exception;
 
-   /**
-    * Returns an array of the properties for this autofocus plugin.
-    * @return array with Property descriptors, representing MMCore data
-    */
-   PropertyItem[] getProperties();
+  /**
+   * Returns the number of images acquired
+   *
+   * @return number of images for autofocussing
+   */
+  int getNumberOfImages();
 
-   /**
-    * Returns an array of the names of properties for this autofocus plugin.
-    * @return array with the names of properties for this autofocus plugin
-    */
-   String[] getPropertyNames();
+  /**
+   * Returns a detailed status of the autofocus plugin/device.
+   *
+   * @return description of the autofocus Status
+   */
+  String getVerboseStatus();
 
-   /**
-    * Returns the name and value of properties for the autofocus plugin.
-    * @param key PropertyName for which we want the value
-    * @return value for given property
-    * @throws java.lang.Exception thrown by MMCore when key is not found.  
-    */
-   PropertyItem getProperty(String key) throws Exception;
+  /**
+   * Returns an array of the properties for this autofocus plugin.
+   *
+   * @return array with Property descriptors, representing MMCore data
+   */
+  PropertyItem[] getProperties();
 
-   /**
-    * Sets the value of a particular property.
-    * @param p 
-    * @throws java.lang.Exception
-    */
-   void setProperty(PropertyItem p) throws Exception;
+  /**
+   * Returns an array of the names of properties for this autofocus plugin.
+   *
+   * @return array with the names of properties for this autofocus plugin
+   */
+  String[] getPropertyNames();
 
-   /**
-    * Gets the value of a named property.
-    * @param name named property
-    * @return value for the given property
-    * @throws java.lang.Exception
-    */
-   String getPropertyValue(String name) throws Exception;
+  /**
+   * Returns the name and value of properties for the autofocus plugin.
+   *
+   * @param key PropertyName for which we want the value
+   * @return value for given property
+   * @throws java.lang.Exception thrown by MMCore when key is not found.
+   */
+  PropertyItem getProperty(String key) throws Exception;
 
-   /**
-    * Sets the value of a named property.
-    * @param name PropertyName
-    * @param value PropertyValue
-    * @throws java.lang.Exception by MMCore
-    */
-   void setPropertyValue(String name, String value) throws Exception;
+  /**
+   * Sets the value of a particular property.
+   *
+   * @param p
+   * @throws java.lang.Exception
+   */
+  void setProperty(PropertyItem p) throws Exception;
 
-   /**
-    * Returns the current focus "score" (goodness of focus).
-    * @return focus score (goodness of focus)
-    */
-   double getCurrentFocusScore();
+  /**
+   * Gets the value of a named property.
+   *
+   * @param name named property
+   * @return value for the given property
+   * @throws java.lang.Exception
+   */
+  String getPropertyValue(String name) throws Exception;
 
-   /**
-    * Turns on continuous autofocus. Typically used by hardware autofocus
-    * devices such as the Nikon Perfect Focus (PFS).
-    * @param enable
-    * @throws java.lang.Exception
-    */
-   void enableContinuousFocus(boolean enable) throws Exception;
+  /**
+   * Sets the value of a named property.
+   *
+   * @param name PropertyName
+   * @param value PropertyValue
+   * @throws java.lang.Exception by MMCore
+   */
+  void setPropertyValue(String name, String value) throws Exception;
 
-   /**
-    * Returns true if continuous autofocus has been enabled. Typically used
-    * by hardware autofocus devices such as the Nikon Perfect Focus (PFS).
-    * @return true if enabled
-    * @throws java.lang.Exception
-    */
-   boolean isContinuousFocusEnabled() throws Exception;
+  /**
+   * Returns the current focus "score" (goodness of focus).
+   *
+   * @return focus score (goodness of focus)
+   */
+  double getCurrentFocusScore();
 
-   /**
-    * Returns true if continuous autofocus is currently locked (successfully
-    * following the specimen). Typically used by hardware autofocus devices
-    * such as the Nikon Perfect Focus (PFS).
-    * @return true if locked
-    * @throws java.lang.Exception thrown by MMCore
-    */
-   boolean isContinuousFocusLocked() throws Exception;
-   
-   /**
-    * Computes a focus score for the given image
-    * @param impro
-    * @return calculated score
-    */
-   double computeScore(final ImageProcessor impro);
+  /**
+   * Turns on continuous autofocus. Typically used by hardware autofocus devices such as the Nikon
+   * Perfect Focus (PFS).
+   *
+   * @param enable
+   * @throws java.lang.Exception
+   */
+  void enableContinuousFocus(boolean enable) throws Exception;
+
+  /**
+   * Returns true if continuous autofocus has been enabled. Typically used by hardware autofocus
+   * devices such as the Nikon Perfect Focus (PFS).
+   *
+   * @return true if enabled
+   * @throws java.lang.Exception
+   */
+  boolean isContinuousFocusEnabled() throws Exception;
+
+  /**
+   * Returns true if continuous autofocus is currently locked (successfully following the specimen).
+   * Typically used by hardware autofocus devices such as the Nikon Perfect Focus (PFS).
+   *
+   * @return true if locked
+   * @throws java.lang.Exception thrown by MMCore
+   */
+  boolean isContinuousFocusLocked() throws Exception;
+
+  /**
+   * Computes a focus score for the given image
+   *
+   * @param impro
+   * @return calculated score
+   */
+  double computeScore(final ImageProcessor impro);
 }

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API implementation
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -23,21 +23,18 @@ package org.micromanager.data.internal;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
 
-/**
- * This class signifies that new summary metadata has been set for a 
- * DataProvider.
- */
-public final class DefaultNewSummaryMetadataEvent implements 
-        DataProviderHasNewSummaryMetadataEvent {
-   
-   private final SummaryMetadata metadata_;
-   
-   public DefaultNewSummaryMetadataEvent(SummaryMetadata metadata) {
-      metadata_ = metadata;
-   }
+/** This class signifies that new summary metadata has been set for a DataProvider. */
+public final class DefaultNewSummaryMetadataEvent
+    implements DataProviderHasNewSummaryMetadataEvent {
 
-   @Override
-   public SummaryMetadata getSummaryMetadata() {
-      return metadata_;
-   }
+  private final SummaryMetadata metadata_;
+
+  public DefaultNewSummaryMetadataEvent(SummaryMetadata metadata) {
+    metadata_ = metadata;
+  }
+
+  @Override
+  public SummaryMetadata getSummaryMetadata() {
+    return metadata_;
+  }
 }

@@ -7,22 +7,19 @@ package org.micromanager.display.internal.event;
 
 import org.micromanager.display.DataViewer;
 
-/**
- *
- * @author Mark A. Tsuchida
- */
+/** @author Mark A. Tsuchida */
 public final class DataViewerDidBecomeVisibleEvent {
-   private final DataViewer viewer_;
+  private final DataViewer viewer_;
 
-   public static DataViewerDidBecomeVisibleEvent create(DataViewer viewer) {
-      return new DataViewerDidBecomeVisibleEvent(viewer);
-   }
+  public static DataViewerDidBecomeVisibleEvent create(DataViewer viewer) {
+    return new DataViewerDidBecomeVisibleEvent(viewer);
+  }
 
-   private DataViewerDidBecomeVisibleEvent(DataViewer viewer) {
-      viewer_ = viewer;
-   }
+  private DataViewerDidBecomeVisibleEvent(DataViewer viewer) {
+    viewer_ = viewer;
+  }
 
-   public DataViewer getDataViewer() {
-      return viewer_;
-   }
+  public DataViewer getDataViewer() {
+    return viewer_;
+  }
 }

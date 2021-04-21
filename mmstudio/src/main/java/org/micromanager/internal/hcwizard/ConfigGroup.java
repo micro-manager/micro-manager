@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, November 7, 2006
 //
@@ -25,68 +25,64 @@ package org.micromanager.internal.hcwizard;
 
 import java.util.Hashtable;
 
-/**
- * Configuration group encapsulation for use in Configuration Wizard. 
- */
+/** Configuration group encapsulation for use in Configuration Wizard. */
 public final class ConfigGroup {
-   String name_;
-   Hashtable<String, ConfigPreset> configs_;
-   
-   public ConfigGroup(String name) {
-      name_ = new String(name);
-      configs_ = new Hashtable<String, ConfigPreset>();
-   }
-   
-   public void addConfigPreset(ConfigPreset p) {
-      configs_.put(p.getName(), p);
-   }
-   
-   public String getName() {
-      return name_;
-   }
-   
-   public void addConfigSetting(String presetName, String device, String property, String value) {
-      ConfigPreset cp = configs_.get(presetName);
-      if (cp == null) {
-         cp = new ConfigPreset(presetName);
-         configs_.put(presetName, cp);
-      }
-      
-      cp.addSetting(new Setting(device, property, value));
-   }
-   
-   public ConfigPreset[] getConfigPresets() {
-      Object objs[] = configs_.values().toArray();
-      ConfigPreset[] cps = new ConfigPreset[objs.length];
-      for (int i=0; i<objs.length; i++)
-         cps[i] = (ConfigPreset)objs[i];
-      return cps;
-   }
-   
-   public String toString() {
-      return new String("Group: " + name_);
-   }
+  String name_;
+  Hashtable<String, ConfigPreset> configs_;
 
-   public void removePreset(String name) {
-      configs_.remove(name);
-   }
+  public ConfigGroup(String name) {
+    name_ = new String(name);
+    configs_ = new Hashtable<String, ConfigPreset>();
+  }
 
-   public ConfigPreset findConfigPreset(String name) {
-      return configs_.get(name);
-   }
+  public void addConfigPreset(ConfigPreset p) {
+    configs_.put(p.getName(), p);
+  }
 
-   public void setName(String name) {
-      name_ = name;
-   }
+  public String getName() {
+    return name_;
+  }
 
-   public void renamePreset(ConfigPreset prs, String name) {
-      configs_.remove(prs.getName());
-      prs.setName(name);
-      configs_.put(name, prs);
-   }
-   
-   public void clear() {
-      configs_.clear();
-   }
-   
+  public void addConfigSetting(String presetName, String device, String property, String value) {
+    ConfigPreset cp = configs_.get(presetName);
+    if (cp == null) {
+      cp = new ConfigPreset(presetName);
+      configs_.put(presetName, cp);
+    }
+
+    cp.addSetting(new Setting(device, property, value));
+  }
+
+  public ConfigPreset[] getConfigPresets() {
+    Object objs[] = configs_.values().toArray();
+    ConfigPreset[] cps = new ConfigPreset[objs.length];
+    for (int i = 0; i < objs.length; i++) cps[i] = (ConfigPreset) objs[i];
+    return cps;
+  }
+
+  public String toString() {
+    return new String("Group: " + name_);
+  }
+
+  public void removePreset(String name) {
+    configs_.remove(name);
+  }
+
+  public ConfigPreset findConfigPreset(String name) {
+    return configs_.get(name);
+  }
+
+  public void setName(String name) {
+    name_ = name;
+  }
+
+  public void renamePreset(ConfigPreset prs, String name) {
+    configs_.remove(prs.getName());
+    prs.setName(name);
+    configs_.put(name, prs);
+  }
+
+  public void clear() {
+    configs_.clear();
+  }
 }

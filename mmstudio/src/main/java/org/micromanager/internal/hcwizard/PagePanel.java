@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, October 29, 2006
 //
@@ -23,77 +23,72 @@
 
 package org.micromanager.internal.hcwizard;
 
-import java.awt.Dialog;
-import java.awt.Font;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.ReportingUtils;
 
-/**
- * Wizard panel used as the abstract base class for all pages.
- */
-public abstract class PagePanel extends JPanel{
-   private static final long serialVersionUID = -4598248516499305300L;
-   private static final Font HELP_FONT = new Font("Arial", Font.PLAIN, 14);
-   protected MicroscopeModel model_;
-   protected CMMCore core_;
-   protected Studio studio_;
-   protected String title_;
-   protected Dialog parent_;
+import javax.swing.*;
+import java.awt.*;
 
-   protected static final String CFG_PATH = "cfg_path";
+/** Wizard panel used as the abstract base class for all pages. */
+public abstract class PagePanel extends JPanel {
+  private static final long serialVersionUID = -4598248516499305300L;
+  private static final Font HELP_FONT = new Font("Arial", Font.PLAIN, 14);
+  protected MicroscopeModel model_;
+  protected CMMCore core_;
+  protected Studio studio_;
+  protected String title_;
+  protected Dialog parent_;
 
-   public PagePanel() {
-      super();
-      title_ = new String();
-   }
+  protected static final String CFG_PATH = "cfg_path";
 
-   public void setModel(MicroscopeModel model, Studio studio) {
-      model_ = model;
-      studio_ = studio;
-      core_ = studio_.core();
-   }
+  public PagePanel() {
+    super();
+    title_ = new String();
+  }
 
-   public void setTitle(String txt) {
-      title_ = txt;
-   }
+  public void setModel(MicroscopeModel model, Studio studio) {
+    model_ = model;
+    studio_ = studio;
+    core_ = studio_.core();
+  }
 
-   public String getTitle() {
-      return title_;
-   }
+  public void setTitle(String txt) {
+    title_ = txt;
+  }
 
-   public void setParentDialog(Dialog p) {
-      this.parent_ = p;
-   }
+  public String getTitle() {
+    return title_;
+  }
 
-   public abstract boolean enterPage(boolean next);
+  public void setParentDialog(Dialog p) {
+    this.parent_ = p;
+  }
 
-   public abstract boolean exitPage(boolean next);
+  public abstract boolean enterPage(boolean next);
 
-   public abstract void loadSettings();
+  public abstract boolean exitPage(boolean next);
 
-   public abstract void saveSettings();
+  public abstract void loadSettings();
 
+  public abstract void saveSettings();
 
-   protected void handleError(String txt) {
-      JOptionPane.showMessageDialog(this, txt);
-   }
+  protected void handleError(String txt) {
+    JOptionPane.showMessageDialog(this, txt);
+  }
 
-   protected void handleException(Exception e) {
-      ReportingUtils.showError(e);
-   }
+  protected void handleException(Exception e) {
+    ReportingUtils.showError(e);
+  }
 
-   protected static JTextArea createHelpText(String text) {
-      JTextArea help = new JTextArea(text);
-      help.setWrapStyleWord(true);
-      help.setLineWrap(true);
-      help.setEditable(false);
-      help.setFont(HELP_FONT);
-      return help;
-   }
+  protected static JTextArea createHelpText(String text) {
+    JTextArea help = new JTextArea(text);
+    help.setWrapStyleWord(true);
+    help.setLineWrap(true);
+    help.setEditable(false);
+    help.setFont(HELP_FONT);
+    return help;
+  }
 
-   public abstract void refresh();
+  public abstract void refresh();
 }

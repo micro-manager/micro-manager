@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,8 +20,5 @@
 
 package org.micromanager.events;
 
-/**
- * This class signals when any property of the microscope has changed. 
- */
-public interface PropertiesChangedEvent {
-}
+/** This class signals when any property of the microscope has changed. */
+public interface PropertiesChangedEvent {}

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Data API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -20,25 +20,23 @@
 
 package org.micromanager.data;
 
-/**
- * This class signifies that an image has been added to a DataProvider.
- */
+/** This class signifies that an image has been added to a DataProvider. */
 public interface DataProviderHasNewImageEvent {
-   /**
-    * Provides the newly-added image.
-    * @return the Image that was just added to the DataProvider.
-    */
-   Image getImage();
+  /**
+   * Provides the newly-added image.
+   *
+   * @return the Image that was just added to the DataProvider.
+   */
+  Image getImage();
 
-   /**
-    * @return the Coords for the Image; identical to getImage().getCoords().
-    */
-   Coords getCoords();
+  /** @return the Coords for the Image; identical to getImage().getCoords(). */
+  Coords getCoords();
 
-   /**
-    * Provides the Datastore this image was added to; potentially useful for
-    * code that listens to events from multiple Datastores.
-    * @return the Datastore this image was added to.
-    */
-   DataProvider getDataProvider();
+  /**
+   * Provides the Datastore this image was added to; potentially useful for code that listens to
+   * events from multiple Datastores.
+   *
+   * @return the Datastore this image was added to.
+   */
+  DataProvider getDataProvider();
 }

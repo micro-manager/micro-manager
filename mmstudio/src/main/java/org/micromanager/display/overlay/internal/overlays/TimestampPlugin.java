@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display implementation
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Display implementation
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -25,14 +25,14 @@ import org.micromanager.display.overlay.OverlayPlugin;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
-
-@Plugin(type = OverlayPlugin.class,
-      priority = Priority.HIGH,
-      name = "Timestamp",
-      description = "Display timestamps")
+@Plugin(
+    type = OverlayPlugin.class,
+    priority = Priority.HIGH,
+    name = "Timestamp",
+    description = "Display timestamps")
 public final class TimestampPlugin implements OverlayPlugin {
-   @Override
-   public Overlay createOverlay() {
-      return TimestampOverlay.create();
-   }
+  @Override
+  public Overlay createOverlay() {
+    return TimestampOverlay.create();
+  }
 }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -19,8 +19,5 @@
 
 package org.micromanager.quickaccess.internal;
 
-/**
- * This event signifies that a new Quick Access Panel has been created or
- * destroyed.
- */
+/** This event signifies that a new Quick Access Panel has been created or destroyed. */
 public final class QuickAccessPanelEvent {}

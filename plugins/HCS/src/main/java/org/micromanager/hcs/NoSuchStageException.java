@@ -1,13 +1,9 @@
-
 package org.micromanager.hcs;
 
-/**
- *
- * @author nico
- */
+/** @author nico */
 class NoSuchStageException extends Exception {
-   
-   public NoSuchStageException(String msg) {
-      super(msg);
-   }
+
+  public NoSuchStageException(String msg) {
+    super(msg);
+  }
 }

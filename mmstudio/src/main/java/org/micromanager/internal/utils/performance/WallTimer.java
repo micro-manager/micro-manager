@@ -20,21 +20,21 @@ package org.micromanager.internal.utils.performance;
  * @author Mark A. Tsuchida
  */
 public class WallTimer {
-   private final long startNs_;
+  private final long startNs_;
 
-   public static WallTimer createStarted() {
-      return new WallTimer();
-   }
+  public static WallTimer createStarted() {
+    return new WallTimer();
+  }
 
-   private WallTimer() {
-      startNs_ = System.nanoTime();
-   }
+  private WallTimer() {
+    startNs_ = System.nanoTime();
+  }
 
-   public long getNs() {
-      return System.nanoTime()- startNs_;
-   }
+  public long getNs() {
+    return System.nanoTime() - startNs_;
+  }
 
-   public double getMs() {
-      return getNs() / 1000000.0;
-   }
+  public double getMs() {
+    return getNs() / 1000000.0;
+  }
 }

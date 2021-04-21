@@ -8,32 +8,25 @@ package org.micromanager.display.internal.event;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.overlay.Overlay;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public class DisplayWindowDidRemoveOverlayEvent {
-   private final DisplayWindow display_;
-   private final Overlay overlay_;
+  private final DisplayWindow display_;
+  private final Overlay overlay_;
 
-   public static DisplayWindowDidRemoveOverlayEvent create(DisplayWindow display,
-         Overlay overlay)
-   {
-      return new DisplayWindowDidRemoveOverlayEvent(display, overlay);
-   }
+  public static DisplayWindowDidRemoveOverlayEvent create(DisplayWindow display, Overlay overlay) {
+    return new DisplayWindowDidRemoveOverlayEvent(display, overlay);
+  }
 
-   private DisplayWindowDidRemoveOverlayEvent(DisplayWindow display,
-         Overlay overlay)
-   {
-      display_ = display;
-      overlay_ = overlay;
-   }
+  private DisplayWindowDidRemoveOverlayEvent(DisplayWindow display, Overlay overlay) {
+    display_ = display;
+    overlay_ = overlay;
+  }
 
-   public DisplayWindow getDisplayWindow() {
-      return display_;
-   }
+  public DisplayWindow getDisplayWindow() {
+    return display_;
+  }
 
-   public Overlay getOverlay() {
-      return overlay_;
-   }
+  public Overlay getOverlay() {
+    return overlay_;
+  }
 }

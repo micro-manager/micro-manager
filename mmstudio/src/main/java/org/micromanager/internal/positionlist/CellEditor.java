@@ -1,66 +1,58 @@
 package org.micromanager.internal.positionlist;
 
-import java.awt.Component;
-import java.awt.Font;
+import javax.swing.*;
+import javax.swing.table.TableCellEditor;
+import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import javax.swing.AbstractCellEditor;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.table.TableCellEditor;
 
-/**
- * Editor component for the position list table
- */
-public final class CellEditor extends AbstractCellEditor implements TableCellEditor, 
-        FocusListener {
-   private static final long serialVersionUID = 3L;
-   // This is the component that will handle editing of the cell's value
-   JTextField text_ = new JTextField();
-   int editingCol_;
+/** Editor component for the position list table */
+public final class CellEditor extends AbstractCellEditor implements TableCellEditor, FocusListener {
+  private static final long serialVersionUID = 3L;
+  // This is the component that will handle editing of the cell's value
+  JTextField text_ = new JTextField();
+  int editingCol_;
 
-   public CellEditor(Font editingFont) {
-      super();
-      text_.setFont(editingFont);
-   }
-   
-   public void addListener() {
-      text_.addFocusListener(this);
-   }
+  public CellEditor(Font editingFont) {
+    super();
+    text_.setFont(editingFont);
+  }
 
-   @Override
-   public void focusLost(FocusEvent e) {
-      fireEditingStopped();
-   }
+  public void addListener() {
+    text_.addFocusListener(this);
+  }
 
-   @Override
-   public void focusGained(FocusEvent e) {
+  @Override
+  public void focusLost(FocusEvent e) {
+    fireEditingStopped();
+  }
 
-   }
+  @Override
+  public void focusGained(FocusEvent e) {}
 
-   // This method is called when a cell value is edited by the user.
-   @Override
-   public Component getTableCellEditorComponent(JTable table, Object value,
-         boolean isSelected, int rowIndex, int colIndex) {
+  // This method is called when a cell value is edited by the user.
+  @Override
+  public Component getTableCellEditorComponent(
+      JTable table, Object value, boolean isSelected, int rowIndex, int colIndex) {
 
-     editingCol_ = colIndex;
+    editingCol_ = colIndex;
 
-      // Configure the component with the specified value
-      if (colIndex == 0) {
-         text_.setText((String)value);
-         return text_;
-      }
+    // Configure the component with the specified value
+    if (colIndex == 0) {
+      text_.setText((String) value);
+      return text_;
+    }
 
-      return null;
-   }
-                                                                          
-   // This method is called when editing is completed.
-   // It must return the new value to be stored in the cell. 
-   @Override
-   public Object getCellEditorValue() {
-      if (editingCol_ == 0) {
-            return text_.getText();
-      }
-      return null;
-   }
+    return null;
+  }
+
+  // This method is called when editing is completed.
+  // It must return the new value to be stored in the cell.
+  @Override
+  public Object getCellEditorValue() {
+    if (editingCol_ == 0) {
+      return text_.getText();
+    }
+    return null;
+  }
 }

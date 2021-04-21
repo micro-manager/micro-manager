@@ -18,18 +18,16 @@ package org.micromanager.magellan.internal.surfacesandregions;
 
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 
-
 public interface SurfaceGridListener {
-   
-   //Data changed or name changed
-   public void SurfaceOrGridChanged(XYFootprint f);
-   
-   public void SurfaceOrGridDeleted(XYFootprint f);
-   
-   public void SurfaceOrGridCreated(XYFootprint f);
 
-   public void SurfaceOrGridRenamed(XYFootprint f);
-   
-   public void SurfaceInterpolationUpdated(SurfaceInterpolator s);
-   
+  // Data changed or name changed
+  public void SurfaceOrGridChanged(XYFootprint f);
+
+  public void SurfaceOrGridDeleted(XYFootprint f);
+
+  public void SurfaceOrGridCreated(XYFootprint f);
+
+  public void SurfaceOrGridRenamed(XYFootprint f);
+
+  public void SurfaceInterpolationUpdated(SurfaceInterpolator s);
 }

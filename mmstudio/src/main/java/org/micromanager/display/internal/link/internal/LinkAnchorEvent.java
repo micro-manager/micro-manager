@@ -7,10 +7,7 @@ package org.micromanager.display.internal.link.internal;
 
 import org.micromanager.display.internal.link.LinkAnchor;
 
-/**
- *
- * @author mark
- */
+/** @author mark */
 public interface LinkAnchorEvent<T> {
-   LinkAnchor<T> getAnchor();
+  LinkAnchor<T> getAnchor();
 }

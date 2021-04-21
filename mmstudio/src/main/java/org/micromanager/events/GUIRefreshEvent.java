@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -21,8 +21,7 @@
 package org.micromanager.events;
 
 /**
- * This event is posted whenever the GUI refreshes its state from the Core
- * (e.g. when a "Refresh" button is clicked or when the refreshGUI() method
- * is called in CompatibilityInterface).
+ * This event is posted whenever the GUI refreshes its state from the Core (e.g. when a "Refresh"
+ * button is clicked or when the refreshGUI() method is called in CompatibilityInterface).
  */
 public interface GUIRefreshEvent {}

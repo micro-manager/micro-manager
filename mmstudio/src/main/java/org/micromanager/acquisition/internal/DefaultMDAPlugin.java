@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -19,54 +19,53 @@
 
 package org.micromanager.acquisition.internal;
 
-import javax.swing.ImageIcon;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-/**
- * This built-in plugin provides access to our standard MDA dialog.
- */
+import javax.swing.*;
+
+/** This built-in plugin provides access to our standard MDA dialog. */
 @Plugin(type = AcquisitionDialogPlugin.class)
 public final class DefaultMDAPlugin implements AcquisitionDialogPlugin, SciJavaPlugin {
-   private Studio studio_;
+  private Studio studio_;
 
-   @Override
-   public ImageIcon getIcon() {
-      // This icon based on the public-domain icon at
-      // https://openclipart.org/detail/2757/movie-tape
-      return new ImageIcon(getClass().getClassLoader().getResource(
-            "org/micromanager/icons/film.png"));
-   }
+  @Override
+  public ImageIcon getIcon() {
+    // This icon based on the public-domain icon at
+    // https://openclipart.org/detail/2757/movie-tape
+    return new ImageIcon(
+        getClass().getClassLoader().getResource("org/micromanager/icons/film.png"));
+  }
 
-   @Override
-   public void showAcquisitionDialog() {
-      ((MMStudio) studio_).uiManager().openAcqControlDialog();
-   }
+  @Override
+  public void showAcquisitionDialog() {
+    ((MMStudio) studio_).uiManager().openAcqControlDialog();
+  }
 
-   @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-   }
+  @Override
+  public void setContext(Studio studio) {
+    studio_ = studio;
+  }
 
-   @Override
-   public String getName() {
-      return "Multi-D Acq.";
-   }
+  @Override
+  public String getName() {
+    return "Multi-D Acq.";
+  }
 
-   @Override
-   public String getHelpText() {
-      return "Open the data acquisition dialog.";
-   }
+  @Override
+  public String getHelpText() {
+    return "Open the data acquisition dialog.";
+  }
 
-   @Override
-   public String getVersion() {
-      return "1.0";
-   }
+  @Override
+  public String getVersion() {
+    return "1.0";
+  }
 
-   @Override
-   public String getCopyright() {
-      return "Copyright (c) 2016 Open Imaging, Inc. and the Regents of the University of California";
-   }
+  @Override
+  public String getCopyright() {
+    return "Copyright (c) 2016 Open Imaging, Inc. and the Regents of the University of California";
+  }
 }

@@ -1,8 +1,8 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ColorRenderer.java
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// FILE:          ColorRenderer.java
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, November 10, 2005
 //
@@ -32,64 +32,58 @@ import javax.swing.JTable;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 
-/**
- * Color chooser cell renderer. 
- */
+/** Color chooser cell renderer. */
 public class ColorRenderer extends JLabel implements TableCellRenderer {
-   private static final long serialVersionUID = -2539377758420096159L;
-   Border unselectedBorder = null;
-    Border selectedBorder = null;
-    boolean isBordered = true;
+  private static final long serialVersionUID = -2539377758420096159L;
+  Border unselectedBorder = null;
+  Border selectedBorder = null;
+  boolean isBordered = true;
 
-    public ColorRenderer(boolean isBordered) {
-        this.isBordered = isBordered;
-        setOpaque(true); //MUST do this for background to show up.
+  public ColorRenderer(boolean isBordered) {
+    this.isBordered = isBordered;
+    setOpaque(true); // MUST do this for background to show up.
+  }
+
+  @Override
+  public Component getTableCellRendererComponent(
+      JTable table, Object color, boolean isSelected, boolean hasFocus, int row, int column) {
+
+    // https://stackoverflow.com/a/3055930
+    if (color == null) {
+      return null;
     }
 
-   @Override
-    public Component getTableCellRendererComponent(
-                            JTable table, Object color,
-                            boolean isSelected, boolean hasFocus,
-                            int row, int column) {
-
-        // https://stackoverflow.com/a/3055930
-        if (color == null) {
-           return null;
+    Color newColor = (Color) color;
+    if (table.isEnabled()) {
+      setBackground(newColor);
+    } else {
+      Color dimColor = mixColors(newColor, table.getBackground(), 0.5);
+      setBackground(dimColor);
+    }
+    if (isBordered) {
+      if (isSelected) {
+        if (selectedBorder == null) {
+          selectedBorder =
+              BorderFactory.createMatteBorder(2, 5, 2, 5, table.getSelectionBackground());
         }
-
-        Color newColor = (Color)color;
-        if (table.isEnabled()) {
-            setBackground(newColor);
-        } else {
-            Color dimColor = mixColors(newColor,table.getBackground(),0.5);
-            setBackground(dimColor);
+        setBorder(selectedBorder);
+      } else {
+        if (unselectedBorder == null) {
+          unselectedBorder = BorderFactory.createMatteBorder(2, 5, 2, 5, table.getBackground());
         }
-        if (isBordered) {
-            if (isSelected) {
-                if (selectedBorder == null) {
-                    selectedBorder = BorderFactory.createMatteBorder(2,5,2,5,
-                                              table.getSelectionBackground());
-                }
-                setBorder(selectedBorder);
-            } else {
-                if (unselectedBorder == null) {
-                    unselectedBorder = BorderFactory.createMatteBorder(2,5,2,5,
-                                              table.getBackground());
-                }
-                setBorder(unselectedBorder);
-            }
-        }
-        
-        setToolTipText("RGB value: " + newColor.getRed() + ", "
-                                     + newColor.getGreen() + ", "
-                                     + newColor.getBlue());
-        return this;
+        setBorder(unselectedBorder);
+      }
     }
 
-    private Color mixColors(Color fgColor, Color bgColor, double transparency) {
-        return new Color( (int) (fgColor.getRed() * transparency + bgColor.getRed() * (1-transparency)),
-                          (int) (fgColor.getGreen() * transparency + bgColor.getGreen() * (1-transparency)),
-                          (int) (fgColor.getBlue() * transparency + bgColor.getBlue() * (1-transparency))
-                          );
-    }
+    setToolTipText(
+        "RGB value: " + newColor.getRed() + ", " + newColor.getGreen() + ", " + newColor.getBlue());
+    return this;
+  }
+
+  private Color mixColors(Color fgColor, Color bgColor, double transparency) {
+    return new Color(
+        (int) (fgColor.getRed() * transparency + bgColor.getRed() * (1 - transparency)),
+        (int) (fgColor.getGreen() * transparency + bgColor.getGreen() * (1 - transparency)),
+        (int) (fgColor.getBlue() * transparency + bgColor.getBlue() * (1 - transparency)));
+  }
 }

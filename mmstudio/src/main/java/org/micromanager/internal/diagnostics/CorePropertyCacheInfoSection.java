@@ -12,33 +12,42 @@
 package org.micromanager.internal.diagnostics;
 
 class CorePropertyCacheInfoSection implements SystemInfo.SystemInfoSection {
-   @Override
-   public String getTitle() { return "Core information"; }
+  @Override
+  public String getTitle() {
+    return "Core information";
+  }
 
-   @Override
-   public String getReport() {
-      mmcorej.CMMCore c = org.micromanager.internal.MMStudio.getInstance().getCMMCore();
+  @Override
+  public String getReport() {
+    mmcorej.CMMCore c = org.micromanager.internal.MMStudio.getInstance().getCMMCore();
 
-      StringBuilder sb = new StringBuilder();
-      sb.append("Core property cache (\"system state cache\") contents:\n");
-      final mmcorej.Configuration cachedProps = c.getSystemStateCache();
-      long count = cachedProps.size();
-      for (long i = 0; i < count; i++) {
-         try {
-            final mmcorej.PropertySetting s = cachedProps.getSetting(i);
-            final String device = s.getDeviceLabel();
-            final String name = s.getPropertyName();
-            final String value = s.getPropertyValue();
-            final String roString = s.getReadOnly() ? " [RO]" : "";
-            sb.append("  ").append(device).append("/").append(name).
-                    append(roString).append(" = ").append(value).append('\n');
-         }
-         catch (Exception e) {
-            sb.append("  Error while getting cache item ").
-                    append(Long.toString(i)).append(": ").
-                    append(e.getMessage()).append('\n');
-         }
+    StringBuilder sb = new StringBuilder();
+    sb.append("Core property cache (\"system state cache\") contents:\n");
+    final mmcorej.Configuration cachedProps = c.getSystemStateCache();
+    long count = cachedProps.size();
+    for (long i = 0; i < count; i++) {
+      try {
+        final mmcorej.PropertySetting s = cachedProps.getSetting(i);
+        final String device = s.getDeviceLabel();
+        final String name = s.getPropertyName();
+        final String value = s.getPropertyValue();
+        final String roString = s.getReadOnly() ? " [RO]" : "";
+        sb.append("  ")
+            .append(device)
+            .append("/")
+            .append(name)
+            .append(roString)
+            .append(" = ")
+            .append(value)
+            .append('\n');
+      } catch (Exception e) {
+        sb.append("  Error while getting cache item ")
+            .append(Long.toString(i))
+            .append(": ")
+            .append(e.getMessage())
+            .append('\n');
       }
-      return sb.toString();
-   }
+    }
+    return sb.toString();
+  }
 }

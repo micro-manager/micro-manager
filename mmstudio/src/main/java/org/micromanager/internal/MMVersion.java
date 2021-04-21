@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, 2013
 //
@@ -26,5 +26,5 @@ package org.micromanager.internal;
  * Micro-Manager. Build scripts will temporarily alter this file.
  */
 public final class MMVersion {
-   public static final String VERSION_STRING = "2.0.x dev";
+  public static final String VERSION_STRING = "2.0.x dev";
 }

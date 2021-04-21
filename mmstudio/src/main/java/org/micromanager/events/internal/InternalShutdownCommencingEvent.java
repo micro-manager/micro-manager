@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
-//-----------------------------------------------------------------------------
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     Events API
+// -----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
 //
@@ -21,24 +21,19 @@
 package org.micromanager.events.internal;
 
 /**
- * This event is posted when the user requests the program to shut down. It's
- * a complete copy of the ShutdownCommencingEvent, but not available in the
- * API; it's only intended for internal use.
+ * This event is posted when the user requests the program to shut down. It's a complete copy of the
+ * ShutdownCommencingEvent, but not available in the API; it's only intended for internal use.
  */
 public final class InternalShutdownCommencingEvent {
-   private boolean isCanceled_ = false;
+  private boolean isCanceled_ = false;
 
-   /**
-    * Cancel shutdown.
-    */
-   public void cancelShutdown() {
-      isCanceled_ = true;
-   }
+  /** Cancel shutdown. */
+  public void cancelShutdown() {
+    isCanceled_ = true;
+  }
 
-   /**
-    * Return whether or not shutdown has been canceled.
-    */
-   public boolean isCanceled() {
-      return isCanceled_;
-   }
+  /** Return whether or not shutdown has been canceled. */
+  public boolean isCanceled() {
+    return isCanceled_;
+  }
 }

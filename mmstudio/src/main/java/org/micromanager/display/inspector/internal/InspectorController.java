@@ -16,8 +16,27 @@ package org.micromanager.display.inspector.internal;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import net.miginfocom.layout.CC;
+import net.miginfocom.layout.LC;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.EventPublisher;
+import org.micromanager.Studio;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.inspector.InspectorPanelController;
+import org.micromanager.display.inspector.InspectorPanelPlugin;
+import org.micromanager.display.internal.DataViewerCollection;
+import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.display.internal.event.*;
+import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.utils.EventBusExceptionLogger;
+import org.micromanager.internal.utils.WindowPositioning;
+import org.scijava.plugin.Plugin;
+
+import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -27,579 +46,528 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
-import net.miginfocom.layout.CC;
-import net.miginfocom.layout.LC;
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.EventPublisher;
-import org.micromanager.Studio;
-import org.micromanager.display.DataViewer;
-import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.DataViewerCollection;
-import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
-import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.display.internal.event.InspectorDidCloseEvent;
-import org.micromanager.internal.utils.EventBusExceptionLogger;
-import org.micromanager.internal.utils.WindowPositioning;
-import org.scijava.plugin.Plugin;
-import org.micromanager.display.inspector.InspectorPanelController;
-import org.micromanager.display.inspector.InspectorPanelPlugin;
-import org.micromanager.display.internal.displaywindow.DisplayController;
-import org.micromanager.events.ShutdownCommencingEvent;
-
 
 /**
  * Implementation of the Inspector window.
  *
  * @author Mark A. Tsuchida, based in part on earlier version by Chris Weisiger
  */
-public final class InspectorController
-      implements EventPublisher, PopupMenuListener, Closeable
-{
-   private static final String FRONTMOST_VIEWER_ITEM = "Frontmost Window";
+public final class InspectorController implements EventPublisher, PopupMenuListener, Closeable {
+  private static final String FRONTMOST_VIEWER_ITEM = "Frontmost Window";
 
-   private final DataViewerCollection viewerCollection_;
-   private final Studio studio_;
+  private final DataViewerCollection viewerCollection_;
+  private final Studio studio_;
 
-   private JFrame frame_;
-   private JPanel headerPanel_;
-   private JScrollPane scrollPane_;
-   private VerticalMultiSplitPane sectionsPane_;
-   private JComboBox viewerComboBox_;
-   private Object viewerComboBoxSelection_;
-   private JButton viewerToFrontButton_;
-   private DataViewer viewer_;
+  private JFrame frame_;
+  private JPanel headerPanel_;
+  private JScrollPane scrollPane_;
+  private VerticalMultiSplitPane sectionsPane_;
+  private JComboBox viewerComboBox_;
+  private Object viewerComboBoxSelection_;
+  private JButton viewerToFrontButton_;
+  private DataViewer viewer_;
 
-   private AttachmentStrategy attachmentStrategy_ =
-         new NullAttachmentStrategy();
+  private AttachmentStrategy attachmentStrategy_ = new NullAttachmentStrategy();
 
-   private final List<SectionInfo> sections_ = new ArrayList<>();
+  private final List<SectionInfo> sections_ = new ArrayList<>();
 
-   private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
+  private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
-   /**
-    * Since it is very difficult to associated an InpectorSectionController 
-    * and InspectorSectionController with a plugin, and/or each other, 
-    * we do it here manually.
-    */
-   private class SectionInfo {
-      public final InspectorPanelController inspectorPanelController_;
-      public final InspectorSectionController inspectorSectionController_;
-      public final InspectorPanelPlugin plugin_;
-      public SectionInfo (InspectorPanelController ipc, 
-              InspectorSectionController isc, InspectorPanelPlugin p){
-         inspectorPanelController_ = ipc;
-         inspectorSectionController_ = isc;
-         plugin_ = p;
-      }
-   }
-   // Type for combo box items (data viewers)
-   private static final class ViewerItem {
-      private final DataViewer viewer_;
+  /**
+   * Since it is very difficult to associated an InpectorSectionController and
+   * InspectorSectionController with a plugin, and/or each other, we do it here manually.
+   */
+  private class SectionInfo {
+    public final InspectorPanelController inspectorPanelController_;
+    public final InspectorSectionController inspectorSectionController_;
+    public final InspectorPanelPlugin plugin_;
 
-      ViewerItem(DataViewer viewer) {
-         viewer_ = viewer;
-      }
+    public SectionInfo(
+        InspectorPanelController ipc, InspectorSectionController isc, InspectorPanelPlugin p) {
+      inspectorPanelController_ = ipc;
+      inspectorSectionController_ = isc;
+      plugin_ = p;
+    }
+  }
+  // Type for combo box items (data viewers)
+  private static final class ViewerItem {
+    private final DataViewer viewer_;
 
-      public DataViewer getDataViewer() {
-         return viewer_;
-      }
+    ViewerItem(DataViewer viewer) {
+      viewer_ = viewer;
+    }
 
-      @Override
-      public String toString() {
-         return viewer_.getName();
-      }
-   }
+    public DataViewer getDataViewer() {
+      return viewer_;
+    }
 
-   public static InspectorController create(Studio studio, DataViewerCollection viewers) {
-      InspectorController instance = new InspectorController(studio, viewers);
-      instance.makeUI();
-      viewers.registerForEvents(instance);
-      instance.updateDataViewerChooser();
-      studio.events().registerForEvents(instance);
-      return instance;
-   }
+    @Override
+    public String toString() {
+      return viewer_.getName();
+    }
+  }
 
-   private InspectorController(Studio studio, DataViewerCollection viewers) {
-      studio_ = studio;
-      viewerCollection_ = viewers;
-   }
+  public static InspectorController create(Studio studio, DataViewerCollection viewers) {
+    InspectorController instance = new InspectorController(studio, viewers);
+    instance.makeUI();
+    viewers.registerForEvents(instance);
+    instance.updateDataViewerChooser();
+    studio.events().registerForEvents(instance);
+    return instance;
+  }
 
-   private void makeUI() {
-      frame_ = new JFrame();
-      frame_.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
-      frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-      frame_.addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent w) {
+  private InspectorController(Studio studio, DataViewerCollection viewers) {
+    studio_ = studio;
+    viewerCollection_ = viewers;
+  }
+
+  private void makeUI() {
+    frame_ = new JFrame();
+    frame_.setIconImage(
+        Toolkit.getDefaultToolkit()
+            .getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
+    frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    frame_.addWindowListener(
+        new WindowAdapter() {
+          @Override
+          public void windowClosing(WindowEvent w) {
             close();
-         }
-      });
-      frame_.setAlwaysOnTop(false);
-      frame_.getRootPane().putClientProperty("Window.style", "small");
-      frame_.setLayout(new MigLayout(
-            new LC().fill().insets("0").gridGap("0", "0")));
+          }
+        });
+    frame_.setAlwaysOnTop(false);
+    frame_.getRootPane().putClientProperty("Window.style", "small");
+    frame_.setLayout(new MigLayout(new LC().fill().insets("0").gridGap("0", "0")));
 
-      headerPanel_ = new JPanel(new MigLayout(
-            new LC().fill().insets("0").gridGap("0", "0")));
-      headerPanel_.add(new JLabel("Inspect:"),
-            new CC().gapBefore("rel").split(3));
-      viewerComboBox_ = new JComboBox();
-      viewerComboBox_.setToolTipText("Select the image window to inspect");
-      viewerComboBox_.setRenderer(
-            ComboBoxSeparatorRenderer.create(viewerComboBox_.getRenderer()));
-      viewerComboBox_.addPopupMenuListener(this);
-      viewerComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+    headerPanel_ = new JPanel(new MigLayout(new LC().fill().insets("0").gridGap("0", "0")));
+    headerPanel_.add(new JLabel("Inspect:"), new CC().gapBefore("rel").split(3));
+    viewerComboBox_ = new JComboBox();
+    viewerComboBox_.setToolTipText("Select the image window to inspect");
+    viewerComboBox_.setRenderer(ComboBoxSeparatorRenderer.create(viewerComboBox_.getRenderer()));
+    viewerComboBox_.addPopupMenuListener(this);
+    viewerComboBox_.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             viewerComboBoxActionPerformed(e);
-         }
-      });
-      viewerComboBox_.setMinimumSize(new Dimension(
-            240, viewerComboBox_.getMinimumSize().height));
-      headerPanel_.add(viewerComboBox_, new CC().growX().pushX());
-      viewerToFrontButton_ = new JButton("To Front");
-      viewerToFrontButton_.setToolTipText("Bring this window to the front");
-      viewerToFrontButton_.setEnabled(false);
-      viewerToFrontButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+          }
+        });
+    viewerComboBox_.setMinimumSize(new Dimension(240, viewerComboBox_.getMinimumSize().height));
+    headerPanel_.add(viewerComboBox_, new CC().growX().pushX());
+    viewerToFrontButton_ = new JButton("To Front");
+    viewerToFrontButton_.setToolTipText("Bring this window to the front");
+    viewerToFrontButton_.setEnabled(false);
+    viewerToFrontButton_.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             viewerToFrontButtonActionPerformed(e);
-         }
-      });
-      headerPanel_.add(viewerToFrontButton_, new CC().wrap());
+          }
+        });
+    headerPanel_.add(viewerToFrontButton_, new CC().wrap());
 
-      sectionsPane_ = VerticalMultiSplitPane.create(0, true);
-      scrollPane_ = new JScrollPane(sectionsPane_,
+    sectionsPane_ = VerticalMultiSplitPane.create(0, true);
+    scrollPane_ =
+        new JScrollPane(
+            sectionsPane_,
             JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      scrollPane_.setBorder(BorderFactory.createEmptyBorder());
+    scrollPane_.setBorder(BorderFactory.createEmptyBorder());
 
-      // Initialize Sections
-      List<InspectorPanelPlugin> plugins = new ArrayList<InspectorPanelPlugin>(
-      studio_.plugins().getInspectorPlugins().values());
-      Collections.sort(plugins, new Comparator<InspectorPanelPlugin>() {
-         @Override
-         public int compare(InspectorPanelPlugin o1, InspectorPanelPlugin o2) {
+    // Initialize Sections
+    List<InspectorPanelPlugin> plugins =
+        new ArrayList<InspectorPanelPlugin>(studio_.plugins().getInspectorPlugins().values());
+    Collections.sort(
+        plugins,
+        new Comparator<InspectorPanelPlugin>() {
+          @Override
+          public int compare(InspectorPanelPlugin o1, InspectorPanelPlugin o2) {
             Plugin p1 = o1.getClass().getAnnotation(Plugin.class);
             Plugin p2 = o2.getClass().getAnnotation(Plugin.class);
             return -Double.compare(p1.priority(), p2.priority());
-         }
-      });
-      for (InspectorPanelPlugin plugin : plugins) {
-         InspectorPanelController panelController = plugin.createPanelController(studio_);
-         InspectorSectionController section = InspectorSectionController.create(this, panelController);
-         panelController.addInspectorPanelListener(section);
-         SectionInfo secInfo = new SectionInfo(panelController, section, plugin);
-         sections_.add(secInfo);
+          }
+        });
+    for (InspectorPanelPlugin plugin : plugins) {
+      InspectorPanelController panelController = plugin.createPanelController(studio_);
+      InspectorSectionController section = InspectorSectionController.create(this, panelController);
+      panelController.addInspectorPanelListener(section);
+      SectionInfo secInfo = new SectionInfo(panelController, section, plugin);
+      sections_.add(secInfo);
+    }
+
+    sectionsPane_ = VerticalMultiSplitPane.create(sections_.size(), true);
+    for (int i = 0; i < sections_.size(); ++i) {
+      InspectorSectionController sectionController = sections_.get(i).inspectorSectionController_;
+      sectionsPane_.setComponentAtIndex(i, sectionController.getSectionPanel());
+      sectionsPane_.setComponentResizeEnabled(
+          i, sectionController.isVerticallyResizableByUser() && sectionController.isExpanded());
+    }
+    scrollPane_.setViewportView(sectionsPane_);
+
+    frame_.add(headerPanel_, new CC().growX().pushX().wrap());
+    frame_.add(scrollPane_, new CC().grow().push().wrap());
+
+    frame_.pack();
+
+    WindowPositioning.setUpBoundsMemory(frame_, InspectorController.class, null);
+
+    frame_.setMinimumSize(
+        new Dimension(frame_.getPreferredSize().width + 16, frame_.getMinimumSize().height));
+    frame_.setSize(Math.max(frame_.getWidth(), frame_.getMinimumSize().width), frame_.getHeight());
+  }
+
+  @Override
+  public void close() {
+    studio_.events().unregisterForEvents(this);
+    viewerCollection_.unregisterForEvents(this);
+    if (frame_ != null) {
+      detachFromDataViewer();
+      frame_.setVisible(false);
+      frame_.dispose();
+      frame_ = null;
+    }
+    eventBus_.post(InspectorDidCloseEvent.create(this));
+  }
+
+  @Subscribe
+  public void closeRequested(ShutdownCommencingEvent sce) {
+    if (!sce.isCanceled()) {
+      close();
+    }
+  }
+
+  public void setVisible(boolean visible) {
+    frame_.setVisible(visible);
+  }
+
+  public void attachToFixedDataViewer(DataViewer viewer) {
+    if (viewer == null || viewer.isClosed()) {
+      return;
+    }
+    attachmentStrategy_ = new FixedAttachmentStrategy(viewer);
+    attachmentStrategy_.attachmentStrategySelected();
+    viewerComboBox_.getModel().setSelectedItem(viewer.getName());
+  }
+
+  public void attachToFrontmostDataViewer() {
+    attachmentStrategy_ = new FrontmostAttachmentStrategy();
+    attachmentStrategy_.attachmentStrategySelected();
+    viewerComboBox_.getModel().setSelectedItem(FRONTMOST_VIEWER_ITEM);
+  }
+
+  public boolean isAttachedToFrontmostDataViewer() {
+    return attachmentStrategy_ instanceof FrontmostAttachmentStrategy;
+  }
+
+  private void updateDataViewerChooserImpl(List<DataViewer> viewers) {
+    if (frame_ == null) {
+      return;
+    }
+
+    Object saveSelection = viewerComboBox_.getModel().getSelectedItem();
+
+    // Disable the combo box while we modify it; otherwise it fires action
+    // events for the "changes"
+    ActionListener[] listeners = viewerComboBox_.getActionListeners();
+    for (ActionListener listener : listeners) {
+      viewerComboBox_.removeActionListener(listener);
+    }
+
+    viewerComboBox_.removeAllItems();
+    viewerComboBox_.addItem(FRONTMOST_VIEWER_ITEM);
+    if (!viewers.isEmpty()) {
+      viewerComboBox_.addItem(new JSeparator(JSeparator.HORIZONTAL));
+    }
+    for (DataViewer viewer : viewers) {
+      viewerComboBox_.addItem(new ViewerItem(viewer));
+    }
+
+    viewerComboBox_.getModel().setSelectedItem(saveSelection);
+    for (ActionListener listener : listeners) {
+      viewerComboBox_.addActionListener(listener);
+    }
+  }
+
+  private void updateDataViewerChooser() {
+    updateDataViewerChooserImpl(viewerCollection_.getAllDataViewers());
+  }
+
+  private void updateDataViewerChooserExcluding(DataViewer viewer) {
+    List<DataViewer> viewers = viewerCollection_.getAllDataViewers();
+    viewers.remove(viewer);
+    updateDataViewerChooserImpl(viewers);
+  }
+
+  void inspectorSectionWillChangeHeight(InspectorSectionController section) {}
+
+  void inspectorSectionDidChangeHeight(InspectorSectionController section) {
+    int index = -1;
+    for (int i = 0; i < sections_.size(); i++) {
+      if (section.equals(sections_.get(i).inspectorSectionController_)) {
+        index = i;
       }
-      
-      sectionsPane_ = VerticalMultiSplitPane.create(sections_.size(), true);
-      for (int i = 0; i < sections_.size(); ++i) {
-         InspectorSectionController sectionController = 
-                 sections_.get(i).inspectorSectionController_;
-         sectionsPane_.setComponentAtIndex(i,
-               sectionController.getSectionPanel());
-         sectionsPane_.setComponentResizeEnabled(i,
-               sectionController.isVerticallyResizableByUser() &&
-               sectionController.isExpanded());
+    }
+    if (index < 0) {
+      return;
+    }
+
+    // Remove the preferred size set by the multi-split pane.
+    section.getSectionPanel().setPreferredSize(null);
+
+    sectionsPane_.resizeToFitPreferredSizes();
+    sectionsPane_.setComponentResizeEnabled(
+        index, section.isVerticallyResizableByUser() && section.isExpanded());
+    sectionsPane_.revalidate();
+    sectionsPane_.repaint();
+
+    // TODO Window (and scroll pane) height should be adjusted to
+    // 1) Always remove any extra space in scroll panel
+    // 2) Grow window vertically, within screen, if scroll panel is showing
+    // vertical scroll bar
+  }
+
+  private void viewerComboBoxActionPerformed(ActionEvent e) {
+    Object selectedItem = viewerComboBox_.getModel().getSelectedItem();
+    if (selectedItem instanceof JSeparator) {
+      viewerComboBox_.getModel().setSelectedItem(viewerComboBoxSelection_);
+      return;
+    }
+    if (selectedItem == viewerComboBoxSelection_) {
+      return;
+    }
+
+    if (selectedItem == FRONTMOST_VIEWER_ITEM) {
+      attachToFrontmostDataViewer();
+      viewerToFrontButton_.setEnabled(false);
+    } else if (selectedItem instanceof ViewerItem) {
+      DataViewer viewer = ((ViewerItem) selectedItem).getDataViewer();
+      attachToFixedDataViewer(viewer);
+      viewerToFrontButton_.setEnabled(true);
+    }
+  }
+
+  private void viewerToFrontButtonActionPerformed(ActionEvent e) {
+    Object selectedItem = viewerComboBox_.getSelectedItem();
+    // TODO: in this case, the Selected item is of type String.
+    // I don't understand why, but for now just deal with it
+    if (selectedItem instanceof ViewerItem) {
+      ViewerItem vi = (ViewerItem) selectedItem;
+      if (vi.getDataViewer() instanceof DisplayController) {
+        ((DisplayController) vi.getDataViewer()).getWindow().toFront();
       }
-      scrollPane_.setViewportView(sectionsPane_);
-      
-      frame_.add(headerPanel_, new CC().growX().pushX().wrap());
-      frame_.add(scrollPane_, new CC().grow().push().wrap());
-
-      frame_.pack();
-
-      WindowPositioning.setUpBoundsMemory(frame_, InspectorController.class, null);
-
-      frame_.setMinimumSize(new Dimension(frame_.getPreferredSize().width + 16,
-            frame_.getMinimumSize().height));
-      frame_.setSize(
-            Math.max(frame_.getWidth(), frame_.getMinimumSize().width),
-            frame_.getHeight());
-   }
-
-   @Override
-   public void close() {
-      studio_.events().unregisterForEvents(this);
-      viewerCollection_.unregisterForEvents(this);
-      if (frame_ != null) {
-         detachFromDataViewer();
-         frame_.setVisible(false);
-         frame_.dispose();
-         frame_ = null;
-      }
-      eventBus_.post(InspectorDidCloseEvent.create(this));
-   }
-   
-   @Subscribe
-   public void closeRequested(ShutdownCommencingEvent sce) {
-      if (!sce.isCanceled()) {
-         close();
-      }
-   }
-
-   public void setVisible(boolean visible) {
-      frame_.setVisible(visible);
-   }
-
-   public void attachToFixedDataViewer(DataViewer viewer) {
-      if (viewer == null || viewer.isClosed()) {
-         return;
-      }
-      attachmentStrategy_ = new FixedAttachmentStrategy(viewer);
-      attachmentStrategy_.attachmentStrategySelected();
-      viewerComboBox_.getModel().setSelectedItem(viewer.getName());
-   }
-
-   public void attachToFrontmostDataViewer() {
-      attachmentStrategy_ = new FrontmostAttachmentStrategy();
-      attachmentStrategy_.attachmentStrategySelected();
-      viewerComboBox_.getModel().setSelectedItem(FRONTMOST_VIEWER_ITEM);
-   }
-
-   public boolean isAttachedToFrontmostDataViewer() {
-      return attachmentStrategy_ instanceof FrontmostAttachmentStrategy;
-   }
-
-   private void updateDataViewerChooserImpl(List<DataViewer> viewers) {
-      if (frame_ == null) {
-         return;
-      }
-
-      Object saveSelection = viewerComboBox_.getModel().getSelectedItem();
-
-      // Disable the combo box while we modify it; otherwise it fires action
-      // events for the "changes"
-      ActionListener[] listeners = viewerComboBox_.getActionListeners();
-      for (ActionListener listener : listeners) {
-         viewerComboBox_.removeActionListener(listener);
-      }
-
-      viewerComboBox_.removeAllItems();
-      viewerComboBox_.addItem(FRONTMOST_VIEWER_ITEM);
-      if (!viewers.isEmpty()) {
-         viewerComboBox_.addItem(new JSeparator(JSeparator.HORIZONTAL));
-      }
-      for (DataViewer viewer : viewers) {
-         viewerComboBox_.addItem(new ViewerItem(viewer));
-      }
-
-      viewerComboBox_.getModel().setSelectedItem(saveSelection);
-      for (ActionListener listener : listeners) {
-         viewerComboBox_.addActionListener(listener);
-      }
-   }
-
-   private void updateDataViewerChooser() {
-      updateDataViewerChooserImpl(viewerCollection_.getAllDataViewers());
-   }
-
-   private void updateDataViewerChooserExcluding(DataViewer viewer) {
+    } else if (selectedItem instanceof String) {
       List<DataViewer> viewers = viewerCollection_.getAllDataViewers();
-      viewers.remove(viewer);
-      updateDataViewerChooserImpl(viewers);
-   }
-
-   void inspectorSectionWillChangeHeight(InspectorSectionController section) {
-   }
-
-   void inspectorSectionDidChangeHeight(InspectorSectionController section)
-   {
-      int index = -1;
-      for (int i=0; i < sections_.size(); i++) {
-         if (section.equals(sections_.get(i).inspectorSectionController_)) {
-            index = i;
-         }
+      for (DataViewer viewer : viewers) {
+        if (viewer.getName().equals(selectedItem)) {
+          if (viewer instanceof DisplayWindow) {
+            ((DisplayWindow) viewer).getWindow().toFront();
+          }
+        }
       }
-      if (index < 0) {
-         return;
-      }
+    }
+  }
 
-      // Remove the preferred size set by the multi-split pane.
-      section.getSectionPanel().setPreferredSize(null);
+  @Override
+  public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+    viewerComboBoxSelection_ = viewerComboBox_.getModel().getSelectedItem();
+  }
 
-      sectionsPane_.resizeToFitPreferredSizes();
-      sectionsPane_.setComponentResizeEnabled(index,
-            section.isVerticallyResizableByUser() && section.isExpanded());
-      sectionsPane_.revalidate();
-      sectionsPane_.repaint();
+  @Override
+  public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
 
-      // TODO Window (and scroll pane) height should be adjusted to
-      // 1) Always remove any extra space in scroll panel
-      // 2) Grow window vertically, within screen, if scroll panel is showing
-      // vertical scroll bar
-   }
+  @Override
+  public void popupMenuCanceled(PopupMenuEvent e) {}
 
-   private void viewerComboBoxActionPerformed(ActionEvent e) {
-      Object selectedItem = viewerComboBox_.getModel().getSelectedItem();
-      if (selectedItem instanceof JSeparator) {
-         viewerComboBox_.getModel().setSelectedItem(viewerComboBoxSelection_);
-         return;
-      }
-      if (selectedItem == viewerComboBoxSelection_) {
-         return;
-      }
+  @Subscribe
+  public void onEvent(DataViewerDidBecomeVisibleEvent e) {
+    updateDataViewerChooser();
+    attachmentStrategy_.viewerShown(e.getDataViewer());
+  }
 
-      if (selectedItem == FRONTMOST_VIEWER_ITEM) {
-         attachToFrontmostDataViewer();
-         viewerToFrontButton_.setEnabled(false);
-      }
-      else if (selectedItem instanceof ViewerItem) {
-         DataViewer viewer = ((ViewerItem) selectedItem).getDataViewer();
-         attachToFixedDataViewer(viewer);
-         viewerToFrontButton_.setEnabled(true);
-      }
-   }
+  @Subscribe
+  public void onEvent(DataViewerDidBecomeInvisibleEvent e) {
+    attachmentStrategy_.viewerHidden(e.getDataViewer());
+    updateDataViewerChooser();
+  }
 
-   private void viewerToFrontButtonActionPerformed(ActionEvent e) {
-      Object selectedItem = viewerComboBox_.getSelectedItem();
-      // TODO: in this case, the Selected item is of type String.  
-      // I don't understand why, but for now just deal with it
-      if (selectedItem instanceof ViewerItem) {
-         ViewerItem vi = (ViewerItem) selectedItem;
-         if (vi.getDataViewer() instanceof DisplayController) {
-            ((DisplayController) vi.getDataViewer()).getWindow().toFront();
-         }
-      } else if (selectedItem instanceof String) {
-         List<DataViewer> viewers = viewerCollection_.getAllDataViewers();
-         for (DataViewer viewer : viewers) {
-            if (viewer.getName().equals(selectedItem)) {
-               if (viewer instanceof DisplayWindow) {
-                  ((DisplayWindow) viewer).getWindow().toFront();
-               }
-            }
-         }
-      }
-   }
+  @Subscribe
+  public void onEvent(DataViewerDidBecomeActiveEvent e) {
+    attachmentStrategy_.viewerActivated(e.getDataViewer());
+  }
 
-   @Override
-   public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-      viewerComboBoxSelection_ = viewerComboBox_.getModel().getSelectedItem();
-   }
+  @Subscribe
+  public void onEvent(DataViewerDidBecomeInactiveEvent e) {
+    attachmentStrategy_.viewerDeactivated(e.getDataViewer());
+  }
 
-   @Override
-   public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-   }
+  @Subscribe
+  public void onEvent(DataViewerWillCloseEvent e) {
+    attachmentStrategy_.viewerWillClose(e.getDataViewer());
+    updateDataViewerChooserExcluding(e.getDataViewer());
+  }
 
-   @Override
-   public void popupMenuCanceled(PopupMenuEvent e) {
-   }
+  private void attachToDataViewer(DataViewer viewer) {
+    if (viewer == null || viewer.isClosed()) {
+      detachFromDataViewer(); // Just in case
+      return;
+    }
+    if (viewer != viewer_) {
+      frame_.setTitle(String.format("Inspect \"%s\"", viewer.getName()));
 
-   @Subscribe
-   public void onEvent(DataViewerDidBecomeVisibleEvent e) {
-      updateDataViewerChooser();
-      attachmentStrategy_.viewerShown(e.getDataViewer());
-   }
-
-   @Subscribe
-   public void onEvent(DataViewerDidBecomeInvisibleEvent e) {
-      attachmentStrategy_.viewerHidden(e.getDataViewer());
-      updateDataViewerChooser();
-   }
-
-   @Subscribe
-   public void onEvent(DataViewerDidBecomeActiveEvent e) {
-      attachmentStrategy_.viewerActivated(e.getDataViewer());
-   }
-
-   @Subscribe
-   public void onEvent(DataViewerDidBecomeInactiveEvent e) {
-      attachmentStrategy_.viewerDeactivated(e.getDataViewer());
-   }
-
-   @Subscribe
-   public void onEvent(DataViewerWillCloseEvent e) {
-      attachmentStrategy_.viewerWillClose(e.getDataViewer());
-      updateDataViewerChooserExcluding(e.getDataViewer());
-   }
-
-   private void attachToDataViewer(DataViewer viewer) {
-      if (viewer == null || viewer.isClosed()) {
-         detachFromDataViewer(); // Just in case
-         return;
-      }
-      if (viewer != viewer_) {
-         frame_.setTitle(String.format("Inspect \"%s\"", viewer.getName()));
-         
-         for (SectionInfo secInfo : sections_) { // attach each individual section to the viewer.
-            if (secInfo.plugin_.isApplicableToDataViewer(viewer)) {
-               secInfo.inspectorSectionController_.setEnabled(true);
-               secInfo.inspectorPanelController_.attachDataViewer(viewer);
-            } else {
-               secInfo.inspectorSectionController_.setEnabled(false);
-            }
-         }
-         
-         viewer_ = viewer;
-      }
-   }
-
-   private void detachFromDataViewer() {
-      frame_.setTitle(String.format("Inspector: No Image"));
-      for (SectionInfo sectionInfo : sections_) { //Detach all controllers from the current viewer.
-         sectionInfo.inspectorPanelController_.detachDataViewer();
-      }
-   }
-
-   @Override
-   public void registerForEvents(Object recipient) {
-      eventBus_.register(recipient);
-   }
-
-   @Override
-   public void unregisterForEvents(Object recipient) {
-      eventBus_.unregister(recipient);
-   }
-
-
-   // Stragety classes for different ways in which to determine which viewer to
-   // attach to
-   private interface AttachmentStrategy {
-      void attachmentStrategySelected();
-      void viewerShown(DataViewer viewer);
-      void viewerHidden(DataViewer viewer);
-      void viewerActivated(DataViewer viewer);
-      void viewerDeactivated(DataViewer viewer);
-      void viewerWillClose(DataViewer viewer);
-   }
-
-   private class NullAttachmentStrategy implements AttachmentStrategy {
-      @Override
-      public void attachmentStrategySelected() {
-         detachFromDataViewer();
+      for (SectionInfo secInfo : sections_) { // attach each individual section to the viewer.
+        if (secInfo.plugin_.isApplicableToDataViewer(viewer)) {
+          secInfo.inspectorSectionController_.setEnabled(true);
+          secInfo.inspectorPanelController_.attachDataViewer(viewer);
+        } else {
+          secInfo.inspectorSectionController_.setEnabled(false);
+        }
       }
 
-      @Override
-      public void viewerShown(DataViewer viewer) {
+      viewer_ = viewer;
+    }
+  }
+
+  private void detachFromDataViewer() {
+    frame_.setTitle(String.format("Inspector: No Image"));
+    for (SectionInfo sectionInfo : sections_) { // Detach all controllers from the current viewer.
+      sectionInfo.inspectorPanelController_.detachDataViewer();
+    }
+  }
+
+  @Override
+  public void registerForEvents(Object recipient) {
+    eventBus_.register(recipient);
+  }
+
+  @Override
+  public void unregisterForEvents(Object recipient) {
+    eventBus_.unregister(recipient);
+  }
+
+  // Stragety classes for different ways in which to determine which viewer to
+  // attach to
+  private interface AttachmentStrategy {
+    void attachmentStrategySelected();
+
+    void viewerShown(DataViewer viewer);
+
+    void viewerHidden(DataViewer viewer);
+
+    void viewerActivated(DataViewer viewer);
+
+    void viewerDeactivated(DataViewer viewer);
+
+    void viewerWillClose(DataViewer viewer);
+  }
+
+  private class NullAttachmentStrategy implements AttachmentStrategy {
+    @Override
+    public void attachmentStrategySelected() {
+      detachFromDataViewer();
+    }
+
+    @Override
+    public void viewerShown(DataViewer viewer) {}
+
+    @Override
+    public void viewerHidden(DataViewer viewer) {}
+
+    @Override
+    public void viewerActivated(DataViewer viewer) {}
+
+    @Override
+    public void viewerDeactivated(DataViewer viewer) {}
+
+    @Override
+    public void viewerWillClose(DataViewer viewer) {}
+  }
+
+  private class FixedAttachmentStrategy implements AttachmentStrategy {
+    private final DataViewer viewer_;
+
+    public FixedAttachmentStrategy(DataViewer viewer) {
+      viewer_ = viewer;
+    }
+
+    @Override
+    public void attachmentStrategySelected() {
+      if (viewer_ != null) {
+        attachToDataViewer(viewer_);
+      } else {
+        detachFromDataViewer();
       }
+      // TODO Coordinate with explicit show/hide of the inspector
+      InspectorController.this.setVisible(viewer_.isVisible());
+    }
 
-      @Override
-      public void viewerHidden(DataViewer viewer) {
+    @Override
+    public void viewerShown(DataViewer viewer) {
+      if (viewer == viewer_) {
+        // TODO Coordinate with explicit show/hide of the inspector
+        InspectorController.this.setVisible(true);
       }
+    }
 
-      @Override
-      public void viewerActivated(DataViewer viewer) {
+    @Override
+    public void viewerHidden(DataViewer viewer) {
+      if (viewer == viewer_) {
+        // TODO Coordinate with explicit show/hide of the inspector
+        InspectorController.this.setVisible(false);
       }
+    }
 
-      @Override
-      public void viewerDeactivated(DataViewer viewer) {
+    @Override
+    public void viewerActivated(DataViewer viewer) {}
+
+    @Override
+    public void viewerDeactivated(DataViewer viewer) {}
+
+    @Override
+    public void viewerWillClose(DataViewer viewer) {
+      if (viewer == viewer_) {
+        InspectorController.this.close();
       }
+    }
+  }
 
-      @Override
-      public void viewerWillClose(DataViewer viewer) {
+  private class FrontmostAttachmentStrategy implements AttachmentStrategy {
+    private DataViewer viewer_;
+
+    @Override
+    public void attachmentStrategySelected() {
+      viewer_ = viewerCollection_.getActiveDataViewer();
+      if (viewer_ != null) {
+        attachToDataViewer(viewer_);
+      } else {
+        detachFromDataViewer();
       }
-   }
+    }
 
-   private class FixedAttachmentStrategy implements AttachmentStrategy {
-      private final DataViewer viewer_;
+    @Override
+    public void viewerShown(DataViewer viewer) {}
 
-      public FixedAttachmentStrategy(DataViewer viewer) {
-         viewer_ = viewer;
+    @Override
+    public void viewerHidden(DataViewer viewer) {}
+
+    @Override
+    public void viewerActivated(DataViewer viewer) {
+      attachToDataViewer(viewer);
+      viewer_ = viewer;
+    }
+
+    @Override
+    public void viewerDeactivated(DataViewer viewer) {
+      if (viewer == viewer_) {
+        detachFromDataViewer();
+        viewer_ = null;
       }
+    }
 
-      @Override
-      public void attachmentStrategySelected() {
-         if (viewer_ != null) {
-            attachToDataViewer(viewer_);
-         }
-         else {
-            detachFromDataViewer();
-         }
-         // TODO Coordinate with explicit show/hide of the inspector
-         InspectorController.this.setVisible(viewer_.isVisible());
+    @Override
+    public void viewerWillClose(DataViewer viewer) {
+      if (viewer == viewer_) {
+        detachFromDataViewer();
+        viewer_ = null;
       }
-
-      @Override
-      public void viewerShown(DataViewer viewer) {
-         if (viewer == viewer_) {
-            // TODO Coordinate with explicit show/hide of the inspector
-            InspectorController.this.setVisible(true);
-         }
-      }
-
-      @Override
-      public void viewerHidden(DataViewer viewer) {
-         if (viewer == viewer_) {
-            // TODO Coordinate with explicit show/hide of the inspector
-            InspectorController.this.setVisible(false);
-         }
-      }
-
-      @Override
-      public void viewerActivated(DataViewer viewer) {
-      }
-
-      @Override
-      public void viewerDeactivated(DataViewer viewer) {
-      }
-
-      @Override
-      public void viewerWillClose(DataViewer viewer) {
-         if (viewer == viewer_) {
-            InspectorController.this.close();
-         }
-      }
-   }
-
-   private class FrontmostAttachmentStrategy
-         implements AttachmentStrategy
-   {
-      private DataViewer viewer_;
-
-      @Override
-      public void attachmentStrategySelected() {
-         viewer_ = viewerCollection_.getActiveDataViewer();
-         if (viewer_ != null) {
-            attachToDataViewer(viewer_);
-         }
-         else {
-            detachFromDataViewer();
-         }
-      }
-
-      @Override
-      public void viewerShown(DataViewer viewer) {
-      }
-
-      @Override
-      public void viewerHidden(DataViewer viewer) {
-      }
-
-      @Override
-      public void viewerActivated(DataViewer viewer) {
-         attachToDataViewer(viewer);
-         viewer_ = viewer;
-      }
-
-      @Override
-      public void viewerDeactivated(DataViewer viewer) {
-         if (viewer == viewer_) {
-            detachFromDataViewer();
-            viewer_ = null;
-         }
-      }
-
-      @Override
-      public void viewerWillClose(DataViewer viewer) {
-         if (viewer == viewer_) {
-            detachFromDataViewer();
-            viewer_ = null;
-         }
-      }
-   }
+    }
+  }
 }

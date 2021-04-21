@@ -4,42 +4,33 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.embl.rieslab.emu.ui.ConfigurablePanel;
 
-public class BoolInternalProperty extends InternalProperty<AtomicBoolean, Boolean>{
+public class BoolInternalProperty extends InternalProperty<AtomicBoolean, Boolean> {
 
-	public BoolInternalProperty(ConfigurablePanel owner, String name, Boolean defaultvalue) {
-		super(owner, name, defaultvalue);
-	}
+  public BoolInternalProperty(ConfigurablePanel owner, String name, Boolean defaultvalue) {
+    super(owner, name, defaultvalue);
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public InternalPropertyType getType() {
-		return InternalPropertyType.BOOLEAN;
-	}
+  /** {@inheritDoc} */
+  @Override
+  public InternalPropertyType getType() {
+    return InternalPropertyType.BOOLEAN;
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected Boolean convertValue(AtomicBoolean val) {
-		return val.get();
-	}
+  /** {@inheritDoc} */
+  @Override
+  protected Boolean convertValue(AtomicBoolean val) {
+    return val.get();
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected void setAtomicValue(Boolean val) {
-		getAtomicValue().set(val);
-	}
+  /** {@inheritDoc} */
+  @Override
+  protected void setAtomicValue(Boolean val) {
+    getAtomicValue().set(val);
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected AtomicBoolean initializeDefault(Boolean defaultval) {
-		return new AtomicBoolean(defaultval);
-	}
-
+  /** {@inheritDoc} */
+  @Override
+  protected AtomicBoolean initializeDefault(Boolean defaultval) {
+    return new AtomicBoolean(defaultval);
+  }
 }

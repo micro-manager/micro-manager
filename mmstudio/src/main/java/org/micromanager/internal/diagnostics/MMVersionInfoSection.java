@@ -12,17 +12,21 @@
 package org.micromanager.internal.diagnostics;
 
 class MMVersionInfoSection implements SystemInfo.SystemInfoSection {
-   public String getTitle() { return "Micro-Manager version information"; }
+  public String getTitle() {
+    return "Micro-Manager version information";
+  }
 
-   public String getReport() {
-      StringBuilder sb = new StringBuilder();
+  public String getReport() {
+    StringBuilder sb = new StringBuilder();
 
-      sb.append("MMStudio version: ").append(org.micromanager.internal.MMVersion.VERSION_STRING).append('\n');
+    sb.append("MMStudio version: ")
+        .append(org.micromanager.internal.MMVersion.VERSION_STRING)
+        .append('\n');
 
-      mmcorej.CMMCore core = org.micromanager.internal.MMStudio.getInstance().core();
-      sb.append("Core version: ").append(core.getVersionInfo()).append('\n');
-      sb.append("Core device API version: ").append(core.getAPIVersionInfo());
+    mmcorej.CMMCore core = org.micromanager.internal.MMStudio.getInstance().core();
+    sb.append("Core version: ").append(core.getVersionInfo()).append('\n');
+    sb.append("Core device API version: ").append(core.getAPIVersionInfo());
 
-      return sb.toString();
-   }
+    return sb.toString();
+  }
 }
