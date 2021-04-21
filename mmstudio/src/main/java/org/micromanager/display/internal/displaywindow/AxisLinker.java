@@ -6,17 +6,18 @@
 package org.micromanager.display.internal.displaywindow;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Collection;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayPositionChangedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.link.AbstractLinkAnchor;
 import org.micromanager.display.internal.link.LinkAnchor;
 import org.micromanager.display.internal.link.LinkManager;
-
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Collection;
 
 /** @author mark */
 class AxisLinker {

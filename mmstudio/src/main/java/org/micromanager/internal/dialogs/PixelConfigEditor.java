@@ -20,13 +20,18 @@
 
 package org.micromanager.internal.dialogs;
 
-import mmcorej.StrVector;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.*;
-
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.geom.AffineTransform;
 import java.text.ParseException;
+import mmcorej.StrVector;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.AffineUtils;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.PropertyTableData;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /** @author nico */
 public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider {

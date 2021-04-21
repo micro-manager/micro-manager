@@ -21,11 +21,11 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
-
-import java.awt.*;
-import java.awt.event.MouseEvent;
 
 /** @author OD, nico */
 public final class CenterAndDragListener {

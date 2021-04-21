@@ -26,10 +26,9 @@
 //
 package org.micromanager;
 
+import java.util.Objects;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.utils.NumberUtils;
-
-import java.util.Objects;
 
 /**
  * Description of the position of a 1 or 2 axis stage

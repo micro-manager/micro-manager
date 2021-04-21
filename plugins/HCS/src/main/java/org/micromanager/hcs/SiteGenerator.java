@@ -515,9 +515,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
     isCalibratedXY_ =
         Double.isFinite(offset[0])
             && Double.isFinite(
-                offset[
-                    1]); // If the offset appears to be valid numbers then a calibration was
-                         // previously run.
+                offset[1]); // If the offset appears to be valid numbers then a calibration was
+    // previously run.
     offset_ = new Point2D.Double(offset[0], offset[1]);
     moveStage_.setEnabled(isCalibratedXY_);
   }

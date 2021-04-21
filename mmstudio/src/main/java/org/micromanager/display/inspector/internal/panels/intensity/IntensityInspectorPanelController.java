@@ -2,6 +2,26 @@ package org.micromanager.display.inspector.internal.panels.intensity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
 import net.miginfocom.layout.AC;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
@@ -23,14 +43,6 @@ import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunna
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /** @author mark */
 public class IntensityInspectorPanelController extends AbstractInspectorPanelController {

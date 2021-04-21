@@ -20,7 +20,7 @@
 
 package org.micromanager.display;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
 
 /**

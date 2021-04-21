@@ -21,15 +21,46 @@
 package org.micromanager.acquisition.internal;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.Timer;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.alerts.UpdatableAlert;
-import org.micromanager.data.*;
-import org.micromanager.data.internal.*;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProviderHasNewImageEvent;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
+import org.micromanager.data.Storage;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.CommentsHelper;
+import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.data.internal.StorageRAM;
+import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.display.*;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DataViewerListener;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.DisplaySettingsChangedEvent;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.AcquisitionEndedEvent;
@@ -37,15 +68,6 @@ import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * This class is used to execute most of the acquisition and image display functionality in the

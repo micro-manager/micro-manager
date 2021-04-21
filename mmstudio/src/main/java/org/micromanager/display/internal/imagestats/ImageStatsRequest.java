@@ -14,13 +14,12 @@
 package org.micromanager.display.internal.imagestats;
 
 import com.google.common.base.Preconditions;
-import org.micromanager.data.Coords;
-import org.micromanager.data.Image;
-
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
 
 /**
  * An image together with parameters for statistics computation.

@@ -1,8 +1,7 @@
 package org.micromanager.events.internal;
 
-import org.micromanager.events.PixelSizeAffineChangedEvent;
-
 import java.awt.geom.AffineTransform;
+import org.micromanager.events.PixelSizeAffineChangedEvent;
 
 public class DefaultPixelSizeAffineChangedEvent implements PixelSizeAffineChangedEvent {
   private final AffineTransform affine_;

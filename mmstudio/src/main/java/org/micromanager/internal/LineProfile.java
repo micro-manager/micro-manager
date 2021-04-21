@@ -6,15 +6,14 @@ import ij.WindowManager;
 import ij.gui.Line;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+import java.awt.Rectangle;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import javax.swing.JFrame;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher.ImageStatsChangedEvent;
 import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.GraphFrame;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 /** This class collects information related to the Line Profile display. */
 public final class LineProfile {

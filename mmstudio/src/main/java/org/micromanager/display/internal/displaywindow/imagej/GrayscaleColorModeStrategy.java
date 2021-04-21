@@ -7,8 +7,7 @@ package org.micromanager.display.internal.displaywindow.imagej;
 
 import com.google.common.base.Preconditions;
 import ij.CompositeImage;
-
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collections;
 
 /** @author mark */

@@ -19,6 +19,14 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.internal.dialogs;
 
+import java.awt.Dimension;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.PropertyType;
@@ -26,13 +34,11 @@ import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.PropertyTableData;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.SortFunctionObjects;
+import org.micromanager.internal.utils.WindowPositioning;
 
 public final class GroupEditor extends ConfigDialog {
 

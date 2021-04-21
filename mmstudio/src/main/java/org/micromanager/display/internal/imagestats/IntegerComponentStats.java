@@ -14,7 +14,6 @@
 package org.micromanager.display.internal.imagestats;
 
 import com.google.common.base.Preconditions;
-
 import java.util.Arrays;
 
 /**

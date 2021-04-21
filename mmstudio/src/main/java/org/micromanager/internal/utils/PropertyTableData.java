@@ -1,13 +1,16 @@
 package org.micromanager.internal.utils;
 
-import mmcorej.*;
-import org.micromanager.Studio;
-
-import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.table.AbstractTableModel;
+import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.DeviceType;
+import mmcorej.PropertySetting;
+import mmcorej.StrVector;
+import org.micromanager.Studio;
 
 /** Property table data model, representing MMCore data */
 public class PropertyTableData extends AbstractTableModel implements MMPropertyTableModel {

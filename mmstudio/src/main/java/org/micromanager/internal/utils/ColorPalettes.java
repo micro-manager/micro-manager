@@ -1,5 +1,22 @@
 package org.micromanager.internal.utils;
 
+import static java.lang.Math.exp;
+import static java.lang.Math.log;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Shape;
+import java.awt.color.ColorSpace;
+import java.awt.geom.Ellipse2D;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jfree.chart.ChartFactory;
@@ -10,18 +27,6 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.color.ColorSpace;
-import java.awt.geom.Ellipse2D;
-import java.util.List;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static java.lang.Math.exp;
-import static java.lang.Math.log;
 
 /** @author mark */
 public final class ColorPalettes {

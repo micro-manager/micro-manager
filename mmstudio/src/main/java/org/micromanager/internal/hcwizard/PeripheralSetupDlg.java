@@ -1,17 +1,25 @@
 package org.micromanager.internal.hcwizard;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Vector;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.WindowPositioning;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.AbstractTableModel;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Vector;
 
 public final class PeripheralSetupDlg extends JDialog {
 

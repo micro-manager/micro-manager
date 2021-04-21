@@ -13,11 +13,14 @@
 
 package org.micromanager.internal.utils.performance.gui;
 
-import org.micromanager.internal.utils.performance.PerformanceMonitor;
-
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import org.micromanager.internal.utils.performance.PerformanceMonitor;
 
 /**
  * Display time series performance statistics in a frame.

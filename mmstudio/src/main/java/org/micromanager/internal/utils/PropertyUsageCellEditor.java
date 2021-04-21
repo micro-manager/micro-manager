@@ -1,10 +1,12 @@
 package org.micromanager.internal.utils;
 
-import javax.swing.*;
-import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JCheckBox;
+import javax.swing.JTable;
+import javax.swing.table.TableCellEditor;
 
 /** @author arthur */
 public final class PropertyUsageCellEditor extends AbstractCellEditor implements TableCellEditor {

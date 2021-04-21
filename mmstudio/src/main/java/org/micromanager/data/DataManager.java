@@ -20,16 +20,16 @@
 
 package org.micromanager.data;
 
-import mmcorej.TaggedImage;
-import mmcorej.org.json.JSONException;
-import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
-
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Window;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import mmcorej.TaggedImage;
+import mmcorej.org.json.JSONException;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 
 /**
  * This class provides general utility functions for working with Micro-Manager data. You can access

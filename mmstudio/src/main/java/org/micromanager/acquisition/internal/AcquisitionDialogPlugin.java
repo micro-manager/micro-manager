@@ -19,9 +19,8 @@
 
 package org.micromanager.acquisition.internal;
 
+import javax.swing.ImageIcon;
 import org.micromanager.MMPlugin;
-
-import javax.swing.*;
 
 /**
  * This plugin type allows you to override the Multi-Dimensional Acquisition dialog used to perform

@@ -7,8 +7,28 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.html.HtmlEscapers;
-import com.google.gson.*;
-import org.micromanager.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.micromanager.Album;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
+import org.micromanager.SnapLiveManager;
+import org.micromanager.StagePosition;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
@@ -21,11 +41,6 @@ import org.micromanager.internal.propertymap.MM1JSONSerializer;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.util.List;
-import java.util.*;
 
 /**
  * Keys that appear in the JSON-formatted metadata (and a few other pieces of data) in the
@@ -859,7 +874,7 @@ public enum PropertyKey {
           if (!msp.containsInteger(
               STAGE_POSITION__NUMAXES
                   .key())) { // "modern" (or also "old"?  who knows...) format that has just the
-                             // name
+            // name
             // and coordinates for whatever axes the device has
             devPositions.add(msp);
           } else { // old format with 3 values

@@ -21,12 +21,16 @@
 package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
-import org.micromanager.data.*;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.data.RewritableStorage;
+import org.micromanager.data.SummaryMetadata;
 
 /**
  * Simple RAM-based storage for Datastores. Methods that interact with the HashMap that is our image

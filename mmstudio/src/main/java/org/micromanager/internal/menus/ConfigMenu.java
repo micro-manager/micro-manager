@@ -1,6 +1,15 @@
 package org.micromanager.internal.menus;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Cursor;
+import java.io.File;
+import java.util.HashSet;
+import javax.swing.JDialog;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.internal.MMStudio;
@@ -10,11 +19,6 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
-import java.util.HashSet;
 
 public final class ConfigMenu {
 

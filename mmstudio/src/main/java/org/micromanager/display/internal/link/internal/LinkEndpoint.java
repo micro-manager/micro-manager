@@ -5,11 +5,10 @@
  */
 package org.micromanager.display.internal.link.internal;
 
-import org.micromanager.EventPublisher;
-import org.micromanager.display.internal.link.LinkAnchor;
-
 import java.util.Collection;
 import java.util.List;
+import org.micromanager.EventPublisher;
+import org.micromanager.display.internal.link.LinkAnchor;
 
 /** @author mark */
 public interface LinkEndpoint extends EventPublisher {

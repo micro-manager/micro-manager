@@ -1,6 +1,9 @@
 package org.micromanager.internal.utils;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;

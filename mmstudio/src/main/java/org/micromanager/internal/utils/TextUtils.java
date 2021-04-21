@@ -23,8 +23,11 @@
 package org.micromanager.internal.utils;
 
 import com.google.common.io.Files;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DecimalFormat;
 
 public final class TextUtils {

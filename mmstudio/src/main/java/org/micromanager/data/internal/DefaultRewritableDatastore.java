@@ -20,12 +20,18 @@
 
 package org.micromanager.data.internal;
 
-import org.micromanager.data.*;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.ReportingUtils;
-
 import java.io.IOException;
 import java.util.List;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Image;
+import org.micromanager.data.RewritableDatastore;
+import org.micromanager.data.RewritableStorage;
+import org.micromanager.data.Storage;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultRewritableDatastore extends DefaultDatastore
     implements RewritableDatastore {

@@ -11,7 +11,8 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
-import javax.swing.*;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 class ProblemDescriptionPanel extends javax.swing.JPanel {
   private final ProblemReportController controller_;

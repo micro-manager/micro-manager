@@ -7,8 +7,11 @@ package org.micromanager.internal.utils;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /** @author mark */
 public final class ChainedMapView<K, V> implements Map<K, V> {

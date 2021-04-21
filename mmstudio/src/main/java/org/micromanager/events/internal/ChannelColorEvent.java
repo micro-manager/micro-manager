@@ -1,6 +1,6 @@
 package org.micromanager.events.internal;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Signals that the user assigned a new color to a channel Used to synchronize the color used to

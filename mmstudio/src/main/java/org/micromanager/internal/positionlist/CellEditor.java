@@ -1,10 +1,13 @@
 package org.micromanager.internal.positionlist;
 
-import javax.swing.*;
-import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.table.TableCellEditor;
 
 /** Editor component for the position list table */
 public final class CellEditor extends AbstractCellEditor implements TableCellEditor, FocusListener {

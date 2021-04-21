@@ -1,9 +1,8 @@
 package org.micromanager.internal.utils;
 
+import java.io.IOException;
 import org.micromanager.SnapLiveManager;
 import org.micromanager.internal.MMStudio;
-
-import java.io.IOException;
 
 /**
  * Storage container for HotKeyActions

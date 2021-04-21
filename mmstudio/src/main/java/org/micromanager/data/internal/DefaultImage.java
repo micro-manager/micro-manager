@@ -21,7 +21,14 @@
 package org.micromanager.data.internal;
 
 import com.google.common.base.Preconditions;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
@@ -34,10 +41,6 @@ import org.micromanager.data.Metadata;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
-
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ShortBuffer;
 
 /**
  * This class represents a single image from a single camera. It contains the image pixel data,

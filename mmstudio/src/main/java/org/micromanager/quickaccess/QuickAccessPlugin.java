@@ -19,10 +19,9 @@
 
 package org.micromanager.quickaccess;
 
+import java.awt.Dimension;
+import javax.swing.ImageIcon;
 import org.micromanager.MMPlugin;
-
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * QuickAccessPlugins are used for controls that can show up in the Quick- Access Window, which

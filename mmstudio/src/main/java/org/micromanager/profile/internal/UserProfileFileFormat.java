@@ -6,15 +6,14 @@
 package org.micromanager.profile.internal;
 
 import com.google.common.collect.Lists;
-import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
-
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 
 /**
  * The profile and profile index container file formats.

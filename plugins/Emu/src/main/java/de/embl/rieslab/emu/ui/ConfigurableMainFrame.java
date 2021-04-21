@@ -425,9 +425,8 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
     while (it.hasNext()) {
       pan = it.next();
 
-      pan
-          .updateAllParameters(); // so that parameters values can be used for UIProperties
-                                  // (RescaledUIProperty)
+      pan.updateAllParameters(); // so that parameters values can be used for UIProperties
+      // (RescaledUIProperty)
       pan.updateAllProperties();
     }
   }

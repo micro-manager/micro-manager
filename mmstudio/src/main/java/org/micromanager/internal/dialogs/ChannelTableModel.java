@@ -1,5 +1,11 @@
 package org.micromanager.internal.dialogs;
 
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.AbstractTableModel;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
@@ -10,13 +16,6 @@ import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import javax.swing.event.TableModelEvent;
-import javax.swing.table.AbstractTableModel;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /** Data representation class for the channels list in the MDA dialog. */
 public final class ChannelTableModel extends AbstractTableModel {

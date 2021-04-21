@@ -2,6 +2,16 @@ package org.micromanager.internal.menus;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import mmcorej.CMMCore;
 import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
@@ -13,12 +23,6 @@ import org.micromanager.internal.utils.HotKeysDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 import org.micromanager.quickaccess.internal.QuickAccessPanelEvent;
-
-import javax.swing.*;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
 
 public final class ToolsMenu {
 

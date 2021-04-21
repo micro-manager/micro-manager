@@ -20,6 +20,8 @@
 
 package org.micromanager.internal.dialogs;
 
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
@@ -28,8 +30,6 @@ import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
-
-import java.awt.*;
 
 public final class PresetEditor extends ConfigDialog {
 

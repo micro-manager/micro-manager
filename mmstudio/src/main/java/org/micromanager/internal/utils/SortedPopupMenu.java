@@ -21,9 +21,11 @@
 //
 package org.micromanager.internal.utils;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.MenuElement;
 
 /**
  * Simple extension of JPopupMenu whose menu items remained alphabetically ordered. Mostly a copy of

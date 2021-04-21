@@ -332,7 +332,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     pu.addListenerLast(
         stepSize_,
         recalculateTimingDisplayCL); // needed only for stage scanning b/c acceleration time related
-                                     // to speed
+    // to speed
     volPanel_.add(stepSize_, "wrap");
 
     // end volume sub-panel
@@ -1251,7 +1251,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         globalExposureDelay_max
             - scanLaserBufferTime // start scan 0.25ms before camera's global exposure
             - scanDelayFilter; // start galvo moving early due to card's Bessel filter and delay of
-                               // TTL signals via PLC
+    // TTL signals via PLC
     s.scanNum = 1;
     s.scanPeriod = scanDuration;
     s.laserDelay =
@@ -1284,7 +1284,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         s.cameraExposure =
             cameraExposure
                 + 0.1f; // add 0.1ms as safety margin, may require adding an additional 0.25ms to
-                        // slice
+        // slice
         // slight delay between trigger and actual exposure start
         // is included in exposure time for Hamamatsu and negligible for Andor and PCO cameras
         // ensure not to miss triggers by not being done with readout in time for next trigger, add
@@ -1307,7 +1307,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         s.cameraExposure = 1; // doesn't really matter, controlled by interval between triggers
         break;
       case PSEUDO_OVERLAP: // PCO or Photometrics, enforce 0.25ms between end exposure and start of
-                           // next exposure by triggering camera 0.25ms into the slice
+        // next exposure by triggering camera 0.25ms into the slice
         s.cameraDuration =
             1; // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
         if (camLibrary == Devices.Libraries.PCOCAM) {
@@ -1335,13 +1335,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         s.cameraDuration = 1; // only need to trigger camera
         final float shutterWidth =
             props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH);
-        final int shutterSpeed =
-            1; // props_.getPropValueInteger(Devices.Keys.PLUGIN,
-               // Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+        final int shutterSpeed = 1; // props_.getPropValueInteger(Devices.Keys.PLUGIN,
+        // Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
         float pixelSize = (float) core_.getPixelSizeUm();
         if (pixelSize
             < 1e-6) { // can't compare equality directly with floating point values so call < 1e-9
-                      // is zero or negative
+          // is zero or negative
           pixelSize = 0.1625f; // default to pixel size of 40x with sCMOS = 6.5um/40
         }
         final double rowReadoutTime = getRowReadoutTime();
@@ -1359,7 +1358,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         s.laserDelay =
             s.cameraDelay
                 - scanLaserBufferTime; // trigger laser just before camera to make sure it's on
-                                       // already
+        // already
         s.laserDuration =
             totalExposure_max + scanLaserBufferTime; // laser will turn off as exposure is ending
         break;
@@ -1496,7 +1495,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                 Devices.Keys.XYSTAGE,
                 Properties.Keys
                     .STAGESCAN_MAX_MOTOR_SPEED); // retrace speed set to 67% of max speed in
-                                                 // firmware
+    // firmware
     final double speedFactor = ASIdiSPIM.OSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
     final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
     final double accelerationX =
@@ -1866,7 +1865,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         try {
           ReportingUtils.logDebugMessage("User requested start of diSPIM acquisition.");
           if (isAcquisitionRequested()) { // don't allow acquisition to be requested again, just
-                                          // return
+            // return
             ReportingUtils.logError("another acquisition already running");
             return;
           }
@@ -1936,7 +1935,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET
         && core_.getPixelSizeUm()
             < 1e-6) { // can't compare equality directly with floating point values so call < 1e-9
-                      // is zero or negative
+      // is zero or negative
       ReportingUtils.showError(
           "Need to configure pixel size in Micro-Manager to use light sheet mode.");
       return false;
@@ -2929,8 +2928,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         [2
                             * acqSettings
                                 .numChannels]; // keep track of how many frames we have received for
-                                               // each "channel" (MM channel is our channel * 2 for
-                                               // the 2 cameras)
+                // each "channel" (MM channel is our channel * 2 for
+                // the 2 cameras)
                 int[] cameraFrNumber =
                     new int[2]; // keep track of how many frames we have received from the camera
                 int[] tpNumber =
@@ -2938,7 +2937,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         [2
                             * acqSettings
                                 .numChannels]; // keep track of which timepoint we are on for
-                                               // hardware timepoints
+                // hardware timepoints
                 int imagesToSkip =
                     0; // hardware timepoints have to drop spurious images with overlap mode
                 final boolean checkForSkips =
@@ -2948,7 +2947,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                 long timeout2 = Math.max(1000, Math.round(5 * sliceDuration));
                 if (acqSettings
                     .isStageScanning) { // for stage scanning have to allow extra time for
-                                        // turn-around
+                  // turn-around
                   timeout2 +=
                       (2
                           * (long)
@@ -2956,9 +2955,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                   getStageRampDuration(acqSettings))); // ramp up and then down
                   timeout2 +=
                       5000; // ample extra time for turn-around (e.g. antibacklash move in Y),
-                            // interestingly 500ms extra seems insufficient for reasons I don't
-                            // understand yet so just pad this for now  // TODO figure out why
-                            // turn-aronud is taking so long
+                  // interestingly 500ms extra seems insufficient for reasons I don't
+                  // understand yet so just pad this for now  // TODO figure out why
+                  // turn-aronud is taking so long
                   if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
                     timeout2 +=
                         (long)
@@ -3062,7 +3061,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                           && frNumber[channelIndex]
                               >= acqSettings
                                   .numSlices) { // only do this if we are done with the slices in
-                                                // this MM channel
+                        // this MM channel
                         // we just finished filling one MM channel with all its slices so go to next
                         // timepoint for this channel
                         frNumber[channelIndex] = 0;
@@ -3120,12 +3119,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     Thread.sleep(
                         (long) volumeDuration
                             / nrChannelsSoftware); // estimate the time per channel, not ideal in
-                                                   // case of software channel switching
+                    // case of software channel switching
                     if (acqSettings.isStageScanning) {
                       Thread.sleep(
-                          1000
-                              + extraStageScanTimeout); // extra 1 second plus ramp time for stage
-                                                        // scanning
+                          1000 + extraStageScanTimeout); // extra 1 second plus ramp time for stage
+                      // scanning
                     }
                   }
 

@@ -22,8 +22,8 @@
 //
 package org.micromanager.internal.utils;
 
-import javax.swing.filechooser.FileFilter;
 import java.io.File;
+import javax.swing.filechooser.FileFilter;
 
 /** File filter class for Open/Save file choosers */
 public final class ScriptFileFilter extends FileFilter {

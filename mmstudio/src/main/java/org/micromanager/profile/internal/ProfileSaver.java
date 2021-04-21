@@ -7,7 +7,6 @@ package org.micromanager.profile.internal;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
-
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;

@@ -25,15 +25,14 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
-import org.micromanager.data.Image;
-import org.micromanager.display.DataViewer;
-import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JOptionPane;
+import org.micromanager.data.Image;
+import org.micromanager.display.DataViewer;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class MMROIManager {
   private final MMStudio studio_;

@@ -245,7 +245,7 @@ public class ConfigurationWizardUI {
                 tabbedpane,
                 tabbedpane
                     .getSelectedIndex()); // updates property and parameter tab when the settings
-                                          // have changed
+            // have changed
           }
         });
 

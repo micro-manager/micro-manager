@@ -15,14 +15,16 @@
 
 package org.micromanager.internal.utils;
 
+import java.awt.Dialog;
+import java.awt.FileDialog;
+import java.awt.Frame;
+import java.awt.Window;
+import java.io.File;
+import javax.swing.JFileChooser;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
 
 public final class FileDialogs {
 

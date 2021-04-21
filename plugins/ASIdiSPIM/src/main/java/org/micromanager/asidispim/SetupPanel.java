@@ -108,16 +108,16 @@ public final class SetupPanel extends ListeningJPanel {
   private final JFormattedTextField rateField_;
   private Devices.Keys
       piezoImagingDeviceKey_; // assigned in constructor based on side, can be updated by
-                              // deviceChange event
+  // deviceChange event
   private Devices.Keys
       piezoIlluminationDeviceKey_; // assigned in constructor based on side, can be updated by
-                                   // deviceChange event
+  // deviceChange event
   private Devices.Keys
       micromirrorDeviceKey_; // assigned in constructor based on side, can be updated by
-                             // deviceChange event
+  // deviceChange event
   private Devices.Keys
       cameraDeviceKey_; // assigned in constructor based on side, can be updated by deviceChange
-                        // event
+  // event
   private final StoredFloatLabel imagingCenterPosLabel_;
   private final JLabel slicePositionLabel_;
   private final JLabel imagingPiezoPositionLabel_;
@@ -673,13 +673,13 @@ public final class SetupPanel extends ListeningJPanel {
                     micromirrorDeviceKey_,
                     Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
             1000, // the scale factor between internal integer representation and float
-                  // representation
+            // representation
             Devices.Keys.PLUGIN,
             widthPropNormal_);
     pu.addListenerLast(
         sheetWidthSlider_,
         new ChangeListener() { // make sure to update the controller value whenever the slider is
-                               // changed
+          // changed
           @Override
           public void stateChanged(ChangeEvent ce) {
             JSlider source = (JSlider) ce.getSource();
@@ -709,7 +709,7 @@ public final class SetupPanel extends ListeningJPanel {
     sheetPanelNormal_.add(
         new JLabel(""),
         "span 3"); // TODO update this label with current value and/or allow user to directly enter
-                   // value
+    // value
     tmp_but = new JButton("Center");
     tmp_but.setMargin(new Insets(4, 8, 4, 8));
     final Properties.Keys offsetProp =
@@ -742,13 +742,13 @@ public final class SetupPanel extends ListeningJPanel {
             props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X)
                 / 4, // max value
             1000, // the scale factor between internal integer representation and float
-                  // representation
+            // representation
             Devices.Keys.PLUGIN,
             offsetProp);
     pu.addListenerLast(
         sheetOffsetSlider_,
         new ChangeListener() { // make sure to update the controller value whenever the slider is
-                               // changed
+          // changed
           @Override
           public void stateChanged(ChangeEvent ce) {
             JSlider source = (JSlider) ce.getSource();

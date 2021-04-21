@@ -24,9 +24,25 @@ import ij.gui.Roi;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
 import ij.process.ByteProcessor;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.MenuBar;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import net.imglib2.display.ColorTable8;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
-import org.micromanager.data.*;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
@@ -35,15 +51,6 @@ import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MustCallOnEDT;
-
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.geom.Rectangle2D;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Bridge to ImageJ1 image viewer window.
@@ -615,7 +622,7 @@ public final class ImageJBridge {
         mm2ijSetMetadata(
             pixelSize,
             pixelSize, // TODO: add asepct ratio here, however, that currently throws a null pointer
-                       // exception
+            // exception
             zStepSize,
             timeInterval,
             sample.getWidth(),

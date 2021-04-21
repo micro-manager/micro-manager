@@ -20,16 +20,23 @@
 
 package org.micromanager.internal.dialogs;
 
+import java.awt.Dimension;
+import java.awt.HeadlessException;
+import java.awt.Toolkit;
+import java.awt.geom.AffineTransform;
+import java.text.ParseException;
+import javax.swing.JOptionPane;
 import mmcorej.Configuration;
 import mmcorej.DoubleVector;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.text.ParseException;
+import org.micromanager.internal.utils.AffineUtils;
+import org.micromanager.internal.utils.CalibrationList;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.PropertyTableData;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /** @author nico */
 public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider {

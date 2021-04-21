@@ -22,9 +22,9 @@
 
 package org.micromanager;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.io.IOException;
+import javax.swing.JFrame;
 
 /**
  * Provides access to and control of various aspects of the user interface, allowing code to

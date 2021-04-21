@@ -5,10 +5,9 @@
  */
 package org.micromanager.display.internal.link.internal;
 
-import org.micromanager.internal.utils.ThreadFactoryFactory;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 /** @author mark */
 public final class LinkageFactory {

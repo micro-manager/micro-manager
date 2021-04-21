@@ -1,11 +1,10 @@
 package org.micromanager.internal.hcwizard;
 
+import java.util.ArrayList;
+import javax.swing.table.AbstractTableModel;
 import org.micromanager.internal.utils.MMPropertyTableModel;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.table.AbstractTableModel;
-import java.util.ArrayList;
 
 /** Table model for device property tables. */
 class ComPropTableModel extends AbstractTableModel implements MMPropertyTableModel {

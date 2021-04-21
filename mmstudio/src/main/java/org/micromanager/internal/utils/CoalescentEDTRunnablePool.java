@@ -13,9 +13,9 @@
 
 package org.micromanager.internal.utils;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 
 /**
  * Provide versions of SwingUtilities.invokeLater that coalesce with other outstanding invocations.

@@ -1,7 +1,6 @@
 package org.micromanager.display.internal.link.internal;
 
 import com.google.common.base.Preconditions;
-
 import java.util.HashMap;
 import java.util.Map;
 

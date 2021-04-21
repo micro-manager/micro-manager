@@ -6,17 +6,24 @@
 package org.micromanager.display.inspector.internal.panels.overlays;
 
 import com.bulenkov.iconloader.IconLoader;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayListener;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /** @author mark */
 final class OverlayConfigPanelController implements OverlayListener {

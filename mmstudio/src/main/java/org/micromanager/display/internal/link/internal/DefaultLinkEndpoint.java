@@ -8,13 +8,12 @@ package org.micromanager.display.internal.link.internal;
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import org.micromanager.display.internal.link.LinkAnchor;
-import org.micromanager.internal.utils.EventBusExceptionLogger;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.micromanager.display.internal.link.LinkAnchor;
+import org.micromanager.internal.utils.EventBusExceptionLogger;
 
 /**
  * @author Mark A. Tsuchida

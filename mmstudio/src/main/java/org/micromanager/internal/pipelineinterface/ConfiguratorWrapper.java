@@ -14,6 +14,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.internal.pipelineinterface;
 
+import java.io.IOException;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PropertyMap;
@@ -22,8 +23,6 @@ import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.io.IOException;
 
 /**
  * This class wraps around a ProcessorConfigurator, allowing it to be easily enabled or disabled

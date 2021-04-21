@@ -20,11 +20,10 @@
 
 package org.micromanager.internal.positionlist;
 
+import javax.swing.table.AbstractTableModel;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
-
-import javax.swing.table.AbstractTableModel;
 
 class PositionTableModel extends AbstractTableModel {
   private static final long serialVersionUID = 1L;

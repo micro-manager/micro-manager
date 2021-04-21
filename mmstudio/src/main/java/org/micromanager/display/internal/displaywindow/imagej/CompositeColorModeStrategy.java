@@ -6,8 +6,7 @@
 package org.micromanager.display.internal.displaywindow.imagej;
 
 import ij.CompositeImage;
-
-import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

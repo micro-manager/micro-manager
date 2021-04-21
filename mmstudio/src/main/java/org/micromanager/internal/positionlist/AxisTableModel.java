@@ -20,10 +20,9 @@
 package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.EventBus;
-import org.micromanager.internal.MMStudio;
-
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
+import org.micromanager.internal.MMStudio;
 
 /** Model holding axis data, used to determine which axis will be recorded */
 class AxisTableModel extends AbstractTableModel {

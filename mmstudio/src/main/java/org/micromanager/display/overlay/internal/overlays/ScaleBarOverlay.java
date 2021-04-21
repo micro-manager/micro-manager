@@ -20,6 +20,22 @@
 
 package org.micromanager.display.overlay.internal.overlays;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.geom.Rectangle2D;
+import java.util.List;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -30,12 +46,6 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.overlay.AbstractOverlay;
 import org.micromanager.internal.utils.DynamicTextField;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.geom.Rectangle2D;
-import java.util.List;
 
 /**
  * The scale bar overlay.

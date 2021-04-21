@@ -1,15 +1,14 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import org.micromanager.Studio;
-import org.micromanager.events.internal.DefaultStagePositionChangedEvent;
-import org.micromanager.internal.utils.ReportingUtils;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.micromanager.Studio;
+import org.micromanager.events.internal.DefaultStagePositionChangedEvent;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class ZNavigator {
   private final Studio studio_;

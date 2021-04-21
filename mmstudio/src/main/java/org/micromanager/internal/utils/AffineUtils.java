@@ -20,11 +20,10 @@
 
 package org.micromanager.internal.utils;
 
-import mmcorej.DoubleVector;
-import org.apache.commons.math.util.MathUtils;
-
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import mmcorej.DoubleVector;
+import org.apache.commons.math.util.MathUtils;
 
 /**
  * Utilities specific to the use of affine transforms in Micro-Manager Mainly concerns itself with

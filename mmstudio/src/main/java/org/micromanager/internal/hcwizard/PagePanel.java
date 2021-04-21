@@ -23,12 +23,14 @@
 
 package org.micromanager.internal.hcwizard;
 
+import java.awt.Dialog;
+import java.awt.Font;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.*;
 
 /** Wizard panel used as the abstract base class for all pages. */
 public abstract class PagePanel extends JPanel {

@@ -7,6 +7,16 @@ package org.micromanager.display.inspector.internal.panels.comments;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
+import java.io.IOException;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.Document;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -16,12 +26,6 @@ import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayDidShowImageEvent;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
-import java.io.IOException;
 
 /** @author mark */
 public final class CommentsInspectorPanelController extends AbstractInspectorPanelController

@@ -17,9 +17,30 @@ package org.micromanager.display.internal.displaywindow;
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
+import java.awt.Window;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.swing.SwingUtilities;
 import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.DataProviderHasNewImageEvent;
+import org.micromanager.data.DataProviderHasNewNameEvent;
+import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.*;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
@@ -29,7 +50,13 @@ import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.animate.DataCoordsAnimationState;
-import org.micromanager.display.internal.event.*;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.display.internal.event.DefaultDisplayDidShowImageEvent;
+import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
+import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
@@ -45,16 +72,6 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Main controller for the standard image viewer.
@@ -117,7 +134,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
   private static final AtomicInteger counter =
       new AtomicInteger(); // This static counter makes sure that each object has it's own unique id
-                           // during runtime.
+  // during runtime.
   private final Integer uid = counter.getAndIncrement();
 
   @Override

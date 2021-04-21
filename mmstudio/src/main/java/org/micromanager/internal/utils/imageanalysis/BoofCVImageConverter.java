@@ -1,20 +1,23 @@
 package org.micromanager.internal.utils.imageanalysis;
 
-import boofcv.struct.image.*;
+import boofcv.struct.image.GrayF32;
+import boofcv.struct.image.GrayU16;
+import boofcv.struct.image.GrayU8;
+import boofcv.struct.image.ImageDataType;
+import boofcv.struct.image.ImageGray;
 import georegression.struct.affine.Affine2D_F64;
 import georegression.struct.point.Point2D_I32;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.awt.geom.AffineTransform;
+import java.io.IOException;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.internal.DefaultImage;
-
-import java.awt.geom.AffineTransform;
-import java.io.IOException;
 
 /**
  * Collection of static functions that convert between ImageJ, Micro-Manager, and BoofCV images.

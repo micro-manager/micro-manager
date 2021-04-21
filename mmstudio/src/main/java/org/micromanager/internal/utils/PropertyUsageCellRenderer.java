@@ -1,10 +1,10 @@
 package org.micromanager.internal.utils;
 
-import org.micromanager.Studio;
-
-import javax.swing.*;
+import java.awt.Component;
+import javax.swing.JCheckBox;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import org.micromanager.Studio;
 
 /** @author arthur */
 public final class PropertyUsageCellRenderer implements TableCellRenderer {

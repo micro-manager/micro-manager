@@ -7,11 +7,10 @@ package org.micromanager;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-import org.micromanager.internal.propertymap.DefaultPropertyMap;
-import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
-
 import java.io.File;
 import java.io.IOException;
+import org.micromanager.internal.propertymap.DefaultPropertyMap;
+import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
 
 /**
  * Static methods to create PropertyMap instances.

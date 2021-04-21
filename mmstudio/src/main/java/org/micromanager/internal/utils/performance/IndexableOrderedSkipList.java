@@ -14,8 +14,13 @@
 package org.micromanager.internal.utils.performance;
 
 import com.google.common.base.Strings;
-
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**

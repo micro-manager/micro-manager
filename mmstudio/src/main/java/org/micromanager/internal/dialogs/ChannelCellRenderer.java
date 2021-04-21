@@ -1,13 +1,14 @@
 package org.micromanager.internal.dialogs;
 
+import java.awt.Component;
+import java.util.ArrayList;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.TableCellRenderer;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.internal.utils.NumberUtils;
-
-import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
-import java.util.ArrayList;
 
 /** Renderer class for the channel table. */
 public final class ChannelCellRenderer extends JLabel implements TableCellRenderer {

@@ -20,9 +20,8 @@
 
 package org.micromanager.data;
 
-import org.micromanager.PropertyMap;
-
 import java.io.IOException;
+import org.micromanager.PropertyMap;
 
 /**
  * A Annotation is a container for mutable information that is associated with a Datastore.

@@ -19,8 +19,8 @@
 
 package org.micromanager;
 
-import javax.swing.*;
 import java.util.List;
+import javax.swing.Icon;
 
 /**
  * IntroPlugins are used to customize the intro dialog that prompts the user for which config file

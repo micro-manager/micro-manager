@@ -23,14 +23,12 @@
 
 package org.micromanager.internal.dialogs;
 
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.profile.internal.LegacyMM1Preferences;
-import org.micromanager.propertymap.MutablePropertyMapView;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.HeadlessException;
+import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,6 +37,18 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.prefs.Preferences;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.profile.internal.LegacyMM1Preferences;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 // TODO: the change to the Profile system (away from Preferences) has caused
 // registration state to be lost.

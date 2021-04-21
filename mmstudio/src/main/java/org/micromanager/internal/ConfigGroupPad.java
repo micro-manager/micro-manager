@@ -23,17 +23,24 @@
 
 package org.micromanager.internal;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.*;
-
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
-import java.util.ArrayList;
-import java.util.HashMap;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.StateGroupCellRenderer;
+import org.micromanager.internal.utils.StateItem;
+import org.micromanager.internal.utils.StatePresetCellEditor;
+import org.micromanager.internal.utils.StatePresetCellRenderer;
 
 /** Preset panel. Displays a list of groups and lets the user select a preset. */
 public final class ConfigGroupPad extends JScrollPane {

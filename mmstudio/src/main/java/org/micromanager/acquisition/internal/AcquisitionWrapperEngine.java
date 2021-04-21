@@ -1,7 +1,15 @@
 package org.micromanager.acquisition.internal;
 
 import com.google.common.eventbus.Subscribe;
-import mmcorej.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
+import javax.swing.JOptionPane;
+import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.PropertySetting;
+import mmcorej.StrVector;
+import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -21,11 +29,6 @@ import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.concurrent.BlockingQueue;
 
 public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 

@@ -20,10 +20,9 @@
 
 package org.micromanager.data;
 
+import java.util.List;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
-
-import java.util.List;
 
 /**
  * This class defines the summary metadata that applies to all images in a dataset. It is immutable;

@@ -227,9 +227,8 @@ public class MagellanAcquisitionsManager {
                         Log.log(e);
                       }
                       gui_.acquisitionRunning(false);
-                      gui_
-                          .acquisitionSettingsChanged(); // so that the available disk space label
-                                                         // updates
+                      gui_.acquisitionSettingsChanged(); // so that the available disk space label
+                      // updates
                       gui_.repaint();
                     }));
           }

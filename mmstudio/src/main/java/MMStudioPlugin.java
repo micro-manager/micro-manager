@@ -28,14 +28,15 @@ import ij.IJ;
 import ij.Macro;
 import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
+import java.lang.reflect.InvocationTargetException;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import org.micromanager.display.internal.displaywindow.imagej.MMVirtualStack;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * ImageJ plugin wrapper for Micro-Manager.
@@ -54,7 +55,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
   public void run(final String arg) {
     final String profileNameAutoStart =
         parseMacroOptions(); // This must be run from the same thread that the plugin is started in
-                             // or Macro.getOptions will return null.
+    // or Macro.getOptions will return null.
     SwingUtilities.invokeLater(
         new Runnable() {
           @Override
@@ -100,22 +101,21 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
     // "-profile {MyProfileNameHere}");
     // This method could be expanded to support other startup arguments in the future.
     String optionalArgs =
-        Macro
-            .getOptions(); // If, in ImageJ you start this plugin as `run("Micro-Manager Studio",
-                           // "-profile MyProfile")` then this line will return "-profile MyProfile"
+        Macro.getOptions(); // If, in ImageJ you start this plugin as `run("Micro-Manager Studio",
+    // "-profile MyProfile")` then this line will return "-profile MyProfile"
     String profileNameAutoStart =
         null; // The name of the user profile that Micro-Manager should start up with. In the case
-              // that this is left as null then a splash screen will request that the user select a
-              // profile before startup.
+    // that this is left as null then a splash screen will request that the user select a
+    // profile before startup.
     if (optionalArgs != null) {
       String args[] =
           optionalArgs.split(
               " "); // Split the arg string into space separated array. This matches the way that
-                    // system arguments are passed in to the `main` method by Java.
+      // system arguments are passed in to the `main` method by Java.
       for (int i = 0;
           i < args.length;
           i++) { // a library for the parsing of arguments such as apache commons - cli would make
-                 // this more robust if needed.
+        // this more robust if needed.
         if (args[i].equals("-profile")) {
           if (i < args.length - 1) {
             i++;

@@ -20,13 +20,12 @@
 
 package org.micromanager.alerts.internal;
 
+import java.util.HashMap;
+import javax.swing.JComponent;
 import org.micromanager.Studio;
 import org.micromanager.alerts.Alert;
 import org.micromanager.alerts.AlertManager;
 import org.micromanager.alerts.UpdatableAlert;
-
-import javax.swing.*;
-import java.util.HashMap;
 
 public final class DefaultAlertManager implements AlertManager {
   private final Studio studio_;

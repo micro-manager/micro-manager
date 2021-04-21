@@ -30,6 +30,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.micromanager.internal;
 
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
+import javax.swing.JFrame;
 import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
@@ -38,11 +42,6 @@ import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 
 public class DefaultApplication implements Application {
   private final Studio studio_;

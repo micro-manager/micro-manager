@@ -5,19 +5,30 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import org.apache.commons.lang3.ArrayUtils;
-import org.micromanager.PropertyMap;
-import org.micromanager.internal.utils.ChainedMapView;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import org.apache.commons.lang3.ArrayUtils;
+import org.micromanager.PropertyMap;
+import org.micromanager.internal.utils.ChainedMapView;
 
 /** @author mark */
 public final class DefaultPropertyMap implements PropertyMap {

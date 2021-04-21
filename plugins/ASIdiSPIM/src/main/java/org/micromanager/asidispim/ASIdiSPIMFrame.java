@@ -309,7 +309,7 @@ public class ASIdiSPIMFrame extends SPIMFrame {
     // gotSelected will be called because we put this after adding the ChangeListener
     tabbedPane_.setSelectedIndex(
         helpTabIndex); // setSelectedIndex(0) just after initialization doesn't fire ChangeListener,
-                       // so switch to help panel first
+    // so switch to help panel first
     tabbedPane_.setSelectedIndex(
         prefs_.getInt(
             MAIN_PREF_NODE,

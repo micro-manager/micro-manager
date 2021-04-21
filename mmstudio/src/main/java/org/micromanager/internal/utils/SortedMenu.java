@@ -21,8 +21,9 @@
 //
 package org.micromanager.internal.utils;
 
-import javax.swing.*;
 import java.util.HashSet;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 
 /** Simple extension of JMenu whose menu items remained alphabetically ordered. */
 public final class SortedMenu extends JMenu {

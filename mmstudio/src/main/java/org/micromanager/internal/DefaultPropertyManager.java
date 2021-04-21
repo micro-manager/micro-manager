@@ -1,12 +1,11 @@
 package org.micromanager.internal;
 
+import java.io.File;
+import java.io.IOException;
 import org.micromanager.PropertyManager;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
-
-import java.io.File;
-import java.io.IOException;
 
 public class DefaultPropertyManager implements PropertyManager {
   /**

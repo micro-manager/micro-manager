@@ -23,9 +23,38 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.WindowManager;
 import ij.gui.Toolbar;
+import java.awt.Point;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-import org.micromanager.*;
+import org.micromanager.Album;
+import org.micromanager.Application;
+import org.micromanager.ApplicationSkin;
+import org.micromanager.AutofocusManager;
+import org.micromanager.CompatibilityInterface;
+import org.micromanager.LogManager;
+import org.micromanager.PluginManager;
+import org.micromanager.PositionListManager;
+import org.micromanager.PropertyManager;
+import org.micromanager.ScriptController;
+import org.micromanager.ShutterManager;
+import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
@@ -36,34 +65,42 @@ import org.micromanager.data.DataManager;
 import org.micromanager.data.internal.DefaultDataManager;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.internal.DefaultDisplayManager;
-import org.micromanager.events.*;
-import org.micromanager.events.internal.*;
+import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
+import org.micromanager.events.EventManager;
+import org.micromanager.events.ExposureChangedEvent;
+import org.micromanager.events.PropertiesChangedEvent;
+import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.events.internal.CoreEventCallback;
+import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.internal.DefaultShutdownCommencingEvent;
+import org.micromanager.events.internal.DefaultStartupCompleteEvent;
+import org.micromanager.events.internal.DefaultSystemConfigurationLoadedEvent;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.diagnostics.EDTHangLogger;
 import org.micromanager.internal.diagnostics.ThreadExceptionLogger;
-import org.micromanager.internal.dialogs.*;
+import org.micromanager.internal.dialogs.AcqControlDlg;
+import org.micromanager.internal.dialogs.IJVersionCheckDlg;
+import org.micromanager.internal.dialogs.IntroDlg;
+import org.micromanager.internal.dialogs.OptionsDlg;
+import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.internal.script.ScriptPanel;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.DefaultAutofocusManager;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.HotKeys;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.UIMonitor;
+import org.micromanager.internal.utils.WaitDialog;
 import org.micromanager.internal.zmq.ZMQServer;
 import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.util.List;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /*
  * Implements the Studio (i.e. primary API) and does various other
@@ -134,12 +171,12 @@ public final class MMStudio implements Studio {
   public static void main(String args[]) {
     String profileNameAutoStart =
         null; // The name of the user profile that Micro-Manager should start up with. In the case
-              // that this is left as null then a splash screen will request that the user select a
-              // profile before startup.
+    // that this is left as null then a splash screen will request that the user select a
+    // profile before startup.
     for (int i = 0;
         i < args.length;
         i++) { // a library for the parsing of arguments such as apache commons - cli would make
-               // this more robust if needed.
+      // this more robust if needed.
       if (args[i].equals("-profile")) {
         if (i < args.length - 1) {
           i++;

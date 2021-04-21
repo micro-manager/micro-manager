@@ -13,10 +13,6 @@
 
 package org.micromanager.display.internal.imagestats;
 
-import org.apache.commons.lang3.event.EventListenerSupport;
-import org.micromanager.internal.utils.ThreadFactoryFactory;
-import org.micromanager.internal.utils.performance.PerformanceMonitor;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -24,6 +20,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.apache.commons.lang3.event.EventListenerSupport;
+import org.micromanager.internal.utils.ThreadFactoryFactory;
+import org.micromanager.internal.utils.performance.PerformanceMonitor;
 
 /**
  * Facade to manage background, rate-limited image stats computation.

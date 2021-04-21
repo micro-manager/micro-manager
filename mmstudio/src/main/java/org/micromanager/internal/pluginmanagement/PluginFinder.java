@@ -18,13 +18,6 @@
 //
 package org.micromanager.internal.pluginmanagement;
 
-import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.scijava.InstantiableException;
-import org.scijava.plugin.DefaultPluginFinder;
-import org.scijava.plugin.PluginIndex;
-import org.scijava.plugin.PluginInfo;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -33,6 +26,12 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.scijava.InstantiableException;
+import org.scijava.plugin.DefaultPluginFinder;
+import org.scijava.plugin.PluginIndex;
+import org.scijava.plugin.PluginInfo;
 
 public final class PluginFinder {
   /**

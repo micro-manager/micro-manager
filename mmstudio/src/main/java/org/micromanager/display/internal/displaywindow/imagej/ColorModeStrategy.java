@@ -6,8 +6,7 @@
 package org.micromanager.display.internal.displaywindow.imagej;
 
 import ij.ImagePlus;
-
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Pluggable implementations for applying scaling or LUT to ImagePlus.

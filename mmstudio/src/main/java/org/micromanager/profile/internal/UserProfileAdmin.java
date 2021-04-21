@@ -10,6 +10,23 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.io.Files;
+import java.awt.Color;
+import java.beans.ExceptionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -22,18 +39,6 @@ import org.micromanager.profile.internal.UserProfileFileFormat.Index;
 import org.micromanager.profile.internal.UserProfileFileFormat.IndexEntry;
 import org.micromanager.profile.internal.UserProfileFileFormat.Profile;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
-import java.beans.ExceptionListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Manage user profiles and their storage.
@@ -138,8 +143,8 @@ public final class UserProfileAdmin {
         Profile.fromSettings(
             currentProfile_
                 .toPropertyMap()); // This is confusing. `DefaultUserProfile` is the class that
-                                   // actually handles the profile in the code. `Profile` is just a
-                                   // file format.
+    // actually handles the profile in the code. `Profile` is just a
+    // file format.
     for (IndexEntry entry : getIndex().getEntries()) {
       if (entry.getUUID().equals(currentProfileUUID_)) {
         final String filename = entry.getFilename();

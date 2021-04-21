@@ -20,12 +20,11 @@
 
 package org.micromanager.data.internal.pipeline;
 
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Processor;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 public final class AsynchronousContext extends BaseContext {
   private boolean isFlushed_ = false;

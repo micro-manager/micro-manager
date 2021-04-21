@@ -14,11 +14,10 @@
 
 package org.micromanager.display.internal.displaywindow;
 
+import java.awt.Window;
 import org.micromanager.display.AbstractDataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-
-import java.awt.*;
 
 /**
  * This is to {@code DisplayWindow} what {@code AbstractDataViewer} is to {@code DataViewer}.

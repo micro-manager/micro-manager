@@ -15,10 +15,9 @@
 
 package org.micromanager.internal.menus;
 
+import javax.swing.JMenuBar;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
-
-import javax.swing.*;
 
 /** This class is the standard Micro-Manager menu bar */
 public final class MMMenuBar extends JMenuBar {

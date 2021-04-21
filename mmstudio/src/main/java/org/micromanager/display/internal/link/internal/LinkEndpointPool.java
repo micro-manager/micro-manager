@@ -8,10 +8,9 @@ package org.micromanager.display.internal.link.internal;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
-import org.micromanager.internal.utils.EventBusExceptionLogger;
-
 import java.util.HashSet;
 import java.util.Set;
+import org.micromanager.internal.utils.EventBusExceptionLogger;
 
 /**
  * A collection of mutually compatible link endpoints.

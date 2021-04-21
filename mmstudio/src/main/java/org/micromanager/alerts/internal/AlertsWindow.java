@@ -22,19 +22,26 @@
 package org.micromanager.alerts.internal;
 
 import com.google.common.eventbus.Subscribe;
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
-import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.internal.utils.WindowPositioning;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.internal.utils.WindowPositioning;
 
 public final class AlertsWindow extends JFrame {
   private static final String NO_ALERTS_MSG = "There are no messages at this time.";

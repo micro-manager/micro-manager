@@ -8,8 +8,11 @@ package org.micromanager.display.internal.displaywindow.imagej;
 import com.google.common.base.Preconditions;
 import ij.CompositeImage;
 import ij.ImagePlus;
-import ij.process.*;
-
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
+import ij.process.LUT;
+import ij.process.ShortProcessor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

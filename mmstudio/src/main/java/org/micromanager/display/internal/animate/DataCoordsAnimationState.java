@@ -14,12 +14,11 @@
 package org.micromanager.display.internal.animate;
 
 import com.google.common.collect.Lists;
+import java.util.Collection;
+import java.util.List;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
 import org.micromanager.data.internal.DefaultCoords;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Manages the position within a dataset displayed during animated playback.

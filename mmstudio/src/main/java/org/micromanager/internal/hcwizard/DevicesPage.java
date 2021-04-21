@@ -22,13 +22,32 @@
 //
 package org.micromanager.internal.hcwizard;
 
-import mmcorej.MMCoreJ;
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
+import java.awt.Cursor;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -36,13 +55,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicBoolean;
+import mmcorej.MMCoreJ;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /** Wizard page to add or remove devices. */
 public final class DevicesPage extends PagePanel

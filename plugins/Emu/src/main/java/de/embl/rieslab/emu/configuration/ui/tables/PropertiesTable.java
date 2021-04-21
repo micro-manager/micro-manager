@@ -362,10 +362,10 @@ public class PropertiesTable extends JPanel {
                 return new BoldTableCellRenderer(); // first column is written in bold font
               case 1:
                 return new ColoredUneditedTableRenderer(); // column 1 takes a colored default
-                                                           // renderer (previously just default)
+                // renderer (previously just default)
               case 2:
                 return new ColoredUneditedTableRenderer(); // column 2 takes a colored default
-                                                           // renderer
+                // renderer
               default:
                 return super.getCellRenderer(row, column);
             }
@@ -386,7 +386,7 @@ public class PropertiesTable extends JPanel {
                 case 1: // in the second column return a JComboBox cell editor with the devices name
                   return new DefaultCellEditor(devices);
                 case 2: // in the last column return a JComboBox cell editor with the properties
-                        // name corresponding to the selected device
+                  // name corresponding to the selected device
                   return new DefaultCellEditor(
                       getDevicePropertiesComboBox(
                           (String) getValueAt(row, 1), (String) getValueAt(row, 0)));
@@ -399,9 +399,8 @@ public class PropertiesTable extends JPanel {
           @Override
           public boolean isCellEditable(
               int row,
-              int
-                  col) { // first column is non-editable and second as well if it is a field value
-                         // row
+              int col) { // first column is non-editable and second as well if it is a field value
+            // row
             String s = (String) table.getValueAt(row, 0);
             if (col < 1) {
               return false;

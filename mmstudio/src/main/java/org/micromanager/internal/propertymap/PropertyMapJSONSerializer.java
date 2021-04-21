@@ -5,18 +5,34 @@
  */
 package org.micromanager.internal.propertymap;
 
-import com.google.gson.*;
-import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMap.Builder;
-import org.micromanager.PropertyMaps;
-
-import java.awt.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMap.Builder;
+import org.micromanager.PropertyMaps;
 
 /** @author mark */
 public final class PropertyMapJSONSerializer {

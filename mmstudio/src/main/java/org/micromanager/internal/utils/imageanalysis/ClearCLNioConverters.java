@@ -3,10 +3,13 @@ package org.micromanager.internal.utils.imageanalysis;
 import clearcl.ClearCLBuffer;
 import clearcl.ClearCLContext;
 import clearcl.ClearCLImage;
-import clearcl.enums.*;
+import clearcl.enums.HostAccessType;
+import clearcl.enums.ImageChannelDataType;
+import clearcl.enums.ImageChannelOrder;
+import clearcl.enums.KernelAccessType;
+import clearcl.enums.MemAllocMode;
 import clearcl.interfaces.ClearCLImageInterface;
 import coremem.enums.NativeTypeEnum;
-
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;

@@ -23,14 +23,19 @@
 
 package org.micromanager.internal.graph;
 
-import org.micromanager.internal.utils.WindowPositioning;
-
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import javax.swing.SpringLayout;
+import javax.swing.border.LineBorder;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /** XY Graph window. */
 public final class GraphFrame extends JFrame {

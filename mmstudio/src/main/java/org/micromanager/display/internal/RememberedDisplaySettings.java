@@ -21,15 +21,14 @@
 
 package org.micromanager.display.internal;
 
+import java.awt.Color;
+import java.util.List;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.awt.*;
-import java.util.List;
 
 /**
  * Stores and restores Display and ChannelDisplaysetting that were last used (in the case of

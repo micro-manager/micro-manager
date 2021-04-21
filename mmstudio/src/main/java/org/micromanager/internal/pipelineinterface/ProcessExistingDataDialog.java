@@ -14,22 +14,36 @@
 
 package org.micromanager.internal.pipelineinterface;
 
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
-import org.micromanager.data.*;
-import org.micromanager.display.DisplayWindow;
-import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.propertymap.MutablePropertyMapView;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.ProgressMonitor;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.WindowPositioning;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /** This class allows users to process files that already exist on disk. */
 public final class ProcessExistingDataDialog extends JDialog {

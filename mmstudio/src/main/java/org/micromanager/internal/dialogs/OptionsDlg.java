@@ -21,6 +21,20 @@
 
 package org.micromanager.internal.dialogs;
 
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.text.ParseException;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
+import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.Studio;
@@ -36,13 +50,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.internal.zmq.ZMQSocketWrapper;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.text.ParseException;
 
 /** Options dialog for MMStudio. */
 public final class OptionsDlg extends JDialog {

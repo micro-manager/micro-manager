@@ -22,6 +22,7 @@
 package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.geom.AffineTransform;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.events.PixelSizeAffineChangedEvent;
@@ -31,8 +32,6 @@ import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
-
-import java.awt.geom.AffineTransform;
 
 /** Simple class used to cache information that doesn't change very often. */
 public class MMCache {

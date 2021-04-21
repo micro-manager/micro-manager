@@ -1,13 +1,6 @@
 package org.micromanager.internal.hcwizard;
 
-import mmcorej.*;
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
-import org.micromanager.internal.utils.*;
-
-import javax.swing.*;
-import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -15,6 +8,30 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.table.TableColumn;
+import mmcorej.CMMCore;
+import mmcorej.DeviceDetectionStatus;
+import mmcorej.DeviceType;
+import mmcorej.MMCoreJ;
+import mmcorej.StrVector;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.PropertyNameCellRenderer;
+import org.micromanager.internal.utils.PropertyValueCellEditor;
+import org.micromanager.internal.utils.PropertyValueCellRenderer;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 public final class DeviceSetupDlg extends JDialog {
   private static final long serialVersionUID = 1L;

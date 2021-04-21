@@ -7,15 +7,14 @@ package org.micromanager.display.internal.event;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.ArrayUtils;
-import org.micromanager.data.Coords;
-import org.micromanager.data.Image;
-import org.micromanager.data.internal.DefaultCoords;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import org.apache.commons.lang3.ArrayUtils;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.internal.DefaultCoords;
 
 /** @author mark */
 public class DataViewerMousePixelInfoChangedEvent {

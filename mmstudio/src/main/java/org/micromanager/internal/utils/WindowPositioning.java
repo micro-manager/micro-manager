@@ -15,17 +15,27 @@
 package org.micromanager.internal.utils;
 
 import com.google.common.base.Preconditions;
+import java.awt.Dimension;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.WeakHashMap;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.*;
 
 /**
  * Save and restore window locations and sizes; cascade windows.

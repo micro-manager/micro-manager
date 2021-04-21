@@ -10,12 +10,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 
 /**
  * Deserialize MM2-beta style property maps (version "1.0").

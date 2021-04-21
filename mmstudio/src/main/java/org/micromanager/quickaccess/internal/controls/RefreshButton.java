@@ -20,12 +20,12 @@
 package org.micromanager.quickaccess.internal.controls;
 
 import com.bulenkov.iconloader.IconLoader;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import org.micromanager.Studio;
 import org.micromanager.quickaccess.SimpleButtonPlugin;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
-
-import javax.swing.*;
 
 /** Implements the "Refresh" button logic. */
 @Plugin(type = SimpleButtonPlugin.class)

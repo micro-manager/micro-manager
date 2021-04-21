@@ -19,6 +19,11 @@
 
 package org.micromanager.quickaccess.internal;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.io.IOException;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import net.miginfocom.swing.MigLayout;
@@ -28,10 +33,6 @@ import org.micromanager.Studio;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
 
 /** This class represents a single control in the window. */
 public final class ControlCell {

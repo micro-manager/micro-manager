@@ -21,17 +21,16 @@
 package org.micromanager.display.internal.displaywindow;
 
 import com.bulenkov.iconloader.IconLoader;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
+import javax.swing.JButton;
+import javax.swing.event.MouseInputAdapter;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import javax.swing.event.MouseInputAdapter;
-import java.awt.event.MouseEvent;
-import java.io.IOException;
 
 /** This class provides a button for saving the current datastore to TIFF. */
 public final class SaveButton extends JButton {

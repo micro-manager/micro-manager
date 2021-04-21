@@ -20,7 +20,7 @@
 
 package org.micromanager.alerts;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * The AlertManager allows you to show non-intrusive messages to the user, which will be displayed

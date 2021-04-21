@@ -14,14 +14,13 @@
 
 package org.micromanager.display;
 
+import java.io.IOException;
+import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * General interface for any user interface displaying image data.

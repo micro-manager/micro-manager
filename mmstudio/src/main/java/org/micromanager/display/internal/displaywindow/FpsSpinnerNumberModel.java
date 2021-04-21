@@ -20,7 +20,7 @@
 //
 package org.micromanager.display.internal.displaywindow;
 
-import javax.swing.*;
+import javax.swing.SpinnerNumberModel;
 
 /** @author nico */
 public class FpsSpinnerNumberModel extends SpinnerNumberModel {

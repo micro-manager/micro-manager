@@ -1,13 +1,6 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import mmcorej.MMCoreJ;
-import org.micromanager.Studio;
-import org.micromanager.events.internal.DefaultXYStagePositionChangedEvent;
-import org.micromanager.internal.utils.AffineUtils;
-import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
@@ -15,6 +8,12 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import javax.swing.JOptionPane;
+import mmcorej.MMCoreJ;
+import org.micromanager.Studio;
+import org.micromanager.events.internal.DefaultXYStagePositionChangedEvent;
+import org.micromanager.internal.utils.AffineUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /** @author Nico */
 public class XYNavigator {

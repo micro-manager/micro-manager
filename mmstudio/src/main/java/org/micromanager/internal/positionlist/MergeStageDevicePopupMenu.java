@@ -1,13 +1,13 @@
 package org.micromanager.internal.positionlist;
 
-import mmcorej.CMMCore;
-import mmcorej.DeviceType;
-import mmcorej.StrVector;
-
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import mmcorej.CMMCore;
+import mmcorej.DeviceType;
+import mmcorej.StrVector;
 
 /** This class allows the user to select a StageDevice or XYStageDevice from a popup menu. */
 class MergeStageDevicePopupMenu extends JPopupMenu {

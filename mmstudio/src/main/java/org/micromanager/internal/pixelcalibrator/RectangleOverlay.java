@@ -30,14 +30,15 @@
 
 package org.micromanager.internal.pixelcalibrator;
 
-import org.micromanager.data.Image;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.overlay.AbstractOverlay;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
+import org.micromanager.data.Image;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.overlay.AbstractOverlay;
 
 /**
  * This class draws rectangles on the overlay

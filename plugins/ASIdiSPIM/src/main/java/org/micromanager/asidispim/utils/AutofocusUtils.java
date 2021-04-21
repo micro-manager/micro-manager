@@ -270,7 +270,7 @@ public class AutofocusUtils {
                 Devices.Keys.PLUGIN,
                 Properties.Keys
                     .PLUGIN_AUTOFOCUS_STEPSIZE); // user specifies step size in um, we translate to
-                                                 // galvo and move only galvo
+        // galvo and move only galvo
         final float imagingCenter =
             prefs_.getFloat(
                 MyStrings.PanelNames.SETUP.toString() + side.toString(),
@@ -599,7 +599,7 @@ public class AutofocusUtils {
             controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
 
             if (runAsynchronously) // when run from Setup panels then put things back to live mode
-                                   // settings, but not if run during acquisition
+            // settings, but not if run during acquisition
             {
               cameras_.setCameraForAcquisition(cameraDevice, false);
             }

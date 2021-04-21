@@ -1,5 +1,19 @@
 package org.micromanager.internal.dialogs;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.geom.AffineTransform;
+import java.text.NumberFormat;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import mmcorej.DoubleVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
@@ -7,16 +21,6 @@ import org.micromanager.internal.pixelcalibrator.PixelCalibratorDialog;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.PropertyItem;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.geom.AffineTransform;
-import java.text.NumberFormat;
 
 /** @author nico */
 public class AffineEditorPanel extends JPanel {

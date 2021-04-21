@@ -19,10 +19,10 @@
 
 package org.micromanager.quickaccess;
 
+import java.awt.Dimension;
+import java.awt.Frame;
+import javax.swing.JComponent;
 import org.micromanager.PropertyMap;
-
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * This plugin allows arbitrary controls ("widgets") to be included in the Quick-Access Window. It

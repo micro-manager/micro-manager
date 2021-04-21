@@ -22,12 +22,11 @@
 
 package org.micromanager.internal.positionlist.utils;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /** Allows construction of Z positions by interpolation using Shepard Interpolation */
 class ZGeneratorShepard implements ZGenerator {

@@ -21,6 +21,8 @@
 
 package org.micromanager.internal.positionlist.utils;
 
+import java.text.DecimalFormat;
+import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
@@ -29,9 +31,6 @@ import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.text.DecimalFormat;
 
 /** @author N2-LiveCell */
 public final class TileCreator {

@@ -18,7 +18,7 @@
 
 package org.micromanager.internal.utils;
 
-import java.awt.*;
+import java.awt.KeyEventDispatcher;
 import java.awt.event.KeyEvent;
 
 /**

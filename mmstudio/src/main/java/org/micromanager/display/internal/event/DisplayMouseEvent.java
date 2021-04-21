@@ -14,7 +14,8 @@
 
 package org.micromanager.display.internal.event;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 

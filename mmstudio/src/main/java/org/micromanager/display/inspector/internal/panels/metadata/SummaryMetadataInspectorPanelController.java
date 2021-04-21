@@ -16,6 +16,20 @@ package org.micromanager.display.inspector.internal.panels.metadata;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
+import java.awt.Dimension;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.table.AbstractTableModel;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -28,13 +42,6 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
-
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import java.awt.*;
-import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.*;
 
 /** @author Mark A. Tsuchida, in part based on original by Chris Weisiger */
 public class SummaryMetadataInspectorPanelController extends AbstractInspectorPanelController {

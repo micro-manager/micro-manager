@@ -11,12 +11,12 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
+import java.io.File;
+import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import org.micromanager.internal.diagnostics.ProblemReport;
 import org.micromanager.internal.diagnostics.ProblemReportFormatter;
 import org.micromanager.internal.diagnostics.ReportSender;
-
-import javax.swing.*;
-import java.io.File;
 
 /**
  * Controller for "Report Problem" GUI.

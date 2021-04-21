@@ -1,8 +1,7 @@
 package org.micromanager.acquisition.internal;
 
-import mmcorej.TaggedImage;
-
 import java.util.concurrent.LinkedBlockingQueue;
+import mmcorej.TaggedImage;
 
 /** @author arthur */
 public final class TaggedImageQueue extends LinkedBlockingQueue<TaggedImage> {

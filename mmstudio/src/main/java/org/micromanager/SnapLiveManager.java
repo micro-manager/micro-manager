@@ -22,10 +22,9 @@
 
 package org.micromanager;
 
+import java.util.List;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
-
-import java.util.List;
 
 /**
  * Interface for interacting with the Snap/Live display and live mode. You can access this via

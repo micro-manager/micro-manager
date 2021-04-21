@@ -5,10 +5,9 @@
  */
 package org.micromanager.data;
 
+import java.io.IOException;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.internal.DefaultCoords;
-
-import java.io.IOException;
 
 /** @author Mark A. Tsuchida */
 public final class Coordinates {

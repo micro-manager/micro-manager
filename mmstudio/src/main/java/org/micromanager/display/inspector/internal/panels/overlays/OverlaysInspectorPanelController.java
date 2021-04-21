@@ -3,6 +3,17 @@ package org.micromanager.display.inspector.internal.panels.overlays;
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -19,14 +30,6 @@ import org.micromanager.display.overlay.OverlayPlugin;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.utils.PopupButton;
 import org.scijava.plugin.Plugin;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /** @author mark */
 public final class OverlaysInspectorPanelController extends AbstractInspectorPanelController {
@@ -108,19 +111,17 @@ public final class OverlaysInspectorPanelController extends AbstractInspectorPan
     for (PropertyMap pMap : settings) {
       for (OverlayPlugin p :
           plugins_) { // We must loop through overlay plugins to determine if they are a match for
-                      // this setting.
+        // this setting.
         Overlay o = p.createOverlay();
         if (pMap.getString(TITLEPMAPKEY, "loadFailed")
-            .equals(
-                o
-                    .getTitle())) { // Checking against Overlay 'Title; is the best way we have to
-                                    // link settings with an overlay.
+            .equals(o.getTitle())) { // Checking against Overlay 'Title; is the best way we have to
+          // link settings with an overlay.
           PropertyMap config = pMap.getPropertyMap(CONFIGPMAPKEY, null);
           o.setConfiguration(config);
           o.setVisible(pMap.getBoolean(VISIBLEPMAPKEY, false));
           viewer_.addOverlay(
               o); // The viewer will fire an event that will trigger adding the UI components to the
-                  // inspector
+          // inspector
           break;
         }
       }
@@ -208,15 +209,15 @@ public final class OverlaysInspectorPanelController extends AbstractInspectorPan
       List<Overlay> overlays =
           new ArrayList<>(
               overlays_); // We iterate over a copy of the overlays_ list to avoid causing a
-                          // ConcurrentModificationException by removing items from the list while
-                          // iterating.
+      // ConcurrentModificationException by removing items from the list while
+      // iterating.
       for (Overlay o :
           overlays) { // We can't manually remove the overlays from `overlays_` we need to allow the
-                      // `viewer_` to fire off the relevant events so that everything is properly
-                      // handled.
+        // `viewer_` to fire off the relevant events so that everything is properly
+        // handled.
         this.handleRemoveOverlay(
             o); // The viewer will fire an event that will also remove the UI components from the
-                // inspector.
+        // inspector.
       }
       viewer_.unregisterForEvents(this);
       viewer_ = null;

@@ -23,9 +23,8 @@
 
 package org.micromanager.internal.hcwizard;
 
-import mmcorej.DoubleVector;
-
 import java.util.ArrayList;
+import mmcorej.DoubleVector;
 
 /** Encapsulation of the preset data for use in the Configuration Wizard. */
 public final class ConfigPreset {

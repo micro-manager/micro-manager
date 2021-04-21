@@ -22,11 +22,10 @@
 //
 package org.micromanager.internal.utils;
 
-import mmcorej.CMMCore;
-import mmcorej.StrVector;
-
 import java.util.ArrayList;
 import java.util.Hashtable;
+import mmcorej.CMMCore;
+import mmcorej.StrVector;
 
 public final class CalibrationList {
   private final ArrayList<Calibration> calibrationList_;

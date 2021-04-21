@@ -209,7 +209,7 @@ public class ControllerUtils {
       // set the scan pattern and number of scans appropriately
       int numLines = settings.numSides;
       if (isInterleaved) { // assure in acquisition code that we can't have single-sided interleaved
-                           // // can't have 1 side interleaved
+        // // can't have 1 side interleaved
       }
       if (settings.numChannels < 1 && settings.channelMode == MultichannelModes.Keys.VOLUME) {
         numLines *= settings.numChannels;
@@ -380,7 +380,7 @@ public class ControllerUtils {
         settings.isStageScanning
             ? 0
             : // minimal delay on micro-mirror card for stage scanning (can't actually be less than
-              // 2ms but this will get as small as possible)
+            // 2ms but this will get as small as possible)
             props_.getPropValueFloat(
                 Devices.Keys.PLUGIN,
                 Properties.Keys.PLUGIN_DELAY_BEFORE_SIDE), // this is usual behavior

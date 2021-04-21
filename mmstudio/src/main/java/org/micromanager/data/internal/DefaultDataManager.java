@@ -20,12 +20,31 @@
 
 package org.micromanager.data.internal;
 
+import java.awt.Component;
+import java.awt.Window;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.ProgressMonitor;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataManager;
+import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.*;
+import org.micromanager.data.ImageJConverter;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorConfigurator;
+import org.micromanager.data.ProcessorFactory;
+import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.data.RewritableDatastore;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.internal.pipeline.DefaultPipeline;
@@ -34,13 +53,6 @@ import org.micromanager.internal.UserCancelledException;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This implementation of the DataManager interface provides general utility access to

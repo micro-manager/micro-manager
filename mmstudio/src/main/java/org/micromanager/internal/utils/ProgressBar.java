@@ -22,8 +22,13 @@
 //
 package org.micromanager.internal.utils;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 
 public final class ProgressBar extends JPanel {
   private static final long serialVersionUID = 1L;

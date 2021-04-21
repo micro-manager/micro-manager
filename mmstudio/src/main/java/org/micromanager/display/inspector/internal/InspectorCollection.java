@@ -6,12 +6,11 @@
 package org.micromanager.display.inspector.internal;
 
 import com.google.common.eventbus.Subscribe;
-import org.micromanager.display.internal.event.InspectorDidCloseEvent;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.micromanager.display.internal.event.InspectorDidCloseEvent;
 
 /** @author mark */
 public class InspectorCollection {

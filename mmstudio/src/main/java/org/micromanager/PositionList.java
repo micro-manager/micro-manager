@@ -26,14 +26,18 @@ package org.micromanager;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-import org.micromanager.data.internal.PropertyKey;
-import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 
 /** Navigation list of positions for the Stages. Used for multi site acquisition support. */
 public class PositionList implements Iterable<MultiStagePosition> {

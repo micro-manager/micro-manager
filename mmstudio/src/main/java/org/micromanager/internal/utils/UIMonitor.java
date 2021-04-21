@@ -1,10 +1,20 @@
 package org.micromanager.internal.utils;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.Button;
+import java.awt.Component;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JList;
+import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 
 /** @author Arthur */
 public final class UIMonitor {

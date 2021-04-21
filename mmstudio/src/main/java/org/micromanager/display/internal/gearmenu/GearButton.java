@@ -21,19 +21,19 @@
 package org.micromanager.display.internal.gearmenu;
 
 import com.bulenkov.iconloader.IconLoader;
-import org.micromanager.Studio;
-import org.micromanager.display.DisplayGearMenuPlugin;
-import org.micromanager.display.DisplayWindow;
-import org.micromanager.internal.utils.SortedMenu;
-import org.micromanager.internal.utils.SortedPopupMenu;
-
-import javax.swing.*;
-import javax.swing.event.MouseInputAdapter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
+import javax.swing.JButton;
+import javax.swing.JMenuItem;
+import javax.swing.event.MouseInputAdapter;
+import org.micromanager.Studio;
+import org.micromanager.display.DisplayGearMenuPlugin;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.SortedMenu;
+import org.micromanager.internal.utils.SortedPopupMenu;
 
 /**
  * This class provides access to various rarely-used functions (like save or duplicate) via a

@@ -1,10 +1,12 @@
 package org.micromanager.internal.utils;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import javax.swing.JLabel;
+import javax.swing.JTable;
 import org.micromanager.Studio;
 import org.micromanager.internal.ConfigGroupPad;
-
-import javax.swing.*;
-import java.awt.*;
 
 /** @author arthur */
 /** Rendering element for the property table. */

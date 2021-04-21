@@ -14,19 +14,22 @@
 
 package org.micromanager.display.internal.displaywindow;
 
-import net.miginfocom.layout.CC;
-import net.miginfocom.layout.LC;
-import net.miginfocom.swing.MigLayout;
-import org.apache.commons.lang3.event.EventListenerSupport;
-import org.micromanager.internal.utils.MustCallOnEDT;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import javax.swing.BoundedRangeModel;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import net.miginfocom.layout.CC;
+import net.miginfocom.layout.LC;
+import net.miginfocom.swing.MigLayout;
+import org.apache.commons.lang3.event.EventListenerSupport;
+import org.micromanager.internal.utils.MustCallOnEDT;
 
 /**
  * Component containing multi-dimensional scroll bars to select display position.

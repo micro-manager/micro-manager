@@ -1,15 +1,15 @@
 package org.micromanager.display.overlay;
 
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
+import java.util.List;
+import javax.swing.JComponent;
 import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
-import java.util.List;
 
 /**
  * Abstract implementation of {@link Overlay}.

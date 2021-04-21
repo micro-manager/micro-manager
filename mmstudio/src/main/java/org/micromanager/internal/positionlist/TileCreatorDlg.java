@@ -21,6 +21,17 @@
 package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.ParseException;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.MultiStagePosition;
@@ -35,12 +46,6 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.text.ParseException;
 
 public final class TileCreatorDlg extends JDialog {
   private static final long serialVersionUID = 1L;

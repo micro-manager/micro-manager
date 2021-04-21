@@ -20,6 +20,15 @@
 package org.micromanager.quickaccess.internal.controls;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Frame;
+import java.text.ParseException;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -31,12 +40,6 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import java.awt.*;
-import java.text.ParseException;
 
 /** Allows you to set the exposure time for the currently-selected channel. */
 @Plugin(type = WidgetPlugin.class)

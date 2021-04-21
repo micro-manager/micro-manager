@@ -20,17 +20,16 @@
 
 package org.micromanager.data.internal;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.HashMap;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.HashMap;
 
 /** Fairly naive Annotation implementation that stores PropertyMaps as JSON in a plaintext file. */
 public final class DefaultAnnotation implements Annotation {

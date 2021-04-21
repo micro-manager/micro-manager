@@ -1,12 +1,19 @@
 package org.micromanager.internal.utils;
 
-import org.micromanager.UserProfile;
-import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.micromanager.UserProfile;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /** @author nico */
 public final class HotKeys {

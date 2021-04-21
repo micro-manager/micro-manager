@@ -20,11 +20,10 @@
 
 package org.micromanager.data;
 
-import org.micromanager.PropertyMap;
-
-import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.UUID;
+import org.micromanager.PropertyMap;
 
 /**
  * This interface defines the metadata for Images. Note that Metadatas are immutable; if you need to

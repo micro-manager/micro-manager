@@ -22,15 +22,22 @@
 //
 package org.micromanager.internal.graph;
 
-import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.text.DecimalFormat;
+import javax.swing.JPanel;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /** XY graph view. */
 public final class GraphPanel extends JPanel {

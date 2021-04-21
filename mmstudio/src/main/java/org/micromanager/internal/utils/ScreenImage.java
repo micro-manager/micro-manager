@@ -7,14 +7,23 @@
 // Thanks, Rob!
 package org.micromanager.internal.utils;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import javax.imageio.ImageIO;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 /*
  *  Convenience class to create and optionally save to a file a

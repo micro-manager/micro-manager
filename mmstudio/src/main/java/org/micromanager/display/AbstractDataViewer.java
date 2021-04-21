@@ -15,6 +15,8 @@
 package org.micromanager.display;
 
 import com.google.common.eventbus.EventBus;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
@@ -22,9 +24,6 @@ import org.micromanager.display.internal.event.DefaultDisplayPositionChangedEven
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Abstract implementation of the {@link DataViewer} interface.

@@ -1,5 +1,6 @@
 package org.micromanager.internal.positionlist;
 
+import java.util.ArrayList;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -7,8 +8,6 @@ import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.util.ArrayList;
 
 /** List with Axis data. Currently, we use only a single global instance of this class */
 class AxisList {

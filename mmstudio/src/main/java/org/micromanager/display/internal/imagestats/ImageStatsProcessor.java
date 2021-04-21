@@ -14,6 +14,16 @@
 package org.micromanager.display.internal.imagestats;
 
 import com.google.common.base.Preconditions;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.histogram.BinMapper1d;
@@ -34,11 +44,6 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.CPUTimer;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.WallTimer;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
 
 /** @author Mark A. Tsuchida */
 public final class ImageStatsProcessor {

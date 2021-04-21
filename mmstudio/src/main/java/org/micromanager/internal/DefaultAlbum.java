@@ -22,10 +22,20 @@
 package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Color;
+import java.io.IOException;
+import java.util.Collection;
 import org.micromanager.Album;
 import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
-import org.micromanager.data.*;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
@@ -33,10 +43,6 @@ import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.awt.*;
-import java.io.IOException;
-import java.util.Collection;
 
 public final class DefaultAlbum implements Album {
   private final Studio studio_;

@@ -20,6 +20,8 @@
 package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.ArrayList;
+import java.util.List;
 import mmcorej.DeviceType;
 import org.micromanager.ShutterManager;
 import org.micromanager.Studio;
@@ -29,9 +31,6 @@ import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.internal.DefaultAutoShutterEvent;
 import org.micromanager.events.internal.DefaultShutterEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class DefaultShutterManager implements ShutterManager {
   private Studio studio_;

@@ -18,7 +18,22 @@
 //
 package org.micromanager.internal.pluginmanagement;
 
-import org.micromanager.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import org.micromanager.AutofocusPlugin;
+import org.micromanager.IntroPlugin;
+import org.micromanager.MMGenericPlugin;
+import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
+import org.micromanager.PluginManager;
+import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
@@ -29,14 +44,6 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.SortedMenu;
 import org.micromanager.quickaccess.QuickAccessPlugin;
-
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /** Implementation of the {@link PluginManager} API. */
 public final class DefaultPluginManager implements PluginManager {

@@ -21,14 +21,18 @@
 
 package org.micromanager.alerts.internal;
 
-import net.miginfocom.swing.MigLayout;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Subclass of DefaultAlert intended for showing multiple lines of alert texts, broken out into

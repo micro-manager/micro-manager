@@ -20,14 +20,14 @@
 
 package org.micromanager.display.overlay;
 
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
+import java.util.List;
+import javax.swing.JComponent;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
-import java.util.List;
 
 /**
  * A graphic object displayed over images.

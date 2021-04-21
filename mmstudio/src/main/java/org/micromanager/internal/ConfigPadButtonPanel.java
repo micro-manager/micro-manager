@@ -21,15 +21,22 @@
 
 package org.micromanager.internal;
 
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.GroupEditor;
 import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public final class ConfigPadButtonPanel extends JPanel {
   /** */

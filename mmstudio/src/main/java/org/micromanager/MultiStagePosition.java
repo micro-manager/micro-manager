@@ -25,11 +25,14 @@
 //
 package org.micromanager;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import mmcorej.CMMCore;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.util.*;
 
 /**
  * Definition of a position in space in terms of available stages/drives

@@ -20,15 +20,31 @@
 
 package org.micromanager.data.internal;
 
+import static org.micromanager.data.internal.PropertyKey.BINNING;
+import static org.micromanager.data.internal.PropertyKey.BIT_DEPTH;
+import static org.micromanager.data.internal.PropertyKey.CAMERA;
+import static org.micromanager.data.internal.PropertyKey.ELAPSED_TIME_MS;
+import static org.micromanager.data.internal.PropertyKey.EXPOSURE_MS;
+import static org.micromanager.data.internal.PropertyKey.FILE_NAME;
+import static org.micromanager.data.internal.PropertyKey.IMAGE_NUMBER;
+import static org.micromanager.data.internal.PropertyKey.PIXEL_ASPECT;
+import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_AFFINE;
+import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_UM;
+import static org.micromanager.data.internal.PropertyKey.POSITION_NAME;
+import static org.micromanager.data.internal.PropertyKey.RECEIVED_TIME;
+import static org.micromanager.data.internal.PropertyKey.ROI;
+import static org.micromanager.data.internal.PropertyKey.SCOPE_DATA;
+import static org.micromanager.data.internal.PropertyKey.USER_DATA;
+import static org.micromanager.data.internal.PropertyKey.X_POSITION_UM;
+import static org.micromanager.data.internal.PropertyKey.Y_POSITION_UM;
+import static org.micromanager.data.internal.PropertyKey.Z_POSITION_UM;
+
+import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.util.UUID;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Metadata;
-
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.util.UUID;
-
-import static org.micromanager.data.internal.PropertyKey.*;
 
 /**
  * This class holds the metadata for ImagePlanes. It is intended to be immutable; construct new

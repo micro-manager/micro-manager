@@ -6,9 +6,12 @@
 package org.micromanager.display.internal.link;
 
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.micromanager.display.internal.link.internal.LinkEndpoint;
-
-import java.util.*;
 
 public abstract class AbstractLinkAnchor<T> implements LinkAnchor<T> {
   private LinkEndpoint endpoint_;

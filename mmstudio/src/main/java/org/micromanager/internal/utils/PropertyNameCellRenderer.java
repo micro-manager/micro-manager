@@ -21,11 +21,11 @@
 
 package org.micromanager.internal.utils;
 
-import org.micromanager.Studio;
-
-import javax.swing.*;
+import java.awt.Component;
+import javax.swing.JLabel;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import org.micromanager.Studio;
 
 /** @author arthur */
 public final class PropertyNameCellRenderer implements TableCellRenderer {

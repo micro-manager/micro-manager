@@ -45,8 +45,8 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 public class SharpnessInspectorController extends AbstractInspectorPanelController {
   private static boolean expanded_ =
       false; // For some reason a whole new instance of this class is created each time we switch
-             // display viewers. Having this variable static allows it's value to stay unchanged
-             // between instances.
+  // display viewers. Having this variable static allows it's value to stay unchanged
+  // between instances.
   private final SharpnessInspectorPanel panel_;
   private DataViewer viewer_;
   private final Studio studio_;
@@ -147,7 +147,7 @@ public class SharpnessInspectorController extends AbstractInspectorPanelControll
     } catch (
         RuntimeException
             rte) { // Sometimes when the display window is just getting initialized this occurs due
-                   // to a nullpointer in trying to get the ImagePlus
+      // to a nullpointer in trying to get the ImagePlus
       return;
     }
     if (roi == null || !roi.isArea()) {
@@ -207,7 +207,7 @@ public class SharpnessInspectorController extends AbstractInspectorPanelControll
           .setRelativePosition(
               -(rangeUm
                   / 2.0)); // Move down by half of the range so that the scan is centered at the
-                           // starting point.
+      // starting point.
       while (studio_.core().deviceBusy(studio_.core().getFocusDevice())) { // make sure we moved
         Thread.sleep(50);
       }

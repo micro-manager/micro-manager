@@ -22,6 +22,7 @@
 //
 package org.micromanager.acquisition.internal;
 
+import java.util.ArrayList;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -30,8 +31,6 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.MMException;
-
-import java.util.ArrayList;
 
 /**
  * The original Acquisition engine interface. This interface is still used by scripts and the

@@ -20,6 +20,31 @@
 package org.micromanager.quickaccess.internal;
 
 import com.bulenkov.iconloader.IconLoader;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JColorChooser;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.MenuElement;
+import javax.swing.MenuSelectionManager;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import net.miginfocom.swing.MigLayout;
@@ -29,15 +54,6 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ScreenImage;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
-
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * This class represents an icon that can be dragged around the window, for adding or removing

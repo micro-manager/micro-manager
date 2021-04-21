@@ -21,11 +21,10 @@
 package org.micromanager.display;
 
 import ij.ImagePlus;
-import org.micromanager.display.overlay.Overlay;
-
-import java.awt.*;
+import java.awt.Window;
 import java.io.Closeable;
 import java.util.List;
+import org.micromanager.display.overlay.Overlay;
 
 /**
  * A DisplayWindow is the interface to Micro-Manager's image display windows.

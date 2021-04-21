@@ -1,11 +1,11 @@
 package org.micromanager.internal.utils;
 
-import org.micromanager.Studio;
-
-import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 import java.text.ParseException;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.TableCellRenderer;
+import org.micromanager.Studio;
 
 public class PropertyValueCellRenderer implements TableCellRenderer {
   // This method is called each time a cell in a column

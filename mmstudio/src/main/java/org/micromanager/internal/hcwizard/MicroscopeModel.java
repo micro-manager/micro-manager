@@ -22,14 +22,28 @@
 //
 package org.micromanager.internal.hcwizard;
 
-import mmcorej.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.GregorianCalendar;
+import java.util.Hashtable;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.JOptionPane;
+import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.DeviceType;
+import mmcorej.DoubleVector;
+import mmcorej.MMCoreJ;
+import mmcorej.PropertySetting;
+import mmcorej.StrVector;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Configuration data and functionality for the entire automated microscope, from the hardware setup

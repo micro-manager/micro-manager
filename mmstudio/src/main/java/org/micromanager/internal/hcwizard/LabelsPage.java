@@ -22,21 +22,26 @@
 //
 package org.micromanager.internal.hcwizard;
 
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /** Wizard page to define labels for state devices. */
 public final class LabelsPage extends PagePanel {

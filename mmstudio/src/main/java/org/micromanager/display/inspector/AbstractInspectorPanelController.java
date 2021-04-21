@@ -14,10 +14,9 @@
 
 package org.micromanager.display.inspector;
 
+import javax.swing.JPopupMenu;
 import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.display.DataViewer;
-
-import javax.swing.*;
 
 /**
  * A panel containing a section of the inspector window.

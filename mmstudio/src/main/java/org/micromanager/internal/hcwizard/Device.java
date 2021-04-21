@@ -23,13 +23,16 @@
 
 package org.micromanager.internal.hcwizard;
 
-import mmcorej.*;
-import org.micromanager.internal.utils.PropertyItem;
-import org.micromanager.internal.utils.ReportingUtils;
-
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Vector;
+import mmcorej.CMMCore;
+import mmcorej.DeviceType;
+import mmcorej.LongVector;
+import mmcorej.MMCoreJ;
+import mmcorej.StrVector;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /** Data structure describing a general MM device. Part of the MicroscopeModel. */
 public final class Device {

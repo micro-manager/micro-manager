@@ -18,15 +18,18 @@
 
 package org.micromanager.internal.navigation;
 
+import static org.micromanager.internal.dialogs.StageControlFrame.MEDIUM_MOVEMENT_Z;
+import static org.micromanager.internal.dialogs.StageControlFrame.SELECTED_Z_DRIVE;
+import static org.micromanager.internal.dialogs.StageControlFrame.SMALL_MOVEMENT_Z;
+import static org.micromanager.internal.dialogs.StageControlFrame.X_MOVEMENTS;
+import static org.micromanager.internal.dialogs.StageControlFrame.Y_MOVEMENTS;
+
 import com.google.common.eventbus.Subscribe;
+import java.awt.event.KeyEvent;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayKeyPressEvent;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.awt.event.KeyEvent;
-
-import static org.micromanager.internal.dialogs.StageControlFrame.*;
 
 /** @author Nico */
 public final class XYZKeyListener {

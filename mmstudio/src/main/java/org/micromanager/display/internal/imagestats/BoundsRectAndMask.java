@@ -5,7 +5,7 @@
  */
 package org.micromanager.display.internal.imagestats;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.Arrays;
 
 /** @author mark */

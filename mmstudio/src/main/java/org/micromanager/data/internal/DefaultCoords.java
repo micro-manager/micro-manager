@@ -22,15 +22,14 @@ package org.micromanager.data.internal;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.ArrayUtils;
-import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
-import org.micromanager.data.Coords;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.ArrayUtils;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
+import org.micromanager.data.Coords;
 
 public final class DefaultCoords implements Coords {
 

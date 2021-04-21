@@ -30,13 +30,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package org.micromanager.internal;
 
+import java.awt.geom.AffineTransform;
 import org.micromanager.CompatibilityInterface;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.awt.geom.AffineTransform;
 
 public class DefaultCompatibilityInterface implements CompatibilityInterface {
   private final Studio studio_;

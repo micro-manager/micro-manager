@@ -222,16 +222,16 @@ public class Properties {
         "CameraLiveExposureMs_Second"), // used internally to save/restore live exposure time
     PLUGIN_SHEET_WIDTH_A(
         "SheetWidthOrig_A"), // used internally to save/restore sheet width when acquisition changes
-                             // it
+    // it
     PLUGIN_SHEET_WIDTH_B(
         "SheetWidthOrig_B"), // used internally to save/restore sheet width when acquisition changes
-                             // it
+    // it
     PLUGIN_SHEET_OFFSET_A(
         "SheetOffsetOrig_A"), // used internally to save/restore sheet offset when acquisition
-                              // changes it
+    // changes it
     PLUGIN_SHEET_OFFSET_B(
         "SheetOffsetOrig_B"), // used internally to save/restore sheet offset when acquisition
-                              // changes it
+    // changes it
     PLUGIN_CAMERA_LIVE_SCAN("CameraLiveScanMs"),
     PREFS_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
     PREFS_AUTO_SHEET_WIDTH("AutomaticSheetWidth"),
@@ -275,10 +275,10 @@ public class Properties {
     //      PLUGIN_LS_SHUTTER_SPEED("LightSheetSpeedFactor"),
     PLUGIN_SHEET_WIDTH_EDGE_A(
         "SheetWidthEdgeSideA"), // hack to have separate properties for different panels when used
-                                // as a property and is exposing flaws in the bipartate
-                                // property/pref scheme, maybe would make sense to just use
-                                // preferences directly but rest of infrastructure isn't set up for
-                                // that at the moment
+    // as a property and is exposing flaws in the bipartate
+    // property/pref scheme, maybe would make sense to just use
+    // preferences directly but rest of infrastructure isn't set up for
+    // that at the moment
     PLUGIN_SHEET_WIDTH_EDGE_B("SheetWidthEdgeSideB"),
     PLUGIN_SHEET_OFFSET_EDGE_A("SheetOffsetEdgeSideA"),
     PLUGIN_SHEET_OFFSET_EDGE_B("SheetOffsetEdgeSideB"),

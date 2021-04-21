@@ -5,9 +5,9 @@
  */
 package org.micromanager.display.inspector;
 
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import org.micromanager.display.DataViewer;
-
-import javax.swing.*;
 
 /** @author Mark A. Tsuchida */
 public interface InspectorPanelController {

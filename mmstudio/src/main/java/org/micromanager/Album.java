@@ -22,11 +22,10 @@
 
 package org.micromanager;
 
-import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
-
 import java.io.IOException;
 import java.util.Collection;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 
 /**
  * Interface for interacting with the Album, an implicit Datastore that Micro-Manager uses as a

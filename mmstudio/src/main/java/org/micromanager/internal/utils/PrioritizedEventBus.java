@@ -1,14 +1,13 @@
 package org.micromanager.internal.utils;
 
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
-
-import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 /**
  * The PrioritizedEventBus allows registrants to provide a priority value; when dispatching events

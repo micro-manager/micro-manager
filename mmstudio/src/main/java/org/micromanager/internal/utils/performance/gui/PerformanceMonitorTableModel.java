@@ -13,12 +13,11 @@
 
 package org.micromanager.internal.utils.performance.gui;
 
-import org.micromanager.internal.utils.MustCallOnEDT;
-import org.micromanager.internal.utils.performance.AbstractExponentialSmoothing;
-
-import javax.swing.table.AbstractTableModel;
 import java.util.List;
 import java.util.Map;
+import javax.swing.table.AbstractTableModel;
+import org.micromanager.internal.utils.MustCallOnEDT;
+import org.micromanager.internal.utils.performance.AbstractExponentialSmoothing;
 
 /** @author Mark A. Tsuchida */
 final class PerformanceMonitorTableModel extends AbstractTableModel {

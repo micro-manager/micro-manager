@@ -5,13 +5,18 @@
  */
 package org.micromanager.profile.internal;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import org.micromanager.PropertyMap;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.util.List;
-import java.util.*;
 
 public final class ProfilePropertyMapView implements MutablePropertyMapView {
   final DefaultUserProfile profile_;

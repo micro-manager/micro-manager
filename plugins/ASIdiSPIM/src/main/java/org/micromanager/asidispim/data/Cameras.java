@@ -665,9 +665,8 @@ public class Cameras {
         } else {
           Rectangle roi = getCameraROI(camKey);
           final double rowReadoutTime = getRowReadoutTime(camKey);
-          int speedFactor =
-              1; // props_.getPropValueInteger(Devices.Keys.PLUGIN,
-                 // Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+          int speedFactor = 1; // props_.getPropValueInteger(Devices.Keys.PLUGIN,
+          // Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
           if (speedFactor < 1) {
             speedFactor = 1;
           }

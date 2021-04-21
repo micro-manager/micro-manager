@@ -30,6 +30,13 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.util.HashMap;
+import java.util.Map;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
@@ -41,13 +48,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.imageanalysis.AnalysisWindows2D;
 import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
-import java.util.HashMap;
-import java.util.Map;
 
 /** @author arthur */
 public class AutomaticCalibrationThread extends CalibrationThread {

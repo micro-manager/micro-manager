@@ -26,24 +26,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
-import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
-import org.micromanager.data.Coords;
-import org.micromanager.data.Image;
-import org.micromanager.data.Metadata;
-import org.micromanager.data.SummaryMetadata;
-import org.micromanager.data.internal.*;
-import org.micromanager.display.ChannelDisplaySettings;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.RememberedDisplaySettings;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.propertymap.MM1JSONSerializer;
-import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.imageanalysis.ImageUtils;
-
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -57,6 +40,27 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.ThreadPoolExecutor;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.CommentsHelper;
+import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.internal.DefaultMetadata;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.propertymap.MM1JSONSerializer;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
 public final class MultipageTiffWriter {
 
@@ -103,7 +107,7 @@ public final class MultipageTiffWriter {
   private long indexMapPosition_; // current position of the dynamically written index map
   private long
       indexMapFirstEntry_; // mark position of first entry so that number of entries can be written
-                           // at end
+  // at end
   private int bufferPosition_;
   private int numChannels_, numFrames_, numSlices_;
   private final HashMap<Coords, Long> coordsToOffset_;

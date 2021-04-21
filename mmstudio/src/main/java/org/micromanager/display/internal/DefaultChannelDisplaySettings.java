@@ -1,16 +1,15 @@
 package org.micromanager.display.internal;
 
 import com.google.common.base.Preconditions;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.internal.utils.ColorPalettes;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /** @author mark */
 public final class DefaultChannelDisplaySettings implements ChannelDisplaySettings {

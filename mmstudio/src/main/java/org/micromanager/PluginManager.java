@@ -19,13 +19,12 @@
 
 package org.micromanager;
 
+import java.util.HashMap;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
 import org.micromanager.display.overlay.OverlayPlugin;
 import org.micromanager.quickaccess.QuickAccessPlugin;
-
-import java.util.HashMap;
 
 /**
  * This class provides access to plugins that have been detected by Micro-Manager at startup. You

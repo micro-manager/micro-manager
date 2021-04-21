@@ -22,7 +22,7 @@
 
 package org.micromanager;
 
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * Provides access to logging and message display routines. Available in the Beanshell scripting

@@ -1,15 +1,16 @@
 package org.micromanager.internal.menus;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /** @author nico */
 public class WindowMenu {

@@ -1,14 +1,17 @@
 package org.micromanager.display.inspector.internal.panels.intensity;
 
-import net.imglib2.display.ColorTable8;
-import org.micromanager.internal.utils.ColorMaps;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JList;
+import net.imglib2.display.ColorTable8;
+import org.micromanager.internal.utils.ColorMaps;
 
 /**
  * Generates the items in the colorModeComboBox in the top of the Histograms and Intensity scaling

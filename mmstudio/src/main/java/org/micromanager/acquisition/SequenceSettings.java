@@ -25,9 +25,8 @@ package org.micromanager.acquisition;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.micromanager.data.Datastore;
-
 import java.util.ArrayList;
+import org.micromanager.data.Datastore;
 
 /**
  * SequenceSettings objects contain the parameters describing how to run a single acquisition.

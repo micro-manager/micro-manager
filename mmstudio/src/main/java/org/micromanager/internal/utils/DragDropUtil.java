@@ -20,17 +20,20 @@
 
 package org.micromanager.internal.utils;
 
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
+import java.io.File;
+import java.io.IOException;
 import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.menus.FileMenu;
-
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.*;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * DragDropUtil Handler for drop events in Micro-Manager Checks if files or folders are dropped onto

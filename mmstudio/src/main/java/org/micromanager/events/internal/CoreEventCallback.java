@@ -21,13 +21,12 @@
 
 package org.micromanager.events.internal;
 
+import java.awt.geom.AffineTransform;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.MMEventCallback;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
-
-import javax.swing.*;
-import java.awt.geom.AffineTransform;
 
 /**
  * Callback to update Java layer when a change happens in the MMCore. This posts events on the

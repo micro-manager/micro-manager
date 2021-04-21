@@ -1,5 +1,7 @@
 package org.micromanager.internal.menus;
 
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMVersion;
@@ -7,8 +9,6 @@ import org.micromanager.internal.dialogs.AboutDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
 
 /*
  * Responsible for handling the Help Menu and its associated logic.

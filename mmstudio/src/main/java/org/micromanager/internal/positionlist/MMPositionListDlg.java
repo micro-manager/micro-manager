@@ -16,13 +16,12 @@
 package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 /**
  * The MMPositionListDlg class extends PositionListDlg to be used as the singleton PositionListDlg

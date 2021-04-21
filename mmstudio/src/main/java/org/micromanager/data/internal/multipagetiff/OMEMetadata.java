@@ -24,6 +24,11 @@ package org.micromanager.data.internal.multipagetiff;
 // Note: java.awt.Color and ome.xml.model.primitives.Color used with
 // fully-qualified class names
 
+import java.io.IOException;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
 import loci.common.DateTools;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
@@ -46,12 +51,6 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.io.IOException;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeMap;
 
 public final class OMEMetadata {
 

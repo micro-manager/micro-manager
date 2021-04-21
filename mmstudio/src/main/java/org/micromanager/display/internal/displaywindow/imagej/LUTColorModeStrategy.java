@@ -8,9 +8,8 @@ package org.micromanager.display.internal.displaywindow.imagej;
 import com.google.common.base.Preconditions;
 import ij.CompositeImage;
 import ij.process.LUT;
+import java.awt.Color;
 import net.imglib2.display.ColorTable8;
-
-import java.awt.*;
 
 /** @author mark */
 class LUTColorModeStrategy extends AbstractColorModeStrategy {

@@ -5,14 +5,16 @@
  */
 package org.micromanager.propertymap;
 
-import org.micromanager.PropertyMap;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.micromanager.PropertyMap;
 
 /**
  * An interface to a property-map-like object that can be modified.

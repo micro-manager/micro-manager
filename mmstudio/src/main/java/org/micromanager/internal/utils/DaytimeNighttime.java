@@ -22,15 +22,18 @@
 //
 package org.micromanager.internal.utils;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Window;
+import java.util.HashMap;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.plaf.ColorUIResource;
+import javax.swing.table.TableModel;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.DefaultApplicationSkinEvent;
-
-import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
-import javax.swing.table.TableModel;
-import java.awt.*;
-import java.util.HashMap;
 
 /*
  * This class controls the colors of the user interface

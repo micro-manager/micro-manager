@@ -18,11 +18,16 @@
 package org.micromanager.display.inspector.internal.panels.intensity;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.event.EventListenerSupport;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -32,6 +37,13 @@ import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import org.apache.commons.lang3.event.EventListenerSupport;
 
 public final class HistogramView extends JPanel {
   public static interface Listener {

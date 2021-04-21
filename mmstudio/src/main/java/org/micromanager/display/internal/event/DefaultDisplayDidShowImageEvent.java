@@ -5,12 +5,11 @@
  */
 package org.micromanager.display.internal.event;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayDidShowImageEvent;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /** @author mark */
 public class DefaultDisplayDidShowImageEvent implements DisplayDidShowImageEvent {

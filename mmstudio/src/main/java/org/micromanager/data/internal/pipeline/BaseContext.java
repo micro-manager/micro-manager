@@ -20,11 +20,14 @@
 
 package org.micromanager.data.internal.pipeline;
 
-import org.micromanager.data.*;
-import org.micromanager.internal.utils.ReportingUtils;
-
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorContext;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public abstract class BaseContext implements ProcessorContext {
   protected BaseContext sink_ = null;

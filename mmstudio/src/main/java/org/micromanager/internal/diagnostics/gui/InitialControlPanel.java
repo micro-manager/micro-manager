@@ -11,9 +11,10 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 
 class InitialControlPanel extends ControlPanel {
   private final ProblemReportController controller_;

@@ -20,14 +20,13 @@
 
 package org.micromanager.display;
 
+import java.io.IOException;
+import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * This interface declares generic display-related methods. You can access a class instance that

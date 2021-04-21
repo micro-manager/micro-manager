@@ -20,7 +20,11 @@
 
 package org.micromanager.data.internal;
 
-import ij.process.*;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;

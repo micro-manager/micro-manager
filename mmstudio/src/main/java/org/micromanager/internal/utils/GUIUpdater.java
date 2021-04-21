@@ -20,8 +20,8 @@
 
 package org.micromanager.internal.utils;
 
-import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.SwingUtilities;
 
 /**
  * @author arthur and henry DO NOT USE. This code is only here so that the DataBrowser plugin can

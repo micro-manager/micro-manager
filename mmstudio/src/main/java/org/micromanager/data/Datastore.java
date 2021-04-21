@@ -20,7 +20,7 @@
 
 package org.micromanager.data;
 
-import java.awt.*;
+import java.awt.Component;
 import java.io.IOException;
 
 /**

@@ -11,12 +11,18 @@
 
 package org.micromanager.internal.diagnostics;
 
-import mmcorej.CMMCore;
-
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.EventQueue;
+import java.awt.Toolkit;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import mmcorej.CMMCore;
 
 /**
  * Log event dispatch thread hangs to the CoreLog.

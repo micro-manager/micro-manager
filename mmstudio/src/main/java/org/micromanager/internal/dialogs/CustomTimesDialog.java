@@ -1,14 +1,17 @@
 package org.micromanager.internal.dialogs;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.WindowPositioning;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * This class provides a dialog available from the "Advanced" button on the AcqConrolDlg (MDA setup

@@ -19,11 +19,11 @@
 
 package org.micromanager.quickaccess;
 
-import org.micromanager.PropertyMap;
-
-import javax.swing.*;
 import java.io.File;
 import java.util.Map;
+import javax.swing.Icon;
+import javax.swing.JFrame;
+import org.micromanager.PropertyMap;
 
 /**
  * The QuickAccessManager provides API access to the Quick Access Panel(s). It can accessed via

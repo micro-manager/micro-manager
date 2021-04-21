@@ -5,9 +5,8 @@
  */
 package org.micromanager.display;
 
-import org.micromanager.data.Image;
-
 import java.util.List;
+import org.micromanager.data.Image;
 
 /** @author mark */
 public interface DisplayDidShowImageEvent {

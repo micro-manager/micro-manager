@@ -369,7 +369,7 @@ public class SystemController {
             .isProperty(
                 configprop.get(
                     uiprop))) { // if it is allocated to an existing Micro-manager property, link
-                                // them together
+          // them together
 
           if (uiproperties
               .get(uiprop)

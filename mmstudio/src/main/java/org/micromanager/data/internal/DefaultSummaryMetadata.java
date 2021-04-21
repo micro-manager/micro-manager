@@ -20,6 +20,32 @@
 
 package org.micromanager.data.internal;
 
+import static org.micromanager.data.internal.PropertyKey.AXIS_ORDER;
+import static org.micromanager.data.internal.PropertyKey.CHANNEL_GROUP;
+import static org.micromanager.data.internal.PropertyKey.CHANNEL_NAMES;
+import static org.micromanager.data.internal.PropertyKey.COMPUTER_NAME;
+import static org.micromanager.data.internal.PropertyKey.CUSTOM_INTERVALS_MS;
+import static org.micromanager.data.internal.PropertyKey.DIRECTORY;
+import static org.micromanager.data.internal.PropertyKey.INTENDED_DIMENSIONS;
+import static org.micromanager.data.internal.PropertyKey.INTERVAL_MS;
+import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS;
+import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_SLICES;
+import static org.micromanager.data.internal.PropertyKey.METADATA_VERSION;
+import static org.micromanager.data.internal.PropertyKey.MICRO_MANAGER_VERSION;
+import static org.micromanager.data.internal.PropertyKey.PREFIX;
+import static org.micromanager.data.internal.PropertyKey.PROFILE_NAME;
+import static org.micromanager.data.internal.PropertyKey.STAGE_POSITIONS;
+import static org.micromanager.data.internal.PropertyKey.START_TIME;
+import static org.micromanager.data.internal.PropertyKey.USER_DATA;
+import static org.micromanager.data.internal.PropertyKey.USER_NAME;
+import static org.micromanager.data.internal.PropertyKey.Z_STEP_UM;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
@@ -29,15 +55,6 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.micromanager.data.internal.PropertyKey.*;
 
 public final class DefaultSummaryMetadata implements SummaryMetadata {
   /**

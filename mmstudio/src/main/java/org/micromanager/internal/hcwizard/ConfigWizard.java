@@ -21,21 +21,18 @@
 //
 package org.micromanager.internal.hcwizard;
 
-import mmcorej.CMMCore;
-import mmcorej.StrVector;
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
-import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.HttpUtils;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.WindowPositioning;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,6 +44,22 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+import mmcorej.CMMCore;
+import mmcorej.StrVector;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.HttpUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * Configuration Wizard main panel. Based on the dialog frame to be activated as part of the

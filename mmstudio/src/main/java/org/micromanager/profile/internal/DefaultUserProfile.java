@@ -5,8 +5,12 @@
  */
 package org.micromanager.profile.internal;
 
+import static org.micromanager.PropertyMaps.emptyPropertyMap;
+
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.io.IOException;
+import java.util.UUID;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -14,11 +18,6 @@ import org.micromanager.UserProfile;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.io.IOException;
-import java.util.UUID;
-
-import static org.micromanager.PropertyMaps.emptyPropertyMap;
 
 /**
  * Implementation of UserProfile.

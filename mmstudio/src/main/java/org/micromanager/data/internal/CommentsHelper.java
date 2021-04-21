@@ -20,14 +20,13 @@
 
 package org.micromanager.data.internal;
 
+import java.io.IOException;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.io.IOException;
 
 /** A simple helper class to handle access of comments. */
 public final class CommentsHelper {

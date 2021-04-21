@@ -5,6 +5,15 @@
  */
 package org.micromanager.profile.internal.gui;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -13,11 +22,6 @@ import org.micromanager.profile.UserProfileMigration;
 import org.micromanager.profile.UserProfileMigrator;
 import org.micromanager.profile.internal.LegacyMM1Preferences;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.io.File;
-import java.util.*;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
 
 /** @author mark */
 public class HardwareConfigurationManager {

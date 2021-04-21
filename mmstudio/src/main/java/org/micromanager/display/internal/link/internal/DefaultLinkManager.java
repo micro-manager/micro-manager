@@ -6,12 +6,11 @@
 package org.micromanager.display.internal.link.internal;
 
 import com.google.common.base.Preconditions;
+import java.util.HashMap;
+import java.util.Map;
 import org.micromanager.display.internal.link.AbstractLinkAnchor;
 import org.micromanager.display.internal.link.LinkAnchor;
 import org.micromanager.display.internal.link.LinkManager;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class DefaultLinkManager implements LinkManager {
   private final LinkEndpointManager endpointManager_ = LinkEndpointManager.create();

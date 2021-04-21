@@ -1,7 +1,15 @@
 package org.micromanager.internal.utils.imageanalysis;
 
 import ij.ImagePlus;
-import ij.process.*;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FHT;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.LUT;
+import ij.process.ShortProcessor;
+import java.awt.Color;
+import java.awt.Point;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONArray;
@@ -10,8 +18,6 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import java.awt.*;
 
 public final class ImageUtils {
 

@@ -1,10 +1,11 @@
 package org.micromanager.internal.positionlist;
 
-import org.micromanager.Studio;
-
-import javax.swing.*;
+import java.awt.Component;
+import java.awt.Font;
+import javax.swing.JLabel;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import org.micromanager.Studio;
 
 /** Renders the first row of the position list table */
 class FirstRowRenderer extends JLabel implements TableCellRenderer {

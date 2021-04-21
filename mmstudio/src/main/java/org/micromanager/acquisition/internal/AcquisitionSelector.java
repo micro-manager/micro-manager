@@ -18,18 +18,24 @@
 package org.micromanager.acquisition.internal;
 
 import com.bulenkov.iconloader.IconLoader;
-import org.micromanager.Studio;
-import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
-import org.micromanager.internal.utils.GUIUtils;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.ListCellRenderer;
+import org.micromanager.Studio;
+import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
+import org.micromanager.internal.utils.GUIUtils;
 
 /**
  * This class provides a JButton that accesses the acquisition dialog -- or, if there is more than

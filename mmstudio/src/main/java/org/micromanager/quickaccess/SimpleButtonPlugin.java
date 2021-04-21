@@ -19,7 +19,7 @@
 
 package org.micromanager.quickaccess;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * This plugin type is used for buttons that can be embedded in the Quick-Access Window. It's for

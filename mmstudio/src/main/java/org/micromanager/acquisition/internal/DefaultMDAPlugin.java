@@ -19,12 +19,11 @@
 
 package org.micromanager.acquisition.internal;
 
+import javax.swing.ImageIcon;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
-
-import javax.swing.*;
 
 /** This built-in plugin provides access to our standard MDA dialog. */
 @Plugin(type = AcquisitionDialogPlugin.class)

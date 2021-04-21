@@ -5,8 +5,10 @@
  */
 package org.micromanager.display.inspector.internal;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import javax.swing.JList;
+import javax.swing.JSeparator;
+import javax.swing.ListCellRenderer;
 
 /**
  * A {@code ListCellRenderer} allowing separators in a {@code JComboBox}.

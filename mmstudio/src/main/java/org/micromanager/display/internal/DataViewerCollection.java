@@ -2,13 +2,22 @@ package org.micromanager.display.internal;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.micromanager.EventPublisher;
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.internal.event.*;
+import org.micromanager.display.internal.event.DataViewerAddedEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.MustCallOnEDT;
-
-import java.util.*;
 
 /**
  * The collection of data viewers.

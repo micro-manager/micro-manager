@@ -22,7 +22,7 @@
 
 package org.micromanager;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Provides access to methods dealing with the "skin" or "look and feel" of the user interface. In

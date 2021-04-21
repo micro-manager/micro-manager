@@ -1,12 +1,14 @@
 package org.micromanager.internal.utils;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.text.ParseException;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.TableCellRenderer;
 import org.micromanager.Studio;
 import org.micromanager.internal.ConfigGroupPad;
-
-import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
-import java.text.ParseException;
 
 /** @author arthur */
 /** Rendering element for the property table. */

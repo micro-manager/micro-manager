@@ -44,7 +44,7 @@ public class StagePositionUpdater {
   private final AtomicBoolean updatingNow_ =
       new AtomicBoolean(
           false); // true iff in middle of update right now, use to skip updates if last one is
-                  // running instead of letting them pile up
+  // running instead of letting them pile up
   private final AtomicBoolean pauseUpdates_ =
       new AtomicBoolean(false); // true iff updates temporarily disabled (e.g. running acquisition)
   private boolean timerRunning; // whether we are set to update positions currently

@@ -1,20 +1,19 @@
 package org.micromanager.internal.utils;
 
 import ij.ImagePlus;
-import mmcorej.Configuration;
-import mmcorej.PropertySetting;
-import mmcorej.TaggedImage;
-import mmcorej.org.json.JSONArray;
-import mmcorej.org.json.JSONException;
-import mmcorej.org.json.JSONObject;
-
-import java.awt.*;
+import java.awt.Rectangle;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.UUID;
+import mmcorej.Configuration;
+import mmcorej.PropertySetting;
+import mmcorej.TaggedImage;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONException;
+import mmcorej.org.json.JSONObject;
 
 /**
  * This class is intended to standardize interactions with the tags in TaggedImages and the image

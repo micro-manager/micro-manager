@@ -17,12 +17,11 @@ package org.micromanager.display.internal.displaywindow.imagej;
 import ij.ImageStack;
 import ij.VirtualStack;
 import ij.process.ImageProcessor;
+import java.awt.Rectangle;
+import java.awt.image.ColorModel;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultImageJConverter;
-
-import java.awt.*;
-import java.awt.image.ColorModel;
 
 /**
  * Proxy for ImageJ's {@code VirtualStack}.

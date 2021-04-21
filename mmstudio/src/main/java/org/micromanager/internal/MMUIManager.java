@@ -20,6 +20,11 @@
 //
 package org.micromanager.internal;
 
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import javax.swing.JFrame;
+import javax.swing.ToolTipManager;
 import mmcorej.MMCoreJ;
 import org.micromanager.PositionList;
 import org.micromanager.events.internal.DefaultGUIRefreshEvent;
@@ -31,11 +36,6 @@ import org.micromanager.internal.positionlist.MMPositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.IOException;
 
 public class MMUIManager {
   private PropertyEditor propertyBrowser_;
@@ -220,7 +220,7 @@ public class MMUIManager {
       studio_.getAutofocusManager().refresh();
 
       if (!fromCache) { // The rest of this function uses the cached property values. If `fromCache`
-                        // is false, start by updating all properties in the cache.
+        // is false, start by updating all properties in the cache.
         studio_.core().updateSystemStateCache();
       }
 

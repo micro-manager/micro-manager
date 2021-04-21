@@ -13,14 +13,18 @@
 
 package org.micromanager.display.internal.animate;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.data.Coords;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.*;
 
 /**
  * Coordinates and moderates animation of displayed data position.

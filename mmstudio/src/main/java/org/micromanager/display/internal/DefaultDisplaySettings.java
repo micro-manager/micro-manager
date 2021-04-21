@@ -21,6 +21,13 @@
 package org.micromanager.display.internal;
 
 import com.google.common.base.Preconditions;
+import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
@@ -35,14 +42,6 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public final class DefaultDisplaySettings implements DisplaySettings {
   private static final String PROFILEKEY = "Default_Display_Settings";

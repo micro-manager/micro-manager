@@ -1,19 +1,25 @@
 package org.micromanager.data.internal;
 
 import com.google.common.eventbus.EventBus;
+import io.scif.ImageMetadata;
 import io.scif.Metadata;
-import io.scif.*;
+import io.scif.Plane;
+import io.scif.Reader;
+import io.scif.SCIFIO;
 import io.scif.util.FormatTools;
-import net.imagej.axis.Axes;
-import net.imagej.axis.CalibratedAxis;
-import org.micromanager.Studio;
-import org.micromanager.data.*;
-import org.scijava.util.Bytes;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import net.imagej.axis.Axes;
+import net.imagej.axis.CalibratedAxis;
+import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.Image;
+import org.micromanager.data.SummaryMetadata;
+import org.scijava.util.Bytes;
 
 /**
  * Wrap the SciFIO library in a Micro-Manager dataProvider So far, only uint8 and uint16 type

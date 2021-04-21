@@ -1,5 +1,9 @@
 package org.micromanager.acquisition.internal;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
@@ -8,10 +12,6 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This object spawns a new thread that receives images from the acquisition engine and runs them

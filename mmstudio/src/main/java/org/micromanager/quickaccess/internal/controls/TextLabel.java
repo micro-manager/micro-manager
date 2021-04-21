@@ -19,15 +19,17 @@
 
 package org.micromanager.quickaccess.internal.controls;
 
+import java.awt.Frame;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
-
-import javax.swing.*;
-import java.awt.*;
 
 /** Allows you to put a simple text label into the window. */
 @Plugin(type = WidgetPlugin.class)

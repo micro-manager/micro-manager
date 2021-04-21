@@ -1,13 +1,12 @@
 package org.micromanager.internal.utils;
 
-import org.micromanager.profile.internal.LegacyMM1Preferences;
-
 import java.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import org.micromanager.profile.internal.LegacyMM1Preferences;
 
 /**
  * This package is here for old code we can't wait to get rid of but need to keep around for a

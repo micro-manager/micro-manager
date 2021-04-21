@@ -21,23 +21,37 @@
 package org.micromanager.internal;
 
 /** @author Nenad Amodaj PropertyEditor provides UI for manipulating sets of device properties */
-
 import com.google.common.eventbus.Subscribe;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.border.BevelBorder;
+import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
-import org.micromanager.internal.utils.*;
-
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.table.TableColumn;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.PropertyNameCellRenderer;
+import org.micromanager.internal.utils.PropertyTableData;
+import org.micromanager.internal.utils.PropertyValueCellEditor;
+import org.micromanager.internal.utils.PropertyValueCellRenderer;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.ShowFlags;
+import org.micromanager.internal.utils.ShowFlagsPanel;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * JFrame based component for generic manipulation of device properties. Represents the entire

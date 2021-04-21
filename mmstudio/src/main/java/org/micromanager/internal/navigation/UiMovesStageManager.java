@@ -20,13 +20,12 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.HashMap;
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.MMStudio;
-
-import java.util.HashMap;
 
 /** This class handles setting up and disabling mouse and keyboard shortcuts for stage motion. */
 public final class UiMovesStageManager {

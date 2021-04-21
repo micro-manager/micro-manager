@@ -8,12 +8,11 @@ package org.micromanager.display.internal.displaywindow.imagej;
 import com.google.common.base.Preconditions;
 import ij.CompositeImage;
 import ij.process.LUT;
-import org.micromanager.internal.utils.imageanalysis.ImageUtils;
-
-import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
 /**
  * The color mode strategy for single-color mode.

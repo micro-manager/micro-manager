@@ -20,17 +20,21 @@
 
 package org.micromanager.internal.utils;
 
-import mmcorej.CMMCore;
-import org.micromanager.LogManager;
-import org.micromanager.internal.MMStudio;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Calendar;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
+import mmcorej.CMMCore;
+import org.micromanager.LogManager;
+import org.micromanager.internal.MMStudio;
 
 /** @author arthur */
 public final class ReportingUtils {

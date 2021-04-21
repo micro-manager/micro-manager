@@ -7,10 +7,13 @@ package org.micromanager.profile.internal;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.micromanager.UserProfile;
 import org.micromanager.profile.UserProfileMigration;
-
-import java.util.*;
 
 /**
  * Automatically migrate user profile settings.

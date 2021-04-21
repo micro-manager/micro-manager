@@ -27,6 +27,7 @@ import ij.ImageStack;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
+import java.io.IOException;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
@@ -37,8 +38,6 @@ import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
-
-import java.io.IOException;
 
 /** @author Nico */
 @Plugin(type = DisplayGearMenuPlugin.class)

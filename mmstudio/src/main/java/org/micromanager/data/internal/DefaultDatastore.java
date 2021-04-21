@@ -20,24 +20,30 @@
 
 package org.micromanager.data.internal;
 
-import org.micromanager.Studio;
-import org.micromanager.data.Image;
-import org.micromanager.data.*;
-import org.micromanager.internal.UserCancelledException;
-import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.PrioritizedEventBus;
-import org.micromanager.internal.utils.ProgressBar;
-import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import java.awt.*;
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JFileChooser;
+import javax.swing.ProgressMonitor;
+import javax.swing.filechooser.FileFilter;
+import org.micromanager.Studio;
+import org.micromanager.data.Annotation;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Image;
+import org.micromanager.data.Storage;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.UserCancelledException;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.PrioritizedEventBus;
+import org.micromanager.internal.utils.ProgressBar;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class DefaultDatastore implements Datastore {
 

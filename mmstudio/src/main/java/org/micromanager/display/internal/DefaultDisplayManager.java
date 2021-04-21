@@ -22,6 +22,13 @@ package org.micromanager.display.internal;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.WeakHashMap;
+import javax.swing.JOptionPane;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
@@ -29,11 +36,23 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.PropertyKey;
-import org.micromanager.display.*;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ComponentDisplaySettings;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DataViewerListener;
+import org.micromanager.display.DisplayManager;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.ImageExporter;
 import org.micromanager.display.inspector.internal.InspectorCollection;
 import org.micromanager.display.inspector.internal.InspectorController;
 import org.micromanager.display.internal.displaywindow.DisplayController;
-import org.micromanager.display.internal.event.*;
+import org.micromanager.display.internal.event.DataViewerAddedEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.gearmenu.DefaultImageExporter;
 import org.micromanager.display.internal.link.LinkManager;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
@@ -41,14 +60,6 @@ import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.WeakHashMap;
 
 // TODO Methods must implement correct threading semantics!
 public final class DefaultDisplayManager extends DataViewerListener implements DisplayManager {
