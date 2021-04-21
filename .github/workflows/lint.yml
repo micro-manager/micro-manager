@@ -21,11 +21,11 @@ jobs:
         with:
           fetch-depth: 0  # Full git history is needed to get a proper list of changed files within `super-linter`
       - run: echo ${{ github.event_name }}
-      - run: echo ${{ github.event_name }} == 'workflow_dispatch'
+      - run: echo ${{ github.event_name == 'workflow_dispatch' }}
       - name: Lint Code Base
         uses: github/super-linter@v3
         env:
-          VALIDATE_ALL_CODEBASE: ${{ github.event_name }} == 'workflow_dispatch' # If triggered by workflow dispatch scan the whole repo, else just scan the new code.
+          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'workflow_dispatch' }} # If triggered by workflow dispatch scan the whole repo, else just scan the new code.
           VALIDATE_JAVA: true
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
