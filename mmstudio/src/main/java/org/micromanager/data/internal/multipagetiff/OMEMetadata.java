@@ -308,12 +308,17 @@ public final class OMEMetadata {
       int channel = coords.getChannel();
 
       // ifdCount is 0 when a new file started, tiff data plane count is 0 at a new position
-      metadata_.setTiffDataFirstZ(new NonNegativeInteger(slice), position, indices.tiffDataIndex_);         
-      metadata_.setTiffDataFirstC(new NonNegativeInteger(channel), position, indices.tiffDataIndex_);
-      metadata_.setTiffDataFirstT(new NonNegativeInteger(frame), position, indices.tiffDataIndex_);
-      metadata_.setTiffDataIFD(new NonNegativeInteger(ifdCount), position, indices.tiffDataIndex_);
-      metadata_.setUUIDFileName(currentFileName, position, indices.tiffDataIndex_);
-      metadata_.setUUIDValue(uuid, position, indices.tiffDataIndex_);
+      try {
+         metadata_.setTiffDataFirstZ(new NonNegativeInteger(slice), position, indices.tiffDataIndex_);
+         metadata_.setTiffDataFirstC(new NonNegativeInteger(channel), position, indices.tiffDataIndex_);
+         metadata_.setTiffDataFirstT(new NonNegativeInteger(frame), position, indices.tiffDataIndex_);
+         metadata_.setTiffDataIFD(new NonNegativeInteger(ifdCount), position, indices.tiffDataIndex_);
+         metadata_.setUUIDFileName(currentFileName, position, indices.tiffDataIndex_);
+         metadata_.setUUIDValue(uuid, position, indices.tiffDataIndex_);
+      } catch (IndexOutOfBoundsException ioe) {
+         ReportingUtils.logError(ioe, "Error in OMEMData class");
+         throw (new UnsupportedOperationException("Multipage Tiff storage only supports images in increasing order, t=0, t=2, etc.."));
+      }
       tiffDataIndexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), indices.tiffDataIndex_);
       metadata_.setTiffDataPlaneCount(new NonNegativeInteger(1), position, indices.tiffDataIndex_);
 
