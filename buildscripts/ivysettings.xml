@@ -6,7 +6,6 @@
       <ibiblio name="clearvolume" m2compatible="true" root="https://dl.bintray.com/clearvolume/ClearVolume"/>
       <ibiblio name="coremem" m2compatible="true" root="https://dl.bintray.com/clearcontrol/ClearControl"/>
 		<ibiblio name="imagej-net" m2compatible="true" root="https://maven.scijava.org/content/groups/public"/>
-      <ibiblio name ="nico" m2compatible="true" root="https://valelab4.ucsf.edu/~nstuurman/maven"/>
       <ibiblio name ="robert" m2compatible="true" root="https://dl.bintray.com/haesleinhuepf/clij"/>
       <ibiblio name ="bintray-micro-manager" m2compatible="true" root="https://dl.bintray.com/micro-manager/micro-manager"/>
 
@@ -25,7 +24,6 @@
 		<chain name="resolver-chain" returnFirst="true">
 			<resolver ref="thirdpartypublic3d"/>
 			<resolver ref="central"/>
-			<resolver ref="nico"/>
 			<resolver ref="imagej-net"/>
 			<resolver ref="thirdpartypublic"/>
 			<resolver ref="thirdpartynonfree"/>
