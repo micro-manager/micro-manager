@@ -46,7 +46,9 @@ public class WindowMenu {
       windowMenu_.add(item);
       windowMenu_.addSeparator();
 
-      item.setState(studio_.profileAdmin().getProfile().getSettings(WindowMenu.class)  // Synchronize item state
+      // Synchronize item state
+      IJ.getInstance().setVisible(false);
+      item.setSelected(studio_.profileAdmin().getProfile().getSettings(WindowMenu.class)
             .getBoolean(IMAGEJ_VISIBLE_PROP, false));
 
       studio_.displays().registerForEvents(this);
