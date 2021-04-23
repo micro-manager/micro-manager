@@ -47,9 +47,9 @@ public class WindowMenu {
       windowMenu_.addSeparator();
 
       // Synchronize item state
-      IJ.getInstance().setVisible(false);
+      IJ.getInstance().setVisible(false); // Since checkbox starts unchecked, make sure the windows status matches.
       item.setSelected(studio_.profileAdmin().getProfile().getSettings(WindowMenu.class)
-            .getBoolean(IMAGEJ_VISIBLE_PROP, false));
+            .getBoolean(IMAGEJ_VISIBLE_PROP, true));
 
       studio_.displays().registerForEvents(this);
    }
