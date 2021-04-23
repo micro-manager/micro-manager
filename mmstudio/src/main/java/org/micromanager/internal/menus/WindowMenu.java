@@ -4,6 +4,7 @@ package org.micromanager.internal.menus;
 import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -12,6 +13,7 @@ import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
+import ij.IJ;
 
 /**
  *
@@ -21,13 +23,32 @@ public class WindowMenu {
    private final MMStudio studio_;
    private final JMenu windowMenu_;
    private final List<JMenuItem> menuItems_;
+   private static final String IMAGEJ_VISIBLE_PROP = "ImageJ_Visible";
+
 
    public WindowMenu(MMStudio studio, JMenuBar menuBar) {
       studio_ = studio;
       menuItems_ = new ArrayList<>();
 
       windowMenu_= GUIUtils.createMenuInMenuBar(menuBar, "Window");
-      
+
+      //Add a checkable menu item to hide ImageJ
+      JCheckBoxMenuItem item = new JCheckBoxMenuItem();
+      item.setText("Show ImageJ");
+      item.setToolTipText("Toggle the visibility of the ImageJ window.");
+      item.addItemListener(
+         (evt) -> {
+            boolean checked = ((JCheckBoxMenuItem) evt.getSource()).getState();
+            IJ.getInstance().setVisible(checked);
+            studio_.profileAdmin().getProfile().getSettings(WindowMenu.class)
+                  .putBoolean(IMAGEJ_VISIBLE_PROP, checked);
+      });
+      windowMenu_.add(item);
+      windowMenu_.addSeparator();
+
+      item.setState(studio_.profileAdmin().getProfile().getSettings(WindowMenu.class)  // Synchronize item state
+            .getBoolean(IMAGEJ_VISIBLE_PROP, false));
+
       studio_.displays().registerForEvents(this);
    }
    
