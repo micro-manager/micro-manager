@@ -96,9 +96,10 @@ public final class IntroDlg extends JDialog {
     * @param versionStr 
     */
    public IntroDlg(Studio studio, String versionStr) {
-      super((Window) null); // Passing null here causes
+      super((Window) null); // Passing null here causes the dialog to have an invisible parent frame that shows up in the task bar.
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));      // Select a plugin to use to customize the dialog.
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      // Select a plugin to use to customize the dialog.
       Map<String, IntroPlugin> plugins = studio == null ?
             Collections.<String, IntroPlugin>emptyMap() :
             studio.plugins().getIntroPlugins();
