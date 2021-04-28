@@ -1,11 +1,13 @@
 #ifndef _NOTIFICATIONTHREAD_H_
 #define _NOTIFICATIONTHREAD_H_
 
-#include "../../MMDevice/DeviceThreads.h"
+// MMDevice
+#include "DeviceThreads.h"
 
 #include "NotificationEntry.h"
 
 #include <boost/thread/condition_variable.hpp>
+
 #include <deque>
 
 class Universal;

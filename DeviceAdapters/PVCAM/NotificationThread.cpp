@@ -83,7 +83,7 @@ void NotificationThread::requestStop()
     frameReadyCondition_.notify_one();
     threadMutex_.unlock();
 
-    // Wait for the thread func to exit
+    // Wait for the thread function to exit
     this->wait();
 }
 

@@ -2,9 +2,10 @@
 #define _PVFRAMEINFO_H_
 
 #include "PVCAMIncludes.h"
+
 /**
 * A local definition for the FRAME_INFO. Used to copy the
-* essential FRAME_INFO metedata together with additional 
+* essential FRAME_INFO metadata together with additional 
 * frame metadata.
 */
 class PvFrameInfo

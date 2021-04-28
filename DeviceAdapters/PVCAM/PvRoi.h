@@ -40,7 +40,7 @@ public:
     }
 
     /**
-    * Sets the sensor binning factors for both directions without affecting the ROI coordintes
+    * Sets the sensor binning factors for both directions without affecting the ROI coordinates
     * @param binX Serial / x-direction binning to be used
     * @param binY Parallel / y-direction binning to be used
     */
@@ -50,7 +50,7 @@ public:
         SetBinningY(binY);
     }
     /**
-    * Sets the sensor binning factor for x-direction without affecting the ROI coordintes
+    * Sets the sensor binning factor for x-direction without affecting the ROI coordinates
     * @param binX Serial / x-direction binning to be used
     */
     void SetBinningX(uns16 binX)
@@ -58,7 +58,7 @@ public:
         m_binX = binX;
     }
     /**
-    * Sets the sensor binning factor for y-direction without affecting the ROI coordintes
+    * Sets the sensor binning factor for y-direction without affecting the ROI coordinates
     * @param binY Parallel / y-direction binning to be used
     */
     void SetBinningY(uns16 binY)

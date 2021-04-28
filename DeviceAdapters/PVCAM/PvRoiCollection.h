@@ -18,7 +18,7 @@ public:
     PvRoiCollection();
 
     /**
-    * Copy constructor. Required to make this class easily copiable.
+    * Copy constructor. Required to make this class easily copyable.
     * @param Another collection to copy from.
     */
     PvRoiCollection(const PvRoiCollection& other);

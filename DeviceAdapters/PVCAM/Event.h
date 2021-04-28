@@ -40,14 +40,14 @@ public:
     /**
     * Waits for the event signal. If the event is already signalled
     * the function returns immediately. If the event is non-signalled
-    * the function waits until the event becomes signalled.
+    * the function waits until the event becomes signaled.
     * In case of auto-reset event the event is reset automatically.
     * @return Always true
     */
     bool Wait();
     /**
     * Similar to the argument-less overload but allows to set an timeout.
-    * @return False if the wait timeouted. True otherwise.
+    * @return False if the wait timed out. True otherwise.
     */
     bool Wait(unsigned int timeoutMs);
 

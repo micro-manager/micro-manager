@@ -81,7 +81,7 @@ void PvRoiCollection::Add(const PvRoi& newRoi)
 
 PvRoi PvRoiCollection::At(unsigned int index) const
 {
-    return m_rois.at(index); // can throw the out_of_range exc.
+    return m_rois.at(index); // can throw the out_of_range exception
 }
 
 void PvRoiCollection::Clear()

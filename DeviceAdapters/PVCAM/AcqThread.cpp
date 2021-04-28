@@ -22,7 +22,7 @@ void AcqThread::Stop()
     camera_->LogAdapterMessage("AcqThead exit requested");
     requestStop_ = true;
     Resume();
-    // Wait for the thread func to exit
+    // Wait for the thread function to exit
     this->wait();
     camera_->LogAdapterMessage("AcqThead exited");
 }

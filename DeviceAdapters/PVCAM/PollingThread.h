@@ -1,7 +1,8 @@
 #ifndef _POLLINGTHREAD_H_
 #define _POLLINGTHREAD_H_
 
-#include "../../MMDevice/DeviceThreads.h"
+// MMDevice
+#include "DeviceThreads.h"
 
 class Universal;
 

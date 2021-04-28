@@ -4,7 +4,7 @@
 #include "PvFrameInfo.h"
 
 /**
-* A class that contains a ponter to frame data and corresponding
+* A class that contains a pointer to frame data and corresponding
 * frame metadata. This class is used by the NotificationThread.
 */
 class NotificationEntry

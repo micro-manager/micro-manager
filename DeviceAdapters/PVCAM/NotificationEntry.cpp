@@ -1,7 +1,10 @@
 #include "NotificationEntry.h"
 
+#include <cstddef> // NULL
+
 NotificationEntry::NotificationEntry() :
-    pFrameData_(0), frameDataSz_(0)
+    pFrameData_(NULL),
+    frameDataSz_(0)
 {
 }
 
