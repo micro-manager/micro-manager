@@ -61,7 +61,7 @@ import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.link.LinkManager;
-import org.micromanager.events.DatastoreClosingEvent;
+import org.micromanager.data.DatastoreClosingEvent;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
 import org.micromanager.internal.utils.MustCallOnEDT;

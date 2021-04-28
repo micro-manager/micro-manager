@@ -20,11 +20,16 @@
 
 package org.micromanager.events;
 
+import org.micromanager.MMEvent;
+
 /**
  * This class signals when the exposure time for one of the channels of the
  * current channel group has been changed.
+ *
+ * The default implementation of this event is posted on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.
  */
-public interface ChannelExposureEvent {
+public interface ChannelExposureEvent extends MMEvent {
 
     /**
     * Return the new exposure time for the channel.

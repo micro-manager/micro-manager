@@ -18,36 +18,26 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events.internal;
+package org.micromanager.acquisition.internal;
 
-import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
-import org.micromanager.events.AcquisitionSequenceStartedEvent;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
 
-public final class DefaultAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
+public final class DefaultAcquisitionEndedEvent implements AcquisitionEndedEvent {
    private Datastore store_;
    private Object source_;
-   private SequenceSettings settings_;
-
-   public DefaultAcquisitionStartedEvent(Datastore store, Object source,
-         SequenceSettings settings) {
+   public DefaultAcquisitionEndedEvent(Datastore store, Object source) {
       store_ = store;
       source_ = source;
-      settings_ = settings;
    }
 
    @Override
-   public Datastore getDatastore() {
+   public Datastore getStore() {
       return store_;
    }
 
    @Override
    public Object getSource() {
       return source_;
-   }
-
-   @Override
-   public SequenceSettings getSettings() {
-      return settings_;
    }
 }

@@ -12,8 +12,11 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayDidShowImageEvent;
 
 /**
+ * This event posts when a DataViewer displays an image(s). It only posts once the
+ * image is actually showing.
  *
- * @author mark
+ * This event posts on the DataViewer event bus.
+ * Register using {@link DataViewer#registerForEvents(Object)}.
  */
 public class DefaultDisplayDidShowImageEvent implements DisplayDidShowImageEvent {
    private final DataViewer viewer_;
@@ -35,16 +38,25 @@ public class DefaultDisplayDidShowImageEvent implements DisplayDidShowImageEvent
       primaryImage_ = primaryImage;
    }
 
+   /**
+    * @return DataViewer instance displaying the image
+    */
    @Override
    public DataViewer getDataViewer() {
       return viewer_;
    }
 
+   /**
+    * @return List of images newly displayed.
+    */
    @Override
    public List<Image> getImages() {
       return new ArrayList<Image>(images_);
    }
 
+   /**
+    * @return TODO: what is this and what is the significance?
+    */
    @Override
    public Image getPrimaryImage() {
       return primaryImage_;

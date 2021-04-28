@@ -18,25 +18,33 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events;
+package org.micromanager.acquisition;
 
+import org.micromanager.MMEvent;
 import org.micromanager.data.Datastore;
 
 /**
- * This event signifies that an acquisition has been ended.
+ * This class signals that an acquisition is starting, and provides access to
+ * the Datastore that images from the acquisition will be put into. Third-party
+ * code may subclass this event to provide notifications of their own
+ * acquisitions. If they do so, they should also publish AcquisitionEndedEvents
+ * when their acquisitions cease.
+ *
+ * The default implementation of this event posts on the Studio event bus,
+ * so subscribe to this event using {@link org.micromanager.events.EventManager}.
  */
-public interface AcquisitionEndedEvent {
+public interface AcquisitionStartedEvent extends MMEvent {
    /**
-    * Return the Datastore into which images were placed during the
+    * Return the Datastore into which images will be inserted during the
     * acquisition.
     */
-   public Datastore getStore();
+   Datastore getDatastore();
 
    /**
     * Return an Object used to identify the entity in charge of the
     * acquisition. This can be used by recipients to distinguish different
-    * types of acquisitions. This object must be the same object that published
-    * the corresponding AcquisitionStartedEvent to this acquisition.
+    * types of acquisitions. You must re-use the same object for the
+    * AcquisitionEndedEvent that you post.
     */
-   public Object getSource();
+   Object getSource();
 }

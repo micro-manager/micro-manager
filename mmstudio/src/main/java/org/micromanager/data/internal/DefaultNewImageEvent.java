@@ -28,6 +28,9 @@ import org.micromanager.data.Image;
 
 /**
  * This class signifies that an image has been added to a Datastore.
+ *
+ * This Event posts on the DataProvider bus.
+ * Subscribe using {@link DataProvider#registerForEvents(Object)}.
  */
 public final class DefaultNewImageEvent implements DataProviderHasNewImageEvent {
    private final Image image_;
@@ -38,16 +41,28 @@ public final class DefaultNewImageEvent implements DataProviderHasNewImageEvent 
       provider_ = provider;
    }
 
+   /**
+    * Provides the newly-added image.
+    * @return the Image that was just added to the DataProvider.
+    */
    @Override
    public Image getImage() {
       return image_;
    }
 
+   /**
+    * @return the Coords for the Image; identical to getImage().getCoords().
+    */
    @Override
    public Coords getCoords() {
       return image_.getCoords();
    }
 
+   /**
+    * Provides the DataProvider this image was added to; potentially useful for
+    * code that listens to events from multiple DataProviders.
+    * @return the DataProvider this image was added to.
+    */
    @Override
    public DataProvider getDataProvider() {
       return provider_;

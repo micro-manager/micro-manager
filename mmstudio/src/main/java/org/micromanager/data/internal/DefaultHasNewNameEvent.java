@@ -20,20 +20,27 @@
 
 package org.micromanager.data.internal;
 
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewNameEvent;
+import org.micromanager.data.Datastore;
 
-/**
- *
- * @author nico
- */
+ /**
+  * This event posts when the DataStore gets a new name, i.e. when
+  * {@link Datastore#setName(String)} is called
+  *
+  * This Event posts on the Datastore bus.
+  * Subscribe using {@link DataProvider#registerForEvents(Object)}.
+  */
 public class DefaultHasNewNameEvent implements DataProviderHasNewNameEvent {
    private final String newName_;
    
    public DefaultHasNewNameEvent (String newName) {
       newName_ = newName;
    }
-   
-   
+
+   /**
+    * @return The new name of the DataProvider.
+    */
    @Override
    public String getNewName() {
       return newName_;

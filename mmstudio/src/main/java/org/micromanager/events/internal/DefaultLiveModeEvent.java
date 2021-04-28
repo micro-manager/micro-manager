@@ -22,9 +22,20 @@ package org.micromanager.events.internal;
 
 import org.micromanager.events.LiveModeEvent;
 
+/**
+ * This class signals that live mode has been turned on or off.
+ *
+ * This event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.
+ */
 public final class DefaultLiveModeEvent implements LiveModeEvent {
    private boolean isOn_;
 
+   /**
+    * Informs the caller if live mode is on or off.
+    * @return True if live mode has been turned on, false if it has been turned
+    *         off.
+    */
    public DefaultLiveModeEvent(boolean isOn) {
       isOn_ = isOn;
    }

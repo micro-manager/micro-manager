@@ -56,7 +56,7 @@ import org.micromanager.data.Image;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.display.DataViewer;
-import org.micromanager.events.AcquisitionStartedEvent;
+import org.micromanager.acquisition.AcquisitionStartedEvent;
 import org.micromanager.events.LiveModeEvent;
 
 import ij.gui.Roi;

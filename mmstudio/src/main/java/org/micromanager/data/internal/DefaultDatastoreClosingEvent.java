@@ -21,8 +21,16 @@
 package org.micromanager.data.internal;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.events.DatastoreClosingEvent;
+import org.micromanager.data.DatastoreClosingEvent;
 
+/**
+ * This class signifies that a Datastore's close() method has been called, and
+ * thus that all resources associated with that Datastore, and references to
+ * the Datastore, should be removed so that it can be garbage collected.
+ *
+ *  This event is posted on the Studio event bus,
+ *  so subscribe using {@link org.micromanager.events.EventManager}.
+ */
 public final class DefaultDatastoreClosingEvent implements DatastoreClosingEvent {
    private Datastore store_;
 
@@ -30,6 +38,9 @@ public final class DefaultDatastoreClosingEvent implements DatastoreClosingEvent
       store_ = store;
    }
 
+   /**
+    * @return Datastore that is closing
+    */
    @Override
    public Datastore getDatastore() {
       return store_;

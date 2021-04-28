@@ -58,7 +58,7 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.RememberedDisplaySettings;
-import org.micromanager.events.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
