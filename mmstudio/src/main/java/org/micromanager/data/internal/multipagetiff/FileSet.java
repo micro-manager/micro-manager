@@ -182,8 +182,12 @@ class FileSet {
          currentFrame_ = frame;
 
          omeMetadata_.addImageTagsToOME(img.getCoords(), img.getMetadata(),
-               ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
+                 ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
+      } catch (UnsupportedOperationException uoe) {
+         throw (uoe);
       } catch (Exception ex) {
+         // not sure why we continue when this fails, since there is also tiff related
+         // stuff that happens in the OME metadata code.
          ReportingUtils.logError(ex, "Problem writing OME metadata");
       }
 
