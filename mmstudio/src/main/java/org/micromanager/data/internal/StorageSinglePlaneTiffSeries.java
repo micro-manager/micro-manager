@@ -119,6 +119,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public void putImage(Image image) {
+      // Note, orderedAxes could be cached, but performance penalty is likely negligible
+      List<String> orderedAxes = store_.getSummaryMetadata().getOrderedAxes();
       // Require images to only have time/channel/z/position axes.
       for (String axis : image.getCoords().getAxes()) {
          if (!ALLOWED_AXES.contains(axis)) {
@@ -147,7 +149,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          // File is in a subdirectory.
          positionPrefix = image.getMetadata().getPositionName("") + "/";
       }
-      String fileName = positionPrefix + createFileName(image.getCoords());
+      String fileName = positionPrefix + createFileName(orderedAxes, image.getCoords());
       if (amLoading_ && !(new File(dir_ + "/" + fileName).exists())) {
          // Try the 1.4 format instead. Since we may not have access to the
          // channel name property, we just have to arbitrarily assign an
@@ -356,11 +358,10 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    /**
     * Generate a filename based on the coordinates of an image.
     */
-   private String createFileName(Coords coords) {
-      List<String> axes = coords.getAxes();
-      java.util.Collections.sort(axes);
+   private String createFileName(List<String> axesUsed, Coords coords) {
+      java.util.Collections.sort(axesUsed);
       String filename = "img";
-      for (String axis : axes) {
+      for (String axis : axesUsed) {
          // HACK: more precision for the time axis.
          String precision = "%03d";
          if (axis.contentEquals(Coords.T)) {
