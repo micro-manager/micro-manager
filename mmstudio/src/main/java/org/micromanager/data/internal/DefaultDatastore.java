@@ -296,7 +296,7 @@ public class DefaultDatastore implements Datastore {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
-      if (haveSetSummary_) {
+      if (haveSetSummary_ || getNumImages() > 0) {
          throw new DatastoreRewriteException();
       }
       haveSetSummary_ = true;

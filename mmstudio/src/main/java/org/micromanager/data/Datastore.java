@@ -55,13 +55,14 @@ public interface Datastore extends DataProvider {
 
    /**
     * Set the SummaryMetadata. Posts a NewSummaryMetadataEvent to the event
-    * bus. This method may only be called once for a given Datastore.
+    * bus. This method may only be called once for a given Datastore, and
+    * must be called before adding any images.
     *
     * @param metadata Object representing the summary metadata
     * @throws java.io.IOException if an IO error occurs
     * @throws DatastoreFrozenException if the freeze() method has been called.
     * @throws DatastoreRewriteException if the Datastore already has
-    *         SummaryMetadata.
+    *         SummaryMetadata or already has images.
     */
    void setSummaryMetadata(SummaryMetadata metadata) throws IOException;
 
