@@ -1,11 +1,14 @@
 #ifndef _PVCAM_PARAM_H_
 #define _PVCAM_PARAM_H_
 
-#include "../../MMDevice/DeviceBase.h"
+// MMDevice
+#include "DeviceBase.h"
+
+// Local
 #include "PVCAMAdapter.h"
 
 /**
-* The hardcoded maximum number of S.M.A.R.T exposures. This numbers is used to allocate
+* The hard-coded maximum number of S.M.A.R.T exposures. This numbers is used to allocate
 * the exposure array for PVCAM.
 */
 #define SMART_STREAM_MAX_EXPOSURES      128
@@ -17,8 +20,10 @@
 template<typename T>
 static std::string numToStr(T num)
 {
-    std::stringstream str;
-    str << num;
+    std::ostringstream str;
+    // uns8 and int8 types are handled as char by stream,
+    // use unary + op. to promote all types to numbers
+    str << +num;
     return str.str();
 }
 
@@ -276,7 +281,9 @@ public:
       virtual std::string ToString()
       {
           std::ostringstream os;
-          os << mCurrent;
+          // uns8 and int8 types are handled as char by stream,
+          // use unary + op. to promote all types to numbers
+          os << +mCurrent;
           return os.str();
       }
 
@@ -540,7 +547,7 @@ public:
     }
 
     /**
-    * Overrided function. Return the enum string instead of the value only.
+    * Overridden function. Return the enum string instead of the value only.
     */
     std::string ToString()
     {
@@ -562,7 +569,7 @@ public:
         return mEnumMap[value];
     }
     /**
-    * Retruns all available enum values for this parameter
+    * Returns all available enum values for this parameter
     */
     std::vector<int32>& GetEnumValues()
     {
@@ -577,7 +584,7 @@ public:
     }
 
     /**
-    * Sets the enumerable PVCAM parameter from string. The string agrument must be exactly the
+    * Sets the enumerable PVCAM parameter from string. The string argument must be exactly the
     * same as obtained from ToString() or GetEnumStrings().
     */
     int Set(const std::string& aValue)
@@ -593,7 +600,7 @@ public:
     }
 
     /**
-    * Sets the enumerable PVCAM parameter from value. The value agrument must be exactly the
+    * Sets the enumerable PVCAM parameter from value. The value argument must be exactly the
     * same as obtained from GetEnumValues().
     */
     int Set(const int32 aValue)
@@ -610,7 +617,7 @@ public:
     }
 
     /**
-    * Overrided function. If we want to re-read the parameter, we also need to re-enumerate the values.
+    * Overridden function. If we want to re-read the parameter, we also need to re-enumerate the values.
     */
     int Update()
     {
@@ -624,7 +631,7 @@ public:
 private:
 
     /**
-    * Read all the enum values and correspondig string descriptions
+    * Read all the enum values and corresponding string descriptions
     */
     void enumerate(bool aDbgPrint)
     {

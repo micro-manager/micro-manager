@@ -19,10 +19,12 @@ std::string PvUniversalParam::ToString()
     switch (mType)
     {
     case TYPE_INT8:
-        os << mValue.int8_val;
+        // int8 type is handled as char by stream, use unary + op. to promote it to number
+        os << +mValue.int8_val;
         return os.str();
     case TYPE_UNS8:
-        os << mValue.uns8_val;
+        // uns8 type is handled as char by stream, use unary + op. to promote it to number
+        os << +mValue.uns8_val;
         return os.str();
     case TYPE_INT16:
         os << mValue.int16_val;
