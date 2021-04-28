@@ -45,12 +45,14 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImagesDifferInSizeException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.ImageSizeChecker;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMException;
@@ -319,7 +321,10 @@ public final class StorageMultipageTiff implements Storage {
       }
       if (firstImage_ == null) {
          firstImage_ = image;
+      } else {
+         ImageSizeChecker.checkImageSizes(firstImage_, image);
       }
+
       try {
          writeImage(image, false);
       }
