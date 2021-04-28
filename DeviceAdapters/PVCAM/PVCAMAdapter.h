@@ -32,22 +32,24 @@
 //==================================================================== INCLUDES
 
 
-#include "../../MMDevice/ImgBuffer.h"
-#include "../../MMDevice/DeviceUtils.h"
-#include "../../MMDevice/DeviceThreads.h"
-
+// MMDevice
 #include "DeviceBase.h"
-#include "PvDebayer.h"
-#include "PVCAMIncludes.h"
+#include "DeviceThreads.h"
+#include "DeviceUtils.h"
+#include "ImgBuffer.h"
+
+// Local
+#include "AcqConfig.h"
 #include "Event.h"
 #include "NotificationEntry.h"
+#include "PVCAMIncludes.h"
 #include "PvCircularBuffer.h"
+#include "PvDebayer.h"
 #include "PpParam.h"
-#include "PvRoi.h"
-#include "AcqConfig.h"
 
-#include <string>
+// System
 #include <map>
+#include <string>
 
 
 //=============================================================================
@@ -63,11 +65,11 @@
 // The SMART streaming support (on Windows since PVCAM 2.8.0, on Linux since 3.0.4)
 #define PVCAM_SMART_STREAMING_SUPPORTED
 // Metadata, Multi-ROI, Centroids and other features that were added to PVCAM 3.0.12
-#define PVCAM_3_0_12_SUPPORTED // TODO: Rename this once the PVCAM is officially out
+#define PVCAM_METADATA_SUPPORTED
 
 // PVCAM 3.1+ has some additional PL_COLOR_MODES defined which we use across the code
 // even if we don't compile against that PVCAM. To make it easier we define them ourselves.
-#ifndef PVCAM_3_0_12_SUPPORTED
+#ifndef PVCAM_METADATA_SUPPORTED
 #define COLOR_GRBG 3
 #define COLOR_GBRG 4
 #define COLOR_BGGR 5
@@ -87,9 +89,10 @@
 #define ERR_OPERATION_TIMED_OUT         10012 // Generic timeout error
 #define ERR_FRAME_READOUT_FAILED        10013 // Polling: status = READOUT_FAILED
 #define ERR_TOO_MANY_ROIS               10014 // Device does not support that many ROIs (uM 2.0)
+#define ERR_FILE_OPERATION_FAILED       10015
 
 // PVCAM-specific error codes base. When a PVCAM error occurs we use the PVCAM
-// ID and PVCAM message to create a new uM error code, we call the the SetErrorCode()
+// ID and PVCAM message to create a new uM error code, we call the SetErrorCode()
 // and assign a text to a new error code value. In order to not interfere with existing
 // error codes we need to add some offset.
 // Example:
@@ -151,6 +154,7 @@ typedef enum PvCameraModel
 class PollingThread;
 class NotificationThread;
 class AcqThread;
+class StreamWriter;
 template<class T> class PvParam;
 class PvUniversalParam;
 class PvEnumParam;
@@ -166,7 +170,7 @@ class PvEnumParam;
 class Universal : public CCameraBase<Universal>
 {
 public: // Constructors, destructor
-    Universal(short id);
+    Universal(short cameraId, const char* deviceName);
     ~Universal();
 
 public: // MMDevice API
@@ -208,7 +212,7 @@ public: // MMCamera API
     bool IsCapturing();
 
     /**
-    * Micromanager calls the "live" acquisition a "sequence". PVCAM calls this "continous - circular buffer" mode.
+    * Micro-manager calls the "live" acquisition a "sequence". PVCAM calls this "continuous - circular buffer" mode.
     */
     int PrepareSequenceAcqusition();
     int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
@@ -218,7 +222,7 @@ public: // Action handlers
     /**
     * Universal properties are automatically read from the camera and does not need a custom
     * value handler. This is useful for simple camera parameters that does not need special treatment.
-    * So far only Enum and Integer values are supported. Other types should be implemented manaully.
+    * So far only Enum and Integer values are supported. Other types should be implemented manually.
     */
     int OnUniversalProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
     /**
@@ -264,11 +268,11 @@ public: // Action handlers
     */
     int OnMultiplierGain(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
-    * Gets the current camera sensor temperature in degrees celsius.
+    * Gets the current camera sensor temperature in degrees Celsius.
     */
     int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
-    * Gets or sets the desired camera sensor temperature, in degrees celsius.
+    * Gets or sets the desired camera sensor temperature, in degrees Celsius.
     */
     int OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
@@ -309,7 +313,7 @@ public: // Action handlers
     int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
     * The TriggerTimeOut is used in WaitForExposureDone() to specify how long should we wait
-    * for a frame to arrive. Increasing this value may help to avoid timouts on long exposures
+    * for a frame to arrive. Increasing this value may help to avoid timeouts on long exposures
     * or when there are long pauses between triggers.
     */
     int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -327,7 +331,7 @@ public: // Action handlers
     int OnClearMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
     * Enables or disables the use of circular buffer. When disabled the live acquisition
-    * runs as a repeated sequence (something like fast time-lapse). The PVCAM continous
+    * runs as a repeated sequence (something like fast time-lapse). The PVCAM continuous
     * mode is not used.
     */
     int OnCircBufferEnabled(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -422,6 +426,19 @@ public: // Action handlers
     */
     int OnInterpolationAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+    /**
+    * Enables or disables the streaming to disk feature.
+    */
+    int OnDiskStreamingEnabled(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Gets or sets the path where raw files get stored.
+    */
+    int OnDiskStreamingPath(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Gets or sets the forward ratio for core.
+    */
+    int OnDiskStreamingCoreSkipRatio(MM::PropertyBase* pProp, MM::ActionType eAct);
+
 #ifdef PVCAM_CALLBACKS_SUPPORTED
     /**
     * Switches between Callbacks or Polling acquisition type.
@@ -449,7 +466,7 @@ public: // Action handlers
     int OnSmartStreamingEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
     * Updates SMART streaming values based on user's input. User always enters the
-    * values in miliseconds. Internally value is converted to microseconds if needed.
+    * values in milliseconds. Internally value is converted to microseconds if needed.
     */
     int OnSmartStreamingValues(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
@@ -548,10 +565,9 @@ protected:
     void PollingThreadExiting() throw();
 
 private:
-    /**
-    * Copy constructor. Empty. Private.
-    */
-    Universal(Universal&);
+    // Make object non-copyable
+    Universal(const Universal&)/* = delete*/;
+    Universal& operator=(const Universal&)/* = delete*/;
 
     /**
     * Read and create basic static camera properties that will be displayed in
@@ -577,7 +593,7 @@ private:
     */
     int initializePostSetupParams();
     /**
-    * Resizes the buffer used for continous live acquisition
+    * Resizes the buffer used for continuous live acquisition
     */
     int resizeImageBufferContinuous();
     /**
@@ -660,7 +676,7 @@ private:
     int postExpSetupInit(unsigned int frameSize);
     /**
     * Calculates and sets the circular buffer count limits based on frame
-    * size and hardcoded limits.
+    * size and hard-coded limits.
     */
     int updateCircBufRange(unsigned int frameSize);
     /**
@@ -694,10 +710,9 @@ private: // Static
     static void PvcamCallbackEofEx3(PFRAME_INFO pNewFrameInfo, void* pContext);
 #endif
 
-
-
-
-
+private:
+    const short     cameraId_;             // 0-based camera ID, used to allow multiple cameras connected
+    const std::string deviceName_;         // Name assigned in constructor, returned by GetName
 
     bool            initialized_;          // Driver initialization status in this class instance
     long            imagesToAcquire_;      // Number of images to acquire
@@ -711,7 +726,6 @@ private: // Static
 
     MM::MMTime      startTime_;            // Acquisition start time
 
-    short           cameraId_;             // 0-based camera ID, used to allow multiple cameras connected
     PvCameraModel   cameraModel_;
     char            deviceLabel_[MM::MaxStrLength]; // Cached device label used when inserting metadata
 
@@ -728,7 +742,7 @@ private: // Static
 
     long            triggerTimeout_;       // Max time to wait for an external trigger
     bool            microsecResSupported_; // True if camera supports microsecond exposures
-    uns32           microsecResMax_;       // Maximum value for microsec resolution
+    uns32           microsecResMax_;       // Maximum value for microsecond resolution
 
     friend class    PollingThread;
     PollingThread*  pollingThd_;           // Pointer to the sequencing thread
@@ -736,6 +750,9 @@ private: // Static
     NotificationThread* notificationThd_;  // Frame notification thread
     friend class    AcqThread;
     AcqThread*      acqThd_;               // Non-CB live thread
+
+    StreamWriter*   customDiskWriter_;     // Writer for custom disk streaming feature
+    bool            customDiskWriterActive_; // Cached value updated after writer->Start
 
     /// CAMERA PARAMETERS:
     uns16           camParSize_;           // CCD parallel size
@@ -767,7 +784,7 @@ private: // Static
     // the configuration the buffer may need to be further processed before its used by MMCore.
 
     // PVCAM helper structure for decoding an embedded-metadata-enabled frame buffer
-#ifdef PVCAM_3_0_12_SUPPORTED
+#ifdef PVCAM_METADATA_SUPPORTED
     md_frame*        metaFrameStruct_;
 
     // For metadata serialization, optimization to not allocate the same for each frame
@@ -797,7 +814,6 @@ private: // Static
     PFRAME_INFO     pFrameInfo_;           // PVCAM frame metadata
 #endif
     int             lastPvFrameNr_;        // The last FrameNr reported by PVCAM
-    bool            enableFrameRecovery_;  // Attempt to recover from missed callbacks
 
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
     PvParam<smart_stream_type>* prmSmartStreamingValues_;

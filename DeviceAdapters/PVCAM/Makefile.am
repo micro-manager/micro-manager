@@ -42,11 +42,24 @@ libmmgr_dal_PVCAM_la_SOURCES = \
                             PvRoi.h \
                             PvRoiCollection.cpp \
                             PvRoiCollection.h \
+                            Semaphore.cpp \
+                            Semaphore.h \
+                            StreamWriter.cpp \
+                            StreamWriter.h \
+                            Task.cpp \
+                            Task.h \
+                            TaskSet.cpp \
+                            TaskSet.h \
+                            TaskSet_CopyMemory.cpp \
+                            TaskSet_CopyMemory.h \
+                            ThreadPool.cpp \
+                            ThreadPool.h \
                             Version.h
 
 libmmgr_dal_PVCAM_la_LIBADD = $(MMDEVAPI_LIBADD) \
                             $(BOOST_THREAD_LIB) \
                             $(BOOST_SYSTEM_LIB) \
+                            $(BOOST_FILESYSTEM_LIB) \
                             $(PVCAM_LIBS)
 
 libmmgr_dal_PVCAM_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) \

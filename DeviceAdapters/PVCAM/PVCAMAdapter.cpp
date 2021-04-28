@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          PVCAM.h
+// FILE:          PVCAMAdapter.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
@@ -18,41 +18,22 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-// NOTE;          This file is obsolete. For extensions and new development
+// NOTE:          This file is obsolete. For extensions and new development
 //                use PVCAMUniversal.cpp. N.A. 01/17/2007
 //
-// CVS:           $Id: PVCAM.cpp 3492 2009-11-20 00:16:46Z karlh $
-
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
-#include "../../MMDevice/ModuleInterface.h"
 #include "PVCAMAdapter.h"
 
-#include <string>
-#include <sstream>
-#include <iomanip>
+// MMDevice
+#include "ModuleInterface.h"
 
+#include <cstring>
 
-using namespace std;
 
 // global constants
-const char* g_DeviceCascade = "Cascade";
 const char* g_DeviceUniversal_1 = "Camera-1";
 const char* g_DeviceUniversal_2 = "Camera-2";
 const char* g_DeviceUniversal_3 = "Camera-3";
 const char* g_DeviceUniversal_4 = "Camera-4";
-
-const char* g_ReadoutRate = "ReadoutRate";
-const char* g_ReadoutRate_Slow = "Slow";
-const char* g_ReadoutRate_Fast = "Fast";
-const char* g_ReadoutPort = "Port";
-const char* g_ReadoutPort_Normal = "Normal";
-const char* g_ReadoutPort_Multiplier = "EM";
-const char* g_ReadoutPort_LowNoise = "LowNoise";
-const char* g_ReadoutPort_HighCap = "HighCap";
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,16 +55,16 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
     if (deviceName == 0)
-        return 0;
+        return NULL;
 
     if (strcmp(deviceName, g_DeviceUniversal_1) == 0)
-        return new Universal(0);
+        return new Universal(0, g_DeviceUniversal_1);
     else if (strcmp(deviceName, g_DeviceUniversal_2) == 0)
-        return new Universal(1);
+        return new Universal(1, g_DeviceUniversal_2);
     else if (strcmp(deviceName, g_DeviceUniversal_3) == 0)
-        return new Universal(2);
+        return new Universal(2, g_DeviceUniversal_3);
     else if (strcmp(deviceName, g_DeviceUniversal_4) == 0)
-        return new Universal(3);
+        return new Universal(3, g_DeviceUniversal_4);
 
-    return 0;
+    return NULL;
 }

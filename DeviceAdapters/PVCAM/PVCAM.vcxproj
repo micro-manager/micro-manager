@@ -178,6 +178,12 @@
     <ClCompile Include="PVCAMUniversal.cpp" />
     <ClCompile Include="PvFrameInfo.cpp" />
     <ClCompile Include="PvRoiCollection.cpp" />
+    <ClCompile Include="Semaphore.cpp" />
+    <ClCompile Include="StreamWriter.cpp" />
+    <ClCompile Include="Task.cpp" />
+    <ClCompile Include="TaskSet.cpp" />
+    <ClCompile Include="TaskSet_CopyMemory.cpp" />
+    <ClCompile Include="ThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AcqConfig.h" />
@@ -195,6 +201,12 @@
     <ClInclude Include="PvFrameInfo.h" />
     <ClInclude Include="PvRoi.h" />
     <ClInclude Include="PvRoiCollection.h" />
+    <ClInclude Include="Semaphore.h" />
+    <ClInclude Include="StreamWriter.h" />
+    <ClInclude Include="Task.h" />
+    <ClInclude Include="TaskSet.h" />
+    <ClInclude Include="TaskSet_CopyMemory.h" />
+    <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Version.h" />
   </ItemGroup>
   <ItemGroup>

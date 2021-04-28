@@ -1,8 +1,8 @@
 #include "AcqConfig.h"
 
 /**
-* Values set in constructor reperesents the default camera state. Each value can be
-* overriden during Initialize().
+* Values set in constructor represents the default camera state. Each value can be
+* overridden during Initialize().
 */
 AcqConfig::AcqConfig() :
     ExposureMs(10),
@@ -24,17 +24,25 @@ AcqConfig::AcqConfig() :
     TrigTabLastMuxMap(),
     PMode(0),
     AdcOffset(0),
+    ScanMode(PL_SCAN_MODE_AUTO),
+    ScanDirection(PL_SCAN_DIRECTION_DOWN),
+    ScanDirectionReset(true),
+    ScanLineDelay(0),
+    ScanWidth(0),
     PortId(0),
     SpeedIndex(0),
     GainNum(0),
     CircBufEnabled(true),
     CircBufSizeAuto(true),
     CallbacksEnabled(true),
+    DiskStreamingEnabled(false),
+    DiskStreamingPath(""),
+    DiskStreamingCoreSkipRatio(100),
     SmartStreamingEnabled(false),
     SmartStreamingActive(false),
     SmartStreamingExposures()
 {
-    // S.M.A.R.T streaming exposures are in msec, floating point.
+    // S.M.A.R.T streaming exposures are in milliseconds, floating point.
     SmartStreamingExposures.push_back(10);
     SmartStreamingExposures.push_back(20);
     SmartStreamingExposures.push_back(30);

@@ -4,6 +4,8 @@
 #include "PvRoiCollection.h"
 
 #include <map>
+#include <string>
+#include <vector>
 
 enum AcqType
 {
@@ -24,7 +26,7 @@ enum AcqType
 * 3) StartSequenceAcquisition() is called
 * Because the OnProperty() is called during live acquisition some intermediate
 * variables cannot be updated right away - for example binning or ROI because
-* these are still used in ongoing acquisition. Instead, we need to remeber the
+* these are still used in ongoing acquisition. Instead, we need to remember the
 * "new" or "future" state that must be applied once StartSequenceAcquisition()
 * is called.
 * Previously we had many variables like: newColorMode, currentColorMode, newBinning,
@@ -167,8 +169,27 @@ public:
     */
     bool CallbacksEnabled;
     /**
+    * Enables or disables custom streaming to disk.
+    * Please note that this streaming is enabled for continuous acquisition only.
+    * The streaming to disk is fully controlled by PVCAM adapter and should only
+    * be used in cases where standard MDA is unable to keep up with camera speed
+    * when storing the data, esp. at high data rates, greater than 2GB/s.
+    */
+    bool DiskStreamingEnabled;
+    /**
+    * The path where files with raw data will be stored.
+    */
+    std::string DiskStreamingPath;
+    /**
+    * Ratio of images forwarded to the core.
+    * The value 1 means all frames are sent, value 2 means every second frame is sent, etc.
+    * Values higher than 1 result in frame rate counter showing a lower value
+    * than the actual acquisition rate.
+    */
+    int DiskStreamingCoreSkipRatio;
+    /**
     * Enables or disables the S.M.A.R.T streaming. Please note that the S.M.A.R.T streaming
-    * mode is enabled for continous acquisition only. See the "Active" variable.
+    * mode is enabled for continuous acquisition only. See the "Active" variable.
     */
     bool SmartStreamingEnabled;
     /**
