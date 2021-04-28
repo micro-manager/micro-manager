@@ -4,9 +4,8 @@
 // AUTHOR:        Jennifer West, jennifer_west@umanitoba.ca,
 //                Nenad Amodaj, nenad@amodaj.com
 //
-// DESCRIPTION:	Debayer algorithms, adapted from:
+// DESCRIPTION:   Debayer algorithms, adapted from:
 //                http://www.umanitoba.ca/faculties/science/astronomy/jwest/plugins.html
-//                
 //
 // COPYRIGHT:     Jennifer West (University of Manitoba),
 //                Exploratorium http://www.exploratorium.edu
@@ -24,9 +23,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "PvDebayer.h"
+
 #include <math.h>
 #include <assert.h>
-using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Debayer class implementation
@@ -212,7 +211,7 @@ void PvDebayer::ReplicateDecode(const T* input, int* output, int width, int heig
                 *bytePix = ((bValue > 255) ? 255 : (unsigned char)bValue);
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
-                //rgb.addSlice("red",b);	
+                //rgb.addSlice("red",b);
                 //rgb.addSlice("green",g);
                 //rgb.addSlice("blue",r);
             }
@@ -231,9 +230,9 @@ void PvDebayer::ReplicateDecode(const T* input, int* output, int width, int heig
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",r);	
+                //rgb.addSlice("red",r);
                 //rgb.addSlice("green",g);
-                //rgb.addSlice("blue",b);			
+                //rgb.addSlice("blue",b);
             }
         }
     }
@@ -264,7 +263,7 @@ void PvDebayer::ReplicateDecode(const T* input, int* output, int width, int heig
                 SetPixel(g, one, x, y, width, height);
                 SetPixel(g, one, x+1, y, width, height);
             }
-        }	
+        }
 
         for (int y=1; y<height; y+=2) {
             for (int x=1; x<width; x+=2) {
@@ -287,7 +286,7 @@ void PvDebayer::ReplicateDecode(const T* input, int* output, int width, int heig
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",b);	
+                //rgb.addSlice("red",b);
                 //rgb.addSlice("green",g);
                 //rgb.addSlice("blue",r);
             }
@@ -308,7 +307,7 @@ void PvDebayer::ReplicateDecode(const T* input, int* output, int width, int heig
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",r);	
+                //rgb.addSlice("red",r);
                 //rgb.addSlice("green",g);
                 //rgb.addSlice("blue",b);
             }
@@ -401,7 +400,7 @@ void PvDebayer::BilinearDecode(const T* input, int* output, int width, int heigh
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",b);	
+                //rgb.addSlice("red",b);
                 //rgb.addSlice("green",g);
                 //rgb.addSlice("blue",r);
             }
@@ -493,7 +492,7 @@ void PvDebayer::BilinearDecode(const T* input, int* output, int width, int heigh
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",b);	
+                //rgb.addSlice("red",b);
                 //rgb.addSlice("green",g);
                 //rgb.addSlice("blue",r);
             }
@@ -580,9 +579,9 @@ void PvDebayer::SmoothDecode(const T* input, int* output, int width, int height,
                 if (x==1)
                     SetPixel(g, (unsigned short)((G1 + G4 + GetPixel(input, x-1, y+1, width, height))/3.0), x-1, y, width, height);
             }
-        }	
+        }
 
-        for (int x=0; x<width; x+=2) {	
+        for (int x=0; x<width; x+=2) {
             for (int y=1; y<height; y+=2) {
 
                 G1 = GetPixel(input, x, y, width, height);
@@ -596,7 +595,7 @@ void PvDebayer::SmoothDecode(const T* input, int* output, int width, int height,
                 else
                     SetPixel(g, (unsigned short)((G1+G2+G3+G4)/4.0), x+1, y, width, height);
             }
-        }	
+        }
 
         SetPixel(g, (unsigned short)((GetPixel(input, 0, 1, width, height) + GetPixel(input, 1, 0, width, height))/2.0), 0, 0, width, height);
 
@@ -672,7 +671,7 @@ void PvDebayer::SmoothDecode(const T* input, int* output, int width, int height,
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",b);	
+                //rgb.addSlice("red",b);
                 //rgb.addSlice("green",g);
                 //rgb.addSlice("blue",r);
             }
@@ -691,9 +690,9 @@ void PvDebayer::SmoothDecode(const T* input, int* output, int width, int height,
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",r);	
+                //rgb.addSlice("red",r);
                 //rgb.addSlice("green",g);
-                //rgb.addSlice("blue",b);			
+                //rgb.addSlice("blue",b);
             }
         }
     }
@@ -716,7 +715,7 @@ void PvDebayer::SmoothDecode(const T* input, int* output, int width, int height,
                 if (x==1)
                     SetPixel(g, (unsigned short)((G1+G4+GetPixel(input, x-1, y+1, width, height))/3.0), x-1, y, width, height);
             }
-        }	
+        }
 
         for (int y=1; y<height; y+=2) {
             for (int x=1; x<width; x+=2) {
@@ -805,7 +804,7 @@ void PvDebayer::SmoothDecode(const T* input, int* output, int width, int height,
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",b);	
+                //rgb.addSlice("red",b);
                 //rgb.addSlice("green",g);
                 //rgb.addSlice("blue",r);
             }
@@ -824,9 +823,9 @@ void PvDebayer::SmoothDecode(const T* input, int* output, int width, int height,
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",r);	
+                //rgb.addSlice("red",r);
                 //rgb.addSlice("green",g);
-                //rgb.addSlice("blue",b);			
+                //rgb.addSlice("blue",b);
             }
         }
     }
@@ -925,9 +924,9 @@ void PvDebayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int
 
 
             }
-        }	
+        }
 
-        for (int x=0; x<width; x+=2) {	
+        for (int x=0; x<width; x+=2) {
             for (int y=1; y<height; y+=2) {
 
                 G1 = GetPixel(input, x, y, width, height);
@@ -1042,7 +1041,7 @@ void PvDebayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",b);	
+                //rgb.addSlice("red",b);
                 //rgb.addSlice("green",g);
                 //rgb.addSlice("blue",r);
             }
@@ -1061,9 +1060,9 @@ void PvDebayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",r);	
+                //rgb.addSlice("red",r);
                 //rgb.addSlice("green",g);
-                //rgb.addSlice("blue",b);			
+                //rgb.addSlice("blue",b);
             }
         }
     }
@@ -1120,9 +1119,9 @@ void PvDebayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int
 
 
             }
-        }	
+        }
 
-        for (int y=1; y<height; y+=2) {	
+        for (int y=1; y<height; y+=2) {
             for (int x=1; x<width; x+=2) {
 
                 G1 = GetPixel(input, x, y, width, height);
@@ -1237,7 +1236,7 @@ void PvDebayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",b);	
+                //rgb.addSlice("red",b);
                 //rgb.addSlice("green",g);
                 //rgb.addSlice("blue",r);
             }
@@ -1256,9 +1255,9 @@ void PvDebayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int
                 *(bytePix+1) = ((gValue > 255) ? 255 : (unsigned char)gValue);
                 *(bytePix+2) = ((rValue > 255) ? 255 : (unsigned char)rValue);
 
-                //rgb.addSlice("red",r);	
+                //rgb.addSlice("red",r);
                 //rgb.addSlice("green",g);
-                //rgb.addSlice("blue",b);			
+                //rgb.addSlice("blue",b);
             }
         }
     }

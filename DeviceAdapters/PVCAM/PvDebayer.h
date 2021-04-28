@@ -1,12 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////////
-// MODULE:			PvDebayer.h
+// MODULE:        PvDebayer.h
 // SYSTEM:        ImageBase subsystem
-// AUTHOR:			Jennifer West, jennifer_west@umanitoba.ca,
+// AUTHOR:        Jennifer West, jennifer_west@umanitoba.ca,
 //                Nenad Amodaj, nenad@amodaj.com
 //
-// DESCRIPTION:	Debayer algorithms, adapted from:
+// DESCRIPTION:   Debayer algorithms, adapted from:
 //                http://www.umanitoba.ca/faculties/science/astronomy/jwest/plugins.html
-//                
 //
 // COPYRIGHT:     Jennifer West (University of Manitoba),
 //                Exploratorium http://www.exploratorium.edu
@@ -26,6 +25,7 @@
 #if !defined(_DEBAYER_)
 #define _DEBAYER_
 
+// MMDevice
 #include "ImgBuffer.h"
 
 /**
@@ -53,7 +53,7 @@ typedef struct
 
 
 /**
-* Utility class to build color image from the Bayer grayscale image
+* Utility class to build color image from the Bayer gray-scale image
 * Based on the Debayer_Image plugin for ImageJ, by Jennifer West, University of Manitoba
 */
 class PvDebayer
