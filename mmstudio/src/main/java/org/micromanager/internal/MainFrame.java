@@ -408,6 +408,13 @@ public final class MainFrame extends JFrame {
 
    @Subscribe
    public void onAlertUpdated(AlertUpdatedEvent event) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            onAlertUpdated(event);
+         });
+         return;
+      }
+
       displayedAlert_ = event.getAlert();
       String title = displayedAlert_.getTitle();
       String text = displayedAlert_.getText();
