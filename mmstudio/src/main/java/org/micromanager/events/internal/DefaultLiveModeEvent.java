@@ -31,15 +31,16 @@ import org.micromanager.events.LiveModeEvent;
 public final class DefaultLiveModeEvent implements LiveModeEvent {
    private boolean isOn_;
 
+
+   public DefaultLiveModeEvent(boolean isOn) {
+      isOn_ = isOn;
+   }
+
    /**
     * Informs the caller if live mode is on or off.
     * @return True if live mode has been turned on, false if it has been turned
     *         off.
     */
-   public DefaultLiveModeEvent(boolean isOn) {
-      isOn_ = isOn;
-   }
-
    @Override
    public boolean isOn() {
       return isOn_;
