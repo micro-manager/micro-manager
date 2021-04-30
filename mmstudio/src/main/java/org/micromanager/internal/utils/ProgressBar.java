@@ -20,6 +20,7 @@
 //
 // CVS:          $Id$
 //
+
 package org.micromanager.internal.utils;
 
 import java.awt.BorderLayout;
@@ -31,38 +32,55 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 
-
+/**
+ * Utility class to show a ProgressBar.
+ * Note: this will need to be refactored in the near future.  The current
+ * version has to be created on the EDT, which is sometimes difficult, and
+ * often is not done, resulting in dangerous code.
+ */
 public final class ProgressBar extends JPanel {
    private static final long serialVersionUID = 1L;
-   private final long delayTimeMs = 1000;
+   private final long delayTimeMs = 3000;
    private final long startTimeMs;
    private final JProgressBar progressBar;
    private final JFrame frame;
 
+   /**
+    * Constructor.
+    *
+    * @param parent Component to place the progressbar on top of
+    * @param windowName Name of the progressbar window
+    * @param start Start value
+    * @param end Last value
+    */
    @MustCallOnEDT
-   public ProgressBar (Component parent, String windowName, int start, int end) {
+   public ProgressBar(Component parent, String windowName, int start, int end) {
 
       super(new BorderLayout());
       
       frame = new JFrame(windowName);
-      frame.setDefaultCloseOperation (JFrame.DISPOSE_ON_CLOSE);
+      frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       frame.setBounds(0, 0, 250 + 12 * windowName.length(), 100);
 
-      progressBar = new JProgressBar(start,end);
+      progressBar = new JProgressBar(start, end);
       progressBar.setValue(0);
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(progressBar, BorderLayout.CENTER);
       super.add(panel, BorderLayout.CENTER);
       panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-      JComponent newContentPane = panel;
-      newContentPane.setOpaque(true);
-      frame.setContentPane(newContentPane);
+      panel.setOpaque(true);
+      frame.setContentPane(panel);
 
       frame.setLocationRelativeTo(parent);
       startTimeMs = System.currentTimeMillis();
    }
 
+   /**
+    * Updates the Progress bar.
+    *
+    * @param progress where to set the bar to.
+    */
    public void setProgress(int progress) {
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(() -> {
@@ -75,8 +93,10 @@ public final class ProgressBar extends JPanel {
             frame.setVisible(true);
          }
       }
-      progressBar.setValue(progress);
-      progressBar.repaint();
+      if (frame.isVisible()) {
+         progressBar.setValue(progress);
+         progressBar.repaint();
+      }
    }
 
    @Override
@@ -84,10 +104,10 @@ public final class ProgressBar extends JPanel {
       frame.setVisible(visible);
    }
 
-    public void setRange(int min, int max) {
-        progressBar.setMinimum(min);
-        progressBar.setMaximum(max);
-    }
+   public void setRange(int min, int max) {
+      progressBar.setMinimum(min);
+      progressBar.setMaximum(max);
+   }
 
    /*
    public static void main(String[] args) {

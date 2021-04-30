@@ -461,8 +461,8 @@ public final class StorageMultipageTiff implements Storage {
       }
       ProgressBar progressBar = null;
       if (!GraphicsEnvironment.isHeadless()) {
-         progressBar = new ProgressBar(parent_, "Finishing Files", 0, 
-                 positionToFileSet_.size());
+         // progressBar = new ProgressBar(parent_, "Finishing Files", 0,
+         //        positionToFileSet_.size());
       }
       try {
          int count = 0;
