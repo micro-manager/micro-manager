@@ -46,7 +46,8 @@ public final class ProgressBar extends JPanel {
    private final JFrame frame;
 
    /**
-    * Constructor
+    * Constructor.
+    *
     * @param parent Component to place the progressbar on top of
     * @param windowName Name of the progressbar window
     * @param start Start value
@@ -58,24 +59,28 @@ public final class ProgressBar extends JPanel {
       super(new BorderLayout());
       
       frame = new JFrame(windowName);
-      frame.setDefaultCloseOperation (JFrame.DISPOSE_ON_CLOSE);
+      frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       frame.setBounds(0, 0, 250 + 12 * windowName.length(), 100);
 
-      progressBar = new JProgressBar(start,end);
+      progressBar = new JProgressBar(start, end);
       progressBar.setValue(0);
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(progressBar, BorderLayout.CENTER);
       super.add(panel, BorderLayout.CENTER);
       panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-      JComponent newContentPane = panel;
-      newContentPane.setOpaque(true);
-      frame.setContentPane(newContentPane);
+      panel.setOpaque(true);
+      frame.setContentPane(panel);
 
       frame.setLocationRelativeTo(parent);
       startTimeMs = System.currentTimeMillis();
    }
 
+   /**
+    * Updates the Progress bar.
+    *
+    * @param progress where to set the bar to.
+    */
    public void setProgress(int progress) {
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(() -> {
@@ -88,8 +93,10 @@ public final class ProgressBar extends JPanel {
             frame.setVisible(true);
          }
       }
-      progressBar.setValue(progress);
-      progressBar.repaint();
+      if (frame.isVisible()) {
+         progressBar.setValue(progress);
+         progressBar.repaint();
+      }
    }
 
    @Override
@@ -98,8 +105,8 @@ public final class ProgressBar extends JPanel {
    }
 
    public void setRange(int min, int max) {
-       progressBar.setMinimum(min);
-       progressBar.setMaximum(max);
+      progressBar.setMinimum(min);
+      progressBar.setMaximum(max);
    }
 
    /*
