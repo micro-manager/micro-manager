@@ -57,8 +57,8 @@ public abstract class KdTree<T> {
    private Status status;
 
    /**
-    * Construct a KdTree with a given number of dimensions and a limit on
-    * maxiumum size (after which it throws away old points)
+    * Construct a KdTree with a given number of dimensions and a limit on maxiumum size (after which
+    * it throws away old points)
     */
    private KdTree(int dimensions, Integer sizeLimit) {
       this.dimensions = dimensions;
@@ -247,9 +247,9 @@ public abstract class KdTree<T> {
    }
 
    /**
-    * Remove the oldest value from the tree. Note: This cannot trim the bounds
-    * of nodes, nor empty nodes, and thus you can't expect it to perfectly
-    * preserve the speed of the tree as you keep adding.
+    * Remove the oldest value from the tree. Note: This cannot trim the bounds of nodes, nor empty
+    * nodes, and thus you can't expect it to perfectly preserve the speed of the tree as you keep
+    * adding.
     */
    private void removeOld() {
       double[] location = this.locationStack.removeFirst();

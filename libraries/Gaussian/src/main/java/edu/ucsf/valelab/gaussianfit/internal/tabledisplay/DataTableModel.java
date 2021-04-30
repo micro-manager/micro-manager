@@ -39,8 +39,7 @@ import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
 
 /**
- * Model for the data shown in the Data window in Localization microscopy
- * plugin
+ * Model for the data shown in the Data window in Localization microscopy plugin
  *
  * @author nico
  */
@@ -82,6 +81,7 @@ public class DataTableModel extends AbstractTableModel {
 
    /**
     * Return a dataset
+    *
     * @param ID with requested ID.
     * @return RowData with selected ID, or null if not found
     */

@@ -46,7 +46,6 @@ import javax.swing.table.TableColumn;
 /**
  * Extension of JTable that takes care of sorting
  *
- *
  * @author nico
  */
 public class DataTable extends JTable {

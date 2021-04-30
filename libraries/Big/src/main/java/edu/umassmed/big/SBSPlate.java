@@ -240,7 +240,8 @@ public class SBSPlate {
    }
 
    /**
-    * Sets the Absolute position, in microns, of well A1. This needs to be set if the center of well A1 is not at 0,0.
+    * Sets the Absolute position, in microns, of well A1. This needs to be set if the center of well
+    * A1 is not at 0,0.
     *
     * @param x micron coordinate the longest dimension of the wellplate at well A1
     * @param y micron coordinate the shortest dimension of the wellplate at well A1
@@ -293,10 +294,11 @@ public class SBSPlate {
    /**
     * Adds local offset of the current position, values need to be relative to center of well
     *
-    * @param X coordinate of the longest dimension of the well plate in microns
-    * @param Y coordinate of the shortest dimension of the well plate in microns
-    * @param Z focus depth in microns
-    * @param well number within the plate, or within region of the plate if first and last wells are set
+    * @param X    coordinate of the longest dimension of the well plate in microns
+    * @param Y    coordinate of the shortest dimension of the well plate in microns
+    * @param Z    focus depth in microns
+    * @param well number within the plate, or within region of the plate if first and last wells are
+    *             set
     */
    public void addPosition(double X, double Y, double Z, int well) {
       // switch to 0 indexed
@@ -321,7 +323,6 @@ public class SBSPlate {
 
    /**
     * Clears all global positions
-    *
     */
    public void clearPositions() {
       globalPositionList.clear();
@@ -346,7 +347,6 @@ public class SBSPlate {
    }
 
    /**
-    *
     * @param skip set to TRUE if you want ignore the current well.
     */
    public void skipWell(Boolean skip) {
@@ -358,7 +358,6 @@ public class SBSPlate {
    }
 
    /**
-    *
     * @param well
     * @return returns TRUE if a well should be skipped, or false if it shouldn't be skipped
     */
@@ -380,7 +379,9 @@ public class SBSPlate {
 
    /**
     * Returns the SBS label associated with a well
-    * @param well number within the plate, or within region of the plate if first and last wells are set
+    *
+    * @param well number within the plate, or within region of the plate if first and last wells are
+    *             set
     * @return returns String SBS name
     */
    public String getWellLabel(int well) {
@@ -423,7 +424,8 @@ public class SBSPlate {
    }
 
    /**
-    * checks the number of positions of the current well. It will check the position list for the current well and if that exits, return that.
+    * checks the number of positions of the current well. It will check the position list for the
+    * current well and if that exits, return that.
     * <p>
     * Otherwise it will return the number of positions of the global list.
     *
@@ -444,11 +446,13 @@ public class SBSPlate {
    }
 
    /**
-    * checks the number of positions of a given well. It will check the position list for the current well and if that exits, return that.
+    * checks the number of positions of a given well. It will check the position list for the
+    * current well and if that exits, return that.
     * <p>
     * Otherwise it will return the number of positions of the global list.
     *
-    * @param well number within the plate, or within region of the plate if first and last wells are set
+    * @param well number within the plate, or within region of the plate if first and last wells are
+    *             set
     * @return number of positions within a well
     */
    public int getNumberOfWellPositions(int well) {
@@ -469,7 +473,8 @@ public class SBSPlate {
    }
 
    /**
-    * Returns next well position within the current well. Position is absolute position including plate position.
+    * Returns next well position within the current well. Position is absolute position including
+    * plate position.
     *
     * @param index
     * @return X, Y, Z in microns
@@ -561,6 +566,7 @@ public class SBSPlate {
 
    /**
     * This function is deprecated. Please use getNextPlatePosition()
+    *
     * @return
     */
    public double[] getNextPosition() {
@@ -570,9 +576,8 @@ public class SBSPlate {
    /**
     * Returns the position, in microns, of the next well, based on position of the last well.
     *
-    * @return either the first position for that well, and if it that does not exist, returns the first global position of that well, which
-    * is usually the center of that well, if not defined.
-    *
+    * @return either the first position for that well, and if it that does not exist, returns the
+    * first global position of that well, which is usually the center of that well, if not defined.
     */
    public double[] getNextPlatePosition() {
       double[] position = {0, 0, 0}; // returns microns position
@@ -637,7 +642,8 @@ public class SBSPlate {
    /**
     * Returns the X and Y coordinates of a well
     *
-    * @param well number within the plate, or within region of the plate if first and last wells are set
+    * @param well number within the plate, or within region of the plate if first and last wells are
+    *             set
     * @return 1 indexed coordinates based on well plate or sub region of well plate
     */
    public int[] getPlateCoordinates(int well) {

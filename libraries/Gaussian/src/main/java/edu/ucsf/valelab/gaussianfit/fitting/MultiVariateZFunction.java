@@ -47,7 +47,6 @@ import org.apache.commons.math.analysis.MultivariateRealFunction;
  */
 
 /**
- *
  * @author nico
  */
 public class MultiVariateZFunction implements MultivariateRealFunction {
@@ -68,11 +67,7 @@ public class MultiVariateZFunction implements MultivariateRealFunction {
 
 
    /**
-    *
-    * @param params array of double with function parameters where:
-    *       0: z
-
-    *
+    * @param params array of double with function parameters where: 0: z
     * @return
     * @throws FunctionEvaluationException
     */
@@ -86,10 +81,8 @@ public class MultiVariateZFunction implements MultivariateRealFunction {
 
    /**
     * actual function evaluation
-    *
-    * D = sqrt (  square (sqrt wx - sqrt wx, calib) + 
-    *             sqr(sqrt wy - sqrt wx, calib) )
-    *
+    * <p>
+    * D = sqrt (  square (sqrt wx - sqrt wx, calib) + sqr(sqrt wy - sqrt wx, calib) )
     */
    public double funcval(double[] params) {
 

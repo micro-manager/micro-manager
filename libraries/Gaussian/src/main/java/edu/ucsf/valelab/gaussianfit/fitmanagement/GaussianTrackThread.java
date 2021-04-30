@@ -55,7 +55,6 @@ import java.util.List;
 
 
 /**
- *
  * @author nico
  */
 public class GaussianTrackThread extends GaussianInfo implements Runnable {
@@ -88,8 +87,6 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable {
 
 
    /**
-    *
-    *
     * @param siPlus
     * @param preFilterType
     */

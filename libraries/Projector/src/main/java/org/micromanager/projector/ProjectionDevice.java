@@ -74,7 +74,7 @@ public interface ProjectionDevice {
 
    /**
     * Displays a spot at location x, y (in Projector coordinates) for a duration set in setExposure.
-    *  This function will display a spot on an SLM, or point a pointing device to the desired
+    * This function will display a spot on an SLM, or point a pointing device to the desired
     * location, and illuminate for the desired duration
     *
     * @param x

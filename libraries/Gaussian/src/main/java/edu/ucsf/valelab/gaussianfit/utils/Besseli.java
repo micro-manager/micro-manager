@@ -10,8 +10,7 @@ package edu.ucsf.valelab.gaussianfit.utils;
 import org.apache.commons.math3.analysis.function.Exp;
 
 /**
- * Code from stackoverflow:
- * http://stackoverflow.com/questions/8797722/modified-bessel-functions-of-order-n
+ * Code from stackoverflow: http://stackoverflow.com/questions/8797722/modified-bessel-functions-of-order-n
  * License unclear. Remove when an alternative is available
  *
  * @author Michael
@@ -19,8 +18,7 @@ import org.apache.commons.math3.analysis.function.Exp;
 public class Besseli {
 
    /**
-    * Functions that aren't part of standard libraries User: Michael Date:
-    * 1/9/12 Time: 9:22 PM
+    * Functions that aren't part of standard libraries User: Michael Date: 1/9/12 Time: 9:22 PM
     */
    public static final double ACC = 4.0;
    public static final double BIGNO = 1.0e10;

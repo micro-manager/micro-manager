@@ -13,8 +13,9 @@
  */
 
  /**
-  * Very silly, we need a NullClass so that instances of it actually reach
-  * the Comparator in our TableRowSorter...
+  * Very silly, we need a NullClass so that instances of it actually reach the Comparator in our
+  * TableRowSorter...
+  *
   * @author nico
   */
  public class NullClass {

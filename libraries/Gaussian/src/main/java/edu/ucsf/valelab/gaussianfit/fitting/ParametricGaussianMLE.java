@@ -34,7 +34,6 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
 
 /**
- *
  * @author nico
  */
 public class ParametricGaussianMLE implements ParametricRealFunction {

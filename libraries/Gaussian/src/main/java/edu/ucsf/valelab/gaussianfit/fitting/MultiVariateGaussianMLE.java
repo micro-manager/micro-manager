@@ -37,7 +37,6 @@ import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 import org.apache.commons.math.FunctionEvaluationException;
 
 /**
- *
  * @author nico
  */
 public class MultiVariateGaussianMLE implements DifferentiableMultivariateRealFunction {
@@ -52,8 +51,8 @@ public class MultiVariateGaussianMLE implements DifferentiableMultivariateRealFu
 
 
    /**
-    * Gaussian fit can be run by estimating parameter c (width of Gaussian)
-    * as 1 (circle), 2 (width varies in x and y), or 3 (ellipse) parameters
+    * Gaussian fit can be run by estimating parameter c (width of Gaussian) as 1 (circle), 2 (width
+    * varies in x and y), or 3 (ellipse) parameters
     *
     * @param shape
     */

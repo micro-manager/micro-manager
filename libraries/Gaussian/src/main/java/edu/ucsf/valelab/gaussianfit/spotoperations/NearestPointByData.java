@@ -37,9 +37,8 @@ import java.util.List;
 
 /**
  * Class that finds the closest by point in a point collection given a single point
- *
+ * <p>
  * The method findKDWSE uses a kd tree approach based written by Rednaxela
- *
  *
  * @author nico
  */
@@ -57,13 +56,12 @@ public class NearestPointByData {
    }
 
    /**
-    * method to find the nearest point in the collection of Points
-    * Uses Squared Euclidian distance method from Rednaxela
-    * TODO: evaluate if the copy of the spot is actually needed.
+    * method to find the nearest point in the collection of Points Uses Squared Euclidian distance
+    * method from Rednaxela TODO: evaluate if the copy of the spot is actually needed.
     *
     * @param input - point for which we want to find the nearest neighbor
-    * @return copy of the point found or null when it was farther away than 
-    * the cutoff set in the constructor
+    * @return copy of the point found or null when it was farther away than the cutoff set in the
+    * constructor
     */
    public PointData findKDWSE(Point2D.Double input) {
       // construct a new KD tree if needed
@@ -97,8 +95,7 @@ public class NearestPointByData {
     * Brute force method to find the nearest point in the collection of Points
     *
     * @param input - point for which we want to find the nearest neighbor
-    * @return point found or null when it was farther away than the cutoff set 
-    * in the constructor
+    * @return point found or null when it was farther away than the cutoff set in the constructor
     */
    public PointData findBF(Point2D.Double input) {
       PointData closestPoint = theList_.get(0);

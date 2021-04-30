@@ -36,7 +36,6 @@ package edu.ucsf.valelab.gaussianfit.fitting;
 import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 
 /**
- *
  * @author nico
  */
 public class MultiVariateGaussianFunction implements MultivariateRealFunction {
@@ -51,11 +50,11 @@ public class MultiVariateGaussianFunction implements MultivariateRealFunction {
 
 
    /**
-    * Gaussian fit can be run by estimating parameter c (width of Gaussian)
-    * as 1 (circle), 2 (width varies in x and y), or 3 (ellipse) parameters
+    * Gaussian fit can be run by estimating parameter c (width of Gaussian) as 1 (circle), 2 (width
+    * varies in x and y), or 3 (ellipse) parameters
     *
     * @param shape 1=circle, 2=width varies in x and y, 3=ellipse
-    * @param s  // width of Gaussian in pixels, negative if it should be fitted
+    * @param s     // width of Gaussian in pixels, negative if it should be fitted
     */
    public MultiVariateGaussianFunction(int shape, double s) {
       super();

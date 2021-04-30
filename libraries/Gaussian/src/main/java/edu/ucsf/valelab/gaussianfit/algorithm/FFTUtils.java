@@ -35,7 +35,6 @@ import org.apache.commons.math.transform.FastFourierTransformer;
 import org.jfree.data.xy.XYSeries;
 
 /**
- *
  * @author nico
  */
 public class FFTUtils {
@@ -43,6 +42,7 @@ public class FFTUtils {
 
    /**
     * simple and bad way to calculate next power of 2
+    *
     * @param n query number
     * @return first number &gt; n that is a power of 2
     */
@@ -56,6 +56,7 @@ public class FFTUtils {
 
    /**
     * simple and bad way to calculate the highest power of 2 contained in this number
+    *
     * @param n query
     * @return highest number &lt; n that is a power of 2
     */
@@ -69,10 +70,10 @@ public class FFTUtils {
    }
 
    /**
-    * Calculates Power Spectrum density for the given datasets
-    * and add result to a XYSeries for graphing using JFreeChart
-    * Currently, the dataset is truncated to the highest power of two
-    * Need to add pWelch windowing and zero-padding to next highest power of two
+    * Calculates Power Spectrum density for the given datasets and add result to a XYSeries for
+    * graphing using JFreeChart Currently, the dataset is truncated to the highest power of two Need
+    * to add pWelch windowing and zero-padding to next highest power of two
+    *
     * @param rowDatas
     * @param datas
     * @param plotMode

@@ -45,11 +45,11 @@ import java.util.Map;
 import javax.swing.JOptionPane;
 
 /**
- * This code looks for "tracks" of spots in consecutive frames
- * Any found track (of 1 or more spots) is merged into a single spot
- * that is inserted into the output row 
- * The resulting spot has the coordinates (frame, channel, position) of the first
- * spot of the track.  Its position is averaged and the intensity is summed.
+ * This code looks for "tracks" of spots in consecutive frames Any found track (of 1 or more spots)
+ * is merged into a single spot that is inserted into the output row The resulting spot has the
+ * coordinates (frame, channel, position) of the first spot of the track.  Its position is averaged
+ * and the intensity is summed.
+ *
  * @author nico
  */
 public class SpotLinker {
@@ -58,10 +58,9 @@ public class SpotLinker {
    }
 
    /**
-    * Function that executes spot linkage.  Goes through a list of spots
-    * and looks in every consecutive frames for the closest by spot (at a 
-    * maximum distance of maxDistance.  If no spot is found, the link is added
-    * and the linked (averaged) spot is added to the destination list 
+    * Function that executes spot linkage.  Goes through a list of spots and looks in every
+    * consecutive frames for the closest by spot (at a maximum distance of maxDistance.  If no spot
+    * is found, the link is added and the linked (averaged) spot is added to the destination list
     * through the function linkSpots.  This code could also be used for spot tracking
     *
     * @param rowData
@@ -155,13 +154,11 @@ public class SpotLinker {
    }
 
    /**
-    * Given a list of linked spots, create a single spot entry that will be
-    * added to the destination list
+    * Given a list of linked spots, create a single spot entry that will be added to the destination
+    * list
     *
-    * @param source - list of spots that all occur around the same pixel and in
-    *                 linked frames
-    * @param dest - list of spots in which each entry represents multiple linked
-    *               spots
+    * @param source    - list of spots that all occur around the same pixel and in linked frames
+    * @param dest      - list of spots in which each entry represents multiple linked spots
     * @param useFrames - whether or not the single axis of the image stack lies about its identity
     */
    private static void linkSpots(List<SpotData> source, List<SpotData> dest,
@@ -239,23 +236,21 @@ public class SpotLinker {
 
 
    /**
-    * Function that executes spot linkage.  Goes through a list of spots
-    * and looks in every consecutive frames for the closest by spot (at a 
-    * maximum distance of maxDistance).  If no spot is found, the link is added
-    * and the track is added as a row.  Only tracks longer then minNr are created.
+    * Function that executes spot linkage.  Goes through a list of spots and looks in every
+    * consecutive frames for the closest by spot (at a maximum distance of maxDistance).  If no spot
+    * is found, the link is added and the track is added as a row.  Only tracks longer then minNr
+    * are created.
     *
-    * @param rowData - input Spot data (obtained through the "Fit" function
-    * @param minNr - track needs to be larger than this or it will not be saved
-    * @param nrMissing - Continue searching for this many frames if no spot was
-    *                  - found.
-    * @param maxDistance - Maximum distance between spot in consecutive frames
-    *                    - if larger, it will not be added to the tracks
-    * @param minTotalDistance - Minimum distance between first and last point 
-    *                in the track.  Track will only be reported if distance is 
-    *                greater than this number.
-    * @param combineChannels - when true, combine track from multiple channels
-    *                   whose average position is within maxPairDistance
-    * @param maxPairDistance - parameter only used when combineChannels is true
+    * @param rowData          - input Spot data (obtained through the "Fit" function
+    * @param minNr            - track needs to be larger than this or it will not be saved
+    * @param nrMissing        - Continue searching for this many frames if no spot was - found.
+    * @param maxDistance      - Maximum distance between spot in consecutive frames - if larger, it
+    *                         will not be added to the tracks
+    * @param minTotalDistance - Minimum distance between first and last point in the track.  Track
+    *                         will only be reported if distance is greater than this number.
+    * @param combineChannels  - when true, combine track from multiple channels whose average
+    *                         position is within maxPairDistance
+    * @param maxPairDistance  - parameter only used when combineChannels is true
     * @return Number of tracks that were extracted.
     */
    public static int extractTracks(final RowData rowData, final int minNr,

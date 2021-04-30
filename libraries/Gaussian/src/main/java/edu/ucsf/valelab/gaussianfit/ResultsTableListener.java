@@ -48,11 +48,10 @@ import org.micromanager.display.DisplayWindow;
  */
 
 /**
- * KeyListener and MouseListenerclass for ResultsTable When user selected a line
- * in the ResulsTable and presses a key, the corresponding image will move to
- * the correct slice and draw the ROI that was used to calculate the Gaussian
- * fit Works only in conjunction with appropriate column names Up and down keys
- * also work as expected
+ * KeyListener and MouseListenerclass for ResultsTable When user selected a line in the ResulsTable
+ * and presses a key, the corresponding image will move to the correct slice and draw the ROI that
+ * was used to calculate the Gaussian fit Works only in conjunction with appropriate column names Up
+ * and down keys also work as expected
  */
 public class ResultsTableListener implements KeyListener, MouseListener {
 

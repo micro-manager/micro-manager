@@ -68,7 +68,6 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 
 /**
- *
  * @author nico
  */
 public class FitAllThread extends GaussianInfo implements Runnable {

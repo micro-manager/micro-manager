@@ -46,7 +46,6 @@ import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
 import org.apache.commons.math.optimization.general.NonLinearConjugateGradientOptimizer;
 
 /**
- *
  * @author nico
  */
 public class GaussianFit {
@@ -116,13 +115,13 @@ public class GaussianFit {
 
 
    /**
-    * Gaussian fit can be run by estimating parameter c (width of Gaussian)
-    * as 1 (circle), 2 (width varies in x and y), or 3 (ellipse) parameters
+    * Gaussian fit can be run by estimating parameter c (width of Gaussian) as 1 (circle), 2 (width
+    * varies in x and y), or 3 (ellipse) parameters
     *
-    * @param shape - fit circle (1) ellipse(2), or ellipse with varying angle (3)
-    * @param fitMode - algorithm use: NelderMead (1), Levenberg Marquard (2), 
-    *                   NelderMean MLE (3), LevenberMarquard MLE(4)
-    * @param fixWidth - if true, do not fit the width
+    * @param shape      - fit circle (1) ellipse(2), or ellipse with varying angle (3)
+    * @param fitMode    - algorithm use: NelderMead (1), Levenberg Marquard (2), NelderMean MLE (3),
+    *                   LevenberMarquard MLE(4)
+    * @param fixWidth   - if true, do not fit the width
     * @param fixedWidth - width of the Gaussian in pixels
     */
    public GaussianFit(int shape, final int fitMode, final boolean fixWidth,
@@ -194,17 +193,14 @@ public class GaussianFit {
 
 
    /**
-    * Performs Gaussian Fit on a given ImageProcessor
-    * Estimates initial values for the fit and sends off to Apache fitting code
-    * Background is estimated by averaging the outer rows and columns
-    * Sigma estimate is hardcoded to 1.115 pixels
-    * Signal estimate is derived from total signal - total background estimate
-    * Steps sizes for the optimizer are set at 0.3 * the estimate values
+    * Performs Gaussian Fit on a given ImageProcessor Estimates initial values for the fit and sends
+    * off to Apache fitting code Background is estimated by averaging the outer rows and columns
+    * Sigma estimate is hardcoded to 1.115 pixels Signal estimate is derived from total signal -
+    * total background estimate Steps sizes for the optimizer are set at 0.3 * the estimate values
     *
-    * @param siProc - ImageJ ImageProcessor containing image to be fit
-    * @param maxIterations - maximum number of iterations for the Nelder Mead
-    *          optimization algorithm
-
+    * @param siProc        - ImageJ ImageProcessor containing image to be fit
+    * @param maxIterations - maximum number of iterations for the Nelder Mead optimization
+    *                      algorithm
     * @return
     */
    public Data dogaussianfit(ImageProcessor siProc, int maxIterations) {

@@ -39,9 +39,8 @@ import java.util.List;
 
 /**
  * Class that finds the closest by point in a point collection given a single point
- *
+ * <p>
  * The method findKDWSE uses a kd tree approach based written by Rednaxela
- *
  *
  * @author nico
  */
@@ -62,12 +61,11 @@ public class NearestPoint2D {
    }
 
    /**
-    *  method to find the nearest point in the collection of Points
-    * Uses Squared Euclidian distance method from Rednaxela
+    * method to find the nearest point in the collection of Points Uses Squared Euclidian distance
+    * method from Rednaxela
     *
     * @param input - point for which we want to find the nearest neighbor
-    * @return point found or null when it was farther away than the cutoff set 
-    * in the constructor
+    * @return point found or null when it was farther away than the cutoff set in the constructor
     */
    public Point2D.Double findKDWSE(Point2D.Double input) {
       // construct a new KD tree if needed
@@ -100,8 +98,7 @@ public class NearestPoint2D {
     * Brute force method to find the nearest point in the collection of Points
     *
     * @param input - point for which we want to find the nearest neighbor
-    * @return point found or null when it was farther away than the cutoff set 
-    * in the constructor
+    * @return point found or null when it was farther away than the cutoff set in the constructor
     */
    public Point2D.Double findBF(Point2D.Double input) {
       Point2D.Double closestPoint = input;
@@ -123,8 +120,8 @@ public class NearestPoint2D {
 
 
    /**
-    * Calculates the square of the distance between two points as
-    * square(difference in x) + square (difference in y)
+    * Calculates the square of the distance between two points as square(difference in x) + square
+    * (difference in y)
     *
     * @param p1 first point
     * @param p2 second point
@@ -137,14 +134,13 @@ public class NearestPoint2D {
    }
 
    /**
-    * Calculates the orientation of these points with respect to each other.
-    * Draw a circle with point 1 at the center, and p2 on the perimeter
-    * Return the sine of the line connecting p1 and p2
+    * Calculates the orientation of these points with respect to each other. Draw a circle with
+    * point 1 at the center, and p2 on the perimeter Return the sine of the line connecting p1 and
+    * p2
     *
     * @param p1
     * @param p2
-    * @return sine of the line connecting p1 and p2 in relation to their shared 
-    * coordinate system
+    * @return sine of the line connecting p1 and p2 in relation to their shared coordinate system
     */
    public static double orientation(Point2D.Double p1, Point2D.Double p2) {
       double x = p2.getX() - p1.getX();

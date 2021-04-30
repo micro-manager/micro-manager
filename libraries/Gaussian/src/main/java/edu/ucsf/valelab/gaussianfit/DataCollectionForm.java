@@ -141,7 +141,6 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 /**
- *
  * @author Nico Stuurman
  */
 public class DataCollectionForm extends JFrame {
@@ -238,6 +237,7 @@ public class DataCollectionForm extends JFrame {
 
    /**
     * Method to allow scripts to tune the jitter corrector
+    *
     * @param jm
     */
    public void setJitterMethod(int jm) {
@@ -247,10 +247,10 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * Method to allow scripts to tune the jitter corrector
-    * Sets the maximum number of frames that will be used to produce one 
-    * "time-point" in the de-jitter process.  Defaults to 500, set higher if you 
-    * have few data-points, lower if you have many spots per frame.
+    * Method to allow scripts to tune the jitter corrector Sets the maximum number of frames that
+    * will be used to produce one "time-point" in the de-jitter process.  Defaults to 500, set
+    * higher if you have few data-points, lower if you have many spots per frame.
+    *
     * @param jm - max number of frames that will be used per de-jitter cycle
     */
    public void setJitterMaxFrames(int jm) {
@@ -258,9 +258,9 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * Method to allow scripts to tune the jitter corrector
-    * Sets the maximum number of spots that will be used to produce one 
-    * "timepoint" in the de-jitter process.  Defaults to 40000.  
+    * Method to allow scripts to tune the jitter corrector Sets the maximum number of spots that
+    * will be used to produce one "timepoint" in the de-jitter process.  Defaults to 40000.
+    *
     * @param jm
     */
    public void setJitterMaxSpots(int jm) {
@@ -268,8 +268,8 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * Method that lets a script gets the Affinetransform calculated by the
-    * CoordinateMapper
+    * Method that lets a script gets the Affinetransform calculated by the CoordinateMapper
+    *
     * @return Affine transform object calculated by the Coordinate Mapper
     */
    public AffineTransform getAffineTransform() {
@@ -282,6 +282,7 @@ public class DataCollectionForm extends JFrame {
 
    /**
     * Get spotdata for the given row
+    *
     * @param rowNr rowNr (unsorted) for which to return the spotdata
     * @return
     */
@@ -402,8 +403,9 @@ public class DataCollectionForm extends JFrame {
 
 
    /**
-    * Adds a dataset to the data table.  
-    * Data is provided as a builder that is build in this function
+    * Adds a dataset to the data table. Data is provided as a builder that is build in this
+    * function
+    *
     * @param builder RowData builder
     */
    public void addSpotData(RowData.Builder builder) {
@@ -431,6 +433,7 @@ public class DataCollectionForm extends JFrame {
 
    /**
     * Return a dataset
+    *
     * @param ID with requested ID.
     * @return RowData with selected ID, or null if not found
     */
@@ -439,8 +442,7 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * This method is called from within the constructor to
-    * initialize the form.
+    * This method is called from within the constructor to initialize the form.
     */
    @SuppressWarnings("unchecked")
    private void initComponents() {
@@ -1058,6 +1060,7 @@ public class DataCollectionForm extends JFrame {
 
    /**
     * Helper function to facilitate the UI
+    *
     * @param minSize minimumSize of the Separator
     * @return vertical separator with the desired minimum size
     */
@@ -1069,10 +1072,9 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * Loads data saved in TSF format (Tagged Spot File Format)
-    * Opens awt file select dialog which lets you select only a single file
-    * If you want to open multiple files, press the ctrl key while clicking
-    * the button.  This will open the swing file opener.
+    * Loads data saved in TSF format (Tagged Spot File Format) Opens awt file select dialog which
+    * lets you select only a single file If you want to open multiple files, press the ctrl key
+    * while clicking the button.  This will open the swing file opener.
     *
     * @evt
     */
@@ -1113,8 +1115,9 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * Given an array of files, tries to import them all
-    * Uses .txt import for text files, and tsf importer for .tsf files.
+    * Given an array of files, tries to import them all Uses .txt import for text files, and tsf
+    * importer for .tsf files.
+    *
     * @param selectedFiles - Array of files to be imported
     */
    private void loadFiles(File[] selectedFiles) {
@@ -1191,6 +1194,7 @@ public class DataCollectionForm extends JFrame {
 
    /**
     * Use the selected data set as the reference for 2-channel color correction
+    *
     * @param evt
     */
    private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1406,7 +1410,7 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * Renders dataset 
+    * Renders dataset
     *
     * @param evt
     */
@@ -1503,9 +1507,8 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * Centers all selected tracks (subtracts the average position)
-    * and then calculates the average position of all tracks.
-    * Can take multiple tracks of varied lengths as input
+    * Centers all selected tracks (subtracts the average position) and then calculates the average
+    * position of all tracks. Can take multiple tracks of varied lengths as input
     *
     * @param evt
     */
@@ -1729,8 +1732,8 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * For the selected tracks, average the various stdDev estimates
-    * and place on the clipboard
+    * For the selected tracks, average the various stdDev estimates and place on the clipboard
+    *
     * @param header when true only return the headers (explaining the data)
     * @return Header or values
     */
@@ -1787,10 +1790,10 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * Returns a data describing the distances between spots in input tracks
-    * This is used to determine the experimental sigma of the fitted positions
-    * The tracks should be of stationary spots, the function determines the 
-    * distance between a spot and the corresponding spots in all other tracks.
+    * Returns a data describing the distances between spots in input tracks This is used to
+    * determine the experimental sigma of the fitted positions The tracks should be of stationary
+    * spots, the function determines the distance between a spot and the corresponding spots in all
+    * other tracks.
     *
     * @param header
     * @return
@@ -1947,11 +1950,11 @@ public class DataCollectionForm extends JFrame {
    }
 
    /**
-    * Links spots by checking in consecutive frames whether the spot is still present
-    * If it is, add it to a list
-    * Once a frame has been found in which it is not present, calculate the average spot position
-    * and add this averaged spot to the list with linked spots
-    * The Frame number of the linked spot list will be 0
+    * Links spots by checking in consecutive frames whether the spot is still present If it is, add
+    * it to a list Once a frame has been found in which it is not present, calculate the average
+    * spot position and add this averaged spot to the list with linked spots The Frame number of the
+    * linked spot list will be 0
+    *
     * @param evt - ignored...
     */
    private void linkButton_ActionPerformed(java.awt.event.ActionEvent evt) {
@@ -2379,11 +2382,9 @@ public class DataCollectionForm extends JFrame {
    /**
     * Performs Z-calibration
     *
-    *
     * @param rowNr
-    * @return 0 indicates success, 
-    *          1 indicates failure and calling code should inform user, 
-    *          2 indicates failure but calling code should not inform user
+    * @return 0 indicates success, 1 indicates failure and calling code should inform user, 2
+    * indicates failure but calling code should not inform user
     */
    public int zCalibrate(int rowNr) {
       final double widthCutoff = 1000.0;
@@ -2539,6 +2540,7 @@ public class DataCollectionForm extends JFrame {
 
    /**
     * Utility function that runs the selected rows through a SpotDataFilter
+    *
     * @param sf SpotDataFilter used to filter the selected dataset
     */
    public void filterSpots(SpotDataFilter sf) {
