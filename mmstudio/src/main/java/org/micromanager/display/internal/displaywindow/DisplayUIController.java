@@ -118,7 +118,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    private final DisplayWindowControlsFactory controlsFactory_;
 
-   private JFrame frame_; // Not null iff not closed
+   private JFrame frame_; // Not null if not closed
    private JFrame fullScreenFrame_; // Not null iff in full-screen mode
 
    // We place all components in a JPanel, so that they can be transferred
@@ -317,6 +317,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          frame_.dispose();
          frame_ = null;
       }
+      bottomControlPanel_ = null;
    }
 
    @MustCallOnEDT
@@ -1228,7 +1229,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
                @Override
                public void run() {
-                  setTitle(frame_);
+                  if (frame_ != null) { // it could have been disposed in the mean time
+                     setTitle(frame_);
+                  }
                }
             });
       }
