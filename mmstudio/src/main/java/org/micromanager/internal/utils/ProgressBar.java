@@ -20,6 +20,7 @@
 //
 // CVS:          $Id$
 //
+
 package org.micromanager.internal.utils;
 
 import java.awt.BorderLayout;
@@ -31,7 +32,12 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 
-
+/**
+ * Utility class to show a ProgressBar.
+ * Note: this will need to be refactored in the near future.  The current
+ * version has to be created on the EDT, which is sometimes difficult, and
+ * often is not done, resulting in dangerous code.
+ */
 public final class ProgressBar extends JPanel {
    private static final long serialVersionUID = 1L;
    private final long delayTimeMs = 3000;
@@ -39,8 +45,15 @@ public final class ProgressBar extends JPanel {
    private final JProgressBar progressBar;
    private final JFrame frame;
 
+   /**
+    * Constructor
+    * @param parent Component to place the progressbar on top of
+    * @param windowName Name of the progressbar window
+    * @param start Start value
+    * @param end Last value
+    */
    @MustCallOnEDT
-   public ProgressBar (Component parent, String windowName, int start, int end) {
+   public ProgressBar(Component parent, String windowName, int start, int end) {
 
       super(new BorderLayout());
       
@@ -84,10 +97,10 @@ public final class ProgressBar extends JPanel {
       frame.setVisible(visible);
    }
 
-    public void setRange(int min, int max) {
-        progressBar.setMinimum(min);
-        progressBar.setMaximum(max);
-    }
+   public void setRange(int min, int max) {
+       progressBar.setMinimum(min);
+       progressBar.setMaximum(max);
+   }
 
    /*
    public static void main(String[] args) {
