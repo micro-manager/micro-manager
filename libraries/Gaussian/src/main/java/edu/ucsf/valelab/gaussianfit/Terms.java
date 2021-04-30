@@ -31,7 +31,6 @@ either expressed or implied, of the FreeBSD Project.
 package edu.ucsf.valelab.gaussianfit;
 
 /**
- *
  * @author nico
  */
 public class Terms {
@@ -54,6 +53,6 @@ public class Terms {
    public static final String THETA = "Theta";
    public static final String XPIX = "X(pix)";
    public static final String YPIX = "Y(pix))";
-   
+
 }
 

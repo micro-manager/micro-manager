@@ -31,8 +31,8 @@ either expressed or implied, of the FreeBSD Project.
 
 package edu.ucsf.valelab.gaussianfit;
 
-import edu.ucsf.valelab.gaussianfit.datasettransformations.SpotDataFilter;
 import edu.ucsf.valelab.gaussianfit.data.RowData;
+import edu.ucsf.valelab.gaussianfit.datasettransformations.SpotDataFilter;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
@@ -40,10 +40,10 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 
 /**
- *
  * @author Nico Stuurman
  */
 public class GaussCanvas extends ImageCanvas {
+
    RowData rowData_;
    int renderMethod_;
    ImagePlus originalIP_;
@@ -53,10 +53,10 @@ public class GaussCanvas extends ImageCanvas {
    final int orImageWidth_;
    final int orImageHeight_;
    SpotDataFilter sf_;
-   
+
 
    public GaussCanvas(ImagePlus sp, RowData rowData,
-           int renderMode, double initialMag, SpotDataFilter sf) {
+         int renderMode, double initialMag, SpotDataFilter sf) {
       super(sp);
       rowData_ = rowData;
       renderMethod_ = renderMode;
@@ -71,53 +71,61 @@ public class GaussCanvas extends ImageCanvas {
       iw_ = iw;
    }
    */
-   
+
    /**
     * Transforms the sourceRct Rectangle into a Rectangle in nm coordinates
+    *
     * @param magnification
-    * @return 
+    * @return
     */
    Rectangle sourceRectToNmRect(double magnification) {
       Rectangle resRect = new Rectangle();
-      resRect.x = (int) (srcRect.x * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );      
-      resRect.y = (int) (srcRect.y * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
-      resRect.width = (int) (srcRect.width * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
-      resRect.height = (int) (srcRect.height * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
-      
+      resRect.x = (int) (srcRect.x * rowData_.pixelSizeNm_ / (originalMag_ * magnification));
+      resRect.y = (int) (srcRect.y * rowData_.pixelSizeNm_ / (originalMag_ * magnification));
+      resRect.width = (int) (srcRect.width * rowData_.pixelSizeNm_ / (originalMag_
+            * magnification));
+      resRect.height = (int) (srcRect.height * rowData_.pixelSizeNm_ / (originalMag_
+            * magnification));
+
       return resRect;
    }
-   
-      /**
+
+   /**
     * Transforms the sourceRct Rectangle into a Rectangle in nm coordinates
+    *
     * @param magnification
-    * @return 
+    * @return
     */
    Rectangle sourceRectToRenderRect(double magnification) {
       Rectangle resRect = new Rectangle();
-      resRect.x = (int) (srcRect.x / (originalMag_ * magnification) );      
-      resRect.y = (int) (srcRect.y * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
-      resRect.width = (int) (srcRect.width * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
-      resRect.height = (int) (srcRect.height * rowData_.pixelSizeNm_ / (originalMag_ * magnification) );
-      
+      resRect.x = (int) (srcRect.x / (originalMag_ * magnification));
+      resRect.y = (int) (srcRect.y * rowData_.pixelSizeNm_ / (originalMag_ * magnification));
+      resRect.width = (int) (srcRect.width * rowData_.pixelSizeNm_ / (originalMag_
+            * magnification));
+      resRect.height = (int) (srcRect.height * rowData_.pixelSizeNm_ / (originalMag_
+            * magnification));
+
       return resRect;
    }
-   
+
    @Override
    public void zoomIn(int sx, int sy) {
-		if (magnification>=32) 
+      if (magnification >= 32) {
          return;
-		double newMag = getHigherZoomLevel(magnification);
-		int newWidth = (int)(imageWidth*newMag);
-		int newHeight = (int)(imageHeight*newMag);
-		Dimension newSize = canEnlarge(newWidth, newHeight);
-		if (newSize!=null) {
-			setDrawingSize(newSize.width, newSize.height);
-			if (newSize.width!=newWidth || newSize.height!=newHeight)
-				adjustSourceRect(newMag, sx, sy);
-			else
-				setMagnification(newMag);
-			imp.getWindow().pack();
-		} else {
+      }
+      double newMag = getHigherZoomLevel(magnification);
+      int newWidth = (int) (imageWidth * newMag);
+      int newHeight = (int) (imageHeight * newMag);
+      Dimension newSize = canEnlarge(newWidth, newHeight);
+      if (newSize != null) {
+         setDrawingSize(newSize.width, newSize.height);
+         if (newSize.width != newWidth || newSize.height != newHeight) {
+            adjustSourceRect(newMag, sx, sy);
+         } else {
+            setMagnification(newMag);
+         }
+         imp.getWindow().pack();
+      } else {
          /*
          Rectangle r = getRect(newMag, sx, sy);
          ImageProcessor ipTmp = ImageRenderer.renderData(rowData_, renderMethod_,
@@ -127,13 +135,13 @@ public class GaussCanvas extends ImageCanvas {
          DisplayUtils.AutoStretch(imp);
          //DisplayUtils.SetCalibration(imp, (float) (rowData.pixelSizeNm_ / mag));
          */
-			adjustSourceRect(newMag, sx, sy);
+         adjustSourceRect(newMag, sx, sy);
       }
-            
-		repaint();
+
+      repaint();
       //if (srcRect.width<imageWidth || srcRect.height<imageHeight)
-		//	resetMaxBounds();
-	}
+      //	resetMaxBounds();
+   }
 
    /*
 
@@ -180,44 +188,68 @@ public class GaussCanvas extends ImageCanvas {
 		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
     }
 */
-   
+
    Rectangle getRect(double newMag, int x, int y) {
-		//IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
-		int w = (int)Math.round(dstWidth/newMag);
-		if (w*newMag<dstWidth) w++;
-		int h = (int)Math.round(dstHeight/newMag);
-		if (h*newMag<dstHeight) h++;
-		x = offScreenX(x);
-		y = offScreenY(y);
-		Rectangle r = new Rectangle(x-w/2, y-h/2, w, h);
-		if (r.x<0) r.x = 0;
-		if (r.y<0) r.y = 0;
-		if (r.x+w>imageWidth) r.x = imageWidth-w;
-		if (r.y+h>imageHeight) r.y = imageHeight-h;
+      //IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
+      int w = (int) Math.round(dstWidth / newMag);
+      if (w * newMag < dstWidth) {
+         w++;
+      }
+      int h = (int) Math.round(dstHeight / newMag);
+      if (h * newMag < dstHeight) {
+         h++;
+      }
+      x = offScreenX(x);
+      y = offScreenY(y);
+      Rectangle r = new Rectangle(x - w / 2, y - h / 2, w, h);
+      if (r.x < 0) {
+         r.x = 0;
+      }
+      if (r.y < 0) {
+         r.y = 0;
+      }
+      if (r.x + w > imageWidth) {
+         r.x = imageWidth - w;
+      }
+      if (r.y + h > imageHeight) {
+         r.y = imageHeight - h;
+      }
       r.x *= newMag;
       r.y *= newMag;
       r.width *= newMag;
       r.height *= newMag;
-		return r;
+      return r;
    }
 
    void adjustSourceRect(double newMag, int x, int y) {
-		//IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
-		int w = (int)Math.round(dstWidth/newMag);
-		if (w*newMag<dstWidth) w++;
-		int h = (int)Math.round(dstHeight/newMag);
-		if (h*newMag<dstHeight) h++;
-		x = offScreenX(x);
-		y = offScreenY(y);
-		Rectangle r = new Rectangle(x-w/2, y-h/2, w, h);
-		if (r.x<0) r.x = 0;
-		if (r.y<0) r.y = 0;
-		if (r.x+w>imageWidth) r.x = imageWidth-w;
-		if (r.y+h>imageHeight) r.y = imageHeight-h;
-		srcRect = r;
-		setMagnification(newMag);
-		//IJ.log("adjustSourceRect2: "+srcRect+" "+dstWidth+"  "+dstHeight);
-	}
+      //IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
+      int w = (int) Math.round(dstWidth / newMag);
+      if (w * newMag < dstWidth) {
+         w++;
+      }
+      int h = (int) Math.round(dstHeight / newMag);
+      if (h * newMag < dstHeight) {
+         h++;
+      }
+      x = offScreenX(x);
+      y = offScreenY(y);
+      Rectangle r = new Rectangle(x - w / 2, y - h / 2, w, h);
+      if (r.x < 0) {
+         r.x = 0;
+      }
+      if (r.y < 0) {
+         r.y = 0;
+      }
+      if (r.x + w > imageWidth) {
+         r.x = imageWidth - w;
+      }
+      if (r.y + h > imageHeight) {
+         r.y = imageHeight - h;
+      }
+      srcRect = r;
+      setMagnification(newMag);
+      //IJ.log("adjustSourceRect2: "+srcRect+" "+dstWidth+"  "+dstHeight);
+   }
    
 /*
    @Override
@@ -276,5 +308,5 @@ public class GaussCanvas extends ImageCanvas {
 
    
 */
-   
+
 }

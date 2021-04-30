@@ -38,10 +38,10 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 /**
- *
  * @author nico
  */
 public class GaussianInfo {
+
    protected static final Object GFSLOCK = new Object();
    protected ImagePlus siPlus_;
    protected ImageProcessor siProc_;
@@ -52,8 +52,8 @@ public class GaussianInfo {
    private int halfSize_ = 8;
    protected double baseLevel_ = 100; // base level (bias) of the camera in counts
    protected double readNoise_ = 0.0; // Effective Read Noise of the camera in electrons
-                                      // Will not be corrected for EM gain
-   
+   // Will not be corrected for EM gain
+
    // settings for maximum finder
    protected int noiseTolerance_ = 100;
 
@@ -88,13 +88,11 @@ public class GaussianInfo {
    // Special setting for Stefan
    protected boolean skipChannels_ = false;  // whether or not to skip channels
    protected int[] channelsToSkip_;   // the channels that we should not analyze
-   
+
    protected boolean fixWidth_ = false; // when true, do not fit the width of the peak but use given number
    protected double widthNm_ = 250.0;   // Width of Gaussian to use in fit
-   
-   protected boolean stop_ = false;
-   
 
+   protected boolean stop_ = false;
 
 
    protected void print(String myText) {
@@ -105,148 +103,195 @@ public class GaussianInfo {
    public void setHalfBoxSize(int hs) {
       halfSize_ = hs;
    }
+
    public int getHalfBoxSize() {
       return halfSize_;
    }
+
    public void setNoiseTolerance(int n) {
       noiseTolerance_ = n;
    }
+
    public int getNoiseTolerance() {
       return noiseTolerance_;
    }
+
    public void setPhotonConversionFactor(double f) {
       photonConversionFactor_ = f;
    }
+
    public double getPhotonConversionFactor() {
       return photonConversionFactor_;
    }
+
    public void setGain(double f) {
       gain_ = f;
    }
+
    public double getGain() {
       return gain_;
    }
-   public void setPixelSize (float f) {
+
+   public void setPixelSize(float f) {
       pixelSize_ = f;
    }
+
    public float getPixelSize() {
       return pixelSize_;
    }
+
    public void setZStackStepSize(float f) {
       zStackStepSize_ = f;
    }
+
    public float getZStackStepSize() {
       return zStackStepSize_;
    }
-   public void setTimeIntervalMs (double f) {
+
+   public void setTimeIntervalMs(double f) {
       timeIntervalMs_ = f;
    }
+
    public double getTimeIntervalMs() {
       return timeIntervalMs_;
    }
+
    public void setSigmaMin(double f) {
       widthMin_ = f;
    }
+
    public double getSigmaMin() {
       return widthMin_;
    }
+
    public void setSigmaMax(double f) {
       widthMax_ = f;
    }
+
    public double getSigmaMax() {
       return widthMax_;
    }
+
    public void setUseWidthFilter(boolean filter) {
       useWidthFilter_ = filter;
    }
+
    public boolean getUseWidthFilter() {
       return useWidthFilter_;
    }
+
    public void setNrPhotonsMin(double min) {
       nrPhotonsMin_ = min;
    }
+
    public double getNrPhotonsMin() {
       return nrPhotonsMin_;
    }
+
    public void setNrPhotonsMax(double max) {
       nrPhotonsMax_ = max;
    }
+
    public double getNrPhotonsMax() {
       return nrPhotonsMax_;
    }
+
    public void setUseNrPhotonsFilter(boolean filter) {
       useNrPhotonsFilter_ = filter;
    }
+
    public boolean getUseNrPhotonsFilter() {
       return useNrPhotonsFilter_;
    }
+
    public void setMaxIterations(int maxIter) {
       maxIterations_ = maxIter;
    }
+
    public int getMaxIterations() {
       return maxIterations_;
    }
+
    public void setShape(int shape) {
       shape_ = shape;
    }
+
    public int getShape() {
       return shape_;
    }
+
    public void setFitMode(int fitMode) {
       fitMode_ = fitMode;
    }
+
    public int getFitMode() {
       return fitMode_;
    }
+
    public void setBaseLevel(double baseLevel) {
       baseLevel_ = baseLevel;
    }
+
    public double getBaseLevel() {
       return baseLevel_;
    }
+
    public void setReadNoise(double readNoise) {
       readNoise_ = readNoise;
    }
+
    public double getReadNoise() {
       return readNoise_;
    }
+
    public void setEndTrackBool(boolean endTrack) {
       endTrackAfterBadFrames_ = endTrack;
    }
+
    public boolean getEndTrackBool() {
       return endTrackAfterBadFrames_;
    }
+
    public void setEndTrackAfterNFrames(int nFrames) {
       endTrackAfterNBadFrames_ = nFrames;
    }
+
    public int getEndTrackAfterNFrames() {
       return endTrackAfterNBadFrames_;
    }
+
    public void setSkipChannels(boolean skip) {
       skipChannels_ = skip;
    }
+
    public boolean getSkipChannels() {
       return skipChannels_;
    }
+
    public void setChannelsToSkip(int[] c2s) {
       channelsToSkip_ = c2s;
    }
+
    public int[] getChannelsToSkip() {
       return channelsToSkip_;
    }
+
    public void setUseFixedWidth(boolean fixWidth) {
       fixWidth_ = fixWidth;
    }
+
    public boolean getUseFixedWidth() {
       return fixWidth_;
    }
+
    public void setFixedWidthNm(double width) {
-      widthNm_ = width; 
+      widthNm_ = width;
    }
+
    public double getFixedWidthNm() {
       return widthNm_;
    }
-   
+
    public void copy(GaussianInfo source) {
       setBaseLevel(source.getBaseLevel());
       setChannelsToSkip(source.getChannelsToSkip());
@@ -273,5 +318,5 @@ public class GaussianInfo {
       setZStackStepSize(source.getZStackStepSize());
       setMaxIterations(source.getMaxIterations());
    }
-   
+
 }

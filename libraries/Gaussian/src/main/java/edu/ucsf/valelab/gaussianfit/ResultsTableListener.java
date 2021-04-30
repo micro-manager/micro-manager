@@ -44,9 +44,9 @@ import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayWindow;
 
 /**
- *
  * @author nico
  */
+
 /**
  * KeyListener and MouseListenerclass for ResultsTable When user selected a line
  * in the ResulsTable and presses a key, the corresponding image will move to
@@ -65,7 +65,8 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    private int key_;
    private int row_;
 
-   public ResultsTableListener(DisplayWindow dw, ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
+   public ResultsTableListener(DisplayWindow dw, ImagePlus siPlus, ResultsTable res, TextWindow win,
+         int halfBoxSize) {
       dw_ = dw;
       siPlus_ = siPlus;
       res_ = res;
@@ -94,7 +95,7 @@ public class ResultsTableListener implements KeyListener, MouseListener {
 */
 
    }
-   
+
 
    @Override
    public void keyPressed(KeyEvent e) {
@@ -131,6 +132,7 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    }
 
    ;
+
    @Override
    public void mouseExited(MouseEvent e) {
    }
@@ -171,11 +173,11 @@ public class ResultsTableListener implements KeyListener, MouseListener {
          int pos = Integer.parseInt(res_.getStringValue(Terms.POSITION, row));
          int x = Integer.parseInt(res_.getStringValue(Terms.XPIX, row));
          int y = Integer.parseInt(res_.getStringValue(Terms.YPIX, row));
-         
+
          if (dw_ != null) {
             Coords.CoordsBuilder builder = Coordinates.builder();
             Coords coords = builder.channel(channel - 1).time(frame - 1).
-                    z(slice - 1).stagePosition(pos - 1).build();
+                  z(slice - 1).stagePosition(pos - 1).build();
             dw_.setDisplayPosition(coords);
          } else if (siPlus_.isHyperStack()) {
             siPlus_.setPosition(channel, slice, frame);

@@ -40,24 +40,24 @@ import javax.swing.SortOrder;
 import javax.swing.table.TableRowSorter;
 
 /**
- *
  * @author nico
  */
 public class DataTableRowSorter extends TableRowSorter<DataTableModel> {
+
    private final DataTableModel model_;
-   
-   public DataTableRowSorter (DataTableModel model) {
-      super (model);
+
+   public DataTableRowSorter(DataTableModel model) {
+      super(model);
       model_ = model;
    }
-   
+
    @Override
    public Comparator<?> getComparator(final int column) {
       Class columnClass = model_.getColumnClass(column);
       if (columnClass == String.class) {
          return super.getComparator(column);
       }
-      
+
       // Special Comparator that always keeps rows with empty
       // content (indicated by instances of NullClass on top
       Comparator c = new Comparator() {
@@ -79,13 +79,13 @@ public class DataTableRowSorter extends TableRowSorter<DataTableModel> {
             if (t1 == DataTableModel.NULLINSTANCE) {
                return ascending ? 1 : -1;
             }
-            
-            return ( (Comparable<Object>) t).compareTo(t1); 
+
+            return ((Comparable<Object>) t).compareTo(t1);
          }
       };
-              
+
       return c;
    }
-              
-              
+
+
 }

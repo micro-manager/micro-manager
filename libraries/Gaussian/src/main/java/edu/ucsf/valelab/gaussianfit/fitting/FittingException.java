@@ -28,14 +28,16 @@
 package edu.ucsf.valelab.gaussianfit.fitting;
 
 /**
- *
  * @author nico
  */
 public class FittingException extends Exception {
+
    final private String msg_;
+
    public FittingException(String msg) {
       msg_ = msg;
    }
+
    @Override
    public String getMessage() {
       return msg_;

@@ -41,7 +41,6 @@ import ij.measure.Calibration;
 import ij.process.ImageStatistics;
 
 /**
- *
  * @author Nico Stuurman
  */
 public class DisplayUtils {
