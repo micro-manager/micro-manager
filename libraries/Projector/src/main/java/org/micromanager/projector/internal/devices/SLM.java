@@ -16,7 +16,6 @@
 
 package org.micromanager.projector.internal.devices;
 
-import org.micromanager.projector.ProjectionDevice;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
@@ -29,10 +28,12 @@ import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
+import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.projector.internal.OnStateListener;
 import org.micromanager.projector.internal.Utils;
 
 public class SLM implements ProjectionDevice {
+
    private final String slm_;
    private final CMMCore mmc_;
    private final Studio app_;
@@ -86,12 +87,12 @@ public class SLM implements ProjectionDevice {
    public double getYRange() {
       return this.slmHeight_;
    }
-   
+
    @Override
    public double getXMinimum() {
       return 0;
    }
-   
+
    @Override
    public double getYMinimum() {
       return 0;
@@ -122,7 +123,7 @@ public class SLM implements ProjectionDevice {
          app_.logs().showError(ex);
       }
    }
-   
+
    // Reads the exposure time in microseconds.
    @Override
    public long getExposure() {
@@ -146,7 +147,7 @@ public class SLM implements ProjectionDevice {
          app_.logs().showError(ex);
       }
    }
-   
+
    @Override
    public void showCheckerBoard(int x, int y) {
       ImageProcessor proc = new ByteProcessor(slmWidth_, slmHeight_);
@@ -155,7 +156,7 @@ public class SLM implements ProjectionDevice {
       proc.setColor(Color.white);
       int xSize = slmWidth_ / x;
       int ySize = slmHeight_ / y;
-      for (int i = 0; i < x; i++){
+      for (int i = 0; i < x; i++) {
          for (int j = 0; j < y; j++) {
             if (i % 2 == j % 2) {
                proc.fill(new Roi(i * xSize, j * ySize, xSize, ySize));
@@ -169,16 +170,16 @@ public class SLM implements ProjectionDevice {
          app_.logs().showError("SLM not connecting properly.");
       }
    }
-   
-   public void displaySLMImage (byte[] image) {
+
+   public void displaySLMImage(byte[] image) {
       try {
-      mmc_.setSLMImage(slm_, image);
-      mmc_.displaySLMImage(slm_);
+         mmc_.setSLMImage(slm_, image);
+         mmc_.displaySLMImage(slm_);
       } catch (Exception e) {
          app_.logs().showError("SLM error");
       }
    }
-   
+
 
    // Fills a circular spot in an ImageJ ImageProcessor with diatemer dia.
    private static void fillSpot(ImageProcessor proc, int x, int y, double dia) {
@@ -197,7 +198,7 @@ public class SLM implements ProjectionDevice {
          mmc_.displaySLMImage(slm_);
          if (externalShutter_ != null) {
             mmc_.setShutterOpen(externalShutter_, true);
-            Thread.sleep(getExposure() / 1000);            
+            Thread.sleep(getExposure() / 1000);
             mmc_.setShutterOpen(externalShutter_, false);
          }
       } catch (Exception e) {
@@ -244,7 +245,8 @@ public class SLM implements ProjectionDevice {
 
    // Convert an array of polygonal ROIs to a single pixel image. If 
    // polygonIntensities is null, then all polygons are set to white
-   public byte[] roisToPixels(int width, int height, List<Polygon>roiPolygons, List<Integer> polygonIntensities) {
+   public byte[] roisToPixels(int width, int height, List<Polygon> roiPolygons,
+         List<Integer> polygonIntensities) {
       ByteProcessor processor = new ByteProcessor(width, height);
       processor.setColor(Color.black);
       processor.fill();
@@ -269,7 +271,7 @@ public class SLM implements ProjectionDevice {
 
    // Convert an array of polygonal ROIs to a single pixel image.
    // All polygons are assumed to have maximum intensity (white)
-   public byte[] roisToPixels(int width, int height, List<Polygon>roiPolygons) {
+   public byte[] roisToPixels(int width, int height, List<Polygon> roiPolygons) {
       return roisToPixels(width, height, roiPolygons, null);
    }
 
@@ -299,8 +301,8 @@ public class SLM implements ProjectionDevice {
          app_.logs().showError(ex);
       }
    }
-   
-      @Override
+
+   @Override
    public void setExternalShutter(String shutter) {
       if (shutter != null && !shutter.isEmpty()) {
          StrVector loadedDevices = mmc_.getLoadedDevices();
