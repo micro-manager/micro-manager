@@ -22,18 +22,16 @@ public final class PrioritizedEventBus {
     */
    private HashMap<Integer, EventBus> prioritizedBuses_;
    private boolean async_ = false;
+   private boolean shutDown_ = false;
    private ExecutorService executorService_;
-
-   public PrioritizedEventBus() {
-      this(false);
-   }
 
    public PrioritizedEventBus(boolean async) {
       prioritizedBuses_ = new HashMap<>();
       async_ = async;
 
       if (async) {
-         executorService_ = newSingleThreadExecutor();
+         executorService_ = newSingleThreadExecutor(
+                 ThreadFactoryFactory.createThreadFactory("PrioritizedEventBus"));
       }
 
    }
@@ -43,6 +41,9 @@ public final class PrioritizedEventBus {
    }
 
    public void register(Object o, Integer priority) {
+      if (shutDown_) {
+         return; // TODO: should this be reported/logged?
+      }
       EventBus subBus;
       if (!prioritizedBuses_.containsKey(priority)) {
          if (async_) {
@@ -59,6 +60,9 @@ public final class PrioritizedEventBus {
    }
 
    public void unregister(Object o) {
+      if (shutDown_) {
+         return; // TODO: should this be reported/logged?
+      }
       for (Integer priority : prioritizedBuses_.keySet()) {
          EventBus subBus = prioritizedBuses_.get(priority);
          // TODO: I can't find any way to test if a given EventBus has a given
@@ -70,7 +74,7 @@ public final class PrioritizedEventBus {
          try {
             subBus.unregister(o);
          }
-         catch (IllegalArgumentException e) {
+         catch (IllegalArgumentException ignored) {
          }
       }
    }
@@ -83,4 +87,11 @@ public final class PrioritizedEventBus {
          subBus.post(event);
       }
    }
+
+   public void shutDown() {
+      shutDown_ = true;
+      if (executorService_ != null) {
+         executorService_.shutdown();
+      }
+    }
 }

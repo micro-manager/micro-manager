@@ -45,7 +45,6 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImagesDifferInSizeException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
@@ -61,6 +60,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 
 /**
@@ -403,8 +403,9 @@ public final class StorageMultipageTiff implements Storage {
       // initialize writing executor
       if (writingExecutor_ == null) {
          writingExecutor_ = new ThreadPoolExecutor(1, 1, 0,
-               TimeUnit.NANOSECONDS,
-               new LinkedBlockingQueue<java.lang.Runnable>());
+                 TimeUnit.NANOSECONDS,
+                 new LinkedBlockingQueue<java.lang.Runnable>(),
+                 ThreadFactoryFactory.createThreadFactory("StorageMultiPageTiff"));
       }
       int fileSetIndex = 0;
       if (splitByXYPosition_) {

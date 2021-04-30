@@ -375,6 +375,7 @@ public class DefaultDatastore implements Datastore {
          storage_.close();
          System.gc();
       }
+      bus_.shutDown();
    }
 
    @Override

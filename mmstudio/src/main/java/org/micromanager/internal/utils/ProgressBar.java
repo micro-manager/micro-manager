@@ -29,6 +29,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 
 
 public final class ProgressBar extends JPanel {
@@ -38,7 +39,9 @@ public final class ProgressBar extends JPanel {
    private final JProgressBar progressBar;
    private final JFrame frame;
 
+   @MustCallOnEDT
    public ProgressBar (Component parent, String windowName, int start, int end) {
+
       super(new BorderLayout());
       
       frame = new JFrame(windowName);
@@ -61,6 +64,12 @@ public final class ProgressBar extends JPanel {
    }
 
    public void setProgress(int progress) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            setProgress(progress);
+         });
+         return;
+      }
       if (!frame.isVisible()) {
          if (System.currentTimeMillis() - startTimeMs > delayTimeMs) {
             frame.setVisible(true);

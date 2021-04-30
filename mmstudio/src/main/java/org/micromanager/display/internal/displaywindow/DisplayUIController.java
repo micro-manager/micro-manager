@@ -59,6 +59,7 @@ import javax.swing.JToggleButton;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.layout.CC;
@@ -1097,17 +1098,36 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    void setPlaybackFpsIndicator(double fps) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            playbackFpsButton_.setText(String.format("Playback: %.1f fps", fps));
+         });
+         return;
+      }
       playbackFpsButton_.setText(String.format("Playback: %.1f fps", fps));
    }
 
    void setNewImageIndicator(boolean show) {
       // NS: I am not sure what this means to the user in the snap/live window,
       // and it takes up space, so don't show in preview windows
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            newImageIndicator_.setVisible(show && !isPreview_);
+         });
+         return;
+      }
       newImageIndicator_.setVisible(show && !isPreview_);
    }
 
    private void updateAxisPositionIndicator(final String axis, 
            final int position, final int length) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            updateAxisPositionIndicator(axis, position, length);
+         });
+         return;
+      }
+
       int checkedLength = length;
       if (checkedLength < 0) {
          int axisIndex = displayedAxes_.indexOf(axis);
