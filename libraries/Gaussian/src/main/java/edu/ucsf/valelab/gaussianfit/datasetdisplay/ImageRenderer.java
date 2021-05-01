@@ -32,10 +32,10 @@ either expressed or implied, of the FreeBSD Project.
 
 package edu.ucsf.valelab.gaussianfit.datasetdisplay;
 
-import edu.ucsf.valelab.gaussianfit.datasettransformations.SpotDataFilter;
-import edu.ucsf.valelab.gaussianfit.data.SpotData;
-import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 import edu.ucsf.valelab.gaussianfit.data.RowData;
+import edu.ucsf.valelab.gaussianfit.data.SpotData;
+import edu.ucsf.valelab.gaussianfit.datasettransformations.SpotDataFilter;
+import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -48,26 +48,26 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- *
  * @author Nico Stuurman
  */
 public class ImageRenderer {
-    private final int[][] iceLut_ = new int[256][];
-    static int[][] zLut_ = new int[256][]; 
-      
+
+   private final int[][] iceLut_ = new int[256][];
+   static int[][] zLut_ = new int[256][];
+
    /**
     * Renders spotdata using various renderModes
-    * 
-    * @param rowData - MyRowData structure to be rendered
-    * @param method - 0 = 2D scatter, 1 = Gaussians, 2 = Normalized Gaussian
-    * @param magnification  - factor x original size
-    * @param rect - roi in the magnified image that should be rendered
+    *
+    * @param rowData       - MyRowData structure to be rendered
+    * @param method        - 0 = 2D scatter, 1 = Gaussians, 2 = Normalized Gaussian
+    * @param magnification - factor x original size
+    * @param rect          - roi in the magnified image that should be rendered
     * @param sf
-    * @return 
+    * @return
     */
    public static ImageProcessor renderData(final RowData rowData,
-           final int method, final double magnification, Rectangle rect, 
-           final SpotDataFilter sf) {
+         final int method, final double magnification, Rectangle rect,
+         final SpotDataFilter sf) {
 
       ImageProcessor ip = null;
 
@@ -81,7 +81,7 @@ public class ImageRenderer {
 
       if (rect == null) {
          rect = new Rectangle(0, 0, (int) (rowData.width_ * magnification),
-                 (int) (rowData.height_ * magnification));
+               (int) (rowData.height_ * magnification));
       }
       final double renderedPixelInNm = rowData.pixelSizeNm_ / magnification;
       final int width = rect.width;
@@ -92,7 +92,6 @@ public class ImageRenderer {
       int endy = rect.y + rect.height;
       final int size = width * height;
       double factor = magnification / rowData.pixelSizeNm_;
-
 
       try {
          if (method == 0) {
@@ -172,7 +171,6 @@ public class ImageRenderer {
 
          } else if (method == 1 || method == 2) {  // Gaussian and normalized Gaussian
 
-
             // determines whether gaussians should be normalized by their total intensity
             boolean normalize = false;
             if (method == 2) {
@@ -192,9 +190,7 @@ public class ImageRenderer {
                   ij.IJ.showProgress(counter, rowData.spotList_.size());
                }
 
-
                if (sf.filter(spot)) {
-
 
                   // cover 3 * precision
                   int halfWidth = (int) (2 * spot.getSigma() / renderedPixelInNm);
@@ -209,19 +205,18 @@ public class ImageRenderer {
                    * xc = params[XC]
                    * yc = params[YC]
                    * sig = params[S]
-                   * 
+                   *
                    */
                   int xc = (int) (factor * spot.getXCenter());
                   int yc = (int) (factor * spot.getYCenter());
                   //int xc = (int) Math.round(spot.getXCenter() / renderedPixelInNm);
                   //int yc = (int) Math.round(spot.getYCenter() / renderedPixelInNm);
 
-
                   if (xc > rect.x + halfWidth && xc < endx - halfWidth
-                          && yc > rect.y + halfWidth && yc < endy - halfWidth) {
+                        && yc > rect.y + halfWidth && yc < endy - halfWidth) {
 
                      if (xc > halfWidth && xc < (fullWidth - halfWidth)
-                             && yc > halfWidth && yc < (fullHeight - halfWidth)) {
+                           && yc > halfWidth && yc < (fullHeight - halfWidth)) {
                         counter++;
                         spotsUsed++;
                         double totalInt = 0.0;
@@ -233,9 +228,9 @@ public class ImageRenderer {
                         for (int x = xStart; x < xEnd; x++) {
                            for (int y = yStart; y < yEnd; y++) {
                               double[] parms = {1.0, 0.0,
-                                 spot.getXCenter() / renderedPixelInNm,
-                                 spot.getYCenter() / renderedPixelInNm,
-                                 spot.getSigma() / renderedPixelInNm};
+                                    spot.getXCenter() / renderedPixelInNm,
+                                    spot.getYCenter() / renderedPixelInNm,
+                                    spot.getSigma() / renderedPixelInNm};
                               double val = GaussianUtils.gaussian(parms, x, y);
                               totalInt += val;
                               if (normalize) {
@@ -250,7 +245,8 @@ public class ImageRenderer {
                            for (int x = xStart; x < xEnd; x++) {
                               for (int y = yStart; y < yEnd; y++) {
                                  boxPixels[x - xStart][y - yStart] /= totalInt;
-                                 if (boxPixels[x - xStart][y - yStart] != boxPixels[x - xStart][y - yStart]) {
+                                 if (boxPixels[x - xStart][y - yStart] != boxPixels[x - xStart][y
+                                       - yStart]) {
                                     System.out.println("<0");
                                  }
                               }
@@ -260,7 +256,8 @@ public class ImageRenderer {
                               for (int y = yStart; y < yEnd; y++) {
                                  try {
                                     ip.setf(x - rect.x, y - rect.y,
-                                            ip.getf(x - rect.x, y - rect.y) + boxPixels[x - xStart][y - yStart]);
+                                          ip.getf(x - rect.x, y - rect.y) + boxPixels[x - xStart][y
+                                                - yStart]);
                                  } catch (Exception ex) {
                                     System.out.println("Exception");
                                  }
@@ -273,7 +270,6 @@ public class ImageRenderer {
                }
             }
 
-
             ij.IJ.showProgress(1);
             ij.IJ.showStatus("Rendered image using " + spotsUsed + " spots.");
 
@@ -282,8 +278,6 @@ public class ImageRenderer {
          // report out of memory
          ij.IJ.showMessage("Out of Memory", "Not enought memory to draw image at this resolution");
       }
-
-
 
       if (ip != null) {
          ip.resetMinAndMax();
@@ -296,37 +290,36 @@ public class ImageRenderer {
       
        */
 
-      return ip;    
+      return ip;
    }
-   
-   
+
+
    /**
     * Renders spotdata using various renderModes
-    * 
-    * @param rowData - MyRowData structure to be rendered
-    * @param method - 0 = 2D scatter, 1 = Gaussians, 2 = Normalized Gaussian
-    * @param magnification  - factor x original size
-    * @param rect - roi in the magnified image that should be rendered
+    *
+    * @param rowData       - MyRowData structure to be rendered
+    * @param method        - 0 = 2D scatter, 1 = Gaussians, 2 = Normalized Gaussian
+    * @param magnification - factor x original size
+    * @param rect          - roi in the magnified image that should be rendered
     * @param sf
-    * @return 
+    * @return
     */
    public static ImageStack renderData3D(final RowData rowData,
-           final int method, final double magnification, Rectangle rect, 
-           final SpotDataFilter sf) {
-   
-      
+         final int method, final double magnification, Rectangle rect,
+         final SpotDataFilter sf) {
+
       //int mag = 1 << renderSize;
 
       if (rect == null) {
          rect = new Rectangle(0, 0, (int) (rowData.width_ * magnification),
-                 (int) (rowData.height_ * magnification));
+               (int) (rowData.height_ * magnification));
       }
       final double renderedPixelInNm = rowData.pixelSizeNm_ / magnification;
       final int width = rect.width;
       final int height = rect.height;
       final int fullWidth = (int) (rowData.width_ * magnification);
       final int fullHeight = (int) (rowData.height_ * magnification);
-      double tmp =  1000.0 * (rowData.maxZ_ - rowData.minZ_ ) / (2* renderedPixelInNm);
+      double tmp = 1000.0 * (rowData.maxZ_ - rowData.minZ_) / (2 * renderedPixelInNm);
       final int nrZs = (int) tmp;
       int endx = rect.x + rect.width;
       int endy = rect.y + rect.height;
@@ -335,9 +328,9 @@ public class ImageRenderer {
 
       ImageStack is = new ImageStack(width, height);
       ImageProcessor[] ip = new ImageProcessor[nrZs];
-      
+
       if (method == 0) {
-         
+
          short pixels[][] = new short[nrZs][size];
          for (int i = 0; i < nrZs; i++) {
             ip[i] = new ShortProcessor(width, height);
@@ -363,14 +356,14 @@ public class ImageRenderer {
             }
          }
       }
- 
-      
+
       return is;
    }
 
    /**
-    * Reads a file enclosed in this jar that is created by copying the output of
-    * the List command in ImageJ (Image>Color>ShowLut).
+    * Reads a file enclosed in this jar that is created by copying the output of the List command in
+    * ImageJ (Image>Color>ShowLut).
+    *
     * @param lutName - name of file containing Lut data
     */
    static private void readLut(String lutName) {
@@ -386,16 +379,16 @@ public class ImageRenderer {
             int index = Integer.parseInt(tokens[0]);
             if (index < zLut_.length) {
                zLut_[index] = new int[]{Integer.parseInt(tokens[1]),
-                  Integer.parseInt(tokens[2]),
-                  Integer.parseInt(tokens[3])};
+                     Integer.parseInt(tokens[2]),
+                     Integer.parseInt(tokens[3])};
             }
          }
       } catch (IOException ioex) {
          System.out.println("IOException" + ioex.getMessage());
       }
    }
-   
-   
+
+
 }
   
   

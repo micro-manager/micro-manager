@@ -28,11 +28,12 @@ import javax.swing.JFileChooser;
 
 
 /**
- *
  * @author nico
  */
 public class FileDialogs {
+
    public static class FileType {
+
       final String name;
       final String[] suffixes;
       final String description;
@@ -40,7 +41,7 @@ public class FileDialogs {
       final String defaultFileName;
 
       public FileType(String name, String description, String defaultFileName,
-              boolean suggestFileOnSave, String... suffixes) {
+            boolean suggestFileOnSave, String... suffixes) {
          this.name = name;
          this.description = description;
          this.suffixes = suffixes;
@@ -50,34 +51,37 @@ public class FileDialogs {
    }
 
    private static class GeneralFileFilter
-           extends javax.swing.filechooser.FileFilter
-           implements java.io.FilenameFilter
-   {
+         extends javax.swing.filechooser.FileFilter
+         implements java.io.FilenameFilter {
+
       private final String fileDescription_;
       private final String[] fileSuffixes_;
-      public GeneralFileFilter(String fileDescription, final String [] fileSuffixes) {
+
+      public GeneralFileFilter(String fileDescription, final String[] fileSuffixes) {
          fileDescription_ = fileDescription;
          fileSuffixes_ = fileSuffixes;
       }
+
       @Override
       public boolean accept(File pathname) {
          String name = pathname.getName();
          int n = name.lastIndexOf(".");
-         String suffix = name.substring(1+n).toLowerCase();
+         String suffix = name.substring(1 + n).toLowerCase();
          if (fileSuffixes_ == null || fileSuffixes_.length == 0) {
             return true;
          }
          if (!isMac() && pathname.isDirectory()) {
             return true;
          }
-         for (int i=0; i<fileSuffixes_.length; ++i) {
-            if (fileSuffixes_[i] != null && 
-                    fileSuffixes_[i].toLowerCase().contentEquals(suffix)) {
+         for (int i = 0; i < fileSuffixes_.length; ++i) {
+            if (fileSuffixes_[i] != null &&
+                  fileSuffixes_[i].toLowerCase().contentEquals(suffix)) {
                return true;
             }
          }
          return false;
       }
+
       @Override
       public String getDescription() {
          return fileDescription_;
@@ -90,21 +94,21 @@ public class FileDialogs {
    }
 
    public static File show(Window parent,
-                    String title,
-                    File startFile,
-                    boolean selectDirectories, boolean load,
-                    final String fileDescription,
-                    final String[] fileSuffixes,
-                    boolean suggestFileName) {
+         String title,
+         File startFile,
+         boolean selectDirectories, boolean load,
+         final String fileDescription,
+         final String[] fileSuffixes,
+         boolean suggestFileName) {
       File selectedFile = null;
       GeneralFileFilter filter = new GeneralFileFilter(fileDescription, fileSuffixes);
 
       if (isMac()) {
          if (selectDirectories) {
-         // For Mac we only select directories, unfortunately!
+            // For Mac we only select directories, unfortunately!
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
          }
-         int mode = load? FileDialog.LOAD : FileDialog.SAVE;
+         int mode = load ? FileDialog.LOAD : FileDialog.SAVE;
          FileDialog fd;
          if (parent instanceof Dialog) {
             fd = new FileDialog((Dialog) parent, title, mode);
@@ -131,11 +135,11 @@ public class FileDialogs {
             System.setProperty("apple.awt.fileDialogForDirectories", "false");
          }
          if (fd.getFile() != null) {
-           selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
+            selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
             if (mode == FileDialog.SAVE) {
-               if (! filter.accept(selectedFile)) {
+               if (!filter.accept(selectedFile)) {
                   selectedFile = new File(selectedFile.getAbsolutePath()
-                                          + "." + fileSuffixes[0]);
+                        + "." + fileSuffixes[0]);
                }
             }
          }
@@ -167,7 +171,7 @@ public class FileDialogs {
    }
 
    public static File show(Window parent, String title, FileType type,
-                    boolean selectDirectories, boolean load) {
+         boolean selectDirectories, boolean load) {
       Preferences node = Preferences.userNodeForPackage(FileDialogs.class);
       String startFile = node.get(type.name, type.defaultFileName);
       File startDir = null;
@@ -175,7 +179,7 @@ public class FileDialogs {
          startDir = new File(startFile);
       }
       File result = show(parent, title, startDir, selectDirectories, load,
-                         type.description, type.suffixes, type.suggestFileOnSave);
+            type.description, type.suffixes, type.suggestFileOnSave);
       if (result != null) {
          node.put(type.name, result.getAbsolutePath());
       }
@@ -184,7 +188,7 @@ public class FileDialogs {
 
    public static void storePath(FileType type, File path) {
       Preferences.userNodeForPackage(FileDialogs.class)
-              .put(type.name, path.getAbsolutePath());
+            .put(type.name, path.getAbsolutePath());
    }
 
    public static File openFile(Window parent, String title, FileType type) {
@@ -198,10 +202,10 @@ public class FileDialogs {
    public static File save(Window parent, String title, FileType type) {
       return show(parent, title, type, false, false);
    }
-   
+
    public static boolean isMac() {
       String os = System.getProperty("os.name").toLowerCase();
       return (os.contains("mac"));
    }
-   
+
 }

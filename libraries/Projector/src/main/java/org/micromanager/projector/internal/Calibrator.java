@@ -1,4 +1,3 @@
-
 package org.micromanager.projector.internal;
 
 import ij.IJ;
@@ -22,33 +21,27 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.Studio;
 import org.micromanager.data.Image;
+import org.micromanager.internal.utils.MathFunctions;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
-import org.micromanager.internal.utils.imageanalysis.ImageUtils;
-import org.micromanager.internal.utils.MathFunctions;
-
 /**
- *
  * @author nico
  */
 public class Calibrator {
-      private final Studio app_;
-      private final CMMCore core_;
-      private final ProjectionDevice dev_;
-      private final MutablePropertyMapView settings_;
-      private final AtomicBoolean stopRequested_;
-      private final AtomicBoolean isRunning_;
-      private final ExecutorService executor_;
-   
-   public Calibrator(Studio app, ProjectionDevice dev, 
-           MutablePropertyMapView settings) {
+
+   private final Studio app_;
+   private final CMMCore core_;
+   private final ProjectionDevice dev_;
+   private final MutablePropertyMapView settings_;
+   private final AtomicBoolean stopRequested_;
+   private final AtomicBoolean isRunning_;
+   private final ExecutorService executor_;
+
+   public Calibrator(Studio app, ProjectionDevice dev,
+         MutablePropertyMapView settings) {
       app_ = app;
       core_ = app_.getCMMCore();
       dev_ = dev;
@@ -57,12 +50,12 @@ public class Calibrator {
       stopRequested_ = new AtomicBoolean(false);
       isRunning_ = new AtomicBoolean(false);
    }
-   
+
    public void requestStop() {
       stopRequested_.set(true);
    }
-   
-    /**
+
+   /**
     * Illuminate a spot at position x,y.
     */
    private void displaySpot(double x, double y) {
@@ -71,18 +64,17 @@ public class Calibrator {
          dev_.displaySpot(x, y);
       }
    }
-   
+
    /**
-    * Illuminate a spot at the center of the Galvo/SLM range, for
-    * the exposure time.
+    * Illuminate a spot at the center of the Galvo/SLM range, for the exposure time.
     */
    void displayCenterSpot() {
       double x = dev_.getXRange() / 2 + dev_.getXMinimum();
       double y = dev_.getYRange() / 2 + dev_.getYMinimum();
       dev_.displaySpot(x, y);
    }
-   
-     // Find the brightest spot in an ImageProcessor. The image is first blurred
+
+   // Find the brightest spot in an ImageProcessor. The image is first blurred
    // and then the pixel with maximum intensity is returned.
    private static Point findPeak(ImageProcessor proc) {
       ImageProcessor blurImage = proc.duplicate();
@@ -94,12 +86,12 @@ public class Calibrator {
       x.translate(1, 1);
       return x;
    }
-   
+
    /**
-    * Display a spot using the projection device, and return its current
-    * location on the camera.  Does not do sub-pixel localization, but could
-    * (just would change its return type, most other code would be OK with this)
-   */
+    * Display a spot using the projection device, and return its current location on the camera.
+    * Does not do sub-pixel localization, but could (just would change its return type, most other
+    * code would be OK with this)
+    */
    private Point measureSpotOnCamera(Point2D.Double projectionPoint) {
       if (stopRequested_.get()) {
          return null;
@@ -113,7 +105,7 @@ public class Calibrator {
          // things quite confusing for the user.  For now, have a single delay 
          // field and use it in multiple locations where a sleep is warranted
          // for one reason or another.
-         
+
          int delayMs = Integer.parseInt(settings_.getString(Terms.DELAY, "10"));
          Thread.sleep(delayMs);
          core_.snapImage();
@@ -143,7 +135,9 @@ public class Calibrator {
          TaggedImage taggedImage2 = core_.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
          app_.live().displayImage(app_.data().convertTaggedImage(taggedImage2));
-         ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
+         ImageProcessor diffImage = ImageUtils
+               .subtractImageProcessors(proc2.convertToFloatProcessor(),
+                     proc1.convertToFloatProcessor());
          Point maxPt = findPeak(diffImage);
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
@@ -155,10 +149,10 @@ public class Calibrator {
       }
    }
 
-   
+
    /**
-    * Illuminate a spot at ptSLM, measure its location on the camera, and
-    * add the resulting point pair to the spotMap.
+    * Illuminate a spot at ptSLM, measure its location on the camera, and add the resulting point
+    * pair to the spotMap.
     */
    private void measureAndAddToSpotMap(Map<Point2D.Double, Point2D.Double> spotMap,
          Point2D.Double ptSLM) {
@@ -168,14 +162,14 @@ public class Calibrator {
    }
 
    /**
-    * Illuminates and images five control points near the center,
-    * and return an affine transform mapping from image coordinates
-    * to phototargeter coordinates.
+    * Illuminates and images five control points near the center, and return an affine transform
+    * mapping from image coordinates to phototargeter coordinates.
     */
    private AffineTransform generateLinearMapping() {
       double centerX = dev_.getXRange() / 2 + dev_.getXMinimum();
       double centerY = dev_.getYRange() / 2 + dev_.getYMinimum();
-      double spacing = Math.min(dev_.getXRange(), dev_.getYRange() ) / 30;  // user 3% of galvo/SLM range
+      double spacing =
+            Math.min(dev_.getXRange(), dev_.getYRange()) / 30;  // user 3% of galvo/SLM range
       Map<Point2D.Double, Point2D.Double> spotMap = new HashMap<>();
 
       measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY));
@@ -188,60 +182,64 @@ public class Calibrator {
       }
       try {
          // require that the RMS value between the mapped points and the measured points be less than 5% of image size
-         final long imageSize = Math.min(core_.getImageWidth(), core_.getImageHeight()); 
-         return MathFunctions.generateAffineTransformFromPointPairs(spotMap, imageSize*0.05, Double.MAX_VALUE);
+         final long imageSize = Math.min(core_.getImageWidth(), core_.getImageHeight());
+         return MathFunctions
+               .generateAffineTransformFromPointPairs(spotMap, imageSize * 0.05, Double.MAX_VALUE);
       } catch (Exception e) {
-         throw new RuntimeException("Spots aren't detected as expected. " + 
-                 "Is the Projector in focus and roughly centered in camera's field of view?");
+         throw new RuntimeException("Spots aren't detected as expected. " +
+               "Is the Projector in focus and roughly centered in camera's field of view?");
       }
    }
-   
-    /**
-    * Generate a nonlinear calibration mapping for the current device settings.
-    * A rectangular lattice of points is illuminated one-by-one on the
-    * projection device, and locations in camera pixels of corresponding
-    * spots on the camera image are recorded. For each rectangular
-    * cell in the grid, we take the four point mappings (camera to projector)
-    * and generate a local AffineTransform using linear least squares.
-    * Cells with suspect measured corner positions are discarded.
-    * A mapping of cell polygon to AffineTransform is generated. 
+
+   /**
+    * Generate a nonlinear calibration mapping for the current device settings. A rectangular
+    * lattice of points is illuminated one-by-one on the projection device, and locations in camera
+    * pixels of corresponding spots on the camera image are recorded. For each rectangular cell in
+    * the grid, we take the four point mappings (camera to projector) and generate a local
+    * AffineTransform using linear least squares. Cells with suspect measured corner positions are
+    * discarded. A mapping of cell polygon to AffineTransform is generated.
     */
    private Mapping generateNonlinearMapping() {
-      
+
       // get the affine transform near the center spot
       final AffineTransform firstApproxAffine = generateLinearMapping();
-      
+
       // then use this single transform to estimate what SLM coordinates 
       // correspond to the image's corner positions 
-      final Point2D.Double camCorner1 = 
-              (Point2D.Double) firstApproxAffine.transform(
-                      new Point2D.Double(0, 0), null);
-      final Point2D.Double camCorner2 = 
-              (Point2D.Double) firstApproxAffine.transform(
-                      new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()), null);
-      final Point2D.Double camCorner3 = 
-              (Point2D.Double) firstApproxAffine.transform(
-                      new Point2D.Double(0, (int) core_.getImageHeight()), null);
-      final Point2D.Double camCorner4 = 
-              (Point2D.Double) firstApproxAffine.transform(
-                      new Point2D.Double((int) core_.getImageWidth(), 0), null);
+      final Point2D.Double camCorner1 =
+            (Point2D.Double) firstApproxAffine.transform(
+                  new Point2D.Double(0, 0), null);
+      final Point2D.Double camCorner2 =
+            (Point2D.Double) firstApproxAffine.transform(
+                  new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()),
+                  null);
+      final Point2D.Double camCorner3 =
+            (Point2D.Double) firstApproxAffine.transform(
+                  new Point2D.Double(0, (int) core_.getImageHeight()), null);
+      final Point2D.Double camCorner4 =
+            (Point2D.Double) firstApproxAffine.transform(
+                  new Point2D.Double((int) core_.getImageWidth(), 0), null);
 
       // figure out camera's bounds in SLM coordinates
       // min/max because we don't know the relative orientation of the camera and SLM
       // do some extra checking in case camera/SLM aren't at exactly 90 degrees from each other, 
       // but still better that they are at 0, 90, 180, or 270 degrees from each other
       // TODO can create grid along camera location instead of SLM's if camera is the limiting factor; this will make arbitrary rotation possible
-      final double camLeft = Math.min(Math.min(Math.min(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
-      final double camRight = Math.max(Math.max(Math.max(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
-      final double camTop = Math.min(Math.min(Math.min(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
-      final double camBottom = Math.max(Math.max(Math.max(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
-      
+      final double camLeft = Math
+            .min(Math.min(Math.min(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
+      final double camRight = Math
+            .max(Math.max(Math.max(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
+      final double camTop = Math
+            .min(Math.min(Math.min(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
+      final double camBottom = Math
+            .max(Math.max(Math.max(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
+
       // these are the SLM's bounds
       final double slmLeft = dev_.getXMinimum();
       final double slmRight = dev_.getXRange() + dev_.getXMinimum();
       final double slmTop = dev_.getYMinimum();
       final double slmBottom = dev_.getYRange() + dev_.getYMinimum();
-      
+
       // figure out the "overlap region" where both the camera and SLM
       // can "see", expressed in SLM coordinates
       final double left = Math.max(camLeft, slmLeft);
@@ -267,7 +265,7 @@ public class Calibrator {
             slmPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
             Point spot = measureSpotOnCamera(slmPoint[i][j]);
             if (spot != null) {
-                camPoint[i][j] = new Point2D.Double(spot.x, spot.y);
+               camPoint[i][j] = new Point2D.Double(spot.x, spot.y);
             }
          }
       }
@@ -292,12 +290,13 @@ public class Calibrator {
             map.put(camPoint[i][j + 1], slmPoint[i][j + 1]);
             map.put(camPoint[i + 1][j], slmPoint[i + 1][j]);
             map.put(camPoint[i + 1][j + 1], slmPoint[i + 1][j + 1]);
-            double srcDX = Math.abs((camPoint[i+1][j].x - camPoint[i][j].x))/4; 
-            double srcDY = Math.abs((camPoint[i][j+1].y - camPoint[i][j].y))/4;
+            double srcDX = Math.abs((camPoint[i + 1][j].x - camPoint[i][j].x)) / 4;
+            double srcDY = Math.abs((camPoint[i][j + 1].y - camPoint[i][j].y)) / 4;
             double srcTol = Math.max(srcDX, srcDY);
 
             try {
-               AffineTransform transform = MathFunctions.generateAffineTransformFromPointPairs(map, srcTol, Double.MAX_VALUE);
+               AffineTransform transform = MathFunctions
+                     .generateAffineTransformFromPointPairs(map, srcTol, Double.MAX_VALUE);
                bigMap.put(poly, transform);
             } catch (Exception e) {
                app_.logs().logError("Bad cell in mapping.");
@@ -310,7 +309,8 @@ public class Calibrator {
          String binningAsString = core_.getProperty(core_.getCameraDevice(), "Binning");
          // Hamamatsu reports 1x1.  I wish there was an api call for binning
          int binning = Integer.parseInt(binningAsString.substring(0, 1));
-         mb.setMap(bigMap).setApproximateTransform(firstApproxAffine).setROI(core_.getROI()).setBinning(binning);
+         mb.setMap(bigMap).setApproximateTransform(firstApproxAffine).setROI(core_.getROI())
+               .setBinning(binning);
          return mb.build();
       } catch (Exception ex) {
          return null;
@@ -318,10 +318,10 @@ public class Calibrator {
    }
 
    /**
-    * Runs the full calibration. First
-    * generates a linear mapping (a first approximation) and then generates
-    * a second piece-wise "non-linear" mapping of affine transforms. Saves
-    * the mapping to Java Preferences.
+    * Runs the full calibration. First generates a linear mapping (a first approximation) and then
+    * generates a second piece-wise "non-linear" mapping of affine transforms. Saves the mapping to
+    * Java Preferences.
+    *
     * @return true if successful, false if interrupted or otherwise fails
     */
    public Future<Boolean> runCalibration() {
@@ -333,7 +333,7 @@ public class Calibrator {
             try {
                isRunning_.set(true);
                if (app_.live().getDisplay() == null) {
-                   app_.live().snap(true);
+                  app_.live().snap(true);
                   // wait for the display to appear 
                   // It would be better to get the DisplayDidShowImageEvent 
                   // from the displayController (which itself can be retrieved
@@ -343,7 +343,7 @@ public class Calibrator {
                Roi originalROI = IJ.getImage().getRoi();
 
                // do the heavy lifting of generating the local affine transform map
-              Mapping mapping = generateNonlinearMapping();
+               Mapping mapping = generateNonlinearMapping();
 
                dev_.turnOff();
                try {
@@ -356,7 +356,8 @@ public class Calibrator {
                // TODO allow different mappings to be stored for different channels (e.g. objective magnification)
                if (!stopRequested_.get()) {
                   List<Image> snap = app_.live().snap(false);
-                  snap.get(0).getHeight(); snap.get(0).getMetadata().getBinning();
+                  snap.get(0).getHeight();
+                  snap.get(0).getMetadata().getBinning();
                   MappingStorage.saveMapping(core_, dev_, settings_, mapping);
                }
                IJ.getImage().setRoi(originalROI);
@@ -384,8 +385,6 @@ public class Calibrator {
    public boolean isCalibrating() {
       return isRunning_.get();
    }
-   
-   
-   
-   
+
+
 }

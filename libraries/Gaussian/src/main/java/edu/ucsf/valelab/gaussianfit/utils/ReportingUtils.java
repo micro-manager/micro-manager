@@ -36,22 +36,21 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 /**
- * Class emulating Micro-Manager's ReportingUtils
- * Goal is to avoid dependencies on MMJ_.jar
- * 
- * 
+ * Class emulating Micro-Manager's ReportingUtils Goal is to avoid dependencies on MMJ_.jar
+ *
  * @author nico
  */
 public class ReportingUtils {
+
    public static void showMessage(String msg) {
       JOptionPane.showMessageDialog(null, msg);
    }
-   
+
    public static void logError(Throwable e, String msg) {
       if (e != null) {
          String stackTrace = getStackTraceAsString(e);
          System.out.println(msg + "\n" + e.toString() + " in "
-                 + Thread.currentThread().toString() + "\n" + stackTrace + "\n");
+               + Thread.currentThread().toString() + "\n" + stackTrace + "\n");
       } else {
          System.out.println("Error: " + msg);
       }
@@ -84,16 +83,18 @@ public class ReportingUtils {
       int maxNrLines = 30;
       String test[] = fullMsg.split("\n");
       if (test.length < maxNrLines) {
-         JOptionPane.showMessageDialog(null, fullMsg, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+         JOptionPane
+               .showMessageDialog(null, fullMsg, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
       } else {
          JTextArea area = new JTextArea(fullMsg);
          area.setRows(maxNrLines);
          area.setColumns(50);
          area.setLineWrap(true);
          JScrollPane pane = new JScrollPane(area);
-         JOptionPane.showMessageDialog(null, pane, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+         JOptionPane
+               .showMessageDialog(null, pane, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
       }
-}
+   }
 
    public static void showError(Throwable e) {
       showError(e, "");
@@ -119,6 +120,6 @@ public class ReportingUtils {
    public static void showError(ActionEvent e) {
       throw new UnsupportedOperationException("Not yet implemented");
    }
-      
-   
+
+
 }

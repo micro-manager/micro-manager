@@ -40,17 +40,18 @@ import java.util.Set;
 
 /**
  * Data structure to internally store fit data
- * 
- * Also contains utility functions to generate an ImageJ ImageProcessor
- * containing the spot in the image
- * 
+ * <p>
+ * Also contains utility functions to generate an ImageJ ImageProcessor containing the spot in the
+ * image
+ *
  * @author Nico Stuurman
  */
 
 
 public class SpotData implements PointData {
-   
+
    public class Keys {
+
       // total intensity as calculated by the sum of pixel intensities minus background
       // expressed in photons - See: http://dx.doi.org/10.1038/nmeth.4073
       public static final String APERTUREINTENSITY = "Int (Apert.)";
@@ -98,14 +99,14 @@ public class SpotData implements PointData {
    private double a_;         // shape of the peak, defined as width(long axis) / width (short axis)
    private double theta_;     // shape factor for spot (rotation of assymetric peak)
    private double sigma_;     // Estimate of error in localization based on Web et al. formula
-                              // that uses # of photons, background and width of gaussian
+   // that uses # of photons, background and width of gaussian
 
    public int nrLinks_;       // number of frames/slices in which this spot was found
    public int originalFrame_; // original first frame/slice in which this spot was found
    private final Map<String, Double> keyValue_; // Map of keys/values that can be used to extend what we store in the SpotData
 
-   public SpotData(ImageProcessor ip, int channel, int slice, int frame, 
-           int position, int nr, int x, int y) {
+   public SpotData(ImageProcessor ip, int channel, int slice, int frame,
+         int position, int nr, int x, int y) {
       ip_ = ip;
       frame_ = frame;
       channel_ = channel;
@@ -116,11 +117,12 @@ public class SpotData implements PointData {
       y_ = y;
       keyValue_ = new HashMap<String, Double>();
    }
-   
-   
+
+
    /**
-    * Copy constructor.  Copies frame, slice, channel, position ,  x,  y,
-    * intensity, background, width, a, theta and sigma!
+    * Copy constructor.  Copies frame, slice, channel, position ,  x,  y, intensity, background,
+    * width, a, theta and sigma!
+    *
     * @param spot
     */
    public SpotData(SpotData spot) {
@@ -142,19 +144,19 @@ public class SpotData implements PointData {
       width_ = spot.width_;
       a_ = spot.a_;
       theta_ = spot.theta_;
-      sigma_ = spot.sigma_;  
+      sigma_ = spot.sigma_;
       keyValue_ = new HashMap<String, Double>(spot.keyValue_);
    }
 
-   public void setData(double intensity, 
-           double background, 
-           double xCenter, 
-           double yCenter, 
-           double zCenter,
-           double width, 
-           double a, 
-           double theta, 
-           double sigma) {
+   public void setData(double intensity,
+         double background,
+         double xCenter,
+         double yCenter,
+         double zCenter,
+         double width,
+         double a,
+         double theta,
+         double sigma) {
       intensity_ = intensity;
       background_ = background;
       xCenter_ = xCenter;
@@ -164,31 +166,31 @@ public class SpotData implements PointData {
       theta_ = theta;
       sigma_ = sigma;
    }
-        
+
    public void addKeyValue(String key, double value) {
       keyValue_.put(key, value);
    }
-   
+
    public Double getValue(String key) {
       return keyValue_.get(key);
    }
-   
+
    public Double getValue(String key, double fallbackValue) {
       if (keyValue_.containsKey(key)) {
          return keyValue_.get(key);
       }
       return fallbackValue;
    }
-   
+
    public String[] getKeys() {
       Set<String> keys = keyValue_.keySet();
-      return  keys.toArray(new String[keys.size()]);
+      return keys.toArray(new String[keys.size()]);
    }
-   
+
    public boolean hasKey(String key) {
       return keyValue_.containsKey(key);
    }
-   
+
    public void setOriginalPosition(double xPos, double yPos, double zPos) {
       xOri_ = xPos;
       yOri_ = yPos;
@@ -198,79 +200,103 @@ public class SpotData implements PointData {
    public ImageProcessor getImageProcessor() {
       return ip_;
    }
-   public void setImageProcessor (ImageProcessor ip) {
+
+   public void setImageProcessor(ImageProcessor ip) {
       ip_ = ip;
    }
+
    public int getFrame() {
       return frame_;
    }
+
    public int getSlice() {
       return slice_;
    }
+
    public int getChannel() {
       return channel_;
    }
+
    public int getPosition() {
       return position_;
    }
+
    public void setPosition(int position) {
       position_ = position;
    }
+
    public int getNr() {
       return nr_;
    }
+
    public int getX() {
       return x_;
    }
+
    public int getY() {
       return y_;
    }
+
    public double getIntensity() {
       return intensity_;
    }
+
    public double getBackground() {
       return background_;
    }
+
    public double getXCenter() {
       return xCenter_;
    }
+
    public void setXCenter(double x) {
       xCenter_ = x;
    }
+
    public double getYCenter() {
       return yCenter_;
    }
+
    public void setYCenter(double y) {
       yCenter_ = y;
    }
+
    public double getZCenter() {
       return zCenter_;
    }
+
    public void setZCenter(double z) {
       zCenter_ = z;
    }
+
    public double getXOri() {
       return xOri_;
    }
+
    public double geYOri() {
       return yOri_;
    }
+
    public double getZOri() {
       return zOri_;
    }
+
    public double getWidth() {
       return width_;
    }
+
    public double getA() {
       return a_;
    }
+
    public double getTheta() {
       return theta_;
    }
+
    public double getSigma() {
       return sigma_;
    }
-   
+
    /**
     * Calculates the pythagorean distance to a given other spot
     *
@@ -280,7 +306,7 @@ public class SpotData implements PointData {
    public double distance(SpotData otherSpot) {
       double x = this.getXCenter() - otherSpot.getXCenter();
       double y = this.getYCenter() - otherSpot.getYCenter();
-      double distance =  (Math.sqrt((x * x) + (y * y)));
+      double distance = (Math.sqrt((x * x) + (y * y)));
       return distance;
    }
 
@@ -289,7 +315,7 @@ public class SpotData implements PointData {
       if (ip_ != null) {
          return ip_;
       }
-      synchronized(LOCK_IP) {
+      synchronized (LOCK_IP) {
          Roi spotRoi = new Roi(x_ - halfSize, y_ - halfSize, 2 * halfSize, 2 * halfSize);
          siPlus.setPositionWithoutUpdate(channel_, slice_, frame_);
          siPlus.setRoi(spotRoi, false);
@@ -301,7 +327,7 @@ public class SpotData implements PointData {
       if (ip_ != null) {
          return ip_;
       }
-      synchronized(LOCK_IP) {
+      synchronized (LOCK_IP) {
          Roi spotRoi = new Roi(x_ - halfSize, y_ - halfSize, 2 * halfSize, 2 * halfSize);
          //siProc.setSliceWithoutUpdate(frame_);
          siProc.setRoi(spotRoi);
@@ -309,8 +335,9 @@ public class SpotData implements PointData {
       }
    }
 
-   public static ImageProcessor getSpotProcessor(ImageProcessor siProc, int halfSize, int x, int y) {
-      synchronized(LOCK_IP) {
+   public static ImageProcessor getSpotProcessor(ImageProcessor siProc, int halfSize, int x,
+         int y) {
+      synchronized (LOCK_IP) {
          Roi spotRoi = new Roi(x - halfSize, y - halfSize, 2 * halfSize, 2 * halfSize);
          siProc.setRoi(spotRoi);
          try {
@@ -320,10 +347,10 @@ public class SpotData implements PointData {
          }
       }
    }
-   
+
    @Override
    public Point2D.Double getPoint() {
       return new Point2D.Double(xCenter_, yCenter_);
    }
-   
+
 }

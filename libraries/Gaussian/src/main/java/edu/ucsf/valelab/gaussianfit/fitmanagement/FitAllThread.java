@@ -1,38 +1,33 @@
 /**
- * Implementation for the "Fit All" button
- * Fits all spots in the selected stack
- * 
+ * Implementation for the "Fit All" button Fits all spots in the selected stack
+ * <p>
  * Part of Micro-Manager's Localization Plugin
- * 
- * Author: Nico Stuurman, 
- * 
- * 
-Copyright (c) 2012-2017, Regents of the University of California
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies,
-either expressed or implied, of the FreeBSD Project.
+ * <p>
+ * Author: Nico Stuurman,
+ * <p>
+ * <p>
+ * Copyright (c) 2012-2017, Regents of the University of California All rights reserved.
+ * <p>
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
+ * <p>
+ * 1. Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer. 2. Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * <p>
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * <p>
+ * The views and conclusions contained in the software and documentation are those of the authors
+ * and should not be interpreted as representing official policies, either expressed or implied, of
+ * the FreeBSD Project.
  */
 
 
@@ -40,32 +35,32 @@ package edu.ucsf.valelab.gaussianfit.fitmanagement;
 
 import edu.ucsf.valelab.gaussianfit.DataCollectionForm;
 import edu.ucsf.valelab.gaussianfit.algorithm.FindLocalMaxima;
-import edu.ucsf.valelab.gaussianfit.utils.ProgressThread;
 import edu.ucsf.valelab.gaussianfit.data.GaussianInfo;
 import edu.ucsf.valelab.gaussianfit.data.RowData;
 import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import edu.ucsf.valelab.gaussianfit.fitting.ZCalibrator;
+import edu.ucsf.valelab.gaussianfit.utils.ProgressThread;
+import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.gui.Roi;
+import ij.plugin.HyperStackConverter;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import java.awt.Polygon;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.concurrent.LinkedBlockingQueue;
-import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
-import ij.ImageStack;
-import ij.plugin.HyperStackConverter;
-import ij.process.ShortProcessor;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
@@ -73,10 +68,10 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 
 /**
- *
  * @author nico
  */
-public class FitAllThread extends GaussianInfo implements Runnable  {
+public class FitAllThread extends GaussianInfo implements Runnable {
+
    double[] params0_;
    double[] steps_ = new double[5];
    GaussianFitStackThread[] gfsThreads_;
@@ -89,11 +84,11 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    private final ExecutorService threadPool_;
    private final int nrThreads_;
 
-   public FitAllThread(Studio studio, 
-           int nrThreads,
-           ExecutorService threadPool,
-           FindLocalMaxima.FilterType preFilterType, 
-           String positions) {
+   public FitAllThread(Studio studio,
+         int nrThreads,
+         ExecutorService threadPool,
+         FindLocalMaxima.FilterType preFilterType,
+         String positions) {
       studio_ = studio;
       preFilterType_ = preFilterType;
       positionString_ = positions;
@@ -101,21 +96,22 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       threadPool_ = threadPool;
    }
 
-   
-   public synchronized void  init() {
-      if (running_)
+
+   public synchronized void init() {
+      if (running_) {
          return;
+      }
       t_ = new Thread(this);
       running_ = true;
       t_.start();
    }
-   
+
    public synchronized void join(long millis) throws InterruptedException {
       if (!running_) {
          return;
       }
       t_.join(millis);
-   } 
+   }
 
    public synchronized void stop() {
       if (gfsThreads_ != null) {
@@ -136,11 +132,11 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    public synchronized List<SpotData> getResults() {
       return resultList_;
    }
-   
+
    public synchronized void showDataWindow(boolean flag) {
       showDataWindow_ = flag;
    }
-   
+
    @Override
    public void run() {
 
@@ -158,7 +154,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          stop();
          return;
       }
-      
+
       DisplayWindow dw = studio_.displays().getCurrentWindow();
 
       long startTime = System.nanoTime();
@@ -176,7 +172,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          nrChannels = dw.getDataProvider().getNextIndex(Coords.CHANNEL);
          nrFrames = dw.getDataProvider().getNextIndex(Coords.T);
          nrSlices = dw.getDataProvider().getNextIndex(Coords.Z);
-         int startPos = 1; int endPos = 1;
+         int startPos = 1;
+         int endPos = 1;
          if (parts.length > 0) {
             startPos = Integer.parseInt(parts[0]);
          }
@@ -202,7 +199,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                   for (int z = 0; z < nrSlices; z++) {
                      for (int c = 0; c < nrChannels; c++) {
                         image = dw.getDataProvider().getImage(builder.stagePosition(p).
-                                channel(c).time(f).z(z).build());
+                              channel(c).time(f).z(z).build());
                         ImageProcessor iProcessor;
                         if (image != null) {
                            iProcessor = studio_.data().ij().createProcessor(image);
@@ -216,7 +213,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
                ImagePlus tmpSP = (new ImagePlus("tmp", stack)).duplicate();
                tmpSP = HyperStackConverter.toHyperStack(tmpSP, nrChannels,
-                       nrSlices, nrFrames);
+                     nrSlices, nrFrames);
                //tmpSP.show();
 
                siPlus.deleteRoi();
@@ -241,7 +238,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          running_ = false;
          return;
       }
-      
+
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
 
       double zMax = resultList_.get(0).getZCenter();
@@ -262,7 +259,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          }
       }
 
-
       ArrayList<Double> timePoints = new ArrayList<Double>();
       // ugly code to deal with 1-based frame numbers and their relation to timePoints
       timePoints.add(0.0);
@@ -274,19 +270,19 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       if (nrPositions > 1) {
          title += "_Pos" + positionString_;
       }
-      
+
       RowData.Builder builder = new RowData.Builder();
       builder.setName(title).setTitle(siPlus.getTitle()).setDisplayWindow(dw).
-              setWidth(siPlus.getWidth()).setHeight(siPlus.getHeight()).
-              setPixelSizeNm(pixelSize_).setZStackStepSizeNm(zStackStepSize_).
-              setShape(super.getShape()).setHalfSize(super.getHalfBoxSize()).
-              setNrChannels(nrChannels).setNrFrames(nrFrames).
-              setNrSlices(nrSlices).setNrPositions(nrPositions).
-              setMaxNrSpots(resultList_.size()).setSpotList(resultList_).
-              setTimePoints(timePoints).setIsTrack(false).
-              setCoordinate(DataCollectionForm.Coordinates.NM).
-              setHasZ(DataCollectionForm.zc_.hasFitFunctions()).
-              setMinZ(zMin).setMaxZ(zMax);
+            setWidth(siPlus.getWidth()).setHeight(siPlus.getHeight()).
+            setPixelSizeNm(pixelSize_).setZStackStepSizeNm(zStackStepSize_).
+            setShape(super.getShape()).setHalfSize(super.getHalfBoxSize()).
+            setNrChannels(nrChannels).setNrFrames(nrFrames).
+            setNrSlices(nrSlices).setNrPositions(nrPositions).
+            setMaxNrSpots(resultList_.size()).setSpotList(resultList_).
+            setTimePoints(timePoints).setIsTrack(false).
+            setCoordinate(DataCollectionForm.Coordinates.NM).
+            setHasZ(DataCollectionForm.zc_.hasFitFunctions()).
+            setMinZ(zMin).setMaxZ(zMax);
       dcForm.addSpotData(builder);
 
       if (showDataWindow_) {
@@ -298,9 +294,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       double rate = resultList_.size() / took;
       DecimalFormat df2 = new DecimalFormat("#.##");
       DecimalFormat df0 = new DecimalFormat("#");
-      studio_.alerts().postAlert("Spot analysis results", FitAllThread.class, 
-              "Analyzed " + resultList_.size() + " spots in " + df2.format(took)
-              + " seconds (" + df0.format(rate) + " spots/sec.)");
+      studio_.alerts().postAlert("Spot analysis results", FitAllThread.class,
+            "Analyzed " + resultList_.size() + " spots in " + df2.format(took)
+                  + " seconds (" + df0.format(rate) + " spots/sec.)");
 
       running_ = false;
    }
@@ -320,12 +316,12 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int shownChannel = siPlus.getChannel();
       int shownSlice = siPlus.getSlice();
       int shownFrame = siPlus.getFrame();
-      
+
       // work around strange bug that happens with freshly opened images
       for (int i = 1; i <= siPlus.getNChannels(); i++) {
          siPlus.setPosition(i, siPlus.getCurrentSlice(), siPlus.getFrame());
       }
-      
+
       int nrChannels = siPlus.getNChannels();
       if (skipChannels_) {
          nrChannels -= channelsToSkip_.length;
@@ -375,9 +371,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                            for (Roi roi : rois) {
                               siPlus.setRoi(roi, false);
                               siProc = siPlus.getProcessor();
-                              Polygon q = FindLocalMaxima.FindMax(siPlus, 
-                                      2 * super.getHalfBoxSize(), noiseTolerance_,
-                                      preFilterType_);
+                              Polygon q = FindLocalMaxima.FindMax(siPlus,
+                                    2 * super.getHalfBoxSize(), noiseTolerance_,
+                                    preFilterType_);
                               for (int i = 0; i < q.npoints; i++) {
                                  p.addPoint(q.xpoints[i], q.ypoints[i]);
                               }
@@ -385,8 +381,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                         } else {  // no Rois in RoiManager
                            siPlus.setRoi(originalRoi, false);
                            siProc = siPlus.getProcessor();
-                           p = FindLocalMaxima.FindMax(siPlus, 2 * super.getHalfBoxSize(), noiseTolerance_,
-                                   preFilterType_);
+                           p = FindLocalMaxima
+                                 .FindMax(siPlus, 2 * super.getHalfBoxSize(), noiseTolerance_,
+                                       preFilterType_);
                         }
                      }
 
@@ -406,16 +403,16 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                      for (int j = 0; j < sC.length; j++) {
                         // filter out spots too close to the edge
                         if (sC[j][0] > halfSize && sC[j][0] < siPlus.getWidth() - halfSize
-                                && sC[j][1] > halfSize && sC[j][1] < siPlus.getHeight() - halfSize) {
+                              && sC[j][1] > halfSize && sC[j][1] < siPlus.getHeight() - halfSize) {
                            ImageProcessor sp = SpotData.getSpotProcessor(siProc,
-                                   halfSize, sC[j][0], sC[j][1]);
+                                 halfSize, sC[j][0], sC[j][1]);
                            if (sp == null) {
                               continue;
                            }
                            int channel = c;
 
                            SpotData thisSpot = new SpotData(sp, channel, z, f,
-                                   position, j, sC[j][0], sC[j][1]);
+                                 position, j, sC[j][0], sC[j][1]);
                            try {
                               sourceList_.put(thisSpot);
                            } catch (InterruptedException iex) {
@@ -447,7 +444,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
 
       // wait for worker threads to finish
-      for (int i=0; i<nrThreads_; i++) {
+      for (int i = 0; i < nrThreads_; i++) {
          try {
             futures[i].get();
             gfsThreads_[i] = null;
@@ -456,11 +453,11 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
 
       siPlus.setPosition(shownChannel, shownSlice, shownFrame);
-       
+
       sourceList_.clear();
       return nrSpots;
    }
-   
+
 
    private class SpotSortComparator implements Comparator {
 
@@ -496,7 +493,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
       return false;
    }
-   
 
 
 }

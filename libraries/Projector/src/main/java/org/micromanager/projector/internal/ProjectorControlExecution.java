@@ -1,4 +1,3 @@
-
 package org.micromanager.projector.internal;
 
 import com.google.common.eventbus.Subscribe;
@@ -22,61 +21,55 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import mmcorej.Configuration;
 import org.micromanager.Studio;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionStartedEvent;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.acquisition.AcquisitionEndedEvent;
-import org.micromanager.acquisition.AcquisitionStartedEvent;
+import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.projector.internal.devices.Galvo;
 
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
-import org.micromanager.display.internal.displaywindow.DisplayController;
-import org.micromanager.internal.utils.ReportingUtils;
-
 
 /**
- *
  * @author nico
  */
 public class ProjectorControlExecution {
-   
+
    private final Studio studio_;
-   
+
    private Datastore store_;
-   
-   public ProjectorControlExecution (final Studio studio) {
+
+   public ProjectorControlExecution(final Studio studio) {
       studio_ = studio;
    }
-   
-   
-    /**
-    * Attaches phototargeting ROIs to a multi-dimensional acquisition, so that
-    * they will run on a particular firstFrame and, if repeat is true,
-    * thereafter again every frameRepeatInterval frames.
+
+
+   /**
+    * Attaches phototargeting ROIs to a multi-dimensional acquisition, so that they will run on a
+    * particular firstFrame and, if repeat is true, thereafter again every frameRepeatInterval
+    * frames.
+    *
     * @param firstFrame
     * @param repeat
     * @param frameRepeatInterval
     * @param runPolygons
-   */
-   public void attachRoisToMDA(int firstFrame, boolean repeat, 
-           int frameRepeatInterval, Runnable runPolygons) {
+    */
+   public void attachRoisToMDA(int firstFrame, boolean repeat,
+         int frameRepeatInterval, Runnable runPolygons) {
       studio_.acquisitions().clearRunnables();
       if (repeat) {
-         for (int i = firstFrame; 
-                 i < studio_.acquisitions().getAcquisitionSettings().numFrames() * 10;
-                 i += frameRepeatInterval) {
+         for (int i = firstFrame;
+               i < studio_.acquisitions().getAcquisitionSettings().numFrames() * 10;
+               i += frameRepeatInterval) {
             studio_.acquisitions().attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
          studio_.acquisitions().attachRunnable(firstFrame, -1, 0, 0, runPolygons);
       }
    }
-   
+
    /**
     * Sets the Channel Group to the targeting channel, if it exists.
     *
@@ -90,8 +83,8 @@ public class ProjectorControlExecution {
          if (targetingChannel != null && targetingChannel.length() > 0) {
             originalConfig = studio_.core().getConfigGroupState(channelGroup);
             if (studio_.core().isConfigDefined(channelGroup, targetingChannel)
-                    && !originalConfig.isConfigurationIncluded(studio_.core().
-                            getConfigData(channelGroup, targetingChannel))) {
+                  && !originalConfig.isConfigurationIncluded(studio_.core().
+                  getConfigData(channelGroup, targetingChannel))) {
                if (studio_.acquisitions().isAcquisitionRunning()) {
                   studio_.acquisitions().setPause(true);
                }
@@ -103,18 +96,20 @@ public class ProjectorControlExecution {
       }
       return originalConfig;
    }
-   
-   
-    /**
-    * Should be called with the value returned by prepareChannel.
-    * Returns Channel Group to its original settings, if needed.
+
+
+   /**
+    * Should be called with the value returned by prepareChannel. Returns Channel Group to its
+    * original settings, if needed.
+    *
     * @param originalConfig Configuration to return to
     */
    public void returnChannel(Configuration originalConfig) {
       if (originalConfig != null) {
          try {
             studio_.core().setSystemState(originalConfig);
-            if (studio_.acquisitions().isAcquisitionRunning() && studio_.acquisitions().isPaused()) {
+            if (studio_.acquisitions().isAcquisitionRunning() && studio_.acquisitions()
+                  .isPaused()) {
                studio_.acquisitions().setPause(false);
             }
          } catch (Exception ex) {
@@ -122,9 +117,10 @@ public class ProjectorControlExecution {
          }
       }
    }
-   
+
    /**
     * Opens the targeting shutter, if it has been specified.
+    *
     * @param targetingShutter - Shutter to be used by the projector device
     * @return true if it was already open
     */
@@ -145,10 +141,11 @@ public class ProjectorControlExecution {
    }
 
    /**
-    * Closes a targeting shutter if it exists and if it was originally closed.
-    * Should be called with the value returned by prepareShutter.
+    * Closes a targeting shutter if it exists and if it was originally closed. Should be called with
+    * the value returned by prepareShutter.
+    *
     * @param targetingShutter
-    * @param originallyOpen - whether or not the shutter was originally open
+    * @param originallyOpen   - whether or not the shutter was originally open
     */
    public void returnShutter(final String targetingShutter, final boolean originallyOpen) {
       try {
@@ -162,17 +159,18 @@ public class ProjectorControlExecution {
          studio_.logs().logError(ex);
       }
    }
-   
-    /**
-    * Illuminate the polygons ROIs that have been previously uploaded to
-    * phototargeter.
+
+   /**
+    * Illuminate the polygons ROIs that have been previously uploaded to phototargeter.
+    *
     * @param dev_
     * @param targetingChannel
     * @param targetingShutter
-    * @param rois Rois as they appear on the camera.  Only used to records with the images
+    * @param rois             Rois as they appear on the camera.  Only used to records with the
+    *                         images
     */
    public void exposeRois(final ProjectionDevice dev_, final String targetingChannel,
-           final String targetingShutter, Roi[] rois) {
+         final String targetingShutter, Roi[] rois) {
       if (dev_ == null) {
          return;
       }
@@ -192,19 +190,19 @@ public class ProjectorControlExecution {
 
       recordPolygons(rois);
    }
-   
+
    @Subscribe
    public void onAcquisitionStart(AcquisitionStartedEvent ae) {
       store_ = ae.getDatastore();
    }
-   
-      
+
+
    @Subscribe
    public void onAcquisitionEnd(AcquisitionEndedEvent ae) {
       store_ = null;
    }
-   
-      
+
+
    // Save ROIs in the acquisition path, if it exists.
    private void recordPolygons(Roi[] individualRois_) {
       if (studio_.acquisitions().isAcquisitionRunning()) {
@@ -223,8 +221,8 @@ public class ProjectorControlExecution {
          }
       }
    }
-   
-      /**
+
+   /**
     * Save a list of ROIs to a given path.
     */
    private static void saveROIs(File path, Roi[] rois) {
@@ -247,7 +245,7 @@ public class ProjectorControlExecution {
          ReportingUtils.logError(e);
       }
    }
-   
+
    /**
     * Gets the label of an ROI with the given index n. Borrowed from ImageJ.
     */
@@ -291,44 +289,41 @@ public class ProjectorControlExecution {
       }
       return label;
    }
-     
-   
-   
+
+
    // Generates a runnable that runs the selected ROIs.
-   Runnable phototargetROIsRunnable(final String runnableName, 
-           final ProjectionDevice dev, final String targetingChannel, 
-           final String targetingShutter, Roi[] rois) {
+   Runnable phototargetROIsRunnable(final String runnableName,
+         final ProjectionDevice dev, final String targetingChannel,
+         final String targetingShutter, Roi[] rois) {
       return new Runnable() {
          @Override
          public void run() {
             exposeRois(dev, targetingChannel, targetingShutter, rois);
          }
+
          @Override
          public String toString() {
             return runnableName;
          }
       };
    }
-   
-   
-   
-   
+
+
    /**
-    * Runs runnable starting at firstTimeMs after this function is called, and
-    * then, if repeat is true, every intervalTimeMs thereafter until
-    * shouldContinue.call() returns false.
+    * Runs runnable starting at firstTimeMs after this function is called, and then, if repeat is
+    * true, every intervalTimeMs thereafter until shouldContinue.call() returns false.
     */
-   Runnable runAtIntervals(final long firstTimeMs, 
-           final boolean repeat,
-           final long intervalTimeMs, 
-           final Runnable exposeROIs, 
-           final Callable<Boolean> shouldContinue) {
-      
+   Runnable runAtIntervals(final long firstTimeMs,
+         final boolean repeat,
+         final long intervalTimeMs,
+         final Runnable exposeROIs,
+         final Callable<Boolean> shouldContinue) {
+
       // protect from actions that have bad consequences
       final boolean doRepeat = (intervalTimeMs == 0) ? false : repeat;
       return () -> {
          ScheduledExecutorService executor
-                 = Executors.newSingleThreadScheduledExecutor();
+               = Executors.newSingleThreadScheduledExecutor();
          Runnable periodicTask = () -> {
             try {
                if (!shouldContinue.call()) {
@@ -342,20 +337,21 @@ public class ProjectorControlExecution {
             }
          };
          if (doRepeat) {
-            executor.scheduleAtFixedRate(periodicTask, firstTimeMs, intervalTimeMs, TimeUnit.MILLISECONDS);
+            executor.scheduleAtFixedRate(periodicTask, firstTimeMs, intervalTimeMs,
+                  TimeUnit.MILLISECONDS);
          } else {
             executor.schedule(periodicTask, firstTimeMs, TimeUnit.MILLISECONDS);
          }
       };
    }
-     
-   
-   
+
+
    /**
     * Ugly internal stuff to see if this IJ IMageCanvas is the MM active window
+    *
     * @param canvas
-    * @return 
-    */   
+    * @return
+    */
    DataProvider getDataProvider(ImageCanvas canvas) {
       if (canvas == null) {
          return null;
@@ -364,8 +360,8 @@ public class ProjectorControlExecution {
       if (dws != null) {
          for (DisplayWindow dw : dws) {
             if (dw instanceof DisplayController) {
-               if ( ((DisplayController) dw).getUIController().
-                       getIJImageCanvas().equals(canvas)) {
+               if (((DisplayController) dw).getUIController().
+                     getIJImageCanvas().equals(canvas)) {
                   return dw.getDataProvider();
                }
             }
@@ -373,7 +369,6 @@ public class ProjectorControlExecution {
       }
       return null;
    }
-   
 
-   
+
 }

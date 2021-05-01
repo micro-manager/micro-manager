@@ -38,35 +38,33 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 
 /**
- *
- * 
- * 
  * @author nico
  */
 public class NumberUtils {
+
    private static final NumberFormat FORMAT;
    private static final int MAXFRACTIONDIGITS = 4;
-   
+
    static {
-		// The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
-		FORMAT = NumberFormat.getInstance();
+      // The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
+      FORMAT = NumberFormat.getInstance();
       FORMAT.setMaximumFractionDigits(MAXFRACTIONDIGITS);
    }
-   
+
    public static double displayStringToDouble(Object numberString) throws ParseException {
-		return FORMAT.parse((String) numberString).doubleValue();
-	}
-    
+      return FORMAT.parse((String) numberString).doubleValue();
+   }
+
    public static int displayStringToInt(Object numberString) throws ParseException {
-		return FORMAT.parse((String) numberString).intValue();      
-	}
-   
+      return FORMAT.parse((String) numberString).intValue();
+   }
+
    public static String doubleToDisplayString(double number) {
-		return doubleToDisplayString(number, MAXFRACTIONDIGITS);
-	}
-   
+      return doubleToDisplayString(number, MAXFRACTIONDIGITS);
+   }
+
    public static String doubleToDisplayString(double number, int significance) {
       FORMAT.setMaximumFractionDigits(significance);
-		return FORMAT.format(number);
-	}
+      return FORMAT.format(number);
+   }
 }
