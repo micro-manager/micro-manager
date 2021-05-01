@@ -551,6 +551,7 @@ public final class MultipageTiffReader {
          raFile_.close();
          raFile_ = null;
       }
+      masterStorage_ = null;
    }
 
    private long unsignInt(int i) {

@@ -559,6 +559,9 @@ public final class StorageMultipageTiff implements Storage {
          if (progressBar != null) {
             progressBar.setVisible(false);
          }
+         // release resources
+         omeMetadata_ = null;
+         store_.unregisterForEvents(this);
       }
       finished_ = true;
    }
