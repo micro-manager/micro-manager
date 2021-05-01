@@ -34,7 +34,9 @@ package edu.ucsf.valelab.gaussianfit.fitting;
 
 
 import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
-import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.analysis.DifferentiableMultivariateRealFunction;
+import org.apache.commons.math.analysis.MultivariateRealFunction;
+import org.apache.commons.math.analysis.MultivariateVectorialFunction;
 
 /**
  * @author nico
@@ -44,17 +46,16 @@ public class MultiVariateGaussianMLE implements DifferentiableMultivariateRealFu
    int[] data_;
    int nx_;
    int ny_;
-   int count_ = 0;
-   int shape_ = 1;
+   int shape_;
    final double s_;     // radius of Gaussian, negative if it will be estimated
    final boolean fitWidth_;
 
 
    /**
     * Gaussian fit can be run by estimating parameter c (width of Gaussian) as 1 (circle), 2 (width
-    * varies in x and y), or 3 (ellipse) parameters
+    * varies in x and y), or 3 (ellipse) parameters.
     *
-    * @param shape
+    * @param shape 1 (circle), 2 (width varies in x and y), or 3 (ellipse).
     */
    public MultiVariateGaussianMLE(int shape, double s) {
       super();
@@ -124,50 +125,43 @@ public class MultiVariateGaussianMLE implements DifferentiableMultivariateRealFu
    @Override
    public MultivariateVectorialFunction gradient() {
 
-      MultivariateVectorialFunction mVF = new MultivariateVectorialFunction() {
-
-         @Override
-         public double[] value(double[] params)
-               throws FunctionEvaluationException, IllegalArgumentException {
-            double[] mleGradient = new double[params.length];
-            for (int i = 0; i < nx_; i++) {
-               for (int j = 0; j < ny_; j++) {
-                  if (shape_ == 1) {
-                     if (fitWidth_) {
-                        double[] jacobian = GaussianUtils.gaussianJ(params, i, j);
-                        for (int k = 0; k < mleGradient.length; k++) {
-                           mleGradient[k] += jacobian[k] * (1 - data_[(j * nx_) + i] / GaussianUtils
-                                 .gaussian(params, i, j));
-                        }
-                     } else {
-                        double[] jacobian = GaussianUtils.gaussianJFixS(params, s_, i, j);
-                        for (int k = 0; k < mleGradient.length; k++) {
-                           mleGradient[k] += jacobian[k] * (1 - data_[(j * nx_) + i] / GaussianUtils
-                                 .gaussian(params, i, j));
-                        }
-                     }
-                  }
-                  if (shape_ == 2) {
-                     double[] jacobian = GaussianUtils.gaussianJ2DXY(params, i, j);
+      return params -> {
+         double[] mleGradient = new double[params.length];
+         for (int i = 0; i < nx_; i++) {
+            for (int j = 0; j < ny_; j++) {
+               if (shape_ == 1) {
+                  if (fitWidth_) {
+                     double[] jacobian = GaussianUtils.gaussianJ(params, i, j);
                      for (int k = 0; k < mleGradient.length; k++) {
                         mleGradient[k] += jacobian[k] * (1 - data_[(j * nx_) + i] / GaussianUtils
-                              .gaussian2DXY(params, i, j));
+                              .gaussian(params, i, j));
                      }
-                  }
-                  if (shape_ == 3) {
-                     double[] jacobian = GaussianUtils.gaussianJ2DEllips(params, i, j);
+                  } else {
+                     double[] jacobian = GaussianUtils.gaussianJFixS(params, s_, i, j);
                      for (int k = 0; k < mleGradient.length; k++) {
                         mleGradient[k] += jacobian[k] * (1 - data_[(j * nx_) + i] / GaussianUtils
-                              .gaussian2DEllips(params, i, j));
+                              .gaussian(params, i, j));
                      }
                   }
                }
+               if (shape_ == 2) {
+                  double[] jacobian = GaussianUtils.gaussianJ2DXY(params, i, j);
+                  for (int k = 0; k < mleGradient.length; k++) {
+                     mleGradient[k] += jacobian[k] * (1 - data_[(j * nx_) + i] / GaussianUtils
+                           .gaussian2DXY(params, i, j));
+                  }
+               }
+               if (shape_ == 3) {
+                  double[] jacobian = GaussianUtils.gaussianJ2DEllips(params, i, j);
+                  for (int k = 0; k < mleGradient.length; k++) {
+                     mleGradient[k] += jacobian[k] * (1 - data_[(j * nx_) + i] / GaussianUtils
+                           .gaussian2DEllips(params, i, j));
+                  }
+               }
             }
-            return mleGradient;
          }
+         return mleGradient;
       };
-
-      return mVF;
    }
 
 
