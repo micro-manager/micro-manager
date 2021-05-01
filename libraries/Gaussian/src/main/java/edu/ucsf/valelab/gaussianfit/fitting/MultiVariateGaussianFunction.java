@@ -34,6 +34,7 @@ package edu.ucsf.valelab.gaussianfit.fitting;
 
 
 import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
+import org.apache.commons.math.analysis.MultivariateRealFunction;
 
 /**
  * @author nico
