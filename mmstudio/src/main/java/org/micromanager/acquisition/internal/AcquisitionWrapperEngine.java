@@ -797,6 +797,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
       curStore_ = null;
       curPipeline_ = null;
+      studio_.events().unregisterForEvents(this);
    }
 
    @Subscribe
