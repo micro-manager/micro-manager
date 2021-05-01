@@ -92,7 +92,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       OverlayListener
 {
    private final Studio studio_;
-   private final DataProvider dataProvider_;
+   private DataProvider dataProvider_;
 
    // The actually painted images. Accessed only on EDT.
    private ImagesAndStats displayedImages_;
@@ -105,7 +105,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    private final Set<String> playbackAxes_ = new HashSet<>();
 
-   private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
+   private StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
 
    private final LinkManager linkManager_;
@@ -128,7 +128,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // Guarded by monitor on this
    private volatile boolean closeCompleted_;
 
-   private final DisplayWindowControlsFactory controlsFactory_;
+   private DisplayWindowControlsFactory controlsFactory_;
 
    private final CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
@@ -1073,14 +1073,21 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          }
       }
       try {
+         computeQueue_.removeListener(this);
          computeQueue_.shutdown();
       } catch (InterruptedException ie) {
          // TODO: report exception
       }
+      computeQueue_ = null;
       animationController_.shutdown();
+      animationController_ = null;
+      controlsFactory_ = null;
       
       studio_.events().unregisterForEvents(this);
       dataProvider_.unregisterForEvents(this);
+      dataProvider_ = null;
+      displayedImages_ = null;
+
       // need to set the flag before closing the UIController,
       // otherwise we wil re-enter this function and write bad
       // display settings to file

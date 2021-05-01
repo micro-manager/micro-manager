@@ -111,12 +111,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
       MDScrollBarPanel.Listener
 {
    private final Studio studio_;
-   private final DisplayController displayController_;
-   private final AnimationController<Coords> animationController_;
+   private DisplayController displayController_;
+   private AnimationController<Coords> animationController_;
 
    // All fields must only be accessed from the EDT unless otherwise noted.
 
-   private final DisplayWindowControlsFactory controlsFactory_;
+   private DisplayWindowControlsFactory controlsFactory_;
 
    private JFrame frame_; // Not null if not closed
    private JFrame fullScreenFrame_; // Not null iff in full-screen mode
@@ -309,6 +309,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
          ijBridge_.mm2ijWindowClosed();
          ijBridge_ = null;
       }
+      displayController_ = null;
+      animationController_  = null;
+      controlsFactory_ = null;
+      displayedImages_ = null;
       if (fullScreenFrame_ != null) {
          fullScreenFrame_.dispose();
          fullScreenFrame_ = null;
