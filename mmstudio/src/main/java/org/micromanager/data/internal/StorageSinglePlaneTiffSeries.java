@@ -120,7 +120,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    @Override
    public void putImage(Image image) {
       // Note, orderedAxes could be cached, but performance penalty is likely negligible
-      List<String> orderedAxes = store_.getSummaryMetadata().getOrderedAxes();
+      List<String> orderedAxes = summaryMetadata_.getOrderedAxes();
       // Require images to only have time/channel/z/position axes.
       for (String axis : image.getCoords().getAxes()) {
          if (!ALLOWED_AXES.contains(axis)) {
