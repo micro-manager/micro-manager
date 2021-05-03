@@ -332,8 +332,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
       playbackFpsButton_.removePopupButtonListener((PopupButton button) -> {
          playbackFpsSpinner_.setValue(displayController_.getPlaybackSpeedFps());
       });
-      playbackFpsSpinner_.setModel(null);
       playbackFpsSpinner_ = null;
+      for (MouseListener ml : saveButton_.getMouseListeners()) {
+         saveButton_.removeMouseListener(ml);
+      }
+      saveButton_ = null;
       gearButton_.cleanup();
       gearButton_ = null;
       playbackFpsButton_ = null;
@@ -564,7 +567,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       tmp2Panel.add(cameraFpsLabel_, new CC());
       panel.add(tmp2Panel, new CC().growX());
 
-      panel.add(new SaveButton(studio_, displayController_));
+      saveButton_ = new SaveButton(studio_, displayController_);
+      panel.add(saveButton_);
       gearButton_ = new GearButton(displayController_, studio_);
       panel.add(gearButton_);
 

@@ -321,6 +321,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          // TODO DisplayGroupManager.getInstance().removeDisplay(viewer);
       }
       viewers_.removeDataViewer(viewer);
+      haveAutoCreatedInspector_.remove(viewer);
    }
 
    /**
@@ -525,6 +526,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       DataProvider provider = display.getDataProvider();
       synchronized (this) {
          display.removeListener(this);
+         haveAutoCreatedInspector_.remove(display);
          providerToDisplays_.get(provider).remove(display);
       }
    }
