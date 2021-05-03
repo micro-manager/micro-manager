@@ -6,5 +6,6 @@ The following changes have been made to the original https://github.com/checksty
  - All properties under the "Indentation" module have been changed to be multiples of 3 rather than multiples of 2.
  - Member variable names are permitted to end with an underscore
  - Parameter names, member names, and many other name types are allowed to have only a single lowercase letter at the beginning, i.e. `xLabel`
+ - All-caps abbreviations are allowed. For example, `refreshGUI` is fine and doesn't need to be changed to `refreshGui`
  
  Information about these properties can be found here: https://checkstyle.sourceforge.io/config_misc.html

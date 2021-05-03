@@ -255,6 +255,7 @@
       <property name="arrayInitIndent" value="3"/>
     </module>
     <module name="AbbreviationAsWordInName">
+	  <property name="severity" value="ignore"/>
       <property name="ignoreFinal" value="false"/>
       <property name="allowedAbbreviationLength" value="0"/>
       <property name="tokens"
