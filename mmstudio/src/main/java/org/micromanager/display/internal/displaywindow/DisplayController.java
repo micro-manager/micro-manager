@@ -108,7 +108,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
 
-   private final LinkManager linkManager_;
+   private LinkManager linkManager_;
 
    // The UI controller manages the actual JFrame and all the components in it,
    // including interaction with ImageJ. After being closed, set to null.
@@ -130,10 +130,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    private DisplayWindowControlsFactory controlsFactory_;
 
-   private final CoalescentEDTRunnablePool runnablePool_ =
+   private CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
 
-   private final PerformanceMonitor perfMon_ =
+   private PerformanceMonitor perfMon_ =
          PerformanceMonitor.createWithTimeConstantMs(1000.0);
    private final PerformanceMonitorUI perfMonUI_ =
          PerformanceMonitorUI.create(perfMon_, "Display Performance");
@@ -1064,6 +1064,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          return;
       }
       postEvent(DataViewerWillCloseEvent.create(this));
+
       // attempt to save Display Settings
       // TODO: Are there problems with multiple viewers on one Datastore?
       if (dataProvider_ instanceof Datastore) {
@@ -1079,10 +1080,15 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          // TODO: report exception
       }
       computeQueue_ = null;
+      perfMon_ = null;
+      animationController_.removeListener(this);
       animationController_.shutdown();
       animationController_ = null;
       controlsFactory_ = null;
-      
+      runnablePool_ = null;
+
+      linkManager_.unregisterAllAnchors();
+      linkManager_ = null;
       studio_.events().unregisterForEvents(this);
       dataProvider_.unregisterForEvents(this);
       dataProvider_ = null;
