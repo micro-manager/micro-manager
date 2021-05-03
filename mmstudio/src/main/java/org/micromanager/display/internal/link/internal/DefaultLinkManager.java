@@ -18,8 +18,7 @@ public class DefaultLinkManager implements LinkManager {
          LinkEndpointManager.create();
    private final LinkageFactory linkageFactory_ =
          LinkageFactory.create();
-   private final Map<LinkAnchor<?>, LinkEndpoint> endpoints_ =
-         new HashMap<LinkAnchor<?>, LinkEndpoint>();
+   private final Map<LinkAnchor<?>, LinkEndpoint> endpoints_ = new HashMap<>();
 
    public static LinkManager create() {
       return new DefaultLinkManager();
@@ -47,5 +46,14 @@ public class DefaultLinkManager implements LinkManager {
             "anchor must be a subclass of AbstractLinkAnchor");
       Preconditions.checkArgument(endpoints_.containsKey(anchor));
       endpointManager_.unregisterEndpoint(endpoints_.get(anchor));
+      endpoints_.remove(anchor);
+   }
+
+   @Override
+   public void unregisterAllAnchors() {
+      for (LinkAnchor<?> anchor :  endpoints_.keySet()) {
+         endpointManager_.unregisterEndpoint(endpoints_.get(anchor));
+      }
+      endpoints_.clear();
    }
 }

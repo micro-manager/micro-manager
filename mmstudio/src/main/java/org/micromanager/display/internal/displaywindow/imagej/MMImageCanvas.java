@@ -34,7 +34,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 public final class MMImageCanvas extends ImageCanvas
       implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener
 {
-   private final ImageJBridge parent_;
+   private ImageJBridge parent_;
 
    private Dimension preferredSize_;
 

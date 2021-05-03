@@ -23,6 +23,12 @@ package org.micromanager.acquisition.internal;
 import org.micromanager.data.Datastore;
 import org.micromanager.acquisition.AcquisitionEndedEvent;
 
+/**
+ * This event signifies that an acquisition has been ended.
+ *
+ * This default implementation of this event is posted on the studio event bus,
+ * i.e. subscribe to this event using {@link org.micromanager.events.EventManager}
+ */
 public final class DefaultAcquisitionEndedEvent implements AcquisitionEndedEvent {
    private Datastore store_;
    private Object source_;
@@ -31,11 +37,21 @@ public final class DefaultAcquisitionEndedEvent implements AcquisitionEndedEvent
       source_ = source;
    }
 
+   /**
+    * Return the Datastore into which images were placed during the
+    * acquisition.
+    */
    @Override
    public Datastore getStore() {
       return store_;
    }
 
+   /**
+    * Return an Object used to identify the entity in charge of the
+    * acquisition. This can be used by recipients to distinguish different
+    * types of acquisitions. This object must be the same object that published
+    * the corresponding AcquisitionStartedEvent to this acquisition.
+    */
    @Override
    public Object getSource() {
       return source_;

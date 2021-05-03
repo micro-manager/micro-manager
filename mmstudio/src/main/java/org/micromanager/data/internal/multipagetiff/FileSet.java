@@ -41,25 +41,24 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
- * Class encapsulating a single File (or series of files)
- * Default is one file series per xy posititon
+ * Class encapsulating a single File (or series of files).
+ * Default is one file series per xy position.
  */
 class FileSet {
    private static final int SPACE_FOR_PARTIAL_OME_MD = 2000; //this should be more than enough
 
    private final LinkedList<MultipageTiffWriter> tiffWriters_;
    private FileWriter mdWriter_;
-   private final OMEMetadata omeMetadata_;
+   private OMEMetadata omeMetadata_;
    private final String baseFilename_;
    private String currentTiffFilename_;
-   private String currentTiffUUID_;;
-   private String metadataFileFullPath_;
+   private String currentTiffUUID_;
    private boolean finished_ = false;
-   private boolean separateMetadataFile_ = false;
-   private boolean splitByXYPosition_ = false;
+   private boolean separateMetadataFile_;
+   private boolean splitByXYPosition_ ;
    private boolean expectedImageOrder_ = true;
    private int ifdCount_ = 0;
-   private final StorageMultipageTiff masterStorage_;
+   private StorageMultipageTiff masterStorage_;
    int nextExpectedChannel_ = 0, nextExpectedSlice_ = 0, nextExpectedFrame_ = 0;
    int currentFrame_ = 0;
 
@@ -114,6 +113,8 @@ class FileSet {
       for (MultipageTiffWriter w : tiffWriters_) {
          w.close(omeXML, ijDescription);
       }
+      omeMetadata_ = null;
+      masterStorage_ = null;
       finished_ = true;
    }
 
@@ -214,8 +215,8 @@ class FileSet {
    }
 
    private void startMetadataFile() {
-      metadataFileFullPath_ = masterStorage_.getDiskLocation() + "/" +
-            baseFilename_ + "_metadata.txt";
+      String metadataFileFullPath_ = masterStorage_.getDiskLocation() + "/" +
+              baseFilename_ + "_metadata.txt";
       PropertyMap summaryPmap = ((DefaultSummaryMetadata) masterStorage_.
             getSummaryMetadata()).toPropertyMap();
       String summaryJSON = NonPropertyMapJSONFormats.summaryMetadata().toJSON(

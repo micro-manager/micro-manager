@@ -21,13 +21,12 @@
 package org.micromanager.display.internal.gearmenu;
 
 import com.bulenkov.iconloader.IconLoader;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
+import javax.swing.MenuElement;
 import javax.swing.event.MouseInputAdapter;
 import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
@@ -45,37 +44,22 @@ public final class GearButton extends JButton {
    public GearButton(final DisplayWindow display, final Studio studio) {
       menu_ = new SortedPopupMenu();
       JMenuItem openInspector = new JMenuItem("Image Inspector...");
-      openInspector.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            studio.displays().createInspectorForDataViewer(display);
-         }
-      });
+      openInspector.addActionListener(
+              e -> studio.displays().createInspectorForDataViewer(display));
       menu_.addUnsorted(openInspector);
 
       JMenuItem duplicate = new JMenuItem("New Window for This Data");
-      duplicate.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            display.duplicate();
-         }
-      });
+      duplicate.addActionListener(e -> display.duplicate());
       menu_.addUnsorted(duplicate);
 
       menu_.addSeparator();
 
       // Insert plugins. Sorted alphabetically by name/submenu name.
       HashMap<String, DisplayGearMenuPlugin> plugins = studio.plugins().getDisplayGearMenuPlugins();
-      HashMap<String, SortedMenu> subMenus = new HashMap<String, SortedMenu>();
-      ArrayList<JMenuItem> items = new ArrayList<JMenuItem>();
+      HashMap<String, SortedMenu> subMenus = new HashMap<>();
       for (final DisplayGearMenuPlugin plugin : plugins.values()) {
          JMenuItem item = new JMenuItem(plugin.getName());
-         item.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               plugin.onPluginSelected(display);
-            }
-         });
+         item.addActionListener(e -> plugin.onPluginSelected(display));
          String subMenu = plugin.getSubMenu();
          if (subMenu.contentEquals("")) {
             // Add directly to the base menu.
@@ -104,5 +88,24 @@ public final class GearButton extends JButton {
       // https://openclipart.org/detail/35533/tango-emblem-system
       super.setIcon(IconLoader.getIcon(
                "/org/micromanager/icons/gear.png"));
+   }
+
+   public void cleanup() {
+      for (MenuElement element : menu_.getSubElements()) {
+         JMenuItem curItem = (JMenuItem) element;
+         for (ActionListener al : curItem.getActionListeners()) {
+            curItem.removeActionListener(al);
+         }
+      }
+      menu_.removeAll();
+      menu_ = null;
+
+      final JButton staticThis = this;
+      super.removeMouseListener(new MouseInputAdapter() {
+         @Override
+         public void mousePressed(MouseEvent e) {
+            menu_.show(staticThis, e.getX(), e.getY());
+         }
+      });
    }
 }

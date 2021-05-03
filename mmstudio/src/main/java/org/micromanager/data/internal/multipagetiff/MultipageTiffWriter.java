@@ -445,6 +445,7 @@ public final class MultipageTiffWriter {
          // reader is still using them
          fileChannel_ = null;
          raFile_ = null;
+         masterStorage_ = null;
       });
    }
    
