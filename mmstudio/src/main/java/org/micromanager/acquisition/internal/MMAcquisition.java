@@ -315,6 +315,7 @@ public final class MMAcquisition extends DataViewerListener {
                        studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
             }
             display_.removeListener(this);
+            display_ = null;
          }
       }
       return result;
