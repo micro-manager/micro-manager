@@ -1073,13 +1073,14 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             ((DefaultDisplaySettings) getDisplaySettings()).save(ds.getSavePath());
          }
       }
+      dataProvider_.unregisterForEvents(this);
       try {
          computeQueue_.removeListener(this);
          computeQueue_.shutdown();
       } catch (InterruptedException ie) {
          // TODO: report exception
       }
-      computeQueue_ = null;
+      // computeQueue_ = null;
       perfMon_ = null;
       animationController_.removeListener(this);
       animationController_.shutdown();
@@ -1088,11 +1089,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       runnablePool_ = null;
 
       linkManager_.unregisterAllAnchors();
-      linkManager_ = null;
+      // linkManager_ = null;
       studio_.events().unregisterForEvents(this);
-      dataProvider_.unregisterForEvents(this);
-      dataProvider_ = null;
-      displayedImages_ = null;
+      // dataProvider_ = null;
+      // displayedImages_ = null;
 
       // need to set the flag before closing the UIController,
       // otherwise we wil re-enter this function and write bad
@@ -1104,7 +1104,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          uiController_.close();
          uiController_ = null;
       }
-      dispose();
+      dispose(); // calls AbstractDataViewer.dispose, which shuts down its eventbus.
 
       // TODO This event should probably be posted in response to window event
       // (which can be done with a ComponentListener for the JFrame)
