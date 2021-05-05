@@ -484,20 +484,7 @@ public class ProjectorControlForm extends JFrame {
       pointAndShootQueue_.add(psi);
    }
 
-
-   /**
-    * Turn on/off point and shoot mode.
-    *
-    * @param on on/off flag
-    */
-   public void enablePointAndShootMode(boolean on) {
-      if (on && (mapping_ == null)) {
-         final String errorS =
-               "Please calibrate the phototargeting device first, using the Setup tab.";
-         studio_.logs().logError(errorS);
-         return;
-      }
-      pointAndShooteModeOn_.set(on);
+   public void enableShootMode(boolean on) {
       // restart this thread if it is not running?
       if (pointAndShootThread_ == null || !pointAndShootThread_.isAlive()) {
          pointAndShootThread_ = new Thread(() -> {
@@ -524,8 +511,28 @@ public class ProjectorControlForm extends JFrame {
                }
             }
          });
+         pointAndShootThread_.setName("Point and Shoot Thread");
+         pointAndShootThread_.setPriority(6);
          pointAndShootThread_.start();
       }
+   }
+
+
+   /**
+    * Turn on/off point and shoot mode.
+    *
+    * @param on on/off flag
+    */
+   public void enablePointAndShootMode(boolean on) {
+      if (on && (mapping_ == null)) {
+         final String errorS =
+               "Please calibrate the phototargeting device first, using the Setup tab.";
+         studio_.logs().logError(errorS);
+         return;
+      }
+      pointAndShooteModeOn_.set(on);
+      enableShootMode(on);
+
       if (!on & pointAndShootViewer_ != null) {
          pointAndShootViewer_.unregisterForEvents(this);
          pointAndShootViewer_ = null;
