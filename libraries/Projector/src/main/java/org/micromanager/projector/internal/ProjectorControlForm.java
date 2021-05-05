@@ -559,8 +559,6 @@ public class ProjectorControlForm extends JFrame {
    private BufferedWriter checkLogFile() {
       if (logFileWriter_ == null || logFile_ == null || !(new File(logFile_)).exists()) {
          if (logDirectoryTextField_.getText().isEmpty()) {
-            studio_.alerts().postAlert("Logging disabled", this.getClass(),
-                  "To enable logging, set the Log Directory");
             return null;
          }
          String currentDate = LOGFILEDATE_FORMATTER.format(new Date());
