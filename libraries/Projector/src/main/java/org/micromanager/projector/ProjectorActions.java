@@ -48,9 +48,11 @@ public abstract class ProjectorActions {
    }
 
    /**
-    * @param app
-    * @param dev
-    * @return
+    * Loads the mapping between camera and projector from user profile.
+    *
+    * @param app Studio object to provide profile.
+    * @param dev projection device for which we request the mapping.
+    * @return Mapping between camera and projector.
     */
    public static Mapping loadMapping(Studio app,
          ProjectionDevice dev) {

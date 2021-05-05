@@ -311,21 +311,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
       displayController_.unregisterForEvents(this);
 
       // make objects available for garbage collection
-      contentPanel_ = null;
-      noImagesMessageLabel_ = null;
-      canvasPanel_ = null;
-      canvasBorderPanel_ = null;
-      topControlPanel_ = null;
-      bottomControlPanel_ = null;
-      fullScreenButton_ = null;
-      zoomInButton_ = null;
-      zoomOutButton_ = null;
-      pixelInfoLabel_ = null;
-      imageInfoLabel_ = null;
-      newImageIndicator_ = null;
-      fpsLabel_ = null;
-      cameraFpsLabel_ = null;
-      infoLabel_ = null;
       scrollBarPanel_.removeListener(this);
       scrollBarPanel_ = null;
       playbackFpsSpinner_.removeChangeListener(this::handlePlaybackFpsSpinner);

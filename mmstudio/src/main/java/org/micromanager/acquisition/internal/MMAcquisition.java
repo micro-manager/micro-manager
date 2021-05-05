@@ -429,7 +429,7 @@ public final class MMAcquisition extends DataViewerListener {
       catch (IOException e) {
          ReportingUtils.logError(e);
       }
-      if (show_) {
+      if (show_ && display_ != null) {
          if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
             if (store_.getSavePath() != null) {
                ((DefaultDisplaySettings) display_.getDisplaySettings()).
