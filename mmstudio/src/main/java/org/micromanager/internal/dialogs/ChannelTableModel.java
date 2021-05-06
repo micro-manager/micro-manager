@@ -194,7 +194,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
          if (acqEng_.getChannelConfigs().length > 0) {
             for (String config : acqEng_.getChannelConfigs()) {
                if (config.equals(channel.config())) {
-                  // Color information is a displaysetting. The ultimate authoraty
+                  // Color information is a displaySetting. The ultimate authority
                   // is in RememberedSettings, so look there now
                   Color c = RememberedDisplaySettings.loadChannel(studio_, channel.channelGroup(),
                           channel.config(), channel.color()).getColor();
@@ -283,14 +283,6 @@ public final class ChannelTableModel extends AbstractTableModel  {
 
    public String[] getAvailableChannels() {
       return acqEng_.getChannelConfigs();
-      /*
-      String[] channelsInGroup = acqEng_.getChannelConfigs();
-      ArrayList<String> channels  = new ArrayList<>();
-      for (ChannelSpec cs : channelSpecs) {
-         channels.add(cs.config());
-      }
-      return channels.toArray(new String[0]);
-      */
    }
 
    /**
