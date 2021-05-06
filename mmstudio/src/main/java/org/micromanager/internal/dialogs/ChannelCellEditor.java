@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import javax.swing.AbstractCellEditor;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -14,10 +15,7 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellEditor;
-
-import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
-import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -28,22 +26,17 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class ChannelCellEditor extends AbstractCellEditor implements TableCellEditor {
 
    private static final long serialVersionUID = -8374637422965302637L;
-   private JTextField text_ = new JTextField();
-   private JComboBox<String> channelSelect_ = new JComboBox<>();
-   private JCheckBox checkBox_ = new JCheckBox();
+   private final JTextField text_ = new JTextField();
+   private final JComboBox<String> channelSelect_ = new JComboBox<>();
+   private final JCheckBox checkBox_ = new JCheckBox();
    boolean checkBoxValue_ = false;
-   private JLabel colorLabel_ = new JLabel();
+   private final JLabel colorLabel_ = new JLabel();
    private int editCol_ = -1;
-   private int editRow_ = -1;
    private ChannelSpec channel_ = null;
 
-   private final Studio studio_;
-   private final AcquisitionEngine acqEng_;
    private final CheckBoxChangeListener checkBoxChangeListener_;
 
-   public ChannelCellEditor(Studio studio, AcquisitionEngine engine) {
-      studio_ = studio;
-      acqEng_ = engine;
+   public ChannelCellEditor() {
       checkBoxChangeListener_ = new CheckBoxChangeListener(this);
    }
 
@@ -54,13 +47,11 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
 
       ChannelTableModel model = (ChannelTableModel) table.getModel();
       ArrayList<ChannelSpec> channels = model.getChannels();
-      final ChannelSpec channel = channels.get(rowIndex);
-      channel_ = channel;
+     channel_ = channels.get(rowIndex);
 
       colIndex = table.convertColumnIndexToModel(colIndex);
 
       // Configure the component with the specified value
-      editRow_ = rowIndex;
       editCol_ = colIndex;
       if (colIndex == 0) {
          checkBox_.removeChangeListener(checkBoxChangeListener_);
@@ -93,7 +84,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          // row.
          HashSet<String> usedChannels = new HashSet<>();
          for (int i = 0; i < model.getChannels().size(); ++i) {
-            if (i != editRow_) {
+            if (i != rowIndex) {
                usedChannels.add((String) model.getValueAt(i, 1));
             }
          }
@@ -103,11 +94,11 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
                channelSelect_.addItem(config);
             }
          }
-         channelSelect_.setSelectedItem(channel.config());
+         channelSelect_.setSelectedItem(channel_.config());
          
          // end editing on selection change
          channelSelect_.addPropertyChangeListener(e -> {
-            if (!channelSelect_.getSelectedItem().equals(channel_.config())) {
+            if (!Objects.equals(channelSelect_.getSelectedItem(), channel_.config())) {
                fireEditingStopped();
             }
          });

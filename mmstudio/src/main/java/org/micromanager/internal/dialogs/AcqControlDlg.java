@@ -139,7 +139,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JComboBox<AcqOrderMode> acqOrderBox_;
    private JTextArea acquisitionOrderText_;
    private JComboBox<String> channelGroupCombo_;
-   private JTextArea commentTextArea_;
+   private final JTextArea commentTextArea_;
    private JComboBox<String> zValCombo_;
    private JTextField nameField_;
    private JTextField rootField_;
@@ -170,6 +170,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private final UserProfile profile_;
    // persistent properties (app settings), most are only for backward compatibility
    private static final String MDA_SEQUENCE_SETTINGS = "MDA_SEQUENCE_SETTINGS";
+   /*
    private static final String ACQ_INTERVAL = "acqInterval";
    private static final String ACQ_ZBOTTOM = "acqZbottom";
    private static final String ACQ_ZTOP = "acqZtop";
@@ -189,11 +190,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private static final String ACQ_SAVE_FILES = "acqSaveFiles";
    private static final String ACQ_AF_ENABLE = "autofocus_enabled";
    private static final String ACQ_AF_SKIP_INTERVAL = "autofocusSkipInterval";
+   private static final String CUSTOM_INTERVAL_PREFIX = "customInterval";
+   private static final String ACQ_ENABLE_CUSTOM_INTERVALS = "enableCustomIntervals";
+    */
    private static final String ACQ_COLUMN_WIDTH = "column_width";
    private static final String ACQ_COLUMN_ORDER = "column_order";
    private static final int ACQ_DEFAULT_COLUMN_WIDTH = 77;
-   private static final String CUSTOM_INTERVAL_PREFIX = "customInterval";
-   private static final String ACQ_ENABLE_CUSTOM_INTERVALS = "enableCustomIntervals";
 
    private final int[] columnWidth_;
    private final int[] columnOrder_;
@@ -212,6 +214,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    /**
     * Acquisition control dialog box.
     * Specification of all parameters required for the acquisition.
+    *
     * @param acqEng - acquisition engine
     * @param mmStudio - ScriptInterface
     */
@@ -331,9 +334,19 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       super.add(topPanel, "grow");
       super.add(channelsPanel_, "grow");
       super.add(createSavePanel(), "growx");
-      super.add(createCommentsPanel(), "growx");
+      commentTextArea_ = new JTextArea();
+      super.add(createCommentsPanel(commentTextArea_, focusListener_), "growx");
 
-      createToolTips();
+      framesPanel_.setToolTipText("Acquire images over a repeating time interval");
+      positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
+      slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
+      acquisitionOrderPanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
+            "Determine the precedence of different acquisition axes (time, slice, channel, and stage position). The rightmost axis will be cycled through most quickly, so e.g. \"Time, Channel\" means \"Collect all channels for each timepoint before going to the next timepoint\"."));
+      afPanel_.setToolTipText("Toggle autofocus on/off");
+      channelsPanel_.setToolTipText("Lets you acquire images in multiple channels (groups of "
+            + "properties with multiple preset values");
+      savePanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
+            "Save images continuously to disk as the acquisition proceeds. If not enabled, then images will be stored in RAM and may be saved later."));
 
       super.pack();
       Dimension size = super.getPreferredSize();
@@ -383,12 +396,11 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          }
       };
 
-
       channelTable.setFont(new Font("Dialog", Font.PLAIN, 10));
       channelTable.setAutoCreateColumnsFromModel(false);
       channelTable.setModel(model_);
 
-      channelCellEditor_ = new ChannelCellEditor(mmStudio_, acqEng_);
+      channelCellEditor_ = new ChannelCellEditor();
       ChannelCellRenderer cellRenderer = new ChannelCellRenderer(acqEng_);
       channelTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
@@ -437,7 +449,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    /**
-    * Create the panel for showing the timepoints settings. This one can have
+    * Creates the panel for showing timepoints settings. This one can have
     * its contents overridden by the custom time intervals system, in which
     * case its normal contents get hidden.
     */
@@ -849,8 +861,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       rootLabel_.setFont(DEFAULT_FONT);
       savePanel_.add(rootLabel_, "alignx label");
 
-
-
       rootField_ = new JTextField();
       rootField_.setFont(DEFAULT_FONT);
       rootField_.addFocusListener(focusListener_);
@@ -914,41 +924,26 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return savePanel_;
    }
 
-   private JPanel createCommentsPanel() {
+   private JPanel createCommentsPanel(JTextArea commentTextArea, FocusListener focusListener) {
       ComponentTitledPanel commentsPanel = createLabelPanel("Acquisition Comments");
       commentsPanel.setLayout(new MigLayout(PANEL_CONSTRAINT,
                "[grow, fill]", "[]"));
 
-      commentTextArea_ = new JTextArea();
-      commentTextArea_.setRows(4);
-      commentTextArea_.setFont(new Font("", Font.PLAIN, 10));
-      commentTextArea_.setToolTipText("Comment for the acquisition to be run");
-      commentTextArea_.setWrapStyleWord(true);
-      commentTextArea_.setLineWrap(true);
-      commentTextArea_.addFocusListener(focusListener_);
+      commentTextArea.setRows(4);
+      commentTextArea.setFont(new Font("", Font.PLAIN, 10));
+      commentTextArea.setToolTipText("Comment for the acquisition to be run");
+      commentTextArea.setWrapStyleWord(true);
+      commentTextArea.setLineWrap(true);
+      commentTextArea.addFocusListener(focusListener);
 
       JScrollPane commentScrollPane = new JScrollPane();
       commentScrollPane.setBorder(BorderFactory.createCompoundBorder(
                BorderFactory.createLoweredBevelBorder(),
                BorderFactory.createEtchedBorder()));
-      commentScrollPane.setViewportView(commentTextArea_);
+      commentScrollPane.setViewportView(commentTextArea);
 
       commentsPanel.add(commentScrollPane, "wmin 0, height pref!, span");
       return commentsPanel;
-   }
-
-   private void createToolTips() {
-      framesPanel_.setToolTipText("Acquire images over a repeating time interval");
-      positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
-      slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
-      acquisitionOrderPanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("Determine the precedence of different acquisition axes (time, slice, channel, and stage position). The rightmost axis will be cycled through most quickly, so e.g. \"Time, Channel\" means \"Collect all channels for each timepoint before going to the next timepoint\"."));
-
-      afPanel_.setToolTipText("Toggle autofocus on/off");
-      channelsPanel_.setToolTipText("Lets you acquire images in multiple channels (groups of "
-              + "properties with multiple preset values");
-      savePanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("Save images continuously to disk as the acquisition proceeds. If not enabled, then images will be stored in RAM and may be saved later."));
-
-
    }
 
    /**
@@ -961,8 +956,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                ((AcqOrderMode) (acqOrderBox_.getSelectedItem())).getExample());
       }
    }
-
-
 
    /** 
     * Called when a field's "value" property changes. 
@@ -1077,10 +1070,11 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (!seqString.isEmpty()) {
          return SequenceSettings.fromJSONStream(seqString);
       }
+      return (new SequenceSettings.Builder()).build();
 
       // the following is for backward compatibility (i.e. restoring old format settings)
       // Change introduced July 10, 2020, delete after July 2021?
-
+/*
       SequenceSettings.Builder ssb = new SequenceSettings.Builder();
 
       // load acquisition engine preferences
@@ -1125,6 +1119,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       ssb.shouldDisplayImages(settings_.getBoolean(SHOULD_HIDE_DISPLAY, false));
 
       return ssb.build();
+
+ */
    }
 
    /**
@@ -1386,10 +1382,11 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
     /**
-    * Asks acqEngine to estimate memory usage, so use this method only after
+    * Asks acqEngine to estimate memory usage. Use this method only after
     * settings have been send to acqEngine.
-    * Prompt the user if there may not be enough memory
-    * @return true if user chooses to cancel.
+    * Prompt the user if there may not be enough memory.
+     *
+    * @return true if user chooses to cancel after being prompted.
     */
    private boolean warnMemoryMayNotBeSufficient() {
       if (savePanel_.isSelected()) {
