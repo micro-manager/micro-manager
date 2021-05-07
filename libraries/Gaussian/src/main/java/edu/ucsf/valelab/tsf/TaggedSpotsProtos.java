@@ -4,864 +4,567 @@
 package edu.ucsf.valelab.tsf;
 
 public final class TaggedSpotsProtos {
-  private TaggedSpotsProtos() {}
-  public static void registerAllExtensions(
-      com.google.protobuf.ExtensionRegistry registry) {
-  }
-  /**
-   * Protobuf enum {@code TSF.FitMode}
-   */
-  public enum FitMode
-      implements com.google.protobuf.ProtocolMessageEnum {
-    /**
-     * <code>ONEAXIS = 0;</code>
-     */
-    ONEAXIS(0, 0),
-    /**
-     * <code>TWOAXIS = 1;</code>
-     */
-    TWOAXIS(1, 1),
-    /**
-     * <code>TWOAXISANDTHETA = 2;</code>
-     */
-    TWOAXISANDTHETA(2, 2),
-    ;
 
-    /**
-     * <code>ONEAXIS = 0;</code>
-     */
-    public static final int ONEAXIS_VALUE = 0;
-    /**
-     * <code>TWOAXIS = 1;</code>
-     */
-    public static final int TWOAXIS_VALUE = 1;
-    /**
-     * <code>TWOAXISANDTHETA = 2;</code>
-     */
-    public static final int TWOAXISANDTHETA_VALUE = 2;
+   private TaggedSpotsProtos() {
+   }
+
+   public static void registerAllExtensions(
+         com.google.protobuf.ExtensionRegistry registry) {
+   }
+
+   /**
+    * Protobuf enum {@code TSF.FitMode}
+    */
+   public enum FitMode
+         implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>ONEAXIS = 0;</code>
+       */
+      ONEAXIS(0, 0),
+      /**
+       * <code>TWOAXIS = 1;</code>
+       */
+      TWOAXIS(1, 1),
+      /**
+       * <code>TWOAXISANDTHETA = 2;</code>
+       */
+      TWOAXISANDTHETA(2, 2),
+      ;
+
+      /**
+       * <code>ONEAXIS = 0;</code>
+       */
+      public static final int ONEAXIS_VALUE = 0;
+      /**
+       * <code>TWOAXIS = 1;</code>
+       */
+      public static final int TWOAXIS_VALUE = 1;
+      /**
+       * <code>TWOAXISANDTHETA = 2;</code>
+       */
+      public static final int TWOAXISANDTHETA_VALUE = 2;
 
 
-    public final int getNumber() { return value; }
-
-    public static FitMode valueOf(int value) {
-      switch (value) {
-        case 0: return ONEAXIS;
-        case 1: return TWOAXIS;
-        case 2: return TWOAXISANDTHETA;
-        default: return null;
+      public final int getNumber() {
+         return value;
       }
-    }
 
-    public static com.google.protobuf.Internal.EnumLiteMap<FitMode>
-        internalGetValueMap() {
-      return internalValueMap;
-    }
-    private static com.google.protobuf.Internal.EnumLiteMap<FitMode>
-        internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<FitMode>() {
-            public FitMode findValueByNumber(int number) {
-              return FitMode.valueOf(number);
-            }
-          };
-
-    public final com.google.protobuf.Descriptors.EnumValueDescriptor
-        getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
-    }
-    public final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptorForType() {
-      return getDescriptor();
-    }
-    public static final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptor() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.getDescriptor().getEnumTypes().get(0);
-    }
-
-    private static final FitMode[] VALUES = values();
-
-    public static FitMode valueOf(
-        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-      if (desc.getType() != getDescriptor()) {
-        throw new java.lang.IllegalArgumentException(
-          "EnumValueDescriptor is not for this type.");
-      }
-      return VALUES[desc.getIndex()];
-    }
-
-    private final int index;
-    private final int value;
-
-    private FitMode(int index, int value) {
-      this.index = index;
-      this.value = value;
-    }
-
-    // @@protoc_insertion_point(enum_scope:TSF.FitMode)
-  }
-
-  /**
-   * Protobuf enum {@code TSF.ThetaUnits}
-   */
-  public enum ThetaUnits
-      implements com.google.protobuf.ProtocolMessageEnum {
-    /**
-     * <code>DEGREES = 0;</code>
-     */
-    DEGREES(0, 0),
-    /**
-     * <code>RADIANS = 1;</code>
-     */
-    RADIANS(1, 1),
-    ;
-
-    /**
-     * <code>DEGREES = 0;</code>
-     */
-    public static final int DEGREES_VALUE = 0;
-    /**
-     * <code>RADIANS = 1;</code>
-     */
-    public static final int RADIANS_VALUE = 1;
-
-
-    public final int getNumber() { return value; }
-
-    public static ThetaUnits valueOf(int value) {
-      switch (value) {
-        case 0: return DEGREES;
-        case 1: return RADIANS;
-        default: return null;
-      }
-    }
-
-    public static com.google.protobuf.Internal.EnumLiteMap<ThetaUnits>
-        internalGetValueMap() {
-      return internalValueMap;
-    }
-    private static com.google.protobuf.Internal.EnumLiteMap<ThetaUnits>
-        internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<ThetaUnits>() {
-            public ThetaUnits findValueByNumber(int number) {
-              return ThetaUnits.valueOf(number);
-            }
-          };
-
-    public final com.google.protobuf.Descriptors.EnumValueDescriptor
-        getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
-    }
-    public final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptorForType() {
-      return getDescriptor();
-    }
-    public static final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptor() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.getDescriptor().getEnumTypes().get(1);
-    }
-
-    private static final ThetaUnits[] VALUES = values();
-
-    public static ThetaUnits valueOf(
-        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-      if (desc.getType() != getDescriptor()) {
-        throw new java.lang.IllegalArgumentException(
-          "EnumValueDescriptor is not for this type.");
-      }
-      return VALUES[desc.getIndex()];
-    }
-
-    private final int index;
-    private final int value;
-
-    private ThetaUnits(int index, int value) {
-      this.index = index;
-      this.value = value;
-    }
-
-    // @@protoc_insertion_point(enum_scope:TSF.ThetaUnits)
-  }
-
-  /**
-   * Protobuf enum {@code TSF.IntensityUnits}
-   */
-  public enum IntensityUnits
-      implements com.google.protobuf.ProtocolMessageEnum {
-    /**
-     * <code>COUNTS = 0;</code>
-     */
-    COUNTS(0, 0),
-    /**
-     * <code>PHOTONS = 1;</code>
-     */
-    PHOTONS(1, 1),
-    ;
-
-    /**
-     * <code>COUNTS = 0;</code>
-     */
-    public static final int COUNTS_VALUE = 0;
-    /**
-     * <code>PHOTONS = 1;</code>
-     */
-    public static final int PHOTONS_VALUE = 1;
-
-
-    public final int getNumber() { return value; }
-
-    public static IntensityUnits valueOf(int value) {
-      switch (value) {
-        case 0: return COUNTS;
-        case 1: return PHOTONS;
-        default: return null;
-      }
-    }
-
-    public static com.google.protobuf.Internal.EnumLiteMap<IntensityUnits>
-        internalGetValueMap() {
-      return internalValueMap;
-    }
-    private static com.google.protobuf.Internal.EnumLiteMap<IntensityUnits>
-        internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<IntensityUnits>() {
-            public IntensityUnits findValueByNumber(int number) {
-              return IntensityUnits.valueOf(number);
-            }
-          };
-
-    public final com.google.protobuf.Descriptors.EnumValueDescriptor
-        getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
-    }
-    public final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptorForType() {
-      return getDescriptor();
-    }
-    public static final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptor() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.getDescriptor().getEnumTypes().get(2);
-    }
-
-    private static final IntensityUnits[] VALUES = values();
-
-    public static IntensityUnits valueOf(
-        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-      if (desc.getType() != getDescriptor()) {
-        throw new java.lang.IllegalArgumentException(
-          "EnumValueDescriptor is not for this type.");
-      }
-      return VALUES[desc.getIndex()];
-    }
-
-    private final int index;
-    private final int value;
-
-    private IntensityUnits(int index, int value) {
-      this.index = index;
-      this.value = value;
-    }
-
-    // @@protoc_insertion_point(enum_scope:TSF.IntensityUnits)
-  }
-
-  /**
-   * Protobuf enum {@code TSF.LocationUnits}
-   */
-  public enum LocationUnits
-      implements com.google.protobuf.ProtocolMessageEnum {
-    /**
-     * <code>NM = 0;</code>
-     */
-    NM(0, 0),
-    /**
-     * <code>UM = 1;</code>
-     */
-    UM(1, 1),
-    /**
-     * <code>PIXELS = 2;</code>
-     */
-    PIXELS(2, 2),
-    ;
-
-    /**
-     * <code>NM = 0;</code>
-     */
-    public static final int NM_VALUE = 0;
-    /**
-     * <code>UM = 1;</code>
-     */
-    public static final int UM_VALUE = 1;
-    /**
-     * <code>PIXELS = 2;</code>
-     */
-    public static final int PIXELS_VALUE = 2;
-
-
-    public final int getNumber() { return value; }
-
-    public static LocationUnits valueOf(int value) {
-      switch (value) {
-        case 0: return NM;
-        case 1: return UM;
-        case 2: return PIXELS;
-        default: return null;
-      }
-    }
-
-    public static com.google.protobuf.Internal.EnumLiteMap<LocationUnits>
-        internalGetValueMap() {
-      return internalValueMap;
-    }
-    private static com.google.protobuf.Internal.EnumLiteMap<LocationUnits>
-        internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<LocationUnits>() {
-            public LocationUnits findValueByNumber(int number) {
-              return LocationUnits.valueOf(number);
-            }
-          };
-
-    public final com.google.protobuf.Descriptors.EnumValueDescriptor
-        getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
-    }
-    public final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptorForType() {
-      return getDescriptor();
-    }
-    public static final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptor() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.getDescriptor().getEnumTypes().get(3);
-    }
-
-    private static final LocationUnits[] VALUES = values();
-
-    public static LocationUnits valueOf(
-        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-      if (desc.getType() != getDescriptor()) {
-        throw new java.lang.IllegalArgumentException(
-          "EnumValueDescriptor is not for this type.");
-      }
-      return VALUES[desc.getIndex()];
-    }
-
-    private final int index;
-    private final int value;
-
-    private LocationUnits(int index, int value) {
-      this.index = index;
-      this.value = value;
-    }
-
-    // @@protoc_insertion_point(enum_scope:TSF.LocationUnits)
-  }
-
-  public interface FluorophoreTypeOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
-
-    // required int32 id = 1;
-    /**
-     * <code>required int32 id = 1;</code>
-     *
-     * <pre>
-     * Key for Spot.fluorophore_type.
-     * </pre>
-     */
-    boolean hasId();
-    /**
-     * <code>required int32 id = 1;</code>
-     *
-     * <pre>
-     * Key for Spot.fluorophore_type.
-     * </pre>
-     */
-    int getId();
-
-    // optional string description = 2;
-    /**
-     * <code>optional string description = 2;</code>
-     */
-    boolean hasDescription();
-    /**
-     * <code>optional string description = 2;</code>
-     */
-    java.lang.String getDescription();
-    /**
-     * <code>optional string description = 2;</code>
-     */
-    com.google.protobuf.ByteString
-        getDescriptionBytes();
-
-    // optional bool is_fiducial = 3;
-    /**
-     * <code>optional bool is_fiducial = 3;</code>
-     */
-    boolean hasIsFiducial();
-    /**
-     * <code>optional bool is_fiducial = 3;</code>
-     */
-    boolean getIsFiducial();
-  }
-  /**
-   * Protobuf type {@code TSF.FluorophoreType}
-   */
-  public static final class FluorophoreType extends
-      com.google.protobuf.GeneratedMessage
-      implements FluorophoreTypeOrBuilder {
-    // Use FluorophoreType.newBuilder() to construct.
-    private FluorophoreType(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private FluorophoreType(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final FluorophoreType defaultInstance;
-    public static FluorophoreType getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public FluorophoreType getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private FluorophoreType(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
+      public static FitMode valueOf(int value) {
+         switch (value) {
             case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
+               return ONEAXIS;
+            case 1:
+               return TWOAXIS;
+            case 2:
+               return TWOAXISANDTHETA;
+            default:
+               return null;
+         }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<FitMode>
+      internalGetValueMap() {
+         return internalValueMap;
+      }
+
+      private static com.google.protobuf.Internal.EnumLiteMap<FitMode>
+            internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<FitMode>() {
+               public FitMode findValueByNumber(int number) {
+                  return FitMode.valueOf(number);
+               }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+      getValueDescriptor() {
+         return getDescriptor().getValues().get(index);
+      }
+
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+      getDescriptorForType() {
+         return getDescriptor();
+      }
+
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+      getDescriptor() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.getDescriptor().getEnumTypes().get(0);
+      }
+
+      private static final FitMode[] VALUES = values();
+
+      public static FitMode valueOf(
+            com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+         if (desc.getType() != getDescriptor()) {
+            throw new java.lang.IllegalArgumentException(
+                  "EnumValueDescriptor is not for this type.");
+         }
+         return VALUES[desc.getIndex()];
+      }
+
+      private final int index;
+      private final int value;
+
+      private FitMode(int index, int value) {
+         this.index = index;
+         this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:TSF.FitMode)
+   }
+
+   /**
+    * Protobuf enum {@code TSF.ThetaUnits}
+    */
+   public enum ThetaUnits
+         implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>DEGREES = 0;</code>
+       */
+      DEGREES(0, 0),
+      /**
+       * <code>RADIANS = 1;</code>
+       */
+      RADIANS(1, 1),
+      ;
+
+      /**
+       * <code>DEGREES = 0;</code>
+       */
+      public static final int DEGREES_VALUE = 0;
+      /**
+       * <code>RADIANS = 1;</code>
+       */
+      public static final int RADIANS_VALUE = 1;
+
+
+      public final int getNumber() {
+         return value;
+      }
+
+      public static ThetaUnits valueOf(int value) {
+         switch (value) {
+            case 0:
+               return DEGREES;
+            case 1:
+               return RADIANS;
+            default:
+               return null;
+         }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<ThetaUnits>
+      internalGetValueMap() {
+         return internalValueMap;
+      }
+
+      private static com.google.protobuf.Internal.EnumLiteMap<ThetaUnits>
+            internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<ThetaUnits>() {
+               public ThetaUnits findValueByNumber(int number) {
+                  return ThetaUnits.valueOf(number);
+               }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+      getValueDescriptor() {
+         return getDescriptor().getValues().get(index);
+      }
+
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+      getDescriptorForType() {
+         return getDescriptor();
+      }
+
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+      getDescriptor() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.getDescriptor().getEnumTypes().get(1);
+      }
+
+      private static final ThetaUnits[] VALUES = values();
+
+      public static ThetaUnits valueOf(
+            com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+         if (desc.getType() != getDescriptor()) {
+            throw new java.lang.IllegalArgumentException(
+                  "EnumValueDescriptor is not for this type.");
+         }
+         return VALUES[desc.getIndex()];
+      }
+
+      private final int index;
+      private final int value;
+
+      private ThetaUnits(int index, int value) {
+         this.index = index;
+         this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:TSF.ThetaUnits)
+   }
+
+   /**
+    * Protobuf enum {@code TSF.IntensityUnits}
+    */
+   public enum IntensityUnits
+         implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>COUNTS = 0;</code>
+       */
+      COUNTS(0, 0),
+      /**
+       * <code>PHOTONS = 1;</code>
+       */
+      PHOTONS(1, 1),
+      ;
+
+      /**
+       * <code>COUNTS = 0;</code>
+       */
+      public static final int COUNTS_VALUE = 0;
+      /**
+       * <code>PHOTONS = 1;</code>
+       */
+      public static final int PHOTONS_VALUE = 1;
+
+
+      public final int getNumber() {
+         return value;
+      }
+
+      public static IntensityUnits valueOf(int value) {
+         switch (value) {
+            case 0:
+               return COUNTS;
+            case 1:
+               return PHOTONS;
+            default:
+               return null;
+         }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<IntensityUnits>
+      internalGetValueMap() {
+         return internalValueMap;
+      }
+
+      private static com.google.protobuf.Internal.EnumLiteMap<IntensityUnits>
+            internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<IntensityUnits>() {
+               public IntensityUnits findValueByNumber(int number) {
+                  return IntensityUnits.valueOf(number);
+               }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+      getValueDescriptor() {
+         return getDescriptor().getValues().get(index);
+      }
+
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+      getDescriptorForType() {
+         return getDescriptor();
+      }
+
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+      getDescriptor() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.getDescriptor().getEnumTypes().get(2);
+      }
+
+      private static final IntensityUnits[] VALUES = values();
+
+      public static IntensityUnits valueOf(
+            com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+         if (desc.getType() != getDescriptor()) {
+            throw new java.lang.IllegalArgumentException(
+                  "EnumValueDescriptor is not for this type.");
+         }
+         return VALUES[desc.getIndex()];
+      }
+
+      private final int index;
+      private final int value;
+
+      private IntensityUnits(int index, int value) {
+         this.index = index;
+         this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:TSF.IntensityUnits)
+   }
+
+   /**
+    * Protobuf enum {@code TSF.LocationUnits}
+    */
+   public enum LocationUnits
+         implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>NM = 0;</code>
+       */
+      NM(0, 0),
+      /**
+       * <code>UM = 1;</code>
+       */
+      UM(1, 1),
+      /**
+       * <code>PIXELS = 2;</code>
+       */
+      PIXELS(2, 2),
+      ;
+
+      /**
+       * <code>NM = 0;</code>
+       */
+      public static final int NM_VALUE = 0;
+      /**
+       * <code>UM = 1;</code>
+       */
+      public static final int UM_VALUE = 1;
+      /**
+       * <code>PIXELS = 2;</code>
+       */
+      public static final int PIXELS_VALUE = 2;
+
+
+      public final int getNumber() {
+         return value;
+      }
+
+      public static LocationUnits valueOf(int value) {
+         switch (value) {
+            case 0:
+               return NM;
+            case 1:
+               return UM;
+            case 2:
+               return PIXELS;
+            default:
+               return null;
+         }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<LocationUnits>
+      internalGetValueMap() {
+         return internalValueMap;
+      }
+
+      private static com.google.protobuf.Internal.EnumLiteMap<LocationUnits>
+            internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<LocationUnits>() {
+               public LocationUnits findValueByNumber(int number) {
+                  return LocationUnits.valueOf(number);
+               }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+      getValueDescriptor() {
+         return getDescriptor().getValues().get(index);
+      }
+
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+      getDescriptorForType() {
+         return getDescriptor();
+      }
+
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+      getDescriptor() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.getDescriptor().getEnumTypes().get(3);
+      }
+
+      private static final LocationUnits[] VALUES = values();
+
+      public static LocationUnits valueOf(
+            com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+         if (desc.getType() != getDescriptor()) {
+            throw new java.lang.IllegalArgumentException(
+                  "EnumValueDescriptor is not for this type.");
+         }
+         return VALUES[desc.getIndex()];
+      }
+
+      private final int index;
+      private final int value;
+
+      private LocationUnits(int index, int value) {
+         this.index = index;
+         this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:TSF.LocationUnits)
+   }
+
+   public interface FluorophoreTypeOrBuilder
+         extends com.google.protobuf.MessageOrBuilder {
+
+      // required int32 id = 1;
+
+      /**
+       * <code>required int32 id = 1;</code>
+       *
+       * <pre>
+       * Key for Spot.fluorophore_type.
+       * </pre>
+       */
+      boolean hasId();
+
+      /**
+       * <code>required int32 id = 1;</code>
+       *
+       * <pre>
+       * Key for Spot.fluorophore_type.
+       * </pre>
+       */
+      int getId();
+
+      // optional string description = 2;
+
+      /**
+       * <code>optional string description = 2;</code>
+       */
+      boolean hasDescription();
+
+      /**
+       * <code>optional string description = 2;</code>
+       */
+      java.lang.String getDescription();
+
+      /**
+       * <code>optional string description = 2;</code>
+       */
+      com.google.protobuf.ByteString
+      getDescriptionBytes();
+
+      // optional bool is_fiducial = 3;
+
+      /**
+       * <code>optional bool is_fiducial = 3;</code>
+       */
+      boolean hasIsFiducial();
+
+      /**
+       * <code>optional bool is_fiducial = 3;</code>
+       */
+      boolean getIsFiducial();
+   }
+
+   /**
+    * Protobuf type {@code TSF.FluorophoreType}
+    */
+   public static final class FluorophoreType extends
+         com.google.protobuf.GeneratedMessage
+         implements FluorophoreTypeOrBuilder {
+
+      // Use FluorophoreType.newBuilder() to construct.
+      private FluorophoreType(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+         super(builder);
+         this.unknownFields = builder.getUnknownFields();
+      }
+
+      private FluorophoreType(boolean noInit) {
+         this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      }
+
+      private static final FluorophoreType defaultInstance;
+
+      public static FluorophoreType getDefaultInstance() {
+         return defaultInstance;
+      }
+
+      public FluorophoreType getDefaultInstanceForType() {
+         return defaultInstance;
+      }
+
+      private final com.google.protobuf.UnknownFieldSet unknownFields;
+
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+         return this.unknownFields;
+      }
+
+      private FluorophoreType(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         initFields();
+         int mutable_bitField0_ = 0;
+         com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+               com.google.protobuf.UnknownFieldSet.newBuilder();
+         try {
+            boolean done = false;
+            while (!done) {
+               int tag = input.readTag();
+               switch (tag) {
+                  case 0:
+                     done = true;
+                     break;
+                  default: {
+                     if (!parseUnknownField(input, unknownFields,
+                           extensionRegistry, tag)) {
+                        done = true;
+                     }
+                     break;
+                  }
+                  case 8: {
+                     bitField0_ |= 0x00000001;
+                     id_ = input.readInt32();
+                     break;
+                  }
+                  case 18: {
+                     bitField0_ |= 0x00000002;
+                     description_ = input.readBytes();
+                     break;
+                  }
+                  case 24: {
+                     bitField0_ |= 0x00000004;
+                     isFiducial_ = input.readBool();
+                     break;
+                  }
+               }
             }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              id_ = input.readInt32();
-              break;
-            }
-            case 18: {
-              bitField0_ |= 0x00000002;
-              description_ = input.readBytes();
-              break;
-            }
-            case 24: {
-              bitField0_ |= 0x00000004;
-              isFiducial_ = input.readBool();
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
+         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(this);
+         } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(
+                  e.getMessage()).setUnfinishedMessage(this);
+         } finally {
+            this.unknownFields = unknownFields.build();
+            makeExtensionsImmutable();
+         }
       }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_descriptor;
-    }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.class, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<FluorophoreType> PARSER =
-        new com.google.protobuf.AbstractParser<FluorophoreType>() {
-      public FluorophoreType parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new FluorophoreType(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<FluorophoreType> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    // required int32 id = 1;
-    public static final int ID_FIELD_NUMBER = 1;
-    private int id_;
-    /**
-     * <code>required int32 id = 1;</code>
-     *
-     * <pre>
-     * Key for Spot.fluorophore_type.
-     * </pre>
-     */
-    public boolean hasId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required int32 id = 1;</code>
-     *
-     * <pre>
-     * Key for Spot.fluorophore_type.
-     * </pre>
-     */
-    public int getId() {
-      return id_;
-    }
-
-    // optional string description = 2;
-    public static final int DESCRIPTION_FIELD_NUMBER = 2;
-    private java.lang.Object description_;
-    /**
-     * <code>optional string description = 2;</code>
-     */
-    public boolean hasDescription() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>optional string description = 2;</code>
-     */
-    public java.lang.String getDescription() {
-      java.lang.Object ref = description_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          description_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string description = 2;</code>
-     */
-    public com.google.protobuf.ByteString
-        getDescriptionBytes() {
-      java.lang.Object ref = description_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        description_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    // optional bool is_fiducial = 3;
-    public static final int IS_FIDUCIAL_FIELD_NUMBER = 3;
-    private boolean isFiducial_;
-    /**
-     * <code>optional bool is_fiducial = 3;</code>
-     */
-    public boolean hasIsFiducial() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>optional bool is_fiducial = 3;</code>
-     */
-    public boolean getIsFiducial() {
-      return isFiducial_;
-    }
-
-    private void initFields() {
-      id_ = 0;
-      description_ = "";
-      isFiducial_ = false;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
-
-      if (!hasId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeInt32(1, id_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getDescriptionBytes());
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBool(3, isFiducial_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(1, id_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getDescriptionBytes());
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(3, isFiducial_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code TSF.FluorophoreType}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_descriptor;
+      getDescriptor() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.class, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder.class);
+      internalGetFieldAccessorTable() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_fieldAccessorTable
+               .ensureFieldAccessorsInitialized(
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.class,
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder.class);
       }
 
-      // Construct using edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
+      public static com.google.protobuf.Parser<FluorophoreType> PARSER =
+            new com.google.protobuf.AbstractParser<FluorophoreType>() {
+               public FluorophoreType parsePartialFrom(
+                     com.google.protobuf.CodedInputStream input,
+                     com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                     throws com.google.protobuf.InvalidProtocolBufferException {
+                  return new FluorophoreType(input, extensionRegistry);
+               }
+            };
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<FluorophoreType> getParserForType() {
+         return PARSER;
       }
 
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        id_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        description_ = "";
-        bitField0_ = (bitField0_ & ~0x00000002);
-        isFiducial_ = false;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_descriptor;
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType getDefaultInstanceForType() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.getDefaultInstance();
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType build() {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType buildPartial() {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType result = new edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.id_ = id_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.description_ = description_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.isFiducial_ = isFiducial_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType) {
-          return mergeFrom((edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType other) {
-        if (other == edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.getDefaultInstance()) return this;
-        if (other.hasId()) {
-          setId(other.getId());
-        }
-        if (other.hasDescription()) {
-          bitField0_ |= 0x00000002;
-          description_ = other.description_;
-          onChanged();
-        }
-        if (other.hasIsFiducial()) {
-          setIsFiducial(other.getIsFiducial());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasId()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
       private int bitField0_;
-
       // required int32 id = 1;
-      private int id_ ;
+      public static final int ID_FIELD_NUMBER = 1;
+      private int id_;
+
       /**
        * <code>required int32 id = 1;</code>
        *
@@ -870,8 +573,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
+         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
+
       /**
        * <code>required int32 id = 1;</code>
        *
@@ -880,3105 +584,2243 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getId() {
-        return id_;
-      }
-      /**
-       * <code>required int32 id = 1;</code>
-       *
-       * <pre>
-       * Key for Spot.fluorophore_type.
-       * </pre>
-       */
-      public Builder setId(int value) {
-        bitField0_ |= 0x00000001;
-        id_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 id = 1;</code>
-       *
-       * <pre>
-       * Key for Spot.fluorophore_type.
-       * </pre>
-       */
-      public Builder clearId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        id_ = 0;
-        onChanged();
-        return this;
+         return id_;
       }
 
       // optional string description = 2;
-      private java.lang.Object description_ = "";
+      public static final int DESCRIPTION_FIELD_NUMBER = 2;
+      private java.lang.Object description_;
+
       /**
        * <code>optional string description = 2;</code>
        */
       public boolean hasDescription() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
+         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
+
       /**
        * <code>optional string description = 2;</code>
        */
       public java.lang.String getDescription() {
-        java.lang.Object ref = description_;
-        if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          description_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
+         java.lang.Object ref = description_;
+         if (ref instanceof java.lang.String) {
+            return (java.lang.String) ref;
+         } else {
+            com.google.protobuf.ByteString bs =
+                  (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            if (bs.isValidUtf8()) {
+               description_ = s;
+            }
+            return s;
+         }
       }
+
       /**
        * <code>optional string description = 2;</code>
        */
       public com.google.protobuf.ByteString
-          getDescriptionBytes() {
-        java.lang.Object ref = description_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          description_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string description = 2;</code>
-       */
-      public Builder setDescription(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        description_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string description = 2;</code>
-       */
-      public Builder clearDescription() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        description_ = getDefaultInstance().getDescription();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string description = 2;</code>
-       */
-      public Builder setDescriptionBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        description_ = value;
-        onChanged();
-        return this;
+      getDescriptionBytes() {
+         java.lang.Object ref = description_;
+         if (ref instanceof java.lang.String) {
+            com.google.protobuf.ByteString b =
+                  com.google.protobuf.ByteString.copyFromUtf8(
+                        (java.lang.String) ref);
+            description_ = b;
+            return b;
+         } else {
+            return (com.google.protobuf.ByteString) ref;
+         }
       }
 
       // optional bool is_fiducial = 3;
-      private boolean isFiducial_ ;
+      public static final int IS_FIDUCIAL_FIELD_NUMBER = 3;
+      private boolean isFiducial_;
+
       /**
        * <code>optional bool is_fiducial = 3;</code>
        */
       public boolean hasIsFiducial() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
+
       /**
        * <code>optional bool is_fiducial = 3;</code>
        */
       public boolean getIsFiducial() {
-        return isFiducial_;
+         return isFiducial_;
       }
+
+      private void initFields() {
+         id_ = 0;
+         description_ = "";
+         isFiducial_ = false;
+      }
+
+      private byte memoizedIsInitialized = -1;
+
+      public final boolean isInitialized() {
+         byte isInitialized = memoizedIsInitialized;
+         if (isInitialized != -1) {
+            return isInitialized == 1;
+         }
+
+         if (!hasId()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         memoizedIsInitialized = 1;
+         return true;
+      }
+
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+            throws java.io.IOException {
+         getSerializedSize();
+         if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            output.writeInt32(1, id_);
+         }
+         if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            output.writeBytes(2, getDescriptionBytes());
+         }
+         if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            output.writeBool(3, isFiducial_);
+         }
+         getUnknownFields().writeTo(output);
+      }
+
+      private int memoizedSerializedSize = -1;
+
+      public int getSerializedSize() {
+         int size = memoizedSerializedSize;
+         if (size != -1) {
+            return size;
+         }
+
+         size = 0;
+         if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(1, id_);
+         }
+         if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeBytesSize(2, getDescriptionBytes());
+         }
+         if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeBoolSize(3, isFiducial_);
+         }
+         size += getUnknownFields().getSerializedSize();
+         memoizedSerializedSize = size;
+         return size;
+      }
+
+      private static final long serialVersionUID = 0L;
+
+      @java.lang.Override
+      protected java.lang.Object writeReplace()
+            throws java.io.ObjectStreamException {
+         return super.writeReplace();
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
+            java.io.InputStream input)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseDelimitedFrom(
+            java.io.InputStream input)
+            throws java.io.IOException {
+         return PARSER.parseDelimitedFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+         return Builder.create();
+      }
+
+      public Builder newBuilderForType() {
+         return newBuilder();
+      }
+
+      public static Builder newBuilder(
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType prototype) {
+         return newBuilder().mergeFrom(prototype);
+      }
+
+      public Builder toBuilder() {
+         return newBuilder(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+         Builder builder = new Builder(parent);
+         return builder;
+      }
+
       /**
-       * <code>optional bool is_fiducial = 3;</code>
+       * Protobuf type {@code TSF.FluorophoreType}
        */
-      public Builder setIsFiducial(boolean value) {
-        bitField0_ |= 0x00000004;
-        isFiducial_ = value;
-        onChanged();
-        return this;
+      public static final class Builder extends
+            com.google.protobuf.GeneratedMessage.Builder<Builder>
+            implements edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder {
+
+         public static final com.google.protobuf.Descriptors.Descriptor
+         getDescriptor() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_descriptor;
+         }
+
+         protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+         internalGetFieldAccessorTable() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_fieldAccessorTable
+                  .ensureFieldAccessorsInitialized(
+                        edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.class,
+                        edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder.class);
+         }
+
+         // Construct using edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.newBuilder()
+         private Builder() {
+            maybeForceBuilderInitialization();
+         }
+
+         private Builder(
+               com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+            super(parent);
+            maybeForceBuilderInitialization();
+         }
+
+         private void maybeForceBuilderInitialization() {
+            if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+            }
+         }
+
+         private static Builder create() {
+            return new Builder();
+         }
+
+         public Builder clear() {
+            super.clear();
+            id_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000001);
+            description_ = "";
+            bitField0_ = (bitField0_ & ~0x00000002);
+            isFiducial_ = false;
+            bitField0_ = (bitField0_ & ~0x00000004);
+            return this;
+         }
+
+         public Builder clone() {
+            return create().mergeFrom(buildPartial());
+         }
+
+         public com.google.protobuf.Descriptors.Descriptor
+         getDescriptorForType() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_FluorophoreType_descriptor;
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType getDefaultInstanceForType() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.getDefaultInstance();
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType build() {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType result = buildPartial();
+            if (!result.isInitialized()) {
+               throw newUninitializedMessageException(result);
+            }
+            return result;
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType buildPartial() {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType result = new edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType(
+                  this);
+            int from_bitField0_ = bitField0_;
+            int to_bitField0_ = 0;
+            if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+               to_bitField0_ |= 0x00000001;
+            }
+            result.id_ = id_;
+            if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+               to_bitField0_ |= 0x00000002;
+            }
+            result.description_ = description_;
+            if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+               to_bitField0_ |= 0x00000004;
+            }
+            result.isFiducial_ = isFiducial_;
+            result.bitField0_ = to_bitField0_;
+            onBuilt();
+            return result;
+         }
+
+         public Builder mergeFrom(com.google.protobuf.Message other) {
+            if (other instanceof edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType) {
+               return mergeFrom((edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType) other);
+            } else {
+               super.mergeFrom(other);
+               return this;
+            }
+         }
+
+         public Builder mergeFrom(edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType other) {
+            if (other == edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType
+                  .getDefaultInstance()) {
+               return this;
+            }
+            if (other.hasId()) {
+               setId(other.getId());
+            }
+            if (other.hasDescription()) {
+               bitField0_ |= 0x00000002;
+               description_ = other.description_;
+               onChanged();
+            }
+            if (other.hasIsFiducial()) {
+               setIsFiducial(other.getIsFiducial());
+            }
+            this.mergeUnknownFields(other.getUnknownFields());
+            return this;
+         }
+
+         public final boolean isInitialized() {
+            if (!hasId()) {
+
+               return false;
+            }
+            return true;
+         }
+
+         public Builder mergeFrom(
+               com.google.protobuf.CodedInputStream input,
+               com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+               throws java.io.IOException {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType parsedMessage = null;
+            try {
+               parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+               parsedMessage = (edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType) e
+                     .getUnfinishedMessage();
+               throw e;
+            } finally {
+               if (parsedMessage != null) {
+                  mergeFrom(parsedMessage);
+               }
+            }
+            return this;
+         }
+
+         private int bitField0_;
+
+         // required int32 id = 1;
+         private int id_;
+
+         /**
+          * <code>required int32 id = 1;</code>
+          *
+          * <pre>
+          * Key for Spot.fluorophore_type.
+          * </pre>
+          */
+         public boolean hasId() {
+            return ((bitField0_ & 0x00000001) == 0x00000001);
+         }
+
+         /**
+          * <code>required int32 id = 1;</code>
+          *
+          * <pre>
+          * Key for Spot.fluorophore_type.
+          * </pre>
+          */
+         public int getId() {
+            return id_;
+         }
+
+         /**
+          * <code>required int32 id = 1;</code>
+          *
+          * <pre>
+          * Key for Spot.fluorophore_type.
+          * </pre>
+          */
+         public Builder setId(int value) {
+            bitField0_ |= 0x00000001;
+            id_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required int32 id = 1;</code>
+          *
+          * <pre>
+          * Key for Spot.fluorophore_type.
+          * </pre>
+          */
+         public Builder clearId() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            id_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional string description = 2;
+         private java.lang.Object description_ = "";
+
+         /**
+          * <code>optional string description = 2;</code>
+          */
+         public boolean hasDescription() {
+            return ((bitField0_ & 0x00000002) == 0x00000002);
+         }
+
+         /**
+          * <code>optional string description = 2;</code>
+          */
+         public java.lang.String getDescription() {
+            java.lang.Object ref = description_;
+            if (!(ref instanceof java.lang.String)) {
+               java.lang.String s = ((com.google.protobuf.ByteString) ref)
+                     .toStringUtf8();
+               description_ = s;
+               return s;
+            } else {
+               return (java.lang.String) ref;
+            }
+         }
+
+         /**
+          * <code>optional string description = 2;</code>
+          */
+         public com.google.protobuf.ByteString
+         getDescriptionBytes() {
+            java.lang.Object ref = description_;
+            if (ref instanceof String) {
+               com.google.protobuf.ByteString b =
+                     com.google.protobuf.ByteString.copyFromUtf8(
+                           (java.lang.String) ref);
+               description_ = b;
+               return b;
+            } else {
+               return (com.google.protobuf.ByteString) ref;
+            }
+         }
+
+         /**
+          * <code>optional string description = 2;</code>
+          */
+         public Builder setDescription(
+               java.lang.String value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00000002;
+            description_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional string description = 2;</code>
+          */
+         public Builder clearDescription() {
+            bitField0_ = (bitField0_ & ~0x00000002);
+            description_ = getDefaultInstance().getDescription();
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional string description = 2;</code>
+          */
+         public Builder setDescriptionBytes(
+               com.google.protobuf.ByteString value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00000002;
+            description_ = value;
+            onChanged();
+            return this;
+         }
+
+         // optional bool is_fiducial = 3;
+         private boolean isFiducial_;
+
+         /**
+          * <code>optional bool is_fiducial = 3;</code>
+          */
+         public boolean hasIsFiducial() {
+            return ((bitField0_ & 0x00000004) == 0x00000004);
+         }
+
+         /**
+          * <code>optional bool is_fiducial = 3;</code>
+          */
+         public boolean getIsFiducial() {
+            return isFiducial_;
+         }
+
+         /**
+          * <code>optional bool is_fiducial = 3;</code>
+          */
+         public Builder setIsFiducial(boolean value) {
+            bitField0_ |= 0x00000004;
+            isFiducial_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional bool is_fiducial = 3;</code>
+          */
+         public Builder clearIsFiducial() {
+            bitField0_ = (bitField0_ & ~0x00000004);
+            isFiducial_ = false;
+            onChanged();
+            return this;
+         }
+
+         // @@protoc_insertion_point(builder_scope:TSF.FluorophoreType)
       }
+
+      static {
+         defaultInstance = new FluorophoreType(true);
+         defaultInstance.initFields();
+      }
+
+      // @@protoc_insertion_point(class_scope:TSF.FluorophoreType)
+   }
+
+   public interface ROIOrBuilder
+         extends com.google.protobuf.MessageOrBuilder {
+
+      // required int32 x = 1;
+
       /**
-       * <code>optional bool is_fiducial = 3;</code>
+       * <code>required int32 x = 1;</code>
        */
-      public Builder clearIsFiducial() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        isFiducial_ = false;
-        onChanged();
-        return this;
+      boolean hasX();
+
+      /**
+       * <code>required int32 x = 1;</code>
+       */
+      int getX();
+
+      // required int32 y = 2;
+
+      /**
+       * <code>required int32 y = 2;</code>
+       */
+      boolean hasY();
+
+      /**
+       * <code>required int32 y = 2;</code>
+       */
+      int getY();
+
+      // required int32 x_width = 3;
+
+      /**
+       * <code>required int32 x_width = 3;</code>
+       */
+      boolean hasXWidth();
+
+      /**
+       * <code>required int32 x_width = 3;</code>
+       */
+      int getXWidth();
+
+      // required int32 y_width = 4;
+
+      /**
+       * <code>required int32 y_width = 4;</code>
+       */
+      boolean hasYWidth();
+
+      /**
+       * <code>required int32 y_width = 4;</code>
+       */
+      int getYWidth();
+   }
+
+   /**
+    * Protobuf type {@code TSF.ROI}
+    *
+    * <pre>
+    * ROI in pixels, should be consistent with nr pixels given in SpotList
+    * </pre>
+    */
+   public static final class ROI extends
+         com.google.protobuf.GeneratedMessage
+         implements ROIOrBuilder {
+
+      // Use ROI.newBuilder() to construct.
+      private ROI(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+         super(builder);
+         this.unknownFields = builder.getUnknownFields();
       }
 
-      // @@protoc_insertion_point(builder_scope:TSF.FluorophoreType)
-    }
+      private ROI(boolean noInit) {
+         this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      }
 
-    static {
-      defaultInstance = new FluorophoreType(true);
-      defaultInstance.initFields();
-    }
+      private static final ROI defaultInstance;
 
-    // @@protoc_insertion_point(class_scope:TSF.FluorophoreType)
-  }
+      public static ROI getDefaultInstance() {
+         return defaultInstance;
+      }
 
-  public interface ROIOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+      public ROI getDefaultInstanceForType() {
+         return defaultInstance;
+      }
 
-    // required int32 x = 1;
-    /**
-     * <code>required int32 x = 1;</code>
-     */
-    boolean hasX();
-    /**
-     * <code>required int32 x = 1;</code>
-     */
-    int getX();
+      private final com.google.protobuf.UnknownFieldSet unknownFields;
 
-    // required int32 y = 2;
-    /**
-     * <code>required int32 y = 2;</code>
-     */
-    boolean hasY();
-    /**
-     * <code>required int32 y = 2;</code>
-     */
-    int getY();
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+         return this.unknownFields;
+      }
 
-    // required int32 x_width = 3;
-    /**
-     * <code>required int32 x_width = 3;</code>
-     */
-    boolean hasXWidth();
-    /**
-     * <code>required int32 x_width = 3;</code>
-     */
-    int getXWidth();
-
-    // required int32 y_width = 4;
-    /**
-     * <code>required int32 y_width = 4;</code>
-     */
-    boolean hasYWidth();
-    /**
-     * <code>required int32 y_width = 4;</code>
-     */
-    int getYWidth();
-  }
-  /**
-   * Protobuf type {@code TSF.ROI}
-   *
-   * <pre>
-   * ROI in pixels, should be consistent with nr pixels given in SpotList
-   * </pre>
-   */
-  public static final class ROI extends
-      com.google.protobuf.GeneratedMessage
-      implements ROIOrBuilder {
-    // Use ROI.newBuilder() to construct.
-    private ROI(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private ROI(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final ROI defaultInstance;
-    public static ROI getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public ROI getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private ROI(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
+      private ROI(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         initFields();
+         int mutable_bitField0_ = 0;
+         com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+               com.google.protobuf.UnknownFieldSet.newBuilder();
+         try {
+            boolean done = false;
+            while (!done) {
+               int tag = input.readTag();
+               switch (tag) {
+                  case 0:
+                     done = true;
+                     break;
+                  default: {
+                     if (!parseUnknownField(input, unknownFields,
+                           extensionRegistry, tag)) {
+                        done = true;
+                     }
+                     break;
+                  }
+                  case 8: {
+                     bitField0_ |= 0x00000001;
+                     x_ = input.readInt32();
+                     break;
+                  }
+                  case 16: {
+                     bitField0_ |= 0x00000002;
+                     y_ = input.readInt32();
+                     break;
+                  }
+                  case 24: {
+                     bitField0_ |= 0x00000004;
+                     xWidth_ = input.readInt32();
+                     break;
+                  }
+                  case 32: {
+                     bitField0_ |= 0x00000008;
+                     yWidth_ = input.readInt32();
+                     break;
+                  }
+               }
             }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              x_ = input.readInt32();
-              break;
-            }
-            case 16: {
-              bitField0_ |= 0x00000002;
-              y_ = input.readInt32();
-              break;
-            }
-            case 24: {
-              bitField0_ |= 0x00000004;
-              xWidth_ = input.readInt32();
-              break;
-            }
-            case 32: {
-              bitField0_ |= 0x00000008;
-              yWidth_ = input.readInt32();
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
+         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(this);
+         } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(
+                  e.getMessage()).setUnfinishedMessage(this);
+         } finally {
+            this.unknownFields = unknownFields.build();
+            makeExtensionsImmutable();
+         }
       }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_descriptor;
-    }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.class, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<ROI> PARSER =
-        new com.google.protobuf.AbstractParser<ROI>() {
-      public ROI parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ROI(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<ROI> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    // required int32 x = 1;
-    public static final int X_FIELD_NUMBER = 1;
-    private int x_;
-    /**
-     * <code>required int32 x = 1;</code>
-     */
-    public boolean hasX() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required int32 x = 1;</code>
-     */
-    public int getX() {
-      return x_;
-    }
-
-    // required int32 y = 2;
-    public static final int Y_FIELD_NUMBER = 2;
-    private int y_;
-    /**
-     * <code>required int32 y = 2;</code>
-     */
-    public boolean hasY() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required int32 y = 2;</code>
-     */
-    public int getY() {
-      return y_;
-    }
-
-    // required int32 x_width = 3;
-    public static final int X_WIDTH_FIELD_NUMBER = 3;
-    private int xWidth_;
-    /**
-     * <code>required int32 x_width = 3;</code>
-     */
-    public boolean hasXWidth() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>required int32 x_width = 3;</code>
-     */
-    public int getXWidth() {
-      return xWidth_;
-    }
-
-    // required int32 y_width = 4;
-    public static final int Y_WIDTH_FIELD_NUMBER = 4;
-    private int yWidth_;
-    /**
-     * <code>required int32 y_width = 4;</code>
-     */
-    public boolean hasYWidth() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
-    }
-    /**
-     * <code>required int32 y_width = 4;</code>
-     */
-    public int getYWidth() {
-      return yWidth_;
-    }
-
-    private void initFields() {
-      x_ = 0;
-      y_ = 0;
-      xWidth_ = 0;
-      yWidth_ = 0;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
-
-      if (!hasX()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasY()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasXWidth()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasYWidth()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeInt32(1, x_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt32(2, y_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeInt32(3, xWidth_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt32(4, yWidth_);
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(1, x_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, y_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, xWidth_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(4, yWidth_);
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code TSF.ROI}
-     *
-     * <pre>
-     * ROI in pixels, should be consistent with nr pixels given in SpotList
-     * </pre>
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_descriptor;
+      getDescriptor() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.class, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder.class);
+      internalGetFieldAccessorTable() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_fieldAccessorTable
+               .ensureFieldAccessorsInitialized(
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.class,
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder.class);
       }
 
-      // Construct using edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
+      public static com.google.protobuf.Parser<ROI> PARSER =
+            new com.google.protobuf.AbstractParser<ROI>() {
+               public ROI parsePartialFrom(
+                     com.google.protobuf.CodedInputStream input,
+                     com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                     throws com.google.protobuf.InvalidProtocolBufferException {
+                  return new ROI(input, extensionRegistry);
+               }
+            };
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<ROI> getParserForType() {
+         return PARSER;
       }
 
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        x_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        y_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000002);
-        xWidth_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        yWidth_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000008);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_descriptor;
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI getDefaultInstanceForType() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance();
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI build() {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI buildPartial() {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI result = new edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.x_ = x_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.y_ = y_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.xWidth_ = xWidth_;
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        result.yWidth_ = yWidth_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI) {
-          return mergeFrom((edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI other) {
-        if (other == edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance()) return this;
-        if (other.hasX()) {
-          setX(other.getX());
-        }
-        if (other.hasY()) {
-          setY(other.getY());
-        }
-        if (other.hasXWidth()) {
-          setXWidth(other.getXWidth());
-        }
-        if (other.hasYWidth()) {
-          setYWidth(other.getYWidth());
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasX()) {
-          
-          return false;
-        }
-        if (!hasY()) {
-          
-          return false;
-        }
-        if (!hasXWidth()) {
-          
-          return false;
-        }
-        if (!hasYWidth()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
       private int bitField0_;
-
       // required int32 x = 1;
-      private int x_ ;
+      public static final int X_FIELD_NUMBER = 1;
+      private int x_;
+
       /**
        * <code>required int32 x = 1;</code>
        */
       public boolean hasX() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
+         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
+
       /**
        * <code>required int32 x = 1;</code>
        */
       public int getX() {
-        return x_;
-      }
-      /**
-       * <code>required int32 x = 1;</code>
-       */
-      public Builder setX(int value) {
-        bitField0_ |= 0x00000001;
-        x_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 x = 1;</code>
-       */
-      public Builder clearX() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        x_ = 0;
-        onChanged();
-        return this;
+         return x_;
       }
 
       // required int32 y = 2;
-      private int y_ ;
+      public static final int Y_FIELD_NUMBER = 2;
+      private int y_;
+
       /**
        * <code>required int32 y = 2;</code>
        */
       public boolean hasY() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
+         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
+
       /**
        * <code>required int32 y = 2;</code>
        */
       public int getY() {
-        return y_;
-      }
-      /**
-       * <code>required int32 y = 2;</code>
-       */
-      public Builder setY(int value) {
-        bitField0_ |= 0x00000002;
-        y_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 y = 2;</code>
-       */
-      public Builder clearY() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        y_ = 0;
-        onChanged();
-        return this;
+         return y_;
       }
 
       // required int32 x_width = 3;
-      private int xWidth_ ;
+      public static final int X_WIDTH_FIELD_NUMBER = 3;
+      private int xWidth_;
+
       /**
        * <code>required int32 x_width = 3;</code>
        */
       public boolean hasXWidth() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
+
       /**
        * <code>required int32 x_width = 3;</code>
        */
       public int getXWidth() {
-        return xWidth_;
-      }
-      /**
-       * <code>required int32 x_width = 3;</code>
-       */
-      public Builder setXWidth(int value) {
-        bitField0_ |= 0x00000004;
-        xWidth_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 x_width = 3;</code>
-       */
-      public Builder clearXWidth() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        xWidth_ = 0;
-        onChanged();
-        return this;
+         return xWidth_;
       }
 
       // required int32 y_width = 4;
-      private int yWidth_ ;
+      public static final int Y_WIDTH_FIELD_NUMBER = 4;
+      private int yWidth_;
+
       /**
        * <code>required int32 y_width = 4;</code>
        */
       public boolean hasYWidth() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+         return ((bitField0_ & 0x00000008) == 0x00000008);
       }
+
       /**
        * <code>required int32 y_width = 4;</code>
        */
       public int getYWidth() {
-        return yWidth_;
+         return yWidth_;
       }
+
+      private void initFields() {
+         x_ = 0;
+         y_ = 0;
+         xWidth_ = 0;
+         yWidth_ = 0;
+      }
+
+      private byte memoizedIsInitialized = -1;
+
+      public final boolean isInitialized() {
+         byte isInitialized = memoizedIsInitialized;
+         if (isInitialized != -1) {
+            return isInitialized == 1;
+         }
+
+         if (!hasX()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         if (!hasY()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         if (!hasXWidth()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         if (!hasYWidth()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         memoizedIsInitialized = 1;
+         return true;
+      }
+
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+            throws java.io.IOException {
+         getSerializedSize();
+         if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            output.writeInt32(1, x_);
+         }
+         if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            output.writeInt32(2, y_);
+         }
+         if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            output.writeInt32(3, xWidth_);
+         }
+         if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            output.writeInt32(4, yWidth_);
+         }
+         getUnknownFields().writeTo(output);
+      }
+
+      private int memoizedSerializedSize = -1;
+
+      public int getSerializedSize() {
+         int size = memoizedSerializedSize;
+         if (size != -1) {
+            return size;
+         }
+
+         size = 0;
+         if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(1, x_);
+         }
+         if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(2, y_);
+         }
+         if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(3, xWidth_);
+         }
+         if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(4, yWidth_);
+         }
+         size += getUnknownFields().getSerializedSize();
+         memoizedSerializedSize = size;
+         return size;
+      }
+
+      private static final long serialVersionUID = 0L;
+
+      @java.lang.Override
+      protected java.lang.Object writeReplace()
+            throws java.io.ObjectStreamException {
+         return super.writeReplace();
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseDelimitedFrom(
+            java.io.InputStream input)
+            throws java.io.IOException {
+         return PARSER.parseDelimitedFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+         return Builder.create();
+      }
+
+      public Builder newBuilderForType() {
+         return newBuilder();
+      }
+
+      public static Builder newBuilder(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI prototype) {
+         return newBuilder().mergeFrom(prototype);
+      }
+
+      public Builder toBuilder() {
+         return newBuilder(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+         Builder builder = new Builder(parent);
+         return builder;
+      }
+
       /**
-       * <code>required int32 y_width = 4;</code>
+       * Protobuf type {@code TSF.ROI}
+       *
+       * <pre>
+       * ROI in pixels, should be consistent with nr pixels given in SpotList
+       * </pre>
        */
-      public Builder setYWidth(int value) {
-        bitField0_ |= 0x00000008;
-        yWidth_ = value;
-        onChanged();
-        return this;
+      public static final class Builder extends
+            com.google.protobuf.GeneratedMessage.Builder<Builder>
+            implements edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder {
+
+         public static final com.google.protobuf.Descriptors.Descriptor
+         getDescriptor() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_descriptor;
+         }
+
+         protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+         internalGetFieldAccessorTable() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_fieldAccessorTable
+                  .ensureFieldAccessorsInitialized(
+                        edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.class,
+                        edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder.class);
+         }
+
+         // Construct using edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.newBuilder()
+         private Builder() {
+            maybeForceBuilderInitialization();
+         }
+
+         private Builder(
+               com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+            super(parent);
+            maybeForceBuilderInitialization();
+         }
+
+         private void maybeForceBuilderInitialization() {
+            if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+            }
+         }
+
+         private static Builder create() {
+            return new Builder();
+         }
+
+         public Builder clear() {
+            super.clear();
+            x_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000001);
+            y_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000002);
+            xWidth_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000004);
+            yWidth_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000008);
+            return this;
+         }
+
+         public Builder clone() {
+            return create().mergeFrom(buildPartial());
+         }
+
+         public com.google.protobuf.Descriptors.Descriptor
+         getDescriptorForType() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_ROI_descriptor;
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI getDefaultInstanceForType() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance();
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI build() {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI result = buildPartial();
+            if (!result.isInitialized()) {
+               throw newUninitializedMessageException(result);
+            }
+            return result;
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI buildPartial() {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI result = new edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI(
+                  this);
+            int from_bitField0_ = bitField0_;
+            int to_bitField0_ = 0;
+            if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+               to_bitField0_ |= 0x00000001;
+            }
+            result.x_ = x_;
+            if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+               to_bitField0_ |= 0x00000002;
+            }
+            result.y_ = y_;
+            if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+               to_bitField0_ |= 0x00000004;
+            }
+            result.xWidth_ = xWidth_;
+            if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+               to_bitField0_ |= 0x00000008;
+            }
+            result.yWidth_ = yWidth_;
+            result.bitField0_ = to_bitField0_;
+            onBuilt();
+            return result;
+         }
+
+         public Builder mergeFrom(com.google.protobuf.Message other) {
+            if (other instanceof edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI) {
+               return mergeFrom((edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI) other);
+            } else {
+               super.mergeFrom(other);
+               return this;
+            }
+         }
+
+         public Builder mergeFrom(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI other) {
+            if (other == edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance()) {
+               return this;
+            }
+            if (other.hasX()) {
+               setX(other.getX());
+            }
+            if (other.hasY()) {
+               setY(other.getY());
+            }
+            if (other.hasXWidth()) {
+               setXWidth(other.getXWidth());
+            }
+            if (other.hasYWidth()) {
+               setYWidth(other.getYWidth());
+            }
+            this.mergeUnknownFields(other.getUnknownFields());
+            return this;
+         }
+
+         public final boolean isInitialized() {
+            if (!hasX()) {
+
+               return false;
+            }
+            if (!hasY()) {
+
+               return false;
+            }
+            if (!hasXWidth()) {
+
+               return false;
+            }
+            if (!hasYWidth()) {
+
+               return false;
+            }
+            return true;
+         }
+
+         public Builder mergeFrom(
+               com.google.protobuf.CodedInputStream input,
+               com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+               throws java.io.IOException {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI parsedMessage = null;
+            try {
+               parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+               parsedMessage = (edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI) e
+                     .getUnfinishedMessage();
+               throw e;
+            } finally {
+               if (parsedMessage != null) {
+                  mergeFrom(parsedMessage);
+               }
+            }
+            return this;
+         }
+
+         private int bitField0_;
+
+         // required int32 x = 1;
+         private int x_;
+
+         /**
+          * <code>required int32 x = 1;</code>
+          */
+         public boolean hasX() {
+            return ((bitField0_ & 0x00000001) == 0x00000001);
+         }
+
+         /**
+          * <code>required int32 x = 1;</code>
+          */
+         public int getX() {
+            return x_;
+         }
+
+         /**
+          * <code>required int32 x = 1;</code>
+          */
+         public Builder setX(int value) {
+            bitField0_ |= 0x00000001;
+            x_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required int32 x = 1;</code>
+          */
+         public Builder clearX() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            x_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // required int32 y = 2;
+         private int y_;
+
+         /**
+          * <code>required int32 y = 2;</code>
+          */
+         public boolean hasY() {
+            return ((bitField0_ & 0x00000002) == 0x00000002);
+         }
+
+         /**
+          * <code>required int32 y = 2;</code>
+          */
+         public int getY() {
+            return y_;
+         }
+
+         /**
+          * <code>required int32 y = 2;</code>
+          */
+         public Builder setY(int value) {
+            bitField0_ |= 0x00000002;
+            y_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required int32 y = 2;</code>
+          */
+         public Builder clearY() {
+            bitField0_ = (bitField0_ & ~0x00000002);
+            y_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // required int32 x_width = 3;
+         private int xWidth_;
+
+         /**
+          * <code>required int32 x_width = 3;</code>
+          */
+         public boolean hasXWidth() {
+            return ((bitField0_ & 0x00000004) == 0x00000004);
+         }
+
+         /**
+          * <code>required int32 x_width = 3;</code>
+          */
+         public int getXWidth() {
+            return xWidth_;
+         }
+
+         /**
+          * <code>required int32 x_width = 3;</code>
+          */
+         public Builder setXWidth(int value) {
+            bitField0_ |= 0x00000004;
+            xWidth_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required int32 x_width = 3;</code>
+          */
+         public Builder clearXWidth() {
+            bitField0_ = (bitField0_ & ~0x00000004);
+            xWidth_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // required int32 y_width = 4;
+         private int yWidth_;
+
+         /**
+          * <code>required int32 y_width = 4;</code>
+          */
+         public boolean hasYWidth() {
+            return ((bitField0_ & 0x00000008) == 0x00000008);
+         }
+
+         /**
+          * <code>required int32 y_width = 4;</code>
+          */
+         public int getYWidth() {
+            return yWidth_;
+         }
+
+         /**
+          * <code>required int32 y_width = 4;</code>
+          */
+         public Builder setYWidth(int value) {
+            bitField0_ |= 0x00000008;
+            yWidth_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required int32 y_width = 4;</code>
+          */
+         public Builder clearYWidth() {
+            bitField0_ = (bitField0_ & ~0x00000008);
+            yWidth_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // @@protoc_insertion_point(builder_scope:TSF.ROI)
       }
+
+      static {
+         defaultInstance = new ROI(true);
+         defaultInstance.initFields();
+      }
+
+      // @@protoc_insertion_point(class_scope:TSF.ROI)
+   }
+
+   public interface SpotListOrBuilder extends
+         com.google.protobuf.GeneratedMessage.
+               ExtendableMessageOrBuilder<SpotList> {
+
+      // required int32 application_id = 1 [default = 1];
+
       /**
-       * <code>required int32 y_width = 4;</code>
+       * <code>required int32 application_id = 1 [default = 1];</code>
+       *
+       * <pre>
+       * UID for the application that generated these data
+       * Request a UID from nico at cmp.ucsf.edu or use 1
+       * </pre>
        */
-      public Builder clearYWidth() {
-        bitField0_ = (bitField0_ & ~0x00000008);
-        yWidth_ = 0;
-        onChanged();
-        return this;
+      boolean hasApplicationId();
+
+      /**
+       * <code>required int32 application_id = 1 [default = 1];</code>
+       *
+       * <pre>
+       * UID for the application that generated these data
+       * Request a UID from nico at cmp.ucsf.edu or use 1
+       * </pre>
+       */
+      int getApplicationId();
+
+      // optional string name = 2;
+
+      /**
+       * <code>optional string name = 2;</code>
+       *
+       * <pre>
+       * name identifying the original dataset
+       * </pre>
+       */
+      boolean hasName();
+
+      /**
+       * <code>optional string name = 2;</code>
+       *
+       * <pre>
+       * name identifying the original dataset
+       * </pre>
+       */
+      java.lang.String getName();
+
+      /**
+       * <code>optional string name = 2;</code>
+       *
+       * <pre>
+       * name identifying the original dataset
+       * </pre>
+       */
+      com.google.protobuf.ByteString
+      getNameBytes();
+
+      // optional string filepath = 3;
+
+      /**
+       * <code>optional string filepath = 3;</code>
+       *
+       * <pre>
+       * path to the image data used to generate these spot data
+       * </pre>
+       */
+      boolean hasFilepath();
+
+      /**
+       * <code>optional string filepath = 3;</code>
+       *
+       * <pre>
+       * path to the image data used to generate these spot data
+       * </pre>
+       */
+      java.lang.String getFilepath();
+
+      /**
+       * <code>optional string filepath = 3;</code>
+       *
+       * <pre>
+       * path to the image data used to generate these spot data
+       * </pre>
+       */
+      com.google.protobuf.ByteString
+      getFilepathBytes();
+
+      // optional int64 uid = 4;
+
+      /**
+       * <code>optional int64 uid = 4;</code>
+       *
+       * <pre>
+       * Unique ID, can be used by application to link to original data
+       * </pre>
+       */
+      boolean hasUid();
+
+      /**
+       * <code>optional int64 uid = 4;</code>
+       *
+       * <pre>
+       * Unique ID, can be used by application to link to original data
+       * </pre>
+       */
+      long getUid();
+
+      // optional int32 nr_pixels_x = 5;
+
+      /**
+       * <code>optional int32 nr_pixels_x = 5;</code>
+       *
+       * <pre>
+       * nr pixels in x of original data
+       * </pre>
+       */
+      boolean hasNrPixelsX();
+
+      /**
+       * <code>optional int32 nr_pixels_x = 5;</code>
+       *
+       * <pre>
+       * nr pixels in x of original data
+       * </pre>
+       */
+      int getNrPixelsX();
+
+      // optional int32 nr_pixels_y = 6;
+
+      /**
+       * <code>optional int32 nr_pixels_y = 6;</code>
+       *
+       * <pre>
+       * nr pixels in y of original data
+       * </pre>
+       */
+      boolean hasNrPixelsY();
+
+      /**
+       * <code>optional int32 nr_pixels_y = 6;</code>
+       *
+       * <pre>
+       * nr pixels in y of original data
+       * </pre>
+       */
+      int getNrPixelsY();
+
+      // optional float pixel_size = 7;
+
+      /**
+       * <code>optional float pixel_size = 7;</code>
+       *
+       * <pre>
+       * pixel size in nanometer
+       * </pre>
+       */
+      boolean hasPixelSize();
+
+      /**
+       * <code>optional float pixel_size = 7;</code>
+       *
+       * <pre>
+       * pixel size in nanometer
+       * </pre>
+       */
+      float getPixelSize();
+
+      // optional int64 nr_spots = 8;
+
+      /**
+       * <code>optional int64 nr_spots = 8;</code>
+       *
+       * <pre>
+       * number of spots in this data set
+       * </pre>
+       */
+      boolean hasNrSpots();
+
+      /**
+       * <code>optional int64 nr_spots = 8;</code>
+       *
+       * <pre>
+       * number of spots in this data set
+       * </pre>
+       */
+      long getNrSpots();
+
+      // optional int32 box_size = 17;
+
+      /**
+       * <code>optional int32 box_size = 17;</code>
+       *
+       * <pre>
+       * size (in pixels) of rectangular box used in Gaussian fitting
+       * </pre>
+       */
+      boolean hasBoxSize();
+
+      /**
+       * <code>optional int32 box_size = 17;</code>
+       *
+       * <pre>
+       * size (in pixels) of rectangular box used in Gaussian fitting
+       * </pre>
+       */
+      int getBoxSize();
+
+      // optional int32 nr_channels = 18;
+
+      /**
+       * <code>optional int32 nr_channels = 18;</code>
+       *
+       * <pre>
+       * Nr of channels in the original data set
+       * </pre>
+       */
+      boolean hasNrChannels();
+
+      /**
+       * <code>optional int32 nr_channels = 18;</code>
+       *
+       * <pre>
+       * Nr of channels in the original data set
+       * </pre>
+       */
+      int getNrChannels();
+
+      // optional int32 nr_frames = 19;
+
+      /**
+       * <code>optional int32 nr_frames = 19;</code>
+       *
+       * <pre>
+       * Nr of frames in the original data set
+       * </pre>
+       */
+      boolean hasNrFrames();
+
+      /**
+       * <code>optional int32 nr_frames = 19;</code>
+       *
+       * <pre>
+       * Nr of frames in the original data set
+       * </pre>
+       */
+      int getNrFrames();
+
+      // optional int32 nr_slices = 20;
+
+      /**
+       * <code>optional int32 nr_slices = 20;</code>
+       *
+       * <pre>
+       * Nr of slices in the original data set
+       * </pre>
+       */
+      boolean hasNrSlices();
+
+      /**
+       * <code>optional int32 nr_slices = 20;</code>
+       *
+       * <pre>
+       * Nr of slices in the original data set
+       * </pre>
+       */
+      int getNrSlices();
+
+      // optional int32 nr_pos = 21;
+
+      /**
+       * <code>optional int32 nr_pos = 21;</code>
+       *
+       * <pre>
+       * Nr of positions in the original data set
+       * </pre>
+       */
+      boolean hasNrPos();
+
+      /**
+       * <code>optional int32 nr_pos = 21;</code>
+       *
+       * <pre>
+       * Nr of positions in the original data set
+       * </pre>
+       */
+      int getNrPos();
+
+      // repeated .TSF.FluorophoreType fluorophore_types = 26;
+
+      /**
+       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+       *
+       * <pre>
+       * Fluorophore type characterizations. If you use the fluorophore type field,
+       * you must add a FluorophoreType message for each used id.
+       * </pre>
+       */
+      java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType>
+      getFluorophoreTypesList();
+
+      /**
+       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+       *
+       * <pre>
+       * Fluorophore type characterizations. If you use the fluorophore type field,
+       * you must add a FluorophoreType message for each used id.
+       * </pre>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType getFluorophoreTypes(int index);
+
+      /**
+       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+       *
+       * <pre>
+       * Fluorophore type characterizations. If you use the fluorophore type field,
+       * you must add a FluorophoreType message for each used id.
+       * </pre>
+       */
+      int getFluorophoreTypesCount();
+
+      /**
+       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+       *
+       * <pre>
+       * Fluorophore type characterizations. If you use the fluorophore type field,
+       * you must add a FluorophoreType message for each used id.
+       * </pre>
+       */
+      java.util.List<? extends edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder>
+      getFluorophoreTypesOrBuilderList();
+
+      /**
+       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+       *
+       * <pre>
+       * Fluorophore type characterizations. If you use the fluorophore type field,
+       * you must add a FluorophoreType message for each used id.
+       * </pre>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder getFluorophoreTypesOrBuilder(
+            int index);
+
+      // optional .TSF.LocationUnits location_units = 22;
+
+      /**
+       * <code>optional .TSF.LocationUnits location_units = 22;</code>
+       *
+       * <pre>
+       * If units will always be the same for all spots, then use these units tags,
+       * otherwise use the unit tags with each spot
+       * </pre>
+       */
+      boolean hasLocationUnits();
+
+      /**
+       * <code>optional .TSF.LocationUnits location_units = 22;</code>
+       *
+       * <pre>
+       * If units will always be the same for all spots, then use these units tags,
+       * otherwise use the unit tags with each spot
+       * </pre>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits();
+
+      // optional .TSF.IntensityUnits intensity_units = 23;
+
+      /**
+       * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
+       */
+      boolean hasIntensityUnits();
+
+      /**
+       * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits();
+
+      // optional .TSF.ThetaUnits theta_units = 27;
+
+      /**
+       * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
+       */
+      boolean hasThetaUnits();
+
+      /**
+       * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits getThetaUnits();
+
+      // optional .TSF.FitMode fit_mode = 24;
+
+      /**
+       * <code>optional .TSF.FitMode fit_mode = 24;</code>
+       *
+       * <pre>
+       * If fitmode  will always be the same for all spots, then use this fitmode
+       * otherwise use the fitmode with each spot
+       * </pre>
+       */
+      boolean hasFitMode();
+
+      /**
+       * <code>optional .TSF.FitMode fit_mode = 24;</code>
+       *
+       * <pre>
+       * If fitmode  will always be the same for all spots, then use this fitmode
+       * otherwise use the fitmode with each spot
+       * </pre>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode getFitMode();
+
+      // optional bool is_track = 25 [default = false];
+
+      /**
+       * <code>optional bool is_track = 25 [default = false];</code>
+       *
+       * <pre>
+       * flag indicating whether this is a sequence of spot data in consecutive
+       * time frames thought to originate from the same entity
+       * </pre>
+       */
+      boolean hasIsTrack();
+
+      /**
+       * <code>optional bool is_track = 25 [default = false];</code>
+       *
+       * <pre>
+       * flag indicating whether this is a sequence of spot data in consecutive
+       * time frames thought to originate from the same entity
+       * </pre>
+       */
+      boolean getIsTrack();
+
+      // repeated double ecf = 28;
+
+      /**
+       * <code>repeated double ecf = 28;</code>
+       *
+       * <pre>
+       * The electron conversion factor (camera gain), defined as
+       * # of electrons per pixel / # of counts per pixel
+       * The ecf can be different for different channels (which can
+       * happen when separate cameras are used for separate channels),
+       * therefore provide the ecf for each channel in the channel order
+       * </pre>
+       */
+      java.util.List<java.lang.Double> getEcfList();
+
+      /**
+       * <code>repeated double ecf = 28;</code>
+       *
+       * <pre>
+       * The electron conversion factor (camera gain), defined as
+       * # of electrons per pixel / # of counts per pixel
+       * The ecf can be different for different channels (which can
+       * happen when separate cameras are used for separate channels),
+       * therefore provide the ecf for each channel in the channel order
+       * </pre>
+       */
+      int getEcfCount();
+
+      /**
+       * <code>repeated double ecf = 28;</code>
+       *
+       * <pre>
+       * The electron conversion factor (camera gain), defined as
+       * # of electrons per pixel / # of counts per pixel
+       * The ecf can be different for different channels (which can
+       * happen when separate cameras are used for separate channels),
+       * therefore provide the ecf for each channel in the channel order
+       * </pre>
+       */
+      double getEcf(int index);
+
+      // repeated double qe = 30;
+
+      /**
+       * <code>repeated double qe = 30;</code>
+       *
+       * <pre>
+       * The quantum efficiency can be used to calculate the number
+       * of photons that hit the sensor, rather than the number of
+       * electrons that were derived from them
+       * Since this number is wavelength dependent, provide the QE
+       * for each fluorophore type (in the fluorophore type order)
+       * See the description of the field channel in the Spot message below
+       * </pre>
+       */
+      java.util.List<java.lang.Double> getQeList();
+
+      /**
+       * <code>repeated double qe = 30;</code>
+       *
+       * <pre>
+       * The quantum efficiency can be used to calculate the number
+       * of photons that hit the sensor, rather than the number of
+       * electrons that were derived from them
+       * Since this number is wavelength dependent, provide the QE
+       * for each fluorophore type (in the fluorophore type order)
+       * See the description of the field channel in the Spot message below
+       * </pre>
+       */
+      int getQeCount();
+
+      /**
+       * <code>repeated double qe = 30;</code>
+       *
+       * <pre>
+       * The quantum efficiency can be used to calculate the number
+       * of photons that hit the sensor, rather than the number of
+       * electrons that were derived from them
+       * Since this number is wavelength dependent, provide the QE
+       * for each fluorophore type (in the fluorophore type order)
+       * See the description of the field channel in the Spot message below
+       * </pre>
+       */
+      double getQe(int index);
+
+      // optional .TSF.ROI roi = 29;
+
+      /**
+       * <code>optional .TSF.ROI roi = 29;</code>
+       */
+      boolean hasRoi();
+
+      /**
+       * <code>optional .TSF.ROI roi = 29;</code>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI getRoi();
+
+      /**
+       * <code>optional .TSF.ROI roi = 29;</code>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder getRoiOrBuilder();
+   }
+
+   /**
+    * Protobuf type {@code TSF.SpotList}
+    */
+   public static final class SpotList extends
+         com.google.protobuf.GeneratedMessage.ExtendableMessage<
+               SpotList> implements SpotListOrBuilder {
+
+      // Use SpotList.newBuilder() to construct.
+      private SpotList(
+            com.google.protobuf.GeneratedMessage.ExtendableBuilder<edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList, ?> builder) {
+         super(builder);
+         this.unknownFields = builder.getUnknownFields();
       }
 
-      // @@protoc_insertion_point(builder_scope:TSF.ROI)
-    }
+      private SpotList(boolean noInit) {
+         this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      }
 
-    static {
-      defaultInstance = new ROI(true);
-      defaultInstance.initFields();
-    }
+      private static final SpotList defaultInstance;
 
-    // @@protoc_insertion_point(class_scope:TSF.ROI)
-  }
+      public static SpotList getDefaultInstance() {
+         return defaultInstance;
+      }
 
-  public interface SpotListOrBuilder extends
-      com.google.protobuf.GeneratedMessage.
-          ExtendableMessageOrBuilder<SpotList> {
+      public SpotList getDefaultInstanceForType() {
+         return defaultInstance;
+      }
 
-    // required int32 application_id = 1 [default = 1];
-    /**
-     * <code>required int32 application_id = 1 [default = 1];</code>
-     *
-     * <pre>
-     * UID for the application that generated these data
-     * Request a UID from nico at cmp.ucsf.edu or use 1 
-     * </pre>
-     */
-    boolean hasApplicationId();
-    /**
-     * <code>required int32 application_id = 1 [default = 1];</code>
-     *
-     * <pre>
-     * UID for the application that generated these data
-     * Request a UID from nico at cmp.ucsf.edu or use 1 
-     * </pre>
-     */
-    int getApplicationId();
+      private final com.google.protobuf.UnknownFieldSet unknownFields;
 
-    // optional string name = 2;
-    /**
-     * <code>optional string name = 2;</code>
-     *
-     * <pre>
-     * name identifying the original dataset 
-     * </pre>
-     */
-    boolean hasName();
-    /**
-     * <code>optional string name = 2;</code>
-     *
-     * <pre>
-     * name identifying the original dataset 
-     * </pre>
-     */
-    java.lang.String getName();
-    /**
-     * <code>optional string name = 2;</code>
-     *
-     * <pre>
-     * name identifying the original dataset 
-     * </pre>
-     */
-    com.google.protobuf.ByteString
-        getNameBytes();
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+         return this.unknownFields;
+      }
 
-    // optional string filepath = 3;
-    /**
-     * <code>optional string filepath = 3;</code>
-     *
-     * <pre>
-     * path to the image data used to generate these spot data
-     * </pre>
-     */
-    boolean hasFilepath();
-    /**
-     * <code>optional string filepath = 3;</code>
-     *
-     * <pre>
-     * path to the image data used to generate these spot data
-     * </pre>
-     */
-    java.lang.String getFilepath();
-    /**
-     * <code>optional string filepath = 3;</code>
-     *
-     * <pre>
-     * path to the image data used to generate these spot data
-     * </pre>
-     */
-    com.google.protobuf.ByteString
-        getFilepathBytes();
-
-    // optional int64 uid = 4;
-    /**
-     * <code>optional int64 uid = 4;</code>
-     *
-     * <pre>
-     * Unique ID, can be used by application to link to original data
-     * </pre>
-     */
-    boolean hasUid();
-    /**
-     * <code>optional int64 uid = 4;</code>
-     *
-     * <pre>
-     * Unique ID, can be used by application to link to original data
-     * </pre>
-     */
-    long getUid();
-
-    // optional int32 nr_pixels_x = 5;
-    /**
-     * <code>optional int32 nr_pixels_x = 5;</code>
-     *
-     * <pre>
-     * nr pixels in x of original data
-     * </pre>
-     */
-    boolean hasNrPixelsX();
-    /**
-     * <code>optional int32 nr_pixels_x = 5;</code>
-     *
-     * <pre>
-     * nr pixels in x of original data
-     * </pre>
-     */
-    int getNrPixelsX();
-
-    // optional int32 nr_pixels_y = 6;
-    /**
-     * <code>optional int32 nr_pixels_y = 6;</code>
-     *
-     * <pre>
-     * nr pixels in y of original data
-     * </pre>
-     */
-    boolean hasNrPixelsY();
-    /**
-     * <code>optional int32 nr_pixels_y = 6;</code>
-     *
-     * <pre>
-     * nr pixels in y of original data
-     * </pre>
-     */
-    int getNrPixelsY();
-
-    // optional float pixel_size = 7;
-    /**
-     * <code>optional float pixel_size = 7;</code>
-     *
-     * <pre>
-     * pixel size in nanometer
-     * </pre>
-     */
-    boolean hasPixelSize();
-    /**
-     * <code>optional float pixel_size = 7;</code>
-     *
-     * <pre>
-     * pixel size in nanometer
-     * </pre>
-     */
-    float getPixelSize();
-
-    // optional int64 nr_spots = 8;
-    /**
-     * <code>optional int64 nr_spots = 8;</code>
-     *
-     * <pre>
-     * number of spots in this data set
-     * </pre>
-     */
-    boolean hasNrSpots();
-    /**
-     * <code>optional int64 nr_spots = 8;</code>
-     *
-     * <pre>
-     * number of spots in this data set
-     * </pre>
-     */
-    long getNrSpots();
-
-    // optional int32 box_size = 17;
-    /**
-     * <code>optional int32 box_size = 17;</code>
-     *
-     * <pre>
-     * size (in pixels) of rectangular box used in Gaussian fitting
-     * </pre>
-     */
-    boolean hasBoxSize();
-    /**
-     * <code>optional int32 box_size = 17;</code>
-     *
-     * <pre>
-     * size (in pixels) of rectangular box used in Gaussian fitting
-     * </pre>
-     */
-    int getBoxSize();
-
-    // optional int32 nr_channels = 18;
-    /**
-     * <code>optional int32 nr_channels = 18;</code>
-     *
-     * <pre>
-     * Nr of channels in the original data set
-     * </pre>
-     */
-    boolean hasNrChannels();
-    /**
-     * <code>optional int32 nr_channels = 18;</code>
-     *
-     * <pre>
-     * Nr of channels in the original data set
-     * </pre>
-     */
-    int getNrChannels();
-
-    // optional int32 nr_frames = 19;
-    /**
-     * <code>optional int32 nr_frames = 19;</code>
-     *
-     * <pre>
-     * Nr of frames in the original data set
-     * </pre>
-     */
-    boolean hasNrFrames();
-    /**
-     * <code>optional int32 nr_frames = 19;</code>
-     *
-     * <pre>
-     * Nr of frames in the original data set
-     * </pre>
-     */
-    int getNrFrames();
-
-    // optional int32 nr_slices = 20;
-    /**
-     * <code>optional int32 nr_slices = 20;</code>
-     *
-     * <pre>
-     * Nr of slices in the original data set
-     * </pre>
-     */
-    boolean hasNrSlices();
-    /**
-     * <code>optional int32 nr_slices = 20;</code>
-     *
-     * <pre>
-     * Nr of slices in the original data set
-     * </pre>
-     */
-    int getNrSlices();
-
-    // optional int32 nr_pos = 21;
-    /**
-     * <code>optional int32 nr_pos = 21;</code>
-     *
-     * <pre>
-     * Nr of positions in the original data set
-     * </pre>
-     */
-    boolean hasNrPos();
-    /**
-     * <code>optional int32 nr_pos = 21;</code>
-     *
-     * <pre>
-     * Nr of positions in the original data set
-     * </pre>
-     */
-    int getNrPos();
-
-    // repeated .TSF.FluorophoreType fluorophore_types = 26;
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> 
-        getFluorophoreTypesList();
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType getFluorophoreTypes(int index);
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    int getFluorophoreTypesCount();
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    java.util.List<? extends edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder> 
-        getFluorophoreTypesOrBuilderList();
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder getFluorophoreTypesOrBuilder(
-        int index);
-
-    // optional .TSF.LocationUnits location_units = 22;
-    /**
-     * <code>optional .TSF.LocationUnits location_units = 22;</code>
-     *
-     * <pre>
-     * If units will always be the same for all spots, then use these units tags,
-     * otherwise use the unit tags with each spot
-     * </pre>
-     */
-    boolean hasLocationUnits();
-    /**
-     * <code>optional .TSF.LocationUnits location_units = 22;</code>
-     *
-     * <pre>
-     * If units will always be the same for all spots, then use these units tags,
-     * otherwise use the unit tags with each spot
-     * </pre>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits();
-
-    // optional .TSF.IntensityUnits intensity_units = 23;
-    /**
-     * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
-     */
-    boolean hasIntensityUnits();
-    /**
-     * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits();
-
-    // optional .TSF.ThetaUnits theta_units = 27;
-    /**
-     * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
-     */
-    boolean hasThetaUnits();
-    /**
-     * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits getThetaUnits();
-
-    // optional .TSF.FitMode fit_mode = 24;
-    /**
-     * <code>optional .TSF.FitMode fit_mode = 24;</code>
-     *
-     * <pre>
-     * If fitmode  will always be the same for all spots, then use this fitmode
-     * otherwise use the fitmode with each spot
-     * </pre>
-     */
-    boolean hasFitMode();
-    /**
-     * <code>optional .TSF.FitMode fit_mode = 24;</code>
-     *
-     * <pre>
-     * If fitmode  will always be the same for all spots, then use this fitmode
-     * otherwise use the fitmode with each spot
-     * </pre>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode getFitMode();
-
-    // optional bool is_track = 25 [default = false];
-    /**
-     * <code>optional bool is_track = 25 [default = false];</code>
-     *
-     * <pre>
-     * flag indicating whether this is a sequence of spot data in consecutive 
-     * time frames thought to originate from the same entity
-     * </pre>
-     */
-    boolean hasIsTrack();
-    /**
-     * <code>optional bool is_track = 25 [default = false];</code>
-     *
-     * <pre>
-     * flag indicating whether this is a sequence of spot data in consecutive 
-     * time frames thought to originate from the same entity
-     * </pre>
-     */
-    boolean getIsTrack();
-
-    // repeated double ecf = 28;
-    /**
-     * <code>repeated double ecf = 28;</code>
-     *
-     * <pre>
-     * The electron conversion factor (camera gain), defined as
-     * # of electrons per pixel / # of counts per pixel
-     * The ecf can be different for different channels (which can 
-     * happen when separate cameras are used for separate channels),
-     * therefore provide the ecf for each channel in the channel order
-     * </pre>
-     */
-    java.util.List<java.lang.Double> getEcfList();
-    /**
-     * <code>repeated double ecf = 28;</code>
-     *
-     * <pre>
-     * The electron conversion factor (camera gain), defined as
-     * # of electrons per pixel / # of counts per pixel
-     * The ecf can be different for different channels (which can 
-     * happen when separate cameras are used for separate channels),
-     * therefore provide the ecf for each channel in the channel order
-     * </pre>
-     */
-    int getEcfCount();
-    /**
-     * <code>repeated double ecf = 28;</code>
-     *
-     * <pre>
-     * The electron conversion factor (camera gain), defined as
-     * # of electrons per pixel / # of counts per pixel
-     * The ecf can be different for different channels (which can 
-     * happen when separate cameras are used for separate channels),
-     * therefore provide the ecf for each channel in the channel order
-     * </pre>
-     */
-    double getEcf(int index);
-
-    // repeated double qe = 30;
-    /**
-     * <code>repeated double qe = 30;</code>
-     *
-     * <pre>
-     * The quantum efficiency can be used to calculate the number
-     * of photons that hit the sensor, rather than the number of 
-     * electrons that were derived from them
-     * Since this number is wavelength dependent, provide the QE
-     * for each fluorophore type (in the fluorophore type order)
-     * See the description of the field channel in the Spot message below
-     * </pre>
-     */
-    java.util.List<java.lang.Double> getQeList();
-    /**
-     * <code>repeated double qe = 30;</code>
-     *
-     * <pre>
-     * The quantum efficiency can be used to calculate the number
-     * of photons that hit the sensor, rather than the number of 
-     * electrons that were derived from them
-     * Since this number is wavelength dependent, provide the QE
-     * for each fluorophore type (in the fluorophore type order)
-     * See the description of the field channel in the Spot message below
-     * </pre>
-     */
-    int getQeCount();
-    /**
-     * <code>repeated double qe = 30;</code>
-     *
-     * <pre>
-     * The quantum efficiency can be used to calculate the number
-     * of photons that hit the sensor, rather than the number of 
-     * electrons that were derived from them
-     * Since this number is wavelength dependent, provide the QE
-     * for each fluorophore type (in the fluorophore type order)
-     * See the description of the field channel in the Spot message below
-     * </pre>
-     */
-    double getQe(int index);
-
-    // optional .TSF.ROI roi = 29;
-    /**
-     * <code>optional .TSF.ROI roi = 29;</code>
-     */
-    boolean hasRoi();
-    /**
-     * <code>optional .TSF.ROI roi = 29;</code>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI getRoi();
-    /**
-     * <code>optional .TSF.ROI roi = 29;</code>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder getRoiOrBuilder();
-  }
-  /**
-   * Protobuf type {@code TSF.SpotList}
-   */
-  public static final class SpotList extends
-      com.google.protobuf.GeneratedMessage.ExtendableMessage<
-        SpotList> implements SpotListOrBuilder {
-    // Use SpotList.newBuilder() to construct.
-    private SpotList(com.google.protobuf.GeneratedMessage.ExtendableBuilder<edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList, ?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private SpotList(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final SpotList defaultInstance;
-    public static SpotList getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public SpotList getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private SpotList(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
+      private SpotList(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         initFields();
+         int mutable_bitField0_ = 0;
+         com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+               com.google.protobuf.UnknownFieldSet.newBuilder();
+         try {
+            boolean done = false;
+            while (!done) {
+               int tag = input.readTag();
+               switch (tag) {
+                  case 0:
+                     done = true;
+                     break;
+                  default: {
+                     if (!parseUnknownField(input, unknownFields,
+                           extensionRegistry, tag)) {
+                        done = true;
+                     }
+                     break;
+                  }
+                  case 8: {
+                     bitField0_ |= 0x00000001;
+                     applicationId_ = input.readInt32();
+                     break;
+                  }
+                  case 18: {
+                     bitField0_ |= 0x00000002;
+                     name_ = input.readBytes();
+                     break;
+                  }
+                  case 26: {
+                     bitField0_ |= 0x00000004;
+                     filepath_ = input.readBytes();
+                     break;
+                  }
+                  case 32: {
+                     bitField0_ |= 0x00000008;
+                     uid_ = input.readInt64();
+                     break;
+                  }
+                  case 40: {
+                     bitField0_ |= 0x00000010;
+                     nrPixelsX_ = input.readInt32();
+                     break;
+                  }
+                  case 48: {
+                     bitField0_ |= 0x00000020;
+                     nrPixelsY_ = input.readInt32();
+                     break;
+                  }
+                  case 61: {
+                     bitField0_ |= 0x00000040;
+                     pixelSize_ = input.readFloat();
+                     break;
+                  }
+                  case 64: {
+                     bitField0_ |= 0x00000080;
+                     nrSpots_ = input.readInt64();
+                     break;
+                  }
+                  case 136: {
+                     bitField0_ |= 0x00000100;
+                     boxSize_ = input.readInt32();
+                     break;
+                  }
+                  case 144: {
+                     bitField0_ |= 0x00000200;
+                     nrChannels_ = input.readInt32();
+                     break;
+                  }
+                  case 152: {
+                     bitField0_ |= 0x00000400;
+                     nrFrames_ = input.readInt32();
+                     break;
+                  }
+                  case 160: {
+                     bitField0_ |= 0x00000800;
+                     nrSlices_ = input.readInt32();
+                     break;
+                  }
+                  case 168: {
+                     bitField0_ |= 0x00001000;
+                     nrPos_ = input.readInt32();
+                     break;
+                  }
+                  case 176: {
+                     int rawValue = input.readEnum();
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits
+                           .valueOf(rawValue);
+                     if (value == null) {
+                        unknownFields.mergeVarintField(22, rawValue);
+                     } else {
+                        bitField0_ |= 0x00002000;
+                        locationUnits_ = value;
+                     }
+                     break;
+                  }
+                  case 184: {
+                     int rawValue = input.readEnum();
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits
+                           .valueOf(rawValue);
+                     if (value == null) {
+                        unknownFields.mergeVarintField(23, rawValue);
+                     } else {
+                        bitField0_ |= 0x00004000;
+                        intensityUnits_ = value;
+                     }
+                     break;
+                  }
+                  case 192: {
+                     int rawValue = input.readEnum();
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode
+                           .valueOf(rawValue);
+                     if (value == null) {
+                        unknownFields.mergeVarintField(24, rawValue);
+                     } else {
+                        bitField0_ |= 0x00010000;
+                        fitMode_ = value;
+                     }
+                     break;
+                  }
+                  case 200: {
+                     bitField0_ |= 0x00020000;
+                     isTrack_ = input.readBool();
+                     break;
+                  }
+                  case 210: {
+                     if (!((mutable_bitField0_ & 0x00002000) == 0x00002000)) {
+                        fluorophoreTypes_ = new java.util.ArrayList<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType>();
+                        mutable_bitField0_ |= 0x00002000;
+                     }
+                     fluorophoreTypes_.add(input.readMessage(
+                           edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.PARSER,
+                           extensionRegistry));
+                     break;
+                  }
+                  case 216: {
+                     int rawValue = input.readEnum();
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits
+                           .valueOf(rawValue);
+                     if (value == null) {
+                        unknownFields.mergeVarintField(27, rawValue);
+                     } else {
+                        bitField0_ |= 0x00008000;
+                        thetaUnits_ = value;
+                     }
+                     break;
+                  }
+                  case 225: {
+                     if (!((mutable_bitField0_ & 0x00080000) == 0x00080000)) {
+                        ecf_ = new java.util.ArrayList<java.lang.Double>();
+                        mutable_bitField0_ |= 0x00080000;
+                     }
+                     ecf_.add(input.readDouble());
+                     break;
+                  }
+                  case 226: {
+                     int length = input.readRawVarint32();
+                     int limit = input.pushLimit(length);
+                     if (!((mutable_bitField0_ & 0x00080000) == 0x00080000)
+                           && input.getBytesUntilLimit() > 0) {
+                        ecf_ = new java.util.ArrayList<java.lang.Double>();
+                        mutable_bitField0_ |= 0x00080000;
+                     }
+                     while (input.getBytesUntilLimit() > 0) {
+                        ecf_.add(input.readDouble());
+                     }
+                     input.popLimit(limit);
+                     break;
+                  }
+                  case 234: {
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder subBuilder = null;
+                     if (((bitField0_ & 0x00040000) == 0x00040000)) {
+                        subBuilder = roi_.toBuilder();
+                     }
+                     roi_ = input.readMessage(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.PARSER,
+                           extensionRegistry);
+                     if (subBuilder != null) {
+                        subBuilder.mergeFrom(roi_);
+                        roi_ = subBuilder.buildPartial();
+                     }
+                     bitField0_ |= 0x00040000;
+                     break;
+                  }
+                  case 241: {
+                     if (!((mutable_bitField0_ & 0x00100000) == 0x00100000)) {
+                        qe_ = new java.util.ArrayList<java.lang.Double>();
+                        mutable_bitField0_ |= 0x00100000;
+                     }
+                     qe_.add(input.readDouble());
+                     break;
+                  }
+                  case 242: {
+                     int length = input.readRawVarint32();
+                     int limit = input.pushLimit(length);
+                     if (!((mutable_bitField0_ & 0x00100000) == 0x00100000)
+                           && input.getBytesUntilLimit() > 0) {
+                        qe_ = new java.util.ArrayList<java.lang.Double>();
+                        mutable_bitField0_ |= 0x00100000;
+                     }
+                     while (input.getBytesUntilLimit() > 0) {
+                        qe_.add(input.readDouble());
+                     }
+                     input.popLimit(limit);
+                     break;
+                  }
+               }
             }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              applicationId_ = input.readInt32();
-              break;
+         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(this);
+         } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(
+                  e.getMessage()).setUnfinishedMessage(this);
+         } finally {
+            if (((mutable_bitField0_ & 0x00002000) == 0x00002000)) {
+               fluorophoreTypes_ = java.util.Collections.unmodifiableList(fluorophoreTypes_);
             }
-            case 18: {
-              bitField0_ |= 0x00000002;
-              name_ = input.readBytes();
-              break;
+            if (((mutable_bitField0_ & 0x00080000) == 0x00080000)) {
+               ecf_ = java.util.Collections.unmodifiableList(ecf_);
             }
-            case 26: {
-              bitField0_ |= 0x00000004;
-              filepath_ = input.readBytes();
-              break;
+            if (((mutable_bitField0_ & 0x00100000) == 0x00100000)) {
+               qe_ = java.util.Collections.unmodifiableList(qe_);
             }
-            case 32: {
-              bitField0_ |= 0x00000008;
-              uid_ = input.readInt64();
-              break;
-            }
-            case 40: {
-              bitField0_ |= 0x00000010;
-              nrPixelsX_ = input.readInt32();
-              break;
-            }
-            case 48: {
-              bitField0_ |= 0x00000020;
-              nrPixelsY_ = input.readInt32();
-              break;
-            }
-            case 61: {
-              bitField0_ |= 0x00000040;
-              pixelSize_ = input.readFloat();
-              break;
-            }
-            case 64: {
-              bitField0_ |= 0x00000080;
-              nrSpots_ = input.readInt64();
-              break;
-            }
-            case 136: {
-              bitField0_ |= 0x00000100;
-              boxSize_ = input.readInt32();
-              break;
-            }
-            case 144: {
-              bitField0_ |= 0x00000200;
-              nrChannels_ = input.readInt32();
-              break;
-            }
-            case 152: {
-              bitField0_ |= 0x00000400;
-              nrFrames_ = input.readInt32();
-              break;
-            }
-            case 160: {
-              bitField0_ |= 0x00000800;
-              nrSlices_ = input.readInt32();
-              break;
-            }
-            case 168: {
-              bitField0_ |= 0x00001000;
-              nrPos_ = input.readInt32();
-              break;
-            }
-            case 176: {
-              int rawValue = input.readEnum();
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(22, rawValue);
-              } else {
-                bitField0_ |= 0x00002000;
-                locationUnits_ = value;
-              }
-              break;
-            }
-            case 184: {
-              int rawValue = input.readEnum();
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(23, rawValue);
-              } else {
-                bitField0_ |= 0x00004000;
-                intensityUnits_ = value;
-              }
-              break;
-            }
-            case 192: {
-              int rawValue = input.readEnum();
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(24, rawValue);
-              } else {
-                bitField0_ |= 0x00010000;
-                fitMode_ = value;
-              }
-              break;
-            }
-            case 200: {
-              bitField0_ |= 0x00020000;
-              isTrack_ = input.readBool();
-              break;
-            }
-            case 210: {
-              if (!((mutable_bitField0_ & 0x00002000) == 0x00002000)) {
-                fluorophoreTypes_ = new java.util.ArrayList<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType>();
-                mutable_bitField0_ |= 0x00002000;
-              }
-              fluorophoreTypes_.add(input.readMessage(edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.PARSER, extensionRegistry));
-              break;
-            }
-            case 216: {
-              int rawValue = input.readEnum();
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(27, rawValue);
-              } else {
-                bitField0_ |= 0x00008000;
-                thetaUnits_ = value;
-              }
-              break;
-            }
-            case 225: {
-              if (!((mutable_bitField0_ & 0x00080000) == 0x00080000)) {
-                ecf_ = new java.util.ArrayList<java.lang.Double>();
-                mutable_bitField0_ |= 0x00080000;
-              }
-              ecf_.add(input.readDouble());
-              break;
-            }
-            case 226: {
-              int length = input.readRawVarint32();
-              int limit = input.pushLimit(length);
-              if (!((mutable_bitField0_ & 0x00080000) == 0x00080000) && input.getBytesUntilLimit() > 0) {
-                ecf_ = new java.util.ArrayList<java.lang.Double>();
-                mutable_bitField0_ |= 0x00080000;
-              }
-              while (input.getBytesUntilLimit() > 0) {
-                ecf_.add(input.readDouble());
-              }
-              input.popLimit(limit);
-              break;
-            }
-            case 234: {
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder subBuilder = null;
-              if (((bitField0_ & 0x00040000) == 0x00040000)) {
-                subBuilder = roi_.toBuilder();
-              }
-              roi_ = input.readMessage(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(roi_);
-                roi_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00040000;
-              break;
-            }
-            case 241: {
-              if (!((mutable_bitField0_ & 0x00100000) == 0x00100000)) {
-                qe_ = new java.util.ArrayList<java.lang.Double>();
-                mutable_bitField0_ |= 0x00100000;
-              }
-              qe_.add(input.readDouble());
-              break;
-            }
-            case 242: {
-              int length = input.readRawVarint32();
-              int limit = input.pushLimit(length);
-              if (!((mutable_bitField0_ & 0x00100000) == 0x00100000) && input.getBytesUntilLimit() > 0) {
-                qe_ = new java.util.ArrayList<java.lang.Double>();
-                mutable_bitField0_ |= 0x00100000;
-              }
-              while (input.getBytesUntilLimit() > 0) {
-                qe_.add(input.readDouble());
-              }
-              input.popLimit(limit);
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00002000) == 0x00002000)) {
-          fluorophoreTypes_ = java.util.Collections.unmodifiableList(fluorophoreTypes_);
-        }
-        if (((mutable_bitField0_ & 0x00080000) == 0x00080000)) {
-          ecf_ = java.util.Collections.unmodifiableList(ecf_);
-        }
-        if (((mutable_bitField0_ & 0x00100000) == 0x00100000)) {
-          qe_ = java.util.Collections.unmodifiableList(qe_);
-        }
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
+            this.unknownFields = unknownFields.build();
+            makeExtensionsImmutable();
+         }
       }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_descriptor;
-    }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.class, edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<SpotList> PARSER =
-        new com.google.protobuf.AbstractParser<SpotList>() {
-      public SpotList parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new SpotList(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<SpotList> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    // required int32 application_id = 1 [default = 1];
-    public static final int APPLICATION_ID_FIELD_NUMBER = 1;
-    private int applicationId_;
-    /**
-     * <code>required int32 application_id = 1 [default = 1];</code>
-     *
-     * <pre>
-     * UID for the application that generated these data
-     * Request a UID from nico at cmp.ucsf.edu or use 1 
-     * </pre>
-     */
-    public boolean hasApplicationId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required int32 application_id = 1 [default = 1];</code>
-     *
-     * <pre>
-     * UID for the application that generated these data
-     * Request a UID from nico at cmp.ucsf.edu or use 1 
-     * </pre>
-     */
-    public int getApplicationId() {
-      return applicationId_;
-    }
-
-    // optional string name = 2;
-    public static final int NAME_FIELD_NUMBER = 2;
-    private java.lang.Object name_;
-    /**
-     * <code>optional string name = 2;</code>
-     *
-     * <pre>
-     * name identifying the original dataset 
-     * </pre>
-     */
-    public boolean hasName() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>optional string name = 2;</code>
-     *
-     * <pre>
-     * name identifying the original dataset 
-     * </pre>
-     */
-    public java.lang.String getName() {
-      java.lang.Object ref = name_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          name_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string name = 2;</code>
-     *
-     * <pre>
-     * name identifying the original dataset 
-     * </pre>
-     */
-    public com.google.protobuf.ByteString
-        getNameBytes() {
-      java.lang.Object ref = name_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        name_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    // optional string filepath = 3;
-    public static final int FILEPATH_FIELD_NUMBER = 3;
-    private java.lang.Object filepath_;
-    /**
-     * <code>optional string filepath = 3;</code>
-     *
-     * <pre>
-     * path to the image data used to generate these spot data
-     * </pre>
-     */
-    public boolean hasFilepath() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>optional string filepath = 3;</code>
-     *
-     * <pre>
-     * path to the image data used to generate these spot data
-     * </pre>
-     */
-    public java.lang.String getFilepath() {
-      java.lang.Object ref = filepath_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          filepath_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string filepath = 3;</code>
-     *
-     * <pre>
-     * path to the image data used to generate these spot data
-     * </pre>
-     */
-    public com.google.protobuf.ByteString
-        getFilepathBytes() {
-      java.lang.Object ref = filepath_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        filepath_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    // optional int64 uid = 4;
-    public static final int UID_FIELD_NUMBER = 4;
-    private long uid_;
-    /**
-     * <code>optional int64 uid = 4;</code>
-     *
-     * <pre>
-     * Unique ID, can be used by application to link to original data
-     * </pre>
-     */
-    public boolean hasUid() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
-    }
-    /**
-     * <code>optional int64 uid = 4;</code>
-     *
-     * <pre>
-     * Unique ID, can be used by application to link to original data
-     * </pre>
-     */
-    public long getUid() {
-      return uid_;
-    }
-
-    // optional int32 nr_pixels_x = 5;
-    public static final int NR_PIXELS_X_FIELD_NUMBER = 5;
-    private int nrPixelsX_;
-    /**
-     * <code>optional int32 nr_pixels_x = 5;</code>
-     *
-     * <pre>
-     * nr pixels in x of original data
-     * </pre>
-     */
-    public boolean hasNrPixelsX() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
-    }
-    /**
-     * <code>optional int32 nr_pixels_x = 5;</code>
-     *
-     * <pre>
-     * nr pixels in x of original data
-     * </pre>
-     */
-    public int getNrPixelsX() {
-      return nrPixelsX_;
-    }
-
-    // optional int32 nr_pixels_y = 6;
-    public static final int NR_PIXELS_Y_FIELD_NUMBER = 6;
-    private int nrPixelsY_;
-    /**
-     * <code>optional int32 nr_pixels_y = 6;</code>
-     *
-     * <pre>
-     * nr pixels in y of original data
-     * </pre>
-     */
-    public boolean hasNrPixelsY() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
-    }
-    /**
-     * <code>optional int32 nr_pixels_y = 6;</code>
-     *
-     * <pre>
-     * nr pixels in y of original data
-     * </pre>
-     */
-    public int getNrPixelsY() {
-      return nrPixelsY_;
-    }
-
-    // optional float pixel_size = 7;
-    public static final int PIXEL_SIZE_FIELD_NUMBER = 7;
-    private float pixelSize_;
-    /**
-     * <code>optional float pixel_size = 7;</code>
-     *
-     * <pre>
-     * pixel size in nanometer
-     * </pre>
-     */
-    public boolean hasPixelSize() {
-      return ((bitField0_ & 0x00000040) == 0x00000040);
-    }
-    /**
-     * <code>optional float pixel_size = 7;</code>
-     *
-     * <pre>
-     * pixel size in nanometer
-     * </pre>
-     */
-    public float getPixelSize() {
-      return pixelSize_;
-    }
-
-    // optional int64 nr_spots = 8;
-    public static final int NR_SPOTS_FIELD_NUMBER = 8;
-    private long nrSpots_;
-    /**
-     * <code>optional int64 nr_spots = 8;</code>
-     *
-     * <pre>
-     * number of spots in this data set
-     * </pre>
-     */
-    public boolean hasNrSpots() {
-      return ((bitField0_ & 0x00000080) == 0x00000080);
-    }
-    /**
-     * <code>optional int64 nr_spots = 8;</code>
-     *
-     * <pre>
-     * number of spots in this data set
-     * </pre>
-     */
-    public long getNrSpots() {
-      return nrSpots_;
-    }
-
-    // optional int32 box_size = 17;
-    public static final int BOX_SIZE_FIELD_NUMBER = 17;
-    private int boxSize_;
-    /**
-     * <code>optional int32 box_size = 17;</code>
-     *
-     * <pre>
-     * size (in pixels) of rectangular box used in Gaussian fitting
-     * </pre>
-     */
-    public boolean hasBoxSize() {
-      return ((bitField0_ & 0x00000100) == 0x00000100);
-    }
-    /**
-     * <code>optional int32 box_size = 17;</code>
-     *
-     * <pre>
-     * size (in pixels) of rectangular box used in Gaussian fitting
-     * </pre>
-     */
-    public int getBoxSize() {
-      return boxSize_;
-    }
-
-    // optional int32 nr_channels = 18;
-    public static final int NR_CHANNELS_FIELD_NUMBER = 18;
-    private int nrChannels_;
-    /**
-     * <code>optional int32 nr_channels = 18;</code>
-     *
-     * <pre>
-     * Nr of channels in the original data set
-     * </pre>
-     */
-    public boolean hasNrChannels() {
-      return ((bitField0_ & 0x00000200) == 0x00000200);
-    }
-    /**
-     * <code>optional int32 nr_channels = 18;</code>
-     *
-     * <pre>
-     * Nr of channels in the original data set
-     * </pre>
-     */
-    public int getNrChannels() {
-      return nrChannels_;
-    }
-
-    // optional int32 nr_frames = 19;
-    public static final int NR_FRAMES_FIELD_NUMBER = 19;
-    private int nrFrames_;
-    /**
-     * <code>optional int32 nr_frames = 19;</code>
-     *
-     * <pre>
-     * Nr of frames in the original data set
-     * </pre>
-     */
-    public boolean hasNrFrames() {
-      return ((bitField0_ & 0x00000400) == 0x00000400);
-    }
-    /**
-     * <code>optional int32 nr_frames = 19;</code>
-     *
-     * <pre>
-     * Nr of frames in the original data set
-     * </pre>
-     */
-    public int getNrFrames() {
-      return nrFrames_;
-    }
-
-    // optional int32 nr_slices = 20;
-    public static final int NR_SLICES_FIELD_NUMBER = 20;
-    private int nrSlices_;
-    /**
-     * <code>optional int32 nr_slices = 20;</code>
-     *
-     * <pre>
-     * Nr of slices in the original data set
-     * </pre>
-     */
-    public boolean hasNrSlices() {
-      return ((bitField0_ & 0x00000800) == 0x00000800);
-    }
-    /**
-     * <code>optional int32 nr_slices = 20;</code>
-     *
-     * <pre>
-     * Nr of slices in the original data set
-     * </pre>
-     */
-    public int getNrSlices() {
-      return nrSlices_;
-    }
-
-    // optional int32 nr_pos = 21;
-    public static final int NR_POS_FIELD_NUMBER = 21;
-    private int nrPos_;
-    /**
-     * <code>optional int32 nr_pos = 21;</code>
-     *
-     * <pre>
-     * Nr of positions in the original data set
-     * </pre>
-     */
-    public boolean hasNrPos() {
-      return ((bitField0_ & 0x00001000) == 0x00001000);
-    }
-    /**
-     * <code>optional int32 nr_pos = 21;</code>
-     *
-     * <pre>
-     * Nr of positions in the original data set
-     * </pre>
-     */
-    public int getNrPos() {
-      return nrPos_;
-    }
-
-    // repeated .TSF.FluorophoreType fluorophore_types = 26;
-    public static final int FLUOROPHORE_TYPES_FIELD_NUMBER = 26;
-    private java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> fluorophoreTypes_;
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    public java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> getFluorophoreTypesList() {
-      return fluorophoreTypes_;
-    }
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    public java.util.List<? extends edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder> 
-        getFluorophoreTypesOrBuilderList() {
-      return fluorophoreTypes_;
-    }
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    public int getFluorophoreTypesCount() {
-      return fluorophoreTypes_.size();
-    }
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType getFluorophoreTypes(int index) {
-      return fluorophoreTypes_.get(index);
-    }
-    /**
-     * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-     *
-     * <pre>
-     * Fluorophore type characterizations. If you use the fluorophore type field,
-     * you must add a FluorophoreType message for each used id.
-     * </pre>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder getFluorophoreTypesOrBuilder(
-        int index) {
-      return fluorophoreTypes_.get(index);
-    }
-
-    // optional .TSF.LocationUnits location_units = 22;
-    public static final int LOCATION_UNITS_FIELD_NUMBER = 22;
-    private edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits locationUnits_;
-    /**
-     * <code>optional .TSF.LocationUnits location_units = 22;</code>
-     *
-     * <pre>
-     * If units will always be the same for all spots, then use these units tags,
-     * otherwise use the unit tags with each spot
-     * </pre>
-     */
-    public boolean hasLocationUnits() {
-      return ((bitField0_ & 0x00002000) == 0x00002000);
-    }
-    /**
-     * <code>optional .TSF.LocationUnits location_units = 22;</code>
-     *
-     * <pre>
-     * If units will always be the same for all spots, then use these units tags,
-     * otherwise use the unit tags with each spot
-     * </pre>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits() {
-      return locationUnits_;
-    }
-
-    // optional .TSF.IntensityUnits intensity_units = 23;
-    public static final int INTENSITY_UNITS_FIELD_NUMBER = 23;
-    private edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits intensityUnits_;
-    /**
-     * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
-     */
-    public boolean hasIntensityUnits() {
-      return ((bitField0_ & 0x00004000) == 0x00004000);
-    }
-    /**
-     * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits() {
-      return intensityUnits_;
-    }
-
-    // optional .TSF.ThetaUnits theta_units = 27;
-    public static final int THETA_UNITS_FIELD_NUMBER = 27;
-    private edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits thetaUnits_;
-    /**
-     * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
-     */
-    public boolean hasThetaUnits() {
-      return ((bitField0_ & 0x00008000) == 0x00008000);
-    }
-    /**
-     * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits getThetaUnits() {
-      return thetaUnits_;
-    }
-
-    // optional .TSF.FitMode fit_mode = 24;
-    public static final int FIT_MODE_FIELD_NUMBER = 24;
-    private edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode fitMode_;
-    /**
-     * <code>optional .TSF.FitMode fit_mode = 24;</code>
-     *
-     * <pre>
-     * If fitmode  will always be the same for all spots, then use this fitmode
-     * otherwise use the fitmode with each spot
-     * </pre>
-     */
-    public boolean hasFitMode() {
-      return ((bitField0_ & 0x00010000) == 0x00010000);
-    }
-    /**
-     * <code>optional .TSF.FitMode fit_mode = 24;</code>
-     *
-     * <pre>
-     * If fitmode  will always be the same for all spots, then use this fitmode
-     * otherwise use the fitmode with each spot
-     * </pre>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode getFitMode() {
-      return fitMode_;
-    }
-
-    // optional bool is_track = 25 [default = false];
-    public static final int IS_TRACK_FIELD_NUMBER = 25;
-    private boolean isTrack_;
-    /**
-     * <code>optional bool is_track = 25 [default = false];</code>
-     *
-     * <pre>
-     * flag indicating whether this is a sequence of spot data in consecutive 
-     * time frames thought to originate from the same entity
-     * </pre>
-     */
-    public boolean hasIsTrack() {
-      return ((bitField0_ & 0x00020000) == 0x00020000);
-    }
-    /**
-     * <code>optional bool is_track = 25 [default = false];</code>
-     *
-     * <pre>
-     * flag indicating whether this is a sequence of spot data in consecutive 
-     * time frames thought to originate from the same entity
-     * </pre>
-     */
-    public boolean getIsTrack() {
-      return isTrack_;
-    }
-
-    // repeated double ecf = 28;
-    public static final int ECF_FIELD_NUMBER = 28;
-    private java.util.List<java.lang.Double> ecf_;
-    /**
-     * <code>repeated double ecf = 28;</code>
-     *
-     * <pre>
-     * The electron conversion factor (camera gain), defined as
-     * # of electrons per pixel / # of counts per pixel
-     * The ecf can be different for different channels (which can 
-     * happen when separate cameras are used for separate channels),
-     * therefore provide the ecf for each channel in the channel order
-     * </pre>
-     */
-    public java.util.List<java.lang.Double>
-        getEcfList() {
-      return ecf_;
-    }
-    /**
-     * <code>repeated double ecf = 28;</code>
-     *
-     * <pre>
-     * The electron conversion factor (camera gain), defined as
-     * # of electrons per pixel / # of counts per pixel
-     * The ecf can be different for different channels (which can 
-     * happen when separate cameras are used for separate channels),
-     * therefore provide the ecf for each channel in the channel order
-     * </pre>
-     */
-    public int getEcfCount() {
-      return ecf_.size();
-    }
-    /**
-     * <code>repeated double ecf = 28;</code>
-     *
-     * <pre>
-     * The electron conversion factor (camera gain), defined as
-     * # of electrons per pixel / # of counts per pixel
-     * The ecf can be different for different channels (which can 
-     * happen when separate cameras are used for separate channels),
-     * therefore provide the ecf for each channel in the channel order
-     * </pre>
-     */
-    public double getEcf(int index) {
-      return ecf_.get(index);
-    }
-
-    // repeated double qe = 30;
-    public static final int QE_FIELD_NUMBER = 30;
-    private java.util.List<java.lang.Double> qe_;
-    /**
-     * <code>repeated double qe = 30;</code>
-     *
-     * <pre>
-     * The quantum efficiency can be used to calculate the number
-     * of photons that hit the sensor, rather than the number of 
-     * electrons that were derived from them
-     * Since this number is wavelength dependent, provide the QE
-     * for each fluorophore type (in the fluorophore type order)
-     * See the description of the field channel in the Spot message below
-     * </pre>
-     */
-    public java.util.List<java.lang.Double>
-        getQeList() {
-      return qe_;
-    }
-    /**
-     * <code>repeated double qe = 30;</code>
-     *
-     * <pre>
-     * The quantum efficiency can be used to calculate the number
-     * of photons that hit the sensor, rather than the number of 
-     * electrons that were derived from them
-     * Since this number is wavelength dependent, provide the QE
-     * for each fluorophore type (in the fluorophore type order)
-     * See the description of the field channel in the Spot message below
-     * </pre>
-     */
-    public int getQeCount() {
-      return qe_.size();
-    }
-    /**
-     * <code>repeated double qe = 30;</code>
-     *
-     * <pre>
-     * The quantum efficiency can be used to calculate the number
-     * of photons that hit the sensor, rather than the number of 
-     * electrons that were derived from them
-     * Since this number is wavelength dependent, provide the QE
-     * for each fluorophore type (in the fluorophore type order)
-     * See the description of the field channel in the Spot message below
-     * </pre>
-     */
-    public double getQe(int index) {
-      return qe_.get(index);
-    }
-
-    // optional .TSF.ROI roi = 29;
-    public static final int ROI_FIELD_NUMBER = 29;
-    private edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI roi_;
-    /**
-     * <code>optional .TSF.ROI roi = 29;</code>
-     */
-    public boolean hasRoi() {
-      return ((bitField0_ & 0x00040000) == 0x00040000);
-    }
-    /**
-     * <code>optional .TSF.ROI roi = 29;</code>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI getRoi() {
-      return roi_;
-    }
-    /**
-     * <code>optional .TSF.ROI roi = 29;</code>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder getRoiOrBuilder() {
-      return roi_;
-    }
-
-    private void initFields() {
-      applicationId_ = 1;
-      name_ = "";
-      filepath_ = "";
-      uid_ = 0L;
-      nrPixelsX_ = 0;
-      nrPixelsY_ = 0;
-      pixelSize_ = 0F;
-      nrSpots_ = 0L;
-      boxSize_ = 0;
-      nrChannels_ = 0;
-      nrFrames_ = 0;
-      nrSlices_ = 0;
-      nrPos_ = 0;
-      fluorophoreTypes_ = java.util.Collections.emptyList();
-      locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
-      intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
-      thetaUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits.DEGREES;
-      fitMode_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode.ONEAXIS;
-      isTrack_ = false;
-      ecf_ = java.util.Collections.emptyList();
-      qe_ = java.util.Collections.emptyList();
-      roi_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance();
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
-
-      if (!hasApplicationId()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      for (int i = 0; i < getFluorophoreTypesCount(); i++) {
-        if (!getFluorophoreTypes(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      if (hasRoi()) {
-        if (!getRoi().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
-      if (!extensionsAreInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      com.google.protobuf.GeneratedMessage
-        .ExtendableMessage<edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList>.ExtensionWriter extensionWriter =
-          newExtensionWriter();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeInt32(1, applicationId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getNameBytes());
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBytes(3, getFilepathBytes());
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt64(4, uid_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeInt32(5, nrPixelsX_);
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeInt32(6, nrPixelsY_);
-      }
-      if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        output.writeFloat(7, pixelSize_);
-      }
-      if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        output.writeInt64(8, nrSpots_);
-      }
-      if (((bitField0_ & 0x00000100) == 0x00000100)) {
-        output.writeInt32(17, boxSize_);
-      }
-      if (((bitField0_ & 0x00000200) == 0x00000200)) {
-        output.writeInt32(18, nrChannels_);
-      }
-      if (((bitField0_ & 0x00000400) == 0x00000400)) {
-        output.writeInt32(19, nrFrames_);
-      }
-      if (((bitField0_ & 0x00000800) == 0x00000800)) {
-        output.writeInt32(20, nrSlices_);
-      }
-      if (((bitField0_ & 0x00001000) == 0x00001000)) {
-        output.writeInt32(21, nrPos_);
-      }
-      if (((bitField0_ & 0x00002000) == 0x00002000)) {
-        output.writeEnum(22, locationUnits_.getNumber());
-      }
-      if (((bitField0_ & 0x00004000) == 0x00004000)) {
-        output.writeEnum(23, intensityUnits_.getNumber());
-      }
-      if (((bitField0_ & 0x00010000) == 0x00010000)) {
-        output.writeEnum(24, fitMode_.getNumber());
-      }
-      if (((bitField0_ & 0x00020000) == 0x00020000)) {
-        output.writeBool(25, isTrack_);
-      }
-      for (int i = 0; i < fluorophoreTypes_.size(); i++) {
-        output.writeMessage(26, fluorophoreTypes_.get(i));
-      }
-      if (((bitField0_ & 0x00008000) == 0x00008000)) {
-        output.writeEnum(27, thetaUnits_.getNumber());
-      }
-      for (int i = 0; i < ecf_.size(); i++) {
-        output.writeDouble(28, ecf_.get(i));
-      }
-      if (((bitField0_ & 0x00040000) == 0x00040000)) {
-        output.writeMessage(29, roi_);
-      }
-      for (int i = 0; i < qe_.size(); i++) {
-        output.writeDouble(30, qe_.get(i));
-      }
-      extensionWriter.writeUntil(2048, output);
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(1, applicationId_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getNameBytes());
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(3, getFilepathBytes());
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(4, uid_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(5, nrPixelsX_);
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(6, nrPixelsY_);
-      }
-      if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(7, pixelSize_);
-      }
-      if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(8, nrSpots_);
-      }
-      if (((bitField0_ & 0x00000100) == 0x00000100)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(17, boxSize_);
-      }
-      if (((bitField0_ & 0x00000200) == 0x00000200)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(18, nrChannels_);
-      }
-      if (((bitField0_ & 0x00000400) == 0x00000400)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(19, nrFrames_);
-      }
-      if (((bitField0_ & 0x00000800) == 0x00000800)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(20, nrSlices_);
-      }
-      if (((bitField0_ & 0x00001000) == 0x00001000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(21, nrPos_);
-      }
-      if (((bitField0_ & 0x00002000) == 0x00002000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(22, locationUnits_.getNumber());
-      }
-      if (((bitField0_ & 0x00004000) == 0x00004000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(23, intensityUnits_.getNumber());
-      }
-      if (((bitField0_ & 0x00010000) == 0x00010000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(24, fitMode_.getNumber());
-      }
-      if (((bitField0_ & 0x00020000) == 0x00020000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(25, isTrack_);
-      }
-      for (int i = 0; i < fluorophoreTypes_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(26, fluorophoreTypes_.get(i));
-      }
-      if (((bitField0_ & 0x00008000) == 0x00008000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(27, thetaUnits_.getNumber());
-      }
-      {
-        int dataSize = 0;
-        dataSize = 8 * getEcfList().size();
-        size += dataSize;
-        size += 2 * getEcfList().size();
-      }
-      if (((bitField0_ & 0x00040000) == 0x00040000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(29, roi_);
-      }
-      {
-        int dataSize = 0;
-        dataSize = 8 * getQeList().size();
-        size += dataSize;
-        size += 2 * getQeList().size();
-      }
-      size += extensionsSerializedSize();
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code TSF.SpotList}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.ExtendableBuilder<
-          edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList, Builder> implements edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotListOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_descriptor;
+      getDescriptor() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.class, edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.Builder.class);
+      internalGetFieldAccessorTable() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_fieldAccessorTable
+               .ensureFieldAccessorsInitialized(
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.class,
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.Builder.class);
       }
 
-      // Construct using edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
+      public static com.google.protobuf.Parser<SpotList> PARSER =
+            new com.google.protobuf.AbstractParser<SpotList>() {
+               public SpotList parsePartialFrom(
+                     com.google.protobuf.CodedInputStream input,
+                     com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                     throws com.google.protobuf.InvalidProtocolBufferException {
+                  return new SpotList(input, extensionRegistry);
+               }
+            };
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<SpotList> getParserForType() {
+         return PARSER;
       }
 
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getFluorophoreTypesFieldBuilder();
-          getRoiFieldBuilder();
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        applicationId_ = 1;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        name_ = "";
-        bitField0_ = (bitField0_ & ~0x00000002);
-        filepath_ = "";
-        bitField0_ = (bitField0_ & ~0x00000004);
-        uid_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000008);
-        nrPixelsX_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000010);
-        nrPixelsY_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000020);
-        pixelSize_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00000040);
-        nrSpots_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000080);
-        boxSize_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000100);
-        nrChannels_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000200);
-        nrFrames_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000400);
-        nrSlices_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000800);
-        nrPos_ = 0;
-        bitField0_ = (bitField0_ & ~0x00001000);
-        if (fluorophoreTypesBuilder_ == null) {
-          fluorophoreTypes_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00002000);
-        } else {
-          fluorophoreTypesBuilder_.clear();
-        }
-        locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
-        bitField0_ = (bitField0_ & ~0x00004000);
-        intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
-        bitField0_ = (bitField0_ & ~0x00008000);
-        thetaUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits.DEGREES;
-        bitField0_ = (bitField0_ & ~0x00010000);
-        fitMode_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode.ONEAXIS;
-        bitField0_ = (bitField0_ & ~0x00020000);
-        isTrack_ = false;
-        bitField0_ = (bitField0_ & ~0x00040000);
-        ecf_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00080000);
-        qe_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00100000);
-        if (roiBuilder_ == null) {
-          roi_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance();
-        } else {
-          roiBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00200000);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_descriptor;
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList getDefaultInstanceForType() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.getDefaultInstance();
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList build() {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList buildPartial() {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList result = new edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.applicationId_ = applicationId_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.name_ = name_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.filepath_ = filepath_;
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        result.uid_ = uid_;
-        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
-          to_bitField0_ |= 0x00000010;
-        }
-        result.nrPixelsX_ = nrPixelsX_;
-        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
-          to_bitField0_ |= 0x00000020;
-        }
-        result.nrPixelsY_ = nrPixelsY_;
-        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
-          to_bitField0_ |= 0x00000040;
-        }
-        result.pixelSize_ = pixelSize_;
-        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
-          to_bitField0_ |= 0x00000080;
-        }
-        result.nrSpots_ = nrSpots_;
-        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
-          to_bitField0_ |= 0x00000100;
-        }
-        result.boxSize_ = boxSize_;
-        if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
-          to_bitField0_ |= 0x00000200;
-        }
-        result.nrChannels_ = nrChannels_;
-        if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
-          to_bitField0_ |= 0x00000400;
-        }
-        result.nrFrames_ = nrFrames_;
-        if (((from_bitField0_ & 0x00000800) == 0x00000800)) {
-          to_bitField0_ |= 0x00000800;
-        }
-        result.nrSlices_ = nrSlices_;
-        if (((from_bitField0_ & 0x00001000) == 0x00001000)) {
-          to_bitField0_ |= 0x00001000;
-        }
-        result.nrPos_ = nrPos_;
-        if (fluorophoreTypesBuilder_ == null) {
-          if (((bitField0_ & 0x00002000) == 0x00002000)) {
-            fluorophoreTypes_ = java.util.Collections.unmodifiableList(fluorophoreTypes_);
-            bitField0_ = (bitField0_ & ~0x00002000);
-          }
-          result.fluorophoreTypes_ = fluorophoreTypes_;
-        } else {
-          result.fluorophoreTypes_ = fluorophoreTypesBuilder_.build();
-        }
-        if (((from_bitField0_ & 0x00004000) == 0x00004000)) {
-          to_bitField0_ |= 0x00002000;
-        }
-        result.locationUnits_ = locationUnits_;
-        if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
-          to_bitField0_ |= 0x00004000;
-        }
-        result.intensityUnits_ = intensityUnits_;
-        if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
-          to_bitField0_ |= 0x00008000;
-        }
-        result.thetaUnits_ = thetaUnits_;
-        if (((from_bitField0_ & 0x00020000) == 0x00020000)) {
-          to_bitField0_ |= 0x00010000;
-        }
-        result.fitMode_ = fitMode_;
-        if (((from_bitField0_ & 0x00040000) == 0x00040000)) {
-          to_bitField0_ |= 0x00020000;
-        }
-        result.isTrack_ = isTrack_;
-        if (((bitField0_ & 0x00080000) == 0x00080000)) {
-          ecf_ = java.util.Collections.unmodifiableList(ecf_);
-          bitField0_ = (bitField0_ & ~0x00080000);
-        }
-        result.ecf_ = ecf_;
-        if (((bitField0_ & 0x00100000) == 0x00100000)) {
-          qe_ = java.util.Collections.unmodifiableList(qe_);
-          bitField0_ = (bitField0_ & ~0x00100000);
-        }
-        result.qe_ = qe_;
-        if (((from_bitField0_ & 0x00200000) == 0x00200000)) {
-          to_bitField0_ |= 0x00040000;
-        }
-        if (roiBuilder_ == null) {
-          result.roi_ = roi_;
-        } else {
-          result.roi_ = roiBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList) {
-          return mergeFrom((edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList other) {
-        if (other == edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.getDefaultInstance()) return this;
-        if (other.hasApplicationId()) {
-          setApplicationId(other.getApplicationId());
-        }
-        if (other.hasName()) {
-          bitField0_ |= 0x00000002;
-          name_ = other.name_;
-          onChanged();
-        }
-        if (other.hasFilepath()) {
-          bitField0_ |= 0x00000004;
-          filepath_ = other.filepath_;
-          onChanged();
-        }
-        if (other.hasUid()) {
-          setUid(other.getUid());
-        }
-        if (other.hasNrPixelsX()) {
-          setNrPixelsX(other.getNrPixelsX());
-        }
-        if (other.hasNrPixelsY()) {
-          setNrPixelsY(other.getNrPixelsY());
-        }
-        if (other.hasPixelSize()) {
-          setPixelSize(other.getPixelSize());
-        }
-        if (other.hasNrSpots()) {
-          setNrSpots(other.getNrSpots());
-        }
-        if (other.hasBoxSize()) {
-          setBoxSize(other.getBoxSize());
-        }
-        if (other.hasNrChannels()) {
-          setNrChannels(other.getNrChannels());
-        }
-        if (other.hasNrFrames()) {
-          setNrFrames(other.getNrFrames());
-        }
-        if (other.hasNrSlices()) {
-          setNrSlices(other.getNrSlices());
-        }
-        if (other.hasNrPos()) {
-          setNrPos(other.getNrPos());
-        }
-        if (fluorophoreTypesBuilder_ == null) {
-          if (!other.fluorophoreTypes_.isEmpty()) {
-            if (fluorophoreTypes_.isEmpty()) {
-              fluorophoreTypes_ = other.fluorophoreTypes_;
-              bitField0_ = (bitField0_ & ~0x00002000);
-            } else {
-              ensureFluorophoreTypesIsMutable();
-              fluorophoreTypes_.addAll(other.fluorophoreTypes_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.fluorophoreTypes_.isEmpty()) {
-            if (fluorophoreTypesBuilder_.isEmpty()) {
-              fluorophoreTypesBuilder_.dispose();
-              fluorophoreTypesBuilder_ = null;
-              fluorophoreTypes_ = other.fluorophoreTypes_;
-              bitField0_ = (bitField0_ & ~0x00002000);
-              fluorophoreTypesBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getFluorophoreTypesFieldBuilder() : null;
-            } else {
-              fluorophoreTypesBuilder_.addAllMessages(other.fluorophoreTypes_);
-            }
-          }
-        }
-        if (other.hasLocationUnits()) {
-          setLocationUnits(other.getLocationUnits());
-        }
-        if (other.hasIntensityUnits()) {
-          setIntensityUnits(other.getIntensityUnits());
-        }
-        if (other.hasThetaUnits()) {
-          setThetaUnits(other.getThetaUnits());
-        }
-        if (other.hasFitMode()) {
-          setFitMode(other.getFitMode());
-        }
-        if (other.hasIsTrack()) {
-          setIsTrack(other.getIsTrack());
-        }
-        if (!other.ecf_.isEmpty()) {
-          if (ecf_.isEmpty()) {
-            ecf_ = other.ecf_;
-            bitField0_ = (bitField0_ & ~0x00080000);
-          } else {
-            ensureEcfIsMutable();
-            ecf_.addAll(other.ecf_);
-          }
-          onChanged();
-        }
-        if (!other.qe_.isEmpty()) {
-          if (qe_.isEmpty()) {
-            qe_ = other.qe_;
-            bitField0_ = (bitField0_ & ~0x00100000);
-          } else {
-            ensureQeIsMutable();
-            qe_.addAll(other.qe_);
-          }
-          onChanged();
-        }
-        if (other.hasRoi()) {
-          mergeRoi(other.getRoi());
-        }
-        this.mergeExtensionFields(other);
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasApplicationId()) {
-          
-          return false;
-        }
-        for (int i = 0; i < getFluorophoreTypesCount(); i++) {
-          if (!getFluorophoreTypes(i).isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (hasRoi()) {
-          if (!getRoi().isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (!extensionsAreInitialized()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
       private int bitField0_;
-
       // required int32 application_id = 1 [default = 1];
-      private int applicationId_ = 1;
+      public static final int APPLICATION_ID_FIELD_NUMBER = 1;
+      private int applicationId_;
+
       /**
        * <code>required int32 application_id = 1 [default = 1];</code>
        *
        * <pre>
        * UID for the application that generated these data
-       * Request a UID from nico at cmp.ucsf.edu or use 1 
+       * Request a UID from nico at cmp.ucsf.edu or use 1
        * </pre>
        */
       public boolean hasApplicationId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
+         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
+
       /**
        * <code>required int32 application_id = 1 [default = 1];</code>
        *
        * <pre>
        * UID for the application that generated these data
-       * Request a UID from nico at cmp.ucsf.edu or use 1 
+       * Request a UID from nico at cmp.ucsf.edu or use 1
        * </pre>
        */
       public int getApplicationId() {
-        return applicationId_;
-      }
-      /**
-       * <code>required int32 application_id = 1 [default = 1];</code>
-       *
-       * <pre>
-       * UID for the application that generated these data
-       * Request a UID from nico at cmp.ucsf.edu or use 1 
-       * </pre>
-       */
-      public Builder setApplicationId(int value) {
-        bitField0_ |= 0x00000001;
-        applicationId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 application_id = 1 [default = 1];</code>
-       *
-       * <pre>
-       * UID for the application that generated these data
-       * Request a UID from nico at cmp.ucsf.edu or use 1 
-       * </pre>
-       */
-      public Builder clearApplicationId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        applicationId_ = 1;
-        onChanged();
-        return this;
+         return applicationId_;
       }
 
       // optional string name = 2;
-      private java.lang.Object name_ = "";
+      public static final int NAME_FIELD_NUMBER = 2;
+      private java.lang.Object name_;
+
       /**
        * <code>optional string name = 2;</code>
        *
        * <pre>
-       * name identifying the original dataset 
+       * name identifying the original dataset
        * </pre>
        */
       public boolean hasName() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
+         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
+
       /**
        * <code>optional string name = 2;</code>
        *
        * <pre>
-       * name identifying the original dataset 
+       * name identifying the original dataset
        * </pre>
        */
       public java.lang.String getName() {
-        java.lang.Object ref = name_;
-        if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          name_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
+         java.lang.Object ref = name_;
+         if (ref instanceof java.lang.String) {
+            return (java.lang.String) ref;
+         } else {
+            com.google.protobuf.ByteString bs =
+                  (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            if (bs.isValidUtf8()) {
+               name_ = s;
+            }
+            return s;
+         }
       }
+
       /**
        * <code>optional string name = 2;</code>
        *
        * <pre>
-       * name identifying the original dataset 
+       * name identifying the original dataset
        * </pre>
        */
       public com.google.protobuf.ByteString
-          getNameBytes() {
-        java.lang.Object ref = name_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          name_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string name = 2;</code>
-       *
-       * <pre>
-       * name identifying the original dataset 
-       * </pre>
-       */
-      public Builder setName(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        name_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string name = 2;</code>
-       *
-       * <pre>
-       * name identifying the original dataset 
-       * </pre>
-       */
-      public Builder clearName() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        name_ = getDefaultInstance().getName();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string name = 2;</code>
-       *
-       * <pre>
-       * name identifying the original dataset 
-       * </pre>
-       */
-      public Builder setNameBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        name_ = value;
-        onChanged();
-        return this;
+      getNameBytes() {
+         java.lang.Object ref = name_;
+         if (ref instanceof java.lang.String) {
+            com.google.protobuf.ByteString b =
+                  com.google.protobuf.ByteString.copyFromUtf8(
+                        (java.lang.String) ref);
+            name_ = b;
+            return b;
+         } else {
+            return (com.google.protobuf.ByteString) ref;
+         }
       }
 
       // optional string filepath = 3;
-      private java.lang.Object filepath_ = "";
+      public static final int FILEPATH_FIELD_NUMBER = 3;
+      private java.lang.Object filepath_;
+
       /**
        * <code>optional string filepath = 3;</code>
        *
@@ -3987,8 +2829,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasFilepath() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
+
       /**
        * <code>optional string filepath = 3;</code>
        *
@@ -3997,16 +2840,20 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public java.lang.String getFilepath() {
-        java.lang.Object ref = filepath_;
-        if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          filepath_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
+         java.lang.Object ref = filepath_;
+         if (ref instanceof java.lang.String) {
+            return (java.lang.String) ref;
+         } else {
+            com.google.protobuf.ByteString bs =
+                  (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            if (bs.isValidUtf8()) {
+               filepath_ = s;
+            }
+            return s;
+         }
       }
+
       /**
        * <code>optional string filepath = 3;</code>
        *
@@ -4015,68 +2862,23 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public com.google.protobuf.ByteString
-          getFilepathBytes() {
-        java.lang.Object ref = filepath_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          filepath_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string filepath = 3;</code>
-       *
-       * <pre>
-       * path to the image data used to generate these spot data
-       * </pre>
-       */
-      public Builder setFilepath(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-        filepath_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string filepath = 3;</code>
-       *
-       * <pre>
-       * path to the image data used to generate these spot data
-       * </pre>
-       */
-      public Builder clearFilepath() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        filepath_ = getDefaultInstance().getFilepath();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string filepath = 3;</code>
-       *
-       * <pre>
-       * path to the image data used to generate these spot data
-       * </pre>
-       */
-      public Builder setFilepathBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-        filepath_ = value;
-        onChanged();
-        return this;
+      getFilepathBytes() {
+         java.lang.Object ref = filepath_;
+         if (ref instanceof java.lang.String) {
+            com.google.protobuf.ByteString b =
+                  com.google.protobuf.ByteString.copyFromUtf8(
+                        (java.lang.String) ref);
+            filepath_ = b;
+            return b;
+         } else {
+            return (com.google.protobuf.ByteString) ref;
+         }
       }
 
       // optional int64 uid = 4;
-      private long uid_ ;
+      public static final int UID_FIELD_NUMBER = 4;
+      private long uid_;
+
       /**
        * <code>optional int64 uid = 4;</code>
        *
@@ -4085,8 +2887,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasUid() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+         return ((bitField0_ & 0x00000008) == 0x00000008);
       }
+
       /**
        * <code>optional int64 uid = 4;</code>
        *
@@ -4095,37 +2898,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public long getUid() {
-        return uid_;
-      }
-      /**
-       * <code>optional int64 uid = 4;</code>
-       *
-       * <pre>
-       * Unique ID, can be used by application to link to original data
-       * </pre>
-       */
-      public Builder setUid(long value) {
-        bitField0_ |= 0x00000008;
-        uid_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int64 uid = 4;</code>
-       *
-       * <pre>
-       * Unique ID, can be used by application to link to original data
-       * </pre>
-       */
-      public Builder clearUid() {
-        bitField0_ = (bitField0_ & ~0x00000008);
-        uid_ = 0L;
-        onChanged();
-        return this;
+         return uid_;
       }
 
       // optional int32 nr_pixels_x = 5;
-      private int nrPixelsX_ ;
+      public static final int NR_PIXELS_X_FIELD_NUMBER = 5;
+      private int nrPixelsX_;
+
       /**
        * <code>optional int32 nr_pixels_x = 5;</code>
        *
@@ -4134,8 +2913,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasNrPixelsX() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+         return ((bitField0_ & 0x00000010) == 0x00000010);
       }
+
       /**
        * <code>optional int32 nr_pixels_x = 5;</code>
        *
@@ -4144,37 +2924,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getNrPixelsX() {
-        return nrPixelsX_;
-      }
-      /**
-       * <code>optional int32 nr_pixels_x = 5;</code>
-       *
-       * <pre>
-       * nr pixels in x of original data
-       * </pre>
-       */
-      public Builder setNrPixelsX(int value) {
-        bitField0_ |= 0x00000010;
-        nrPixelsX_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 nr_pixels_x = 5;</code>
-       *
-       * <pre>
-       * nr pixels in x of original data
-       * </pre>
-       */
-      public Builder clearNrPixelsX() {
-        bitField0_ = (bitField0_ & ~0x00000010);
-        nrPixelsX_ = 0;
-        onChanged();
-        return this;
+         return nrPixelsX_;
       }
 
       // optional int32 nr_pixels_y = 6;
-      private int nrPixelsY_ ;
+      public static final int NR_PIXELS_Y_FIELD_NUMBER = 6;
+      private int nrPixelsY_;
+
       /**
        * <code>optional int32 nr_pixels_y = 6;</code>
        *
@@ -4183,8 +2939,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasNrPixelsY() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
+         return ((bitField0_ & 0x00000020) == 0x00000020);
       }
+
       /**
        * <code>optional int32 nr_pixels_y = 6;</code>
        *
@@ -4193,37 +2950,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getNrPixelsY() {
-        return nrPixelsY_;
-      }
-      /**
-       * <code>optional int32 nr_pixels_y = 6;</code>
-       *
-       * <pre>
-       * nr pixels in y of original data
-       * </pre>
-       */
-      public Builder setNrPixelsY(int value) {
-        bitField0_ |= 0x00000020;
-        nrPixelsY_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 nr_pixels_y = 6;</code>
-       *
-       * <pre>
-       * nr pixels in y of original data
-       * </pre>
-       */
-      public Builder clearNrPixelsY() {
-        bitField0_ = (bitField0_ & ~0x00000020);
-        nrPixelsY_ = 0;
-        onChanged();
-        return this;
+         return nrPixelsY_;
       }
 
       // optional float pixel_size = 7;
-      private float pixelSize_ ;
+      public static final int PIXEL_SIZE_FIELD_NUMBER = 7;
+      private float pixelSize_;
+
       /**
        * <code>optional float pixel_size = 7;</code>
        *
@@ -4232,8 +2965,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasPixelSize() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+         return ((bitField0_ & 0x00000040) == 0x00000040);
       }
+
       /**
        * <code>optional float pixel_size = 7;</code>
        *
@@ -4242,37 +2976,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public float getPixelSize() {
-        return pixelSize_;
-      }
-      /**
-       * <code>optional float pixel_size = 7;</code>
-       *
-       * <pre>
-       * pixel size in nanometer
-       * </pre>
-       */
-      public Builder setPixelSize(float value) {
-        bitField0_ |= 0x00000040;
-        pixelSize_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float pixel_size = 7;</code>
-       *
-       * <pre>
-       * pixel size in nanometer
-       * </pre>
-       */
-      public Builder clearPixelSize() {
-        bitField0_ = (bitField0_ & ~0x00000040);
-        pixelSize_ = 0F;
-        onChanged();
-        return this;
+         return pixelSize_;
       }
 
       // optional int64 nr_spots = 8;
-      private long nrSpots_ ;
+      public static final int NR_SPOTS_FIELD_NUMBER = 8;
+      private long nrSpots_;
+
       /**
        * <code>optional int64 nr_spots = 8;</code>
        *
@@ -4281,8 +2991,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasNrSpots() {
-        return ((bitField0_ & 0x00000080) == 0x00000080);
+         return ((bitField0_ & 0x00000080) == 0x00000080);
       }
+
       /**
        * <code>optional int64 nr_spots = 8;</code>
        *
@@ -4291,37 +3002,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public long getNrSpots() {
-        return nrSpots_;
-      }
-      /**
-       * <code>optional int64 nr_spots = 8;</code>
-       *
-       * <pre>
-       * number of spots in this data set
-       * </pre>
-       */
-      public Builder setNrSpots(long value) {
-        bitField0_ |= 0x00000080;
-        nrSpots_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int64 nr_spots = 8;</code>
-       *
-       * <pre>
-       * number of spots in this data set
-       * </pre>
-       */
-      public Builder clearNrSpots() {
-        bitField0_ = (bitField0_ & ~0x00000080);
-        nrSpots_ = 0L;
-        onChanged();
-        return this;
+         return nrSpots_;
       }
 
       // optional int32 box_size = 17;
-      private int boxSize_ ;
+      public static final int BOX_SIZE_FIELD_NUMBER = 17;
+      private int boxSize_;
+
       /**
        * <code>optional int32 box_size = 17;</code>
        *
@@ -4330,8 +3017,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasBoxSize() {
-        return ((bitField0_ & 0x00000100) == 0x00000100);
+         return ((bitField0_ & 0x00000100) == 0x00000100);
       }
+
       /**
        * <code>optional int32 box_size = 17;</code>
        *
@@ -4340,37 +3028,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getBoxSize() {
-        return boxSize_;
-      }
-      /**
-       * <code>optional int32 box_size = 17;</code>
-       *
-       * <pre>
-       * size (in pixels) of rectangular box used in Gaussian fitting
-       * </pre>
-       */
-      public Builder setBoxSize(int value) {
-        bitField0_ |= 0x00000100;
-        boxSize_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 box_size = 17;</code>
-       *
-       * <pre>
-       * size (in pixels) of rectangular box used in Gaussian fitting
-       * </pre>
-       */
-      public Builder clearBoxSize() {
-        bitField0_ = (bitField0_ & ~0x00000100);
-        boxSize_ = 0;
-        onChanged();
-        return this;
+         return boxSize_;
       }
 
       // optional int32 nr_channels = 18;
-      private int nrChannels_ ;
+      public static final int NR_CHANNELS_FIELD_NUMBER = 18;
+      private int nrChannels_;
+
       /**
        * <code>optional int32 nr_channels = 18;</code>
        *
@@ -4379,8 +3043,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasNrChannels() {
-        return ((bitField0_ & 0x00000200) == 0x00000200);
+         return ((bitField0_ & 0x00000200) == 0x00000200);
       }
+
       /**
        * <code>optional int32 nr_channels = 18;</code>
        *
@@ -4389,37 +3054,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getNrChannels() {
-        return nrChannels_;
-      }
-      /**
-       * <code>optional int32 nr_channels = 18;</code>
-       *
-       * <pre>
-       * Nr of channels in the original data set
-       * </pre>
-       */
-      public Builder setNrChannels(int value) {
-        bitField0_ |= 0x00000200;
-        nrChannels_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 nr_channels = 18;</code>
-       *
-       * <pre>
-       * Nr of channels in the original data set
-       * </pre>
-       */
-      public Builder clearNrChannels() {
-        bitField0_ = (bitField0_ & ~0x00000200);
-        nrChannels_ = 0;
-        onChanged();
-        return this;
+         return nrChannels_;
       }
 
       // optional int32 nr_frames = 19;
-      private int nrFrames_ ;
+      public static final int NR_FRAMES_FIELD_NUMBER = 19;
+      private int nrFrames_;
+
       /**
        * <code>optional int32 nr_frames = 19;</code>
        *
@@ -4428,8 +3069,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasNrFrames() {
-        return ((bitField0_ & 0x00000400) == 0x00000400);
+         return ((bitField0_ & 0x00000400) == 0x00000400);
       }
+
       /**
        * <code>optional int32 nr_frames = 19;</code>
        *
@@ -4438,37 +3080,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getNrFrames() {
-        return nrFrames_;
-      }
-      /**
-       * <code>optional int32 nr_frames = 19;</code>
-       *
-       * <pre>
-       * Nr of frames in the original data set
-       * </pre>
-       */
-      public Builder setNrFrames(int value) {
-        bitField0_ |= 0x00000400;
-        nrFrames_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 nr_frames = 19;</code>
-       *
-       * <pre>
-       * Nr of frames in the original data set
-       * </pre>
-       */
-      public Builder clearNrFrames() {
-        bitField0_ = (bitField0_ & ~0x00000400);
-        nrFrames_ = 0;
-        onChanged();
-        return this;
+         return nrFrames_;
       }
 
       // optional int32 nr_slices = 20;
-      private int nrSlices_ ;
+      public static final int NR_SLICES_FIELD_NUMBER = 20;
+      private int nrSlices_;
+
       /**
        * <code>optional int32 nr_slices = 20;</code>
        *
@@ -4477,8 +3095,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasNrSlices() {
-        return ((bitField0_ & 0x00000800) == 0x00000800);
+         return ((bitField0_ & 0x00000800) == 0x00000800);
       }
+
       /**
        * <code>optional int32 nr_slices = 20;</code>
        *
@@ -4487,37 +3106,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getNrSlices() {
-        return nrSlices_;
-      }
-      /**
-       * <code>optional int32 nr_slices = 20;</code>
-       *
-       * <pre>
-       * Nr of slices in the original data set
-       * </pre>
-       */
-      public Builder setNrSlices(int value) {
-        bitField0_ |= 0x00000800;
-        nrSlices_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 nr_slices = 20;</code>
-       *
-       * <pre>
-       * Nr of slices in the original data set
-       * </pre>
-       */
-      public Builder clearNrSlices() {
-        bitField0_ = (bitField0_ & ~0x00000800);
-        nrSlices_ = 0;
-        onChanged();
-        return this;
+         return nrSlices_;
       }
 
       // optional int32 nr_pos = 21;
-      private int nrPos_ ;
+      public static final int NR_POS_FIELD_NUMBER = 21;
+      private int nrPos_;
+
       /**
        * <code>optional int32 nr_pos = 21;</code>
        *
@@ -4526,8 +3121,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasNrPos() {
-        return ((bitField0_ & 0x00001000) == 0x00001000);
+         return ((bitField0_ & 0x00001000) == 0x00001000);
       }
+
       /**
        * <code>optional int32 nr_pos = 21;</code>
        *
@@ -4536,47 +3132,12 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getNrPos() {
-        return nrPos_;
-      }
-      /**
-       * <code>optional int32 nr_pos = 21;</code>
-       *
-       * <pre>
-       * Nr of positions in the original data set
-       * </pre>
-       */
-      public Builder setNrPos(int value) {
-        bitField0_ |= 0x00001000;
-        nrPos_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 nr_pos = 21;</code>
-       *
-       * <pre>
-       * Nr of positions in the original data set
-       * </pre>
-       */
-      public Builder clearNrPos() {
-        bitField0_ = (bitField0_ & ~0x00001000);
-        nrPos_ = 0;
-        onChanged();
-        return this;
+         return nrPos_;
       }
 
       // repeated .TSF.FluorophoreType fluorophore_types = 26;
-      private java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> fluorophoreTypes_ =
-        java.util.Collections.emptyList();
-      private void ensureFluorophoreTypesIsMutable() {
-        if (!((bitField0_ & 0x00002000) == 0x00002000)) {
-          fluorophoreTypes_ = new java.util.ArrayList<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType>(fluorophoreTypes_);
-          bitField0_ |= 0x00002000;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder> fluorophoreTypesBuilder_;
+      public static final int FLUOROPHORE_TYPES_FIELD_NUMBER = 26;
+      private java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> fluorophoreTypes_;
 
       /**
        * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
@@ -4587,12 +3148,22 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> getFluorophoreTypesList() {
-        if (fluorophoreTypesBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(fluorophoreTypes_);
-        } else {
-          return fluorophoreTypesBuilder_.getMessageList();
-        }
+         return fluorophoreTypes_;
       }
+
+      /**
+       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+       *
+       * <pre>
+       * Fluorophore type characterizations. If you use the fluorophore type field,
+       * you must add a FluorophoreType message for each used id.
+       * </pre>
+       */
+      public java.util.List<? extends edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder>
+      getFluorophoreTypesOrBuilderList() {
+         return fluorophoreTypes_;
+      }
+
       /**
        * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
        *
@@ -4602,12 +3173,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getFluorophoreTypesCount() {
-        if (fluorophoreTypesBuilder_ == null) {
-          return fluorophoreTypes_.size();
-        } else {
-          return fluorophoreTypesBuilder_.getCount();
-        }
+         return fluorophoreTypes_.size();
       }
+
       /**
        * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
        *
@@ -4617,201 +3185,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType getFluorophoreTypes(int index) {
-        if (fluorophoreTypesBuilder_ == null) {
-          return fluorophoreTypes_.get(index);
-        } else {
-          return fluorophoreTypesBuilder_.getMessage(index);
-        }
+         return fluorophoreTypes_.get(index);
       }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public Builder setFluorophoreTypes(
-          int index, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType value) {
-        if (fluorophoreTypesBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureFluorophoreTypesIsMutable();
-          fluorophoreTypes_.set(index, value);
-          onChanged();
-        } else {
-          fluorophoreTypesBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public Builder setFluorophoreTypes(
-          int index, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder builderForValue) {
-        if (fluorophoreTypesBuilder_ == null) {
-          ensureFluorophoreTypesIsMutable();
-          fluorophoreTypes_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          fluorophoreTypesBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public Builder addFluorophoreTypes(edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType value) {
-        if (fluorophoreTypesBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureFluorophoreTypesIsMutable();
-          fluorophoreTypes_.add(value);
-          onChanged();
-        } else {
-          fluorophoreTypesBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public Builder addFluorophoreTypes(
-          int index, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType value) {
-        if (fluorophoreTypesBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureFluorophoreTypesIsMutable();
-          fluorophoreTypes_.add(index, value);
-          onChanged();
-        } else {
-          fluorophoreTypesBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public Builder addFluorophoreTypes(
-          edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder builderForValue) {
-        if (fluorophoreTypesBuilder_ == null) {
-          ensureFluorophoreTypesIsMutable();
-          fluorophoreTypes_.add(builderForValue.build());
-          onChanged();
-        } else {
-          fluorophoreTypesBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public Builder addFluorophoreTypes(
-          int index, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder builderForValue) {
-        if (fluorophoreTypesBuilder_ == null) {
-          ensureFluorophoreTypesIsMutable();
-          fluorophoreTypes_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          fluorophoreTypesBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public Builder addAllFluorophoreTypes(
-          java.lang.Iterable<? extends edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> values) {
-        if (fluorophoreTypesBuilder_ == null) {
-          ensureFluorophoreTypesIsMutable();
-          super.addAll(values, fluorophoreTypes_);
-          onChanged();
-        } else {
-          fluorophoreTypesBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public Builder clearFluorophoreTypes() {
-        if (fluorophoreTypesBuilder_ == null) {
-          fluorophoreTypes_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00002000);
-          onChanged();
-        } else {
-          fluorophoreTypesBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public Builder removeFluorophoreTypes(int index) {
-        if (fluorophoreTypesBuilder_ == null) {
-          ensureFluorophoreTypesIsMutable();
-          fluorophoreTypes_.remove(index);
-          onChanged();
-        } else {
-          fluorophoreTypesBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder getFluorophoreTypesBuilder(
-          int index) {
-        return getFluorophoreTypesFieldBuilder().getBuilder(index);
-      }
+
       /**
        * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
        *
@@ -4821,82 +3197,14 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder getFluorophoreTypesOrBuilder(
-          int index) {
-        if (fluorophoreTypesBuilder_ == null) {
-          return fluorophoreTypes_.get(index);  } else {
-          return fluorophoreTypesBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public java.util.List<? extends edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder> 
-           getFluorophoreTypesOrBuilderList() {
-        if (fluorophoreTypesBuilder_ != null) {
-          return fluorophoreTypesBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(fluorophoreTypes_);
-        }
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder addFluorophoreTypesBuilder() {
-        return getFluorophoreTypesFieldBuilder().addBuilder(
-            edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder addFluorophoreTypesBuilder(
-          int index) {
-        return getFluorophoreTypesFieldBuilder().addBuilder(
-            index, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
-       *
-       * <pre>
-       * Fluorophore type characterizations. If you use the fluorophore type field,
-       * you must add a FluorophoreType message for each used id.
-       * </pre>
-       */
-      public java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder> 
-           getFluorophoreTypesBuilderList() {
-        return getFluorophoreTypesFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder> 
-          getFluorophoreTypesFieldBuilder() {
-        if (fluorophoreTypesBuilder_ == null) {
-          fluorophoreTypesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder>(
-                  fluorophoreTypes_,
-                  ((bitField0_ & 0x00002000) == 0x00002000),
-                  getParentForChildren(),
-                  isClean());
-          fluorophoreTypes_ = null;
-        }
-        return fluorophoreTypesBuilder_;
+            int index) {
+         return fluorophoreTypes_.get(index);
       }
 
       // optional .TSF.LocationUnits location_units = 22;
-      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+      public static final int LOCATION_UNITS_FIELD_NUMBER = 22;
+      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits locationUnits_;
+
       /**
        * <code>optional .TSF.LocationUnits location_units = 22;</code>
        *
@@ -4906,8 +3214,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasLocationUnits() {
-        return ((bitField0_ & 0x00004000) == 0x00004000);
+         return ((bitField0_ & 0x00002000) == 0x00002000);
       }
+
       /**
        * <code>optional .TSF.LocationUnits location_units = 22;</code>
        *
@@ -4917,114 +3226,49 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits() {
-        return locationUnits_;
-      }
-      /**
-       * <code>optional .TSF.LocationUnits location_units = 22;</code>
-       *
-       * <pre>
-       * If units will always be the same for all spots, then use these units tags,
-       * otherwise use the unit tags with each spot
-       * </pre>
-       */
-      public Builder setLocationUnits(edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00004000;
-        locationUnits_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .TSF.LocationUnits location_units = 22;</code>
-       *
-       * <pre>
-       * If units will always be the same for all spots, then use these units tags,
-       * otherwise use the unit tags with each spot
-       * </pre>
-       */
-      public Builder clearLocationUnits() {
-        bitField0_ = (bitField0_ & ~0x00004000);
-        locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
-        onChanged();
-        return this;
+         return locationUnits_;
       }
 
       // optional .TSF.IntensityUnits intensity_units = 23;
-      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+      public static final int INTENSITY_UNITS_FIELD_NUMBER = 23;
+      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits intensityUnits_;
+
       /**
        * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
        */
       public boolean hasIntensityUnits() {
-        return ((bitField0_ & 0x00008000) == 0x00008000);
+         return ((bitField0_ & 0x00004000) == 0x00004000);
       }
+
       /**
        * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits() {
-        return intensityUnits_;
-      }
-      /**
-       * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
-       */
-      public Builder setIntensityUnits(edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00008000;
-        intensityUnits_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
-       */
-      public Builder clearIntensityUnits() {
-        bitField0_ = (bitField0_ & ~0x00008000);
-        intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
-        onChanged();
-        return this;
+         return intensityUnits_;
       }
 
       // optional .TSF.ThetaUnits theta_units = 27;
-      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits thetaUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits.DEGREES;
+      public static final int THETA_UNITS_FIELD_NUMBER = 27;
+      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits thetaUnits_;
+
       /**
        * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
        */
       public boolean hasThetaUnits() {
-        return ((bitField0_ & 0x00010000) == 0x00010000);
+         return ((bitField0_ & 0x00008000) == 0x00008000);
       }
+
       /**
        * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits getThetaUnits() {
-        return thetaUnits_;
-      }
-      /**
-       * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
-       */
-      public Builder setThetaUnits(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00010000;
-        thetaUnits_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
-       */
-      public Builder clearThetaUnits() {
-        bitField0_ = (bitField0_ & ~0x00010000);
-        thetaUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits.DEGREES;
-        onChanged();
-        return this;
+         return thetaUnits_;
       }
 
       // optional .TSF.FitMode fit_mode = 24;
-      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode fitMode_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode.ONEAXIS;
+      public static final int FIT_MODE_FIELD_NUMBER = 24;
+      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode fitMode_;
+
       /**
        * <code>optional .TSF.FitMode fit_mode = 24;</code>
        *
@@ -5034,8 +3278,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasFitMode() {
-        return ((bitField0_ & 0x00020000) == 0x00020000);
+         return ((bitField0_ & 0x00010000) == 0x00010000);
       }
+
       /**
        * <code>optional .TSF.FitMode fit_mode = 24;</code>
        *
@@ -5045,229 +3290,97 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode getFitMode() {
-        return fitMode_;
-      }
-      /**
-       * <code>optional .TSF.FitMode fit_mode = 24;</code>
-       *
-       * <pre>
-       * If fitmode  will always be the same for all spots, then use this fitmode
-       * otherwise use the fitmode with each spot
-       * </pre>
-       */
-      public Builder setFitMode(edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00020000;
-        fitMode_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .TSF.FitMode fit_mode = 24;</code>
-       *
-       * <pre>
-       * If fitmode  will always be the same for all spots, then use this fitmode
-       * otherwise use the fitmode with each spot
-       * </pre>
-       */
-      public Builder clearFitMode() {
-        bitField0_ = (bitField0_ & ~0x00020000);
-        fitMode_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode.ONEAXIS;
-        onChanged();
-        return this;
+         return fitMode_;
       }
 
       // optional bool is_track = 25 [default = false];
-      private boolean isTrack_ ;
+      public static final int IS_TRACK_FIELD_NUMBER = 25;
+      private boolean isTrack_;
+
       /**
        * <code>optional bool is_track = 25 [default = false];</code>
        *
        * <pre>
-       * flag indicating whether this is a sequence of spot data in consecutive 
+       * flag indicating whether this is a sequence of spot data in consecutive
        * time frames thought to originate from the same entity
        * </pre>
        */
       public boolean hasIsTrack() {
-        return ((bitField0_ & 0x00040000) == 0x00040000);
+         return ((bitField0_ & 0x00020000) == 0x00020000);
       }
+
       /**
        * <code>optional bool is_track = 25 [default = false];</code>
        *
        * <pre>
-       * flag indicating whether this is a sequence of spot data in consecutive 
+       * flag indicating whether this is a sequence of spot data in consecutive
        * time frames thought to originate from the same entity
        * </pre>
        */
       public boolean getIsTrack() {
-        return isTrack_;
-      }
-      /**
-       * <code>optional bool is_track = 25 [default = false];</code>
-       *
-       * <pre>
-       * flag indicating whether this is a sequence of spot data in consecutive 
-       * time frames thought to originate from the same entity
-       * </pre>
-       */
-      public Builder setIsTrack(boolean value) {
-        bitField0_ |= 0x00040000;
-        isTrack_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional bool is_track = 25 [default = false];</code>
-       *
-       * <pre>
-       * flag indicating whether this is a sequence of spot data in consecutive 
-       * time frames thought to originate from the same entity
-       * </pre>
-       */
-      public Builder clearIsTrack() {
-        bitField0_ = (bitField0_ & ~0x00040000);
-        isTrack_ = false;
-        onChanged();
-        return this;
+         return isTrack_;
       }
 
       // repeated double ecf = 28;
-      private java.util.List<java.lang.Double> ecf_ = java.util.Collections.emptyList();
-      private void ensureEcfIsMutable() {
-        if (!((bitField0_ & 0x00080000) == 0x00080000)) {
-          ecf_ = new java.util.ArrayList<java.lang.Double>(ecf_);
-          bitField0_ |= 0x00080000;
-         }
-      }
+      public static final int ECF_FIELD_NUMBER = 28;
+      private java.util.List<java.lang.Double> ecf_;
+
       /**
        * <code>repeated double ecf = 28;</code>
        *
        * <pre>
        * The electron conversion factor (camera gain), defined as
        * # of electrons per pixel / # of counts per pixel
-       * The ecf can be different for different channels (which can 
+       * The ecf can be different for different channels (which can
        * happen when separate cameras are used for separate channels),
        * therefore provide the ecf for each channel in the channel order
        * </pre>
        */
       public java.util.List<java.lang.Double>
-          getEcfList() {
-        return java.util.Collections.unmodifiableList(ecf_);
+      getEcfList() {
+         return ecf_;
       }
+
       /**
        * <code>repeated double ecf = 28;</code>
        *
        * <pre>
        * The electron conversion factor (camera gain), defined as
        * # of electrons per pixel / # of counts per pixel
-       * The ecf can be different for different channels (which can 
+       * The ecf can be different for different channels (which can
        * happen when separate cameras are used for separate channels),
        * therefore provide the ecf for each channel in the channel order
        * </pre>
        */
       public int getEcfCount() {
-        return ecf_.size();
+         return ecf_.size();
       }
+
       /**
        * <code>repeated double ecf = 28;</code>
        *
        * <pre>
        * The electron conversion factor (camera gain), defined as
        * # of electrons per pixel / # of counts per pixel
-       * The ecf can be different for different channels (which can 
+       * The ecf can be different for different channels (which can
        * happen when separate cameras are used for separate channels),
        * therefore provide the ecf for each channel in the channel order
        * </pre>
        */
       public double getEcf(int index) {
-        return ecf_.get(index);
-      }
-      /**
-       * <code>repeated double ecf = 28;</code>
-       *
-       * <pre>
-       * The electron conversion factor (camera gain), defined as
-       * # of electrons per pixel / # of counts per pixel
-       * The ecf can be different for different channels (which can 
-       * happen when separate cameras are used for separate channels),
-       * therefore provide the ecf for each channel in the channel order
-       * </pre>
-       */
-      public Builder setEcf(
-          int index, double value) {
-        ensureEcfIsMutable();
-        ecf_.set(index, value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double ecf = 28;</code>
-       *
-       * <pre>
-       * The electron conversion factor (camera gain), defined as
-       * # of electrons per pixel / # of counts per pixel
-       * The ecf can be different for different channels (which can 
-       * happen when separate cameras are used for separate channels),
-       * therefore provide the ecf for each channel in the channel order
-       * </pre>
-       */
-      public Builder addEcf(double value) {
-        ensureEcfIsMutable();
-        ecf_.add(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double ecf = 28;</code>
-       *
-       * <pre>
-       * The electron conversion factor (camera gain), defined as
-       * # of electrons per pixel / # of counts per pixel
-       * The ecf can be different for different channels (which can 
-       * happen when separate cameras are used for separate channels),
-       * therefore provide the ecf for each channel in the channel order
-       * </pre>
-       */
-      public Builder addAllEcf(
-          java.lang.Iterable<? extends java.lang.Double> values) {
-        ensureEcfIsMutable();
-        super.addAll(values, ecf_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double ecf = 28;</code>
-       *
-       * <pre>
-       * The electron conversion factor (camera gain), defined as
-       * # of electrons per pixel / # of counts per pixel
-       * The ecf can be different for different channels (which can 
-       * happen when separate cameras are used for separate channels),
-       * therefore provide the ecf for each channel in the channel order
-       * </pre>
-       */
-      public Builder clearEcf() {
-        ecf_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00080000);
-        onChanged();
-        return this;
+         return ecf_.get(index);
       }
 
       // repeated double qe = 30;
-      private java.util.List<java.lang.Double> qe_ = java.util.Collections.emptyList();
-      private void ensureQeIsMutable() {
-        if (!((bitField0_ & 0x00100000) == 0x00100000)) {
-          qe_ = new java.util.ArrayList<java.lang.Double>(qe_);
-          bitField0_ |= 0x00100000;
-         }
-      }
+      public static final int QE_FIELD_NUMBER = 30;
+      private java.util.List<java.lang.Double> qe_;
+
       /**
        * <code>repeated double qe = 30;</code>
        *
        * <pre>
        * The quantum efficiency can be used to calculate the number
-       * of photons that hit the sensor, rather than the number of 
+       * of photons that hit the sensor, rather than the number of
        * electrons that were derived from them
        * Since this number is wavelength dependent, provide the QE
        * for each fluorophore type (in the fluorophore type order)
@@ -5275,15 +3388,16 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public java.util.List<java.lang.Double>
-          getQeList() {
-        return java.util.Collections.unmodifiableList(qe_);
+      getQeList() {
+         return qe_;
       }
+
       /**
        * <code>repeated double qe = 30;</code>
        *
        * <pre>
        * The quantum efficiency can be used to calculate the number
-       * of photons that hit the sensor, rather than the number of 
+       * of photons that hit the sensor, rather than the number of
        * electrons that were derived from them
        * Since this number is wavelength dependent, provide the QE
        * for each fluorophore type (in the fluorophore type order)
@@ -5291,14 +3405,15 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getQeCount() {
-        return qe_.size();
+         return qe_.size();
       }
+
       /**
        * <code>repeated double qe = 30;</code>
        *
        * <pre>
        * The quantum efficiency can be used to calculate the number
-       * of photons that hit the sensor, rather than the number of 
+       * of photons that hit the sensor, rather than the number of
        * electrons that were derived from them
        * Since this number is wavelength dependent, provide the QE
        * for each fluorophore type (in the fluorophore type order)
@@ -5306,2240 +3421,3358 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public double getQe(int index) {
-        return qe_.get(index);
-      }
-      /**
-       * <code>repeated double qe = 30;</code>
-       *
-       * <pre>
-       * The quantum efficiency can be used to calculate the number
-       * of photons that hit the sensor, rather than the number of 
-       * electrons that were derived from them
-       * Since this number is wavelength dependent, provide the QE
-       * for each fluorophore type (in the fluorophore type order)
-       * See the description of the field channel in the Spot message below
-       * </pre>
-       */
-      public Builder setQe(
-          int index, double value) {
-        ensureQeIsMutable();
-        qe_.set(index, value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double qe = 30;</code>
-       *
-       * <pre>
-       * The quantum efficiency can be used to calculate the number
-       * of photons that hit the sensor, rather than the number of 
-       * electrons that were derived from them
-       * Since this number is wavelength dependent, provide the QE
-       * for each fluorophore type (in the fluorophore type order)
-       * See the description of the field channel in the Spot message below
-       * </pre>
-       */
-      public Builder addQe(double value) {
-        ensureQeIsMutable();
-        qe_.add(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double qe = 30;</code>
-       *
-       * <pre>
-       * The quantum efficiency can be used to calculate the number
-       * of photons that hit the sensor, rather than the number of 
-       * electrons that were derived from them
-       * Since this number is wavelength dependent, provide the QE
-       * for each fluorophore type (in the fluorophore type order)
-       * See the description of the field channel in the Spot message below
-       * </pre>
-       */
-      public Builder addAllQe(
-          java.lang.Iterable<? extends java.lang.Double> values) {
-        ensureQeIsMutable();
-        super.addAll(values, qe_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated double qe = 30;</code>
-       *
-       * <pre>
-       * The quantum efficiency can be used to calculate the number
-       * of photons that hit the sensor, rather than the number of 
-       * electrons that were derived from them
-       * Since this number is wavelength dependent, provide the QE
-       * for each fluorophore type (in the fluorophore type order)
-       * See the description of the field channel in the Spot message below
-       * </pre>
-       */
-      public Builder clearQe() {
-        qe_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00100000);
-        onChanged();
-        return this;
+         return qe_.get(index);
       }
 
       // optional .TSF.ROI roi = 29;
-      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI roi_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder> roiBuilder_;
+      public static final int ROI_FIELD_NUMBER = 29;
+      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI roi_;
+
       /**
        * <code>optional .TSF.ROI roi = 29;</code>
        */
       public boolean hasRoi() {
-        return ((bitField0_ & 0x00200000) == 0x00200000);
+         return ((bitField0_ & 0x00040000) == 0x00040000);
       }
+
       /**
        * <code>optional .TSF.ROI roi = 29;</code>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI getRoi() {
-        if (roiBuilder_ == null) {
-          return roi_;
-        } else {
-          return roiBuilder_.getMessage();
-        }
+         return roi_;
       }
-      /**
-       * <code>optional .TSF.ROI roi = 29;</code>
-       */
-      public Builder setRoi(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI value) {
-        if (roiBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          roi_ = value;
-          onChanged();
-        } else {
-          roiBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00200000;
-        return this;
-      }
-      /**
-       * <code>optional .TSF.ROI roi = 29;</code>
-       */
-      public Builder setRoi(
-          edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder builderForValue) {
-        if (roiBuilder_ == null) {
-          roi_ = builderForValue.build();
-          onChanged();
-        } else {
-          roiBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00200000;
-        return this;
-      }
-      /**
-       * <code>optional .TSF.ROI roi = 29;</code>
-       */
-      public Builder mergeRoi(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI value) {
-        if (roiBuilder_ == null) {
-          if (((bitField0_ & 0x00200000) == 0x00200000) &&
-              roi_ != edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance()) {
-            roi_ =
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.newBuilder(roi_).mergeFrom(value).buildPartial();
-          } else {
-            roi_ = value;
-          }
-          onChanged();
-        } else {
-          roiBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00200000;
-        return this;
-      }
-      /**
-       * <code>optional .TSF.ROI roi = 29;</code>
-       */
-      public Builder clearRoi() {
-        if (roiBuilder_ == null) {
-          roi_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance();
-          onChanged();
-        } else {
-          roiBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00200000);
-        return this;
-      }
-      /**
-       * <code>optional .TSF.ROI roi = 29;</code>
-       */
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder getRoiBuilder() {
-        bitField0_ |= 0x00200000;
-        onChanged();
-        return getRoiFieldBuilder().getBuilder();
-      }
+
       /**
        * <code>optional .TSF.ROI roi = 29;</code>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder getRoiOrBuilder() {
-        if (roiBuilder_ != null) {
-          return roiBuilder_.getMessageOrBuilder();
-        } else {
-          return roi_;
-        }
+         return roi_;
       }
+
+      private void initFields() {
+         applicationId_ = 1;
+         name_ = "";
+         filepath_ = "";
+         uid_ = 0L;
+         nrPixelsX_ = 0;
+         nrPixelsY_ = 0;
+         pixelSize_ = 0F;
+         nrSpots_ = 0L;
+         boxSize_ = 0;
+         nrChannels_ = 0;
+         nrFrames_ = 0;
+         nrSlices_ = 0;
+         nrPos_ = 0;
+         fluorophoreTypes_ = java.util.Collections.emptyList();
+         locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+         intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+         thetaUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits.DEGREES;
+         fitMode_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode.ONEAXIS;
+         isTrack_ = false;
+         ecf_ = java.util.Collections.emptyList();
+         qe_ = java.util.Collections.emptyList();
+         roi_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance();
+      }
+
+      private byte memoizedIsInitialized = -1;
+
+      public final boolean isInitialized() {
+         byte isInitialized = memoizedIsInitialized;
+         if (isInitialized != -1) {
+            return isInitialized == 1;
+         }
+
+         if (!hasApplicationId()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         for (int i = 0; i < getFluorophoreTypesCount(); i++) {
+            if (!getFluorophoreTypes(i).isInitialized()) {
+               memoizedIsInitialized = 0;
+               return false;
+            }
+         }
+         if (hasRoi()) {
+            if (!getRoi().isInitialized()) {
+               memoizedIsInitialized = 0;
+               return false;
+            }
+         }
+         if (!extensionsAreInitialized()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         memoizedIsInitialized = 1;
+         return true;
+      }
+
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+            throws java.io.IOException {
+         getSerializedSize();
+         com.google.protobuf.GeneratedMessage
+               .ExtendableMessage<edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList>.ExtensionWriter extensionWriter =
+               newExtensionWriter();
+         if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            output.writeInt32(1, applicationId_);
+         }
+         if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            output.writeBytes(2, getNameBytes());
+         }
+         if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            output.writeBytes(3, getFilepathBytes());
+         }
+         if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            output.writeInt64(4, uid_);
+         }
+         if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            output.writeInt32(5, nrPixelsX_);
+         }
+         if (((bitField0_ & 0x00000020) == 0x00000020)) {
+            output.writeInt32(6, nrPixelsY_);
+         }
+         if (((bitField0_ & 0x00000040) == 0x00000040)) {
+            output.writeFloat(7, pixelSize_);
+         }
+         if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            output.writeInt64(8, nrSpots_);
+         }
+         if (((bitField0_ & 0x00000100) == 0x00000100)) {
+            output.writeInt32(17, boxSize_);
+         }
+         if (((bitField0_ & 0x00000200) == 0x00000200)) {
+            output.writeInt32(18, nrChannels_);
+         }
+         if (((bitField0_ & 0x00000400) == 0x00000400)) {
+            output.writeInt32(19, nrFrames_);
+         }
+         if (((bitField0_ & 0x00000800) == 0x00000800)) {
+            output.writeInt32(20, nrSlices_);
+         }
+         if (((bitField0_ & 0x00001000) == 0x00001000)) {
+            output.writeInt32(21, nrPos_);
+         }
+         if (((bitField0_ & 0x00002000) == 0x00002000)) {
+            output.writeEnum(22, locationUnits_.getNumber());
+         }
+         if (((bitField0_ & 0x00004000) == 0x00004000)) {
+            output.writeEnum(23, intensityUnits_.getNumber());
+         }
+         if (((bitField0_ & 0x00010000) == 0x00010000)) {
+            output.writeEnum(24, fitMode_.getNumber());
+         }
+         if (((bitField0_ & 0x00020000) == 0x00020000)) {
+            output.writeBool(25, isTrack_);
+         }
+         for (int i = 0; i < fluorophoreTypes_.size(); i++) {
+            output.writeMessage(26, fluorophoreTypes_.get(i));
+         }
+         if (((bitField0_ & 0x00008000) == 0x00008000)) {
+            output.writeEnum(27, thetaUnits_.getNumber());
+         }
+         for (int i = 0; i < ecf_.size(); i++) {
+            output.writeDouble(28, ecf_.get(i));
+         }
+         if (((bitField0_ & 0x00040000) == 0x00040000)) {
+            output.writeMessage(29, roi_);
+         }
+         for (int i = 0; i < qe_.size(); i++) {
+            output.writeDouble(30, qe_.get(i));
+         }
+         extensionWriter.writeUntil(2048, output);
+         getUnknownFields().writeTo(output);
+      }
+
+      private int memoizedSerializedSize = -1;
+
+      public int getSerializedSize() {
+         int size = memoizedSerializedSize;
+         if (size != -1) {
+            return size;
+         }
+
+         size = 0;
+         if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(1, applicationId_);
+         }
+         if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeBytesSize(2, getNameBytes());
+         }
+         if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeBytesSize(3, getFilepathBytes());
+         }
+         if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt64Size(4, uid_);
+         }
+         if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(5, nrPixelsX_);
+         }
+         if (((bitField0_ & 0x00000020) == 0x00000020)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(6, nrPixelsY_);
+         }
+         if (((bitField0_ & 0x00000040) == 0x00000040)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(7, pixelSize_);
+         }
+         if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt64Size(8, nrSpots_);
+         }
+         if (((bitField0_ & 0x00000100) == 0x00000100)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(17, boxSize_);
+         }
+         if (((bitField0_ & 0x00000200) == 0x00000200)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(18, nrChannels_);
+         }
+         if (((bitField0_ & 0x00000400) == 0x00000400)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(19, nrFrames_);
+         }
+         if (((bitField0_ & 0x00000800) == 0x00000800)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(20, nrSlices_);
+         }
+         if (((bitField0_ & 0x00001000) == 0x00001000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(21, nrPos_);
+         }
+         if (((bitField0_ & 0x00002000) == 0x00002000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeEnumSize(22, locationUnits_.getNumber());
+         }
+         if (((bitField0_ & 0x00004000) == 0x00004000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeEnumSize(23, intensityUnits_.getNumber());
+         }
+         if (((bitField0_ & 0x00010000) == 0x00010000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeEnumSize(24, fitMode_.getNumber());
+         }
+         if (((bitField0_ & 0x00020000) == 0x00020000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeBoolSize(25, isTrack_);
+         }
+         for (int i = 0; i < fluorophoreTypes_.size(); i++) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeMessageSize(26, fluorophoreTypes_.get(i));
+         }
+         if (((bitField0_ & 0x00008000) == 0x00008000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeEnumSize(27, thetaUnits_.getNumber());
+         }
+         {
+            int dataSize = 0;
+            dataSize = 8 * getEcfList().size();
+            size += dataSize;
+            size += 2 * getEcfList().size();
+         }
+         if (((bitField0_ & 0x00040000) == 0x00040000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeMessageSize(29, roi_);
+         }
+         {
+            int dataSize = 0;
+            dataSize = 8 * getQeList().size();
+            size += dataSize;
+            size += 2 * getQeList().size();
+         }
+         size += extensionsSerializedSize();
+         size += getUnknownFields().getSerializedSize();
+         memoizedSerializedSize = size;
+         return size;
+      }
+
+      private static final long serialVersionUID = 0L;
+
+      @java.lang.Override
+      protected java.lang.Object writeReplace()
+            throws java.io.ObjectStreamException {
+         return super.writeReplace();
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
+            java.io.InputStream input)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseDelimitedFrom(
+            java.io.InputStream input)
+            throws java.io.IOException {
+         return PARSER.parseDelimitedFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+         return Builder.create();
+      }
+
+      public Builder newBuilderForType() {
+         return newBuilder();
+      }
+
+      public static Builder newBuilder(edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList prototype) {
+         return newBuilder().mergeFrom(prototype);
+      }
+
+      public Builder toBuilder() {
+         return newBuilder(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+         Builder builder = new Builder(parent);
+         return builder;
+      }
+
       /**
-       * <code>optional .TSF.ROI roi = 29;</code>
+       * Protobuf type {@code TSF.SpotList}
        */
-      private com.google.protobuf.SingleFieldBuilder<
-          edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder> 
-          getRoiFieldBuilder() {
-        if (roiBuilder_ == null) {
-          roiBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder>(
-                  roi_,
-                  getParentForChildren(),
-                  isClean());
-          roi_ = null;
-        }
-        return roiBuilder_;
-      }
+      public static final class Builder extends
+            com.google.protobuf.GeneratedMessage.ExtendableBuilder<
+                  edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList, Builder> implements
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotListOrBuilder {
 
-      // @@protoc_insertion_point(builder_scope:TSF.SpotList)
-    }
+         public static final com.google.protobuf.Descriptors.Descriptor
+         getDescriptor() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_descriptor;
+         }
 
-    static {
-      defaultInstance = new SpotList(true);
-      defaultInstance.initFields();
-    }
+         protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+         internalGetFieldAccessorTable() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_fieldAccessorTable
+                  .ensureFieldAccessorsInitialized(
+                        edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.class,
+                        edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.Builder.class);
+         }
 
-    // @@protoc_insertion_point(class_scope:TSF.SpotList)
-  }
+         // Construct using edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.newBuilder()
+         private Builder() {
+            maybeForceBuilderInitialization();
+         }
 
-  public interface SpotOrBuilder extends
-      com.google.protobuf.GeneratedMessage.
-          ExtendableMessageOrBuilder<Spot> {
+         private Builder(
+               com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+            super(parent);
+            maybeForceBuilderInitialization();
+         }
 
-    // required int32 molecule = 1;
-    /**
-     * <code>required int32 molecule = 1;</code>
-     *
-     * <pre>
-     * Identifier for a physical molecule. Multiple localizations will be considered
-     * to be generated by the same molecule if they share the same molecule ID.
-     * Typically, a molecule generates up to one localization per frame.
-     * If you don't implement tracking, assign a different molecule ID to
-     * each localization.
-     * The difference between molecules and clusters is that a cluster is a group
-     * of physical molecules, e.g. a raft on a membrane. When you are tracking to
-     * link your localizations, you're looking at a molecule, and when you're 
-     * thresholding on the nearest neighbor distance, it's typically a cluster.
-     * If you are using both cluster and molecule, localizations with the same
-     * molecule ID should have the same cluster ID.
-     * Molecule IDs must be globally unique across clusters. 
-     * </pre>
-     */
-    boolean hasMolecule();
-    /**
-     * <code>required int32 molecule = 1;</code>
-     *
-     * <pre>
-     * Identifier for a physical molecule. Multiple localizations will be considered
-     * to be generated by the same molecule if they share the same molecule ID.
-     * Typically, a molecule generates up to one localization per frame.
-     * If you don't implement tracking, assign a different molecule ID to
-     * each localization.
-     * The difference between molecules and clusters is that a cluster is a group
-     * of physical molecules, e.g. a raft on a membrane. When you are tracking to
-     * link your localizations, you're looking at a molecule, and when you're 
-     * thresholding on the nearest neighbor distance, it's typically a cluster.
-     * If you are using both cluster and molecule, localizations with the same
-     * molecule ID should have the same cluster ID.
-     * Molecule IDs must be globally unique across clusters. 
-     * </pre>
-     */
-    int getMolecule();
-
-    // required int32 channel = 2;
-    /**
-     * <code>required int32 channel = 2;</code>
-     *
-     * <pre>
-     * Identifier for an input channel. Input channels represent different optical
-     * paths, often with different spectral characteristics. For example, in a
-     * biplane setup, you'd have two channels, one for each camera. Channels are
-     * 1-based.
-     * Please note that channels and fluorophore type are subtly different: channel
-     * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
-     * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
-     * biplane single-color 3D, you'd set the channel field if you emit separate
-     * localizations for both channels, but never the type field. For biplane
-     * two-color experiments, you'd set both channel and type if you fit in both
-     * channels independently, and only types if your fitter combines information
-     * for both channels. For spectrally separated measurements, channel and type
-     * are usually identical, but for spectral unmixing, they may differ.
-     * </pre>
-     */
-    boolean hasChannel();
-    /**
-     * <code>required int32 channel = 2;</code>
-     *
-     * <pre>
-     * Identifier for an input channel. Input channels represent different optical
-     * paths, often with different spectral characteristics. For example, in a
-     * biplane setup, you'd have two channels, one for each camera. Channels are
-     * 1-based.
-     * Please note that channels and fluorophore type are subtly different: channel
-     * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
-     * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
-     * biplane single-color 3D, you'd set the channel field if you emit separate
-     * localizations for both channels, but never the type field. For biplane
-     * two-color experiments, you'd set both channel and type if you fit in both
-     * channels independently, and only types if your fitter combines information
-     * for both channels. For spectrally separated measurements, channel and type
-     * are usually identical, but for spectral unmixing, they may differ.
-     * </pre>
-     */
-    int getChannel();
-
-    // required int32 frame = 3;
-    /**
-     * <code>required int32 frame = 3;</code>
-     *
-     * <pre>
-     * Frame number (image number). The frames of each channel are numbered
-     * sequentially, starting from 1.
-     * </pre>
-     */
-    boolean hasFrame();
-    /**
-     * <code>required int32 frame = 3;</code>
-     *
-     * <pre>
-     * Frame number (image number). The frames of each channel are numbered
-     * sequentially, starting from 1.
-     * </pre>
-     */
-    int getFrame();
-
-    // optional int32 slice = 4;
-    /**
-     * <code>optional int32 slice = 4;</code>
-     *
-     * <pre>
-     * Z slice. If you are taking a series of images at different axial offsets,
-     * you can tag the localizations from each respective slice with this 1-based
-     * field. Please apply the offset between slices before saving to a TSF file:
-     * z=100 with slice=1 is considered same position as z=100 with slice=2.
-     * </pre>
-     */
-    boolean hasSlice();
-    /**
-     * <code>optional int32 slice = 4;</code>
-     *
-     * <pre>
-     * Z slice. If you are taking a series of images at different axial offsets,
-     * you can tag the localizations from each respective slice with this 1-based
-     * field. Please apply the offset between slices before saving to a TSF file:
-     * z=100 with slice=1 is considered same position as z=100 with slice=2.
-     * </pre>
-     */
-    int getSlice();
-
-    // optional int32 pos = 5;
-    /**
-     * <code>optional int32 pos = 5;</code>
-     *
-     * <pre>
-     * Lateral position. If you are taking images at multiple x/y stage positions,
-     * you can tag the localizations from each position with this 1-based field.
-     * Positions are 1-based. Please apply the offset between positions before
-     * saving the TSF file:
-     * x=100 with pos=1 is considered same position as x=100 with pos=2.
-     * </pre>
-     */
-    boolean hasPos();
-    /**
-     * <code>optional int32 pos = 5;</code>
-     *
-     * <pre>
-     * Lateral position. If you are taking images at multiple x/y stage positions,
-     * you can tag the localizations from each position with this 1-based field.
-     * Positions are 1-based. Please apply the offset between positions before
-     * saving the TSF file:
-     * x=100 with pos=1 is considered same position as x=100 with pos=2.
-     * </pre>
-     */
-    int getPos();
-
-    // optional int32 fluorophore_type = 19;
-    /**
-     * <code>optional int32 fluorophore_type = 19;</code>
-     *
-     * <pre>
-     * Fluorophore type. The number is 1-based. Please compare the note for
-     * channel for the distinction between type and channel.
-     * </pre>
-     */
-    boolean hasFluorophoreType();
-    /**
-     * <code>optional int32 fluorophore_type = 19;</code>
-     *
-     * <pre>
-     * Fluorophore type. The number is 1-based. Please compare the note for
-     * channel for the distinction between type and channel.
-     * </pre>
-     */
-    int getFluorophoreType();
-
-    // optional int32 cluster = 20;
-    /**
-     * <code>optional int32 cluster = 20;</code>
-     *
-     * <pre>
-     * The identifier of the cluster that the localization belongs to, 1-based.
-     * A cluster is a logical group of multiple physical molecules. Typical
-     * examples are membrane rafts, 
-     * </pre>
-     */
-    boolean hasCluster();
-    /**
-     * <code>optional int32 cluster = 20;</code>
-     *
-     * <pre>
-     * The identifier of the cluster that the localization belongs to, 1-based.
-     * A cluster is a logical group of multiple physical molecules. Typical
-     * examples are membrane rafts, 
-     * </pre>
-     */
-    int getCluster();
-
-    // optional .TSF.LocationUnits location_units = 17;
-    /**
-     * <code>optional .TSF.LocationUnits location_units = 17;</code>
-     *
-     * <pre>
-     * xyz coordinates of the spot in location_units  
-     * after fitting and optional correction
-     * </pre>
-     */
-    boolean hasLocationUnits();
-    /**
-     * <code>optional .TSF.LocationUnits location_units = 17;</code>
-     *
-     * <pre>
-     * xyz coordinates of the spot in location_units  
-     * after fitting and optional correction
-     * </pre>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits();
-
-    // required float x = 7;
-    /**
-     * <code>required float x = 7;</code>
-     */
-    boolean hasX();
-    /**
-     * <code>required float x = 7;</code>
-     */
-    float getX();
-
-    // required float y = 8;
-    /**
-     * <code>required float y = 8;</code>
-     */
-    boolean hasY();
-    /**
-     * <code>required float y = 8;</code>
-     */
-    float getY();
-
-    // optional float z = 9;
-    /**
-     * <code>optional float z = 9;</code>
-     */
-    boolean hasZ();
-    /**
-     * <code>optional float z = 9;</code>
-     */
-    float getZ();
-
-    // optional .TSF.IntensityUnits intensity_units = 18;
-    /**
-     * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
-     *
-     * <pre>
-     * Use intensity_units only if different from SpotList
-     * integrated spot density. This can either be determined from a fit or 
-     * using any other methods.  This number should be corrected for background
-     * </pre>
-     */
-    boolean hasIntensityUnits();
-    /**
-     * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
-     *
-     * <pre>
-     * Use intensity_units only if different from SpotList
-     * integrated spot density. This can either be determined from a fit or 
-     * using any other methods.  This number should be corrected for background
-     * </pre>
-     */
-    edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits();
-
-    // required float intensity = 10;
-    /**
-     * <code>required float intensity = 10;</code>
-     *
-     * <pre>
-     * integrated spot density
-     * </pre>
-     */
-    boolean hasIntensity();
-    /**
-     * <code>required float intensity = 10;</code>
-     *
-     * <pre>
-     * integrated spot density
-     * </pre>
-     */
-    float getIntensity();
-
-    // optional float background = 11;
-    /**
-     * <code>optional float background = 11;</code>
-     *
-     * <pre>
-     * Background around the spot. 
-     * This can be determined through a fit or other methods
-     * This number should not include the camera bias, i.e. it should be linearly
-     * proportional to the number of photons in the background
-     * </pre>
-     */
-    boolean hasBackground();
-    /**
-     * <code>optional float background = 11;</code>
-     *
-     * <pre>
-     * Background around the spot. 
-     * This can be determined through a fit or other methods
-     * This number should not include the camera bias, i.e. it should be linearly
-     * proportional to the number of photons in the background
-     * </pre>
-     */
-    float getBackground();
-
-    // optional float width = 12;
-    /**
-     * <code>optional float width = 12;</code>
-     *
-     * <pre>
-     * Peak width at half height in location units
-     * for asymmetric peaks, calculate the width as the square root of the 
-     * product of the widths of the long and short axes
-     * </pre>
-     */
-    boolean hasWidth();
-    /**
-     * <code>optional float width = 12;</code>
-     *
-     * <pre>
-     * Peak width at half height in location units
-     * for asymmetric peaks, calculate the width as the square root of the 
-     * product of the widths of the long and short axes
-     * </pre>
-     */
-    float getWidth();
-
-    // optional float a = 13;
-    /**
-     * <code>optional float a = 13;</code>
-     *
-     * <pre>
-     * Shape of the peak: width of the long axis 
-     * divided by width of the short axis
-     * </pre>
-     */
-    boolean hasA();
-    /**
-     * <code>optional float a = 13;</code>
-     *
-     * <pre>
-     * Shape of the peak: width of the long axis 
-     * divided by width of the short axis
-     * </pre>
-     */
-    float getA();
-
-    // optional float theta = 14;
-    /**
-     * <code>optional float theta = 14;</code>
-     *
-     * <pre>
-     * Rotation of asymetric peak, only used 
-     * when fitmode == TWOAXISANDTHETA
-     * </pre>
-     */
-    boolean hasTheta();
-    /**
-     * <code>optional float theta = 14;</code>
-     *
-     * <pre>
-     * Rotation of asymetric peak, only used 
-     * when fitmode == TWOAXISANDTHETA
-     * </pre>
-     */
-    float getTheta();
-
-    // optional float x_original = 101;
-    /**
-     * <code>optional float x_original = 101;</code>
-     *
-     * <pre>
-     * Original xyz coordinates from fitting before correction
-     * </pre>
-     */
-    boolean hasXOriginal();
-    /**
-     * <code>optional float x_original = 101;</code>
-     *
-     * <pre>
-     * Original xyz coordinates from fitting before correction
-     * </pre>
-     */
-    float getXOriginal();
-
-    // optional float y_original = 102;
-    /**
-     * <code>optional float y_original = 102;</code>
-     */
-    boolean hasYOriginal();
-    /**
-     * <code>optional float y_original = 102;</code>
-     */
-    float getYOriginal();
-
-    // optional float z_original = 103;
-    /**
-     * <code>optional float z_original = 103;</code>
-     */
-    boolean hasZOriginal();
-    /**
-     * <code>optional float z_original = 103;</code>
-     */
-    float getZOriginal();
-
-    // optional float x_precision = 104;
-    /**
-     * <code>optional float x_precision = 104;</code>
-     *
-     * <pre>
-     * localization precision
-     * </pre>
-     */
-    boolean hasXPrecision();
-    /**
-     * <code>optional float x_precision = 104;</code>
-     *
-     * <pre>
-     * localization precision
-     * </pre>
-     */
-    float getXPrecision();
-
-    // optional float y_precision = 105;
-    /**
-     * <code>optional float y_precision = 105;</code>
-     */
-    boolean hasYPrecision();
-    /**
-     * <code>optional float y_precision = 105;</code>
-     */
-    float getYPrecision();
-
-    // optional float z_precision = 106;
-    /**
-     * <code>optional float z_precision = 106;</code>
-     */
-    boolean hasZPrecision();
-    /**
-     * <code>optional float z_precision = 106;</code>
-     */
-    float getZPrecision();
-
-    // optional int32 x_position = 107;
-    /**
-     * <code>optional int32 x_position = 107;</code>
-     *
-     * <pre>
-     * position in the original image (in pixels) used for fitting
-     * </pre>
-     */
-    boolean hasXPosition();
-    /**
-     * <code>optional int32 x_position = 107;</code>
-     *
-     * <pre>
-     * position in the original image (in pixels) used for fitting
-     * </pre>
-     */
-    int getXPosition();
-
-    // optional int32 y_position = 108;
-    /**
-     * <code>optional int32 y_position = 108;</code>
-     */
-    boolean hasYPosition();
-    /**
-     * <code>optional int32 y_position = 108;</code>
-     */
-    int getYPosition();
-  }
-  /**
-   * Protobuf type {@code TSF.Spot}
-   */
-  public static final class Spot extends
-      com.google.protobuf.GeneratedMessage.ExtendableMessage<
-        Spot> implements SpotOrBuilder {
-    // Use Spot.newBuilder() to construct.
-    private Spot(com.google.protobuf.GeneratedMessage.ExtendableBuilder<edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot, ?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private Spot(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final Spot defaultInstance;
-    public static Spot getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public Spot getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private Spot(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
+         private void maybeForceBuilderInitialization() {
+            if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+               getFluorophoreTypesFieldBuilder();
+               getRoiFieldBuilder();
             }
-            case 8: {
-              bitField0_ |= 0x00000001;
-              molecule_ = input.readInt32();
-              break;
+         }
+
+         private static Builder create() {
+            return new Builder();
+         }
+
+         public Builder clear() {
+            super.clear();
+            applicationId_ = 1;
+            bitField0_ = (bitField0_ & ~0x00000001);
+            name_ = "";
+            bitField0_ = (bitField0_ & ~0x00000002);
+            filepath_ = "";
+            bitField0_ = (bitField0_ & ~0x00000004);
+            uid_ = 0L;
+            bitField0_ = (bitField0_ & ~0x00000008);
+            nrPixelsX_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000010);
+            nrPixelsY_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000020);
+            pixelSize_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00000040);
+            nrSpots_ = 0L;
+            bitField0_ = (bitField0_ & ~0x00000080);
+            boxSize_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000100);
+            nrChannels_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000200);
+            nrFrames_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000400);
+            nrSlices_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000800);
+            nrPos_ = 0;
+            bitField0_ = (bitField0_ & ~0x00001000);
+            if (fluorophoreTypesBuilder_ == null) {
+               fluorophoreTypes_ = java.util.Collections.emptyList();
+               bitField0_ = (bitField0_ & ~0x00002000);
+            } else {
+               fluorophoreTypesBuilder_.clear();
             }
-            case 16: {
-              bitField0_ |= 0x00000002;
-              channel_ = input.readInt32();
-              break;
+            locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+            bitField0_ = (bitField0_ & ~0x00004000);
+            intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+            bitField0_ = (bitField0_ & ~0x00008000);
+            thetaUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits.DEGREES;
+            bitField0_ = (bitField0_ & ~0x00010000);
+            fitMode_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode.ONEAXIS;
+            bitField0_ = (bitField0_ & ~0x00020000);
+            isTrack_ = false;
+            bitField0_ = (bitField0_ & ~0x00040000);
+            ecf_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00080000);
+            qe_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00100000);
+            if (roiBuilder_ == null) {
+               roi_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance();
+            } else {
+               roiBuilder_.clear();
             }
-            case 24: {
-              bitField0_ |= 0x00000004;
-              frame_ = input.readInt32();
-              break;
+            bitField0_ = (bitField0_ & ~0x00200000);
+            return this;
+         }
+
+         public Builder clone() {
+            return create().mergeFrom(buildPartial());
+         }
+
+         public com.google.protobuf.Descriptors.Descriptor
+         getDescriptorForType() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_SpotList_descriptor;
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList getDefaultInstanceForType() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.getDefaultInstance();
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList build() {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList result = buildPartial();
+            if (!result.isInitialized()) {
+               throw newUninitializedMessageException(result);
             }
-            case 32: {
-              bitField0_ |= 0x00000008;
-              slice_ = input.readInt32();
-              break;
+            return result;
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList buildPartial() {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList result = new edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList(
+                  this);
+            int from_bitField0_ = bitField0_;
+            int to_bitField0_ = 0;
+            if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+               to_bitField0_ |= 0x00000001;
             }
-            case 40: {
-              bitField0_ |= 0x00000010;
-              pos_ = input.readInt32();
-              break;
+            result.applicationId_ = applicationId_;
+            if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+               to_bitField0_ |= 0x00000002;
             }
-            case 61: {
-              bitField0_ |= 0x00000100;
-              x_ = input.readFloat();
-              break;
+            result.name_ = name_;
+            if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+               to_bitField0_ |= 0x00000004;
             }
-            case 69: {
-              bitField0_ |= 0x00000200;
-              y_ = input.readFloat();
-              break;
+            result.filepath_ = filepath_;
+            if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+               to_bitField0_ |= 0x00000008;
             }
-            case 77: {
-              bitField0_ |= 0x00000400;
-              z_ = input.readFloat();
-              break;
+            result.uid_ = uid_;
+            if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+               to_bitField0_ |= 0x00000010;
             }
-            case 85: {
-              bitField0_ |= 0x00001000;
-              intensity_ = input.readFloat();
-              break;
+            result.nrPixelsX_ = nrPixelsX_;
+            if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+               to_bitField0_ |= 0x00000020;
             }
-            case 93: {
-              bitField0_ |= 0x00002000;
-              background_ = input.readFloat();
-              break;
+            result.nrPixelsY_ = nrPixelsY_;
+            if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+               to_bitField0_ |= 0x00000040;
             }
-            case 101: {
-              bitField0_ |= 0x00004000;
-              width_ = input.readFloat();
-              break;
+            result.pixelSize_ = pixelSize_;
+            if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+               to_bitField0_ |= 0x00000080;
             }
-            case 109: {
-              bitField0_ |= 0x00008000;
-              a_ = input.readFloat();
-              break;
+            result.nrSpots_ = nrSpots_;
+            if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+               to_bitField0_ |= 0x00000100;
             }
-            case 117: {
-              bitField0_ |= 0x00010000;
-              theta_ = input.readFloat();
-              break;
+            result.boxSize_ = boxSize_;
+            if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
+               to_bitField0_ |= 0x00000200;
             }
-            case 136: {
-              int rawValue = input.readEnum();
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(17, rawValue);
-              } else {
-                bitField0_ |= 0x00000080;
-                locationUnits_ = value;
-              }
-              break;
+            result.nrChannels_ = nrChannels_;
+            if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
+               to_bitField0_ |= 0x00000400;
             }
-            case 144: {
-              int rawValue = input.readEnum();
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(18, rawValue);
-              } else {
-                bitField0_ |= 0x00000800;
-                intensityUnits_ = value;
-              }
-              break;
+            result.nrFrames_ = nrFrames_;
+            if (((from_bitField0_ & 0x00000800) == 0x00000800)) {
+               to_bitField0_ |= 0x00000800;
             }
-            case 152: {
-              bitField0_ |= 0x00000020;
-              fluorophoreType_ = input.readInt32();
-              break;
+            result.nrSlices_ = nrSlices_;
+            if (((from_bitField0_ & 0x00001000) == 0x00001000)) {
+               to_bitField0_ |= 0x00001000;
             }
-            case 160: {
-              bitField0_ |= 0x00000040;
-              cluster_ = input.readInt32();
-              break;
+            result.nrPos_ = nrPos_;
+            if (fluorophoreTypesBuilder_ == null) {
+               if (((bitField0_ & 0x00002000) == 0x00002000)) {
+                  fluorophoreTypes_ = java.util.Collections.unmodifiableList(fluorophoreTypes_);
+                  bitField0_ = (bitField0_ & ~0x00002000);
+               }
+               result.fluorophoreTypes_ = fluorophoreTypes_;
+            } else {
+               result.fluorophoreTypes_ = fluorophoreTypesBuilder_.build();
             }
-            case 813: {
-              bitField0_ |= 0x00020000;
-              xOriginal_ = input.readFloat();
-              break;
+            if (((from_bitField0_ & 0x00004000) == 0x00004000)) {
+               to_bitField0_ |= 0x00002000;
             }
-            case 821: {
-              bitField0_ |= 0x00040000;
-              yOriginal_ = input.readFloat();
-              break;
+            result.locationUnits_ = locationUnits_;
+            if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
+               to_bitField0_ |= 0x00004000;
             }
-            case 829: {
-              bitField0_ |= 0x00080000;
-              zOriginal_ = input.readFloat();
-              break;
+            result.intensityUnits_ = intensityUnits_;
+            if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
+               to_bitField0_ |= 0x00008000;
             }
-            case 837: {
-              bitField0_ |= 0x00100000;
-              xPrecision_ = input.readFloat();
-              break;
+            result.thetaUnits_ = thetaUnits_;
+            if (((from_bitField0_ & 0x00020000) == 0x00020000)) {
+               to_bitField0_ |= 0x00010000;
             }
-            case 845: {
-              bitField0_ |= 0x00200000;
-              yPrecision_ = input.readFloat();
-              break;
+            result.fitMode_ = fitMode_;
+            if (((from_bitField0_ & 0x00040000) == 0x00040000)) {
+               to_bitField0_ |= 0x00020000;
             }
-            case 853: {
-              bitField0_ |= 0x00400000;
-              zPrecision_ = input.readFloat();
-              break;
+            result.isTrack_ = isTrack_;
+            if (((bitField0_ & 0x00080000) == 0x00080000)) {
+               ecf_ = java.util.Collections.unmodifiableList(ecf_);
+               bitField0_ = (bitField0_ & ~0x00080000);
             }
-            case 856: {
-              bitField0_ |= 0x00800000;
-              xPosition_ = input.readInt32();
-              break;
+            result.ecf_ = ecf_;
+            if (((bitField0_ & 0x00100000) == 0x00100000)) {
+               qe_ = java.util.Collections.unmodifiableList(qe_);
+               bitField0_ = (bitField0_ & ~0x00100000);
             }
-            case 864: {
-              bitField0_ |= 0x01000000;
-              yPosition_ = input.readInt32();
-              break;
+            result.qe_ = qe_;
+            if (((from_bitField0_ & 0x00200000) == 0x00200000)) {
+               to_bitField0_ |= 0x00040000;
             }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_descriptor;
-    }
+            if (roiBuilder_ == null) {
+               result.roi_ = roi_;
+            } else {
+               result.roi_ = roiBuilder_.build();
+            }
+            result.bitField0_ = to_bitField0_;
+            onBuilt();
+            return result;
+         }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.class, edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.Builder.class);
-    }
+         public Builder mergeFrom(com.google.protobuf.Message other) {
+            if (other instanceof edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList) {
+               return mergeFrom((edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList) other);
+            } else {
+               super.mergeFrom(other);
+               return this;
+            }
+         }
 
-    public static com.google.protobuf.Parser<Spot> PARSER =
-        new com.google.protobuf.AbstractParser<Spot>() {
-      public Spot parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new Spot(input, extensionRegistry);
-      }
-    };
+         public Builder mergeFrom(edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList other) {
+            if (other == edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList.getDefaultInstance()) {
+               return this;
+            }
+            if (other.hasApplicationId()) {
+               setApplicationId(other.getApplicationId());
+            }
+            if (other.hasName()) {
+               bitField0_ |= 0x00000002;
+               name_ = other.name_;
+               onChanged();
+            }
+            if (other.hasFilepath()) {
+               bitField0_ |= 0x00000004;
+               filepath_ = other.filepath_;
+               onChanged();
+            }
+            if (other.hasUid()) {
+               setUid(other.getUid());
+            }
+            if (other.hasNrPixelsX()) {
+               setNrPixelsX(other.getNrPixelsX());
+            }
+            if (other.hasNrPixelsY()) {
+               setNrPixelsY(other.getNrPixelsY());
+            }
+            if (other.hasPixelSize()) {
+               setPixelSize(other.getPixelSize());
+            }
+            if (other.hasNrSpots()) {
+               setNrSpots(other.getNrSpots());
+            }
+            if (other.hasBoxSize()) {
+               setBoxSize(other.getBoxSize());
+            }
+            if (other.hasNrChannels()) {
+               setNrChannels(other.getNrChannels());
+            }
+            if (other.hasNrFrames()) {
+               setNrFrames(other.getNrFrames());
+            }
+            if (other.hasNrSlices()) {
+               setNrSlices(other.getNrSlices());
+            }
+            if (other.hasNrPos()) {
+               setNrPos(other.getNrPos());
+            }
+            if (fluorophoreTypesBuilder_ == null) {
+               if (!other.fluorophoreTypes_.isEmpty()) {
+                  if (fluorophoreTypes_.isEmpty()) {
+                     fluorophoreTypes_ = other.fluorophoreTypes_;
+                     bitField0_ = (bitField0_ & ~0x00002000);
+                  } else {
+                     ensureFluorophoreTypesIsMutable();
+                     fluorophoreTypes_.addAll(other.fluorophoreTypes_);
+                  }
+                  onChanged();
+               }
+            } else {
+               if (!other.fluorophoreTypes_.isEmpty()) {
+                  if (fluorophoreTypesBuilder_.isEmpty()) {
+                     fluorophoreTypesBuilder_.dispose();
+                     fluorophoreTypesBuilder_ = null;
+                     fluorophoreTypes_ = other.fluorophoreTypes_;
+                     bitField0_ = (bitField0_ & ~0x00002000);
+                     fluorophoreTypesBuilder_ =
+                           com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                                 getFluorophoreTypesFieldBuilder() : null;
+                  } else {
+                     fluorophoreTypesBuilder_.addAllMessages(other.fluorophoreTypes_);
+                  }
+               }
+            }
+            if (other.hasLocationUnits()) {
+               setLocationUnits(other.getLocationUnits());
+            }
+            if (other.hasIntensityUnits()) {
+               setIntensityUnits(other.getIntensityUnits());
+            }
+            if (other.hasThetaUnits()) {
+               setThetaUnits(other.getThetaUnits());
+            }
+            if (other.hasFitMode()) {
+               setFitMode(other.getFitMode());
+            }
+            if (other.hasIsTrack()) {
+               setIsTrack(other.getIsTrack());
+            }
+            if (!other.ecf_.isEmpty()) {
+               if (ecf_.isEmpty()) {
+                  ecf_ = other.ecf_;
+                  bitField0_ = (bitField0_ & ~0x00080000);
+               } else {
+                  ensureEcfIsMutable();
+                  ecf_.addAll(other.ecf_);
+               }
+               onChanged();
+            }
+            if (!other.qe_.isEmpty()) {
+               if (qe_.isEmpty()) {
+                  qe_ = other.qe_;
+                  bitField0_ = (bitField0_ & ~0x00100000);
+               } else {
+                  ensureQeIsMutable();
+                  qe_.addAll(other.qe_);
+               }
+               onChanged();
+            }
+            if (other.hasRoi()) {
+               mergeRoi(other.getRoi());
+            }
+            this.mergeExtensionFields(other);
+            this.mergeUnknownFields(other.getUnknownFields());
+            return this;
+         }
 
-    @java.lang.Override
-    public com.google.protobuf.Parser<Spot> getParserForType() {
-      return PARSER;
-    }
+         public final boolean isInitialized() {
+            if (!hasApplicationId()) {
 
-    private int bitField0_;
-    // required int32 molecule = 1;
-    public static final int MOLECULE_FIELD_NUMBER = 1;
-    private int molecule_;
-    /**
-     * <code>required int32 molecule = 1;</code>
-     *
-     * <pre>
-     * Identifier for a physical molecule. Multiple localizations will be considered
-     * to be generated by the same molecule if they share the same molecule ID.
-     * Typically, a molecule generates up to one localization per frame.
-     * If you don't implement tracking, assign a different molecule ID to
-     * each localization.
-     * The difference between molecules and clusters is that a cluster is a group
-     * of physical molecules, e.g. a raft on a membrane. When you are tracking to
-     * link your localizations, you're looking at a molecule, and when you're 
-     * thresholding on the nearest neighbor distance, it's typically a cluster.
-     * If you are using both cluster and molecule, localizations with the same
-     * molecule ID should have the same cluster ID.
-     * Molecule IDs must be globally unique across clusters. 
-     * </pre>
-     */
-    public boolean hasMolecule() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required int32 molecule = 1;</code>
-     *
-     * <pre>
-     * Identifier for a physical molecule. Multiple localizations will be considered
-     * to be generated by the same molecule if they share the same molecule ID.
-     * Typically, a molecule generates up to one localization per frame.
-     * If you don't implement tracking, assign a different molecule ID to
-     * each localization.
-     * The difference between molecules and clusters is that a cluster is a group
-     * of physical molecules, e.g. a raft on a membrane. When you are tracking to
-     * link your localizations, you're looking at a molecule, and when you're 
-     * thresholding on the nearest neighbor distance, it's typically a cluster.
-     * If you are using both cluster and molecule, localizations with the same
-     * molecule ID should have the same cluster ID.
-     * Molecule IDs must be globally unique across clusters. 
-     * </pre>
-     */
-    public int getMolecule() {
-      return molecule_;
-    }
+               return false;
+            }
+            for (int i = 0; i < getFluorophoreTypesCount(); i++) {
+               if (!getFluorophoreTypes(i).isInitialized()) {
 
-    // required int32 channel = 2;
-    public static final int CHANNEL_FIELD_NUMBER = 2;
-    private int channel_;
-    /**
-     * <code>required int32 channel = 2;</code>
-     *
-     * <pre>
-     * Identifier for an input channel. Input channels represent different optical
-     * paths, often with different spectral characteristics. For example, in a
-     * biplane setup, you'd have two channels, one for each camera. Channels are
-     * 1-based.
-     * Please note that channels and fluorophore type are subtly different: channel
-     * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
-     * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
-     * biplane single-color 3D, you'd set the channel field if you emit separate
-     * localizations for both channels, but never the type field. For biplane
-     * two-color experiments, you'd set both channel and type if you fit in both
-     * channels independently, and only types if your fitter combines information
-     * for both channels. For spectrally separated measurements, channel and type
-     * are usually identical, but for spectral unmixing, they may differ.
-     * </pre>
-     */
-    public boolean hasChannel() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required int32 channel = 2;</code>
-     *
-     * <pre>
-     * Identifier for an input channel. Input channels represent different optical
-     * paths, often with different spectral characteristics. For example, in a
-     * biplane setup, you'd have two channels, one for each camera. Channels are
-     * 1-based.
-     * Please note that channels and fluorophore type are subtly different: channel
-     * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
-     * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
-     * biplane single-color 3D, you'd set the channel field if you emit separate
-     * localizations for both channels, but never the type field. For biplane
-     * two-color experiments, you'd set both channel and type if you fit in both
-     * channels independently, and only types if your fitter combines information
-     * for both channels. For spectrally separated measurements, channel and type
-     * are usually identical, but for spectral unmixing, they may differ.
-     * </pre>
-     */
-    public int getChannel() {
-      return channel_;
-    }
+                  return false;
+               }
+            }
+            if (hasRoi()) {
+               if (!getRoi().isInitialized()) {
 
-    // required int32 frame = 3;
-    public static final int FRAME_FIELD_NUMBER = 3;
-    private int frame_;
-    /**
-     * <code>required int32 frame = 3;</code>
-     *
-     * <pre>
-     * Frame number (image number). The frames of each channel are numbered
-     * sequentially, starting from 1.
-     * </pre>
-     */
-    public boolean hasFrame() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>required int32 frame = 3;</code>
-     *
-     * <pre>
-     * Frame number (image number). The frames of each channel are numbered
-     * sequentially, starting from 1.
-     * </pre>
-     */
-    public int getFrame() {
-      return frame_;
-    }
+                  return false;
+               }
+            }
+            if (!extensionsAreInitialized()) {
 
-    // optional int32 slice = 4;
-    public static final int SLICE_FIELD_NUMBER = 4;
-    private int slice_;
-    /**
-     * <code>optional int32 slice = 4;</code>
-     *
-     * <pre>
-     * Z slice. If you are taking a series of images at different axial offsets,
-     * you can tag the localizations from each respective slice with this 1-based
-     * field. Please apply the offset between slices before saving to a TSF file:
-     * z=100 with slice=1 is considered same position as z=100 with slice=2.
-     * </pre>
-     */
-    public boolean hasSlice() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
-    }
-    /**
-     * <code>optional int32 slice = 4;</code>
-     *
-     * <pre>
-     * Z slice. If you are taking a series of images at different axial offsets,
-     * you can tag the localizations from each respective slice with this 1-based
-     * field. Please apply the offset between slices before saving to a TSF file:
-     * z=100 with slice=1 is considered same position as z=100 with slice=2.
-     * </pre>
-     */
-    public int getSlice() {
-      return slice_;
-    }
+               return false;
+            }
+            return true;
+         }
 
-    // optional int32 pos = 5;
-    public static final int POS_FIELD_NUMBER = 5;
-    private int pos_;
-    /**
-     * <code>optional int32 pos = 5;</code>
-     *
-     * <pre>
-     * Lateral position. If you are taking images at multiple x/y stage positions,
-     * you can tag the localizations from each position with this 1-based field.
-     * Positions are 1-based. Please apply the offset between positions before
-     * saving the TSF file:
-     * x=100 with pos=1 is considered same position as x=100 with pos=2.
-     * </pre>
-     */
-    public boolean hasPos() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
-    }
-    /**
-     * <code>optional int32 pos = 5;</code>
-     *
-     * <pre>
-     * Lateral position. If you are taking images at multiple x/y stage positions,
-     * you can tag the localizations from each position with this 1-based field.
-     * Positions are 1-based. Please apply the offset between positions before
-     * saving the TSF file:
-     * x=100 with pos=1 is considered same position as x=100 with pos=2.
-     * </pre>
-     */
-    public int getPos() {
-      return pos_;
-    }
+         public Builder mergeFrom(
+               com.google.protobuf.CodedInputStream input,
+               com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+               throws java.io.IOException {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList parsedMessage = null;
+            try {
+               parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+               parsedMessage = (edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotList) e
+                     .getUnfinishedMessage();
+               throw e;
+            } finally {
+               if (parsedMessage != null) {
+                  mergeFrom(parsedMessage);
+               }
+            }
+            return this;
+         }
 
-    // optional int32 fluorophore_type = 19;
-    public static final int FLUOROPHORE_TYPE_FIELD_NUMBER = 19;
-    private int fluorophoreType_;
-    /**
-     * <code>optional int32 fluorophore_type = 19;</code>
-     *
-     * <pre>
-     * Fluorophore type. The number is 1-based. Please compare the note for
-     * channel for the distinction between type and channel.
-     * </pre>
-     */
-    public boolean hasFluorophoreType() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
-    }
-    /**
-     * <code>optional int32 fluorophore_type = 19;</code>
-     *
-     * <pre>
-     * Fluorophore type. The number is 1-based. Please compare the note for
-     * channel for the distinction between type and channel.
-     * </pre>
-     */
-    public int getFluorophoreType() {
-      return fluorophoreType_;
-    }
+         private int bitField0_;
 
-    // optional int32 cluster = 20;
-    public static final int CLUSTER_FIELD_NUMBER = 20;
-    private int cluster_;
-    /**
-     * <code>optional int32 cluster = 20;</code>
-     *
-     * <pre>
-     * The identifier of the cluster that the localization belongs to, 1-based.
-     * A cluster is a logical group of multiple physical molecules. Typical
-     * examples are membrane rafts, 
-     * </pre>
-     */
-    public boolean hasCluster() {
-      return ((bitField0_ & 0x00000040) == 0x00000040);
-    }
-    /**
-     * <code>optional int32 cluster = 20;</code>
-     *
-     * <pre>
-     * The identifier of the cluster that the localization belongs to, 1-based.
-     * A cluster is a logical group of multiple physical molecules. Typical
-     * examples are membrane rafts, 
-     * </pre>
-     */
-    public int getCluster() {
-      return cluster_;
-    }
+         // required int32 application_id = 1 [default = 1];
+         private int applicationId_ = 1;
 
-    // optional .TSF.LocationUnits location_units = 17;
-    public static final int LOCATION_UNITS_FIELD_NUMBER = 17;
-    private edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits locationUnits_;
-    /**
-     * <code>optional .TSF.LocationUnits location_units = 17;</code>
-     *
-     * <pre>
-     * xyz coordinates of the spot in location_units  
-     * after fitting and optional correction
-     * </pre>
-     */
-    public boolean hasLocationUnits() {
-      return ((bitField0_ & 0x00000080) == 0x00000080);
-    }
-    /**
-     * <code>optional .TSF.LocationUnits location_units = 17;</code>
-     *
-     * <pre>
-     * xyz coordinates of the spot in location_units  
-     * after fitting and optional correction
-     * </pre>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits() {
-      return locationUnits_;
-    }
+         /**
+          * <code>required int32 application_id = 1 [default = 1];</code>
+          *
+          * <pre>
+          * UID for the application that generated these data
+          * Request a UID from nico at cmp.ucsf.edu or use 1
+          * </pre>
+          */
+         public boolean hasApplicationId() {
+            return ((bitField0_ & 0x00000001) == 0x00000001);
+         }
 
-    // required float x = 7;
-    public static final int X_FIELD_NUMBER = 7;
-    private float x_;
-    /**
-     * <code>required float x = 7;</code>
-     */
-    public boolean hasX() {
-      return ((bitField0_ & 0x00000100) == 0x00000100);
-    }
-    /**
-     * <code>required float x = 7;</code>
-     */
-    public float getX() {
-      return x_;
-    }
+         /**
+          * <code>required int32 application_id = 1 [default = 1];</code>
+          *
+          * <pre>
+          * UID for the application that generated these data
+          * Request a UID from nico at cmp.ucsf.edu or use 1
+          * </pre>
+          */
+         public int getApplicationId() {
+            return applicationId_;
+         }
 
-    // required float y = 8;
-    public static final int Y_FIELD_NUMBER = 8;
-    private float y_;
-    /**
-     * <code>required float y = 8;</code>
-     */
-    public boolean hasY() {
-      return ((bitField0_ & 0x00000200) == 0x00000200);
-    }
-    /**
-     * <code>required float y = 8;</code>
-     */
-    public float getY() {
-      return y_;
-    }
+         /**
+          * <code>required int32 application_id = 1 [default = 1];</code>
+          *
+          * <pre>
+          * UID for the application that generated these data
+          * Request a UID from nico at cmp.ucsf.edu or use 1
+          * </pre>
+          */
+         public Builder setApplicationId(int value) {
+            bitField0_ |= 0x00000001;
+            applicationId_ = value;
+            onChanged();
+            return this;
+         }
 
-    // optional float z = 9;
-    public static final int Z_FIELD_NUMBER = 9;
-    private float z_;
-    /**
-     * <code>optional float z = 9;</code>
-     */
-    public boolean hasZ() {
-      return ((bitField0_ & 0x00000400) == 0x00000400);
-    }
-    /**
-     * <code>optional float z = 9;</code>
-     */
-    public float getZ() {
-      return z_;
-    }
+         /**
+          * <code>required int32 application_id = 1 [default = 1];</code>
+          *
+          * <pre>
+          * UID for the application that generated these data
+          * Request a UID from nico at cmp.ucsf.edu or use 1
+          * </pre>
+          */
+         public Builder clearApplicationId() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            applicationId_ = 1;
+            onChanged();
+            return this;
+         }
 
-    // optional .TSF.IntensityUnits intensity_units = 18;
-    public static final int INTENSITY_UNITS_FIELD_NUMBER = 18;
-    private edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits intensityUnits_;
-    /**
-     * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
-     *
-     * <pre>
-     * Use intensity_units only if different from SpotList
-     * integrated spot density. This can either be determined from a fit or 
-     * using any other methods.  This number should be corrected for background
-     * </pre>
-     */
-    public boolean hasIntensityUnits() {
-      return ((bitField0_ & 0x00000800) == 0x00000800);
-    }
-    /**
-     * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
-     *
-     * <pre>
-     * Use intensity_units only if different from SpotList
-     * integrated spot density. This can either be determined from a fit or 
-     * using any other methods.  This number should be corrected for background
-     * </pre>
-     */
-    public edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits() {
-      return intensityUnits_;
-    }
+         // optional string name = 2;
+         private java.lang.Object name_ = "";
 
-    // required float intensity = 10;
-    public static final int INTENSITY_FIELD_NUMBER = 10;
-    private float intensity_;
-    /**
-     * <code>required float intensity = 10;</code>
-     *
-     * <pre>
-     * integrated spot density
-     * </pre>
-     */
-    public boolean hasIntensity() {
-      return ((bitField0_ & 0x00001000) == 0x00001000);
-    }
-    /**
-     * <code>required float intensity = 10;</code>
-     *
-     * <pre>
-     * integrated spot density
-     * </pre>
-     */
-    public float getIntensity() {
-      return intensity_;
-    }
+         /**
+          * <code>optional string name = 2;</code>
+          *
+          * <pre>
+          * name identifying the original dataset
+          * </pre>
+          */
+         public boolean hasName() {
+            return ((bitField0_ & 0x00000002) == 0x00000002);
+         }
 
-    // optional float background = 11;
-    public static final int BACKGROUND_FIELD_NUMBER = 11;
-    private float background_;
-    /**
-     * <code>optional float background = 11;</code>
-     *
-     * <pre>
-     * Background around the spot. 
-     * This can be determined through a fit or other methods
-     * This number should not include the camera bias, i.e. it should be linearly
-     * proportional to the number of photons in the background
-     * </pre>
-     */
-    public boolean hasBackground() {
-      return ((bitField0_ & 0x00002000) == 0x00002000);
-    }
-    /**
-     * <code>optional float background = 11;</code>
-     *
-     * <pre>
-     * Background around the spot. 
-     * This can be determined through a fit or other methods
-     * This number should not include the camera bias, i.e. it should be linearly
-     * proportional to the number of photons in the background
-     * </pre>
-     */
-    public float getBackground() {
-      return background_;
-    }
+         /**
+          * <code>optional string name = 2;</code>
+          *
+          * <pre>
+          * name identifying the original dataset
+          * </pre>
+          */
+         public java.lang.String getName() {
+            java.lang.Object ref = name_;
+            if (!(ref instanceof java.lang.String)) {
+               java.lang.String s = ((com.google.protobuf.ByteString) ref)
+                     .toStringUtf8();
+               name_ = s;
+               return s;
+            } else {
+               return (java.lang.String) ref;
+            }
+         }
 
-    // optional float width = 12;
-    public static final int WIDTH_FIELD_NUMBER = 12;
-    private float width_;
-    /**
-     * <code>optional float width = 12;</code>
-     *
-     * <pre>
-     * Peak width at half height in location units
-     * for asymmetric peaks, calculate the width as the square root of the 
-     * product of the widths of the long and short axes
-     * </pre>
-     */
-    public boolean hasWidth() {
-      return ((bitField0_ & 0x00004000) == 0x00004000);
-    }
-    /**
-     * <code>optional float width = 12;</code>
-     *
-     * <pre>
-     * Peak width at half height in location units
-     * for asymmetric peaks, calculate the width as the square root of the 
-     * product of the widths of the long and short axes
-     * </pre>
-     */
-    public float getWidth() {
-      return width_;
-    }
+         /**
+          * <code>optional string name = 2;</code>
+          *
+          * <pre>
+          * name identifying the original dataset
+          * </pre>
+          */
+         public com.google.protobuf.ByteString
+         getNameBytes() {
+            java.lang.Object ref = name_;
+            if (ref instanceof String) {
+               com.google.protobuf.ByteString b =
+                     com.google.protobuf.ByteString.copyFromUtf8(
+                           (java.lang.String) ref);
+               name_ = b;
+               return b;
+            } else {
+               return (com.google.protobuf.ByteString) ref;
+            }
+         }
 
-    // optional float a = 13;
-    public static final int A_FIELD_NUMBER = 13;
-    private float a_;
-    /**
-     * <code>optional float a = 13;</code>
-     *
-     * <pre>
-     * Shape of the peak: width of the long axis 
-     * divided by width of the short axis
-     * </pre>
-     */
-    public boolean hasA() {
-      return ((bitField0_ & 0x00008000) == 0x00008000);
-    }
-    /**
-     * <code>optional float a = 13;</code>
-     *
-     * <pre>
-     * Shape of the peak: width of the long axis 
-     * divided by width of the short axis
-     * </pre>
-     */
-    public float getA() {
-      return a_;
-    }
+         /**
+          * <code>optional string name = 2;</code>
+          *
+          * <pre>
+          * name identifying the original dataset
+          * </pre>
+          */
+         public Builder setName(
+               java.lang.String value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00000002;
+            name_ = value;
+            onChanged();
+            return this;
+         }
 
-    // optional float theta = 14;
-    public static final int THETA_FIELD_NUMBER = 14;
-    private float theta_;
-    /**
-     * <code>optional float theta = 14;</code>
-     *
-     * <pre>
-     * Rotation of asymetric peak, only used 
-     * when fitmode == TWOAXISANDTHETA
-     * </pre>
-     */
-    public boolean hasTheta() {
-      return ((bitField0_ & 0x00010000) == 0x00010000);
-    }
-    /**
-     * <code>optional float theta = 14;</code>
-     *
-     * <pre>
-     * Rotation of asymetric peak, only used 
-     * when fitmode == TWOAXISANDTHETA
-     * </pre>
-     */
-    public float getTheta() {
-      return theta_;
-    }
+         /**
+          * <code>optional string name = 2;</code>
+          *
+          * <pre>
+          * name identifying the original dataset
+          * </pre>
+          */
+         public Builder clearName() {
+            bitField0_ = (bitField0_ & ~0x00000002);
+            name_ = getDefaultInstance().getName();
+            onChanged();
+            return this;
+         }
 
-    // optional float x_original = 101;
-    public static final int X_ORIGINAL_FIELD_NUMBER = 101;
-    private float xOriginal_;
-    /**
-     * <code>optional float x_original = 101;</code>
-     *
-     * <pre>
-     * Original xyz coordinates from fitting before correction
-     * </pre>
-     */
-    public boolean hasXOriginal() {
-      return ((bitField0_ & 0x00020000) == 0x00020000);
-    }
-    /**
-     * <code>optional float x_original = 101;</code>
-     *
-     * <pre>
-     * Original xyz coordinates from fitting before correction
-     * </pre>
-     */
-    public float getXOriginal() {
-      return xOriginal_;
-    }
+         /**
+          * <code>optional string name = 2;</code>
+          *
+          * <pre>
+          * name identifying the original dataset
+          * </pre>
+          */
+         public Builder setNameBytes(
+               com.google.protobuf.ByteString value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00000002;
+            name_ = value;
+            onChanged();
+            return this;
+         }
 
-    // optional float y_original = 102;
-    public static final int Y_ORIGINAL_FIELD_NUMBER = 102;
-    private float yOriginal_;
-    /**
-     * <code>optional float y_original = 102;</code>
-     */
-    public boolean hasYOriginal() {
-      return ((bitField0_ & 0x00040000) == 0x00040000);
-    }
-    /**
-     * <code>optional float y_original = 102;</code>
-     */
-    public float getYOriginal() {
-      return yOriginal_;
-    }
+         // optional string filepath = 3;
+         private java.lang.Object filepath_ = "";
 
-    // optional float z_original = 103;
-    public static final int Z_ORIGINAL_FIELD_NUMBER = 103;
-    private float zOriginal_;
-    /**
-     * <code>optional float z_original = 103;</code>
-     */
-    public boolean hasZOriginal() {
-      return ((bitField0_ & 0x00080000) == 0x00080000);
-    }
-    /**
-     * <code>optional float z_original = 103;</code>
-     */
-    public float getZOriginal() {
-      return zOriginal_;
-    }
+         /**
+          * <code>optional string filepath = 3;</code>
+          *
+          * <pre>
+          * path to the image data used to generate these spot data
+          * </pre>
+          */
+         public boolean hasFilepath() {
+            return ((bitField0_ & 0x00000004) == 0x00000004);
+         }
 
-    // optional float x_precision = 104;
-    public static final int X_PRECISION_FIELD_NUMBER = 104;
-    private float xPrecision_;
-    /**
-     * <code>optional float x_precision = 104;</code>
-     *
-     * <pre>
-     * localization precision
-     * </pre>
-     */
-    public boolean hasXPrecision() {
-      return ((bitField0_ & 0x00100000) == 0x00100000);
-    }
-    /**
-     * <code>optional float x_precision = 104;</code>
-     *
-     * <pre>
-     * localization precision
-     * </pre>
-     */
-    public float getXPrecision() {
-      return xPrecision_;
-    }
+         /**
+          * <code>optional string filepath = 3;</code>
+          *
+          * <pre>
+          * path to the image data used to generate these spot data
+          * </pre>
+          */
+         public java.lang.String getFilepath() {
+            java.lang.Object ref = filepath_;
+            if (!(ref instanceof java.lang.String)) {
+               java.lang.String s = ((com.google.protobuf.ByteString) ref)
+                     .toStringUtf8();
+               filepath_ = s;
+               return s;
+            } else {
+               return (java.lang.String) ref;
+            }
+         }
 
-    // optional float y_precision = 105;
-    public static final int Y_PRECISION_FIELD_NUMBER = 105;
-    private float yPrecision_;
-    /**
-     * <code>optional float y_precision = 105;</code>
-     */
-    public boolean hasYPrecision() {
-      return ((bitField0_ & 0x00200000) == 0x00200000);
-    }
-    /**
-     * <code>optional float y_precision = 105;</code>
-     */
-    public float getYPrecision() {
-      return yPrecision_;
-    }
+         /**
+          * <code>optional string filepath = 3;</code>
+          *
+          * <pre>
+          * path to the image data used to generate these spot data
+          * </pre>
+          */
+         public com.google.protobuf.ByteString
+         getFilepathBytes() {
+            java.lang.Object ref = filepath_;
+            if (ref instanceof String) {
+               com.google.protobuf.ByteString b =
+                     com.google.protobuf.ByteString.copyFromUtf8(
+                           (java.lang.String) ref);
+               filepath_ = b;
+               return b;
+            } else {
+               return (com.google.protobuf.ByteString) ref;
+            }
+         }
 
-    // optional float z_precision = 106;
-    public static final int Z_PRECISION_FIELD_NUMBER = 106;
-    private float zPrecision_;
-    /**
-     * <code>optional float z_precision = 106;</code>
-     */
-    public boolean hasZPrecision() {
-      return ((bitField0_ & 0x00400000) == 0x00400000);
-    }
-    /**
-     * <code>optional float z_precision = 106;</code>
-     */
-    public float getZPrecision() {
-      return zPrecision_;
-    }
+         /**
+          * <code>optional string filepath = 3;</code>
+          *
+          * <pre>
+          * path to the image data used to generate these spot data
+          * </pre>
+          */
+         public Builder setFilepath(
+               java.lang.String value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00000004;
+            filepath_ = value;
+            onChanged();
+            return this;
+         }
 
-    // optional int32 x_position = 107;
-    public static final int X_POSITION_FIELD_NUMBER = 107;
-    private int xPosition_;
-    /**
-     * <code>optional int32 x_position = 107;</code>
-     *
-     * <pre>
-     * position in the original image (in pixels) used for fitting
-     * </pre>
-     */
-    public boolean hasXPosition() {
-      return ((bitField0_ & 0x00800000) == 0x00800000);
-    }
-    /**
-     * <code>optional int32 x_position = 107;</code>
-     *
-     * <pre>
-     * position in the original image (in pixels) used for fitting
-     * </pre>
-     */
-    public int getXPosition() {
-      return xPosition_;
-    }
+         /**
+          * <code>optional string filepath = 3;</code>
+          *
+          * <pre>
+          * path to the image data used to generate these spot data
+          * </pre>
+          */
+         public Builder clearFilepath() {
+            bitField0_ = (bitField0_ & ~0x00000004);
+            filepath_ = getDefaultInstance().getFilepath();
+            onChanged();
+            return this;
+         }
 
-    // optional int32 y_position = 108;
-    public static final int Y_POSITION_FIELD_NUMBER = 108;
-    private int yPosition_;
-    /**
-     * <code>optional int32 y_position = 108;</code>
-     */
-    public boolean hasYPosition() {
-      return ((bitField0_ & 0x01000000) == 0x01000000);
-    }
-    /**
-     * <code>optional int32 y_position = 108;</code>
-     */
-    public int getYPosition() {
-      return yPosition_;
-    }
+         /**
+          * <code>optional string filepath = 3;</code>
+          *
+          * <pre>
+          * path to the image data used to generate these spot data
+          * </pre>
+          */
+         public Builder setFilepathBytes(
+               com.google.protobuf.ByteString value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00000004;
+            filepath_ = value;
+            onChanged();
+            return this;
+         }
 
-    private void initFields() {
-      molecule_ = 0;
-      channel_ = 0;
-      frame_ = 0;
-      slice_ = 0;
-      pos_ = 0;
-      fluorophoreType_ = 0;
-      cluster_ = 0;
-      locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
-      x_ = 0F;
-      y_ = 0F;
-      z_ = 0F;
-      intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
-      intensity_ = 0F;
-      background_ = 0F;
-      width_ = 0F;
-      a_ = 0F;
-      theta_ = 0F;
-      xOriginal_ = 0F;
-      yOriginal_ = 0F;
-      zOriginal_ = 0F;
-      xPrecision_ = 0F;
-      yPrecision_ = 0F;
-      zPrecision_ = 0F;
-      xPosition_ = 0;
-      yPosition_ = 0;
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+         // optional int64 uid = 4;
+         private long uid_;
 
-      if (!hasMolecule()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasChannel()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasFrame()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasX()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasY()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasIntensity()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!extensionsAreInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
+         /**
+          * <code>optional int64 uid = 4;</code>
+          *
+          * <pre>
+          * Unique ID, can be used by application to link to original data
+          * </pre>
+          */
+         public boolean hasUid() {
+            return ((bitField0_ & 0x00000008) == 0x00000008);
+         }
 
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      com.google.protobuf.GeneratedMessage
-        .ExtendableMessage<edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot>.ExtensionWriter extensionWriter =
-          newExtensionWriter();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeInt32(1, molecule_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt32(2, channel_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeInt32(3, frame_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt32(4, slice_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeInt32(5, pos_);
-      }
-      if (((bitField0_ & 0x00000100) == 0x00000100)) {
-        output.writeFloat(7, x_);
-      }
-      if (((bitField0_ & 0x00000200) == 0x00000200)) {
-        output.writeFloat(8, y_);
-      }
-      if (((bitField0_ & 0x00000400) == 0x00000400)) {
-        output.writeFloat(9, z_);
-      }
-      if (((bitField0_ & 0x00001000) == 0x00001000)) {
-        output.writeFloat(10, intensity_);
-      }
-      if (((bitField0_ & 0x00002000) == 0x00002000)) {
-        output.writeFloat(11, background_);
-      }
-      if (((bitField0_ & 0x00004000) == 0x00004000)) {
-        output.writeFloat(12, width_);
-      }
-      if (((bitField0_ & 0x00008000) == 0x00008000)) {
-        output.writeFloat(13, a_);
-      }
-      if (((bitField0_ & 0x00010000) == 0x00010000)) {
-        output.writeFloat(14, theta_);
-      }
-      if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        output.writeEnum(17, locationUnits_.getNumber());
-      }
-      if (((bitField0_ & 0x00000800) == 0x00000800)) {
-        output.writeEnum(18, intensityUnits_.getNumber());
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeInt32(19, fluorophoreType_);
-      }
-      if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        output.writeInt32(20, cluster_);
-      }
-      if (((bitField0_ & 0x00020000) == 0x00020000)) {
-        output.writeFloat(101, xOriginal_);
-      }
-      if (((bitField0_ & 0x00040000) == 0x00040000)) {
-        output.writeFloat(102, yOriginal_);
-      }
-      if (((bitField0_ & 0x00080000) == 0x00080000)) {
-        output.writeFloat(103, zOriginal_);
-      }
-      if (((bitField0_ & 0x00100000) == 0x00100000)) {
-        output.writeFloat(104, xPrecision_);
-      }
-      if (((bitField0_ & 0x00200000) == 0x00200000)) {
-        output.writeFloat(105, yPrecision_);
-      }
-      if (((bitField0_ & 0x00400000) == 0x00400000)) {
-        output.writeFloat(106, zPrecision_);
-      }
-      if (((bitField0_ & 0x00800000) == 0x00800000)) {
-        output.writeInt32(107, xPosition_);
-      }
-      if (((bitField0_ & 0x01000000) == 0x01000000)) {
-        output.writeInt32(108, yPosition_);
-      }
-      extensionWriter.writeUntil(2048, output);
-      getUnknownFields().writeTo(output);
-    }
+         /**
+          * <code>optional int64 uid = 4;</code>
+          *
+          * <pre>
+          * Unique ID, can be used by application to link to original data
+          * </pre>
+          */
+         public long getUid() {
+            return uid_;
+         }
 
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
+         /**
+          * <code>optional int64 uid = 4;</code>
+          *
+          * <pre>
+          * Unique ID, can be used by application to link to original data
+          * </pre>
+          */
+         public Builder setUid(long value) {
+            bitField0_ |= 0x00000008;
+            uid_ = value;
+            onChanged();
+            return this;
+         }
 
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(1, molecule_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, channel_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, frame_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(4, slice_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(5, pos_);
-      }
-      if (((bitField0_ & 0x00000100) == 0x00000100)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(7, x_);
-      }
-      if (((bitField0_ & 0x00000200) == 0x00000200)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(8, y_);
-      }
-      if (((bitField0_ & 0x00000400) == 0x00000400)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(9, z_);
-      }
-      if (((bitField0_ & 0x00001000) == 0x00001000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(10, intensity_);
-      }
-      if (((bitField0_ & 0x00002000) == 0x00002000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(11, background_);
-      }
-      if (((bitField0_ & 0x00004000) == 0x00004000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(12, width_);
-      }
-      if (((bitField0_ & 0x00008000) == 0x00008000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(13, a_);
-      }
-      if (((bitField0_ & 0x00010000) == 0x00010000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(14, theta_);
-      }
-      if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(17, locationUnits_.getNumber());
-      }
-      if (((bitField0_ & 0x00000800) == 0x00000800)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(18, intensityUnits_.getNumber());
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(19, fluorophoreType_);
-      }
-      if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(20, cluster_);
-      }
-      if (((bitField0_ & 0x00020000) == 0x00020000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(101, xOriginal_);
-      }
-      if (((bitField0_ & 0x00040000) == 0x00040000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(102, yOriginal_);
-      }
-      if (((bitField0_ & 0x00080000) == 0x00080000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(103, zOriginal_);
-      }
-      if (((bitField0_ & 0x00100000) == 0x00100000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(104, xPrecision_);
-      }
-      if (((bitField0_ & 0x00200000) == 0x00200000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(105, yPrecision_);
-      }
-      if (((bitField0_ & 0x00400000) == 0x00400000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeFloatSize(106, zPrecision_);
-      }
-      if (((bitField0_ & 0x00800000) == 0x00800000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(107, xPosition_);
-      }
-      if (((bitField0_ & 0x01000000) == 0x01000000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(108, yPosition_);
-      }
-      size += extensionsSerializedSize();
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
+         /**
+          * <code>optional int64 uid = 4;</code>
+          *
+          * <pre>
+          * Unique ID, can be used by application to link to original data
+          * </pre>
+          */
+         public Builder clearUid() {
+            bitField0_ = (bitField0_ & ~0x00000008);
+            uid_ = 0L;
+            onChanged();
+            return this;
+         }
 
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
+         // optional int32 nr_pixels_x = 5;
+         private int nrPixelsX_;
 
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
+         /**
+          * <code>optional int32 nr_pixels_x = 5;</code>
+          *
+          * <pre>
+          * nr pixels in x of original data
+          * </pre>
+          */
+         public boolean hasNrPixelsX() {
+            return ((bitField0_ & 0x00000010) == 0x00000010);
+         }
 
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
+         /**
+          * <code>optional int32 nr_pixels_x = 5;</code>
+          *
+          * <pre>
+          * nr pixels in x of original data
+          * </pre>
+          */
+         public int getNrPixelsX() {
+            return nrPixelsX_;
+         }
 
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code TSF.Spot}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.ExtendableBuilder<
-          edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot, Builder> implements edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotOrBuilder {
+         /**
+          * <code>optional int32 nr_pixels_x = 5;</code>
+          *
+          * <pre>
+          * nr pixels in x of original data
+          * </pre>
+          */
+         public Builder setNrPixelsX(int value) {
+            bitField0_ |= 0x00000010;
+            nrPixelsX_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 nr_pixels_x = 5;</code>
+          *
+          * <pre>
+          * nr pixels in x of original data
+          * </pre>
+          */
+         public Builder clearNrPixelsX() {
+            bitField0_ = (bitField0_ & ~0x00000010);
+            nrPixelsX_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 nr_pixels_y = 6;
+         private int nrPixelsY_;
+
+         /**
+          * <code>optional int32 nr_pixels_y = 6;</code>
+          *
+          * <pre>
+          * nr pixels in y of original data
+          * </pre>
+          */
+         public boolean hasNrPixelsY() {
+            return ((bitField0_ & 0x00000020) == 0x00000020);
+         }
+
+         /**
+          * <code>optional int32 nr_pixels_y = 6;</code>
+          *
+          * <pre>
+          * nr pixels in y of original data
+          * </pre>
+          */
+         public int getNrPixelsY() {
+            return nrPixelsY_;
+         }
+
+         /**
+          * <code>optional int32 nr_pixels_y = 6;</code>
+          *
+          * <pre>
+          * nr pixels in y of original data
+          * </pre>
+          */
+         public Builder setNrPixelsY(int value) {
+            bitField0_ |= 0x00000020;
+            nrPixelsY_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 nr_pixels_y = 6;</code>
+          *
+          * <pre>
+          * nr pixels in y of original data
+          * </pre>
+          */
+         public Builder clearNrPixelsY() {
+            bitField0_ = (bitField0_ & ~0x00000020);
+            nrPixelsY_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional float pixel_size = 7;
+         private float pixelSize_;
+
+         /**
+          * <code>optional float pixel_size = 7;</code>
+          *
+          * <pre>
+          * pixel size in nanometer
+          * </pre>
+          */
+         public boolean hasPixelSize() {
+            return ((bitField0_ & 0x00000040) == 0x00000040);
+         }
+
+         /**
+          * <code>optional float pixel_size = 7;</code>
+          *
+          * <pre>
+          * pixel size in nanometer
+          * </pre>
+          */
+         public float getPixelSize() {
+            return pixelSize_;
+         }
+
+         /**
+          * <code>optional float pixel_size = 7;</code>
+          *
+          * <pre>
+          * pixel size in nanometer
+          * </pre>
+          */
+         public Builder setPixelSize(float value) {
+            bitField0_ |= 0x00000040;
+            pixelSize_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float pixel_size = 7;</code>
+          *
+          * <pre>
+          * pixel size in nanometer
+          * </pre>
+          */
+         public Builder clearPixelSize() {
+            bitField0_ = (bitField0_ & ~0x00000040);
+            pixelSize_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional int64 nr_spots = 8;
+         private long nrSpots_;
+
+         /**
+          * <code>optional int64 nr_spots = 8;</code>
+          *
+          * <pre>
+          * number of spots in this data set
+          * </pre>
+          */
+         public boolean hasNrSpots() {
+            return ((bitField0_ & 0x00000080) == 0x00000080);
+         }
+
+         /**
+          * <code>optional int64 nr_spots = 8;</code>
+          *
+          * <pre>
+          * number of spots in this data set
+          * </pre>
+          */
+         public long getNrSpots() {
+            return nrSpots_;
+         }
+
+         /**
+          * <code>optional int64 nr_spots = 8;</code>
+          *
+          * <pre>
+          * number of spots in this data set
+          * </pre>
+          */
+         public Builder setNrSpots(long value) {
+            bitField0_ |= 0x00000080;
+            nrSpots_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int64 nr_spots = 8;</code>
+          *
+          * <pre>
+          * number of spots in this data set
+          * </pre>
+          */
+         public Builder clearNrSpots() {
+            bitField0_ = (bitField0_ & ~0x00000080);
+            nrSpots_ = 0L;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 box_size = 17;
+         private int boxSize_;
+
+         /**
+          * <code>optional int32 box_size = 17;</code>
+          *
+          * <pre>
+          * size (in pixels) of rectangular box used in Gaussian fitting
+          * </pre>
+          */
+         public boolean hasBoxSize() {
+            return ((bitField0_ & 0x00000100) == 0x00000100);
+         }
+
+         /**
+          * <code>optional int32 box_size = 17;</code>
+          *
+          * <pre>
+          * size (in pixels) of rectangular box used in Gaussian fitting
+          * </pre>
+          */
+         public int getBoxSize() {
+            return boxSize_;
+         }
+
+         /**
+          * <code>optional int32 box_size = 17;</code>
+          *
+          * <pre>
+          * size (in pixels) of rectangular box used in Gaussian fitting
+          * </pre>
+          */
+         public Builder setBoxSize(int value) {
+            bitField0_ |= 0x00000100;
+            boxSize_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 box_size = 17;</code>
+          *
+          * <pre>
+          * size (in pixels) of rectangular box used in Gaussian fitting
+          * </pre>
+          */
+         public Builder clearBoxSize() {
+            bitField0_ = (bitField0_ & ~0x00000100);
+            boxSize_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 nr_channels = 18;
+         private int nrChannels_;
+
+         /**
+          * <code>optional int32 nr_channels = 18;</code>
+          *
+          * <pre>
+          * Nr of channels in the original data set
+          * </pre>
+          */
+         public boolean hasNrChannels() {
+            return ((bitField0_ & 0x00000200) == 0x00000200);
+         }
+
+         /**
+          * <code>optional int32 nr_channels = 18;</code>
+          *
+          * <pre>
+          * Nr of channels in the original data set
+          * </pre>
+          */
+         public int getNrChannels() {
+            return nrChannels_;
+         }
+
+         /**
+          * <code>optional int32 nr_channels = 18;</code>
+          *
+          * <pre>
+          * Nr of channels in the original data set
+          * </pre>
+          */
+         public Builder setNrChannels(int value) {
+            bitField0_ |= 0x00000200;
+            nrChannels_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 nr_channels = 18;</code>
+          *
+          * <pre>
+          * Nr of channels in the original data set
+          * </pre>
+          */
+         public Builder clearNrChannels() {
+            bitField0_ = (bitField0_ & ~0x00000200);
+            nrChannels_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 nr_frames = 19;
+         private int nrFrames_;
+
+         /**
+          * <code>optional int32 nr_frames = 19;</code>
+          *
+          * <pre>
+          * Nr of frames in the original data set
+          * </pre>
+          */
+         public boolean hasNrFrames() {
+            return ((bitField0_ & 0x00000400) == 0x00000400);
+         }
+
+         /**
+          * <code>optional int32 nr_frames = 19;</code>
+          *
+          * <pre>
+          * Nr of frames in the original data set
+          * </pre>
+          */
+         public int getNrFrames() {
+            return nrFrames_;
+         }
+
+         /**
+          * <code>optional int32 nr_frames = 19;</code>
+          *
+          * <pre>
+          * Nr of frames in the original data set
+          * </pre>
+          */
+         public Builder setNrFrames(int value) {
+            bitField0_ |= 0x00000400;
+            nrFrames_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 nr_frames = 19;</code>
+          *
+          * <pre>
+          * Nr of frames in the original data set
+          * </pre>
+          */
+         public Builder clearNrFrames() {
+            bitField0_ = (bitField0_ & ~0x00000400);
+            nrFrames_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 nr_slices = 20;
+         private int nrSlices_;
+
+         /**
+          * <code>optional int32 nr_slices = 20;</code>
+          *
+          * <pre>
+          * Nr of slices in the original data set
+          * </pre>
+          */
+         public boolean hasNrSlices() {
+            return ((bitField0_ & 0x00000800) == 0x00000800);
+         }
+
+         /**
+          * <code>optional int32 nr_slices = 20;</code>
+          *
+          * <pre>
+          * Nr of slices in the original data set
+          * </pre>
+          */
+         public int getNrSlices() {
+            return nrSlices_;
+         }
+
+         /**
+          * <code>optional int32 nr_slices = 20;</code>
+          *
+          * <pre>
+          * Nr of slices in the original data set
+          * </pre>
+          */
+         public Builder setNrSlices(int value) {
+            bitField0_ |= 0x00000800;
+            nrSlices_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 nr_slices = 20;</code>
+          *
+          * <pre>
+          * Nr of slices in the original data set
+          * </pre>
+          */
+         public Builder clearNrSlices() {
+            bitField0_ = (bitField0_ & ~0x00000800);
+            nrSlices_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 nr_pos = 21;
+         private int nrPos_;
+
+         /**
+          * <code>optional int32 nr_pos = 21;</code>
+          *
+          * <pre>
+          * Nr of positions in the original data set
+          * </pre>
+          */
+         public boolean hasNrPos() {
+            return ((bitField0_ & 0x00001000) == 0x00001000);
+         }
+
+         /**
+          * <code>optional int32 nr_pos = 21;</code>
+          *
+          * <pre>
+          * Nr of positions in the original data set
+          * </pre>
+          */
+         public int getNrPos() {
+            return nrPos_;
+         }
+
+         /**
+          * <code>optional int32 nr_pos = 21;</code>
+          *
+          * <pre>
+          * Nr of positions in the original data set
+          * </pre>
+          */
+         public Builder setNrPos(int value) {
+            bitField0_ |= 0x00001000;
+            nrPos_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 nr_pos = 21;</code>
+          *
+          * <pre>
+          * Nr of positions in the original data set
+          * </pre>
+          */
+         public Builder clearNrPos() {
+            bitField0_ = (bitField0_ & ~0x00001000);
+            nrPos_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // repeated .TSF.FluorophoreType fluorophore_types = 26;
+         private java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> fluorophoreTypes_ =
+               java.util.Collections.emptyList();
+
+         private void ensureFluorophoreTypesIsMutable() {
+            if (!((bitField0_ & 0x00002000) == 0x00002000)) {
+               fluorophoreTypes_ = new java.util.ArrayList<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType>(
+                     fluorophoreTypes_);
+               bitField0_ |= 0x00002000;
+            }
+         }
+
+         private com.google.protobuf.RepeatedFieldBuilder<
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder> fluorophoreTypesBuilder_;
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> getFluorophoreTypesList() {
+            if (fluorophoreTypesBuilder_ == null) {
+               return java.util.Collections.unmodifiableList(fluorophoreTypes_);
+            } else {
+               return fluorophoreTypesBuilder_.getMessageList();
+            }
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public int getFluorophoreTypesCount() {
+            if (fluorophoreTypesBuilder_ == null) {
+               return fluorophoreTypes_.size();
+            } else {
+               return fluorophoreTypesBuilder_.getCount();
+            }
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType getFluorophoreTypes(
+               int index) {
+            if (fluorophoreTypesBuilder_ == null) {
+               return fluorophoreTypes_.get(index);
+            } else {
+               return fluorophoreTypesBuilder_.getMessage(index);
+            }
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public Builder setFluorophoreTypes(
+               int index, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType value) {
+            if (fluorophoreTypesBuilder_ == null) {
+               if (value == null) {
+                  throw new NullPointerException();
+               }
+               ensureFluorophoreTypesIsMutable();
+               fluorophoreTypes_.set(index, value);
+               onChanged();
+            } else {
+               fluorophoreTypesBuilder_.setMessage(index, value);
+            }
+            return this;
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public Builder setFluorophoreTypes(
+               int index,
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder builderForValue) {
+            if (fluorophoreTypesBuilder_ == null) {
+               ensureFluorophoreTypesIsMutable();
+               fluorophoreTypes_.set(index, builderForValue.build());
+               onChanged();
+            } else {
+               fluorophoreTypesBuilder_.setMessage(index, builderForValue.build());
+            }
+            return this;
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public Builder addFluorophoreTypes(
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType value) {
+            if (fluorophoreTypesBuilder_ == null) {
+               if (value == null) {
+                  throw new NullPointerException();
+               }
+               ensureFluorophoreTypesIsMutable();
+               fluorophoreTypes_.add(value);
+               onChanged();
+            } else {
+               fluorophoreTypesBuilder_.addMessage(value);
+            }
+            return this;
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public Builder addFluorophoreTypes(
+               int index, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType value) {
+            if (fluorophoreTypesBuilder_ == null) {
+               if (value == null) {
+                  throw new NullPointerException();
+               }
+               ensureFluorophoreTypesIsMutable();
+               fluorophoreTypes_.add(index, value);
+               onChanged();
+            } else {
+               fluorophoreTypesBuilder_.addMessage(index, value);
+            }
+            return this;
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public Builder addFluorophoreTypes(
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder builderForValue) {
+            if (fluorophoreTypesBuilder_ == null) {
+               ensureFluorophoreTypesIsMutable();
+               fluorophoreTypes_.add(builderForValue.build());
+               onChanged();
+            } else {
+               fluorophoreTypesBuilder_.addMessage(builderForValue.build());
+            }
+            return this;
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public Builder addFluorophoreTypes(
+               int index,
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder builderForValue) {
+            if (fluorophoreTypesBuilder_ == null) {
+               ensureFluorophoreTypesIsMutable();
+               fluorophoreTypes_.add(index, builderForValue.build());
+               onChanged();
+            } else {
+               fluorophoreTypesBuilder_.addMessage(index, builderForValue.build());
+            }
+            return this;
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public Builder addAllFluorophoreTypes(
+               java.lang.Iterable<? extends edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType> values) {
+            if (fluorophoreTypesBuilder_ == null) {
+               ensureFluorophoreTypesIsMutable();
+               super.addAll(values, fluorophoreTypes_);
+               onChanged();
+            } else {
+               fluorophoreTypesBuilder_.addAllMessages(values);
+            }
+            return this;
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public Builder clearFluorophoreTypes() {
+            if (fluorophoreTypesBuilder_ == null) {
+               fluorophoreTypes_ = java.util.Collections.emptyList();
+               bitField0_ = (bitField0_ & ~0x00002000);
+               onChanged();
+            } else {
+               fluorophoreTypesBuilder_.clear();
+            }
+            return this;
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public Builder removeFluorophoreTypes(int index) {
+            if (fluorophoreTypesBuilder_ == null) {
+               ensureFluorophoreTypesIsMutable();
+               fluorophoreTypes_.remove(index);
+               onChanged();
+            } else {
+               fluorophoreTypesBuilder_.remove(index);
+            }
+            return this;
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder getFluorophoreTypesBuilder(
+               int index) {
+            return getFluorophoreTypesFieldBuilder().getBuilder(index);
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder getFluorophoreTypesOrBuilder(
+               int index) {
+            if (fluorophoreTypesBuilder_ == null) {
+               return fluorophoreTypes_.get(index);
+            } else {
+               return fluorophoreTypesBuilder_.getMessageOrBuilder(index);
+            }
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public java.util.List<? extends edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder>
+         getFluorophoreTypesOrBuilderList() {
+            if (fluorophoreTypesBuilder_ != null) {
+               return fluorophoreTypesBuilder_.getMessageOrBuilderList();
+            } else {
+               return java.util.Collections.unmodifiableList(fluorophoreTypes_);
+            }
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder addFluorophoreTypesBuilder() {
+            return getFluorophoreTypesFieldBuilder().addBuilder(
+                  edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.getDefaultInstance());
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder addFluorophoreTypesBuilder(
+               int index) {
+            return getFluorophoreTypesFieldBuilder().addBuilder(
+                  index,
+                  edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.getDefaultInstance());
+         }
+
+         /**
+          * <code>repeated .TSF.FluorophoreType fluorophore_types = 26;</code>
+          *
+          * <pre>
+          * Fluorophore type characterizations. If you use the fluorophore type field,
+          * you must add a FluorophoreType message for each used id.
+          * </pre>
+          */
+         public java.util.List<edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder>
+         getFluorophoreTypesBuilderList() {
+            return getFluorophoreTypesFieldBuilder().getBuilderList();
+         }
+
+         private com.google.protobuf.RepeatedFieldBuilder<
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder>
+         getFluorophoreTypesFieldBuilder() {
+            if (fluorophoreTypesBuilder_ == null) {
+               fluorophoreTypesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreType.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.FluorophoreTypeOrBuilder>(
+                     fluorophoreTypes_,
+                     ((bitField0_ & 0x00002000) == 0x00002000),
+                     getParentForChildren(),
+                     isClean());
+               fluorophoreTypes_ = null;
+            }
+            return fluorophoreTypesBuilder_;
+         }
+
+         // optional .TSF.LocationUnits location_units = 22;
+         private edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+
+         /**
+          * <code>optional .TSF.LocationUnits location_units = 22;</code>
+          *
+          * <pre>
+          * If units will always be the same for all spots, then use these units tags,
+          * otherwise use the unit tags with each spot
+          * </pre>
+          */
+         public boolean hasLocationUnits() {
+            return ((bitField0_ & 0x00004000) == 0x00004000);
+         }
+
+         /**
+          * <code>optional .TSF.LocationUnits location_units = 22;</code>
+          *
+          * <pre>
+          * If units will always be the same for all spots, then use these units tags,
+          * otherwise use the unit tags with each spot
+          * </pre>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits() {
+            return locationUnits_;
+         }
+
+         /**
+          * <code>optional .TSF.LocationUnits location_units = 22;</code>
+          *
+          * <pre>
+          * If units will always be the same for all spots, then use these units tags,
+          * otherwise use the unit tags with each spot
+          * </pre>
+          */
+         public Builder setLocationUnits(
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00004000;
+            locationUnits_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.LocationUnits location_units = 22;</code>
+          *
+          * <pre>
+          * If units will always be the same for all spots, then use these units tags,
+          * otherwise use the unit tags with each spot
+          * </pre>
+          */
+         public Builder clearLocationUnits() {
+            bitField0_ = (bitField0_ & ~0x00004000);
+            locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+            onChanged();
+            return this;
+         }
+
+         // optional .TSF.IntensityUnits intensity_units = 23;
+         private edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+
+         /**
+          * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
+          */
+         public boolean hasIntensityUnits() {
+            return ((bitField0_ & 0x00008000) == 0x00008000);
+         }
+
+         /**
+          * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits() {
+            return intensityUnits_;
+         }
+
+         /**
+          * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
+          */
+         public Builder setIntensityUnits(
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00008000;
+            intensityUnits_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.IntensityUnits intensity_units = 23;</code>
+          */
+         public Builder clearIntensityUnits() {
+            bitField0_ = (bitField0_ & ~0x00008000);
+            intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+            onChanged();
+            return this;
+         }
+
+         // optional .TSF.ThetaUnits theta_units = 27;
+         private edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits thetaUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits.DEGREES;
+
+         /**
+          * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
+          */
+         public boolean hasThetaUnits() {
+            return ((bitField0_ & 0x00010000) == 0x00010000);
+         }
+
+         /**
+          * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits getThetaUnits() {
+            return thetaUnits_;
+         }
+
+         /**
+          * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
+          */
+         public Builder setThetaUnits(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00010000;
+            thetaUnits_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.ThetaUnits theta_units = 27;</code>
+          */
+         public Builder clearThetaUnits() {
+            bitField0_ = (bitField0_ & ~0x00010000);
+            thetaUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ThetaUnits.DEGREES;
+            onChanged();
+            return this;
+         }
+
+         // optional .TSF.FitMode fit_mode = 24;
+         private edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode fitMode_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode.ONEAXIS;
+
+         /**
+          * <code>optional .TSF.FitMode fit_mode = 24;</code>
+          *
+          * <pre>
+          * If fitmode  will always be the same for all spots, then use this fitmode
+          * otherwise use the fitmode with each spot
+          * </pre>
+          */
+         public boolean hasFitMode() {
+            return ((bitField0_ & 0x00020000) == 0x00020000);
+         }
+
+         /**
+          * <code>optional .TSF.FitMode fit_mode = 24;</code>
+          *
+          * <pre>
+          * If fitmode  will always be the same for all spots, then use this fitmode
+          * otherwise use the fitmode with each spot
+          * </pre>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode getFitMode() {
+            return fitMode_;
+         }
+
+         /**
+          * <code>optional .TSF.FitMode fit_mode = 24;</code>
+          *
+          * <pre>
+          * If fitmode  will always be the same for all spots, then use this fitmode
+          * otherwise use the fitmode with each spot
+          * </pre>
+          */
+         public Builder setFitMode(edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00020000;
+            fitMode_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.FitMode fit_mode = 24;</code>
+          *
+          * <pre>
+          * If fitmode  will always be the same for all spots, then use this fitmode
+          * otherwise use the fitmode with each spot
+          * </pre>
+          */
+         public Builder clearFitMode() {
+            bitField0_ = (bitField0_ & ~0x00020000);
+            fitMode_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.FitMode.ONEAXIS;
+            onChanged();
+            return this;
+         }
+
+         // optional bool is_track = 25 [default = false];
+         private boolean isTrack_;
+
+         /**
+          * <code>optional bool is_track = 25 [default = false];</code>
+          *
+          * <pre>
+          * flag indicating whether this is a sequence of spot data in consecutive
+          * time frames thought to originate from the same entity
+          * </pre>
+          */
+         public boolean hasIsTrack() {
+            return ((bitField0_ & 0x00040000) == 0x00040000);
+         }
+
+         /**
+          * <code>optional bool is_track = 25 [default = false];</code>
+          *
+          * <pre>
+          * flag indicating whether this is a sequence of spot data in consecutive
+          * time frames thought to originate from the same entity
+          * </pre>
+          */
+         public boolean getIsTrack() {
+            return isTrack_;
+         }
+
+         /**
+          * <code>optional bool is_track = 25 [default = false];</code>
+          *
+          * <pre>
+          * flag indicating whether this is a sequence of spot data in consecutive
+          * time frames thought to originate from the same entity
+          * </pre>
+          */
+         public Builder setIsTrack(boolean value) {
+            bitField0_ |= 0x00040000;
+            isTrack_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional bool is_track = 25 [default = false];</code>
+          *
+          * <pre>
+          * flag indicating whether this is a sequence of spot data in consecutive
+          * time frames thought to originate from the same entity
+          * </pre>
+          */
+         public Builder clearIsTrack() {
+            bitField0_ = (bitField0_ & ~0x00040000);
+            isTrack_ = false;
+            onChanged();
+            return this;
+         }
+
+         // repeated double ecf = 28;
+         private java.util.List<java.lang.Double> ecf_ = java.util.Collections.emptyList();
+
+         private void ensureEcfIsMutable() {
+            if (!((bitField0_ & 0x00080000) == 0x00080000)) {
+               ecf_ = new java.util.ArrayList<java.lang.Double>(ecf_);
+               bitField0_ |= 0x00080000;
+            }
+         }
+
+         /**
+          * <code>repeated double ecf = 28;</code>
+          *
+          * <pre>
+          * The electron conversion factor (camera gain), defined as
+          * # of electrons per pixel / # of counts per pixel
+          * The ecf can be different for different channels (which can
+          * happen when separate cameras are used for separate channels),
+          * therefore provide the ecf for each channel in the channel order
+          * </pre>
+          */
+         public java.util.List<java.lang.Double>
+         getEcfList() {
+            return java.util.Collections.unmodifiableList(ecf_);
+         }
+
+         /**
+          * <code>repeated double ecf = 28;</code>
+          *
+          * <pre>
+          * The electron conversion factor (camera gain), defined as
+          * # of electrons per pixel / # of counts per pixel
+          * The ecf can be different for different channels (which can
+          * happen when separate cameras are used for separate channels),
+          * therefore provide the ecf for each channel in the channel order
+          * </pre>
+          */
+         public int getEcfCount() {
+            return ecf_.size();
+         }
+
+         /**
+          * <code>repeated double ecf = 28;</code>
+          *
+          * <pre>
+          * The electron conversion factor (camera gain), defined as
+          * # of electrons per pixel / # of counts per pixel
+          * The ecf can be different for different channels (which can
+          * happen when separate cameras are used for separate channels),
+          * therefore provide the ecf for each channel in the channel order
+          * </pre>
+          */
+         public double getEcf(int index) {
+            return ecf_.get(index);
+         }
+
+         /**
+          * <code>repeated double ecf = 28;</code>
+          *
+          * <pre>
+          * The electron conversion factor (camera gain), defined as
+          * # of electrons per pixel / # of counts per pixel
+          * The ecf can be different for different channels (which can
+          * happen when separate cameras are used for separate channels),
+          * therefore provide the ecf for each channel in the channel order
+          * </pre>
+          */
+         public Builder setEcf(
+               int index, double value) {
+            ensureEcfIsMutable();
+            ecf_.set(index, value);
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>repeated double ecf = 28;</code>
+          *
+          * <pre>
+          * The electron conversion factor (camera gain), defined as
+          * # of electrons per pixel / # of counts per pixel
+          * The ecf can be different for different channels (which can
+          * happen when separate cameras are used for separate channels),
+          * therefore provide the ecf for each channel in the channel order
+          * </pre>
+          */
+         public Builder addEcf(double value) {
+            ensureEcfIsMutable();
+            ecf_.add(value);
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>repeated double ecf = 28;</code>
+          *
+          * <pre>
+          * The electron conversion factor (camera gain), defined as
+          * # of electrons per pixel / # of counts per pixel
+          * The ecf can be different for different channels (which can
+          * happen when separate cameras are used for separate channels),
+          * therefore provide the ecf for each channel in the channel order
+          * </pre>
+          */
+         public Builder addAllEcf(
+               java.lang.Iterable<? extends java.lang.Double> values) {
+            ensureEcfIsMutable();
+            super.addAll(values, ecf_);
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>repeated double ecf = 28;</code>
+          *
+          * <pre>
+          * The electron conversion factor (camera gain), defined as
+          * # of electrons per pixel / # of counts per pixel
+          * The ecf can be different for different channels (which can
+          * happen when separate cameras are used for separate channels),
+          * therefore provide the ecf for each channel in the channel order
+          * </pre>
+          */
+         public Builder clearEcf() {
+            ecf_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00080000);
+            onChanged();
+            return this;
+         }
+
+         // repeated double qe = 30;
+         private java.util.List<java.lang.Double> qe_ = java.util.Collections.emptyList();
+
+         private void ensureQeIsMutable() {
+            if (!((bitField0_ & 0x00100000) == 0x00100000)) {
+               qe_ = new java.util.ArrayList<java.lang.Double>(qe_);
+               bitField0_ |= 0x00100000;
+            }
+         }
+
+         /**
+          * <code>repeated double qe = 30;</code>
+          *
+          * <pre>
+          * The quantum efficiency can be used to calculate the number
+          * of photons that hit the sensor, rather than the number of
+          * electrons that were derived from them
+          * Since this number is wavelength dependent, provide the QE
+          * for each fluorophore type (in the fluorophore type order)
+          * See the description of the field channel in the Spot message below
+          * </pre>
+          */
+         public java.util.List<java.lang.Double>
+         getQeList() {
+            return java.util.Collections.unmodifiableList(qe_);
+         }
+
+         /**
+          * <code>repeated double qe = 30;</code>
+          *
+          * <pre>
+          * The quantum efficiency can be used to calculate the number
+          * of photons that hit the sensor, rather than the number of
+          * electrons that were derived from them
+          * Since this number is wavelength dependent, provide the QE
+          * for each fluorophore type (in the fluorophore type order)
+          * See the description of the field channel in the Spot message below
+          * </pre>
+          */
+         public int getQeCount() {
+            return qe_.size();
+         }
+
+         /**
+          * <code>repeated double qe = 30;</code>
+          *
+          * <pre>
+          * The quantum efficiency can be used to calculate the number
+          * of photons that hit the sensor, rather than the number of
+          * electrons that were derived from them
+          * Since this number is wavelength dependent, provide the QE
+          * for each fluorophore type (in the fluorophore type order)
+          * See the description of the field channel in the Spot message below
+          * </pre>
+          */
+         public double getQe(int index) {
+            return qe_.get(index);
+         }
+
+         /**
+          * <code>repeated double qe = 30;</code>
+          *
+          * <pre>
+          * The quantum efficiency can be used to calculate the number
+          * of photons that hit the sensor, rather than the number of
+          * electrons that were derived from them
+          * Since this number is wavelength dependent, provide the QE
+          * for each fluorophore type (in the fluorophore type order)
+          * See the description of the field channel in the Spot message below
+          * </pre>
+          */
+         public Builder setQe(
+               int index, double value) {
+            ensureQeIsMutable();
+            qe_.set(index, value);
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>repeated double qe = 30;</code>
+          *
+          * <pre>
+          * The quantum efficiency can be used to calculate the number
+          * of photons that hit the sensor, rather than the number of
+          * electrons that were derived from them
+          * Since this number is wavelength dependent, provide the QE
+          * for each fluorophore type (in the fluorophore type order)
+          * See the description of the field channel in the Spot message below
+          * </pre>
+          */
+         public Builder addQe(double value) {
+            ensureQeIsMutable();
+            qe_.add(value);
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>repeated double qe = 30;</code>
+          *
+          * <pre>
+          * The quantum efficiency can be used to calculate the number
+          * of photons that hit the sensor, rather than the number of
+          * electrons that were derived from them
+          * Since this number is wavelength dependent, provide the QE
+          * for each fluorophore type (in the fluorophore type order)
+          * See the description of the field channel in the Spot message below
+          * </pre>
+          */
+         public Builder addAllQe(
+               java.lang.Iterable<? extends java.lang.Double> values) {
+            ensureQeIsMutable();
+            super.addAll(values, qe_);
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>repeated double qe = 30;</code>
+          *
+          * <pre>
+          * The quantum efficiency can be used to calculate the number
+          * of photons that hit the sensor, rather than the number of
+          * electrons that were derived from them
+          * Since this number is wavelength dependent, provide the QE
+          * for each fluorophore type (in the fluorophore type order)
+          * See the description of the field channel in the Spot message below
+          * </pre>
+          */
+         public Builder clearQe() {
+            qe_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00100000);
+            onChanged();
+            return this;
+         }
+
+         // optional .TSF.ROI roi = 29;
+         private edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI roi_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI
+               .getDefaultInstance();
+         private com.google.protobuf.SingleFieldBuilder<
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder> roiBuilder_;
+
+         /**
+          * <code>optional .TSF.ROI roi = 29;</code>
+          */
+         public boolean hasRoi() {
+            return ((bitField0_ & 0x00200000) == 0x00200000);
+         }
+
+         /**
+          * <code>optional .TSF.ROI roi = 29;</code>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI getRoi() {
+            if (roiBuilder_ == null) {
+               return roi_;
+            } else {
+               return roiBuilder_.getMessage();
+            }
+         }
+
+         /**
+          * <code>optional .TSF.ROI roi = 29;</code>
+          */
+         public Builder setRoi(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI value) {
+            if (roiBuilder_ == null) {
+               if (value == null) {
+                  throw new NullPointerException();
+               }
+               roi_ = value;
+               onChanged();
+            } else {
+               roiBuilder_.setMessage(value);
+            }
+            bitField0_ |= 0x00200000;
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.ROI roi = 29;</code>
+          */
+         public Builder setRoi(
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder builderForValue) {
+            if (roiBuilder_ == null) {
+               roi_ = builderForValue.build();
+               onChanged();
+            } else {
+               roiBuilder_.setMessage(builderForValue.build());
+            }
+            bitField0_ |= 0x00200000;
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.ROI roi = 29;</code>
+          */
+         public Builder mergeRoi(edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI value) {
+            if (roiBuilder_ == null) {
+               if (((bitField0_ & 0x00200000) == 0x00200000) &&
+                     roi_ != edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance()) {
+                  roi_ =
+                        edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.newBuilder(roi_).mergeFrom(value)
+                              .buildPartial();
+               } else {
+                  roi_ = value;
+               }
+               onChanged();
+            } else {
+               roiBuilder_.mergeFrom(value);
+            }
+            bitField0_ |= 0x00200000;
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.ROI roi = 29;</code>
+          */
+         public Builder clearRoi() {
+            if (roiBuilder_ == null) {
+               roi_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.getDefaultInstance();
+               onChanged();
+            } else {
+               roiBuilder_.clear();
+            }
+            bitField0_ = (bitField0_ & ~0x00200000);
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.ROI roi = 29;</code>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder getRoiBuilder() {
+            bitField0_ |= 0x00200000;
+            onChanged();
+            return getRoiFieldBuilder().getBuilder();
+         }
+
+         /**
+          * <code>optional .TSF.ROI roi = 29;</code>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder getRoiOrBuilder() {
+            if (roiBuilder_ != null) {
+               return roiBuilder_.getMessageOrBuilder();
+            } else {
+               return roi_;
+            }
+         }
+
+         /**
+          * <code>optional .TSF.ROI roi = 29;</code>
+          */
+         private com.google.protobuf.SingleFieldBuilder<
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder>
+         getRoiFieldBuilder() {
+            if (roiBuilder_ == null) {
+               roiBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROI.Builder, edu.ucsf.valelab.tsf.TaggedSpotsProtos.ROIOrBuilder>(
+                     roi_,
+                     getParentForChildren(),
+                     isClean());
+               roi_ = null;
+            }
+            return roiBuilder_;
+         }
+
+         // @@protoc_insertion_point(builder_scope:TSF.SpotList)
+      }
+
+      static {
+         defaultInstance = new SpotList(true);
+         defaultInstance.initFields();
+      }
+
+      // @@protoc_insertion_point(class_scope:TSF.SpotList)
+   }
+
+   public interface SpotOrBuilder extends
+         com.google.protobuf.GeneratedMessage.
+               ExtendableMessageOrBuilder<Spot> {
+
+      // required int32 molecule = 1;
+
+      /**
+       * <code>required int32 molecule = 1;</code>
+       *
+       * <pre>
+       * Identifier for a physical molecule. Multiple localizations will be considered
+       * to be generated by the same molecule if they share the same molecule ID.
+       * Typically, a molecule generates up to one localization per frame.
+       * If you don't implement tracking, assign a different molecule ID to
+       * each localization.
+       * The difference between molecules and clusters is that a cluster is a group
+       * of physical molecules, e.g. a raft on a membrane. When you are tracking to
+       * link your localizations, you're looking at a molecule, and when you're
+       * thresholding on the nearest neighbor distance, it's typically a cluster.
+       * If you are using both cluster and molecule, localizations with the same
+       * molecule ID should have the same cluster ID.
+       * Molecule IDs must be globally unique across clusters.
+       * </pre>
+       */
+      boolean hasMolecule();
+
+      /**
+       * <code>required int32 molecule = 1;</code>
+       *
+       * <pre>
+       * Identifier for a physical molecule. Multiple localizations will be considered
+       * to be generated by the same molecule if they share the same molecule ID.
+       * Typically, a molecule generates up to one localization per frame.
+       * If you don't implement tracking, assign a different molecule ID to
+       * each localization.
+       * The difference between molecules and clusters is that a cluster is a group
+       * of physical molecules, e.g. a raft on a membrane. When you are tracking to
+       * link your localizations, you're looking at a molecule, and when you're
+       * thresholding on the nearest neighbor distance, it's typically a cluster.
+       * If you are using both cluster and molecule, localizations with the same
+       * molecule ID should have the same cluster ID.
+       * Molecule IDs must be globally unique across clusters.
+       * </pre>
+       */
+      int getMolecule();
+
+      // required int32 channel = 2;
+
+      /**
+       * <code>required int32 channel = 2;</code>
+       *
+       * <pre>
+       * Identifier for an input channel. Input channels represent different optical
+       * paths, often with different spectral characteristics. For example, in a
+       * biplane setup, you'd have two channels, one for each camera. Channels are
+       * 1-based.
+       * Please note that channels and fluorophore type are subtly different: channel
+       * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
+       * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
+       * biplane single-color 3D, you'd set the channel field if you emit separate
+       * localizations for both channels, but never the type field. For biplane
+       * two-color experiments, you'd set both channel and type if you fit in both
+       * channels independently, and only types if your fitter combines information
+       * for both channels. For spectrally separated measurements, channel and type
+       * are usually identical, but for spectral unmixing, they may differ.
+       * </pre>
+       */
+      boolean hasChannel();
+
+      /**
+       * <code>required int32 channel = 2;</code>
+       *
+       * <pre>
+       * Identifier for an input channel. Input channels represent different optical
+       * paths, often with different spectral characteristics. For example, in a
+       * biplane setup, you'd have two channels, one for each camera. Channels are
+       * 1-based.
+       * Please note that channels and fluorophore type are subtly different: channel
+       * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
+       * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
+       * biplane single-color 3D, you'd set the channel field if you emit separate
+       * localizations for both channels, but never the type field. For biplane
+       * two-color experiments, you'd set both channel and type if you fit in both
+       * channels independently, and only types if your fitter combines information
+       * for both channels. For spectrally separated measurements, channel and type
+       * are usually identical, but for spectral unmixing, they may differ.
+       * </pre>
+       */
+      int getChannel();
+
+      // required int32 frame = 3;
+
+      /**
+       * <code>required int32 frame = 3;</code>
+       *
+       * <pre>
+       * Frame number (image number). The frames of each channel are numbered
+       * sequentially, starting from 1.
+       * </pre>
+       */
+      boolean hasFrame();
+
+      /**
+       * <code>required int32 frame = 3;</code>
+       *
+       * <pre>
+       * Frame number (image number). The frames of each channel are numbered
+       * sequentially, starting from 1.
+       * </pre>
+       */
+      int getFrame();
+
+      // optional int32 slice = 4;
+
+      /**
+       * <code>optional int32 slice = 4;</code>
+       *
+       * <pre>
+       * Z slice. If you are taking a series of images at different axial offsets,
+       * you can tag the localizations from each respective slice with this 1-based
+       * field. Please apply the offset between slices before saving to a TSF file:
+       * z=100 with slice=1 is considered same position as z=100 with slice=2.
+       * </pre>
+       */
+      boolean hasSlice();
+
+      /**
+       * <code>optional int32 slice = 4;</code>
+       *
+       * <pre>
+       * Z slice. If you are taking a series of images at different axial offsets,
+       * you can tag the localizations from each respective slice with this 1-based
+       * field. Please apply the offset between slices before saving to a TSF file:
+       * z=100 with slice=1 is considered same position as z=100 with slice=2.
+       * </pre>
+       */
+      int getSlice();
+
+      // optional int32 pos = 5;
+
+      /**
+       * <code>optional int32 pos = 5;</code>
+       *
+       * <pre>
+       * Lateral position. If you are taking images at multiple x/y stage positions,
+       * you can tag the localizations from each position with this 1-based field.
+       * Positions are 1-based. Please apply the offset between positions before
+       * saving the TSF file:
+       * x=100 with pos=1 is considered same position as x=100 with pos=2.
+       * </pre>
+       */
+      boolean hasPos();
+
+      /**
+       * <code>optional int32 pos = 5;</code>
+       *
+       * <pre>
+       * Lateral position. If you are taking images at multiple x/y stage positions,
+       * you can tag the localizations from each position with this 1-based field.
+       * Positions are 1-based. Please apply the offset between positions before
+       * saving the TSF file:
+       * x=100 with pos=1 is considered same position as x=100 with pos=2.
+       * </pre>
+       */
+      int getPos();
+
+      // optional int32 fluorophore_type = 19;
+
+      /**
+       * <code>optional int32 fluorophore_type = 19;</code>
+       *
+       * <pre>
+       * Fluorophore type. The number is 1-based. Please compare the note for
+       * channel for the distinction between type and channel.
+       * </pre>
+       */
+      boolean hasFluorophoreType();
+
+      /**
+       * <code>optional int32 fluorophore_type = 19;</code>
+       *
+       * <pre>
+       * Fluorophore type. The number is 1-based. Please compare the note for
+       * channel for the distinction between type and channel.
+       * </pre>
+       */
+      int getFluorophoreType();
+
+      // optional int32 cluster = 20;
+
+      /**
+       * <code>optional int32 cluster = 20;</code>
+       *
+       * <pre>
+       * The identifier of the cluster that the localization belongs to, 1-based.
+       * A cluster is a logical group of multiple physical molecules. Typical
+       * examples are membrane rafts,
+       * </pre>
+       */
+      boolean hasCluster();
+
+      /**
+       * <code>optional int32 cluster = 20;</code>
+       *
+       * <pre>
+       * The identifier of the cluster that the localization belongs to, 1-based.
+       * A cluster is a logical group of multiple physical molecules. Typical
+       * examples are membrane rafts,
+       * </pre>
+       */
+      int getCluster();
+
+      // optional .TSF.LocationUnits location_units = 17;
+
+      /**
+       * <code>optional .TSF.LocationUnits location_units = 17;</code>
+       *
+       * <pre>
+       * xyz coordinates of the spot in location_units
+       * after fitting and optional correction
+       * </pre>
+       */
+      boolean hasLocationUnits();
+
+      /**
+       * <code>optional .TSF.LocationUnits location_units = 17;</code>
+       *
+       * <pre>
+       * xyz coordinates of the spot in location_units
+       * after fitting and optional correction
+       * </pre>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits();
+
+      // required float x = 7;
+
+      /**
+       * <code>required float x = 7;</code>
+       */
+      boolean hasX();
+
+      /**
+       * <code>required float x = 7;</code>
+       */
+      float getX();
+
+      // required float y = 8;
+
+      /**
+       * <code>required float y = 8;</code>
+       */
+      boolean hasY();
+
+      /**
+       * <code>required float y = 8;</code>
+       */
+      float getY();
+
+      // optional float z = 9;
+
+      /**
+       * <code>optional float z = 9;</code>
+       */
+      boolean hasZ();
+
+      /**
+       * <code>optional float z = 9;</code>
+       */
+      float getZ();
+
+      // optional .TSF.IntensityUnits intensity_units = 18;
+
+      /**
+       * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
+       *
+       * <pre>
+       * Use intensity_units only if different from SpotList
+       * integrated spot density. This can either be determined from a fit or
+       * using any other methods.  This number should be corrected for background
+       * </pre>
+       */
+      boolean hasIntensityUnits();
+
+      /**
+       * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
+       *
+       * <pre>
+       * Use intensity_units only if different from SpotList
+       * integrated spot density. This can either be determined from a fit or
+       * using any other methods.  This number should be corrected for background
+       * </pre>
+       */
+      edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits();
+
+      // required float intensity = 10;
+
+      /**
+       * <code>required float intensity = 10;</code>
+       *
+       * <pre>
+       * integrated spot density
+       * </pre>
+       */
+      boolean hasIntensity();
+
+      /**
+       * <code>required float intensity = 10;</code>
+       *
+       * <pre>
+       * integrated spot density
+       * </pre>
+       */
+      float getIntensity();
+
+      // optional float background = 11;
+
+      /**
+       * <code>optional float background = 11;</code>
+       *
+       * <pre>
+       * Background around the spot.
+       * This can be determined through a fit or other methods
+       * This number should not include the camera bias, i.e. it should be linearly
+       * proportional to the number of photons in the background
+       * </pre>
+       */
+      boolean hasBackground();
+
+      /**
+       * <code>optional float background = 11;</code>
+       *
+       * <pre>
+       * Background around the spot.
+       * This can be determined through a fit or other methods
+       * This number should not include the camera bias, i.e. it should be linearly
+       * proportional to the number of photons in the background
+       * </pre>
+       */
+      float getBackground();
+
+      // optional float width = 12;
+
+      /**
+       * <code>optional float width = 12;</code>
+       *
+       * <pre>
+       * Peak width at half height in location units
+       * for asymmetric peaks, calculate the width as the square root of the
+       * product of the widths of the long and short axes
+       * </pre>
+       */
+      boolean hasWidth();
+
+      /**
+       * <code>optional float width = 12;</code>
+       *
+       * <pre>
+       * Peak width at half height in location units
+       * for asymmetric peaks, calculate the width as the square root of the
+       * product of the widths of the long and short axes
+       * </pre>
+       */
+      float getWidth();
+
+      // optional float a = 13;
+
+      /**
+       * <code>optional float a = 13;</code>
+       *
+       * <pre>
+       * Shape of the peak: width of the long axis
+       * divided by width of the short axis
+       * </pre>
+       */
+      boolean hasA();
+
+      /**
+       * <code>optional float a = 13;</code>
+       *
+       * <pre>
+       * Shape of the peak: width of the long axis
+       * divided by width of the short axis
+       * </pre>
+       */
+      float getA();
+
+      // optional float theta = 14;
+
+      /**
+       * <code>optional float theta = 14;</code>
+       *
+       * <pre>
+       * Rotation of asymetric peak, only used
+       * when fitmode == TWOAXISANDTHETA
+       * </pre>
+       */
+      boolean hasTheta();
+
+      /**
+       * <code>optional float theta = 14;</code>
+       *
+       * <pre>
+       * Rotation of asymetric peak, only used
+       * when fitmode == TWOAXISANDTHETA
+       * </pre>
+       */
+      float getTheta();
+
+      // optional float x_original = 101;
+
+      /**
+       * <code>optional float x_original = 101;</code>
+       *
+       * <pre>
+       * Original xyz coordinates from fitting before correction
+       * </pre>
+       */
+      boolean hasXOriginal();
+
+      /**
+       * <code>optional float x_original = 101;</code>
+       *
+       * <pre>
+       * Original xyz coordinates from fitting before correction
+       * </pre>
+       */
+      float getXOriginal();
+
+      // optional float y_original = 102;
+
+      /**
+       * <code>optional float y_original = 102;</code>
+       */
+      boolean hasYOriginal();
+
+      /**
+       * <code>optional float y_original = 102;</code>
+       */
+      float getYOriginal();
+
+      // optional float z_original = 103;
+
+      /**
+       * <code>optional float z_original = 103;</code>
+       */
+      boolean hasZOriginal();
+
+      /**
+       * <code>optional float z_original = 103;</code>
+       */
+      float getZOriginal();
+
+      // optional float x_precision = 104;
+
+      /**
+       * <code>optional float x_precision = 104;</code>
+       *
+       * <pre>
+       * localization precision
+       * </pre>
+       */
+      boolean hasXPrecision();
+
+      /**
+       * <code>optional float x_precision = 104;</code>
+       *
+       * <pre>
+       * localization precision
+       * </pre>
+       */
+      float getXPrecision();
+
+      // optional float y_precision = 105;
+
+      /**
+       * <code>optional float y_precision = 105;</code>
+       */
+      boolean hasYPrecision();
+
+      /**
+       * <code>optional float y_precision = 105;</code>
+       */
+      float getYPrecision();
+
+      // optional float z_precision = 106;
+
+      /**
+       * <code>optional float z_precision = 106;</code>
+       */
+      boolean hasZPrecision();
+
+      /**
+       * <code>optional float z_precision = 106;</code>
+       */
+      float getZPrecision();
+
+      // optional int32 x_position = 107;
+
+      /**
+       * <code>optional int32 x_position = 107;</code>
+       *
+       * <pre>
+       * position in the original image (in pixels) used for fitting
+       * </pre>
+       */
+      boolean hasXPosition();
+
+      /**
+       * <code>optional int32 x_position = 107;</code>
+       *
+       * <pre>
+       * position in the original image (in pixels) used for fitting
+       * </pre>
+       */
+      int getXPosition();
+
+      // optional int32 y_position = 108;
+
+      /**
+       * <code>optional int32 y_position = 108;</code>
+       */
+      boolean hasYPosition();
+
+      /**
+       * <code>optional int32 y_position = 108;</code>
+       */
+      int getYPosition();
+   }
+
+   /**
+    * Protobuf type {@code TSF.Spot}
+    */
+   public static final class Spot extends
+         com.google.protobuf.GeneratedMessage.ExtendableMessage<
+               Spot> implements SpotOrBuilder {
+
+      // Use Spot.newBuilder() to construct.
+      private Spot(
+            com.google.protobuf.GeneratedMessage.ExtendableBuilder<edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot, ?> builder) {
+         super(builder);
+         this.unknownFields = builder.getUnknownFields();
+      }
+
+      private Spot(boolean noInit) {
+         this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      }
+
+      private static final Spot defaultInstance;
+
+      public static Spot getDefaultInstance() {
+         return defaultInstance;
+      }
+
+      public Spot getDefaultInstanceForType() {
+         return defaultInstance;
+      }
+
+      private final com.google.protobuf.UnknownFieldSet unknownFields;
+
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+         return this.unknownFields;
+      }
+
+      private Spot(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         initFields();
+         int mutable_bitField0_ = 0;
+         com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+               com.google.protobuf.UnknownFieldSet.newBuilder();
+         try {
+            boolean done = false;
+            while (!done) {
+               int tag = input.readTag();
+               switch (tag) {
+                  case 0:
+                     done = true;
+                     break;
+                  default: {
+                     if (!parseUnknownField(input, unknownFields,
+                           extensionRegistry, tag)) {
+                        done = true;
+                     }
+                     break;
+                  }
+                  case 8: {
+                     bitField0_ |= 0x00000001;
+                     molecule_ = input.readInt32();
+                     break;
+                  }
+                  case 16: {
+                     bitField0_ |= 0x00000002;
+                     channel_ = input.readInt32();
+                     break;
+                  }
+                  case 24: {
+                     bitField0_ |= 0x00000004;
+                     frame_ = input.readInt32();
+                     break;
+                  }
+                  case 32: {
+                     bitField0_ |= 0x00000008;
+                     slice_ = input.readInt32();
+                     break;
+                  }
+                  case 40: {
+                     bitField0_ |= 0x00000010;
+                     pos_ = input.readInt32();
+                     break;
+                  }
+                  case 61: {
+                     bitField0_ |= 0x00000100;
+                     x_ = input.readFloat();
+                     break;
+                  }
+                  case 69: {
+                     bitField0_ |= 0x00000200;
+                     y_ = input.readFloat();
+                     break;
+                  }
+                  case 77: {
+                     bitField0_ |= 0x00000400;
+                     z_ = input.readFloat();
+                     break;
+                  }
+                  case 85: {
+                     bitField0_ |= 0x00001000;
+                     intensity_ = input.readFloat();
+                     break;
+                  }
+                  case 93: {
+                     bitField0_ |= 0x00002000;
+                     background_ = input.readFloat();
+                     break;
+                  }
+                  case 101: {
+                     bitField0_ |= 0x00004000;
+                     width_ = input.readFloat();
+                     break;
+                  }
+                  case 109: {
+                     bitField0_ |= 0x00008000;
+                     a_ = input.readFloat();
+                     break;
+                  }
+                  case 117: {
+                     bitField0_ |= 0x00010000;
+                     theta_ = input.readFloat();
+                     break;
+                  }
+                  case 136: {
+                     int rawValue = input.readEnum();
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits
+                           .valueOf(rawValue);
+                     if (value == null) {
+                        unknownFields.mergeVarintField(17, rawValue);
+                     } else {
+                        bitField0_ |= 0x00000080;
+                        locationUnits_ = value;
+                     }
+                     break;
+                  }
+                  case 144: {
+                     int rawValue = input.readEnum();
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits value = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits
+                           .valueOf(rawValue);
+                     if (value == null) {
+                        unknownFields.mergeVarintField(18, rawValue);
+                     } else {
+                        bitField0_ |= 0x00000800;
+                        intensityUnits_ = value;
+                     }
+                     break;
+                  }
+                  case 152: {
+                     bitField0_ |= 0x00000020;
+                     fluorophoreType_ = input.readInt32();
+                     break;
+                  }
+                  case 160: {
+                     bitField0_ |= 0x00000040;
+                     cluster_ = input.readInt32();
+                     break;
+                  }
+                  case 813: {
+                     bitField0_ |= 0x00020000;
+                     xOriginal_ = input.readFloat();
+                     break;
+                  }
+                  case 821: {
+                     bitField0_ |= 0x00040000;
+                     yOriginal_ = input.readFloat();
+                     break;
+                  }
+                  case 829: {
+                     bitField0_ |= 0x00080000;
+                     zOriginal_ = input.readFloat();
+                     break;
+                  }
+                  case 837: {
+                     bitField0_ |= 0x00100000;
+                     xPrecision_ = input.readFloat();
+                     break;
+                  }
+                  case 845: {
+                     bitField0_ |= 0x00200000;
+                     yPrecision_ = input.readFloat();
+                     break;
+                  }
+                  case 853: {
+                     bitField0_ |= 0x00400000;
+                     zPrecision_ = input.readFloat();
+                     break;
+                  }
+                  case 856: {
+                     bitField0_ |= 0x00800000;
+                     xPosition_ = input.readInt32();
+                     break;
+                  }
+                  case 864: {
+                     bitField0_ |= 0x01000000;
+                     yPosition_ = input.readInt32();
+                     break;
+                  }
+               }
+            }
+         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(this);
+         } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(
+                  e.getMessage()).setUnfinishedMessage(this);
+         } finally {
+            this.unknownFields = unknownFields.build();
+            makeExtensionsImmutable();
+         }
+      }
+
       public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_descriptor;
+      getDescriptor() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.class, edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.Builder.class);
+      internalGetFieldAccessorTable() {
+         return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_fieldAccessorTable
+               .ensureFieldAccessorsInitialized(
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.class,
+                     edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.Builder.class);
       }
 
-      // Construct using edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
+      public static com.google.protobuf.Parser<Spot> PARSER =
+            new com.google.protobuf.AbstractParser<Spot>() {
+               public Spot parsePartialFrom(
+                     com.google.protobuf.CodedInputStream input,
+                     com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                     throws com.google.protobuf.InvalidProtocolBufferException {
+                  return new Spot(input, extensionRegistry);
+               }
+            };
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<Spot> getParserForType() {
+         return PARSER;
       }
 
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        molecule_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000001);
-        channel_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000002);
-        frame_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        slice_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000008);
-        pos_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000010);
-        fluorophoreType_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000020);
-        cluster_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000040);
-        locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
-        bitField0_ = (bitField0_ & ~0x00000080);
-        x_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00000100);
-        y_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00000200);
-        z_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00000400);
-        intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
-        bitField0_ = (bitField0_ & ~0x00000800);
-        intensity_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00001000);
-        background_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00002000);
-        width_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00004000);
-        a_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00008000);
-        theta_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00010000);
-        xOriginal_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00020000);
-        yOriginal_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00040000);
-        zOriginal_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00080000);
-        xPrecision_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00100000);
-        yPrecision_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00200000);
-        zPrecision_ = 0F;
-        bitField0_ = (bitField0_ & ~0x00400000);
-        xPosition_ = 0;
-        bitField0_ = (bitField0_ & ~0x00800000);
-        yPosition_ = 0;
-        bitField0_ = (bitField0_ & ~0x01000000);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_descriptor;
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot getDefaultInstanceForType() {
-        return edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.getDefaultInstance();
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot build() {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot buildPartial() {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot result = new edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.molecule_ = molecule_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.channel_ = channel_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.frame_ = frame_;
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        result.slice_ = slice_;
-        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
-          to_bitField0_ |= 0x00000010;
-        }
-        result.pos_ = pos_;
-        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
-          to_bitField0_ |= 0x00000020;
-        }
-        result.fluorophoreType_ = fluorophoreType_;
-        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
-          to_bitField0_ |= 0x00000040;
-        }
-        result.cluster_ = cluster_;
-        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
-          to_bitField0_ |= 0x00000080;
-        }
-        result.locationUnits_ = locationUnits_;
-        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
-          to_bitField0_ |= 0x00000100;
-        }
-        result.x_ = x_;
-        if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
-          to_bitField0_ |= 0x00000200;
-        }
-        result.y_ = y_;
-        if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
-          to_bitField0_ |= 0x00000400;
-        }
-        result.z_ = z_;
-        if (((from_bitField0_ & 0x00000800) == 0x00000800)) {
-          to_bitField0_ |= 0x00000800;
-        }
-        result.intensityUnits_ = intensityUnits_;
-        if (((from_bitField0_ & 0x00001000) == 0x00001000)) {
-          to_bitField0_ |= 0x00001000;
-        }
-        result.intensity_ = intensity_;
-        if (((from_bitField0_ & 0x00002000) == 0x00002000)) {
-          to_bitField0_ |= 0x00002000;
-        }
-        result.background_ = background_;
-        if (((from_bitField0_ & 0x00004000) == 0x00004000)) {
-          to_bitField0_ |= 0x00004000;
-        }
-        result.width_ = width_;
-        if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
-          to_bitField0_ |= 0x00008000;
-        }
-        result.a_ = a_;
-        if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
-          to_bitField0_ |= 0x00010000;
-        }
-        result.theta_ = theta_;
-        if (((from_bitField0_ & 0x00020000) == 0x00020000)) {
-          to_bitField0_ |= 0x00020000;
-        }
-        result.xOriginal_ = xOriginal_;
-        if (((from_bitField0_ & 0x00040000) == 0x00040000)) {
-          to_bitField0_ |= 0x00040000;
-        }
-        result.yOriginal_ = yOriginal_;
-        if (((from_bitField0_ & 0x00080000) == 0x00080000)) {
-          to_bitField0_ |= 0x00080000;
-        }
-        result.zOriginal_ = zOriginal_;
-        if (((from_bitField0_ & 0x00100000) == 0x00100000)) {
-          to_bitField0_ |= 0x00100000;
-        }
-        result.xPrecision_ = xPrecision_;
-        if (((from_bitField0_ & 0x00200000) == 0x00200000)) {
-          to_bitField0_ |= 0x00200000;
-        }
-        result.yPrecision_ = yPrecision_;
-        if (((from_bitField0_ & 0x00400000) == 0x00400000)) {
-          to_bitField0_ |= 0x00400000;
-        }
-        result.zPrecision_ = zPrecision_;
-        if (((from_bitField0_ & 0x00800000) == 0x00800000)) {
-          to_bitField0_ |= 0x00800000;
-        }
-        result.xPosition_ = xPosition_;
-        if (((from_bitField0_ & 0x01000000) == 0x01000000)) {
-          to_bitField0_ |= 0x01000000;
-        }
-        result.yPosition_ = yPosition_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot) {
-          return mergeFrom((edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot other) {
-        if (other == edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.getDefaultInstance()) return this;
-        if (other.hasMolecule()) {
-          setMolecule(other.getMolecule());
-        }
-        if (other.hasChannel()) {
-          setChannel(other.getChannel());
-        }
-        if (other.hasFrame()) {
-          setFrame(other.getFrame());
-        }
-        if (other.hasSlice()) {
-          setSlice(other.getSlice());
-        }
-        if (other.hasPos()) {
-          setPos(other.getPos());
-        }
-        if (other.hasFluorophoreType()) {
-          setFluorophoreType(other.getFluorophoreType());
-        }
-        if (other.hasCluster()) {
-          setCluster(other.getCluster());
-        }
-        if (other.hasLocationUnits()) {
-          setLocationUnits(other.getLocationUnits());
-        }
-        if (other.hasX()) {
-          setX(other.getX());
-        }
-        if (other.hasY()) {
-          setY(other.getY());
-        }
-        if (other.hasZ()) {
-          setZ(other.getZ());
-        }
-        if (other.hasIntensityUnits()) {
-          setIntensityUnits(other.getIntensityUnits());
-        }
-        if (other.hasIntensity()) {
-          setIntensity(other.getIntensity());
-        }
-        if (other.hasBackground()) {
-          setBackground(other.getBackground());
-        }
-        if (other.hasWidth()) {
-          setWidth(other.getWidth());
-        }
-        if (other.hasA()) {
-          setA(other.getA());
-        }
-        if (other.hasTheta()) {
-          setTheta(other.getTheta());
-        }
-        if (other.hasXOriginal()) {
-          setXOriginal(other.getXOriginal());
-        }
-        if (other.hasYOriginal()) {
-          setYOriginal(other.getYOriginal());
-        }
-        if (other.hasZOriginal()) {
-          setZOriginal(other.getZOriginal());
-        }
-        if (other.hasXPrecision()) {
-          setXPrecision(other.getXPrecision());
-        }
-        if (other.hasYPrecision()) {
-          setYPrecision(other.getYPrecision());
-        }
-        if (other.hasZPrecision()) {
-          setZPrecision(other.getZPrecision());
-        }
-        if (other.hasXPosition()) {
-          setXPosition(other.getXPosition());
-        }
-        if (other.hasYPosition()) {
-          setYPosition(other.getYPosition());
-        }
-        this.mergeExtensionFields(other);
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasMolecule()) {
-          
-          return false;
-        }
-        if (!hasChannel()) {
-          
-          return false;
-        }
-        if (!hasFrame()) {
-          
-          return false;
-        }
-        if (!hasX()) {
-          
-          return false;
-        }
-        if (!hasY()) {
-          
-          return false;
-        }
-        if (!hasIntensity()) {
-          
-          return false;
-        }
-        if (!extensionsAreInitialized()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
       private int bitField0_;
-
       // required int32 molecule = 1;
-      private int molecule_ ;
+      public static final int MOLECULE_FIELD_NUMBER = 1;
+      private int molecule_;
+
       /**
        * <code>required int32 molecule = 1;</code>
        *
@@ -7551,16 +6784,17 @@ public final class TaggedSpotsProtos {
        * each localization.
        * The difference between molecules and clusters is that a cluster is a group
        * of physical molecules, e.g. a raft on a membrane. When you are tracking to
-       * link your localizations, you're looking at a molecule, and when you're 
+       * link your localizations, you're looking at a molecule, and when you're
        * thresholding on the nearest neighbor distance, it's typically a cluster.
        * If you are using both cluster and molecule, localizations with the same
        * molecule ID should have the same cluster ID.
-       * Molecule IDs must be globally unique across clusters. 
+       * Molecule IDs must be globally unique across clusters.
        * </pre>
        */
       public boolean hasMolecule() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
+         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
+
       /**
        * <code>required int32 molecule = 1;</code>
        *
@@ -7572,67 +6806,21 @@ public final class TaggedSpotsProtos {
        * each localization.
        * The difference between molecules and clusters is that a cluster is a group
        * of physical molecules, e.g. a raft on a membrane. When you are tracking to
-       * link your localizations, you're looking at a molecule, and when you're 
+       * link your localizations, you're looking at a molecule, and when you're
        * thresholding on the nearest neighbor distance, it's typically a cluster.
        * If you are using both cluster and molecule, localizations with the same
        * molecule ID should have the same cluster ID.
-       * Molecule IDs must be globally unique across clusters. 
+       * Molecule IDs must be globally unique across clusters.
        * </pre>
        */
       public int getMolecule() {
-        return molecule_;
-      }
-      /**
-       * <code>required int32 molecule = 1;</code>
-       *
-       * <pre>
-       * Identifier for a physical molecule. Multiple localizations will be considered
-       * to be generated by the same molecule if they share the same molecule ID.
-       * Typically, a molecule generates up to one localization per frame.
-       * If you don't implement tracking, assign a different molecule ID to
-       * each localization.
-       * The difference between molecules and clusters is that a cluster is a group
-       * of physical molecules, e.g. a raft on a membrane. When you are tracking to
-       * link your localizations, you're looking at a molecule, and when you're 
-       * thresholding on the nearest neighbor distance, it's typically a cluster.
-       * If you are using both cluster and molecule, localizations with the same
-       * molecule ID should have the same cluster ID.
-       * Molecule IDs must be globally unique across clusters. 
-       * </pre>
-       */
-      public Builder setMolecule(int value) {
-        bitField0_ |= 0x00000001;
-        molecule_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 molecule = 1;</code>
-       *
-       * <pre>
-       * Identifier for a physical molecule. Multiple localizations will be considered
-       * to be generated by the same molecule if they share the same molecule ID.
-       * Typically, a molecule generates up to one localization per frame.
-       * If you don't implement tracking, assign a different molecule ID to
-       * each localization.
-       * The difference between molecules and clusters is that a cluster is a group
-       * of physical molecules, e.g. a raft on a membrane. When you are tracking to
-       * link your localizations, you're looking at a molecule, and when you're 
-       * thresholding on the nearest neighbor distance, it's typically a cluster.
-       * If you are using both cluster and molecule, localizations with the same
-       * molecule ID should have the same cluster ID.
-       * Molecule IDs must be globally unique across clusters. 
-       * </pre>
-       */
-      public Builder clearMolecule() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        molecule_ = 0;
-        onChanged();
-        return this;
+         return molecule_;
       }
 
       // required int32 channel = 2;
-      private int channel_ ;
+      public static final int CHANNEL_FIELD_NUMBER = 2;
+      private int channel_;
+
       /**
        * <code>required int32 channel = 2;</code>
        *
@@ -7653,8 +6841,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasChannel() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
+         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
+
       /**
        * <code>required int32 channel = 2;</code>
        *
@@ -7675,61 +6864,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getChannel() {
-        return channel_;
-      }
-      /**
-       * <code>required int32 channel = 2;</code>
-       *
-       * <pre>
-       * Identifier for an input channel. Input channels represent different optical
-       * paths, often with different spectral characteristics. For example, in a
-       * biplane setup, you'd have two channels, one for each camera. Channels are
-       * 1-based.
-       * Please note that channels and fluorophore type are subtly different: channel
-       * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
-       * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
-       * biplane single-color 3D, you'd set the channel field if you emit separate
-       * localizations for both channels, but never the type field. For biplane
-       * two-color experiments, you'd set both channel and type if you fit in both
-       * channels independently, and only types if your fitter combines information
-       * for both channels. For spectrally separated measurements, channel and type
-       * are usually identical, but for spectral unmixing, they may differ.
-       * </pre>
-       */
-      public Builder setChannel(int value) {
-        bitField0_ |= 0x00000002;
-        channel_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 channel = 2;</code>
-       *
-       * <pre>
-       * Identifier for an input channel. Input channels represent different optical
-       * paths, often with different spectral characteristics. For example, in a
-       * biplane setup, you'd have two channels, one for each camera. Channels are
-       * 1-based.
-       * Please note that channels and fluorophore type are subtly different: channel
-       * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
-       * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
-       * biplane single-color 3D, you'd set the channel field if you emit separate
-       * localizations for both channels, but never the type field. For biplane
-       * two-color experiments, you'd set both channel and type if you fit in both
-       * channels independently, and only types if your fitter combines information
-       * for both channels. For spectrally separated measurements, channel and type
-       * are usually identical, but for spectral unmixing, they may differ.
-       * </pre>
-       */
-      public Builder clearChannel() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        channel_ = 0;
-        onChanged();
-        return this;
+         return channel_;
       }
 
       // required int32 frame = 3;
-      private int frame_ ;
+      public static final int FRAME_FIELD_NUMBER = 3;
+      private int frame_;
+
       /**
        * <code>required int32 frame = 3;</code>
        *
@@ -7739,8 +6880,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasFrame() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
+
       /**
        * <code>required int32 frame = 3;</code>
        *
@@ -7750,39 +6892,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getFrame() {
-        return frame_;
-      }
-      /**
-       * <code>required int32 frame = 3;</code>
-       *
-       * <pre>
-       * Frame number (image number). The frames of each channel are numbered
-       * sequentially, starting from 1.
-       * </pre>
-       */
-      public Builder setFrame(int value) {
-        bitField0_ |= 0x00000004;
-        frame_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required int32 frame = 3;</code>
-       *
-       * <pre>
-       * Frame number (image number). The frames of each channel are numbered
-       * sequentially, starting from 1.
-       * </pre>
-       */
-      public Builder clearFrame() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        frame_ = 0;
-        onChanged();
-        return this;
+         return frame_;
       }
 
       // optional int32 slice = 4;
-      private int slice_ ;
+      public static final int SLICE_FIELD_NUMBER = 4;
+      private int slice_;
+
       /**
        * <code>optional int32 slice = 4;</code>
        *
@@ -7794,8 +6910,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasSlice() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+         return ((bitField0_ & 0x00000008) == 0x00000008);
       }
+
       /**
        * <code>optional int32 slice = 4;</code>
        *
@@ -7807,43 +6924,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getSlice() {
-        return slice_;
-      }
-      /**
-       * <code>optional int32 slice = 4;</code>
-       *
-       * <pre>
-       * Z slice. If you are taking a series of images at different axial offsets,
-       * you can tag the localizations from each respective slice with this 1-based
-       * field. Please apply the offset between slices before saving to a TSF file:
-       * z=100 with slice=1 is considered same position as z=100 with slice=2.
-       * </pre>
-       */
-      public Builder setSlice(int value) {
-        bitField0_ |= 0x00000008;
-        slice_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 slice = 4;</code>
-       *
-       * <pre>
-       * Z slice. If you are taking a series of images at different axial offsets,
-       * you can tag the localizations from each respective slice with this 1-based
-       * field. Please apply the offset between slices before saving to a TSF file:
-       * z=100 with slice=1 is considered same position as z=100 with slice=2.
-       * </pre>
-       */
-      public Builder clearSlice() {
-        bitField0_ = (bitField0_ & ~0x00000008);
-        slice_ = 0;
-        onChanged();
-        return this;
+         return slice_;
       }
 
       // optional int32 pos = 5;
-      private int pos_ ;
+      public static final int POS_FIELD_NUMBER = 5;
+      private int pos_;
+
       /**
        * <code>optional int32 pos = 5;</code>
        *
@@ -7856,8 +6943,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasPos() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+         return ((bitField0_ & 0x00000010) == 0x00000010);
       }
+
       /**
        * <code>optional int32 pos = 5;</code>
        *
@@ -7870,45 +6958,13 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getPos() {
-        return pos_;
-      }
-      /**
-       * <code>optional int32 pos = 5;</code>
-       *
-       * <pre>
-       * Lateral position. If you are taking images at multiple x/y stage positions,
-       * you can tag the localizations from each position with this 1-based field.
-       * Positions are 1-based. Please apply the offset between positions before
-       * saving the TSF file:
-       * x=100 with pos=1 is considered same position as x=100 with pos=2.
-       * </pre>
-       */
-      public Builder setPos(int value) {
-        bitField0_ |= 0x00000010;
-        pos_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 pos = 5;</code>
-       *
-       * <pre>
-       * Lateral position. If you are taking images at multiple x/y stage positions,
-       * you can tag the localizations from each position with this 1-based field.
-       * Positions are 1-based. Please apply the offset between positions before
-       * saving the TSF file:
-       * x=100 with pos=1 is considered same position as x=100 with pos=2.
-       * </pre>
-       */
-      public Builder clearPos() {
-        bitField0_ = (bitField0_ & ~0x00000010);
-        pos_ = 0;
-        onChanged();
-        return this;
+         return pos_;
       }
 
       // optional int32 fluorophore_type = 19;
-      private int fluorophoreType_ ;
+      public static final int FLUOROPHORE_TYPE_FIELD_NUMBER = 19;
+      private int fluorophoreType_;
+
       /**
        * <code>optional int32 fluorophore_type = 19;</code>
        *
@@ -7918,8 +6974,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasFluorophoreType() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
+         return ((bitField0_ & 0x00000020) == 0x00000020);
       }
+
       /**
        * <code>optional int32 fluorophore_type = 19;</code>
        *
@@ -7929,311 +6986,155 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getFluorophoreType() {
-        return fluorophoreType_;
-      }
-      /**
-       * <code>optional int32 fluorophore_type = 19;</code>
-       *
-       * <pre>
-       * Fluorophore type. The number is 1-based. Please compare the note for
-       * channel for the distinction between type and channel.
-       * </pre>
-       */
-      public Builder setFluorophoreType(int value) {
-        bitField0_ |= 0x00000020;
-        fluorophoreType_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 fluorophore_type = 19;</code>
-       *
-       * <pre>
-       * Fluorophore type. The number is 1-based. Please compare the note for
-       * channel for the distinction between type and channel.
-       * </pre>
-       */
-      public Builder clearFluorophoreType() {
-        bitField0_ = (bitField0_ & ~0x00000020);
-        fluorophoreType_ = 0;
-        onChanged();
-        return this;
+         return fluorophoreType_;
       }
 
       // optional int32 cluster = 20;
-      private int cluster_ ;
+      public static final int CLUSTER_FIELD_NUMBER = 20;
+      private int cluster_;
+
       /**
        * <code>optional int32 cluster = 20;</code>
        *
        * <pre>
        * The identifier of the cluster that the localization belongs to, 1-based.
        * A cluster is a logical group of multiple physical molecules. Typical
-       * examples are membrane rafts, 
+       * examples are membrane rafts,
        * </pre>
        */
       public boolean hasCluster() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+         return ((bitField0_ & 0x00000040) == 0x00000040);
       }
+
       /**
        * <code>optional int32 cluster = 20;</code>
        *
        * <pre>
        * The identifier of the cluster that the localization belongs to, 1-based.
        * A cluster is a logical group of multiple physical molecules. Typical
-       * examples are membrane rafts, 
+       * examples are membrane rafts,
        * </pre>
        */
       public int getCluster() {
-        return cluster_;
-      }
-      /**
-       * <code>optional int32 cluster = 20;</code>
-       *
-       * <pre>
-       * The identifier of the cluster that the localization belongs to, 1-based.
-       * A cluster is a logical group of multiple physical molecules. Typical
-       * examples are membrane rafts, 
-       * </pre>
-       */
-      public Builder setCluster(int value) {
-        bitField0_ |= 0x00000040;
-        cluster_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 cluster = 20;</code>
-       *
-       * <pre>
-       * The identifier of the cluster that the localization belongs to, 1-based.
-       * A cluster is a logical group of multiple physical molecules. Typical
-       * examples are membrane rafts, 
-       * </pre>
-       */
-      public Builder clearCluster() {
-        bitField0_ = (bitField0_ & ~0x00000040);
-        cluster_ = 0;
-        onChanged();
-        return this;
+         return cluster_;
       }
 
       // optional .TSF.LocationUnits location_units = 17;
-      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+      public static final int LOCATION_UNITS_FIELD_NUMBER = 17;
+      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits locationUnits_;
+
       /**
        * <code>optional .TSF.LocationUnits location_units = 17;</code>
        *
        * <pre>
-       * xyz coordinates of the spot in location_units  
+       * xyz coordinates of the spot in location_units
        * after fitting and optional correction
        * </pre>
        */
       public boolean hasLocationUnits() {
-        return ((bitField0_ & 0x00000080) == 0x00000080);
+         return ((bitField0_ & 0x00000080) == 0x00000080);
       }
+
       /**
        * <code>optional .TSF.LocationUnits location_units = 17;</code>
        *
        * <pre>
-       * xyz coordinates of the spot in location_units  
+       * xyz coordinates of the spot in location_units
        * after fitting and optional correction
        * </pre>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits() {
-        return locationUnits_;
-      }
-      /**
-       * <code>optional .TSF.LocationUnits location_units = 17;</code>
-       *
-       * <pre>
-       * xyz coordinates of the spot in location_units  
-       * after fitting and optional correction
-       * </pre>
-       */
-      public Builder setLocationUnits(edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00000080;
-        locationUnits_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .TSF.LocationUnits location_units = 17;</code>
-       *
-       * <pre>
-       * xyz coordinates of the spot in location_units  
-       * after fitting and optional correction
-       * </pre>
-       */
-      public Builder clearLocationUnits() {
-        bitField0_ = (bitField0_ & ~0x00000080);
-        locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
-        onChanged();
-        return this;
+         return locationUnits_;
       }
 
       // required float x = 7;
-      private float x_ ;
+      public static final int X_FIELD_NUMBER = 7;
+      private float x_;
+
       /**
        * <code>required float x = 7;</code>
        */
       public boolean hasX() {
-        return ((bitField0_ & 0x00000100) == 0x00000100);
+         return ((bitField0_ & 0x00000100) == 0x00000100);
       }
+
       /**
        * <code>required float x = 7;</code>
        */
       public float getX() {
-        return x_;
-      }
-      /**
-       * <code>required float x = 7;</code>
-       */
-      public Builder setX(float value) {
-        bitField0_ |= 0x00000100;
-        x_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required float x = 7;</code>
-       */
-      public Builder clearX() {
-        bitField0_ = (bitField0_ & ~0x00000100);
-        x_ = 0F;
-        onChanged();
-        return this;
+         return x_;
       }
 
       // required float y = 8;
-      private float y_ ;
+      public static final int Y_FIELD_NUMBER = 8;
+      private float y_;
+
       /**
        * <code>required float y = 8;</code>
        */
       public boolean hasY() {
-        return ((bitField0_ & 0x00000200) == 0x00000200);
+         return ((bitField0_ & 0x00000200) == 0x00000200);
       }
+
       /**
        * <code>required float y = 8;</code>
        */
       public float getY() {
-        return y_;
-      }
-      /**
-       * <code>required float y = 8;</code>
-       */
-      public Builder setY(float value) {
-        bitField0_ |= 0x00000200;
-        y_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required float y = 8;</code>
-       */
-      public Builder clearY() {
-        bitField0_ = (bitField0_ & ~0x00000200);
-        y_ = 0F;
-        onChanged();
-        return this;
+         return y_;
       }
 
       // optional float z = 9;
-      private float z_ ;
+      public static final int Z_FIELD_NUMBER = 9;
+      private float z_;
+
       /**
        * <code>optional float z = 9;</code>
        */
       public boolean hasZ() {
-        return ((bitField0_ & 0x00000400) == 0x00000400);
+         return ((bitField0_ & 0x00000400) == 0x00000400);
       }
+
       /**
        * <code>optional float z = 9;</code>
        */
       public float getZ() {
-        return z_;
-      }
-      /**
-       * <code>optional float z = 9;</code>
-       */
-      public Builder setZ(float value) {
-        bitField0_ |= 0x00000400;
-        z_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float z = 9;</code>
-       */
-      public Builder clearZ() {
-        bitField0_ = (bitField0_ & ~0x00000400);
-        z_ = 0F;
-        onChanged();
-        return this;
+         return z_;
       }
 
       // optional .TSF.IntensityUnits intensity_units = 18;
-      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+      public static final int INTENSITY_UNITS_FIELD_NUMBER = 18;
+      private edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits intensityUnits_;
+
       /**
        * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
        *
        * <pre>
        * Use intensity_units only if different from SpotList
-       * integrated spot density. This can either be determined from a fit or 
+       * integrated spot density. This can either be determined from a fit or
        * using any other methods.  This number should be corrected for background
        * </pre>
        */
       public boolean hasIntensityUnits() {
-        return ((bitField0_ & 0x00000800) == 0x00000800);
+         return ((bitField0_ & 0x00000800) == 0x00000800);
       }
+
       /**
        * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
        *
        * <pre>
        * Use intensity_units only if different from SpotList
-       * integrated spot density. This can either be determined from a fit or 
+       * integrated spot density. This can either be determined from a fit or
        * using any other methods.  This number should be corrected for background
        * </pre>
        */
       public edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits() {
-        return intensityUnits_;
-      }
-      /**
-       * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
-       *
-       * <pre>
-       * Use intensity_units only if different from SpotList
-       * integrated spot density. This can either be determined from a fit or 
-       * using any other methods.  This number should be corrected for background
-       * </pre>
-       */
-      public Builder setIntensityUnits(edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        bitField0_ |= 0x00000800;
-        intensityUnits_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
-       *
-       * <pre>
-       * Use intensity_units only if different from SpotList
-       * integrated spot density. This can either be determined from a fit or 
-       * using any other methods.  This number should be corrected for background
-       * </pre>
-       */
-      public Builder clearIntensityUnits() {
-        bitField0_ = (bitField0_ & ~0x00000800);
-        intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
-        onChanged();
-        return this;
+         return intensityUnits_;
       }
 
       // required float intensity = 10;
-      private float intensity_ ;
+      public static final int INTENSITY_FIELD_NUMBER = 10;
+      private float intensity_;
+
       /**
        * <code>required float intensity = 10;</code>
        *
@@ -8242,8 +7143,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasIntensity() {
-        return ((bitField0_ & 0x00001000) == 0x00001000);
+         return ((bitField0_ & 0x00001000) == 0x00001000);
       }
+
       /**
        * <code>required float intensity = 10;</code>
        *
@@ -8252,261 +7154,131 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public float getIntensity() {
-        return intensity_;
-      }
-      /**
-       * <code>required float intensity = 10;</code>
-       *
-       * <pre>
-       * integrated spot density
-       * </pre>
-       */
-      public Builder setIntensity(float value) {
-        bitField0_ |= 0x00001000;
-        intensity_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required float intensity = 10;</code>
-       *
-       * <pre>
-       * integrated spot density
-       * </pre>
-       */
-      public Builder clearIntensity() {
-        bitField0_ = (bitField0_ & ~0x00001000);
-        intensity_ = 0F;
-        onChanged();
-        return this;
+         return intensity_;
       }
 
       // optional float background = 11;
-      private float background_ ;
+      public static final int BACKGROUND_FIELD_NUMBER = 11;
+      private float background_;
+
       /**
        * <code>optional float background = 11;</code>
        *
        * <pre>
-       * Background around the spot. 
+       * Background around the spot.
        * This can be determined through a fit or other methods
        * This number should not include the camera bias, i.e. it should be linearly
        * proportional to the number of photons in the background
        * </pre>
        */
       public boolean hasBackground() {
-        return ((bitField0_ & 0x00002000) == 0x00002000);
+         return ((bitField0_ & 0x00002000) == 0x00002000);
       }
+
       /**
        * <code>optional float background = 11;</code>
        *
        * <pre>
-       * Background around the spot. 
+       * Background around the spot.
        * This can be determined through a fit or other methods
        * This number should not include the camera bias, i.e. it should be linearly
        * proportional to the number of photons in the background
        * </pre>
        */
       public float getBackground() {
-        return background_;
-      }
-      /**
-       * <code>optional float background = 11;</code>
-       *
-       * <pre>
-       * Background around the spot. 
-       * This can be determined through a fit or other methods
-       * This number should not include the camera bias, i.e. it should be linearly
-       * proportional to the number of photons in the background
-       * </pre>
-       */
-      public Builder setBackground(float value) {
-        bitField0_ |= 0x00002000;
-        background_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float background = 11;</code>
-       *
-       * <pre>
-       * Background around the spot. 
-       * This can be determined through a fit or other methods
-       * This number should not include the camera bias, i.e. it should be linearly
-       * proportional to the number of photons in the background
-       * </pre>
-       */
-      public Builder clearBackground() {
-        bitField0_ = (bitField0_ & ~0x00002000);
-        background_ = 0F;
-        onChanged();
-        return this;
+         return background_;
       }
 
       // optional float width = 12;
-      private float width_ ;
+      public static final int WIDTH_FIELD_NUMBER = 12;
+      private float width_;
+
       /**
        * <code>optional float width = 12;</code>
        *
        * <pre>
        * Peak width at half height in location units
-       * for asymmetric peaks, calculate the width as the square root of the 
+       * for asymmetric peaks, calculate the width as the square root of the
        * product of the widths of the long and short axes
        * </pre>
        */
       public boolean hasWidth() {
-        return ((bitField0_ & 0x00004000) == 0x00004000);
+         return ((bitField0_ & 0x00004000) == 0x00004000);
       }
+
       /**
        * <code>optional float width = 12;</code>
        *
        * <pre>
        * Peak width at half height in location units
-       * for asymmetric peaks, calculate the width as the square root of the 
+       * for asymmetric peaks, calculate the width as the square root of the
        * product of the widths of the long and short axes
        * </pre>
        */
       public float getWidth() {
-        return width_;
-      }
-      /**
-       * <code>optional float width = 12;</code>
-       *
-       * <pre>
-       * Peak width at half height in location units
-       * for asymmetric peaks, calculate the width as the square root of the 
-       * product of the widths of the long and short axes
-       * </pre>
-       */
-      public Builder setWidth(float value) {
-        bitField0_ |= 0x00004000;
-        width_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float width = 12;</code>
-       *
-       * <pre>
-       * Peak width at half height in location units
-       * for asymmetric peaks, calculate the width as the square root of the 
-       * product of the widths of the long and short axes
-       * </pre>
-       */
-      public Builder clearWidth() {
-        bitField0_ = (bitField0_ & ~0x00004000);
-        width_ = 0F;
-        onChanged();
-        return this;
+         return width_;
       }
 
       // optional float a = 13;
-      private float a_ ;
+      public static final int A_FIELD_NUMBER = 13;
+      private float a_;
+
       /**
        * <code>optional float a = 13;</code>
        *
        * <pre>
-       * Shape of the peak: width of the long axis 
+       * Shape of the peak: width of the long axis
        * divided by width of the short axis
        * </pre>
        */
       public boolean hasA() {
-        return ((bitField0_ & 0x00008000) == 0x00008000);
+         return ((bitField0_ & 0x00008000) == 0x00008000);
       }
+
       /**
        * <code>optional float a = 13;</code>
        *
        * <pre>
-       * Shape of the peak: width of the long axis 
+       * Shape of the peak: width of the long axis
        * divided by width of the short axis
        * </pre>
        */
       public float getA() {
-        return a_;
-      }
-      /**
-       * <code>optional float a = 13;</code>
-       *
-       * <pre>
-       * Shape of the peak: width of the long axis 
-       * divided by width of the short axis
-       * </pre>
-       */
-      public Builder setA(float value) {
-        bitField0_ |= 0x00008000;
-        a_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float a = 13;</code>
-       *
-       * <pre>
-       * Shape of the peak: width of the long axis 
-       * divided by width of the short axis
-       * </pre>
-       */
-      public Builder clearA() {
-        bitField0_ = (bitField0_ & ~0x00008000);
-        a_ = 0F;
-        onChanged();
-        return this;
+         return a_;
       }
 
       // optional float theta = 14;
-      private float theta_ ;
+      public static final int THETA_FIELD_NUMBER = 14;
+      private float theta_;
+
       /**
        * <code>optional float theta = 14;</code>
        *
        * <pre>
-       * Rotation of asymetric peak, only used 
+       * Rotation of asymetric peak, only used
        * when fitmode == TWOAXISANDTHETA
        * </pre>
        */
       public boolean hasTheta() {
-        return ((bitField0_ & 0x00010000) == 0x00010000);
+         return ((bitField0_ & 0x00010000) == 0x00010000);
       }
+
       /**
        * <code>optional float theta = 14;</code>
        *
        * <pre>
-       * Rotation of asymetric peak, only used 
+       * Rotation of asymetric peak, only used
        * when fitmode == TWOAXISANDTHETA
        * </pre>
        */
       public float getTheta() {
-        return theta_;
-      }
-      /**
-       * <code>optional float theta = 14;</code>
-       *
-       * <pre>
-       * Rotation of asymetric peak, only used 
-       * when fitmode == TWOAXISANDTHETA
-       * </pre>
-       */
-      public Builder setTheta(float value) {
-        bitField0_ |= 0x00010000;
-        theta_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float theta = 14;</code>
-       *
-       * <pre>
-       * Rotation of asymetric peak, only used 
-       * when fitmode == TWOAXISANDTHETA
-       * </pre>
-       */
-      public Builder clearTheta() {
-        bitField0_ = (bitField0_ & ~0x00010000);
-        theta_ = 0F;
-        onChanged();
-        return this;
+         return theta_;
       }
 
       // optional float x_original = 101;
-      private float xOriginal_ ;
+      public static final int X_ORIGINAL_FIELD_NUMBER = 101;
+      private float xOriginal_;
+
       /**
        * <code>optional float x_original = 101;</code>
        *
@@ -8515,8 +7287,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasXOriginal() {
-        return ((bitField0_ & 0x00020000) == 0x00020000);
+         return ((bitField0_ & 0x00020000) == 0x00020000);
       }
+
       /**
        * <code>optional float x_original = 101;</code>
        *
@@ -8525,103 +7298,49 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public float getXOriginal() {
-        return xOriginal_;
-      }
-      /**
-       * <code>optional float x_original = 101;</code>
-       *
-       * <pre>
-       * Original xyz coordinates from fitting before correction
-       * </pre>
-       */
-      public Builder setXOriginal(float value) {
-        bitField0_ |= 0x00020000;
-        xOriginal_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float x_original = 101;</code>
-       *
-       * <pre>
-       * Original xyz coordinates from fitting before correction
-       * </pre>
-       */
-      public Builder clearXOriginal() {
-        bitField0_ = (bitField0_ & ~0x00020000);
-        xOriginal_ = 0F;
-        onChanged();
-        return this;
+         return xOriginal_;
       }
 
       // optional float y_original = 102;
-      private float yOriginal_ ;
+      public static final int Y_ORIGINAL_FIELD_NUMBER = 102;
+      private float yOriginal_;
+
       /**
        * <code>optional float y_original = 102;</code>
        */
       public boolean hasYOriginal() {
-        return ((bitField0_ & 0x00040000) == 0x00040000);
+         return ((bitField0_ & 0x00040000) == 0x00040000);
       }
+
       /**
        * <code>optional float y_original = 102;</code>
        */
       public float getYOriginal() {
-        return yOriginal_;
-      }
-      /**
-       * <code>optional float y_original = 102;</code>
-       */
-      public Builder setYOriginal(float value) {
-        bitField0_ |= 0x00040000;
-        yOriginal_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float y_original = 102;</code>
-       */
-      public Builder clearYOriginal() {
-        bitField0_ = (bitField0_ & ~0x00040000);
-        yOriginal_ = 0F;
-        onChanged();
-        return this;
+         return yOriginal_;
       }
 
       // optional float z_original = 103;
-      private float zOriginal_ ;
+      public static final int Z_ORIGINAL_FIELD_NUMBER = 103;
+      private float zOriginal_;
+
       /**
        * <code>optional float z_original = 103;</code>
        */
       public boolean hasZOriginal() {
-        return ((bitField0_ & 0x00080000) == 0x00080000);
+         return ((bitField0_ & 0x00080000) == 0x00080000);
       }
+
       /**
        * <code>optional float z_original = 103;</code>
        */
       public float getZOriginal() {
-        return zOriginal_;
-      }
-      /**
-       * <code>optional float z_original = 103;</code>
-       */
-      public Builder setZOriginal(float value) {
-        bitField0_ |= 0x00080000;
-        zOriginal_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float z_original = 103;</code>
-       */
-      public Builder clearZOriginal() {
-        bitField0_ = (bitField0_ & ~0x00080000);
-        zOriginal_ = 0F;
-        onChanged();
-        return this;
+         return zOriginal_;
       }
 
       // optional float x_precision = 104;
-      private float xPrecision_ ;
+      public static final int X_PRECISION_FIELD_NUMBER = 104;
+      private float xPrecision_;
+
       /**
        * <code>optional float x_precision = 104;</code>
        *
@@ -8630,8 +7349,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasXPrecision() {
-        return ((bitField0_ & 0x00100000) == 0x00100000);
+         return ((bitField0_ & 0x00100000) == 0x00100000);
       }
+
       /**
        * <code>optional float x_precision = 104;</code>
        *
@@ -8640,103 +7360,49 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public float getXPrecision() {
-        return xPrecision_;
-      }
-      /**
-       * <code>optional float x_precision = 104;</code>
-       *
-       * <pre>
-       * localization precision
-       * </pre>
-       */
-      public Builder setXPrecision(float value) {
-        bitField0_ |= 0x00100000;
-        xPrecision_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float x_precision = 104;</code>
-       *
-       * <pre>
-       * localization precision
-       * </pre>
-       */
-      public Builder clearXPrecision() {
-        bitField0_ = (bitField0_ & ~0x00100000);
-        xPrecision_ = 0F;
-        onChanged();
-        return this;
+         return xPrecision_;
       }
 
       // optional float y_precision = 105;
-      private float yPrecision_ ;
+      public static final int Y_PRECISION_FIELD_NUMBER = 105;
+      private float yPrecision_;
+
       /**
        * <code>optional float y_precision = 105;</code>
        */
       public boolean hasYPrecision() {
-        return ((bitField0_ & 0x00200000) == 0x00200000);
+         return ((bitField0_ & 0x00200000) == 0x00200000);
       }
+
       /**
        * <code>optional float y_precision = 105;</code>
        */
       public float getYPrecision() {
-        return yPrecision_;
-      }
-      /**
-       * <code>optional float y_precision = 105;</code>
-       */
-      public Builder setYPrecision(float value) {
-        bitField0_ |= 0x00200000;
-        yPrecision_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float y_precision = 105;</code>
-       */
-      public Builder clearYPrecision() {
-        bitField0_ = (bitField0_ & ~0x00200000);
-        yPrecision_ = 0F;
-        onChanged();
-        return this;
+         return yPrecision_;
       }
 
       // optional float z_precision = 106;
-      private float zPrecision_ ;
+      public static final int Z_PRECISION_FIELD_NUMBER = 106;
+      private float zPrecision_;
+
       /**
        * <code>optional float z_precision = 106;</code>
        */
       public boolean hasZPrecision() {
-        return ((bitField0_ & 0x00400000) == 0x00400000);
+         return ((bitField0_ & 0x00400000) == 0x00400000);
       }
+
       /**
        * <code>optional float z_precision = 106;</code>
        */
       public float getZPrecision() {
-        return zPrecision_;
-      }
-      /**
-       * <code>optional float z_precision = 106;</code>
-       */
-      public Builder setZPrecision(float value) {
-        bitField0_ |= 0x00400000;
-        zPrecision_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional float z_precision = 106;</code>
-       */
-      public Builder clearZPrecision() {
-        bitField0_ = (bitField0_ & ~0x00400000);
-        zPrecision_ = 0F;
-        onChanged();
-        return this;
+         return zPrecision_;
       }
 
       // optional int32 x_position = 107;
-      private int xPosition_ ;
+      public static final int X_POSITION_FIELD_NUMBER = 107;
+      private int xPosition_;
+
       /**
        * <code>optional int32 x_position = 107;</code>
        *
@@ -8745,8 +7411,9 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public boolean hasXPosition() {
-        return ((bitField0_ & 0x00800000) == 0x00800000);
+         return ((bitField0_ & 0x00800000) == 0x00800000);
       }
+
       /**
        * <code>optional int32 x_position = 107;</code>
        *
@@ -8755,182 +7422,2281 @@ public final class TaggedSpotsProtos {
        * </pre>
        */
       public int getXPosition() {
-        return xPosition_;
-      }
-      /**
-       * <code>optional int32 x_position = 107;</code>
-       *
-       * <pre>
-       * position in the original image (in pixels) used for fitting
-       * </pre>
-       */
-      public Builder setXPosition(int value) {
-        bitField0_ |= 0x00800000;
-        xPosition_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 x_position = 107;</code>
-       *
-       * <pre>
-       * position in the original image (in pixels) used for fitting
-       * </pre>
-       */
-      public Builder clearXPosition() {
-        bitField0_ = (bitField0_ & ~0x00800000);
-        xPosition_ = 0;
-        onChanged();
-        return this;
+         return xPosition_;
       }
 
       // optional int32 y_position = 108;
-      private int yPosition_ ;
+      public static final int Y_POSITION_FIELD_NUMBER = 108;
+      private int yPosition_;
+
       /**
        * <code>optional int32 y_position = 108;</code>
        */
       public boolean hasYPosition() {
-        return ((bitField0_ & 0x01000000) == 0x01000000);
+         return ((bitField0_ & 0x01000000) == 0x01000000);
       }
+
       /**
        * <code>optional int32 y_position = 108;</code>
        */
       public int getYPosition() {
-        return yPosition_;
+         return yPosition_;
       }
+
+      private void initFields() {
+         molecule_ = 0;
+         channel_ = 0;
+         frame_ = 0;
+         slice_ = 0;
+         pos_ = 0;
+         fluorophoreType_ = 0;
+         cluster_ = 0;
+         locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+         x_ = 0F;
+         y_ = 0F;
+         z_ = 0F;
+         intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+         intensity_ = 0F;
+         background_ = 0F;
+         width_ = 0F;
+         a_ = 0F;
+         theta_ = 0F;
+         xOriginal_ = 0F;
+         yOriginal_ = 0F;
+         zOriginal_ = 0F;
+         xPrecision_ = 0F;
+         yPrecision_ = 0F;
+         zPrecision_ = 0F;
+         xPosition_ = 0;
+         yPosition_ = 0;
+      }
+
+      private byte memoizedIsInitialized = -1;
+
+      public final boolean isInitialized() {
+         byte isInitialized = memoizedIsInitialized;
+         if (isInitialized != -1) {
+            return isInitialized == 1;
+         }
+
+         if (!hasMolecule()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         if (!hasChannel()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         if (!hasFrame()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         if (!hasX()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         if (!hasY()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         if (!hasIntensity()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         if (!extensionsAreInitialized()) {
+            memoizedIsInitialized = 0;
+            return false;
+         }
+         memoizedIsInitialized = 1;
+         return true;
+      }
+
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+            throws java.io.IOException {
+         getSerializedSize();
+         com.google.protobuf.GeneratedMessage
+               .ExtendableMessage<edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot>.ExtensionWriter extensionWriter =
+               newExtensionWriter();
+         if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            output.writeInt32(1, molecule_);
+         }
+         if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            output.writeInt32(2, channel_);
+         }
+         if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            output.writeInt32(3, frame_);
+         }
+         if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            output.writeInt32(4, slice_);
+         }
+         if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            output.writeInt32(5, pos_);
+         }
+         if (((bitField0_ & 0x00000100) == 0x00000100)) {
+            output.writeFloat(7, x_);
+         }
+         if (((bitField0_ & 0x00000200) == 0x00000200)) {
+            output.writeFloat(8, y_);
+         }
+         if (((bitField0_ & 0x00000400) == 0x00000400)) {
+            output.writeFloat(9, z_);
+         }
+         if (((bitField0_ & 0x00001000) == 0x00001000)) {
+            output.writeFloat(10, intensity_);
+         }
+         if (((bitField0_ & 0x00002000) == 0x00002000)) {
+            output.writeFloat(11, background_);
+         }
+         if (((bitField0_ & 0x00004000) == 0x00004000)) {
+            output.writeFloat(12, width_);
+         }
+         if (((bitField0_ & 0x00008000) == 0x00008000)) {
+            output.writeFloat(13, a_);
+         }
+         if (((bitField0_ & 0x00010000) == 0x00010000)) {
+            output.writeFloat(14, theta_);
+         }
+         if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            output.writeEnum(17, locationUnits_.getNumber());
+         }
+         if (((bitField0_ & 0x00000800) == 0x00000800)) {
+            output.writeEnum(18, intensityUnits_.getNumber());
+         }
+         if (((bitField0_ & 0x00000020) == 0x00000020)) {
+            output.writeInt32(19, fluorophoreType_);
+         }
+         if (((bitField0_ & 0x00000040) == 0x00000040)) {
+            output.writeInt32(20, cluster_);
+         }
+         if (((bitField0_ & 0x00020000) == 0x00020000)) {
+            output.writeFloat(101, xOriginal_);
+         }
+         if (((bitField0_ & 0x00040000) == 0x00040000)) {
+            output.writeFloat(102, yOriginal_);
+         }
+         if (((bitField0_ & 0x00080000) == 0x00080000)) {
+            output.writeFloat(103, zOriginal_);
+         }
+         if (((bitField0_ & 0x00100000) == 0x00100000)) {
+            output.writeFloat(104, xPrecision_);
+         }
+         if (((bitField0_ & 0x00200000) == 0x00200000)) {
+            output.writeFloat(105, yPrecision_);
+         }
+         if (((bitField0_ & 0x00400000) == 0x00400000)) {
+            output.writeFloat(106, zPrecision_);
+         }
+         if (((bitField0_ & 0x00800000) == 0x00800000)) {
+            output.writeInt32(107, xPosition_);
+         }
+         if (((bitField0_ & 0x01000000) == 0x01000000)) {
+            output.writeInt32(108, yPosition_);
+         }
+         extensionWriter.writeUntil(2048, output);
+         getUnknownFields().writeTo(output);
+      }
+
+      private int memoizedSerializedSize = -1;
+
+      public int getSerializedSize() {
+         int size = memoizedSerializedSize;
+         if (size != -1) {
+            return size;
+         }
+
+         size = 0;
+         if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(1, molecule_);
+         }
+         if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(2, channel_);
+         }
+         if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(3, frame_);
+         }
+         if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(4, slice_);
+         }
+         if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(5, pos_);
+         }
+         if (((bitField0_ & 0x00000100) == 0x00000100)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(7, x_);
+         }
+         if (((bitField0_ & 0x00000200) == 0x00000200)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(8, y_);
+         }
+         if (((bitField0_ & 0x00000400) == 0x00000400)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(9, z_);
+         }
+         if (((bitField0_ & 0x00001000) == 0x00001000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(10, intensity_);
+         }
+         if (((bitField0_ & 0x00002000) == 0x00002000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(11, background_);
+         }
+         if (((bitField0_ & 0x00004000) == 0x00004000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(12, width_);
+         }
+         if (((bitField0_ & 0x00008000) == 0x00008000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(13, a_);
+         }
+         if (((bitField0_ & 0x00010000) == 0x00010000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(14, theta_);
+         }
+         if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeEnumSize(17, locationUnits_.getNumber());
+         }
+         if (((bitField0_ & 0x00000800) == 0x00000800)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeEnumSize(18, intensityUnits_.getNumber());
+         }
+         if (((bitField0_ & 0x00000020) == 0x00000020)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(19, fluorophoreType_);
+         }
+         if (((bitField0_ & 0x00000040) == 0x00000040)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(20, cluster_);
+         }
+         if (((bitField0_ & 0x00020000) == 0x00020000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(101, xOriginal_);
+         }
+         if (((bitField0_ & 0x00040000) == 0x00040000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(102, yOriginal_);
+         }
+         if (((bitField0_ & 0x00080000) == 0x00080000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(103, zOriginal_);
+         }
+         if (((bitField0_ & 0x00100000) == 0x00100000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(104, xPrecision_);
+         }
+         if (((bitField0_ & 0x00200000) == 0x00200000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(105, yPrecision_);
+         }
+         if (((bitField0_ & 0x00400000) == 0x00400000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeFloatSize(106, zPrecision_);
+         }
+         if (((bitField0_ & 0x00800000) == 0x00800000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(107, xPosition_);
+         }
+         if (((bitField0_ & 0x01000000) == 0x01000000)) {
+            size += com.google.protobuf.CodedOutputStream
+                  .computeInt32Size(108, yPosition_);
+         }
+         size += extensionsSerializedSize();
+         size += getUnknownFields().getSerializedSize();
+         memoizedSerializedSize = size;
+         return size;
+      }
+
+      private static final long serialVersionUID = 0L;
+
+      @java.lang.Override
+      protected java.lang.Object writeReplace()
+            throws java.io.ObjectStreamException {
+         return super.writeReplace();
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+         return PARSER.parseFrom(data, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseDelimitedFrom(
+            java.io.InputStream input)
+            throws java.io.IOException {
+         return PARSER.parseDelimitedFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input);
+      }
+
+      public static edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+         return PARSER.parseFrom(input, extensionRegistry);
+      }
+
+      public static Builder newBuilder() {
+         return Builder.create();
+      }
+
+      public Builder newBuilderForType() {
+         return newBuilder();
+      }
+
+      public static Builder newBuilder(edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot prototype) {
+         return newBuilder().mergeFrom(prototype);
+      }
+
+      public Builder toBuilder() {
+         return newBuilder(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+         Builder builder = new Builder(parent);
+         return builder;
+      }
+
       /**
-       * <code>optional int32 y_position = 108;</code>
+       * Protobuf type {@code TSF.Spot}
        */
-      public Builder setYPosition(int value) {
-        bitField0_ |= 0x01000000;
-        yPosition_ = value;
-        onChanged();
-        return this;
+      public static final class Builder extends
+            com.google.protobuf.GeneratedMessage.ExtendableBuilder<
+                  edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot, Builder> implements
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.SpotOrBuilder {
+
+         public static final com.google.protobuf.Descriptors.Descriptor
+         getDescriptor() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_descriptor;
+         }
+
+         protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+         internalGetFieldAccessorTable() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_fieldAccessorTable
+                  .ensureFieldAccessorsInitialized(
+                        edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.class,
+                        edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.Builder.class);
+         }
+
+         // Construct using edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.newBuilder()
+         private Builder() {
+            maybeForceBuilderInitialization();
+         }
+
+         private Builder(
+               com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+            super(parent);
+            maybeForceBuilderInitialization();
+         }
+
+         private void maybeForceBuilderInitialization() {
+            if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+            }
+         }
+
+         private static Builder create() {
+            return new Builder();
+         }
+
+         public Builder clear() {
+            super.clear();
+            molecule_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000001);
+            channel_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000002);
+            frame_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000004);
+            slice_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000008);
+            pos_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000010);
+            fluorophoreType_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000020);
+            cluster_ = 0;
+            bitField0_ = (bitField0_ & ~0x00000040);
+            locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+            bitField0_ = (bitField0_ & ~0x00000080);
+            x_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00000100);
+            y_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00000200);
+            z_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00000400);
+            intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+            bitField0_ = (bitField0_ & ~0x00000800);
+            intensity_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00001000);
+            background_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00002000);
+            width_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00004000);
+            a_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00008000);
+            theta_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00010000);
+            xOriginal_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00020000);
+            yOriginal_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00040000);
+            zOriginal_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00080000);
+            xPrecision_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00100000);
+            yPrecision_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00200000);
+            zPrecision_ = 0F;
+            bitField0_ = (bitField0_ & ~0x00400000);
+            xPosition_ = 0;
+            bitField0_ = (bitField0_ & ~0x00800000);
+            yPosition_ = 0;
+            bitField0_ = (bitField0_ & ~0x01000000);
+            return this;
+         }
+
+         public Builder clone() {
+            return create().mergeFrom(buildPartial());
+         }
+
+         public com.google.protobuf.Descriptors.Descriptor
+         getDescriptorForType() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.internal_static_TSF_Spot_descriptor;
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot getDefaultInstanceForType() {
+            return edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.getDefaultInstance();
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot build() {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot result = buildPartial();
+            if (!result.isInitialized()) {
+               throw newUninitializedMessageException(result);
+            }
+            return result;
+         }
+
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot buildPartial() {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot result = new edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot(
+                  this);
+            int from_bitField0_ = bitField0_;
+            int to_bitField0_ = 0;
+            if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+               to_bitField0_ |= 0x00000001;
+            }
+            result.molecule_ = molecule_;
+            if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+               to_bitField0_ |= 0x00000002;
+            }
+            result.channel_ = channel_;
+            if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+               to_bitField0_ |= 0x00000004;
+            }
+            result.frame_ = frame_;
+            if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+               to_bitField0_ |= 0x00000008;
+            }
+            result.slice_ = slice_;
+            if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+               to_bitField0_ |= 0x00000010;
+            }
+            result.pos_ = pos_;
+            if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+               to_bitField0_ |= 0x00000020;
+            }
+            result.fluorophoreType_ = fluorophoreType_;
+            if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+               to_bitField0_ |= 0x00000040;
+            }
+            result.cluster_ = cluster_;
+            if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+               to_bitField0_ |= 0x00000080;
+            }
+            result.locationUnits_ = locationUnits_;
+            if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+               to_bitField0_ |= 0x00000100;
+            }
+            result.x_ = x_;
+            if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
+               to_bitField0_ |= 0x00000200;
+            }
+            result.y_ = y_;
+            if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
+               to_bitField0_ |= 0x00000400;
+            }
+            result.z_ = z_;
+            if (((from_bitField0_ & 0x00000800) == 0x00000800)) {
+               to_bitField0_ |= 0x00000800;
+            }
+            result.intensityUnits_ = intensityUnits_;
+            if (((from_bitField0_ & 0x00001000) == 0x00001000)) {
+               to_bitField0_ |= 0x00001000;
+            }
+            result.intensity_ = intensity_;
+            if (((from_bitField0_ & 0x00002000) == 0x00002000)) {
+               to_bitField0_ |= 0x00002000;
+            }
+            result.background_ = background_;
+            if (((from_bitField0_ & 0x00004000) == 0x00004000)) {
+               to_bitField0_ |= 0x00004000;
+            }
+            result.width_ = width_;
+            if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
+               to_bitField0_ |= 0x00008000;
+            }
+            result.a_ = a_;
+            if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
+               to_bitField0_ |= 0x00010000;
+            }
+            result.theta_ = theta_;
+            if (((from_bitField0_ & 0x00020000) == 0x00020000)) {
+               to_bitField0_ |= 0x00020000;
+            }
+            result.xOriginal_ = xOriginal_;
+            if (((from_bitField0_ & 0x00040000) == 0x00040000)) {
+               to_bitField0_ |= 0x00040000;
+            }
+            result.yOriginal_ = yOriginal_;
+            if (((from_bitField0_ & 0x00080000) == 0x00080000)) {
+               to_bitField0_ |= 0x00080000;
+            }
+            result.zOriginal_ = zOriginal_;
+            if (((from_bitField0_ & 0x00100000) == 0x00100000)) {
+               to_bitField0_ |= 0x00100000;
+            }
+            result.xPrecision_ = xPrecision_;
+            if (((from_bitField0_ & 0x00200000) == 0x00200000)) {
+               to_bitField0_ |= 0x00200000;
+            }
+            result.yPrecision_ = yPrecision_;
+            if (((from_bitField0_ & 0x00400000) == 0x00400000)) {
+               to_bitField0_ |= 0x00400000;
+            }
+            result.zPrecision_ = zPrecision_;
+            if (((from_bitField0_ & 0x00800000) == 0x00800000)) {
+               to_bitField0_ |= 0x00800000;
+            }
+            result.xPosition_ = xPosition_;
+            if (((from_bitField0_ & 0x01000000) == 0x01000000)) {
+               to_bitField0_ |= 0x01000000;
+            }
+            result.yPosition_ = yPosition_;
+            result.bitField0_ = to_bitField0_;
+            onBuilt();
+            return result;
+         }
+
+         public Builder mergeFrom(com.google.protobuf.Message other) {
+            if (other instanceof edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot) {
+               return mergeFrom((edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot) other);
+            } else {
+               super.mergeFrom(other);
+               return this;
+            }
+         }
+
+         public Builder mergeFrom(edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot other) {
+            if (other == edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot.getDefaultInstance()) {
+               return this;
+            }
+            if (other.hasMolecule()) {
+               setMolecule(other.getMolecule());
+            }
+            if (other.hasChannel()) {
+               setChannel(other.getChannel());
+            }
+            if (other.hasFrame()) {
+               setFrame(other.getFrame());
+            }
+            if (other.hasSlice()) {
+               setSlice(other.getSlice());
+            }
+            if (other.hasPos()) {
+               setPos(other.getPos());
+            }
+            if (other.hasFluorophoreType()) {
+               setFluorophoreType(other.getFluorophoreType());
+            }
+            if (other.hasCluster()) {
+               setCluster(other.getCluster());
+            }
+            if (other.hasLocationUnits()) {
+               setLocationUnits(other.getLocationUnits());
+            }
+            if (other.hasX()) {
+               setX(other.getX());
+            }
+            if (other.hasY()) {
+               setY(other.getY());
+            }
+            if (other.hasZ()) {
+               setZ(other.getZ());
+            }
+            if (other.hasIntensityUnits()) {
+               setIntensityUnits(other.getIntensityUnits());
+            }
+            if (other.hasIntensity()) {
+               setIntensity(other.getIntensity());
+            }
+            if (other.hasBackground()) {
+               setBackground(other.getBackground());
+            }
+            if (other.hasWidth()) {
+               setWidth(other.getWidth());
+            }
+            if (other.hasA()) {
+               setA(other.getA());
+            }
+            if (other.hasTheta()) {
+               setTheta(other.getTheta());
+            }
+            if (other.hasXOriginal()) {
+               setXOriginal(other.getXOriginal());
+            }
+            if (other.hasYOriginal()) {
+               setYOriginal(other.getYOriginal());
+            }
+            if (other.hasZOriginal()) {
+               setZOriginal(other.getZOriginal());
+            }
+            if (other.hasXPrecision()) {
+               setXPrecision(other.getXPrecision());
+            }
+            if (other.hasYPrecision()) {
+               setYPrecision(other.getYPrecision());
+            }
+            if (other.hasZPrecision()) {
+               setZPrecision(other.getZPrecision());
+            }
+            if (other.hasXPosition()) {
+               setXPosition(other.getXPosition());
+            }
+            if (other.hasYPosition()) {
+               setYPosition(other.getYPosition());
+            }
+            this.mergeExtensionFields(other);
+            this.mergeUnknownFields(other.getUnknownFields());
+            return this;
+         }
+
+         public final boolean isInitialized() {
+            if (!hasMolecule()) {
+
+               return false;
+            }
+            if (!hasChannel()) {
+
+               return false;
+            }
+            if (!hasFrame()) {
+
+               return false;
+            }
+            if (!hasX()) {
+
+               return false;
+            }
+            if (!hasY()) {
+
+               return false;
+            }
+            if (!hasIntensity()) {
+
+               return false;
+            }
+            if (!extensionsAreInitialized()) {
+
+               return false;
+            }
+            return true;
+         }
+
+         public Builder mergeFrom(
+               com.google.protobuf.CodedInputStream input,
+               com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+               throws java.io.IOException {
+            edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot parsedMessage = null;
+            try {
+               parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+               parsedMessage = (edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot) e
+                     .getUnfinishedMessage();
+               throw e;
+            } finally {
+               if (parsedMessage != null) {
+                  mergeFrom(parsedMessage);
+               }
+            }
+            return this;
+         }
+
+         private int bitField0_;
+
+         // required int32 molecule = 1;
+         private int molecule_;
+
+         /**
+          * <code>required int32 molecule = 1;</code>
+          *
+          * <pre>
+          * Identifier for a physical molecule. Multiple localizations will be considered
+          * to be generated by the same molecule if they share the same molecule ID.
+          * Typically, a molecule generates up to one localization per frame.
+          * If you don't implement tracking, assign a different molecule ID to
+          * each localization.
+          * The difference between molecules and clusters is that a cluster is a group
+          * of physical molecules, e.g. a raft on a membrane. When you are tracking to
+          * link your localizations, you're looking at a molecule, and when you're
+          * thresholding on the nearest neighbor distance, it's typically a cluster.
+          * If you are using both cluster and molecule, localizations with the same
+          * molecule ID should have the same cluster ID.
+          * Molecule IDs must be globally unique across clusters.
+          * </pre>
+          */
+         public boolean hasMolecule() {
+            return ((bitField0_ & 0x00000001) == 0x00000001);
+         }
+
+         /**
+          * <code>required int32 molecule = 1;</code>
+          *
+          * <pre>
+          * Identifier for a physical molecule. Multiple localizations will be considered
+          * to be generated by the same molecule if they share the same molecule ID.
+          * Typically, a molecule generates up to one localization per frame.
+          * If you don't implement tracking, assign a different molecule ID to
+          * each localization.
+          * The difference between molecules and clusters is that a cluster is a group
+          * of physical molecules, e.g. a raft on a membrane. When you are tracking to
+          * link your localizations, you're looking at a molecule, and when you're
+          * thresholding on the nearest neighbor distance, it's typically a cluster.
+          * If you are using both cluster and molecule, localizations with the same
+          * molecule ID should have the same cluster ID.
+          * Molecule IDs must be globally unique across clusters.
+          * </pre>
+          */
+         public int getMolecule() {
+            return molecule_;
+         }
+
+         /**
+          * <code>required int32 molecule = 1;</code>
+          *
+          * <pre>
+          * Identifier for a physical molecule. Multiple localizations will be considered
+          * to be generated by the same molecule if they share the same molecule ID.
+          * Typically, a molecule generates up to one localization per frame.
+          * If you don't implement tracking, assign a different molecule ID to
+          * each localization.
+          * The difference between molecules and clusters is that a cluster is a group
+          * of physical molecules, e.g. a raft on a membrane. When you are tracking to
+          * link your localizations, you're looking at a molecule, and when you're
+          * thresholding on the nearest neighbor distance, it's typically a cluster.
+          * If you are using both cluster and molecule, localizations with the same
+          * molecule ID should have the same cluster ID.
+          * Molecule IDs must be globally unique across clusters.
+          * </pre>
+          */
+         public Builder setMolecule(int value) {
+            bitField0_ |= 0x00000001;
+            molecule_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required int32 molecule = 1;</code>
+          *
+          * <pre>
+          * Identifier for a physical molecule. Multiple localizations will be considered
+          * to be generated by the same molecule if they share the same molecule ID.
+          * Typically, a molecule generates up to one localization per frame.
+          * If you don't implement tracking, assign a different molecule ID to
+          * each localization.
+          * The difference between molecules and clusters is that a cluster is a group
+          * of physical molecules, e.g. a raft on a membrane. When you are tracking to
+          * link your localizations, you're looking at a molecule, and when you're
+          * thresholding on the nearest neighbor distance, it's typically a cluster.
+          * If you are using both cluster and molecule, localizations with the same
+          * molecule ID should have the same cluster ID.
+          * Molecule IDs must be globally unique across clusters.
+          * </pre>
+          */
+         public Builder clearMolecule() {
+            bitField0_ = (bitField0_ & ~0x00000001);
+            molecule_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // required int32 channel = 2;
+         private int channel_;
+
+         /**
+          * <code>required int32 channel = 2;</code>
+          *
+          * <pre>
+          * Identifier for an input channel. Input channels represent different optical
+          * paths, often with different spectral characteristics. For example, in a
+          * biplane setup, you'd have two channels, one for each camera. Channels are
+          * 1-based.
+          * Please note that channels and fluorophore type are subtly different: channel
+          * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
+          * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
+          * biplane single-color 3D, you'd set the channel field if you emit separate
+          * localizations for both channels, but never the type field. For biplane
+          * two-color experiments, you'd set both channel and type if you fit in both
+          * channels independently, and only types if your fitter combines information
+          * for both channels. For spectrally separated measurements, channel and type
+          * are usually identical, but for spectral unmixing, they may differ.
+          * </pre>
+          */
+         public boolean hasChannel() {
+            return ((bitField0_ & 0x00000002) == 0x00000002);
+         }
+
+         /**
+          * <code>required int32 channel = 2;</code>
+          *
+          * <pre>
+          * Identifier for an input channel. Input channels represent different optical
+          * paths, often with different spectral characteristics. For example, in a
+          * biplane setup, you'd have two channels, one for each camera. Channels are
+          * 1-based.
+          * Please note that channels and fluorophore type are subtly different: channel
+          * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
+          * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
+          * biplane single-color 3D, you'd set the channel field if you emit separate
+          * localizations for both channels, but never the type field. For biplane
+          * two-color experiments, you'd set both channel and type if you fit in both
+          * channels independently, and only types if your fitter combines information
+          * for both channels. For spectrally separated measurements, channel and type
+          * are usually identical, but for spectral unmixing, they may differ.
+          * </pre>
+          */
+         public int getChannel() {
+            return channel_;
+         }
+
+         /**
+          * <code>required int32 channel = 2;</code>
+          *
+          * <pre>
+          * Identifier for an input channel. Input channels represent different optical
+          * paths, often with different spectral characteristics. For example, in a
+          * biplane setup, you'd have two channels, one for each camera. Channels are
+          * 1-based.
+          * Please note that channels and fluorophore type are subtly different: channel
+          * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
+          * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
+          * biplane single-color 3D, you'd set the channel field if you emit separate
+          * localizations for both channels, but never the type field. For biplane
+          * two-color experiments, you'd set both channel and type if you fit in both
+          * channels independently, and only types if your fitter combines information
+          * for both channels. For spectrally separated measurements, channel and type
+          * are usually identical, but for spectral unmixing, they may differ.
+          * </pre>
+          */
+         public Builder setChannel(int value) {
+            bitField0_ |= 0x00000002;
+            channel_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required int32 channel = 2;</code>
+          *
+          * <pre>
+          * Identifier for an input channel. Input channels represent different optical
+          * paths, often with different spectral characteristics. For example, in a
+          * biplane setup, you'd have two channels, one for each camera. Channels are
+          * 1-based.
+          * Please note that channels and fluorophore type are subtly different: channel
+          * gives the *physical* excitation path (camera 1 or camera 2), while fluorophore
+          * type gives the *fluorophore's* type (Cy5, Cy3, Tetraspeck). For example, for
+          * biplane single-color 3D, you'd set the channel field if you emit separate
+          * localizations for both channels, but never the type field. For biplane
+          * two-color experiments, you'd set both channel and type if you fit in both
+          * channels independently, and only types if your fitter combines information
+          * for both channels. For spectrally separated measurements, channel and type
+          * are usually identical, but for spectral unmixing, they may differ.
+          * </pre>
+          */
+         public Builder clearChannel() {
+            bitField0_ = (bitField0_ & ~0x00000002);
+            channel_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // required int32 frame = 3;
+         private int frame_;
+
+         /**
+          * <code>required int32 frame = 3;</code>
+          *
+          * <pre>
+          * Frame number (image number). The frames of each channel are numbered
+          * sequentially, starting from 1.
+          * </pre>
+          */
+         public boolean hasFrame() {
+            return ((bitField0_ & 0x00000004) == 0x00000004);
+         }
+
+         /**
+          * <code>required int32 frame = 3;</code>
+          *
+          * <pre>
+          * Frame number (image number). The frames of each channel are numbered
+          * sequentially, starting from 1.
+          * </pre>
+          */
+         public int getFrame() {
+            return frame_;
+         }
+
+         /**
+          * <code>required int32 frame = 3;</code>
+          *
+          * <pre>
+          * Frame number (image number). The frames of each channel are numbered
+          * sequentially, starting from 1.
+          * </pre>
+          */
+         public Builder setFrame(int value) {
+            bitField0_ |= 0x00000004;
+            frame_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required int32 frame = 3;</code>
+          *
+          * <pre>
+          * Frame number (image number). The frames of each channel are numbered
+          * sequentially, starting from 1.
+          * </pre>
+          */
+         public Builder clearFrame() {
+            bitField0_ = (bitField0_ & ~0x00000004);
+            frame_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 slice = 4;
+         private int slice_;
+
+         /**
+          * <code>optional int32 slice = 4;</code>
+          *
+          * <pre>
+          * Z slice. If you are taking a series of images at different axial offsets,
+          * you can tag the localizations from each respective slice with this 1-based
+          * field. Please apply the offset between slices before saving to a TSF file:
+          * z=100 with slice=1 is considered same position as z=100 with slice=2.
+          * </pre>
+          */
+         public boolean hasSlice() {
+            return ((bitField0_ & 0x00000008) == 0x00000008);
+         }
+
+         /**
+          * <code>optional int32 slice = 4;</code>
+          *
+          * <pre>
+          * Z slice. If you are taking a series of images at different axial offsets,
+          * you can tag the localizations from each respective slice with this 1-based
+          * field. Please apply the offset between slices before saving to a TSF file:
+          * z=100 with slice=1 is considered same position as z=100 with slice=2.
+          * </pre>
+          */
+         public int getSlice() {
+            return slice_;
+         }
+
+         /**
+          * <code>optional int32 slice = 4;</code>
+          *
+          * <pre>
+          * Z slice. If you are taking a series of images at different axial offsets,
+          * you can tag the localizations from each respective slice with this 1-based
+          * field. Please apply the offset between slices before saving to a TSF file:
+          * z=100 with slice=1 is considered same position as z=100 with slice=2.
+          * </pre>
+          */
+         public Builder setSlice(int value) {
+            bitField0_ |= 0x00000008;
+            slice_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 slice = 4;</code>
+          *
+          * <pre>
+          * Z slice. If you are taking a series of images at different axial offsets,
+          * you can tag the localizations from each respective slice with this 1-based
+          * field. Please apply the offset between slices before saving to a TSF file:
+          * z=100 with slice=1 is considered same position as z=100 with slice=2.
+          * </pre>
+          */
+         public Builder clearSlice() {
+            bitField0_ = (bitField0_ & ~0x00000008);
+            slice_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 pos = 5;
+         private int pos_;
+
+         /**
+          * <code>optional int32 pos = 5;</code>
+          *
+          * <pre>
+          * Lateral position. If you are taking images at multiple x/y stage positions,
+          * you can tag the localizations from each position with this 1-based field.
+          * Positions are 1-based. Please apply the offset between positions before
+          * saving the TSF file:
+          * x=100 with pos=1 is considered same position as x=100 with pos=2.
+          * </pre>
+          */
+         public boolean hasPos() {
+            return ((bitField0_ & 0x00000010) == 0x00000010);
+         }
+
+         /**
+          * <code>optional int32 pos = 5;</code>
+          *
+          * <pre>
+          * Lateral position. If you are taking images at multiple x/y stage positions,
+          * you can tag the localizations from each position with this 1-based field.
+          * Positions are 1-based. Please apply the offset between positions before
+          * saving the TSF file:
+          * x=100 with pos=1 is considered same position as x=100 with pos=2.
+          * </pre>
+          */
+         public int getPos() {
+            return pos_;
+         }
+
+         /**
+          * <code>optional int32 pos = 5;</code>
+          *
+          * <pre>
+          * Lateral position. If you are taking images at multiple x/y stage positions,
+          * you can tag the localizations from each position with this 1-based field.
+          * Positions are 1-based. Please apply the offset between positions before
+          * saving the TSF file:
+          * x=100 with pos=1 is considered same position as x=100 with pos=2.
+          * </pre>
+          */
+         public Builder setPos(int value) {
+            bitField0_ |= 0x00000010;
+            pos_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 pos = 5;</code>
+          *
+          * <pre>
+          * Lateral position. If you are taking images at multiple x/y stage positions,
+          * you can tag the localizations from each position with this 1-based field.
+          * Positions are 1-based. Please apply the offset between positions before
+          * saving the TSF file:
+          * x=100 with pos=1 is considered same position as x=100 with pos=2.
+          * </pre>
+          */
+         public Builder clearPos() {
+            bitField0_ = (bitField0_ & ~0x00000010);
+            pos_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 fluorophore_type = 19;
+         private int fluorophoreType_;
+
+         /**
+          * <code>optional int32 fluorophore_type = 19;</code>
+          *
+          * <pre>
+          * Fluorophore type. The number is 1-based. Please compare the note for
+          * channel for the distinction between type and channel.
+          * </pre>
+          */
+         public boolean hasFluorophoreType() {
+            return ((bitField0_ & 0x00000020) == 0x00000020);
+         }
+
+         /**
+          * <code>optional int32 fluorophore_type = 19;</code>
+          *
+          * <pre>
+          * Fluorophore type. The number is 1-based. Please compare the note for
+          * channel for the distinction between type and channel.
+          * </pre>
+          */
+         public int getFluorophoreType() {
+            return fluorophoreType_;
+         }
+
+         /**
+          * <code>optional int32 fluorophore_type = 19;</code>
+          *
+          * <pre>
+          * Fluorophore type. The number is 1-based. Please compare the note for
+          * channel for the distinction between type and channel.
+          * </pre>
+          */
+         public Builder setFluorophoreType(int value) {
+            bitField0_ |= 0x00000020;
+            fluorophoreType_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 fluorophore_type = 19;</code>
+          *
+          * <pre>
+          * Fluorophore type. The number is 1-based. Please compare the note for
+          * channel for the distinction between type and channel.
+          * </pre>
+          */
+         public Builder clearFluorophoreType() {
+            bitField0_ = (bitField0_ & ~0x00000020);
+            fluorophoreType_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 cluster = 20;
+         private int cluster_;
+
+         /**
+          * <code>optional int32 cluster = 20;</code>
+          *
+          * <pre>
+          * The identifier of the cluster that the localization belongs to, 1-based.
+          * A cluster is a logical group of multiple physical molecules. Typical
+          * examples are membrane rafts,
+          * </pre>
+          */
+         public boolean hasCluster() {
+            return ((bitField0_ & 0x00000040) == 0x00000040);
+         }
+
+         /**
+          * <code>optional int32 cluster = 20;</code>
+          *
+          * <pre>
+          * The identifier of the cluster that the localization belongs to, 1-based.
+          * A cluster is a logical group of multiple physical molecules. Typical
+          * examples are membrane rafts,
+          * </pre>
+          */
+         public int getCluster() {
+            return cluster_;
+         }
+
+         /**
+          * <code>optional int32 cluster = 20;</code>
+          *
+          * <pre>
+          * The identifier of the cluster that the localization belongs to, 1-based.
+          * A cluster is a logical group of multiple physical molecules. Typical
+          * examples are membrane rafts,
+          * </pre>
+          */
+         public Builder setCluster(int value) {
+            bitField0_ |= 0x00000040;
+            cluster_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 cluster = 20;</code>
+          *
+          * <pre>
+          * The identifier of the cluster that the localization belongs to, 1-based.
+          * A cluster is a logical group of multiple physical molecules. Typical
+          * examples are membrane rafts,
+          * </pre>
+          */
+         public Builder clearCluster() {
+            bitField0_ = (bitField0_ & ~0x00000040);
+            cluster_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional .TSF.LocationUnits location_units = 17;
+         private edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+
+         /**
+          * <code>optional .TSF.LocationUnits location_units = 17;</code>
+          *
+          * <pre>
+          * xyz coordinates of the spot in location_units
+          * after fitting and optional correction
+          * </pre>
+          */
+         public boolean hasLocationUnits() {
+            return ((bitField0_ & 0x00000080) == 0x00000080);
+         }
+
+         /**
+          * <code>optional .TSF.LocationUnits location_units = 17;</code>
+          *
+          * <pre>
+          * xyz coordinates of the spot in location_units
+          * after fitting and optional correction
+          * </pre>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits getLocationUnits() {
+            return locationUnits_;
+         }
+
+         /**
+          * <code>optional .TSF.LocationUnits location_units = 17;</code>
+          *
+          * <pre>
+          * xyz coordinates of the spot in location_units
+          * after fitting and optional correction
+          * </pre>
+          */
+         public Builder setLocationUnits(
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00000080;
+            locationUnits_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.LocationUnits location_units = 17;</code>
+          *
+          * <pre>
+          * xyz coordinates of the spot in location_units
+          * after fitting and optional correction
+          * </pre>
+          */
+         public Builder clearLocationUnits() {
+            bitField0_ = (bitField0_ & ~0x00000080);
+            locationUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.LocationUnits.NM;
+            onChanged();
+            return this;
+         }
+
+         // required float x = 7;
+         private float x_;
+
+         /**
+          * <code>required float x = 7;</code>
+          */
+         public boolean hasX() {
+            return ((bitField0_ & 0x00000100) == 0x00000100);
+         }
+
+         /**
+          * <code>required float x = 7;</code>
+          */
+         public float getX() {
+            return x_;
+         }
+
+         /**
+          * <code>required float x = 7;</code>
+          */
+         public Builder setX(float value) {
+            bitField0_ |= 0x00000100;
+            x_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required float x = 7;</code>
+          */
+         public Builder clearX() {
+            bitField0_ = (bitField0_ & ~0x00000100);
+            x_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // required float y = 8;
+         private float y_;
+
+         /**
+          * <code>required float y = 8;</code>
+          */
+         public boolean hasY() {
+            return ((bitField0_ & 0x00000200) == 0x00000200);
+         }
+
+         /**
+          * <code>required float y = 8;</code>
+          */
+         public float getY() {
+            return y_;
+         }
+
+         /**
+          * <code>required float y = 8;</code>
+          */
+         public Builder setY(float value) {
+            bitField0_ |= 0x00000200;
+            y_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required float y = 8;</code>
+          */
+         public Builder clearY() {
+            bitField0_ = (bitField0_ & ~0x00000200);
+            y_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float z = 9;
+         private float z_;
+
+         /**
+          * <code>optional float z = 9;</code>
+          */
+         public boolean hasZ() {
+            return ((bitField0_ & 0x00000400) == 0x00000400);
+         }
+
+         /**
+          * <code>optional float z = 9;</code>
+          */
+         public float getZ() {
+            return z_;
+         }
+
+         /**
+          * <code>optional float z = 9;</code>
+          */
+         public Builder setZ(float value) {
+            bitField0_ |= 0x00000400;
+            z_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float z = 9;</code>
+          */
+         public Builder clearZ() {
+            bitField0_ = (bitField0_ & ~0x00000400);
+            z_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional .TSF.IntensityUnits intensity_units = 18;
+         private edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+
+         /**
+          * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
+          *
+          * <pre>
+          * Use intensity_units only if different from SpotList
+          * integrated spot density. This can either be determined from a fit or
+          * using any other methods.  This number should be corrected for background
+          * </pre>
+          */
+         public boolean hasIntensityUnits() {
+            return ((bitField0_ & 0x00000800) == 0x00000800);
+         }
+
+         /**
+          * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
+          *
+          * <pre>
+          * Use intensity_units only if different from SpotList
+          * integrated spot density. This can either be determined from a fit or
+          * using any other methods.  This number should be corrected for background
+          * </pre>
+          */
+         public edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits getIntensityUnits() {
+            return intensityUnits_;
+         }
+
+         /**
+          * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
+          *
+          * <pre>
+          * Use intensity_units only if different from SpotList
+          * integrated spot density. This can either be determined from a fit or
+          * using any other methods.  This number should be corrected for background
+          * </pre>
+          */
+         public Builder setIntensityUnits(
+               edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits value) {
+            if (value == null) {
+               throw new NullPointerException();
+            }
+            bitField0_ |= 0x00000800;
+            intensityUnits_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional .TSF.IntensityUnits intensity_units = 18;</code>
+          *
+          * <pre>
+          * Use intensity_units only if different from SpotList
+          * integrated spot density. This can either be determined from a fit or
+          * using any other methods.  This number should be corrected for background
+          * </pre>
+          */
+         public Builder clearIntensityUnits() {
+            bitField0_ = (bitField0_ & ~0x00000800);
+            intensityUnits_ = edu.ucsf.valelab.tsf.TaggedSpotsProtos.IntensityUnits.COUNTS;
+            onChanged();
+            return this;
+         }
+
+         // required float intensity = 10;
+         private float intensity_;
+
+         /**
+          * <code>required float intensity = 10;</code>
+          *
+          * <pre>
+          * integrated spot density
+          * </pre>
+          */
+         public boolean hasIntensity() {
+            return ((bitField0_ & 0x00001000) == 0x00001000);
+         }
+
+         /**
+          * <code>required float intensity = 10;</code>
+          *
+          * <pre>
+          * integrated spot density
+          * </pre>
+          */
+         public float getIntensity() {
+            return intensity_;
+         }
+
+         /**
+          * <code>required float intensity = 10;</code>
+          *
+          * <pre>
+          * integrated spot density
+          * </pre>
+          */
+         public Builder setIntensity(float value) {
+            bitField0_ |= 0x00001000;
+            intensity_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>required float intensity = 10;</code>
+          *
+          * <pre>
+          * integrated spot density
+          * </pre>
+          */
+         public Builder clearIntensity() {
+            bitField0_ = (bitField0_ & ~0x00001000);
+            intensity_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float background = 11;
+         private float background_;
+
+         /**
+          * <code>optional float background = 11;</code>
+          *
+          * <pre>
+          * Background around the spot.
+          * This can be determined through a fit or other methods
+          * This number should not include the camera bias, i.e. it should be linearly
+          * proportional to the number of photons in the background
+          * </pre>
+          */
+         public boolean hasBackground() {
+            return ((bitField0_ & 0x00002000) == 0x00002000);
+         }
+
+         /**
+          * <code>optional float background = 11;</code>
+          *
+          * <pre>
+          * Background around the spot.
+          * This can be determined through a fit or other methods
+          * This number should not include the camera bias, i.e. it should be linearly
+          * proportional to the number of photons in the background
+          * </pre>
+          */
+         public float getBackground() {
+            return background_;
+         }
+
+         /**
+          * <code>optional float background = 11;</code>
+          *
+          * <pre>
+          * Background around the spot.
+          * This can be determined through a fit or other methods
+          * This number should not include the camera bias, i.e. it should be linearly
+          * proportional to the number of photons in the background
+          * </pre>
+          */
+         public Builder setBackground(float value) {
+            bitField0_ |= 0x00002000;
+            background_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float background = 11;</code>
+          *
+          * <pre>
+          * Background around the spot.
+          * This can be determined through a fit or other methods
+          * This number should not include the camera bias, i.e. it should be linearly
+          * proportional to the number of photons in the background
+          * </pre>
+          */
+         public Builder clearBackground() {
+            bitField0_ = (bitField0_ & ~0x00002000);
+            background_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float width = 12;
+         private float width_;
+
+         /**
+          * <code>optional float width = 12;</code>
+          *
+          * <pre>
+          * Peak width at half height in location units
+          * for asymmetric peaks, calculate the width as the square root of the
+          * product of the widths of the long and short axes
+          * </pre>
+          */
+         public boolean hasWidth() {
+            return ((bitField0_ & 0x00004000) == 0x00004000);
+         }
+
+         /**
+          * <code>optional float width = 12;</code>
+          *
+          * <pre>
+          * Peak width at half height in location units
+          * for asymmetric peaks, calculate the width as the square root of the
+          * product of the widths of the long and short axes
+          * </pre>
+          */
+         public float getWidth() {
+            return width_;
+         }
+
+         /**
+          * <code>optional float width = 12;</code>
+          *
+          * <pre>
+          * Peak width at half height in location units
+          * for asymmetric peaks, calculate the width as the square root of the
+          * product of the widths of the long and short axes
+          * </pre>
+          */
+         public Builder setWidth(float value) {
+            bitField0_ |= 0x00004000;
+            width_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float width = 12;</code>
+          *
+          * <pre>
+          * Peak width at half height in location units
+          * for asymmetric peaks, calculate the width as the square root of the
+          * product of the widths of the long and short axes
+          * </pre>
+          */
+         public Builder clearWidth() {
+            bitField0_ = (bitField0_ & ~0x00004000);
+            width_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float a = 13;
+         private float a_;
+
+         /**
+          * <code>optional float a = 13;</code>
+          *
+          * <pre>
+          * Shape of the peak: width of the long axis
+          * divided by width of the short axis
+          * </pre>
+          */
+         public boolean hasA() {
+            return ((bitField0_ & 0x00008000) == 0x00008000);
+         }
+
+         /**
+          * <code>optional float a = 13;</code>
+          *
+          * <pre>
+          * Shape of the peak: width of the long axis
+          * divided by width of the short axis
+          * </pre>
+          */
+         public float getA() {
+            return a_;
+         }
+
+         /**
+          * <code>optional float a = 13;</code>
+          *
+          * <pre>
+          * Shape of the peak: width of the long axis
+          * divided by width of the short axis
+          * </pre>
+          */
+         public Builder setA(float value) {
+            bitField0_ |= 0x00008000;
+            a_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float a = 13;</code>
+          *
+          * <pre>
+          * Shape of the peak: width of the long axis
+          * divided by width of the short axis
+          * </pre>
+          */
+         public Builder clearA() {
+            bitField0_ = (bitField0_ & ~0x00008000);
+            a_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float theta = 14;
+         private float theta_;
+
+         /**
+          * <code>optional float theta = 14;</code>
+          *
+          * <pre>
+          * Rotation of asymetric peak, only used
+          * when fitmode == TWOAXISANDTHETA
+          * </pre>
+          */
+         public boolean hasTheta() {
+            return ((bitField0_ & 0x00010000) == 0x00010000);
+         }
+
+         /**
+          * <code>optional float theta = 14;</code>
+          *
+          * <pre>
+          * Rotation of asymetric peak, only used
+          * when fitmode == TWOAXISANDTHETA
+          * </pre>
+          */
+         public float getTheta() {
+            return theta_;
+         }
+
+         /**
+          * <code>optional float theta = 14;</code>
+          *
+          * <pre>
+          * Rotation of asymetric peak, only used
+          * when fitmode == TWOAXISANDTHETA
+          * </pre>
+          */
+         public Builder setTheta(float value) {
+            bitField0_ |= 0x00010000;
+            theta_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float theta = 14;</code>
+          *
+          * <pre>
+          * Rotation of asymetric peak, only used
+          * when fitmode == TWOAXISANDTHETA
+          * </pre>
+          */
+         public Builder clearTheta() {
+            bitField0_ = (bitField0_ & ~0x00010000);
+            theta_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float x_original = 101;
+         private float xOriginal_;
+
+         /**
+          * <code>optional float x_original = 101;</code>
+          *
+          * <pre>
+          * Original xyz coordinates from fitting before correction
+          * </pre>
+          */
+         public boolean hasXOriginal() {
+            return ((bitField0_ & 0x00020000) == 0x00020000);
+         }
+
+         /**
+          * <code>optional float x_original = 101;</code>
+          *
+          * <pre>
+          * Original xyz coordinates from fitting before correction
+          * </pre>
+          */
+         public float getXOriginal() {
+            return xOriginal_;
+         }
+
+         /**
+          * <code>optional float x_original = 101;</code>
+          *
+          * <pre>
+          * Original xyz coordinates from fitting before correction
+          * </pre>
+          */
+         public Builder setXOriginal(float value) {
+            bitField0_ |= 0x00020000;
+            xOriginal_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float x_original = 101;</code>
+          *
+          * <pre>
+          * Original xyz coordinates from fitting before correction
+          * </pre>
+          */
+         public Builder clearXOriginal() {
+            bitField0_ = (bitField0_ & ~0x00020000);
+            xOriginal_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float y_original = 102;
+         private float yOriginal_;
+
+         /**
+          * <code>optional float y_original = 102;</code>
+          */
+         public boolean hasYOriginal() {
+            return ((bitField0_ & 0x00040000) == 0x00040000);
+         }
+
+         /**
+          * <code>optional float y_original = 102;</code>
+          */
+         public float getYOriginal() {
+            return yOriginal_;
+         }
+
+         /**
+          * <code>optional float y_original = 102;</code>
+          */
+         public Builder setYOriginal(float value) {
+            bitField0_ |= 0x00040000;
+            yOriginal_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float y_original = 102;</code>
+          */
+         public Builder clearYOriginal() {
+            bitField0_ = (bitField0_ & ~0x00040000);
+            yOriginal_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float z_original = 103;
+         private float zOriginal_;
+
+         /**
+          * <code>optional float z_original = 103;</code>
+          */
+         public boolean hasZOriginal() {
+            return ((bitField0_ & 0x00080000) == 0x00080000);
+         }
+
+         /**
+          * <code>optional float z_original = 103;</code>
+          */
+         public float getZOriginal() {
+            return zOriginal_;
+         }
+
+         /**
+          * <code>optional float z_original = 103;</code>
+          */
+         public Builder setZOriginal(float value) {
+            bitField0_ |= 0x00080000;
+            zOriginal_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float z_original = 103;</code>
+          */
+         public Builder clearZOriginal() {
+            bitField0_ = (bitField0_ & ~0x00080000);
+            zOriginal_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float x_precision = 104;
+         private float xPrecision_;
+
+         /**
+          * <code>optional float x_precision = 104;</code>
+          *
+          * <pre>
+          * localization precision
+          * </pre>
+          */
+         public boolean hasXPrecision() {
+            return ((bitField0_ & 0x00100000) == 0x00100000);
+         }
+
+         /**
+          * <code>optional float x_precision = 104;</code>
+          *
+          * <pre>
+          * localization precision
+          * </pre>
+          */
+         public float getXPrecision() {
+            return xPrecision_;
+         }
+
+         /**
+          * <code>optional float x_precision = 104;</code>
+          *
+          * <pre>
+          * localization precision
+          * </pre>
+          */
+         public Builder setXPrecision(float value) {
+            bitField0_ |= 0x00100000;
+            xPrecision_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float x_precision = 104;</code>
+          *
+          * <pre>
+          * localization precision
+          * </pre>
+          */
+         public Builder clearXPrecision() {
+            bitField0_ = (bitField0_ & ~0x00100000);
+            xPrecision_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float y_precision = 105;
+         private float yPrecision_;
+
+         /**
+          * <code>optional float y_precision = 105;</code>
+          */
+         public boolean hasYPrecision() {
+            return ((bitField0_ & 0x00200000) == 0x00200000);
+         }
+
+         /**
+          * <code>optional float y_precision = 105;</code>
+          */
+         public float getYPrecision() {
+            return yPrecision_;
+         }
+
+         /**
+          * <code>optional float y_precision = 105;</code>
+          */
+         public Builder setYPrecision(float value) {
+            bitField0_ |= 0x00200000;
+            yPrecision_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float y_precision = 105;</code>
+          */
+         public Builder clearYPrecision() {
+            bitField0_ = (bitField0_ & ~0x00200000);
+            yPrecision_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional float z_precision = 106;
+         private float zPrecision_;
+
+         /**
+          * <code>optional float z_precision = 106;</code>
+          */
+         public boolean hasZPrecision() {
+            return ((bitField0_ & 0x00400000) == 0x00400000);
+         }
+
+         /**
+          * <code>optional float z_precision = 106;</code>
+          */
+         public float getZPrecision() {
+            return zPrecision_;
+         }
+
+         /**
+          * <code>optional float z_precision = 106;</code>
+          */
+         public Builder setZPrecision(float value) {
+            bitField0_ |= 0x00400000;
+            zPrecision_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional float z_precision = 106;</code>
+          */
+         public Builder clearZPrecision() {
+            bitField0_ = (bitField0_ & ~0x00400000);
+            zPrecision_ = 0F;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 x_position = 107;
+         private int xPosition_;
+
+         /**
+          * <code>optional int32 x_position = 107;</code>
+          *
+          * <pre>
+          * position in the original image (in pixels) used for fitting
+          * </pre>
+          */
+         public boolean hasXPosition() {
+            return ((bitField0_ & 0x00800000) == 0x00800000);
+         }
+
+         /**
+          * <code>optional int32 x_position = 107;</code>
+          *
+          * <pre>
+          * position in the original image (in pixels) used for fitting
+          * </pre>
+          */
+         public int getXPosition() {
+            return xPosition_;
+         }
+
+         /**
+          * <code>optional int32 x_position = 107;</code>
+          *
+          * <pre>
+          * position in the original image (in pixels) used for fitting
+          * </pre>
+          */
+         public Builder setXPosition(int value) {
+            bitField0_ |= 0x00800000;
+            xPosition_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 x_position = 107;</code>
+          *
+          * <pre>
+          * position in the original image (in pixels) used for fitting
+          * </pre>
+          */
+         public Builder clearXPosition() {
+            bitField0_ = (bitField0_ & ~0x00800000);
+            xPosition_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // optional int32 y_position = 108;
+         private int yPosition_;
+
+         /**
+          * <code>optional int32 y_position = 108;</code>
+          */
+         public boolean hasYPosition() {
+            return ((bitField0_ & 0x01000000) == 0x01000000);
+         }
+
+         /**
+          * <code>optional int32 y_position = 108;</code>
+          */
+         public int getYPosition() {
+            return yPosition_;
+         }
+
+         /**
+          * <code>optional int32 y_position = 108;</code>
+          */
+         public Builder setYPosition(int value) {
+            bitField0_ |= 0x01000000;
+            yPosition_ = value;
+            onChanged();
+            return this;
+         }
+
+         /**
+          * <code>optional int32 y_position = 108;</code>
+          */
+         public Builder clearYPosition() {
+            bitField0_ = (bitField0_ & ~0x01000000);
+            yPosition_ = 0;
+            onChanged();
+            return this;
+         }
+
+         // @@protoc_insertion_point(builder_scope:TSF.Spot)
       }
-      /**
-       * <code>optional int32 y_position = 108;</code>
-       */
-      public Builder clearYPosition() {
-        bitField0_ = (bitField0_ & ~0x01000000);
-        yPosition_ = 0;
-        onChanged();
-        return this;
+
+      static {
+         defaultInstance = new Spot(true);
+         defaultInstance.initFields();
       }
 
-      // @@protoc_insertion_point(builder_scope:TSF.Spot)
-    }
+      // @@protoc_insertion_point(class_scope:TSF.Spot)
+   }
 
-    static {
-      defaultInstance = new Spot(true);
-      defaultInstance.initFields();
-    }
+   private static com.google.protobuf.Descriptors.Descriptor
+         internal_static_TSF_FluorophoreType_descriptor;
+   private static
+   com.google.protobuf.GeneratedMessage.FieldAccessorTable
+         internal_static_TSF_FluorophoreType_fieldAccessorTable;
+   private static com.google.protobuf.Descriptors.Descriptor
+         internal_static_TSF_ROI_descriptor;
+   private static
+   com.google.protobuf.GeneratedMessage.FieldAccessorTable
+         internal_static_TSF_ROI_fieldAccessorTable;
+   private static com.google.protobuf.Descriptors.Descriptor
+         internal_static_TSF_SpotList_descriptor;
+   private static
+   com.google.protobuf.GeneratedMessage.FieldAccessorTable
+         internal_static_TSF_SpotList_fieldAccessorTable;
+   private static com.google.protobuf.Descriptors.Descriptor
+         internal_static_TSF_Spot_descriptor;
+   private static
+   com.google.protobuf.GeneratedMessage.FieldAccessorTable
+         internal_static_TSF_Spot_fieldAccessorTable;
 
-    // @@protoc_insertion_point(class_scope:TSF.Spot)
-  }
+   public static com.google.protobuf.Descriptors.FileDescriptor
+   getDescriptor() {
+      return descriptor;
+   }
 
-  private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_TSF_FluorophoreType_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_TSF_FluorophoreType_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_TSF_ROI_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_TSF_ROI_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_TSF_SpotList_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_TSF_SpotList_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_TSF_Spot_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_TSF_Spot_fieldAccessorTable;
+   private static com.google.protobuf.Descriptors.FileDescriptor
+         descriptor;
 
-  public static com.google.protobuf.Descriptors.FileDescriptor
-      getDescriptor() {
-    return descriptor;
-  }
-  private static com.google.protobuf.Descriptors.FileDescriptor
-      descriptor;
-  static {
-    java.lang.String[] descriptorData = {
-      "\n\016TSFProto.proto\022\003TSF\"G\n\017FluorophoreType" +
-      "\022\n\n\002id\030\001 \002(\005\022\023\n\013description\030\002 \001(\t\022\023\n\013is_" +
-      "fiducial\030\003 \001(\010\"=\n\003ROI\022\t\n\001x\030\001 \002(\005\022\t\n\001y\030\002 " +
-      "\002(\005\022\017\n\007x_width\030\003 \002(\005\022\017\n\007y_width\030\004 \002(\005\"\241\004" +
-      "\n\010SpotList\022\031\n\016application_id\030\001 \002(\005:\0011\022\014\n" +
-      "\004name\030\002 \001(\t\022\020\n\010filepath\030\003 \001(\t\022\013\n\003uid\030\004 \001" +
-      "(\003\022\023\n\013nr_pixels_x\030\005 \001(\005\022\023\n\013nr_pixels_y\030\006" +
-      " \001(\005\022\022\n\npixel_size\030\007 \001(\002\022\020\n\010nr_spots\030\010 \001" +
-      "(\003\022\020\n\010box_size\030\021 \001(\005\022\023\n\013nr_channels\030\022 \001(" +
-      "\005\022\021\n\tnr_frames\030\023 \001(\005\022\021\n\tnr_slices\030\024 \001(\005\022",
-      "\016\n\006nr_pos\030\025 \001(\005\022/\n\021fluorophore_types\030\032 \003" +
-      "(\0132\024.TSF.FluorophoreType\022*\n\016location_uni" +
-      "ts\030\026 \001(\0162\022.TSF.LocationUnits\022,\n\017intensit" +
-      "y_units\030\027 \001(\0162\023.TSF.IntensityUnits\022$\n\013th" +
-      "eta_units\030\033 \001(\0162\017.TSF.ThetaUnits\022\036\n\010fit_" +
-      "mode\030\030 \001(\0162\014.TSF.FitMode\022\027\n\010is_track\030\031 \001" +
-      "(\010:\005false\022\013\n\003ecf\030\034 \003(\001\022\n\n\002qe\030\036 \003(\001\022\025\n\003ro" +
-      "i\030\035 \001(\0132\010.TSF.ROI*\006\010\334\013\020\200\020\"\365\003\n\004Spot\022\020\n\010mo" +
-      "lecule\030\001 \002(\005\022\017\n\007channel\030\002 \002(\005\022\r\n\005frame\030\003" +
-      " \002(\005\022\r\n\005slice\030\004 \001(\005\022\013\n\003pos\030\005 \001(\005\022\030\n\020fluo",
-      "rophore_type\030\023 \001(\005\022\017\n\007cluster\030\024 \001(\005\022*\n\016l" +
-      "ocation_units\030\021 \001(\0162\022.TSF.LocationUnits\022" +
-      "\t\n\001x\030\007 \002(\002\022\t\n\001y\030\010 \002(\002\022\t\n\001z\030\t \001(\002\022,\n\017inte" +
-      "nsity_units\030\022 \001(\0162\023.TSF.IntensityUnits\022\021" +
-      "\n\tintensity\030\n \002(\002\022\022\n\nbackground\030\013 \001(\002\022\r\n" +
-      "\005width\030\014 \001(\002\022\t\n\001a\030\r \001(\002\022\r\n\005theta\030\016 \001(\002\022\022" +
-      "\n\nx_original\030e \001(\002\022\022\n\ny_original\030f \001(\002\022\022" +
-      "\n\nz_original\030g \001(\002\022\023\n\013x_precision\030h \001(\002\022" +
-      "\023\n\013y_precision\030i \001(\002\022\023\n\013z_precision\030j \001(" +
-      "\002\022\022\n\nx_position\030k \001(\005\022\022\n\ny_position\030l \001(",
-      "\005*\006\010\334\013\020\200\020*8\n\007FitMode\022\013\n\007ONEAXIS\020\000\022\013\n\007TWO" +
-      "AXIS\020\001\022\023\n\017TWOAXISANDTHETA\020\002*&\n\nThetaUnit" +
-      "s\022\013\n\007DEGREES\020\000\022\013\n\007RADIANS\020\001*)\n\016Intensity" +
-      "Units\022\n\n\006COUNTS\020\000\022\013\n\007PHOTONS\020\001*+\n\rLocati" +
-      "onUnits\022\006\n\002NM\020\000\022\006\n\002UM\020\001\022\n\n\006PIXELS\020\002B)\n\024e" +
-      "du.ucsf.valelab.tsfB\021TaggedSpotsProtos"
-    };
-    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-      new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
-        public com.google.protobuf.ExtensionRegistry assignDescriptors(
-            com.google.protobuf.Descriptors.FileDescriptor root) {
-          descriptor = root;
-          internal_static_TSF_FluorophoreType_descriptor =
-            getDescriptor().getMessageTypes().get(0);
-          internal_static_TSF_FluorophoreType_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_TSF_FluorophoreType_descriptor,
-              new java.lang.String[] { "Id", "Description", "IsFiducial", });
-          internal_static_TSF_ROI_descriptor =
-            getDescriptor().getMessageTypes().get(1);
-          internal_static_TSF_ROI_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_TSF_ROI_descriptor,
-              new java.lang.String[] { "X", "Y", "XWidth", "YWidth", });
-          internal_static_TSF_SpotList_descriptor =
-            getDescriptor().getMessageTypes().get(2);
-          internal_static_TSF_SpotList_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_TSF_SpotList_descriptor,
-              new java.lang.String[] { "ApplicationId", "Name", "Filepath", "Uid", "NrPixelsX", "NrPixelsY", "PixelSize", "NrSpots", "BoxSize", "NrChannels", "NrFrames", "NrSlices", "NrPos", "FluorophoreTypes", "LocationUnits", "IntensityUnits", "ThetaUnits", "FitMode", "IsTrack", "Ecf", "Qe", "Roi", });
-          internal_static_TSF_Spot_descriptor =
-            getDescriptor().getMessageTypes().get(3);
-          internal_static_TSF_Spot_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_TSF_Spot_descriptor,
-              new java.lang.String[] { "Molecule", "Channel", "Frame", "Slice", "Pos", "FluorophoreType", "Cluster", "LocationUnits", "X", "Y", "Z", "IntensityUnits", "Intensity", "Background", "Width", "A", "Theta", "XOriginal", "YOriginal", "ZOriginal", "XPrecision", "YPrecision", "ZPrecision", "XPosition", "YPosition", });
-          return null;
-        }
+   static {
+      java.lang.String[] descriptorData = {
+            "\n\016TSFProto.proto\022\003TSF\"G\n\017FluorophoreType" +
+                  "\022\n\n\002id\030\001 \002(\005\022\023\n\013description\030\002 \001(\t\022\023\n\013is_"
+                  +
+                  "fiducial\030\003 \001(\010\"=\n\003ROI\022\t\n\001x\030\001 \002(\005\022\t\n\001y\030\002 "
+                  +
+                  "\002(\005\022\017\n\007x_width\030\003 \002(\005\022\017\n\007y_width\030\004 \002(\005\"\241\004"
+                  +
+                  "\n\010SpotList\022\031\n\016application_id\030\001 \002(\005:\0011\022\014\n" +
+                  "\004name\030\002 \001(\t\022\020\n\010filepath\030\003 \001(\t\022\013\n\003uid\030\004 \001"
+                  +
+                  "(\003\022\023\n\013nr_pixels_x\030\005 \001(\005\022\023\n\013nr_pixels_y\030\006"
+                  +
+                  " \001(\005\022\022\n\npixel_size\030\007 \001(\002\022\020\n\010nr_spots\030\010 \001"
+                  +
+                  "(\003\022\020\n\010box_size\030\021 \001(\005\022\023\n\013nr_channels\030\022 \001("
+                  +
+                  "\005\022\021\n\tnr_frames\030\023 \001(\005\022\021\n\tnr_slices\030\024 \001(\005\022",
+            "\016\n\006nr_pos\030\025 \001(\005\022/\n\021fluorophore_types\030\032 \003" +
+                  "(\0132\024.TSF.FluorophoreType\022*\n\016location_uni" +
+                  "ts\030\026 \001(\0162\022.TSF.LocationUnits\022,\n\017intensit" +
+                  "y_units\030\027 \001(\0162\023.TSF.IntensityUnits\022$\n\013th" +
+                  "eta_units\030\033 \001(\0162\017.TSF.ThetaUnits\022\036\n\010fit_" +
+                  "mode\030\030 \001(\0162\014.TSF.FitMode\022\027\n\010is_track\030\031 \001" +
+                  "(\010:\005false\022\013\n\003ecf\030\034 \003(\001\022\n\n\002qe\030\036 \003(\001\022\025\n\003ro"
+                  +
+                  "i\030\035 \001(\0132\010.TSF.ROI*\006\010\334\013\020\200\020\"\365\003\n\004Spot\022\020\n\010mo"
+                  +
+                  "lecule\030\001 \002(\005\022\017\n\007channel\030\002 \002(\005\022\r\n\005frame\030\003"
+                  +
+                  " \002(\005\022\r\n\005slice\030\004 \001(\005\022\013\n\003pos\030\005 \001(\005\022\030\n\020fluo",
+            "rophore_type\030\023 \001(\005\022\017\n\007cluster\030\024 \001(\005\022*\n\016l" +
+                  "ocation_units\030\021 \001(\0162\022.TSF.LocationUnits\022" +
+                  "\t\n\001x\030\007 \002(\002\022\t\n\001y\030\010 \002(\002\022\t\n\001z\030\t \001(\002\022,\n\017inte"
+                  +
+                  "nsity_units\030\022 \001(\0162\023.TSF.IntensityUnits\022\021" +
+                  "\n\tintensity\030\n \002(\002\022\022\n\nbackground\030\013 \001(\002\022\r\n" +
+                  "\005width\030\014 \001(\002\022\t\n\001a\030\r \001(\002\022\r\n\005theta\030\016 \001(\002\022\022"
+                  +
+                  "\n\nx_original\030e \001(\002\022\022\n\ny_original\030f \001(\002\022\022" +
+                  "\n\nz_original\030g \001(\002\022\023\n\013x_precision\030h \001(\002\022" +
+                  "\023\n\013y_precision\030i \001(\002\022\023\n\013z_precision\030j \001(" +
+                  "\002\022\022\n\nx_position\030k \001(\005\022\022\n\ny_position\030l \001(",
+            "\005*\006\010\334\013\020\200\020*8\n\007FitMode\022\013\n\007ONEAXIS\020\000\022\013\n\007TWO"
+                  +
+                  "AXIS\020\001\022\023\n\017TWOAXISANDTHETA\020\002*&\n\nThetaUnit" +
+                  "s\022\013\n\007DEGREES\020\000\022\013\n\007RADIANS\020\001*)\n\016Intensity" +
+                  "Units\022\n\n\006COUNTS\020\000\022\013\n\007PHOTONS\020\001*+\n\rLocati" +
+                  "onUnits\022\006\n\002NM\020\000\022\006\n\002UM\020\001\022\n\n\006PIXELS\020\002B)\n\024e"
+                  +
+                  "du.ucsf.valelab.tsfB\021TaggedSpotsProtos"
       };
-    com.google.protobuf.Descriptors.FileDescriptor
-      .internalBuildGeneratedFileFrom(descriptorData,
-        new com.google.protobuf.Descriptors.FileDescriptor[] {
-        }, assigner);
-  }
+      com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
+            new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
+               public com.google.protobuf.ExtensionRegistry assignDescriptors(
+                     com.google.protobuf.Descriptors.FileDescriptor root) {
+                  descriptor = root;
+                  internal_static_TSF_FluorophoreType_descriptor =
+                        getDescriptor().getMessageTypes().get(0);
+                  internal_static_TSF_FluorophoreType_fieldAccessorTable = new
+                        com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+                        internal_static_TSF_FluorophoreType_descriptor,
+                        new java.lang.String[]{"Id", "Description", "IsFiducial",});
+                  internal_static_TSF_ROI_descriptor =
+                        getDescriptor().getMessageTypes().get(1);
+                  internal_static_TSF_ROI_fieldAccessorTable = new
+                        com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+                        internal_static_TSF_ROI_descriptor,
+                        new java.lang.String[]{"X", "Y", "XWidth", "YWidth",});
+                  internal_static_TSF_SpotList_descriptor =
+                        getDescriptor().getMessageTypes().get(2);
+                  internal_static_TSF_SpotList_fieldAccessorTable = new
+                        com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+                        internal_static_TSF_SpotList_descriptor,
+                        new java.lang.String[]{"ApplicationId", "Name", "Filepath", "Uid",
+                              "NrPixelsX", "NrPixelsY", "PixelSize", "NrSpots", "BoxSize",
+                              "NrChannels", "NrFrames", "NrSlices", "NrPos", "FluorophoreTypes",
+                              "LocationUnits", "IntensityUnits", "ThetaUnits", "FitMode", "IsTrack",
+                              "Ecf", "Qe", "Roi",});
+                  internal_static_TSF_Spot_descriptor =
+                        getDescriptor().getMessageTypes().get(3);
+                  internal_static_TSF_Spot_fieldAccessorTable = new
+                        com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+                        internal_static_TSF_Spot_descriptor,
+                        new java.lang.String[]{"Molecule", "Channel", "Frame", "Slice", "Pos",
+                              "FluorophoreType", "Cluster", "LocationUnits", "X", "Y", "Z",
+                              "IntensityUnits", "Intensity", "Background", "Width", "A", "Theta",
+                              "XOriginal", "YOriginal", "ZOriginal", "XPrecision", "YPrecision",
+                              "ZPrecision", "XPosition", "YPosition",});
+                  return null;
+               }
+            };
+      com.google.protobuf.Descriptors.FileDescriptor
+            .internalBuildGeneratedFileFrom(descriptorData,
+                  new com.google.protobuf.Descriptors.FileDescriptor[]{
+                  }, assigner);
+   }
 
-  // @@protoc_insertion_point(outer_class_scope)
+   // @@protoc_insertion_point(outer_class_scope)
 }

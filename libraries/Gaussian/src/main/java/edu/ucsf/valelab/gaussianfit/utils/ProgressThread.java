@@ -37,14 +37,12 @@ import java.util.concurrent.BlockingQueue;
 
 
 /**
- *
  * @author nico
  */
-public class ProgressThread  implements Runnable {
+public class ProgressThread implements Runnable {
 
    Thread t_;
    BlockingQueue<SpotData> sourceList_;
-
 
 
    public ProgressThread(BlockingQueue<SpotData> sourceList) {
@@ -57,11 +55,12 @@ public class ProgressThread  implements Runnable {
    }
 
    public void join() throws InterruptedException {
-      if (t_ != null)
+      if (t_ != null) {
          t_.join();
+      }
    }
 
-   
+
    @Override
    public void run() {
       int maxNr = sourceList_.size();

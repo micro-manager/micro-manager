@@ -133,6 +133,7 @@ public final class AnimationController<P> {
       catch (InterruptedException notUsedByUs) {
          Thread.currentThread().interrupt();
       }
+      perfMon_ = null;
    }
 
    public synchronized void setTickIntervalMs(int intervalMs) {

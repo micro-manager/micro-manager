@@ -18,26 +18,22 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events.internal;
+package org.micromanager.acquisition;
 
-import org.micromanager.data.Datastore;
-import org.micromanager.events.AcquisitionEndedEvent;
-
-public final class DefaultAcquisitionEndedEvent implements AcquisitionEndedEvent {
-   private Datastore store_;
-   private Object source_;
-   public DefaultAcquisitionEndedEvent(Datastore store, Object source) {
-      store_ = store;
-      source_ = source;
-   }
-
-   @Override
-   public Datastore getStore() {
-      return store_;
-   }
-
-   @Override
-   public Object getSource() {
-      return source_;
-   }
+/**
+ * This variant of the AcquisitionStartedEvent is used for acquisitions that
+ * can be described by a {@link SequenceSettings}, it provides access to those
+ * {@link SequenceSettings}.
+ *
+ *  The default implementation of this event posts on the Studio event bus,
+ *  so subscribe to this event using {@link org.micromanager.events.EventManager}.
+ */
+public interface AcquisitionSequenceStartedEvent extends AcquisitionStartedEvent {
+   /**
+    * Return the SequenceSettings used to control the parameters of the
+    * acquisition. Note that the images in the datastore may not necessarily
+    * match these parameters (with respect to number of Z-slices, etc.) due
+    * to the actions of image processors in the data processing pipeline.
+    */
+   SequenceSettings getSettings();
 }

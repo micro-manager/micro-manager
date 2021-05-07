@@ -24,7 +24,7 @@ import org.micromanager.display.internal.link.LinkManager;
  * @author mark
  */
 class AxisLinker {
-   private final DisplayController viewer_;
+   private DisplayController viewer_;
    private final String axis_;
    private final AxisLinkAnchor anchor_;
    private final LinkManager linkManager_;
@@ -136,6 +136,7 @@ class AxisLinker {
       if (e.getDataViewer().equals(viewer_)) {
          anchor_.unlink();
          linkManager_.unregisterAnchor(anchor_);
+         viewer_ = null;
       }
    }
 }

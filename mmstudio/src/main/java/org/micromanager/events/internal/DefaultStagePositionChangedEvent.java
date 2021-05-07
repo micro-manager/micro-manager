@@ -2,6 +2,12 @@ package org.micromanager.events.internal;
 
 import org.micromanager.events.StagePositionChangedEvent;
 
+/**
+ * This class signals when a single-axis drive has moved.
+ *
+ * This event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.
+ */
 public class DefaultStagePositionChangedEvent implements StagePositionChangedEvent {
    private final String deviceName_;
    private final double pos_;

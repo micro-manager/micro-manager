@@ -39,11 +39,10 @@ import java.util.Arrays;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
 /**
- *
  * @author nico
  */
 public class EmpiricalCumulativeDistribution {
-   
+
    public static Vector2D[] calculate(double[] values) {
       Arrays.sort(values);
       Vector2D[] result = new Vector2D[values.length];
@@ -54,9 +53,9 @@ public class EmpiricalCumulativeDistribution {
          result[i] = new Vector2D(values[i], i * increment + halfIncrement);
          // result[i] = new Vector2D(values[i], ((double)i + 1d) / valuesd);
       }
-      
+
       return result;
-      
+
    }
-   
+
 }

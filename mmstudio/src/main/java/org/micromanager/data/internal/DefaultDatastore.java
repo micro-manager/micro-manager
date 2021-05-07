@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.filechooser.FileFilter;
@@ -81,13 +82,13 @@ public class DefaultDatastore implements Datastore {
    protected Map<String, DefaultAnnotation> annotations_ = new HashMap<>();
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
-   protected final Studio studio;
+   protected final Studio studio_;
    
    private String savePath_ = null;
    private boolean haveSetSummary_ = false;
 
    public DefaultDatastore(Studio mmStudio) {
-      studio = mmStudio;
+      studio_ = mmStudio;
       bus_ = new PrioritizedEventBus(true);
    }
 
@@ -97,7 +98,7 @@ public class DefaultDatastore implements Datastore {
     * progress.
     * @param alt Source Datastore
     * @param monitor can be used to keep callers appraised of our progress.
-    * @throws java.io.IOException
+    * @throws java.io.IOException expected only for disk-backed Datastores
     * @throws UserCancelledException when the users cancels this action
     */
    public void copyFrom(Datastore alt, ProgressMonitor monitor)
@@ -118,13 +119,13 @@ public class DefaultDatastore implements Datastore {
          }
       }
       catch (DatastoreFrozenException e) {
-         ReportingUtils.logError("Can't copy from datastore: we're frozen");
+         studio_.logs().logError("Can't copy from datastore: we're frozen");
       }
       catch (DatastoreRewriteException e) {
-         ReportingUtils.logError("Can't copy from datastore: we already have an image at one of its coords.");
+         studio_.logs().logError("Can't copy from datastore: we already have an image at one of its coords.");
       }
       catch (IllegalArgumentException e) {
-         ReportingUtils.logError("Inconsistent image coordinates in datastore");
+         studio_.logs().logError("Inconsistent image coordinates in datastore");
       }
    }
    
@@ -296,7 +297,7 @@ public class DefaultDatastore implements Datastore {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
-      if (haveSetSummary_) {
+      if (haveSetSummary_ || getNumImages() > 0) {
          throw new DatastoreRewriteException();
       }
       haveSetSummary_ = true;
@@ -369,12 +370,17 @@ public class DefaultDatastore implements Datastore {
    @Override
    public void close() throws IOException {
       freeze();
-      studio.events().post(
+      studio_.events().post(
             new DefaultDatastoreClosingEvent(this));
       if (storage_ != null) {
          storage_.close();
+         // since we call the gc, make sure that storage, which contains the first
+         // image amongst other things, actually may get collected.
+         storage_ = null;
          System.gc();
       }
+      annotations_ = null;
+      bus_.shutDown();
    }
 
    @Override
@@ -402,7 +408,7 @@ public class DefaultDatastore implements Datastore {
       chooser.setAcceptAllFileFilterUsed(false);
       chooser.addChoosableFileFilter(SINGLEPLANEFILTER);
       chooser.addChoosableFileFilter(MULTIPAGEFILTER);
-      if (getPreferredSaveMode(studio).equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
+      if (Objects.equals(getPreferredSaveMode(studio_), SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(MULTIPAGEFILTER);
       }
       else {
@@ -426,15 +432,15 @@ public class DefaultDatastore implements Datastore {
       } else if (filter == MULTIPAGEFILTER) {
          mode = Datastore.SaveMode.MULTIPAGE_TIFF;
       }  else {
-         ReportingUtils.showError("Unrecognized file format filter " +
+         studio_.logs().showError("Unrecognized file format filter " +
                filter.getDescription());
          return null;
       }
-      setPreferredSaveMode(studio, mode);
+      setPreferredSaveMode(studio_, mode);
       // the DefaultDataSave constructor creates the directory
       // so that displaysettings can be saved there even before we finish
       // saving all the data
-      DefaultDataSaver ds = new DefaultDataSaver(studio, this, mode,
+      DefaultDataSaver ds = new DefaultDataSaver(studio_, this, mode,
               file.getAbsolutePath());
       if (!blocking) {
          final ProgressBar pb = new ProgressBar(parent, "Saving..", 0, 100);
@@ -465,7 +471,7 @@ public class DefaultDatastore implements Datastore {
    // if our current Storage is a file-based Storage).
    @Override
    public void save(Datastore.SaveMode mode, String path, boolean blocking) throws IOException {
-      DefaultDataSaver ds = new DefaultDataSaver(studio, this, mode, path);
+      DefaultDataSaver ds = new DefaultDataSaver(studio_, this, mode, path);
       if (blocking) {
          ds.doInBackground();
       } else {

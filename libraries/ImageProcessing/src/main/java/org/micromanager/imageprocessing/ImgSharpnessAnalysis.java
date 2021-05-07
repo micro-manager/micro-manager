@@ -36,26 +36,28 @@ import ij.process.ImageStatistics;
 import java.util.Arrays;
 
 /**
- *
  * @author Nick Anthony
  */
 public class ImgSharpnessAnalysis {
+
    private double fftLowerCutoff_ = 2.5;
    private double fftUpperCutoff_ = 14;
    private Method method_ = Method.Edges;
-   
+
    public enum Method {
-      Edges, StdDev, Mean, 
-      NormalizedVariance, SharpEdges, Redondo, Volath, Volath5, 
+      Edges, StdDev, Mean,
+      NormalizedVariance, SharpEdges, Redondo, Volath, Volath5,
       MedianEdges, Tenengrad, FFTBandpass;
-      
+
       public static String[] getNames() {
-         return Arrays.stream(Method.class.getEnumConstants()).map(Enum::name).toArray(String[]::new);
+         return Arrays.stream(Method.class.getEnumConstants()).map(Enum::name)
+               .toArray(String[]::new);
       }
    }
-   
+
    /**
     * These parameters are only used for method: FFTBandpass
+    *
     * @param fftLowerCutoff Frequencies below this will be filtered out
     * @param fftUpperCutoff Frequencies above this will be filtered out
     */
@@ -63,27 +65,28 @@ public class ImgSharpnessAnalysis {
       fftLowerCutoff_ = fftLowerCutoff;
       fftUpperCutoff_ = fftUpperCutoff;
    }
-   
+
    public double getFFTLowerCutoff() {
       return fftLowerCutoff_;
    }
-   
+
    public double getFFTUpperCutoff() {
       return fftUpperCutoff_;
    }
-   
+
    public void setComputationMethod(Method method) {
       method_ = method;
    }
-   
+
    public Method getComputationMethod() {
       return method_;
    }
-    
+
    /**
     * Compute the sharpness of `proc` using the current `Method` set with `setComputationMethod`.
+    *
     * @param proc
-    * @return 
+    * @return
     */
    public double compute(ImageProcessor proc) {
       switch (method_) {
@@ -113,7 +116,7 @@ public class ImgSharpnessAnalysis {
             throw new AssertionError(method_.name());
       }
    }
-    
+
    public static double computeEdges(ImageProcessor proc) {
       // mean intensity for the original image
       double meanIntensity = proc.getStatistics().mean;
@@ -151,7 +154,7 @@ public class ImgSharpnessAnalysis {
       return (stats.stdDev * stats.stdDev) / stats.mean;
    }
 
-   
+
    // this is NOT a traditional Laplace filter; the "center" weight is
    // actually the bottom-center cell of the 3x3 matrix.  AFAICT it's a
    // typo in the source paper, but works better than the traditional
@@ -173,10 +176,10 @@ public class ImgSharpnessAnalysis {
       for (int i = 1; i < w - 1; ++i) {
          for (int j = 1; j < h - 1; ++j) {
             double p = proc.getPixel(i - 1, j)
-                    + proc.getPixel(i + 1, j)
-                    + proc.getPixel(i, j - 1)
-                    + proc.getPixel(i, j + 1)
-                    - 4 * (proc.getPixel(i - 1, j));
+                  + proc.getPixel(i + 1, j)
+                  + proc.getPixel(i, j - 1)
+                  + proc.getPixel(i, j + 1)
+                  - 4 * (proc.getPixel(i - 1, j));
             sum += (p * p);
          }
       }
@@ -184,12 +187,12 @@ public class ImgSharpnessAnalysis {
       return sum;
    }
 
-     
+
    /**
-    * From "Autofocusing Algorithm Selection in Computer Microscopy" 
-    * (doi: 10.1109/IROS.2005.1545017). 
-    * 2016 paper (doi:10.1038/nbt.3708) concludes this is best  most 
+    * From "Autofocusing Algorithm Selection in Computer Microscopy" (doi:
+    * 10.1109/IROS.2005.1545017). 2016 paper (doi:10.1038/nbt.3708) concludes this is best  most
     * non-spectral metric for their light sheet microscopy application
+    *
     * @author Jon
     */
    public static double computeTenengrad(ImageProcessor proc) {
@@ -202,14 +205,14 @@ public class ImgSharpnessAnalysis {
       ImageProcessor proc2 = proc.duplicate();
       proc.convolve3x3(ken1);
       proc2.convolve3x3(ken2);
-      for (int i=0; i<w; i++){
-         for (int j=0; j<h; j++){
-            sum += Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2);
+      for (int i = 0; i < w; i++) {
+         for (int j = 0; j < h; j++) {
+            sum += Math.pow(proc.getPixel(i, j), 2) + Math.pow(proc2.getPixel(i, j), 2);
          }
       }
       return sum;
    }
-   
+
    // Volath's 1D autocorrelation
    // Volath  D., "The influence of the scene parameters and of noise on
    // the behavior of automatic focusing algorithms,"
@@ -255,15 +258,15 @@ public class ImgSharpnessAnalysis {
       sum -= ((w - 1) * h * stats.mean * stats.mean);
       return sum;
    }
-   
-   
- /**
-    * Modified version of the algorithm used by the AutoFocus JAF(H&P) code
-    * in Micro-Manager's Autofocus.java by Pakpoom Subsoontorn & Hernan Garcia.
-    * Looks for diagonal edges in both directions, then combines them (RMS).
-    * (Original algorithm only looked for edges in one diagonal direction).
-    * Similar to Edges algorithm except it does no normalization by original
+
+
+   /**
+    * Modified version of the algorithm used by the AutoFocus JAF(H&P) code in Micro-Manager's
+    * Autofocus.java by Pakpoom Subsoontorn & Hernan Garcia. Looks for diagonal edges in both
+    * directions, then combines them (RMS). (Original algorithm only looked for edges in one
+    * diagonal direction). Similar to Edges algorithm except it does no normalization by original
     * intensity and adds a median filter before edge detection.
+    *
     * @author Jon
     */
    public static double computeMedianEdges(ImageProcessor proc) {
@@ -277,34 +280,36 @@ public class ImgSharpnessAnalysis {
       ImageProcessor proc2 = proc.duplicate();
       proc.convolve3x3(ken1);
       proc2.convolve3x3(ken2);
-      for (int i=0; i<w; i++){
-         for (int j=0; j<h; j++){
-            sum += Math.sqrt(Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2));
+      for (int i = 0; i < w; i++) {
+         for (int j = 0; j < h; j++) {
+            sum += Math.sqrt(Math.pow(proc.getPixel(i, j), 2) + Math.pow(proc2.getPixel(i, j), 2));
          }
       }
       return sum;
    }
 
    /**
-    * Per suggestion of William "Bill" Mohler @ UConn.  Returns the power in a
-    * specified band of spatial frequencies via the FFT.  Key according to Bill is
-    * to use an unscaled FFT, so this is provided using a modified ImageJ class.
+    * Per suggestion of William "Bill" Mohler @ UConn.  Returns the power in a specified band of
+    * spatial frequencies via the FFT.  Key according to Bill is to use an unscaled FFT, so this is
+    * provided using a modified ImageJ class.
+    *
     * @author Jon
     */
-   public static double computeFFTBandpass(ImageProcessor proc, double fftLowerCutoff, double fftUpperCutoff) {
+   public static double computeFFTBandpass(ImageProcessor proc, double fftLowerCutoff,
+         double fftUpperCutoff) {
       // gets power spectrum (FFT) without scaling result
       FHT_NoScaling myFHT = new FHT_NoScaling(proc);
       myFHT.transform();
       ImageProcessor ps = myFHT.getPowerSpectrum_noScaling();
-      int midpoint = ps.getHeight()/2;
-      final int scaled_lower = (int) Math.round(fftLowerCutoff/100*midpoint);
-      final int start_lower = Math.round(midpoint-scaled_lower);
-      final int scaled_upper = (int) Math.round(fftUpperCutoff/100*midpoint);
-      final int start_upper = Math.round(midpoint-scaled_upper);
+      int midpoint = ps.getHeight() / 2;
+      final int scaled_lower = (int) Math.round(fftLowerCutoff / 100 * midpoint);
+      final int start_lower = Math.round(midpoint - scaled_lower);
+      final int scaled_upper = (int) Math.round(fftUpperCutoff / 100 * midpoint);
+      final int start_upper = Math.round(midpoint - scaled_upper);
       OvalRoi innerCutoff = new OvalRoi(start_lower, start_lower,
-            2*scaled_lower+1, 2*scaled_lower+1);
+            2 * scaled_lower + 1, 2 * scaled_lower + 1);
       OvalRoi outerCutoff = new OvalRoi(start_upper, start_upper,
-            2*scaled_upper+1, 2*scaled_upper+1);
+            2 * scaled_upper + 1, 2 * scaled_upper + 1);
       ps.setColor(0);
       ps.fillOutside(outerCutoff);
       ps.fill(innerCutoff);

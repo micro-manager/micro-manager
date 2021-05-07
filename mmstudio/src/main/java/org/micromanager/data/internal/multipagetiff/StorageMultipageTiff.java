@@ -51,6 +51,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.ImageSizeChecker;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMException;
@@ -59,6 +60,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 
 /**
@@ -319,7 +321,10 @@ public final class StorageMultipageTiff implements Storage {
       }
       if (firstImage_ == null) {
          firstImage_ = image;
+      } else {
+         ImageSizeChecker.checkImageSizes(firstImage_, image);
       }
+
       try {
          writeImage(image, false);
       }
@@ -398,8 +403,9 @@ public final class StorageMultipageTiff implements Storage {
       // initialize writing executor
       if (writingExecutor_ == null) {
          writingExecutor_ = new ThreadPoolExecutor(1, 1, 0,
-               TimeUnit.NANOSECONDS,
-               new LinkedBlockingQueue<java.lang.Runnable>());
+                 TimeUnit.NANOSECONDS,
+                 new LinkedBlockingQueue<java.lang.Runnable>(),
+                 ThreadFactoryFactory.createThreadFactory("StorageMultiPageTiff"));
       }
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
@@ -455,8 +461,8 @@ public final class StorageMultipageTiff implements Storage {
       }
       ProgressBar progressBar = null;
       if (!GraphicsEnvironment.isHeadless()) {
-         progressBar = new ProgressBar(parent_, "Finishing Files", 0, 
-                 positionToFileSet_.size());
+         // progressBar = new ProgressBar(parent_, "Finishing Files", 0,
+         //        positionToFileSet_.size());
       }
       try {
          int count = 0;
@@ -553,6 +559,9 @@ public final class StorageMultipageTiff implements Storage {
          if (progressBar != null) {
             progressBar.setVisible(false);
          }
+         // release resources
+         omeMetadata_ = null;
+         store_.unregisterForEvents(this);
       }
       finished_ = true;
    }

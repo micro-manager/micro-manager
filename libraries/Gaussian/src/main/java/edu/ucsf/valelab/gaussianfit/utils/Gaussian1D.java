@@ -35,18 +35,19 @@ import org.jfree.data.function.Function2D;
  * @author nico
  */
 public class Gaussian1D implements Function2D {
+
    private final double mu_;
-   private final double sigma_;   
-   static double  sqrt2Pi = Math.sqrt(2 * Math.PI);
-  
+   private final double sigma_;
+   static double sqrt2Pi = Math.sqrt(2 * Math.PI);
+
    public Gaussian1D(double mu, double sigma) {
       mu_ = mu;
       sigma_ = sigma;
    }
-   
+
    @Override
    public double getValue(double d) {
       return Gaussian1DFitter.gaussian(d, mu_, sigma_);
    }
-   
+
 }

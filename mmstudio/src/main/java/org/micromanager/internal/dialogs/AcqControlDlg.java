@@ -22,6 +22,9 @@ package org.micromanager.internal.dialogs;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.util.Objects;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.ChannelSpec;
@@ -136,7 +139,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JComboBox<AcqOrderMode> acqOrderBox_;
    private JTextArea acquisitionOrderText_;
    private JComboBox<String> channelGroupCombo_;
-   private JTextArea commentTextArea_;
+   private final JTextArea commentTextArea_;
    private JComboBox<String> zValCombo_;
    private JTextField nameField_;
    private JTextField rootField_;
@@ -147,8 +150,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JFormattedTextField zTop_;
    private JFormattedTextField zBottom_;
    private final AcquisitionWrapperEngine acqEng_;
-   private JScrollPane channelTablePane_;
-   private JTable channelTable_;
+   private final JScrollPane channelTablePane_;
+   private final JTable channelTable_;
    private ChannelCellEditor channelCellEditor_;
    private JSpinner numFrames_;
    private ChannelTableModel model_;
@@ -167,6 +170,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private final UserProfile profile_;
    // persistent properties (app settings), most are only for backward compatibility
    private static final String MDA_SEQUENCE_SETTINGS = "MDA_SEQUENCE_SETTINGS";
+   /*
    private static final String ACQ_INTERVAL = "acqInterval";
    private static final String ACQ_ZBOTTOM = "acqZbottom";
    private static final String ACQ_ZTOP = "acqZtop";
@@ -186,28 +190,31 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private static final String ACQ_SAVE_FILES = "acqSaveFiles";
    private static final String ACQ_AF_ENABLE = "autofocus_enabled";
    private static final String ACQ_AF_SKIP_INTERVAL = "autofocusSkipInterval";
+   private static final String CUSTOM_INTERVAL_PREFIX = "customInterval";
+   private static final String ACQ_ENABLE_CUSTOM_INTERVALS = "enableCustomIntervals";
+    */
    private static final String ACQ_COLUMN_WIDTH = "column_width";
    private static final String ACQ_COLUMN_ORDER = "column_order";
    private static final int ACQ_DEFAULT_COLUMN_WIDTH = 77;
-   private static final String CUSTOM_INTERVAL_PREFIX = "customInterval";
-   private static final String ACQ_ENABLE_CUSTOM_INTERVALS = "enableCustomIntervals";
 
-   private int[] columnWidth_;
-   private int[] columnOrder_;
+   private final int[] columnWidth_;
+   private final int[] columnOrder_;
    private CheckBoxPanel framesPanel_;
    private JPanel defaultTimesPanel_;
    private JPanel customTimesPanel_;
-   private CheckBoxPanel channelsPanel_;
+   private final CheckBoxPanel channelsPanel_;
    private CheckBoxPanel slicesPanel_;
    protected CheckBoxPanel positionsPanel_;
    private JPanel acquisitionOrderPanel_;
    private CheckBoxPanel afPanel_;
    private CheckBoxPanel savePanel_;
    private boolean disableGUItoSettings_ = false;
+   private final FocusListener focusListener_;
 
    /**
     * Acquisition control dialog box.
     * Specification of all parameters required for the acquisition.
+    *
     * @param acqEng - acquisition engine
     * @param mmStudio - ScriptInterface
     */
@@ -277,11 +284,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       topPanel.add(topMiddlePanel);
       topPanel.add(topRightPanel);
 
-      super.add(topPanel, "grow");
-      super.add(createChannelsPanel(), "grow");
-      super.add(createSavePanel(), "growx");
-      super.add(createCommentsPanel(), "growx");
-
       // add update event listeners
       positionsPanel_.addActionListener((ActionEvent arg0) -> applySettingsFromGUI());
       acqOrderBox_.addActionListener((ActionEvent e) -> {
@@ -308,9 +310,43 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
 
       // create the table of channels
-      createChannelTable();
+      channelTablePane_ = new JScrollPane();
+      channelTablePane_.setFont(DEFAULT_FONT);
+      channelTable_ = createChannelTable();
+      channelTablePane_.setViewportView(channelTable_);
+      channelsPanel_ = createChannelsPanel();
 
-      createToolTips();
+      focusListener_ = new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent e) {
+            AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
+            if (ae != null) {
+               ae.stopCellEditing();
+            }
+         }
+
+         @Override
+         public void focusLost(FocusEvent e) {
+            applySettingsFromGUI();
+         }
+      };
+
+      super.add(topPanel, "grow");
+      super.add(channelsPanel_, "grow");
+      super.add(createSavePanel(), "growx");
+      commentTextArea_ = new JTextArea();
+      super.add(createCommentsPanel(commentTextArea_, focusListener_), "growx");
+
+      framesPanel_.setToolTipText("Acquire images over a repeating time interval");
+      positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
+      slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
+      acquisitionOrderPanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
+            "Determine the precedence of different acquisition axes (time, slice, channel, and stage position). The rightmost axis will be cycled through most quickly, so e.g. \"Time, Channel\" means \"Collect all channels for each timepoint before going to the next timepoint\"."));
+      afPanel_.setToolTipText("Toggle autofocus on/off");
+      channelsPanel_.setToolTipText("Lets you acquire images in multiple channels (groups of "
+            + "properties with multiple preset values");
+      savePanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
+            "Save images continuously to disk as the acquisition proceeds. If not enabled, then images will be stored in RAM and may be saved later."));
 
       super.pack();
       Dimension size = super.getPreferredSize();
@@ -341,13 +377,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
 
-   public final void createChannelTable() {
+   public final JTable createChannelTable() {
       model_ = new ChannelTableModel(mmStudio_, acqEng_);
       model_.addTableModelListener(this);
 
-      channelTable_ = new DaytimeNighttime.Table() {
+      JTable channelTable = new DaytimeNighttime.Table() {
          @Override
-         @SuppressWarnings("serial")
          protected JTableHeader createDefaultTableHeader() {
             return new JTableHeader(columnModel) {
                @Override
@@ -361,13 +396,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          }
       };
 
-      channelTable_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      channelTable_.setAutoCreateColumnsFromModel(false);
-      channelTable_.setModel(model_);
+      channelTable.setFont(new Font("Dialog", Font.PLAIN, 10));
+      channelTable.setAutoCreateColumnsFromModel(false);
+      channelTable.setModel(model_);
 
-      channelCellEditor_ = new ChannelCellEditor(mmStudio_, acqEng_);
+      channelCellEditor_ = new ChannelCellEditor();
       ChannelCellRenderer cellRenderer = new ChannelCellRenderer(acqEng_);
-      channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+      channelTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
       for (int k = 0; k < model_.getColumnCount(); k++) {
          int colIndex = search(columnOrder_, k);
@@ -390,10 +425,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                column.setMinWidth((int) (ACQ_DEFAULT_COLUMN_WIDTH * 1.25));
             }
          }
-         channelTable_.addColumn(column);
+         channelTable.addColumn(column);
       }
 
-      channelTablePane_.setViewportView(channelTable_);
+      return channelTable;
    }
 
    private CheckBoxPanel createCheckBoxPanel(String text) {
@@ -414,7 +449,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    /**
-    * Create the panel for showing the timepoints settings. This one can have
+    * Creates the panel for showing timepoints settings. This one can have
     * its contents overridden by the custom time intervals system, in which
     * case its normal contents get hidden.
     */
@@ -669,14 +704,14 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return summaryPanel;
    }
 
-   private JPanel createChannelsPanel() {
-      channelsPanel_ = createCheckBoxPanel("Channels");
-      channelsPanel_.setLayout(new MigLayout("fill, gap 2, insets 2",
+   private CheckBoxPanel createChannelsPanel() {
+      CheckBoxPanel channelsPanel = createCheckBoxPanel("Channels");
+      channelsPanel.setLayout(new MigLayout("fill, gap 2, insets 2",
                "[grow][]", "[][grow]"));
 
       final JLabel channelsLabel = new JLabel("Channel group:");
       channelsLabel.setFont(DEFAULT_FONT);
-      channelsPanel_.add(channelsLabel, "split, alignx label");
+      channelsPanel.add(channelsLabel, "split, alignx label");
 
       channelGroupCombo_ = new JComboBox<>();
       channelGroupCombo_.setFont(new Font("", Font.PLAIN, 10));
@@ -689,20 +724,18 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                mmStudio_.getAutofocusManager().refresh();
             }
          } else {
-            updateGroupsCombo();
+            updateGroupsCombo(); // NS 2021-05-6: not sure what this is needed for.
          }
       });
-      channelsPanel_.add(channelGroupCombo_, "alignx left");
+      channelsPanel.add(channelGroupCombo_, "alignx left");
 
       chanKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
       chanKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
       chanKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) -> applySettingsFromGUI());
       chanKeepShutterOpenCheckBox_.setSelected(false);
-      channelsPanel_.add(chanKeepShutterOpenCheckBox_, "gapleft push, wrap");
+      channelsPanel.add(chanKeepShutterOpenCheckBox_, "gapleft push, wrap");
 
-      channelTablePane_ = new JScrollPane();
-      channelTablePane_.setFont(DEFAULT_FONT);
-      channelsPanel_.add(channelTablePane_, "height 60:60:, grow");
+      channelsPanel.add(channelTablePane_, "height 60:60:, grow");
 
       // Slightly smaller than BUTTON_SIZE, and the gap matches the insets of
       // the panel.
@@ -717,7 +750,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          model_.addNewChannel();
          model_.fireTableStructureChanged();
       });
-      channelsPanel_.add(addButton, buttonConstraint + ", flowy, split, aligny top");
+      channelsPanel.add(addButton, buttonConstraint + ", flowy, split, aligny top");
 
       final JButton removeButton = new JButton("Remove");
       removeButton.setFont(DEFAULT_FONT);
@@ -734,7 +767,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             }
          }
       });
-      channelsPanel_.add(removeButton, buttonConstraint);
+      channelsPanel.add(removeButton, buttonConstraint);
 
       final JButton upButton = new JButton("Up");
       upButton.setFont(DEFAULT_FONT);
@@ -750,7 +783,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             channelTable_.setRowSelectionInterval(newSel, newSel);
          }
       });
-      channelsPanel_.add(upButton, buttonConstraint);
+      channelsPanel.add(upButton, buttonConstraint);
 
       final JButton downButton = new JButton("Down");
       downButton.setFont(DEFAULT_FONT);
@@ -767,10 +800,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             channelTable_.setRowSelectionInterval(newSel, newSel);
          }
       });
-      channelsPanel_.add(downButton, buttonConstraint);
+      channelsPanel.add(downButton, buttonConstraint);
 
-      channelsPanel_.addActionListener((ActionEvent e) -> applySettingsFromGUI());
-      return channelsPanel_;
+      channelsPanel.addActionListener((ActionEvent e) -> applySettingsFromGUI());
+      return channelsPanel;
    }
 
    private JComponent createCloseButton() {
@@ -830,6 +863,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       rootField_ = new JTextField();
       rootField_.setFont(DEFAULT_FONT);
+      rootField_.addFocusListener(focusListener_);
       savePanel_.add(rootField_);
 
       JButton browseRootButton = new JButton("...");
@@ -845,6 +879,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       nameField_ = new JTextField();
       nameField_.setFont(DEFAULT_FONT);
+      nameField_.addFocusListener(focusListener_);
+
       savePanel_.add(nameField_, "wrap");
 
       JLabel saveTypeLabel = new JLabel("Saving format:");
@@ -853,16 +889,20 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       singleButton_ = new JRadioButton("Separate image files");
       singleButton_.setFont(DEFAULT_FONT);
-      singleButton_.addActionListener((ActionEvent e) ->
-              DefaultDatastore.setPreferredSaveMode(mmStudio_,
-                           Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES));
+      singleButton_.addActionListener(e -> {
+         DefaultDatastore.setPreferredSaveMode(mmStudio_,
+               Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+         applySettingsFromGUI();
+      }  );
       savePanel_.add(singleButton_, "spanx, split");
 
       multiButton_ = new JRadioButton("Image stack file");
       multiButton_.setFont(DEFAULT_FONT);
-      multiButton_.addActionListener((ActionEvent e) ->
+      multiButton_.addActionListener(e -> {
               DefaultDatastore.setPreferredSaveMode(mmStudio_,
-                           Datastore.SaveMode.MULTIPAGE_TIFF));
+                           Datastore.SaveMode.MULTIPAGE_TIFF);
+         applySettingsFromGUI();
+      }  );
       savePanel_.add(multiButton_, "gapafter push");
 
       ButtonGroup buttonGroup = new ButtonGroup();
@@ -884,40 +924,26 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return savePanel_;
    }
 
-   private JPanel createCommentsPanel() {
+   private JPanel createCommentsPanel(JTextArea commentTextArea, FocusListener focusListener) {
       ComponentTitledPanel commentsPanel = createLabelPanel("Acquisition Comments");
       commentsPanel.setLayout(new MigLayout(PANEL_CONSTRAINT,
                "[grow, fill]", "[]"));
 
-      commentTextArea_ = new JTextArea();
-      commentTextArea_.setRows(4);
-      commentTextArea_.setFont(new Font("", Font.PLAIN, 10));
-      commentTextArea_.setToolTipText("Comment for the acquisition to be run");
-      commentTextArea_.setWrapStyleWord(true);
-      commentTextArea_.setLineWrap(true);
+      commentTextArea.setRows(4);
+      commentTextArea.setFont(new Font("", Font.PLAIN, 10));
+      commentTextArea.setToolTipText("Comment for the acquisition to be run");
+      commentTextArea.setWrapStyleWord(true);
+      commentTextArea.setLineWrap(true);
+      commentTextArea.addFocusListener(focusListener);
 
       JScrollPane commentScrollPane = new JScrollPane();
       commentScrollPane.setBorder(BorderFactory.createCompoundBorder(
                BorderFactory.createLoweredBevelBorder(),
                BorderFactory.createEtchedBorder()));
-      commentScrollPane.setViewportView(commentTextArea_);
+      commentScrollPane.setViewportView(commentTextArea);
 
       commentsPanel.add(commentScrollPane, "wmin 0, height pref!, span");
       return commentsPanel;
-   }
-
-   private void createToolTips() {
-      framesPanel_.setToolTipText("Acquire images over a repeating time interval");
-      positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
-      slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
-      acquisitionOrderPanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("Determine the precedence of different acquisition axes (time, slice, channel, and stage position). The rightmost axis will be cycled through most quickly, so e.g. \"Time, Channel\" means \"Collect all channels for each timepoint before going to the next timepoint\"."));
-
-      afPanel_.setToolTipText("Toggle autofocus on/off");
-      channelsPanel_.setToolTipText("Lets you acquire images in multiple channels (groups of "
-              + "properties with multiple preset values");
-      savePanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("Save images continuously to disk as the acquisition proceeds. If not enabled, then images will be stored in RAM and may be saved later."));
-
-
    }
 
    /**
@@ -930,8 +956,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                ((AcqOrderMode) (acqOrderBox_.getSelectedItem())).getExample());
       }
    }
-
-
 
    /** 
     * Called when a field's "value" property changes. 
@@ -1046,10 +1070,11 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (!seqString.isEmpty()) {
          return SequenceSettings.fromJSONStream(seqString);
       }
+      return (new SequenceSettings.Builder()).build();
 
       // the following is for backward compatibility (i.e. restoring old format settings)
       // Change introduced July 10, 2020, delete after July 2021?
-
+/*
       SequenceSettings.Builder ssb = new SequenceSettings.Builder();
 
       // load acquisition engine preferences
@@ -1094,6 +1119,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       ssb.shouldDisplayImages(settings_.getBoolean(SHOULD_HIDE_DISPLAY, false));
 
       return ssb.build();
+
+ */
    }
 
    /**
@@ -1103,12 +1130,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    public void updateGUIBlocking() {
       if (!SwingUtilities.isEventDispatchThread()) {
          try {
-            SwingUtilities.invokeAndWait(() -> {
-               updateGUIContents();
-            });
-         } catch (InterruptedException e) {
-            mmStudio_.logs().logError(e);
-         } catch (InvocationTargetException e) {
+            SwingUtilities.invokeAndWait(this::updateGUIContents);
+         } catch (InterruptedException | InvocationTargetException e) {
             mmStudio_.logs().logError(e);
          }
       }
@@ -1121,9 +1144,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    private void updateGUIFromSequenceSettings(final SequenceSettings sequenceSettings) {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            updateGUIFromSequenceSettings(sequenceSettings);
-         } );
+         SwingUtilities.invokeLater(() -> updateGUIFromSequenceSettings(sequenceSettings));
       }
       else {
          if (disableGUItoSettings_) {
@@ -1179,6 +1200,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          }
          // add correct acquisition order options
          int selectedIndex = sequenceSettings.acqOrderMode();
+         ActionListener[] actionListeners = acqOrderBox_.getActionListeners();
+         for (ActionListener al : actionListeners) {
+            acqOrderBox_.removeActionListener(al);
+         }
          acqOrderBox_.removeAllItems();
          if (framesPanel_.isSelected() && positionsPanel_.isSelected()
                  && slicesPanel_.isSelected() && channelsPanel_.isSelected()) {
@@ -1211,7 +1236,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             acqOrderBox_.addItem(acqOrderModes_[selectedIndex]);
          }
          acqOrderBox_.setSelectedItem(acqOrderModes_[sequenceSettings.acqOrderMode()]);
-
+         for (ActionListener al : actionListeners) {
+            acqOrderBox_.addActionListener(al);
+         }
          savePanel_.setSelected(sequenceSettings.save());
          nameField_.setText(sequenceSettings.prefix());
          rootField_.setText(sequenceSettings.root());
@@ -1242,9 +1269,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Subscribe
    public void onNewPositionList(NewPositionListEvent newPositionListEvent) {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            onNewPositionList(newPositionListEvent);
-         } );
+         SwingUtilities.invokeLater(() -> onNewPositionList(newPositionListEvent));
       }
       else {
          acqEng_.setPositionList(newPositionListEvent.getPositionList());
@@ -1260,7 +1285,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       // Save model column widths and order
       for (int k = 0; k < model_.getColumnCount(); k++) {
-         settings_.putInteger(ACQ_COLUMN_WIDTH + k, findTableColumn(channelTable_, k).getWidth());
+         TableColumn tableColumn = findTableColumn(channelTable_, k);
+         if (tableColumn != null) {
+            settings_.putInteger(ACQ_COLUMN_WIDTH + k, tableColumn.getWidth());
+         }
          settings_.putInteger(ACQ_COLUMN_ORDER + k, channelTable_.convertColumnIndexToView(k));
       }
    }
@@ -1269,7 +1297,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    // index in the model
    public TableColumn findTableColumn(JTable table, int columnModelIndex) {
       Enumeration<?> e = table.getColumnModel().getColumns();
-      for (; e.hasMoreElements();) {
+      while (e.hasMoreElements()) {
          TableColumn col = (TableColumn) e.nextElement();
          if (col.getModelIndex() == columnModelIndex) {
             return col;
@@ -1325,8 +1353,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    public void loadAcqSettingsFromFile(String path) throws IOException {
-      File acqFile_ = new File(path);
-      if (acqFile_ != null) {
+      if (new File(path).canRead()){
          final SequenceSettings settings = mmStudio_.acquisitions().loadSequenceSettings(path);
          try {
             GUIUtils.invokeAndWait(() -> acqEng_.setSequenceSettings(settings));
@@ -1335,8 +1362,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          } catch (InvocationTargetException e) {
             ReportingUtils.logError(e, "Error updating GUI");
          }
-      } else {
-         mmStudio_.logs().logError("Could not open acquisition settings file: " + path);
       }
    }
 
@@ -1357,10 +1382,11 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
     /**
-    * Asks acqEngine to estimate memory usage, so use this method only after
+    * Asks acqEngine to estimate memory usage. Use this method only after
     * settings have been send to acqEngine.
-    * Prompt the user if there may not be enough memory
-    * @return true if user chooses to cancel.
+    * Prompt the user if there may not be enough memory.
+     *
+    * @return true if user chooses to cancel after being prompted.
     */
    private boolean warnMemoryMayNotBeSufficient() {
       if (savePanel_.isSelected()) {
@@ -1385,8 +1411,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          Font font = label.getFont();
          // create some css from the label's font
          StringBuilder style = new StringBuilder("font-family:" + font.getFamily() + ";");
-         style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
-         style.append("font-size:" + font.getSize() + "pt;");
+         style.append("font-weight:").append(font.isBold() ? "bold" : "normal").append(";");
+         style.append("font-size:").append(font.getSize()).append("pt;");
          Color c = label.getForeground();
          style.append(("color:rgb(")).append(c.getRed()).append(",").
                  append(c.getGreen()).append(",").append(c.getBlue()).append(")");
@@ -1453,7 +1479,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          if (badChannels.size() > 0 && getShouldCheckExposureSanity()) {
             String channelString = (badChannels.size() == 1) ?
                String.format("the %s channel", badChannels.get(0)) :
-               String.format("these channels: %s", badChannels.toString());
+               String.format("these channels: %s", badChannels);
             String message = String.format("I found unusually long exposure times for %s. Are you sure you want to run this acquisition?",
                   channelString);
             JCheckBox neverAgain = new JCheckBox("Do not ask me again.");
@@ -1522,6 +1548,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
       disableGUItoSettings_ = true;
 
+      int editingRow = channelTable_.getEditingRow();
+      int editingColumn = channelTable_.getEditingColumn();
+
       AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
       if (ae != null) {
          ae.stopCellEditing();
@@ -1530,7 +1559,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       SequenceSettings.Builder ssb = new SequenceSettings.Builder();
 
       try {
-         ssb.acqOrderMode( ((AcqOrderMode) acqOrderBox_.getSelectedItem()).getID() );
+         if (acqOrderBox_.getSelectedItem() != null) {
+            ssb.acqOrderMode(((AcqOrderMode) acqOrderBox_.getSelectedItem()).getID());
+         }
 
          ssb.useFrames(framesPanel_.isSelected());
          ssb.numFrames ((Integer) numFrames_.getValue());
@@ -1566,7 +1597,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       ssb.save(savePanel_.isSelected());
 
       // avoid dangerous characters in the name that will be used as a directory name
-      String name = nameField_.getText().replaceAll("[/\\*!':]", "-");
+      String name = nameField_.getText().replaceAll("[/\\\\*!':]", "-");
       ssb.prefix(name.trim());
       ssb.root(rootField_.getText().trim());
 
@@ -1599,6 +1630,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       disableGUItoSettings_ = false;
       updateGUIContents();
+      channelTable_.editCellAt(editingRow, editingColumn, null);
    }
 
 
@@ -1633,7 +1665,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    private void zValCalcChanged() {
-      final boolean isEnabled = zValCombo_.getSelectedItem().equals(ABSOLUTE_Z);
+      final boolean isEnabled = Objects.equals(zValCombo_.getSelectedItem(), ABSOLUTE_Z);
       // HACK: push this to a later call; even though this method should only
       // be called from the EDT, for some reason if we do this action
       // immediately, then the buttons don't visually become disabled.
@@ -1685,7 +1717,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       summaryTextArea_.setText(acqEng_.getVerboseSummary());
    }
 
-   @SuppressWarnings("serial")
    public static class ComponentTitledPanel extends JPanel {
       public ComponentTitledBorder compTitledBorder;
       public boolean borderSet_ = false;
@@ -1728,8 +1759,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
-   @SuppressWarnings("serial")
-   public class LabelPanel extends ComponentTitledPanel {
+   public static class LabelPanel extends ComponentTitledPanel {
       LabelPanel(String title) {
          super();
          JLabel label = new JLabel(title);
@@ -1744,8 +1774,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    }
 
-   @SuppressWarnings("serial")
-   public class CheckBoxPanel extends ComponentTitledPanel {
+   public static class CheckBoxPanel extends ComponentTitledPanel {
 
       JCheckBox checkBox;
 
@@ -1776,7 +1805,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       public void setChildrenEnabled(boolean enabled) {
          Component[] comp = this.getComponents();
          for (Component comp1 : comp) {
-            if (comp1.getClass().equals(JPanel.class)) {
+            if (comp1.getClass() == JPanel.class) {
                Component[] subComp = ((JPanel) comp1).getComponents();
                for (Component subComp1 : subComp) {
                   subComp1.setEnabled(enabled);

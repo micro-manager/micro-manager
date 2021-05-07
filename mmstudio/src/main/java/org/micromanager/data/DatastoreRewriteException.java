@@ -24,4 +24,11 @@ package org.micromanager.data;
  * An unchecked exception thrown when an attempt is made to overwrite data in
  * a non-rewritable datastore.
  */
-public class DatastoreRewriteException extends UnsupportedOperationException {}
+public class DatastoreRewriteException extends UnsupportedOperationException {
+   public static final String ERROR_MESSAGE =
+           "An attempt was made to overwrite data in a non-rewriteable Datastore";
+
+   public DatastoreRewriteException() {
+      super(ERROR_MESSAGE);
+   }
+}

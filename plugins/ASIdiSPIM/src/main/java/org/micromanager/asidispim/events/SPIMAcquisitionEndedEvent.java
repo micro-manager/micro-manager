@@ -21,7 +21,7 @@
 package org.micromanager.asidispim.events;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.events.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
 
 /**
  *

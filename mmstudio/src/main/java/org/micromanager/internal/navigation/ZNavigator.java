@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.DefaultStagePositionChangedEvent;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +47,8 @@ public class ZNavigator {
       public ZStageTask(String stage) {
          stage_ = stage;
          moveMemory_ = new AtomicDouble(0.0);
-         executorService_ = Executors.newSingleThreadExecutor();
+         executorService_ = Executors.newSingleThreadExecutor(
+                 ThreadFactoryFactory.createThreadFactory("ZNavigator-" + stage ));
       }
 
       public void setPosition(double pos) {

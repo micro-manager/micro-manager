@@ -114,6 +114,7 @@ public final class StatsComputeQueue {
       computeExecutor_.shutdown();
       bypassExecutor_.shutdown();
       resultExecutor_.shutdown();
+      perfMon_ = null;
    }
 
    public synchronized void submitRequest(ImageStatsRequest request) {

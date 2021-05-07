@@ -21,17 +21,17 @@
 package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.data.RewritableStorage;
+import org.micromanager.data.SummaryMetadata;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import org.micromanager.data.Coords;
-import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
-import org.micromanager.data.RewritableStorage;
-import org.micromanager.data.SummaryMetadata;
-import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 
 /**
  * Simple RAM-based storage for Datastores. Methods that interact with the
@@ -49,7 +49,7 @@ public final class StorageRAM implements RewritableStorage {
    private SummaryMetadata summaryMetadata_;
 
    public StorageRAM(Datastore store) {
-      coordsToImage_ = new HashMap<Coords, Image>();
+      coordsToImage_ = new HashMap<>();
       maxIndex_ = new DefaultCoords.Builder().build();
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
       // It is imperative that we be notified of new images before anyone who
@@ -62,6 +62,10 @@ public final class StorageRAM implements RewritableStorage {
     */
    @Override
    public synchronized void putImage(Image image) {
+      Image imageExisting = getAnyImage();
+      if (imageExisting != null) {
+         ImageSizeChecker.checkImageSizes(image, imageExisting);
+      }
       Coords coords = image.getCoords();
       coordsToImage_.put(coords, image);
       for (String axis : coords.getAxes()) {
@@ -92,7 +96,7 @@ public final class StorageRAM implements RewritableStorage {
    @Override
    public synchronized Image getAnyImage() {
       if (coordsToImage_ != null && coordsToImage_.size() > 0) {
-         Coords coords = new ArrayList<Coords>(coordsToImage_.keySet()).get(0);
+         Coords coords = new ArrayList<>(coordsToImage_.keySet()).get(0);
          return coordsToImage_.get(coords);
       }
       return null;

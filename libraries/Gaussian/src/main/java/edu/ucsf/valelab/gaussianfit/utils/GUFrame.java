@@ -32,19 +32,18 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
 import javax.swing.JFrame;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 
 
 /**
- * Base class for frame windows.
- * Saves and restores window size and position. 
- * Shamelessly copied from Micro-Manager MMFrame
- * Included here so that the plugin does not become dependent on Micro-Manager
+ * Base class for frame windows. Saves and restores window size and position. Shamelessly copied
+ * from Micro-Manager MMFrame Included here so that the plugin does not become dependent on
+ * Micro-Manager
  */
 public class GUFrame extends JFrame {
+
    private static final long serialVersionUID = 1L;
    private final String prefPrefix_;
    private final Class<?> caller_;
@@ -53,7 +52,7 @@ public class GUFrame extends JFrame {
    private static final String WINDOW_Y = "frame_y";
    private static final String WINDOW_WIDTH = "frame_width";
    private static final String WINDOW_HEIGHT = "frame_height";
-   
+
    public GUFrame(Studio studio, Class<?> caller) {
       super();
       caller_ = caller;
@@ -69,18 +68,18 @@ public class GUFrame extends JFrame {
    }
 
    /**
-    * Checks whether WINDOW_X and WINDOW_Y coordinates are on the screen(s).
-    * If not then it sets the prefs to the values specified.
-    * Accounts for screen size changes between invocations or if screen
-    * is removed (e.g. had 2 monitors and go to 1).
-    * TODO: this code is duplicated between here and MMDialog.
+    * Checks whether WINDOW_X and WINDOW_Y coordinates are on the screen(s). If not then it sets the
+    * prefs to the values specified. Accounts for screen size changes between invocations or if
+    * screen is removed (e.g. had 2 monitors and go to 1). TODO: this code is duplicated between
+    * here and MMDialog.
+    *
     * @param x new WINDOW_X position if current value isn't valid
     * @param y new WINDOW_Y position if current value isn't valid
     */
    private void ensureSafeWindowPosition(int x, int y) {
       UserProfile up = studio_.profile();
       int prefX = up.getInt(caller_, prefPrefix_ + WINDOW_X, 0);
-      int prefY =up.getInt(caller_, prefPrefix_ + WINDOW_Y, 0);
+      int prefY = up.getInt(caller_, prefPrefix_ + WINDOW_Y, 0);
       if (getGraphicsConfigurationContaining(prefX, prefY) == null) {
          // only reach this code if the pref coordinates are off screen
          up.setInt(caller_, prefPrefix_ + WINDOW_X, x);
@@ -90,92 +89,95 @@ public class GUFrame extends JFrame {
 
    public void loadPosition(int x, int y, int width, int height) {
       UserProfile up = studio_.profile();
-      if (up == null)
+      if (up == null) {
          return;
+      }
 
       ensureSafeWindowPosition(x, y);
       setBounds(up.getInt(caller_, prefPrefix_ + WINDOW_X, x),
-                up.getInt(caller_, prefPrefix_ + WINDOW_Y, y),
-                up.getInt(caller_, prefPrefix_ + WINDOW_WIDTH, width),
-                up.getInt(caller_, prefPrefix_ + WINDOW_HEIGHT, height));
+            up.getInt(caller_, prefPrefix_ + WINDOW_Y, y),
+            up.getInt(caller_, prefPrefix_ + WINDOW_WIDTH, width),
+            up.getInt(caller_, prefPrefix_ + WINDOW_HEIGHT, height));
    }
 
    public void loadPosition(int x, int y) {
       UserProfile up = studio_.profile();
-      if (up == null)
+      if (up == null) {
          return;
-      
+      }
+
       ensureSafeWindowPosition(x, y);
       setBounds(up.getInt(caller_, prefPrefix_ + WINDOW_X, x),
-                up.getInt(caller_, prefPrefix_ + WINDOW_Y, y),
-                getWidth(),
-                getHeight());
+            up.getInt(caller_, prefPrefix_ + WINDOW_Y, y),
+            getWidth(),
+            getHeight());
    }
-   
-   
-    /**
-    * Load window position and size from preferences if possible.
-    * If not possible then sets them from arguments
-    * Attaches a listener to the window that will save the position when the
-    * window closing event is received
-    * @param x - X position of this dialog if preference value invalid
-    * @param y - y position of this dialog if preference value invalid
-    * @param width - width of this dialog if preference value invalid
+
+
+   /**
+    * Load window position and size from preferences if possible. If not possible then sets them
+    * from arguments Attaches a listener to the window that will save the position when the window
+    * closing event is received
+    *
+    * @param x      - X position of this dialog if preference value invalid
+    * @param y      - y position of this dialog if preference value invalid
+    * @param width  - width of this dialog if preference value invalid
     * @param height - height of this dialog if preference value invalid
     */
    protected void loadAndRestorePosition(int x, int y, int width, int height) {
       loadPosition(x, y, width, height);
       this.addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            savePosition();
-         }
-      }
+                                @Override
+                                public void windowClosing(WindowEvent arg0) {
+                                   savePosition();
+                                }
+                             }
       );
    }
-   
-    /**
-    * Load window position and size from preferences if possible.
-    * If not possible then sets it from arguments
-    * Attaches a listener to the window that will save the position when the
-    * window closing event is received
+
+   /**
+    * Load window position and size from preferences if possible. If not possible then sets it from
+    * arguments Attaches a listener to the window that will save the position when the window
+    * closing event is received
+    *
     * @param x - X position of this dialog if preference value invalid
     * @param y - y position of this dialog if preference value invalid
     */
    protected void loadAndRestorePosition(int x, int y) {
       loadPosition(x, y);
       this.addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            savePosition();
-         }
-      }
+                                @Override
+                                public void windowClosing(WindowEvent arg0) {
+                                   savePosition();
+                                }
+                             }
       );
    }
-   
+
 
    public void savePosition() {
       UserProfile up = studio_.profile();
-      if (up == null)
+      if (up == null) {
          return;
-      
+      }
+
       Rectangle r = getBounds();
-      
+
       // save window position
       up.setInt(caller_, prefPrefix_ + WINDOW_X, r.x);
       up.setInt(caller_, prefPrefix_ + WINDOW_Y, r.y);
       up.setInt(caller_, prefPrefix_ + WINDOW_WIDTH, r.width);
       up.setInt(caller_, prefPrefix_ + WINDOW_HEIGHT, r.height);
    }
-   
-         
+
+
    @Override
    public void dispose() {
       savePosition();
       super.dispose();
    }
 
-  
+
    public static GraphicsConfiguration getGraphicsConfigurationContaining(
          int x, int y) {
       GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -191,6 +193,6 @@ public class GUFrame extends JFrame {
       }
       return null;
    }
-   
+
 }
 

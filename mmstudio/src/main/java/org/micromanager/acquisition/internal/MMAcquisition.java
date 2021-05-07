@@ -25,6 +25,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.RememberedDisplaySettings;
-import org.micromanager.events.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -314,7 +315,7 @@ public final class MMAcquisition extends DataViewerListener {
                        studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
             }
             display_.removeListener(this);
-            display_.unregisterForEvents(this);
+            display_ = null;
          }
       }
       return result;
@@ -330,6 +331,8 @@ public final class MMAcquisition extends DataViewerListener {
    private static class SubscribedButton extends JButton {
 
       private static final long serialVersionUID = -4447256100740272458L;
+      private final Studio studio_;
+
       /**
        * Create a SubscribedButton and subscribe it to the relevant event
        * buses.
@@ -338,11 +341,8 @@ public final class MMAcquisition extends DataViewerListener {
             final ImageIcon icon, final DisplayWindow display) {
          SubscribedButton result = new SubscribedButton(studio, icon);
          studio.events().registerForEvents(result);
-         display.registerForEvents(result);
          return result;
       }
-
-      private final Studio studio_;
 
       public SubscribedButton(Studio studio, ImageIcon icon) {
          super(icon);
@@ -353,6 +353,11 @@ public final class MMAcquisition extends DataViewerListener {
       public void onAcquisitionEnded(AcquisitionEndedEvent e) {
          if (studio_.acquisitions().isOurAcquisition(e.getSource())) {
             setEnabled(false);
+            studio_.events().unregisterForEvents(this);
+            this.removeAll();
+            for (ActionListener al : this.getActionListeners()) {
+               this.removeActionListener(al);
+            }
          }
       }
    }
@@ -417,21 +422,26 @@ public final class MMAcquisition extends DataViewerListener {
             nextImageAlert_.dismiss();
          }
       }
+
       try {
          store_.freeze();
       }
       catch (IOException e) {
          ReportingUtils.logError(e);
       }
-      if (display_ .getDisplaySettings() instanceof DefaultDisplaySettings) {
-         if (store_.getSavePath() != null) {
-            ( (DefaultDisplaySettings) display_.getDisplaySettings() ).
-                    save(store_.getSavePath());
+      if (show_ && display_ != null) {
+         if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
+            if (store_.getSavePath() != null) {
+               ((DefaultDisplaySettings) display_.getDisplaySettings()).
+                       save(store_.getSavePath());
+            }
+            // save display settings to profile
+            ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
+                    studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
-         // save display settings to profile
-         ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
-               studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         display_.unregisterForEvents(this);
       }
+      store_.unregisterForEvents(this);
       studio_.events().unregisterForEvents(this);
       new Thread(() -> {
          try {

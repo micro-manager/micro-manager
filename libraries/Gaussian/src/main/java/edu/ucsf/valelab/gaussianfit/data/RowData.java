@@ -266,7 +266,7 @@ public class RowData {
          }
          List<Integer> channelList = new ArrayList<Integer>();
          for (SpotData spot : spotList_) {
-            if (!channelList.contains(spot.getChannel()) ) {
+            if (!channelList.contains(spot.getChannel())) {
                channelList.add(spot.getChannel());
             }
          }
@@ -274,9 +274,9 @@ public class RowData {
             tmpChannelStr += i + ", ";
          }
          tmpChannelStr = tmpChannelStr.substring(0, tmpChannelStr.length() - 2);
-         
+
       }
-      channels_ = tmpChannelStr;   
+      channels_ = tmpChannelStr;
       stdX_ = stdX;
       stdY_ = stdY;
       std_ = std;
@@ -288,17 +288,17 @@ public class RowData {
    public RowData.Builder copy() {
       RowData.Builder builder = new Builder();
       builder.setName(name_).setTitle(title_).setDisplayWindow(dw_).
-              setColColorRef(colCorrRef_).setWidth(width_).setHeight(height_).
-              setPixelSizeNm(pixelSizeNm_).setZStackStepSizeNm(zStackStepSizeNm_).
-              setShape(shape_).setHalfSize(halfSize_).setNrChannels(nrChannels_).
-              setNrFrames(nrFrames_).setNrSlices(nrSlices_).
-              setNrPositions(nrPositions_).setMaxNrSpots(maxNrSpots_).
-              setSpotList(spotList_).setTimePoints(timePoints_).
-              setIsTrack(isTrack_).setCoordinate(coordinate_).setHasZ(hasZ_).
-              setMinZ(minZ_).setMaxZ(maxZ_);
+            setColColorRef(colCorrRef_).setWidth(width_).setHeight(height_).
+            setPixelSizeNm(pixelSizeNm_).setZStackStepSizeNm(zStackStepSizeNm_).
+            setShape(shape_).setHalfSize(halfSize_).setNrChannels(nrChannels_).
+            setNrFrames(nrFrames_).setNrSlices(nrSlices_).
+            setNrPositions(nrPositions_).setMaxNrSpots(maxNrSpots_).
+            setSpotList(spotList_).setTimePoints(timePoints_).
+            setIsTrack(isTrack_).setCoordinate(coordinate_).setHasZ(hasZ_).
+            setMinZ(minZ_).setMaxZ(maxZ_);
       return builder;
    }
-   
+
    /**
     * Populates the list frameIndexSpotList which gives access to spots by frame
     */
@@ -323,21 +323,21 @@ public class RowData {
          frameIndexSpotList_.get(frameIndex).add(spot);
 
          ImageIndex ii = new ImageIndex(spot.getFrame(), spot.getSlice(),
-                 spot.getChannel(), spot.getPosition());
+               spot.getChannel(), spot.getPosition());
          if (indexedSpotList_.get(ii) == null) {
             indexedSpotList_.put(ii, new ArrayList<SpotData>());
          }
          indexedSpotList_.get(ii).add(spot);
       }
    }
-   
-   public Map<Integer, List<SpotData>> getSpotListIndexedByFrame () {
+
+   public Map<Integer, List<SpotData>> getSpotListIndexedByFrame() {
       if (frameIndexSpotList_ == null) {
          index();
       }
       return frameIndexSpotList_;
    }
-           
+
 
    public List<SpotData> get(int frame, int slice, int channel, int position) {
       ImageIndex ii = new ImageIndex(frame, slice, channel, position);
@@ -348,31 +348,30 @@ public class RowData {
    }
 
    /**
-    * Return the first spot with desired properties or null if not found Uses
-    * brute force method (because I got null pointer exceptions using the
-    * indexes
+    * Return the first spot with desired properties or null if not found Uses brute force method
+    * (because I got null pointer exceptions using the indexes
     *
-    * @param frame in which the desired spot is located
+    * @param frame   in which the desired spot is located
     * @param channel in which the desired spot is located
-    * @param xPos of the desired spot
-    * @param yPos of the desired spot
+    * @param xPos    of the desired spot
+    * @param yPos    of the desired spot
     * @return desired spot or null if not found
     */
    public SpotData get(int frame, int channel, double xPos, double yPos) {
       for (SpotData spot : spotList_) {
          if (spot.getFrame() == frame && spot.getChannel() == channel
-                 && spot.getXCenter() == xPos && spot.getYCenter() == yPos) {
+               && spot.getXCenter() == xPos && spot.getYCenter() == yPos) {
             return spot;
          }
       }
 
       return null;
    }
-   
+
    public String getName() {
       return name_;
    }
-   
+
    public void setName(String name) {
       name_ = name;
    }
@@ -381,7 +380,7 @@ public class RowData {
       boolean useS = false;
       if (timePoints_ != null) {
          if (timePoints_.get(timePoints_.size() - 1)
-                 - timePoints_.get(0) > 10000) {
+               - timePoints_.get(0) > 10000) {
             useS = true;
          }
       }
@@ -392,7 +391,7 @@ public class RowData {
       boolean hasTimeInfo = false;
       if (timePoints_ != null) {
          if (timePoints_.get(timePoints_.size() - 1)
-                 - timePoints_.get(0) > 0) {
+               - timePoints_.get(0) > 0) {
             hasTimeInfo = true;
          }
       }

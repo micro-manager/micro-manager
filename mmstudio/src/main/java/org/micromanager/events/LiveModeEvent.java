@@ -21,7 +21,10 @@
 package org.micromanager.events;
 
 /**
- * This class is used to signify that live mode has been turned on or off.
+ * This class signals that live mode has been turned on or off.
+ *
+ * The default implementation of this event is posted on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.
  */
 public interface LiveModeEvent {
    /**
@@ -31,6 +34,11 @@ public interface LiveModeEvent {
     */
    boolean isOn();
 
+   /**
+    * @return true if live mode has been turned on, false if it has been turned
+    *            off.
+    * @deprecated use {@link #isOn()} instead.
+    */
    @Deprecated
    default boolean getIsOn() {
       return isOn();

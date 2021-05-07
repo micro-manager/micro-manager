@@ -20,10 +20,15 @@
 
 package org.micromanager.events;
 
+import org.micromanager.MMEvent;
+
 /**
- * This class signals when any XY stage is moved.
+ * This class signals when any XY stage changes position.
+ *
+ * The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.
  */
-public interface XYStagePositionChangedEvent {
+public interface XYStagePositionChangedEvent extends MMEvent {
 
 
    /**
@@ -33,13 +38,11 @@ public interface XYStagePositionChangedEvent {
    String getDeviceName();
 
    /**
-    *
     * @return New X position of the stage in microns
     */
    double getXPos();
 
    /**
-    *
     * @return New Y position of the stage in microns
     */
    double getYPos();
