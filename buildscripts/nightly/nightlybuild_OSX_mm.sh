@@ -96,8 +96,6 @@ fi
 # It looks like both libusb-1.0 and libusb-compat fail to include IOKit and
 # CoreFoundation in their respective .la files.
 
-# TODO Python: use Python.org version
-
 if [ "$print_config_only" = yes ]; then
    EVAL="eval printf '\"%s\" '"
 else
@@ -119,7 +117,6 @@ $EVAL ./configure \
    --with-opencv \
    --with-gphoto2 \
    --with-freeimageplus \
-   --with-python=/usr \
    $MM_CONFIGUREFLAGS \
    "JAVA_HOME=\"/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home\"" \
    "JNI_CPPFLAGS=\"-I/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home/include -I/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home/include/darwin\"" \

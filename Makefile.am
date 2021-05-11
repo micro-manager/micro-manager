@@ -23,10 +23,6 @@ ANTEXTENSIONS = buildscripts/AntExtensions
 MMCOREJ_DIR = mmCoreAndDevices/MMCoreJ_wrap
 endif
 
-if BUILD_MMCOREPY
-MMCOREPY_DIR = mmCoreAndDevices/MMCorePy_wrap
-endif
-
 if BUILD_SECRETDEVICEADAPTERS
 SECRETDEVICEADAPTERS = mmCoreAndDevices/SecretDeviceAdapters
 endif
@@ -136,7 +132,6 @@ SUBDIRS = \
 	mmCoreAndDevices/MMDevice \
 	$(MMCORE_DIR) \
 	$(MMCOREJ_DIR) \
-	$(MMCOREPY_DIR) \
 	$(JAVA_APP_DIRS) \
 	mmCoreAndDevices/DeviceAdapters \
 	$(SECRETDEVICEADAPTERS) \

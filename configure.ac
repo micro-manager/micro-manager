@@ -43,7 +43,7 @@ can_build_mmcore=yes
 
 
 ##
-## MMCoreJ and MMCorePy
+## MMCoreJ
 ##
 
 # Define a shell variable based on the earlier m4_define
@@ -186,53 +186,8 @@ fi
 AC_SUBST([MMCOREJ_LIBRARY_PATH])
 
 
-# Python and NumPy
-MM_ARG_WITH_PYTHON
-AS_IF([test "x$want_python" != xno],
-[
-   AS_IF([test -n "$PYTHON_PREFIX"],
-   [
-      # Be lenient if user gives --with-python=bindir instead of
-      # --with-python=prefix.
-      MM_PROG_PYTHON([$PYTHON_PREFIX/bin $PYTHON_PREFIX])
-   ],
-   [
-      MM_PROG_PYTHON
-   ])
-
-   have_python=no
-   AS_IF([test -n "$PYTHON"],
-   [
-      MM_HEADERS_PYTHON(
-      [
-         MM_HEADERS_NUMPY([have_python=yes])
-      ])
-   ])
-
-   AS_IF([test "x$want_python" = xyes],
-   [
-      AS_IF([test "x$have_python" = xno],
-      [
-         AC_MSG_FAILURE([--with-python was given, but test for Python and NumPy failed])
-      ])
-   ])
-   use_python=$have_python
-],
-[
-   use_python=no
-])
-
-
-build_mmcorepy=yes
-test "x$use_python" = xno && { build_mmcorepy=no; nobuild_mmcorepy_reason="(Python not available)"; }
-test -z "$SWIG" && { build_mmcorepy=no; nobuild_mmcorepy_reason="(SWIG not available)"; }
-test "x$can_build_mmcore" = xno && { build_mmcorepy=no; nobuild_mmcorepy_reason="(cannot build MMCore)"; }
-AM_CONDITIONAL([BUILD_MMCOREPY], [test "x$build_mmcorepy" = xyes])
-
-
 build_mmcore=no
 test "x$build_mmcorej" = xyes && build_mmcore=yes
-test "x$build_mmcorepy" = xyes && build_mmcore=yes
 AM_CONDITIONAL([BUILD_MMCORE], [test "x$build_mmcore" = xyes])
 
 
@@ -380,7 +335,6 @@ AC_CONFIG_FILES(m4_strip([
    ]MM_CPP_DIR[/MMCore/Makefile
    ]MM_CPP_DIR[/MMCore/unittest/Makefile
    ]MM_CPP_DIR[/MMCoreJ_wrap/Makefile
-   ]MM_CPP_DIR[/MMCorePy_wrap/Makefile
    mmstudio/Makefile
    acqEngine/Makefile
    libraries/Makefile
@@ -410,15 +364,7 @@ fi
 echo ""
 fi
 
-if test "x$use_python" = xyes; then
-echo "   PYTHON          = $PYTHON"
-echo "   PYTHON_CPPFLAGS = $PYTHON_CPPFLAGS"
-echo "   NUMPY_CPPFLAGS  = $NUMPY_CPPFLAGS"
-echo ""
-fi
-
 echo "   Build MMCoreJ (MMCore Java wrapper):    $build_mmcorej $nobuild_mmcorej_reason"
-echo "   Build MMCorePy (MMCore Python wrapper): $build_mmcorepy $nobuild_mmcorepy_reason"
 echo "   Build Java application (MMStudio):      $build_java_app $nobuild_java_app_reason"
 echo "   Build device adapters:                  yes"
 echo "   Build closed-source device adapters:    $build_secretdeviceadapters"

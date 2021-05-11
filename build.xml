@@ -77,13 +77,6 @@
 			<filelist dir="${mm.cpp.outdir}" files="MMCoreJ_wrap.dll"/>
 		</copy>
 
-		<!-- MMCorePy files -->
-		<!-- For staging purposes, MMCorePy is optional -->
-		<copy todir="${mm.installdir}" failonerror="${mm.build.failonerror}">
-			<filelist dir="${mm.cpp.outdir}" files="_MMCorePy.pyd"/>
-			<filelist dir="${mm.swig.pysrcdir}" files="MMCorePy.py"/>
-		</copy>
-
 		<!-- Files to distribute as is -->
 		<if>
 			<istrue value="${mm.build.for.imagej2updater}"/>
@@ -202,8 +195,6 @@
 		     target using MSBuild doesn't seem to delete these. -->
 		<delete file="${mm.cpp.srcdir}/MMCoreJ_wrap/MMCoreJ_wrap.cpp"/>
 		<delete file="${mm.cpp.srcdir}/MMCoreJ_wrap/MMCoreJ_wrap.h"/>
-		<delete file="${mm.cpp.srcdir}/MMCorePy_wrap/MMCorePy_wrap.cpp"/>
-		<delete file="${mm.cpp.srcdir}/MMCorePy_wrap/MMCorePy_wrap.h"/>
 		<delete dir="${mm.basedir}/build/intermediates/Swig"/>
 	</target>
 

@@ -118,6 +118,11 @@ Type: files; Name: "{app}\mmplugins\Image_Processing\ImageFlipper.jar"
 Type: files; Name: "{app}\mmplugins\Image_Processing\MultiChannelShading.jar"
 Type: files; Name: "{app}\mmplugins\Image_Processing\SplitView.jar"
 
+; Python wrapper (now distributed separately as pymmcore)
+Type: files; Name: "{app}\_MMCorePy.pyd"
+Type: files; Name: "{app}\MMCorePy.py"
+Type: files; Name: "{app}\MMCoreWrapDemo.py"
+
 ; Renamed to NewportCONEX
 Type: files; Name: "{app}\mmgr_dal_CONEX.dll"
 
@@ -154,11 +159,6 @@ Source: {#MMStageDir}\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 
 ; Configuration files
 Source: {#MMStageDir}\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
-
-; Python wrapper
-Source: {#MMStageDir}\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\MMCorePy.py; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion
 
 ; MATLAB utility script
 Source: {#MMStageDir}\StartMMStudio.m; DestDir: {app}; Flags: ignoreversion
