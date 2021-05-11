@@ -38,7 +38,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#define KAMLIBVERSION           255
+#define KAMLIBVERSION           300
 #pragma once
 
 #define WM_CHANGE_CAMERAVALUES WM_APP + 200
@@ -53,6 +53,7 @@
 #define SOURCE_IS_CAMWARE_VIEW          4
 #define SOURCE_IS_OUTPUTWND             5
 #define SOURCE_IS_RECORDER_SETTINGS     6
+#define SOURCE_IS_DICAMC4COMMONWND      7
 
 #define CAMERA_CP_MASK                  0x800000FF
 #define CAMERA_CP_ACTIVE_SET_NAME       0x80000001
@@ -66,6 +67,8 @@
 
 #define CAMERA_CP_SET_PARAM_ONLY        0x00000100 // Set the parameters without transfer to camera
 #define CAMERA_CP_AVOID_DIALOG_SWITCH   0x00000200 // Avoid switching of dialogs due to fast switch back and forth
+#define CAMERA_CP_SET_COMMON            0x00000400 // Transfer setting to other cameras too, as we have common setting
+#define CAMERA_CP_KEEP_ACTIVE_CAMERA    0x00000800 // Do not switch current active camera to other one
 
 //#define CAMERA_GENERAL_MASK             0xF0000000
 #define CAMERA_GROUP_MASK               0xFF00
@@ -83,6 +86,8 @@
 #define CAMERA_TIMING_MODULATE_MON_OFFS 0x0008
 #define CAMERA_TIMING_SYNCH_MODE        0x0009
 #define CAMERA_TIMING_FPS               0x000A
+
+#define CAMERA_TIMING_INTENS_LOOPCOUNT  0x000D
 
 #define CAMERA_SENSOR                   0x0200
 #define CAMERA_SENSOR_BIN_HORZ          0x0001
@@ -119,6 +124,10 @@
 #define CAMERA_HWIO                     0x0700
 #define CAMERA_HWIO_SIGNALS             0x0001
 
+#define CAMERA_MCP                      0x0800
+#define CAMERA_MCP_PHOSPHOR_DECAY       0x0001
+#define CAMERA_MCP_VOLTAGE              0x0002
+#define CAMERA_MCP_GATING_MODE          0x0003
 
 #define CAMERA_DETAIL_MASK              0x0FF00000
 #define CAMERA_DETAIL_TO_INDEX(det)     (det >> 20)
@@ -143,6 +152,8 @@
 #define CAMERA_DETAIL_INDEX_6           0x60000000
 #define CAMERA_DETAIL_INDEX_7           0x70000000
 #define CAMERA_DETAIL_INDEX_8           0x80000000
+#define CAMERA_DETAIL_INDEX_9           0x90000000
+#define CAMERA_DETAIL_INDEX_10          0xA0000000
 
 #define FAN_LED_IS_POSSIBLE 0x00000001
 #define FAN_IS_POSSIBLE     0x00000002
@@ -156,9 +167,9 @@ typedef unsigned long dword;    /* 32-bit */
 //#define NOTINIT -1
 #define TIMEOUT -2
 
-#define PCO_ERRT_H_CREATE_OBJECT
-#include "PCO_err.h"
-#include "PCO_errt.h"
+//#define PCO_ERRT_H_CREATE_OBJECT
+//#include "PCO_err.h"
+//#include "PCO_errt.h"
 #include "sc2_SDKStructures.h"
 #include "sc2_defs.h"
 
@@ -211,7 +222,7 @@ public:
   int PreInitSen(int numbersi, int iCamCnt, unsigned int *uiResult);
   int PreInitPcCam(int numberpf, int iCamCnt, unsigned int *uiResult);
   int PreInitSC2(int numbersc2, int iCamCnt, unsigned int *uiResult);
-
+  HANDLE GetCameraHandle();
 
   void SetDemoMode(bool bd, int iDemoXRes, int iDemoYRes, int iDemoCol, int iDemoDS,
     int iDemoModeBitRes, int iDemoModeAlign);
@@ -266,8 +277,8 @@ public:
 
   PCO_Camera m_strCamera;
   int m_iNumActiveSet;
-  int LoadSettingsFromRegistryMM(int iSetNum, std::string &csSetName, PCO_Camera &strCamera);
-  int WriteSettingsToRegistryMM(int iSetNum, std::string &csSetName, PCO_Camera &strCamera);
+  int LoadSettingsFromRegistryMM(int iSetNum, char* csSetName, int ilen, PCO_Camera &strCamera);
+  int WriteSettingsToRegistryMM(int iSetNum, char* csSetName, PCO_Camera &strCamera);
 
 public:
   int DeleteSettingsFromRegistry(int iSetNum);

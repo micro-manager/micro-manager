@@ -39,7 +39,7 @@
 #error Missing current pco library (in camera.h). Please copy pco lib into correct library/include folder.
 #endif
 
-#define KAMLIBVERSION_MM 255  // Will be incremented by pco when a new Kamlib is present (do not change)
+#define KAMLIBVERSION_MM 300  // Will be incremented by pco when a new Kamlib is present (do not change)
 #if KAMLIBVERSION != KAMLIBVERSION_MM
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
@@ -121,8 +121,7 @@ public:
   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int OnEMLeftROI(MM::PropertyBase* pProp, MM::ActionType eAct);
+
   int OnDemoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnTimestampMode( MM::PropertyBase* pProp, MM::ActionType eAct );
   int OnDoubleShutterMode( MM::PropertyBase* pProp, MM::ActionType eAct );
@@ -164,6 +163,7 @@ public:
   int OnFanControl(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnFanSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnLEDControl(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnDoDotPhoton(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
   int ResizeImageBuffer();
@@ -173,6 +173,12 @@ private:
   int GetSignalNum(std::string szSigName);
   int CheckLineTime(DWORD *ptime);
 
+  bool m_bDotPhotonFilterAvailable;
+  bool m_bDoDotPhoton;
+  int InitDotPhoton();
+  int UnInitDotPhoton();
+  int InitDotPhotonCamera(HANDLE hcamera);
+  int CalcImageDotphoton(WORD* pb16, int iImageSize, HANDLE hCam);
 
   class SequenceThread : public MMDeviceThreadBase
   {
@@ -263,7 +269,6 @@ private:
   int m_nSubMode;
   int m_nMode;
   int m_nTrig;
-  int m_iXRes, m_iYRes;
   int m_iWidth, m_iHeight, m_iBytesPerPixel;
   int m_nRoiXMax;
   int m_nRoiXMin;

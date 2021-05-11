@@ -165,9 +165,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DotPhoton.cpp" />
     <ClCompile Include="MicroManager.cpp" />
+    <ClCompile Include="MMFanLed.cpp" />
+    <ClCompile Include="MMFlim.cpp" />
+    <ClCompile Include="MMHWio.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dp_status.h" />
     <ClInclude Include="MicroManager.h" />
   </ItemGroup>
   <ItemGroup>
