@@ -64,9 +64,6 @@ or 1.7 should work well. (For JDK versions, 1.x is the same as x.)
 
 Building the Java components also requires Apache Ant (pre-installed on OS X).
 
-To build MMCorePy, you will need Python and Numpy. Recent versions of either
-Python 2 or Python 3 should work.
-
 Many Linux distributions split library packages into runtimes and development
 files. If you are using such a distribution, make sure to get the packages
 with the `-dev` suffix.
@@ -188,10 +185,10 @@ following.
 
 #### Specifying where to find external packages
 
-As a general rule, the `--with-foo` flags to `configure` (e.g.
-`--with-python=PREFIX`) will try to autodetect the package, whereas the
-capitalized variables listed at the end of `./configure --help` (e.g. `PYTHON`)
-will override any automatic detection and be used unmodified.
+As a general rule, the `--with-foo` flags to `configure` will try to autodetect
+the package, whereas the all-caps variables (`FOO`) listed at the end of
+`./configure --help` will override any automatic detection and be used
+unmodified.
 
 
 #### Failing to fetch on Ubuntu 18.04 and newer
