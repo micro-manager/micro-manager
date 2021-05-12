@@ -16,6 +16,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //CVS:          $Id$
 //
+
 package org.micromanager.acquisition.internal;
 
 import com.google.common.base.Charsets;
@@ -56,12 +57,20 @@ import org.micromanager.internal.utils.MMException;
  */
 public final class DefaultAcquisitionManager implements AcquisitionManager {
    // NOTE: should match the format used by the acquisition engine.
-   private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
+   private static final SimpleDateFormat DATE_FORMATTER =
+         new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
 
    private final Studio studio_;
    private final AcquisitionWrapperEngine engine_;
    private final AcqControlDlg mdaDialog_;
 
+   /**
+    * Constructor only sets essential member values.
+    *
+    * @param studio Implementation of Studio
+    * @param engine Implementation of the acquisition engine.
+    * @param mdaDialog The MDA dialog.
+    */
    public DefaultAcquisitionManager(Studio studio,
          AcquisitionWrapperEngine engine, AcqControlDlg mdaDialog) {
       studio_ = studio;
@@ -80,11 +89,6 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
    }
 
    @Override
-   public Datastore runAcquisition() throws IllegalThreadStateException {
-      return executeAcquisition(null, true);
-   }
-
-   @Override
    public Datastore runAcquisitionNonblocking() throws IllegalThreadStateException {
       return executeAcquisition(null, false);
    }
@@ -95,7 +99,8 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       return executeAcquisition(settings, shouldBlock);
    }
 
-   private Datastore executeAcquisition(SequenceSettings settings, boolean isBlocking) throws IllegalThreadStateException {
+   private Datastore executeAcquisition(SequenceSettings settings, boolean isBlocking)
+         throws IllegalThreadStateException {
       if (SwingUtilities.isEventDispatchThread()) {
          throw new IllegalThreadStateException("Acquisition can not be run from this (EDT) thread");
       }
@@ -104,21 +109,18 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          // Use the MDA dialog's runAcquisition logic.
          if (mdaDialog_ != null) {
             store = mdaDialog_.runAcquisition();
-         }
-         else {
+         } else {
             // I'm not sure how this could ever happen, but we have null
             // checks for mdaDialog_ everywhere in this code, with no
             // explanation.
             studio_.logs().showError("Unable to run acquisition as MDA dialog is null");
          }
-      }
-      else {
+      } else {
          // Use the provided settings.
          engine_.setSequenceSettings(settings);
          try {
             store = engine_.acquire();
-         }
-         catch (MMException e) {
+         } catch (MMException e) {
             throw new RuntimeException(e);
          }
       }
@@ -127,8 +129,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             while (engine_.isAcquisitionRunning()) {
                Thread.sleep(50);
             }
-         }
-         catch (InterruptedException e) {
+         } catch (InterruptedException e) {
             studio_.logs().showError(e);
          }
       }
@@ -136,10 +137,18 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
    }
 
    @Override
-   public void haltAcquisition() {
-      engine_.abortRequest();
+   public Datastore runAcquisition() throws IllegalThreadStateException {
+      return executeAcquisition(null, true);
    }
 
+   /**
+    * Runs an acquisition with the current settings except that
+    * the name and root where data are saved are replaced with the input parameters.
+    *
+    * @param name Name under which these data should be stored.
+    * @param root The root (directory) in which the data should be stored.
+    * @return Datastore destination of the acquisition that was started.
+    */
    @Override
    public Datastore runAcquisition(String name, String root)
          throws IllegalThreadStateException {
@@ -159,10 +168,16 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       }
    }
 
+   @Override
+   public void haltAcquisition() {
+      engine_.abortRequest();
+   }
+
    /**
-    * Loads acquisition settings from file
+    * Loads acquisition settings from file.
+    *
     * @param path file containing previously saved acquisition settings
-    * @throws java.io.IOException
+    * @throws java.io.IOException when file can not be read
     */
    @Override
    public void loadAcquisition(String path) throws IOException {
@@ -185,14 +200,14 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       File file = new File(path);
       try (FileWriter writer = new FileWriter(file)) {
          writer.write(SequenceSettings.toJSONStream(settings));
-         writer.close();
       }
    }
 
    @Override
    public boolean isAcquisitionRunning() {
-      if (engine_ == null)
+      if (engine_ == null) {
          return false;
+      }
       return engine_.isAcquisitionRunning();
    }
 
@@ -261,8 +276,9 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       String computerName = null;
       try {
          computerName = InetAddress.getLocalHost().getHostName();
+      } catch (UnknownHostException e) {
+         studio_.logs().logError(e);
       }
-      catch (UnknownHostException e) {}
       return new DefaultSummaryMetadata.Builder()
          .userName(System.getProperty("user.name"))
          .profileName(studio_.profile().getProfileName())
@@ -279,14 +295,14 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
 
       MMStudio mmstudio = (MMStudio) studio_;
       Metadata.Builder result = image.getMetadata().copyBuilderWithNewUUID()
-         .camera(camera)
-         .receivedTime(DATE_FORMATTER.format(new Date()))
-         .pixelSizeUm(mmstudio.cache().getPixelSizeUm())
-         .pixelSizeAffine(mmstudio.cache().getPixelSizeAffine())
-         .xPositionUm(mmstudio.cache().getStageX())
-         .yPositionUm(mmstudio.cache().getStageY())
-         .zPositionUm(mmstudio.cache().getStageZ())
-         .bitDepth(mmstudio.cache().getImageBitDepth());
+            .camera(camera)
+            .receivedTime(DATE_FORMATTER.format(new Date()))
+            .pixelSizeUm(mmstudio.cache().getPixelSizeUm())
+            .pixelSizeAffine(mmstudio.cache().getPixelSizeAffine())
+            .xPositionUm(mmstudio.cache().getStageX())
+            .yPositionUm(mmstudio.cache().getStageY())
+            .zPositionUm(mmstudio.cache().getStageZ())
+            .bitDepth(mmstudio.cache().getImageBitDepth());
 
       try {
          String binning = studio_.core().getPropertyFromCache(
@@ -296,21 +312,17 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             // just take the first number.
             try {
                result.binning(Integer.parseInt(binning.split("x", 2)[0]));
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                studio_.logs().logError("Unable to determine binning from " + binning);
             }
-         }
-         else {
+         } else {
             try {
                result.binning(Integer.parseInt(binning));
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                studio_.logs().logError("Unable to determine binning from " + binning);
             }
          }
-      }
-      catch (Exception ignored) {
+      } catch (Exception ignored) {
          // Again, this can fail if there is no camera.
       }
       if (includeHardwareState) {
