@@ -1363,7 +1363,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             ReportingUtils.logError(e, "Error updating GUI");
          }
       } else {
-         ReportingUtils.logError("Could not read file: " + path);
+         throw new IOException("Can not read file: " + path);
       }
    }
 
