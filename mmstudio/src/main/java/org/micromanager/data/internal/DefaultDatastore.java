@@ -46,13 +46,16 @@ import org.micromanager.internal.utils.PrioritizedEventBus;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 
-
+/**
+ * Default implementaton of the Datastore interface.
+ */
 public class DefaultDatastore implements Datastore {
 
    // Simple customization of the FileFilter class for choosing the save
    // file format.
    private static class SaveFileFilter extends FileFilter {
       private final String desc_;
+
       public SaveFileFilter(String desc) {
          desc_ = desc;
       }
@@ -96,6 +99,7 @@ public class DefaultDatastore implements Datastore {
     * Copy all data from the source Datastore into ourselves. The
     * optional ProgressMonitor can be used to keep callers appraised of our
     * progress.
+    *
     * @param alt Source Datastore
     * @param monitor can be used to keep callers appraised of our progress.
     * @throws java.io.IOException expected only for disk-backed Datastores
@@ -117,14 +121,12 @@ public class DefaultDatastore implements Datastore {
                monitor.setProgress(imageCount);
             }
          }
-      }
-      catch (DatastoreFrozenException e) {
+      } catch (DatastoreFrozenException e) {
          studio_.logs().logError("Can't copy from datastore: we're frozen");
-      }
-      catch (DatastoreRewriteException e) {
-         studio_.logs().logError("Can't copy from datastore: we already have an image at one of its coords.");
-      }
-      catch (IllegalArgumentException e) {
+      } catch (DatastoreRewriteException e) {
+         studio_.logs().logError(
+               "Can't copy from datastore: we already have an image at one of its coords.");
+      } catch (IllegalArgumentException e) {
          studio_.logs().logError("Inconsistent image coordinates in datastore");
       }
    }
@@ -148,7 +150,8 @@ public class DefaultDatastore implements Datastore {
 
    /**
     * Registers objects at default priority levels.
-    * @param obj object to be registered
+    *
+    * @param obj object to be registered.
     */
    @Override
    public void registerForEvents(Object obj) {
@@ -232,7 +235,8 @@ public class DefaultDatastore implements Datastore {
       if (ourAxes != null && ourAxes.size() > 0) {
          for (String axis : coords.getAxes()) {
             if (!ourAxes.contains(axis) && coords.getIndex(axis) > 0) {
-               throw new IllegalArgumentException("Invalid image coordinate axis " + axis + "; allowed axes are " + ourAxes);
+               throw new IllegalArgumentException("Invalid image coordinate axis "
+                     + axis + "; allowed axes are " + ourAxes);
             }
          }
       }
@@ -240,9 +244,9 @@ public class DefaultDatastore implements Datastore {
       if (storage_ != null) {
          storage_.putImage(image);
       }
-      // Note: the store may be very busy saving data, so consumers of this message should use as few
-      // resources as possible.  Note that the bus is asynchronous, so we do not have to
-      // wait for processing to finish.
+      // Note: the store may be very busy saving data, so consumers of this message
+      // should use as few resources as possible.  Note that the bus is asynchronous,
+      // so we do not have to wait for processing to finish.
       bus_.post(new DefaultNewImageEvent(image, this));
    }
 
@@ -319,6 +323,13 @@ public class DefaultDatastore implements Datastore {
       return result;
    }
 
+   /**
+    * Loads annotation from a string and adds to this stores annotations.
+    *
+    * @param tag String to add to the annotations.
+    * @return Annotations object that was added to this datastore.
+    * @throws IOException Possible whith disk-backed datastores.
+    */
    public Annotation loadAnnotation(String tag) throws IOException {
       if (annotations_.containsKey(tag)) {
          // We already have an Annotation for this store/filename combo.
@@ -332,25 +343,30 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public boolean hasAnnotation(String tag) {
-      return (annotations_.containsKey(tag) ||
-            DefaultAnnotation.isAnnotationOnDisk(this, tag));
+      return (annotations_.containsKey(tag)
+            || DefaultAnnotation.isAnnotationOnDisk(this, tag));
    }
 
+   /**
+    * I am not sure what this is supposed to do....
+    *
+    * @param filename ???
+    * @return Annotation object
+    */
    public Annotation createNewAnnotation(String filename) {
       if (hasAnnotation(filename)) {
-         throw new IllegalArgumentException("Annotation \"" + filename +
-               "\" for datastore at " + savePath_ + " already exists");
+         throw new IllegalArgumentException("Annotation \"" + filename
+               + "\" for datastore at " + savePath_ + " already exists");
       }
       try {
          DefaultAnnotation result = new DefaultAnnotation(this, filename);
          annotations_.put(filename, result);
          return result;
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          // This should never happen.
-         throw new IllegalArgumentException("Annotation \"" + filename +
-               "\" for datastore at " + savePath_ +
-               " nominally does not exist but we couldn't create a new one anyway.");
+         throw new IllegalArgumentException("Annotation \"" + filename
+               + "\" for datastore at " + savePath_
+               + " nominally does not exist but we couldn't create a new one anyway.");
       }
    }
 
@@ -413,8 +429,7 @@ public class DefaultDatastore implements Datastore {
       chooser.addChoosableFileFilter(MULTIPAGEFILTER);
       if (Objects.equals(getPreferredSaveMode(studio_), SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(MULTIPAGEFILTER);
-      }
-      else {
+      } else {
          chooser.setFileFilter(SINGLEPLANEFILTER);
       }
       chooser.setSelectedFile(
@@ -435,8 +450,8 @@ public class DefaultDatastore implements Datastore {
       } else if (filter == MULTIPAGEFILTER) {
          mode = Datastore.SaveMode.MULTIPAGE_TIFF;
       }  else {
-         studio_.logs().showError("Unrecognized file format filter " +
-               filter.getDescription());
+         studio_.logs().showError("Unrecognized file format filter "
+               + filter.getDescription());
          return null;
       }
       setPreferredSaveMode(studio_, mode);
@@ -467,7 +482,7 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public void save(SaveMode mode, String path) throws IOException {
-      save (mode, path, true);
+      save(mode, path, true);
    }
 
    // TODO: re-use existing file-based storage if possible/relevant (i.e.
@@ -494,39 +509,50 @@ public class DefaultDatastore implements Datastore {
       return -1;
    }
 
+   /**
+    * Returns the save method set in the user's profile.
+    *
+    * @param studio Studio object.
+    * @return Preferred SaveMode/Format.
+    */
    public static Datastore.SaveMode getPreferredSaveMode(Studio studio) {
       String modeStr = studio.profile().getSettings(
             DefaultDatastore.class).getString(
                   PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
       if (modeStr.equals(MULTIPAGE_TIFF)) {
          return Datastore.SaveMode.MULTIPAGE_TIFF;
-      }
-      else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES)) {
+      } else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES)) {
          return Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
-      }
-      else {
+      } else {
          ReportingUtils.logError("Unrecognized save mode " + modeStr);
          return null;
       }
    }
 
+   /**
+    * Saves the preferresed DataFormat in the User Profile.
+    *
+    * @param studio Studio object to get access to the User Profile.
+    * @param mode DateMode/Format
+    */
    public static void setPreferredSaveMode(Studio studio, Datastore.SaveMode mode) {
       String modeStr = "";
       if (null == mode) {
          ReportingUtils.logError("Unrecognized save mode " + mode);
+      } else {
+         switch (mode) {
+            case MULTIPAGE_TIFF:
+               modeStr = MULTIPAGE_TIFF;
+               break;
+            case SINGLEPLANE_TIFF_SERIES:
+               modeStr = SINGLEPLANE_TIFF_SERIES;
+               break;
+            default:
+               ReportingUtils.logError("Unrecognized save mode " + mode);
+               break;
+         }
       }
-      else switch (mode) {
-         case MULTIPAGE_TIFF:
-            modeStr = MULTIPAGE_TIFF;
-            break;
-         case SINGLEPLANE_TIFF_SERIES:
-            modeStr = SINGLEPLANE_TIFF_SERIES;
-            break;
-         default:
-            ReportingUtils.logError("Unrecognized save mode " + mode);
-            break;
-      }
-      studio.profile().getSettings(DefaultDatastore.class).
-              putString(PREFERRED_SAVE_FORMAT, modeStr);
+      studio.profile().getSettings(DefaultDatastore.class)
+              .putString(PREFERRED_SAVE_FORMAT, modeStr);
    }
 }
