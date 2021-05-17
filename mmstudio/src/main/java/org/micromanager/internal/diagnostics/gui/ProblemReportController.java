@@ -17,13 +17,12 @@ import javax.swing.SwingWorker;
 import org.micromanager.internal.diagnostics.ProblemReport;
 import org.micromanager.internal.diagnostics.ProblemReportFormatter;
 import org.micromanager.internal.diagnostics.ReportSender;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
  * Controller for "Report Problem" GUI.
- *
  * The only public interface is start().
- *
  * All methods must be called on the EDT.
  */
 public final class ProblemReportController {
@@ -42,25 +41,22 @@ public final class ProblemReportController {
       String[] options;
       if (userInitiated) {
          options = new String[]{ "Reopen", "Discard", "Cancel" };
-      }
-      else {
+      } else {
          options = new String[]{ "Reopen", "Discard", "Not Now" };
       }
       int answer = JOptionPane.showOptionDialog(null,
-            "A Problem Report was in progress when Micro-Manager " +
-            "exited. Would you like to reopen the interrupted report?",
+            "A Problem Report was in progress when Micro-Manager "
+            + "exited. Would you like to reopen the interrupted report?",
             "Continue Problem Report",
             JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
             null, options, options[0]);
 
       if (answer == JOptionPane.YES_OPTION) {
          return JOptionPane.YES_OPTION;
-      }
-      else if (answer == JOptionPane.NO_OPTION) {
+      } else if (answer == JOptionPane.NO_OPTION) {
          report.deleteStorage();
          return JOptionPane.NO_OPTION;
-      }
-      else {
+      } else {
          return JOptionPane.CANCEL_OPTION;
       }
    }
@@ -154,7 +150,7 @@ public final class ProblemReportController {
 
    private static ProblemReport loadLeftoverReport() {
       File reportDir = getReportDirectory();
-      ProblemReport report = ProblemReport.LoadFromPersistence(reportDir);
+      ProblemReport report = ProblemReport.loadFromPersistence(reportDir);
       if (report.isUsefulReport()) {
          return report;
       }
@@ -177,7 +173,8 @@ public final class ProblemReportController {
 
    private static boolean isValidEmailAddress(String addr) {
       java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
-         "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$");
+            "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*"
+            + "(\\.[A-Za-z]{2,})$");
       return pattern.matcher(addr).matches();
    }
 
@@ -189,7 +186,7 @@ public final class ProblemReportController {
       hasUnsentContent_ = true;
 
       if (frame_.getControlPanel() instanceof SendReportControlPanel) {
-         SendReportControlPanel panel = (SendReportControlPanel)frame_.getControlPanel();
+         SendReportControlPanel panel = (SendReportControlPanel) frame_.getControlPanel();
          panel.setUIMode(SendReportControlPanel.UIMode.UNSENT);
       }
    }
@@ -198,7 +195,7 @@ public final class ProblemReportController {
       hasUnsentContent_ = false;
 
       if (frame_.getControlPanel() instanceof SendReportControlPanel) {
-         SendReportControlPanel panel = (SendReportControlPanel)frame_.getControlPanel();
+         SendReportControlPanel panel = (SendReportControlPanel) frame_.getControlPanel();
          panel.setUIMode(SendReportControlPanel.UIMode.SENT);
       }
    }
@@ -217,8 +214,9 @@ public final class ProblemReportController {
    }
 
    void setName(String name) {
-      if (report_ != null)
+      if (report_ != null) {
          report_.setUserName(name);
+      }
    }
 
    String getName() {
@@ -226,8 +224,9 @@ public final class ProblemReportController {
    }
 
    void setOrganization(String organization) {
-      if (report_ != null)
+      if (report_ != null) {
          report_.setUserOrganization(organization);
+      }
    }
 
    String getOrganization() {
@@ -235,8 +234,9 @@ public final class ProblemReportController {
    }
 
    void setEmail(String email) {
-      if (report_ != null)
+      if (report_ != null) {
          report_.setUserEmail(email);
+      }
    }
 
    String getEmail() {
@@ -250,10 +250,6 @@ public final class ProblemReportController {
    boolean getUseCrashRobustLogging() {
       return useCrashRobustLogging_;
    }
-
-   /*
-    * UI actions
-    */
 
    void controlPanelDidChangeSize(ControlPanel panel) {
       frame_.setControlPanel(panel);
@@ -292,7 +288,7 @@ public final class ProblemReportController {
       frame_.setControlPanel(panel);
 
       File reportDir = getReportDirectory();
-      report_ = ProblemReport.NewPersistentReport(core_, reportDir);
+      report_ = ProblemReport.newPersistentReport(core_, reportDir);
       copyDescriptionToReport();
 
       report_.startCapturingLog(useCrashRobustLogging_);
@@ -301,8 +297,7 @@ public final class ProblemReportController {
          public Object doInBackground() {
             try {
                report_.logSystemInfo(false);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                core_.logMessage("Logging system info failed: " + e.getMessage());
             }
             return null;
@@ -316,7 +311,8 @@ public final class ProblemReportController {
 
             if (frame_ != null) {
                panel.setStatus("Capturing log...");
-               panel.setInstructions("<html><b>Please perform the steps that reproduce the problem.</b></html>");
+               panel.setInstructions("<html><b>Please perform the steps that reproduce "
+                     + "the problem.</b></html>");
                panel.setButtonsEnabled(true);
                frame_.setControlPanel(panel);
             }
@@ -355,8 +351,7 @@ public final class ProblemReportController {
          public Object doInBackground() {
             try {
                report_.logSystemInfo(true);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                core_.logMessage("Logging system info failed: " + e.getMessage());
             }
             report_.finishCapturingLog();
@@ -413,8 +408,8 @@ public final class ProblemReportController {
       try {
          setName(nameDocument.getText(0, nameDocument.getLength()));
          markReportUnsent();
-      }
-      catch (javax.swing.text.BadLocationException impossible) {
+      } catch (javax.swing.text.BadLocationException impossible) {
+         ReportingUtils.logError(impossible);
       }
    }
 
@@ -422,8 +417,8 @@ public final class ProblemReportController {
       try {
          setOrganization(organizationDocument.getText(0, organizationDocument.getLength()));
          markReportUnsent();
-      }
-      catch (javax.swing.text.BadLocationException impossible) {
+      } catch (javax.swing.text.BadLocationException impossible) {
+         ReportingUtils.logError(impossible);
       }
    }
 
@@ -431,8 +426,8 @@ public final class ProblemReportController {
       try {
          setEmail(emailDocument.getText(0, emailDocument.getLength()));
          markReportUnsent();
-      }
-      catch (javax.swing.text.BadLocationException impossible) {
+      } catch (javax.swing.text.BadLocationException impossible) {
+         ReportingUtils.logError(impossible);
       }
    }
 
@@ -458,7 +453,8 @@ public final class ProblemReportController {
       }
 
       if (!isContactInfoValid()) {
-         JOptionPane.showMessageDialog(frame_, "Please enter your name, organization, and valid email address.");
+         JOptionPane.showMessageDialog(frame_, "Please enter your name, organization, "
+               + "and valid email address.");
          return;
       }
 
@@ -502,11 +498,11 @@ public final class ProblemReportController {
             r.warning = null;
             if (tooManyLines(reportStr, 10000)) {
                r.warning =
-                  "<html><body><p style='width: 400px;'>" +
-                  "The report has been sent, but may have been truncated " +
-                  "due to exceeding the size limit. It is recommended that " +
-                  "you keep a backup by clicking on View Report and saving " +
-                  "a copy.</p></body></html>";
+                  "<html><body><p style='width: 400px;'>"
+                  + "The report has been sent, but may have been truncated "
+                  + "due to exceeding the size limit. It is recommended that "
+                  + "you keep a backup by clicking on View Report and saving "
+                  + "a copy.</p></body></html>";
             }
             return r;
          }
@@ -516,8 +512,7 @@ public final class ProblemReportController {
             Result result = null;
             try {
                result = get();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                JOptionPane.showMessageDialog(frame_,
                      "Failed to generate or send report:\n" + e.getMessage());
                panel.setUIMode(SendReportControlPanel.UIMode.UNSENT);
@@ -563,7 +558,8 @@ public final class ProblemReportController {
    }
 
    private void openReportWindow(String report) {
-      final int width = 640, height = 480;
+      final int width = 640;
+      final int height = 480;
       ij.text.TextWindow window = new ij.text.TextWindow("Problem Report", report, width, height);
       ij.text.TextPanel panel = window.getTextPanel();
       panel.scrollToTop();

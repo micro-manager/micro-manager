@@ -11,8 +11,11 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
+/**
+ * Control Panel in ProblemReportFrame.
+ */
 public class ControlPanel extends javax.swing.JPanel {
    ControlPanel() {
-       super(new net.miginfocom.swing.MigLayout("fillx, insets 0"));
+      super(new net.miginfocom.swing.MigLayout("fillx, insets 0"));
    }
 }

@@ -58,12 +58,12 @@ class ProblemReportFrame extends javax.swing.JFrame {
    }
 
    void setControlPanel(final ControlPanel newPanel) {
-      int saveWidth = getWidth();
+      final int saveWidth = getWidth();
 
       // Preserve the size of the description panel
       int descriptionPanelHeight = descriptionPanel_.getHeight();
       int defaultDescriptionPanelHeight = descriptionPanel_.getPreferredSize().height;
-      int saveExtraHeight = descriptionPanelHeight - defaultDescriptionPanelHeight;
+      final int saveExtraHeight = descriptionPanelHeight - defaultDescriptionPanelHeight;
 
       controlPanelPanel_.remove(controlPanel_);
       controlPanel_ = newPanel;
