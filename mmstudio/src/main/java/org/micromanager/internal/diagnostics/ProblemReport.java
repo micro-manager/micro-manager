@@ -23,6 +23,7 @@ import com.google.gson.JsonSerializer;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.lang.reflect.Type;
@@ -32,6 +33,7 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import mmcorej.CMMCore;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 public final class ProblemReport {
@@ -329,8 +331,13 @@ public final class ProblemReport {
       logFileHandle_ = null;
       logFileName_ = null;
 
-      java.io.File logFile = new java.io.File(logFileName);
-      capturedLogContent_ = readTextFile(logFile);
+      File logFile = new File(logFileName);
+      capturedLogContent_ = null;
+      try {
+         capturedLogContent_ = readTextFile(logFile);
+      } catch (IOException ioe) {
+         ReportingUtils.logError(ioe);
+      }
       if (capturedLogContent_ == null) {
          capturedLogContent_ = "<<<Failed to read captured log file>>>";
       }
@@ -502,34 +509,35 @@ public final class ProblemReport {
       metadata_.currentDir = System.getProperty("user.dir");
    }
 
-   private static String readTextFile(java.io.File file) {
+   private static String readTextFile(File file) throws IOException {
       // Important: do NOT try to use java.nio mapped file channel to read.
       // Windows will not be able to delete a file once it has been mapped in
       // the current process, no matter how correctly we "close" it.
       Reader reader = null;
       try {
          reader = new FileReader(file);
+      } catch (java.io.FileNotFoundException e) {
+         throw new IOException(e.getMessage());
       }
-      catch (java.io.FileNotFoundException e) {
-         return e.getMessage();
+      long freeMemory = Runtime.getRuntime().freeMemory();
+      int sbSize = (int) Math.min((long) Integer.MAX_VALUE, freeMemory / 6);
+      if (file.getTotalSpace() < sbSize) {
+         sbSize = (int) file.getTotalSpace();
       }
-      StringBuilder sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder(sbSize);
       try {
-         int read;
-         char[] buf = new char[8192];
-         while ((read = reader.read(buf)) > 0) {
-            sb.append(buf, 0, read);
+         if (freeMemory > 6 * file.getTotalSpace()) {
+            int read;
+            char[] buf = new char[8192];
+            while ((read = reader.read(buf)) > 0) {
+               sb.append(buf, 0, read);
+            }
+         } else {
+            ReportingUtils.showError(file.getAbsolutePath() + " too large to read into memory.");
+            throw new IOException("File too large to read into memory.");
          }
-      }
-      catch (java.io.IOException e) {
-         return e.getMessage();
-      }
-      finally {
-         try {
-            reader.close();
-         }
-         catch (java.io.IOException ignore) {
-         }
+      } finally {
+         reader.close();
       }
       return sb.toString();
    }
@@ -706,32 +714,36 @@ public final class ProblemReport {
       if (!metadataFile.isFile()) {
          return;
       }
-      String metadataJson = readTextFile(metadataFile);
-      if (metadataJson == null) {
-         return;
-      }
-      Gson gson = makeGson();
-      metadata_ = gson.fromJson(metadataJson, Metadata.class);
+      try {
+         String metadataJson = readTextFile(metadataFile);
+         if (metadataJson == null) {
+            return;
+         }
+         Gson gson = makeGson();
+         metadata_ = gson.fromJson(metadataJson, Metadata.class);
 
-      if (metadata_.startCfgFilename != null) {
-         startCfg_ = new NamedTextFile(metadata_.startCfgFilename,
-               new File(directory, START_CFG_FILENAME));
-      }
+         if (metadata_.startCfgFilename != null) {
+            startCfg_ = new NamedTextFile(metadata_.startCfgFilename,
+                  new File(directory, START_CFG_FILENAME));
+         }
 
-      if (metadata_.endCfgFilename != null) {
-         endCfg_ = new NamedTextFile(metadata_.endCfgFilename,
-               new File(directory, END_CFG_FILENAME));
-      }
+         if (metadata_.endCfgFilename != null) {
+            endCfg_ = new NamedTextFile(metadata_.endCfgFilename,
+                  new File(directory, END_CFG_FILENAME));
+         }
 
-      capturedLogContent_ =
-         readTextFile(new File(directory, LOG_CAPTURE_FILENAME));
+         capturedLogContent_ =
+               readTextFile(new File(directory, LOG_CAPTURE_FILENAME));
 
-      if (metadata_.pid != null) {
-         loadHotSpotErrorLogForPid(metadata_.pid);
+         if (metadata_.pid != null) {
+            loadHotSpotErrorLogForPid(metadata_.pid);
+         }
+      } catch (IOException ioe) {
+         ReportingUtils.logError(ioe, "Error in ProblemReport.loadReport().");
       }
    }
 
-   private void loadHotSpotErrorLogForPid(int pid) {
+   private void loadHotSpotErrorLogForPid(int pid) throws IOException {
       String logFilename = "hs_err_pid" + Integer.toString(pid) + ".log";
       File logDir;
       if (metadata_.currentDir != null) {
@@ -752,7 +764,12 @@ public final class ProblemReport {
       if (fileName == null || fileName.isEmpty()) {
          return null;
       }
-      return new NamedTextFile(fileName);
+      try {
+         return new NamedTextFile(fileName);
+      } catch (IOException ioe) {
+         ReportingUtils.logError(ioe, "Failed to open configuration file.");
+      }
+      return null;
    }
 
    // A text file's name and content.
@@ -760,15 +777,15 @@ public final class ProblemReport {
       final private String filename_;
       final private String content_;
 
-      public NamedTextFile(String filename) {
+      public NamedTextFile(String filename) throws IOException {
          this(filename, new File(filename));
       }
 
-      public NamedTextFile(File file) {
+      public NamedTextFile(File file) throws IOException  {
          this(file.getAbsolutePath(), file);
       }
 
-      public NamedTextFile(String filename, File file) {
+      public NamedTextFile(String filename, File file) throws IOException {
          filename_ = filename;
          content_ = readTextFile(file);
       }
