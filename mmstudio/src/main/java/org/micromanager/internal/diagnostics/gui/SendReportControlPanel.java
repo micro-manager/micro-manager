@@ -11,8 +11,6 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -31,7 +29,6 @@ class SendReportControlPanel extends ControlPanel {
 
    private final JButton cancelButton_;
    private final JButton startOverButton_;
-   private final JButton viewButton_;
    private final JButton sendButton_;
 
    private final JPanel sendingActivityIndicatorPanel_;
@@ -43,6 +40,7 @@ class SendReportControlPanel extends ControlPanel {
       SENDING,
       SENT,
    }
+
    UIMode mode_ = UIMode.UNSENT;
 
    SendReportControlPanel(ProblemReportController controller) {
@@ -54,41 +52,20 @@ class SendReportControlPanel extends ControlPanel {
       controller_ = controller;
 
       cancelButton_ = new JButton("Cancel");
-      cancelButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            controller_.cancelRequested();
-         }
-      });
+      cancelButton_.addActionListener(e -> controller_.cancelRequested());
 
       if (allowRestart) {
          startOverButton_ = new JButton("Start Over");
-         startOverButton_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               controller_.startLogCapture();
-            }
-         });
-      }
-      else {
+         startOverButton_.addActionListener(e -> controller_.startLogCapture());
+      } else {
          startOverButton_ = null;
       }
 
-      viewButton_ = new JButton("View Report");
-      viewButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            controller_.displayReport();
-         }
-      });
+      JButton viewButton = new JButton("View Report");
+      viewButton.addActionListener(e -> controller_.displayReport());
 
       sendButton_ = new JButton("Send Report...");
-      sendButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            controller_.sendRequested();
-         }
-      });
+      sendButton_.addActionListener(e -> controller_.sendRequested());
 
       nameField_ = new JTextField(controller_.getName());
       nameField_.getDocument().addDocumentListener(new DocumentListener() {
@@ -96,10 +73,12 @@ class SendReportControlPanel extends ControlPanel {
          public void changedUpdate(DocumentEvent e) {
             controller_.nameChanged(e.getDocument());
          }
+
          @Override
          public void insertUpdate(DocumentEvent e) {
             controller_.nameChanged(e.getDocument());
          }
+
          @Override
          public void removeUpdate(DocumentEvent e) {
             controller_.nameChanged(e.getDocument());
@@ -112,10 +91,12 @@ class SendReportControlPanel extends ControlPanel {
          public void changedUpdate(DocumentEvent e) {
             controller_.organizationChanged(e.getDocument());
          }
+
          @Override
          public void insertUpdate(DocumentEvent e) {
             controller_.organizationChanged(e.getDocument());
          }
+
          @Override
          public void removeUpdate(DocumentEvent e) {
             controller_.organizationChanged(e.getDocument());
@@ -128,10 +109,12 @@ class SendReportControlPanel extends ControlPanel {
          public void changedUpdate(DocumentEvent e) {
             controller_.emailChanged(e.getDocument());
          }
+
          @Override
          public void insertUpdate(DocumentEvent e) {
             controller_.emailChanged(e.getDocument());
          }
+
          @Override
          public void removeUpdate(DocumentEvent e) {
             controller_.emailChanged(e.getDocument());
@@ -139,7 +122,7 @@ class SendReportControlPanel extends ControlPanel {
       });
 
       sendingActivityIndicatorPanel_ =
-         new JPanel(new net.miginfocom.swing.MigLayout("fillx, insets 0"));
+            new JPanel(new net.miginfocom.swing.MigLayout("fillx, insets 0"));
       sendingActivityLabel_ = new JLabel("Report not yet sent.");
       sendingActivityLabel_.setEnabled(false);
       sendingActivityIndicatorPanel_.add(sendingActivityLabel_);
@@ -159,11 +142,10 @@ class SendReportControlPanel extends ControlPanel {
       if (startOverButton_ != null) {
          add(cancelButton_, "span 2, split 4, sizegroup cancelbtns");
          add(startOverButton_, "gapright push, sizegroup cancelbtns");
-      }
-      else {
+      } else {
          add(cancelButton_, "span 2, split 3, gapright push, sizegroup cancelbtns");
       }
-      add(viewButton_, "sizegroup actionbtns");
+      add(viewButton, "sizegroup actionbtns");
       add(sendButton_, "sizegroup actionbtns");
 
       add(sendingActivityIndicatorPanel_, "newline, span 2");
@@ -174,7 +156,9 @@ class SendReportControlPanel extends ControlPanel {
          return;
       }
 
-      boolean editable = false, disabled = true, sendable = false;
+      boolean editable = false;
+      boolean disabled = true;
+      boolean sendable = false;
       switch (mode) {
          case UNSENT:
             editable = true;
@@ -191,6 +175,8 @@ class SendReportControlPanel extends ControlPanel {
             disabled = false;
             sendable = false;
             break;
+         default:
+
       }
 
       nameField_.setEnabled(editable);
@@ -219,6 +205,7 @@ class SendReportControlPanel extends ControlPanel {
             sendingActivityLabel_.setText("Report sent to micro-manager.org (thank you!).");
             cancelButton_.setText("Close");
             break;
+         default:
       }
 
       if (mode_ != UIMode.SENDING && mode == UIMode.SENDING) {
@@ -227,8 +214,7 @@ class SendReportControlPanel extends ControlPanel {
             sendingActivityIndicator_.setIndeterminate(true);
          }
          sendingActivityIndicatorPanel_.add(sendingActivityIndicator_);
-      }
-      else if (mode_ == UIMode.SENDING && mode != UIMode.SENDING) {
+      } else if (mode_ == UIMode.SENDING && mode != UIMode.SENDING) {
          sendingActivityIndicatorPanel_.remove(sendingActivityIndicator_);
       }
 

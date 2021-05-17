@@ -11,8 +11,6 @@
 
 package org.micromanager.internal.diagnostics.gui;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JSeparator;
@@ -33,36 +31,16 @@ class LogCaptureControlPanel extends ControlPanel {
       controller_ = controller;
 
       JButton cancelButton = new JButton("Cancel");
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            controller_.cancelRequested();
-         }
-      });
+      cancelButton.addActionListener(e -> controller_.cancelRequested());
 
       startOverButton_ = new JButton("Start Over");
-      startOverButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            controller_.startLogCapture();
-         }
-      });
+      startOverButton_.addActionListener(e -> controller_.startLogCapture());
 
       doneButton_ = new JButton("Done");
-      doneButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            controller_.finishLogCapture();
-         }
-      });
+      doneButton_.addActionListener(e -> controller_.finishLogCapture());
 
       cannotReproButton_ = new JButton("Cannot Reproduce");
-      cannotReproButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            controller_.finishWithoutReproducing();
-         }
-      });
+      cannotReproButton_.addActionListener(e -> controller_.finishWithoutReproducing());
 
       statusLabel_ = new JLabel();
       statusLabel_.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
@@ -74,13 +52,10 @@ class LogCaptureControlPanel extends ControlPanel {
 
       final JTextField remarkTextField = new JTextField();
       final JButton remarkButton = new JButton("Insert");
-      remarkButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            String remark = remarkTextField.getText();
-            if (!remark.isEmpty()) {
-               controller_.insertTimestampedRemark(remark);
-            }
+      remarkButton.addActionListener(e -> {
+         String remark = remarkTextField.getText();
+         if (!remark.isEmpty()) {
+            controller_.insertTimestampedRemark(remark);
          }
       });
 

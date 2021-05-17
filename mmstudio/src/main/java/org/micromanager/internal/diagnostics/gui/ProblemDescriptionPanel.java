@@ -52,9 +52,11 @@ class ProblemDescriptionPanel extends javax.swing.JPanel {
          public void insertUpdate(javax.swing.event.DocumentEvent e) {
             controller_.markDescriptionModified();
          }
+
          public void removeUpdate(javax.swing.event.DocumentEvent e) {
             controller_.markDescriptionModified();
          }
+
          public void changedUpdate(javax.swing.event.DocumentEvent e) {
             controller_.markDescriptionModified();
          }
