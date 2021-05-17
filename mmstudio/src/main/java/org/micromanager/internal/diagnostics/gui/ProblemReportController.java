@@ -154,7 +154,7 @@ public final class ProblemReportController {
 
    private static ProblemReport loadLeftoverReport() {
       File reportDir = getReportDirectory();
-      ProblemReport report = ProblemReport.LoadFromPersistence(reportDir);
+      ProblemReport report = ProblemReport.loadFromPersistence(reportDir);
       if (report.isUsefulReport()) {
          return report;
       }
@@ -292,7 +292,7 @@ public final class ProblemReportController {
       frame_.setControlPanel(panel);
 
       File reportDir = getReportDirectory();
-      report_ = ProblemReport.NewPersistentReport(core_, reportDir);
+      report_ = ProblemReport.newPersistentReport(core_, reportDir);
       copyDescriptionToReport();
 
       report_.startCapturingLog(useCrashRobustLogging_);

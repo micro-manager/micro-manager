@@ -21,12 +21,15 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -36,6 +39,9 @@ import mmcorej.CMMCore;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
+/**
+ * Handles generation and sharing the Micro-Manager Problem Report.
+ */
 public final class ProblemReport {
    private final CMMCore core_;
 
@@ -47,7 +53,6 @@ public final class ProblemReport {
       // Used boxed types to allow null
       public Integer pid;
       public Date date;
-      public String mmStudioVersion;
       public String startCfgFilename;
       public String endCfgFilename;
       public String userName;
@@ -82,35 +87,31 @@ public final class ProblemReport {
 
    /**
     * Create a new problem report.
-    *
     * The report will not be backed by persistent storage, and therefore will
     * not be crash-proof.
-    *
     * Note that although core is used for logging control, but the information
     * logged may come from global state (the system information classes obtain
     * the Core from the MMStudio singleton).
     *
     * @param core the Core.
     */
-   public static ProblemReport NewReport(CMMCore core) {
+   public static ProblemReport newReport(CMMCore core) {
       return new ProblemReport(core);
    }
 
    /**
     * Create a new disk-backed report.
-    *
     * Note that although core is used for logging control, but the information
     * logged may come from global state (the system information classes obtain
     * the Core from the MMStudio singleton).
-    *
     * If there are any errors writing to storageDirectory, they are silently
     * ignored (and the report will behave as if it were non-persistent).
     *
     * @param core the Core.
     * @param storageDirectory where to save the report data.
     */
-   public static ProblemReport NewPersistentReport(CMMCore core,
-         File storageDirectory) {
+   public static ProblemReport newPersistentReport(CMMCore core,
+                                                   File storageDirectory) {
       return new ProblemReport(core, storageDirectory);
    }
 
@@ -119,7 +120,7 @@ public final class ProblemReport {
     *
     * @param storageDirectory where to load the report data from.
     */
-   public static ProblemReport LoadFromPersistence(File storageDirectory) {
+   public static ProblemReport loadFromPersistence(File storageDirectory) {
       return new ProblemReport(storageDirectory);
    }
 
@@ -148,17 +149,16 @@ public final class ProblemReport {
     * Return true of the report contains anything substantial.
     */
    public boolean isUsefulReport() {
-      if (metadata_ == null)
+      if (metadata_ == null) {
          return false;
-      if (capturedLogContent_ != null && !capturedLogContent_.isEmpty())
-         return true;
-      return false;
+      }
+      return capturedLogContent_ != null && !capturedLogContent_.isEmpty();
    }
 
    /**
-    * Set the user full name.
-    *
+    * Sets the user's full name.    *
     * This is for the name entered by the user, not the login name.
+    *
     * @param name the name.
     */
    public void setUserName(String name) {
@@ -167,9 +167,9 @@ public final class ProblemReport {
    }
 
    /**
-    * Get the user full name.
-    *
+    * Gets the user's full name.
     * This is the human-readable name entered by the user, not the login name.
+    *
     * @return the name.
     */
    public String getUserName() {
@@ -177,7 +177,8 @@ public final class ProblemReport {
    }
 
    /**
-    * Set the user organization name.
+    * Sets the user's organization name.
+    *
     * @param organization the organization name.
     */
    public void setUserOrganization(String organization) {
@@ -186,7 +187,8 @@ public final class ProblemReport {
    }
 
    /**
-    * Get the user organization name.
+    * Gets the user's organization name.
+    *
     * @return the organization name.
     */
    public String getUserOrganization() {
@@ -194,7 +196,8 @@ public final class ProblemReport {
    }
 
    /**
-    * Set the user email address.
+    * Sets the user's email address.
+    *
     * @param email the email address.
     */
    public void setUserEmail(String email) {
@@ -203,7 +206,8 @@ public final class ProblemReport {
    }
 
    /**
-    * Get the user email address.
+    * Gets the user's email address.
+    *
     * @return the email address.
     */
    public String getUserEmail() {
@@ -211,7 +215,8 @@ public final class ProblemReport {
    }
 
    /**
-    * Set the user-entered description.
+    * Sets the user-entered description.
+    *
     * @param description the description.
     */
    public void setDescription(String description) {
@@ -220,7 +225,8 @@ public final class ProblemReport {
    }
 
    /**
-    * Get the user-entered description.
+    * Gets the user-entered description.
+    *
     * @return the description.
     */
    public String getDescription() {
@@ -228,8 +234,7 @@ public final class ProblemReport {
    }
 
    /**
-    * Start CoreLog capture.
-    *
+    * Starts CoreLog capture.    *
     * Save the current hardware configuration file, then start capturing the
     * CoreLog.
     */
@@ -249,18 +254,15 @@ public final class ProblemReport {
             // Touch, so that we can test canWrite below
             try {
                new FileOutputStream(logFile).close();
-            }
-            catch (java.io.FileNotFoundException dealWithLater) {
-            }
-            catch (java.io.IOException ignore) {
+            } catch (IOException dealWithLater) {
+               ReportingUtils.logError(dealWithLater);
             }
          }
-      }
-      else {
+      } else {
          try {
             logFile = File.createTempFile("MMCoreLogCapture", ".txt");
-         }
-         catch (java.io.IOException dealWithLater) {
+         } catch (IOException dealWithLater) {
+            ReportingUtils.logError(dealWithLater);
          }
       }
       if (logFile == null || !logFile.canWrite()) {
@@ -273,8 +275,7 @@ public final class ProblemReport {
       try {
          logFileHandle_ = core_.startSecondaryLogFile(filename,
                true, true, useCrashRobust);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          capturedLogContent_ = "<<<Failed to start log capture>>>";
       }
       logFileName_ = filename;
@@ -292,8 +293,7 @@ public final class ProblemReport {
       core_.logMessage("Problem Report: Canceling log capture");
       try {
          core_.stopSecondaryLogFile(logFileHandle_);
-      }
-      catch (Exception ignore) {
+      } catch (Exception ignore) {
          // Errors will be logged by the Core; there is not much else we can
          // do.
       }
@@ -304,8 +304,7 @@ public final class ProblemReport {
    }
 
    /**
-    * Stop CoreLog capture and record the captured log as part of the report.
-    *
+    * Stop CoreLog capture and record the captured log as part of the report.    *
     * After stopping CoreLog capture, the current hardware configuration file
     * is also recorded.
     */
@@ -318,13 +317,12 @@ public final class ProblemReport {
          return;
       }
 
-      String logFileName = logFileName_;
+      final String logFileName = logFileName_;
 
       core_.logMessage("Problem Report: End of log capture");
       try {
          core_.stopSecondaryLogFile(logFileHandle_);
-      }
-      catch (Exception ignore) {
+      } catch (Exception ignore) {
          // This is an unlikely error unless there are programming errors.
          // Let's continue and see if we can read the file anyway.
       }
@@ -349,6 +347,9 @@ public final class ProblemReport {
       syncEndingConfig();
    }
 
+   /**
+    * Deletes Problem Report files from disk.
+    */
    public void deleteStorage() {
       deleteReportDir(reportDir_);
       reportDir_ = null;
@@ -358,7 +359,6 @@ public final class ProblemReport {
 
    /**
     * Dump system information to the CoreLog.
-    *
     * This is intended to be called after startCapturingLog().
     *
     * @param incremental if true, only dump info that is likely to change.
@@ -473,12 +473,11 @@ public final class ProblemReport {
 
    private void collectHostInformation() {
       java.lang.management.RuntimeMXBean rtMXB =
-         java.lang.management.ManagementFactory.getRuntimeMXBean();
+            java.lang.management.ManagementFactory.getRuntimeMXBean();
       final String jvmName = rtMXB.getName();
       try {
          metadata_.pid = Integer.parseInt(jvmName.split("@")[0]);
-      }
-      catch (NumberFormatException e) {
+      } catch (NumberFormatException e) {
          metadata_.pid = null;
       }
 
@@ -494,15 +493,15 @@ public final class ProblemReport {
       metadata_.hostName = null;
       try {
          metadata_.hostName = java.net.InetAddress.getLocalHost().getHostName();
-      }
-      catch (java.io.IOException ignore) {
+      } catch (IOException ioe) {
+         ReportingUtils.logError(ioe, "Failed to get Host Name.");
       }
 
       metadata_.ipAddress = null;
       try {
          metadata_.ipAddress = java.net.InetAddress.getLocalHost().getHostAddress();
-      }
-      catch (java.io.IOException ignore) {
+      } catch (IOException ioe) {
+         ReportingUtils.logError(ioe, "Failed to get Host IP Address.");
       }
 
       metadata_.userLogin = core_.getUserId();
@@ -513,20 +512,21 @@ public final class ProblemReport {
       // Important: do NOT try to use java.nio mapped file channel to read.
       // Windows will not be able to delete a file once it has been mapped in
       // the current process, no matter how correctly we "close" it.
-      Reader reader = null;
+      Reader reader;
       try {
          reader = new FileReader(file);
       } catch (java.io.FileNotFoundException e) {
          throw new IOException(e.getMessage());
       }
       long freeMemory = Runtime.getRuntime().freeMemory();
-      int sbSize = (int) Math.min((long) Integer.MAX_VALUE, freeMemory / 6);
-      if (file.getTotalSpace() < sbSize) {
-         sbSize = (int) file.getTotalSpace();
+      int sbSize = (int) Math.min(Integer.MAX_VALUE, freeMemory / 6);
+      if (file.length() < sbSize) {
+         sbSize = (int) file.length();
       }
       StringBuilder sb = new StringBuilder(sbSize);
       try {
-         if (freeMemory > 6 * file.getTotalSpace()) {
+         file.getUsableSpace();
+         if (freeMemory > 6 * file.length()) {
             int read;
             char[] buf = new char[8192];
             while ((read = reader.read(buf)) > 0) {
@@ -546,28 +546,20 @@ public final class ProblemReport {
       FileOutputStream outputStream;
       try {
          outputStream = new FileOutputStream(file);
-      }
-      catch (java.io.FileNotFoundException e) {
+      } catch (FileNotFoundException e) {
          return;
       }
-      OutputStreamWriter writer = null;
-      try {
-         writer = new OutputStreamWriter(outputStream, "UTF-8");
-      }
-      catch (java.io.UnsupportedEncodingException wontHappen) {
-         // "UTF-8" is guaranteed to be supported.
-      }
+      OutputStreamWriter writer;
+      writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
       try {
          writer.write(text);
-      }
-      catch (java.io.IOException e) {
+      } catch (IOException e) {
          return;
-      }
-      finally {
+      } finally {
          try {
             writer.close();
-         }
-         catch (java.io.IOException ignore) {
+         } catch (IOException ioe) {
+            ReportingUtils.logError(ioe);
          }
       }
    }
@@ -581,8 +573,8 @@ public final class ProblemReport {
          File readmeFile = new File(reportDir_, README_FILENAME);
          if (!readmeFile.isFile()) {
             String readme =
-               "This directory contains an in-progress (or crashed) \n" +
-               "Micro-Manager Problem Report. It is safe to delete.";
+                  "This directory contains an in-progress (or crashed) \n"
+                  + "Micro-Manager Problem Report. It is safe to delete.";
             writeTextFile(readmeFile, readme);
          }
       }
@@ -602,7 +594,7 @@ public final class ProblemReport {
 
    private Gson makeGson() {
       final DateFormat format =
-         new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
       class MyDateSerializer implements JsonSerializer<Date> {
          @Override public JsonElement serialize(Date src,
@@ -617,17 +609,16 @@ public final class ProblemReport {
                JsonDeserializationContext context) throws JsonParseException {
             try {
                return format.parse(json.getAsJsonPrimitive().getAsString());
-            }
-            catch (java.text.ParseException e) {
+            } catch (java.text.ParseException e) {
                return null;
             }
          }
       }
 
-      return new GsonBuilder().
-         registerTypeAdapter(Date.class, new MyDateSerializer()).
-         registerTypeAdapter(Date.class, new MyDateDeserializer()).
-         create();
+      return new GsonBuilder()
+            .registerTypeAdapter(Date.class, new MyDateSerializer())
+            .registerTypeAdapter(Date.class, new MyDateDeserializer())
+            .create();
    }
 
    private synchronized void deferredSyncMetadata() {
@@ -678,8 +669,7 @@ public final class ProblemReport {
          syncMetadata();
          writeTextFile(new File(reportDir_, START_CFG_FILENAME),
                startCfg_.getContent());
-      }
-      else if (metadata_.startCfgFilename != null) {
+      } else if (metadata_.startCfgFilename != null) {
          new File(reportDir_, START_CFG_FILENAME).delete();
          metadata_.startCfgFilename = null;
       }
@@ -696,8 +686,7 @@ public final class ProblemReport {
          syncMetadata();
          writeTextFile(new File(reportDir_, END_CFG_FILENAME),
                endCfg_.getContent());
-      }
-      else if (metadata_.endCfgFilename != null) {
+      } else if (metadata_.endCfgFilename != null) {
          new File(reportDir_, END_CFG_FILENAME).delete();
          metadata_.endCfgFilename = null;
       }
@@ -716,9 +705,6 @@ public final class ProblemReport {
       }
       try {
          String metadataJson = readTextFile(metadataFile);
-         if (metadataJson == null) {
-            return;
-         }
          Gson gson = makeGson();
          metadata_ = gson.fromJson(metadataJson, Metadata.class);
 
@@ -744,12 +730,11 @@ public final class ProblemReport {
    }
 
    private void loadHotSpotErrorLogForPid(int pid) throws IOException {
-      String logFilename = "hs_err_pid" + Integer.toString(pid) + ".log";
+      String logFilename = "hs_err_pid" + pid + ".log";
       File logDir;
       if (metadata_.currentDir != null) {
          logDir = new File(metadata_.currentDir);
-      }
-      else {
+      } else {
          // Try the current current directory, in case we get lucky.
          logDir = new File(System.getProperty("user.dir"));
       }
@@ -774,8 +759,8 @@ public final class ProblemReport {
 
    // A text file's name and content.
    private static class NamedTextFile {
-      final private String filename_;
-      final private String content_;
+      final String filename_;
+      final String content_;
 
       public NamedTextFile(String filename) throws IOException {
          this(filename, new File(filename));
