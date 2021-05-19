@@ -18,7 +18,7 @@ If you are working only with the source code that is publicly available then tha
 
 1. Move Git bash into the `mmCoreAndDevices` submodule: `cd mmCoreAndDevices`
 2. Change to the "privateMain" branch: `git checkout privateMain`
-3. "privateMain" has a submodule that main does not. Make sure that any new submodules are in a consistent state: `git submodule update --init --recursive`
+3. "privateMain" has a submodule that main does not. Make sure that any new submodules are in a consistent state: `git submodule update --init --recursive --remote`
 For more information about working with Git submodules click [here](https://git-scm.com/book/en/v2/Git-Tools-Submodules). 
 
 
