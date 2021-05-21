@@ -69,6 +69,30 @@ public final class BufferTools {
       }
       return null;
    }
+
+   public static byte[] getByteArray(Buffer rawPixels_) {
+      if (rawPixels_ instanceof IntBuffer) {
+         IntBuffer buf = (IntBuffer) rawPixels_;
+         ByteBuffer bb = ByteBuffer.allocate(rawPixels_.remaining() * 4);
+         while (buf.hasRemaining()) {
+            bb.putInt(buf.get());
+         }
+         buf.rewind();
+         return bb.array();
+      } else if (rawPixels_ instanceof ShortBuffer) {
+         ShortBuffer buf = (ShortBuffer) rawPixels_;
+         ByteBuffer bb = ByteBuffer.allocate(rawPixels_.remaining() * 2);
+         while (buf.hasRemaining()) {
+            bb.putShort(buf.get());
+         }
+         buf.rewind();
+         return bb.array();
+      } else if (rawPixels_ instanceof ByteBuffer) {
+         return ((ByteBuffer) rawPixels_).array();
+      } else {
+         throw new RuntimeException(("Unhandled Case."));
+      }
+   }
    
    public static Buffer directBufferFromArray(Object primitiveArray) {
       if (primitiveArray instanceof byte[]) {

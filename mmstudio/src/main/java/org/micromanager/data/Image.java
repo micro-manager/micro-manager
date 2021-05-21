@@ -243,4 +243,12 @@ public interface Image {
     */
    Object getRawPixelsForComponent(int component);
 
+   /**
+    * Regardless of the the value of {@code #getBytesPerPixel} return an array of bytes containing
+    * raw data for the image. Useful for doing low-level handling of raw image data.
+    *
+    * @return The byte array containing raw data for this image.
+    */
+   byte[] getByteArray();
+
 }

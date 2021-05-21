@@ -286,6 +286,11 @@ public final class DefaultImage implements Image {
    }
 
    @Override
+   public byte[] getByteArray() {
+      return BufferTools.getByteArray(rawPixels_);
+   }
+
+   @Override
    public Object getRawPixelsCopy() {
       Object original = getRawPixels();
       Object copy;
