@@ -70,25 +70,33 @@ public final class BufferTools {
       return null;
    }
 
-   public static byte[] getByteArray(Buffer rawPixels_) {
-      if (rawPixels_ instanceof IntBuffer) {
-         IntBuffer buf = (IntBuffer) rawPixels_;
-         ByteBuffer bb = ByteBuffer.allocate(rawPixels_.remaining() * 4);
+   /**
+    *  Convert a buffer to an array of `byte` regardless of the underlying data type of the buffer
+    *  Useful for low-level data manipulation and for efficiently streaming data over a socket.
+    *  
+    * @param rawPixels A buffer of pixel data. IntBuffer, ShortBuffer, and ByteBuffer are currently
+    *                   supported.
+    * @return An array of `byte` containing the raw data of the rawPixels buffer.
+    */
+   public static byte[] getByteArray(Buffer rawPixels) {
+      if (rawPixels instanceof IntBuffer) {
+         IntBuffer buf = (IntBuffer) rawPixels;
+         ByteBuffer bb = ByteBuffer.allocate(rawPixels.remaining() * 4);
          while (buf.hasRemaining()) {
             bb.putInt(buf.get());
          }
          buf.rewind();
          return bb.array();
-      } else if (rawPixels_ instanceof ShortBuffer) {
-         ShortBuffer buf = (ShortBuffer) rawPixels_;
-         ByteBuffer bb = ByteBuffer.allocate(rawPixels_.remaining() * 2);
+      } else if (rawPixels instanceof ShortBuffer) {
+         ShortBuffer buf = (ShortBuffer) rawPixels;
+         ByteBuffer bb = ByteBuffer.allocate(rawPixels.remaining() * 2);
          while (buf.hasRemaining()) {
             bb.putShort(buf.get());
          }
          buf.rewind();
          return bb.array();
-      } else if (rawPixels_ instanceof ByteBuffer) {
-         return ((ByteBuffer) rawPixels_).array();
+      } else if (rawPixels instanceof ByteBuffer) {
+         return ((ByteBuffer) rawPixels).array();
       } else {
          throw new RuntimeException(("Unhandled Case."));
       }
