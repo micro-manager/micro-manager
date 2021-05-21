@@ -1,6 +1,7 @@
 
 package org.micromanager.data.internal;
 
+import java.util.Arrays;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -72,11 +73,12 @@ public final class BufferTools {
 
    /**
     *  Convert a buffer to an array of `byte` regardless of the underlying data type of the buffer
-    *  Useful for low-level data manipulation and for efficiently streaming data over a socket.
+    *  Useful for low-level data manipulation and for efficiently streaming data over a socket. The
+    *  returned buffer is a copy of the original data.
     *  
     * @param rawPixels A buffer of pixel data. IntBuffer, ShortBuffer, and ByteBuffer are currently
     *                   supported.
-    * @return An array of `byte` containing the raw data of the rawPixels buffer.
+    * @return An array of `byte` containing a copy of the raw data of the rawPixels buffer.
     */
    public static byte[] getByteArray(Buffer rawPixels) {
       if (rawPixels instanceof IntBuffer) {
@@ -86,7 +88,8 @@ public final class BufferTools {
             bb.putInt(buf.get());
          }
          buf.rewind();
-         return bb.array();
+         byte[] arr = bb.array();
+         return Arrays.copyOf(arr, arr.length);
       } else if (rawPixels instanceof ShortBuffer) {
          ShortBuffer buf = (ShortBuffer) rawPixels;
          ByteBuffer bb = ByteBuffer.allocate(rawPixels.remaining() * 2);
@@ -94,9 +97,11 @@ public final class BufferTools {
             bb.putShort(buf.get());
          }
          buf.rewind();
-         return bb.array();
+         byte[] arr = bb.array();
+         return Arrays.copyOf(arr, arr.length);
       } else if (rawPixels instanceof ByteBuffer) {
-         return ((ByteBuffer) rawPixels).array();
+         byte[] arr = ((ByteBuffer) rawPixels).array();
+         return Arrays.copyOf(arr, arr.length);
       } else {
          throw new RuntimeException(("Unhandled Case."));
       }
