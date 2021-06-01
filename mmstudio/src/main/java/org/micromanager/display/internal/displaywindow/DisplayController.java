@@ -526,8 +526,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    protected Coords handleDisplayPosition(Coords position) {
       perfMon_.sampleTimeInterval("Handle display position");
 
-      runnablePool_.invokeLaterWithCoalescence(
-            new ExpandDisplayRangeCoalescentRunnable(position));
+      //runnablePool_.invokeLaterWithCoalescence(
+      //      new ExpandDisplayRangeCoalescentRunnable(position));
 
       // Always compute stats for all channels
       List<Image> images;
@@ -854,27 +854,26 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // Event handlers
    //
 
-   // From the datastore
+   /**
+    * A new image arrived in the Datastore.
+    *
+    * @event Contains information about the newly arrived image.
+     */
    @Subscribe
    public void onNewImage(final DataProviderHasNewImageEvent event) {
-      // (NS - 2020-03-27)
-      // Hack: handle only if the circular buffer is not too full.  How full is highly arbitrary.
-      if ( !studio_.acquisitions().isAcquisitionRunning() || !studio_.core().isSequenceRunning() ||
-              studio_.core().getRemainingImageCount() < 6 ) {
-         perfMon_.sampleTimeInterval("NewImageEvent");
-         synchronized (this) {
-            if (closeCompleted_) {
-               return;
-            }
+      perfMon_.sampleTimeInterval("NewImageEvent");
+      synchronized (this) {
+         if (closeCompleted_) {
+            return;
          }
-
-         // Generally we want to display new images (if not instructed otherwise
-         // by the user), but we let the animation controller coordinate that with
-         // any ongoing playback animation. Actual display of new images happens
-         // upon receiving callbacks via the AnimationController.Listener
-         // interface.
-         animationController_.newDataPosition(event.getImage().getCoords());
       }
+
+      // Generally we want to display new images (if not instructed otherwise
+      // by the user), but we let the animation controller coordinate that with
+      // any ongoing playback animation. Actual display of new images happens
+      // upon receiving callbacks via the AnimationController.Listener
+      // interface.
+      animationController_.newDataPosition(event.getImage().getCoords());
    }
 
 

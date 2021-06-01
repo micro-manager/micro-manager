@@ -769,6 +769,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    @MustCallOnEDT
    void displayImages(ImagesAndStats images) {
+      if (repaintScheduledForNewImages_.get()) {
+         return;
+      }
       boolean firstTime = false;
       if (ijBridge_ == null) {
          firstTime = true;

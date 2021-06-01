@@ -89,7 +89,7 @@ public final class AnimationController<P> {
 
    private final ScheduledExecutorService scheduler_ =
          Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory.
-               createThreadFactory("AnimationController"));
+               createThreadFactory("AnimationController", 4));
 
    private ScheduledFuture<?> scheduledTickFuture_;
    private long lastTickNs_;
@@ -309,6 +309,7 @@ public final class AnimationController<P> {
             @Override
             public void run() {
                synchronized (AnimationController.this) {
+                  // TODO: should this be done at all?
                   listeners_.fire().animationAcknowledgeDataPosition(newPosition);
                  
                   listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
