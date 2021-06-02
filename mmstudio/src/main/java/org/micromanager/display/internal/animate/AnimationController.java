@@ -92,6 +92,7 @@ public final class AnimationController<P> {
                createThreadFactory("AnimationController", 4));
 
    private ScheduledFuture<?> scheduledTickFuture_;
+   private ScheduledFuture<?> newDataPositionExpiredFuture_;
    private long lastTickNs_;
 
    private ScheduledFuture<?> snapBackFuture_;
@@ -253,10 +254,12 @@ public final class AnimationController<P> {
          snapBackFuture_.cancel(false);
          snapBackFuture_ = null;
       }
-      ScheduledFuture<?> newDataPositionExpiredFuture = null;
       if (didJumpToNewPosition_) {
          didJumpToNewPosition_ = false;
-         newDataPositionExpiredFuture = scheduler_.schedule(new Runnable() {
+         if (newDataPositionExpiredFuture_ != null) {
+            newDataPositionExpiredFuture_.cancel(false);
+         }
+         newDataPositionExpiredFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
                synchronized (AnimationController.this) {
@@ -266,7 +269,7 @@ public final class AnimationController<P> {
                   listeners_.fire().animationNewDataPositionExpired();
                }
             }
-         }, 0, TimeUnit.MILLISECONDS);
+         }, 1000, TimeUnit.MILLISECONDS);
       }
 
       final Coords oldPosition = (Coords) sequencer_.getAnimationPosition();
@@ -277,7 +280,6 @@ public final class AnimationController<P> {
       Boolean foundFlashBackAxis = false;
       if (oldPosition != null) {
          for (String axis : newPositionModes_.keySet()) {
-         // for (String axis : newPosition.getAxes()) {
              if (oldPosition.getIndex(axis) != newPosition.getIndex(axis)) {
                 if (newPositionModes_.get(axis).equals(
                                NewPositionHandlingMode.IGNORE)) {
@@ -297,8 +299,8 @@ public final class AnimationController<P> {
       
       if (foundFlashBackAxis) {
          stopTicks();
-         if (newDataPositionExpiredFuture != null) {
-            newDataPositionExpiredFuture.cancel(true);
+         if (newDataPositionExpiredFuture_ != null) {
+            newDataPositionExpiredFuture_.cancel(true);
          }
          if (snapBackFuture_ != null) {
             snapBackFuture_.cancel(false);
@@ -311,7 +313,6 @@ public final class AnimationController<P> {
                synchronized (AnimationController.this) {
                   // TODO: should this be done at all?
                   listeners_.fire().animationAcknowledgeDataPosition(newPosition);
-                 
                   listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
                   listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                   didJumpToNewPosition_ = true;
@@ -350,12 +351,14 @@ public final class AnimationController<P> {
             public void run() {
                synchronized (AnimationController.this) {
                   listeners_.fire().animationAcknowledgeDataPosition(newPosition);
-                  if (newDisplayPosition != oldPosition) {
+                  if (!newDisplayPosition.equals(oldPosition)) {
                      listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
                      sequencer_.setAnimationPosition((P) newDisplayPosition);
                      listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                      didJumpToNewPosition_ = true;
                      listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
+                  } else {
+                     listeners_.fire().animationNewDataPositionExpired();
                   }
                }
             }
