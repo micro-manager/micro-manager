@@ -212,9 +212,9 @@ public class SpinnerPanel extends Panel {
             final int index = cmbSelectSettings.getSelectedIndex();
             crisp.setSettingsIndex(index);
             updateSpinnersFromSettings(crisp.getSettingsByIndex(index));
-            System.out.println(index);
-            System.out.println(crisp.getSettingsByIndex(index));
-            System.out.println(crisp.getSettingsFromDevice());
+//             System.out.println(index);
+//             System.out.println(crisp.getSettingsByIndex(index));
+//             System.out.println(crisp.getSettingsFromDevice());
         });
 
         // increase the number of available software settings
