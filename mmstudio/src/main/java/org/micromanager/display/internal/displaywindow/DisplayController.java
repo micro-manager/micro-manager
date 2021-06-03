@@ -854,7 +854,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    /**
     * A new image arrived in the Datastore.
     *
-    * @event Contains information about the newly arrived image.
+    * @param event Contains information about the newly arrived image.
      */
    @Subscribe
    public void onNewImage(final DataProviderHasNewImageEvent event) {
