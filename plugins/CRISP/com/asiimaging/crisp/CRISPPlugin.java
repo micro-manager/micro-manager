@@ -13,8 +13,6 @@ import org.micromanager.Studio;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-import javax.swing.UIManager;
-
 // The original plugin was created by Nico Stuurman, rewritten by Vikram Kopuri, 
 // and then once again rewritten by the current maintainer.
 @Plugin(type = MenuPlugin.class)
