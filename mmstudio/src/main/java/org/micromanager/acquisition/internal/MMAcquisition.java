@@ -149,6 +149,12 @@ public final class MMAcquisition extends DataViewerListener {
             SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(
                     NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                             summaryMetadata.toString()));
+            // Calculate expected images from dimensionality in summary metadata.
+            Coords dims = summary.getIntendedDimensions();
+            imagesExpected_ = 1;
+            for (String axis : dims.getAxes()) {
+               imagesExpected_ *= dims.getIndex(axis);
+            }
             pipeline_.insertSummaryMetadata(summary);
          }
       }
@@ -164,15 +170,7 @@ public final class MMAcquisition extends DataViewerListener {
       catch (IOException e) {
          throw new RuntimeException("Failed to parse summary metadata", e);
       }
-      // Calculate expected images from dimensionality in summary metadata.
-      if (store_.getSummaryMetadata().getIntendedDimensions() != null) {
-         Coords dims = store_.getSummaryMetadata().getIntendedDimensions();
-         imagesExpected_ = 1;
-         for (String axis : dims.getAxes()) {
-            imagesExpected_ *= dims.getIndex(axis);
-         }
-         setProgressText();
-      }
+
       if (show_) {
          studio_.displays().manage(store_);
          display_ = studio_.displays().createDisplay(store_, makeControlsFactory());
