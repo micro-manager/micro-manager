@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.data.Coords;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
@@ -85,7 +86,7 @@ public final class AnimationController<P> {
            new HashMap<>();
    private int newPositionFlashDurationMs_ = 500;
 
-   private boolean animationEnabled_ = false;
+   private AtomicBoolean animationEnabled_ = new AtomicBoolean(false);
 
    private final ScheduledExecutorService scheduler_ =
          Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory.
@@ -125,7 +126,7 @@ public final class AnimationController<P> {
    /**
     * Permanently cease all animation and scheduled events.
     */
-   public synchronized void shutdown() {
+   public void shutdown() {
       scheduler_.shutdown();
       stopAnimation();
       try {
@@ -144,7 +145,7 @@ public final class AnimationController<P> {
       if (intervalMs == tickIntervalMs_) {
          return;
       }
-      if (animationEnabled_) {
+      if (animationEnabled_.get()) {
          if (isTicksScheduled()) {
             // Adjust the current interval to match new interval, if possible
             long remainingMs =
@@ -209,26 +210,26 @@ public final class AnimationController<P> {
       return newPositionFlashDurationMs_;
    }
 
-   public synchronized void startAnimation() {
-      if (animationEnabled_) {
+   public void startAnimation() {
+      if (animationEnabled_.get()) {
          return;
       }
       startTicks(tickIntervalMs_, tickIntervalMs_);
-      animationEnabled_ = true;
+      animationEnabled_.set(true);
    }
 
-   public synchronized void stopAnimation() {
-      if (!animationEnabled_) {
+   public  void stopAnimation() {
+      if (!animationEnabled_.get()) {
          return;
       }
       if (isTicksScheduled()) {
          stopTicks();
       }
-      animationEnabled_ = false;
+      animationEnabled_.set(false);
    }
 
-   public synchronized boolean isAnimating() {
-      return animationEnabled_;
+   public boolean isAnimating() {
+      return animationEnabled_.get();
    }
 
    public synchronized void forceDataPosition(final P position) {
@@ -336,7 +337,7 @@ public final class AnimationController<P> {
                      //}
                      snapBackPosition_ = null;
                   }
-                  if (animationEnabled_) {
+                  if (animationEnabled_.get()) {
                      startTicks(tickIntervalMs_, tickIntervalMs_);
                   }
                   snapBackFuture_ = null;
