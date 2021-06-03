@@ -92,6 +92,7 @@ public final class AnimationController<P> {
                createThreadFactory("AnimationController"));
 
    private ScheduledFuture<?> scheduledTickFuture_;
+   private ScheduledFuture<?> newDataPositionExpiredFuture_;
    private long lastTickNs_;
 
    private ScheduledFuture<?> snapBackFuture_;
@@ -253,10 +254,12 @@ public final class AnimationController<P> {
          snapBackFuture_.cancel(false);
          snapBackFuture_ = null;
       }
-      ScheduledFuture<?> newDataPositionExpiredFuture = null;
       if (didJumpToNewPosition_) {
          didJumpToNewPosition_ = false;
-         newDataPositionExpiredFuture = scheduler_.schedule(new Runnable() {
+         if (newDataPositionExpiredFuture_ != null) {
+            newDataPositionExpiredFuture_.cancel(false);
+         }
+         newDataPositionExpiredFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
                synchronized (AnimationController.this) {
@@ -266,7 +269,7 @@ public final class AnimationController<P> {
                   listeners_.fire().animationNewDataPositionExpired();
                }
             }
-         }, 0, TimeUnit.MILLISECONDS);
+         }, 1000, TimeUnit.MILLISECONDS);
       }
 
       final Coords oldPosition = (Coords) sequencer_.getAnimationPosition();
@@ -277,7 +280,6 @@ public final class AnimationController<P> {
       Boolean foundFlashBackAxis = false;
       if (oldPosition != null) {
          for (String axis : newPositionModes_.keySet()) {
-         // for (String axis : newPosition.getAxes()) {
              if (oldPosition.getIndex(axis) != newPosition.getIndex(axis)) {
                 if (newPositionModes_.get(axis).equals(
                                NewPositionHandlingMode.IGNORE)) {
@@ -297,8 +299,8 @@ public final class AnimationController<P> {
       
       if (foundFlashBackAxis) {
          stopTicks();
-         if (newDataPositionExpiredFuture != null) {
-            newDataPositionExpiredFuture.cancel(true);
+         if (newDataPositionExpiredFuture_ != null) {
+            newDataPositionExpiredFuture_.cancel(true);
          }
          if (snapBackFuture_ != null) {
             snapBackFuture_.cancel(false);
@@ -310,7 +312,6 @@ public final class AnimationController<P> {
             public void run() {
                synchronized (AnimationController.this) {
                   listeners_.fire().animationAcknowledgeDataPosition(newPosition);
-                 
                   listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
                   listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                   didJumpToNewPosition_ = true;
@@ -349,12 +350,14 @@ public final class AnimationController<P> {
             public void run() {
                synchronized (AnimationController.this) {
                   listeners_.fire().animationAcknowledgeDataPosition(newPosition);
-                  if (newDisplayPosition != oldPosition) {
+                  if (!newDisplayPosition.equals(oldPosition)) {
                      listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
                      sequencer_.setAnimationPosition((P) newDisplayPosition);
                      listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                      didJumpToNewPosition_ = true;
                      listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
+                  } else {
+                     listeners_.fire().animationNewDataPositionExpired();
                   }
                }
             }
@@ -373,100 +376,6 @@ public final class AnimationController<P> {
             }
          }, 0, TimeUnit.MILLISECONDS);
       }
-
-      /*
-      
-      switch (newPositionMode_) {
-         case IGNORE: // aka red locked
-            scheduler_.schedule(new Runnable() {
-               @Override
-               public void run() {
-                  synchronized (AnimationController.this) {
-                     listeners_.fire().animationAcknowledgeDataPosition(newPosition);
-                  }
-               }
-            }, 0, TimeUnit.MILLISECONDS);
-            break;
-
-         case JUMP_TO_AND_STAY: // aka unlocked
-            // This mode does not make sense when animating, so fall through
-            // to flash-and-snap-back mode.
-            if (!isAnimating()) {
-               if (newDataPositionExpiredFuture != null) {
-                  newDataPositionExpiredFuture.cancel(true);
-               }
-               scheduler_.schedule(new Runnable() {
-                  @Override
-                  public void run() {
-                     synchronized (AnimationController.this) {
-                        listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
-                        sequencer_.setAnimationPosition( (P) newPosition);
-                        listeners_.fire().animationShouldDisplayDataPosition(newPosition);
-                        didJumpToNewPosition_ = true;
-                        listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
-                     }
-                  }
-               }, 0, TimeUnit.MILLISECONDS);
-               snapBackFuture_ = scheduler_.schedule(new Runnable() {
-                  @Override
-                  public void run() {
-                     if (didJumpToNewPosition_) {
-                        didJumpToNewPosition_ = false;
-                        listeners_.fire().animationNewDataPositionExpired();
-                     }
-                  }
-               }, newPositionFlashDurationMs_, TimeUnit.MILLISECONDS);
-               break;
-            }
-            // Conditional fallthrough            // Conditional fallthrough            // Conditional fallthrough            // Conditional fallthrough
-
-         case FLASH_AND_SNAP_BACK: // aka black locked
-            stopTicks();
-            if (newDataPositionExpiredFuture != null) {
-               newDataPositionExpiredFuture.cancel(true);
-            }
-            scheduler_.schedule(new Runnable() {
-               @Override
-               public void run() {
-                  synchronized (AnimationController.this) {
-                     snapBackPosition_ = sequencer_.getAnimationPosition();
-                     listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
-                     listeners_.fire().animationShouldDisplayDataPosition(newPosition);
-                     didJumpToNewPosition_ = true;
-                     listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
-                  }
-               }
-            }, 0, TimeUnit.MILLISECONDS);
-            snapBackFuture_ = scheduler_.schedule(new Runnable() {
-               @Override
-               public void run() {
-                  synchronized (AnimationController.this) {
-                     if (snapBackPosition_ != null) { // Be safe
-                        if (didJumpToNewPosition_) {
-                           didJumpToNewPosition_ = false;
-                           listeners_.fire().animationNewDataPositionExpired();
-                        }
-                        // Even if we have already moved away from the new data
-                        // position by other means (e.g. user click), we still
-                        // snap back if we are still in snap-back mode.
-                        if (newPositionMode_ == NewPositionHandlingMode.FLASH_AND_SNAP_BACK) {
-                           listeners_.fire().animationShouldDisplayDataPosition(snapBackPosition_);
-                        }
-                        snapBackPosition_ = null;
-                     }
-                     if (animationEnabled_) {
-                        startTicks(tickIntervalMs_, tickIntervalMs_);
-                     }
-                     snapBackFuture_ = null;
-                  }
-               }
-            }, newPositionFlashDurationMs_, TimeUnit.MILLISECONDS);
-            break;
-
-         default: // Should be impossible
-            throw new AssertionError(newPositionMode_);
-      }
-      */
    }
 
    private synchronized void startTicks(long delayMs, long intervalMs) {

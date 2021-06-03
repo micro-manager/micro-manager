@@ -769,6 +769,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    @MustCallOnEDT
    void displayImages(ImagesAndStats images) {
+      if (repaintScheduledForNewImages_.get()) {
+         return;
+      }
+
+      repaintScheduledForNewImages_.set(true);
+
       boolean firstTime = false;
       if (ijBridge_ == null) {
          firstTime = true;
@@ -819,7 +825,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       imageInfoLabel_.setText(getImageInfoLabel(images));
 
-      repaintScheduledForNewImages_.set(true);
    }
 
    void setImageInfoLabel(ImagesAndStats images) {
