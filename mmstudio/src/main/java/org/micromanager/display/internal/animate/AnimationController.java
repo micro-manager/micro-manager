@@ -89,7 +89,7 @@ public final class AnimationController<P> {
 
    private final ScheduledExecutorService scheduler_ =
          Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory.
-               createThreadFactory("AnimationController", 4));
+               createThreadFactory("AnimationController"));
 
    private ScheduledFuture<?> scheduledTickFuture_;
    private ScheduledFuture<?> newDataPositionExpiredFuture_;
