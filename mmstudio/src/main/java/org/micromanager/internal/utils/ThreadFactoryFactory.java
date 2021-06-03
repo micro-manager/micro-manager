@@ -32,22 +32,12 @@ public final class ThreadFactoryFactory {
       return new Factory(poolName);
    }
 
-   public static ThreadFactory createThreadFactory(final String poolName, int priority) {
-      return new Factory(poolName, priority);
-   }
-
    private static final class Factory implements ThreadFactory {
       private final AtomicLong next_ = new AtomicLong(0);
       private final String name_;
-      private int priority_ = 4; // default priority
 
       Factory(String poolName) {
          name_ = poolName;
-      }
-
-      Factory(String poolName, int priority) {
-         name_ = poolName;
-         priority_ = priority;
       }
 
       private String nextTitle() {
@@ -58,7 +48,6 @@ public final class ThreadFactoryFactory {
       @Override
       public Thread newThread(Runnable r) {
          Thread ret = new Thread(r, nextTitle());
-         ret.setPriority(priority_);
          ret.setDaemon(true);
          return ret;
       }
