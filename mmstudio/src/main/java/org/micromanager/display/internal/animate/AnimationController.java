@@ -311,7 +311,6 @@ public final class AnimationController<P> {
             @Override
             public void run() {
                synchronized (AnimationController.this) {
-                  // TODO: should this be done at all?
                   listeners_.fire().animationAcknowledgeDataPosition(newPosition);
                   listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
                   listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
