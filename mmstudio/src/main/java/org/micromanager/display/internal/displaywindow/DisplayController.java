@@ -526,9 +526,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    protected Coords handleDisplayPosition(Coords position) {
       perfMon_.sampleTimeInterval("Handle display position");
 
-      //runnablePool_.invokeLaterWithCoalescence(
-      //      new ExpandDisplayRangeCoalescentRunnable(position));
-
       // Always compute stats for all channels
       List<Image> images;
       try {
