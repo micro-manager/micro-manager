@@ -21,6 +21,8 @@
 package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
@@ -31,7 +33,6 @@ import org.micromanager.data.SummaryMetadata;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -45,11 +46,14 @@ import java.util.List;
  */
 public final class StorageRAM implements RewritableStorage {
    private ConcurrentHashMap<Coords, Image> coordsToImage_;
+   private Set<String> axesInUse_;
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;
+   private Image anyImage_;
 
    public StorageRAM(Datastore store) {
       coordsToImage_ = new ConcurrentHashMap<>();
+      axesInUse_ = new TreeSet<>();
       maxIndex_ = new DefaultCoords.Builder().build();
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
       // It is imperative that we be notified of new images before anyone who
@@ -69,6 +73,7 @@ public final class StorageRAM implements RewritableStorage {
       Coords coords = image.getCoords();
       coordsToImage_.put(coords, image);
       for (String axis : coords.getAxes()) {
+         axesInUse_.add(axis);
          if (maxIndex_.getIndex(axis) < coords.getIndex(axis)) {
             // Either this image is further along on this axis, or we have
             // no index for this axis yet.
@@ -95,15 +100,20 @@ public final class StorageRAM implements RewritableStorage {
 
    @Override
    public Image getAnyImage() {
+      if (anyImage_ != null) {
+         return anyImage_;
+      }
       if (coordsToImage_ != null && coordsToImage_.size() > 0) {
+         coordsToImage_.elements().hasMoreElements();
          Coords coords = new ArrayList<>(coordsToImage_.keySet()).get(0);
-         return coordsToImage_.get(coords);
+         anyImage_ = coordsToImage_.get(coords);
+         return anyImage_;
       }
       return null;
    }
 
    @Override
-   public synchronized List<Image> getImagesMatching(Coords coords) {
+   public List<Image> getImagesMatching(Coords coords) {
       if (coordsToImage_ == null) {
          return null;
       }
@@ -124,10 +134,23 @@ public final class StorageRAM implements RewritableStorage {
          return null;
       }
       List<Image> result = new ArrayList<>();
-      for (Image image : coordsToImage_.values()) {
-         Coords imCoord = image.getCoords().copyRemovingAxes(ignoreTheseAxes);
-         if (imCoord.equals(coords)) {
-            result.add (image);
+      // Optimization: traversing large HashMaps is costly, so avoid that when there is no need
+      // without this, there is noticeable slowdown for one axis data > ~10,000 images
+      boolean haveIgnoredAxes = false;
+      for (String axis : ignoreTheseAxes) {
+         if (axesInUse_.contains(axis)) {
+            haveIgnoredAxes = true;
+            continue;
+         }
+      }
+      if (!haveIgnoredAxes) {
+         result.add(coordsToImage_.get(coords));
+      } else {  // could not optimize, traverse our HashMap
+         for (Image image : coordsToImage_.values()) {
+            Coords imCoord = image.getCoords().copyRemovingAxes(ignoreTheseAxes);
+            if (imCoord.equals(coords)) {
+               result.add(image);
+            }
          }
       }
       return result;
