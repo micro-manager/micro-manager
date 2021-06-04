@@ -14,7 +14,6 @@ nobase_mmplugin_DATA = \
 	AcquireMultipleRegions.jar \
 	AutoLase.jar \
 	CRISP.jar \
-	CRISPv2.jar \
 	ChannelCorrector.jar \
 	Duplicator.jar \
 	FrameCombiner.jar \
