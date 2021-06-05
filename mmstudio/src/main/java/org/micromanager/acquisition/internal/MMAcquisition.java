@@ -449,7 +449,9 @@ public final class MMAcquisition extends DataViewerListener {
             // This should never happen.
             studio_.logs().logError("Interrupted while waiting to dismiss alert");
          }
-         alert_.dismiss();
+         if (alert_ != null) {
+            alert_.dismiss();
+         }
       }).start();
    }
 
@@ -471,18 +473,16 @@ public final class MMAcquisition extends DataViewerListener {
    }
 
    private void setProgressText() {
-      if (imagesExpected_ > 0) {
-         int numDigits = (int) (Math.log10(imagesExpected_) + 1);
-         String format = "%0" + numDigits + "d";
-         if (alert_ != null) {
+      if (alert_ != null) {
+         if (imagesExpected_ > 0) {
             if (nextFrameAlertGenerator_ != null && nextFrameAlertGenerator_.isRunning()) {
                nextFrameAlertGenerator_.restart();
             }
             alert_.setText(String.format(
-                    "Received " + format + " of %d images",
-                    imagesReceived_, imagesExpected_));
+                  "Received %d of %d images",
+                  imagesReceived_, imagesExpected_));
          }
-      } else if (alert_ != null) {
+      } else {
          alert_.setText("No images expected.");
       }
    }
