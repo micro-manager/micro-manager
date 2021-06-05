@@ -135,7 +135,10 @@ public final class StorageRAM implements RewritableStorage {
       }
       List<Image> result = new ArrayList<>();
       // Optimization: traversing large HashMaps is costly, so avoid that when there is no need
-      // without this, there is noticeable slowdown for one axis data > ~10,000 images
+      // without this, there is noticeable slowdown for one axis data > ~10,000 images.
+      // An alternative optimization approach is to keep collections of coords
+      // for all possible ignoredAxes.  There is more upfront work involved but may be
+      // needed for fast multi-camera imaging.
       boolean haveIgnoredAxes = false;
       for (String axis : ignoreTheseAxes) {
          if (axesInUse_.contains(axis)) {
