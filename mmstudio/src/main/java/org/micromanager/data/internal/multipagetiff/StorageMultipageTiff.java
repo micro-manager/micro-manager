@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -111,6 +112,8 @@ public final class StorageMultipageTiff implements Storage {
    
    //Map of image labels to file 
    private Map<Coords, MultipageTiffReader> coordsToReader_;
+   // Cache the axes that are in use
+   private Set<String> axesInUse_;
    // Keeps track of our maximum extent along each axis.
    private Coords maxIndices_;
 
@@ -151,6 +154,7 @@ public final class StorageMultipageTiff implements Storage {
       store_.setSavePath(directory_);
       store_.setName(new File(directory_).getName());
       coordsToReader_ = new HashMap<>();
+      axesInUse_ = new TreeSet<>();
 
       if (amInWriteMode_) {
          positionToFileSet_ = new HashMap<>();
@@ -314,6 +318,7 @@ public final class StorageMultipageTiff implements Storage {
       DefaultImage image = (DefaultImage) newImage;
       // Require images to only have time/channel/z/position axes.
       for (String axis : image.getCoords().getAxes()) {
+         axesInUse_.add(axis);
          if (!ALLOWED_AXES.contains(axis)) {
             ReportingUtils.showError("Multipage TIFF storage cannot handle images with axis \"" + axis + "\". Allowed axes are " + ALLOWED_AXES);
             return;
@@ -904,13 +909,28 @@ public final class StorageMultipageTiff implements Storage {
             }
          }
       }
-      for (Coords imageCoords : coordsToReader_.keySet()) {
-         if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
-            try {
-               result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
-            }
-            catch (IOException ex) {
-               ReportingUtils.logError("Failed to read image at " + imageCoords);
+      // Optimization: traversing large HashMaps is costly, so avoid that when there is no need
+      // without this, there is noticeable slowdown for one axis data > ~10,000 images.
+      // An alternative optimization approach is to keep collections of coords
+      // for all possible ignoredAxes.  There is more upfront work involved but may be
+      // needed for fast multi-camera imaging.
+      boolean haveIgnoredAxes = false;
+      for (String axis : ignoreTheseAxes) {
+         if (axesInUse_.contains(axis)) {
+            haveIgnoredAxes = true;
+            continue;
+         }
+      }
+      if (!haveIgnoredAxes) {
+         result.add(coordsToReader_.get(coords).readImage(coords));
+      } else {
+         for (Coords imageCoords : coordsToReader_.keySet()) {
+            if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
+               try {
+                  result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
+               } catch (IOException ex) {
+                  ReportingUtils.logError("Failed to read image at " + imageCoords);
+               }
             }
          }
       }
