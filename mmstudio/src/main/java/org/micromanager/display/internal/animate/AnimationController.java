@@ -126,7 +126,7 @@ public final class AnimationController<P> {
    /**
     * Permanently cease all animation and scheduled events.
     */
-   public void shutdown() {
+   public synchronized void shutdown() {
       scheduler_.shutdown();
       stopAnimation();
       try {
@@ -210,7 +210,7 @@ public final class AnimationController<P> {
       return newPositionFlashDurationMs_;
    }
 
-   public void startAnimation() {
+   public synchronized void startAnimation() {
       if (animationEnabled_.get()) {
          return;
       }
@@ -218,7 +218,7 @@ public final class AnimationController<P> {
       animationEnabled_.set(true);
    }
 
-   public  void stopAnimation() {
+   public synchronized void stopAnimation() {
       if (!animationEnabled_.get()) {
          return;
       }
