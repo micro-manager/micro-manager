@@ -21,9 +21,12 @@
 package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.Datastore;
@@ -31,13 +34,11 @@ import org.micromanager.data.Image;
 import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.SummaryMetadata;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Simple RAM-based storage for Datastores. Methods that interact with the
  * HashMap that is our image storage are synchronized.
+ * 
  * TODO: coordsToImage_ can be set to null in the close function
  * if any of the member functions are called after "close", a null pointer exception
  * will follow.  We can either check for null whenever coordsToImage is used,
@@ -45,16 +46,16 @@ import java.util.List;
  * (which may be very difficult to guarantee).
  */
 public final class StorageRAM implements RewritableStorage {
-   private ConcurrentHashMap<Coords, Image> coordsToImage_;
-   private Set<String> axesInUse_;
+   private HashMap<Coords, Image> coordsToImage_;
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;
+   private final Set<String> axesInUse_;
    private Image anyImage_;
 
    public StorageRAM(Datastore store) {
-      coordsToImage_ = new ConcurrentHashMap<>();
-      axesInUse_ = new TreeSet<>();
+      coordsToImage_ = new HashMap<>();
       maxIndex_ = new DefaultCoords.Builder().build();
+      axesInUse_ = new TreeSet<>();
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
       // It is imperative that we be notified of new images before anyone who
       // wants to retrieve the images from the store is notified.
@@ -65,7 +66,7 @@ public final class StorageRAM implements RewritableStorage {
     * Add a new image to our storage, and update maxIndex_.
     */
    @Override
-   public void putImage(Image image) {
+   public synchronized void putImage(Image image) {
       Image imageExisting = getAnyImage();
       if (imageExisting != null) {
          ImageSizeChecker.checkImageSizes(image, imageExisting);
@@ -91,7 +92,7 @@ public final class StorageRAM implements RewritableStorage {
    }
 
    @Override
-   public Image getImage(Coords coords) {
+   public synchronized Image getImage(Coords coords) {
       if (coordsToImage_ != null && coordsToImage_.containsKey(coords)) {
          return coordsToImage_.get(coords);
       }
@@ -103,17 +104,18 @@ public final class StorageRAM implements RewritableStorage {
       if (anyImage_ != null) {
          return anyImage_;
       }
-      if (coordsToImage_ != null && coordsToImage_.size() > 0) {
-         coordsToImage_.elements().hasMoreElements();
-         Coords coords = new ArrayList<>(coordsToImage_.keySet()).get(0);
-         anyImage_ = coordsToImage_.get(coords);
-         return anyImage_;
+      synchronized (this) {
+         if (coordsToImage_ != null && coordsToImage_.size() > 0) {
+            Coords coords = new ArrayList<>(coordsToImage_.keySet()).get(0);
+            anyImage_ = coordsToImage_.get(coords);
+            return anyImage_;
+         }
       }
       return null;
    }
 
    @Override
-   public List<Image> getImagesMatching(Coords coords) {
+   public synchronized List<Image> getImagesMatching(Coords coords) {
       if (coordsToImage_ == null) {
          return null;
       }
@@ -128,17 +130,17 @@ public final class StorageRAM implements RewritableStorage {
       return results;
    }
 
-   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
+   public synchronized List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
            throws IOException {
       if (coordsToImage_ == null) {
          return null;
       }
-      List<Image> result = new ArrayList<>();
       // Optimization: traversing large HashMaps is costly, so avoid that when there is no need
       // without this, there is noticeable slowdown for one axis data > ~10,000 images.
       // An alternative optimization approach is to keep collections of coords
       // for all possible ignoredAxes.  There is more upfront work involved but may be
       // needed for fast multi-camera imaging.
+      List<Image> result = new ArrayList<>();
       boolean haveIgnoredAxes = false;
       for (String axis : ignoreTheseAxes) {
          if (axesInUse_.contains(axis)) {
@@ -160,7 +162,7 @@ public final class StorageRAM implements RewritableStorage {
    }
 
    @Override
-   public Iterable<Coords> getUnorderedImageCoords() {
+   public synchronized Iterable<Coords> getUnorderedImageCoords() {
       return coordsToImage_.keySet();
    }
 
@@ -201,7 +203,7 @@ public final class StorageRAM implements RewritableStorage {
    }
 
    @Override
-   public void deleteImage(Coords coords) throws IllegalArgumentException {
+   public synchronized void deleteImage(Coords coords) throws IllegalArgumentException {
       if (!coordsToImage_.containsKey(coords)) {
          throw new IllegalArgumentException("Storage does not contain image at " + coords);
       }
