@@ -155,6 +155,15 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public DisplaySettings.Builder channels(Iterable<ChannelDisplaySettings> channelSettings) {
+         channelSettings_.clear();
+         for (ChannelDisplaySettings channelSetting: channelSettings) {
+            channelSettings_.add(channelSetting);
+         }
+         return this;
+      }
+
+      @Override
       public int getNumberOfChannels() {
          return channelSettings_.size();
       }
