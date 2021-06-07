@@ -25,6 +25,36 @@ import java.util.concurrent.ConcurrentHashMap;
  * Collection of exponentially smoothed statistics for monitoring dynamic
  * performance.
  *
+ * Performance Monitor UI is enabled by setting the system property "org.micromanager.showperfmon".
+ * This can be done from code/script panel:
+ * https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#setProperty-java.lang.String-java.lang.String-
+ * (System.setProperty("org.micromanager.showperfmon", "true"))
+ * Or from JVM command line args:
+ * https://docs.oracle.com/javase/8/docs/technotes/tools/windows/java.html
+ * (-Dorg.micromanager.showperfmon=true).
+ * We could document that somewhere, but I don't feel that this feature is useful to anybody who
+ * doesn't already have deep knowledge of the display code -- the data it displays is
+ * uninterpretable without reading the code.
+ * I don't think the performance impact is that big when not enabled (it should be noted that most
+ * of its uses are per display cycle, which is never over 60 Hz, I would hope, no matter how high
+ * the acquisition rate), but please feel free to remove its use entirely from the viewer classes
+ * (or add code that would cause it to be JIT-compiled to nothing when not enabled) if you prefer
+ * it that way, whether or not there is any proof. At least that will make the viewer code cleaner,
+ * and we can always temporarily re-add performance sampling when working on display performance.
+ * In my hands, the insight gained from it was quite valuable, because most of our viewer
+ * performance issues (with the exception of histogramming and metadata processing) are not
+ * CPU-bound but rather concurrency programming bugs or nonidealities, such as waiting for things
+ * incorrectly or scheduling too many things at the same time. I'm a bit worried that trying to
+ * address display performance issues without this kind of tool is like shooting in the dark.
+ * But it is true that it is something I quickly whipped up for my own use, hence the lack of
+ * documentation. If you would like, I can make it a separate library and completely remove it
+ * from MMStudio (that would maybe force me to document it...).
+ * The only org.micromanager.internal.utils.performance usage that cannot be trivially removed
+ * is the DisplayUIController's use of TimeIntervalRunningQuantile to compute a running median
+ * (yes, it can be done) of actual past display FPS in order to adjust its target FPS. This is
+ * something that seemed to work better (across a wide range of incoming frame rates and
+ * processing delays) than other methods I tried, but by no means is it perfect.
+ *
  * @author Mark A. Tsuchida
  */
 public final class PerformanceMonitor {
