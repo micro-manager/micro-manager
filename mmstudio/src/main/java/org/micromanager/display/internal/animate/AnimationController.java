@@ -211,21 +211,19 @@ public final class AnimationController<P> {
    }
 
    public synchronized void startAnimation() {
-      if (animationEnabled_.get()) {
+      if (animationEnabled_.compareAndSet(true,true)) {
          return;
       }
       startTicks(tickIntervalMs_, tickIntervalMs_);
-      animationEnabled_.set(true);
    }
 
    public synchronized void stopAnimation() {
-      if (!animationEnabled_.get()) {
+      if (animationEnabled_.compareAndSet(false, false)) {
          return;
       }
       if (isTicksScheduled()) {
          stopTicks();
       }
-      animationEnabled_.set(false);
    }
 
    public boolean isAnimating() {
