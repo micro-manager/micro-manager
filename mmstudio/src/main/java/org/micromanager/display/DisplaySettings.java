@@ -30,14 +30,18 @@ import java.util.List;
  * You are not expected to implement this interface; it is here to describe how
  * you can interact with DisplaySettings created by Micro-Manager itself. If
  * you need a DisplaySettings.Builder, you can generate one via the
- * DataManager's getDisplaySettingsBuilder() method, or by using the copy()
- * method of an existing DisplaySettings instance.
+ * {@link org.micromanager.display.DisplayManager} displaySettingsBuilder()
+ * method or by using one of the copy() methods of an existing DisplaySettings instance.
  * This class uses a Builder pattern. Please see
- * https://micro-manager.org/wiki/Using_Builders
- * for more information.
+ * https://micro-manager.org/wiki/Using_Builders for more information.
  */
 public interface DisplaySettings {
 
+   /**
+    * Builder for DisplaySettings.  Get an instance using the
+    * {@link org.micromanager.display.DisplayManager} displaySettingsBuilder()
+    * method or by using one of the copy() methods of an existing DisplaySettings instance.
+    */
    interface Builder {
       Builder zoomRatio(double ratio);
 
@@ -347,6 +351,11 @@ public interface DisplaySettings {
       int getNumComponents();
    }
 
+   /**
+    * Deprecated version of a DisplaySettings Builder.
+    *
+    * @deprecated Use DisplaySettings.Builder instead
+    */
    @Deprecated
    interface DisplaySettingsBuilder extends Builder {
       /**
@@ -522,6 +531,9 @@ public interface DisplaySettings {
    @Deprecated
    Boolean getSafeIsVisible(int index, Boolean defaultVal);
 
+   /**
+    * ColorMode enums.
+    */
    enum ColorMode {
       // TODO Integer indices should be implementation detail of file format
       COLOR(0), COMPOSITE(1), GRAYSCALE(2), HIGHLIGHT_LIMITS(3), FIRE(4),
