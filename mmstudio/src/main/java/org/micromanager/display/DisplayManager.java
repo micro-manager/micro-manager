@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -39,6 +38,7 @@ public interface DisplayManager extends EventPublisher {
     * display the provided Image. The Datastore will use RAM-based storage,
     * and will not be managed by Micro-Manager by default (see the manage()
     * method, below).
+    *
     * @param image The Image to display.
     * @return The Datastore created to hold the Image.
     */
@@ -47,6 +47,7 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Retrieve a DisplaySettings holding the values the user has saved as their
     * default values.
+    *
     * @return The DisplaySettings as of the last time the user clicked the
     *         "Set as default" button in the Settings tab of a DisplayWindow.
     */
@@ -54,6 +55,7 @@ public interface DisplayManager extends EventPublisher {
 
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.
+    *
     * @return A DisplaySettingsBuilder with no pre-set values.
     * @deprecated - use displaySettingsBuilder() instead
     */
@@ -63,19 +65,22 @@ public interface DisplayManager extends EventPublisher {
    
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.
+    *
     * @return A DisplaySettingsBuilder with no pre-set values.
     */
    DisplaySettings.Builder displaySettingsBuilder();
    
    /**
-    * Generates a blank channelDisplaySettings Builder with all null values
+    * Generates a blank channelDisplaySettings Builder with all null values.
+    *
     * @return a blank ChannelDisplaySettings Builder
     */
    ChannelDisplaySettings.Builder channelDisplaySettingsBuilder();
    
    
    /**
-    * Generates a blank componentSettings Builder with all null values
+    * Generates a blank componentSettings Builder with all null values.
+    *
     * @return a blank componentSettings builder
     */
    ComponentDisplaySettings.Builder componentDisplaySettingsBuilder();
@@ -84,6 +89,7 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Generate a ContrastSettings object with the provided values. This version
     * of the method is to be used for single-component images.
+    *
     * @param contrastMin The highest pixel intensity corresponding to black.
     * @param contrastMax The lowest pixel intensity corresponding to full
     *        intensity.
@@ -92,7 +98,7 @@ public interface DisplayManager extends EventPublisher {
     *        when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object, whose properties are
     *         all length-1 arrays with the provided values.
-    * @deprecated
+    * @deprecated Use {@link DisplaySettings#getAllChannelSettings()} instead.
     */
    @Deprecated
    DisplaySettings.ContrastSettings getContrastSettings(
@@ -102,6 +108,7 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Generate a ContrastSettings object with the provided values. This version
     * of the method is to be used for multi-component (e.g. RGB) images.
+    *
     * @param contrastMins Array with the highest pixel intensity corresponding 
     *        to black, for each component.
     * @param contrastMaxes Array with the lowest pixel intensity corresponding to full
@@ -120,65 +127,8 @@ public interface DisplayManager extends EventPublisher {
          Boolean isVisible);
 
    /**
-    * Generate a HistogramData object based on the pixels in the provided
-    * Image. HistogramData objects may be used for controlling the histogram(s)
-    * in the Inspector window by posting a NewHistogramsEvent to the display.
-    * @param image The image whose pixel intensities will be examined.
-    * @param component The component of the image (use 0 for grayscale images).
-    * @param binPower The number of bins in the resulting histogram, expressed
-    *        as an exponent for a power of 2. For example, using 8 here will
-    *        result in a histogram with 256 bins. Note: if accurate min/max
-    *        pixel intensities are required, then this must equal the bitDepth
-    *        parameter; see notes on HistogramData.getMinVal() and
-    *        HistogramData.getMaxVal() for more information.
-    * @param bitDepth The range of values accepted by the histogram, expressed
-    *        as a power of 2. For example, using 10 here would result in a
-    *        histogram whose bins accept values from 0 through 1023,
-    *        inclusive. The other statistics provided in the HistogramData are
-    *        not constrained by this value. Note: if this bitDepth parameter
-    *        does not fully encompass the intensities in the image's pixels,
-    *        then an ArrayIndexOutOfBoundsException will be thrown.
-    * @param extremaPercentage The percentage of pixels to ignore when
-    *        calculating the min/max intensities.
-    * @param shouldCalcStdDev If true, the standard deviation will be
-    *        calculated in the resulting HistogramData; otherwise it will be -1
-    * @return a HistogramData derived from the pixels in the image.
-    */
-   //   public HistogramData calculateHistogram(Image image, int component,
-   //         int binPower, int bitDepth, double extremaPercentage,
-   //         boolean shouldCalcStdDev);
-
-   /**
-    * Generate a HistogramData object based on the pixels in the provided
-    * Image. HistogramData objects may be used for controlling the histogram(s)
-    * in the Inspector window by posting a NewHistogramsEvent to the display.
-    * Behaves as calculateHistogram, except that the binPower, bitDepth, and
-    * extremaPercentage parameters will be derived from the provided
-    * DisplaySettings (or the image's native bit depth, if the bitDepthIndex
-    * property of the DisplaySettings has a value of 0).
-    * @param image The image whose pixel intensities will be examined.
-    * @param component The component of the image (use 0 for grayscale images).
-    * @param settings The DisplaySettings to use for extracting other
-    *        histogram calculation values.
-    * @return a HistogramData derived from the pixels in the image.
-    */
-   //   public HistogramData calculateHistogramWithSettings(Image image,
-   //         int component, DisplaySettings settings);
-
-   /**
-    * Send updated histogram information to anyone who is listening for it for
-    * the specified display. This is equivalent to calling
-    * calculateHistogramWithSettings for every component in every image in the
-    * provided list and then posting a NewHistogramsEvent with the resulting
-    * HistogramDatas.
-    * @param images List of images to calculate histograms for.
-    * @param viewer DataViewer that histogram information should be updated for
-    */
-   //   public void updateHistogramDisplays(List<Image> images, DataViewer viewer);
-
-
-   /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
+    *
     * @return A PropertyMapBuilder with no pre-set values.
     * @deprecated Use {@link org.micromanager.PropertyMaps#builder()} instead
     */
@@ -187,6 +137,7 @@ public interface DisplayManager extends EventPublisher {
 
    /**
     * Create a new DisplayWindow for the specified DataProvider and return it.
+    *
     * @param dataProvider The DataProvider whose data should be displayed.
     * @return The created DisplayWindow.
     */
@@ -196,6 +147,7 @@ public interface DisplayManager extends EventPublisher {
     * Create a new DisplayWindow for the specified DataProvider and return it.
     * This version allows you to add your own custom controls to the display
     * that will appear underneath the axis scrollbars.
+    *
     * @param dataProvider The DataProvider whose data should be displayed.
     * @param factory A ControlsFactory used to create custom controls for
     *        the DisplayWindow. May be null.
@@ -207,6 +159,7 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Create a new Inspector window that shows information for the specified
     * DataViewer, or for the topmost window if the DataViewer is null.
+    *
     * @param display The DataViewer the inspector should show information on,
     *        or null to show information on the topmost window.
     */
@@ -218,6 +171,7 @@ public interface DisplayManager extends EventPublisher {
     * DisplayWindow is created, but it can be created earlier by calling this
     * method. Note that once the default Inspector has been created, this
     * method will not do anything, even if that Inspector is later closed.
+    *
     * @return true if an inspector window is created, false otherwise.
     */
    @Deprecated
@@ -228,6 +182,7 @@ public interface DisplayManager extends EventPublisher {
     * aware of the viewer, so that it may be used by Micro-Manager's widgets
     * (chiefly, the Inspector Window). Use removeViewer() to remove a viewer
     * that has been added by this method.
+    *
     * @param viewer The new DataViewer that should be tracked.
     */
    void addViewer(DataViewer viewer);
@@ -235,6 +190,7 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Cause Micro-Manager to stop tracking a DataViewer that was previously
     * added with addViewer().
+    *
     * @param viewer The DataViewer that should no longer be tracked.
     * @throws IllegalArgumentException if the viewer is not currently tracked.
     */
@@ -246,9 +202,10 @@ public interface DisplayManager extends EventPublisher {
     * in a separate display settings file; one new DisplayWindow will be
     * created for every entry in that file. If no file is found then a single
     * default DisplayWindow will be created, as per createDisplay() above.
+    *
     * @param store The Datastore to load display settings for.
     * @return The list of DisplayWindows that were created by this method.
-    * @throws java.io.IOException
+    * @throws java.io.IOException Most likely indicating that a file could not be read.
     */
    List<DisplayWindow> loadDisplays(Datastore store) throws IOException;
 
@@ -272,6 +229,7 @@ public interface DisplayManager extends EventPublisher {
     * are not managed, which means you are responsible for ensuring that they
     * are properly closed and saved. DataProvider created by MicroManager itself
     * (e.g. by running an MDA) are automatically managed.
+    *
     * @param store The DataProvider to manage.
     */
    void manage(DataProvider store);
@@ -279,12 +237,14 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Return a list of all DataProviders that MicroManager is managing (see the
     * manage() method for more information).
+    *
     * @return A list of all DataProviders that Micro-Manager is managing.
     */
    List<DataProvider> getManagedDataProviders();
 
    /**
     * Returns true if the DataProvider is being managed by MicroManager.
+    *
     * @param provider The DataProvider whose management status is under question.
     * @return Whether or not Micro-Manager is managing the DataProvider.
     */
@@ -292,6 +252,7 @@ public interface DisplayManager extends EventPublisher {
 
    /**
     * Returns true if the DataProvider is being managed by MicroManager.
+    *
     * @param provider The DataProvider whose management status is under question.
     * @return Whether or not Micro-Manager is managing the DataProvider.
     * @deprecated use {@link #isManaged(DataProvider)} instead
@@ -304,6 +265,7 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Return all associated DisplayWindows for the Datastore. Returns null if
     * the Datastore is not managed.
+    *
     * @param store Datastore of interest to the caller
     * @return A list of all DisplayWindows Micro-Manager knows are associated
     *         with the specified Datastore, or null.
@@ -315,6 +277,7 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Return all associated DisplayWindows for the DataProvider. Returns null if
     * the DataProvider is not managed.
+    *
     * @param dataProvider DataProvider of interest to the caller
     * @return A list of all DisplayWindows Micro-Manager knows are associated
     *         with the specified Datastore, or null.
@@ -334,15 +297,14 @@ public interface DisplayManager extends EventPublisher {
    DisplayWindow getCurrentWindow();
 
    /**
-    * Return the currently active data viewer.
-    *
+    * Returns the currently active data viewer.
     * The active data viewer is the data viewer that last became active among
     * those currently visible. A data viewer may become active because its
     * window became active (if the viewer is windowed), or because the window
     * containing it became active (if the viewer is a subcomponent of a larger
     * window).
     *
-    * @return the active data viewer, or null if no data viewer is registered
+    * @return the active data viewer, or null if no data viewer is registered.
     */
    DataViewer getActiveDataViewer();
 
@@ -350,6 +312,7 @@ public interface DisplayManager extends EventPublisher {
     * Return all active DisplayWindows. Note this is specifically Micro-
     * Manager DisplayWindows; it doesn't include ImageJ's ImageWindows or
     * any other data-representation windows.
+    *
     * @return A list of all DisplayWindows that Micro-Manager knows about.
     */
    List<DisplayWindow> getAllImageWindows();
@@ -358,6 +321,7 @@ public interface DisplayManager extends EventPublisher {
     * Return all DataViewers that Micro-Manager knows about. This includes
     * the results of getAllImageWindows, as well as any extant DataViewers
     * that have been registered with Micro-Manager via the addViewer method.
+    *
     * @return List with all DataViewers that Micro-Manager knows about
     */
    List<DataViewer> getAllDataViewers();
@@ -366,16 +330,18 @@ public interface DisplayManager extends EventPublisher {
     * Display a prompt for the user to save their data. This is the same
     * prompt that is generated when the last DisplayWindow for a managed
     * Datastore is closed.
+    *
     * @param store The Datastore to save.
     * @param display The DisplayWindow over which to show the prompt.
     * @return true if saving was successful or the user explicitly declined
     *         to save; false if the user cancelled or if saving failed.
-    * @throws java.io.IOException
+    * @throws java.io.IOException Can be thrown when file IO causes an exception.
     */
    boolean promptToSave(Datastore store, DisplayWindow display) throws IOException;
 
    /**
     * Provide an ImagceExporter for generating image sequences.
+    *
     * @return an ImageExporter instance.
     */
    ImageExporter createExporter();
@@ -384,6 +350,7 @@ public interface DisplayManager extends EventPublisher {
     * Given a DataProvider, close any open DisplayWindows for that DataProvider.
     * If the DataProvider is managed, then the user may receive a prompt to
     * save their data, which they have the option to cancel.
+    *
     * @param provider DataProvider for which displays should be closed
     * @return True if all windows were closed; false otherwise (e.g. because
     *         the user canceled saving).
@@ -400,6 +367,7 @@ public interface DisplayManager extends EventPublisher {
 
    /**
     * Close all open image windows.
+    *
     * @param shouldPromptToSave If true, then any open windows for Datastores
     *        that have not been saved will show a prompt to save, and if the
     *        user chooses not to save a file, then the process of closing
