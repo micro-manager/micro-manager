@@ -174,7 +174,6 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    }
    
    @Override
-   @Deprecated
    public DisplaySettings.Builder displaySettingsBuilder() {
       return DefaultDisplaySettings.builder();
    }
