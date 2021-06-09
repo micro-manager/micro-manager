@@ -1561,7 +1561,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    public void paintDidFinish() {
-      perfMon_.sampleTimeInterval("Repaint completed");
+      if (perfMon_ != null) {
+         perfMon_.sampleTimeInterval("Repaint completed");
+      }
 
       // Paints occur both by our requesting a new image to be displayed and
       // for other reasons. To compute the display rate, we want to count only
@@ -1569,19 +1571,23 @@ public final class DisplayUIController implements Closeable, WindowListener,
       boolean countAsNewDisplayedImage =
               repaintScheduledForNewImages_.compareAndSet(true, false);
       if (countAsNewDisplayedImage) {
-         perfMon_.sampleTimeInterval("Repaint counted as new display");
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("Repaint counted as new display");
+         }
 
          displayIntervalEstimator_.get().sample();
          if (displayController_.isAnimating()) {
             adjustAnimationTickIntervalMs(
                     displayIntervalEstimator_.get().getQuantile(0.5));
          }
-         perfMon_.sample("Display interval 25th percentile",
-                 displayIntervalEstimator_.get().getQuantile(0.25));
-         perfMon_.sample("Display interval 50th percentile",
-                 displayIntervalEstimator_.get().getQuantile(0.5));
-         perfMon_.sample("Display interval 75th percentile",
-                 displayIntervalEstimator_.get().getQuantile(0.75));
+         if (perfMon_ != null) {
+            perfMon_.sample("Display interval 25th percentile",
+                  displayIntervalEstimator_.get().getQuantile(0.25));
+            perfMon_.sample("Display interval 50th percentile",
+                  displayIntervalEstimator_.get().getQuantile(0.5));
+            perfMon_.sample("Display interval 75th percentile",
+                  displayIntervalEstimator_.get().getQuantile(0.75));
+         }
          showFPS();
       }
    }

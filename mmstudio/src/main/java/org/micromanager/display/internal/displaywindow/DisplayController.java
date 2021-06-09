@@ -133,10 +133,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
 
-   private PerformanceMonitor perfMon_ =
-         PerformanceMonitor.createWithTimeConstantMs(1000.0);
-   private final PerformanceMonitorUI perfMonUI_ =
-         PerformanceMonitorUI.create(perfMon_, "Display Performance");
+   private PerformanceMonitor perfMon_
+         = PerformanceMonitor.createWithTimeConstantMs(1000.0);
+   private PerformanceMonitorUI perfMonUI_
+         = PerformanceMonitorUI.create(perfMon_, "Display Performance");
    
     private static final AtomicInteger counter = new AtomicInteger(); //This static counter makes sure that each object has it's own unique id during runtime.
     private final Integer uid = counter.getAndIncrement();
@@ -317,7 +317,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public long imageStatsReady(ImagesAndStats stats) {
-      perfMon_.sampleTimeInterval("Image stats ready");
+      if (perfMon_ != null) {
+         perfMon_.sampleTimeInterval("Image stats ready");
+      }
 
       scheduleDisplayInUI(stats);
 
@@ -359,7 +361,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          @Override
          public CoalescentRunnable coalesceWith(CoalescentRunnable later) {
             // Only the most recent repaint task need be run
-            perfMon_.sampleTimeInterval("Scheduling of repaint coalesced");
+            if (perfMon_ != null) {
+               perfMon_.sampleTimeInterval("Scheduling of repaint coalesced");
+            }
             return later;
          }
 
@@ -375,8 +379,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                int channel = nominalCoords.getChannel();
                for (Image image : images.getRequest().getImages()) {
                   if (image.getCoords().hasAxis(Coords.CHANNEL) &&
-                        image.getCoords().getChannel() == channel)
-                  {
+                        image.getCoords().getChannel() == channel) {
                      primaryImage = image;
                      break;
                   }
@@ -386,26 +389,27 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             boolean imagesDiffer = true;
             if (displayedImages_ != null &&
                   images.getRequest().getNumberOfImages() ==
-                  displayedImages_.getRequest().getNumberOfImages())
-            {
+                        displayedImages_.getRequest().getNumberOfImages()) {
                imagesDiffer = false;
                for (int i = 0; i < images.getRequest().getNumberOfImages(); ++i) {
                   if (images.getRequest().getImage(i) !=
-                          displayedImages_.getRequest().getImage(i)) {
+                        displayedImages_.getRequest().getImage(i)) {
                      imagesDiffer = true;
                      break;
                   }
                }
             }
 
-            perfMon_.sample("Scheduling identical images (%)", imagesDiffer ? 0.0 : 100.0);
-
+            if (perfMon_ != null) {
+               perfMon_.sample("Scheduling identical images (%)", imagesDiffer ? 0.0 : 100.0);
+            }
             if (imagesDiffer || getDisplaySettings().isAutostretchEnabled()
-                    || getDisplaySettings().getColorMode()
-                    != DisplaySettings.ColorMode.COMPOSITE) {
+                  || getDisplaySettings().getColorMode()
+                  != DisplaySettings.ColorMode.COMPOSITE) {
                uiController_.displayImages(images);
-            } else if (getDisplaySettings().getColorMode()
-                    == DisplaySettings.ColorMode.COMPOSITE) {
+            }
+            else if (getDisplaySettings().getColorMode()
+                  == DisplaySettings.ColorMode.COMPOSITE) {
                // in composite mode, keep the channel name in sync with the 
                // channel set by the slider.  It would be even better to 
                // disable the channel slider and display the names of all 
@@ -425,7 +429,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             }
             displayedImages_ = images;
 
-            perfMon_.sampleTimeInterval("Scheduled repaint on EDT");
+            if (perfMon_ != null) {
+               perfMon_.sampleTimeInterval("Scheduled repaint on EDT");
+            }
          }
       });
    }
@@ -481,7 +487,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    protected DisplaySettings handleDisplaySettings(
          DisplaySettings requestedSettings)
    {
-      perfMon_.sampleTimeInterval("Handle display settings");
+      if (perfMon_ != null) {
+         perfMon_.sampleTimeInterval("Handle display settings");
+      }
 
       final DisplaySettings oldSettings = getDisplaySettings();
       final DisplaySettings adjustedSettings = requestedSettings;
@@ -524,7 +532,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    protected Coords handleDisplayPosition(Coords position) {
-      perfMon_.sampleTimeInterval("Handle display position");
+      if (perfMon_ != null) {
+         perfMon_.sampleTimeInterval("Handle display position");
+      }
 
       // Always compute stats for all channels
       List<Image> images;
@@ -618,7 +628,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          }
       }
 
-      perfMon_.sampleTimeInterval("Submitting compute request");
+      if (perfMon_ != null) {
+         perfMon_.sampleTimeInterval("Submitting compute request");
+      }
       computeQueue_.submitRequest(ImageStatsRequest.create(position,
               images,
               selection));
@@ -633,7 +645,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void animationShouldDisplayDataPosition(Coords position) {
-      perfMon_.sampleTimeInterval("Coords from animation controller");
+      if (perfMon_ != null) {
+         perfMon_.sampleTimeInterval("Coords from animation controller");
+      }
 
       // We do not skip handling this position even if it equals the current
       // position, because the image data may have changed (e.g. if we have
@@ -662,13 +676,17 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void animationDidJumpToNewDataPosition(Coords position) {
-      perfMon_.sampleTimeInterval("Animation Did Jump To New Data Position");
+      if (perfMon_ != null) {
+         perfMon_.sampleTimeInterval("Animation Did Jump To New Data Position");
+      }
       uiController_.setNewImageIndicator(true);
    }
 
    @Override
    public void animationNewDataPositionExpired() {
-      perfMon_.sampleTimeInterval("Animation New Data Position Expired");
+      if (perfMon_ != null) {
+         perfMon_.sampleTimeInterval("Animation New Data Position Expired");
+      }
       uiController_.setNewImageIndicator(false);
    }
 
@@ -858,7 +876,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
      */
    @Subscribe
    public void onNewImage(final DataProviderHasNewImageEvent event) {
-      perfMon_.sampleTimeInterval("NewImageEvent");
+      if (perfMon_ != null) {
+         perfMon_.sampleTimeInterval("NewImageEvent");
+      }
       synchronized (this) {
          if (closeCompleted_) {
             return;
@@ -1052,7 +1072,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    @Override
-   public void close() {
+   public synchronized void close() {
       // close is called from DisplayUICOntroller.windowClosing and from 
       // store.requestToClose, so we need to accomodate multiple calls
       // This is a workaround a bug...
