@@ -1345,7 +1345,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // TODO revisit this after further experimentation
          s.cameraDuration = 1;  // only need to trigger camera
          final float shutterWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH);
-         final int shutterSpeed = 1;  // props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+         final int shutterSpeed = 1;  // props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);  // 
          float pixelSize = (float) core_.getPixelSizeUm();
          if (pixelSize < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
             pixelSize = 0.1625f;  // default to pixel size of 40x with sCMOS = 6.5um/40
@@ -2588,7 +2588,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      // with Hamamatsu cameras the user needs to have scan mode (readout speed) set to fastest possibel
+      // with Hamamatsu cameras the user needs to have scan mode (readout speed) set to fastest possible
       if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
          if (sideActiveA  && devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA)==Devices.Libraries.HAMCAM) {
             if (cameras_.isSlowReadout(Devices.Keys.CAMERAA)) {
@@ -3976,7 +3976,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            }
 
                            // grab all the images from the cameras, put them into the acquisition
-                           int imagesToSkip = 0;  // hardware timepoints have to drop spurious images with overlap mode
+                           int[] imagesToSkip = new int[4];  // hardware timepoints have to drop spurious images with overlap mode
                            final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
                            boolean done = false;
                            long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
@@ -4011,12 +4011,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  now = System.currentTimeMillis();
                                  if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
                                     TaggedImage timg = core_.popNextTaggedImage();
-
-                                    if (checkForSkips && imagesToSkip != 0) {
-                                       imagesToSkip--;
-                                       continue;  // goes to next iteration of this loop without doing anything else
-                                    }
                                     totalImages++;
+
                                     // figure out which channel index this frame belongs to
                                     // "channel index" is channel of MM acquisition
                                     // channel indexes will go from 0 to (numSides * numChannels - 1) for standard (non-reflective) imaging
@@ -4113,6 +4109,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                        }
                                     }
                                     final int channelIndex = channelIndex_tmp;
+                                    
+                                    if (checkForSkips && imagesToSkip[channelIndex] != 0) {
+                                       imagesToSkip[channelIndex]--;
+                                       continue;  // goes to next iteration of this loop without doing anything else
+                                    }
 
                                     final int actualTimePoint;
                                     int actualFrameNr = 0;
@@ -4170,34 +4171,34 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                        channelImageNr[channelIndex] = 0;
                                        tpNumber[channelIndex]++;
                                        
-                                       for (Runnable r : runnablesEndTimepoint_) {
-                                          try {
-                                             r.run();
-                                          } catch(Exception ex) {
-                                             ReportingUtils.logError("runnable threw exception: " + r.toString());
-                                          }
-                                       }
-                                       
                                        // see if we are supposed to skip next image
                                        if (checkForSkips) {
                                           // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected)
                                           // if we are interleaving by slice then next nrChannel images will be from extra slice position
                                           // any other configuration we will just drop the next image
                                           if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-                                             imagesToSkip = acqSettings.numChannels;
+                                             imagesToSkip[channelIndex] = acqSettings.numChannels;
                                           } else {
-                                             imagesToSkip = 1;
+                                             imagesToSkip[channelIndex] = 1;
                                           }
                                        }
 
                                        
-                                       // update acquisition status message for hardware acquisition
+                                       // Update acquisition status message for hardware acquisition
                                        //   (for non-hardware acquisition message is updated elsewhere)
-                                       //   Arbitrarily choose one possible channel to do this on.
-                                       // At same time execute runnable if any.
+                                       // Arbitrarily choose first (always present) channel to do this on.
+                                       // At same time execute runnable if any (and hope that actual images from other channels arrive first)
                                        if (channelIndex == 0 && (numTimePointsDone_ < acqSettings.numTimepoints)) {
                                           numTimePointsDone_++;
                                           updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
+                                          
+                                          for (Runnable r : runnablesEndTimepoint_) {
+                                             try {
+                                                r.run();
+                                             } catch(Exception ex) {
+                                                ReportingUtils.logError("runnable threw exception: " + r.toString());
+                                             }
+                                          }
 
                                           for (Runnable r : runnablesStartTimepoint_) {
                                              try {
