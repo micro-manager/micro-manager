@@ -38,6 +38,7 @@ import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.DatastoreFrozenEvent;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
@@ -1073,8 +1074,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public synchronized void close() {
-      // close is called from DisplayUICOntroller.windowClosing and from 
-      // store.requestToClose, so we need to accomodate multiple calls
+      // close is called from DisplayUIController.windowClosing and from
+      // store.requestToClose, so we need to accommodate multiple calls
       // This is a workaround a bug...
       if (closeCompleted_) {
          return;
@@ -1096,7 +1097,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       } catch (InterruptedException ie) {
          // TODO: report exception
       }
-      // computeQueue_ = null;
       perfMon_ = null;
       animationController_.removeListener(this);
       animationController_.shutdown();
@@ -1104,11 +1104,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       controlsFactory_ = null;
       runnablePool_ = null;
 
-      linkManager_.unregisterAllAnchors();
-      // linkManager_ = null;
       studio_.events().unregisterForEvents(this);
-      // dataProvider_ = null;
-      // displayedImages_ = null;
 
       // need to set the flag before closing the UIController,
       // otherwise we wil re-enter this function and write bad
@@ -1131,6 +1127,17 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public void onDatastoreClosing(DatastoreClosingEvent event) {
       if (event.getDatastore().equals(dataProvider_)) {
          requestToClose();
+      }
+   }
+
+   @Subscribe
+   public void onDatastoreFrozenEvent(DatastoreFrozenEvent event) {
+      if (uiController_ != null) {
+         Coords.CoordsBuilder cb = studio_.data().coordsBuilder();
+         for (String axis : dataProvider_.getAxes()) {
+            cb.index(axis, dataProvider_.getNextIndex(axis) - 1);
+         }
+         uiController_.expandDisplayedRangeToInclude(cb.build());
       }
    }
    
