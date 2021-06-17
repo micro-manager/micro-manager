@@ -416,10 +416,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       pu.addListenerLast(lsShutterWidth, recalculateTimingDisplayCL);
       lightSheetPanel_.add(lsShutterWidth);
       
-//      lightSheetPanel_.add(new JLabel("1 / (shutter speed):"));
-//      JSpinner lsShutterSpeed = pu.makeSpinnerInteger(1, 10,
-//            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED, 1);
-//      lightSheetPanel_.add(lsShutterSpeed, "wrap");
+      lightSheetPanel_.add(new JLabel("1 / (shutter speed):"));
+      JSpinner lsShutterSpeed = pu.makeSpinnerInteger(1, 10,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED, 1);
+      lightSheetPanel_.add(lsShutterSpeed, "wrap");
       
       // end light sheet controls
       
@@ -1345,7 +1345,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // TODO revisit this after further experimentation
          s.cameraDuration = 1;  // only need to trigger camera
          final float shutterWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH);
-         final int shutterSpeed = 1;  // props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);  // 
+         final int shutterSpeed = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED); 
          float pixelSize = (float) core_.getPixelSizeUm();
          if (pixelSize < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
             pixelSize = 0.1625f;  // default to pixel size of 40x with sCMOS = 6.5um/40

@@ -238,10 +238,18 @@ public class Cameras {
                      : Properties.Values.AREA));
          switch (mode) {
          case EDGE:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_ACTIVE,
+                  Properties.Values.EDGE);
+            break;
          case LIGHT_SHEET:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_ACTIVE,
                   Properties.Values.EDGE);
+            double rowTime = getRowReadoutTime(devKey) * 
+                  props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+            props_.setPropValue(devKey,
+                  Properties.Keys.HAMAMATSU_LINE_INTERVAL, (float)rowTime);
             break;
          case LEVEL:
             props_.setPropValue(devKey,
@@ -294,6 +302,13 @@ public class Cameras {
          }
          switch (mode) {
          case EDGE:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE,
+                  Properties.Values.EXTERNAL_LC);
+            props_.setPropValue(devKey,
+                  Properties.Keys.ANDOR_OVERLAP,
+                  Properties.Values.OFF);
+            break;
          case LIGHT_SHEET:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
@@ -301,6 +316,11 @@ public class Cameras {
             props_.setPropValue(devKey,
                   Properties.Keys.ANDOR_OVERLAP,
                   Properties.Values.OFF);
+            double rowsPerSec = 1/(getRowReadoutTime(devKey) * 
+                  props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED));
+            props_.setPropValue(devKey,
+                  Properties.Keys.ANDOR_LIGHTSHEET_SPEED,
+                  (float)rowsPerSec);
             break;
          case INTERNAL:
             props_.setPropValue(devKey,

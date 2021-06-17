@@ -162,7 +162,8 @@ public class Properties {
       SENSOR_MODE("SENSOR MODE"),         // for Hamamatsu
       SCAN_MODE("ScanMode"),              // for Hamamatsu, for Flash4: 1 = slow scan, 2 = fast scan, for Fusion 1 = slow scan, 2 = standard scan, 3 = fast scan
       CAMERA_BUS("Camera Bus"),           // for Hamamatsu interface type, USB3 or ??
-      //CAMERA_NAME("CameraName"),          // for Hamamatsu interface type, begins with C14440 for Fusion, begins with C11440 for Flash4 (last few characters are specific model/version I think) 
+      //CAMERA_NAME("CameraName"),          // for Hamamatsu interface type, begins with C14440 for Fusion, begins with C11440 for Flash4 (last few characters are specific model/version I think)
+      HAMAMATSU_LINE_INTERVAL("INTERNAL LINE INTERVAL"), // for Hamamatsu
       TRIGGER_MODE_PCO("Triggermode"),         // for PCO
       PIXEL_RATE("PixelRate"),                 // for PCO
       CAMERA_TYPE("CameraType"),               // for PCO
@@ -172,6 +173,7 @@ public class Properties {
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
       ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
       SENSOR_READOUT_MODE("LightScanPlus-SensorReadoutMode"), // for Andor Zyla
+      ANDOR_LIGHTSHEET_SPEED("LightScanPlus-LineScanSpeed [lines/sec]"),  // for Andor Zyla
       PIXEL_TYPE("PixelType"),            // for DemoCam
       CAMERA_SIZE_X("OnCameraCCDXSize"),  // for DemoCam
       CAMERA_SIZE_Y("OnCameraCCDYSize"),  // for DemoCam
@@ -299,7 +301,7 @@ public class Properties {
       PLUGIN_LS_SCAN_RESET("LightSheetScanReset"),
       PLUGIN_LS_SCAN_SETTLE("LightSheetScanSettle"),
       PLUGIN_LS_SHUTTER_WIDTH("LightSheetShutterWidth"),
-//      PLUGIN_LS_SHUTTER_SPEED("LightSheetSpeedFactor"),
+      PLUGIN_LS_SHUTTER_SPEED("LightSheetSpeedFactor"),
       PLUGIN_SHEET_WIDTH_EDGE_A("SheetWidthEdgeSideA"),  // hack to have separate properties for different panels when used as a property and is exposing flaws in the bipartate property/pref scheme, maybe would make sense to just use preferences directly but rest of infrastructure isn't set up for that at the moment
       PLUGIN_SHEET_WIDTH_EDGE_B("SheetWidthEdgeSideB"),
       PLUGIN_SHEET_OFFSET_EDGE_A("SheetOffsetEdgeSideA"),
