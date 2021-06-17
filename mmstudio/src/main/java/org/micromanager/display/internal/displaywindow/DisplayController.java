@@ -478,7 +478,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public Collection<String> getAnimatedAxes() {
-      synchronized (this) {
+      synchronized (playbackAxes_) {
          return new ArrayList<>(playbackAxes_);
       }
    }
@@ -814,7 +814,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    public void setPlaybackAnimationAxes(String... axes) {
-      synchronized (this) {
+      synchronized (playbackAxes_) {
          playbackAxes_.clear();
          playbackAxes_.addAll(Arrays.asList(axes));
       }
