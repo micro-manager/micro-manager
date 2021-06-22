@@ -126,7 +126,7 @@ public final class AnimationController<P> {
    /**
     * Permanently cease all animation and scheduled events.
     */
-   public synchronized void shutdown() {
+   public void shutdown() {
       scheduler_.shutdown();
       stopAnimation();
       try {
@@ -261,10 +261,10 @@ public final class AnimationController<P> {
          newDataPositionExpiredFuture_ = scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
+               if (Thread.interrupted()) {
+                  return; // Canceled
+               }
                synchronized (AnimationController.this) {
-                  if (Thread.interrupted()) {
-                     return; // Canceled
-                  }
                   listeners_.fire().animationNewDataPositionExpired();
                }
             }
