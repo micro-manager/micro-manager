@@ -571,7 +571,7 @@ public final class MMStudio implements Studio {
                   studio_.getCMMCore().logMessage(s);
                }
             });
-            logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_MASTER_PORT_NUMBER);
+            logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.STARTING_PORT_NUMBER);
          } catch (URISyntaxException | UnsupportedEncodingException e) {
             studio_.logs().logError("Failed to initialize ZMQ Server");
             studio_.logs().logError(e);

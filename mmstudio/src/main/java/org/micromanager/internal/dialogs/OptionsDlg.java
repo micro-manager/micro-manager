@@ -252,7 +252,7 @@ public final class OptionsDlg extends JDialog {
       });
       
       final JCheckBox runServer = new JCheckBox();
-      runServer.setText("Run server on port " + ZMQSocketWrapper.DEFAULT_MASTER_PORT_NUMBER);
+      runServer.setText("Run server on port " + ZMQSocketWrapper.STARTING_PORT_NUMBER);
       runServer.setSelected(mmStudio.settings().getShouldRunZMQServer());
       runServer.addActionListener((ActionEvent arg0) ->  {
          if (runServer.isSelected()) {
