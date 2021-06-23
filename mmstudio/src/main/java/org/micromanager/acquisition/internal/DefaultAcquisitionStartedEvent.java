@@ -18,12 +18,16 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events.internal;
+package org.micromanager.acquisition.internal;
 
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
-import org.micromanager.events.AcquisitionSequenceStartedEvent;
+import org.micromanager.acquisition.AcquisitionSequenceStartedEvent;
 
+/**
+ *  * This implementation of this event is posted on the Studio event bus,
+ *  * so subscribe to this event using {@link org.micromanager.events.EventManager}.
+ */
 public final class DefaultAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
    private Datastore store_;
    private Object source_;

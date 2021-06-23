@@ -52,7 +52,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.display.inspector.internal.InspectorCollection;
 import org.micromanager.display.inspector.internal.InspectorController;
-import org.micromanager.events.DatastoreClosingEvent;
+import org.micromanager.data.DatastoreClosingEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -321,6 +321,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          // TODO DisplayGroupManager.getInstance().removeDisplay(viewer);
       }
       viewers_.removeDataViewer(viewer);
+      haveAutoCreatedInspector_.remove(viewer);
    }
 
    /**
@@ -525,6 +526,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       DataProvider provider = display.getDataProvider();
       synchronized (this) {
          display.removeListener(this);
+         haveAutoCreatedInspector_.remove(display);
          providerToDisplays_.get(provider).remove(display);
       }
    }

@@ -50,7 +50,7 @@ public class SharpnessInspectorController extends AbstractInspectorPanelControll
     private final SharpnessInspectorPanel panel_;
     private DataViewer viewer_;
     private final Studio studio_;
-    private boolean autoImageEvaluation_ = true;
+    private boolean autoImageEvaluation_ = false;
     private final SharpnessEvaluator eval_ = new SharpnessEvaluator();
     
     private SharpnessInspectorController(Studio studio) {
@@ -132,7 +132,8 @@ public class SharpnessInspectorController extends AbstractInspectorPanelControll
     
     @Subscribe
     public void onNewImage(DataProviderHasNewImageEvent evt) {
-        ///This is fired because we register for the dataprovider events. Happens each time a new image is available from the provider.
+        // This is fired because we register for the dataprovider events.
+        // Happens each time a new image is available from the provider.
         if (!this.autoImageEvaluation_) {
             return;
         }

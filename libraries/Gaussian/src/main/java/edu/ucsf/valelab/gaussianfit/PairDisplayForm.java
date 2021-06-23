@@ -28,18 +28,15 @@
 package edu.ucsf.valelab.gaussianfit;
 
 import edu.ucsf.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
-import edu.ucsf.valelab.gaussianfit.utils.GUFrame;
 import edu.ucsf.valelab.gaussianfit.utils.FileDialogs;
+import edu.ucsf.valelab.gaussianfit.utils.GUFrame;
 import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
 import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
-
-import net.miginfocom.swing.MigLayout;
-
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.Dimension;
 import java.text.ParseException;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -50,14 +47,15 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
- *
  * @author nico
  */
-public class PairDisplayForm extends GUFrame{
+public class PairDisplayForm extends GUFrame {
+
    private static final String MAXDISTANCEPREF = "maxdistance";
    private static final String SHOWPAIRLISTPREF = "showpairlist";
    private static final String SHOWHISTOGRAMPREF = "showhistogram";
@@ -70,83 +68,82 @@ public class PairDisplayForm extends GUFrame{
    private static final String P2DMULTIPLE = "p2dmultiple";
    private static final String SIGMAPREF = "sigma";
    private static final String USEBOOTSTRAPPING = "useBootsTrapping";
-   
-   public static FileDialogs.FileType PAIR_DATA 
-           = new FileDialogs.FileType("PAIR_DATA",
-                 "Export to Location",
-                 System.getProperty("user.home") + "/Untitled",
-                 false, (String[]) null);
+
+   public static FileDialogs.FileType PAIR_DATA
+         = new FileDialogs.FileType("PAIR_DATA",
+         "Export to Location",
+         System.getProperty("user.home") + "/Untitled",
+         false, (String[]) null);
    final MutablePropertyMapView settings_;
-   
+
    public PairDisplayForm(final Studio studio) {
       super(studio, PairDisplayForm.class);
       final GUFrame myFrame = this;
       settings_ = studio.profile().getSettings(this.getClass());
       super.loadPosition(100, 100, 250, 75);
       JPanel panel = new JPanel(new MigLayout(
-              "ins 5", 
-              "[][grow]", 
-              "[][grow][]"));
+            "ins 5",
+            "[][grow]",
+            "[][grow][]"));
       super.setTitle("Pair display options");
-      
+
       // input box with max distance for a pair to be a pair
-      panel.add(new JLabel("Maximum distance:" ), "split 2, span 2");
+      panel.add(new JLabel("Maximum distance:"), "split 2, span 2");
       final JTextField distanceTextField = new JTextField();
       distanceTextField.setMinimumSize(new Dimension(60, 20));
       distanceTextField.setText(settings_.getString(MAXDISTANCEPREF, "50.0"));
       distanceTextField.getDocument().addDocumentListener(
-              makeDocumentListener(MAXDISTANCEPREF, distanceTextField));
-      panel.add (distanceTextField, "wrap");
-      
-      
+            makeDocumentListener(MAXDISTANCEPREF, distanceTextField));
+      panel.add(distanceTextField, "wrap");
+
       // pair list
-      final JCheckBox showPairList = 
-              makeCheckBox ("Show Pair list", SHOWPAIRLISTPREF);
-      panel.add(showPairList, "wrap");     
+      final JCheckBox showPairList =
+            makeCheckBox("Show Pair list", SHOWPAIRLISTPREF);
+      panel.add(showPairList, "wrap");
 
       final JCheckBox showPairTrackSummary =
-              makeCheckBox("Show Pair Track Summary", SHOWTRACKSUMMARYPREF);
+            makeCheckBox("Show Pair Track Summary", SHOWTRACKSUMMARYPREF);
       panel.add(showPairTrackSummary, "wrap");
-           
+
       // arrow overlay
-      final JCheckBox showOverlay = 
-              makeCheckBox("Show Pair Track Arrow overlay", SHOWOVERLAYPREF);
+      final JCheckBox showOverlay =
+            makeCheckBox("Show Pair Track Arrow overlay", SHOWOVERLAYPREF);
       panel.add(showOverlay, "wrap");
-      
+
       // 2 histograms, one with X and other with Y distance of pair members
-      final JCheckBox showXYHistogram = 
-              makeCheckBox("Show X-Y distance histogram (registration error)", SHOWXYHISTOGRAMPREF);
+      final JCheckBox showXYHistogram =
+            makeCheckBox("Show X-Y distance histogram (registration error)", SHOWXYHISTOGRAMPREF);
       panel.add(showXYHistogram, "span 2, wrap");
-      
+
       // Calculate Gaussian fit of vector distances (calculate distance from average x position and average y position)
       // final JCheckBox gaussianEstimate = 
       //        makeCheckBox("Use Gaussian fit of Vector distances", USEGAUSSIAN);
-      
-            // 2 histograms, one with X and other with Y distance of pair members
-      final JCheckBox bootstrap = 
-              makeCheckBox("Error using bootstrapping (slow)", USEBOOTSTRAPPING);
+
+      // 2 histograms, one with X and other with Y distance of pair members
+      final JCheckBox bootstrap =
+            makeCheckBox("Error using bootstrapping (slow)", USEBOOTSTRAPPING);
       bootstrap.setEnabled(false);
-      
+
       // Distance estimate
       final JCheckBox p2dDistanceEstimate =
-              makeCheckBox("Calculate distance (P2D)", P2DPREF);
-      
+            makeCheckBox("Calculate distance (P2D)", P2DPREF);
+
       final JRadioButton p2dSingle = new JRadioButton("from single frames");
-      final JRadioButton p2dMultiple = new JRadioButton ("from multiple frames"); 
+      final JRadioButton p2dMultiple = new JRadioButton("from multiple frames");
       ButtonGroup group = new ButtonGroup();
       group.add(p2dSingle);
       group.add(p2dMultiple);
-      
-        // Registration error Sigma to use when doing P2D fit with fixed sigma
+
+      // Registration error Sigma to use when doing P2D fit with fixed sigma
       final JLabel registrationLabel = new JLabel("Registration error: ");
       final JTextField registrationErrorTextField = new JTextField();
       registrationErrorTextField.setMinimumSize(new Dimension(60, 20));
       registrationErrorTextField.setText(settings_.getString(SIGMAPREF, "10.0"));
       registrationErrorTextField.getDocument().addDocumentListener(
-              makeDocumentListener(SIGMAPREF, registrationErrorTextField));
+            makeDocumentListener(SIGMAPREF, registrationErrorTextField));
 
       final JCheckBox showHistogram =
-              makeCheckBox("Show histogram", SHOWHISTOGRAMPREF);
+            makeCheckBox("Show histogram", SHOWHISTOGRAMPREF);
 
       String buttonSelection = settings_.getString(P2DFRAMES, P2DSINGLE);
       p2dSingle.setSelected(buttonSelection.equals(P2DSINGLE));
@@ -178,24 +175,24 @@ public class PairDisplayForm extends GUFrame{
          }
       });
 
-      showHistogram.setEnabled(p2dDistanceEstimate.isSelected() );
-     
+      showHistogram.setEnabled(p2dDistanceEstimate.isSelected());
+
       p2dDistanceEstimate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
             p2dSingle.setEnabled(p2dDistanceEstimate.isSelected());
             p2dMultiple.setEnabled(p2dDistanceEstimate.isSelected());
             registrationErrorTextField.setEnabled(
-                    p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
+                  p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
             bootstrap.setEnabled(
-                    p2dDistanceEstimate.isSelected() && p2dMultiple.isSelected());
+                  p2dDistanceEstimate.isSelected() && p2dMultiple.isSelected());
             showHistogram.setEnabled(p2dDistanceEstimate.isSelected());
          }
       });
 
       registrationErrorTextField.setEnabled(
-              p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
-     
+            p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
+
       panel.add(p2dDistanceEstimate, "wrap");
       panel.add(p2dSingle, "gapleft 30, wrap");
       panel.add(registrationLabel, "split 2, gapleft 55");
@@ -203,14 +200,13 @@ public class PairDisplayForm extends GUFrame{
       panel.add(p2dMultiple, "gapleft 30, wrap");
       panel.add(bootstrap, "gapleft 50, wrap");
       panel.add(showHistogram, "gapleft 30, wrap");
-      
-      
+
       // OK/Cancel buttons
       JButton okButton = new JButton("OK");
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            
+
             final double maxDistance;
             try {
                maxDistance = NumberUtils.displayStringToDouble(distanceTextField.getText());
@@ -221,7 +217,8 @@ public class PairDisplayForm extends GUFrame{
             final double registrationError;
             if (p2dDistanceEstimate.isSelected()) {
                try {
-                  registrationError = NumberUtils.displayStringToDouble(registrationErrorTextField.getText());
+                  registrationError = NumberUtils
+                        .displayStringToDouble(registrationErrorTextField.getText());
                } catch (ParseException ex) {
                   ReportingUtils.showError("Maximum distance should be a number");
                   return;
@@ -229,18 +226,18 @@ public class PairDisplayForm extends GUFrame{
             } else {
                registrationError = -1.0;
             }
-            
+
             ParticlePairLister.Builder ppb = new ParticlePairLister.Builder();
-                 ppb.maxDistanceNm(maxDistance).
-                    showPairs(showPairList.isSelected()).
-                    showSummary(showPairTrackSummary.isSelected()).
-                    showOverlay(showOverlay.isSelected()).
-                    p2d(p2dDistanceEstimate.isSelected()).
-                    showXYHistogram(showXYHistogram.isSelected()).
-                    p2dSingleFrames(p2dSingle.isSelected()).
-                    registrationError(registrationError).
-                    showHistogram(showHistogram.isSelected()).
-                    bootstrap(bootstrap.isSelected());
+            ppb.maxDistanceNm(maxDistance).
+                  showPairs(showPairList.isSelected()).
+                  showSummary(showPairTrackSummary.isSelected()).
+                  showOverlay(showOverlay.isSelected()).
+                  p2d(p2dDistanceEstimate.isSelected()).
+                  showXYHistogram(showXYHistogram.isSelected()).
+                  p2dSingleFrames(p2dSingle.isSelected()).
+                  registrationError(registrationError).
+                  showHistogram(showHistogram.isSelected()).
+                  bootstrap(bootstrap.isSelected());
             DataCollectionForm.getInstance().listPairTracks(ppb);
 
             myFrame.dispose();
@@ -252,12 +249,12 @@ public class PairDisplayForm extends GUFrame{
       cancelButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            
+
             myFrame.dispose();
          }
       });
       panel.add(cancelButton, "tag cancel");
-      
+
       super.add(panel);
       super.pack();
       super.addWindowListener(new WindowAdapter() {
@@ -267,14 +264,14 @@ public class PairDisplayForm extends GUFrame{
          }
       });
    }
-   
+
    @Override
    public void dispose() {
       super.dispose();
    }
-   
+
    private JCheckBox makeCheckBox(final String text, final String prefName) {
-      final JCheckBox jcb =  new JCheckBox(text);
+      final JCheckBox jcb = new JCheckBox(text);
       jcb.setSelected(settings_.getBoolean(prefName, false));
       jcb.addActionListener(new ActionListener() {
          @Override
@@ -284,26 +281,29 @@ public class PairDisplayForm extends GUFrame{
       });
       return jcb;
    }
-   
-   private DocumentListener makeDocumentListener(final String prefName, 
-           final JTextField textField) {
+
+   private DocumentListener makeDocumentListener(final String prefName,
+         final JTextField textField) {
       return new DocumentListener() {
          private void savePref() {
             settings_.putString(prefName, textField.getText());
          }
+
          @Override
          public void insertUpdate(DocumentEvent e) {
-            savePref(); 
+            savePref();
          }
+
          @Override
          public void removeUpdate(DocumentEvent e) {
             savePref();
          }
+
          @Override
          public void changedUpdate(DocumentEvent e) {
             savePref();
          }
       };
    }
-   
+
 }

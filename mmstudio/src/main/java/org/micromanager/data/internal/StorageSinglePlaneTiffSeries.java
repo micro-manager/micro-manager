@@ -37,6 +37,19 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import org.micromanager.PropertyMap;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
+import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.Storage;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.TextUtils;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -53,18 +66,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.micromanager.PropertyMap;
-import org.micromanager.data.Coordinates;
-import org.micromanager.data.Coords;
-import org.micromanager.data.Image;
-import org.micromanager.data.Metadata;
-import org.micromanager.data.Storage;
-import org.micromanager.data.SummaryMetadata;
-import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.TextUtils;
-import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 
 /**
  * This class provides Image storage backed by a file system in which each
@@ -72,7 +73,7 @@ import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
  * TaggedImageStorageDiskDefault class.
  */
 public final class StorageSinglePlaneTiffSeries implements Storage {
-   private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
+   private static final HashSet<String> ALLOWED_AXES = new HashSet<>(
          Arrays.asList(Coords.CHANNEL, Coords.T, Coords.Z,
             Coords.STAGE_POSITION));
    private final DefaultDatastore store_;
@@ -87,6 +88,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    private ArrayList<String> orderedChannelNames_;
    private Coords maxIndices_;
    private boolean isMultiPosition_;
+   private Image firstImage_;
 
    public StorageSinglePlaneTiffSeries(DefaultDatastore store,
          String directory, boolean newDataSet) throws IOException {
@@ -102,9 +104,9 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       // can provide images on request.
       store_.registerForEvents(this, 0);
       coordsToFilename_ = new ConcurrentHashMap<>();
-      metadataStreams_ = new HashMap<Integer, Writer>();
-      positionIndexToName_ = new HashMap<Integer, String>();
-      orderedChannelNames_ = new ArrayList<String>();
+      metadataStreams_ = new HashMap<>();
+      positionIndexToName_ = new HashMap<>();
+      orderedChannelNames_ = new ArrayList<>();
       maxIndices_ = new DefaultCoords.Builder().build();
       amLoading_ = false;
       isMultiPosition_ = true;
@@ -117,6 +119,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public void putImage(Image image) {
+      // Note, orderedAxes could be cached, but performance penalty is likely negligible
+      List<String> orderedAxes = summaryMetadata_.getOrderedAxes();
       // Require images to only have time/channel/z/position axes.
       for (String axis : image.getCoords().getAxes()) {
          if (!ALLOWED_AXES.contains(axis)) {
@@ -145,7 +149,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          // File is in a subdirectory.
          positionPrefix = image.getMetadata().getPositionName("") + "/";
       }
-      String fileName = positionPrefix + createFileName(image.getCoords());
+      String fileName = positionPrefix + createFileName(orderedAxes, image.getCoords());
       if (amLoading_ && !(new File(dir_ + "/" + fileName).exists())) {
          // Try the 1.4 format instead. Since we may not have access to the
          // channel name property, we just have to arbitrarily assign an
@@ -271,9 +275,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             return null;
          }
          Object pixels = proc.getPixels();
-         DefaultImage result = new DefaultImage(pixels, width, height,
+         return new DefaultImage(pixels, width, height,
                bytesPerPixel, numComponents, coords, metadata);
-         return result;
       } catch (IllegalArgumentException ex) {
          ReportingUtils.logError(ex);
          return null;
@@ -285,7 +288,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       if (coordsToFilename_.isEmpty()) {
          return null;
       }
-      Coords coords = new ArrayList<Coords>(coordsToFilename_.keySet()).get(0);
+      Coords coords = new ArrayList<>(coordsToFilename_.keySet()).get(0);
       return getImage(coords);
    }
 
@@ -355,11 +358,10 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    /**
     * Generate a filename based on the coordinates of an image.
     */
-   private String createFileName(Coords coords) {
-      List<String> axes = coords.getAxes();
-      java.util.Collections.sort(axes);
+   private String createFileName(List<String> axesUsed, Coords coords) {
+      java.util.Collections.sort(axesUsed);
       String filename = "img";
-      for (String axis : axes) {
+      for (String axis : axesUsed) {
          // HACK: more precision for the time axis.
          String precision = "%03d";
          if (axis.contentEquals(Coords.T)) {
@@ -456,8 +458,14 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       }
    }
 
+
    private void saveImageFile(Image image, String path, String tiffFileName,
          String metadataJSON) {
+      if (firstImage_ == null) {
+         firstImage_ = image;
+      } else {
+         ImageSizeChecker.checkImageSizes(firstImage_, image);
+      }
       ImagePlus imp;
       try {
          ImageProcessor ip;
@@ -596,7 +604,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
    private void openExistingDataSet() throws IOException {
       amLoading_ = true;
-      ArrayList<String> positions = new ArrayList<String>();
+      ArrayList<String> positions = new ArrayList<>();
       if (new File(dir_ + "/metadata.txt").exists()) {
          // Our base directory is a valid "position", i.e. there are no
          // positions in this dataset.

@@ -29,11 +29,12 @@ either expressed or implied, of the FreeBSD Project.
 
 package edu.ucsf.valelab.gaussianfit.datasettransformations;
 
-import edu.ucsf.valelab.gaussianfit.DataCollectionForm;
-import edu.ucsf.valelab.gaussianfit.data.SpotData;
-import edu.ucsf.valelab.gaussianfit.algorithm.JitterDetector;
 import static edu.ucsf.valelab.gaussianfit.DataCollectionForm.getInstance;
+
+import edu.ucsf.valelab.gaussianfit.DataCollectionForm;
+import edu.ucsf.valelab.gaussianfit.algorithm.JitterDetector;
 import edu.ucsf.valelab.gaussianfit.data.RowData;
+import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Point;
@@ -45,7 +46,6 @@ import java.util.Map;
 import javax.swing.JOptionPane;
 
 /**
- *
  * @author nico
  */
 public class DriftCorrector {
@@ -61,47 +61,45 @@ public class DriftCorrector {
          frameRange_ = frameRange;
       }
    }
-   
+
    /**
-    * Creates a new data set that is corrected for motion blur
-    * Correction is performed by projecting a number of images onto a 
-    * 2D scattergram and using cross-correlation between them to find
-    * the displacement
-    * 
-    * @param rowData 
+    * Creates a new data set that is corrected for motion blur Correction is performed by projecting
+    * a number of images onto a 2D scattergram and using cross-correlation between them to find the
+    * displacement
+    *
+    * @param rowData
     */
    public static void unJitter(final RowData rowData) {
 
       // TODO: instead of a fixed number of frames, go for a certain number of spots
       // Number of frames could be limited as well
       final int framesToCombine = 200;
-      
+
       if (rowData.spotList_.size() <= 1) {
          return;
       }
-      
-           
+
       ij.IJ.showStatus("Executing jitter correction");
-      
+
       Runnable doWorkRunnable = new Runnable() {
-         
+
          @Override
          public void run() {
-            
+
             int mag = (int) (rowData.pixelSizeNm_ / 40.0);
-            while (mag % 2 != 0)
+            while (mag % 2 != 0) {
                mag += 1;
-                        
+            }
+
             int width = mag * rowData.width_;
-            int height = mag * rowData.height_;                        
-            
+            int height = mag * rowData.height_;
+
             int size = width * height;
-            
-            
-             // TODO: add 0 padding to deal with aberrant image sizes
-            if ( (width != height) || ( (width & (width - 1)) != 0) ) {
-               JOptionPane.showMessageDialog(getInstance(), 
-                 "Magnified image is not a square with a size that is a power of 2");
+
+            // TODO: add 0 padding to deal with aberrant image sizes
+            if ((width != height) || ((width & (width - 1)) != 0)) {
+               JOptionPane.showMessageDialog(getInstance(),
+                     "Magnified image is not a square with a size that is a power of 2");
                ij.IJ.showStatus(" ");
                return;
             }
@@ -123,27 +121,27 @@ public class DriftCorrector {
 
             // storage of stage movement data
             class StageMovementData {
-               
+
                Point2D.Double pos_;
                Point frameRange_;
-               
+
                StageMovementData(Point2D.Double pos, Point frameRange) {
                   pos_ = pos;
                   frameRange_ = frameRange;
                }
             }
             ArrayList<StageMovementData> stagePos = new ArrayList<StageMovementData>();
-            
+
             try {
                // make imageprocessors for all the images that we will generate
                ImageProcessor[] ip = new ImageProcessor[nrOfTests];
                byte[][] pixels = new byte[nrOfTests][width * height];
-               
+
                for (int i = 0; i < nrOfTests; i++) {
                   ip[i] = new ByteProcessor(width, height);
                   ip[i].setPixels(pixels[i]);
                }
-               
+
                double factor = (double) mag / rowData.pixelSizeNm_;
 
                // make 2D scattergrams of all pixelData
@@ -162,23 +160,24 @@ public class DriftCorrector {
                         pixels[j][index] += 1;
                      }
                   }
-                  
+
                }
-               
+
                JitterDetector jd = new JitterDetector(ip[0]);
-               
+
                Point2D.Double fp = new Point2D.Double(0.0, 0.0);
                Point2D.Double com = new Point2D.Double(0.0, 0.0);
-               
+
                jd.getJitter(ip[0], fp);
-               
+
                for (int i = 1; i < ip.length; i++) {
                   ij.IJ.showStatus("Executing jitter correction..." + i);
                   ij.IJ.showProgress(i, ip.length);
                   int spotCount = 0;
-                  for (int j=0; j < ip[i].getPixelCount(); j++) 
+                  for (int j = 0; j < ip[i].getPixelCount(); j++) {
                      spotCount += ip[i].get(j);
-                  
+                  }
+
                   jd.getJitter(ip[i], com);
                   double x = (fp.x - com.x) / factor;
                   double y = (fp.y - com.y) / factor;
@@ -186,20 +185,19 @@ public class DriftCorrector {
                      rowData.timePoints_.get(i);
                   }
                   stagePos.add(new StageMovementData(new Point2D.Double(x, y),
-                          new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
+                        new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
                   System.out.println("i: " + i + " nSpots: " + spotCount + " X: " + x + " Y: " + y);
                }
-               
+
             } catch (OutOfMemoryError ex) {
                // not enough memory to allocate all images in one go
                // we need to cycle through all gaussian spots cycle by cycle
 
                double factor = (double) mag / rowData.pixelSizeNm_;
-               
+
                ImageProcessor ipRef = new ByteProcessor(width, height);
                byte[] pixelsRef = new byte[width * height];
                ipRef.setPixels(pixelsRef);
-
 
                // take the first image as reference
                for (SpotData spot : rowData.spotList_) {
@@ -220,24 +218,24 @@ public class DriftCorrector {
                      }
                   }
                }
-               
+
                JitterDetector jd = new JitterDetector(ipRef);
-               
+
                Point2D.Double fp = new Point2D.Double(0.0, 0.0);
                jd.getJitter(ipRef, fp);
-               
+
                Point2D.Double com = new Point2D.Double(0.0, 0.0);
                ImageProcessor ipTest = new ByteProcessor(width, height);
                byte[] pixelsTest = new byte[width * height];
                ipTest.setPixels(pixelsTest);
-               
+
                for (int i = 1; i < nrOfTests; i++) {
                   ij.IJ.showStatus("Executing jitter correction..." + i);
                   ij.IJ.showProgress(i, nrOfTests);
                   for (int p = 0; p < size; p++) {
                      ipTest.set(p, 0);
                   }
-                  
+
                   for (SpotData spot : rowData.spotList_) {
                      int j;
                      if (useSlices) {
@@ -256,7 +254,7 @@ public class DriftCorrector {
                         }
                      }
                   }
-                  
+
                   jd.getJitter(ipTest, com);
                   double x = (fp.x - com.x) / factor;
                   double y = (fp.y - com.y) / factor;
@@ -265,19 +263,19 @@ public class DriftCorrector {
                      rowData.timePoints_.get(i);
                   }
                   stagePos.add(new StageMovementData(new Point2D.Double(x, y),
-                          new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
+                        new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
                   System.out.println("X: " + x + " Y: " + y);
                }
-               
+
             }
-            
+
             try {
                // Assemble stage movement data into a track
                List<SpotData> stageMovementData = new ArrayList<SpotData>();
                SpotData sm = new SpotData(null, 1, 1, 1, 1, 1, 1, 1);
                sm.setData(0, 0, 0, 0, 0.0, 0, 0, 0, 0);
                stageMovementData.add(sm);
-               
+
                // calculate moving average for stageposition
                ArrayList<StageMovementData> stagePosMA = new ArrayList<StageMovementData>();
                int windowSize = 5;
@@ -289,16 +287,15 @@ public class DriftCorrector {
                   }
                   avg.x /= windowSize;
                   avg.y /= windowSize;
-                  
+
                   stagePosMA.add(new StageMovementData(avg, stagePos.get(i).frameRange_));
                }
-               
-               
+
                for (int i = 0; i < stagePosMA.size(); i++) {
                   StageMovementData smd = stagePosMA.get(i);
                   SpotData s =
-                          new SpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
-                  s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);                  
+                        new SpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
+                  s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);
                   stageMovementData.add(s);
                }
 
@@ -313,21 +310,21 @@ public class DriftCorrector {
                      tp += framesToCombine;
                   }
                }
-               
+
                RowData.Builder builder = rowData.copy();
                builder.setName(rowData.getName() + "-Jitter").
-                       setNrFrames(stageMovementData.size()).
-                       setMaxNrSpots(stageMovementData.size()).
-                       setSpotList(stageMovementData).setTimePoints(timePoints).
-                       setIsTrack(true).setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
+                     setNrFrames(stageMovementData.size()).
+                     setMaxNrSpots(stageMovementData.size()).
+                     setSpotList(stageMovementData).setTimePoints(timePoints).
+                     setIsTrack(true).setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
                DataCollectionForm.getInstance().addSpotData(builder);
-                            
+
                ij.IJ.showStatus("Assembling jitter corrected dataset...");
                ij.IJ.showProgress(1);
-               
+
                List<SpotData> correctedData = new ArrayList<SpotData>();
                Iterator it = rowData.spotList_.iterator();
-               
+
                int testNr = 0;
                StageMovementData smd = stagePosMA.get(0);
                int counter = 0;
@@ -357,7 +354,7 @@ public class DriftCorrector {
                   }
                   if (found) {
                      Point2D.Double point = new Point2D.Double(gs.getXCenter() - smd.pos_.x,
-                             gs.getYCenter() - smd.pos_.y);
+                           gs.getYCenter() - smd.pos_.y);
                      SpotData gsn = new SpotData(gs);
                      gsn.setXCenter(point.x);
                      gsn.setYCenter(point.y);
@@ -365,34 +362,34 @@ public class DriftCorrector {
                   } else {
                      correctedData.add(gs);
                   }
-                  
-                  
+
+
                }
-               
+
                // Add transformed data to data overview window
                builder = rowData.copy();
                builder.setName(rowData.getName() + "-Jitter-Correct").
-                       setSpotList(correctedData);
+                     setSpotList(correctedData);
                DataCollectionForm.getInstance().addSpotData(builder);
-               
+
                ij.IJ.showStatus("Finished jitter correction");
             } catch (OutOfMemoryError oom) {
-              System.gc();
-              ij.IJ.error("Out of Memory");
+               System.gc();
+               ij.IJ.error("Out of Memory");
             }
          }
       };
 
       (new Thread(doWorkRunnable)).start();
    }
-   
 
-   
+
    /**
     * I do not remember what the difference is with the other unjitter method...
+    *
     * @param rowData
     * @param maxFrames
-    * @param maxSpots 
+    * @param maxSpots
     */
    public void unJitter2(final RowData rowData, int maxFrames, int maxSpots) {
 
@@ -404,7 +401,7 @@ public class DriftCorrector {
       if (rowData.spotList_.size() <= 1) {
          return;
       }
-      
+
       ij.IJ.showStatus("Executing jitter correction");
 
       int mag = (int) (rowData.pixelSizeNm_ / 40.0);
@@ -420,7 +417,7 @@ public class DriftCorrector {
       // TODO: add 0 padding to deal with aberrant image sizes
       if ((width != height) || ((width & (width - 1)) != 0)) {
          JOptionPane.showMessageDialog(DataCollectionForm.getInstance(),
-                 "Magnified image is not a square with a size that is a power of 2");
+               "Magnified image is not a square with a size that is a power of 2");
          ij.IJ.showStatus(" ");
          return;
       }
@@ -436,22 +433,21 @@ public class DriftCorrector {
       ArrayList<StageMovementData> stagePos = new ArrayList<StageMovementData>();
 
       double factor = (double) mag / rowData.pixelSizeNm_;
-           
+
       // Assemble the reference image (the first one)
       ImageProcessor ipRef = new ByteProcessor(width, height);
       byte[] pixelsRef = new byte[width * height];
       ipRef.setPixels(pixelsRef);
 
-      
-      Map<Integer, List<SpotData>> frameIndexSpotList = 
-              rowData.getSpotListIndexedByFrame();
+      Map<Integer, List<SpotData>> frameIndexSpotList =
+            rowData.getSpotListIndexedByFrame();
 
       int spotNr = 0;
       int frameNr = 0;
       while (spotNr < maxNrSpots && frameNr < maxNrFrames && frameNr < nrImages) {
          List<SpotData> frameSpots = frameIndexSpotList.get(frameNr);
          if (frameSpots != null) {
-            for (SpotData spot: frameSpots) {
+            for (SpotData spot : frameSpots) {
                int x = (int) (factor * spot.getXCenter());
                int y = (int) (factor * spot.getYCenter());
                int index = (y * width) + x;
@@ -471,7 +467,6 @@ public class DriftCorrector {
       Point2D.Double fp = new Point2D.Double(0.0, 0.0);
       jd.getJitter(ipRef, fp);
 
-      
       // Assemble images for all subsequent frames and calculate cross-correlation with the first image
       Point2D.Double com = new Point2D.Double(0.0, 0.0);
       ImageProcessor ipTest = new ByteProcessor(width, height);
@@ -484,7 +479,7 @@ public class DriftCorrector {
       while (frameNr < nrImages) {
          estimatedNrTests = nrImages / (frameNr / testNr) + 1;
          ij.IJ.showStatus("Executing jitter correction..." + testNr
-                 + "/" + estimatedNrTests);
+               + "/" + estimatedNrTests);
          ij.IJ.showProgress(testNr, estimatedNrTests);
          for (int p = 0; p < size; p++) {
             ipTest.set(p, 0);
@@ -494,7 +489,7 @@ public class DriftCorrector {
          spotNr = 0;
 
          while (spotNr < maxNrSpots && tmpFrameNr < maxNrFrames && frameNr < nrImages) {
-            List<SpotData> frameSpots = frameIndexSpotList.get(frameNr); 
+            List<SpotData> frameSpots = frameIndexSpotList.get(frameNr);
             if (frameSpots != null) {
                for (SpotData spot : frameSpots) {
                   int x = (int) (factor * spot.getXCenter());
@@ -519,11 +514,10 @@ public class DriftCorrector {
             rowData.timePoints_.get(frameNr);
          }
          stagePos.add(new StageMovementData(new Point2D.Double(x, y),
-                 new Point(frameNr - tmpFrameNr, frameNr - 1)));
+               new Point(frameNr - tmpFrameNr, frameNr - 1)));
          System.out.println("X: " + x + " Y: " + y);
          testNr++;
       }
-
 
       // Assemble stage movement data into a track
       try {
@@ -537,23 +531,22 @@ public class DriftCorrector {
          for (int i = 0; i < stagePos.size(); i++) {
             StageMovementData smd = stagePos.get(i);
             SpotData s =
-                    new SpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
+                  new SpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
             s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);
             stageMovementData.add(s);
          }
 
-
          // Add stage movement data to overview window
-         
+
          RowData.Builder builder = rowData.copy();
          builder.setName(rowData.getName() + "-Jitter").
-                 setNrFrames(stageMovementData.size()).
-                 setMaxNrSpots(stageMovementData.size()).
-                 setSpotList(stageMovementData).
-                 setIsTrack(true).setHasZ(false).setMinZ(0).setMaxZ(0);
+               setNrFrames(stageMovementData.size()).
+               setMaxNrSpots(stageMovementData.size()).
+               setSpotList(stageMovementData).
+               setIsTrack(true).setHasZ(false).setMinZ(0).setMaxZ(0);
 
          DataCollectionForm.getInstance().addSpotData(builder);
-         
+
          ij.IJ.showStatus("Assembling jitter corrected dataset...");
          ij.IJ.showProgress(1);
 
@@ -587,7 +580,7 @@ public class DriftCorrector {
             }
             if (found) {
                Point2D.Double point = new Point2D.Double(gs.getXCenter() - smd.pos_.x,
-                       gs.getYCenter() - smd.pos_.y);
+                     gs.getYCenter() - smd.pos_.y);
                SpotData gsn = new SpotData(gs);
                gsn.setXCenter(point.x);
                gsn.setYCenter(point.y);
@@ -609,6 +602,5 @@ public class DriftCorrector {
       }
    }
 
-   
 
 }

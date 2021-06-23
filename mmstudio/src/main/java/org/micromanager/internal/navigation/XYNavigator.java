@@ -9,6 +9,7 @@ import org.micromanager.Studio;
 import org.micromanager.events.internal.DefaultXYStagePositionChangedEvent;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -229,7 +230,8 @@ public class XYNavigator {
 
 		public XYStageTask(String xyStage) {
 			xyStage_ = xyStage;
-			executorService_ = Executors.newSingleThreadExecutor();
+			executorService_ = Executors.newSingleThreadExecutor(
+					ThreadFactoryFactory.createThreadFactory("XYNavigator-" + xyStage ));
 		}
 
 		/**

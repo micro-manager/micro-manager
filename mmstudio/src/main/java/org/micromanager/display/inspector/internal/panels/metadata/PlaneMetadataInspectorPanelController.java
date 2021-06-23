@@ -38,6 +38,7 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.display.DisplayDidShowImageEvent;
 
@@ -171,8 +172,8 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       try {
           images = viewer_.getDisplayedImages();
       }
-      catch (IOException e) {
-         // TODO Show error
+      catch (IOException | NullPointerException e) {
+         ReportingUtils.logError("Exception in PlaneMetadataInspectorPanelController");
          return;
       }
 

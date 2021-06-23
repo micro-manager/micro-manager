@@ -36,75 +36,80 @@ import java.util.Set;
 
 /**
  * Simple filter for spot data.
- * 
- * Spots can be filtered based on intensity and sigma (width)
- * Setup the filter using the setSigma, setIntensity, and setItemFilter functions,
- * then use the filter class to test individual spots
- * 
+ * <p>
+ * Spots can be filtered based on intensity and sigma (width) Setup the filter using the setSigma,
+ * setIntensity, and setItemFilter functions, then use the filter class to test individual spots
+ *
  * @author Nico Stuuman
  */
 public class SpotDataFilter {
+
    private boolean useSigma_ = false;
    private double sigmaMin_ = 0;
    private double sigmaMax_ = 0;
    private boolean useIntensity_ = false;
    private double intensityMin_ = 0;
    private double intensityMax_ = 0;
+
    private static class Extremes {
+
       double minimum_;
       double maximum_;
+
       public Extremes(double min, double max) {
          minimum_ = min;
          maximum_ = max;
       }
    }
+
    private final Map<String, Extremes> itemFilter_ = new HashMap<String, Extremes>();
-   
+
    public SpotDataFilter() {
    }
-   
+
    public void setSigma(boolean filter, double min, double max) {
       useSigma_ = filter;
       sigmaMin_ = min;
       sigmaMax_ = max;
    }
-   
+
    /**
-    * 
-    * @param filter - whether or not to use this filter 
-    * @param min - Smallest value that will be rejected
-    * @param max - Largest value that will be rejected
+    * @param filter - whether or not to use this filter
+    * @param min    - Smallest value that will be rejected
+    * @param max    - Largest value that will be rejected
     */
    public void setIntensity(boolean filter, double min, double max) {
       useIntensity_ = filter;
       intensityMin_ = min;
       intensityMax_ = max;
    }
-   
+
    public void setItemFilter(String item, double min, double max) {
       itemFilter_.put(item, new Extremes(min, max));
    }
-   
+
    /**
-    * Indicates whether or not the spot is acceptable 
-    * 
+    * Indicates whether or not the spot is acceptable
+    *
     * @param spot - spot Data
     * @return true if spot is acceptable
     */
-   public boolean filter (SpotData spot) {
+   public boolean filter(SpotData spot) {
       final String INTEGRALSIGMA = SpotData.Keys.INTEGRALSIGMA;
       if (useSigma_) {
          if (spot.hasKey(INTEGRALSIGMA) && (  // return false if no IntegralSigma found?
-                 spot.getValue(INTEGRALSIGMA)) < sigmaMin_ || 
-                 spot.getValue(INTEGRALSIGMA) > sigmaMax_)
+               spot.getValue(INTEGRALSIGMA)) < sigmaMin_ ||
+               spot.getValue(INTEGRALSIGMA) > sigmaMax_) {
             return false;
+         }
       }
       if (useIntensity_) {
          final String INTENSITY = SpotData.Keys.APERTUREINTENSITY;
-         if ( spot.hasKey(INTENSITY) && (
-                 spot.getValue(INTENSITY) < intensityMin_ || 
-                 spot.getValue(INTENSITY) > intensityMax_) )
+         if (spot.hasKey(INTENSITY) && (
+               spot.getValue(INTENSITY) < intensityMin_ ||
+                     spot.getValue(INTENSITY) > intensityMax_)) {
             return false;
+         }
       }
       Set<String> itemFilterKeySet = itemFilter_.keySet();
       for (String key : itemFilterKeySet) {
@@ -117,10 +122,9 @@ public class SpotDataFilter {
          // we may need to throw an exception
          // currently, data will simply not be filtered
       }
-      
+
       return true;
    }
-   
-   
-   
+
+
 }

@@ -34,35 +34,33 @@ either expressed or implied, of the FreeBSD Project.
  */
 package edu.ucsf.valelab.gaussianfit.utils;
 
+import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.ImageWindow;
+import ij.process.ShortProcessor;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import ij.ImageStack;
-import ij.IJ;
-import ij.gui.ImageWindow;
-import ij.process.ShortProcessor;
 
 /**
- *
  * @author nico
  */
 public class ImageAffineTransform {
 
    /**
-    *
     * @param input
     * @param af
-    * @param interpolationType - AffineTransformOp.Type_Bilinear, or
-    * AffineTransformOp.Type_Bicubic AffineTransformOp.Type_Nearest_Neighbor if
-    * an invalid number is supplied, Nearest_neighbor will be used
+    * @param interpolationType - AffineTransformOp.Type_Bilinear, or AffineTransformOp.Type_Bicubic
+    *                          AffineTransformOp.Type_Nearest_Neighbor if an invalid number is
+    *                          supplied, Nearest_neighbor will be used
     * @return transform image
     */
    public static BufferedImage transform(BufferedImage input, AffineTransform af,
-           int interpolationType) {
+         int interpolationType) {
       if (interpolationType != AffineTransformOp.TYPE_BICUBIC
-              && interpolationType != AffineTransformOp.TYPE_BILINEAR
-              && interpolationType != AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
+            && interpolationType != AffineTransformOp.TYPE_BILINEAR
+            && interpolationType != AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
          interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
       }
       AffineTransformOp aOp = new AffineTransformOp(af, interpolationType);
@@ -84,27 +82,26 @@ type = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
 edu.valelab.gaussianfit.utils.ImageAffineTransform.transformImagePlus(siPlus, af, type);
 
     */
-   
-   
+
+
    /**
-    * Given an input image and affine transform, will apply the affine transform
-    * to the second channel and create a new window with the untouched
-    * first channel and transformed second channel
-    * For now only works on 16 bit (short) images, and 2-channel images (which
-    * may contain multiple frames and slices)
-    * 
-    * @param siPlus - input image
-    * @param af - affine transform that will be applied
+    * Given an input image and affine transform, will apply the affine transform to the second
+    * channel and create a new window with the untouched first channel and transformed second
+    * channel For now only works on 16 bit (short) images, and 2-channel images (which may contain
+    * multiple frames and slices)
+    *
+    * @param siPlus            - input image
+    * @param af                - affine transform that will be applied
     * @param interpolationType - valid AffinTRansformOp type
     */
    public static void transformImagePlus(ImagePlus siPlus, AffineTransform af,
-           int interpolationType) {
-      
+         int interpolationType) {
+
       if (siPlus.getNChannels() == 2) {
-         
+
          if (interpolationType != AffineTransformOp.TYPE_BICUBIC
-                 && interpolationType != AffineTransformOp.TYPE_BILINEAR
-                 && interpolationType != AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
+               && interpolationType != AffineTransformOp.TYPE_BILINEAR
+               && interpolationType != AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
             interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
          }
 
@@ -124,13 +121,13 @@ edu.valelab.gaussianfit.utils.ImageAffineTransform.transformImagePlus(siPlus, af
 
             // Create the destination Window
             ImagePlus dest = IJ.createHyperStack(siPlus.getTitle() + "aligned",
-                    width, height, siPlus.getNChannels(),
-                    siPlus.getNSlices(), siPlus.getNFrames(), siPlus.getBitDepth());
+                  width, height, siPlus.getNChannels(),
+                  siPlus.getNSlices(), siPlus.getNFrames(), siPlus.getBitDepth());
             dest.copyScale(siPlus);
-            
+
             ImageStack destStack = dest.getStack();
             BufferedImage aOpResult = new BufferedImage(afBi16.getWidth(),
-               afBi16.getHeight(), BufferedImage.TYPE_USHORT_GRAY);
+                  afBi16.getHeight(), BufferedImage.TYPE_USHORT_GRAY);
 
             for (int i = 1; i <= stack.getSize(); i++) {
                ShortProcessor proc = (ShortProcessor) stack.getProcessor(i);
@@ -146,13 +143,14 @@ edu.valelab.gaussianfit.utils.ImageAffineTransform.transformImagePlus(siPlus, af
                destProc.setRoi(0, 0, width, height);
                destProc = (ShortProcessor) destProc.crop();
                destStack.setPixels(destProc.getPixels(), i);
-               
+
                // The following is weird, but was needed to get the first frame 
                // of the first channel to display.  Remove when solved in ImageJ
-               if (i == 1)
+               if (i == 1) {
                   dest.setProcessor(destProc);
+               }
             }
-                        
+
             ImageWindow win = new ij.gui.StackWindow(dest);
 
          } else {

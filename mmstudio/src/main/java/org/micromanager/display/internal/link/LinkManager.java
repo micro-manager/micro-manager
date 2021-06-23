@@ -12,4 +12,5 @@ package org.micromanager.display.internal.link;
 public interface LinkManager {
    void registerAnchor(LinkAnchor<?> anchor);
    void unregisterAnchor(LinkAnchor<?> anchor);
+   void unregisterAllAnchors();
 }

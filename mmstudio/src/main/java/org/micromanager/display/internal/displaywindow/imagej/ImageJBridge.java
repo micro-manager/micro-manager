@@ -70,7 +70,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  * @author Mark Tsuchida
  */
 public final class ImageJBridge {
-   private final DisplayUIController uiController_;
+   private DisplayUIController uiController_;
 
    // Our child objects on the ImageJ side. These are created and owned by this
    // class. There are three events in the lifetime of these objects: creation,
@@ -117,7 +117,7 @@ public final class ImageJBridge {
    private Rectangle lastSeenRoiRect_;
 
    // Get a copy of ImageCanvas's zoom levels
-   private static final List<Double> IJ_ZOOM_LEVELS = new ArrayList<Double>();
+   private static final List<Double> IJ_ZOOM_LEVELS = new ArrayList<>();
    static {
       double factor = 1.0;
       IJ_ZOOM_LEVELS.add(factor);
@@ -235,6 +235,7 @@ public final class ImageJBridge {
       imagePlus_ = null;
       colorModeStrategy_.releaseImagePlus();
       proxyStack_ = null;
+      uiController_ = null;
    }
 
    @MustCallOnEDT

@@ -32,13 +32,13 @@ package edu.ucsf.valelab.gaussianfit.data;
 import java.awt.geom.Point2D;
 
 /**
- *
  * @author nico
  */
 public class GsSpotPair implements PointData {
+
    private final SpotData firstSpot_;
    private final SpotData secondSpot_;
-   private final Point2D.Double firstPoint_; 
+   private final Point2D.Double firstPoint_;
    private final Point2D.Double secondPoint_;
    private boolean partOfTrack_;
 
@@ -53,7 +53,7 @@ public class GsSpotPair implements PointData {
    public SpotData getFirstSpot() {
       return firstSpot_;
    }
-   
+
    public SpotData getSecondSpot() {
       return secondSpot_;
    }
@@ -65,22 +65,22 @@ public class GsSpotPair implements PointData {
    public Point2D.Double getSecondPoint() {
       return secondPoint_;
    }
-   
+
    public boolean partOfTrack() {
       return partOfTrack_;
    }
-   
+
    public void useInTrack(boolean use) {
       partOfTrack_ = use;
    }
-   
+
    public GsSpotPair copy() {
       return new GsSpotPair(firstSpot_, secondSpot_, firstPoint_, secondPoint_);
    }
-   
+
    @Override
    public Point2D.Double getPoint() {
       return firstSpot_.getPoint();
    }
-   
+
 }

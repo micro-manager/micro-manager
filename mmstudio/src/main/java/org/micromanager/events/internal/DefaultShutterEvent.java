@@ -22,12 +22,21 @@ package org.micromanager.events.internal;
 
 import org.micromanager.events.ShutterEvent;
 
+/**
+ * This event posts when the shutter opens or closes.
+ *
+ * This event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.
+ */
 public final class DefaultShutterEvent implements ShutterEvent {
    private boolean isOn_;
    public DefaultShutterEvent(boolean isOn) {
       isOn_ = isOn;
    }
 
+   /**
+    * @return true if the shutter is open, false if it is closed.
+    */
    @Override
    public boolean getShutter() {
       return isOn_;

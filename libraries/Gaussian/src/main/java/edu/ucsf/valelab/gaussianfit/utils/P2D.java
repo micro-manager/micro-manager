@@ -30,20 +30,20 @@ import edu.ucsf.valelab.gaussianfit.fitting.P2DFunctions;
 import org.jfree.data.function.Function2D;
 
 /**
- * Utility functions to calculate and fit the Probability density function
- * to estimate the distance between two single molecules.
- * Based on: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1367071/
+ * Utility functions to calculate and fit the Probability density function to estimate the distance
+ * between two single molecules. Based on: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1367071/
+ * <p>
+ * A Non-Gaussian Distribution Quantifies Distances Measured with Fluorescence Localization
+ * Techniques L. Stirling Churchman, Henrik Flyvbjerg, and James A. Spudich Biophys J. Jan 15, 2006;
+ * 90(2): 668-671.
+ * <p>
+ * To avoid running into problems with positive and negative infinity, we use the approximation
+ * function when sigma < mu/2
  *
- * A Non-Gaussian Distribution Quantifies Distances Measured with Fluorescence Localization Techniques
-L. Stirling Churchman, Henrik Flyvbjerg, and James A. Spudich
-* Biophys J. Jan 15, 2006; 90(2): 668-671.
-*
-* To avoid running into problems with positive and negative infinity, we use
-* the approximation function when sigma < mu/2
-* 
  * @author nico
  */
 public class P2D implements Function2D {
+
    private final double mu_;
    private final double sigma_;
    private final boolean useApproximation_;
@@ -53,7 +53,7 @@ public class P2D implements Function2D {
       sigma_ = sigma;
       useApproximation_ = sigma_ < mu_ / 2;
    }
-   
+
    @Override
    public double getValue(double d) {
       if (useApproximation_) {
@@ -61,5 +61,5 @@ public class P2D implements Function2D {
       }
       return P2DFunctions.p2d(d, mu_, sigma_);
    }
-   
+
 }

@@ -15,10 +15,8 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.internal.DefaultDatastore;
-import org.micromanager.events.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
 import org.micromanager.events.NewPositionListEvent;
-import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
-import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
@@ -799,6 +797,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
       curStore_ = null;
       curPipeline_ = null;
+      studio_.events().unregisterForEvents(this);
    }
 
    @Subscribe

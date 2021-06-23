@@ -40,11 +40,18 @@ public class DefaultChannelExposureEvent {
     * Returns true if this channel is the currently-active channel (i.e. the
     * one used for snaps and live mode, the one whose exposure time is
     * displayed in the main window).
+    *
+    * @return true if this channel is the currently-active channel.
     */
    public boolean isMainExposureTime() {
       return isMainExposureTime_;
    }
 
+   /**
+    *
+    * @return true if this channel is the currently-active channel.
+    * @deprecated use {@link #isMainExposureTime()} instead
+    */
    @Deprecated
    public boolean getIsMainExposureTime() {
       return isMainExposureTime();

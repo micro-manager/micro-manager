@@ -18,15 +18,29 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events;
+package org.micromanager.acquisition;
 
+import org.micromanager.MMEvent;
 import org.micromanager.data.Datastore;
 
 /**
- * This class signifies that a Datastore's close() method has been called, and
- * thus that all resources associated with that Datastore, and references to
- * the Datastore, should be removed so that it can be garbage collected.
+ * This event signifies that an acquisition has been ended.
+ *
+ * This default implementation of this event is posted on the studio event bus,
+ * i.e. subscribe to this event using {@link org.micromanager.events.EventManager}
  */
-public interface DatastoreClosingEvent {
-   public Datastore getDatastore();
+public interface AcquisitionEndedEvent extends MMEvent {
+   /**
+    * Return the Datastore into which images were placed during the
+    * acquisition.
+    */
+   Datastore getStore();
+
+   /**
+    * Return an Object used to identify the entity in charge of the
+    * acquisition. This can be used by recipients to distinguish different
+    * types of acquisitions. This object must be the same object that published
+    * the corresponding AcquisitionStartedEvent to this acquisition.
+    */
+   Object getSource();
 }

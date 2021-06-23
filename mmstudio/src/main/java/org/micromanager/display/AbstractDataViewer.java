@@ -297,6 +297,7 @@ public abstract class AbstractDataViewer implements DataViewer {
     */
    protected void dispose() {
       asyncEventPoster_.shutdown();
+      displayPosition_ = null;
    }
 
    /**

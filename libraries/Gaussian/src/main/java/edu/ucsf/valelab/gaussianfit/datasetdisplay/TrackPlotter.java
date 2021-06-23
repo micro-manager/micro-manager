@@ -36,23 +36,24 @@ import javax.swing.JOptionPane;
 import org.jfree.data.xy.XYSeries;
 
 /**
- *
  * @author nico
  */
 public class TrackPlotter {
-   
+
    public static final String[] PLOTMODES = {"t-X", "t-Y", "t-dist", "t-Int", "X-Y"};
-    /**
+
+   /**
     * Plots Tracks using JFreeChart
     *
     * @param rowDatas
-    * @param plotMode - Index of plotMode in array {"t-X", "t-Y", "t-dist.", "t-Int.", "X-Y"};
+    * @param plotMode        - Index of plotMode in array {"t-X", "t-Y", "t-dist.", "t-Int.",
+    *                        "X-Y"};
     * @param doLog
     * @param doPowerSpectrum
     * @param comp
     */
    public static void plotData(RowData[] rowDatas, int plotMode, final boolean doLog,
-           final boolean doPowerSpectrum, Component comp) {
+         final boolean doPowerSpectrum, Component comp) {
       String title = PLOTMODES[plotMode];
       boolean useShapes = true;
       if (doLog || doPowerSpectrum) {
@@ -73,7 +74,8 @@ public class TrackPlotter {
       boolean hasTimeInfo = rowDatas[0].hasTimeInfo();
       for (RowData row : rowDatas) {
          if (row.hasTimeInfo() != hasTimeInfo) {
-            JOptionPane.showMessageDialog(comp, "Some rows have time information whereas others have not.");
+            JOptionPane.showMessageDialog(comp,
+                  "Some rows have time information whereas others have not.");
             return;
          }
       }
@@ -87,7 +89,7 @@ public class TrackPlotter {
                FFTUtils.calculatePSDs(rowDatas, datas, DataCollectionForm.PlotMode.X);
                xAxis = "Freq (Hz)";
                GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
-                       0, 400, useShapes, doLog);
+                     0, 400, useShapes, doLog);
 
             } else {
                for (int index = 0; index < rowDatas.length; index++) {
@@ -125,7 +127,7 @@ public class TrackPlotter {
                FFTUtils.calculatePSDs(rowDatas, datas, DataCollectionForm.PlotMode.Y);
                xAxis = "Freq (Hz)";
                GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
-                       0, 400, useShapes, doLog);
+                     0, 400, useShapes, doLog);
             } else {
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
@@ -157,7 +159,6 @@ public class TrackPlotter {
          }
          break;
 
-
          case (2): { // t-dist.
             if (doPowerSpectrum) {
                /*
@@ -176,9 +177,9 @@ public class TrackPlotter {
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      SpotData spot = rowDatas[index].spotList_.get(i);
                      double distX = (sp.getXCenter() - spot.getXCenter())
-                             * (sp.getXCenter() - spot.getXCenter());
+                           * (sp.getXCenter() - spot.getXCenter());
                      double distY = (sp.getYCenter() - spot.getYCenter())
-                             * (sp.getYCenter() - spot.getYCenter());
+                           * (sp.getYCenter() - spot.getYCenter());
                      double dist = Math.sqrt(distX + distY);
                      if (hasTimeInfo) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
@@ -198,14 +199,15 @@ public class TrackPlotter {
                      }
                   }
                }
-               GaussianUtils.plotDataN(title, datas, xAxis, " distance (nm)", 0, 400, useShapes, doLog);
+               GaussianUtils
+                     .plotDataN(title, datas, xAxis, " distance (nm)", 0, 400, useShapes, doLog);
             }
          }
          break;
 
          case (3): { // t-Int
             if (doPowerSpectrum) {
-                JOptionPane.showMessageDialog(comp, "Function is not implemented");
+               JOptionPane.showMessageDialog(comp, "Function is not implemented");
             } else {
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
@@ -234,7 +236,7 @@ public class TrackPlotter {
                   }
                }
                GaussianUtils.plotDataN(title, datas, xAxis, "Intensity (#photons)",
-                       0, 400, useShapes, doLog);
+                     0, 400, useShapes, doLog);
             }
          }
          break;
@@ -243,8 +245,10 @@ public class TrackPlotter {
             if (doPowerSpectrum) {
                JOptionPane.showMessageDialog(comp, "Function is not implemented");
             } else {
-               double minX = Double.MAX_VALUE; double minY = Double.MAX_VALUE;
-               double maxX = Double.MIN_VALUE; double maxY = Double.MIN_VALUE;
+               double minX = Double.MAX_VALUE;
+               double minY = Double.MAX_VALUE;
+               double maxX = Double.MIN_VALUE;
+               double maxY = Double.MIN_VALUE;
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
@@ -267,25 +271,25 @@ public class TrackPlotter {
                if (maxY - minY > 10000) {
                   yAxisTitle = "Y(micron)";
                   yDivisor = 1000;
-               } 
-               if (xDivisor != 1.0 || yDivisor != 1.0) {  
+               }
+               if (xDivisor != 1.0 || yDivisor != 1.0) {
                   for (int index = 0; index < rowDatas.length; index++) {
                      datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
                      for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                         SpotData spot = rowDatas[index].spotList_.get(i);
-                        datas[index].add(spot.getXCenter() / xDivisor, 
-                                spot.getYCenter() / yDivisor);
+                        datas[index].add(spot.getXCenter() / xDivisor,
+                              spot.getYCenter() / yDivisor);
                      }
                   }
                }
 
-               GaussianUtils.plotDataN(title, datas, xAxisTitle, yAxisTitle, 0, 400, useShapes, doLog);
+               GaussianUtils
+                     .plotDataN(title, datas, xAxisTitle, yAxisTitle, 0, 400, useShapes, doLog);
             }
          }
          break;
       }
    }
-   
-    
-   
+
+
 }
