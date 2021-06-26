@@ -276,7 +276,6 @@ public final class MultipageTiffReader {
          // Already have a comments annotation set up; bail.
          return;
       }
-      boolean didCreate = false;
       ByteBuffer buffer = null;
       try {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
@@ -292,11 +291,6 @@ public final class MultipageTiffReader {
             if (comments.getString(key).equals("")) {
                continue;
             }
-            if (!didCreate) {
-               // Have at least one comment, so create the annotation.
-               CommentsHelper.createAnnotation(store);
-               didCreate = true;
-            }
             if (key.equals("Summary")) {
                CommentsHelper.setSummaryComment(store, comments.getString(key));
                continue;
@@ -309,9 +303,7 @@ public final class MultipageTiffReader {
             CommentsHelper.setImageComment(store, builder.build(),
                   comments.getString(key));
          }
-         if (didCreate) {
-            CommentsHelper.saveComments(store);
-         }
+         CommentsHelper.saveComments(store);
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Unable to generate JSON from buffer " + getString(buffer));

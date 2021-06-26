@@ -132,13 +132,4 @@ public final class CommentsHelper {
       return store.hasAnnotation(COMMENTS_FILE);
    }
 
-   /**
-    * Create a new comments annotation.
-    * @param store
-    * @throws java.io.IOException
-    */
-   public static void createAnnotation(Datastore store) throws IOException {
-      //store.createNewAnnotation(COMMENTS_FILE       // throw new UnsupportedOperationException("TODO");
-      ReportingUtils.logError("TODO: Implement org.micromanager.data.internal.CommentsHelper.createAnnotation");
-   }
 }
