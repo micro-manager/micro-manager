@@ -90,6 +90,9 @@ public final class DefaultAnnotation implements Annotation {
          throw new RuntimeException("Asked to save Annotation when store has no save path");
       }
       File file = getFile(store_, filename_);
+      if (!file.exists()) {
+         file.createNewFile();
+      }
       PropertyMap.Builder builder = PropertyMaps.builder();
       if (generalAnnotation_ != null) {
          builder.putPropertyMap(GENERAL_KEY, generalAnnotation_);
@@ -138,7 +141,7 @@ public final class DefaultAnnotation implements Annotation {
     * @return 
     */
    public static File getFile(Datastore store, String filename) {
-      return new File(store.getSavePath() + "/" + filename);
+      return new File(store.getSavePath() + File.separator + filename);
    }
 
    /**
