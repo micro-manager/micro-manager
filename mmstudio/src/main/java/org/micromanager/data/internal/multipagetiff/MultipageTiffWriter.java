@@ -447,6 +447,7 @@ public final class MultipageTiffWriter {
          raFile_ = null;
          masterStorage_ = null;
       });
+      CommentsHelper.saveComments(masterStorage_.getDatastore());
    }
    
    public boolean hasSpaceForFullOMEMetadata(int length) {

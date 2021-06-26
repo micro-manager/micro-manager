@@ -218,6 +218,15 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    public void freeze() {
       closeMetadataStreams();
       isDatasetWritable_ = false;
+      saveComments();
+   }
+
+   private void saveComments() {
+      try {
+         CommentsHelper.saveComments(store_);
+      } catch (IOException ioe) {
+         ReportingUtils.logError(ioe, "Failed to write comments for " + store_.getName());
+      }
    }
 
    @Override
@@ -572,6 +581,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       String time = image.getMetadata().getReceivedTime();
       // TODO: should we log if the date isn't available?
       SummaryMetadata summary = summaryMetadata_;
+      String summaryComment = CommentsHelper.getSummaryComment(store_);
       if (time != null && summary.getStartDate() == null) {
          summary = summary.copyBuilder().startDate(time.split(" ")[0]).build();
       }
@@ -801,6 +811,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public void close() {
+      saveComments();
       // We don't maintain any state that needs to be cleaned up.
    }
 }

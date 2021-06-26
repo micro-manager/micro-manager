@@ -551,6 +551,7 @@ public final class MultipageTiffReader {
          raFile_.close();
          raFile_ = null;
       }
+      CommentsHelper.saveComments(masterStorage_.getDatastore());
       masterStorage_ = null;
    }
 
