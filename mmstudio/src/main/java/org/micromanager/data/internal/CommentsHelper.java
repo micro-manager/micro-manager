@@ -29,7 +29,11 @@ import org.micromanager.data.Datastore;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * A simple helper class to handle access of comments.
+ * Comments are handled separately from SummaryMetadata and Imagemetadata since the
+ * used may change them (add to them) at any point in time.
+ * This class facilitates supporting Comments in the various storage methods.
+ * Note that the design of this class is not final, Annotation should be
+ * part of the API.
  */
 public final class CommentsHelper {
    /** File that comments are saved in. */
@@ -38,8 +42,8 @@ public final class CommentsHelper {
    private static final String COMMENTS_KEY = "comments";
 
    /**
-    * Returns the summary comment for the specified Datastore, or "" if it
-    * does not exist.
+    * Returns the summary comment for the specified Datastore, or en empty string
+    * if no summary comment exists.
     * @param store Datastore from where to retrieve the comment
     * @return comment text
     * @throws java.io.IOException
@@ -53,7 +57,7 @@ public final class CommentsHelper {
 
    /**
     * Write a new summary comment for the given Datastore.
-    * @param store Datastore to whic to add the summary comment
+    * @param store Datastore to which to add the summary comment
     * @param comment text to be added to the metadata
     * @throws java.io.IOException
     */
