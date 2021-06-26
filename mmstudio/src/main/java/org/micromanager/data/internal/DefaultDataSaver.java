@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.SwingWorker;
 
 import org.micromanager.Studio;
+import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Storage;
@@ -156,7 +157,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       duplicate_.freeze();
       duplicate_.close();
       // Save our annotations now.
-      for (DefaultAnnotation annotation : store_.getAnnotations().values()) {
+      for (Annotation annotation : store_.getAnnotations().values()) {
          annotation.save();
       }
 

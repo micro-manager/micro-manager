@@ -114,6 +114,14 @@ public final class CommentsHelper {
       annotation.save();
    }
 
+   public static void copyComments(Datastore source, Datastore target) throws IOException {
+      Annotation annotation = source.getAnnotation(COMMENTS_FILE);
+      if (target instanceof DefaultDatastore) {
+         DefaultDatastore dTarget = (DefaultDatastore) target;
+         dTarget.setAnnotation(COMMENTS_FILE, annotation);
+      }
+   }
+
    /**
     * Return true if there's a comments annotation.
     * @param store

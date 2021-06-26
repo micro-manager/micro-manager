@@ -551,8 +551,10 @@ public final class MultipageTiffReader {
          raFile_.close();
          raFile_ = null;
       }
-      CommentsHelper.saveComments(masterStorage_.getDatastore());
-      masterStorage_ = null;
+      if (masterStorage_ != null) {
+         CommentsHelper.saveComments(masterStorage_.getDatastore());
+         masterStorage_ = null;
+      }
    }
 
    private long unsignInt(int i) {
