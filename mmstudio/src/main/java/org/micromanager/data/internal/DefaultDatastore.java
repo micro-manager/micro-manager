@@ -401,7 +401,8 @@ public class DefaultDatastore implements Datastore {
             CommentsHelper.copyComments(this, copiedFromStore_);
             CommentsHelper.saveComments(copiedFromStore_);
          } catch (IOException ioe) {
-            ReportingUtils.logError(ioe, "Failed to write comments for " + copiedFromStore_.getName());
+            ReportingUtils.logError(ioe, "Failed to write comments for "
+                  + copiedFromStore_.getName());
          }
       }
       if (storage_ != null) {

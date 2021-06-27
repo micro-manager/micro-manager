@@ -38,7 +38,6 @@ import org.micromanager.data.SummaryMetadata;
 /**
  * Simple RAM-based storage for Datastores. Methods that interact with the
  * HashMap that is our image storage are synchronized.
- * 
  * TODO: coordsToImage_ can be set to null in the close function
  * if any of the member functions are called after "close", a null pointer exception
  * will follow.  We can either check for null whenever coordsToImage is used,
@@ -52,6 +51,11 @@ public final class StorageRAM implements RewritableStorage {
    private final Set<String> axesInUse_;
    private Image anyImage_;
 
+   /**
+    * Image Data Storage located in RAM.
+    *
+    * @param store Datastore that "owns" this storage.
+    */
    public StorageRAM(Datastore store) {
       coordsToImage_ = new HashMap<>();
       maxIndex_ = new DefaultCoords.Builder().build();
@@ -130,6 +134,18 @@ public final class StorageRAM implements RewritableStorage {
       return results;
    }
 
+   /**
+    * Finds images in this storage that match the given coord, but ignore
+    * the provided axes (i.e., remove those axes from our images, and
+    * then check if the Coord is identical to the one given).
+    *
+    * @param coords coord looking for matching images
+    * @param ignoreTheseAxes Axes to be ignored in the images collection when
+    *                        looking for matches
+    * @return List with Images that have the same coord as the one given
+    *         (except for the axes to be ignored).
+    * @throws IOException Not sure why this is here, should never be thrown.
+    */
    public synchronized List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
            throws IOException {
       if (coordsToImage_ == null) {

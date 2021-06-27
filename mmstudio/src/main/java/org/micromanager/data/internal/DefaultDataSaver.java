@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.swing.SwingWorker;
-
 import org.micromanager.Studio;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
@@ -15,45 +14,50 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.internal.MMStudio;
 
 /**
- * TODO: Not sure if Swingworker is the best implementation
+ * TODO: Not sure if Swingworker is the best implementation.
  * However, it has nice facilities to give user feedback about progress 
- * of saving (using the setProgress function)
- * 
- * 
+ * of saving (using the setProgress function) *
+ *
  * @author nico
  */
 public class DefaultDataSaver extends SwingWorker<Void, Void> {
-      private final Studio studio;
-      private final DefaultDatastore store_;
-      private final Datastore.SaveMode mode_;
-      private final String path_;
-      private final DefaultDatastore duplicate_;
-      private final Storage saver_;
-      
+   private final Studio studio;
+   private final DefaultDatastore store_;
+   private final String path_;
+   private final DefaultDatastore duplicate_;
+   private final Storage saver_;
+
+   /**
+    * Takes care of most of the dirty work saving data to various targets.
+    *
+    * @param studio The ever present Studio object.
+    * @param store Datastore that is using this Datasaver.
+    * @param mode Mode (currently, RAM, Single TIffs or MultiPage Tiffs).
+    * @param path Path/directory for disk-based storage.
+    * @throws IOException Thrown by disk-based mthods.
+    */
    public DefaultDataSaver(Studio studio,
                            DefaultDatastore store,
                            Datastore.SaveMode mode,
                            String path) throws IOException {
       this.studio = studio;
       store_ = store;
-      mode_ = mode;
       path_ = path;
       
       duplicate_ = new DefaultDatastore(this.studio);
 
-      if (mode_ == Datastore.SaveMode.MULTIPAGE_TIFF) {
+      if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
          saver_ = new StorageMultipageTiff(studio.app().getMainWindow(),
                  duplicate_,
                  path_, true, true,
                  StorageMultipageTiff.getShouldSplitPositions());
-      } else if (mode_ == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+      } else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          saver_ = new StorageSinglePlaneTiffSeries(duplicate_, path_, true);
       } else {
          throw new IllegalArgumentException("Unrecognized mode parameter "
-                 + mode_);
+                 + mode);
       }
       
    }
@@ -121,19 +125,22 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
                   int t2 = b.getT();
                   if (t1 != t2) {
                      return t1 < t2 ? -1 : 1;
-                  }  break;
+                  }
+                  break;
                case Coords.Z:
                   int z1 = a.getZ();
                   int z2 = b.getZ();
                   if (z1 != z2) {
                      return z1 < z2 ? -1 : 1;
-                  }  break;
+                  }
+                  break;
                case Coords.C:
                   int c1 = a.getChannel();
                   int c2 = b.getChannel();
                   if (c1 != c2) {
                      return c1 < c2 ? -1 : 1;
-                  } break;
+                  }
+                  break;
                default:
                   break;
             }
@@ -170,7 +177,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       try {
          get();
       } catch (ExecutionException | InterruptedException e) {
-          studio.logs().showError(e, "Failed to save to " + path_);
+         studio.logs().showError(e, "Failed to save to " + path_);
       }
       
       studio.alerts().postAlert("Finished saving", this.getClass(), path_);
