@@ -70,7 +70,7 @@ if [ "$do_download" = yes ]; then
    [ -f libusb-compat-0.1.5.tar.bz2 ] || curl -LO http://sourceforge.net/projects/libusb/files/libusb-compat-0.1/libusb-compat-0.1.5/libusb-compat-0.1.5.tar.bz2
    [ -f hidapi-0.8.0-rc1.tar.gz ] || curl -LO https://github.com/signal11/hidapi/archive/hidapi-0.8.0-rc1.tar.gz
    [ -f libexif-0.6.21.tar.bz2 ] || curl -L -o libexif-0.6.21.tar.bz2 http://sourceforge.net/projects/libexif/files/libexif/0.6.21/libexif-0.6.21.tar.bz2/download
-   [ -f libtool-2.4.2.tar.gz ] || curl -LO http://gnu.mirrorcatalogs.com/libtool/libtool-2.4.2.tar.gz
+   [ -f libtool-2.4.2.tar.gz ] || curl -LO https://ftpmirror.gnu.org/libtool/libtool-2.4.2.tar.gz
    [ -f libgphoto2-2.5.2.tar.bz2 ] || curl -L -o libgphoto2-2.5.2.tar.bz2 http://sourceforge.net/projects/gphoto/files/libgphoto/2.5.2/libgphoto2-2.5.2.tar.bz2/download
    [ -f FreeImage3154.zip ] || curl -LO http://downloads.sourceforge.net/freeimage/FreeImage3154.zip
    [ -f libdc1394-2.2.1.tar.gz ] || curl -L -o libdc1394-2.2.1.tar.gz http://sourceforge.net/projects/libdc1394/files/libdc1394-2/2.2.1/libdc1394-2.2.1.tar.gz/download
