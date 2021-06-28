@@ -19,6 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.data.internal.multipagetiff;
 
 import com.google.common.collect.ImmutableList;
@@ -60,6 +61,9 @@ import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 
+/**
+ * Reads in Multi-page Tiff Data from disk.
+ */
 public final class MultipageTiffReader {
 
    private static final long BIGGEST_INT_BIT = (long) Math.pow(2, 31);
@@ -87,10 +91,11 @@ public final class MultipageTiffReader {
 
    /**
     * This constructor is used for a file that is currently being written.
-    * @param masterStorage
-    * @param summaryMD
-    * @param summaryPmap
-    * @param firstImage
+    *
+    * @param masterStorage Storage entity that will be using this reader
+    * @param summaryMD Summary Metadata
+    * @param summaryPmap unused, delete?
+    * @param firstImage unused, delete?
     */
    public MultipageTiffReader(StorageMultipageTiff masterStorage,
          SummaryMetadata summaryMD, PropertyMap summaryPmap,
@@ -109,7 +114,7 @@ public final class MultipageTiffReader {
    }
 
    /**
-    * This constructor is used for opening datasets that have already been saved
+    * This constructor is used for opening datasets that have already been saved.
     */
    public MultipageTiffReader(StorageMultipageTiff masterStorage, File file)
          throws IOException, InvalidIndexMapException {
@@ -126,8 +131,7 @@ public final class MultipageTiffReader {
 
       try {
          readIndexMap();
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          // Unlike other IOErrors, this is a potentially recoverable error.
          throw new InvalidIndexMapException(e);
       }
@@ -145,8 +149,7 @@ public final class MultipageTiffReader {
       file_ = file;
       try {
          createFileChannel(true);
-      }
-      catch (Exception ex) {
+      } catch (Exception ex) {
          ReportingUtils.showError(ex, "Cannot open file: " +  file_.getName());
          throw ex instanceof IOException ? (IOException) ex : new IOException(ex);
       }
@@ -156,46 +159,58 @@ public final class MultipageTiffReader {
       fixIndexMap(firstIFD, file.getName());
    }
 
+   /**
+    * Determined if the given directory contains a Micro-Manager Multi-page TIFF
+    * dataset.
+    *
+    * @param directory Where to look
+    * @return True if this is a Micro-Manager Multipage Tiff data set, false otherwise.
+    * @throws IOException when underlying code throws an IOException, or when directory
+    *                      is empty.
+    */
    public static boolean isMMMultipageTiff(String directory) throws IOException {
       File dir = new File(directory);
       File[] children = dir.listFiles();
       if (children == null) {
-         throw new IOException(directory + " does not appear to be a directory; is this a \u00B5Manager dataset?");
+         throw new IOException(directory
+               + " does not appear to be a directory; is this a Micro-Manager dataset?");
       }
       File testFile = null;
       for (File child : children) {
          if (child.isDirectory()) {
             File[] grandchildren = child.listFiles();
             for (File grandchild : grandchildren) {
-               if ( (!grandchild.getName().startsWith("._")) && grandchild.getName().endsWith(".tif")) {
+               if ((!grandchild.getName().startsWith("._")) && grandchild.getName()
+                     .endsWith(".tif")) {
                   testFile = grandchild;
                   break;
                }
             }
-         } else if ( (!child.getName().startsWith("._")) && 
-                 child.getName().endsWith(".tif") || child.getName().endsWith(".TIF")) {
+         } else if ((!child.getName().startsWith("._"))
+               && child.getName().endsWith(".tif") || child.getName().endsWith(".TIF")) {
             testFile = child;
             break;
          }
       }
       if (testFile == null) {
-         throw new IOException("Unable to find any .tif files in " + directory + "; is this a \u00B5Manager dataset?");
+         throw new IOException("Unable to find any .tif files in "
+               + directory + "; is this a Micro-Manager dataset?");
       }
       RandomAccessFile ra;
       try {
-         ra = new RandomAccessFile(testFile,"r");
+         ra = new RandomAccessFile(testFile, "r");
       } catch (FileNotFoundException ex) {
-        ReportingUtils.logError(ex);
-        return false;
+         ReportingUtils.logError(ex);
+         return false;
       }
       FileChannel channel = ra.getChannel();
       ByteBuffer tiffHeader = ByteBuffer.allocate(36);
       ByteOrder bo;
-      channel.read(tiffHeader,0);
+      channel.read(tiffHeader, 0);
       char zeroOne = tiffHeader.getChar(0);
-      if (zeroOne == 0x4949 ) {
+      if (zeroOne == 0x4949) {
          bo = ByteOrder.LITTLE_ENDIAN;
-      } else if (zeroOne == 0x4d4d ) {
+      } else if (zeroOne == 0x4d4d) {
          bo = ByteOrder.BIG_ENDIAN;
       } else {
          throw new IOException("Error reading TIFF header");
@@ -204,35 +219,24 @@ public final class MultipageTiffReader {
       int summaryMDHeader = tiffHeader.getInt(32);
       channel.close();
       ra.close();
-      if (summaryMDHeader == MultipageTiffWriter.SUMMARY_MD_HEADER) {
-         return true;
-      }
-      return false;
+      return summaryMDHeader == MultipageTiffWriter.SUMMARY_MD_HEADER;
    }
 
    public SummaryMetadata getSummaryMetadata() {
       return summaryMetadata_;
    }
 
-   public DefaultImage readImage(Coords coords) throws IOException {
-      if (!coordsToOffset_.containsKey(coords)) {
-         // Coordinates not in our map; maybe the writer hasn't finished
-         // writing it?
-         return null;
-      }
-      if (fileChannel_ == null) {
-         ReportingUtils.logError("Attempted to read image on FileChannel that is null");
-         return null;
-      }
-      long byteOffset = coordsToOffset_.get(coords);
 
-      IFDData data = readIFD(byteOffset);
-      return (DefaultImage) readImage(data);
-   }
 
+   /**
+    * Returns the Coords this reader knows about .
+    *
+    * @return Set of known Coords
+    */
    public Set<Coords> getIndexKeys() {
-      if (coordsToOffset_ == null)
+      if (coordsToOffset_ == null) {
          return null;
+      }
       return coordsToOffset_.keySet();
    }
 
@@ -255,8 +259,8 @@ public final class MultipageTiffReader {
       reader.setLenient(true);
       JsonElement summaryGson = parser.parse(reader);
 
-      imageFormatReadFromSummary_ = NonPropertyMapJSONFormats.imageFormat().
-            fromGson(summaryGson);
+      imageFormatReadFromSummary_ = NonPropertyMapJSONFormats.imageFormat()
+            .fromGson(summaryGson);
       summaryMetadata_ = DefaultSummaryMetadata.fromPropertyMap(
             NonPropertyMapJSONFormats.summaryMetadata().fromGson(summaryGson));
    }
@@ -276,7 +280,6 @@ public final class MultipageTiffReader {
          // Already have a comments annotation set up; bail.
          return;
       }
-      boolean didCreate = false;
       ByteBuffer buffer = null;
       try {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
@@ -292,11 +295,6 @@ public final class MultipageTiffReader {
             if (comments.getString(key).equals("")) {
                continue;
             }
-            if (!didCreate) {
-               // Have at least one comment, so create the annotation.
-               CommentsHelper.createAnnotation(store);
-               didCreate = true;
-            }
             if (key.equals("Summary")) {
                CommentsHelper.setSummaryComment(store, comments.getString(key));
                continue;
@@ -309,14 +307,10 @@ public final class MultipageTiffReader {
             CommentsHelper.setImageComment(store, builder.build(),
                   comments.getString(key));
          }
-         if (didCreate) {
-            CommentsHelper.saveComments(store);
-         }
-      }
-      catch (JSONException e) {
+         CommentsHelper.saveComments(store);
+      } catch (JSONException e) {
          ReportingUtils.logError(e, "Unable to generate JSON from buffer " + getString(buffer));
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          ReportingUtils.logError(e, "Error reading comments block");
       }
    }
@@ -327,11 +321,13 @@ public final class MultipageTiffReader {
       return buffer;
    }
 
-   private long readOffsetHeaderAndOffset(int offsetHeaderVal, int startOffset) throws IOException  {
-      ByteBuffer buffer1 = readIntoBuffer(startOffset,8);
+   private long readOffsetHeaderAndOffset(int offsetHeaderVal, int startOffset)
+         throws IOException  {
+      ByteBuffer buffer1 = readIntoBuffer(startOffset, 8);
       int offsetHeader = buffer1.getInt(0);
-      if ( offsetHeader != offsetHeaderVal) {
-         throw new IOException("Offset header incorrect, expected: " + offsetHeaderVal +"   found: " + offsetHeader);
+      if (offsetHeader != offsetHeaderVal) {
+         throw new IOException("Offset header incorrect, expected: "
+               + offsetHeaderVal + "   found: " + offsetHeader);
       }
       return unsignInt(buffer1.getInt(4));     
    }
@@ -344,13 +340,13 @@ public final class MultipageTiffReader {
       }
       int numMappings = header.getInt(4);
       coordsToOffset_ = new HashMap<Coords, Long>();
-      ByteBuffer mapBuffer = readIntoBuffer(offset+8, 20*numMappings);     
+      ByteBuffer mapBuffer = readIntoBuffer(offset + 8, 20 * numMappings);
       for (int i = 0; i < numMappings; i++) {
-         int channel = mapBuffer.getInt(i*20);
-         int slice = mapBuffer.getInt(i*20+4);
-         int frame = mapBuffer.getInt(i*20+8);
-         int position = mapBuffer.getInt(i*20+12);
-         long imageOffset = unsignInt(mapBuffer.getInt(i*20+16));
+         int channel = mapBuffer.getInt(i * 20);
+         int slice = mapBuffer.getInt(i * 20 + 4);
+         int frame = mapBuffer.getInt(i * 20 + 8);
+         int position = mapBuffer.getInt(i * 20 + 12);
+         long imageOffset = unsignInt(mapBuffer.getInt(i * 20 + 16));
          if (imageOffset == 0) {
             break; // end of index map reached
          }
@@ -402,6 +398,29 @@ public final class MultipageTiffReader {
       }
    }
 
+   /**
+    * Reads image with given Coords from disk.
+    *
+    * @param coords Coords indicating which image should be retrieved.
+    * @return Image matching Coords
+    * @throws IOException When reading fails
+    */
+   public DefaultImage readImage(Coords coords) throws IOException {
+      if (!coordsToOffset_.containsKey(coords)) {
+         // Coordinates not in our map; maybe the writer hasn't finished
+         // writing it?
+         return null;
+      }
+      if (fileChannel_ == null) {
+         ReportingUtils.logError("Attempted to read image on FileChannel that is null");
+         return null;
+      }
+      long byteOffset = coordsToOffset_.get(coords);
+
+      IFDData data = readIFD(byteOffset);
+      return (DefaultImage) readImage(data);
+   }
+
    private Image readImage(IFDData data) throws IOException {
       ByteBuffer pixelBuffer = ByteBuffer.allocate((int) data.bytesPerImage).order(byteOrder_);
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
@@ -415,8 +434,8 @@ public final class MultipageTiffReader {
       JsonElement mdGson = parser.parse(reader);
 
       try {
-         PropertyMap formatPmap = NonPropertyMapJSONFormats.imageFormat().
-                 fromGson(mdGson);
+         PropertyMap formatPmap = NonPropertyMapJSONFormats.imageFormat()
+                 .fromGson(mdGson);
          Coords coords = DefaultCoords.fromPropertyMap(
                  NonPropertyMapJSONFormats.coords().fromGson(mdGson));
          Metadata metadata = DefaultMetadata.fromPropertyMap(
@@ -434,10 +453,10 @@ public final class MultipageTiffReader {
                // TODO We should probably try the IFD before giving up
                throw new IOException("Cannot find image width and height");
             }
-            formatPmap = formatPmap.copyBuilder().
-                    putInteger(PropertyKey.WIDTH.key(), width).
-                    putInteger(PropertyKey.HEIGHT.key(), height).
-                    build();
+            formatPmap = formatPmap.copyBuilder()
+                    .putInteger(PropertyKey.WIDTH.key(), width)
+                    .putInteger(PropertyKey.HEIGHT.key(), height)
+                    .build();
          }
 
          PixelType pixelType = formatPmap.getStringAsEnum(
@@ -498,29 +517,29 @@ public final class MultipageTiffReader {
    private IFDEntry readDirectoryEntry(int offset, ByteBuffer buffer) throws IOException {
       char tag =  buffer.getChar(offset); 
       char type = buffer.getChar(offset + 2);
-      long count = unsignInt( buffer.getInt(offset + 4) );
+      long count = unsignInt(buffer.getInt(offset + 4));
       long value;
-      if ( type == 3 && count == 1) {
+      if (type == 3 && count == 1) {
          value = buffer.getChar(offset + 8);
       } else {
          value = unsignInt(buffer.getInt(offset + 8));
       }
-      return (new IFDEntry(tag,type,count,value));
+      return (new IFDEntry(tag, type, count, value));
    }
 
    //returns byteoffset of first IFD
    private long readHeader() throws IOException {           
       ByteBuffer tiffHeader = ByteBuffer.allocate(8);
-      fileChannel_.read(tiffHeader,0);
+      fileChannel_.read(tiffHeader, 0);
       char zeroOne = tiffHeader.getChar(0);
-      if (zeroOne == 0x4949 ) {
+      if (zeroOne == 0x4949) {
          byteOrder_ = ByteOrder.LITTLE_ENDIAN;
-      } else if (zeroOne == 0x4d4d ) {
+      } else if (zeroOne == 0x4d4d) {
          byteOrder_ = ByteOrder.BIG_ENDIAN;
       } else {
          throw new IOException("Error reading Tiff header");
       }
-      tiffHeader.order( byteOrder_ );  
+      tiffHeader.order(byteOrder_);
       short twoThree = tiffHeader.getShort(2);
       if (twoThree != 42) {
          throw new IOException("Tiff identifier code incorrect");
@@ -537,11 +556,17 @@ public final class MultipageTiffReader {
       }
    }
 
-   private void createFileChannel(boolean isReadWrite) throws FileNotFoundException, IOException {      
+   private void createFileChannel(boolean isReadWrite)
+         throws FileNotFoundException, IOException {
       raFile_ = new RandomAccessFile(file_, isReadWrite ? "rw" : "r");
       fileChannel_ = raFile_.getChannel();
    }
 
+   /**
+    * Closes this MultipageTIffReader. Saves comments.
+    *
+    * @throws IOException Accessing disk can cause these.
+    */
    public void close() throws IOException {
       if (fileChannel_ != null) {
          fileChannel_.close();
@@ -551,7 +576,10 @@ public final class MultipageTiffReader {
          raFile_.close();
          raFile_ = null;
       }
-      masterStorage_ = null;
+      if (masterStorage_ != null) {
+         CommentsHelper.saveComments(masterStorage_.getDatastore());
+         masterStorage_ = null;
+      }
    }
 
    private long unsignInt(int i) {
@@ -566,17 +594,18 @@ public final class MultipageTiffReader {
    // terminates before properly closing, thereby preventing the multipage tiff
    // writer from putting in the index map, comments, channels, and OME XML in
    // the ImageDescription tag location
-   private void fixIndexMap(long firstIFD, String fileName) throws IOException {
-      long filePosition = firstIFD;
+   private void fixIndexMap(final long firstIFD, final String fileName) throws IOException {
       coordsToOffset_ = new HashMap<Coords, Long>();
       long progBarMax = (fileChannel_.size() / 2L);
       final ProgressBar progressBar = new ProgressBar(null, "Fixing " + fileName, 0, 
               progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
-      progressBar.setRange(0, progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
+      progressBar.setRange(0, progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE
+                                                               : (int) progBarMax);
       progressBar.setProgress(0);
       progressBar.setVisible(true);
       long nextIFDOffsetLocation = 0;
       IFDData data;
+      long filePosition = firstIFD;
       while (filePosition > 0) {
          try {
             data = readIFD(filePosition);
@@ -593,7 +622,7 @@ public final class MultipageTiffReader {
             }
             coordsToOffset_.put(image.getCoords(), filePosition);
 
-            final int progress = (int) (filePosition/2L);
+            final int progress = (int) (filePosition / 2L);
             SwingUtilities.invokeLater(new Runnable() {
                @Override
                public void run() {
@@ -601,7 +630,8 @@ public final class MultipageTiffReader {
                }
             });
 
-            if (data.nextIFD <= filePosition || data.nextIFDOffsetLocation <= nextIFDOffsetLocation ) {
+            if (data.nextIFD <= filePosition
+                  || data.nextIFDOffsetLocation <= nextIFDOffsetLocation) {
                break; //so no recoverable data is ever lost
             }
             filePosition = data.nextIFD;
@@ -628,14 +658,16 @@ public final class MultipageTiffReader {
    }
 
    // TODO: There is a very similar but not identical method in the Writer
-   private int writeDisplaySettings(DisplaySettings settings, long filePosition) throws IOException {
+   private int writeDisplaySettings(DisplaySettings settings, long filePosition)
+         throws IOException {
       String settingsJSON = ((DefaultDisplaySettings) settings).toPropertyMap().toJSON();
-      int numReservedBytes = settingsJSON.length() * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
+      int numReservedBytes = settingsJSON.length()
+            * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settingsJSON));
       header.putInt(0, MultipageTiffWriter.DISPLAY_SETTINGS_HEADER);
       header.putInt(4, numReservedBytes);
       fileChannel_.write(header, filePosition);
+      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settingsJSON));
       fileChannel_.write(buffer, filePosition + 8);
 
       ByteBuffer offsetHeader = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
@@ -663,7 +695,8 @@ public final class MultipageTiffReader {
          // the extra logging just in case.
          for (String axis : coords.getAxes()) {
             if (!ALLOWED_AXES.contains(axis)) {
-               ReportingUtils.logError("Axis " + axis + " is ignored because it is not one of " + ALLOWED_AXES.toString());
+               ReportingUtils.logError("Axis " + axis
+                     + " is ignored because it is not one of " + ALLOWED_AXES.toString());
             }
          }
          buffer.putInt(4 * position, coordsToOffset_.get(coords).intValue());
@@ -690,15 +723,19 @@ public final class MultipageTiffReader {
 
       @Override
       public String toString() {
-         return String.format("<IFDData offset %d, bytes %d, metadata offset %d, metadata length %d, next %d, next offset %d>",
+         return String.format(
+               "<IFDData offset %d, bytes %d, metadata offset %d, metadata length %d, "
+               + "next %d, next offset %d>",
                pixelOffset, bytesPerImage, mdOffset, mdLength, nextIFD,
                nextIFDOffsetLocation);
       }
    }
 
    private class IFDEntry {
-      public char tag, type;
-      public long count, value;
+      public char tag;
+      public char type;
+      public long count;
+      public long value;
 
       public IFDEntry(char tg, char typ, long cnt, long val) {
          tag = tg;

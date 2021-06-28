@@ -45,10 +45,18 @@ public final class DefaultAnnotation implements Annotation {
    private HashMap<Coords, PropertyMap> imageAnnotations_ = new HashMap<Coords, PropertyMap>();
    private PropertyMap generalAnnotation_ = PropertyMaps.emptyPropertyMap();
 
+   /**
+    * Annotations are user-provided comments that either pertain to the complete dataset
+    * (Summary comments), or per image.
+    *
+    * @param store Datastore to which this annotation belongs.
+    * @param filename not sure what this filename refers to.
+    * @throws IOException can happen
+    */
    public DefaultAnnotation(Datastore store, String filename) throws IOException {
       store_ = store;
       filename_ = filename;
-      File target = getFile(store, filename);
+      File target = new File(store.getSavePath() + File.separator + filename);
       if (target.exists()) {
          try {
             PropertyMap data = PropertyMaps.loadJSON(new File(target.getAbsolutePath()));
@@ -71,15 +79,14 @@ public final class DefaultAnnotation implements Annotation {
                try {
                   Coords coords = DefaultCoords.fromNormalizedString(def);
                   imageAnnotations_.put(coords, data.getPropertyMap(key, null));
-               }
-               catch (IllegalArgumentException e) {
+               } catch (IllegalArgumentException e) {
                   ReportingUtils.logError("Malformatted coordinate key \"" + def + "\"");
                }
             }
-         }
-         catch (FileNotFoundException e) {
+         } catch (FileNotFoundException e) {
             // This should never happen.
-            ReportingUtils.showError(e, "Unable to load annotation at " + target.getAbsolutePath() + " because it doesn't exist");
+            ReportingUtils.showError(e, "Unable to load annotation at "
+                  + target.getAbsolutePath() + " because it doesn't exist");
          }
       }
    }
@@ -89,7 +96,10 @@ public final class DefaultAnnotation implements Annotation {
       if (store_.getSavePath() == null) {
          throw new RuntimeException("Asked to save Annotation when store has no save path");
       }
-      File file = getFile(store_, filename_);
+      File file = new File(store_.getSavePath() + File.separator + filename_);
+      if (!file.exists()) {
+         file.createNewFile();
+      }
       PropertyMap.Builder builder = PropertyMaps.builder();
       if (generalAnnotation_ != null) {
          builder.putPropertyMap(GENERAL_KEY, generalAnnotation_);
@@ -131,25 +141,15 @@ public final class DefaultAnnotation implements Annotation {
    }
 
    /**
-    * Utility function to get the path at which an Annotation's data should
-    * reside, if it exists.
-    * @param store
-    * @param filename
-    * @return 
-    */
-   public static File getFile(Datastore store, String filename) {
-      return new File(store.getSavePath() + "/" + filename);
-   }
-
-   /**
     * Return true if there's an existing annotation for this datastore, on
     * disk where the datastore's own data is stored.
-    * @param store
-    * @param filename
-    * @return 
+    *
+    * @param store Datastore to interrogate
+    * @param filename Name of the annotation file
+    * @return True if the annotation file exists, false otherwise
     */
    public static boolean isAnnotationOnDisk(Datastore store, String filename) {
-      return getFile(store, filename).exists();
+      return (new File(store.getSavePath() + File.separator + filename)).exists();
    }
 
    @Override

@@ -81,8 +81,9 @@ public class DefaultDatastore implements Datastore {
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
    
    protected Storage storage_ = null;
+   protected Datastore copiedFromStore_ = null;
    protected String name_ = "Untitled";
-   protected Map<String, DefaultAnnotation> annotations_ = new HashMap<>();
+   protected Map<String, Annotation> annotations_ = new HashMap<>();
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
    protected final Studio studio_;
@@ -107,6 +108,7 @@ public class DefaultDatastore implements Datastore {
     */
    public void copyFrom(Datastore alt, ProgressMonitor monitor)
          throws IOException, UserCancelledException {
+      copiedFromStore_ = alt;
       int imageCount = 0;
       try {
          setSummaryMetadata(alt.getSummaryMetadata());
@@ -130,7 +132,6 @@ public class DefaultDatastore implements Datastore {
          studio_.logs().logError("Inconsistent image coordinates in datastore");
       }
    }
-   
    
    @Override
    public void setName(String name) {
@@ -323,6 +324,10 @@ public class DefaultDatastore implements Datastore {
       return result;
    }
 
+   public void setAnnotation(String tag, Annotation annotation) {
+      annotations_.put(tag, annotation);
+   }
+
    /**
     * Loads annotation from a string and adds to this stores annotations.
     *
@@ -391,6 +396,15 @@ public class DefaultDatastore implements Datastore {
       freeze();
       studio_.events().post(
             new DefaultDatastoreClosingEvent(this));
+      if (copiedFromStore_ != null) {
+         try {
+            CommentsHelper.copyComments(this, copiedFromStore_);
+            CommentsHelper.saveComments(copiedFromStore_);
+         } catch (IOException ioe) {
+            ReportingUtils.logError(ioe, "Failed to write comments for "
+                  + copiedFromStore_.getName());
+         }
+      }
       if (storage_ != null) {
          storage_.close();
          // since we call the gc, make sure that storage, which contains the first
@@ -398,7 +412,6 @@ public class DefaultDatastore implements Datastore {
          storage_ = null;
          System.gc();
       }
-      annotations_ = null;
       bus_.shutDown();
    }
 
@@ -497,7 +510,7 @@ public class DefaultDatastore implements Datastore {
       }
    }
    
-   protected Map<String, DefaultAnnotation> getAnnotations() {
+   protected Map<String, Annotation> getAnnotations() {
       return annotations_;
    }
 

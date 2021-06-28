@@ -128,7 +128,8 @@ public final class MMAcquisition extends DataViewerListener {
                store_.setStorage(getAppropriateStorage(studio_, store_, acqPath, true));
             } catch (Exception e) {
                ReportingUtils.showError(e, "Unable to create directory for saving images.");
-               eng.stop(true);
+               eng_.stop(true);
+               return;
             }
          } else {
             store_.setStorage(new StorageRAM(store_));
