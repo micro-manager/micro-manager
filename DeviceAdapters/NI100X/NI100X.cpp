@@ -942,7 +942,7 @@ int AnalogIO::Initialize()
       return nRet;
    }
    char terminalsBuf[4096];
-    int error = DAQmxGetDevTerminals(deviceName_.c_str(), terminalsBuf, 4096);
+   int error = DAQmxGetDevTerminals(deviceName_.c_str(), terminalsBuf, 4096);
    if (error)
    {
       return LogError(error, "GetDevTerminals");

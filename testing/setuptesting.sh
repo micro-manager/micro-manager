@@ -1,5 +1,6 @@
 #!/bin/sh
 
+
 # Run this script to set up C++ unit testing on Unix; then (re)run configure.
 # Use `make check' to build and run the tests.
 

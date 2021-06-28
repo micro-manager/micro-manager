@@ -374,8 +374,8 @@ int MCCDaqShutter::Initialize()
 
    // Define ports for this shutter
    // #TODO Load port from parameter
-   // ports_.push_back(FIRSTPORTA);
-   ports_.push_back(FIRSTPORTB);
+   ports_.push_back(FIRSTPORTA);
+   // ports_.push_back(FIRSTPORTB);
 
    // initialize the digital ports as output ports
    // #TODO Only initialize the needed ports
