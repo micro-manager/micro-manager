@@ -474,19 +474,7 @@ ZeissChanger::~ZeissChanger()
 
 int ZeissChanger::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, int position)
 {
-   int currentPosition;
-   int ret = ZeissChanger::GetPosition(device, core, devId_, currentPosition);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   if (currentPosition != position)
-   {
-      return ZeissDevice::SetPosition(device, core, g_hub.GetCommandGroup(devId), devId, position);
-   }
-     std::ostringstream os;
-     os << "Device " << devId_ << "was already in position " << position;
-     core.LogMessage(&device, os.str().c_str(), true);
-     return DEVICE_OK;
+   return ZeissDevice::SetPosition(device, core, g_hub.GetCommandGroup(devId), devId, position);
 }
 
 /////////////////////////////////////////////////////////////

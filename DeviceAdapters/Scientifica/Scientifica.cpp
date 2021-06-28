@@ -231,7 +231,7 @@ int XYStage::SetPositionSteps(long x, long y)
 
    std::ostringstream command;
    command << "abs " << x << " " << y;
-   LogMessage("abs move");
+   LogMessage("abs " + x, +" " + y);
 
    ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
@@ -260,7 +260,7 @@ int XYStage::SetRelativePositionSteps(long x, long y)
 
    std::ostringstream command;
    command << "rel " << x << " " << y;
-   LogMessage("rel move");
+   LogMessage("rel " + x, + " " + y);
 
    ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
