@@ -14,12 +14,15 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.geom.AffineTransform;
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import net.miginfocom.swing.MigLayout;
 
+import ome.xml.model.Well;
 import org.micromanager.MenuPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
@@ -49,6 +52,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private static final String SNAKE_ORDER = "Snake";
    private static final String TYPEWRITER_ORDER = "Typewriter";
+   private static final String CASCADE_ORDER = "Cascade";
    
    private static final String ZPLANESTAGE = "Z-Plane stage: ";
 
@@ -86,7 +90,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private final JCheckBox chckbxThreePt_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
    private final JComboBox spacingMode_;
-   private final JComboBox visitOrder_;
+   private final JComboBox visitOrderInWell_;
+   private final JComboBox visitOrderBetweenWells_;
 
    private double xSpacing_ = 0.0;
    private double ySpacing_ = 0.0;
@@ -283,7 +288,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
          plate_.initialize((String) plateIDCombo_.getSelectedItem());
          updateXySpacing();
-         PositionList sites = generateSites();
+         PositionList sites = generateSitesInWell();
          try {
             platePanel_.refreshImagingSites(sites);
          } catch (HCSException e1) {
@@ -380,11 +385,19 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       });
 
       sidebar.add(new JLabel("Site visit order:"));
-      visitOrder_ = new JComboBox(new String[] {SNAKE_ORDER, TYPEWRITER_ORDER});
-      visitOrder_.addActionListener((ActionEvent e) -> {
+      visitOrderInWell_ = new JComboBox(new String[] {SNAKE_ORDER, TYPEWRITER_ORDER, CASCADE_ORDER});
+      visitOrderInWell_.addActionListener((ActionEvent e) -> {
          regenerate();
       });
-      sidebar.add(visitOrder_, "growx");
+      sidebar.add(new JLabel("In well"), "split 2");
+      sidebar.add(visitOrderInWell_, "growx");
+
+      visitOrderBetweenWells_ = new JComboBox<String>(new String[] {SNAKE_ORDER, TYPEWRITER_ORDER, CASCADE_ORDER});
+      visitOrderBetweenWells_.addActionListener((ActionEvent e) -> {
+         regenerate();
+      });
+      sidebar.add(new JLabel("Between wells"), "split 2");
+      sidebar.add(visitOrderBetweenWells_, "growx");
 
       final JButton refreshButton = new JButton("Refresh",
             IconLoader.getIcon("/org/micromanager/icons/arrow_refresh.png"));
@@ -408,7 +421,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             app_.logs().showMessage("Calibrate XY first");
             return;
          }
-         setPositionList();
+         setPositionList((String)visitOrderBetweenWells_.getSelectedItem());
       });
       sidebar.add(setPositionListButton, "growx");
 
@@ -458,7 +471,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
       updateXySpacing();
 
-      PositionList sites = generateSites();
+      PositionList sites = generateSitesInWell();
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
@@ -516,8 +529,28 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       moveStage_.setEnabled(isCalibratedXY_); 
    }
 
-   private void setPositionList() {
-      WellPositionList[] wpl = platePanel_.getSelectedWellPositions();
+   private void setPositionList(String betweenWellOrder) {
+      List<WellPositionList> wpl = platePanel_.getSelectedWellPositions();
+      if (!betweenWellOrder.equals(SNAKE_ORDER)) {
+         if (betweenWellOrder.equals(TYPEWRITER_ORDER)) {
+            Collections.sort(wpl, (l1, l2) -> {
+               if (l1.getRow() == l2.getRow()) {
+                  return l1.getColumn() - l2.getColumn();
+               } else {
+                  return l1.getRow() - l2.getRow();
+               }
+            });
+         } else if (betweenWellOrder.equals(CASCADE_ORDER)) {
+            Collections.sort(wpl, (l1, l2) -> {
+               if (l1.getColumn() == l2.getColumn()) {
+                  return l1.getRow() - l2.getRow();
+               } else {
+                  return l1.getColumn() - l2.getColumn();
+               }
+            });
+         }
+      }
+
       PositionList platePl = new PositionList();
       for (WellPositionList wpl1 : wpl) {
          PositionList pl = PositionList.newInstance(wpl1.getSitePositions());
@@ -648,52 +681,61 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
 
-   private PositionList generateSites() {
+   private PositionList generateSitesInWell() {
       int rows = Integer.parseInt(rowsField_.getText());
       int cols = Integer.parseInt(columnsField_.getText());
-      boolean isTypewriterMode =
-            ((String) visitOrder_.getSelectedItem()).equals(TYPEWRITER_ORDER);
       PositionList sites = new PositionList();
-      for (int i = 0; i < rows; i++) {
-         // In "snake" mode we go in one X direction on odd rows and the other
-         // X direction on even rows; in "typewriter" mode we always use the
-         // same X direction.
-         int start, end, stepDir;
-         if (isTypewriterMode) {
-            start = 0;
-            end = cols;
-            stepDir = 1;
-         }
-         else {
-            boolean isEven = i % 2 == 0;
-            start = isEven ? 0 : cols - 1;
-            end = isEven ? cols : - 1;
-            stepDir = isEven ? 1 : -1;
-         }
-         for (int j = start; j != end; j += stepDir) {
-            double x;
-            double y;
-            if (cols > 1) {
-               x = -cols * xSpacing_ / 2.0 + xSpacing_ * j + xSpacing_ / 2.0;
-            } else {
-               x = 0.0;
+      if (visitOrderInWell_.getSelectedItem().equals(CASCADE_ORDER)) {
+         for (int col = 0; col < cols; col++) {
+            for (int row = 0; row < rows; row++) {
+               sites.addPosition(stagePositionInWell(rows, cols, row, col));
             }
-
-            if (rows > 1) {
-               y = -rows * ySpacing_ / 2.0 + ySpacing_ * i + ySpacing_ / 2.0;
+         }
+      } else {
+         for (int row = 0; row < rows; row++) {
+            // In "snake" mode we go in one X direction on odd rows and the other
+            // X direction on even rows; in "typewriter" mode we always use the
+            // same X direction.
+            int start, end, stepDir;
+            if (visitOrderInWell_.getSelectedItem().equals(TYPEWRITER_ORDER)) {
+               start = 0;
+               end = cols;
+               stepDir = 1;
             } else {
-               y = 0.0;
+               boolean isEven = row % 2 == 0;
+               start = isEven ? 0 : cols - 1;
+               end = isEven ? cols : -1;
+               stepDir = isEven ? 1 : -1;
             }
-
-            MultiStagePosition mps = new MultiStagePosition();
-            StagePosition sp = StagePosition.create2D("", x, y);
-
-            mps.add(sp);
-            sites.addPosition(mps);
+            for (int col = start; col != end; col += stepDir) {
+               sites.addPosition(stagePositionInWell(rows, cols, row, col));
+            }
          }
       }
 
       return sites;
+   }
+
+   private MultiStagePosition stagePositionInWell(int rows, int cols, int row, int col) {
+      double x;
+      double y;
+      if (cols > 1) {
+         x = -cols * ySpacing_ / 2.0 + ySpacing_ * col + ySpacing_ / 2.0;
+      } else {
+         x = 0.0;
+      }
+
+      if (rows > 1) {
+         y = -rows * xSpacing_ / 2.0 + xSpacing_ * row + xSpacing_ / 2.0;
+      } else {
+         y = 0.0;
+      }
+
+      MultiStagePosition mps = new MultiStagePosition();
+      StagePosition sp = StagePosition.create2D("", x, y);
+
+      mps.add(sp);
+      return mps;
    }
 
    @Override
@@ -764,9 +806,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
    
    private void regenerate() {
-      WellPositionList[] selectedWells = platePanel_.getSelectedWellPositions();
+      List<WellPositionList> selectedWells = platePanel_.getSelectedWellPositions();
       updateXySpacing();
-      PositionList sites = generateSites();
+      PositionList sites = generateSitesInWell();
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
       try {
          platePanel_.refreshImagingSites(sites);
@@ -803,7 +845,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    public void loadCustom(File target) {
       plate_.initialize(target.getAbsolutePath());
-      PositionList sites = generateSites();
+      PositionList sites = generateSitesInWell();
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {

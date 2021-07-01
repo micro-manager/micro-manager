@@ -22,6 +22,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 
 import javax.swing.JPanel;
 import mmcorej.DeviceType;
@@ -616,20 +617,16 @@ public class PlatePanel extends JPanel {
       return wells_;
    }
    
-   public WellPositionList[] getSelectedWellPositions() {
-      ArrayList<WellPositionList> wal = new ArrayList<WellPositionList>();
+   public List<WellPositionList> getSelectedWellPositions() {
+      List<WellPositionList> wal = new ArrayList<WellPositionList>();
       for (int i=0; i<wells_.length; i++) {
          if (wellBoxes_[i].selected)
             wal.add(wells_[i]);
       }
-      
-      // convert to array
-      WellPositionList selWells[] = new WellPositionList[wal.size()];
-      selWells = wal.toArray(selWells);
-      return selWells;
+      return wal;
    }
 
-   public void setSelectedWells(WellPositionList[] wal) {
+   public void setSelectedWells(List<WellPositionList> wal) {
       for (WellPositionList wpl : wal) {
          selectWell(wpl.getRow(), wpl.getColumn(), true);
       }
