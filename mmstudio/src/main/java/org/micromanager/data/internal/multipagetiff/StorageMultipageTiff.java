@@ -301,6 +301,9 @@ public final class StorageMultipageTiff implements Storage {
          Set<Coords> readerCoords = reader.getIndexKeys();
          for (Coords coords : readerCoords) {
             coordsToReader_.put(coords, reader);
+            for (String axis : coords.getAxes()) {
+               axesInUse_.add(axis);
+            }
             lastFrameOpenedDataSet_ = Math.max(coords.getT(),
                   lastFrameOpenedDataSet_);
             if (firstImage_ == null) {
