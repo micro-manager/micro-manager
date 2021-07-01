@@ -1,36 +1,38 @@
 package org.micromanager.hcs;
 
 import com.bulenkov.iconloader.IconLoader;
-
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.geom.Point2D;
-import java.awt.Dimension;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.border.LineBorder;
-
+import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-
-import ome.xml.model.Well;
 import org.micromanager.MenuPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.Studio;
 import org.micromanager.StagePosition;
-
-import mmcorej.CMMCore;
-
+import org.micromanager.Studio;
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
@@ -42,6 +44,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * This is the primary user interface for the plugin.
+ *
  * @author nenad
  */
 public class SiteGenerator extends JFrame implements ParentPlateGUI {
@@ -78,13 +81,13 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    PositionList threePtList_;
    AFPlane focusPlane_;
    private JLabel threePlaneDrive_;
-   private final String PLATE_FORMAT_ID = "plate_format_id";
-   private final String SITE_SPACING_X  = "site_spacing"; //keep string for bac
-   private final String SITE_SPACING_Y  = "site_spacing_y";
-   private final String SITE_OVERLAP    = "site_overlap"; //in µm
-   private final String SITE_ROWS       = "site_rows";
-   private final String SITE_COLS       = "site_cols";
-   private final String SITE_OFFSET     = "site_offset"; // in µm
+   private static final  String PLATE_FORMAT_ID = "plate_format_id";
+   private static final String SITE_SPACING_X  = "site_spacing"; //keep string for bac
+   private static final String SITE_SPACING_Y  = "site_spacing_y";
+   private static final String SITE_OVERLAP    = "site_overlap"; //in µm
+   private static final String SITE_ROWS       = "site_rows";
+   private static final String SITE_COLS       = "site_cols";
+   private static final String SITE_OFFSET     = "site_offset"; // in µm
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
@@ -141,40 +144,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
    }
 
-   public AffineTransform getCurrentAffineTransform() {
-      AffineTransform transform = null;
-      try {
-         transform = app_.compat().getCameraTransform(core_.getCameraDevice());
-      } catch (Exception ex) {
-         app_.logs().logError(ex);
-      }
-
-
-      if (transform == null) {
-         int result = JOptionPane.showConfirmDialog(null,
-                 "The current magnification setting needs to be calibrated.\n" +
-                 "Would you like to run automatic pixel calibration?",
-                 "Pixel calibration required.",
-                 JOptionPane.YES_NO_OPTION);
-         if (result == JOptionPane.YES_OPTION) {
-            try {
-               MenuPlugin pc = app_.plugins().getMenuPlugins().get("org.micromanager.pixelcalibrator.PixelCalibratorPlugin");
-               pc.onPluginSelected();
-            } catch (Exception ex) {
-               app_.logs().showError(ex, "Unable to load Pixel Calibrator Plugin.");
-            }
-         }
-      }
-
-      return transform;
-   }
-
-
 
    /**
-    * Create the frame
-    */
-   /**
+    * Create the frame.
     *
     * @param app Micro-Manager api
     */
@@ -229,8 +201,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             platePanel_.setTool(PlatePanel.Tool.SELECT);
             selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
             moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
-         }
-         else {
+         } else {
             selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
             moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
          }
@@ -246,8 +217,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             platePanel_.setTool(PlatePanel.Tool.MOVE);
             moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
             selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
-         }
-         else {
+         } else {
             moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
             selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
          }
@@ -299,6 +269,16 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          platePanel_.repaint();
       });
 
+      sidebar.add(new JLabel("Imaging Sites"));
+      JPanel gridPanel = new JPanel(new MigLayout("flowx, gap 0, insets 0",
+               "0[]0[]0", "0[]0[]0"));
+      gridPanel.add(new JLabel("Rows"));
+      gridPanel.add(new JLabel("Columns"), "wrap");
+
+
+      rowsField_ = new JTextField(3);
+      rowsField_.setText("1");
+      gridPanel.add(rowsField_);
 
       FocusListener regeneratePlateOnLossOfFocus = new FocusListener() {
          @Override
@@ -311,15 +291,6 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
       };
 
-      sidebar.add(new JLabel("Imaging Sites"));
-      JPanel gridPanel = new JPanel(new MigLayout("flowx, gap 0, insets 0",
-               "0[]0[]0", "0[]0[]0"));
-      gridPanel.add(new JLabel("Rows"));
-      gridPanel.add(new JLabel("Columns"), "wrap");
-
-      rowsField_ = new JTextField(3);
-      rowsField_.setText("1");
-      gridPanel.add(rowsField_);
       rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
 
       sidebar.add(new JLabel("Columns"));
@@ -385,14 +356,16 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       });
 
       sidebar.add(new JLabel("Site visit order:"));
-      visitOrderInWell_ = new JComboBox(new String[] {SNAKE_ORDER, TYPEWRITER_ORDER, CASCADE_ORDER});
+      visitOrderInWell_ = new JComboBox(
+            new String[] {SNAKE_ORDER, TYPEWRITER_ORDER, CASCADE_ORDER});
       visitOrderInWell_.addActionListener((ActionEvent e) -> {
          regenerate();
       });
       sidebar.add(new JLabel("In well"), "split 2");
       sidebar.add(visitOrderInWell_, "growx");
 
-      visitOrderBetweenWells_ = new JComboBox<String>(new String[] {SNAKE_ORDER, TYPEWRITER_ORDER, CASCADE_ORDER});
+      visitOrderBetweenWells_ = new JComboBox<>(
+            new String[] {SNAKE_ORDER, TYPEWRITER_ORDER, CASCADE_ORDER});
       visitOrderBetweenWells_.addActionListener((ActionEvent e) -> {
          regenerate();
       });
@@ -421,7 +394,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             app_.logs().showMessage("Calibrate XY first");
             return;
          }
-         setPositionList((String)visitOrderBetweenWells_.getSelectedItem());
+         setPositionList((String) visitOrderBetweenWells_.getSelectedItem());
       });
       sidebar.add(setPositionListButton, "growx");
 
@@ -501,12 +474,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             columnsField_.getText());
       Double[] offset;
       if (isCalibratedXY_) {
-          offset = new Double[] {offset_.getX(), offset_.getY()};
+         offset = new Double[] {offset_.getX(), offset_.getY()};
       } else {
-          offset = new Double[] {Double.NaN, Double.NaN};
+         offset = new Double[] {Double.NaN, Double.NaN};
       }
-      app_.profile().setDoubleArray(SiteGenerator.class, SITE_OFFSET,
-          offset);
+      app_.profile().setDoubleArray(SiteGenerator.class, SITE_OFFSET, offset);
    }
 
    protected final void loadSettings() {
@@ -524,7 +496,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
                SITE_OVERLAP, "10"));
       Double[] offset = app_.profile().getDoubleArray(SiteGenerator.class,
               SITE_OFFSET, new Double[] {Double.NaN, Double.NaN});
-      isCalibratedXY_ = Double.isFinite(offset[0]) && Double.isFinite(offset[1]);//If the offset appears to be valid numbers then a calibration was previously run.
+      // If the offset appears to be valid numbers then a calibration was previously run.
+      isCalibratedXY_ = Double.isFinite(offset[0]) && Double.isFinite(offset[1]);
       offset_ = new Point2D.Double(offset[0], offset[1]);
       moveStage_.setEnabled(isCalibratedXY_); 
    }
@@ -601,7 +574,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
    /**
-    * Mark current position as one point in the 3-pt set
+    * Marks current position as one point in the 3-pt set.
     * Ensures that one XY stage and one Z stage are selected in the PositionList
     * Also ensures that the same stages as in the previous points are selected
     */
@@ -609,11 +582,13 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       app_.app().showPositionList();
       int nrPositions = app_.positions().getPositionList().getNumberOfPositions();
       if (nrPositions > 3) {
-         app_.logs().showMessage("PositionList contains > 3 points.  Try to clear the Stage Position List");
+         app_.logs().showMessage(
+               "PositionList contains > 3 points.  Try to clear the Stage Position List");
          return;
       }
       if (nrPositions == 3) {
-         app_.logs().showMessage("PositionList already contains 3 positions.  Delete at least one");
+         app_.logs().showMessage(
+               "PositionList already contains 3 positions.  Delete at least one");
          return;
       }
       app_.positions().markCurrentPosition();
@@ -625,17 +600,19 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
       if (msp.size() != 2) {
          app_.positions().getPositionList().removePosition(nrPositions);
-         app_.logs().showMessage("Make sure that only one XY stage and one Z stage is checked", this);
+         app_.logs().showMessage(
+               "Make sure that only one XY stage and one Z stage is checked", this);
          return;
       }
       boolean stagesOK = false;
-      if (msp.get(0).is1DStagePosition() && msp.get(1).is2DStagePosition() ||
-             msp.get(0).is2DStagePosition() && msp.get(1).is1DStagePosition() ) {
+      if (msp.get(0).is1DStagePosition() && msp.get(1).is2DStagePosition()
+            || msp.get(0).is2DStagePosition() && msp.get(1).is1DStagePosition()) {
          stagesOK = true;
       }
       if (!stagesOK) {  
          app_.positions().getPositionList().removePosition(nrPositions);
-         app_.logs().showMessage("Make sure that only one XY stage and one Z stage is checked", this);
+         app_.logs().showMessage(
+               "Make sure that only one XY stage and one Z stage is checked", this);
          return;
       }
       // also ensure that the same stages are checked
@@ -645,16 +622,14 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          String stage1 = msp.get(1).getStageDeviceLabel();
          for (int i = 0; i < nrPositions; i++) {
             MultiStagePosition mspTest = app_.positions().getPositionList().getPosition(i);
-            if (!mspTest.get(0).getStageDeviceLabel().equals(stage0) || 
-                   !mspTest.get(1).getStageDeviceLabel().equals(stage1) ) {                
+            if (!mspTest.get(0).getStageDeviceLabel().equals(stage0)
+                  || !mspTest.get(1).getStageDeviceLabel().equals(stage1)) {
                app_.positions().getPositionList().removePosition(nrPositions - 1);
                app_.logs().showMessage(
                        "Make sure that the same stages are checked for all 3 positions", this);
             }
          }
       }
-      
-      
    }
 
    private void setThreePoint() {
@@ -662,10 +637,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          PositionList plist = app_.positions().getPositionList();
          if (plist.getNumberOfPositions() != 3) {
             app_.logs().showMessage(
-                    "We need exactly three positions to fit AF plane. Please create XY list with exactly 3 positions.");
+                    "We need exactly three positions to fit AF plane. "
+                  + "Please create XY list with exactly 3 positions.");
             return;
          }
-         
 
          threePtList_ = PositionList.newInstance(plist);
          focusPlane_ = new AFPlane(threePtList_.getPositions());
@@ -696,7 +671,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             // In "snake" mode we go in one X direction on odd rows and the other
             // X direction on even rows; in "typewriter" mode we always use the
             // same X direction.
-            int start, end, stepDir;
+            int start;
+            int end;
+            int stepDir;
             if (visitOrderInWell_.getSelectedItem().equals(TYPEWRITER_ORDER)) {
                start = 0;
                end = cols;
@@ -753,10 +730,13 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          return;
       }
       Point2D.Double cursorOffsetPos = applyOffset(cursorPos_);
-      String statusTxt = "Cursor: X=" + TextUtils.FMT2.format(cursorOffsetPos.x) + "um, Y=" + TextUtils.FMT2.format(cursorOffsetPos.y) + "um, " + cursorWell_
-              + ((useThreePtAF() && focusPlane_ != null) ? ", Z->" + TextUtils.FMT2.format(focusPlane_.getZPos(cursorOffsetPos.x, cursorOffsetPos.y)) + "um" : "")
-              + " -- Stage: X=" + TextUtils.FMT2.format(xyStagePos_.x) + "um, Y=" + TextUtils.FMT2.format(xyStagePos_.y) + "um, Z=" + TextUtils.FMT2.format(zStagePos_) + "um, "
-              + stageWell_;
+      String statusTxt = "Cursor: X=" + TextUtils.FMT2.format(cursorOffsetPos.x) + "um, Y="
+            + TextUtils.FMT2.format(cursorOffsetPos.y) + "um, " + cursorWell_
+            + ((useThreePtAF() && focusPlane_ != null) ? ", Z->"
+            + TextUtils.FMT2.format(focusPlane_.getZPos(cursorOffsetPos.x, cursorOffsetPos.y))
+            + "um" : "") + " -- Stage: X=" + TextUtils.FMT2.format(xyStagePos_.x) + "um, Y="
+            + TextUtils.FMT2.format(xyStagePos_.y) + "um, Z="
+            + TextUtils.FMT2.format(zStagePos_) + "um, " + stageWell_;
       statusLabel_.setText(statusTxt);
    }
 
@@ -782,7 +762,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    @Override
    public void displayError(String txt) {
-      if (app_ !=null) {
+      if (app_ != null) {
          app_.logs().showError(txt, this);
       }
    }
@@ -798,6 +778,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
    }
 
+   /**
+    * Finish Calibration.
+    *
+    * @param offset Offset found during Calibration
+    */
    public void finishCalibration(Point2D.Double offset) {
       offset_ = offset;
       isCalibratedXY_ = true;
@@ -806,7 +791,6 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
    
    private void regenerate() {
-      List<WellPositionList> selectedWells = platePanel_.getSelectedWellPositions();
       updateXySpacing();
       PositionList sites = generateSitesInWell();
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
@@ -816,7 +800,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          displayError(e.getMessage());
       }
 
-      platePanel_.setSelectedWells(selectedWells);
+      platePanel_.setSelectedWells(platePanel_.getSelectedWellPositions());
       platePanel_.repaint();
    }
 
@@ -843,6 +827,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       return focusPlane_.getZPos(x, y);
    }
 
+   /**
+    * Load custom plate layout from file.
+    *
+    * @param target File containing the custom plate layout
+    */
    public void loadCustom(File target) {
       plate_.initialize(target.getAbsolutePath());
       PositionList sites = generateSitesInWell();
@@ -860,18 +849,18 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
    
    @Override
-    public Point2D.Double getOffset(){
-        if (offset_ == null){
-            return new Point2D.Double(0,0);
-        } else{
-            return offset_;
-        }
-    } 
+   public Point2D.Double getOffset() {
+      if (offset_ == null) {
+         return new Point2D.Double(0, 0);
+      } else {
+         return offset_;
+      }
+   }
     
-    @Override
-    public Point2D.Double applyOffset(Point2D.Double pt) {
-      Point2D.Double offset = getOffset();
-      pt.setLocation(pt.getX() + offset.getX(), pt.getY() + offset.getY());
-      return pt;
+   @Override
+   public Point2D.Double applyOffset(Point2D.Double pt) {
+     Point2D.Double offset = getOffset();
+     pt.setLocation(pt.getX() + offset.getX(), pt.getY() + offset.getY());
+     return pt;
    }
 }
