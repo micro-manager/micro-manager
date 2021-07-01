@@ -16,6 +16,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.data.internal.multipagetiff;
 
 import com.google.common.eventbus.Subscribe;
@@ -44,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
@@ -53,14 +55,13 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.ImageSizeChecker;
-import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
-import org.micromanager.display.DataViewer;
-import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 
@@ -68,11 +69,9 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
  * This class provides image storage in the form of a single TIFF file that
  * contains all image data in the dataset.
  * Adapted from the TaggedImageStorageMultipageTiff module.
- * 
  * TODO: The org.micromanager.data package should not depend on internal code
  * (or any code outside of the packae) so that it can be re-used elsewhere.
- * 
- * 
+ *
  */
 public final class StorageMultipageTiff implements Storage {
    private static final String SHOULD_GENERATE_METADATA_FILE = 
@@ -86,12 +85,12 @@ public final class StorageMultipageTiff implements Storage {
    private DefaultDatastore store_;
    private Component parent_;
    private DefaultSummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
-   private String summaryMetadataString_ = NonPropertyMapJSONFormats.
-         summaryMetadata().toJSON(summaryMetadata_.toPropertyMap());
+   private String summaryMetadataString_ = NonPropertyMapJSONFormats
+         .summaryMetadata().toJSON(summaryMetadata_.toPropertyMap());
    private boolean amInWriteMode_;
    private int lastFrameOpenedDataSet_ = -1;
-   private String directory_;
-   final private boolean separateMetadataFile_;
+   private final String directory_;
+   private final boolean separateMetadataFile_;
    private boolean splitByXYPosition_ = true;
    private volatile boolean finished_ = false;
    private OMEMetadata omeMetadata_;
@@ -127,16 +126,16 @@ public final class StorageMultipageTiff implements Storage {
    
    /**
     * Constructor that doesn't make reference to MMStudio so it can be used
-    * independently of MM GUI
-    * 
+    * independently of MM GUI.
+    *
     * @param parent  GUI element on top of which a ProgressBar (or other things) can be displayed
     * @param store   Datastore to be saved
     * @param dir     Directory in which to store the data
-    * @param amInWriteMode 
+    * @param amInWriteMode whether or not we are also writing data
     * @param separateMDFile   Whether or not to write a separate file with the MM metadata
     * @param separateFilesForPositions If true, will store positions in separate files,
     *             otherwise all data will go into a single file
-    * @throws java.io.IOException
+    * @throws java.io.IOException can happen
     */
    public StorageMultipageTiff(Component parent, Datastore store, String dir,
          boolean amInWriteMode, boolean separateMDFile,
@@ -170,18 +169,21 @@ public final class StorageMultipageTiff implements Storage {
          if (!dirFile.canWrite()) {
             throw new IOException("Insufficient permission to write to " + dirFile);
          }
-      }
-      else {
+      } else {
          openExistingDataSet();
       }
    }
 
+   /**
+    * Signals the arrival of new Summary Metadata.
+    *
+    * @param event contains a link to the new summary Metadata
+    */
    @Subscribe
    public void onNewSummaryMetadata(DataProviderHasNewSummaryMetadataEvent event) {
       try {
          setSummaryMetadata(event.getSummaryMetadata());
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          ReportingUtils.logError(e, "Error setting new summary metadata");
       }
    }
@@ -194,8 +196,8 @@ public final class StorageMultipageTiff implements Storage {
     * Indicator of Acquisition order.  This function is difficult to name.
     * "First" means that the axis comes before another axis in the ordered axes
     * list.  Note, however, that the list of ordered axes is exactly the inverse 
-    * of the Acquisition Order as presented to the user
-    * 
+    * of the Acquisition Order as presented to the user.
+    *
     * @return true if slices come before channels in the list of ordered axis
     */
    boolean slicesFirst() {
@@ -213,8 +215,8 @@ public final class StorageMultipageTiff implements Storage {
     * Indicator of Acquisition order.  This function is difficult to name.
     * "First" means that the axis comes before another axis in the ordered axes
     * list.  Note, however, that the list of ordered axes is exactly the inverse 
-    * of the Acquisition Order as presented to the user
-    * 
+    * of the Acquisition Order as presented to the user.
+    *
     * @return true if time comes before positions in the list of ordered axis
     */
    boolean timeFirst() {
@@ -248,8 +250,8 @@ public final class StorageMultipageTiff implements Storage {
          // Heuristics to only read tiff files, and not files created by the
          // OS (starting with ".")
          String fileName = f.getName();
-         if (fileName.endsWith(".tif") || fileName.endsWith(".TIF") ) {
-            if (  !fileName.startsWith("._") ) {
+         if (fileName.endsWith(".tif") || fileName.endsWith(".TIF")) {
+            if (!fileName.startsWith("._")) {
                reader = loadFile(f);
             }
          }
@@ -279,13 +281,12 @@ public final class StorageMultipageTiff implements Storage {
       try {
          try {
             reader = new MultipageTiffReader(this, f);
-         }
-         catch (InvalidIndexMapException e) {
+         } catch (InvalidIndexMapException e) {
             // Prompt to repair it.
             int choice = JOptionPane.showConfirmDialog(null,
-                  "This file cannot be opened bcause it appears to have \n" +
-                  "been improperly saved. Would you like Micro-Manger to attempt " +
-                  "to fix it?",
+                  "This file cannot be opened bcause it appears to have \n"
+                        + "been improperly saved. Would you like Micro-Manger to attempt "
+                        + "to fix it?",
                   "Micro-Manager", JOptionPane.YES_NO_OPTION);
             if (choice != JOptionPane.YES_OPTION) {
                return null;
@@ -301,6 +302,9 @@ public final class StorageMultipageTiff implements Storage {
          Set<Coords> readerCoords = reader.getIndexKeys();
          for (Coords coords : readerCoords) {
             coordsToReader_.put(coords, reader);
+            for (String axis : coords.getAxes()) {
+               axesInUse_.add(axis);
+            }
             lastFrameOpenedDataSet_ = Math.max(coords.getT(),
                   lastFrameOpenedDataSet_);
             if (firstImage_ == null) {
@@ -320,7 +324,9 @@ public final class StorageMultipageTiff implements Storage {
       for (String axis : image.getCoords().getAxes()) {
          axesInUse_.add(axis);
          if (!ALLOWED_AXES.contains(axis)) {
-            ReportingUtils.showError("Multipage TIFF storage cannot handle images with axis \"" + axis + "\". Allowed axes are " + ALLOWED_AXES);
+            ReportingUtils.showError(
+                  "Multipage TIFF storage cannot handle images with axis \""
+                        + axis + "\". Allowed axes are " + ALLOWED_AXES);
             return;
          }
       }
@@ -332,8 +338,7 @@ public final class StorageMultipageTiff implements Storage {
 
       try {
          writeImage(image, false);
-      }
-      catch (MMException | InterruptedException | ExecutionException | IOException e) {
+      } catch (MMException | InterruptedException | ExecutionException | IOException e) {
          ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
       }
    }
@@ -371,7 +376,7 @@ public final class StorageMultipageTiff implements Storage {
       }
 
       final Coords coords = image.getCoords();
-      synchronized(coordsToPendingImage_) {
+      synchronized (coordsToPendingImage_) {
          coordsToPendingImage_.put(coords, image);
       }
 
@@ -380,12 +385,14 @@ public final class StorageMultipageTiff implements Storage {
       writingExecutor_.submit(new Runnable() {
          @Override
          public void run() {
-            synchronized(coordsToPendingImage_) {
+            synchronized (coordsToPendingImage_) {
                coordsToPendingImage_.remove(coords);
             }
          }
       });
-   };
+   }
+
+   ;
 
    /**
     * This method handles starting the process of writing images (which means
@@ -395,8 +402,7 @@ public final class StorageMultipageTiff implements Storage {
       // Update maxIndices_
       if (maxIndices_ == null) {
          maxIndices_ = image.getCoords().copyBuilder().build();
-      }
-      else {
+      } else {
          for (String axis : image.getCoords().getAxes()) {
             int pos = image.getCoords().getIndex(axis);
             if (pos > maxIndices_.getIndex(axis)) {
@@ -437,7 +443,7 @@ public final class StorageMultipageTiff implements Storage {
          Coords coords = image.getCoords();
          coordsToReader_.put(coords, set.getCurrentReader());
       } catch (IOException ex) {
-        ReportingUtils.showError(ex, "Failed to write image to file.");
+         ReportingUtils.showError(ex, "Failed to write image to file.");
       }
 
       int frame = image.getCoords().getTimePoint();
@@ -497,7 +503,8 @@ public final class StorageMultipageTiff implements Storage {
          //figure out where the full string of OME metadata can be stored 
          String fullOMEXMLMetadata = omeMetadata_.toString();
          int length = fullOMEXMLMetadata.length();
-         String uuid = null, filename = null;
+         String uuid = null;
+         String filename = null;
          FileSet master = null;
          String ijDescription = getIJDescriptionString();
          for (FileSet p : positionToFileSet_.values()) {
@@ -515,15 +522,15 @@ public final class StorageMultipageTiff implements Storage {
          }
 
          if (uuid == null) {
-             //in the rare case that no files have extra space to fit the full
-             //block of OME XML, generate a file specifically for holding it
-             //that all other files can point to simplest way to do this is to
-             //make a .ome text file
-             filename = "OMEXMLMetadata.ome";
-             uuid = "urn:uuid:" + UUID.randomUUID().toString();
-             PrintWriter pw = new PrintWriter(directory_ + File.separator + filename);
-             pw.print(fullOMEXMLMetadata);
-             pw.close();
+            //in the rare case that no files have extra space to fit the full
+            //block of OME XML, generate a file specifically for holding it
+            //that all other files can point to simplest way to do this is to
+            //make a .ome text file
+            filename = "OMEXMLMetadata.ome";
+            uuid = "urn:uuid:" + UUID.randomUUID().toString();
+            PrintWriter pw = new PrintWriter(directory_ + File.separator + filename);
+            pw.print(fullOMEXMLMetadata);
+            pw.close();
          }
 
          String partialOME = OMEMetadata.getOMEStringPointerToMasterFile(filename, uuid);
@@ -548,19 +555,18 @@ public final class StorageMultipageTiff implements Storage {
                // Wait for tasks to finish.
                int i = 0;
                while (!writingExecutor_.awaitTermination(4, TimeUnit.SECONDS)) {
-                  ReportingUtils.logMessage("Waiting for image stack to finish writing (" + i + ")...");
+                  ReportingUtils.logMessage(
+                        "Waiting for image stack to finish writing (" + i + ")...");
                   i++;
                }
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                ReportingUtils.logError("File finishing thread interrupted");
                Thread.interrupted();
             }
          }
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
-      }
-      finally {
+      } finally {
          if (progressBar != null) {
             progressBar.setVisible(false);
          }
@@ -582,8 +588,8 @@ public final class StorageMultipageTiff implements Storage {
    private void setSummaryMetadata(DefaultSummaryMetadata summary,
          boolean showProgress) {
       summaryMetadata_ = summary;
-      summaryMetadataString_ = NonPropertyMapJSONFormats.summaryMetadata().
-            toJSON(summary.toPropertyMap());
+      summaryMetadataString_ = NonPropertyMapJSONFormats.summaryMetadata()
+            .toJSON(summary.toPropertyMap());
 
       // TODO What does the following have to do with summary metadata?
       Map<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
@@ -605,14 +611,13 @@ public final class StorageMultipageTiff implements Storage {
       }
    }
    
-    /**
-    * This function provides the ImageJ "Properties" information when opening 
-    * in ImageJ/Fiji.   
-    * 
-    * It also defines the image orde when creating Hyperstacks from sequences
-    * of images
-    * 
-    * @return 
+   /**
+    * This function provides the ImageJ "Properties" information when opening
+    * in ImageJ/Fiji.
+    * It also defines the image order when creating Hyperstacks from sequences
+    * of images.
+    *
+    * @return ImageJ Properties information.
     */
    private String getIJDescriptionString() {
       StringBuffer sb = new StringBuffer();
@@ -667,18 +672,20 @@ public final class StorageMultipageTiff implements Storage {
          // multiple channels?  go for composite display
          if (settings != null) {
             DisplaySettings.ColorMode mode = settings.getChannelColorMode();
-            if (null != mode) switch (mode) {
-               case COMPOSITE:
-                  sb.append("mode=composite\n");
-                  break;
-               case COLOR:
-                  sb.append("mode=color\n");
-                  break;
-               case GRAYSCALE:
-                  sb.append("mode=gray\n");
-                  break;
-               default:
-                  break;
+            if (null != mode) {
+               switch (mode) {
+                  case COMPOSITE:
+                     sb.append("mode=composite\n");
+                     break;
+                  case COLOR:
+                     sb.append("mode=color\n");
+                     break;
+                  case GRAYSCALE:
+                     sb.append("mode=gray\n");
+                     break;
+                  default:
+                     break;
+               }
             }
          } else {
             sb.append("mode=composite\n");
@@ -696,7 +703,7 @@ public final class StorageMultipageTiff implements Storage {
     * applications (such as ImageJ/Fiji) to display the data the same way we 
     * did in MM, we need some ugly heuristics to figure out what DisplaySettings 
     * were used.
-    * 
+    *
     * @return DisplaySettings of a DataViewer that used this store for data.
     *          Will be null when no such DataViewer was found.
     */
@@ -726,7 +733,7 @@ public final class StorageMultipageTiff implements Storage {
     * since we may be saving a "copy" (i.e., saving a RAMM data set on disk)
     * This is bad, but seems to work alright for now.
     */
-   private boolean isViewingOurStore  (DataViewer dv) throws IOException{
+   private boolean isViewingOurStore(DataViewer dv) throws IOException {
       DataProvider dp = dv.getDataProvider();
       if (dp != null) {
          Image dpImg = dp.getAnyImage();
@@ -734,15 +741,15 @@ public final class StorageMultipageTiff implements Storage {
          if (dpImg == null || ourImg == null) {
             return false;
          }
-         if (dpImg.getWidth() != ourImg.getWidth() || 
-                 dpImg.getHeight() != ourImg.getHeight() ||
-                 dpImg.getBytesPerPixel() != ourImg.getBytesPerPixel()) {
+         if (dpImg.getWidth() != ourImg.getWidth()
+               || dpImg.getHeight() != ourImg.getHeight()
+               || dpImg.getBytesPerPixel() != ourImg.getBytesPerPixel()) {
             return false;
          }
          if (dp.getAxes().size() != store_.getAxes().size()) {
             return false;
          }
-         for (String axis : dp.getAxes() ) {
+         for (String axis : dp.getAxes()) {
             if (store_.getNextIndex(axis) != dp.getNextIndex(axis)) {
                return false;
             }
@@ -770,6 +777,11 @@ public final class StorageMultipageTiff implements Storage {
       return directory_;
    }
 
+   /**
+    * Provides index of the last acquired frame.
+    *
+    * @return Index of last acquired frame.
+    */
    public int lastAcquiredFrame() {
       if (amInWriteMode_) {
          return lastFrame_;
@@ -786,8 +798,13 @@ public final class StorageMultipageTiff implements Storage {
       lastAcquiredPosition_ = Math.max(pos, lastAcquiredPosition_);
    }
 
+   /**
+    * Provides size of the dataset in bytes.
+    *
+    * @return Size of the dataset in bytes.
+    */
    public long getDataSetSize() {
-      File dir = new File (directory_);
+      File dir = new File(directory_);
       List<File> list = new LinkedList<>();
       for (File f : dir.listFiles()) {
          if (f.isDirectory()) {
@@ -818,8 +835,8 @@ public final class StorageMultipageTiff implements Storage {
          HashMap<String, Integer> maxIndices = new HashMap<>();
          for (Coords coords : coordsToReader_.keySet()) {
             for (String axis : coords.getAxes()) {
-               if (!maxIndices.containsKey(axis) ||
-                     coords.getIndex(axis) > maxIndices.get(axis)) {
+               if (!maxIndices.containsKey(axis)
+                     || coords.getIndex(axis) > maxIndices.get(axis)) {
                   maxIndices.put(axis, coords.getIndex(axis));
                }
             }
@@ -834,7 +851,7 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    /**
-    * TODO: Check that summaryMetadata is a reliable source for this information
+    * TODO: Check that summaryMetadata is a reliable source for this information.
     */
    @Override
    public List<String> getAxes() {
@@ -861,6 +878,12 @@ public final class StorageMultipageTiff implements Storage {
       return getMaxIndex(axis) + 1;
    }
 
+   /**
+    * Provides the expected highest index minus one for a given axis.
+    *
+    * @param axis Axis for which we like to know the expected size
+    * @return Expected highest index minus one for the given axis.
+    */
    public Integer getIntendedSize(String axis) {
       if (summaryMetadata_.getIntendedDimensions() == null) {
          // Return the current size instead.
@@ -879,7 +902,7 @@ public final class StorageMultipageTiff implements Storage {
    @Override
    public List<Image> getImagesMatching(Coords coords) {
       HashSet<Image> result = new HashSet<>();
-      synchronized(coordsToPendingImage_) {
+      synchronized (coordsToPendingImage_) {
          for (Coords imageCoords : coordsToPendingImage_.keySet()) {
             if (imageCoords.equals(coords)) {
                result.add(coordsToPendingImage_.get(imageCoords));
@@ -890,8 +913,7 @@ public final class StorageMultipageTiff implements Storage {
          if (imageCoords.equals(coords)) {
             try {
                result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
-            }
-            catch (IOException ex) {
+            } catch (IOException ex) {
                ReportingUtils.logError("Failed to read image at " + imageCoords);
             }
          }
@@ -900,9 +922,10 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    @Override
-   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException {
+   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
+         throws IOException {
       HashSet<Image> result = new HashSet<>();
-      synchronized(coordsToPendingImage_) {
+      synchronized (coordsToPendingImage_) {
          for (Coords imageCoords : coordsToPendingImage_.keySet()) {
             if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
                result.add(coordsToPendingImage_.get(imageCoords));
@@ -940,7 +963,7 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public Image getImage(Coords coords) {
-      synchronized(coordsToPendingImage_) {
+      synchronized (coordsToPendingImage_) {
          if (coordsToPendingImage_.containsKey(coords)) {
             return coordsToPendingImage_.get(coords);
          }
@@ -951,8 +974,7 @@ public final class StorageMultipageTiff implements Storage {
       }
       try {
          return coordsToReader_.get(coords).readImage(coords);
-      }
-      catch (IOException ex) {
+      } catch (IOException ex) {
          ReportingUtils.logError(ex, "Failed to read image at " + coords);
          return null;
       }
@@ -970,8 +992,8 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public boolean hasImage(Coords coords) {
-      return coordsToPendingImage_.containsKey(coords) ||
-         coordsToReader_.containsKey(coords);
+      return coordsToPendingImage_.containsKey(coords)
+            || coordsToReader_.containsKey(coords);
    }
 
    /**
@@ -989,30 +1011,29 @@ public final class StorageMultipageTiff implements Storage {
       for (MultipageTiffReader reader : coordsToReader_.values()) {
          try {
             reader.close();
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
             ReportingUtils.logError(e, "Error cleaning up open file descriptor");
          }
       }
    }
 
    public static boolean getShouldGenerateMetadataFile() {
-      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
-              getBoolean(SHOULD_GENERATE_METADATA_FILE, false);
+      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
+            .getBoolean(SHOULD_GENERATE_METADATA_FILE, false);
    }
 
    public static void setShouldGenerateMetadataFile(boolean shouldGen) {
-      MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
-              putBoolean(SHOULD_GENERATE_METADATA_FILE, shouldGen);
+      MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
+            .putBoolean(SHOULD_GENERATE_METADATA_FILE, shouldGen);
    }
 
    public static boolean getShouldSplitPositions() {
-      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
-              getBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
+      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
+            .getBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
    }
 
    public static void setShouldSplitPositions(boolean shouldSplit) {
-      MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
-              putBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, shouldSplit);
+      MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
+            .putBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, shouldSplit);
    }
 }
