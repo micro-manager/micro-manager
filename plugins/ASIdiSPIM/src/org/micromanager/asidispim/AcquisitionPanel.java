@@ -414,11 +414,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       JSpinner lsShutterWidth = pu.makeSpinnerFloat(0.1, 100, 1,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH, 5);
       pu.addListenerLast(lsShutterWidth, recalculateTimingDisplayCL);
-      lightSheetPanel_.add(lsShutterWidth);
+      lightSheetPanel_.add(lsShutterWidth, "wrap");
       
       lightSheetPanel_.add(new JLabel("1 / (shutter speed):"));
       JSpinner lsShutterSpeed = pu.makeSpinnerInteger(1, 10,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED, 1);
+      pu.addListenerLast(lsShutterSpeed, recalculateTimingDisplayCL);
       lightSheetPanel_.add(lsShutterSpeed, "wrap");
       
       // end light sheet controls
@@ -1293,7 +1294,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             ? (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f
             : cameraResetTime; // everything but Photometrics Prime 95B
       final float cameraExposure = MyNumberUtils.ceilToQuarterMs(actualCameraResetTime) + laserDuration;
-      
+   
       switch (acqSettings.cameraMode) {
       case EDGE:
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
@@ -1351,15 +1352,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             pixelSize = 0.1625f;  // default to pixel size of 40x with sCMOS = 6.5um/40
          }
          final double rowReadoutTime = getRowReadoutTime();
-         s.cameraExposure = (float) (rowReadoutTime * shutterWidth / pixelSize * shutterSpeed);
+         s.cameraExposure = (float) (rowReadoutTime * (int)(shutterWidth/pixelSize) * shutterSpeed);
+         //s.cameraExposure = (float) (rowReadoutTime * shutterWidth / pixelSize * shutterSpeed);
          final float totalExposure_max = MyNumberUtils.ceilToQuarterMs(cameraReadoutTime + s.cameraExposure + 0.05f);  // 50-300us extra cushion time
          final float scanSettle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE);
          final float scanReset = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_RESET);
          s.scanDelay = scanReset - scanDelayFilter;
-         s.scanPeriod = scanSettle + totalExposure_max + scanLaserBufferTime;
+         s.scanPeriod = scanSettle + (totalExposure_max*shutterSpeed) + scanLaserBufferTime;
          s.cameraDelay = scanReset + scanSettle;
          s.laserDelay = s.cameraDelay - scanLaserBufferTime;  // trigger laser just before camera to make sure it's on already
-         s.laserDuration = totalExposure_max + scanLaserBufferTime;  // laser will turn off as exposure is ending
+         s.laserDuration = (totalExposure_max*shutterSpeed) + scanLaserBufferTime;  // laser will turn off as exposure is ending
          break;
       case INTERNAL:
       default:
@@ -2588,22 +2590,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      // with Hamamatsu cameras the user needs to have scan mode (readout speed) set to fastest possible
-      if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
-         if (sideActiveA  && devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA)==Devices.Libraries.HAMCAM) {
-            if (cameras_.isSlowReadout(Devices.Keys.CAMERAA)) {
-               MyDialogUtils.showError("Need to set SCAN_MODE property to fastest possible for Hamamatsu cameras in light sheet mode.");
-               return AcquisitionStatus.FATAL_ERROR;
-            }
-         }
-         if (sideActiveB  && devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB)==Devices.Libraries.HAMCAM) {
-            if (cameras_.isSlowReadout(Devices.Keys.CAMERAB)) {
-               MyDialogUtils.showError("Need to set SCAN_MODE property to fastest possible for Hamamatsu cameras in light sheet mode.");
-               return AcquisitionStatus.FATAL_ERROR;
-            }
-         }
-      }
-      
       // if we are told to use path presets but nothing is actually used then set to false
       if (acqSettingsOrig.usePathPresets) {
          boolean needA = sideActiveA && !props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_CONFIG_A).equals("");
@@ -3123,10 +3109,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                core_.setExposure(cameraA4, exposureTime);
             }
          } else {
-            core_.setExposure(firstCamera, exposureTime);
-            if (twoSided || acqBothCameras) {
-               core_.setExposure(secondCamera, exposureTime);
-            }
+        	// Andor Zyla cameras change the LineScanSpeed property based on the exposure time, 
+        	// and setExposure rounds the argument which would change the light sheet speed
+        	if (!(devices_.getMMDeviceLibrary(firstCameraKey) == Devices.Libraries.ANDORCAM)) {
+                core_.setExposure(firstCamera, exposureTime);
+                if (twoSided || acqBothCameras) {
+                    core_.setExposure(secondCamera, exposureTime);
+                }
+        	}
          }
          gui_.refreshGUIFromCache();
       } catch (Exception ex) {

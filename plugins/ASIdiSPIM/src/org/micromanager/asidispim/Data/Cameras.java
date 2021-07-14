@@ -248,8 +248,20 @@ public class Cameras {
                   Properties.Values.EDGE);
             double rowTime = getRowReadoutTime(devKey) * 
                   props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+            
+            // get the lower limit from the camera (0.0098 for Flash4)
+            double lowerLimit = 0.0;
+            final String deviceName = devices_.getMMDevice(Devices.Keys.CAMERAA);
+            try {
+            	lowerLimit = core_.getPropertyLowerLimit(deviceName, 
+            			Properties.Keys.HAMAMATSU_LINE_INTERVAL.toString());
+            } catch (Exception ignore) {
+            	// ignore => will set the HAMAMATSU_LINE_INTERVAL property  
+            	// to the rowTime without considering the lower limit
+            }
+            
             props_.setPropValue(devKey,
-                  Properties.Keys.HAMAMATSU_LINE_INTERVAL, (float)rowTime);
+                  Properties.Keys.HAMAMATSU_LINE_INTERVAL, (float)Math.max(rowTime, lowerLimit));
             break;
          case LEVEL:
             props_.setPropValue(devKey,
@@ -284,7 +296,7 @@ public class Cameras {
                   Properties.Values.INTERNAL_LC);
             break;
          default:
-               break;
+        	 break;
          }
          break;
       case ANDORCAM:
@@ -316,16 +328,52 @@ public class Cameras {
             props_.setPropValue(devKey,
                   Properties.Keys.ANDOR_OVERLAP,
                   Properties.Values.OFF);
-            double rowsPerSec = 1/(getRowReadoutTime(devKey) * 
-                  props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED));
-            props_.setPropValue(devKey,
-                  Properties.Keys.ANDOR_LIGHTSHEET_SPEED,
-                  (float)rowsPerSec);
+
+            // Note: the following applies to single view mode, the issue is not present in dual view mode:
+            // only shutter speeds < 4 work with the 200 Mhz slow scan mode, shutter speeds >= 5 will miss 1 image
+            
+            // the maximum value for the LineScanSpeed property
+            float maxLineScanSpeed = 104166.6667f;
+            if (isSlowReadout(devKey)) {
+            	maxLineScanSpeed = 41666.6667f;
+            }
+            
+            final float shutterSpeed = props_.getPropValueFloat(
+            		Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED); 
+            
+            final float shutterWidth = props_.getPropValueFloat(
+            		Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH);
+            
+            // this property must be set to "On" to change LineScanSpeed
+	        props_.setPropValue(devKey, 
+	        		Properties.Keys.ANDOR_SCAN_SPEED_CONTROL_ENABLE,
+	        		Properties.Values.ON);
+
+	        // default to the same pixelSize as getTimingFromPeriodAndLightExposure
+            float pixelSize = (float) core_.getPixelSizeUm();
+            if (pixelSize < 1e-6) {
+            	pixelSize = 0.1625f;
+            }
+            
+            // these properties must be set in the correct order:
+            // light sheet speed => exposed pixel height
+            // this will set the correct exposure automatically
+            props_.setPropValue(devKey, 
+            		Properties.Keys.ANDOR_LIGHTSHEET_SPEED, maxLineScanSpeed/shutterSpeed);
+            props_.setPropValue(devKey, 
+            		Properties.Keys.ANDOR_EXPOSED_PIXEL_HEIGHT, (int)(shutterWidth/pixelSize));
             break;
          case INTERNAL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
                   Properties.Values.INTERNAL_ANDOR);
+            
+            // check to see if we need to disable scan speed control
+            if (props_.getPropValueString(devKey, Properties.Keys.ANDOR_SCAN_SPEED_CONTROL_ENABLE)
+            		.equals(Properties.Values.ON.toString())) {
+            	props_.setPropValue(devKey, 
+            		  Properties.Keys.ANDOR_SCAN_SPEED_CONTROL_ENABLE, Properties.Values.OFF);
+            }
             break;
          case LEVEL:
             props_.setPropValue(devKey,
@@ -440,13 +488,16 @@ public class Cameras {
          }
       case PCOCAM:
          return props_.getPropValueString(camKey, Properties.Keys.PIXEL_RATE).equals("slow scan");
-      case ANDORCAM:
+      case ANDORCAM: 
+    	 // Note: at some point the Andor Zyla 4.2 camera changed it's PixelReadoutRate property value 
+    	 // for the slow scan speed to start with "200 MHz" instead of "216 MHz".
          if (isZyla55(camKey)) {
             return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
                   .substring(0, 3).equals("200");
          } else {
-            return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
-                  .substring(0, 3).equals("216");
+        	final String pixelReadoutRate = props_.getPropValueString(
+        			camKey, Properties.Keys.PIXEL_READOUT_RATE).substring(0, 3);
+        	return pixelReadoutRate.equals("200") || pixelReadoutRate.equals("216");
          }
       case DEMOCAM:
          break;
@@ -538,12 +589,12 @@ public class Cameras {
                return (11.22/2304);
             } else if (mode.equals("2")) {
                return (42.99/2304);
-            }  else {
+            } else {
                return (184.4/2304); 
             }
          } else {  // Flash4
             if (isSlowReadout(camKey)) {
-               return (2592 / 266e3 * (10./3)); 
+               return (2592 / 266e3 * (10./3));
             } else {
                return (2592 / 266e3);
             }

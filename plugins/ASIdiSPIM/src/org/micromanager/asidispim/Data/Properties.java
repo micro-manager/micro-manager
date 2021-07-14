@@ -173,7 +173,9 @@ public class Properties {
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
       ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
       SENSOR_READOUT_MODE("LightScanPlus-SensorReadoutMode"), // for Andor Zyla
-      ANDOR_LIGHTSHEET_SPEED("LightScanPlus-LineScanSpeed [lines/sec]"),  // for Andor Zyla
+      ANDOR_EXPOSED_PIXEL_HEIGHT("LightScanPlus-ExposedPixelHeight"), // for Andor Zyla
+      ANDOR_LIGHTSHEET_SPEED("LightScanPlus-LineScanSpeed [lines/sec]"), // for Andor Zyla
+      ANDOR_SCAN_SPEED_CONTROL_ENABLE("LightScanPlus-ScanSpeedControlEnable"), // for Andor Zyla
       PIXEL_TYPE("PixelType"),            // for DemoCam
       CAMERA_SIZE_X("OnCameraCCDXSize"),  // for DemoCam
       CAMERA_SIZE_Y("OnCameraCCDYSize"),  // for DemoCam
