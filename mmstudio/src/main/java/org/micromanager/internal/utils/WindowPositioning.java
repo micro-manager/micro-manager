@@ -38,8 +38,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
- * Save and restore window locations and sizes; cascade windows.
- *
+ * Save and restore window locations and sizes; cascade windows. *
  * The two aspects are coordinated by methods of this class.
  *
  * @author Mark A. Tsuchida
@@ -52,69 +51,68 @@ public final class WindowPositioning {
 
    // TODO Avoid static - before putting this in the API, we should tie it to
    // the application context.
-   private static final Map<Class<?>, WindowCascade> cascades_ =
-         new HashMap<Class<?>, WindowCascade>();
-   private static final Map<Window, WindowCascade> windowCascades_ =
-         new WeakHashMap<Window, WindowCascade>();
+   private static final Map<Class<?>, WindowCascade> cascades_ = new HashMap<>();
+   private static final Map<Window, WindowCascade> windowCascades_ = new WeakHashMap<>();
 
    /**
     * Set the window bounds to the last saved ones, and arrange to save the
     * bounds for future recall by this method.
-    * <p>
-    * To create a JFrame or JDialog that opens at it last known position, all
+    *
+    * <p>To create a JFrame or JDialog that opens at it last known position, all
     * you need to do is call this method once after creating (and before
     * showing) the window. No further action is necessary (no class to extend,
     * no method to call when the window closes).
-    * <p>
-    * This method is typically called by the controller object that creates the
+    *
+    * <p>This method is typically called by the controller object that creates the
     * window. However, where the old-fashioned (and discouraged) practice of
     * overriding JFrame or JDialog to add controller logic is followed, the
     * window itself may call this method.
-    * <p>
-    * This method is intended for a windows that are usually singletons. For
+    *
+    * <p>This method is intended for a windows that are usually singletons. For
     * windows that will have many instances, use (TODO) instead.
-    * <p>
-    * The window bounds are saved per positioning class and per positioning key
+    *
+    * <p>The window bounds are saved per positioning class and per positioning key
     * (null being the default key). The positioning class is any class that
     * uniquely identifies the window type (typically the controller object's
     * class). The optional positioning key may be used when several distinct
     * instances of the same window need to be remembered (an example of this
     * in MMStudio is the Preview window versus other, normal image windows).
-    * <p>
-    * To provide a default bounds for the window (for use when displaying for
+    *
+    * <p>To provide a default bounds for the window (for use when displaying for
     * the first time in the current user profile), simply set the window bounds
     * <i>before</i> calling this method.
-    * <p>
-    * If you want to also cascade the window, you must call this method
+    *
+    * <p>If you want to also cascade the window, you must call this method
     * <i>before</i> calling {@code cascade}.
     *
     * @param window the window whose position should be restored and remembered
     * @param positioningClass a class that identifies the type of the window
-    * (must not be null)
+    *          (must not be null)
     * @param positioningKey a string that further identifies the type of the
-    * window (may be null)
+    *          window (may be null)
     */
    @MustCallOnEDT
    public static void setUpBoundsMemory(Window window,
-         Class<?> positioningClass, String positioningKey)
-   {
-      GeometrySaver.createAndRestoreBounds(window,
-            positioningClass, positioningKey);
+         Class<?> positioningClass, String positioningKey) {
+      GeometrySaver.createAndRestoreBounds(
+            window,
+            positioningClass,
+            positioningKey);
    }
 
    /**
     * Set the window location to the last saved one, and arrange to save the
     * location for future recall by this method.
-    * <p>
-    * This is exactly like {@code restoreAndMemorizeBounds}, except that the
+    *
+    * <p>This is exactly like {@code restoreAndMemorizeBounds}, except that the
     * window size is not saved or restored. Recommended for use on non-
     * resizable windows only.
-    * <p>
-    * See {@code restoreAndMemorizeBounds} for further details.
     *
-    * @param window
-    * @param positioningClass
-    * @param positioningKey
+    * <p>See {@code restoreAndMemorizeBounds} for further details.
+    *
+    * @param window window for which to set up location memory
+    * @param positioningClass Class to which to tie the location memory
+    * @param positioningKey Some key, unsure if this can be empty
     */
    @MustCallOnEDT
    public static void setUpLocationMemory(Window window,
@@ -126,16 +124,16 @@ public final class WindowPositioning {
    /**
     * Set the location of a window so that it cascades within a series of
     * windows.
-    * <p>
-    * This method should be called before showing the window. If no visible
+    *
+    * <p>This method should be called before showing the window. If no visible
     * windows exist in the series specified by {@code cascadingClass}, the
     * window location is not altered except to fit the window in the screen.
-    * <p>
-    * If you want to also set up memorization for the window position, you
+    *
+    * <p>If you want to also set up memorization for the window position, you
     * must call either {@code setUpBoundsMemory} or {@code setUpLocationMemory}
     * <i>before</i> calling this method.
-    * <p>
-    * If the window is cascaded, the remembered position is that of the oldest
+    *
+    * <p>If the window is cascaded, the remembered position is that of the oldest
     * window in the series. However, since window positions are saved whenever
     * windows are hidden, the program must close a group of cascaded windows in
     * new-to-old order in order to get correct position memory behavior.
@@ -143,7 +141,7 @@ public final class WindowPositioning {
     *
     * @param window the window to position
     * @param cascadingClass a class that identifies the group of windows to be
-    * cascaded with respect to each other
+    *          cascaded with respect to each other
     */
    @MustCallOnEDT
    public static void cascade(Window window, Class<?> cascadingClass) {
@@ -159,12 +157,12 @@ public final class WindowPositioning {
    /**
     * Move and resize a window so that it is on screen and (to the extent
     * possible) fits in the screen.
-    * <p>
-    * This keeps the window in the same screen as much as possible. To position
+    *
+    * <p>This keeps the window in the same screen as much as possible. To position
     * a window in a particular screen, move it into that screen before calling
     * this method.
-    * <p>
-    * There is no need to call this method if position memory is set up or
+    *
+    * <p>There is no need to call this method if position memory is set up or
     * cascading is enabled for the window (those methods internally call this
     * method).
     *
@@ -174,16 +172,15 @@ public final class WindowPositioning {
    public static void fitWindowInScreen(Window window) {
       // Move to the nearest screen if the top-left is off all screens.
       Rectangle screenBounds = null;
-      {
+         {
          Point location = window.getLocation();
          Point nearestOnScreenPoint = location;
          double minDistance = Double.MAX_VALUE;
-         for (GraphicsDevice gDevice : GraphicsEnvironment.
-               getLocalGraphicsEnvironment().getScreenDevices())
-         {
+         for (GraphicsDevice gDevice : GraphicsEnvironment
+               .getLocalGraphicsEnvironment().getScreenDevices()) {
             GraphicsConfiguration gConfig = gDevice.getDefaultConfiguration();
             Rectangle bounds = Geometry.insettedRectangle(gConfig.getBounds(),
-                  Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
+                     Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
             Point nearestPoint =
                   Geometry.nearestPointInRectangle(location, bounds);
             double distance = nearestPoint.distance(location);
@@ -197,15 +194,14 @@ public final class WindowPositioning {
             }
          }
          window.setLocation(nearestOnScreenPoint);
-      }
+         }
       if (screenBounds == null) {
          return; // No screen? Bail.
       }
 
       // Determine whether we need to honor cascading
       WindowCascade cascade = windowCascades_.get(window);
-      boolean cascading = (cascade != null &&
-            cascade.getOldestVisibleWindow() != window);
+      boolean cascading = (cascade != null && cascade.getOldestVisibleWindow() != window);
       if (cascading) {
          Point resetCursor = cascade.getResetCursor();
          if (resetCursor != null && !screenBounds.contains(resetCursor)) {
@@ -221,39 +217,30 @@ public final class WindowPositioning {
          bounds.translate(
                -Math.min(bounds.x - screenBounds.x,
                      Math.max(0,
-                           (bounds.x + bounds.width) -
-                                 (screenBounds.x + screenBounds.width))),
+                           (bounds.x + bounds.width) - (screenBounds.x + screenBounds.width))),
                -Math.min(bounds.y - screenBounds.y,
                      Math.max(0,
-                           (bounds.y + bounds.height) -
-                                 (screenBounds.y + screenBounds.height))));
+                           (bounds.y + bounds.height) - (screenBounds.y + screenBounds.height))));
          window.setLocation(bounds.getLocation());
-      }
-      else {
+      } else {
          // When we are cascading, we "reset" the cascade by moving to the top
          // of the screen, preserving the horizontal position. If we are
          // getting significantly beyond the right edge of the screen, we also
          // jump to the left edge, and move down one vertical offset.
          Point resetCursor = cascade.getResetCursor();
          Point location = window.getLocation();
-         if (location.y + window.getHeight() >
-               screenBounds.y + screenBounds.height)
-         {
+         if (location.y + window.getHeight() >  screenBounds.y + screenBounds.height) {
             if (resetCursor == null) {
                location.y = screenBounds.y;
-            }
-            else {
+            } else {
                location.y = resetCursor.y;
             }
          }
-         if (location.x + window.getWidth() -
-               (screenBounds.x + screenBounds.width) >
-               screenBounds.width / 2)
-         {
+         if (location.x + window.getWidth() - (screenBounds.x + screenBounds.width)
+               > screenBounds.width / 2) {
             if (resetCursor == null) {
                location = screenBounds.getLocation();
-            }
-            else {
+            } else {
                location.x = screenBounds.x;
                location.y  = resetCursor.y + CASCADING_OFFSET_VERTICAL;
             }
@@ -268,10 +255,10 @@ public final class WindowPositioning {
          }
       }
 
-      // Finally, if the window still extends beyond the right or bottom of the
-      // screen, we resize it to the extent needed to fit and permitted by the
-      // window's minimum size.
-      {
+         // Finally, if the window still extends beyond the right or bottom of the
+         // screen, we resize it to the extent needed to fit and permitted by the
+         // window's minimum size.
+         {
          Rectangle bounds = window.getBounds();
          Dimension minSize = window.getMinimumSize();
          window.setSize(
@@ -281,11 +268,11 @@ public final class WindowPositioning {
                Math.max(minSize.height,
                      Math.min(bounds.height,
                            screenBounds.y + screenBounds.height - bounds.y)));
-      }
+         }
    }
 
    private static class GeometrySaver implements ComponentListener {
-      private static enum Mode {
+      private enum Mode {
          MEMORIZE_BOUNDS,
          MEMORIZE_LOCATION,
       }
@@ -293,7 +280,7 @@ public final class WindowPositioning {
       // The profile settings for this class stores nested property maps for
       // positioning class and then positioning key. Each of those pmaps can
       // contain these keys:
-      private static enum ProfileKey {
+      private enum ProfileKey {
          WINDOW_LOCATION,
          WINDOW_BOUNDS,
       }
@@ -304,8 +291,7 @@ public final class WindowPositioning {
       private final Window window_;
 
       static GeometrySaver createAndRestoreBounds(Window window,
-            Class<?> positioningClass, String positioningKey)
-      {
+            Class<?> positioningClass, String positioningKey) {
          GeometrySaver saver =
                new GeometrySaver(window, positioningClass, positioningKey,
                      Mode.MEMORIZE_BOUNDS);
@@ -315,8 +301,7 @@ public final class WindowPositioning {
       }
 
       static GeometrySaver createAndRestoreLocation(Window window,
-            Class<?> positioningClass, String positioningKey)
-      {
+            Class<?> positioningClass, String positioningKey) {
          GeometrySaver saver =
                new GeometrySaver(window, positioningClass, positioningKey,
                      Mode.MEMORIZE_LOCATION);
@@ -376,19 +361,16 @@ public final class WindowPositioning {
                throw new AssertionError(mode_);
          }
          keyPmap = builder.build();
-         classPmap = classPmap.copyBuilder().
-               putPropertyMap(positioningKey_, keyPmap).build();
+         classPmap = classPmap.copyBuilder().putPropertyMap(positioningKey_, keyPmap).build();
          settings.putPropertyMap(positioningClass_.getCanonicalName(),
                classPmap);
       }
 
       private void restoreGeometry() {
-         PropertyMap pmap = MMStudio.getInstance().profile().
-               getSettings(getClass()).
-               getPropertyMap(positioningClass_.getCanonicalName(),
-                     PropertyMaps.emptyPropertyMap()).
-               getPropertyMap(positioningKey_,
-                     PropertyMaps.emptyPropertyMap());
+         PropertyMap pmap = MMStudio.getInstance().profile().getSettings(getClass())
+               .getPropertyMap(positioningClass_.getCanonicalName(),
+                     PropertyMaps.emptyPropertyMap()).getPropertyMap(
+                           positioningKey_, PropertyMaps.emptyPropertyMap());
 
          switch (mode_) {
             case MEMORIZE_BOUNDS:
@@ -430,13 +412,12 @@ public final class WindowPositioning {
    }
 
    private static class WindowCascade {
-      private final List<WeakReference<Window>> windows_ =
-            new LinkedList<WeakReference<Window>>();
+      private final List<WeakReference<Window>> windows_ = new LinkedList<>();
       private Point resetCursor_;
 
       void addWindow(Window window) {
          Window previous = getNewestVisibleWindow();
-         windows_.add(new WeakReference<Window>(window));
+         windows_.add(new WeakReference<>(window));
          if (previous != null) {
             Point location = previous.getLocation();
             location.translate(CASCADING_OFFSET_HORIZONTAL,
