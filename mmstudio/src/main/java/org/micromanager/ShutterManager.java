@@ -37,37 +37,41 @@ public interface ShutterManager {
     * disabled. This method will post a ShutterEvent on the application event
     * bus, and if autoshutter was enabled, then it will also post an
     * AutoShutterEvent when it is disabled.
+    *
     * @param isOpen if true, the shutter will be opened, otherwise it will be
     *        closed.
-    * @throws Exception if there was a problem setting the shutter state.
     * @return true if autoshutter was disabled as a side-effect of calling
     *         this method; false if autoshutter was already off.
+    * @throws Exception if there was a problem setting the shutter state.
     */
-   public boolean setShutter(boolean isOpen) throws Exception;
+   boolean setShutter(boolean isOpen) throws Exception;
 
    /**
     * Return whether or not the shutter is currently open. A straight pass-
     * through to MMCore.getShutterOpen().
-    * @throws Exception if there was a problem getting the shutter state.
+    *
     * @return true if shutter is open, false if closed.
+    * @throws Exception if there was a problem getting the shutter state.
     */
-   public boolean getShutter() throws Exception;
+   boolean getShutter() throws Exception;
 
    /**
     * Return a list of device names of devices that can be used as shutter
     * devices. Will be null briefly at the start of the program, before a
     * configuration file has been loaded.
+    *
     * @return List of strings of shutter device names.
     */
-   public List<String> getShutterDevices();
+   List<String> getShutterDevices();
 
    /**
     * Return the current shutter device. A straight pass-through to
     * MMCore.getShutterDevice();
-    * @throws Exception if there was a problem getting the shutter device.
+    *
     * @return Name of the device that is the current shutter device.
+    * @throws Exception if there was a problem getting the shutter device.
     */
-   public String getCurrentShutter() throws Exception;
+   String getCurrentShutter() throws Exception;
 
    /**
     * Turn autoshutter on or off. When autoshutter is enabled, the shutter
@@ -75,17 +79,19 @@ public interface ShutterManager {
     * acquisition (either a single-image snap or a sequence acquisition).
     * This method will also close the shutter as a side-effect.
     * This method will post an AutoShutterEvent on the application event bus.
+    *
     * @param isAuto if true, then autoshutter is enabled, otherwise it will be
     *        disabled.
     * @throws Exception if there was an error setting autoshutter or closing
     *         the shutter.
     */
-   public void setAutoShutter(boolean isAuto) throws Exception;
+   void setAutoShutter(boolean isAuto) throws Exception;
 
    /**
     * Return true if autoshutter is enabled. A straight passthrough to
     * MMCore.getAutoShutter().
+    *
     * @return true if autoshutter is enabled, false if disabled.
     */
-   public boolean getAutoShutter();
+   boolean getAutoShutter();
 }

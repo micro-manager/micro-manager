@@ -24,6 +24,7 @@
 //
 // CVS:          $Id: StagePosition.java 3828 2010-01-22 21:06:21Z arthur $
 //
+
 package org.micromanager;
 
 import java.util.Objects;
@@ -31,7 +32,8 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**
- * Description of the position of a 1 or 2 axis stage
+ * Description of the position of a 1 or 2 axis stage.
+ *
  * @author nico
  */
 public class StagePosition {
@@ -63,7 +65,7 @@ public class StagePosition {
     * The stage device label.
     *
     * @deprecated Use {@link #set1DPosition} or {@link #set2DPosition} to set;
-    * use {@link #getStageDeviceLabel} to access.
+    *             use {@link #getStageDeviceLabel} to access.
     */
    @Deprecated
    public String stageName;
@@ -72,14 +74,15 @@ public class StagePosition {
     * The number of stage axes. Must be 1 or 2.
     *
     * @deprecated Use {@link #set1DPosition} or {@link #set2DPosition} to set;
-    * use {@link #getNumberOfStageAxes}, {@link #is1DStagePosition}, or
-    * {@link #is2DStagePosition} to access.
+    *             use {@link #getNumberOfStageAxes}, {@link #is1DStagePosition}, or
+    *             {@link #is2DStagePosition} to access.
     */
    @Deprecated
    public int numAxes;
 
    /**
-    * Creates a new StapePosition for a 1 axis drive
+    * Creates a new StapePosition for a 1 axis drive.
+    *
     * @param stageDeviceLabel name of the stage/drive
     * @param z position
     * @return StagePosition object based on the input
@@ -90,16 +93,16 @@ public class StagePosition {
       return ret;
    }
 
-      /**
-    * Creates a new StapePosition for a 2 axis drive
+   /**
+    * Creates a new StapePosition for a 2 axis drive.
+    *
     * @param stageDeviceLabel name of the stage/drive
     * @param x position-x
     * @param y position-y
     * @return StagePosition object based on the input
     */
    public static StagePosition create2D(String stageDeviceLabel,
-         double x, double y)
-   {
+         double x, double y) {
       StagePosition ret = new StagePosition();
       ret.set2DPosition(stageDeviceLabel, x, y);
       return ret;
@@ -107,6 +110,7 @@ public class StagePosition {
 
    /**
     * Default constructor.
+    *
     * @deprecated Use {@link #create1D} or {@link #create2D} instead.
     */
    @Deprecated
@@ -115,13 +119,14 @@ public class StagePosition {
       x = 0.0;
       y = 0.0;
       z = 0.0;
-      numAxes=1;
+      numAxes = 1;
    }
 
    /**
-    * 
-    * @param aPos
-    * @return 
+    * Creates a copy of a StagePosition object.
+    *
+    * @param aPos StagePosition to be copied.  Should not be null/
+    * @return Copy of the given StagePosition
     */
    public static StagePosition newInstance(StagePosition aPos) {
       StagePosition sp = new StagePosition();
@@ -133,6 +138,13 @@ public class StagePosition {
       return sp;
    }
 
+   /**
+    * Sets the position of an XY stage device in this StagePosition instance.
+    *
+    * @param stageDeviceLabel String identifying the stage
+    * @param x New x position
+    * @param y New Y position
+    */
    public void set2DPosition(String stageDeviceLabel, double x, double y) {
       stageName = stageDeviceLabel;
       numAxes = 2;
@@ -141,6 +153,12 @@ public class StagePosition {
       this.z = 0.0;
    }
 
+   /**
+    * Sets the position of a stage device in this StagePosition instance.
+    *
+    * @param stageDeviceLabel String identifying the stage
+    * @param z New position
+    */
    public void set1DPosition(String stageDeviceLabel, double z) {
       stageName = stageDeviceLabel;
       numAxes = 1;
@@ -176,22 +194,29 @@ public class StagePosition {
       return x;
    }
 
+   /**
+    * Verbose description of this StagePosition.
+    *
+    * @return Description of this StagePosition as a String.
+    */
    public String getVerbose() {
-      if (numAxes == 1)
+      if (numAxes == 1) {
          return stageName + "(" + NumberUtils.doubleToDisplayString(x) + ")";
-      else if (numAxes == 2)
-         return stageName + "(" + NumberUtils.doubleToDisplayString(x) +
-      "," + NumberUtils.doubleToDisplayString(y) + ")";
-      else
-         return stageName + "(" + NumberUtils.doubleToDisplayString(x) +
-      "," + NumberUtils.doubleToDisplayString(y) +
-      "," + NumberUtils.doubleToDisplayString(z) + ")";
+      } else if (numAxes == 2) {
+         return stageName + "(" + NumberUtils.doubleToDisplayString(x)
+               + "," + NumberUtils.doubleToDisplayString(y) + ")";
+      } else {
+         return stageName + "(" + NumberUtils.doubleToDisplayString(x)
+               + "," + NumberUtils.doubleToDisplayString(y)
+               + "," + NumberUtils.doubleToDisplayString(z) + ")";
+      }
 
    }
 
    /**
     * Compare us against the provided StagePosition and return true only if
     * we are equal in all respects.
+    *
     * @param alt Other StagePosition to compare against.
     * @return true if every field in alt equals our corresponding field.
     */
@@ -207,9 +232,12 @@ public class StagePosition {
    @Override
    public int hashCode() {
       int hash = 7;
-      hash = 37 * hash + (int) (Double.doubleToLongBits(this.x) ^ (Double.doubleToLongBits(this.x) >>> 32));
-      hash = 37 * hash + (int) (Double.doubleToLongBits(this.y) ^ (Double.doubleToLongBits(this.y) >>> 32));
-      hash = 37 * hash + (int) (Double.doubleToLongBits(this.z) ^ (Double.doubleToLongBits(this.z) >>> 32));
+      hash = 37 * hash
+            + (int) (Double.doubleToLongBits(this.x) ^ (Double.doubleToLongBits(this.x) >>> 32));
+      hash = 37 * hash
+            + (int) (Double.doubleToLongBits(this.y) ^ (Double.doubleToLongBits(this.y) >>> 32));
+      hash = 37 * hash
+            + (int) (Double.doubleToLongBits(this.z) ^ (Double.doubleToLongBits(this.z) >>> 32));
       hash = 37 * hash + Objects.hashCode(this.stageName);
       hash = 37 * hash + this.numAxes;
       return hash;
@@ -220,33 +248,47 @@ public class StagePosition {
       return getVerbose();
    }
 
+   /**
+    * Returns this StagePosition instance as a PropertyMap.
+    *
+    * @return PropertyMap representation of this StagePosition.
+    */
    public PropertyMap toPropertyMap() {
       int n = Math.max(0, Math.min(3, numAxes));
       double[] pos = new double[n];
-      if (n >= 1) pos[0] = x;
-      if (n >= 2) pos[1] = y;
-      if (n >= 3) pos[2] = z;
-      return PropertyMaps.builder().
-            putString(PropertyKey.STAGE_POSITION__DEVICE.key(), stageName).
-            putDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.key(), pos).
-            build();
+      if (n >= 1) {
+         pos[0] = x;
+      }
+      if (n >= 2) {
+         pos[1] = y;
+      }
+      if (n >= 3) {
+         pos[2] = z;
+      }
+      return PropertyMaps.builder()
+            .putString(PropertyKey.STAGE_POSITION__DEVICE.key(), stageName)
+            .putDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.key(), pos)
+            .build();
    }
 
+   /**
+    * Returns the given PrropertyMap as a StagePosition.
+    *
+    * @param pmap Input PropertyMap
+    * @return StagePosition representation of this PropertyMap.
+    */
    public static StagePosition fromPropertyMap(PropertyMap pmap) {
       int n = pmap.getDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.key()).length;
       switch (n) {
          case 1:
             return StagePosition.create1D(pmap.getString(
                   PropertyKey.STAGE_POSITION__DEVICE.key(), null),
-                  pmap.getDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.
-                        key())[0]);
+                  pmap.getDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.key())[0]);
          case 2:
             return StagePosition.create2D(pmap.getString(
                   PropertyKey.STAGE_POSITION__DEVICE.key(), null),
-                  pmap.getDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.
-                        key())[0],
-                  pmap.getDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.
-                        key())[1]);
+                  pmap.getDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.key())[0],
+                  pmap.getDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.key())[1]);
          default:
             throw new IllegalArgumentException(String.format(
                   "Invalid stage position (%d-axis stage not supported)", n));
