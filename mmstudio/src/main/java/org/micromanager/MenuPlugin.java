@@ -36,13 +36,14 @@ public interface MenuPlugin extends MMPlugin {
     * in. If that sub-menu does not exist, it will be created. If an empty
     * string is returned, then the plugin will be inserted directly into the
     * Plugins menu, instead of into a sub-menu.
+    *
     * @return Sub-menu of the Plugins menu hosting this entry
     */
-   public String getSubMenu();
+   String getSubMenu();
 
    /**
     * This method will be called when the plugin is selected from the
     * PluginsMenu.
     */
-   public void onPluginSelected();
+   void onPluginSelected();
 }

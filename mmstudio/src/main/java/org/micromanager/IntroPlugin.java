@@ -32,15 +32,17 @@ public interface IntroPlugin extends MMPlugin {
    /**
     * Provide a "splash" image to display at the top of the intro dialog. If
     * this method returns null, then the default µManager logo will be used.
+    *
     * @return The image to use at the top of the intro dialog, or null.
     */
-   public Icon getSplashImage();
+   Icon getSplashImage();
 
    /**
     * Provide a list of paths to config files to include in the config file
     * dropdown menu. These will be provided in addition to any config files
     * the user has used in the past. This list may be null or empty.
+    *
     * @return List of config files to show to the user, or null.
     */
-   public List<String> getConfigFilePaths();
+   List<String> getConfigFilePaths();
 }

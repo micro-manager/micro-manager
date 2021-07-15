@@ -33,10 +33,11 @@ public interface ScriptController {
     * This exception signifies that the Beanshell interpreter has a stop
     * request pending, which prevents most interactions with the system.
     */
-   public class ScriptStoppedException extends RuntimeException {
+   class ScriptStoppedException extends RuntimeException {
       /**
-       * 
-       * @param message 
+       * Exception thrown when the interpreted has a stop request pending.
+       *
+       * @param message Exception message
        */
       public ScriptStoppedException(String message) {
          super(message);
@@ -45,29 +46,33 @@ public interface ScriptController {
 
    /**
     * Execute the script located in the given file.
+    *
     * @param file File containing the script to be run.
     */
-   public void runFile(File file);
+   void runFile(File file);
 
    /**
     * Displays text in the scripting console output window.
-    * @param text 
+    *
+    * @param text Text to be displayed in the scripting console output window.
     * @throws ScriptStoppedException if the script panel has been requested to
     *         stop execution.
     */
-   public void message(String text) throws ScriptStoppedException;
+   void message(String text) throws ScriptStoppedException;
    
    /**
     * Clears scripting console output window.
+    *
     * @throws ScriptStoppedException if the script panel has been requested to
     *         stop execution.
     */
-   public void clearMessageWindow() throws ScriptStoppedException;
+   void clearMessageWindow() throws ScriptStoppedException;
 
    /**
     * Clears all methods and variables defined in the script interpreter.
+    *
     * @throws ScriptStoppedException if the script panel has been requested to
     *         stop execution.
     */
-   public void resetInterpreter() throws ScriptStoppedException;
+   void resetInterpreter() throws ScriptStoppedException;
 }

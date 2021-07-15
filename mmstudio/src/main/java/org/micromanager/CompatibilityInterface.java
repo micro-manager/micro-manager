@@ -43,24 +43,28 @@ public interface CompatibilityInterface {
     * 1.4.6 20110831
     * When a date is appended to a version number, it will be newer than the
     * same version without a date
+    *
     * @param version - minimum version needen to run this code
     * @return true if the run-time Micro-Manager version is less than the
-    * one specified
+    *          one specified
     * @throws NumberFormatException if the version number is not in the format
-    * expected.
+    *          expected.
     */
-   public boolean versionLessThan(String version) throws NumberFormatException;
+   boolean versionLessThan(String version) throws NumberFormatException;
 
    /**
+    * Return the version of the running instance of Micro-Manager.
+    *
     * @return the currently running Micro-Manager version
     */
-   public String getVersion();
+   String getVersion();
 
    /**
     * Retrieve the affine transform describing how the camera image maps to
     * stage coordinates, for a given pixel size config. This method will pull
     * information from the profile if available, and failing that will look in
     * the Java Preferences. Will return null if no transform is found.
+    *
     * @param config The configuration (per core.getCurrentPixelSizeConfig())
     *        to find the affine transform for.
     * @return The transform describing how the camera maps to the stage.
@@ -68,11 +72,12 @@ public interface CompatibilityInterface {
     * @deprecated - Use core.getPixelSizeAffineByID(config) instead
     */
    @Deprecated
-   public AffineTransform getCameraTransform(String config);
+   AffineTransform getCameraTransform(String config);
 
    /**
     * Set a new affine transform for describing how the camera image maps to
     * the stage coordinates. The value will be stored in the user's profile.
+    *
     * @param transform The new transform to use.
     * @param config The configuration (per core.getCurrentPixelSizeConfig())
     *        to set the affine transform for.
@@ -80,5 +85,5 @@ public interface CompatibilityInterface {
     *                instead
     */
    @Deprecated
-   public void setCameraTransform(AffineTransform transform, String config);
+   void setCameraTransform(AffineTransform transform, String config);
 }

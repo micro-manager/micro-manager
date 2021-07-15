@@ -23,8 +23,8 @@ package org.micromanager;
 public interface EventPublisher {
    /**
     * Register an object to receive events on the viewer event bus.
-    * <p>
-    * Objects registered by this method will receive events through their
+    *
+    * <p>Objects registered by this method will receive events through their
     * methods bearing a {@code com.google.common.eventbus.Subscribe}
     * annotation. See Guava Event Bus documentation for how this works.
     *

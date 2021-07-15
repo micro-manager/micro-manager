@@ -51,7 +51,8 @@ public interface ApplicationSkin {
       }
 
       /**
-       * 
+       * Returns a description of this skin.
+       *
        * @return string describing this skin
        */
       public String getDesc() {
@@ -59,10 +60,11 @@ public interface ApplicationSkin {
       }
 
       /**
-       * 
+       * Returns skinmode associated with the given string (if any).
+       *
        * @param desc string describing this skin
        * @return the skinmode associated with the given string (if any)
-       * throws IllegalArgumentException when no matching mode is found
+       * @throws IllegalArgumentException when no matching mode is found
        */
       public static SkinMode fromString(String desc) {
          for (SkinMode mode : SkinMode.values()) {
@@ -78,17 +80,21 @@ public interface ApplicationSkin {
     * Sets the background color of the GUI to the selected mode. This will
     * provoke a refresh of the GUI and post a ApplicationSkinEvent to the
     * application-wide event bus.
+    *
     * @param mode The mode to use.
     */
    void setSkin(SkinMode mode);
 
    /**
+    * Returns the current Micro-Manager skin.
+    *
     * @return the current Micro-Manager skin.
     */
    SkinMode getSkin();
 
    /**
     * Return the current background color for normal GUI elements.
+    *
     * @return current background color
     */
    Color getBackgroundColor();
@@ -96,24 +102,28 @@ public interface ApplicationSkin {
    /**
     * Return the current "lighter" background color for highlighted or
     * otherwise differentiated GUI elements.
+    *
     * @return light background color
     */
    Color getLightBackgroundColor();
 
    /**
     * Return the current "disabled" background color.
+    *
     * @return "disabled" background color
     */
    Color getDisabledBackgroundColor();
 
    /**
     * Return the current color for enabled text.
+    *
     * @return current color for enabled text
     */
    Color getEnabledTextColor();
 
    /**
     * Return the current color for disabled text.
+    *
     * @return current color for disabled text.
     */
    Color getDisabledTextColor();
@@ -122,6 +132,7 @@ public interface ApplicationSkin {
     * If the specified mode is not currently active, then we switch to that
     * mode without updating the UI. Useful if a component must be generated
     * with a nonstandard look-and-feel.
+    *
     * @param mode SkinMode to switch to (but without updating the UI)
     */
    void suspendToMode(SkinMode mode);

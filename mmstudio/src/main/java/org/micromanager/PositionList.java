@@ -22,7 +22,9 @@
 //
 // CVS:          $Id: PositionList.java 10970 2013-05-08 16:58:06Z nico $
 //
+
 package org.micromanager;
+
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import java.io.File;
@@ -45,93 +47,102 @@ import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 public class PositionList implements Iterable<MultiStagePosition> {
    private final ArrayList<MultiStagePosition> positions_;
 
-   private final HashSet<ChangeListener> listeners_ = new HashSet<ChangeListener>();
+   private final HashSet<ChangeListener> listeners_ = new HashSet<>();
 
    /**
     * Constructor of navigation list of positions for the Stages.
     */
    public PositionList() {
-      positions_ = new ArrayList<MultiStagePosition>();
+      positions_ = new ArrayList<>();
    }
 
    /**
-    * This looks like a static copy constructor
+    * This looks like a static copy constructor.
+    *
     * @param aPl input positionlist
     * @return new instance of a PositionList with identical positions to the input
     */
    public static PositionList newInstance(PositionList aPl) {
       PositionList pl = new PositionList();
-      Iterator<MultiStagePosition> it = aPl.positions_.iterator();
-      while (it.hasNext())
-         pl.addPosition(MultiStagePosition.newInstance(it.next()));
+      for (MultiStagePosition multiStagePosition : aPl.positions_) {
+         pl.addPosition(MultiStagePosition.newInstance(multiStagePosition));
+      }
       return pl;
    }
 
    /**
-    * Adds a changeListener to this PositionList
+    * Adds a changeListener to this PositionList.
+    *
     * @param listener Will fire when the list changes
     */
    public void addChangeListener(ChangeListener listener) {
-       listeners_.add(listener);
+      listeners_.add(listener);
    }
 
    /**
-    * Removes the given listener  
-    * Nothing will happen if listener was not added first
-    * @param listener 
+    * Removes the given listener. Nothing will happen if listener was not added first.
+    *
+    * @param listener Removes the specified listener.
     */
    public void removeChangeListener(ChangeListener listener) {
-       listeners_.remove(listener);
+      listeners_.remove(listener);
    }
 
    /**
-    * Notifies all changeListeners to the list that something changed
+    * Notifies all changeListeners to the list that something changed.
     */
    public void notifyChangeListeners() {
-       for (ChangeListener listener:listeners_) {
-           listener.stateChanged(new ChangeEvent(this));
-       }
+      for (ChangeListener listener : listeners_) {
+         listener.stateChanged(new ChangeEvent(this));
+      }
    }
 
    /**
     * Returns multi-stage position associated with the position index.
+    *
     * @param idx - position index
     * @return multi-stage position
     */
    public MultiStagePosition getPosition(int idx) {
-      if (idx < 0 || idx >= positions_.size())
+      if (idx < 0 || idx >= positions_.size()) {
          return null;
+      }
       
       return positions_.get(idx);
    }
    
    /**
     * Returns a copy of the multi-stage position associated with the position index.
+    *
     * @param idx - position index
     * @return multi-stage position
     */
    public MultiStagePosition getPositionCopy(int idx) {
-      if (idx < 0 || idx >= positions_.size())
+      if (idx < 0 || idx >= positions_.size()) {
          return null;
+      }
       
       return MultiStagePosition.newInstance(positions_.get(idx));
    }
    
    /**
     * Returns position index associated with the position name.
+    *
     * @param posLabel - label (name) of the position
     * @return index, or -1 when the name was not found
     */
    public int getPositionIndex(String posLabel) {
-      for (int i=0; i<positions_.size(); i++) {
-         if (positions_.get(i).getLabel().compareTo(posLabel) == 0)
+      for (int i = 0; i < positions_.size(); i++) {
+         if (positions_.get(i).getLabel().compareTo(posLabel) == 0) {
             return i;
+         }
       }
       return -1;
    }
    
    /**
     * Adds a new position to the list.
+    *
     * @param pos - multi-stage position
     */
    public void addPosition(MultiStagePosition pos) {
@@ -145,6 +156,7 @@ public class PositionList implements Iterable<MultiStagePosition> {
 
    /**
     * Insert a position into the list.
+    *
     * @param in0 - place in the list where the position should be inserted
     * @param pos - multi-stage position
     */
@@ -158,7 +170,8 @@ public class PositionList implements Iterable<MultiStagePosition> {
    }
    
    /**
-    * Replaces position in the list with the new position
+    * Replaces position in the list with the new position.
+    *
     * @param index index of the position to be replaced
     * @param pos - multi-stage position
     */
@@ -170,7 +183,8 @@ public class PositionList implements Iterable<MultiStagePosition> {
    }
    
    /**
-    * Returns the number of positions contained within the list
+    * Returns the number of positions contained within the list.
+    *
     * @return number of positions contained in the position list
     */
    public int getNumberOfPositions() {
@@ -186,7 +200,8 @@ public class PositionList implements Iterable<MultiStagePosition> {
    }
    
    /**
-    * Removes a specific position based on the index
+    * Removes a specific position based on the index.
+    *
     * @param idx - position index
     */
    public void removePosition(int idx) {
@@ -197,7 +212,8 @@ public class PositionList implements Iterable<MultiStagePosition> {
    }
    
    /**
-    * Initialize the entire array by passing an array of multi-stage positions
+    * Initialize the entire array by passing an array of multi-stage positions.
+    *
     * @param posArray - array of multi-stage positions
     */
    public void setPositions(MultiStagePosition[] posArray) {
@@ -208,11 +224,12 @@ public class PositionList implements Iterable<MultiStagePosition> {
 
    /**
     * Returns an array of positions contained in the list.
+    *
     * @return position array
     */
    public MultiStagePosition[] getPositions() {
       MultiStagePosition[] list = new MultiStagePosition[positions_.size()];
-      for (int i=0; i<positions_.size(); i++) {
+      for (int i = 0; i < positions_.size(); i++) {
          list[i] = positions_.get(i);
       }
       
@@ -220,37 +237,41 @@ public class PositionList implements Iterable<MultiStagePosition> {
    }
    
    /**
-    * Assigns a label to the position index
+    * Assigns a label to the position index.
+    *
     * @param idx - position index
     * @param label - new label (name)
     */
    public void setLabel(int idx, String label) {
-      if (idx < 0 || idx >= positions_.size())
+      if (idx < 0 || idx >= positions_.size()) {
          return;
+      }
       
       positions_.get(idx).setLabel(label);
       notifyChangeListeners();
    }
 
    /**
-    * Creates a PropertyMap from this PositionList
+    * Creates a PropertyMap from this PositionList.
+    *
     * @return PropertyMap representing this PositionList
     */
    public PropertyMap toPropertyMap() {
-      List<PropertyMap> msps = new ArrayList<PropertyMap>();
+      List<PropertyMap> msps = new ArrayList<>();
       for (MultiStagePosition msp : positions_) {
          msps.add(msp.toPropertyMap());
       }
-      return PropertyMaps.builder().
-            putPropertyMapList(PropertyKey.STAGE_POSITIONS.key(), msps).
-            build();
+      return PropertyMaps.builder()
+            .putPropertyMapList(PropertyKey.STAGE_POSITIONS.key(), msps)
+            .build();
    }
 
 
    /**
-    * replaces the content of this PositionList with the content of the given PropertyMap
+    * replaces the content of this PositionList with the content of the given PropertyMap.
+    *
     * @param map PropertyMap whose content will replace this PositionList
-    * @throws IOException 
+    * @throws IOException appears to be never thrown. TODO: Remove?
     */
    public void replaceWithPropertyMap(PropertyMap map) throws IOException {
       positions_.clear();
@@ -261,8 +282,9 @@ public class PositionList implements Iterable<MultiStagePosition> {
       for (PropertyMap mspMap : map.getPropertyMapList(PropertyKey.STAGE_POSITIONS.key())) {
          MultiStagePosition msp = MultiStagePosition.fromPropertyMap(mspMap);
          if (mspMap.containsKey(PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key())) {
-            PropertyMap propertyMap = mspMap.getPropertyMap(PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key(), null);
-            for (String key: propertyMap.keySet()) {
+            PropertyMap propertyMap =
+                  mspMap.getPropertyMap(PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key(), null);
+            for (String key : propertyMap.keySet()) {
                String val = propertyMap.getString(key, "");
                msp.setProperty(key, val);
             }
@@ -275,6 +297,7 @@ public class PositionList implements Iterable<MultiStagePosition> {
    /**
     * Helper method to generate unique label when inserting a new position.
     * Not recommended for use - planned to become obsolete.
+    *
     * @return Unique label
     */
    public String generateLabel() {
@@ -282,7 +305,8 @@ public class PositionList implements Iterable<MultiStagePosition> {
    }
    
    /**
-    * Generates a label for a new Position
+    * Generates a label for a new Position.
+    *
     * @param proposal user-supplied suggestion
     * @return new, unique label that will be accepted by this list 
     */
@@ -301,13 +325,14 @@ public class PositionList implements Iterable<MultiStagePosition> {
    
    
    /**
-    * Verify that the new label is unique
+    * Verify that the new label is unique.
+    *
     * @param label - proposed label
     * @return true if label does not exist
     */
    public boolean isLabelUnique(String label) {
-      for (MultiStagePosition positions_1 : positions_) {
-         if (positions_1.getLabel().compareTo(label) == 0) {
+      for (MultiStagePosition position : positions_) {
+         if (position.getLabel().compareTo(label) == 0) {
             return false;
          }
       }
@@ -316,8 +341,9 @@ public class PositionList implements Iterable<MultiStagePosition> {
 
    /**
     * Save list to a file.
+    *
     * @param file destination; recommended suffix is ".json".
-    * @throws IOException
+    * @throws IOException can happen while saving to disk
     */
    public void save(File file) throws IOException {
       toPropertyMap().saveJSON(file, true, true);
@@ -325,8 +351,9 @@ public class PositionList implements Iterable<MultiStagePosition> {
 
    /**
     * Save list to a file.
+    *
     * @param path destination; recommended suffix is ".json".
-    * @throws IOException
+    * @throws IOException can happen while saving to disk
     */
    public void save(String path) throws IOException {
       save(new File(path));
@@ -334,16 +361,16 @@ public class PositionList implements Iterable<MultiStagePosition> {
 
    /**
     * Load position list from a file.
+    *
     * @param file source JSON file, usually ".txt" or ".json".
-    * @throws IOException
+    * @throws IOException can happen while saving to disk
     */
    public void load(File file) throws IOException {
       String text = Files.toString(file, Charsets.UTF_8);
       PropertyMap pmap;
       try {
          pmap = PropertyMaps.fromJSON(text);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          pmap = NonPropertyMapJSONFormats.positionList().fromJSON(text);
       }
       replaceWithPropertyMap(pmap);
@@ -353,8 +380,9 @@ public class PositionList implements Iterable<MultiStagePosition> {
 
    /**
     * Load position list from a file.
+    *
     * @param path source JSON file, usually ".txt" or ".json".
-    * @throws IOException
+    * @throws IOException can happen while reading from disk
     */
    public void load(String path) throws IOException {
       load(new File(path));

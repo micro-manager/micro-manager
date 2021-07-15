@@ -54,6 +54,7 @@ public interface Application {
    /**
     * Set the exposure time for the current channel (if any). Equivalent to
     * updating the exposure time field in the main window.
+    *
     * @param exposureMs Exposure time, in milliseconds.
     */
    void setExposure(double exposureMs);
@@ -87,6 +88,7 @@ public interface Application {
     * Save the current state of the config file to the specified path. If you
     * have generated new config groups and/or presets, they will be included
     * in the new file.
+    *
     * @param path Path to save the file to.
     * @param allowOverwrite If true, any existing file at the specified path
     *        will be overwritten.
@@ -110,6 +112,7 @@ public interface Application {
     * Set the default camera's ROI -- a convenience function. Will stop and
     * start Live mode for you, and update the GUI's display of values such as
     * the view dimensions.
+    *
     * @param rect Rectangle defining the ROI
     * @throws Exception if there is an error in the Core when setting the ROI
     */
@@ -124,6 +127,7 @@ public interface Application {
     * Provide access to the main window of the program. This is largely
     * intended to allow client code to position their windows with respect
     * to the main window.
+    *
     * @return the main Window
     */
    JFrame getMainWindow();
@@ -131,6 +135,7 @@ public interface Application {
    /**
     * Provides access to the application skin API for determining colors for
     * various GUI components.
+    *
     * @return ApplicationSkin instance.
     */
    ApplicationSkin skin();
@@ -138,6 +143,7 @@ public interface Application {
    /**
     * Provides access to the application skin API for determining colors for
     * various GUI components. Identical to skin() except in name.
+    *
     * @return ApplicationSkin instance.
     */
    ApplicationSkin getApplicationSkin();

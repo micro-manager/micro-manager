@@ -33,6 +33,7 @@ import org.micromanager.data.Image;
  * album via Studio.album() or Studio.getAlbum().
  */
 public interface Album {
+
    /**
     * Return the Datastore that currently backs the Album. If no images have
     * ever been added to the Album, then this will be null. Otherwise, the
@@ -41,7 +42,7 @@ public interface Album {
     *
     * @return The current Datastore for the Album.
     */
-   public Datastore getDatastore();
+   Datastore getDatastore();
 
    /**
     * Add the specified Image to the Album's datastore. If no Datastore exists
@@ -56,9 +57,9 @@ public interface Album {
     * @param image The Image to add to the album
     * @return True if a new Datastore and DisplayWindow were created as a
     *         side-effect of adding the image.
-    * @throws java.io.IOException
+    * @throws java.io.IOException these happen with disk-based stores
     */
-   public boolean addImage(Image image) throws IOException;
+   boolean addImage(Image image) throws IOException;
 
    /**
     * Add the specified Images to the Album's datastore. Equivalent to
@@ -67,7 +68,7 @@ public interface Album {
     * @param images The Images to add to the album
     * @return True if a new Datastore and DisplayWindow were created as a
     *         side-effect of adding the images.
-    * @throws java.io.IOException
+    * @throws java.io.IOException these happen with disk-based stores
     */
-   public boolean addImages(Collection<Image> images) throws IOException;
+   boolean addImages(Collection<Image> images) throws IOException;
 }

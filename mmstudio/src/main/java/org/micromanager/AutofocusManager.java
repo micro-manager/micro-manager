@@ -18,6 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager;
 
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.List;
 public interface AutofocusManager {
    /**
     * Set the current AutofocusPlugin to use for performing autofocus actions.
+    *
     * @param plugin AutofocusPlugin to use for autofocus.
     */
    void setAutofocusMethod(AutofocusPlugin plugin);
@@ -37,6 +39,7 @@ public interface AutofocusManager {
     * Set the current AutofocusPlugin by name. This will throw an
     * IllegalArgumentException if there is no AutofocusPlugin with the
     * specified name (as per the value returned by its getName() method).
+    *
     * @param name Name of autofocus method to use.
     */
    void setAutofocusMethodByName(String name);
@@ -45,6 +48,7 @@ public interface AutofocusManager {
     * Return the current AutofocusPlugin being used to run autofocus. It is
     * recommended that callers invoke this method whenever the current
     * autofocus plugin is required, rather than storing its results.
+    *
     * @return AutofocusPlugin currently selected.
     */
    AutofocusPlugin getAutofocusMethod();
@@ -54,6 +58,7 @@ public interface AutofocusManager {
     * setAutofocusMethodByName(). This includes both software AutofocusPlugins
     * (which are accessible via the PluginManager) and hardware autofocus
     * devices (which are not).
+    *
     * @return List of valid autofocus names.
     */
    List<String> getAllAutofocusMethods();
@@ -68,5 +73,5 @@ public interface AutofocusManager {
     * Initializes all known autofocus plugins.
     *
     */
-    void initialize();
+   void initialize();
 }
