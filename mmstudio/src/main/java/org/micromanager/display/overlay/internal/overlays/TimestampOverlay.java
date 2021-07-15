@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -42,6 +43,7 @@ import javax.swing.SwingConstants;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.apache.commons.lang.time.DurationFormatUtils;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
@@ -191,9 +193,7 @@ public final class TimestampOverlay extends AbstractOverlay {
             if (elapsedMs < 0.0) {
                return "RELATIVE TIME UNAVAILABLE";
             }
-            Date date = new Date((long)elapsedMs);
-            SimpleDateFormat dest = new SimpleDateFormat(formatString);
-            return dest.format(date);
+            return DurationFormatUtils.formatDuration((long) elapsedMs, formatString, false);
          }
       },
       ;
