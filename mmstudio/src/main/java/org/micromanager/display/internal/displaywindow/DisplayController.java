@@ -1113,8 +1113,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          // TODO: report exception
       }
       perfMon_ = null;
-      animationController_.removeListener(this);
       animationController_.shutdown();
+      animationController_.removeListener(this);
       animationController_ = null;
       controlsFactory_ = null;
       runnablePool_ = null;
