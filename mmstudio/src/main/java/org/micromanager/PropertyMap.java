@@ -80,7 +80,7 @@ public interface PropertyMap {
    /**
     * A value that can be stored in a property map.
     *
-    * <p></p>This is only used for interchange purposes, for example when performing
+    * <p>This is only used for interchange purposes, for example when performing
     * bulk operations on property maps.</p>
     */
    interface OpaqueValue {

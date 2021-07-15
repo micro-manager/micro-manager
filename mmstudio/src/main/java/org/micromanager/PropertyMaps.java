@@ -26,14 +26,14 @@ public final class PropertyMaps {
    /**
     * Returns a builder object for creating {@code PropertyMap} instances.
     *
-    * <p>Create property maps like this:
+    * <p>Create property maps like this:</p>
     * <pre><code>
     * PropertyMap myPropertyMap = PropertyMaps.builder().
     *       putString("first name", "Jane").
     *       putString("last name", "Smith").
     *       putInteger("age", 32).
     *       build();
-    * </code></pre></p>
+    * </code></pre>
     *
     * @return a property map builder
     */

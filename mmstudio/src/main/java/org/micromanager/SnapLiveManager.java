@@ -54,9 +54,9 @@ public interface SnapLiveManager {
    /**
     * Returns whether live mode is on.
     *
-    * <p></p>If live mode is on but suspended, this method returns <code>true</code>.</p>
+    * <p>If live mode is on but suspended, this method returns <code>true</code>.</p>
     *
-    * @return true iff live mode is on.
+    * @return true if live mode is on.
     */
    boolean isLiveModeOn();
 
