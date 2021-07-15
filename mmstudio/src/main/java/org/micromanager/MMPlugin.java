@@ -32,7 +32,7 @@ package org.micromanager;
  * - <code>org.micromanager.display.OverlayPlugin</code>, for drawing on top of
  *   image windows.
  *
- * To cause your plugin to be loaded when the program runs, you need to do the
+ * <p>To cause your plugin to be loaded when the program runs, you need to do the
  * following:
  * - Create a class that implements one of the interfaces listed above and the
  *   <code>org.scijava.plugin.SciJavaPlugin</code> interface (which is an empty
@@ -41,9 +41,9 @@ package org.micromanager;
  *   annotation, with the <code>type</code> parameter of that annotation being
  *   the type of the interface your plugin implements.
  * - Place your plugin's jar file in the mmplugins directory of your ImageJ
- *   installation.
+ *   installation.</p>
  *
- * The annotated plugin class should look something like this (assuming you
+ * <p>The annotated plugin class should look something like this (assuming you
  * want a <code>MenuPlugin</code>; replace with a different type as
  * appropriate):
  *
@@ -55,38 +55,43 @@ package org.micromanager;
  * public class MyPlugin implements MenuPlugin, SciJavaPlugin {
  *    // ...plugin contents go here...
  * }
- * </code></pre>
+ * </code></pre></p>
  *
- * Note that all plugins must have a default (no-argument) constructor.
+ * <p>Note that all plugins must have a default (no-argument) constructor.</p>
  */
 public interface MMPlugin extends MMGenericPlugin {
    /**
     * Receive the Studio object needed to make API calls.
+    *
     * @param studio instance of the Micro-Manager Studio object
     */
-   public void setContext(Studio studio);
+   void setContext(Studio studio);
 
    /**
     * Provide a short string identifying the plugin.
+    *
     * @return String identifying this plugin
     */
-   public String getName();
+   String getName();
 
    /**
     * Provide a longer string describing the purpose of the plugin.
+    *
     * @return String describing this purpose of this plugin
     */
-   public String getHelpText();
+   String getHelpText();
 
    /**
     * Provide a version string.
+    *
     * @return Version String
     */
-   public String getVersion();
+   String getVersion();
 
    /**
     * Provide a copyright string.
+    *
     * @return copyright information
     */
-   public String getCopyright();
+   String getCopyright();
 }
