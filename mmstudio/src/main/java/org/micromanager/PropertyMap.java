@@ -29,7 +29,7 @@ import java.util.UUID;
  * stores typed values rather than just strings, and supports storage of nested
  * property maps.</p>
  *
- * <p><strong>Methods to access primitive types</strong><br>
+ * <p><strong>Methods to access primitive types</strong><br></p>
  * <pre><code>
  * PropertyMap pm = ...
  * pm.containsLong("key"); // - true if "key" exists and type is long
@@ -51,9 +51,9 @@ import java.util.UUID;
  * default value was given as any collection or iterable.
  * The same pattern applies to {@code boolean}, {@code byte}, {@code short},
  * {@code int}, {@code long}, {@code float}, and {@code double}. (No {@code
- * char} or {@code void}, this is intentional.)</p>
+ * char} or {@code void}, this is intentional.)
  *
- * <p><strong>Methods to access primitive types</strong><br>
+ * <p><strong>Methods to access primitive types</strong><br></p>
  * <pre><code>
  * pm.containsString("key3");
  * pm.getString("key3", "foo");
@@ -66,7 +66,7 @@ import java.util.UUID;
  * get methods return a {@code List} regardless of the type of the default value.
  * The same pattern applies to {@code String}, {@code Color}, {@code
  * AffineTransform}, {@code Rectangle}, {@code Dimension}, {@code Point}, and
- * nested {@code PropertyMap}.</p>
+ * nested {@code PropertyMap}.
  *
  * <p><strong>Methods to access enum types</strong><br>
  * Enum values can be stored by automatically converting to {@code String}.
