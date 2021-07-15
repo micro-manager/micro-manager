@@ -217,7 +217,7 @@ public final class AnimationController<P> {
       startTicks(tickIntervalMs_, tickIntervalMs_);
    }
 
-   public synchronized void stopAnimation() {
+   public void stopAnimation() {
       if (animationEnabled_.compareAndSet(false, false)) {
          return;
       }
