@@ -45,7 +45,7 @@ package org.micromanager;
  *
  * <p>The annotated plugin class should look something like this (assuming you
  * want a <code>MenuPlugin</code>; replace with a different type as
- * appropriate):
+ * appropriate):</p>
  *
  * <pre><code>
  * import org.micromanager.MenuPlugin;
@@ -55,7 +55,7 @@ package org.micromanager;
  * public class MyPlugin implements MenuPlugin, SciJavaPlugin {
  *    // ...plugin contents go here...
  * }
- * </code></pre></p>
+ * </code></pre>
  *
  * <p>Note that all plugins must have a default (no-argument) constructor.</p>
  */

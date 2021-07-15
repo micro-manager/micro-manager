@@ -38,7 +38,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Definition of a position in space in terms of available stages/drives.
  *
- * <p></p>The current implementation uses the concept of "DefaultXYStage", and
+ * <p>The current implementation uses the concept of "DefaultXYStage", and
  * "DefaultZStage".  This is problematic.  The concept of "default" stages 
  * originates in the Micro-Manager core, that always has only 1 stage that is 
  * the "active" one.  However, MultiStagePosition devices can record the position
