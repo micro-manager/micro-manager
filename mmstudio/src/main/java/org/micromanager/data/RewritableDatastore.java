@@ -66,6 +66,7 @@ public interface RewritableDatastore extends Datastore {
     * Delete an image from the Datastore. Posts an ImageDeletedEvent to the
     * event bus. Throws an IllegalArgumentException if the provided coordinates
     * do not correspond to any image in the Datastore.
+    *
     * @param coords Coordinates of the image to remove.
     * @throws java.io.IOException if an IO error occurred.
     * @throws IllegalArgumentException if the coords do not match any image.
@@ -82,6 +83,7 @@ public interface RewritableDatastore extends Datastore {
     * with an empty Coords object will delete every image in the Datastore,
     * as per deleteAllImages() except without posting a DatastoreClearedEvent.
     * This method may potentially remove no images.
+    *
     * @param coords Potentially-underspecified coordinates of the image(s) to
     *        remove.
     * @throws java.io.IOException if an IO error occurred.
@@ -92,6 +94,7 @@ public interface RewritableDatastore extends Datastore {
     * Delete all images from the Datastore. An ImageDeletedEvent will be
     * published on the Datastore's event bus for each image, as will a
     * DatastoreClearedEvent.
+    *
     * @throws java.io.IOException if an IO error occurred.
     */
    void deleteAllImages() throws IOException;

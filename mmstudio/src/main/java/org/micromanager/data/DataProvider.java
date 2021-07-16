@@ -29,15 +29,15 @@ public interface DataProvider extends Closeable {
 
    /**
     * Retrieve any image from this DataProvider.
-    * 
+    *
     * @return a random image from the collection kept by the DataProvider
     * @throws IOException when error occurs loading the data from storage
     */
    Image getAnyImage() throws IOException;
 
    /**
-    * Retrieve the axis currently in use by this DataProvider
-    * 
+    * Retrieve the axis currently in use by this DataProvider.
+    *
     * @return List with Axis being used in no particular order
     */
    List<String> getAxes();
@@ -46,12 +46,12 @@ public interface DataProvider extends Closeable {
     * Returns the highest index plus 1 along the given axis.
     * If the axis is not (yet) represented in the data set, it will return 0.
     *
-    * If the axis is present in the data set, but no Coords with that axes
-    * are found (Coords for an axis can not be zero), it will return 1.
+    * <p>If the axis is present in the data set, but no Coords with that axes
+    * are found (Coords for an axis can not be zero), it will return 1.</p>
     *
-    * Missing images for any given axis are ignored, e.g. if the DataProvider
+    * <p>Missing images for any given axis are ignored, e.g. if the DataProvider
     * has images 0, 1, 3, 4 for a given axis, it will return 5. Do not expect
-    * all images along a given axis to be present in the DataProvider.
+    * all images along a given axis to be present in the DataProvider.</p>
     *
     * @param axis Axis for which the next index is requested.
     * @return Next Index for the given axis.
@@ -65,12 +65,12 @@ public interface DataProvider extends Closeable {
     * Returns the highest index along the given axis plus 1.
     * If the axis is not (yet) represented in the data set, it will return 0.
     *
-    * If the axis is present in the data set, but no Coords with that axes
-    * are found (Coords for an axis can not be zero), it will return 1.
+    * <p>If the axis is present in the data set, but no Coords with that axes
+    * are found (Coords for an axis can not be zero), it will return 1.</p>
     *
-    * Missing images for any given axis are ignored, e.g. if the DataProvider
+    * <p>Missing images for any given axis are ignored, e.g. if the DataProvider
     * has images 0, 1, 3, 4 for a given axis, it will return 5. Do not expect
-    * all images along a given axis to be present in the DataProvider.
+    * all images along a given axis to be present in the DataProvider.</p>
     *
     * @param axis Axis for which the next index is requested.
     * @return Next Index for the given axis.
@@ -78,7 +78,8 @@ public interface DataProvider extends Closeable {
    int getNextIndex(String axis);
 
    /**
-    * Returns the image at the given postion 
+    * Returns the image at the given position.
+    *
     * @param coords Coords specifying the multi-dimensional index to the image
     * @return desired Image
     * @throws IOException when error occurs loading the data from storage
@@ -86,7 +87,8 @@ public interface DataProvider extends Closeable {
    Image getImage(Coords coords) throws IOException;
 
    /**
-    * Returns a list of images that have coords matching the given one
+    * Returns a list of images that have coords matching the given one.
+    *
     * @param coords specification of multi-dimensional index that needs to be
     *               present in the Coords of the images that will be returned
     * @return Matching Images
@@ -100,6 +102,7 @@ public interface DataProvider extends Closeable {
    /**
     * Returns a list of image in the DataProvider's collection that have
     * identical coords after removing the given axes from both source and target.
+    *
     * @param coords Coords to look for in the provider's collection
     * @param ignoreTheseAxes Axes that will be removed from copy of Coords in the
     *                        collection before checking for identity
@@ -109,14 +112,15 @@ public interface DataProvider extends Closeable {
    List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException;
 
    /**
-    * A dataProvider is frozen when no more images can be added
-    * 
+    * A dataProvider is frozen when no more images can be added.
+    *
     * @return True if no more images can be added
     */
    boolean isFrozen();
 
    /**
-    * Coords with highest possible index along each axis
+    * Coords with highest possible index along each axis.
+    *
     * @return Coords with highest possible index along each axis
     * @deprecated Use {@link #getNextIndex(String axis)} instead
     */
@@ -125,14 +129,16 @@ public interface DataProvider extends Closeable {
 
 
    /**
-    * Provides total number of images that can be accessed through this DataProvider
+    * Provides total number of images that can be accessed through this DataProvider.
     * TODO: does this include blank images/empty Coords?
+    *
     * @return total number of images that can be accessed through this DataProvider
     */
    int getNumImages();
 
    /**
-    * 
+    * Returns Summary Metadata.
+    *
     * @return summarymetadata of this dataProvides
     */
    SummaryMetadata getSummaryMetadata();
@@ -142,8 +148,8 @@ public interface DataProvider extends Closeable {
    boolean hasImage(Coords coords);
    
    /**
-    * A dataProvider has a name (not guaranteed to be unique)
-    * 
+    * A dataProvider has a name (not guaranteed to be unique).
+    *
     * @return name of this dataProvider
     */
    String getName();

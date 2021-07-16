@@ -34,41 +34,62 @@ import org.micromanager.PropertyMap;
  * the getSummaryMetadataBuilder() method of the DataManager class, or call the
  * copy() method of an existing SummaryMetadata instance.
  *
- * This class uses a Builder pattern. Please see
- * https://micro-manager.org/wiki/Using_Builders
- * for more information.
+ * <p>This class uses a Builder pattern. Please see
+ * https://micro-manager.org/wiki/Using_Builders for more information.</p>
  */
 public interface SummaryMetadata {
+   /**
+    * Builder for SummaryMetadata.
+    */
    interface Builder extends SummaryMetadataBuilder {
-      @Override Builder prefix(String prefix);
-      @Override Builder userName(String userName);
+      @Override
+      Builder prefix(String prefix);
+
+      @Override
+      Builder userName(String userName);
+
       @Override Builder profileName(String profileName);
 
       @Override Builder computerName(String computerName);
+
       @Override Builder directory(String directory);
 
       @Override Builder channelGroup(String channelGroup);
+
       @Override Builder channelNames(String... channelNames);
+
       Builder channelNames(Iterable<String> channelNames);
+
       @Override Builder zStepUm(Double zStepUm);
+
       @Override Builder waitInterval(Double waitInterval);
+
       Builder customIntervalsMs(double... customIntervalsMs);
+
       Builder customIntervalsMs(Iterable<Double> customIntervalsMs);
 
       @Override Builder axisOrder(String... axisOrder);
+
       Builder axisOrder(Iterable<String> axisOrder);
+
       @Override Builder intendedDimensions(Coords intendedDimensions);
+
       @Override Builder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
+
       @Override Builder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
 
       @Override Builder startDate(String startDate);
+
       @Override Builder stagePositions(MultiStagePosition... stagePositions);
+
       Builder stagePositions(Iterable<MultiStagePosition> stagePositions);
+
       @Override Builder userData(PropertyMap userData);
    }
 
    /**
-    * 
+    * Deprecated.
+    *
     * @deprecated - Use SummaryMetadata.Builder instead
     */
    @Deprecated
@@ -76,32 +97,46 @@ public interface SummaryMetadata {
       SummaryMetadata build();
 
       SummaryMetadataBuilder prefix(String prefix);
+
       SummaryMetadataBuilder userName(String userName);
+
       SummaryMetadataBuilder profileName(String profileName);
 
       SummaryMetadataBuilder computerName(String computerName);
+
       SummaryMetadataBuilder directory(String directory);
 
       SummaryMetadataBuilder channelGroup(String channelGroup);
+
       SummaryMetadataBuilder channelNames(String... channelNames);
+
       SummaryMetadataBuilder zStepUm(Double zStepUm);
+
       SummaryMetadataBuilder waitInterval(Double waitInterval);
+
       @Deprecated
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
+
       SummaryMetadataBuilder axisOrder(String... axisOrder);
+
       SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions);
+
       SummaryMetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
+
       SummaryMetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
 
       SummaryMetadataBuilder startDate(String startDate);
+
       SummaryMetadataBuilder stagePositions(MultiStagePosition... stagePositions);
+
       SummaryMetadataBuilder userData(PropertyMap userData);
    }
 
    Builder copyBuilder();
 
    /**
-    * 
+    * Deprecated.
+    *
     * @return - A copy of the SummaryMetadataBuilder
     * @deprecated - Use SummaryMetadata.Builder.copyBuilder instead
     */
@@ -112,48 +147,56 @@ public interface SummaryMetadata {
     * The user-supplied portion of the filename, plus any additional numerical
     * identifier needed to ensure uniqueness. This should in practice be the
     * name of the directory that the data is saved in.
+    *
     * @return user-supplied portion of the filename.
     */
    String getPrefix();
 
    /**
-    * The signed-in user of the machine that collected this data
+    * The signed-in user of the machine that collected this data.
+    *
     * @return signed-in user of the machine that collected this data
     */
    String getUserName();
 
    /**
     * The name of the Micro-Manager profile used to collect this data.
+    *
     * @return name of the micro-Manager profile used to collect this data
     */
    String getProfileName();
 
    /**
-    * The version of Micro-Manager used to collect the data
+    * The version of Micro-Manager used to collect the data.
+    *
     * @return version of Micro-Manager used to collect the data
     */
    String getMicroManagerVersion();
 
    /**
-    * The version of the metadata when the data was collected
+    * The version of the metadata when the data was collected.
+    *
     * @return version of the metadata when the data was collected
     */
    String getMetadataVersion();
 
    /**
-    * The name of the computer the data was collected on
+    * The name of the computer the data was collected on.
+    *
     * @return name of the computer the data was collected on
     */
    String getComputerName();
 
    /**
-    * The directory the data was originally saved to
+    * The directory the data was originally saved to.
+    *
     * @return directory the data was originally saved to
     */
    String getDirectory();
 
    /**
     * The config group that was used to switch between channels.
+    *
     * @return name of the channel config group
     */
    String getChannelGroup();
@@ -161,6 +204,8 @@ public interface SummaryMetadata {
    List<String> getChannelNameList();
 
    /**
+    * Deprecated.
+    *
     * @return Array with channelname
     * @deprecated - Use getChannelNameList() instead
     */
@@ -173,31 +218,39 @@ public interface SummaryMetadata {
     * there is no name there (channelNames is unset, or not long enough, or
     * contains a null), then the name will be "channel N" where N is the
     * channel index.
+    *
     * @param index Channel index to get the name for.
     * @return Name of the channel.
     */
    String getSafeChannelName(int index);
 
    /**
-    * Distance between slices in a volume of data, in microns
+    * Distance between slices in a volume of data, in microns.
+    *
     * @return distance between slices in a volume of data, in microns
     */
    Double getZStepUm();
 
    /**
-    * Amount of time to wait between timepoints
+    * Amount of time to wait between timepoints.
+    *
     * @return amount of time to wait between timepoints
     */
    Double getWaitInterval();
 
    /**
     * When using a variable amount of time between timepoints, this array has
-    * the list of wait times
+    * the list of wait times.
+    *
     * @return list of wait times between timepoints
     */
    List<Double> getCustomIntervalsMsList();
+
    double[] getCustomIntervalsMsArray();
+
    /**
+    * Deprecated.
+    *
     * @return - Array with custom intervals
     * @deprecated - Use double[] getCustomIntervalsMsArray() instead
     */
@@ -214,11 +267,14 @@ public interface SummaryMetadata {
     * are added to the Datastore, if the property is not set manually. Other
     * Datastore types cannot change the SummaryMetadata as images are added;
     * thus this property will need to be set manually in those cases.
+    *
     * @return Axis names in order of change rate.
     */
    List<String> getOrderedAxes();
 
    /**
+    * Deprecated.
+    *
     * @return - Array with Axis ordered as described for getOrderedAxes() 
     * @deprecated - Use getOrdereddAxes() instead
     */
@@ -229,6 +285,7 @@ public interface SummaryMetadata {
     * The expected number of images along each axis that were to be collected.
     * The actual dimensions may differ if the acquisition was aborted partway
     * through for any reason.
+    *
     * @return expected number of images along each axis that were to be collected
     */
    Coords getIntendedDimensions();
@@ -236,6 +293,7 @@ public interface SummaryMetadata {
    /**
     * For acquisitions with more than one Z slice, whether or not the shutter
     * was left open in between each slice.
+    *
     * @return whether shutter was left open between Z slices.
     */
    Boolean getKeepShutterOpenSlices();
@@ -243,23 +301,28 @@ public interface SummaryMetadata {
    /**
     * For acquisitions with more than one channel, whether or not the shutter
     * was left open in between each channel.
+    *
     * @return whether shutter was left open between channels.
     */
    Boolean getKeepShutterOpenChannels();
 
    /**
-    * The date and time at which the acquisition started
+    * The date and time at which the acquisition started.
+    *
     * @return date and time at which the acquisition started
     */
    String getStartDate();
 
    /**
-    * The stage positions that were to be visited in the acquisition
+    * The stage positions that were to be visited in the acquisition.
+    *
     * @return stage positions that were to be visited in the acquisition
     */
    List<MultiStagePosition> getStagePositionList();
 
    /**
+    * Deprecated.
+    *
     * @return see getStagePostionList()
     * @deprecated - Use getStagePositionList() instead
     */
@@ -267,7 +330,7 @@ public interface SummaryMetadata {
    MultiStagePosition[] getStagePositions();
 
    /**
-    * Any general-purpose user meta data
+    * Any general-purpose user meta data.
     *
     * @return Any general-purpose user meta data
     */

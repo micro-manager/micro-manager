@@ -2,7 +2,6 @@ package org.micromanager.data;
 
 
 /**
- *
  *  An unchecked exception thrown when an image is put into a datastore that
  *  already has an image of a different size and that does not support images
  *  differing in size (currently non of the MM Datastores support images

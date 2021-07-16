@@ -26,7 +26,7 @@ import org.micromanager.MMEvent;
  * This class signifies that a Datastore has become frozen and can no longer
  * be written to (but read actions may still occur).
  *
- * The default implementation of this Event posts on the DataProvider
- * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.
+ * <p>The default implementation of this Event posts on the DataProvider
+ * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.</p>
  */
 public interface DatastoreFrozenEvent extends MMEvent {}

@@ -25,18 +25,20 @@ import org.micromanager.MMEvent;
 /**
  * This class signifies that an image has been overwritten in the Datastore.
  *
- * The default implementation of this Event posts on the DataProvider
- * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.
+ * <p>The default implementation of this Event posts on the DataProvider
+ * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.</p>
  */
 public interface ImageOverwrittenEvent extends MMEvent {
    /**
     * Provides the newly-added image.
+    *
     * @return the Image that was just added to the Datastore.
     */
    Image getNewImage();
 
    /**
     * Provides the image that was overwritten.
+    *
     * @return the Image that was just overwritten in the Datastore.
     */
    Image getOldImage();
@@ -44,6 +46,7 @@ public interface ImageOverwrittenEvent extends MMEvent {
    /**
     * Provides the Datastore this image was added to; potentially useful for
     * code that listens to events from multiple Datastores.
+    *
     * @return the Datastore this image was added to.
     */
    Datastore getDatastore();

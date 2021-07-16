@@ -32,7 +32,7 @@ import java.io.IOException;
 public interface Datastore extends DataProvider {
    /**
     * Sets the data storage implementation for this Datastore.
-    * 
+    *
     * @param storage data storage to be used henceforth
     */
    void setStorage(Storage storage);
@@ -76,7 +76,8 @@ public interface Datastore extends DataProvider {
    boolean hasAnnotation(String tag) throws IOException;
 
    /**
-    * Get an annotation, creating it if it doesn't exist
+    * Get an annotation, creating it if it doesn't exist.
+    *
     * @param tag tag for the annotation
     * @return Annotation for th given tag
     * @throws java.io.IOException if an IO error occurs
@@ -85,17 +86,17 @@ public interface Datastore extends DataProvider {
 
    /**
     * Freeze this Datastore so it cannot be further modified.
-    * 
+    *
     * @throws java.io.IOException if an IO error occurs
     */
    void freeze() throws IOException;
 
    /**
     * Set the intended path where the data will be stored.
-    * <p>
-    * In the current Micro-Manager file format, this path is used as the
-    * enclosing directory.
-    * 
+    *
+    * <p>In the current Micro-Manager file format, this path is used as the
+    * enclosing directory.</p>
+    *
     * @param path the file path (without extension)
     * @throws UnsupportedOperationException if this is an on-disk datastore
     */
@@ -103,10 +104,10 @@ public interface Datastore extends DataProvider {
 
    /**
     * Get the intended or actual path where the data will be stored.
-    * <p>
-    * If this is an in-memory datastore, returns whatever was set by {@link
-    * #setSavePath}. If this is an on-disk datastore, returns the actual path.
-    * 
+    *
+    * <p>If this is an in-memory datastore, returns whatever was set by {@link
+    * #setSavePath}. If this is an on-disk datastore, returns the actual path.</p>
+    *
     * @return the file path where the data is (to be) saved
     */
    String getSavePath();
@@ -120,6 +121,8 @@ public interface Datastore extends DataProvider {
    }
    
    /**
+    * Deprecated.
+    *
     * @param parent Window  on top of which to display the dialog prompt;
     *        may be null.
     * @return true if data was saved; false if user canceled
@@ -131,8 +134,8 @@ public interface Datastore extends DataProvider {
 
    /**
     * Saves the datastore to an interactively determined path.
-    * Opens a file dialog prompting user for a storage location
-    * 
+    * Opens a file dialog prompting user for a storage location.
+    *
     * @param parent Window  on top of which to display a dialog prompting
     *        the user for a location to save.  After displaying 
     * @param blocking if true will return after saving, otherwise will return quickly
@@ -146,17 +149,16 @@ public interface Datastore extends DataProvider {
    /**
     * Saves the datastore to the given path using the given format (SaveMode)
     * Will save synchronously (i.e. this function will block)
-    * 
+    *
     * @param mode File format to save to
     * @param path File path used to save the data
-    * 
     * @throws java.io.IOException if an IO error occurs
     */
    void save(SaveMode mode, String path) throws IOException;
    
    /**
-    * Saves the datastore to the given path using the given format (SaveMode)
-    * 
+    * Saves the datastore to the given path using the given format (SaveMode).
+    *
     * @param mode File format to save to
     * @param path File path used to save the data
     * @param blocking when true, will block while saving data, otherwise will return
@@ -166,7 +168,8 @@ public interface Datastore extends DataProvider {
    void save(SaveMode mode, String path, boolean blocking) throws IOException;
    
    /**
-    * Sets the name of the Datastore.  Posts a DatastoreNewNameEvent
+    * Sets the name of the Datastore.  Posts a DatastoreNewNameEvent.
+    *
     * @param name new name of the Datastore
     */
    void setName(String name);
