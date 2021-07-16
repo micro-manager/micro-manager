@@ -38,9 +38,9 @@ public interface AlertManager {
     * null, then the alert will always be shown, in addition to all other
     * alerts for this title.
     *
-    * If the user dismisses one of these alerts, they are effectively clearing
+    * <p>If the user dismisses one of these alerts, they are effectively clearing
     * the "message history" for the alert. Future calls to this method will
-    * create a new alert rather than resurrect the old one.
+    * create a new alert rather than resurrect the old one.</p>
     *
     * @param title Title text to show above the alert. May be null.
     * @param group Object to use for grouping multiple alert texts together.
@@ -57,6 +57,7 @@ public interface AlertManager {
     * changing the text will not bring it back.  Each UpdatableAlert is shown
     * separately in the Messages window, so calling this method repeatedly can
     * rapidly fill the window with alerts.
+    *
     * @param title Title text to show above the main text. May be null.
     * @param text Initial text to display to the user.
     * @return Newly-created UpdatableAlert
@@ -69,11 +70,11 @@ public interface AlertManager {
     * is still usable (per its isUsable() method), then no action will be
     * taken.
     *
-    * This method returns a UpdatableAlert primarily so that the custom alert
+    * <p>This method returns a UpdatableAlert primarily so that the custom alert
     * may update the text of the alert (via UpdatableAlert.setText()). While
     * this does not directly affect the display of the alert in the Messages
     * window (the caller is of course responsible for that), it does affect the
-    * text that is displayed in the main window.
+    * text that is displayed in the main window.</p>
     *
     * @param title Title text to show above the custom contents. May be null.
     * @param contents Contents to be inserted into the alert dialog.

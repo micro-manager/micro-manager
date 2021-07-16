@@ -39,12 +39,14 @@ public interface UpdatableAlert extends Alert {
     * current status of something (like the acquisition status alert). Usually
     * you should use a combining text alert rather than update this text
     * directly.
+    *
     * @param text New text of alert.
     */
    void setText(String text);
 
    /**
     * Returns the current text of the alert.
+    *
     * @return Current text of the alert.
     */
    String getText();
