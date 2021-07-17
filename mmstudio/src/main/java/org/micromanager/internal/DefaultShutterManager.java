@@ -32,8 +32,11 @@ import org.micromanager.events.internal.DefaultAutoShutterEvent;
 import org.micromanager.events.internal.DefaultShutterEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 
+/**
+ * Default implementation of the ShutterManager API.
+ */
 public final class DefaultShutterManager implements ShutterManager {
-   private Studio studio_;
+   private final Studio studio_;
    private ArrayList<String> shutters_;
    private boolean isAutoShutter_ = false;
    private boolean isOpen_ = false;
@@ -48,14 +51,13 @@ public final class DefaultShutterManager implements ShutterManager {
     */
    @Subscribe
    public void onSystemConfigurationLoaded(SystemConfigurationLoadedEvent event) {
-      shutters_ = new ArrayList<String>();
+      shutters_ = new ArrayList<>();
       try {
          for (String shutter : studio_.core().getLoadedDevicesOfType(
                   DeviceType.ShutterDevice)) {
             shutters_.add(shutter);
          }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio_.logs().logError(e, "Error getting shutter devices");
       }
       studio_.events().post(new ShutterDevicesEvent(shutters_));
@@ -89,8 +91,7 @@ public final class DefaultShutterManager implements ShutterManager {
             isAutoShutter_ = isAuto;
             studio_.events().post(new DefaultAutoShutterEvent(isAuto));
          }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio_.logs().logError(e, "Error updating shutter state after GUI refresh");
       }
    }

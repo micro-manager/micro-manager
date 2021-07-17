@@ -21,20 +21,20 @@ import org.micromanager.internal.graph.GraphFrame;
  */
 public final class LineProfile {
    private GraphData lineProfileData_;
-   private GraphFrame profileWin_;
-   private DisplayWindow display_;
-   
+   private final GraphFrame profileWin_;
+   private final DisplayWindow display_;
+
+   /**
+    * Constructs the Line Profile object.
+    *
+    * @param display Viewer we should look at
+    */
    public LineProfile(DisplayWindow display) {
       display_ = display;
-      display_.registerForEvents(this);;
+      display_.registerForEvents(this);
       calculateLineProfileData(display_.getImagePlus());
 
-      profileWin_ = new GraphFrame(new Runnable() {
-         @Override
-         public void run() {
-            updateLineProfile();
-         }
-      });
+      profileWin_ = new GraphFrame(this::updateLineProfile);
       profileWin_.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent event) {
@@ -97,6 +97,9 @@ public final class LineProfile {
    }
 */
 
+   /**
+    * Unregister from display events and dispose of the profile Window.
+    */
    public void cleanup() {
       display_.unregisterForEvents(this);
       if (profileWin_ != null) {

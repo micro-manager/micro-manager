@@ -62,8 +62,8 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.acquisition.internal.AcquisitionSelector;
 import org.micromanager.alerts.internal.AlertClearedEvent;
 import org.micromanager.alerts.internal.AlertUpdatedEvent;
-import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.alerts.internal.DefaultAlert;
+import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.ChannelGroupChangedEvent;
@@ -74,7 +74,12 @@ import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.DragDropUtil;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MMKeyDispatcher;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.quickaccess.internal.controls.ShutterControl;
 
@@ -101,11 +106,7 @@ public final class MainFrame extends JFrame {
    // Toggles activity of chanGroupSelect_ on or off.
    private boolean shouldChangeChannelGroup_;
    private JLabel labelImageDimensions_;
-   private JButton liveButton_;
-   private JCheckBox autoShutterCheckBox_;
-   private JLabel shutterIcon_;
    private JButton toggleShutterButton_;
-   private JButton snapButton_;
    private JToggleButton handMovesButton_;
    private JButton autofocusNowButton_;
    private JButton autofocusConfigureButton_;
@@ -127,6 +128,12 @@ public final class MainFrame extends JFrame {
    private AbstractButton clearRoiButton_;
    private AbstractButton centerQuadButton_;
 
+   /**
+    * Main Frame constructor.
+    *
+    * @param mmStudio implementation of Studio object.
+    * @param core Hardware interface.
+    */
    @SuppressWarnings("LeakingThisInConstructor")
    public MainFrame(MMStudio mmStudio, CMMCore core) {
       super("main micro manager frame");
@@ -186,6 +193,7 @@ public final class MainFrame extends JFrame {
             setMenuBar(null);
             setJMenuBar(getJMenuBar());
          }
+
          // Shut down when this window is closed.
          @Override
          public void windowClosing(WindowEvent event) {
@@ -209,9 +217,7 @@ public final class MainFrame extends JFrame {
       button.setMargin(new Insets(0, 0, 0, 0));
       button.setToolTipText(help);
       button.setFont(defaultFont_);
-      button.addActionListener((ActionEvent e) -> {
-         action.run();
-      });
+      button.addActionListener((ActionEvent e) -> action.run());
       return button;
    }
 
@@ -242,9 +248,8 @@ public final class MainFrame extends JFrame {
          }
       });
       textFieldExp_.setFont(defaultFont_);
-      textFieldExp_.addActionListener((ActionEvent e) -> {
-         mmStudio_.app().setExposure(getDisplayedExposureTime());
-      });
+      textFieldExp_.addActionListener((ActionEvent e) ->
+            mmStudio_.app().setExposure(getDisplayedExposureTime()));
       subPanel.add(textFieldExp_, "gapleft push, wrap");
 
       // Channel group.
@@ -252,7 +257,7 @@ public final class MainFrame extends JFrame {
 
       // HACK: limit the width of this combo box, ignoring the width of the
       // entries inside of it.
-      chanGroupSelect_ = new JComboBox<String> () {
+      chanGroupSelect_ = new JComboBox<String>() {
          @Override
          public Dimension getMinimumSize() {
             return new Dimension(110, super.getSize().height);
@@ -277,9 +282,8 @@ public final class MainFrame extends JFrame {
       comboBinning_.setName("Binning");
       comboBinning_.setFont(defaultFont_);
       comboBinning_.setMaximumRowCount(4);
-      comboBinning_.addActionListener((ActionEvent e) -> {
-         mmStudio_.changeBinning(getBinMode());
-      });
+      comboBinning_.addActionListener((ActionEvent e) ->
+            mmStudio_.changeBinning(getBinMode()));
       subPanel.add(comboBinning_, "gapleft push, width 60::, wrap");
 
       // Shutter device.
@@ -303,11 +307,11 @@ public final class MainFrame extends JFrame {
       shutterPanel.add(shutterComboBox_, "gapleft push, width 60::, wrap");
 
       // Auto/manual shutter control.
-      autoShutterCheckBox_ = ShutterControl.makeAutoShutterCheckBox(mmStudio_);
-      shutterPanel.add(autoShutterCheckBox_, "w 72!, h 20!, split 3");
+      JCheckBox autoShutterCheckBox = ShutterControl.makeAutoShutterCheckBox(mmStudio_);
+      shutterPanel.add(autoShutterCheckBox, "w 72!, h 20!, split 3");
 
-      shutterIcon_ = ShutterControl.makeShutterIcon(mmStudio_);
-      shutterPanel.add(shutterIcon_, "growx, alignx center");
+      JLabel shutterIcon = ShutterControl.makeShutterIcon(mmStudio_);
+      shutterPanel.add(shutterIcon, "growx, alignx center");
 
       toggleShutterButton_ = ShutterControl.makeShutterButton(mmStudio_);
       shutterPanel.add(toggleShutterButton_, "growx, h 20!, wrap");
@@ -322,9 +326,8 @@ public final class MainFrame extends JFrame {
             "flowx, growx, pushy 0, split 2");
 
       saveConfigButton_ = createButton("Save", null,
-         "Save current presets to the configuration file", () -> {
-            mmStudio_.uiManager().promptToSaveConfigPresets();
-      });
+         "Save current presets to the configuration file", () ->
+                  mmStudio_.uiManager().promptToSaveConfigPresets());
       subPanel.add(saveConfigButton_,
             "pushy 0, gapleft push, alignx right, w 88!, h 20!");
 
@@ -348,38 +351,43 @@ public final class MainFrame extends JFrame {
    private JPanel createCommonActionButtons() {
       JPanel subPanel = new JPanel(
             new MigLayout("flowy, insets 1, gap 1"));
-      snapButton_ = (JButton) QuickAccessFactory.makeGUI(mmStudio_.plugins().getQuickAccessPlugins().get(
-               "org.micromanager.quickaccess.internal.controls.SnapButton"));
-      snapButton_.setFont(defaultFont_);
-      subPanel.add(snapButton_, BIGBUTTON_SIZE);
+      JButton snapButton =
+            (JButton) QuickAccessFactory.makeGUI(
+                  mmStudio_.plugins().getQuickAccessPlugins().get(
+                  "org.micromanager.quickaccess.internal.controls.SnapButton"));
+      snapButton.setFont(defaultFont_);
+      subPanel.add(snapButton, BIGBUTTON_SIZE);
 
-      liveButton_ = (JButton) QuickAccessFactory.makeGUI(mmStudio_.plugins().getQuickAccessPlugins().get(
-               "org.micromanager.quickaccess.internal.controls.LiveButton"));
-      liveButton_.setFont(defaultFont_);
-      subPanel.add(liveButton_, BIGBUTTON_SIZE);
+      JButton liveButton =
+            (JButton) QuickAccessFactory.makeGUI(
+                  mmStudio_.plugins().getQuickAccessPlugins().get(
+                  "org.micromanager.quickaccess.internal.controls.LiveButton"));
+      liveButton.setFont(defaultFont_);
+      subPanel.add(liveButton, BIGBUTTON_SIZE);
 
       JButton albumButton = createButton("Album", "camera_plus_arrow.png",
-         "Acquire single frame and add to an album", () -> {
+            "Acquire single frame and add to an album", () -> {
             try {
                mmStudio_.album().addImages(mmStudio_.live().snap(false));
             } catch (IOException ioEx) {
                mmStudio_.logs().showError(ioEx);
             }
-      });
+         });
       subPanel.add(albumButton, BIGBUTTON_SIZE);
 
       subPanel.add(AcquisitionSelector.makeSelector(mmStudio_), BIGBUTTON_SIZE);
 
       JButton refreshButton = createButton("Refresh", "arrow_refresh.png",
-         "Refresh all GUI controls directly from the hardware", () -> {
+            "Refresh all GUI controls directly from the hardware", () -> {
             mmStudio_.live().setSuspended(true);
             core_.updateSystemStateCache();
             mmStudio_.uiManager().updateGUI(true);
             mmStudio_.live().setSuspended(false);
-      });
+         });
       subPanel.add(refreshButton, BIGBUTTON_SIZE);
 
-      JButton closeAllButton = (JButton) QuickAccessFactory.makeGUI(mmStudio_.plugins().getQuickAccessPlugins().get(
+      JButton closeAllButton = (JButton) QuickAccessFactory.makeGUI(
+            mmStudio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.CloseAllButton"));
       closeAllButton.setFont(defaultFont_);
       // HACK: Windows will helpfully replace "All" with "..." unless we do
@@ -397,7 +405,7 @@ public final class MainFrame extends JFrame {
             "You have messages requesting your attention. Click to show the Messages window.",
             () -> {
                ((DefaultAlertManager) mmStudio_.alerts()).alertsWindow().showWithoutFocus();
-      });
+         });
       alertButton_.setVisible(false);
       result.add(alertButton_, "width 30!, height 20!, hidemode 2");
       alertLabel_ = new JLabel("");
@@ -406,6 +414,11 @@ public final class MainFrame extends JFrame {
       return result;
    }
 
+   /**
+    * Signals that an event has been updated.
+    *
+    * @param event information about the updated event.
+    */
    @Subscribe
    public void onAlertUpdated(AlertUpdatedEvent event) {
       if (!SwingUtilities.isEventDispatchThread()) {
@@ -431,6 +444,11 @@ public final class MainFrame extends JFrame {
       alertLabel_.invalidate();
    }
 
+   /**
+    * Signals that an Alert has been cleared.
+    *
+    * @param event Info aout the cleared event.
+    */
    @Subscribe
    public void onAlertCleared(AlertClearedEvent event) {
       if (event.getAlert() == displayedAlert_) {
@@ -485,26 +503,26 @@ public final class MainFrame extends JFrame {
    }
 
    private JPanel createUtilityButtons() {
-      JPanel subPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
+      final JPanel subPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       // ROI
-      JPanel roiPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
+      final JPanel roiPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       roiPanel.add(createLabel("ROI", true),
             "span 2, alignx center, growx, wrap");
       setRoiButton_ = createButton(null, "shape_handles.png",
          "Set Region Of Interest to selected rectangle", () -> {
             mmStudio_.roiManager().setROI();
-      });
+         });
       roiPanel.add(setRoiButton_, SMALLBUTTON_SIZE);
       centerQuadButton_ = createButton(null, "center_quad.png",
          "Set Region Of Interest to center quad of camera", () -> {
             mmStudio_.roiManager().setCenterQuad();
-      });
+         });
       roiPanel.add(centerQuadButton_, SMALLBUTTON_SIZE);
 
       clearRoiButton_ = createButton(null, "arrow_out.png",
          "Reset Region of Interest to full frame", () -> {
             mmStudio_.roiManager().clearROI();
-      });
+         });
       roiPanel.add(clearRoiButton_, SMALLBUTTON_SIZE);
 
       subPanel.add(roiPanel);
@@ -518,7 +536,7 @@ public final class MainFrame extends JFrame {
       AbstractButton moveButton = createButton(null, "move.png",
             "Control the current stage with a virtual joystick", () -> {
                StageControlFrame.showStageControl(mmStudio_);
-      });
+         });
       stagePanel.add(moveButton, SMALLBUTTON_SIZE);
 
       // This icon is based on the public-domain icons at
@@ -539,7 +557,7 @@ public final class MainFrame extends JFrame {
       AbstractButton listButton = createButton(null, "application_view_list.png",
             "Show the Stage Position List dialog", () -> {
                mmStudio_.app().showPositionList();
-      });
+         });
       stagePanel.add(listButton, SMALLBUTTON_SIZE);
 
       subPanel.add(stagePanel, "gapleft 16");
@@ -553,7 +571,7 @@ public final class MainFrame extends JFrame {
       autofocusNowButton_ = createButton(null, "binoculars.png",
          "Autofocus now", () -> {
             mmStudio_.autofocusNow();
-      });
+         });
       autoPanel.add(autofocusNowButton_, SMALLBUTTON_SIZE);
 
       // Icon based on the public-domain icon at
@@ -561,13 +579,18 @@ public final class MainFrame extends JFrame {
       autofocusConfigureButton_ = createButton(null,
             "wrench.png", "Set autofocus options", () -> {
                mmStudio_.app().showAutofocusDialog();
-      });
+         });
       autoPanel.add(autofocusConfigureButton_, SMALLBUTTON_SIZE);
 
       subPanel.add(autoPanel, "gapleft 16");
       return subPanel;
    }
 
+   /**
+    * Displays the name of the config file in top of the main window.
+    *
+    * @param inputConfigFileName Name of the config file.
+    */
    public void setConfigText(String inputConfigFileName) {
       // Recognize and specially treat empty config files.
       String configFile = inputConfigFileName;
@@ -577,11 +600,17 @@ public final class MainFrame extends JFrame {
       configFile_.setText("Config File: " + configFile);
    }
 
+   /**
+    * Bit superfluous.  Sets the exit strategy.
+    *
+    * @param closeOnExit whether or not to quit the app when closing the window.
+    *                    When running as a Fiji plugin it is strange to exit the app,
+    *                    whereas Micro-Manager users are used to it.
+    */
    public final void setExitStrategy(boolean closeOnExit) {
       if (closeOnExit) {
          setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      }
-      else {
+      } else {
          setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       }
    }
@@ -592,12 +621,16 @@ public final class MainFrame extends JFrame {
 
    /**
     * Updates Status line in main window.
+    *
     * @param text text to be shown 
     */
    public void updateInfoDisplay(String text) {
       labelImageDimensions_.setText(text);
    }
 
+   /**
+    * Toggles the state of the shutter. Delete?
+    */
    public void toggleShutter() {
       try {
          if (!toggleShutterButton_.isEnabled()) {
@@ -626,14 +659,12 @@ public final class MainFrame extends JFrame {
       String activeShutter = null;
       try {
          activeShutter = mmStudio_.shutter().getCurrentShutter();
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          ReportingUtils.logError(e, "Error getting shutter device");
       }
       if (activeShutter != null) {
          shutterComboBox_.setSelectedItem(activeShutter);
-      }
-      else {
+      } else {
          shutterComboBox_.setSelectedItem("");
       }
    }
@@ -691,6 +722,12 @@ public final class MainFrame extends JFrame {
       handMovesButton_.setSelected(state);
    }
 
+   /**
+    * Event signalling that the camera exposure time associated with a
+    * configgroup-configpreset has been changed.
+    *
+    * @param event info about the event.
+    */
    @Subscribe
    public void onChannelExposure(ChannelExposureEvent event) {
       if (event.isMainExposureTime()) {
@@ -703,11 +740,10 @@ public final class MainFrame extends JFrame {
 
       // Check if all items are valid integers
       for (String s : items) {
-         Integer i;
+         int i;
          try {
-            i = Integer.valueOf(s);
-         }
-         catch (NumberFormatException e) {
+            i = Integer.parseInt(s);
+         } catch (NumberFormatException e) {
             // Not a number; give up sorting and return original list
             return items;
          }
@@ -722,13 +758,18 @@ public final class MainFrame extends JFrame {
       return ret;
    }
 
+   /**
+    * Dropdown for camera binning.
+    *
+    * @param cameraLabel name of the camera.
+    */
    public void configureBinningComboForCamera(String cameraLabel) {
       ActionListener[] listeners;
 
       try {
          StrVector binSizes = core_.getAllowedPropertyValues(
                  cameraLabel, MMCoreJ.getG_Keyword_Binning());
-         List<String> items = sortBinningItems(Arrays.asList(binSizes.toArray()));
+         final List<String> items = sortBinningItems(Arrays.asList(binSizes.toArray()));
 
          listeners = comboBinning_.getActionListeners();
          for (ActionListener listener : listeners) {
@@ -744,11 +785,7 @@ public final class MainFrame extends JFrame {
          }
 
          comboBinning_.setMaximumRowCount(items.size());
-         if (items.isEmpty()) {
-             comboBinning_.setEditable(true);
-         } else {
-             comboBinning_.setEditable(false);
-         }
+         comboBinning_.setEditable(items.isEmpty());
 
          for (ActionListener listener : listeners) {
             comboBinning_.addActionListener(listener);
@@ -765,6 +802,7 @@ public final class MainFrame extends JFrame {
 
    /**
     * Return the current selection from the comboBinning_ menu, or null.
+    *
     * @return bin setting in UI as a String
     */
    public String getBinMode() {
@@ -772,7 +810,7 @@ public final class MainFrame extends JFrame {
       if (item != null) {
          return item.toString();
       }
-      return (String) null;
+      return null;
    }
 
    public ConfigGroupPad getConfigPad() {
@@ -801,10 +839,10 @@ public final class MainFrame extends JFrame {
    }
 
    public void enableRoiButtons(final boolean enabled) {
-       SwingUtilities.invokeLater(() -> {
-          setRoiButton_.setEnabled(enabled);
-          clearRoiButton_.setEnabled(enabled);
-          centerQuadButton_.setEnabled(enabled);
-       });
+      SwingUtilities.invokeLater(() -> {
+         setRoiButton_.setEnabled(enabled);
+         clearRoiButton_.setEnabled(enabled);
+         centerQuadButton_.setEnabled(enabled);
+      });
    }
 }
