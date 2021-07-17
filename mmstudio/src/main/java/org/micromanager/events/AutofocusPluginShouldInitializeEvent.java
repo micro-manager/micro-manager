@@ -23,9 +23,10 @@ package org.micromanager.events;
 /**
  * Autofocus plugins should initialize properties upon receiving this event.
  *
- * The Core is available and the hardware configuration is loaded when this
+ * <p>The Core is available and the hardware configuration is loaded when this
  * event is received. Note that the autofocus plugin may receive this event
- * multiple times, if the user loads a new hardware configuration.
+ * multiple times, if the user loads a new hardware configuration.</p>
+ *
  * @deprecated use
  */
 @Deprecated

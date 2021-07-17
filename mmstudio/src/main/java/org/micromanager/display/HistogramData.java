@@ -27,6 +27,7 @@ import java.util.Arrays;
  * of an int-based image, and some related statistics. You can generate new
  * HistogramData objects yourself, or use DisplayManager.calculateHistogram()
  * and related methods to generate a HistogramData based off of an Image.
+ *
  * @deprecated an improved API will be provided soon
  */
 @Deprecated
@@ -43,6 +44,8 @@ public class HistogramData {
    private final int binSize_;
 
    /**
+    * Deprecated Histogram constructor.
+    *
     * @param histogram An array of integers indicating how many pixels had
     *        intensities falling into the "bin" at the given index. The first
     *        bin always starts from an intensity of 0; the last bin ends with
@@ -92,8 +95,8 @@ public class HistogramData {
     * Retrieve the histogram, an array of ints counting the number of samples
     * whose intensities fall into each bin.
     *
-    * Note: the returned array is the internal data, not a copy. Calling code
-    * must not modify this array.
+    * <p>Note: the returned array is the internal data, not a copy. Calling code
+    * must not modify this array.</p>
     *
     * @return Array with histogram data. Must not be modified.
     */
@@ -108,6 +111,7 @@ public class HistogramData {
     * number will be the lowest intensity that goes into the first
     * (lowest-intensity) bin that has at least one pixel in it; it is possible
     * there is no pixel in the image with this intensity.
+    *
     * @return lowest intensity value in the dataset
     */
    public int getMinVal() {
@@ -121,6 +125,7 @@ public class HistogramData {
     * number will be the highest intensity that goes into the last
     * (highest-intensity) bin that has at least one pixel in it; it is possible
     * there is no pixel in the image with this intensity.
+    *
     * @return highest intensity value in the dataset
     */
    public int getMaxVal() {
@@ -131,8 +136,9 @@ public class HistogramData {
     * Retrieve the intensity of the dimmest sample in the dataset once a
     * fraction of all pixels have been discarded. See the extremaPercentage
     * parameter to DisplayManager.calculateHistogram() for more information.
+    *
     * @return lowest intensity value in the dataset ignoring given fraction of
-    * outliers
+    *         outliers
     */
    public int getMinIgnoringOutliers() {
       return minIgnoringOutliers_;
@@ -142,8 +148,9 @@ public class HistogramData {
     * Retrieve the intensity of the brightest sample in the dataset once a
     * fraction of all pixels have been discarded. See the extremaPercentage
     * parameter to DisplayManager.calculateHistogram() for more information.
+    *
     * @return highest intensity value in the dataset ignoring given fraction of
-    * outliers
+    *         outliers
     */
    public int getMaxIgnoringOutliers() {
       return maxIgnoringOutliers_;
@@ -151,6 +158,7 @@ public class HistogramData {
 
    /**
     * Retrieve the mean value of all samples in the dataset.
+    *
     * @return mean intensity value in this dataset
     */
    public int getMean() {
@@ -161,6 +169,7 @@ public class HistogramData {
     * Retrieve the standard deviation of all samples in the dataset, or -1
     * if standard deviation calculation was disabled or if a calculation error
     * occurred while calculating the standard deviation.
+    *
     * @return standard deviation, or -1
     */
    public double getStdDev() {
@@ -170,6 +179,7 @@ public class HistogramData {
    /**
     * Retrieve the bit depth of the dataset. The highest pixel intensity in the 
     * dataset can not be higher than 2^bitDepth.
+    *
     * @return bitdepth of the dataset
     */
    public int getBitDepth() {
@@ -180,6 +190,7 @@ public class HistogramData {
     * Retrieve the number of distinct intensities that fit within each bin
     * of the histogram. For example, if this is 4, then the first bin will
     * hold the number of samples whose intensities were 0, 1, 2, or 3.
+    *
     * @return Range of pixel intensities that fit into a single bin in the
     *         histogram.
     */
@@ -189,6 +200,7 @@ public class HistogramData {
 
    /**
     * Retrieve the number of samples used to construct the histogram.
+    *
     * @return Total number of bins in the histogram
     */
    public int getNumSamples() {
@@ -197,9 +209,9 @@ public class HistogramData {
 
    @Override
    public String toString() {
-      String result = String.format("<HistogramData mins %d/%d maxes %d/%d mean %d bitdepth %d binsize %d>",
+      return String.format(
+            "<HistogramData mins %d/%d maxes %d/%d mean %d bitdepth %d binsize %d>",
             minVal_, minIgnoringOutliers_, maxVal_, maxIgnoringOutliers_,
             mean_, bitDepth_, binSize_);
-      return result;
    }
 }

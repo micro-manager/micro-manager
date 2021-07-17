@@ -31,6 +31,7 @@ public interface ImageExporter {
    /**
     * Set the display to use for image exporting. The same ImageExporter may
     * be re-used for multiple displays, if desired.
+    *
     * @param display Display to use for exporting images.
     */
    void setDisplay(DisplayWindow display);
@@ -56,6 +57,7 @@ public interface ImageExporter {
 
    /**
     * Set the output format to use.
+    *
     * @param format The format to output in.
     */
    void setOutputFormat(OutputFormat format);
@@ -63,6 +65,7 @@ public interface ImageExporter {
    /**
     * Set the image quality. This is currently only relevant if the output
     * format is OUTPUT_JPG.
+    *
     * @param quality An integer quality ranging from 1 through 100. The default
     *        value is 90.
     */
@@ -72,6 +75,7 @@ public interface ImageExporter {
     * Set the path to save images to, and the filename prefix to use when
     * saving images. These values are ignored if the output format is set to
     * OUTPUT_IMAGEJ.
+    *
     * @param path Directory in which images will be placed
     * @param prefix String to place at beginning of each output image's name.
     * @throws IllegalArgumentException if the directory does not exist.
@@ -85,6 +89,7 @@ public interface ImageExporter {
     * This will cause the channel axis to be the "inner loop", changing most
     * frequently, and the Z axis to be the "outer loop", changing least
     * frequently.
+    *
     * @param axis Axis name, like Coords.CHANNEL, Coords.Z, etc.
     * @param start Axis index to start exporting from, inclusive.
     * @param stop Axis index to stop exporting from, exclusive (i.e. one more
@@ -106,7 +111,7 @@ public interface ImageExporter {
     * method will return immediately. If you want to wait for exporting to
     * finish, call the waitForExport() method.
     *
-    * NOTE: the exporter will silently ignore the following "configuration
+    * <p>NOTE: the exporter will silently ignore the following "configuration
     * errors":
     * - Setting a save path when using the OUTPUT_IMAGEJ format
     * - Loops over axes that are not used by any images in the display's
@@ -117,7 +122,8 @@ public interface ImageExporter {
     * image will be ignored (for example, trying to access a Z coordinate of 1
     * in a dataset that is two-dimensional). It is therefore possible that this
     * method will not actually do anything, if none of the loops encompass
-    * valid image coordinates.
+    * valid image coordinates.</p>
+    *
     * @throws IOException if the export process would attempt to write to a
     *         file that already exists
     * @throws IllegalArgumentException if no output format has been set, or
@@ -130,6 +136,7 @@ public interface ImageExporter {
    /**
     * Block until a prior call to export() returns. Returns immediately if no
     * export is currently running.
+    *
     * @throws InterruptedException if the thread was interrupted while waiting.
     */
    void waitForExport() throws InterruptedException;
