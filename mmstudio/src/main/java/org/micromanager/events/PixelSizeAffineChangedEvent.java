@@ -20,23 +20,23 @@
 
 package org.micromanager.events;
 
-import org.micromanager.MMEvent;
-
 import java.awt.geom.AffineTransform;
+import org.micromanager.MMEvent;
 
 /**
  * This event posts when the affine transform, describing the relation between
  * stage movement and camera coordinates, changes.
  *
- * The default implementation of this event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface PixelSizeAffineChangedEvent extends MMEvent {
 
    /**
     * New affine transform.
+    *
     * @return New affine transform describing relation between stage movement and
-    * camera coordinates.
+    *         camera coordinates.
     */
    AffineTransform getNewPixelSizeAffine();
 

@@ -25,8 +25,8 @@ import org.micromanager.MMEvent;
 /**
  * This event signifies that the system finished starting up.
  *
- * The default implementation of this event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface StartupCompleteEvent extends MMEvent {
 }

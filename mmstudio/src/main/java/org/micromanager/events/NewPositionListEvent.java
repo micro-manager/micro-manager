@@ -26,15 +26,16 @@ import org.micromanager.PositionList;
  * This event posts when the application's Stage Position List changes
  * (positions added, removed, or moved).
  *
- * The default implementation of this event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface NewPositionListEvent {
 
    /**
     * Returns the new stage position list.
+    *
     * @return PositionList that is modified, usually the application's Stage
-    * Position List.
+    *         Position List.
     */
    PositionList getPositionList();
 }

@@ -29,8 +29,8 @@ import org.micromanager.MMEvent;
  * Since the Core callbacks into this event, there is a mismatch here that needs
  * to be resolved.
  *
- * The default implementation of this event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface PropertiesChangedEvent extends MMEvent {
 }
