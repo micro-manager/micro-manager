@@ -180,7 +180,7 @@ Name: "{app}\mmautofocus"; Permissions: users-modify
 
 [Icons]
 Name: {group}\Micro-Manager-2.0; Filename: {app}\ImageJ.exe; WorkingDir: {app}
-Name: {group}\{cm:UninstallProgram,Micro-Manager-2.0gamm}; Filename: {uninstallexe}
+Name: {group}\{cm:UninstallProgram,Micro-Manager-2.0}; Filename: {uninstallexe}
 Name: {commondesktop}\Micro-Manager 2.0; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]

@@ -21,11 +21,10 @@
 
 package org.micromanager.internal;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.Collection;
-
-import com.google.common.eventbus.Subscribe;
 import org.micromanager.Album;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
@@ -45,6 +44,9 @@ import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
+/**
+ * Implementation of the Album interface.
+ */
 public final class DefaultAlbum implements Album {
    private final Studio studio_;
    private DisplayWindow display_;
@@ -84,8 +86,7 @@ public final class DefaultAlbum implements Album {
       try {
          curChannel = studio_.core().getCurrentConfig(
                studio_.core().getChannelGroup());
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio_.logs().logError(e, "Error getting current channel name");
       }
       /*
@@ -108,15 +109,14 @@ public final class DefaultAlbum implements Album {
          store_ = studio_.data().createRAMDatastore();
 
          try {
-            SummaryMetadata.Builder smb = studio_.acquisitions().
-                    generateSummaryMetadata().copyBuilder();
+            SummaryMetadata.Builder smb = studio_.acquisitions()
+                  .generateSummaryMetadata().copyBuilder();
             smb.channelGroup(studio_.core().getChannelGroup());
             // TODO: can there be other axes than T?
             smb.channelNames(curChannel).axisOrder(
                     Coords.T, Coords.C, Coords.Z, Coords.P);
             store_.setSummaryMetadata(smb.build());
-         }
-         catch (DatastoreFrozenException | DatastoreRewriteException e) {
+         } catch (DatastoreFrozenException | DatastoreRewriteException e) {
             // This should never happen!
             studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
          }
@@ -125,7 +125,7 @@ public final class DefaultAlbum implements Album {
          display_.setCustomTitle("Album");
          DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
                  studio_.profile(),
-                 PropertyKey.ALBUM_DISPLAY_SETTINGS.key() );
+                 PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          if (ds == null) {
             ds = DefaultDisplaySettings.builder().colorMode(
                     DisplaySettings.ColorMode.GRAYSCALE).build();
@@ -178,32 +178,37 @@ public final class DefaultAlbum implements Album {
                pipeline_.clearExceptions();
             }
          }
-      }
-      catch (DatastoreFrozenException e) {
+      } catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");
-      }
-      catch (DatastoreRewriteException e) {
+      } catch (DatastoreRewriteException e) {
          // This should never happen.
-         ReportingUtils.showError(e, "Unable to add image at " + newCoords + 
-                 " to album as another image with those coords already exists.");
+         ReportingUtils.showError(e, "Unable to add image at "
+               + newCoords
+               + " to album as another image with those coords already exists.");
       }
       return mustCreateNew;
    }
-   
+
+   /**
+    * Creates Coords for the image to be added to the album.
+    *
+    * @param image Image that will be added
+    * @return Coords that can be used to insert the image into the Album Store.
+    * @throws IOException  Not sure where this can be thrown.
+    */
    public Coords createAlbumCoords(Image image) throws IOException {
       // We want to add new images to the next timepoint, or to the current
       // timepoint if there's no image for this channel at the current
       // timepoint.
       if (curTime_ == null) {
          curTime_ = 0;
-      }
-      else {
+      } else {
          // Try to find images at this timepoint and channel, which would mean
          // we need to move to the next timepoint.
          Coords matcher = Coordinates.builder()
-            .channel(image.getCoords().getChannel())
-            .t(curTime_)
-            .build();
+               .channel(image.getCoords().getChannel())
+               .t(curTime_)
+               .build();
          if (store_.getImagesMatching(matcher).size() > 0) {
             // Have an image at this time/channel pair already.
             curTime_++;
@@ -223,6 +228,11 @@ public final class DefaultAlbum implements Album {
       return result;
    }
 
+   /**
+    * Handle events indicating that the viewer will close.
+    *
+    * @param viewerWillCloseEvent EVent signalling that the viewer will close.
+    */
    @Subscribe
    public void onAlbumStoreClosing(DataViewerWillCloseEvent viewerWillCloseEvent) {
       if (viewerWillCloseEvent.getDataViewer().getDataProvider().equals(store_)) {
@@ -233,8 +243,8 @@ public final class DefaultAlbum implements Album {
 
    private void saveDisplaySettings() {
       if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) display_.getDisplaySettings()).
-                 saveToProfile(studio_.profile(),
+         ((DefaultDisplaySettings) display_.getDisplaySettings())
+               .saveToProfile(studio_.profile(),
                          PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
       }
    }

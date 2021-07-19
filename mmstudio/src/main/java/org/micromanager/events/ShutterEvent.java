@@ -25,11 +25,13 @@ import org.micromanager.MMEvent;
 /**
  * This event posts when the shutter opens or closes.
  *
- * The default implementation of this event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface ShutterEvent extends MMEvent {
    /**
+    * Returns state of the shutter (true if shutter is open, false otherwise).
+    *
     * @return true if the shutter is open, false if it is closed.
     */
    boolean getShutter();

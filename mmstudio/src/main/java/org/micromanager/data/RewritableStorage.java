@@ -29,6 +29,7 @@ public interface RewritableStorage extends Storage {
     * Delete an image from the Storage. Posts an ImageDeletedEvent to the
     * event bus. Throws an IllegalArgumentException if the provided coordinates
     * do not correspond to any image in the Storage.
+    *
     * @param coords Coordinates of the image to remove.
     * @throws IllegalArgumentException if the coords do not match any image.
     */

@@ -25,17 +25,21 @@ import org.micromanager.MMEvent;
 /**
  * Event signaling that the "active" preset in a config group changed.
  *
- * The default implementation of this event is posted on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event is posted on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface ConfigGroupChangedEvent extends MMEvent {
 
    /**
+    * Returns the name of the newly selected config in the group.
+    *
     * @return The name of the add configuration
     */
    String getNewConfig();
 
    /**
+    * Name of the ConfigGroup.
+    *
     * @return Name of the group this configuration was added to.
     */
    String getGroupName();

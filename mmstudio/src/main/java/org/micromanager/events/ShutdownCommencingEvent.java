@@ -25,15 +25,15 @@ import org.micromanager.MMEvent;
 /**
  * This event posts when the user requests the program to shut down.
  *
- * It gives subscribers the opportunity to cancel shutdown (ideally only to
- * ensure that data can be saved or other similarly-critical decisions).
+ * <p>It gives subscribers the opportunity to cancel shutdown (ideally only to
+ * ensure that data can be saved or other similarly-critical decisions).</p>
  *
- * All subscribers must first check if the shutdown has been canceled by
+ * <p>All subscribers must first check if the shutdown has been canceled by
  * calling {@link #isCanceled()}. If the shutdown has been canceled, the
- * event must be ignored.
+ * event must be ignored.</p>
  *
- * The default implementation of this event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface ShutdownCommencingEvent extends MMEvent {
    /**
@@ -43,12 +43,15 @@ public interface ShutdownCommencingEvent extends MMEvent {
 
    /**
     * Return whether or not shutdown has been canceled.
+    *
     * @return true when shutdown was canceled
     */
    boolean isCanceled();
 
 
    /**
+    * Deprecated.
+    *
     * @return true when shutdown was canceled
     * @deprecated use {@link #isCanceled()} instead
     */

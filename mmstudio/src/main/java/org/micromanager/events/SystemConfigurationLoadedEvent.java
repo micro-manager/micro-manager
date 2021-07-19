@@ -25,8 +25,8 @@ import org.micromanager.MMEvent;
 /**
  * This interface signals when a configuration file is loaded.
  *
- * The default implementation of this event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface SystemConfigurationLoadedEvent extends MMEvent {
 }

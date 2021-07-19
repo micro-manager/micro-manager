@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.internal;
 
 import org.micromanager.PropertyMap;
@@ -13,11 +14,13 @@ import org.micromanager.profile.UserProfileMigrator;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
+ * Class that makes it possible to optionally skip profile and/or configuration
+ * selection at startup.
  *
  * @author Mark A. Tsuchida
  */
 public class StartupSettings {
-   private static enum ProfileKey implements UserProfileMigration {
+   private enum ProfileKey implements UserProfileMigration {
       SKIP_PROFILE_SELECTION_AT_STARTUP {
          @Override
          public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {
@@ -37,7 +40,8 @@ public class StartupSettings {
             PropertyMap legacySettings = legacy.getPropertyMap(
                   "org.micromanager.internal.dialogs.IntroDlg",
                   PropertyMaps.emptyPropertyMap());
-            final String legacyKey = "whether or not the intro dialog should include a prompt for the config file";
+            final String legacyKey =
+                  "whether or not the intro dialog should include a prompt for the config file";
             if (legacySettings.containsBoolean(legacyKey)) {
                modern.putBoolean(name(), !legacySettings.getBoolean(legacyKey, true));
             }
@@ -49,6 +53,7 @@ public class StartupSettings {
       @Override
       public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {}
    }
+
    static {
       UserProfileMigrator.registerMigrations(StartupSettings.class,
             ProfileKey.values());
@@ -64,15 +69,25 @@ public class StartupSettings {
       profile_ = profile;
    }
 
+   /**
+    * Sets the option to skip Profile selection at startup.
+    *
+    * @param flag If true, do skip profile selection, otherwise, do not.
+    */
    public void setSkipProfileSelectionAtStartup(boolean flag) {
-      profile_.getSettings(getClass()).
-            putBoolean(ProfileKey.SKIP_PROFILE_SELECTION_AT_STARTUP.name(),
-                  flag);
+      profile_.getSettings(getClass())
+            .putBoolean(ProfileKey.SKIP_PROFILE_SELECTION_AT_STARTUP.name(), flag);
    }
 
+   /**
+    * Returns whether or not the application will skip profile selection at
+    * startup.
+    *
+    * @return True if profile selection should be skipped, false otherwise.
+    */
    public boolean shouldSkipProfileSelectionAtStartup() {
-      return profile_.getSettings(getClass()).
-            getBoolean(ProfileKey.SKIP_PROFILE_SELECTION_AT_STARTUP.name(),
+      return profile_.getSettings(getClass())
+            .getBoolean(ProfileKey.SKIP_PROFILE_SELECTION_AT_STARTUP.name(),
                   false);
    }
 
@@ -82,12 +97,12 @@ public class StartupSettings {
    }
 
    public boolean shouldSkipConfigSelectionAtStartup() {
-      return profile_.getSettings(getClass()).
-            getBoolean(ProfileKey.SKIP_CONFIG_SELECTION_AT_STARTUP.name(), false);
+      return profile_.getSettings(getClass())
+            .getBoolean(ProfileKey.SKIP_CONFIG_SELECTION_AT_STARTUP.name(), false);
    }
 
    public boolean shouldSkipUserInteractionWithSplashScreen() {
-      return shouldSkipProfileSelectionAtStartup() &&
-            shouldSkipConfigSelectionAtStartup();
+      return shouldSkipProfileSelectionAtStartup()
+            && shouldSkipConfigSelectionAtStartup();
    }
 }

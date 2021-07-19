@@ -26,15 +26,15 @@ import org.micromanager.MMEvent;
  * This class signals when the exposure time for one of the channels of the
  * current channel group has been changed.
  *
- * The default implementation of this event is posted on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event is posted on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface ChannelExposureEvent extends MMEvent {
 
-    /**
+   /**
     * Return the new exposure time for the channel.
     */
-    double getNewExposureTime();
+   double getNewExposureTime();
 
    /**
     * Return the name of the channel group in which the modified channel
@@ -45,16 +45,17 @@ public interface ChannelExposureEvent extends MMEvent {
    /**
     * Return the channel whose exposure time has changed.
     */
-    String getChannel();
+   String getChannel();
 
    /**
     * Returns true if this channel is the currently-active channel (i.e. the
     * one used for snaps and live mode, the one whose exposure time is
     * displayed in the main window).
     */
-    boolean isMainExposureTime();
+   boolean isMainExposureTime();
 
    /**
+    * Deprecated.
     *
     * @deprecated use {@link #isMainExposureTime()} instead
     */

@@ -27,7 +27,7 @@ import org.micromanager.MMEvent;
  * has changed, giving entities that use that pipeline an opportunity to make
  * a new copy of it (by invoking DataManager.copyApplicationPipeline()).
  *
- * The default implementation of this event is posted on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event is posted on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface NewPipelineEvent extends MMEvent {}

@@ -25,23 +25,28 @@ import org.micromanager.MMEvent;
 /**
  * This class provides information when a specific property changes.
  *
- * The default implementation of this event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface PropertyChangedEvent extends MMEvent {
 
    /**
-    * Device to which the changed property belongs
+    * Device to which the changed property belongs.
+    *
     * @return Device to which the changed property belongs
     */
    String getDevice();
 
    /**
+    * New value of the property.
+    *
     * @return new value of the property
     */
    String getValue();
 
    /**
+    * Returns the property key.
+    *
     * @return Property name (key)
     */
    String getProperty();

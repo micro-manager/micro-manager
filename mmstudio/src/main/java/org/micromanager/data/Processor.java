@@ -32,6 +32,7 @@ public interface Processor {
     * manner of changes it expects to make to the data.
     * The default implementation of this method returns the passed-in
     * SummaryMetadata unmodified.
+    *
     * @param source Source SummaryMetadata, as generated from the input to this
     *        Processor.
     * @return New SummaryMetadata, modified from the source by the Processor.
@@ -47,6 +48,7 @@ public interface Processor {
     * is called (for example if you want to do frame-averaging or stack
     * projections). However, it is not legal to output Images outside of this
     * function call (e.g. via thread-based systems).
+    *
     * @param image input Image
     * @param context ProcessorContext to be used to hand the processed image to
     */
@@ -58,6 +60,7 @@ public interface Processor {
     * made available in case any final images need to be generated. If the
     * Processor creates any resources external to it (like displays or
     * datastores) then they should be cleaned up at this time.
+    *
     * @param context ProcessorContext that can be used to hand images to
     */
    default void cleanup(ProcessorContext context) {}

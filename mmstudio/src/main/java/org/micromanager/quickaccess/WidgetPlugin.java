@@ -33,6 +33,7 @@ import org.micromanager.PropertyMap;
 public abstract class WidgetPlugin extends QuickAccessPlugin {
    /**
     * Create the GUI components for this control.
+    *
     * @param config A PropertyMap as output by configureControl used to
     *        configure this control. The PropertyMap may be empty or may be
     *        preserved from a previous session.
@@ -46,6 +47,7 @@ public abstract class WidgetPlugin extends QuickAccessPlugin {
     * modal. It is also only ever called from the EDT. If for any reason the
     * control should not be created (for example, because the user canceled
     * a dialog during configuration), then this method must return null.
+    *
     * @param parent The Quick-Access Window
     * @return A PropertyMap containing the information needed to generate the
     *         control, or null if the control should not be created.

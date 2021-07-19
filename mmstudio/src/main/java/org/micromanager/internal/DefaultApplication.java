@@ -28,6 +28,7 @@ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package org.micromanager.internal;
 
 import java.awt.Rectangle;
@@ -37,7 +38,6 @@ import javax.swing.JFrame;
 import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
-import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.internal.DefaultChannelExposureEvent;
 import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
@@ -45,6 +45,9 @@ import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
+/**
+ * Implementation of the Application interface.
+ */
 public class DefaultApplication implements Application {
    private final Studio studio_;
    private static final String EXPOSURE_KEY = "Exposure_";
@@ -75,8 +78,7 @@ public class DefaultApplication implements Application {
          if (studio_.core() != null && studio_.core().getExposure() == exposureTime) {
             shouldSetInCore = false;
          }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          ReportingUtils.logError(e, "Error getting core exposure time");
       }
       // This is synchronized with the shutdown lock primarily so that
@@ -96,8 +98,7 @@ public class DefaultApplication implements Application {
          channelGroup = studio_.core().getChannelGroup();
          channel = studio_.core().getCurrentConfigFromCache(channelGroup);
          storeChannelExposureTime(channelGroup, channel, exposureTime);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio_.logs().logError("Unable to determine channel group");
       }
 
@@ -106,8 +107,7 @@ public class DefaultApplication implements Application {
          try {
             studio_.core().setExposure(exposureTime);
             studio_.core().waitForDevice(studio_.core().getCameraDevice());
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             ReportingUtils.logError(e, "Failed to set core exposure time.");
          }
          studio_.live().setSuspended(false);
@@ -119,19 +119,17 @@ public class DefaultApplication implements Application {
          exposure = studio_.core().getExposure();
          studio_.events().post(new DefaultChannelExposureEvent(exposure,
                   channelGroup, channel, true));
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't set exposure time.");
       }
    }
 
    /**
-    * Updates the exposure time in the given preset 
+    * Updates the exposure time in the given preset.
     * Will also update current exposure if it the given channel and channelgroup
     * are the current one
-    * 
+    *
     * @param channelGroup - 
-    * 
     * @param channel - preset for which to change exposure time
     * @param exposure - desired exposure time
     */
@@ -141,8 +139,8 @@ public class DefaultApplication implements Application {
       try {
          storeChannelExposureTime(channelGroup, channel, exposure);
          if (channelGroup != null && channelGroup.equals(studio_.core().getChannelGroup())) {
-            if (channel != null && !channel.equals("") && 
-                    channel.equals(studio_.core().getCurrentConfigFromCache(channelGroup))) {
+            if (channel != null && !channel.equals("")
+                  && channel.equals(studio_.core().getCurrentConfigFromCache(channelGroup))) {
                setExposure(exposure);
             }
          }
@@ -152,11 +150,11 @@ public class DefaultApplication implements Application {
       }
    }
 
-    /**
-    * Returns exposure time for the desired preset in the given channelgroup
-    * Acquires its info from the preferences
-    * Same thing is used in MDA window, but this class keeps its own copy
-    * 
+   /**
+    * Returns exposure time for the desired preset in the given channelgroup.
+    * Acquires its info from the preferences.
+    * Same thing is used in MDA window, but this class keeps its own copy.
+    *
     * @param channelGroup Core-channelgroup
     * @param channel - specific channel of interest
     * @param defaultExp - default exposure
@@ -200,7 +198,7 @@ public class DefaultApplication implements Application {
    }
 
    /**
-    * Opens a dialog to record stage positions
+    * Opens a dialog to record stage positions.
     */
    @Override
    public void showPositionList() {

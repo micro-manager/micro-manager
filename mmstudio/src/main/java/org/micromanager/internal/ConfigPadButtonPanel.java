@@ -25,7 +25,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.net.URL;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -38,10 +38,11 @@ import org.micromanager.internal.dialogs.GroupEditor;
 import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.ReportingUtils;
 
+/**
+ * Buttons under the ConfigPad that let the user add, remove, or edit
+ * config groups and configuration within groups.
+ */
 public final class ConfigPadButtonPanel extends JPanel {
-   /**
-    * 
-    */
    private static final long serialVersionUID = 6481082898578589473L;
    
    private JButton addGroupButton_;
@@ -52,8 +53,8 @@ public final class ConfigPadButtonPanel extends JPanel {
    private JButton removePresetButton_;
    private JButton editPresetButton_;
 
-   private ConfigGroupPad configPad_;
-   private Studio studio_;
+   private final ConfigGroupPad configPad_;
+   private final Studio studio_;
 
    
    
@@ -62,66 +63,85 @@ public final class ConfigPadButtonPanel extends JPanel {
       configPad_ = configPad;
    }
 
+   /**
+    * Initializes the UI.
+    */
    public void initialize() {
-
       createLabel("Group:");
-      addGroupButton_ = createButton("","/org/micromanager/icons/plus.png");
+      addGroupButton_ = createButton("", "/org/micromanager/icons/plus.png");
       addGroupButton_.setName("Add group");
       addGroupButton_.setToolTipText("Create new group of properties");
-      removeGroupButton_ = createButton("","/org/micromanager/icons/minus.png");
+      removeGroupButton_ = createButton("", "/org/micromanager/icons/minus.png");
       removeGroupButton_.setName("Remove group");
       removeGroupButton_.setToolTipText("Delete currently selected group");
-      editGroupButton_ = createButton("Edit","");
+      editGroupButton_ = createButton("Edit", "");
       editGroupButton_.setName("Edit group");
       editGroupButton_.setToolTipText("Edit currently selected group");
 
       createLabel("Preset:");
-      addPresetButton_ = createButton("","/org/micromanager/icons/plus.png");
+      addPresetButton_ = createButton("", "/org/micromanager/icons/plus.png");
       addPresetButton_.setName("Add preset");
-      addPresetButton_.setToolTipText("Create new preset (set of values for each property in group)");
-      removePresetButton_ = createButton("","/org/micromanager/icons/minus.png");
+      addPresetButton_.setToolTipText(
+            "Create new preset (set of values for each property in group)");
+      removePresetButton_ = createButton("", "/org/micromanager/icons/minus.png");
       removePresetButton_.setName("Remove preset");
       removePresetButton_.setToolTipText("Delete currently selected preset");
-      editPresetButton_ = createButton("Edit","");
+      editPresetButton_ = createButton("Edit", "");
       editPresetButton_.setName("Remove preset");
       editPresetButton_.setToolTipText("Edit property values for currently selected preset");
 
-      GridLayout layout = new GridLayout(1,8,2,1);
+      GridLayout layout = new GridLayout(1, 8, 2, 1);
       setLayout(layout);
    }
 
    public void format(JComponent theComp) {
-      theComp.setFont(new Font("Arial",Font.PLAIN,10));
+      theComp.setFont(new Font("Arial", Font.PLAIN, 10));
       add(theComp);
    }
 
+   /**
+    * Creates a label for the button.
+    *
+    * @param labelText Text to be displayed on the button.
+    * @return JLabel to be displayed on the button.
+    */
    public JLabel createLabel(String labelText) {
       JLabel theLabel = new JLabel(labelText);
-      theLabel.setFont(new Font("Arial",Font.BOLD,10));
+      theLabel.setFont(new Font("Arial", Font.BOLD, 10));
       theLabel.setHorizontalAlignment(SwingConstants.RIGHT);
       add(theLabel);
       return theLabel;
    }
-   
+
+   /**
+    * Creates one of the buttons.
+    *
+    * @return Button with some of our styling applied.
+    */
    public JButton createButton() {
       JButton theButton = new JButton();
       theButton.setIconTextGap(0);
-      theButton.setMargin(new Insets(-50,-50,-50,-50));
+      theButton.setMargin(new Insets(-50, -50, -50, -50));
       format(theButton);
-      theButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleButtonPress(e);
-         }
-      });
+      theButton.addActionListener(this::handleButtonPress);
       return theButton;
    }
 
+   /**
+    * Creates a button, ready to be displayed.
+    *
+    * @param buttonText Text for th button.
+    * @param iconPath Path to the icon to be displayed on the button.
+    * @return Button that is ready to go
+    */
    public JButton createButton(String buttonText, String iconPath) {
       JButton theButton = createButton();
       theButton.setText(buttonText);
-      if (iconPath.length()>0) {
-         theButton.setIcon(new ImageIcon(getClass().getResource(iconPath)));
+      if (iconPath.length() > 0) {
+         URL resource = getClass().getResource(iconPath);
+         if (resource != null) {
+            theButton.setIcon(new ImageIcon(resource));
+         }
       }
       return theButton;
    }
@@ -153,12 +173,17 @@ public final class ConfigPadButtonPanel extends JPanel {
    public void addGroup() {
       new GroupEditor("", "", studio_, true);
    }
-   
-   
+
+
+   /**
+    * Removes a group from the configPad (user pressed the minus group button).
+    */
    public void removeGroup() {
       String groupName = configPad_.getSelectedGroup();
-      if (groupName.length()> 0) {
-         int result = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove group " + groupName + " and all associated presets?",
+      if (groupName.length() > 0) {
+         int result = JOptionPane.showConfirmDialog(
+               this, "Are you sure you want to remove group "
+                     + groupName + " and all associated presets?",
                "Remove the " + groupName + " group?",
                JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
          if (result == JOptionPane.OK_OPTION) {
@@ -174,44 +199,56 @@ public final class ConfigPadButtonPanel extends JPanel {
                  "To remove a group, select it on the Configurations panel first.");  
       }
    }
-   
-   @SuppressWarnings("ResultOfObjectAllocationIgnored")
+
+   /**
+    * Edit a group (user clicked the edit group button).
+    */
    public void editGroup() {
       String groupName = configPad_.getSelectedGroup();
-      if (groupName.length() ==0) {
+      if (groupName.length() == 0) {
          JOptionPane.showMessageDialog(this,
                  "To edit a group, please select it first, then press the edit button.");
       } else {
          new GroupEditor(groupName, configPad_.getPresetForSelectedGroup(), studio_, false);
       }
    }
-   
-   
-   @SuppressWarnings("ResultOfObjectAllocationIgnored")
+
+
+   /**
+    * Add a config to a group (user pressed plus config button).
+    */
    public void addPreset() {
       String groupName = configPad_.getSelectedGroup();
-      if (groupName.length()==0) {
+      if (groupName.length() == 0) {
          JOptionPane.showMessageDialog(this, 
-                 "To add a preset to a group, please select the group first, then press the edit button.");
+                 "To add a preset to a group, please select the group first, "
+               + "then press the edit button.");
       } else {
          new PresetEditor(groupName, "", studio_, true);
       }
    }
-   
+
+   /**
+    * Removes a preset from a group (user clicked the minus config button).
+    */
    public void removePreset() {
       String groupName = configPad_.getSelectedGroup();
       if (groupName.isEmpty()) {
          JOptionPane.showMessageDialog(this,
-                 "To remove a preset, please select a group or preset first, then press the - button.");
+                 "To remove a preset, please select a group or preset first, "
+               + "then press the - button.");
          return;
       }
       String presetName = configPad_.getPresetForSelectedGroup();
-      if (presetName.isEmpty()) {
+      if (presetName == null || presetName.isEmpty()) {
          presetName = choosePreset(groupName, "for removal");
       }
       int result;
       if (studio_.core().getAvailableConfigs(groupName).size() == 1) {
-         result = JOptionPane.showConfirmDialog(this, "\"" + presetName + "\" is the last preset for the \"" + groupName + "\" group.\nDelete both preset and group?",
+         result = JOptionPane.showConfirmDialog(this, "\""
+                     + presetName + "\" is the last preset for the \""
+                     + groupName
+                     + "\" group.\nDelete both preset and group?",
                  "Remove last preset in group",
                  JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
          if (result == JOptionPane.OK_OPTION) {
@@ -223,7 +260,12 @@ public final class ConfigPadButtonPanel extends JPanel {
             }
          }
       } else {
-         result = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove preset " + presetName + " from the " + groupName + " group?",
+         result = JOptionPane.showConfirmDialog(this,
+               "Are you sure you want to remove preset "
+                     + presetName
+                     + " from the "
+                     + groupName
+                     + " group?",
                  "Remove preset",
                  JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
          if (result == JOptionPane.OK_OPTION) {
@@ -237,24 +279,38 @@ public final class ConfigPadButtonPanel extends JPanel {
       }
    }
 
+   /**
+    * Shows select preset OptionPane.
+    *
+    * @param groupName Group Name from which to select a preset.
+    * @param msg Message to be added.
+    * @return Preset selected.
+    */
    public String choosePreset(String groupName, String msg) {
       final String [] presets = studio_.core().getAvailableConfigs(groupName).toArray();
       return (String) JOptionPane.showInputDialog(
                     null,
-                    "Please choose a preset from the " + groupName + " group " + msg,                    "Preset not selected.",
+                    "Please choose a preset from the "
+                          + groupName
+                          + " group "
+                          + msg,
+            "Preset not selected.",
                     JOptionPane.PLAIN_MESSAGE,
                     null,
                     presets,
                     presets[0]);
    }
 
-   @SuppressWarnings("ResultOfObjectAllocationIgnored")
+   /**
+    * Edit a preset.
+    */
    public void editPreset() {
       final String presetName = configPad_.getPresetForSelectedGroup();
       final String groupName = configPad_.getSelectedGroup();
-      if (groupName.length() ==0) {
-         JOptionPane.showMessageDialog(this, "To edit a preset, please select the preset first, then press the edit button.");
-      } else if (presetName.length() == 0) {
+      if (groupName.length() == 0) {
+         JOptionPane.showMessageDialog(this,
+               "To edit a preset, please select the preset first, then press the edit button.");
+      } else if (presetName == null || presetName.length() == 0) {
          final String newPresetName = choosePreset(groupName, "for editing");
          if (newPresetName != null) {
             try {

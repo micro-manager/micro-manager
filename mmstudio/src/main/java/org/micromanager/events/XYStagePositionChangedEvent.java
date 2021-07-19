@@ -25,24 +25,29 @@ import org.micromanager.MMEvent;
 /**
  * This class signals when any XY stage changes position.
  *
- * The default implementation of this event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface XYStagePositionChangedEvent extends MMEvent {
 
 
    /**
-    * Name of the (XYStage) device that change position
+    * Name of the (XYStage) device that change position.
+    *
     * @return Name of the (XYStage) device that changed position
     */
    String getDeviceName();
 
    /**
+    * New X position of the stage in microns.
+    *
     * @return New X position of the stage in microns
     */
    double getXPos();
 
    /**
+    * New Y position of the stage in microns.
+    *
     * @return New Y position of the stage in microns
     */
    double getYPos();

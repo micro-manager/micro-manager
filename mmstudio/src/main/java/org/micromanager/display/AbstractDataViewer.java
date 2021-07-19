@@ -17,12 +17,9 @@ package org.micromanager.display;
 import com.google.common.eventbus.EventBus;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.display.internal.event.DefaultDisplayPositionChangedEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
@@ -31,11 +28,11 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 /**
  * Abstract implementation of the {@link DataViewer} interface.
  *
- * Custom data viewer classes should extend this class, rather than directly
- * implement {@code DataViewer}.
- * <p>
- * <b>Warning</b>: Support for custom data viewers is experimental.
- * Future updates may require you to update such code for compatibility.
+ * <p>Custom data viewer classes should extend this class, rather than directly
+ * implement {@code DataViewer}.</p>
+ *
+ * <p><b>Warning</b>: Support for custom data viewers is experimental.
+ * Future updates may require you to update such code for compatibility.</p>
  *
 * @author Mark A. Tsuchida
  */
@@ -54,8 +51,8 @@ public abstract class AbstractDataViewer implements DataViewer {
    // we use a single-threaded executor to sequence the event posting.
    // TODO XXX Need to shut down
    private final ExecutorService asyncEventPoster_ =
-         Executors.newSingleThreadExecutor(ThreadFactoryFactory.
-               createThreadFactory("AbstractDataViewer Pool"));
+         Executors.newSingleThreadExecutor(ThreadFactoryFactory
+               .createThreadFactory("AbstractDataViewer Pool"));
 
    /**
     * Construct the abstract viewer implementation.
@@ -82,18 +79,19 @@ public abstract class AbstractDataViewer implements DataViewer {
    /**
     * Post an event on the viewer event bus.
     *
-    * Implementations should call this method to post required notification
-    * events.
-    * <p>
-    * Some standard viewer events require that they be posted on the Swing/AWT
+    * <p>Implementations should call this method to post required notification
+    * events.</p>
+    *
+    * <p>Some standard viewer events require that they be posted on the Swing/AWT
     * event dispatch thread. Make sure you are on the right thread when posting
-    * such events.
-    * <p>
-    * Viewers are required to post the following events:
+    * such events.</p>
+    *
+    * <p>Viewers are required to post the following events:
     * <ul>
     * <li>{@link DisplaySettingsChangedEvent} (posted by this abstract class)
     * <li>{@link DisplayPositionChangedEvent} (posted by this abstract class)
     * </ul>
+    * </p>
     *
     * @param event the event to post
     */
@@ -103,11 +101,15 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Implements {@code setDisplaySettings}.
+    *
     * <p>
     * {@inheritDoc}
+    * </p>
+    *
     * <p>
     * Implementations must override {@code handleNewDisplaySettings} in order
     * to respond to new display settings.
+    * </p>
     */
    @Override
    public final void setDisplaySettings(final DisplaySettings settings) {
@@ -129,8 +131,10 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Implements {@code getDisplaySettings}.
+    *
     * <p>
     * {@inheritDoc}
+    * </p>
     */
    @Override
    public final DisplaySettings getDisplaySettings() {
@@ -141,16 +145,19 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Implements {@code compareAndSetDisplaySettings}.
+    *
     * <p>
     * {@inheritDoc}
+    * </p>
+    *
     * <p>
     * Implementations must override {@code handleNewDisplaySettings} in order
     * to respond to new display settings.
+    * </p>
     */
    @Override
    public final boolean compareAndSetDisplaySettings(
-         final DisplaySettings oldSettings, final DisplaySettings newSettings)
-   {
+         final DisplaySettings oldSettings, final DisplaySettings newSettings) {
       if (newSettings == null) {
          throw new NullPointerException("Display settings must not be null");
       }
@@ -175,20 +182,20 @@ public abstract class AbstractDataViewer implements DataViewer {
    /**
     * Arrange to apply new display settings.
     *
-    * Override this method to apply new display settings.
-    * <p>
-    * This method is called in a thread-synchronized context, so you should
+    * <p>Override this method to apply new display settings.</p>
+    *
+    * <p>This method is called in a thread-synchronized context, so you should
     * avoid time-consuming actions. It is safe to call {@code
     * getDisplaySettings} and compare its return value with {@code
     * requestedSettings}. However, calling {@code setDisplaySettings} will
     * result in infinite recursion; if you need to adjust {@code
     * requestedSettings} before accepting it, do so by returning a modified
     * copy from this method. This returned settings is what subsequent calls to
-    * {@code getDisplaySettings} will return.
-    * <p>
-    * Typically, the implementation should record all information needed to
+    * {@code getDisplaySettings} will return.</p>
+    *
+    * <p></p>Typically, the implementation should record all information needed to
     * make the changes and arrange to apply the changes at a later time
-    * (usually on the Swing/AWT event dispatch thread).
+    * (usually on the Swing/AWT event dispatch thread).</p>
     *
     * @param requestedSettings the new display settings requested
     * @return adjusted display settings that will actually apply
@@ -198,16 +205,19 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Implements {@code setDisplayPosition}.
+    *
     * <p>
     * {@inheritDoc}
+    * </p>
+    *
     * <p>
     * Implementations must override {@code handleNewDisplayPosition} in order
     * to respond to new display positions.
+    * </p>
     */
    @Override
    public final void setDisplayPosition(final Coords position,
-         boolean forceRedisplay)
-   {
+         boolean forceRedisplay) {
       if (position == null) {
          throw new NullPointerException("Position must not be null");
       }
@@ -252,8 +262,7 @@ public abstract class AbstractDataViewer implements DataViewer {
     */
    @Override
    public final boolean compareAndSetDisplayPosition(final Coords oldPosition,
-         final Coords newPosition, boolean forceRedisplay)
-   {
+         final Coords newPosition, boolean forceRedisplay) {
       if (newPosition == null) {
          throw new NullPointerException("Position must not be null");
       }
@@ -279,8 +288,7 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    @Override
    public final boolean compareAndSetDisplayPosition(Coords oldPosition,
-         Coords newPosition)
-   {
+         Coords newPosition) {
       return compareAndSetDisplayPosition(oldPosition, newPosition, false);
    }
 
@@ -288,12 +296,15 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Must be called by implementation to release resources.
+    *
     * <p>
     * This is not a "close" method because the {@code DataViewer} interface may
     * apply to viewers that are not windows (e.g. an embeddable component).
+    * </p>
+    *
     * <p>
     * This method should be called at an appropriate time to release non-memory
-    * resources used by {@code AbstractDataViewer}.
+    * resources used by {@code AbstractDataViewer}.</p>
     */
    protected void dispose() {
       asyncEventPoster_.shutdown();
@@ -303,10 +314,12 @@ public abstract class AbstractDataViewer implements DataViewer {
    /**
     * Implements {@code setDisplayedImageTo} by calling
     * {@code setDisplayPosition}.
+    *
     * <p>
     * {@inheritDoc}
+    * </p>
     *
-    * @param coords
+    * @param coords Coords of image to be displayed.
     * @deprecated user code should call {@code setDisplayPosition}
     */
    @Override

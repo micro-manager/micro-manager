@@ -53,7 +53,7 @@ public final class ConfigGroupPad extends JScrollPane {
    private final Studio studio_;
    private JTable table_;
    private StateTableData data_;
-   private final String COLUMN_WIDTH = "group_col_width";
+   private static final String COLUMN_WIDTH = "group_col_width";
 
    
    public ConfigGroupPad(Studio studio) {
@@ -61,11 +61,14 @@ public final class ConfigGroupPad extends JScrollPane {
       studio_ = studio;
    }
 
-   private void handleException (Exception e) {
+   private void handleException(Exception e) {
       ReportingUtils.showError(e);
    }
 
-   public void initialize(){
+   /**
+    * Initialize config group pad.
+    */
+   public void initialize() {
       table_ = new DaytimeNighttime.Table();
       table_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       table_.setAutoCreateColumnsFromModel(false);
@@ -81,20 +84,29 @@ public final class ConfigGroupPad extends JScrollPane {
       table_.addColumn(new TableColumn(1, 200, 
               new StatePresetCellRenderer(studio_), new StatePresetCellEditor()));
       
-      int colWidth = studio_.profile().getSettings(this.getClass()).
-              getInteger(COLUMN_WIDTH , 0);
+      int colWidth = studio_.profile().getSettings(this.getClass())
+            .getInteger(COLUMN_WIDTH, 0);
       if (colWidth > 0) {
          table_.getColumnModel().getColumn(0).setPreferredWidth(colWidth);
       }
    }
-   
+
+   /**
+    * Saves ConfigGroupPad settings to the user profile.
+    */
    public void saveSettings() {
       if (table_ != null) {
-           studio_.profile().getSettings(this.getClass()).putInteger(
+         studio_.profile().getSettings(this.getClass()).putInteger(
                  COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
       }
    }
 
+   /**
+    * Refreshes the structure of the ConfigGroupPad.
+    *
+    * @param fromCache If true, use the hardware state cache rather than enquiring
+    *                  with the actual hardware.
+    */
    public void refreshStructure(boolean fromCache) {
       if (data_ != null) {
          data_.rebuildModel(fromCache);
@@ -103,6 +115,12 @@ public final class ConfigGroupPad extends JScrollPane {
       }
    }
 
+   /**
+    * Sets the display to the provided group and config.
+    *
+    * @param groupName ConfigGroup
+    * @param configName ConfigName
+    */
    public void refreshGroup(String groupName, String configName) {
       if (data_ != null) {
          data_.refreshGroup(groupName, configName);
@@ -111,26 +129,41 @@ public final class ConfigGroupPad extends JScrollPane {
       }
    }
 
+   /**
+    * Returns the group selected by the user.
+    *
+    * @return Group selected by the user.
+    */
    public String getSelectedGroup() {
       int idx = table_.getSelectedRow();
-      if (idx<0 || data_.getRowCount()<=0) {
+      if (idx < 0 || data_.getRowCount() <= 0) {
          return "";
       } else {
          return (String) data_.getValueAt(idx, 0);
       }
    }
 
+   /**
+    * Sets the UI to the provided group.
+    *
+    * @param groupName Group to show in the display.
+    */
    public void setSelectedGroup(String groupName) {
-      for (int i=0;i<data_.getRowCount();i++) {
-         if(data_.getValueAt(i,0).toString().contentEquals(groupName)) {
-            table_.setRowSelectionInterval(i,i);
+      for (int i = 0; i < data_.getRowCount(); i++) {
+         if (data_.getValueAt(i, 0).toString().contentEquals(groupName)) {
+            table_.setRowSelectionInterval(i, i);
          }
       }
    }
-   
+
+   /**
+    * TODO: describe.
+    *
+    * @return Preset for Selected Group
+    */
    public String getPresetForSelectedGroup() {
       int idx = table_.getSelectedRow();
-      if (idx<0 || data_.getRowCount()<=0) {
+      if (idx < 0 || data_.getRowCount() <= 0) {
          return "";
       } else {
          try {
@@ -146,16 +179,16 @@ public final class ConfigGroupPad extends JScrollPane {
 
    ////////////////////////////////////////////////////////////////////////////
    /**
-    * Property table data model, representing state devices
+    * Property table data model, representing state devices.
     */
    public final class StateTableData extends AbstractTableModel {
       private static final long serialVersionUID = -6584881796860806078L;
-      final public String columnNames_[] = {
+      final public String[] columnNames_ = {
             "Group",
             "Preset"
       };
       ArrayList<StateItem> groupList_ = new ArrayList<>();
-      private CMMCore core_ = null;
+      private final CMMCore core_;
 
       public StateTableData(CMMCore core) {
          core_ = core;
@@ -199,9 +232,11 @@ public final class ConfigGroupPad extends JScrollPane {
                   studio_.live().setSuspended(true);
                   if (item.singleProp) {
                      if (item.hasLimits && item.isInteger()) {
-                        core_.setProperty(item.device, item.name, NumberUtils.intStringDisplayToCore(value));
+                        core_.setProperty(item.device, item.name,
+                              NumberUtils.intStringDisplayToCore(value));
                      } else if (item.hasLimits && !item.isInteger()) {
-                        core_.setProperty(item.device, item.name, NumberUtils.doubleStringDisplayToCore(value));
+                        core_.setProperty(item.device, item.name,
+                              NumberUtils.doubleStringDisplayToCore(value));
                      } else {
                         core_.setProperty(item.device, item.name, value.toString());
                      }
@@ -224,19 +259,17 @@ public final class ConfigGroupPad extends JScrollPane {
                   studio_.core().updateSystemStateCache(); 
                   refreshStatus();
                   table_.repaint();
-                  if (studio_ != null) {
-                     // This is a little superfluous, but it is nice that we
-                     // are depending only on Studio, not MMStudio
-                     // directly, so keep it that way.
-                     if (studio_ instanceof MMStudio) {
-                        // But it appears to be important for performance that
-                        // we use the non-config-pad-updating version of
-                        // MMStudio.refreshGUI().
-                        MMStudio parentGUI = (MMStudio) studio_;
-                        parentGUI.uiManager().updateGUI(false, true);
-                     } else {
-                        studio_.app().refreshGUIFromCache();
-                     }
+                  // This is a little superfluous, but it is nice that we
+                  // are depending only on Studio, not MMStudio
+                  // directly, so keep it that way.
+                  if (studio_ instanceof MMStudio) {
+                     // But it appears to be important for performance that
+                     // we use the non-config-pad-updating version of
+                     // MMStudio.refreshGUI().
+                     MMStudio parentGUI = (MMStudio) studio_;
+                     parentGUI.uiManager().updateGUI(false, true);
+                  } else {
+                     studio_.app().refreshGUIFromCache();
                   }
 
                } catch (Exception e) {
@@ -258,6 +291,11 @@ public final class ConfigGroupPad extends JScrollPane {
          return nCol != 0;
       }
 
+      /**
+       * Rebuilds the model.
+       *
+       * @param fromCache Use cached hardware state if true.
+       */
       public void rebuildModel(boolean fromCache) {
          try {
             ReportingUtils.logMessage("Rebuilding config group table");
@@ -292,19 +330,23 @@ public final class ConfigGroupPad extends JScrollPane {
                      item.device = cfg.getSetting(0).getDeviceLabel();
                      item.name = cfg.getSetting(0).getPropertyName();
                      item.hasLimits = core_.hasPropertyLimits(item.device, item.name);
-                     boolean itemHasAllowedValues = (0 < core_.getAllowedPropertyValues(item.device, item.name).size());
+                     boolean itemHasAllowedValues = (
+                           0 < core_.getAllowedPropertyValues(item.device, item.name).size());
                      if (item.hasLimits || !itemHasAllowedValues) {
                         item.singleProp = true;
                         item.type = core_.getPropertyType(item.device, item.name);
                         if (fromCache) {
-                           item.setValueFromCoreString(core_.getPropertyFromCache(item.device, item.name));
+                           item.setValueFromCoreString(
+                                 core_.getPropertyFromCache(item.device, item.name));
                         } else {
-                           item.setValueFromCoreString(core_.getProperty(item.device, item.name));
+                           item.setValueFromCoreString(
+                                 core_.getProperty(item.device, item.name));
                         }
                         item.config = item.value;
                         item.lowerLimit = core_.getPropertyLowerLimit(item.device, item.name);
                         item.upperLimit = core_.getPropertyUpperLimit(item.device, item.name);
-                        item.singlePropAllowed = core_.getAllowedPropertyValues(item.device, item.name).toArray();
+                        item.singlePropAllowed = core_.getAllowedPropertyValues(
+                              item.device, item.name).toArray();
                      }
 
                   }
@@ -345,6 +387,12 @@ public final class ConfigGroupPad extends JScrollPane {
          }
       }
 
+      /**
+       * TODO.
+       *
+       * @param groupName Group name.
+       * @param configName Configuration name.
+       */
       public void refreshGroup(String groupName, String configName) {
          try {
             for (StateItem item : groupList_) {

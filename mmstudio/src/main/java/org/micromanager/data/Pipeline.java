@@ -38,6 +38,7 @@ public interface Pipeline {
     * not already have SummaryMetadata set for it, and only prior to any images
     * being inserted into the Pipeline by the insertImage() method.
     * This method is synchronous even for asynchronous Pipelines.
+    *
     * @param source Source SummaryMetadata to be input into the Pipeline.
     * @throws org.micromanager.data.DatastoreFrozenException if the Datastore
     *         is frozen at the time this method is called.
@@ -55,23 +56,23 @@ public interface Pipeline {
     * reaches the end of the Pipeline, at which point those result Images
     * will be stored in any attached Datastores (see addDatastore, below).
     *
-    * If the Pipeline is in synchronous mode, then this call will block until
+    * <p>If the Pipeline is in synchronous mode, then this call will block until
     * any generated images are in the Datastore. If it is in asynchronous
     * mode, then the call will return as soon as the first processor in the
     * pipeline is ready to start processing (i.e. as soon as it is not busy
-    * processing a different image).
+    * processing a different image).</p>
     *
-    * If the Pipeline has been halted, then the image will be silently
-    * discarded, and no processing of it will occur.
+    * <p>If the Pipeline has been halted, then the image will be silently
+    * discarded, and no processing of it will occur.</p>
     *
-    * If any of the Processors in the Pipeline throws an exception during
+    * <p>If any of the Processors in the Pipeline throws an exception during
     * processing, then the Pipeline will be put into an error state, and
     * attempts to call insertImage() will throw a PipelineErrorException.
     * You can retrieve the exception(s) that occurred by calling
     * getExceptions(). If you wish to continue inserting images into the
     * Pipeline (despite the fact that it may be in an inconsistent state,
     * resulting in incorrect processed images), then you must call
-    * clearExceptions() first.
+    * clearExceptions() first.</p>
     *
     * @param image Image to be processed by the Pipeline.
     * @throws org.micromanager.data.DatastoreFrozenException if the Datastore
@@ -91,6 +92,7 @@ public interface Pipeline {
    /**
     * Get the output Datastore for this Pipeline. This Datastore is the
     * ultimate recipient of Images that have been processed by the Pipeline.
+    *
     * @return output Datastore for this Pipeline
     */
    Datastore getDatastore();
@@ -98,11 +100,14 @@ public interface Pipeline {
    /**
     * Return whether the Pipeline is operating in synchronous or asynchronous
     * modes. See DataManager.createPipeline() for more information.
+    *
     * @return True if the Pipeline is synchronous, False otherwise.
     */
    boolean isSynchronous();
 
    /**
+    * Deprecated.
+    *
     * @deprecated Use {@link #isSynchronous()} instead.
     */
    @Deprecated
@@ -132,8 +137,9 @@ public interface Pipeline {
     * Return a list containing any exceptions that have occurred during
     * processing of images. If this list has any elements in it, then calls
     * to insertImage() will provoke a PipelineErrorException.
+    *
     * @return list containing any exceptions that have occurred during
-    * processing of images
+    *         processing of images
     */
    List<Exception> getExceptions();
 

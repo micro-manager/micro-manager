@@ -25,9 +25,8 @@ package org.micromanager.acquisition;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.micromanager.data.Datastore;
-
 import java.util.ArrayList;
+import org.micromanager.data.Datastore;
 
 
 /**
@@ -35,15 +34,18 @@ import java.util.ArrayList;
  * single acquisition. Various methods of the AcquisitionManager will consume
  * or generate SequenceSettings, and you can create your own to configure your
  * custom acquisitions.
- *
+ * <p>
  * Maintainer note: This should be an interface, but kept as a class for backward
- * compatibility.
+ * compatibility.</p>
  *
  */
 public final class SequenceSettings {
    // version ID for the sequence settings
    public static final double Version = 1.3;
 
+   /**
+    * SequenceSettings Builder.
+    */
    public static final class Builder {
       private int numFrames = 1;
       private double intervalMs = 0.0;
@@ -77,15 +79,37 @@ public final class SequenceSettings {
       private double sliceZTopUm = 0.0;
       private int acqOrderMode; // defined in org.micromanager.internal.utils.AcqOrderMode
 
-      public Builder numFrames(int nFrames) { numFrames = nFrames; return this;}
-      public Builder intervalMs(double d) { intervalMs = d; return this;}
-      public Builder displayTimeUnit(int d) { displayTimeUnit = d; return this; }
-      public Builder useCustomIntervals (boolean use) {
-         useCustomIntervals = use; return this;
+      public Builder numFrames(int nFrames) {
+         numFrames = nFrames;
+         return this;
       }
+
+      public Builder intervalMs(double d) {
+         intervalMs = d;
+         return this;
+      }
+
+      public Builder displayTimeUnit(int d) {
+         displayTimeUnit = d;
+         return this;
+      }
+
+      public Builder useCustomIntervals(boolean use) {
+         useCustomIntervals = use;
+         return this;
+      }
+
       public Builder customIntervalsMs(ArrayList<Double> c) {
-         customIntervalsMs = c; return this;
+         customIntervalsMs = c;
+         return this;
       }
+
+      /**
+       * Sets the ChannelSpecs to be used in this builder.
+       *
+       * @param c List of ChannelSpec to be used.
+       * @return Builder instance for convenience.
+       */
       public Builder channels(ArrayList<ChannelSpec> c) {
          // avoid inserting null channels
          channels = new ArrayList<>();
@@ -95,37 +119,148 @@ public final class SequenceSettings {
                   channels.add(cs);
                }
             }
-         } return this;
+         }
+         return this;
       }
-      public Builder slices (ArrayList<Double> s) { slices = s; return this;}
-      public Builder relativeZSlice(boolean r) {relativeZSlice = r; return this;}
-      public Builder slicesFirst(boolean s) {slicesFirst = s; return this;}
-      public Builder timeFirst(boolean t) {timeFirst = t; return this;}
-      public Builder keepShutterOpenSlices(boolean k) {keepShutterOpenSlices = k; return this;}
-      public Builder keepShutterOpenChannels (boolean k) {keepShutterOpenChannels = k; return this;}
-      public Builder useAutofocus(boolean u) {useAutofocus = u; return this;}
-      public Builder skipAutofocusCount(int s) {skipAutofocusCount = s; return this;}
-      public Builder save(boolean s) {save = s; return this;}
-      public Builder saveMode(Datastore.SaveMode s) { saveMode = s; return this;}
-      public Builder root(String r) {root = r; return this;}
-      public Builder prefix (String p) {prefix = p; return this;}
-      public Builder zReference(double z) {zReference = z; return this;}
-      public Builder comment(String c) {comment = c; return this;}
-      public Builder channelGroup (String c) {channelGroup = c; return this;}
-      public Builder usePositionList (boolean u) {usePositionList = u; return this;}
-      public Builder cameraTimeout(int ct) {cameraTimeout = ct; return this;}
-      public Builder shouldDisplayImages(boolean s) {shouldDisplayImages = s; return this;}
 
-      public Builder useSlices(boolean u) { useSlices = u; return this; }
-      public Builder useFrames(boolean u) {useFrames = u; return this;}
-      public Builder useChannels(boolean u) {useChannels = u; return this;}
-      public Builder sliceZStepUm(double s) {sliceZStepUm = s; return this;}
-      public Builder sliceZBottomUm (double s) {sliceZBottomUm = s; return this;}
-      public Builder sliceZTopUm(double s) {sliceZTopUm = s; return this;}
-      public Builder acqOrderMode(int a) {acqOrderMode = a; return this;}
+      public Builder slices(ArrayList<Double> s) {
+         slices = s;
+         return this;
+      }
+
+      public Builder relativeZSlice(boolean r) {
+         relativeZSlice = r;
+         return this;
+      }
+
+      public Builder slicesFirst(boolean s) {
+         slicesFirst = s;
+         return this;
+      }
+
+      public Builder timeFirst(boolean t) {
+         timeFirst = t;
+         return this;
+      }
+
+      public Builder keepShutterOpenSlices(boolean k) {
+         keepShutterOpenSlices = k;
+         return this;
+      }
+
+      public Builder keepShutterOpenChannels(boolean k) {
+         keepShutterOpenChannels = k;
+         return this;
+      }
+      
+      public Builder useAutofocus(boolean u) {
+         useAutofocus = u;
+         return this;
+      }
+
+      public Builder skipAutofocusCount(int s) {
+         skipAutofocusCount = s;
+         return this;
+      }
+
+      public Builder save(boolean s) {
+         save = s;
+         return this;
+      }
+
+      public Builder saveMode(Datastore.SaveMode s) {
+         saveMode = s;
+         return this;
+      }
+
+      public Builder root(String r) {
+         root = r;
+         return this;
+      }
+
+      public Builder prefix(String p) {
+         prefix = p;
+         return this;
+      }
+
+      public Builder zReference(double z) {
+         zReference = z;
+         return this;
+      }
+
+      public Builder comment(String c) {
+         comment = c;
+         return this;
+      }
+
+      public Builder channelGroup(String c) {
+         channelGroup = c;
+         return this;
+      }
+
+      public Builder usePositionList(boolean u) {
+         usePositionList = u;
+         return this;
+      }
+
+      public Builder cameraTimeout(int ct) {
+         cameraTimeout = ct;
+         return this;
+      }
+
+      public Builder shouldDisplayImages(boolean s) {
+         shouldDisplayImages = s;
+         return this;
+      }
+
+      public Builder useSlices(boolean u) {
+         useSlices = u;
+         return this;
+      }
+
+      public Builder useFrames(boolean u) {
+         useFrames = u;
+         return this;
+      }
+
+      public Builder useChannels(boolean u) {
+         useChannels = u;
+         return this;
+      }
+
+      public Builder sliceZStepUm(double s) {
+         sliceZStepUm = s;
+         return this;
+      }
+
+      public Builder sliceZBottomUm(double s) {
+         sliceZBottomUm = s;
+         return this;
+      }
+
+      public Builder sliceZTopUm(double s) {
+         sliceZTopUm = s;
+         return this;
+      }
+
+      /**
+       * Sets acquisition order of axes.  See SequenceSettings for definitions.
+       *
+       * @param a integer representing acquisition order.
+       * @return Builder instance for convenience.
+       */
+      public Builder acqOrderMode(int a) {
+         acqOrderMode = a;
+         return this;
+      }
 
       public Builder() {}
 
+      /**
+       * Construct a Builder using the given SequenceSettings (copy builder).
+       *
+       * @param s SequenceSettings to apply to this builder.
+       */
       public Builder(SequenceSettings s) {
          numFrames =  s.numFrames;
          intervalMs = s.intervalMs;
@@ -160,6 +295,11 @@ public final class SequenceSettings {
          acqOrderMode = s.acqOrderMode;
       }
 
+      /**
+       * Constructs SequenceSettings.
+       *
+       * @return immutable instance of SequenceSettings.
+       */
       public SequenceSettings build() {
          SequenceSettings s = new SequenceSettings();
          s.numFrames =  numFrames;
@@ -201,137 +341,182 @@ public final class SequenceSettings {
 
    // acquisition protocol
    /**
+    * Deprecated.
+    *
     * @deprecated use Builder and numFrames() instead
     */
    @Deprecated
    public int numFrames = 1;
    /**
+    * Deprecated.
+    *
     * @deprecated use Builder and intervalMs() instead
     */
    @Deprecated
    public double intervalMs = 0.0;
 
    private int displayTimeUnit = 0;
+
    /**
     * Whether or not to use custom time intervals. Do not set this to true
     * if customIntervalsMs is null!
+    *
     * @deprecated use Builder and useCustomIntervals() instead
     */
    @Deprecated
    public boolean useCustomIntervals;
+
    /**
-    * sequence of custom intervals or null
+    * Sequence of custom intervals or null.
+    *
     * @deprecated use Builder and customIntervalsMs() instead
     */
    @Deprecated
    public ArrayList<Double> customIntervalsMs = null;
+
    /**
-    * an array of ChannelSpec settings (one for each channel)
-    * no member of the array should ever by null
+    * An array of ChannelSpec settings (one for each channel).
+    * no member of the array should ever by null.
+    *
     * @deprecated use Builder and channels() instead
     */
    @Deprecated
    public ArrayList<ChannelSpec> channels = new ArrayList<>();
+
    /**
-    * slice Z coordinates
+    * Slice Z coordinates.
+    *
     * @deprecated use Builder and slices() instead
     */
    @Deprecated
    public ArrayList<Double> slices = new ArrayList<>();
+
    /**
-    * are Z coordinates relative or absolute
+    * are Z coordinates relative or absolute.
+    *
     * @deprecated use Builder and relativeZSlice() instead
     */
    @Deprecated
    public boolean relativeZSlice = false;
+
    /**
-    * slice coordinate changes first
+    * slice coordinate changes first.
+    *
     * @deprecated use Builder and slicesFirst() instead
     */
    @Deprecated
    public boolean slicesFirst = false;
+
    /**
-    * frame coordinate changes first
+    * frame coordinate changes first.
+    *
     * @deprecated use Builder and timeFirst() instead
     */
    @Deprecated
    public boolean timeFirst = false;
+
    /**
-    * do we keep shutter open during slice changes
+    * do we keep shutter open during slice changes.
+    *
     * @deprecated use Builder and keepShutterOpenSlices() instead
     */
    @Deprecated
    public boolean keepShutterOpenSlices = false;
+
    /**
-    * do we keep shutter open channel changes
+    * do we keep shutter open channel changes.
+    *
     * @deprecated use Builder and keepShutterOpenChannels() instead
     */
    @Deprecated
    public boolean keepShutterOpenChannels = false;
+
    /**
-    * are we going to run autofocus before acquiring each position/frame
+    * are we going to run autofocus before acquiring each position/frame.
+    *
     * @deprecated use Builder and useAutofocus() instead
     */
    @Deprecated
    public boolean useAutofocus = false;
+
    /**
-    * how many autofocus opportunities to skip
+    * how many autofocus opportunities to skip.
+    *
     * @deprecated use Builder and skipAutofocusCount() instead
     */
    @Deprecated
    public int skipAutofocusCount = 0;
+
    /**
-    * save to disk?
+    * Whether or not to save to disk.
+    *
     * @deprecated use Builder and save() instead
     */
    @Deprecated
    public boolean save = false;
+
    private Datastore.SaveMode saveMode = Datastore.SaveMode.MULTIPAGE_TIFF;
+
    /**
-    * root directory name
+    * root directory name.
+    *
     * @deprecated use Builder and root() instead
     */
    @Deprecated
    public String root = null;
+
    /**
-    * acquisition name
+    * acquisition name.
+    *
     * @deprecated use Builder and prefix() instead
     */
    @Deprecated
    public String prefix = null;
+
    /**
-    * referent z position for relative moves
+    * referent z position for relative moves.
+    *
     * @deprecated use Builder and zReference() instead
     */
    @Deprecated
    public double zReference = 0.0;
+
    /**
-    * comment text
+    * comment text.
+    *
     * @deprecated use Builder and comment() instead
     */
    @Deprecated
    public String comment = "";
+
    /**
-    * which configuration group is used to define channels
+    * which configuration group is used to define channels.
+    *
     * @deprecated use Builder and channelGroup() instead
     */
    @Deprecated
    public String channelGroup = "";
+
    /**
-    * true if we want to have multiple positions
+    * true if we want to have multiple positions.
+    *
     * @deprecated use Builder and usePositionList() instead
     */
    @Deprecated
    public boolean usePositionList = false;
+
    /**
-    * Minimum camera timeout, in ms, for sequence acquisitions
+    * Minimum camera timeout, in ms, for sequence acquisitions.
     * (actual timeout depends on exposure time and other factors)
+    *
     * @deprecated use Builder and cameraTimeout() instead
     */
    @Deprecated
    public int cameraTimeout = 20000;
+
    /**
     * Whether or not to display images generated by the acquisition.
+    *
     * @deprecated use Builder and shouldDisplayImages() instead
     */
    @Deprecated
@@ -341,28 +526,35 @@ public final class SequenceSettings {
     * Whether or not to acquire a z-stack during the acquisition.
     */
    private boolean useSlices = false;
+
    /**
     * Whether or not to acquire multiple time points during the acquisition.
     */
    private boolean useFrames = false;
+
    /**
     * Whether or not to acquire multiple channels during the acquisition.
     */
    private boolean useChannels = false;
+
    /**
-    * Distance the z-drive should travel between steps when acquiring a z-stack
+    * Distance the z-drive should travel between steps when acquiring a z-stack.
     */
    private double sliceZStepUm;
+
    /**
     * Start position of the z-stack in microns.  Can be absolute or relative to current position.
     */
    private double sliceZBottomUm;
+
    /**
     * End position of the z-stack in microns.  Can be absolute or relative to current position.
     */
    private double sliceZTopUm;
+
    /**
-    * Order of the various axes during acquisition as defined in {@link org.micromanager.internal.utils.AcqOrderMode}
+    * Order of the various axes during acquisition as defined in
+    * {@link org.micromanager.internal.utils.AcqOrderMode}.
     */
    private int acqOrderMode;
 
@@ -370,9 +562,10 @@ public final class SequenceSettings {
    /**
     * Create a copy of this SequenceSettings. All parameters will be copied,
     * with new objects being created as necessary (i.e. this is a deep copy).
+    *
     * @return Copy of this SequenceSettings.
     * @deprecated When used correctly, SequenceSettings are immutable.
-    * If you really need a copy, use copyBuilder().build();
+    *             If you really need a copy, use copyBuilder().build();
     */
    @Deprecated
    public SequenceSettings copy() {
@@ -380,169 +573,264 @@ public final class SequenceSettings {
    }
 
    /**
-    * Default constructor needed since we have a copy constructor
+    * Default constructor needed since we have a copy constructor.
+    *
     * @deprecated use Builder instead
     */
    @Deprecated
    private SequenceSettings() {
    }
 
-   public SequenceSettings.Builder copyBuilder() {return new Builder(this);}
+   public SequenceSettings.Builder copyBuilder() {
+      return new Builder(this);
+   }
 
    /**
     * Number of time points to be acquired.  Defines a sequence of time points
     * together with {@link #intervalMs()}.  Will be overriden when
     * {@link #useCustomIntervals()} and {@link #customIntervalsMs()} are set.
     */
-   public int numFrames() {return numFrames;}
+   public int numFrames() {
+      return numFrames;
+   }
+
    /**
     * Desired interval between the start of two consecutive time points in milliseconds.
     * Defines a sequence of time points together r with {@link #numFrames()}.
     * Will be overriden when {@link #useCustomIntervals()}
     * and {@link #customIntervalsMs()} are set.
     */
-   public double intervalMs() {return  intervalMs; }
+   public double intervalMs() {
+      return  intervalMs;
+   }
+
    /**
-    * Time unit, only used to store preferred way to display the time
+    * Time unit, only used to store preferred way to display the time.
+    *
     * @return 0-milliseconds, 1-seconds, 2-minutes
     */
-   public int displayTimeUnit() { return displayTimeUnit;}
+   public int displayTimeUnit() {
+      return displayTimeUnit;
+   }
+
    /**
-    * Whether to use custom time intervals defined {@link #customIntervalsMs()}
+    * Whether to use custom time intervals defined {@link #customIntervalsMs()}.
+    *
     * @return use custom time intervals when true
     */
-   public boolean useCustomIntervals() { return useCustomIntervals; }
+   public boolean useCustomIntervals() {
+      return useCustomIntervals;
+   }
+
    /**
-    * Time intervals between the starts of time points in milliseconds
+    * Time intervals between the starts of time points in milliseconds.
     */
-   public ArrayList<Double> customIntervalsMs() { return customIntervalsMs; }
+   public ArrayList<Double> customIntervalsMs() {
+      return customIntervalsMs;
+   }
+
    /**
-    * LIst with channel definitions to be used in the acquisition
-    * @return LIst with channel definitions to be used in the acquisition
+    * List with channel definitions to be used in the acquisition.
+    *
+    * @return List with channel definitions to be used in the acquisition
     */
-   public ArrayList<ChannelSpec> channels() {return channels; }
+   public ArrayList<ChannelSpec> channels() {
+      return channels;
+   }
+
    /**
-    * Z- drive positions to be used to acquire a z-stack
+    * Z- drive positions to be used to acquire a z-stack.
+    *
     * @return List of Z- drive positions to be used to acquire a z-stack
     */
-   public ArrayList<Double> slices() { return slices; }
+   public ArrayList<Double> slices() {
+      return slices;
+   }
+
    /**
     * Whether to base the z Top and Bottom for a z stack relative to a referent position
-    * or treat them as absolute values
+    * or treat them as absolute values.
+    *
     * @return true when values are relative
     */
-   public boolean relativeZSlice() { return relativeZSlice; }
-   // public boolean slicesFirst() { return slicesFirst; }
-   // public boolean timeFirst() { return timeFirst; }
-   /**
-    * Whether to keep shutter open during z-stack stage movements
-    */
-   public boolean keepShutterOpenSlices() { return keepShutterOpenSlices; }
-   /**
-    * Whether to keep shutter open during channel changes
-    */
-   public boolean keepShutterOpenChannels() { return keepShutterOpenChannels; }
+   public boolean relativeZSlice() {
+      return relativeZSlice;
+   }
 
    /**
-    * Whether to use autofocus before each time point / position
+    * Whether to keep shutter open during z-stack stage movements.
+    */
+   public boolean keepShutterOpenSlices() {
+      return keepShutterOpenSlices;
+   }
+
+   /**
+    * Whether to keep shutter open during channel changes.
+    */
+   public boolean keepShutterOpenChannels() {
+      return keepShutterOpenChannels;
+   }
+
+   /**
+    * Whether to use autofocus before each time point / position.
+    *
     * @return Whether to use autofocus before each time point / position
     */
-   public boolean useAutofocus() { return useAutofocus; }
-   /**
-    * how many autofocus opportunities to skip
-    */
-   public int skipAutofocusCount() { return skipAutofocusCount; }
+   public boolean useAutofocus() {
+      return useAutofocus;
+   }
 
    /**
-    * Whether the data acquisition should be stored on disk
+    * how many autofocus opportunities to skip.
+    */
+   public int skipAutofocusCount() {
+      return skipAutofocusCount;
+   }
+
+   /**
+    * Whether the data acquisition should be stored on disk.
+    *
     * @return save when true, otherwise to RAMM only
     */
-   public boolean save() { return save; }
+   public boolean save() {
+      return save;
+   }
+
    /**
     * File format to be used to save this acquisition when {@link #save()} is set.
     * Formats are defined in {@link org.micromanager.data.Datastore.SaveMode}.
     * Currently:
     * 0 - {@link org.micromanager.data.Datastore.SaveMode#SINGLEPLANE_TIFF_SERIES}
     * 1 - {@link org.micromanager.data.Datastore.SaveMode#MULTIPAGE_TIFF}
+    *
     * @return integer representing {@link org.micromanager.data.Datastore.SaveMode}
     */
-   public Datastore.SaveMode saveMode() { return saveMode; }
+   public Datastore.SaveMode saveMode() {
+      return saveMode;
+   }
 
    /**
-    * Directory where data will be saved
-    * @return irectory where data will be saved
+    * Directory where data will be saved.
+    *
+    * @return Directory where data will be saved
     */
-   public String root() { return root; }
+   public String root() {
+      return root;
+   }
 
    /**
-    * Acquisition name. Will be used in storage and display
-    * @return acquisition anme
+    * Acquisition name. Will be used in storage and display.
+    *
+    * @return acquisition name
     */
-   public String prefix() { return prefix; }
-   /**
-    * referent z position for relative moves
-    */
-   public double zReference() { return zReference; }
+   public String prefix() {
+      return prefix;
+   }
 
    /**
-    * Text comment to be attached to the acquired data
+    * referent z position for relative moves.
+    */
+   public double zReference() {
+      return zReference;
+   }
+
+   /**
+    * Text comment to be attached to the acquired data.
+    *
     * @return text comment
     */
-   public String comment() { return comment; }
-   /**
-    * Configuration group used to define channels used in the acquisition
-    */
-   public String channelGroup() { return channelGroup; }
+   public String comment() {
+      return comment;
+   }
 
    /**
-    * Whether to acquire at multiple positions (defined in the positionLost
-    * @return True if positions in the list should all be visited, when false, only acquired at current position
+    * Configuration group used to define channels used in the acquisition.
     */
-   public boolean usePositionList() { return usePositionList; }
+   public String channelGroup() {
+      return channelGroup;
+   }
+
+   /**
+    * Whether to acquire at multiple positions (defined in the positionList).
+    *
+    * @return True if positions in the list should all be visited,
+    *         when false, only acquired at current position
+    */
+   public boolean usePositionList() {
+      return usePositionList;
+   }
+
    /**
     * Minimum camera timeout, in ms, for sequence acquisitions
-    * (actual timeout depends on exposure time and other factors)
+    * (actual timeout depends on exposure time and other factors).
     */
-   public int cameraTimeout() { return cameraTimeout; }
+   public int cameraTimeout() {
+      return cameraTimeout;
+   }
+
    /**
-    * Whether to display acquired data
+    * Whether to display acquired data.
     */
-   public boolean shouldDisplayImages() { return shouldDisplayImages; }
+   public boolean shouldDisplayImages() {
+      return shouldDisplayImages;
+   }
+
    /**
     * Whether to acquire z stacks during the acquisition.
     */
-   public boolean useSlices() { return useSlices; }
+   public boolean useSlices() {
+      return useSlices;
+   }
+
    /**
     * Whether to acquire multiple time points during the acquisition.
     */
-   public boolean useFrames() { return useFrames; }
+   public boolean useFrames() {
+      return useFrames;
+   }
+
    /**
     * Whether to acquire multiple channels during the acquisition.
     */
-   public boolean useChannels() { return  useChannels; }
+   public boolean useChannels() {
+      return  useChannels;
+   }
+
    /**
-    * Distance the z-drive should travel between steps when acquiring a z-stack
+    * Distance the z-drive should travel between steps when acquiring a z-stack.
     */
-   public double sliceZStepUm() { return sliceZStepUm ; }
+   public double sliceZStepUm() {
+      return sliceZStepUm;
+   }
+
    /**
     * Start position of the z-stack in microns.  Can be absolute or relative to current position.
     */
-   public double sliceZBottomUm() { return sliceZBottomUm; }
+   public double sliceZBottomUm() {
+      return sliceZBottomUm;
+   }
+
    /**
     * End position of the z-stack in microns.  Can be absolute or relative to current position.
     */
-   public double sliceZTopUm () { return sliceZTopUm; }
+   public double sliceZTopUm() {
+      return sliceZTopUm;
+   }
+
    /**
     * Order of the various axes during acquisition as defined in
-    * {@link org.micromanager.internal.utils.AcqOrderMode}
+    * {@link org.micromanager.internal.utils.AcqOrderMode}.
     * Currently available orders:
     * 0 - {@link org.micromanager.internal.utils.AcqOrderMode#TIME_POS_SLICE_CHANNEL}
     * 1 - {@link org.micromanager.internal.utils.AcqOrderMode#TIME_POS_CHANNEL_SLICE}
     * 2 - {@link org.micromanager.internal.utils.AcqOrderMode#POS_TIME_SLICE_CHANNEL}
     * 3 - {@link org.micromanager.internal.utils.AcqOrderMode#POS_TIME_CHANNEL_SLICE}
+    *
     * @return integer representing enum {@link org.micromanager.internal.utils.AcqOrderMode}
     */
-   public int acqOrderMode() { return acqOrderMode; }
+   public int acqOrderMode() {
+      return acqOrderMode;
+   }
 
    public static String toJSONStream(SequenceSettings settings) {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();

@@ -17,6 +17,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.data;
 
 import org.micromanager.MMEvent;
@@ -25,12 +26,14 @@ import org.micromanager.MMEvent;
  * This event posts when the DataStore gets a new name, i.e. when
  * {@link Datastore#setName(String)} is called
  *
- * The default implementation of this Event posts on the Datastore
- * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.
+ * <p>The default implementation of this Event posts on the Datastore
+ * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.</p>
  */
 public interface DataProviderHasNewNameEvent extends MMEvent {
 
    /**
+    * Returns the new name of the DataProvider.
+    *
     * @return The new name of the DataProvider.
     */
    String getNewName();

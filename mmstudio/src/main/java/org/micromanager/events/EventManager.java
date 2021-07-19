@@ -36,7 +36,7 @@ public interface EventManager {
     * @param obj The object that should be subscribed to receive event
     *        notifications.
     */
-   public void registerForEvents(Object obj);
+   void registerForEvents(Object obj);
 
    /**
     * Un-register the provided object from the EventBus, so that it will no
@@ -47,7 +47,7 @@ public interface EventManager {
     *
     * @param obj The object that should no longer receive event notifications.
     */
-   public void unregisterForEvents(Object obj);
+   void unregisterForEvents(Object obj);
 
    /**
     * Post an event on the EventBus, so that subscribers for that event can
@@ -55,5 +55,5 @@ public interface EventManager {
     *
     * @param event The event object to be posted.
     */
-   public void post(Object event);
+   void post(Object event);
 }

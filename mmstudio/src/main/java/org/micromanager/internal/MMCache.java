@@ -52,9 +52,16 @@ public class MMCache {
    private String xyStageLabel_ = "";
    private String zStageLabel_ = "";
 
-   static private CMMCore core_;
-   static private MainFrame frame_;
+   static CMMCore core_;
+   static MainFrame frame_;
 
+   /**
+    * Yet another cache.  This one seems mainly to be used by the info string
+    * in the bottom of the main window.  TODO: evaluate.
+    *
+    * @param studio (singleton) Studion object.
+    * @param frame MainFrame.
+    */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMCache(Studio studio, MainFrame frame) {
       core_ = studio.core();
@@ -62,16 +69,33 @@ public class MMCache {
       studio.events().registerForEvents(this);
    }
 
+   /**
+    * Updates Cache with X,Y position of the Core-Stage.
+    *
+    * @param x X position of the Core-Stage.
+    * @param y Y position of the Core-Stage.
+    */
    public void updateXYPos(double x, double y) {
       x_ = x;
       y_ = y;
       updateInfoDisplay();
    }
+
+   /**
+    * Updates Cache with relative X,Y position of the Core-Stage.
+    *
+    * @param x relative change in X position of the Core-Stage.
+    * @param y relative change in Y position of the Core-Stage.
+    */
    public void updateXYPosRelative(double x, double y) {
       x_ += x;
       y_ += y;
       updateInfoDisplay();
    }
+
+   /**
+    * Updates XY stage position in the cache by reading values from hardware.
+    */
    public void updateXYStagePosition() {
       double[] x = new double[1];
       double[] y = new double[1];
@@ -80,7 +104,7 @@ public class MMCache {
             core_.getXYPosition(xyStageLabel_, x, y);
          }
       } catch (Exception e) {
-          ReportingUtils.showError(e);
+         ReportingUtils.showError(e);
       }
       updateXYPos(x[0], y[0]);
    }
@@ -89,6 +113,7 @@ public class MMCache {
       zPos_ = z;
       updateInfoDisplay();
    }
+
    public void updateZPosRelative(double z) {
       zPos_ += z;
       updateInfoDisplay();
@@ -106,6 +131,11 @@ public class MMCache {
       // we are not displaying the affine transform...
    }
 
+   /**
+    * Handles event signalling that a StagePosition changed.
+    *
+    * @param event Holds information about the stage and its new position.
+    */
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
       if (event.getDeviceName().equals(zStageLabel_)) {
@@ -113,6 +143,11 @@ public class MMCache {
       }
    }
 
+   /**
+    * Handles event signalling that a XYStagePosition changed.
+    *
+    * @param event Holds information about the XY stage in its new position.
+    */
    @Subscribe
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
       if (event.getDeviceName().equals(xyStageLabel_)) {
@@ -120,6 +155,9 @@ public class MMCache {
       }
    }
 
+   /**
+    * Updates the cache by reading values from the hardware.
+    */
    public void refreshValues() {
       try {
          cameraLabel_ = core_.getCameraDevice();
@@ -150,15 +188,18 @@ public class MMCache {
          zPos_ = zPos;
          x_ = x[0];
          y_ = y[0];
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          ReportingUtils.showError(e);
       }
       updateInfoDisplay();
    }
 
+   /**
+    * Updates the information line in the UI.
+    */
    public void updateInfoDisplay() {
-      String text = String.format("Image info (from camera): %s X %s X %s bytes, Intensity range: %s bits, %s nm/px",
+      String text = String.format(
+            "Image info (from camera): %s X %s X %s bytes, Intensity range: %s bits, %s nm/px",
             width_, height_, bytesPerPixel_, imageBitDepth_,
             TextUtils.FMT0.format(pixSizeUm_ * 1000));
       if (zStageLabel_.length() > 0) {

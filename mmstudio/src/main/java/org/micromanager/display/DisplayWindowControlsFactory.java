@@ -33,7 +33,7 @@ import java.util.List;
  * DisplayManager.createDisplay() method that does not take a ControlsFactory
  * argument.
  *
- * Usage example:
+ * <p>Usage example:</p>
  *
  * <pre><code>
  * Datastore store = mm.data().createRAMDatastore();

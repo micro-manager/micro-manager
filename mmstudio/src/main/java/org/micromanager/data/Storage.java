@@ -31,10 +31,10 @@ import java.util.List;
  * and most of its methods are simply "backings" for similar methods in
  * Datastore.
  *
- * Note that the Storage interface does not expose any "setter" methods
+ * <p>Note that the Storage interface does not expose any "setter" methods
  * (e.g. putImage(), setSummaryMetadata(), etc.). It is expected that any
  * read/write Storage listen for the relevant events published by the
- * Datastore instead.
+ * Datastore instead.</p>
  */
 public interface Storage {
    /**
@@ -45,12 +45,14 @@ public interface Storage {
    /**
     * Insert an Image into the Storage, so that it may be returned by later
     * getImage() calls.
+    *
     * @param image Image to be inserted.
     */
    void putImage(Image image) throws IOException;
 
    /**
     * Retrieve the Image located at the specified coordinates.
+    *
     * @param coords Coordinates specifying which image to retrieve
     * @return desired Image
     */
@@ -58,6 +60,7 @@ public interface Storage {
 
    /**
     * Returns whether or not an image exists at the specified coordinates.
+    *
     * @param coords Coordinates to test
     * @return True if an image exists at the coordinates, false otherwise.
     */
@@ -67,6 +70,7 @@ public interface Storage {
     * Return any Image, or null if there are no images. Only really useful if
     * you need a representative image to work with. No guarantees are made
     * about which image will be provided.
+    *
     * @return any Image or null if there are no images
     */
    Image getAnyImage();
@@ -74,8 +78,9 @@ public interface Storage {
    /**
     * Return an Iterable that provides access to all image coordinates in the
     * Storage, in arbitrary order.
+    *
     * @return Iterable that provides access to all image coordinates in the
-    * Storage, in arbitrary order
+    *         Storage, in arbitrary order
     */
    Iterable<Coords> getUnorderedImageCoords();
 
@@ -85,6 +90,7 @@ public interface Storage {
     * would return all Images whose position along the "z" axis is 9 (note that
     * this means that Images with no defined position along that axis will
     * not be returned). The result may be empty.
+    *
     * @param coords Coordinates specifying images to match
     * @return List with matching Images
     */
@@ -95,13 +101,14 @@ public interface Storage {
     * except for the axes listed in the exception list.
     * For instance, given Coords {@code t=1,z=3>} and axes "c", the following
     * Coords would match: {@code <t=1, z=3>}, {@code <t=1, z=3, c=1>}, {@code <t=1, z=3, c=2>}.
+    *
     * @param coords coord looking for matching images
     * @param ignoreTheseAxes Axes to be ignored in the images collection when
     *                        looking for matches
-    * @return matchig images
-    * @throws IOException
+    * @return matching images
+    * @throws IOException happens with disk based storage
     */
-    List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException;
+   List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException;
 
 
    /**
@@ -111,30 +118,34 @@ public interface Storage {
     *
     * @param axis axis of interest
     * @return Largest stored position along the specified axis or -1 when no images
-    * are found on the given axis
+    *         are found on the given axis
     */
    int getMaxIndex(String axis);
 
    /**
     * Return a List of all axis names for Images we know about.
+    *
     * @return List of all axis names for Images we know about
     */
    List<String> getAxes();
 
    /**
     * Return a Coords that provides the maximum index along all available axes.
+    *
     * @return Coords that provides the maximum index along all available axes
     */
    Coords getMaxIndices();
 
    /**
     * Retrieve the SummaryMetadata associated with this dataset.
+    *
     * @return SummaryMetadata associated with this dataset
     */
    SummaryMetadata getSummaryMetadata();
 
    /**
     * Return the number of images in this dataset.
+    *
     * @return number of images in this dataset
     */
    int getNumImages();

@@ -25,13 +25,14 @@ import org.micromanager.MMEvent;
 /**
  * This class signifies that an image has been deleted in the Datastore.
  *
- * The default implementation of this Event posts on the DataProvider
- * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.
+ * <p>The default implementation of this Event posts on the DataProvider
+ * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.</p>
  */
 public interface ImageDeletedEvent extends MMEvent {
 
    /**
     * Provides the Image that was deleted.
+    *
     * @return the Image that was just deleted from the Datastore.
     */
    Image getImage();
@@ -39,6 +40,7 @@ public interface ImageDeletedEvent extends MMEvent {
    /**
     * Provides the Datastore this image was added to; potentially useful for
     * code that listens to events from multiple Datastores.
+    *
     * @return the Datastore this image was added to.
     */
    Datastore getDatastore();

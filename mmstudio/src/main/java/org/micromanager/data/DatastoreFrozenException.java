@@ -25,7 +25,8 @@ package org.micromanager.data;
  * that has been frozen.
  */
 public class DatastoreFrozenException extends UnsupportedOperationException {
-   public static final String ERROR_MESSAGE = "This Datastore can not be modified since it was frozen.";
+   public static final String ERROR_MESSAGE =
+         "This Datastore can not be modified since it was frozen.";
 
    public DatastoreFrozenException() {
       super(ERROR_MESSAGE);

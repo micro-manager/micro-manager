@@ -541,7 +541,7 @@ public interface DisplaySettings {
 
       private final int index_;
 
-      private ColorMode(int index) {
+      ColorMode(int index) {
          index_ = index;
       }
 

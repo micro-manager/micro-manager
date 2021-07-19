@@ -26,12 +26,14 @@ import org.micromanager.MMEvent;
  * This class signifies that new summary metadata has been set for a 
  * DataProvider.
  *
- * The default implementation of this Event posts on the DataProvider
- * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.
+ * <p>The default implementation of this Event posts on the DataProvider
+ * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.</p>
  */
 public interface DataProviderHasNewSummaryMetadataEvent extends MMEvent {
 
    /**
+    * Returns Summary Metadata.
+    *
     * @return New summary metadata of the DataProvider.
     */
    SummaryMetadata getSummaryMetadata();
