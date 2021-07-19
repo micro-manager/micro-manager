@@ -18,6 +18,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.assembledata;
 
 import java.awt.datatransfer.DataFlavor;
@@ -33,10 +34,11 @@ import java.io.IOException;
 import javax.swing.JTextField;
 
 /**
+ * DragDrop Listener allowing data to be dropped on the Assemble plugin UI.
  *
  * @author nico
  */
-public class DragDropListener implements DropTargetListener{
+public class DragDropListener implements DropTargetListener {
    private final JTextField textField_;
    
    public DragDropListener(JTextField textField) {
@@ -71,10 +73,10 @@ public class DragDropListener implements DropTargetListener{
          for (DataFlavor flavor : flavors) {
             if (flavor.isFlavorJavaFileListType()) {
                dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-               java.util.List list = (java.util.List) tr.getTransferData(flavor);
+               java.util.List<File> list = (java.util.List<File>) tr.getTransferData(flavor);
                // we expect only one file.  for now, just use the last one
                for (int j = 0; j < list.size(); j++) {
-                  File f = (File) list.get(j);
+                  File f = list.get(j);
                   if (f.isDirectory()) {
                      textField_.setText(f.getPath());
                   }

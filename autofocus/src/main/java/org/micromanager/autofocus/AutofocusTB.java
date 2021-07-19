@@ -6,20 +6,15 @@ import ij.gui.ImageWindow;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-
 import java.awt.Color;
-import java.util.Date;
 import java.awt.Rectangle;
-
+import java.util.Date;
+import mmcorej.CMMCore;
 import mmcorej.StrVector;
-
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
-
-import mmcorej.CMMCore;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -34,16 +29,15 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = AutofocusPlugin.class)
 public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin {
 
-   private final static String KEY_SIZE_FIRST = "1st step size";
-   private final static String KEY_NUM_FIRST = "1st setp number";
-   private final static String KEY_SIZE_SECOND = "2nd step size";
-   private final static String KEY_NUM_SECOND = "2nd step number";
-   private final static String KEY_THRES = "Threshold";
-   private final static String KEY_CROP_SIZE = "Crop ratio";
-   private final static String KEY_CHANNEL1 = "Channel-1";
-   private final static String KEY_CHANNEL2 = "Channel-2";
+   private static final String KEY_SIZE_FIRST = "1st step size";
+   private static final String KEY_NUM_FIRST = "1st setp number";
+   private static final String KEY_SIZE_SECOND = "2nd step size";
+   private static final String KEY_NUM_SECOND = "2nd step number";
+   private static final String KEY_THRES = "Threshold";
+   private static final String KEY_CROP_SIZE = "Crop ratio";
+   private static final String KEY_CHANNEL1 = "Channel-1";
+   private static final String KEY_CHANNEL2 = "Channel-2";
    private static final String NOCHANNEL = "";
-   private final static String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    private static final String AF_DEVICE_NAME = "JAF(TB)";
 
    private Studio app_;
@@ -51,39 +45,18 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    private ImageProcessor ipCurrent_ = null;
 
    /**
-    *  Description of the Field
+    *  Description of the Field.
     */
-   public double SIZE_FIRST = 2;
+   public double sizeFirst_ = 2;
    //
-   /**
-    *  Description of the Field
-    */
-   public int NUM_FIRST = 1;
+   public int numFirst_ = 1;
    // +/- #of snapshot
-   /**
-    *  Description of the Field
-    */
-   public double SIZE_SECOND = 0.2;
-   /**
-    *  Description of the Field
-    */
-   public int NUM_SECOND = 5;
-   /**
-    *  Description of the Field
-    */
-   public double THRES = 0.02;
-   /**
-    *  Description of the Field
-    */
-   public double CROP_SIZE = 0.2;
-   /**
-    *  Description of the Field
-    */
-   public String CHANNEL1 = "Bright-Field";
-   /**
-    *  Description of the Field
-    */
-   public String CHANNEL2 = "DAPI";
+   public double sizeSecond_ = 0.2;
+   public int numSecond_ = 5;
+   public double threshold_ = 0.02;
+   public double cropSize_ = 0.2;
+   public String channel1_ = "Bright-Field";
+   public String channel2_ = "DAPI";
 
    private final double indx = 0;
    //snapshot show new window iff indx = 1
@@ -105,44 +78,40 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
    /**
-    *  Constructor for the Autofocus_ object
+    * Constructor for the Autofocus_ object.
     */
    public AutofocusTB() {
-      super.createProperty(KEY_SIZE_FIRST, Double.toString(SIZE_FIRST));
-      super.createProperty(KEY_NUM_FIRST, Integer.toString(NUM_FIRST));
-      super.createProperty(KEY_SIZE_SECOND, Double.toString(SIZE_SECOND));
-      super.createProperty(KEY_NUM_SECOND, Integer.toString(NUM_SECOND));
-      super.createProperty(KEY_THRES, Double.toString(THRES));
-      super.createProperty(KEY_CROP_SIZE, Double.toString(CROP_SIZE));
-      super.createProperty(KEY_CHANNEL1, CHANNEL1);
-      super.createProperty(KEY_CHANNEL2, CHANNEL2);
+      super.createProperty(KEY_SIZE_FIRST, Double.toString(sizeFirst_));
+      super.createProperty(KEY_NUM_FIRST, Integer.toString(numFirst_));
+      super.createProperty(KEY_SIZE_SECOND, Double.toString(sizeSecond_));
+      super.createProperty(KEY_NUM_SECOND, Integer.toString(numSecond_));
+      super.createProperty(KEY_THRES, Double.toString(threshold_));
+      super.createProperty(KEY_CROP_SIZE, Double.toString(cropSize_));
+      super.createProperty(KEY_CHANNEL1, channel1_);
+      super.createProperty(KEY_CHANNEL2, channel2_);
    }
 
 
    @Override
    public void applySettings() {
       try {
-         SIZE_FIRST = Double.parseDouble(getPropertyValue(KEY_SIZE_FIRST));
-         NUM_FIRST = Integer.parseInt(getPropertyValue(KEY_NUM_FIRST));
-         SIZE_SECOND = Double.parseDouble(getPropertyValue(KEY_SIZE_SECOND));
-         NUM_SECOND = Integer.parseInt(getPropertyValue(KEY_NUM_SECOND));
-         THRES = Double.parseDouble(getPropertyValue(KEY_THRES));
-         CROP_SIZE = Double.parseDouble(getPropertyValue(KEY_CROP_SIZE));
-         CHANNEL1 = getPropertyValue(KEY_CHANNEL1);
-         CHANNEL2 = getPropertyValue(KEY_CHANNEL2);
+         sizeFirst_ = Double.parseDouble(getPropertyValue(KEY_SIZE_FIRST));
+         numFirst_ = Integer.parseInt(getPropertyValue(KEY_NUM_FIRST));
+         sizeSecond_ = Double.parseDouble(getPropertyValue(KEY_SIZE_SECOND));
+         numSecond_ = Integer.parseInt(getPropertyValue(KEY_NUM_SECOND));
+         threshold_ = Double.parseDouble(getPropertyValue(KEY_THRES));
+         cropSize_ = Double.parseDouble(getPropertyValue(KEY_CROP_SIZE));
+         channel1_ = getPropertyValue(KEY_CHANNEL1);
+         channel2_ = getPropertyValue(KEY_CHANNEL2);
 
-      } catch (NumberFormatException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
       } catch (Exception e) {
          // TODO Auto-generated catch block
-         e.printStackTrace();                                                                         
-      }                                                                                               
-                                                                                                      
+         e.printStackTrace();
+      }
    }
 
    /**
-    *  Main processing method for the Autofocus_ object
+    * Main processing method for the Autofocus_ object.
     *
     *@param  arg  Description of the Parameter
     */
@@ -151,11 +120,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       bestDist = 5000;
       bestSh = 0;
       //############# CHECK INPUT ARG AND CORE ########
-      if (arg.compareTo("silent") == 0) {
-         verbose_ = false;
-      } else {
-         verbose_ = true;
-      }
+      verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0) {
          app_.app().showAutofocusDialog();
@@ -167,8 +132,9 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       }
 
       if (core_ == null) {
-         IJ.error("Unable to get Micro-Manager Core API handle.\n" +
-               "If this module is used as ImageJ plugin, Micro-Manager Studio must be running first!");
+         IJ.error("Unable to get Micro-Manager Core API handle.\n"
+               + "If this module is used as ImageJ plugin, Micro-Manager Studio "
+               + "must be running first!");
          return;
       }
 
@@ -179,8 +145,9 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       try {
          IJ.log("Autofocus TB started.");
          //########System setup##########
-         if (!CHANNEL1.equals(NOCHANNEL) && channelGroup_ != null) 
-            core_.setConfig(channelGroup_,CHANNEL1); 
+         if (!channel1_.equals(NOCHANNEL) && channelGroup_ != null) {
+            core_.setConfig(channelGroup_, channel1_);
+         }
          core_.waitForSystem();
          if (core_.getShutterDevice().trim().length() > 0) {
             core_.waitForDevice(core_.getShutterDevice());
@@ -200,7 +167,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
           */
          //set z-distance to the lowest z-distance of the stack
          curDist = core_.getPosition(core_.getFocusDevice());
-         baseDist = curDist - SIZE_FIRST * NUM_FIRST;
+         baseDist = curDist - sizeFirst_ * numFirst_;
          core_.setPosition(core_.getFocusDevice(), baseDist);
          core_.waitForDevice(core_.getFocusDevice());
          delay_time(100);
@@ -208,13 +175,13 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
          //core_.setShutterOpen(true);
          //core_.setAutoShutter(false);
 
-         IJ.log("Before rough search: " + String.valueOf(curDist));
+         IJ.log("Before rough search: " + curDist);
 
          //Rough search
-         for (int i = 0; i < 2 * NUM_FIRST + 1; i++) {
+         for (int i = 0; i < 2 * numFirst_ + 1; i++) {
             tPrev = System.currentTimeMillis();
 
-            core_.setPosition(core_.getFocusDevice(), baseDist + i * SIZE_FIRST);
+            core_.setPosition(core_.getFocusDevice(), baseDist + i * sizeFirst_);
             core_.waitForDevice(core_.getFocusDevice());
 
             curDist = core_.getPosition(core_.getFocusDevice());
@@ -228,32 +195,29 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
             if (curSh > bestSh) {
                bestSh = curSh;
                bestDist = curDist;
-            } else if (bestSh - curSh > THRES * bestSh) {
+            } else if (bestSh - curSh > threshold_ * bestSh) {
                break;
             }
             tcur = System.currentTimeMillis() - tPrev;
 
-            //===IJ.write(String.valueOf(curDist)+" "+String.valueOf(curSh)+" " +String.valueOf(tcur));
          }
 
-         //===IJ.write("BEST_DIST_FIRST"+String.valueOf(bestDist)+" BEST_SH_FIRST"+String.valueOf(bestSh));
-
-         baseDist = bestDist - SIZE_SECOND * NUM_SECOND;
+         baseDist = bestDist - sizeSecond_ * numSecond_;
          core_.setPosition(core_.getFocusDevice(), baseDist);
          delay_time(100);
 
          bestSh = 0;
 
-         if (!CHANNEL2.equals(NOCHANNEL) && channelGroup_ != null)
-            core_.setConfig(channelGroup_,CHANNEL2); 
+         if (!channel2_.equals(NOCHANNEL) && channelGroup_ != null)
+            core_.setConfig(channelGroup_, channel2_);
          core_.waitForSystem();
          if (core_.getShutterDevice().trim().length() > 0) {
             core_.waitForDevice(core_.getShutterDevice());
          }
          //Fine search
-         for (int i = 0; i < 2 * NUM_SECOND + 1; i++) {
+         for (int i = 0; i < 2 * numSecond_ + 1; i++) {
             tPrev = System.currentTimeMillis();
-            core_.setPosition(core_.getFocusDevice(), baseDist + i * SIZE_SECOND);
+            core_.setPosition(core_.getFocusDevice(), baseDist + i * sizeSecond_);
             core_.waitForDevice(core_.getFocusDevice());
 
             curDist = core_.getPosition(core_.getFocusDevice());
@@ -266,15 +230,16 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
             if (curSh > bestSh) {
                bestSh = curSh;
                bestDist = curDist;
-            } else if (bestSh - curSh > THRES * bestSh) {
+            } else if (bestSh - curSh > threshold_ * bestSh) {
                break;
             }
             tcur = System.currentTimeMillis() - tPrev;
 
-            //===IJ.write(String.valueOf(curDist)+" "+String.valueOf(curSh)+" "+String.valueOf(tcur));
+            //===IJ.write(String.valueOf(curDist)+" "+String.valueOf(curSh)+" "
+            // +String.valueOf(tcur));
          }
 
-         IJ.log("BEST_DIST_SECOND= " + String.valueOf(bestDist) + " BEST_SH_SECOND= " + String.valueOf(bestSh));
+         IJ.log("BEST_DIST_SECOND= " + bestDist + " BEST_SH_SECOND= " + bestSh);
 
          core_.setPosition(core_.getFocusDevice(), bestDist);
          // indx =1;
@@ -283,7 +248,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
          //core_.setShutterOpen(false);
          //core_.setAutoShutter(true);
 
-         IJ.log("Total Time: " + String.valueOf(System.currentTimeMillis() - t0));
+         IJ.log("Total Time: " + (System.currentTimeMillis() - t0));
       } catch (Exception e) {
          IJ.error(e.getMessage());
       }
@@ -292,13 +257,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
    //take a snapshot and save pixel values in ipCurrent_
-   /**
-    *  Description of the Method
-    *
-    *@return    Description of the Return Value
-    */
    private boolean snapSingleImage() {
-
       try {
          core_.snapImage();
          Object img = core_.getImage();
@@ -317,11 +276,6 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
    //waiting
-   /**
-    *  Description of the Method
-    *
-    *@param  delay  Description of the Parameter
-    */
    private void delay_time(double delay) {
       Date date = new Date();
       long sec = date.getTime();
@@ -330,23 +284,15 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       }
    }
 
-
-
    /*
     *  calculate the sharpness of a given image (in "impro").
     */
-   /**
-    *  Description of the Method
-    *
-    *@param  impro  Description of the Parameter
-    *@return        Description of the Return Value
-    */
    private double sharpNessp(ImageProcessor impro) {
 
-      int width = (int) (CROP_SIZE * core_.getImageWidth());
-      int height = (int) (CROP_SIZE * core_.getImageHeight());
-      int ow = (int) (((1 - CROP_SIZE) / 2) * core_.getImageWidth());
-      int oh = (int) (((1 - CROP_SIZE) / 2) * core_.getImageHeight());
+      int width = (int) (cropSize_ * core_.getImageWidth());
+      int height = (int) (cropSize_ * core_.getImageHeight());
+      int ow = (int) (((1 - cropSize_) / 2) * core_.getImageWidth());
+      int oh = (int) (((1 - cropSize_) / 2) * core_.getImageHeight());
 
       double[][] medPix = new double[width][height];
       double sharpNess = 0;
@@ -358,31 +304,38 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       for (int i = 1; i < width - 1; i++) {
          for (int j = 1; j < height - 1; j++) {
 
-            windo[0] = (double) impro.getPixel(ow + i - 1, oh + j - 1);
-            windo[1] = (double) impro.getPixel(ow + i, oh + j - 1);
-            windo[2] = (double) impro.getPixel(ow + i + 1, oh + j - 1);
-            windo[3] = (double) impro.getPixel(ow + i - 1, oh + j);
-            windo[4] = (double) impro.getPixel(ow + i, oh + j);
-            windo[5] = (double) impro.getPixel(ow + i + 1, oh + j);
-            windo[6] = (double) impro.getPixel(ow + i - 1, oh + j + 1);
-            windo[7] = (double) impro.getPixel(ow + i, oh + j + 1);
-            windo[8] = (double) impro.getPixel(ow + i + 1, oh + j + 1);
+            windo[0] = impro.getPixel(ow + i - 1, oh + j - 1);
+            windo[1] = impro.getPixel(ow + i, oh + j - 1);
+            windo[2] = impro.getPixel(ow + i + 1, oh + j - 1);
+            windo[3] = impro.getPixel(ow + i - 1, oh + j);
+            windo[4] = impro.getPixel(ow + i, oh + j);
+            windo[5] = impro.getPixel(ow + i + 1, oh + j);
+            windo[6] = impro.getPixel(ow + i - 1, oh + j + 1);
+            windo[7] = impro.getPixel(ow + i, oh + j + 1);
+            windo[8] = impro.getPixel(ow + i + 1, oh + j + 1);
 
             medPix[i][j] = findMed(windo);
          }
       }
 
       /*
-       *  Edge detection using a 3x3 filter: [-2 -1 0; -1 0 1; 0 1 2]. Then sum all pixel values. Ideally, the sum is large if most edges are sharp
+       * Edge detection using a 3x3 filter: [-2 -1 0; -1 0 1; 0 1 2].
+       * Then sum all pixel values. Ideally, the sum is large if most edges are sharp
        */
       double edgehoriz;
       double edvevert;
       for (int k = 1; k < width - 1; k++) {
          for (int l = 1; l < height - 1; l++) {
-            edgehoriz = Math.pow((-2 * medPix[k - 1][l] - medPix[k - 1][l - 1] - medPix[k - 1][l + 1] + medPix[k + 1][l - 1] + medPix[k + 1][l + 1] + 2 * medPix[k + 1][l]), 2);
-            edvevert = Math.pow((-2 * medPix[k][l - 1] - medPix[k - 1][l - 1] - medPix[k + 1][l - 1] + medPix[k - 1][l + 1] + medPix[k + 1][l + 1] + 2 * medPix[k][l + 1]), 2);
+            edgehoriz = Math.pow((-2 * medPix[k - 1][l] - medPix[k - 1][l - 1]
+                  - medPix[k - 1][l + 1] + medPix[k + 1][l - 1] + medPix[k + 1][l + 1]
+                  + 2 * medPix[k + 1][l]), 2);
+            edvevert = Math.pow((-2 * medPix[k][l - 1] - medPix[k - 1][l - 1]
+                  - medPix[k + 1][l - 1] + medPix[k - 1][l + 1] + medPix[k + 1][l + 1]
+                  + 2 * medPix[k][l + 1]), 2);
             sharpNess += (edgehoriz + edvevert);
-            //sharpNess = sharpNess + Math.pow((-2 * medPix[k - 1][l - 1] - medPix[k][l - 1] - medPix[k - 1][l] + medPix[k + 1][l] + medPix[k][l + 1] + 2 * medPix[k + 1][l + 1]), 2);
+            // sharpNess = sharpNess + Math.pow((-2 * medPix[k - 1][l - 1]
+            // - medPix[k][l - 1] - medPix[k - 1][l] + medPix[k + 1][l] + medPix[k][l + 1]
+            // + 2 * medPix[k + 1][l + 1]), 2);
 
          }
       }
@@ -393,16 +346,9 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    /*
     *  calculate the sharpness of a given image (in "impro").
     */
-   /**
-    *  Description of the Method
-    *
-    *@param  impro  Description of the Parameter
-    *@return        Description of the Return Value
-    */
    public double computeScore(final ImageProcessor impro) {
-
-      int width = (int) (CROP_SIZE * core_.getImageWidth());
-      int height = (int) (CROP_SIZE * core_.getImageHeight());
+      int width = (int) (cropSize_ * core_.getImageWidth());
+      int height = (int) (cropSize_ * core_.getImageHeight());
       int sx = (int) (core_.getImageWidth() - width) / 2;
       int sy = (int) (core_.getImageHeight() - height) / 2;
       //int ow = (int) (((1 - CROP_SIZE) / 2) * core_.getImageWidth());
@@ -450,12 +396,14 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       // tcur = System.currentTimeMillis()-tPrev;
 
       /*
-       *  Edge detection using a 3x3 filter: [-2 -1 0; -1 0 1; 0 1 2]. Then sum all pixel values. Ideally, the sum is large if most edges are sharp
+       *  Edge detection using a 3x3 filter: [-2 -1 0; -1 0 1; 0 1 2].
+       * Then sum all pixel values. Ideally, the sum is large if most edges are sharp
        */
       /*
        *  for (int k=1; k<width-1; k++){
        *  for (int l=1; l<height-1; l++){
-       *  sharpNess = sharpNess + Math.pow((-2*medPix[k-1][l-1]- medPix[k][l-1]-medPix[k-1][l]+medPix[k+1][l]+medPix[k][l+1]+2*medPix[k+1][l+1]),2);
+       *  sharpNess = sharpNess + Math.pow((-2*medPix[k-1][l-1]- medPix[k][l-1]
+       * - medPix[k-1][l]+medPix[k+1][l]+medPix[k][l+1]+2*medPix[k+1][l+1]),2);
        *  }
        *  }
        */
@@ -464,13 +412,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
    //making a new window for a new snapshot.
-   /**
-    *  Description of the Method
-    *
-    *@return    Description of the Return Value
-    */
    private ImagePlus newWindow() {
-      ImagePlus implus;
       ImageProcessor ip;
       long byteDepth = core_.getBytesPerPixel();
 
@@ -482,7 +424,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       ip.setColor(Color.black);
       ip.fill();
 
-      implus = new ImagePlus(String.valueOf(curDist), ip);
+      ImagePlus implus = new ImagePlus(String.valueOf(curDist), ip);
       if (indx == 1) {
          if (verbose_) {
             // create image window if we are in the verbose mode
@@ -493,12 +435,6 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    }
 
 
-   /**
-    *  Description of the Method
-    *
-    *@param  arr  Description of the Parameter
-    *@return      Description of the Return Value
-    */
    private double findMed(double[] arr) {
       double tmp;
       boolean sorted = false;
@@ -519,11 +455,6 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    }
 
 
-   /**
-    *  Description of the Method
-    *
-    *@return    Description of the Return Value
-    */
    public double fullFocus() {
       run("silent");
       return 0;
@@ -531,7 +462,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
    /**
-    *  Gets the verboseStatus attribute of the Autofocus_ object
+    * Gets the verboseStatus attribute of the Autofocus_ object.
     *
     *@return    The verboseStatus value
     */
@@ -541,7 +472,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
    /**
-    *  Description of the Method
+    *  Description of the Method.
     *
     *@return    Description of the Return Value
     */
@@ -551,23 +482,22 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    }
 
    public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) {
-      SIZE_FIRST = coarseStep;
-      NUM_FIRST = numCoarse;
-      SIZE_SECOND = fineStep;
-      NUM_SECOND = numFine;
+      sizeFirst_ = coarseStep;
+      numFirst_ = numCoarse;
+      sizeSecond_ = fineStep;
+      numSecond_ = numFine;
 
       run("silent");
    }
 
    /**
-    *  Description of the Method
+    * Description of the Method.
     */
    @Override
    public PropertyItem[] getProperties() {
-
       channelGroup_ = core_.getChannelGroup();
       StrVector channels = core_.getAvailableConfigs(channelGroup_);
-      String allowedChannels[] = new String[(int)channels.size() + 1];
+      String[] allowedChannels = new String[(int) channels.size() + 1];
       allowedChannels[0] = NOCHANNEL;
 
       try {
@@ -575,29 +505,33 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
          PropertyItem p2 = getProperty(KEY_CHANNEL2);
          boolean found1 = false;
          boolean found2 = false;
-         for (int i=0; i<channels.size(); i++) {
-            allowedChannels[i+1] = channels.get(i);
-            if (p1.value.equals(channels.get(i)))
+         for (int i = 0; i < channels.size(); i++) {
+            allowedChannels[i + 1] = channels.get(i);
+            if (p1.value.equals(channels.get(i))) {
                found1 = true;
-            if (p2.value.equals(channels.get(i)))
+            }
+            if (p2.value.equals(channels.get(i))) {
                found2 = true;
+            }
          }
-         p1.allowed = allowedChannels;                                                                 
-         if (!found1)                                                                                  
-            p1.value = allowedChannels[0];                                                             
-         setProperty(p1);                                                                              
-         p2.allowed = allowedChannels;                                                                 
-         if (!found2)                                                                                  
-            p2.value = allowedChannels[0];                                                             
-         setProperty(p2);                                                                              
+         p1.allowed = allowedChannels;
+         if (!found1) {
+            p1.value = allowedChannels[0];
+         }
+         setProperty(p1);
+
+         p2.allowed = allowedChannels;
+         if (!found2) {
+            p2.value = allowedChannels[0];
+         }
+         setProperty(p2);
       } catch (Exception e1) {                                                                      
-         // TODO Auto-generated catch block                                                           
-         e1.printStackTrace();                                                                        
-      }                                                                                               
+         // TODO Auto-generated catch block
+         e1.printStackTrace();
+      }
 
       return super.getProperties();
    }
-                                                                                                      
 
    @Override
    public double getCurrentFocusScore() {

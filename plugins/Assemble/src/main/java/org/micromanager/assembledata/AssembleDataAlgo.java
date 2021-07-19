@@ -1,25 +1,14 @@
 package org.micromanager.assembledata;
 
 import boofcv.abst.distort.FDistort;
-import boofcv.alg.distort.AssignPixelValue_SB;
-import boofcv.alg.distort.ImageDistort;
-import boofcv.alg.distort.ImageDistortBasic_SB;
-import boofcv.alg.distort.PixelTransformAffine_F32;
-import boofcv.alg.distort.PixelTransformAffine_F64;
-import boofcv.alg.distort.PixelTransformHomography_F32;
-import boofcv.alg.interpolate.InterpolatePixelS;
 import boofcv.alg.misc.GImageMiscOps;
-import boofcv.alg.misc.GPixelMath;
 import boofcv.core.image.ConvertImage;
-import boofcv.core.image.GConvertImage;
-import boofcv.factory.interpolate.FactoryInterpolation;
 import boofcv.struct.border.BorderType;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayS32;
 import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
-import georegression.struct.affine.Affine2D_F32;
 import georegression.struct.affine.Affine2D_F64;
 import georegression.struct.homography.Homography2D_F64;
 import java.awt.geom.AffineTransform;
@@ -38,11 +27,27 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
 
 /**
+ * Carries out the actual image processing to combine different views of the same
+ * scene into a single dataset.
  *
  * @author nico
  */
 public class AssembleDataAlgo {
 
+   /**
+    * THe function doint the assembly work.
+    *
+    * @param studio API
+    * @param form ???
+    * @param output Datastore to which to write the output.
+    * @param dp1 Input Data set 1
+    * @param dp2 Input Data set 2
+    * @param xOffset XOffset
+    * @param yOffset YOffset
+    * @param targetPosition  ???
+    * @param test ???
+    * @return Outputstore ?
+    */
    public static Datastore assemble(Studio studio, 
            AssembleDataForm form, 
            Datastore output, 
@@ -61,8 +66,9 @@ public class AssembleDataAlgo {
          channelNames.addAll(spd.getSummaryMetadata().getChannelNameList());
          channelNames.addAll(mpd.getSummaryMetadata().getChannelNameList());
          output.setSummaryMetadata(smb.channelNames(channelNames).build());
-      } catch (IOException | DatastoreRewriteException ex) {}
-   
+      } catch (IOException | DatastoreRewriteException ex) {
+         // TODO: What to do?
+      }
 
       try {
          Image singlePositionImg = spd.getAnyImage();
@@ -91,10 +97,14 @@ public class AssembleDataAlgo {
 
          Coords.Builder cb = Coordinates.builder().t(0).c(0).p(targetPosition).z(0);
          // need to initialize these parameters with something sensible
-         double xMinUm = singlePositionImg.getMetadata().getXPositionUm() - (0.5 * singlePositionImg.getWidth() * singlePositionPixelSize);
-         double yMinUm = singlePositionImg.getMetadata().getYPositionUm() - (0.5 * singlePositionImg.getHeight() * singlePositionPixelSize);
-         double xMaxUm = singlePositionImg.getMetadata().getXPositionUm() + (0.5 * singlePositionImg.getWidth() * singlePositionPixelSize);
-         double yMaxUm = singlePositionImg.getMetadata().getYPositionUm() + (0.5 * singlePositionImg.getHeight() * singlePositionPixelSize);
+         double xMinUm = singlePositionImg.getMetadata().getXPositionUm()
+               - (0.5 * singlePositionImg.getWidth() * singlePositionPixelSize);
+         double yMinUm = singlePositionImg.getMetadata().getYPositionUm()
+               - (0.5 * singlePositionImg.getHeight() * singlePositionPixelSize);
+         double xMaxUm = singlePositionImg.getMetadata().getXPositionUm()
+               + (0.5 * singlePositionImg.getWidth() * singlePositionPixelSize);
+         double yMaxUm = singlePositionImg.getMetadata().getYPositionUm()
+               + (0.5 * singlePositionImg.getHeight() * singlePositionPixelSize);
 
          for (DataProvider data : datas) {
             for (int p = 0; p < data.getNextIndex(Coords.STAGE_POSITION); p++) {
@@ -145,19 +155,19 @@ public class AssembleDataAlgo {
 
          //for (DataProvider data : datas) {
          cb.t(0).c(0).p(0).z(0);
-         ImageGray newImgBoof, oldImgBoof, tmpImgBoof, tmp2ImgBoof;
+         ImageGray newImgBoof;
+         ImageGray oldImgBoof;
+         ImageGray tmpImgBoof;
          if (bytesPerPixel == 1) {
             newImgBoof = new GrayU8(widthPixels, heightPixels);
             tmpImgBoof = new GrayU8(widthPixels, heightPixels);
-            tmp2ImgBoof = new GrayU16(widthPixels, heightPixels);
          } else { // bytesPerPixel == 2
             newImgBoof = new GrayU16(widthPixels, heightPixels);
             tmpImgBoof = new GrayU16(widthPixels, heightPixels);
-            tmp2ImgBoof = new GrayS32(widthPixels, heightPixels);
          }
          
-         GrayF32 tmpImgNF32 = new GrayF32(mpd.getAnyImage().getWidth(), mpd.getAnyImage().getHeight());
-         GrayF32 tmpImgSF32 = new GrayF32(spd.getAnyImage().getWidth(), spd.getAnyImage().getHeight());
+         GrayF32 tmpImgNF32 = new GrayF32(
+               mpd.getAnyImage().getWidth(), mpd.getAnyImage().getHeight());
 
          // single position data
          final int spdTLength = test ? 1 : spd.getNextIndex(Coords.T);
@@ -168,18 +178,21 @@ public class AssembleDataAlgo {
                cb.t(t).c(c).p(0).z(0);
                Image img = spd.getImage(cb.p(0).build());
                if (img != null) {
-                  newMetadataB = img.getMetadata().
-                          copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
+                  newMetadataB = img.getMetadata()
+                        .copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
                   /*
                   TODO: use stage position informatoin to correct for inaccuracies
                   this will currently cause errors in the GImageMiscOps.copy step
                   double pSize = img.getMetadata().getPixelSizeUm();
-                  double tmpXMinUm = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
-                  double tmpYMinUm = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
+                  double tmpXMinUm = img.getMetadata().getXPositionUm()
+                           - (0.5 * img.getWidth() * pSize);
+                  double tmpYMinUm = img.getMetadata().getYPositionUm()
+                           - (0.5 * img.getHeight() * pSize);
 
                   int xMinPixel = (int) ((tmpXMinUm - xMinUm) / basePixelSize);
                   int yMinPixel = (int) ((tmpYMinUm - yMinUm) / basePixelSize);
                    */
+
                   if (bytesPerPixel == 1) {
                      GrayU8 tmp = new GrayU8(img.getWidth(), img.getHeight());
                      tmp.setData((byte[]) img.getRawPixels());
@@ -215,8 +228,8 @@ public class AssembleDataAlgo {
                for (int p = 0; p < mpd.getNextIndex(Coords.STAGE_POSITION); p++) {
                   Image img = mpd.getImage(cb.c(c).t(t).p(p).build());
                   if (img != null) {
-                     newMetadataB = img.getMetadata().
-                             copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
+                     newMetadataB = img.getMetadata()
+                           .copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
                      if (bytesPerPixel == 1) {
                         GrayU8 tmp = new GrayU8(img.getWidth(), img.getHeight());
                         tmp.setData((byte[]) img.getRawPixels());
@@ -247,8 +260,8 @@ public class AssembleDataAlgo {
                      fd.interpNN();
                      fd.border(BorderType.SKIP);
                      fd.apply();
-                     //GPixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
-                     //GConvertImage.convert(tmp2ImgBoof, newImgBoof);
+                     // GPixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
+                     // GConvertImage.convert(tmp2ImgBoof, newImgBoof);
                      /*
                      Affine2D_F32 a32 = new Affine2D_F32((float) aff.a11,
                               (float) aff.a12,
@@ -257,14 +270,17 @@ public class AssembleDataAlgo {
                               (float) aff.tx,
                               (float) aff.ty );
                      PixelTransformAffine_F32 model = new PixelTransformAffine_F32(a32);
-                     //PixelTransformHomography_F32 model = new PixelTransformHomography_F32();                     
+                     //PixelTransformHomography_F32 model =
+                        new PixelTransformHomography_F32();
                      //model.set(pf);
                      InterpolatePixelS<GrayF32> interp = FactoryInterpolation.bilinearPixelS(
                              GrayF32.class, BorderType.ZERO);
                      AssignPixelValue_SB.F32 f32 = new AssignPixelValue_SB.F32();
-                     ImageDistort<GrayF32, GrayF32> distort = new ImageDistortBasic_SB(f32, interp);
-                     //ImageDistort<Planar<GrayF32>,Planar<GrayF32>> distort =
-                     //               DistortSupport.createDistortPL(GrayF32.class, model, interp, false);
+                     ImageDistort<GrayF32, GrayF32> distort = new ImageDistortBasic_SB(
+                                    f32, interp);
+                     // ImageDistort<Planar<GrayF32>,Planar<GrayF32>> distort =
+                     //               DistortSupport.createDistortPL(
+                                          GrayF32.class, model, interp, false);
                      distort.setModel(model);
                      distort.setRenderAll(false);
                      distort.apply(tmpImgNF32, tmpImgSF32);
@@ -295,8 +311,13 @@ public class AssembleDataAlgo {
 
       return null;
    }
-   
-   
+
+   /**
+    * TODO: check if this is this used.
+    *
+    * @param aff ???
+    * @return ???
+    */
    public static Homography2D_F64 affineToHomography(Affine2D_F64 aff) {
       return new Homography2D_F64(
                aff.a11,

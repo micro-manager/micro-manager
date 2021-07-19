@@ -42,21 +42,17 @@ public interface DataViewer extends EventPublisher {
    /**
     * Register an object to receive events on the viewer event bus.
     *
-    * <p>
-    * Objects registered by this method will receive viewer events through
+    * <p>Objects registered by this method will receive viewer events through
     * their methods bearing a {@code com.google.common.eventbus.Subscribe}
-    * annotation. See Guava Event Bus documentation for how this works.
-    * </p>
+    * annotation. See Guava Event Bus documentation for how this works.</p>
     *
-    * <p>
-    * Events that can be subscribed to include:
+    * <p>Events that can be subscribed to include:</p>
     * <ul>
     * <li>{@link DisplaySettingsChangedEvent} (on an arbitrary thread)
     * <li>{@link DisplayPositionChangedEvent} (on an arbitrary thread)
     * <li>TODO DisplayPositionRenderedEvent (on the EDT)
     * <li>TODO DataViewerClosedEvent (on the EDT)
     * </ul>
-    * </p>
     *
     * @param recipient the object to register
     *

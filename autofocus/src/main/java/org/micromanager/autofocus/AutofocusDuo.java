@@ -19,22 +19,19 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.autofocus;
 
 
 import ij.IJ;
 import ij.process.ImageProcessor;
-
 import java.util.List;
-
 import mmcorej.CMMCore;
-
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -82,7 +79,7 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
 
       verbose_ = arg.compareTo("silent") != 0;
 
-      if (arg.compareTo("options") == 0){
+      if (arg.compareTo("options") == 0) {
          app_.app().showAutofocusDialog();
       }  
 
@@ -92,14 +89,15 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
       }
 
       if (core_ == null) {
-         IJ.error("Unable to get Micro-Manager Core API handle.\n" +
-         "If this module is used as ImageJ plugin, Micro-Manager Studio must be running first!");
+         IJ.error("Unable to get Micro-Manager Core API handle.\n"
+               + "If this module is used as ImageJ plugin, Micro-Manager Studio "
+               + "must be running first!");
          return;
       }
 
       applySettings();
 
-      try{
+      try {
          if (autoFocus1_ != null) {
             app_.getAutofocusManager().setAutofocusMethodByName(autoFocus1_);
             app_.getAutofocusManager().getAutofocusMethod().fullFocus();
@@ -109,9 +107,7 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
             app_.getAutofocusManager().getAutofocusMethod().fullFocus();
          }
          app_.getAutofocusManager().setAutofocusMethodByName(AF_DEVICE_NAME);
-      }
-      catch(Exception e)
-      {
+      }  catch (Exception e) {
          e.printStackTrace();
          IJ.error(e.getMessage());
       }     
@@ -147,7 +143,7 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
          PropertyItem p2 = getProperty(KEY_AUTOFOCUS2);
          boolean found1 = false;
          boolean found2 = false;
-         int j =0;
+         int j = 0;
          for (String afDevice : afDevices) {
             if (!afDevice.equals(AF_DEVICE_NAME)) {
                allowedAfDevices[j] = afDevice;
@@ -162,11 +158,13 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
          }
          p1.allowed = allowedAfDevices;
          p2.allowed = allowedAfDevices;
-         if (!found1)
+         if (!found1) {
             p1.value = allowedAfDevices[0];
+         }
          setProperty(p1);
-         if (!found2)
+         if (!found2) {
             p2.value = allowedAfDevices[0];
+         }
          setProperty(p2);
       } catch (Exception e1) {
          // TODO Auto-generated catch block
