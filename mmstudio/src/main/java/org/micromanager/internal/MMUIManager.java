@@ -18,6 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.internal;
 
 import java.awt.event.WindowEvent;
@@ -27,7 +28,6 @@ import javax.swing.JFrame;
 import javax.swing.ToolTipManager;
 import mmcorej.MMCoreJ;
 import org.micromanager.PositionList;
-import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.internal.DefaultGUIRefreshEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
@@ -39,6 +39,9 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
+/**
+ * This class handles much of the User Interface.
+ */
 public class MMUIManager {
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
@@ -52,6 +55,11 @@ public class MMUIManager {
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
 
+   /**
+    * Constructs TooltipManager, and stores the studio object for later use.
+    *
+    * @param studio MMStudio instance.
+    */
    public MMUIManager(MMStudio studio) {
       studio_ = studio;
       
@@ -61,6 +69,9 @@ public class MMUIManager {
       ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
    }
 
+   /**
+    * Creates and displays the Property Browser.
+    */
    public void createPropertyEditor() {
       if (propertyBrowser_ != null) {
          propertyBrowser_.dispose();
@@ -72,6 +83,9 @@ public class MMUIManager {
       propertyBrowser_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
    }
 
+   /**
+    * Creates the Pixel Size Calibration Dialog.
+    */
    public void createCalibrationListDlg() {
       if (calibrationListDlg_ != null) {
          calibrationListDlg_.dispose();
@@ -83,6 +97,12 @@ public class MMUIManager {
       calibrationListDlg_.setParentGUI(studio_);
    }
 
+   /**
+    * Provides access to the CalibrationListDlg.
+    * TODO: Remove?
+    *
+    * @return singleton instance of the Calivration Dialog.
+    */
    public CalibrationListDlg getCalibrationListDlg() {
       if (calibrationListDlg_ == null) {
          createCalibrationListDlg();
@@ -98,6 +118,10 @@ public class MMUIManager {
       return scriptPanel_;
    }
 
+   /**
+    * Creates the PipelineFrame that lets users set up on the fly proecssing
+    * pipelines.
+    */
    public void createPipelineFrame() {
       if (pipelineFrame_ == null) { //Create the pipelineframe if it hasn't already been done.
          pipelineFrame_ = new PipelineFrame(studio_);
@@ -108,6 +132,11 @@ public class MMUIManager {
       return pipelineFrame_;
    }
 
+   /**
+    * Returns the singleton instance of the Multi-Dimensional Acquisition Dialog.
+    *
+    * @return Singleton instance of the MDA dialog.
+    */
    public AcqControlDlg getAcquisitionWindow() {
       if (acqControlWin_ == null) {
          acqControlWin_ = new AcqControlDlg(studio_.getAcquisitionEngine(), studio_);
@@ -115,6 +144,9 @@ public class MMUIManager {
       return acqControlWin_;
    }
 
+   /**
+    * Shows the MDA dialog.  Creates it if needed.
+    */
    public void openAcqControlDialog() {
       try {
          if (acqControlWin_ == null) {
@@ -135,6 +167,9 @@ public class MMUIManager {
       }
    }
 
+   /**
+    * Updates the ChannelGroup and Preset UI.
+    */
    public void updateChannelCombos() {
       if (acqControlWin_ != null) {
          acqControlWin_.updateChannelAndGroupCombo();
@@ -149,6 +184,9 @@ public class MMUIManager {
       scriptPanel_.setVisible(true);
    }
 
+   /**
+    * Closes and cleans up all UI elements.  Should be called when quitting the application.
+    */
    public void cleanupOnClose() {
       if (scriptPanel_ != null) {
          scriptPanel_.closePanel();
@@ -170,6 +208,9 @@ public class MMUIManager {
       }
    }
 
+   /**
+    * Close the Main Frame.
+    */
    public void close() {
       if (frame_ != null) {
          frame_.dispose();
@@ -177,6 +218,9 @@ public class MMUIManager {
       }
    }
 
+   /**
+    * Creates the Main Frame.
+    */
    public void createMainWindow() {
       mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
       frame_ = new MainFrame(studio_, studio_.core());
@@ -195,14 +239,16 @@ public class MMUIManager {
       return mmMenuBar_;
    }
 
+   /**
+    * Asks the users to save the (changed) configuration file.
+    */
    public void promptToSaveConfigPresets() {
       File f = FileDialogs.save(frame_,
             "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
       if (f != null) {
          try {
             studio_.app().saveConfigPresets(f.getAbsolutePath(), true);
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
             // This should be impossible as we set shouldOverwrite to true.
             studio_.logs().logError(e, "Error saving config presets");
          }
@@ -213,14 +259,23 @@ public class MMUIManager {
       updateGUI(updateConfigPadStructure, false);
    }
 
+   /**
+    * Updates the GUI with the hardware state.
+    *
+    * @param updateConfigPadStructure Whether or not to update the Config Pad.
+    * @param fromCache When true, use the cache in the core, otherwise, ask
+    *                  the hardware (which will update the cache).
+    */
    public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
-      ReportingUtils.logMessage("Updating GUI; config pad = " +
-            updateConfigPadStructure + "; from cache = " + fromCache);
+      ReportingUtils.logMessage("Updating GUI; config pad = "
+            + updateConfigPadStructure + "; from cache = " + fromCache);
       try {
          studio_.cache().refreshValues();
          studio_.getAutofocusManager().refresh();
 
-         if (!fromCache) { // The rest of this function uses the cached property values. If `fromCache` is false, start by updating all properties in the cache.
+         // The rest of this function uses the cached property values.
+         // If `fromCache` is false, start by updating all properties in the cache.
+         if (!fromCache) {
             studio_.core().updateSystemStateCache();
          }
 
@@ -229,7 +284,8 @@ public class MMUIManager {
             double exp = studio_.core().getExposure();
             frame_.setDisplayedExposureTime(exp);
             configureBinningCombo();
-            String binSize = studio_.core().getPropertyFromCache(studio_.cache().getCameraLabel(), MMCoreJ.getG_Keyword_Binning());
+            String binSize = studio_.core().getPropertyFromCache(
+                  studio_.cache().getCameraLabel(), MMCoreJ.getG_Keyword_Binning());
             frame_.setBinSize(binSize);
          }
 
@@ -259,7 +315,12 @@ public class MMUIManager {
       frame_.setConfigText(studio_.getSysConfigFile());
       studio_.events().post(new DefaultGUIRefreshEvent());
    }
-   
+
+   /**
+    * Sets up teh camera binning dropdown.
+    *
+    * @throws Exception may be thrown by the hardware.
+    */
    public void configureBinningCombo() throws Exception {
       if (studio_.cache().getCameraLabel().length() > 0) {
          frame_.configureBinningComboForCamera(studio_.cache().getCameraLabel());
@@ -272,6 +333,10 @@ public class MMUIManager {
    // SystemConfigurationLoaded event occurs, and in no other way.
    // Better: each of these entities should listen for
    // SystemConfigurationLoaded itself and handle its own updates.
+
+   /**
+    * Todo: This function should be renamed.
+    */
    public void initializeGUI() {
       try {
          if (studio_.cache() != null) {
@@ -288,14 +353,18 @@ public class MMUIManager {
 
          if (frame_ != null) {
             configureBinningCombo();
-            frame_.updateAutofocusButtons(studio_.getAutofocusManager().getAutofocusMethod() != null);
+            frame_.updateAutofocusButtons(
+                  studio_.getAutofocusManager().getAutofocusMethod() != null);
             updateGUI(true);
          }
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
    }
-   
+
+   /**
+    * Adds an entry to the Position List with the current position of the hardware.
+    */
    public void markCurrentPosition() {
       if (posListDlg_ == null) {
          showPositionList();
@@ -304,7 +373,10 @@ public class MMUIManager {
          posListDlg_.markPosition(false);
       }
    }
-   
+
+   /**
+    * Shows the Position List Window.
+    */
    public void showPositionList() {
       if (posListDlg_ == null) {
          posListDlg_ = new MMPositionListDlg(studio_, studio_.positions().getPositionList());
@@ -317,9 +389,10 @@ public class MMUIManager {
     * Hack: The API currently does not allow modifying positions in the current list
     * See https://github.com/micro-manager/micro-manager/issues/1090
     * This backdoor should be removed once a better solution has been implemented
+    *
     * @return current PositionList.  Handle with care as dangerous things can happen
     * @deprecated Direct access to the PositionList should not be allowed, but
-    * currently is the only way to modify the StagePositions in the current PositionList
+    *             currently is the only way to modify the StagePositions in the current PositionList
     */
    @Deprecated
    public PositionList getPositionList() {

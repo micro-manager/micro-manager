@@ -131,7 +131,6 @@ public final class MMStudio implements Studio {
    private final DefaultQuickAccessManager quickAccess_;
    private final DefaultAlertManager alertManager_;
    private final DefaultEventManager eventManager_;
-   private final ApplicationSkin daytimeNighttimeManager_;
    private final UserProfileAdmin userProfileAdmin_;
    private final PositionListManager posListManager_;
    private final UiMovesStageManager uiMovesStageManager_;
@@ -265,8 +264,8 @@ public final class MMStudio implements Studio {
       compatibility_ = new DefaultCompatibilityInterface(studio_);
 
       // Essential GUI settings in preparation of the intro dialog
-      daytimeNighttimeManager_ = DaytimeNighttime.create(studio_);
-      defaultApplication_ = new DefaultApplication(studio_, daytimeNighttimeManager_);
+      ApplicationSkin daytimeNighttimeManager = DaytimeNighttime.create(studio_);
+      defaultApplication_ = new DefaultApplication(studio_, daytimeNighttimeManager);
       
       // Start loading plugins in the background
       // Note: plugin constructors should not expect a fully constructed Studio!
@@ -355,7 +354,7 @@ public final class MMStudio implements Studio {
                if (name.equals(profileNameAutoStart)) {
                   UserProfile profile = userProfileAdmin_.getNonSavingProfile(entry.getKey());
                   userProfileAdmin_.setCurrentUserProfile(entry.getKey());
-                  daytimeNighttimeManager_.setSkin(daytimeNighttimeManager_.getSkin());
+                  daytimeNighttimeManager.setSkin(daytimeNighttimeManager.getSkin());
                   sysConfigFile_ = HardwareConfigurationManager
                         .getRecentlyUsedConfigFilesFromProfile(profile).get(0);
                   break;

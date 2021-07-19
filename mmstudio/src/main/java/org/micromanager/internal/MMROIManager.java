@@ -34,13 +34,20 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
 import org.micromanager.internal.utils.ReportingUtils;
 
+/**
+ * Manages Regions of interest (ROI). This mainly involves receiving UI input
+ * declaring the user's desire for an ROI to be send to the camera.
+ */
 public class MMROIManager {
    private final MMStudio studio_;
    
    public MMROIManager(MMStudio studio) {
       studio_ = studio;
    }
-   
+
+   /**
+    * Enquires with the UI what ROI(s) are set, and send these to the camera.
+    */
    public void setROI() {
       ImagePlus curImage = WindowManager.getCurrentImage();
       if (curImage == null) {
@@ -51,14 +58,15 @@ public class MMROIManager {
       Roi roi = curImage.getRoi();
       if (roi == null) {
          // Nothing to be done.
-         studio_.logs().showError("There is no selection in the image window.\nUse the ImageJ rectangle tool to draw the ROI.");
+         studio_.logs().showError(
+               "There is no selection in the image window.\n"
+               + "Use the ImageJ rectangle tool to draw the ROI.");
          return;
       }
       if (roi.getType() == Roi.RECTANGLE) {
          try {
             studio_.app().setROI(updateROI(roi));
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             // Core failed to set new ROI.
             studio_.logs().logError(e, "Unable to set new ROI");
          }
@@ -70,8 +78,7 @@ public class MMROIManager {
             handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
             return;
          }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          handleError("Unable to determine if multiple ROIs is supported");
          return;
       }
@@ -88,8 +95,7 @@ public class MMROIManager {
       }
       try {
          setMultiROI(rois);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          // Core failed to set new ROI.
          studio_.logs().logError(e, "Unable to set new ROI");
       }
@@ -115,8 +121,7 @@ public class MMROIManager {
             List<Image> images = viewer.getDisplayedImages();
             // Just take the first one.
             originalROI = images.get(0).getMetadata().getROI();
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
             ReportingUtils.showError(e, "There was an error determining the selected ROI");
          }
       }
@@ -124,8 +129,7 @@ public class MMROIManager {
       if (originalROI == null) {
          try {
             originalROI = studio_.core().getROI();
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             // Core failed to provide an ROI.
             studio_.logs().logError(e, "Unable to get core ROI");
             return null;
@@ -136,7 +140,10 @@ public class MMROIManager {
       r.y += originalROI.y;
       return r;
    }
-   
+
+   /**
+    * Set the ROI to the center quadrant of the current ROI.
+    */
    public void setCenterQuad() {
       ImagePlus curImage = WindowManager.getCurrentImage();
       if (curImage == null) {
@@ -153,13 +160,15 @@ public class MMROIManager {
       Roi roi = curImage.getRoi();
       try {
          studio_.app().setROI(updateROI(roi));
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          // Core failed to set new ROI.
          studio_.logs().logError(e, "Unable to set new ROI");
       }
    }
 
+   /**
+    * Clears the ROI, i.e. set the camera back to use its full frame.
+    */
    public void clearROI() {
       studio_.live().setSuspended(true);
       try {
