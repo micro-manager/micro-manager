@@ -101,6 +101,7 @@ public final class StageControlFrame extends JFrame {
    private static final String CURRENT_Z_DRIVE = "CURRENTZDRIVE";
 
    private static final String REFRESH = "REFRESH";
+   private static final String SNAP = "SNAP_AFTER_MOVE";
    private static final String NR_Z_PANELS = "NRZPANELS";
 
    private static StageControlFrame staticFrame_;
@@ -116,6 +117,7 @@ public final class StageControlFrame extends JFrame {
    private final JLabel[] zPositionLabel_ = new JLabel[MAX_NUM_Z_PANELS];
    private JPanel settingsPanel_;
    private JCheckBox enableRefreshCB_;
+   private JCheckBox snapAfterMoveCB_;
    private Timer timer_ = null;
    // Ordered small, medium, large.
    private final JFormattedTextField[] xStepTexts_ = new JFormattedTextField[] {
@@ -521,12 +523,12 @@ public final class StageControlFrame extends JFrame {
          presetButton.setFont(new Font("Arial", Font.PLAIN, 10));
          presetButton.addActionListener((ActionEvent e) -> {
             double pixelSize = core_.getPixelSizeUm();
-            double viewSize = core_.getImageWidth() * pixelSize;
-            double[] sizes = new double[] {pixelSize, viewSize / 10,
-               viewSize};
-            double stepSize = sizes[index];
-            xStepTexts_[index].setText(NumberUtils.doubleToDisplayString(stepSize));
-            yStepTexts_[index].setText(NumberUtils.doubleToDisplayString(stepSize));
+            double xViewSize = core_.getImageWidth() * pixelSize;
+            double yViewSize = core_.getImageHeight() * pixelSize;
+            double[] xSizes = new double[] {pixelSize, xViewSize / 10, xViewSize};
+            double[] ySizes = new double[] {pixelSize, yViewSize / 10, yViewSize};
+            xStepTexts_[index].setText(NumberUtils.doubleToDisplayString(xSizes[index]));
+            yStepTexts_[index].setText(NumberUtils.doubleToDisplayString(ySizes[index]));
          });
          result.add(presetButton, "width 80!, height 20!, wrap");
       } // End creating set-step-size text fields/buttons.
@@ -728,15 +730,23 @@ public final class StageControlFrame extends JFrame {
    
    private JPanel createSettingsPanel() {
       final JPanel result = new JPanel(new MigLayout("insets 0, gap 0"));
-      
+
+      // checkbox to enable Snap after Move
+      snapAfterMoveCB_  = new JCheckBox("Snap after Move");
+      snapAfterMoveCB_.addItemListener((ItemEvent e) -> {
+         settings_.putBoolean(SNAP, snapAfterMoveCB_.isSelected());
+      });
+      snapAfterMoveCB_.setSelected(settings_.getBoolean(SNAP, true));
+      result.add(snapAfterMoveCB_, "left, wrap");
+
       // checkbox to turn updates on and off
-      enableRefreshCB_ = new JCheckBox("Polling updates");
+      enableRefreshCB_ = new JCheckBox("Polling Updates");
       enableRefreshCB_.addItemListener((ItemEvent e) -> {
          settings_.putBoolean(REFRESH, enableRefreshCB_.isSelected());
          refreshTimer();
       });
       enableRefreshCB_.setSelected(settings_.getBoolean(REFRESH, false));
-      result.add(enableRefreshCB_, "center, wrap");
+      result.add(enableRefreshCB_, "left, wrap");
       return result;
    }
    
@@ -755,14 +765,29 @@ public final class StageControlFrame extends JFrame {
    }
    
    private void setRelativeXYStagePosition(double x, double y) {
-      // TODO: should we call moveSampleOnDisplay instead, so that sample moves as expected?
-      uiMovesStageManager_.getXYNavigator().moveXYStageUm(
-              core_.getXYStageDevice(), x, y);
+      uiMovesStageManager_.getXYNavigator().moveSampleOnDisplayUm(x, y);
+      if (settings_.getBoolean(SNAP, false)) {
+         try {
+            core_.waitForDevice(core_.getXYStageDevice());
+            studio_.live().snap(true);
+         } catch (Exception ex) {
+            studio_.logs().showError(ex, "Error while waiting for stage: "
+                  + core_.getXYStageDevice());
+         }
+      }
    }
 
    private void setRelativeStagePosition(double z, int idx) {
       String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
       uiMovesStageManager_.getZNavigator().setPosition(curDrive, z);
+      if (settings_.getBoolean(SNAP, false)) {
+         try {
+            core_.waitForDevice(curDrive);
+            studio_.live().snap(true);
+         } catch (Exception ex) {
+            studio_.logs().showError(ex, "Error while waiting for stage: " + curDrive);
+         }
+      }
    }
 
    private void getXYPosLabelFromCore() throws Exception {
@@ -882,7 +907,7 @@ public final class StageControlFrame extends JFrame {
    /**
     * Handles event signalling that MM is shutting down.
     *
-    * @param event signals that MM is shuttings down.
+    * @param event signals that MM is shutting down.
     */
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
