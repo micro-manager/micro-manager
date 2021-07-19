@@ -24,26 +24,26 @@ package org.micromanager.assembledata;
 import ij.plugin.PlugIn;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
+ * Micro-Manager plugin to assemble multiple datasets into one.
  *
- * @author kthorn
+ * @author Nico Stuurman
  */
 @Plugin(type = MenuPlugin.class)
 public class AssembleData implements PlugIn, MenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Assemble Data";
    public static final String TOOLTIPDESCRIPTION =
-      "Combines one or more data sets into one.  Also combines positions.";
+         "Combines one or more data sets into one.  Also combines positions.";
 
    public static final String VERSIONNUMBER = "0.1";
 
    private Studio studio_;
    private AssembleDataForm form_;
 
-    @Override
+   @Override
    public void run(String string) {
       if (form_ != null && !form_.wasDisposed()) {
          form_.setVisible(true);

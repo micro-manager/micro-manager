@@ -38,8 +38,19 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.swing.*;
-
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
@@ -54,6 +65,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
+ * Forms for user input for the Assemble data plugin.
  *
  * @author nico
  */
@@ -70,21 +82,22 @@ public class AssembleDataForm extends JDialog {
    private final JComboBox<String> dataSet1Box_;
    private final JComboBox<String> dataSet2Box_;
    
-   private final String DATAVIEWER1 = "DataViewer1";
-   private final String DATAVIEWER2 = "DataViewer2";
-   private final String CHOOSEDIR = "ChooseDir";
-   private final String CHOOSEDATASET = "ChooseDataSet";
-   private final String DIRNAME = "DirName";
-   private final String XOFFSET = "XOffset";
-   private final String YOFFSET = "YOffset";
-   private final int DEFAULTX = -350;
-   private final int DEFAULTY = 200;
+   private static final String DATAVIEWER1 = "DataViewer1";
+   private static final String DATAVIEWER2 = "DataViewer2";
+   private static final String CHOOSEDIR = "ChooseDir";
+   private static final String CHOOSEDATASET = "ChooseDataSet";
+   private static final String DIRNAME = "DirName";
+   private static final String XOFFSET = "XOffset";
+   private static final String YOFFSET = "YOffset";
+   private static final int DEFAULTX = -350;
+   private static final int DEFAULTY = 200;
    
      
-    /**
-     * Creates new form MultiChannelShadingForm
-     * @param studio
-     */
+   /**
+    * Creates new form MultiChannelShadingForm.
+    *
+    * @param studio API instance.
+    */
    @SuppressWarnings("LeakingThisInConstructor")
    public AssembleDataForm(Studio studio) {
       studio_ = studio;
@@ -129,7 +142,7 @@ public class AssembleDataForm extends JDialog {
       locationsFieldButton.addActionListener((ActionEvent evt) -> {
          File f = FileDialogs.openDir(this, "Locations File",   
                  new FileDialogs.FileType("MMProjector", "Locations File",
-                         locationsField.getText(), true, "") );
+                       locationsField.getText(), true, ""));
          if (f != null) {
             locationsField.setText(f.getAbsolutePath());
          }
@@ -143,12 +156,12 @@ public class AssembleDataForm extends JDialog {
       JRadioButton chooseData = new JRadioButton("Choose from open Data Sets");
       super.add(chooseData, "span 2, wrap");     
  
-      dataSet1Box_ = new JComboBox();
+      dataSet1Box_ = new JComboBox<>();
       setupDataViewerBox(dataSet1Box_, DATAVIEWER1);
       super.add(new JLabel("First Data Set:"));
       super.add(dataSet1Box_, "wrap");
      
-      dataSet2Box_ = new JComboBox();
+      dataSet2Box_ = new JComboBox<>();
       setupDataViewerBox(dataSet2Box_, DATAVIEWER2);
       super.add(new JLabel("Second Data Set:"));
       super.add(dataSet2Box_, "wrap");
@@ -191,7 +204,7 @@ public class AssembleDataForm extends JDialog {
       super.add(xOffsetLabel);
       int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
       final SpinnerNumberModel xModel = new SpinnerNumberModel(xOffset, -1000, 1000, 1);
-      final JSpinner xSpinner = new JSpinner (xModel);
+      final JSpinner xSpinner = new JSpinner(xModel);
       xSpinner.addChangeListener((ChangeEvent e) -> {
          profileSettings_.putInteger(XOFFSET, (Integer) xSpinner.getValue());
       });
@@ -201,7 +214,7 @@ public class AssembleDataForm extends JDialog {
       super.add(yOffsetLabel);
       int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
       final SpinnerNumberModel yModel = new SpinnerNumberModel(yOffset, -1000, 1000, 1);
-      final JSpinner ySpinner = new JSpinner (yModel);
+      final JSpinner ySpinner = new JSpinner(yModel);
       ySpinner.addChangeListener((ChangeEvent e) -> {
          profileSettings_.putInteger(YOFFSET, (Integer) ySpinner.getValue());
       });
@@ -212,7 +225,7 @@ public class AssembleDataForm extends JDialog {
          new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
                  "https://micro-manager.org/wiki/AssembleData")).start();
       });
-      super.add (helpButton, "span 2, split 4");
+      super.add(helpButton, "span 2, split 4");
     
                 
       final JButton testButton =  new JButton("Test");
@@ -247,8 +260,8 @@ public class AssembleDataForm extends JDialog {
    }
       
    private void assembleDataSets(boolean test) {
-      String dataViewerName1 = profileSettings_.getString(DATAVIEWER1,"");
-      String dataViewerName2 = profileSettings_.getString(DATAVIEWER2,"");
+      String dataViewerName1 = profileSettings_.getString(DATAVIEWER1, "");
+      String dataViewerName2 = profileSettings_.getString(DATAVIEWER2, "");
       DataViewer dv1 = null;
       DataViewer dv2 = null;
       for (DataViewer dv : studio_.displays().getAllDataViewers()) {
@@ -310,7 +323,7 @@ public class AssembleDataForm extends JDialog {
       }
       List<FileNameInfo> fni1 = new ArrayList<>();
       List<FileNameInfo> fni2 = new ArrayList<>();
-      List<String> rootList = new ArrayList(2);
+      List<String> rootList = new ArrayList<>(2);
       for (String root : roots) {
          rootList.add(root);
       }
@@ -408,7 +421,7 @@ public class AssembleDataForm extends JDialog {
               dataViewers));
       String dataViewer = profileSettings_.getString(key, "");
       box.setSelectedItem(dataViewer);
-      profileSettings_.putString(key, (String)box.getSelectedItem());
+      profileSettings_.putString(key, (String) box.getSelectedItem());
       box.addActionListener((java.awt.event.ActionEvent evt) -> {
          profileSettings_.putString(key, (String) 
                  box.getSelectedItem());

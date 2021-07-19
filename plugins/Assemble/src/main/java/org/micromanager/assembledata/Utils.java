@@ -9,19 +9,21 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.display.DataViewer;
 
 /**
+ * Collection of Utilities for the Assemble Data plugin.
  *
  * @author Nico
  */
 public class Utils {
-   
-   public static double getSmallestZoom(DataViewer dv1, DataViewer dv2) {
-      double zoom = dv1.getDisplaySettings().getZoomRatio();
-      if (dv2.getDisplaySettings().getZoomRatio() < zoom) { 
-         zoom = dv2.getDisplaySettings().getZoomRatio(); 
-      }
-      return zoom;
-   }
-   
+
+   /**
+    * Returns the input DataProvider that has only one position.
+    * Returns null if both DataProviders have only one or both have more than one
+    * position.
+    *
+    * @param dp1 dataProvider1
+    * @param dp2 dataProvider2
+    * @return One of the two inputs, or null if both have one or more than one position.
+    */
    public static DataProvider singlePositionData(DataProvider dp1, DataProvider dp2) {
       if (dp1.getNextIndex(Coords.P) <= 1 && dp2.getNextIndex(Coords.P) > 1) {
          return dp1;
@@ -30,7 +32,15 @@ public class Utils {
       }
       return null;
    }
-   
+
+   /**
+    * Returns the input DataProvider that has more than one position.
+    *
+    * @param dp1 DataProvider 1
+    * @param dp2 DataProvider 2
+    * @return One of the two inputs, or null if none or both of them have more than
+    *         one position.
+    */
    public static DataProvider multiPositionData(DataProvider dp1, DataProvider dp2) {
       if (dp1.getNextIndex(Coords.P) <= 1 && dp2.getNextIndex(Coords.P) > 1) {
          return dp2;
@@ -52,7 +62,8 @@ public class Utils {
    }
    
    /**
-    * Find the entry in the Set ( of size 2) that is not the given String
+    * Find the entry in the Set ( of size 2) that is not the given String.
+    *
     * @param root
     * @param roots
     * @return 
@@ -69,14 +80,12 @@ public class Utils {
    }
    
    /**
-    * Filenames are expected to be formatted as"
-    * TIRF-B2-Site_0-7
+    * Filenames are expected to be formatted as "TIRF-B2-Site_0-7.
     * Where the last number is the sequence in the total acquistion series,
     * the number before the site number in the well
     * the letter/number before Site is the well indicator
     * and the text at the beginning the modality (here: TIRF or Confocal, but 
     * can be more or less anything without an underscore
-    * 
     * There should be an underscore behind "Site", and dashes separating the other parts
     * 
     * @param input - input file name
@@ -103,7 +112,7 @@ public class Utils {
       String[] numbers = lSplit[1].split("-");
       if (numbers.length != 2) {
          throw new MalFormedFileNameException(
-                 "The DataSetNames must contain 2 numbers sepearated by a dash behind the underscore");         
+      "The DataSetNames must contain 2 numbers separated by a dash behind the underscore");
       }
       site = Integer.parseInt(numbers[0]);
       sequence = Integer.parseInt(numbers[1]);

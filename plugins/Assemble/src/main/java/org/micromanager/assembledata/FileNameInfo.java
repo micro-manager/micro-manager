@@ -5,19 +5,16 @@ import java.util.Objects;
 import org.micromanager.assembledata.exceptions.MalFormedFileNameException;
 
 /**
+ * Manages FileName Information.
+ * Filenames are expected to be formatted as "TIRF-B2-Site_0-7"
+ * Where the last number is the sequence in the total acquisition series,
+ * the number before the site number in the well
+ * the letter/number before Site is the well indicator
+ * and the text at the beginning the modality (here: TIRF or Confocal, but
+ * can be more or less anything without an underscore
+ * There should be an underscore behind "Site", and dashes separating the other parts.
  *
  * @author nico
- * 
-**
-    * Filenames are expected to be formatted as"
-    * TIRF-B2-Site_0-7
-    * Where the last number is the sequence in the total acquistion series,
-    * the number before the site number in the well
-    * the letter/number before Site is the well indicator
-    * and the text at the beginning the modality (here: TIRF or Confocal, but 
-    * can be more or less anything without an underscore
-    * 
-    * There should be an underscore behind "Site", and dashes separating the other parts
  */
 public class FileNameInfo implements Comparable {
    private final String fullName_;
@@ -41,17 +38,31 @@ public class FileNameInfo implements Comparable {
       String[] numbers = lSplit[1].split("-");
       if (numbers.length != 2) {
          throw new MalFormedFileNameException(
-                 "The DataSetNames must contain 2 numbers sepearated by a dash behind the underscore");         
+             "The DataSetNames must contain 2 numbers sepearated by a dash behind the underscore");
       }
       site_ = Integer.parseInt(numbers[0]);
       sequence_ = Integer.parseInt(numbers[1]);
    }
    
-   public String fileName() { return fullName_; }
-   public String root() { return root_; }
-   public String well() { return well_; }
-   public Integer site() { return site_; }
-   public Integer sequence() { return sequence_; }
+   public String fileName() {
+      return fullName_;
+   }
+
+   public String root() {
+      return root_;
+   }
+
+   public String well() {
+      return well_;
+   }
+
+   public Integer site() {
+      return site_;
+   }
+
+   public Integer sequence() {
+      return sequence_;
+   }
 
    @Override
    public int compareTo(Object o) {
