@@ -285,7 +285,7 @@ public interface Coords {
    /**
     * Get the Z slice index.
     * 
-    * </p>Equivalent to {@code getIndex(Coords.Z_SLICE)}.</p>
+    * <p>Equivalent to {@code getIndex(Coords.Z_SLICE)}.</p>
     *
     * @return Z slice index, or {@code 0} if this {@code Coords} doesn't
     *         contain a Z slice index.
