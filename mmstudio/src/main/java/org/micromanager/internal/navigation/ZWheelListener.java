@@ -25,6 +25,7 @@ import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 
 /**
+ * Classs that translates changes in the mouse wheel into Z stage movements.
 */
 public final class ZWheelListener  {
    private static final double MOVE_INCREMENT = 0.20;
@@ -42,7 +43,7 @@ public final class ZWheelListener  {
     * ZStageMovements are funneled through zNavigator, which runs separate
     * executors for each zStage, and combines movement requests if they come in
     * too fast.
-    * 
+    *
     * @param e DisplayMouseWheelEvent containing a MouseWheel event
     */
    @Subscribe

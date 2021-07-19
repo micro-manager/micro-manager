@@ -2,17 +2,19 @@ package org.micromanager.internal.navigation;
 
 
 import com.google.common.util.concurrent.AtomicDouble;
-import org.micromanager.Studio;
-import org.micromanager.events.internal.DefaultStagePositionChangedEvent;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.ThreadFactoryFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.micromanager.Studio;
+import org.micromanager.events.internal.DefaultStagePositionChangedEvent;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.ThreadFactoryFactory;
 
+/**
+ * Utility class sending movement commands to the (z) stage(s).
+ */
 public class ZNavigator {
    private final Studio studio_;
    private final Map<String, ZStageTask> zStageTaskMap_;
@@ -22,6 +24,12 @@ public class ZNavigator {
       zStageTaskMap_ = new HashMap<>();
    }
 
+   /**
+    * Sets the position of the stage.
+    *
+    * @param stage name of the stage to move.
+    * @param relativeMovement Amount of the relative movement in microns.
+    */
    public void setPosition(String stage, double relativeMovement) {
       if (!zStageTaskMap_.containsKey(stage)) {
          zStageTaskMap_.put(stage, new ZStageTask(stage));
@@ -48,7 +56,7 @@ public class ZNavigator {
          stage_ = stage;
          moveMemory_ = new AtomicDouble(0.0);
          executorService_ = Executors.newSingleThreadExecutor(
-                 ThreadFactoryFactory.createThreadFactory("ZNavigator-" + stage ));
+                 ThreadFactoryFactory.createThreadFactory("ZNavigator-" + stage));
       }
 
       public void setPosition(double pos) {

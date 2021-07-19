@@ -28,6 +28,8 @@ import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
 
 /**
+ * Implementation of the Center And DragListener that lets the user "drag" the stage.
+ *
  * @author OD, nico
  *
  */
@@ -35,7 +37,8 @@ public final class CenterAndDragListener  {
 
    private final Studio studio_;
    private final XYNavigator xyNavigator_;
-   private int lastX_, lastY_;
+   private int lastX_;
+   private int lastY_;
 
    public CenterAndDragListener(final Studio studio, final XYNavigator xyNavigator) {
       studio_ = studio;
@@ -45,11 +48,10 @@ public final class CenterAndDragListener  {
 
 
    /**
-    * Handles mouse events and does the actual stage movement
+    * Handles mouse events and does the actual stage movement.
+    * TODO: this does not take into account multiple cameras in different displays.
     *
     * @param dme DisplayMouseEvent containing information about the mouse movement
-    * TODO: this does not take into account multiple cameras in different displays
-    * 
     */
    @Subscribe
    public void onDisplayMouseEvent(DisplayMouseEvent dme) {
@@ -103,6 +105,8 @@ public final class CenterAndDragListener  {
 
             xyNavigator_.moveSampleOnDisplayPixels(tmpXUm, tmpYUm);
 
+            break;
+         default:
             break;
       }
    }

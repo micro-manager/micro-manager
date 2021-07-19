@@ -39,6 +39,13 @@ public final class UiMovesStageManager {
    private final XYNavigator xyNavigator_;
    private final ZNavigator zNavigator_;
 
+
+   /**
+    * This class handles setting up and disabling mouse and keyboard
+    * shortcuts for stage motion.
+    *
+    * @param studio MM API instance
+    */
    public UiMovesStageManager(Studio studio) {
       studio_ = studio;
       xyNavigator_ = new XYNavigator(studio_);
@@ -51,6 +58,7 @@ public final class UiMovesStageManager {
 
    /**
     * Keep track of enabling/disabling click-to-move for this display.
+    *
     * @param display Display to which we will listen for events
     */
    public void activate(final DisplayController display) {
@@ -76,6 +84,11 @@ public final class UiMovesStageManager {
       displayToKeyListener_.put(display, keyListener);
    }
 
+   /**
+    * Deactivates all the UI elements that move the stage for the given display.
+    *
+    * @param displayToDeActivate The Viewer that should no longer control the stage.
+    */
    public void deActivate(final DataViewer displayToDeActivate) {
       synchronized (displayToDragListener_) {
          for (DisplayController display : displayToDragListener_.keySet()) {
