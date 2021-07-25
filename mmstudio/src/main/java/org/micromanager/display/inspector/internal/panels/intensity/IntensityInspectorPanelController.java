@@ -58,7 +58,13 @@ public class IntensityInspectorPanelController
    private static final String COLOR_BLIND_FRIENDLY = "Colorblind-friendly";
    private static final String RGBCMYW = "RGBCMYW";
    private static final String CUSTOM = "Custom";
-   
+   private static final String RATE_EVERY = "Every Displayed Image";
+   private static final String RATE_NEVER = "Never";
+   private static final String RATE_5HZ = "5 Hz";
+   private static final String RATE_2HZ = "2 Hz";
+   private static final String RATE_1HZ = "1 Hz";
+   private static final String RATE_05HZ = "0.5 Hz";
+
    private final Studio studio_;
    private final JPanel panel_ = new JPanel();
    
@@ -167,15 +173,15 @@ public class IntensityInspectorPanelController
       
       gearMenu_.add(gearMenuUpdateRateSubMenu_);
       // Add/remove items to the histogramSubMenu here
-      histogramMenuMap_.put("Every Displayed Image", Double.POSITIVE_INFINITY);
-      histogramMenuMap_.put("5 Hz", 5.0);
-      histogramMenuMap_.put("2 Hz", 2.0);
-      histogramMenuMap_.put("1 Hz", 1.0);
-      histogramMenuMap_.put("0.5 Hz", 0.5);
-      histogramMenuMap_.put("Never", 0.0);
+      histogramMenuMap_.put(RATE_EVERY, Double.POSITIVE_INFINITY);
+      histogramMenuMap_.put(RATE_5HZ, 5.0);
+      histogramMenuMap_.put(RATE_2HZ, 2.0);
+      histogramMenuMap_.put(RATE_1HZ, 1.0);
+      histogramMenuMap_.put(RATE_05HZ, 0.5);
+      histogramMenuMap_.put(RATE_NEVER, 0.0);
       final String defaultUpdateFrequency = studio_.profile().getSettings(
               IntensityInspectorPanelController.class).getString(
-                    HISTOGRAM_UPDATE_FREQUENCY, "Every Displayed Image");
+                    HISTOGRAM_UPDATE_FREQUENCY, RATE_EVERY);
       final List<JCheckBoxMenuItem> histogramMenuItems = new LinkedList<>();
       for (final String hKey : histogramMenuMap_.keySet()) {
          final JCheckBoxMenuItem jcmi = new JCheckBoxMenuItem(hKey);
@@ -480,7 +486,7 @@ public class IntensityInspectorPanelController
          updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
          String updateRate = studio_.profile()
                  .getSettings(IntensityInspectorPanelController.class)
-                 .getString(HISTOGRAM_UPDATE_FREQUENCY, "1 Hz");
+                 .getString(HISTOGRAM_UPDATE_FREQUENCY, RATE_EVERY);
          if (histogramMenuMap_.get(updateRate) != null) {
             handleHistogramUpdateRate(histogramMenuMap_.get(updateRate));
          }
