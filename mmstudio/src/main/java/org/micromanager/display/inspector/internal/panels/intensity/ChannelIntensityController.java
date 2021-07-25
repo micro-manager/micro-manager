@@ -36,7 +36,6 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- *
  * @author mark
  */
 public final class ChannelIntensityController implements HistogramView.Listener {
@@ -65,10 +64,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private static final class HistoRangeComboBoxModel extends DefaultComboBoxModel<String> {
       public HistoRangeComboBoxModel() {
          super(new String[] {
-            "4-bit (0-15)", "5-bit (0-31)", "6-bit (0-63)",
-            "7-bit (0-127)", "8-bit (0-255)", "9-bit (0-511)", "10-bit (0-1023)",
-            "11-bit (0-2047)", "12-bit (0-4095)", "13-bit (0-8191)",
-            "14-bit (0-16383)", "15-bit (0-32767)", "16-bit (0-65535)", "Camera Depth"
+               "4-bit (0-15)", "5-bit (0-31)", "6-bit (0-63)",
+               "7-bit (0-127)", "8-bit (0-255)", "9-bit (0-511)", "10-bit (0-1023)",
+               "11-bit (0-2047)", "12-bit (0-4095)", "13-bit (0-8191)",
+               "14-bit (0-16383)", "15-bit (0-32767)", "16-bit (0-65535)", "Camera Depth"
          });
       }
 
@@ -81,11 +80,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             if (cameraBits == null) {
                cameraBits = 16;
             }
-            return settings.copyBuilder().useCameraHistoRange(true).
-                    histoRangeBits(cameraBits).build();
+            return settings.copyBuilder().useCameraHistoRange(true)
+                    .histoRangeBits(cameraBits).build();
          }
-         return settings.copyBuilder().useCameraHistoRange(false).
-                    histoRangeBits(index + 4).build();
+         return settings.copyBuilder().useCameraHistoRange(false)
+                    .histoRangeBits(index + 4).build();
       }
       
       public void setBits(ChannelDisplaySettings settings) {
@@ -138,17 +137,15 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          maxMinMaxWidth_ = valueFontMetrics_.stringWidth("99999") + 2;
          maxAvgStdWidth_ = valueFontMetrics_.stringWidth("9.99e+99") + 2;
 
-         valueX1 = keyX1 +
-               Math.max(keyFontMetrics.stringWidth("MAX"),
-                     keyFontMetrics.stringWidth("MIN")) +
-               keyFontMetrics.stringWidth(" ") +
-               maxMinMaxWidth_;
+         valueX1 = keyX1 + Math.max(keyFontMetrics.stringWidth("MAX"),
+                     keyFontMetrics.stringWidth("MIN"))
+               + keyFontMetrics.stringWidth(" ")
+               + maxMinMaxWidth_;
          keyX2 = valueX1 + keyFontMetrics.stringWidth("  ");
-         valueX2 = keyX2 +
-               Math.max(keyFontMetrics.stringWidth("AVG"),
-                     keyFontMetrics.stringWidth("STD")) +
-               keyFontMetrics.stringWidth(" ") +
-               maxAvgStdWidth_;
+         valueX2 = keyX2 + Math.max(keyFontMetrics.stringWidth("AVG"),
+                     keyFontMetrics.stringWidth("STD"))
+               + keyFontMetrics.stringWidth(" ")
+               + maxAvgStdWidth_;
 
          y1 = keyFontMetrics.getMaxAscent();
          y2 = y1 + keyFontMetrics.getHeight();
@@ -266,17 +263,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       viewer_ = viewer;
       channelIndex_ = channelIndex;
 
-      JToggleButton[] componentButtons_ = new JToggleButton[3];
+      JToggleButton[] componentButtons = new JToggleButton[3];
       for (int i = 0; i < 3; ++i) {
-         componentButtons_[i] = new JToggleButton(RGB_ICONS_INACTIVE[i]);
-         componentButtons_[i].setSelectedIcon(RGB_ICONS_ACTIVE[i]);
-         componentButtons_[i].setBorder(BorderFactory.createEmptyBorder());
-         componentButtons_[i].setBorderPainted(false);
-         componentButtons_[i].setOpaque(true);
+         componentButtons[i] = new JToggleButton(RGB_ICONS_INACTIVE[i]);
+         componentButtons[i].setSelectedIcon(RGB_ICONS_ACTIVE[i]);
+         componentButtons[i].setBorder(BorderFactory.createEmptyBorder());
+         componentButtons[i].setBorderPainted(false);
+         componentButtons[i].setOpaque(true);
          // TODO: These buttons do nothing, so do not show until they are active
-         componentButtons_[i].setVisible(false);
+         componentButtons[i].setVisible(false);
       }
-      componentButtons_[0].setSelected(true);
+      componentButtons[0].setSelected(true);
 
       channelPanel_.setLayout(new MigLayout(
             new LC().fill().insets("0").gridGap("0", "0")));
@@ -284,13 +281,13 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       channelPanel_.add(channelVisibleButton_, new CC().gapBefore("rel").split(2));
       channelPanel_.add(channelColorSwatch_, new CC().gapBefore("rel").width("32").wrap());
       channelPanel_.add(channelNameLabel_, new CC().gapBefore("rel").pushX().wrap("rel:rel:push"));
-      channelPanel_.add(componentButtons_[0], new CC().gapBefore("push").gapAfter("0").split(3));
-      channelPanel_.add(componentButtons_[1], new CC().gapAfter("0"));
-      channelPanel_.add(componentButtons_[2], new CC().gapAfter("push").wrap("rel"));
-      JButton fullscaleButton_ = new JButton("Fullscale");
-      channelPanel_.add(fullscaleButton_, new CC().pushX().wrap());
-      JButton autostretchOnceButton_ = new JButton("Auto Once");
-      channelPanel_.add(autostretchOnceButton_, new CC().pushX().wrap("rel"));
+      channelPanel_.add(componentButtons[0], new CC().gapBefore("push").gapAfter("0").split(3));
+      channelPanel_.add(componentButtons[1], new CC().gapAfter("0"));
+      channelPanel_.add(componentButtons[2], new CC().gapAfter("push").wrap("rel"));
+      JButton fullscaleButton = new JButton("Fullscale");
+      channelPanel_.add(fullscaleButton, new CC().pushX().wrap());
+      JButton autostretchOnceButton = new JButton("Auto Once");
+      channelPanel_.add(autostretchOnceButton, new CC().pushX().wrap("rel"));
 
       histoPanel_.setLayout(new MigLayout(
             new LC().fill().insets("0").gridGap("0", "0")));
@@ -302,14 +299,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       histoPanel_.add(histoRangeUpButton_, new CC().gapAfter("push"));
 
       histoPanel_.add(intensityStatsPanel_, new CC().gapAfter("push"));
-      JToggleButton intensityLinkButton_ = new JToggleButton();
-      histoPanel_.add(intensityLinkButton_, new CC());
+      JToggleButton intensityLinkButton = new JToggleButton();
+      histoPanel_.add(intensityLinkButton, new CC());
 
-      Font labelFont = channelNameLabel_.getFont().
-            deriveFont(11.0f).deriveFont(Font.BOLD);
+      Font labelFont = channelNameLabel_.getFont()
+            .deriveFont(11.0f).deriveFont(Font.BOLD);
       channelNameLabel_.setFont(labelFont);
-      channelNameLabel_.setText(viewer.getDataProvider().getSummaryMetadata().
-            getSafeChannelName(channelIndex));
+      channelNameLabel_.setText(viewer.getDataProvider().getSummaryMetadata()
+            .getSafeChannelName(channelIndex));
    
       channelVisibleButton_.setMargin(new Insets(0, 0, 0, 0));
       channelVisibleButton_.setPreferredSize(new Dimension(23, 23));
@@ -318,21 +315,21 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             IconLoader.getIcon("/org/micromanager/icons/eye-out.png"));
       channelVisibleButton_.setSelectedIcon(
             IconLoader.getIcon("/org/micromanager/icons/eye.png"));
-      channelVisibleButton_.addActionListener((ActionEvent e) -> handleVisible() );
+      channelVisibleButton_.addActionListener((ActionEvent e) -> handleVisible());
       channelColorSwatch_.addActionListener((ActionEvent e) ->
-         handleColor(channelColorSwatch_.getColor()) );
+            handleColor(channelColorSwatch_.getColor()));
 
-      Font buttonFont = fullscaleButton_.getFont().deriveFont(9.0f);
-      fullscaleButton_.setMargin(new Insets(0, 0, 0, 0));
-      fullscaleButton_.setFont(buttonFont);
-      fullscaleButton_.setPreferredSize(new Dimension(72, 23));
-      fullscaleButton_.setMaximumSize(new Dimension(72, 23));
-      fullscaleButton_.addActionListener((ActionEvent e) -> handleFullscale());
-      autostretchOnceButton_.setMargin(new Insets(0, 0, 0, 0));
-      autostretchOnceButton_.setFont(buttonFont);
-      autostretchOnceButton_.setPreferredSize(new Dimension(72, 23));
-      autostretchOnceButton_.setMaximumSize(new Dimension(72, 23));
-      autostretchOnceButton_.addActionListener((ActionEvent e) -> handleAutoscale());
+      Font buttonFont = fullscaleButton.getFont().deriveFont(9.0f);
+      fullscaleButton.setMargin(new Insets(0, 0, 0, 0));
+      fullscaleButton.setFont(buttonFont);
+      fullscaleButton.setPreferredSize(new Dimension(72, 23));
+      fullscaleButton.setMaximumSize(new Dimension(72, 23));
+      fullscaleButton.addActionListener((ActionEvent e) -> handleFullscale());
+      autostretchOnceButton.setMargin(new Insets(0, 0, 0, 0));
+      autostretchOnceButton.setFont(buttonFont);
+      autostretchOnceButton.setPreferredSize(new Dimension(72, 23));
+      autostretchOnceButton.setMaximumSize(new Dimension(72, 23));
+      autostretchOnceButton.addActionListener((ActionEvent e) -> handleAutoscale());
 
       histoRangeDownButton_.setMaximumSize(new Dimension(20, 20));
       histoRangeDownButton_.setIcon(IconLoader.getIcon(
@@ -364,11 +361,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       });
 
       // TODO This will actually be a popup button!
-      intensityLinkButton_.setMaximumSize(new Dimension(30, 20));
-      intensityLinkButton_.setMinimumSize(new Dimension(30, 20));
-      intensityLinkButton_.setIcon(IconLoader.getIcon(
+      intensityLinkButton.setMaximumSize(new Dimension(30, 20));
+      intensityLinkButton.setMinimumSize(new Dimension(30, 20));
+      intensityLinkButton.setIcon(IconLoader.getIcon(
             "/org/micromanager/icons/linkflat.png"));
-      intensityLinkButton_.setSelectedIcon(IconLoader.getIcon(
+      intensityLinkButton.setSelectedIcon(IconLoader.getIcon(
             "/org/micromanager/icons/linkflat_active.png"));
 
       //updateHistoRangeButtonStates();
@@ -419,7 +416,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          if (anyImage == null) {
             return;
          }
-         DisplaySettings settings = viewer_.getDisplaySettings();
+         final DisplaySettings settings = viewer_.getDisplaySettings();
          cameraBits_ = anyImage.getMetadata().getBitDepth(); // can throw IOException
          ChannelDisplaySettings cSettings = histoRangeComboBoxModel_.getBits(
                  viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);
@@ -445,18 +442,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    @MustCallOnEDT
    private void updateScalingIndicators(DisplaySettings settings,
-         IntegerComponentStats componentStats, int component)
-   {
-      long min, max;
+         IntegerComponentStats componentStats, int component) {
+      long min;
+      long max;
       if (settings.isAutostretchEnabled()) {
          double q = settings.getAutoscaleIgnoredQuantile();
          min = componentStats.getAutoscaleMinForQuantile(q);
          max = componentStats.getAutoscaleMaxForQuantile(q);
-      }
-      else {
+      } else {
          ComponentDisplaySettings componentSettings =
-               settings.getChannelSettings(channelIndex_).
-                     getComponentSettings(component);
+               settings.getChannelSettings(channelIndex_)
+                     .getComponentSettings(component);
          max = Math.min(componentStats.getHistogramRangeMax(),
                componentSettings.getScalingMaximum());
          min = Math.max(0, Math.min(max - 1,
@@ -469,15 +465,15 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private void updateHistoRangeButtonStates() {
       int index = histoRangeComboBox_.getSelectedIndex();
       histoRangeDownButton_.setEnabled(index > 0);
-      histoRangeUpButton_.setEnabled(index <
-            histoRangeComboBoxModel_.getSize() - 2);
-      DisplaySettings oldDisplaySettings, newDisplaySettings;
+      histoRangeUpButton_.setEnabled(index < histoRangeComboBoxModel_.getSize() - 2);
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
       do {
          oldDisplaySettings = viewer_.getDisplaySettings();
          ChannelDisplaySettings channelSettings =
                oldDisplaySettings.getChannelSettings(channelIndex_);
-         newDisplaySettings = oldDisplaySettings.
-               copyBuilderWithChannelSettings(channelIndex_,
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithChannelSettings(channelIndex_,
                            histoRangeComboBoxModel_.getBits(channelSettings, 
                                    cameraBits_)).build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
@@ -501,15 +497,16 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    private void handleVisible() {
       boolean visible = channelVisibleButton_.isSelected();
-      DisplaySettings oldDisplaySettings, newDisplaySettings;
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
       do {
          oldDisplaySettings = viewer_.getDisplaySettings();
          ChannelDisplaySettings channelSettings =
                oldDisplaySettings.getChannelSettings(channelIndex_);
-         newDisplaySettings = oldDisplaySettings.
-               copyBuilderWithChannelSettings(channelIndex_,
-                     channelSettings.copyBuilder().visible(visible).build()).
-               build();
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithChannelSettings(channelIndex_,
+                     channelSettings.copyBuilder().visible(visible).build())
+               .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
@@ -518,21 +515,22 @@ public final class ChannelIntensityController implements HistogramView.Listener 
               histoPanel_.getTopLevelAncestor(), "Channel Color", color);
       
       if (newColor != null) {
-         DisplaySettings oldDisplaySettings, newDisplaySettings;
+         DisplaySettings oldDisplaySettings;
+         DisplaySettings newDisplaySettings;
          do {
             oldDisplaySettings = viewer_.getDisplaySettings();
             ChannelDisplaySettings channelSettings
                     = oldDisplaySettings.getChannelSettings(channelIndex_);
-            newDisplaySettings = oldDisplaySettings.
-                    copyBuilderWithChannelSettings(channelIndex_,
-                            channelSettings.copyBuilder().color(newColor).build()).
-                    build();
+            newDisplaySettings = oldDisplaySettings
+                  .copyBuilderWithChannelSettings(channelIndex_,
+                            channelSettings.copyBuilder().color(newColor).build()).build();
          } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       }
    }
 
    private void handleFullscale() {
-      DisplaySettings oldDisplaySettings, newDisplaySettings;
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
       do {
          oldDisplaySettings = viewer_.getDisplaySettings();
          ChannelDisplaySettings channelSettings =
@@ -541,28 +539,29 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          int nComponents = 1; // TODO
          for (int i = 0; i < nComponents; ++i) {
             try {
-            int cameraBits = viewer_.getDataProvider().getAnyImage(). // can throw IOException
-                    getMetadata().getBitDepth(); 
-            long max = 1 << cameraBits;
-            builder.component(i,
-                  channelSettings.getComponentSettings(i).copyBuilder().
-                        scalingRange(0L, 
-                                max >= 0 ? max : Long.MAX_VALUE).
-                        build() );
+               int cameraBits = viewer_.getDataProvider().getAnyImage(). // can throw IOException
+                     getMetadata().getBitDepth();
+               long max = 1 << cameraBits;
+               builder.component(i,
+                     channelSettings.getComponentSettings(i).copyBuilder()
+                           .scalingRange(0L,
+                                max >= 0 ? max : Long.MAX_VALUE)
+                        .build());
             } catch (IOException ioe) {
                // if we could not find an image, we have bigger problems
                ReportingUtils.logError(ioe);
             }
          }
-         newDisplaySettings = oldDisplaySettings.
-               copyBuilderWithChannelSettings(channelIndex_, builder.build()).
-               autostretch(false).
-               build();
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithChannelSettings(channelIndex_, builder.build())
+               .autostretch(false)
+               .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
    void handleAutoscale() {
-      DisplaySettings oldDisplaySettings, newDisplaySettings;
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
       do {
          oldDisplaySettings = viewer_.getDisplaySettings();
          double q = oldDisplaySettings.getAutoscaleIgnoredQuantile();
@@ -575,18 +574,19 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             long min = stats.getAutoscaleMinForQuantile(q);
             long max = stats.getAutoscaleMaxForQuantile(q);
             builder.component(i,
-                  channelSettings.getComponentSettings(i).copyBuilder().
-                        scalingRange(min, max).build());
+                  channelSettings.getComponentSettings(i).copyBuilder()
+                        .scalingRange(min, max).build());
          }
-         newDisplaySettings = oldDisplaySettings.
-               copyBuilderWithChannelSettings(channelIndex_, builder.build()).
-               build();
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithChannelSettings(channelIndex_, builder.build())
+               .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
    @Override
    public void histogramScalingMinChanged(int component, long newMin) {
-      DisplaySettings oldDisplaySettings, newDisplaySettings;
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
       do {
          oldDisplaySettings = viewer_.getDisplaySettings();
          ChannelDisplaySettings channelSettings =
@@ -596,41 +596,44 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          if (componentSettings.getScalingMinimum() == newMin) {
             return;
          }
-         componentSettings = componentSettings.copyBuilder().
-               scalingMinimum(newMin).
-               build();
-         newDisplaySettings = oldDisplaySettings.
-               copyBuilderWithComponentSettings(channelIndex_, component, componentSettings).
-               autostretch(false).
-               build();
+         componentSettings = componentSettings
+               .copyBuilder()
+               .scalingMinimum(newMin)
+               .build();
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithComponentSettings(channelIndex_, component, componentSettings)
+               .autostretch(false)
+               .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
    @Override
    public void histogramScalingMaxChanged(int component, long newMax) {
-      DisplaySettings oldDisplaySettings, newDisplaySettings;
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
       do {
          oldDisplaySettings = viewer_.getDisplaySettings();
          ChannelDisplaySettings channelSettings =
                oldDisplaySettings.getChannelSettings(channelIndex_);
          ComponentDisplaySettings componentSettings =
                channelSettings.getComponentSettings(component);
-         if (componentSettings.getScalingMaximum()== newMax) {
+         if (componentSettings.getScalingMaximum() == newMax) {
             return;
          }
-         componentSettings = componentSettings.copyBuilder().
-               scalingMaximum(newMax).
-               build();
-         newDisplaySettings = oldDisplaySettings.
-               copyBuilderWithComponentSettings(channelIndex_, component, componentSettings).
-               autostretch(false).
-               build();
+         componentSettings = componentSettings.copyBuilder()
+               .scalingMaximum(newMax)
+               .build();
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilderWithComponentSettings(channelIndex_, component, componentSettings)
+               .autostretch(false)
+               .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
    @Override
    public void histogramGammaChanged(double newGamma) {
-      DisplaySettings oldDisplaySettings, newDisplaySettings;
+      DisplaySettings oldDisplaySettings;
+      DisplaySettings newDisplaySettings;
       do {
          oldDisplaySettings = viewer_.getDisplaySettings();
          ChannelDisplaySettings channelSettings =
@@ -646,16 +649,18 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             }
             changed = true;
             channelBuilder.component(c,
-                  componentSettings.copyBuilder().
-                        scalingGamma(newGamma).
-                        build());
+                  componentSettings
+                        .copyBuilder()
+                        .scalingGamma(newGamma)
+                        .build());
          }
          if (!changed) {
             return;
          }
-         newDisplaySettings = oldDisplaySettings.copyBuilder().
-               channel(channelIndex_, channelBuilder.build()).
-               build();
+         newDisplaySettings = oldDisplaySettings
+               .copyBuilder()
+               .channel(channelIndex_, channelBuilder.build())
+               .build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
@@ -673,16 +678,16 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             return;
          }
          numComponents = anyImage.getNumComponents();
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          numComponents = 1;
       }
       if (numComponents == 1) {
          channelNameLabel_.setText(channelSettings.getName());
          histogram_.setComponentColor(0, channelSettings.getColor(),
                channelSettings.getColor());
-         histogram_.setGamma(channelSettings.getComponentSettings(0).
-               getScalingGamma());
+         histogram_.setGamma(channelSettings
+               .getComponentSettings(0)
+               .getScalingGamma());
          // Need to remove actionListeners before setting the histoRangeBox
          ActionListener[] actionListeners = histoRangeComboBox_.getActionListeners();
          for (ActionListener al : actionListeners) {
@@ -701,6 +706,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
    }
 
+   /**
+    * Handles event indicating the Pixel info about the pizel the mouse
+    * is pointing at has changed.
+    *
+    * @param e Event with information about the pixel and its value(s).
+    */
    @Subscribe
    public void onEvent(DataViewerMousePixelInfoChangedEvent e) {
       histogram_.clearComponentHighlights();
