@@ -16,7 +16,7 @@ import org.micromanager.internal.utils.ColorMaps;
 
 /**
  * Generates the items in the colorModeComboBox in the top of the
- * Histograms and Intensity scaling panel
+ * Histograms and Intensity scaling panel.
  *
  * @author mark
  */
@@ -24,7 +24,7 @@ final class ColorModeCell extends DefaultListCellRenderer {
    private static final int ICON_WIDTH = 64;
    private static final int ICON_HEIGHT = 12;
 
-   static enum Item {
+   enum Item {
       COMPOSITE("Composite"),
       COLOR("Color"),
       GRAYSCALE("Grayscale"),
@@ -36,12 +36,12 @@ final class ColorModeCell extends DefaultListCellRenderer {
       private final String text_;
       private final Icon icon_;
 
-      private Item(String text) {
+      Item(String text) {
          text_ = text;
          icon_ = null;
       }
 
-      private Item(String text, ColorTable8 lut) {
+      Item(String text, ColorTable8 lut) {
          text_ = text;
          icon_ = makeLUTIcon(lut);
       }
@@ -56,7 +56,7 @@ final class ColorModeCell extends DefaultListCellRenderer {
       }
    }
 
-   private final List<Color> channelColors_ = new ArrayList<Color>();
+   private final List<Color> channelColors_ = new ArrayList<>();
 
    static ColorModeCell create() {
       return new ColorModeCell();
@@ -70,8 +70,7 @@ final class ColorModeCell extends DefaultListCellRenderer {
       channelColors_.clear();
       if (colors == null || colors.isEmpty()) {
          channelColors_.add(Color.WHITE);
-      }
-      else {
+      } else {
          channelColors_.addAll(colors);
       }
    }
@@ -113,11 +112,10 @@ final class ColorModeCell extends DefaultListCellRenderer {
       int[] pixels = new int[ICON_WIDTH * ICON_HEIGHT];
       for (int y = 0; y < ICON_HEIGHT; ++y) {
          for (int x = 0; x < ICON_WIDTH; ++x) {
-            pixels[x + y * ICON_WIDTH] =
-                  0xff << 24 |
-                  lut.getResampled(0, ICON_WIDTH, x) << 16 |
-                  lut.getResampled(1, ICON_WIDTH, x) << 8 |
-                  lut.getResampled(2, ICON_WIDTH, x);
+            pixels[x + y * ICON_WIDTH] = 0xff << 24
+               | lut.getResampled(0, ICON_WIDTH, x) << 16
+               | lut.getResampled(1, ICON_WIDTH, x) << 8
+               | lut.getResampled(2, ICON_WIDTH, x);
          }
       }
 
@@ -129,6 +127,7 @@ final class ColorModeCell extends DefaultListCellRenderer {
 
    private static final Icon GRAYSCALE_ICON;
    private static final Icon GRAYSCALE_HILO_ICON;
+
    static {
       int[] pixels = new int[ICON_WIDTH * ICON_HEIGHT];
       for (int y = 0; y < ICON_HEIGHT; ++y) {
@@ -158,7 +157,7 @@ final class ColorModeCell extends DefaultListCellRenderer {
 
    private Icon getColorIcon(int maxColors) {
       // Show gradient of the first 1 to 3 colors.
-      List<Color> sixColors = new ArrayList<Color>(6);
+      List<Color> sixColors = new ArrayList<>(6);
       switch (Math.min(maxColors, channelColors_.size())) {
          case 1:
             sixColors.addAll(Collections.nCopies(6, channelColors_.get(0)));
@@ -183,10 +182,10 @@ final class ColorModeCell extends DefaultListCellRenderer {
             double g = fraction * color.getGreen();
             double b = fraction * color.getBlue();
             pixels[x + y * ICON_WIDTH] =
-                  0xff000000 |
-                  0x00010000 * (int) Math.round(r) |
-                  0x00000100 * (int) Math.round(g) |
-                  0x00000001 * (int) Math.round(b);
+                  0xff000000
+                        | 0x00010000 * (int) Math.round(r)
+                        | 0x00000100 * (int) Math.round(g)
+                        | 0x00000001 * (int) Math.round(b);
          }
       }
       BufferedImage image = new BufferedImage(ICON_WIDTH, ICON_HEIGHT,

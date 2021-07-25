@@ -3,12 +3,13 @@ package org.micromanager.display.inspector.internal.panels.intensity;
 
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
-import org.scijava.Priority;
-import org.scijava.plugin.Plugin;
 import org.micromanager.display.inspector.InspectorPanelController;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
+import org.scijava.Priority;
+import org.scijava.plugin.Plugin;
 
 /**
+ * Plugin used to create the Intensity panel in the Inspector window.
  *
  * @author mark
  */
@@ -19,8 +20,8 @@ import org.micromanager.display.inspector.InspectorPanelPlugin;
 public class IntensityInspectorPanelPlugin implements InspectorPanelPlugin {
    @Override
    public boolean isApplicableToDataViewer(DataViewer viewer) {
-      return viewer.getDataProvider() != null &&
-            viewer instanceof ImageStatsPublisher;
+      return viewer.getDataProvider() != null
+            && viewer instanceof ImageStatsPublisher;
    }
 
    @Override
