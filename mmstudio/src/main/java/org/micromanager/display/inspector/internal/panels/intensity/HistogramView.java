@@ -665,8 +665,8 @@ public final class HistogramView extends JPanel {
    }
 
    // See also: getScalingLabelRect()
-   private void drawScalingLabel(int component, boolean top, Graphics2D g) {
-      Rectangle rect = getGraphRect();
+   private void drawScalingLabel(final int component, final boolean top, final Graphics2D g) {
+      final Rectangle rect = getGraphRect();
       ComponentState state = componentStates_.get(component);
       if (state.rangeMax_ <= 0) {
          return;
@@ -675,7 +675,6 @@ public final class HistogramView extends JPanel {
       final String text = Long.toString(intensity);
 
       float x = getScalingHandlePos(component, top);
-      final float y = top ? rect.y : rect.y + rect.height;
       if (x < rect.x - 1 || x > rect.x + rect.width) {
          return;
       }
@@ -697,6 +696,7 @@ public final class HistogramView extends JPanel {
       } else {
          x += drawOnLeftOfHandle ? -width - LUT_HANDLE_SIZE : 2;
       }
+      float y = top ? rect.y : rect.y + rect.height;
       y += vOffset;
       g2d.drawString(text, x, y);
    }

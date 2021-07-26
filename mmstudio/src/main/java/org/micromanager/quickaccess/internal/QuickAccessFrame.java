@@ -28,8 +28,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
@@ -41,8 +39,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import javax.swing.BorderFactory;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -52,11 +48,10 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
-
-import net.miginfocom.swing.MigLayout;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
@@ -84,7 +79,7 @@ public final class QuickAccessFrame extends JFrame {
    // well as the rows/columns configuration fields.
    private final ConfigurationPanel configurePanel_;
    // Switches between normal and configure modes.
-   private JToggleButton configureButton_;
+   private final JToggleButton configureButton_;
    // List of visual dividers in the grid.
    private final HashSet<Divider> dividers_;
 
@@ -103,13 +98,17 @@ public final class QuickAccessFrame extends JFrame {
    private int iconOffsetX_ = -1;
    private int iconOffsetY_ = -1;
 
+   /**
+    * Constructs the Quick Access Window that shows buttons for often used controls.
+    * Also let's the user customize the UI.
+    */
    @SuppressWarnings("LeakingThisInConstructor")
    public QuickAccessFrame(Studio studio, JSONObject config) {
       setAlwaysOnTop(true);
 
       studio_ = studio;
-      controls_ = new HashSet<ControlCell>();
-      dividers_ = new HashSet<Divider>();
+      controls_ = new HashSet<>();
+      dividers_ = new HashSet<>();
 
       // Hide ourselves when the close button is clicked, instead of letting
       // us be destroyed. Also leave configuration mode.
@@ -137,12 +136,7 @@ public final class QuickAccessFrame extends JFrame {
       configureButton_ = new JToggleButton(
             IconLoader.getIcon("/org/micromanager/icons/gear.png"));
       configureButton_.setToolTipText("Open the configuration UI for this panel");
-      configureButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            toggleConfigurePanel(configureButton_.isSelected());
-         }
-      });
+      configureButton_.addActionListener(e -> toggleConfigurePanel(configureButton_.isSelected()));
       contentsPanel_.add(configureButton_);
 
       // We'll add this later, when the configure button is toggled.
@@ -164,7 +158,8 @@ public final class QuickAccessFrame extends JFrame {
    private void loadConfig(JSONObject config) {
       if (config.length() == 0) {
          // Empty config; create a default (i.e. empty) window.
-         setTitle(((DefaultQuickAccessManager) studio_.quickAccess()).getUniqueTitle(this,DEFAULT_TITLE));
+         setTitle(((DefaultQuickAccessManager) studio_.quickAccess())
+               .getUniqueTitle(this, DEFAULT_TITLE));
          super.setBounds(100, 100, 100, 100);
          super.pack();
          setVisible(true);
@@ -194,18 +189,18 @@ public final class QuickAccessFrame extends JFrame {
          boolean wasOpen = config.getBoolean("wasOpen");
          String openMode = config.getString("openMode");
          configurePanel_.setOpenMode(openMode);
-         if (openMode.equals(OPEN_ALWAYS) ||
-               (wasOpen && openMode.equals(OPEN_REMEMBER))) {
+         if (openMode.equals(OPEN_ALWAYS)
+               || (wasOpen && openMode.equals(OPEN_REMEMBER))) {
             setVisible(true);
          }
-      }
-      catch (JSONException e) {
+      } catch (JSONException e) {
          studio_.logs().logError(e, "Unable to reconstruct Quick Access Window from config.");
       }
    }
 
    /**
     * Create a JSONObject for storing our settings to the profile.
+    *
     * @return JSONObject containing the settings for this Quick Access Panel
     */
    public JSONObject getConfig() {
@@ -234,8 +229,7 @@ public final class QuickAccessFrame extends JFrame {
          settings.put("windowWidth", getSize().width);
          settings.put("windowHeight", getSize().height);
          return settings;
-      }
-      catch (JSONException e) {
+      } catch (JSONException e) {
          studio_.logs().logError(e, "Error saving Quick Access Window's settings");
          return null;
       }
@@ -258,6 +252,7 @@ public final class QuickAccessFrame extends JFrame {
    /**
     * Start dragging the specified DraggableIcon, which was clicked on
     * according to the provided MouseEvent.
+    *
     * @param icon - Icon being dragged
     * @param e - The MouseEvent that started all of this
     */
@@ -277,6 +272,7 @@ public final class QuickAccessFrame extends JFrame {
    /**
     * Drop the specified plugin into the controlsPanel_ at the current mouse
     * location, creating a new control (and configuring it if necessary).
+    *
     * @param plugin The source plugin to create the new control.
     */
    public void dropPlugin(QuickAccessPlugin plugin) {
@@ -300,8 +296,7 @@ public final class QuickAccessFrame extends JFrame {
             ControlCell cell = new ControlCell(studio_, this, plugin,
                   config, rect);
             addControl(cell);
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             // Probably because configuration failed.
             studio_.logs().showError(e, "Unable to add control");
          }
@@ -333,8 +328,8 @@ public final class QuickAccessFrame extends JFrame {
     * worry about self-intersections.
     */
    public boolean canFitRect(Rectangle rect, ControlCell source) {
-      if (rect.x < 0 || rect.x + rect.width > numCols_ ||
-            rect.y < 0 || rect.y + rect.height > numRows_) {
+      if (rect.x < 0 || rect.x + rect.width > numCols_
+            || rect.y < 0 || rect.y + rect.height > numRows_) {
          // Rect is out of bounds.
          return false;
       }
@@ -408,8 +403,8 @@ public final class QuickAccessFrame extends JFrame {
       // Show/hide controls depending on if they're in-bounds.
       for (ControlCell control : controls_) {
          Rectangle r = control.getRect();
-         boolean isVisible = (r.x + r.width <= numCols_ &&
-               r.y + r.height <= numRows_);
+         boolean isVisible = (r.x + r.width <= numCols_
+               && r.y + r.height <= numRows_);
          control.getWidget().setVisible(isVisible);
          control.getIcon().setVisible(isVisible);
       }
@@ -455,7 +450,8 @@ public final class QuickAccessFrame extends JFrame {
     * Update the title of this window according to the provided string.
     */
    private String updateTitle(String title) {
-      String newTitle = ((DefaultQuickAccessManager) studio_.quickAccess()).getUniqueTitle(this, title);
+      String newTitle = ((DefaultQuickAccessManager) studio_.quickAccess())
+            .getUniqueTitle(this, title);
       setTitle(newTitle);
       // This is mostly to let the Tools menu know it needs to regenerate its
       // submenu for the quick access panels.
@@ -489,8 +485,7 @@ public final class QuickAccessFrame extends JFrame {
                   if (divider != null) {
                      if (dividers_.contains(divider)) {
                         dividers_.remove(divider);
-                     }
-                     else {
+                     } else {
                         dividers_.add(divider);
                      }
                      GridPanel.this.repaint();
@@ -503,6 +498,7 @@ public final class QuickAccessFrame extends JFrame {
                   curDivider_ = getDivider(e);
                   GridPanel.this.repaint();
                }
+
                @Override
                public void mouseExited(MouseEvent e) {
                   curDivider_ = null;
@@ -530,8 +526,7 @@ public final class QuickAccessFrame extends JFrame {
             // Horizontal divider.
             return new Divider(new Point(column, row),
                   new Point(column, row + 1));
-         }
-         else {
+         } else {
             // Vertical divider.
             return new Divider(new Point(column, row),
                   new Point(column + 1, row));
@@ -541,8 +536,8 @@ public final class QuickAccessFrame extends JFrame {
       @Override
       public void paint(Graphics g) {
          super.paint(g);
-         int cellWidth = QuickAccessPlugin.CELL_WIDTH;
-         int cellHeight = QuickAccessPlugin.CELL_HEIGHT;
+         final int cellWidth = QuickAccessPlugin.CELL_WIDTH;
+         final int cellHeight = QuickAccessPlugin.CELL_HEIGHT;
 
          // Draw any dividers.
          ((Graphics2D) g).setStroke(new BasicStroke(4));
@@ -557,8 +552,6 @@ public final class QuickAccessFrame extends JFrame {
             return;
          }
          // Draw a grid showing the cells.
-         int width = getSize().width;
-         int height = getSize().height;
          g.setColor(new Color(200, 255, 200, 128));
          g.fillRect(0, 0, numCols_ * cellWidth,
                numRows_ * cellHeight);
@@ -614,9 +607,9 @@ public final class QuickAccessFrame extends JFrame {
       private final JSpinner colsControl_;
       private final JSpinner rowsControl_;
       // Title input text field
-      private JTextField titleField_;
+      private final JTextField titleField_;
       // Dropdown menu for selecting the open mode.
-      private final JComboBox openSelect_;
+      private final JComboBox<String> openSelect_;
 
       /**
        * We take the title as a parameter because, at the time that this
@@ -635,27 +628,17 @@ public final class QuickAccessFrame extends JFrame {
          colsControl_ = new JSpinner(
                new SpinnerNumberModel(numCols_, 1, 99, 1));
          subPanel.add(colsControl_);
-         colsControl_.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-               updateSize();
-            }
-         });
+         colsControl_.addChangeListener(e -> updateSize());
 
          subPanel.add(new JLabel("Rows: "));
          rowsControl_ = new JSpinner(
                new SpinnerNumberModel(numCols_, 1, 99, 1));
          subPanel.add(rowsControl_, "wrap");
-         rowsControl_.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-               updateSize();
-            }
-         });
+         rowsControl_.addChangeListener(e -> updateSize());
 
          subPanel.add(new JLabel("Panel title:"), "split 2, span");
          titleField_ = new JTextField(title, 20);
-         titleField_.addFocusListener(new FocusListener(){
+         titleField_.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent fe) {
                // Nothing to be done
@@ -670,7 +653,7 @@ public final class QuickAccessFrame extends JFrame {
          subPanel.add(titleField_, "wrap");
 
          subPanel.add(new JLabel("Open on launch: "), "split 2, span");
-         openSelect_ = new JComboBox(new String[] {OPEN_NEVER,
+         openSelect_ = new JComboBox<>(new String[] {OPEN_NEVER,
             OPEN_ALWAYS, OPEN_REMEMBER});
          // The OPEN_REMEMBER string is kinda large and blows out the size
          // of the combobox, so use the OPEN_ALWAYS string to set size.
@@ -678,7 +661,10 @@ public final class QuickAccessFrame extends JFrame {
          openSelect_.setSelectedItem(OPEN_REMEMBER);
          subPanel.add(openSelect_, "wrap");
 
-         subPanel.add(new JLabel("<html>Drag controls into the grid above to add them to the panel.<br>Click on grid lines to add or remove dividers. Right-click<br>on a control in the grid to customize its icon (when possible).</html>"),
+         subPanel.add(new JLabel(
+               "<html>Drag controls into the grid above to add them to the panel.<br>"
+               + "Click on grid lines to add or remove dividers. Right-click<br> "
+               + " on a control in the grid to customize its icon (when possible).</html>"),
                "span, wrap, gaptop 10");
 
          add(subPanel, "span, wrap");
@@ -689,7 +675,7 @@ public final class QuickAccessFrame extends JFrame {
          // Populate the panel with icons corresponding to controls we can
          // provide. List them in alphabetical order.
          HashMap<String, QuickAccessPlugin> plugins = studio_.plugins().getQuickAccessPlugins();
-         ArrayList<String> keys = new ArrayList<String>(plugins.keySet());
+         ArrayList<String> keys = new ArrayList<>(plugins.keySet());
          Collections.sort(keys);
          for (String key : keys) {
             JPanel iconPanel = new JPanel(new MigLayout("flowy, insets 0, fill"));
@@ -723,8 +709,7 @@ public final class QuickAccessFrame extends JFrame {
             setGridSize(
                   (Integer) ((SpinnerNumberModel) colsControl_.getModel()).getNumber(),
                   (Integer) ((SpinnerNumberModel) rowsControl_.getModel()).getNumber());
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             // Ignore it.
          }
       }
@@ -832,8 +817,8 @@ public final class QuickAccessFrame extends JFrame {
             return false;
          }
          Divider alt = (Divider) obj;
-         return (p1_.x == alt.p1_.x && p1_.y == alt.p1_.y &&
-               p2_.x == alt.p2_.x && p2_.y == alt.p2_.y);
+         return (p1_.x == alt.p1_.x && p1_.y == alt.p1_.y
+               && p2_.x == alt.p2_.x && p2_.y == alt.p2_.y);
       }
 
       @Override
@@ -851,6 +836,11 @@ public final class QuickAccessFrame extends JFrame {
       return new Divider(new Point(x1, y1), new Point(x2, y2));
    }
 
+   /**
+    * Handles event signalling that shutdown is starting.
+    *
+    * @param event Information about shutdown event.  We only check if it was cancelled.
+    */
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.isCanceled()) {

@@ -21,15 +21,9 @@
 
 package org.micromanager.internal.utils;
 
-/**
- * @author Nenad Amodaj
- * PropertyEditor provides UI for manipulating sets of autofocus properties
- */
-
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -37,7 +31,17 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
 import java.util.ArrayList;
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SpringLayout;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
@@ -48,45 +52,51 @@ import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
 
 /**
+ /**
+ * PropertyEditor provides UI for manipulating sets of autofocus properties.
  * JFrame based component for generic manipulation of device properties.
  * Represents the entire system state as a list of triplets:
  * device - property - value
+ *
+ * @author Nenad Amodaj
  */
 public final class AutofocusPropertyEditor extends JDialog {
    private final Studio studio_;
-   private final SpringLayout springLayout;
    private static final long serialVersionUID = 1507097881635431043L;
-   
-   private JTable table_;
-   private PropertyTableData data_;
+
+   private final PropertyTableData data_;
    private final PropertyCellEditor cellEditor_;
-   private JCheckBox showReadonlyCheckBox_;
+   private final JCheckBox showReadonlyCheckBox_;
    
    private static final String PREF_SHOW_READONLY = "show_readonly";
-   private final JScrollPane scrollPane_;
    private final DefaultAutofocusManager afMgr_;
-   private final JButton btnClose;
-   private JComboBox methodCombo_;
-   
+   private JComboBox<String> methodCombo_;
+
+   /**
+    * Constructs the Autofocus Property Editor.
+    *
+    * @param studio Gives access to the API of the currently MM instance
+    * @param afmgr We presumably need access to functions not available through the API
+    */
    public AutofocusPropertyEditor(Studio studio, DefaultAutofocusManager afmgr) {
       super();
       studio_ = studio;
       afMgr_ = afmgr;
       setModal(false);
       data_ = new PropertyTableData();
-      table_ = new DaytimeNighttime.Table();
-      table_.setAutoCreateColumnsFromModel(false);
-      table_.setModel(data_);
+      JTable table = new DaytimeNighttime.Table();
+      table.setAutoCreateColumnsFromModel(false);
+      table.setModel(data_);
      
       cellEditor_ = new PropertyCellEditor();
       PropertyCellRenderer renderer = new PropertyCellRenderer(studio);
      
-      for (int k=0; k < data_.getColumnCount(); k++) {
+      for (int k = 0; k < data_.getColumnCount(); k++) {
          TableColumn column = new TableColumn(k, 200, renderer, cellEditor_);
-         table_.addColumn(column);
+         table.addColumn(column);
       }
-            
-      springLayout = new SpringLayout();
+
+      SpringLayout springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       setSize(551, 514);
       final UserProfile profile = MMStudio.getInstance().profile();
@@ -100,11 +110,11 @@ public final class AutofocusPropertyEditor extends JDialog {
          public void windowOpened(WindowEvent e) {
             // restore values from the previous session
             showReadonlyCheckBox_.setSelected(
-               profile.getSettings(AutofocusPropertyEditor.class).getBoolean(
-                  PREF_SHOW_READONLY, true));
+                  profile.getSettings(AutofocusPropertyEditor.class).getBoolean(
+                     PREF_SHOW_READONLY, true));
             data_.updateStatus();
             data_.fireTableStructureChanged();
-        }
+         }
       });
       setTitle("Autofocus properties");
 
@@ -113,51 +123,63 @@ public final class AutofocusPropertyEditor extends JDialog {
       super.setBounds(100, 100, 400, 300);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
-      scrollPane_ = new JScrollPane();
-      scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));
-      scrollPane_.setBorder(new BevelBorder(BevelBorder.LOWERED));
-      getContentPane().add(scrollPane_);
-      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane_, -5, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, scrollPane_, 70, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, scrollPane_, -5, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, scrollPane_, 5, SpringLayout.WEST, getContentPane());
+      JScrollPane scrollPane = new JScrollPane();
+      scrollPane.setFont(new Font("Arial", Font.PLAIN, 10));
+      scrollPane.setBorder(new BevelBorder(BevelBorder.LOWERED));
+      getContentPane().add(scrollPane);
+      springLayout
+            .putConstraint(SpringLayout.SOUTH, scrollPane, -5,
+                  SpringLayout.SOUTH, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.NORTH, scrollPane, 70,
+                  SpringLayout.NORTH, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.EAST, scrollPane, -5,
+                  SpringLayout.EAST, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.WEST, scrollPane, 5,
+                  SpringLayout.WEST, getContentPane());
       
-      scrollPane_.setViewportView(table_);
+      scrollPane.setViewportView(table);
       
-      table_ = new DaytimeNighttime.Table();
-      table_.setAutoCreateColumnsFromModel(false);
+      table = new DaytimeNighttime.Table();
+      table.setAutoCreateColumnsFromModel(false);
       
       final JButton refreshButton = new JButton();
-      springLayout.putConstraint(SpringLayout.NORTH, refreshButton, 10, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, refreshButton, 10, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 33, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, refreshButton, 110, SpringLayout.WEST, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.NORTH, refreshButton, 10,
+                  SpringLayout.NORTH, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.WEST, refreshButton, 10,
+                  SpringLayout.WEST, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.SOUTH, refreshButton, 33,
+                  SpringLayout.NORTH, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.EAST, refreshButton, 110,
+                  SpringLayout.WEST, getContentPane());
       refreshButton.setIcon(new ImageIcon(getClass().getResource(
               "/org/micromanager/icons/arrow_refresh.png")));
       refreshButton.setFont(new Font("Arial", Font.PLAIN, 10));
       getContentPane().add(refreshButton);
-      refreshButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            refresh();
-         }
-      });
+      refreshButton.addActionListener(e -> refresh());
       refreshButton.setText("Refresh! ");
 
       showReadonlyCheckBox_ = new JCheckBox();
-      springLayout.putConstraint(SpringLayout.NORTH, showReadonlyCheckBox_, 41, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, showReadonlyCheckBox_, 10, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, showReadonlyCheckBox_, 64, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, showReadonlyCheckBox_, 183, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, showReadonlyCheckBox_, 41,
+            SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, showReadonlyCheckBox_, 10,
+            SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, showReadonlyCheckBox_, 64,
+            SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, showReadonlyCheckBox_, 183,
+            SpringLayout.WEST, getContentPane());
       showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
-      showReadonlyCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // show/hide read-only properties
-            data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
-            data_.updateStatus();
-            data_.fireTableStructureChanged();
-          }
+      showReadonlyCheckBox_.addActionListener(e -> {
+         // show/hide read-only properties
+         data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
+         data_.updateStatus();
+         data_.fireTableStructureChanged();
       });
       showReadonlyCheckBox_.setText("Show read-only properties");
       getContentPane().add(showReadonlyCheckBox_);
@@ -165,38 +187,39 @@ public final class AutofocusPropertyEditor extends JDialog {
       // restore values from the previous session
       showReadonlyCheckBox_.setSelected(profile.getSettings(
                AutofocusPropertyEditor.class).getBoolean(PREF_SHOW_READONLY, true));
-      {
-         btnClose = new JButton("Close");
-         btnClose.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-               cleanup();
-               dispose();
-            }
-         });
-         springLayout.putConstraint(SpringLayout.SOUTH, btnClose, 0, SpringLayout.SOUTH, refreshButton);
-         springLayout.putConstraint(SpringLayout.EAST, btnClose, -10, SpringLayout.EAST, getContentPane());
-         getContentPane().add(btnClose);
-      }
-      
+
+      JButton btnClose = new JButton("Close");
+      btnClose.addActionListener(arg0 -> {
+         cleanup();
+         dispose();
+      });
+      springLayout
+            .putConstraint(SpringLayout.SOUTH, btnClose, 0,
+                  SpringLayout.SOUTH, refreshButton);
+      springLayout
+            .putConstraint(SpringLayout.EAST, btnClose, -10,
+                  SpringLayout.EAST, getContentPane());
+      getContentPane().add(btnClose);
+
       if (afMgr_ != null) {
-         methodCombo_ = new JComboBox();
-         String afDevs[] = afMgr_.getAfDevices();
+         methodCombo_ = new JComboBox<>();
+         String[] afDevs = afMgr_.getAfDevices();
          for (String devName : afDevs) {
             methodCombo_.addItem(devName);
          }
          if (afMgr_.getAutofocusMethod() != null) {
             methodCombo_.setSelectedItem(afMgr_.getAutofocusMethod().getName());
          } 
-         methodCombo_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-               changeAFMethod((String)methodCombo_.getSelectedItem());
-            }
-         });
-         springLayout.putConstraint(SpringLayout.WEST, methodCombo_, 80, SpringLayout.EAST, refreshButton);
-         springLayout.putConstraint(SpringLayout.SOUTH, methodCombo_, 0, SpringLayout.SOUTH, refreshButton);
-         springLayout.putConstraint(SpringLayout.EAST, methodCombo_, -6, SpringLayout.WEST, btnClose);
+         methodCombo_.addActionListener(
+               arg0 -> changeAFMethod((String) methodCombo_.getSelectedItem()));
+         springLayout
+               .putConstraint(SpringLayout.WEST, methodCombo_, 80, SpringLayout.EAST,
+                     refreshButton);
+         springLayout
+               .putConstraint(SpringLayout.SOUTH, methodCombo_, 0, SpringLayout.SOUTH,
+                     refreshButton);
+         springLayout.putConstraint(SpringLayout.EAST, methodCombo_, -6, SpringLayout.WEST,
+                     btnClose);
          getContentPane().add(methodCombo_);
       }
       
@@ -214,71 +237,78 @@ public final class AutofocusPropertyEditor extends JDialog {
       data_.refresh();
    }
 
+   /**
+    * Reconstructs the UI.
+    */
    public void rebuild() {
-      String afDevice = afMgr_.getAutofocusMethod().getName();
+      final String afDevice = afMgr_.getAutofocusMethod().getName();
       ActionListener l = methodCombo_.getActionListeners()[0];
       
       try {
-         if (l != null)
+         if (l != null) {
             methodCombo_.removeActionListener(l);
+         }
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
        
       methodCombo_.removeAllItems();
-      if (afMgr_ != null) {
-         String afDevs[] = afMgr_.getAfDevices();
-         for (String devName : afDevs) {
-            methodCombo_.addItem(devName);
-         }
-         methodCombo_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-               changeAFMethod((String)methodCombo_.getSelectedItem());
-            }
-         });
-         if (afDevice != null)
-            methodCombo_.setSelectedItem(afDevice);
-         else
-            if (afMgr_.getAutofocusMethod() != null) {
-               methodCombo_.setSelectedItem(afMgr_.getAutofocusMethod().getName());
+      String[] afDevs = afMgr_.getAfDevices();
+      for (String devName : afDevs) {
+         methodCombo_.addItem(devName);
+      }
+      methodCombo_.addActionListener(arg0 -> changeAFMethod(
+            (String) methodCombo_.getSelectedItem()));
+      if (afDevice != null) {
+         methodCombo_.setSelectedItem(afDevice);
+      } else {
+         if (afMgr_.getAutofocusMethod() != null) {
+            methodCombo_.setSelectedItem(afMgr_.getAutofocusMethod().getName());
          }
       }
    }
 
+   /**
+    * Updates the UI with the current autofocus device and its properties.
+    */
    public void updateStatus() {
-      if (data_ != null)
+      if (data_ != null) {
          data_.updateStatus();
+      }
    }
    
-   private void handleException (Exception e) {
+   private void handleException(Exception e) {
       ReportingUtils.showError(e);
-   }
-         
-
-   public void cleanup() {
-      studio_.profile().getSettings(AutofocusPropertyEditor.class).
-              putBoolean(PREF_SHOW_READONLY, showReadonlyCheckBox_.isSelected());
-      if (afMgr_ != null)
-         if (afMgr_.getAutofocusMethod() != null) {
-            afMgr_.getAutofocusMethod().applySettings();
-            afMgr_.getAutofocusMethod().saveSettings();
-         }
    }
 
 
    /**
-    * Property table data model, representing MMCore data
+    * Saves settings to profile, so they can be restored in the next session.
+    */
+   public void cleanup() {
+      studio_.profile().getSettings(AutofocusPropertyEditor.class)
+            .putBoolean(PREF_SHOW_READONLY, showReadonlyCheckBox_.isSelected());
+      if (afMgr_ != null) {
+         if (afMgr_.getAutofocusMethod() != null) {
+            afMgr_.getAutofocusMethod().applySettings();
+            afMgr_.getAutofocusMethod().saveSettings();
+         }
+      }
+   }
+
+
+   /**
+    * Property table data model, representing MMCore data.
     */
    final class PropertyTableData extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
 
-      final public String columnNames_[] = {
+      public final String[] columnNames_ = {
             "Property",
             "Value",
       };
       
-      ArrayList<PropertyItem> propList_ = new ArrayList<PropertyItem>();
+      ArrayList<PropertyItem> propList_ = new ArrayList<>();
       private boolean showReadOnly_ = true;
       
       public PropertyTableData() {
@@ -307,10 +337,11 @@ public final class AutofocusPropertyEditor extends JDialog {
       public Object getValueAt(int row, int col) {
          
          PropertyItem item = propList_.get(row);
-         if (col == 0)
+         if (col == 0) {
             return item.device + "-" + item.name;
-         else if (col == 1)
+         } else if (col == 1) {
             return item.value;
+         }
          
          return null;
       }
@@ -321,9 +352,11 @@ public final class AutofocusPropertyEditor extends JDialog {
          if (col == 1 && afMgr_.getAutofocusMethod() != null) {
             try {
                if (item.isInteger()) {
-                  afMgr_.getAutofocusMethod().setPropertyValue(item.name, NumberUtils.intStringDisplayToCore(value));
+                  afMgr_.getAutofocusMethod()
+                        .setPropertyValue(item.name, NumberUtils.intStringDisplayToCore(value));
                } else if (item.isFloat()) {
-                  afMgr_.getAutofocusMethod().setPropertyValue(item.name, NumberUtils.doubleStringDisplayToCore(value));
+                  afMgr_.getAutofocusMethod()
+                        .setPropertyValue(item.name, NumberUtils.doubleStringDisplayToCore(value));
                } else  {
                   afMgr_.getAutofocusMethod().setPropertyValue(item.name, value.toString());
                }
@@ -344,50 +377,46 @@ public final class AutofocusPropertyEditor extends JDialog {
       
       @Override
       public boolean isCellEditable(int nRow, int nCol) {
-         if(nCol == 1)
+         if (nCol == 1) {
             return !propList_.get(nRow).readOnly;
-         else
+         } else {
             return false;
+         }
       }
             
-      public void refresh(){
-         if (afMgr_.getAutofocusMethod() == null)
+      public void refresh() {
+         if (afMgr_.getAutofocusMethod() == null) {
             return;
+         }
          
          try {            
-        	
             for (PropertyItem item : propList_) {
                item.value = afMgr_.getAutofocusMethod().getPropertyValue(item.name);
             }
-        	
             this.fireTableDataChanged();
          } catch (Exception e) {
             handleException(e);
          }
       }
       
-      public void updateStatus(){
+      public void updateStatus() {
+         propList_.clear();
+         PropertyItem[] properties = new PropertyItem[0];
          
-         propList_.clear();                
-         PropertyItem properties[] = new PropertyItem[0];
-         
-         if (afMgr_.getAutofocusMethod() != null)
+         if (afMgr_.getAutofocusMethod() != null) {
             properties = afMgr_.getAutofocusMethod().getProperties();
+         }
          
-         for (PropertyItem propertie : properties) {
-            if (!propertie.preInit) {
-               if ((showReadOnly_ && propertie.readOnly) || !propertie.readOnly) {
-                  propList_.add(propertie);
+         for (PropertyItem property : properties) {
+            if (!property.preInit) {
+               if ((showReadOnly_ && property.readOnly) || !property.readOnly) {
+                  propList_.add(property);
                }
             }
          }
          this.fireTableStructureChanged();
       }   
-      
-      public boolean isShowReadOnly() {
-         return showReadOnly_;
-      }
-      
+
    }
    
    /**
@@ -398,27 +427,20 @@ public final class AutofocusPropertyEditor extends JDialog {
       private static final long serialVersionUID = 1L;
       // This is the component that will handle the editing of the cell value
       JTextField text_ = new JTextField();
-      JComboBox combo_ = new JComboBox();
+      JComboBox<String> combo_ = new JComboBox<>();
       JCheckBox check_ = new JCheckBox();
       SliderPanel slider_ = new SliderPanel();
       int editingCol_;
       PropertyItem item_;
-      
+
+      /**
+       * Component that edits the cell's value.
+       */
       public PropertyCellEditor() {
          super();
-         check_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               fireEditingStopped();
-            }
-         });
+         check_.addActionListener(e -> fireEditingStopped());
          
-         slider_.addEditActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               fireEditingStopped();
-            }            
-         });
+         slider_.addEditActionListener(e -> fireEditingStopped());
          
          slider_.addSliderMouseListener(new MouseAdapter() {
             @Override
@@ -437,37 +459,28 @@ public final class AutofocusPropertyEditor extends JDialog {
       public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
          
-         if (isSelected) {
-            // cell (and perhaps other cells) are selected
-         }
-         
          editingCol_ = colIndex;
                   
-         PropertyTableData data = (PropertyTableData)table.getModel();
+         PropertyTableData data = (PropertyTableData) table.getModel();
          item_ = data.getPropertyItem(rowIndex);
          // Configure the component with the specified value
          
          if (colIndex == 1) {
             if (item_.allowed.length == 0) {
                if (item_.hasRange) {
-                  if (item_.isInteger())
-                     slider_.setLimits((int)item_.lowerLimit, (int)item_.upperLimit);
-                  else {
+                  if (item_.isInteger()) {
+                     slider_.setLimits((int) item_.lowerLimit, (int) item_.upperLimit);
+                  } else {
                      slider_.setLimits(item_.lowerLimit, item_.upperLimit);
-                /*     try {
-                        value = NumberUtils.NumberToString(Double.parseDouble((String)value));
-                     } catch (Exception e) {
-                        ReportingUtils.logError(e);
-                     }*/
                   }
                   try {
-                     slider_.setText((String)value);
+                     slider_.setText((String) value);
                   } catch (ParseException ex) {
-                    ReportingUtils.logError(ex);
+                     ReportingUtils.logError(ex);
                   }
                   return slider_;
                } else {
-                  text_.setText((String)value);
+                  text_.setText((String) value);
                   return text_;
                }
             }
@@ -483,12 +496,7 @@ public final class AutofocusPropertyEditor extends JDialog {
             combo_.setSelectedItem(item_.value);
             
             // end editing on selection change
-            combo_.addActionListener(new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  fireEditingStopped();
-               }
-            });
+            combo_.addActionListener(e -> fireEditingStopped());
                        
             return combo_;
          } else if (colIndex == 2) {
@@ -505,20 +513,24 @@ public final class AutofocusPropertyEditor extends JDialog {
             if (item_.allowed.length == 0) {
                if (item_.hasRange) {
                   return slider_.getText();
-               } else
+               } else {
                   return text_.getText();
+               }
             } else {
                return combo_.getSelectedItem();
             }
-         } else if (editingCol_ == 2)
-            return check_;
+         } else {
+            if (editingCol_ == 2) {
+               return check_;
+            }
+         }
          
          return null;
       }
    }
    
    /**
-    * Cell rendering for the device property table
+    * Cell rendering for the device property table.
     */
    public final class PropertyCellRenderer implements TableCellRenderer {
       // This method is called each time a cell in a column
@@ -535,22 +547,14 @@ public final class AutofocusPropertyEditor extends JDialog {
       public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
          
-         PropertyTableData data = (PropertyTableData)table.getModel();
+         PropertyTableData data = (PropertyTableData) table.getModel();
          item_ = data.getPropertyItem(rowIndex);
-         
-         if (isSelected) {
-            // cell (and perhaps other cells) are selected
-         }
-         
-         if (hasFocus) {
-            // this cell is the anchor and the table has the focus
-         }
          
          Component comp;
          
          if (colIndex == 0) {
             JLabel lab = new JLabel();
-            lab.setText((String)value);
+            lab.setText((String) value);
             lab.setOpaque(true);
             lab.setHorizontalAlignment(JLabel.LEFT);
             comp = lab;
@@ -559,11 +563,11 @@ public final class AutofocusPropertyEditor extends JDialog {
                SliderPanel slider = new SliderPanel();
                slider.setLimits(item_.lowerLimit, item_.upperLimit);
                try {
-                  slider.setText((String)value);
+                  slider.setText((String) value);
                } catch (ParseException ex) {
                   ReportingUtils.logError(ex);
                }
-               slider.setToolTipText((String)value);
+               slider.setToolTipText((String) value);
                comp = slider;
             } else {
                JLabel lab = new JLabel();
@@ -588,8 +592,11 @@ public final class AutofocusPropertyEditor extends JDialog {
       
       // The following methods override the defaults for performance reasons
       public void validate() {}
+
       public void revalidate() {}
+
       protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {}
+
       public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
 
    }
