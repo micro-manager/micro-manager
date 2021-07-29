@@ -91,8 +91,9 @@ public final class StageControlFrame extends JFrame {
 
    // used both by individual ZPanels (with id) and in general
    public static final String SMALL_MOVEMENT_Z = "SMALLMOVEMENTZ";
-
    public static final String MEDIUM_MOVEMENT_Z = "MEDIUMMOVEMENTZ";
+
+   private static final long EXTRA_WAIT = 100;
 
    // used to keep track of the "active" Z Drive
    public static final String SELECTED_Z_DRIVE = "SELECTED_Z_DRIVE";
@@ -769,6 +770,9 @@ public final class StageControlFrame extends JFrame {
       if (settings_.getBoolean(SNAP, false)) {
          try {
             core_.waitForDevice(core_.getXYStageDevice());
+            // ASI stages report not busy, and then become busy again.  Add an extra wait
+            // to avoid motion blur with such stages.
+            Thread.sleep(EXTRA_WAIT);
             studio_.live().snap(true);
          } catch (Exception ex) {
             studio_.logs().showError(ex, "Error while waiting for stage: "
