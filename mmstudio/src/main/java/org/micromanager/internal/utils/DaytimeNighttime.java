@@ -195,6 +195,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
       }
       for (String key : ENABLED_TEXT_COLOR_KEYS) {
          UIManager.put(key + ".foreground", enabledTextColor_.get(mode));
+         UIManager.put(key + ".caretForeground", enabledTextColor_.get(mode));
       }
       // Improve contrast of disabled text against backgrounds.
       for (String key : DISABLED_TEXT_COLOR_KEYS) {
