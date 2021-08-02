@@ -18,6 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.data.internal.multipagetiff;
 
 import java.io.IOException;
@@ -27,9 +28,11 @@ import java.io.IOException;
  * index map in a file.
  */
 public final class InvalidIndexMapException extends IOException {
+
    public InvalidIndexMapException() {
       super();
    }
+
    public InvalidIndexMapException(Throwable cause) {
       super(cause);
    }

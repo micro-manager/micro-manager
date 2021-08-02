@@ -595,7 +595,7 @@ public final class MultipageTiffReader {
    // writer from putting in the index map, comments, channels, and OME XML in
    // the ImageDescription tag location
    private void fixIndexMap(final long firstIFD, final String fileName) throws IOException {
-      coordsToOffset_ = new HashMap<Coords, Long>();
+      coordsToOffset_ = new HashMap<>();
       long progBarMax = (fileChannel_.size() / 2L);
       final ProgressBar progressBar = new ProgressBar(null, "Fixing " + fileName, 0, 
               progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
@@ -623,12 +623,7 @@ public final class MultipageTiffReader {
             coordsToOffset_.put(image.getCoords(), filePosition);
 
             final int progress = (int) (filePosition / 2L);
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  progressBar.setProgress(progress);
-               }
-            });
+            SwingUtilities.invokeLater(() -> progressBar.setProgress(progress));
 
             if (data.nextIFD <= filePosition
                   || data.nextIFDOffsetLocation <= nextIFDOffsetLocation) {
@@ -696,7 +691,7 @@ public final class MultipageTiffReader {
          for (String axis : coords.getAxes()) {
             if (!ALLOWED_AXES.contains(axis)) {
                ReportingUtils.logError("Axis " + axis
-                     + " is ignored because it is not one of " + ALLOWED_AXES.toString());
+                     + " is ignored because it is not one of " + ALLOWED_AXES);
             }
          }
          buffer.putInt(4 * position, coordsToOffset_.get(coords).intValue());
@@ -711,7 +706,7 @@ public final class MultipageTiffReader {
       return buffer.capacity();
    }
 
-   private class IFDData {
+   private static class IFDData {
       public long pixelOffset;
       public long bytesPerImage;
       public long mdOffset;
@@ -731,7 +726,7 @@ public final class MultipageTiffReader {
       }
    }
 
-   private class IFDEntry {
+   private static class IFDEntry {
       public char tag;
       public char type;
       public long count;
@@ -747,8 +742,8 @@ public final class MultipageTiffReader {
       @Override
       public String toString() {
          return String.format("<IFDEntry tag 0x%s, type 0x%s, count %d, value %d>",
-               Integer.toHexString((int) tag),
-               Integer.toHexString((int) type), count, value);
+               Integer.toHexString(tag),
+               Integer.toHexString(type), count, value);
       }
    }
 }

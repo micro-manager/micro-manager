@@ -70,7 +70,7 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
  * contains all image data in the dataset.
  * Adapted from the TaggedImageStorageMultipageTiff module.
  * TODO: The org.micromanager.data package should not depend on internal code
- * (or any code outside of the packae) so that it can be re-used elsewhere.
+ * (or any code outside of the package) so that it can be re-used elsewhere.
  *
  */
 public final class StorageMultipageTiff implements Storage {
@@ -78,12 +78,12 @@ public final class StorageMultipageTiff implements Storage {
            "generate a metadata file when saving datasets as multipage TIFF files";
    private static final String SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS = 
            "generate a separate multipage TIFF file for each stage position";
-   private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
+   private static final HashSet<String> ALLOWED_AXES = new HashSet<>(
          Arrays.asList(Coords.CHANNEL, Coords.T, Coords.Z,
             Coords.STAGE_POSITION));
 
-   private DefaultDatastore store_;
-   private Component parent_;
+   private final DefaultDatastore store_;
+   private final Component parent_;
    private DefaultSummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
    private String summaryMetadataString_ = NonPropertyMapJSONFormats
          .summaryMetadata().toJSON(summaryMetadata_.toPropertyMap());
@@ -112,7 +112,7 @@ public final class StorageMultipageTiff implements Storage {
    //Map of image labels to file 
    private Map<Coords, MultipageTiffReader> coordsToReader_;
    // Cache the axes that are in use
-   private Set<String> axesInUse_;
+   private final Set<String> axesInUse_;
    // Keeps track of our maximum extent along each axis.
    private Coords maxIndices_;
 
@@ -237,27 +237,30 @@ public final class StorageMultipageTiff implements Storage {
 
       ProgressBar progressBar = null;
       // Allow operation in headless mode.
-      if (!GraphicsEnvironment.isHeadless()) {
+      File[] listFiles = dir.listFiles();
+      if (!GraphicsEnvironment.isHeadless() && listFiles != null) {
          progressBar = new ProgressBar(parent_, "Reading " + directory_, 0, 
-                 dir.listFiles().length);
+                 listFiles.length);
       }
       int numRead = 0;
       if (progressBar != null) {
          progressBar.setProgress(numRead);
          progressBar.setVisible(true);
       }
-      for (File f : dir.listFiles()) {
-         // Heuristics to only read tiff files, and not files created by the
-         // OS (starting with ".")
-         String fileName = f.getName();
-         if (fileName.endsWith(".tif") || fileName.endsWith(".TIF")) {
-            if (!fileName.startsWith("._")) {
-               reader = loadFile(f);
+      if (listFiles != null) {
+         for (File f : listFiles) {
+            // Heuristics to only read tiff files, and not files created by the
+            // OS (starting with ".")
+            String fileName = f.getName();
+            if (fileName.endsWith(".tif") || fileName.endsWith(".TIF")) {
+               if (!fileName.startsWith("._")) {
+                  reader = loadFile(f);
+               }
             }
-         }
-         numRead++;
-         if (progressBar != null) {
-            progressBar.setProgress(numRead);
+            numRead++;
+            if (progressBar != null) {
+               progressBar.setProgress(numRead);
+            }
          }
       }
       if (progressBar != null) {
@@ -300,15 +303,15 @@ public final class StorageMultipageTiff implements Storage {
             reader = new MultipageTiffReader(this, f);
          }
          Set<Coords> readerCoords = reader.getIndexKeys();
-         for (Coords coords : readerCoords) {
-            coordsToReader_.put(coords, reader);
-            for (String axis : coords.getAxes()) {
-               axesInUse_.add(axis);
-            }
-            lastFrameOpenedDataSet_ = Math.max(coords.getT(),
-                  lastFrameOpenedDataSet_);
-            if (firstImage_ == null) {
-               firstImage_ = reader.readImage(coords);
+         if (readerCoords != null) {
+            for (Coords coords : readerCoords) {
+               coordsToReader_.put(coords, reader);
+               axesInUse_.addAll(coords.getAxes());
+               lastFrameOpenedDataSet_ = Math.max(coords.getT(),
+                     lastFrameOpenedDataSet_);
+               if (firstImage_ == null) {
+                  firstImage_ = reader.readImage(coords);
+               }
             }
          }
       } catch (IOException ex) {
@@ -392,8 +395,6 @@ public final class StorageMultipageTiff implements Storage {
       });
    }
 
-   ;
-
    /**
     * This method handles starting the process of writing images (which means
     * that it ultimately submits a task to writingExecutor_).
@@ -415,7 +416,7 @@ public final class StorageMultipageTiff implements Storage {
       if (writingExecutor_ == null) {
          writingExecutor_ = new ThreadPoolExecutor(1, 1, 0,
                  TimeUnit.NANOSECONDS,
-                 new LinkedBlockingQueue<java.lang.Runnable>(),
+                 new LinkedBlockingQueue<>(),
                  ThreadFactoryFactory.createThreadFactory("StorageMultiPageTiff"));
       }
       int fileSetIndex = 0;
@@ -527,7 +528,7 @@ public final class StorageMultipageTiff implements Storage {
             //that all other files can point to simplest way to do this is to
             //make a .ome text file
             filename = "OMEXMLMetadata.ome";
-            uuid = "urn:uuid:" + UUID.randomUUID().toString();
+            uuid = "urn:uuid:" + UUID.randomUUID();
             PrintWriter pw = new PrintWriter(directory_ + File.separator + filename);
             pw.print(fullOMEXMLMetadata);
             pw.close();
@@ -620,7 +621,7 @@ public final class StorageMultipageTiff implements Storage {
     * @return ImageJ Properties information.
     */
    private String getIJDescriptionString() {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append("ImageJ=" + ImageJ.VERSION + "\n");
       int numChannels = getIntendedSize(Coords.CHANNEL);
       int numFrames = getIntendedSize(Coords.TIME_POINT);
