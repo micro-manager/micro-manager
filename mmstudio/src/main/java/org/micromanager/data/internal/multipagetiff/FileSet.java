@@ -260,7 +260,11 @@ class FileSet {
          if (posIndex == -1) {
             posIndex = 0;
          }
-         if (posName != null && !posName.isEmpty()) {
+         // Note: if the position name in this image is the same as the position
+         // name provided for the previous position, we will overwrite the existing
+         // file. That is bad, but I don't see what we can do at this position.
+         // At least handle the case where the default name is used.
+         if (posName != null && !posName.isEmpty() && !posName.equals("Default")) {
             baseFilename += "_" + posName;
          }
          else {
