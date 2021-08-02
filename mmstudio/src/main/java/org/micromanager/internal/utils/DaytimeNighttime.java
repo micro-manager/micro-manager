@@ -20,6 +20,7 @@
 //
 // CVS:          $Id: ProgressBar.java 2 2007-02-27 23:33:17Z nenad $
 //
+
 package org.micromanager.internal.utils;
 
 import java.awt.Color;
@@ -32,20 +33,20 @@ import javax.swing.UIManager;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.TableModel;
 import org.micromanager.ApplicationSkin;
-import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.DefaultApplicationSkinEvent;
 
-/*
- * This class controls the colors of the user interface
- * Note we use ColorUIResources instead of Colors because Colors don't
+/**
+ * This class controls the colors of the user interface.
+ * Note that we use ColorUIResources instead of Colors because Colors don't
  * interact well with Look and Feel; see
  * http://stackoverflow.com/questions/27933017/cant-update-look-and-feel-on-the-fly
  */
 public final class DaytimeNighttime implements ApplicationSkin {
 
    // Key into the user's profile for the current display mode.
-   private static final String BACKGROUND_MODE = "current window style (as per ApplicationSkin.SkinMode)";
+   private static final String BACKGROUND_MODE =
+         "current window style (as per ApplicationSkin.SkinMode)";
    // List of keys to UIManager.put() method for setting the background color
    // look and feel. Selected from this page:
    // http://alvinalexander.com/java/java-uimanager-color-keys-list
@@ -117,8 +118,13 @@ public final class DaytimeNighttime implements ApplicationSkin {
    // Studio has
    private final Studio studio_;
 
-   public static DaytimeNighttime create(Studio studio)
-   {
+   /**
+    * Look and Feel controller construtor.
+    *
+    * @param studio Main API, so far has always been a singleton.
+    * @return instance of the DaytimeNighttime class
+    */
+   public static DaytimeNighttime create(Studio studio) {
       DaytimeNighttime skin = new DaytimeNighttime(studio);
       skin.loadStoredSkin();
       return skin;
@@ -220,6 +226,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
     * If the specified mode is not currently active, then we switch to that
     * mode without updating the UI. Useful if a component must be generated
     * with a nonstandard look-and-feel.
+    *
     * @param mode SkinMode to switch to (but without updating the UI)
     */
    @Override
@@ -246,6 +253,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    /**
     * Set a new default background mode in the user's profile.
+    *
     * @param mode new default background mode
     */
    private void storeSkin(SkinMode mode) {
@@ -256,12 +264,12 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    /**
     * Return the current stored background mode from the profile.
+    *
     * @return current stored background mode from the profile
     */
    @Override
    public SkinMode getSkin() {
-      return SkinMode.fromString(studio_.profile().
-              getSettings(DaytimeNighttime.class).getString(
+      return SkinMode.fromString(studio_.profile().getSettings(DaytimeNighttime.class).getString(
             BACKGROUND_MODE, SkinMode.NIGHT.getDesc()));
    }
 
@@ -274,6 +282,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    /**
     * Return the current background color.
+    *
     * @return current background color
     */
    @Override
@@ -283,6 +292,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    /**
     * Return the current "lighter" background color.
+    *
     * @return light background color
     */
    @Override
@@ -292,6 +302,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    /**
     * Return a proper "disabled" background color based on the current mode.
+    *
     * @return "disabled" background color based on the current mode
     */
    @Override
@@ -301,6 +312,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    /**
     * Return the current color for enabled text.
+    *
     * @return current color for enabled text
     */
    @Override
@@ -310,6 +322,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    /**
     * Return the current color for disabled text.
+    *
     * @return current color for disabled text.
     */
    @Override
@@ -347,6 +360,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
       /**
        * Before painting, ensure our color is correct.
+       *
        * @param g Graphics to be painted
        */
       @Override
