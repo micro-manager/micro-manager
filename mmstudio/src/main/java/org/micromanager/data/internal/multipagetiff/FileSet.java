@@ -18,6 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.data.internal.multipagetiff;
 
 import java.io.File;
@@ -54,19 +55,20 @@ class FileSet {
    private String currentTiffFilename_;
    private String currentTiffUUID_;
    private boolean finished_ = false;
-   private boolean separateMetadataFile_;
-   private boolean splitByXYPosition_ ;
+   private final boolean separateMetadataFile_;
+   private final boolean splitByXYPosition_;
    private boolean expectedImageOrder_ = true;
    private int ifdCount_ = 0;
    private StorageMultipageTiff masterStorage_;
-   int nextExpectedChannel_ = 0, nextExpectedSlice_ = 0, nextExpectedFrame_ = 0;
+   int nextExpectedChannel_ = 0;
+   int  nextExpectedSlice_ = 0;
+   int nextExpectedFrame_ = 0;
    int currentFrame_ = 0;
 
    
    public FileSet(Image firstImage, StorageMultipageTiff masterStorage,
          OMEMetadata omeMetadata,
-         boolean splitByXYPosition, boolean separateMetadataFile)
-      throws IOException {
+         boolean splitByXYPosition, boolean separateMetadataFile) throws IOException {
       tiffWriters_ = new LinkedList<>();  
       masterStorage_ = masterStorage;
       omeMetadata_ = omeMetadata;
@@ -76,7 +78,7 @@ class FileSet {
       //get file path and name
       baseFilename_ = createBaseFilename(firstImage);
       currentTiffFilename_ = baseFilename_ + ".ome.tif";
-      currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
+      currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID();
       //make first writer
       tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
             firstImage, currentTiffFilename_));
@@ -107,9 +109,10 @@ class FileSet {
          finishMetadataFile();
       }
 
-      //only need to finish last one here because previous ones in set are finished as they fill up with images
+      // only need to finish last one here because previous ones in set are finished
+      // as they fill up with images
       tiffWriters_.getLast().finish();
-      //close all
+      //  close all
       for (MultipageTiffWriter w : tiffWriters_) {
          w.close(omeXML, ijDescription);
       }
@@ -122,8 +125,7 @@ class FileSet {
       for (MultipageTiffWriter writer : tiffWriters_) {
          try {
             writer.getReader().close();
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
             ReportingUtils.logError(e, "Error closing file descriptor");
          }
       }
@@ -139,24 +141,27 @@ class FileSet {
 
    public void writeImage(final Image imgIn) throws IOException {
       //Add filename to image tags - needed by hasSpaceToWrite function
-      Image img = imgIn.copyWithMetadata(imgIn.getMetadata().
-            copyBuilderPreservingUUID().fileName(currentTiffFilename_).
-            build());
+      Image img = imgIn.copyWithMetadata(imgIn
+            .getMetadata()
+            .copyBuilderPreservingUUID()
+            .fileName(currentTiffFilename_)
+            .build());
       //check if current writer is out of space, if so, make a new one
       if (!tiffWriters_.getLast().hasSpaceToWrite(img, SPACE_FOR_PARTIAL_OME_MD)) {
          //write index map here but still need to call close() at end of acq
          tiffWriters_.getLast().finish();          
 
          currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".ome.tif";
-         currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
+         currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID();
          ifdCount_ = 0;
          tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
                img, currentTiffFilename_));
          
          //Add new filename to image tags
-         img = img.copyWithMetadata(img.getMetadata().
-               copyBuilderPreservingUUID().fileName(currentTiffFilename_).
-               build());
+         img = img.copyWithMetadata(img.getMetadata()
+               .copyBuilderPreservingUUID()
+               .fileName(currentTiffFilename_)
+               .build());
       }      
 
       //write image
@@ -205,8 +210,8 @@ class FileSet {
 
    private void writeToMetadataFile(Coords coords, Metadata md) {
       try {
-         mdWriter_.write(",\n\"FrameKey-" + coords.getTimePoint() +
-               "-" + coords.getChannel() + "-" + coords.getZSlice() + "\": ");
+         mdWriter_.write(",\n\"FrameKey-" + coords.getTimePoint()
+               + "-" + coords.getChannel() + "-" + coords.getZSlice() + "\": ");
          PropertyMap pmap = ((DefaultMetadata) md).toPropertyMap();
          mdWriter_.write(NonPropertyMapJSONFormats.metadata().toJSON(pmap));
       } catch (IOException ex) {
@@ -215,19 +220,18 @@ class FileSet {
    }
 
    private void startMetadataFile() {
-      String metadataFileFullPath_ = masterStorage_.getDiskLocation() + "/" +
-              baseFilename_ + "_metadata.txt";
-      PropertyMap summaryPmap = ((DefaultSummaryMetadata) masterStorage_.
-            getSummaryMetadata()).toPropertyMap();
+      String metadataFileFullPath = masterStorage_.getDiskLocation() + "/"
+            + baseFilename_ + "_metadata.txt";
+      PropertyMap summaryPmap = ((DefaultSummaryMetadata) masterStorage_
+            .getSummaryMetadata()).toPropertyMap();
       String summaryJSON = NonPropertyMapJSONFormats.summaryMetadata().toJSON(
             summaryPmap);
       try {
-         mdWriter_ = new FileWriter(metadataFileFullPath_);
+         mdWriter_ = new FileWriter(metadataFileFullPath);
          mdWriter_.write("{" + "\n");
          mdWriter_.write("\"Summary\": ");
          mdWriter_.write(summaryJSON);
-      }
-      catch (IOException ex) {
+      } catch (IOException ex) {
          ReportingUtils.logError("Problem creating metadata.txt file");
       }
    }
@@ -245,10 +249,10 @@ class FileSet {
       String baseFilename;
       String prefix = masterStorage_.getSummaryMetadata().getPrefix();
       if (prefix == null || prefix.length() == 0) {
-         File dir = new File (masterStorage_.getDiskLocation());
+         File dir = new File(masterStorage_.getDiskLocation());
          prefix = dir.getName();
       }
-      if (prefix == null || prefix.length() == 0) {
+      if (prefix.length() == 0) {
          baseFilename = "MMStack";
       } else {
          baseFilename = prefix + "_MMStack";
@@ -260,10 +264,13 @@ class FileSet {
          if (posIndex == -1) {
             posIndex = 0;
          }
-         if (posName != null && !posName.isEmpty()) {
+         // Note: if the position name in this image is the same as the position
+         // name provided for the previous position, we will overwrite the existing
+         // file. That is bad, but I don't see what we can do at this position.
+         // At least handle the case where the default name is used.
+         if (posName != null && !posName.isEmpty() && !posName.equals("Default")) {
             baseFilename += "_" + posName;
-         }
-         else {
+         } else {
             baseFilename += "_" + "Pos" + posIndex;
          }
       }
@@ -296,7 +303,7 @@ class FileSet {
       int numFrames = masterStorage_.getIntendedSize(Coords.T);
       int numSlices = masterStorage_.getIntendedSize(Coords.Z);
       int numChannels = masterStorage_.getIntendedSize(Coords.CHANNEL);
-      if (numFrames > frame + 1 ) {
+      if (numFrames > frame + 1) {
          HashSet<Coords> writtenImages = new HashSet<>();
          for (MultipageTiffWriter w : tiffWriters_) {
             writtenImages.addAll(w.getIndexMap().keySet());
@@ -338,8 +345,9 @@ class FileSet {
       int channel = coords.getChannel();
       int frame = coords.getTimePoint();
       int slice = coords.getZSlice();
-      if (slice != nextExpectedSlice_ || channel != nextExpectedChannel_ ||
-              frame != nextExpectedFrame_) {
+      if (slice != nextExpectedSlice_
+            || channel != nextExpectedChannel_
+            || frame != nextExpectedFrame_) {
          expectedImageOrder_ = false;
       }
       //Figure out next expected indices
