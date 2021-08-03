@@ -172,29 +172,29 @@ public final class WindowPositioning {
    public static void fitWindowInScreen(Window window) {
       // Move to the nearest screen if the top-left is off all screens.
       Rectangle screenBounds = null;
-         {
-         Point location = window.getLocation();
-         Point nearestOnScreenPoint = location;
-         double minDistance = Double.MAX_VALUE;
-         for (GraphicsDevice gDevice : GraphicsEnvironment
-               .getLocalGraphicsEnvironment().getScreenDevices()) {
-            GraphicsConfiguration gConfig = gDevice.getDefaultConfiguration();
-            Rectangle bounds = Geometry.insettedRectangle(gConfig.getBounds(),
-                     Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
-            Point nearestPoint =
-                  Geometry.nearestPointInRectangle(location, bounds);
-            double distance = nearestPoint.distance(location);
-            if (distance == 0.0) {
-               screenBounds = bounds;
-               break;
-            }
-            if (distance < minDistance) {
-               nearestOnScreenPoint = nearestPoint;
-               screenBounds = bounds;
-            }
+
+      Point location = window.getLocation();
+      Point nearestOnScreenPoint = location;
+      double minDistance = Double.MAX_VALUE;
+      for (GraphicsDevice gDevice : GraphicsEnvironment
+            .getLocalGraphicsEnvironment().getScreenDevices()) {
+         GraphicsConfiguration gConfig = gDevice.getDefaultConfiguration();
+         Rectangle bounds = Geometry.insettedRectangle(gConfig.getBounds(),
+                  Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
+         Point nearestPoint =
+               Geometry.nearestPointInRectangle(location, bounds);
+         double distance = nearestPoint.distance(location);
+         nearestOnScreenPoint = nearestPoint;
+         if (distance == 0.0) {
+            screenBounds = bounds;
+            break;
          }
-         window.setLocation(nearestOnScreenPoint);
+         if (distance < minDistance) {
+            screenBounds = bounds;
          }
+      }
+      window.setLocation(nearestOnScreenPoint);
+
       if (screenBounds == null) {
          return; // No screen? Bail.
       }
@@ -204,7 +204,7 @@ public final class WindowPositioning {
       boolean cascading = (cascade != null && cascade.getOldestVisibleWindow() != window);
       if (cascading) {
          Point resetCursor = cascade.getResetCursor();
-         if (resetCursor != null && !screenBounds.contains(resetCursor)) {
+         if (screenBounds.contains(resetCursor)) {
             // The window is on a different screen from the one we are
             // cascading on. Ignore cascading.
             cascading = false;
@@ -228,22 +228,14 @@ public final class WindowPositioning {
          // getting significantly beyond the right edge of the screen, we also
          // jump to the left edge, and move down one vertical offset.
          Point resetCursor = cascade.getResetCursor();
-         Point location = window.getLocation();
+         location = window.getLocation();
          if (location.y + window.getHeight() >  screenBounds.y + screenBounds.height) {
-            if (resetCursor == null) {
-               location.y = screenBounds.y;
-            } else {
-               location.y = resetCursor.y;
-            }
+            location.y = resetCursor.y;
          }
          if (location.x + window.getWidth() - (screenBounds.x + screenBounds.width)
                > screenBounds.width / 2) {
-            if (resetCursor == null) {
-               location = screenBounds.getLocation();
-            } else {
-               location.x = screenBounds.x;
-               location.y  = resetCursor.y + CASCADING_OFFSET_VERTICAL;
-            }
+            location.x = screenBounds.x;
+            location.y  = resetCursor.y + CASCADING_OFFSET_VERTICAL;
          }
          if (!screenBounds.contains(location)) {
             // Falling off the screen; do an all-reset
@@ -255,20 +247,18 @@ public final class WindowPositioning {
          }
       }
 
-         // Finally, if the window still extends beyond the right or bottom of the
-         // screen, we resize it to the extent needed to fit and permitted by the
-         // window's minimum size.
-         {
-         Rectangle bounds = window.getBounds();
-         Dimension minSize = window.getMinimumSize();
-         window.setSize(
-               Math.max(minSize.width,
-                     Math.min(bounds.width,
-                           screenBounds.x + screenBounds.width - bounds.x)),
-               Math.max(minSize.height,
-                     Math.min(bounds.height,
-                           screenBounds.y + screenBounds.height - bounds.y)));
-         }
+      // Finally, if the window still extends beyond the right or bottom of the
+      // screen, we resize it to the extent needed to fit and permitted by the
+      // window's minimum size.
+      Rectangle bounds = window.getBounds();
+      Dimension minSize = window.getMinimumSize();
+      window.setSize(
+            Math.max(minSize.width,
+                  Math.min(bounds.width,
+                        screenBounds.x + screenBounds.width - bounds.x)),
+            Math.max(minSize.height,
+                  Math.min(bounds.height,
+                        screenBounds.y + screenBounds.height - bounds.y)));
    }
 
    private static class GeometrySaver implements ComponentListener {
