@@ -86,6 +86,15 @@ To build from an SVN working copy, you will first need to generate the
 
     ./autogen.sh
 
+If you want to compile and install only special device adapters based on your
+microscope, you can skip these unused devices by editing `configure.ac` and
+`Makefile.am` under `/mmCoreAndDevices/DeviceAdapters`. For example, if you
+delete `DemoCamera` in `SUBDIRS` section of `Makefile.am` and `m4_define`
+function of `configure.ac`, building will go through without `DemoCamera`
+module. It will help you to keep simplicity and skip the device adapters failed
+to compile at your machine now( but it will be better if you feedback issues at the
+same time). Then run `./autogen.sh` again.
+
 Now, you will run `./configure`. There are many ways to configure
 Micro-Manager, but you will most likely want to choose one of two major
 installation styles: a traditional Unix-style installation and installation as
@@ -214,3 +223,19 @@ If unresolved dependences on some Java libraries:
 ```
 
 Take a look at [issue #708](https://github.com/micro-manager/micro-manager/issues/708)
+
+### C++17 refuse dynamic exception 
+
+If your gcc( such as gcc 11) compile MM by `ISO C++17` or newer than C++14 in default, 
+it will stop by dynamic exception related error:
+
+        ImageMetadata.h:334:56: error: ISO C++17 does not allow dynamic exception specifications
+        334 |    MetadataArrayTag GetArrayTag(const char* key) const throw (MetadataKeyError)
+
+Since C++17 removed dynamic exception specifications, as a result of
+[P0003](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0003r5.html), 
+which had been deprecated since C++11. Before MM codes are updated, you
+need to add CXXFLAGS `-std=c++11` or `-std=c++14`. To do so run this command
+before `./autogen.sh`:
+
+        export CXXFLAGS="-std=c++11"
