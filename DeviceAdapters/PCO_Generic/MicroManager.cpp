@@ -2228,9 +2228,29 @@ int CPCOCam::SnapImage()
   if(m_bSoftwareTriggered)
     m_pCamera->ForceTrigger();
 
-  m_iLastBufferUsed[0] = m_iNextBuffer;
+  if (m_nTrig > 1)
+  {
+    bool bok = false;
+    do
+    {
+      m_iLastBufferUsed[0] = m_iNextBuffer;
 
-  nErr = m_pCamera->WaitForImage(&m_iNextBufferToUse[0], &m_iLastBufferUsed[0]);
+      nErr = m_pCamera->WaitForImage(&m_iNextBufferToUse[0], &m_iLastBufferUsed[0]);
+      if (nErr == PCO_NOERROR)
+        bok = true;
+      if (::GetAsyncKeyState(VK_ESCAPE) & 0x8000) // Stops 'Auto Save' in progress
+      {
+        bok = true;
+        nErr = PCO_NOERROR;
+      }
+    } while (!bok);
+  }
+  else
+  {
+    m_iLastBufferUsed[0] = m_iNextBuffer;
+
+    nErr = m_pCamera->WaitForImage(&m_iNextBufferToUse[0], &m_iLastBufferUsed[0]);
+  }
   if(m_bSequenceRunning == FALSE)
   {
     if(m_bSoftwareTriggered == FALSE)
