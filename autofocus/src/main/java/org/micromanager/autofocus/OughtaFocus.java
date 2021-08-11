@@ -388,7 +388,8 @@ class BrentFocuser {
             try {
                return measureFocusScore(d);
             } catch (Exception e) {
-               throw new LocalException(d, e);
+               String msg = String.format("Focus score measurement failed at Z = %d", d);
+               throw new RuntimeException(msg, e);
             }
          }
       );
@@ -488,28 +489,4 @@ class BrentFocuser {
          return image.pix;  // Presumably already a gray image.
       }
    }
-}
-
-      
-/**
- * A user-defined exception is needed for the `UnivariateObjectFunction`.
- * 
- */
-class LocalException extends RuntimeException {
-   // The x value that caused the problem.
-   private final double x_;
-   private final Exception ex_;
-
-   public LocalException(double x, Exception ex) {
-      x_ = x;
-      ex_ = ex;
-   }
-
-   public double getX() {
-      return x_;
-   }
-
-   public Exception getException() {
-      return ex_;
-   } 
 }
