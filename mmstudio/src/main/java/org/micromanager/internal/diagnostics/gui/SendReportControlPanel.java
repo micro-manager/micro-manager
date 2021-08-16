@@ -17,7 +17,7 @@ import javax.swing.JButton;
 class SendReportControlPanel extends ControlPanel {
    private final ProblemReportController controller_;
 
-   private final JButton cancelButton_;
+   private final JButton closeButton_;
    private final JButton startOverButton_;
 
    SendReportControlPanel(ProblemReportController controller) {
@@ -28,8 +28,8 @@ class SendReportControlPanel extends ControlPanel {
          boolean allowRestart) {
       controller_ = controller;
 
-      cancelButton_ = new JButton("Cancel");
-      cancelButton_.addActionListener(e -> controller_.cancelRequested());
+      closeButton_ = new JButton("Close");
+      closeButton_.addActionListener(e -> controller_.cancelRequested());
 
       if (allowRestart) {
          startOverButton_ = new JButton("Start Over");
@@ -45,10 +45,10 @@ class SendReportControlPanel extends ControlPanel {
                "fillx, insets 0", "", ""));
 
       if (startOverButton_ != null) {
-         add(cancelButton_, "span 2, split 3, sizegroup cancelbtns");
+         add(closeButton_, "span 2, split 3, sizegroup cancelbtns");
          add(startOverButton_, "gapright push, sizegroup cancelbtns");
       } else {
-         add(cancelButton_, "span 2, split 2, gapright push, sizegroup cancelbtns");
+         add(closeButton_, "span 2, split 2, gapright push, sizegroup cancelbtns");
       }
       add(viewButton, "");
    }
