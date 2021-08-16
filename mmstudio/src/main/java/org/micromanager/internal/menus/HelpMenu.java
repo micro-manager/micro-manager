@@ -44,7 +44,7 @@ public final class HelpMenu {
          });
       }
 
-      GUIUtils.addMenuItem(helpMenu, "Report Problem...", null, () -> {
+      GUIUtils.addMenuItem(helpMenu, "Create Problem Report...", null, () -> {
          org.micromanager.internal.diagnostics.gui.ProblemReportController.start(core_);
       });
 
