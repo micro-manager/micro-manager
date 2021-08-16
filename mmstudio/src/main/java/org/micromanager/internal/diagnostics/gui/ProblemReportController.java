@@ -181,10 +181,6 @@ public final class ProblemReportController {
       return useCrashRobustLogging_;
    }
 
-   void controlPanelDidChangeSize(ControlPanel panel) {
-      frame_.setControlPanel(panel);
-   }
-
    void cancelRequested() {
       if (hasContent_) {
          int result = JOptionPane.showConfirmDialog(frame_,
