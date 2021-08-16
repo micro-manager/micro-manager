@@ -13,31 +13,12 @@ package org.micromanager.internal.diagnostics;
 
 
 public final class ProblemReportFormatter {
-   static final String FORMAT_VERSION = "2.1";
+   static final String FORMAT_VERSION = "3";
    /*
     * Version history:
     * 2    Introduced versioning.
     * 2.1  Added Pid field.
     */
-
-
-   /**
-    * Return a filename for use upon report upload.
-    */
-   public String generateFileName(ProblemReport report) {
-      String shortTZName = java.util.TimeZone.getDefault().getDisplayName(false, java.util.TimeZone.SHORT);
-      java.text.DateFormat dateFormat = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
-      String date = dateFormat.format(report.getDate()) + shortTZName;
-
-      String physAddr = report.getMACAddress();
-      if (physAddr == null) {
-         physAddr = "00-00-00-00-00-00";
-      }
-
-      // Not sure why sanitization was thought necessary, given how the name is
-      // constructed. Keeping just in case, as it is harmless.
-      return sanitizeFileName(date + "_" + physAddr + ".log");
-   }
 
    /**
     * Generate a formatted report
@@ -82,9 +63,6 @@ public final class ProblemReportFormatter {
       StringBuilder sb = new StringBuilder(512);
 
       sb.append(preambleKeyValue("Report Format Version", FORMAT_VERSION));
-      sb.append(preambleKeyValue("User Name", report.getUserName()));
-      sb.append(preambleKeyValue("Organization", report.getUserOrganization()));
-      sb.append(preambleKeyValue("User e-mail", report.getUserEmail()));
 
       String description = report.getDescription();
       if (description == null) {
@@ -95,21 +73,6 @@ public final class ProblemReportFormatter {
       sb.append(preambleKeyValue("User Description",
             description.isEmpty() ? "" : "\n" + description));
 
-      String reportMACAddress = report.getMACAddress();
-      if (reportMACAddress != null && reportMACAddress.length() > 0) {
-         sb.append(preambleKeyValue("MAC", report.getMACAddress()));
-      }
-      else {
-         // This is really not useful but is done to preserve the format:
-         sb.append(preambleKeyValue("MAC", "00-00-00-00-00-00"));
-      }
-
-      String reportHost = report.getHostName();
-      if (reportHost != null && reportHost.length() > 0) {
-         sb.append(preambleKeyValue("Host", reportHost));
-      }
-
-      sb.append(preambleKeyValue("User", report.getUserId()));
       sb.append(preambleKeyValue("Pid", Integer.toString(report.getPid())));
 
       // Note: Older versions had a single "configuration file" key (note
