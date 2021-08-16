@@ -258,7 +258,8 @@ public final class ProblemReportController {
    void cancelRequested() {
       if (hasUnsentContent_) {
          int result = JOptionPane.showConfirmDialog(frame_,
-               "Discard this report?", "Cancel Problem Report",
+               "<html>Close this report?<br />It will be lost if you have not saved a copy.</html>",
+               "Close Problem Report",
                JOptionPane.YES_NO_OPTION);
          if (result != JOptionPane.YES_OPTION) {
             return;
