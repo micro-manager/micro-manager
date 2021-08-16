@@ -95,7 +95,7 @@ public final class ProblemReportController {
    private mmcorej.CMMCore core_;
 
    private ProblemReportFrame frame_ = null;
-   private boolean hasUnsentContent_ = false;
+   private boolean hasContent_ = false;
    private javax.swing.JTextArea descriptionTextArea_;
 
    private boolean useCrashRobustLogging_ = true;
@@ -121,7 +121,7 @@ public final class ProblemReportController {
             report_ = loadLeftoverReport();
             descriptionTextArea_.setText(report_.getDescription());
             frame_.setControlPanel(new SendReportControlPanel(this, false));
-            markReportUnsent();
+            markReportHasContent();
          }
       }
 
@@ -160,18 +160,13 @@ public final class ProblemReportController {
     * Accessors
     */
 
-   private void markReportUnsent() {
-      hasUnsentContent_ = true;
-
-      if (frame_.getControlPanel() instanceof SendReportControlPanel) {
-         SendReportControlPanel panel = (SendReportControlPanel) frame_.getControlPanel();
-         panel.setUIMode(SendReportControlPanel.UIMode.UNSENT);
-      }
+   private void markReportHasContent() {
+      hasContent_ = true;
    }
 
    void markDescriptionModified() {
       copyDescriptionToReport();
-      markReportUnsent();
+      markReportHasContent();
    }
 
    void setDescriptionTextArea(javax.swing.JTextArea textArea) {
@@ -191,9 +186,9 @@ public final class ProblemReportController {
    }
 
    void cancelRequested() {
-      if (hasUnsentContent_) {
+      if (hasContent_) {
          int result = JOptionPane.showConfirmDialog(frame_,
-               "<html>Close this report?<br />It will be lost if you have not saved a copy.</html>",
+               "Discard all unsaved contents of this report?",
                "Close Problem Report",
                JOptionPane.YES_NO_OPTION);
          if (result != JOptionPane.YES_OPTION) {
@@ -257,7 +252,7 @@ public final class ProblemReportController {
          }
       }.execute();
 
-      markReportUnsent();
+      markReportHasContent();
    }
 
    void insertTimestampedRemark(String remark) {

@@ -20,14 +20,6 @@ class SendReportControlPanel extends ControlPanel {
    private final JButton cancelButton_;
    private final JButton startOverButton_;
 
-   enum UIMode {
-      UNSENT,
-      SENDING,
-      SENT,
-   }
-
-   UIMode mode_ = UIMode.UNSENT;
-
    SendReportControlPanel(ProblemReportController controller) {
       this(controller, true);
    }
@@ -59,33 +51,5 @@ class SendReportControlPanel extends ControlPanel {
          add(cancelButton_, "span 2, split 2, gapright push, sizegroup cancelbtns");
       }
       add(viewButton, "");
-   }
-
-   void setUIMode(UIMode mode) {
-      if (mode == mode_) {
-         return;
-      }
-
-      boolean disabled = (mode == UIMode.SENDING);
-
-      cancelButton_.setEnabled(!disabled);
-      if (startOverButton_ != null) {
-         startOverButton_.setEnabled(!disabled);
-      }
-      // Leave view button always enabled.
-
-      switch (mode) {
-         case UNSENT:
-            cancelButton_.setText("Cancel");
-            break;
-         case SENDING:
-            break;
-         case SENT:
-            cancelButton_.setText("Close");
-            break;
-         default:
-      }
-
-      mode_ = mode;
    }
 }
