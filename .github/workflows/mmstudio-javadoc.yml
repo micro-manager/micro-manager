@@ -17,22 +17,51 @@ jobs:
           sudo apt-get -y install build-essential autoconf automake libtool \
                                   autoconf-archive pkg-config
           sudo apt-get -y install libboost-all-dev
+          sudo apt-get -y install libpcre3-dev  # For SWIG-3
 
-      - name: Install SWIG-3
+      - name: Cache SWIG-3
+        id: cache-swig-3
+        uses: actions/cache@v2
+        with:
+          path: swig-3.0.12
+          key: mmstudio-javadoc-swig-3.0.12
+
+      - name: Build SWIG-3
+        if: steps.cache-swig-3.outputs.cache-hit != 'true'
         run: |
-          sudo apt-get -y install libpcre3-dev
           curl -LO http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
           tar xzf swig-3.0.12.tar.gz
           cd swig-3.0.12
           ./configure
           make -j3
+
+      - name: Install SWIG-3
+        run: |
+          cd swig-3.0.12
           sudo make install
 
-      - name: Build parts of micro-manager
+      - name: Cache 3rdpartypublic classext
+        id: cache-3ppce
+        uses: actions/cache@v2
+        with:
+          path: 3rdpartypublic
+          key: mmstudio-javadoc-3ppce-${{ hashFiles('micro-manager/buildscripts/ivy.xml') }}
+
+      - name: Check out 3rdpartypublic classext
+        if: steps.cache-3ppce.outputs.cache-hit != 'true'
         run: |
           mkdir 3rdpartypublic
           svn co https://valelab4.ucsf.edu/svn/3rdpartypublic/classext \
                  3rdpartypublic/classext
+
+      - name: Cache Ivy cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.ivy2
+          key: mmstudio-javadoc-ivy-${{ hashFiles('micro-manager/buildscripts/ivy*.xml') }}
+
+      - name: Build parts of micro-manager
+        run: |
           cd micro-manager
           ./autogen.sh
           ./configure CXXFLAGS=-std=c++03 JAVA_HOME=$JAVA_HOME_8_X64
