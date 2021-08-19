@@ -46,7 +46,7 @@ jobs:
       - name: Build Javadoc
         run: |
           cd micro-manager/mmstudio
-          make javadoc
+          PATH="$JAVA_HOME_8_X64/bin:$PATH" make javadoc
           tar cf ../../mmstudio-javadoc.tar -C doc .
 
       - uses: actions/checkout@v2
