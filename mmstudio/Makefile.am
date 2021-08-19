@@ -21,7 +21,7 @@ ant_test.sh:
 javadoc:
 	-rm -rf doc
 	$(MKDIR_P) doc
-	javadoc -public \
+	javadoc \
 		-classpath ../$(MM_CPP_DIR)/MMCoreJ_wrap/MMCoreJ.jar:../dependencies/artifacts/compile/"*":../dependencies/artifacts/imagej/"*" \
 		-d doc \
 		-sourcepath $(srcdir)/src/main/java \
