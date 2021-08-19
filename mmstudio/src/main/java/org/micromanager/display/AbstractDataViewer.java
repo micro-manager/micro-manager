@@ -86,12 +86,11 @@ public abstract class AbstractDataViewer implements DataViewer {
     * event dispatch thread. Make sure you are on the right thread when posting
     * such events.</p>
     *
-    * <p>Viewers are required to post the following events:
+    * Viewers are required to post the following events:
     * <ul>
     * <li>{@link DisplaySettingsChangedEvent} (posted by this abstract class)
     * <li>{@link DisplayPositionChangedEvent} (posted by this abstract class)
     * </ul>
-    * </p>
     *
     * @param event the event to post
     */
@@ -193,7 +192,7 @@ public abstract class AbstractDataViewer implements DataViewer {
     * copy from this method. This returned settings is what subsequent calls to
     * {@code getDisplaySettings} will return.</p>
     *
-    * <p></p>Typically, the implementation should record all information needed to
+    * <p>Typically, the implementation should record all information needed to
     * make the changes and arrange to apply the changes at a later time
     * (usually on the Swing/AWT event dispatch thread).</p>
     *
