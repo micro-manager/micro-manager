@@ -25,7 +25,8 @@ javadoc:
 		-classpath ../$(MM_CPP_DIR)/MMCoreJ_wrap/MMCoreJ.jar:../dependencies/artifacts/compile/"*":../dependencies/artifacts/imagej/"*" \
 		-d doc \
 		-sourcepath $(srcdir)/src/main/java \
-		-subpackages org.micromanager
+		-subpackages org.micromanager \
+		-exclude `cd $(srcdir); find src/main/java -type d |grep '\<internal\>' |tr / . |sed 's/^src\.main\.java\.//' |paste -sd ':' -`
 
 
 clean-local:
