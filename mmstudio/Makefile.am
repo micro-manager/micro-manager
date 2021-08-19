@@ -26,7 +26,8 @@ javadoc:
 		-d doc \
 		-sourcepath $(srcdir)/src/main/java \
 		-subpackages org.micromanager \
-		-exclude `cd $(srcdir); find src/main/java -type d |grep '\<internal\>' |tr / . |sed 's/^src\.main\.java\.//' |paste -sd ':' -`
+		-exclude `cd $(srcdir); find src/main/java -type d |grep '\<internal\>' |tr / . |sed 's/^src\.main\.java\.//' |paste -sd ':' -` \
+		-use
 
 
 clean-local:
