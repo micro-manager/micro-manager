@@ -253,6 +253,3 @@ make dox
 pushd swig-doc-converter
 ./convert
 popd
-pushd mmstudio
-make javadoc
-popd
