@@ -1,0 +1,67 @@
+name: Publish mmstudio Javadoc
+
+on: [push, pull_request]
+
+jobs:
+  build-and-publish:
+    name: Build and publish mmstudio Javadoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: micro-manager
+          submodules: true
+
+      - name: Install tools and dependencies
+        run: |
+          sudo apt-get -y install build-essential autoconf automake libtool \
+                                  autoconf-archive pkg-config
+          sudo apt-get -y install libboost-all-dev
+
+      - name: Install SWIG-3
+        run: |
+          sudo apt-get -y install libpcre3-dev
+          curl -LO http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
+          tar xzf swig-3.0.12.tar.gz
+          cd swig-3.0.12
+          ./configure
+          make -j3
+          sudo make install
+
+      - name: Build parts of micro-manager
+        run: |
+          mkdir 3rdpartypublic
+          svn co https://valelab4.ucsf.edu/svn/3rdpartypublic/classext \
+                 3rdpartypublic/classext
+          cd micro-manager
+          ./autogen.sh
+          ./configure CXXFLAGS=-std=c++03 JAVA_HOME=$JAVA_HOME_8_X64
+          make fetchdeps
+          make -C buildscripts/AntExtensions
+          make -C mmCoreAndDevices/MMDevice -j3
+          make -C mmCoreAndDevices/MMCore -j3
+          make -C mmCoreAndDevices/MMCoreJ_wrap
+          make -C mmstudio
+
+      - name: Build Javadoc
+        run: |
+          cd micro-manager/mmstudio
+          make javadoc
+          tar cf ../../mmstudio-javadoc.tar -C doc .
+
+      - uses: actions/checkout@v2
+        if: github.ref == 'refs/heads/master'
+        with:
+          repository: micro-manager/apidoc
+          ssh-key: ${{ secrets.SSH_KEY_DEPLOY_TO_APIDOC }}
+          fetch-depth: 0
+          path: apidoc
+
+      - name: Publish Javadoc
+        if: github.ref == 'refs/heads/master'
+        run: |
+          cd apidoc
+          ./prepare_pages_branch.sh mmstudio/latest
+          tar xf ../mmstudio-javadoc.tar
+          git add .
+          ./publish_pages_as_bot.sh mmstudio/latest
