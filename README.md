@@ -31,4 +31,4 @@ Additional information is available on the Micro-Manager website at
 https://micro-manager.org
 
 ### Contributing  
-Start here: https://micro-manager.org/wiki/How_to_debug_and_develop_MM2.0
+Start here: https://micro-manager.org/How_to_debug_and_develop_MM2.0
