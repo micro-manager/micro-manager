@@ -1,9 +1,83 @@
-name: Publish mmstudio Javadoc
+name: Build and publish API docs
 
 on: [push, pull_request]
 
 jobs:
-  build-and-publish:
+  mmdevice-doxygen:
+    name: Build and publish MMDevice Doxygen docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: micro-manager
+          submodules: true
+
+      - name: Install Doxygen
+        run: |
+          sudo apt-get -y install doxygen
+
+      - name: Build HTML
+        run: |
+          cd micro-manager
+          mkdir -p doxygen/out/MMDevice
+          doxygen doxygen/MMDevice
+          tar cf ../../html.tar -C doxygen/out/MMDevice/html .
+
+      - uses: actions/checkout@v2
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        with:
+          repository: micro-manager/apidoc
+          ssh-key: ${{ secrets.SSH_KEY_DEPLOY_TO_APIDOC }}
+          fetch-depth: 0
+          path: apidoc
+
+      - name: Publish HTML
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        run: |
+          cd apidoc
+          ./prepare_pages_branch.sh MMDevice/latest
+          tar xf ../html.tar
+          git add .
+          ./publish_pages_as_bot.sh MMDevice/latest
+
+  mmcore-doxygen:
+    name: Build and publish MMCore Doxygen docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: micro-manager
+          submodules: true
+
+      - name: Install Doxygen
+        run: |
+          sudo apt-get -y install doxygen
+
+      - name: Build HTML
+        run: |
+          cd micro-manager
+          mkdir -p doxygen/out/MMCore
+          doxygen doxygen/MMCore
+          tar cf ../../html.tar -C doxygen/out/MMCore/html .
+
+      - uses: actions/checkout@v2
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        with:
+          repository: micro-manager/apidoc
+          ssh-key: ${{ secrets.SSH_KEY_DEPLOY_TO_APIDOC }}
+          fetch-depth: 0
+          path: apidoc
+
+      - name: Publish HTML
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        run: |
+          cd apidoc
+          ./prepare_pages_branch.sh MMCore/latest
+          tar xf ../html.tar
+          git add .
+          ./publish_pages_as_bot.sh MMCore/latest
+
+  mmstudio-javadoc:
     name: Build and publish mmstudio Javadoc
     runs-on: ubuntu-latest
     steps:
@@ -76,7 +150,7 @@ jobs:
         run: |
           cd micro-manager/mmstudio
           PATH="$JAVA_HOME_8_X64/bin:$PATH" make javadoc
-          tar cf ../../mmstudio-javadoc.tar -C doc .
+          tar cf ../../html.tar -C doc .
 
       - uses: actions/checkout@v2
         if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
@@ -91,6 +165,6 @@ jobs:
         run: |
           cd apidoc
           ./prepare_pages_branch.sh mmstudio/latest
-          tar xf ../mmstudio-javadoc.tar
+          tar xf ../html.tar
           git add .
           ./publish_pages_as_bot.sh mmstudio/latest
