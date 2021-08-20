@@ -21,7 +21,7 @@ jobs:
           cd micro-manager
           mkdir -p doxygen/out/MMDevice
           doxygen doxygen/MMDevice
-          tar cf ../../html.tar -C doxygen/out/MMDevice/html .
+          tar cf ../html.tar -C doxygen/out/MMDevice/html .
 
       - uses: actions/checkout@v2
         if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
@@ -58,7 +58,7 @@ jobs:
           cd micro-manager
           mkdir -p doxygen/out/MMCore
           doxygen doxygen/MMCore
-          tar cf ../../html.tar -C doxygen/out/MMCore/html .
+          tar cf ../html.tar -C doxygen/out/MMCore/html .
 
       - uses: actions/checkout@v2
         if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
