@@ -77,6 +77,74 @@ jobs:
           git add .
           ./publish_pages_as_bot.sh MMCore/latest
 
+  mmcorej-javadoc:
+    name: Build and publish mmcorej Javadoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: micro-manager
+          submodules: true
+
+      - name: Install tools and dependencies
+        run: |
+          sudo apt-get -y install build-essential autoconf automake libtool \
+                                  autoconf-archive pkg-config doxygen
+          sudo apt-get -y install libpcre3-dev  # For SWIG-3
+
+      - name: Cache SWIG-3
+        id: cache-swig-3
+        uses: actions/cache@v2
+        with:
+          path: swig-3.0.12
+          key: mmstudio-javadoc-swig-3.0.12
+
+      - name: Build SWIG-3
+        if: steps.cache-swig-3.outputs.cache-hit != 'true'
+        run: |
+          curl -LO http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
+          tar xzf swig-3.0.12.tar.gz
+          cd swig-3.0.12
+          ./configure
+          make -j3
+
+      - name: Install SWIG-3
+        run: |
+          cd swig-3.0.12
+          sudo make install
+
+      - name: Configure and run SWIG
+        run: |
+          cd micro-manager
+          ./autogen.sh
+          ./configure CXXFLAGS=-std=c++03 JAVA_HOME=$JAVA_HOME_8_X64
+          make -C mmCoreAndDevices/MMCoreJ_wrap MMCoreJ_wrap.h
+
+      - name: Build Javadoc
+        run: |
+          cd micro-manager
+          make dox
+          cd swig-doc-converter
+          PATH="$JAVA_HOME_8_X64/bin:$PATH" ./convert
+          tar cf ../../html.tar -C javadoc .
+
+      - uses: actions/checkout@v2
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        with:
+          repository: micro-manager/apidoc
+          ssh-key: ${{ secrets.SSH_KEY_DEPLOY_TO_APIDOC }}
+          fetch-depth: 0
+          path: apidoc
+
+      - name: Publish Javadoc
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        run: |
+          cd apidoc
+          ./prepare_pages_branch.sh mmcorej/latest
+          tar xf ../html.tar
+          git add .
+          ./publish_pages_as_bot.sh mmcorej/latest
+
   mmstudio-javadoc:
     name: Build and publish mmstudio Javadoc
     runs-on: ubuntu-latest
