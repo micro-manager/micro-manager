@@ -241,15 +241,3 @@ mv mm-mnt/Micro-Manager mm-mnt/Micro-Manager-$MM_VERSION
 hdiutil detach mm-mnt
 rmdir mm-mnt
 hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager-$MM_VERSION.dmg
-
-
-##
-## Generate HTML API documentation
-##
-
-cd $MM_SRCDIR
-
-make dox
-pushd swig-doc-converter
-./convert
-popd
