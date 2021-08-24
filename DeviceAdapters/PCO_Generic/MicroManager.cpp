@@ -1030,34 +1030,36 @@ int CPCOCam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CPCOCam::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-  if(m_pCamera->m_iCamClass == 1)
+  if(m_pCamera->m_iCamClass == 3)
   {
     if(eAct == MM::BeforeGet)
     {
-      if(m_iGainCam == 0)
-        pProp->Set("normal");
-      else
-      if(m_iGainCam == 1)
-        pProp->Set("extended");
-      else
-      if(m_iGainCam == 3)
-        pProp->Set("low light mode");
+      char szval[20] = { 0 };
+      snprintf(szval, 20, "%d", (int)m_pCamera->m_strCamera.strSensor.wConvFact);
+      m_iGainCam = m_pCamera->m_strCamera.strSensor.wConvFact;
+
+      pProp->Set(szval);
     }
     else if(eAct == MM::AfterSet)
     {
-      int igains[3] = {0, 1, 3};
+      int igains[4] = {0, 1, 2, 3};
       int nErr = 0;
       long ihelp;
       string tmp;
       pProp->Get(tmp);
       ((MM::Property *) pProp)->GetData(tmp.c_str(), ihelp);
-      ihelp = igains[ihelp];
+
       if(ihelp != m_iGainCam)
       {
         m_iGainCam = ihelp;
-        ihelp = m_nMode & 0xFF;
-        m_nMode = ihelp + (m_nSubMode << 16) + (m_iGainCam << 8);
+
+        m_pCamera->m_strCamera.strSensor.wConvFact = (WORD)m_iGainCam;
+
         nErr = SetupCamera(true, false);
+        if (nErr != 0)
+        {
+          return nErr;
+        }
       }
 
       if(nErr != 0)
@@ -1484,7 +1486,25 @@ int CPCOCam::Initialize()
       if(nRet != DEVICE_OK)
         return nRet;
     }
-    if(m_pCamera->m_strCamera.strSensor.strDescription.dwGeneralCapsDESC1 & GENERALCAPS1_HW_IO_SIGNAL_DESCRIPTOR)
+    if (m_pCamera->m_strCamera.strSensor.strDescription.wConvFactDESC[1] != 0)
+    {
+      char szval[20] = { 0 };
+      pAct = new CPropertyAction(this, &CPCOCam::OnGain);
+      snprintf(szval, 20, "%d", (int)m_pCamera->m_strCamera.strSensor.strDescription.wConvFactDESC[0]);
+      nRet = CreateProperty("Conversion factor*100", szval, MM::String, false, pAct);
+      if (nRet != DEVICE_OK)
+        return nRet;
+      for (int i = 0; i < 4; i++)
+      {
+        if (m_pCamera->m_strCamera.strSensor.strDescription.wConvFactDESC[i] == 0)
+          break;
+        snprintf(szval, 20, "%d", (int)m_pCamera->m_strCamera.strSensor.strDescription.wConvFactDESC[i]);
+        nRet = AddAllowedValue("Conversion factor*100", szval, m_pCamera->m_strCamera.strSensor.strDescription.wConvFactDESC[i]);
+        if (nRet != DEVICE_OK)
+          return nRet;
+      }
+    }
+    if (m_pCamera->m_strCamera.strSensor.strDescription.dwGeneralCapsDESC1 & GENERALCAPS1_HW_IO_SIGNAL_DESCRIPTOR)
       InitHWIO();
     if(m_bCMOSLineTiming)
       InitLineTiming();
