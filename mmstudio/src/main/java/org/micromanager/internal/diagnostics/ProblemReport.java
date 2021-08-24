@@ -27,7 +27,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -55,14 +54,7 @@ public final class ProblemReport {
       public Date date;
       public String startCfgFilename;
       public String endCfgFilename;
-      public String userName;
-      public String userOrganization;
-      public String userEmail;
       public String description;
-      public String macAddress;
-      public String ipAddress;
-      public String hostName;
-      public String userLogin;
       public String currentDir;
    }
 
@@ -153,65 +145,6 @@ public final class ProblemReport {
          return false;
       }
       return capturedLogContent_ != null && !capturedLogContent_.isEmpty();
-   }
-
-   /**
-    * Sets the user's full name.    *
-    * This is for the name entered by the user, not the login name.
-    *
-    * @param name the name.
-    */
-   public void setUserName(String name) {
-      metadata_.userName = name;
-      deferredSyncMetadata();
-   }
-
-   /**
-    * Gets the user's full name.
-    * This is the human-readable name entered by the user, not the login name.
-    *
-    * @return the name.
-    */
-   public String getUserName() {
-      return metadata_.userName;
-   }
-
-   /**
-    * Sets the user's organization name.
-    *
-    * @param organization the organization name.
-    */
-   public void setUserOrganization(String organization) {
-      metadata_.userOrganization = organization;
-      deferredSyncMetadata();
-   }
-
-   /**
-    * Gets the user's organization name.
-    *
-    * @return the organization name.
-    */
-   public String getUserOrganization() {
-      return metadata_.userOrganization;
-   }
-
-   /**
-    * Sets the user's email address.
-    *
-    * @param email the email address.
-    */
-   public void setUserEmail(String email) {
-      metadata_.userEmail = email;
-      deferredSyncMetadata();
-   }
-
-   /**
-    * Gets the user's email address.
-    *
-    * @return the email address.
-    */
-   public String getUserEmail() {
-      return metadata_.userEmail;
    }
 
    /**
@@ -443,22 +376,6 @@ public final class ProblemReport {
       return hotSpotErrorLog_.getContent();
    }
 
-   String getMACAddress() {
-      return metadata_.macAddress;
-   }
-
-   String getHostName() {
-      return metadata_.hostName;
-   }
-
-   String getIPAddress() {
-      return metadata_.ipAddress;
-   }
-
-   String getUserId() {
-      return metadata_.userLogin;
-   }
-
    int getPid() {
       return metadata_.pid;
    }
@@ -481,30 +398,6 @@ public final class ProblemReport {
          metadata_.pid = null;
       }
 
-      metadata_.macAddress = null;
-      mmcorej.StrVector addrs = core_.getMACAddresses();
-      if (addrs.size() > 0) {
-         String addr = addrs.get(0);
-         if (addr.length() > 0) {
-            metadata_.macAddress = addr;
-         }
-      }
-
-      metadata_.hostName = null;
-      try {
-         metadata_.hostName = java.net.InetAddress.getLocalHost().getHostName();
-      } catch (IOException ioe) {
-         ReportingUtils.logError(ioe, "Failed to get Host Name.");
-      }
-
-      metadata_.ipAddress = null;
-      try {
-         metadata_.ipAddress = java.net.InetAddress.getLocalHost().getHostAddress();
-      } catch (IOException ioe) {
-         ReportingUtils.logError(ioe, "Failed to get Host IP Address.");
-      }
-
-      metadata_.userLogin = core_.getUserId();
       metadata_.currentDir = System.getProperty("user.dir");
    }
 

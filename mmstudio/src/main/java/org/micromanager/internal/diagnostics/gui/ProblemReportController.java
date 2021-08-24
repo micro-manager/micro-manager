@@ -16,8 +16,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.micromanager.internal.diagnostics.ProblemReport;
 import org.micromanager.internal.diagnostics.ProblemReportFormatter;
-import org.micromanager.internal.diagnostics.ReportSender;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -97,7 +95,7 @@ public final class ProblemReportController {
    private mmcorej.CMMCore core_;
 
    private ProblemReportFrame frame_ = null;
-   private boolean hasUnsentContent_ = false;
+   private boolean hasContent_ = false;
    private javax.swing.JTextArea descriptionTextArea_;
 
    private boolean useCrashRobustLogging_ = true;
@@ -123,7 +121,7 @@ public final class ProblemReportController {
             report_ = loadLeftoverReport();
             descriptionTextArea_.setText(report_.getDescription());
             frame_.setControlPanel(new SendReportControlPanel(this, false));
-            markReportUnsent();
+            markReportHasContent();
          }
       }
 
@@ -158,89 +156,21 @@ public final class ProblemReportController {
       return null;
    }
 
-   private boolean isContactInfoValid() {
-      if (getName() == null || getName().length() < 1) {
-         return false;
-      }
-      if (getOrganization() == null || getOrganization().length() < 1) {
-         return false;
-      }
-      if (getEmail() == null || !isValidEmailAddress(getEmail())) {
-         return false;
-      }
-      return true;
-   }
-
-   private static boolean isValidEmailAddress(String addr) {
-      java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
-            "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*"
-            + "(\\.[A-Za-z]{2,})$");
-      return pattern.matcher(addr).matches();
-   }
-
    /*
     * Accessors
     */
 
-   private void markReportUnsent() {
-      hasUnsentContent_ = true;
-
-      if (frame_.getControlPanel() instanceof SendReportControlPanel) {
-         SendReportControlPanel panel = (SendReportControlPanel) frame_.getControlPanel();
-         panel.setUIMode(SendReportControlPanel.UIMode.UNSENT);
-      }
-   }
-
-   private void markReportSent() {
-      hasUnsentContent_ = false;
-
-      if (frame_.getControlPanel() instanceof SendReportControlPanel) {
-         SendReportControlPanel panel = (SendReportControlPanel) frame_.getControlPanel();
-         panel.setUIMode(SendReportControlPanel.UIMode.SENT);
-      }
+   private void markReportHasContent() {
+      hasContent_ = true;
    }
 
    void markDescriptionModified() {
       copyDescriptionToReport();
-      markReportUnsent();
+      markReportHasContent();
    }
 
    void setDescriptionTextArea(javax.swing.JTextArea textArea) {
       descriptionTextArea_ = textArea;
-   }
-
-   javax.swing.JTextArea getDescriptionTextArea() {
-      return descriptionTextArea_;
-   }
-
-   void setName(String name) {
-      if (report_ != null) {
-         report_.setUserName(name);
-      }
-   }
-
-   String getName() {
-      return report_ == null ? null : report_.getUserName();
-   }
-
-   void setOrganization(String organization) {
-      if (report_ != null) {
-         report_.setUserOrganization(organization);
-      }
-   }
-
-   String getOrganization() {
-      return report_ == null ? null : report_.getUserOrganization();
-   }
-
-   void setEmail(String email) {
-      if (report_ != null) {
-         report_.setUserEmail(email);
-      }
-   }
-
-   String getEmail() {
-      return report_ == null ? null : report_.getUserEmail();
    }
 
    void setUseCrashRobustLogging(boolean flag) {
@@ -251,14 +181,11 @@ public final class ProblemReportController {
       return useCrashRobustLogging_;
    }
 
-   void controlPanelDidChangeSize(ControlPanel panel) {
-      frame_.setControlPanel(panel);
-   }
-
    void cancelRequested() {
-      if (hasUnsentContent_) {
+      if (hasContent_) {
          int result = JOptionPane.showConfirmDialog(frame_,
-               "Discard this report?", "Cancel Problem Report",
+               "Discard all unsaved contents of this report?",
+               "Close Problem Report",
                JOptionPane.YES_NO_OPTION);
          if (result != JOptionPane.YES_OPTION) {
             return;
@@ -321,7 +248,7 @@ public final class ProblemReportController {
          }
       }.execute();
 
-      markReportUnsent();
+      markReportHasContent();
    }
 
    void insertTimestampedRemark(String remark) {
@@ -404,33 +331,6 @@ public final class ProblemReportController {
       }.execute();
    }
 
-   void nameChanged(javax.swing.text.Document nameDocument) {
-      try {
-         setName(nameDocument.getText(0, nameDocument.getLength()));
-         markReportUnsent();
-      } catch (javax.swing.text.BadLocationException impossible) {
-         ReportingUtils.logError(impossible);
-      }
-   }
-
-   void organizationChanged(javax.swing.text.Document organizationDocument) {
-      try {
-         setOrganization(organizationDocument.getText(0, organizationDocument.getLength()));
-         markReportUnsent();
-      } catch (javax.swing.text.BadLocationException impossible) {
-         ReportingUtils.logError(impossible);
-      }
-   }
-
-   void emailChanged(javax.swing.text.Document emailDocument) {
-      try {
-         setEmail(emailDocument.getText(0, emailDocument.getLength()));
-         markReportUnsent();
-      } catch (javax.swing.text.BadLocationException impossible) {
-         ReportingUtils.logError(impossible);
-      }
-   }
-
    void displayReport() {
       if (report_ == null) {
          return; // Should not happen
@@ -440,113 +340,6 @@ public final class ProblemReportController {
       String reportStr = formatter.format(report_);
 
       openReportWindow(reportStr);
-   }
-
-   void sendRequested() {
-      if (report_ == null) {
-         return; // Should not happen
-      }
-
-      if (descriptionTextArea_.getDocument().getLength() == 0) {
-         JOptionPane.showMessageDialog(frame_, "Please enter a description.");
-         return;
-      }
-
-      if (!isContactInfoValid()) {
-         JOptionPane.showMessageDialog(frame_, "Please enter your name, organization, "
-               + "and valid email address.");
-         return;
-      }
-
-      if (!confirmEmailAddress()) {
-         return;
-      }
-
-      final SendReportControlPanel panel = (SendReportControlPanel) frame_.getControlPanel();
-      panel.setUIMode(SendReportControlPanel.UIMode.SENDING);
-      getDescriptionTextArea().setEnabled(false);
-
-      class Result {
-         public boolean success;
-         public String warning;
-      }
-      new SwingWorker<Result, Object>() {
-         private boolean tooManyLines(String str, int limit) {
-            int index = -1;
-            for (int count = 0; count < limit; count++) {
-               index = str.indexOf('\n', index + 1);
-               if (index == -1) {
-                  return false;
-               }
-            }
-            return true;
-         }
-
-         @Override
-         public Result doInBackground() throws Exception {
-            ProblemReportFormatter formatter = new ProblemReportFormatter();
-            String reportStr = formatter.format(report_);
-            String reportFileName = formatter.generateFileName(report_);
-
-            java.net.URL url = ReportSender.getProblemReportUploadURL();
-
-            ReportSender sender = new ReportSender();
-            sender.sendReport(reportStr, reportFileName, url);
-
-            Result r = new Result();
-            r.success = true;
-            r.warning = null;
-            if (tooManyLines(reportStr, 10000)) {
-               r.warning =
-                  "<html><body><p style='width: 400px;'>"
-                  + "The report has been sent, but may have been truncated "
-                  + "due to exceeding the size limit. It is recommended that "
-                  + "you keep a backup by clicking on View Report and saving "
-                  + "a copy.</p></body></html>";
-            }
-            return r;
-         }
-
-         @Override
-         public void done() {
-            Result result = null;
-            try {
-               result = get();
-            } catch (Exception e) {
-               JOptionPane.showMessageDialog(frame_,
-                     "Failed to generate or send report:\n" + e.getMessage());
-               panel.setUIMode(SendReportControlPanel.UIMode.UNSENT);
-               getDescriptionTextArea().setEnabled(true);
-               return;
-            }
-            if (!result.success) {
-               return; // Should have been an exception
-            }
-
-            if (result.warning != null) {
-               JOptionPane.showMessageDialog(frame_, result.warning);
-            }
-            report_.deleteStorage();
-            markReportSent();
-            panel.setUIMode(SendReportControlPanel.UIMode.SENT);
-            getDescriptionTextArea().setEnabled(true);
-         }
-      }.execute();
-   }
-
-   private boolean confirmEmailAddress() {
-      String confirmEmail = JOptionPane.showInputDialog(frame_,
-            "Please enter your email address once more:",
-            "Send Problem Report", JOptionPane.QUESTION_MESSAGE);
-      if (confirmEmail == null) {
-         return false;
-      }
-      if (!confirmEmail.equals(getEmail())) {
-         JOptionPane.showMessageDialog(frame_,
-               "Email address does not match; please check your typing.");
-         return false;
-      }
-      return true;
    }
 
    private void copyDescriptionToReport() {
