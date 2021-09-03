@@ -102,7 +102,6 @@ public class CRISPTimer {
      * Called in the CRISP setStateLogCal method to skip timer updates.
      */
     public void onLogCal() {
-        skipCounter = skipRefresh;
         // controller becomes unresponsive during loG_cal => skip polling a few times
         if (timer.isRunning()) {
             skipCounter = skipRefresh;
