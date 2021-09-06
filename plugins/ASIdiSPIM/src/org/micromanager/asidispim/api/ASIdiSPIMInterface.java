@@ -846,4 +846,16 @@ public interface ASIdiSPIMInterface extends Remote {
     * clears all runnables attached to diSPIM acquisition
     */
    public void clearAllRunnables() throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * @return the camera readout mode
+    */
+   public org.micromanager.asidispim.Data.CameraModes.Keys getCameraReadoutMode() throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * Sets the camera readout mode.
+    * @param mode
+    */
+   public void setCameraReadoutMode(org.micromanager.asidispim.Data.CameraModes.Keys mode) throws ASIdiSPIMException, RemoteException;
+   
 }

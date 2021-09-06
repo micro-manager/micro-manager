@@ -248,6 +248,10 @@ public class CameraPanel extends ListeningJPanel{
       return (CameraModes.Keys) camModeCB_.getSelectedItem();
    }
    
+   public void setSPIMCameraMode(CameraModes.Keys mode) {
+      camModeCB_.setSelectedItem(mode);
+   }
+   
    private JToggleButton makeRoiButton(RoiPresets roi, String prefNode, String prefKey) {
 
       class roiListener implements ActionListener {

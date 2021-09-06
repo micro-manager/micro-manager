@@ -32,6 +32,7 @@ import org.micromanager.asidispim.ASIdiSPIMFrame;
 import org.micromanager.asidispim.AcquisitionPanel;
 import org.micromanager.asidispim.AutofocusPanel;
 import org.micromanager.asidispim.AutofocusPanel.Modes;
+import org.micromanager.asidispim.CameraPanel;
 import org.micromanager.asidispim.DataAnalysisPanel;
 import org.micromanager.asidispim.NavigationPanel;
 import org.micromanager.asidispim.SetupPanel;
@@ -806,6 +807,16 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       getAcquisitionPanel().clearAllRunnables();      
    }
    
+   @Override
+   public org.micromanager.asidispim.Data.CameraModes.Keys getCameraReadoutMode() throws ASIdiSPIMException, RemoteException {
+      return getCameraPanel().getSPIMCameraMode();
+   }
+
+   @Override
+   public void setCameraReadoutMode(org.micromanager.asidispim.Data.CameraModes.Keys mode) throws ASIdiSPIMException, RemoteException {
+      getCameraPanel().setSPIMCameraMode(mode);
+   }
+   
    
    //** Private methods.  Only for internal use **//
 
@@ -872,6 +883,14 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
          throw new ASIdiSPIMException ("DataAnalysisPanel is not open");
       }
       return dataAnalysisPanel;
+   }
+   
+   private CameraPanel getCameraPanel() throws ASIdiSPIMException, RemoteException {
+      CameraPanel cameraPanel = getFrame().getCameraPanel();
+      if (cameraPanel == null) {
+         throw new ASIdiSPIMException ("CameraPanel is not open");
+      }
+      return cameraPanel;
    }
    
    private Devices getDevices() throws ASIdiSPIMException, RemoteException {
