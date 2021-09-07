@@ -173,7 +173,7 @@ public class PlotPanel extends Panel {
                 if (isPollingEnabled) {
                     frame.getSpinnerPanel().setPollingCheckBox(true);
                 }
-                btnPlot.setEnabled(isPollingEnabled);
+                btnPlot.setEnabled(true);
                 showPlotWindow();
             }
             
