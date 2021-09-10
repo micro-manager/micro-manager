@@ -20,8 +20,6 @@ public class PropValue {
     public static final String STATE_DITHER = "Dither";
     public static final String STATE_GAIN_CAL = "gain_Cal";
 
-    public static final String STATE_IN_FOCUS = "gain_Cal";
-
     public static final String RESET_FOCUS_OFFSET = "Reset Focus Offset";
     public static final String SAVE_TO_CONTROLLER = "Save to Controller";
     
