@@ -43,7 +43,7 @@ public class FileUtils {
         return Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
     }
 
-    public static void saveTextFile(final List<String> file, final String filePath) {
-        // TODO: implement this feature to make saving a focus curve possible
+    public static void saveFile(final List<String> contents, final String filePath) throws IOException {
+        Files.write(Paths.get(filePath), contents, StandardCharsets.UTF_8);
     }
 }
