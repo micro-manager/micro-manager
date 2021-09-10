@@ -27,7 +27,7 @@ import mmcorej.StrVector;
  * <p>Example:
  * <blockquote><pre>
  * CRISP crisp = new CRISP();
- * crisp.findDevice();
+ * crisp.detectDevice();
  * crisp.getAxis(); // OK to call now
  * </pre></blockquote>
  * Documentation:
@@ -226,7 +226,7 @@ public class CRISP {
      * @return {@code true} if the device is focus locked
      */
     public boolean isFocusLocked() {
-        return getState().equals(PropValue.STATE_IN_FOCUS);
+        return getState().equals(PropValue.STATE_GAIN_CAL);
     }
     
     // NOTE: this is a long running task, use a separate thread when calling this
@@ -505,6 +505,21 @@ public class CRISP {
         return result;
     }
     
+     /**
+     * Returns the number of skips.
+     *
+     * @return the number of skips
+     */
+    public int getUpdateRateMs() {
+        int result = 0;
+        try {
+            result = Integer.parseInt(core.getProperty(deviceName, PropName.NUMBER_OF_SKIPS));
+        } catch (Exception e) {
+            //studio.logs().showError("CRISP: Failed to read the Number of Skips.");
+        }
+        return result;
+    }
+    
     /**
      * Returns the lock range.
      * 
@@ -556,6 +571,19 @@ public class CRISP {
             core.setProperty(deviceName, PropName.NUMBER_OF_AVERAGES, value);
         } catch (Exception e) {
             //studio.logs().showError("CRISP: Failed to set the Number of Averages.");
+        }
+    }
+    
+     /**
+     * Sets the number of skips.
+     *
+     * @param value the number of skips
+     */
+    public void setUpdateRateMs(final int value) {
+        try {
+            core.setProperty(deviceName, PropName.NUMBER_OF_SKIPS, value);
+        } catch (Exception e) {
+            //studio.logs().showError("CRISP: Failed to set the Number of Skips.");
         }
     }
     
