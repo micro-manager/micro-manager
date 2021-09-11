@@ -226,7 +226,7 @@ public class CRISP {
      * @return {@code true} if the device is focus locked
      */
     public boolean isFocusLocked() {
-        return getState().equals(PropValue.STATE_GAIN_CAL);
+        return getState().equals("In Focus");
     }
     
     // NOTE: this is a long running task, use a separate thread when calling this
