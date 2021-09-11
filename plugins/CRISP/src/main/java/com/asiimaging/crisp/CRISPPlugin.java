@@ -13,8 +13,6 @@ import org.micromanager.Studio;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-import javax.swing.UIManager;
-
 // The original plugin was created by Nico Stuurman, rewritten by Vikram Kopuri, 
 // and then once again rewritten by the current maintainer.
 @Plugin(type = MenuPlugin.class)
@@ -22,7 +20,7 @@ public class CRISPPlugin implements MenuPlugin, SciJavaPlugin {
     public static final String copyright = "Applied Scientific Instrumentation (ASI), 2014-2021";
     public static final String description = "Interface to control ASIs CRISP Autofocus system.";
     public static final String menuName = "ASI CRISP Control";
-    public static final String version = "2.2.1";
+    public static final String version = "2.3.0";
 
     private Studio studio;
     private CRISPFrame frame;

@@ -129,6 +129,7 @@ public class CRISPFrame extends JFrame {
         // disable spinners if already focus locked
         if (crisp.isFocusLocked()) {
             spinnerPanel.setEnabledFocusLockSpinners(false);
+            buttonPanel.setCalibrationButtonStates(false);
         }
         
         // TODO: support this feature on Tiger

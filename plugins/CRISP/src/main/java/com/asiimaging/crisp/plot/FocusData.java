@@ -29,7 +29,6 @@ public class FocusData {
             time, position, error);
     }
     
-    // FIXME: spaces or no spaces?
     public String toStringCSV() {
         return time + "," + position + "," + error;
     }

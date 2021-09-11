@@ -19,13 +19,15 @@ import org.jfree.data.xy.XYSeriesCollection;
  */
 public class FocusDataSet {
 
+    private static final String HEADER = "Time,Position,Error";
+    
     private final ArrayList<FocusData> data;
     
     /**
      * Constructs an empty FocusDataSet to store focus curve data.
      */
     public FocusDataSet() {
-        data = new ArrayList<FocusData>();
+        data = new ArrayList<>();
     }
     
 //    @Override
@@ -33,9 +35,13 @@ public class FocusDataSet {
 //        return ""; // TODO:
 //    }
 
+    public void add(final FocusData focusData) {
+        data.add(focusData);
+    }
+    
     public static FocusDataSet createFromCSV(final List<String> csv) {
         final FocusDataSet data = new FocusDataSet();
-        data.parseCSV(csv);
+        data.fromCSV(csv);
         return data;
     }
     
@@ -49,6 +55,12 @@ public class FocusDataSet {
         return dataset;
     }
     
+    /**
+     * Parses a concatenated String of focus curve data assembled from MS2000
+     * focus curve data properties into a FocusDataSet.
+     *
+     * @param text the focus curve data
+     */
     public void parseString(final String text) {
         // remove extra white space and split on "T:"
         final String extraSpacesRemoved = text.replaceAll("\\s+", " ");
@@ -72,11 +84,11 @@ public class FocusDataSet {
     // TODO meant to parse well formed input from file being opened... doc the format
     // TODO maybe use a method to verify array?
     /**
+     * Create a FocusDataSet from a CSV file.
      * 
-     * 
-     * @param array
+     * @param array the CSV file
      */
-    public void parseCSV(final List<String> array) {
+    public void fromCSV(final List<String> array) {
         for (int i = 1; i < array.size(); i++) {
             final String[] values = array.get(i).split(",");
             data.add(new FocusData(
@@ -87,8 +99,24 @@ public class FocusDataSet {
         }
     }
     
+    /**
+     * Returns the FocusDataSet in CSV format.
+     */
+    public ArrayList<String> toCSV() {
+        final ArrayList<String> csv = new ArrayList<>(data.size()+1);
+        csv.add(HEADER);
+        for (final FocusData point : data) {
+            csv.add(point.toStringCSV());
+        }
+        return csv;
+    }
+    
+    /**
+     * Print the FocusDataSet to the console.
+     */
     public void print() {
         System.out.println("[FocusDataSet]");
+        System.out.println(HEADER);
         for (final FocusData point : data) {
             System.out.println(point.toStringCSV());
         }

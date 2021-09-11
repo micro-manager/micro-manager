@@ -67,21 +67,21 @@ public class SpinnerPanel extends Panel {
         lblPollRate = new JLabel("Polling Rate [ms]");
         
         // spinners to change CRISP values
-        spnLEDIntensity = Spinner.createIntegerSpinnner(
+        spnLEDIntensity = Spinner.createIntegerSpinner(
             Defaults.LED_INTENSITY,
             Ranges.MIN_LED_INTENSITY,
             Ranges.MAX_LED_INTENSITY,
             1
         );
         
-        spnGain = Spinner.createIntegerSpinnner(
+        spnGain = Spinner.createIntegerSpinner(
             Defaults.GAIN,
             Ranges.MIN_GAIN,
             Ranges.MAX_GAIN,
             1
         );
         
-        spnNumAverages = Spinner.createIntegerSpinnner(
+        spnNumAverages = Spinner.createIntegerSpinner(
             Defaults.NUM_AVERAGES,
             Ranges.MIN_NUM_AVERAGES,
             Ranges.MAX_NUM_AVERAGES,
@@ -102,7 +102,7 @@ public class SpinnerPanel extends Panel {
             0.05f
         );
         
-        spnPollRate = Spinner.createIntegerSpinnner(
+        spnPollRate = Spinner.createIntegerSpinner(
             Defaults.POLL_RATE_MS,
             Ranges.MIN_POLL_RATE_MS,
             Ranges.MAX_POLL_RATE_MS,
@@ -162,7 +162,7 @@ public class SpinnerPanel extends Panel {
      * Create the event handlers for Spinner objects.
      */
     private void registerEventHandlers() {
-        // changes the led intensity
+        // changes the LED intensity
         spnLEDIntensity.registerListener(event -> {
             final int ledIntensity = spnLEDIntensity.getInt();
             crisp.getSettings().setLEDIntensity(ledIntensity);
@@ -183,7 +183,7 @@ public class SpinnerPanel extends Panel {
             crisp.setNumAverages(numAverages);
         });
          
-        // set this value to the objectives numerical aperture
+        // set this value to the objective numerical aperture
         spnObjectiveNA.registerListener(event -> {
             final float objectiveNA = spnObjectiveNA.getFloat();
             crisp.getSettings().setObjectiveNA(objectiveNA);
