@@ -114,12 +114,13 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       acq_ = (MagellanAcquisition) acq;
       pixelSizeZ_ = acq_.getZStep();
 
+      AcqEngMetadata.setHeight(summaryMetadata, (int) Magellan.getCore().getImageHeight());
+      AcqEngMetadata.setWidth(summaryMetadata, (int) Magellan.getCore().getImageWidth());
+
       storage_ = new MultiResMultipageTiffStorage(dir_, name_,
                  summaryMetadata,
                  AcqEngMetadata.getPixelOverlapX(summaryMetadata),
                  AcqEngMetadata.getPixelOverlapY(summaryMetadata),
-                 (int) Magellan.getCore().getImageWidth(),
-                 (int) Magellan.getCore().getImageHeight(),
                  true, null, SAVING_QUEUE_SIZE,
                 Engine.getCore().debugLogEnabled() ? (Consumer<String>) s -> Engine.getCore().logMessage(s) : null);
 
