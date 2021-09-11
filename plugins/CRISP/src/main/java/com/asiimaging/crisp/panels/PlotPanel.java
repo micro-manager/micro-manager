@@ -92,9 +92,9 @@ public class PlotPanel extends Panel {
         PlotFrame.createPlotWindow(
             "CRISP Data Plot",
             "Focus Curve",
-            "Position",
+            "Position (\u00B5m)",
             "Error",
-            data.createXYSeries()
+            data
         );
     }
 
@@ -144,9 +144,9 @@ public class PlotPanel extends Panel {
             PlotFrame.createPlotWindow(
                 "CRISP Data Viewer",
                 "Focus Curve",
-                "Position",
+                "Position (\u00B5m)",
                 "Error",
-                data.createXYSeries()
+                data
             );
         } catch (Exception e) {
             studio.logs().showError("could not open the file: " + file.toString());
