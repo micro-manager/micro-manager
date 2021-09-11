@@ -6,25 +6,26 @@
  */
 package com.asiimaging.crisp.plot;
 
+
+import java.awt.Color;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
-
 import javax.swing.JFrame;
 
+import com.asiimaging.crisp.data.Icons;
+import com.asiimaging.crisp.utils.FileUtils;
+import com.asiimaging.ui.Button;
+import net.miginfocom.swing.MigLayout;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
-//import org.jfree.chart.plot.XYPlot;
-//import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYDataset;
-//import org.jfree.data.xy.XYSeries;
-//import org.jfree.data.xy.XYSeriesCollection;
-
-import com.asiimaging.crisp.data.Icons;
+import org.micromanager.internal.utils.FileDialogs;
 
 /**
  * Creates a custom JFrame to display data plots.
@@ -39,15 +40,29 @@ public class PlotFrame extends JFrame {
     
     private JFreeChart chart;
     private ChartPanel panel;
+    private FocusDataSet data;
+
+    private final Button btnSaveData;
+    private final FileDialogs.FileType FOCUS_CURVE_FILE_TYPE;
     
     public PlotFrame(final String title) {
         super(title);
-        chart = null;
-        panel = null;
+        FOCUS_CURVE_FILE_TYPE = new FileDialogs.FileType(
+            "FOCUS_CURVE_DATA",
+            "Focus Curve Data (.csv)",
+            "",
+            false,
+            "csv"
+        );
         
         // set size and location to default values
         setLocation(WINDOW_LOCATION_X, WINDOW_LOCATION_Y);
         setSize(new Dimension(WINDOW_SIZE_X, WINDOW_SIZE_Y));
+        setMinimumSize(new Dimension(WINDOW_SIZE_X/2, WINDOW_SIZE_Y/2));
+        
+        // ui elements
+        btnSaveData = new Button("Save Data");
+        registerEventHandlers();
         
         // set the window icon to be a microscope
         setIconImage(Icons.MICROSCOPE.getImage());
@@ -61,11 +76,18 @@ public class PlotFrame extends JFrame {
             final String plotTitle, 
             final String xAxisLabel, 
             final String yAxisLabel, 
-            final XYDataset dataset) {
+            final FocusDataSet data) {
         
-        final PlotFrame plot = new PlotFrame(windowTitle);
+        // create an XYSeries to use in JFreeChart
+        final XYDataset dataset = data.createXYSeries();
         
-        plot.chart = ChartFactory.createScatterPlot(
+        // create the frame using MigLayout
+        final PlotFrame plotFrame = new PlotFrame(windowTitle);
+        plotFrame.setLayout(new MigLayout("", "", ""));
+        plotFrame.data = data;
+        
+        // create the plot
+        plotFrame.chart = ChartFactory.createScatterPlot(
             plotTitle,
             xAxisLabel,
             yAxisLabel,
@@ -75,21 +97,55 @@ public class PlotFrame extends JFrame {
             false, // use tooltips
             false  // generate urls
         );
-
-        plot.panel = new ChartPanel(plot.chart);
-        plot.setContentPane(plot.panel);
-        plot.setVisible(true);
-        return plot;
+        
+        // plot style for dark mode
+        plotFrame.chart.setBackgroundPaint(Color.DARK_GRAY);
+        plotFrame.chart.getTitle().setPaint(Color.WHITE);
+        final XYPlot plot = plotFrame.chart.getXYPlot();
+        plot.getDomainAxis().setLabelPaint(Color.WHITE);
+        plot.getRangeAxis().setLabelPaint(Color.WHITE);
+        plot.setDomainGridlinePaint(Color.DARK_GRAY);
+        plot.setRangeGridlinePaint(Color.DARK_GRAY);
+        plot.getDomainAxis().setTickLabelPaint(Color.WHITE);
+        plot.getRangeAxis().setTickLabelPaint(Color.WHITE);
+        
+        // Override the resize method for ChartPanel
+        plotFrame.panel = new ChartPanel(plotFrame.chart) {
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(plotFrame.getWidth(), plotFrame.getHeight());
+            }
+        };
+        
+        // add components to frame
+        plotFrame.add(plotFrame.panel, "wrap");
+        plotFrame.add(plotFrame.btnSaveData, "");
+        plotFrame.setVisible(true);
+        return plotFrame;
     }
     
-//        final XYPlot plot = (XYPlot)chart.getPlot();
-//        plot.setBackgroundPaint(Color.white);
-//        plot.setRangeGridlinePaint(Color.lightGray);
-        
-//        final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-//        renderer.setSeriesPaint(0, Color.BLUE); // line color
-//        renderer.setSeriesStroke(0, new BasicStroke(1.0f)); // stroke weight
-//        plot.setRenderer(renderer);
+    private void registerEventHandlers() {
+        btnSaveData.registerListener(e -> {
+            // open a file browser
+            final File file = FileDialogs.openFile(
+                    this,
+                    "Please select the file to open",
+                    FOCUS_CURVE_FILE_TYPE
+            );
+
+            if (file == null) {
+                return; // no selection => early exit
+            }
+
+            // save the focus curve data as CSV
+            try {
+                FileUtils.saveFile(data.toCSV(), file.toString());
+            } catch (IOException ex) {
+                // TODO: log or show the error
+                //DialogUtils.showMessage(btnSaveData, "Failed to save the data.");
+            }
+        });
+    }
     
     /**
      * Save the plot as a PNG file. Image size depends
@@ -104,6 +160,7 @@ public class PlotFrame extends JFrame {
             final File file = new File(filepath);
             ChartUtils.saveChartAsPNG(file, chart, size.width, size.height);
         } catch (IOException e) {
+           // TODO: log or show error
            //ReportingUtils.showError("Could not save the plot as a PNG file.");
         }
     }
