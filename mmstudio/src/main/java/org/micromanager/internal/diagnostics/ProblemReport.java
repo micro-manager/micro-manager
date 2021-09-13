@@ -23,17 +23,18 @@ import com.google.gson.JsonSerializer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.stream.Collectors;
+
 import mmcorej.CMMCore;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -402,37 +403,10 @@ public final class ProblemReport {
    }
 
    private static String readTextFile(File file) throws IOException {
-      // Important: do NOT try to use java.nio mapped file channel to read.
-      // Windows will not be able to delete a file once it has been mapped in
-      // the current process, no matter how correctly we "close" it.
-      Reader reader;
-      try {
-         reader = new FileReader(file);
-      } catch (java.io.FileNotFoundException e) {
-         throw new IOException(e.getMessage());
-      }
-      long freeMemory = Runtime.getRuntime().freeMemory();
-      int sbSize = (int) Math.min(Integer.MAX_VALUE, freeMemory / 6);
-      if (file.length() < sbSize) {
-         sbSize = (int) file.length();
-      }
-      StringBuilder sb = new StringBuilder(sbSize);
-      try {
-         file.getUsableSpace();
-         if (freeMemory > 6 * file.length()) {
-            int read;
-            char[] buf = new char[8192];
-            while ((read = reader.read(buf)) > 0) {
-               sb.append(buf, 0, read);
-            }
-         } else {
-            ReportingUtils.showError(file.getAbsolutePath() + " too large to read into memory.");
-            throw new IOException("File too large to read into memory.");
-         }
-      } finally {
-         reader.close();
-      }
-      return sb.toString();
+      // On Windows, the files may contain CRLF newlines, so it is important
+      // to read as text, line by line.
+      return Files.lines(file.toPath()).
+         collect(Collectors.joining("\n"));
    }
 
    private static void writeTextFile(java.io.File file, String text) {
