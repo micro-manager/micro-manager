@@ -18,6 +18,7 @@ public final class ProblemReportFormatter {
     * Version history:
     * 2    Introduced versioning.
     * 2.1  Added Pid field.
+    * 3    Removed personal info fields.
     */
 
    /**
