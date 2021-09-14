@@ -19,10 +19,12 @@ public class Ranges {
     public static final int MAX_LED_INTENSITY = 100;
     
     // integer sliders
-    public static final int MIN_GAIN = 1;
-    public static final int MAX_GAIN = 100;
+    public static final int MIN_LOOP_GAIN = 0;
+    public static final int MAX_LOOP_GAIN = 100;
     public static final int MIN_NUM_AVERAGES = 0;
-    public static final int MAX_NUM_AVERAGES = 8;
+    public static final int MAX_NUM_AVERAGES = 10;
+    public static final int MIN_UPDATE_RATE_MS = 0;
+    public static final int MAX_UPDATE_RATE_MS = 255;
     public static final int MIN_POLL_RATE_MS = 50;
     public static final int MAX_POLL_RATE_MS = 5000;
     
