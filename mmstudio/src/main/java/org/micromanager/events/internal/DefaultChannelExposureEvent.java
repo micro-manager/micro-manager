@@ -1,6 +1,8 @@
 package org.micromanager.events.internal;
 
-public class DefaultChannelExposureEvent {
+import org.micromanager.events.ChannelExposureEvent;
+
+public class DefaultChannelExposureEvent implements ChannelExposureEvent {
    private final double newExposureTime_;
    private final String channelGroup_;
    private final String channel_;
