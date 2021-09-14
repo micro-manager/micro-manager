@@ -31,7 +31,8 @@ import javax.swing.Icon;
 public interface IntroPlugin extends MMPlugin {
    /**
     * Provide a "splash" image to display at the top of the intro dialog. If
-    * this method returns null, then the default µManager logo will be used.
+    * this method returns null, then the default Micro-Manager logo will be
+    * used.
     *
     * @return The image to use at the top of the intro dialog, or null.
     */
