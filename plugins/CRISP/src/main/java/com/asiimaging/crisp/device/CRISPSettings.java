@@ -17,6 +17,7 @@ public class CRISPSettings {
     private String name;
     private int gain;
     private int ledIntensity;
+    private int updateRateMs;
     private int numAverages;
     private float objectiveNA;
     private float lockRange;
@@ -29,6 +30,7 @@ public class CRISPSettings {
         this.name = name;
         this.gain = 1;
         this.ledIntensity = 50;
+        this.updateRateMs = 10;
         this.numAverages = 1;
         this.objectiveNA = 0.65f;
         this.lockRange = 1.0f;
@@ -37,13 +39,15 @@ public class CRISPSettings {
     public CRISPSettings(
             final String name, 
             final int gain, 
-            final int ledIntensity, 
+            final int ledIntensity,
+            final int updateRateMs,
             final int numAverages, 
             final float objectiveNA, 
             final float lockRange) {
         this.name = name;
         this.gain = gain;
         this.ledIntensity = ledIntensity;
+        this.updateRateMs = updateRateMs;
         this.numAverages = numAverages;
         this.objectiveNA = objectiveNA;
         this.lockRange = lockRange;
@@ -52,8 +56,8 @@ public class CRISPSettings {
     @Override
     public String toString() {
         return String.format(
-            "%s[name=\"%s\", gain=%s, ledIntensity=%s, numAverages=%s, objectiveNa=%s, lockRange=%s]", 
-            getClass().getSimpleName(), name, gain, ledIntensity, numAverages, objectiveNA, lockRange
+            "%s[name=\"%s\", gain=%s, ledIntensity=%s, updateRateMs=%s, numAverages=%s, objectiveNA=%s, lockRange=%s]",
+            getClass().getSimpleName(), name, gain, ledIntensity, updateRateMs, numAverages, objectiveNA, lockRange
         );
     }
 
@@ -64,7 +68,11 @@ public class CRISPSettings {
     public int getLEDIntensity() {
         return ledIntensity;
     }
-    
+
+    public int getUpdateRateMs() {
+        return updateRateMs;
+    }
+
     public int getNumAverages() {
         return numAverages;
     }
@@ -87,6 +95,10 @@ public class CRISPSettings {
     
     public void setLEDIntensity(final int n) {
         ledIntensity = n;
+    }
+
+    public void setUpdateRateMs(final int n) {
+        updateRateMs = n;
     }
 
     public void setNumAverages(final int n) {
