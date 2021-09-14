@@ -224,7 +224,6 @@ public class CRISP {
     public String getFirmwareVersion() {
         String result = "";
         try {
-            System.out.println(deviceName);
             if (deviceType == ControllerType.TIGER) {
                 result = core.getProperty(deviceName, "FirmwareVersion");
             } else {
