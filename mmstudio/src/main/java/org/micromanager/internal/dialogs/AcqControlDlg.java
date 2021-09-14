@@ -376,6 +376,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             }
          }
       };
+      mmStudio_.events().registerForEvents(this);
       super.addWindowFocusListener(windowFocusListener);
    }
 
@@ -1014,7 +1015,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    /**
     * Called when the GUI needs updating.
     *
-    * @param event Event signaling GUI Refresh reuest.
+    * @param event Event signaling GUI Refresh request.
     */
    @Subscribe
    public void onGUIRefresh(GUIRefreshEvent event) {

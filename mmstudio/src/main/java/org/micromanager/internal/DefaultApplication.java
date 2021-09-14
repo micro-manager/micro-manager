@@ -97,7 +97,8 @@ public class DefaultApplication implements Application {
       try {
          channelGroup = studio_.core().getChannelGroup();
          channel = studio_.core().getCurrentConfigFromCache(channelGroup);
-         storeChannelExposureTime(channelGroup, channel, exposureTime);
+         studio_.events().post(new DefaultChannelExposureEvent(exposureTime,
+               channelGroup, channel, true));
       } catch (Exception e) {
          studio_.logs().logError("Unable to determine channel group");
       }
@@ -109,18 +110,15 @@ public class DefaultApplication implements Application {
             studio_.core().waitForDevice(studio_.core().getCameraDevice());
          } catch (Exception e) {
             ReportingUtils.logError(e, "Failed to set core exposure time.");
+            try {
+               double exposure = studio_.core().getExposure();
+               studio_.events().post(new DefaultChannelExposureEvent(exposure,
+                     channelGroup, channel, true));
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex, "Failed to read exposure time.");
+            }
          }
          studio_.live().setSuspended(false);
-      }
-
-      // Display the new exposure time
-      double exposure;
-      try {
-         exposure = studio_.core().getExposure();
-         studio_.events().post(new DefaultChannelExposureEvent(exposure,
-                  channelGroup, channel, true));
-      } catch (Exception e) {
-         ReportingUtils.logError(e, "Couldn't set exposure time.");
       }
    }
 
