@@ -187,7 +187,7 @@ public final class ImageJBridge {
 
       imagePlus_ = MMImagePlus.create(this);
 
-      imagePlus_.setStack("New µManager-ImageJ Bridge", proxyStack_);
+      imagePlus_.setStack("New Micro-Manager-to-ImageJ Bridge", proxyStack_);
       imagePlus_.setOpenAsHyperStack(true);
       applyColorMode(colorModeStrategy_);
 
