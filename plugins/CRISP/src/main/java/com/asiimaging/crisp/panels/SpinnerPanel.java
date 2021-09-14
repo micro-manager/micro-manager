@@ -29,14 +29,16 @@ public class SpinnerPanel extends Panel {
     private JLabel lblDeviceAxis;
     private JLabel lblLEDIntensity;
     private JLabel lblObjectiveNA;
-    private JLabel lblGain;
+    private JLabel lblLoopGain;
     private JLabel lblNumAverages;
+    private JLabel lblUpdateRateMs;
     private JLabel lblLockRange;
     private JLabel lblPollRate;
     private JLabel lblSelectSettings;
     private Spinner spnLEDIntensity;
-    private Spinner spnGain;
+    private Spinner spnLoopGain;
     private Spinner spnNumAverages;
+    private Spinner spnUpdateRateMs;
     private Spinner spnObjectiveNA;
     private Spinner spnLockRange;
     private Spinner spnPollRate;
@@ -59,8 +61,9 @@ public class SpinnerPanel extends Panel {
         lblDeviceAxis = new JLabel("Axis");
         lblLEDIntensity = new JLabel("LED Intensity [%]");
         lblObjectiveNA = new JLabel("Objective NA");
-        lblGain = new JLabel("Loop Gain");
+        lblLoopGain = new JLabel("Loop Gain");
         lblNumAverages = new JLabel("Averaging");
+        lblUpdateRateMs = new JLabel("Update Rate [ms]");
         lblLockRange = new JLabel("Lock Range [mm]");
         lblPollRate = new JLabel("Polling Rate [ms]");
         
@@ -71,14 +74,21 @@ public class SpinnerPanel extends Panel {
             Ranges.MAX_LED_INTENSITY,
             1
         );
-        
-        spnGain = Spinner.createIntegerSpinner(
-            Defaults.GAIN,
-            Ranges.MIN_GAIN,
-            Ranges.MAX_GAIN,
+
+        spnLoopGain = Spinner.createIntegerSpinner(
+            Defaults.LOOP_GAIN,
+            Ranges.MIN_LOOP_GAIN,
+            Ranges.MAX_LOOP_GAIN,
             1
         );
-        
+
+        spnUpdateRateMs = Spinner.createIntegerSpinner(
+            Defaults.UPDATE_RATE_MS,
+            Ranges.MIN_UPDATE_RATE_MS,
+            Ranges.MAX_UPDATE_RATE_MS,
+            1
+        );
+
         spnNumAverages = Spinner.createIntegerSpinner(
             Defaults.NUM_AVERAGES,
             Ranges.MIN_NUM_AVERAGES,
@@ -124,8 +134,9 @@ public class SpinnerPanel extends Panel {
         // tooltips for the spinners
         lblPollRate.setToolTipText("The rate in milliseconds that CRISP is polled to update the status text.");
         lblObjectiveNA.setToolTipText("The numerical aperture of the objective.");
-        lblGain.setToolTipText("");
-        lblNumAverages.setToolTipText(""); 
+        lblLoopGain.setToolTipText("");
+        lblNumAverages.setToolTipText("");
+        lblUpdateRateMs.setToolTipText("Set the update rate for CRISP trajectory.");
         lblLockRange.setToolTipText("The range of the focus lock.");
         lblLEDIntensity.setToolTipText("The intensity of the LED.");
     
@@ -141,10 +152,12 @@ public class SpinnerPanel extends Panel {
         add(spnLEDIntensity, "wrap");
         add(lblObjectiveNA, "");
         add(spnObjectiveNA, "wrap");
-        add(lblGain, "");
-        add(spnGain, "wrap");
+        add(lblLoopGain, "");
+        add(spnLoopGain, "wrap");
         add(lblNumAverages, "");
         add(spnNumAverages, "wrap");
+        add(lblUpdateRateMs, "");
+        add(spnUpdateRateMs, "wrap");
         add(lblLockRange, "");
         add(spnLockRange, "wrap");
         add(lblPollRate, "");
@@ -166,12 +179,19 @@ public class SpinnerPanel extends Panel {
             crisp.getSettings().setLEDIntensity(ledIntensity);
             crisp.setLEDIntensity(ledIntensity);
         });
-         
+
         // changes the gain multiplier
-        spnGain.registerListener(event -> {
-            final int gain = spnGain.getInt();
+        spnLoopGain.registerListener(event -> {
+            final int gain = spnLoopGain.getInt();
             crisp.getSettings().setGain(gain);
             crisp.setGain(gain);
+        });
+
+        // changes the update rate in milliseconds
+        spnUpdateRateMs.registerListener(event -> {
+            final int updateRateMs = spnUpdateRateMs.getInt();
+            crisp.getSettings().setUpdateRateMs(updateRateMs);
+            crisp.setUpdateRateMs(updateRateMs);
         });
 
         // changes the number of samples to average
@@ -286,8 +306,9 @@ public class SpinnerPanel extends Panel {
      * Note: Only happens once at application startup, no need for thread.
      */
     public void update() {
-        spnGain.setInt(crisp.getGain());
+        spnLoopGain.setInt(crisp.getGain());
         spnLEDIntensity.setInt(crisp.getLEDIntensity());
+        spnUpdateRateMs.setInt(crisp.getUpdateRateMs());
         spnNumAverages.setInt(crisp.getNumAverages());
         spnObjectiveNA.setFloat(crisp.getObjectiveNA());
         spnLockRange.setFloat(crisp.getLockRange());
@@ -301,8 +322,9 @@ public class SpinnerPanel extends Panel {
      * @param settings the {@code CRISPSettings} to update
      */
     public void updateSpinnersFromSettings(final CRISPSettings settings) {
-        spnGain.setInt(settings.getGain());
+        spnLoopGain.setInt(settings.getGain());
         spnLEDIntensity.setInt(settings.getLEDIntensity());
+        spnUpdateRateMs.setInt(settings.getUpdateRateMs());
         spnNumAverages.setInt(settings.getNumAverages());
         spnObjectiveNA.setFloat(settings.getObjectiveNA());
         spnLockRange.setFloat(settings.getLockRange());
@@ -337,7 +359,18 @@ public class SpinnerPanel extends Panel {
     public void setPollingCheckBox(final boolean state) {
         chkEnablePolling.setSelected(state);
     }
-    
+
+    /**
+     * Enable or disable the UpdateRateMs spinner.
+     * Firmware version 3.38 is required for Tiger.
+     *
+     * @param state true or false
+     */
+    public void setEnabledUpdateRateSpinner(final boolean state) {
+        lblUpdateRateMs.setEnabled(state);
+        spnUpdateRateMs.setEnabled(state);
+    }
+
     public boolean isPollingEnabled() {
         return chkEnablePolling.isSelected();
     }
