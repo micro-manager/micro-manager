@@ -18,9 +18,7 @@ import com.asiimaging.ui.ComboBox;
 import com.asiimaging.ui.Panel;
 import com.asiimaging.ui.Spinner;
 
-import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import java.util.Objects;
 
 /**
