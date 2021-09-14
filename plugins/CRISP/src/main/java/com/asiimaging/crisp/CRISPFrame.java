@@ -18,8 +18,6 @@ import javax.swing.JLabel;
 import com.asiimaging.crisp.device.CRISP;
 import com.asiimaging.crisp.device.CRISPTimer;
 import com.asiimaging.ui.Panel;
-import com.google.gson.Gson;
-import mmcorej.DeviceType;
 import org.micromanager.Studio;
 
 import com.asiimaging.crisp.data.Icons;
