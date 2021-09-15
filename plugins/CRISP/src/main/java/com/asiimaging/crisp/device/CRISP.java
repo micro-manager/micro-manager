@@ -7,7 +7,6 @@
 package com.asiimaging.crisp.device;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import org.micromanager.Studio;
@@ -151,7 +150,8 @@ public class CRISP {
         return new CRISPSettings(
             "Current Values",
             getGain(),
-            getLEDIntensity(), 
+            getLEDIntensity(),
+            getUpdateRateMs(),
             getNumAverages(),
             getObjectiveNA(),
             getLockRange()
@@ -220,6 +220,21 @@ public class CRISP {
         return deviceName;
     }
 
+    // TODO: Make a base class for generic properties?
+    public String getFirmwareVersion() {
+        String result = "";
+        try {
+            if (deviceType == ControllerType.TIGER) {
+                result = core.getProperty(deviceName, "FirmwareVersion");
+            } else {
+                result = core.getProperty(deviceName,"Version");
+            }
+        } catch (Exception e) {
+            studio.logs().logError("Could not get the firmware version!");
+        }
+        return result;
+    }
+    
     /**
      * Returns {@code true} if the device is in the "In Focus" state.
      *
