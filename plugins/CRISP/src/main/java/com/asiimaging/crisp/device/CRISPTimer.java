@@ -29,7 +29,7 @@ public class CRISPTimer {
     public CRISPTimer(final CRISP crisp) {
         this.crisp = crisp;
         skipCounter = 0;
-        skipRefresh = 20;
+        skipRefresh = 10; // this value changes based on pollRateMs
         pollRateMs = 250;
     }
     
@@ -125,13 +125,10 @@ public class CRISPTimer {
      * @param rate the polling rate in milliseconds
      */
     public void setPollRateMs(final int rate) {
-        timer.setDelay(rate);
-        skipRefresh = Math.round(5000.0f/rate);
+        skipRefresh = Math.round(2500.0f/rate);
         pollRateMs = rate;
+        timer.setDelay(rate);
     }
 
-    public void setSkipCounter(final int n) {
-        skipCounter = n;
-    }
 }
 

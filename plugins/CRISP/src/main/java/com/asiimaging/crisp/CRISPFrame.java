@@ -131,15 +131,14 @@ public class CRISPFrame extends JFrame {
             buttonPanel.setCalibrationButtonStates(false);
         }
         
-        // TODO: better method for parsing version strings
         // disable update rate spinner if using old firmware
-        final String version = crisp.getFirmwareVersion();
         if (crisp.getDeviceType() == ControllerType.TIGER) {
-            if (!version.startsWith("3.38")) {
+            if (crisp.getFirmwareVersion() < 3.38) {
                 spinnerPanel.setEnabledUpdateRateSpinner(false);
             }
         } else {
-            if (!version.startsWith("USB-9.2n")) {
+            if (crisp.getFirmwareVersion() < 9.2
+                    || crisp.getFirmwareVersionLetter() < 'n') {
                 spinnerPanel.setEnabledUpdateRateSpinner(false);
             }
         }
@@ -250,11 +249,8 @@ public class CRISPFrame extends JFrame {
         return spinnerPanel;
     }
 
-    public CRISPTimer getTimer() {
-        return timer;
-    }
-
     public CRISP getCRISP() {
         return crisp;
     }
+    
 }

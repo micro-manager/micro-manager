@@ -13,8 +13,8 @@ package com.asiimaging.crisp.data;
 public final class Defaults {
     
     // CRISPSettings
-    public static final int LOOP_GAIN = 1;
-    public static final int NUM_AVERAGES = 1;
+    public static final int LOOP_GAIN = 10;
+    public static final int NUM_AVERAGES = 0;
     public static final int LED_INTENSITY = 50;
     public static final int UPDATE_RATE_MS = 10;
     public static final float LOCK_RANGE = 1.0f;

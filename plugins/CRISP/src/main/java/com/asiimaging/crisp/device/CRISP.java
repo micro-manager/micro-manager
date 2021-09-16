@@ -42,6 +42,12 @@ public class CRISP {
     /** The name of the device. */
     private String deviceName;
 
+    /** The version number of the firmware. */
+    private double firmwareVersion;
+
+    /** The letter after the firmware version number (MS2000 only). */
+    private char firmwareVersionLetter;
+    
     /** The type of controller CRISP is connected to. */
     private ControllerType deviceType;
 
@@ -79,6 +85,9 @@ public class CRISP {
         deviceType = ControllerType.NONE;
         settings = new ArrayList<>();
 
+        firmwareVersion = 0.0;
+        firmwareVersionLetter = Character.MIN_VALUE;
+        
         // always start with the default settings
         settings.add(new CRISPSettings(CRISPSettings.DEFAULT_PROFILE_NAME));
     }
@@ -86,10 +95,9 @@ public class CRISP {
     @Override
     public String toString() {
         return String.format(
-            "%s[deviceName=%s, deviceType=%s]", 
-            getClass().getSimpleName(), 
-            deviceName.isEmpty() ? "\"\"" : deviceName, 
-            deviceType
+            "%s[deviceName=%s, deviceType=%s]",
+            getClass().getSimpleName(),
+            deviceName, deviceType
         );
     }
 
@@ -220,19 +228,32 @@ public class CRISP {
         return deviceName;
     }
 
-    // TODO: Make a base class for generic properties?
-    public String getFirmwareVersion() {
-        String result = "";
+    public double getFirmwareVersion() {
+        return firmwareVersion;
+    }
+
+    public char getFirmwareVersionLetter() {
+        return firmwareVersionLetter;
+    }
+    
+    // TODO: base class for generic methods? FirmwareVersion in prop names?
+    /**
+     * Sets firmwareVersion and firmwareVersionLetter by querying the device and parsing the String.
+     */
+    private void setFirmwareVersion() {
         try {
             if (deviceType == ControllerType.TIGER) {
-                result = core.getProperty(deviceName, "FirmwareVersion");
-            } else {
-                result = core.getProperty(deviceName,"Version");
+                final String version = core.getProperty(deviceName, "FirmwareVersion");
+                firmwareVersion = Double.parseDouble(version);
+            } else { // MS2000
+                final String version = core.getProperty(deviceName,"Version");
+                final String v = version.split("-")[1];
+                firmwareVersion = Double.parseDouble(v.substring(0, v.length()-2));
+                firmwareVersionLetter = v.charAt(v.length()-2);
             }
         } catch (Exception e) {
-            studio.logs().logError("Could not get the firmware version!");
+            studio.logs().showError("could not get the firmware version!");
         }
-        return result;
     }
     
     /**
@@ -244,7 +265,7 @@ public class CRISP {
         return getState().equals("In Focus");
     }
     
-    // NOTE: this is a long running task, use a separate thread when calling this
+    // NOTE: this is a long-running task, use a separate thread when calling this
     public void getFocusCurve() {
         try {
             core.setProperty(deviceName, PropName.MS2000.OBTAIN_FOCUS_CURVE, PropValue.MS2000.DO_IT);
@@ -660,8 +681,16 @@ public class CRISP {
      */
     public void setStateLogCal(final CRISPTimer timer) {
         try {
-            // controller becomes unresponsive during loG_cal => skip polling a few timer ticks
-            timer.onLogCal();
+            // controller becomes unresponsive during loG_cal => skip polling for a few timer ticks
+            if (deviceType == ControllerType.TIGER) {
+                if (firmwareVersion < 3.38) {
+                    timer.onLogCal();
+                }
+            } else { // MS2000 (this has been fixed in Whizkid at least since ~2016)
+                if (firmwareVersion < 9.2 && firmwareVersionLetter < 'j') {
+                    timer.onLogCal();
+                }
+            }
             core.setProperty(deviceName, PropName.CRISP_STATE, PropValue.STATE_LOG_CAL);
         } catch (Exception e) {
             studio.logs().showError("Failed to set the state to loG_cal");
