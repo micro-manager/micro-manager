@@ -92,7 +92,7 @@ public class PlotPanel extends Panel {
         PlotFrame.createPlotWindow(
             "CRISP Data Plot",
             "Focus Curve",
-            "Position (\u00B5m)",
+            "Position", // (\u00B5m)
             "Error",
             data
         );
@@ -144,7 +144,7 @@ public class PlotPanel extends Panel {
             PlotFrame.createPlotWindow(
                 "CRISP Data Viewer",
                 "Focus Curve",
-                "Position (\u00B5m)",
+                "Position", // (\u00B5m)
                 "Error",
                 data
             );
