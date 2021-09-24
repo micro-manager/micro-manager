@@ -192,6 +192,9 @@ public class CRISP {
                 }
             }
         }
+        if (found) {
+            setFirmwareVersion(); // sets firmwareVersion and firmwareVersionLetter
+        }
         return found;
     }
     
