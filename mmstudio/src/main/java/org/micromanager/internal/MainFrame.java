@@ -473,7 +473,7 @@ public final class MainFrame extends JFrame {
       subPanel.add(createUtilityButtons(), "span, wrap");
       subPanel.add(createAlertPanel(), "span, wrap");
       overPanel.add(subPanel, "gapbottom push, grow 0, pushx 0");
-      overPanel.add(createConfigurationControls(), "grow, wrap, pushx 100");
+      overPanel.add(createConfigurationControls(), "grow, wrap, , pushy 100, pushx 100");
       // Must not be a completely empty label or else our size calculations
       // fail when setting the minimum size of the frame.
       labelImageDimensions_ = createLabel(" ", false);
