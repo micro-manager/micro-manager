@@ -12,6 +12,7 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Array;
@@ -684,7 +685,11 @@ public final class DefaultPropertyMap implements PropertyMap {
                }
             }
          }
-         Files.move(tempFile, file);
+         try {
+            Files.move(tempFile, file);
+         } catch (FileNotFoundException fne) {
+            return false;
+         }
          return true;
       }
       finally {
