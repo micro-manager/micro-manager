@@ -263,7 +263,7 @@ public class XYNavigator {
                      new DefaultXYStagePositionChangedEvent(xyStage_, xs[0], ys[0]));
             }
          } catch (Exception ex) {
-            ReportingUtils.logError(ex.getMessage());
+            ReportingUtils.showError(ex.getMessage());
          }
       }
    }
