@@ -1,7 +1,11 @@
+import org.micromanager.internal.MMStudio;
 import org.micromanager.data.Image;
 import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.Datastore;
 
-
+import java.util.List;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -10,7 +14,8 @@ import ij.macro.Functions;
 import ij.macro.MacroExtension;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
-import org.micromanager.internal.MMStudio;
+import ij.measure.Calibration;
+
 
 public class MM2_MacroExtensions implements PlugIn, MacroExtension {
    @Override
