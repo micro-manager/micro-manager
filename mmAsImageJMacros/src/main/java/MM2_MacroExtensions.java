@@ -23,7 +23,8 @@ public class MM2_MacroExtensions implements PlugIn, MacroExtension {
 	}
 
 	private final ExtensionDescriptor[] extensions = { ExtensionDescriptor.newDescriptor("snap", this),
-			ExtensionDescriptor.newDescriptor("setExposure", this, ARG_NUMBER),
+			ExtensionDescriptor.newDescriptor("snapAndProcess", this),
+                        ExtensionDescriptor.newDescriptor("setExposure", this, ARG_NUMBER),
 			ExtensionDescriptor.newDescriptor("moveRelativeXYZ", this, ARG_NUMBER, ARG_NUMBER, ARG_NUMBER),
 			ExtensionDescriptor.newDescriptor("moveAbsoluteXYZ", this, ARG_NUMBER, ARG_NUMBER, ARG_NUMBER),
 			ExtensionDescriptor.newDescriptor("getStageXYZ", this, ARG_NUMBER + ARG_OUTPUT, ARG_NUMBER + ARG_OUTPUT,
