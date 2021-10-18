@@ -33,7 +33,8 @@ public class MM2_MacroExtensions implements PlugIn, MacroExtension {
 			ExtensionDescriptor.newDescriptor("setConfig", this, ARG_STRING, ARG_STRING),
 			ExtensionDescriptor.newDescriptor("getDevices", this, ARG_STRING + ARG_OUTPUT),
 			ExtensionDescriptor.newDescriptor("getDeviceProperties", this, ARG_STRING, ARG_STRING + ARG_OUTPUT),
-			ExtensionDescriptor.newDescriptor("setDeviceProperty", this, ARG_STRING, ARG_STRING, ARG_STRING), };
+			ExtensionDescriptor.newDescriptor("setDeviceProperty", this, ARG_STRING, ARG_STRING, ARG_STRING), 
+			ExtensionDescriptor.newDescriptor("getDeviceProperty", this, ARG_STRING, ARG_STRING, ARG_STRING + ARG_OUTPUT), };
 
 	@Override
 	public ExtensionDescriptor[] getExtensionFunctions() {
@@ -155,6 +156,17 @@ public class MM2_MacroExtensions implements PlugIn, MacroExtension {
 				try {
 					studio.core().setProperty(dev, prop, value);
 					studio.app().refreshGUI();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				break;
+			}
+			case "getDeviceProperty": {
+				MMStudio studio = MMStudio.getInstance();
+				String dev = ((String) args[0]);
+				String prop = ((String) args[1]);
+				try {
+ 					((String[]) args[2])[0] = studio.core().getProperty(dev, prop);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
