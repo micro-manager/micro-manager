@@ -51,6 +51,31 @@ public class MM2_MacroExtensions implements PlugIn, MacroExtension {
 				imp.show();
 				break;
 			}
+			case "snapAndProcess": {
+				Studio studio = MMStudio.getInstance();
+				Datastore store = studio.data().createRAMDatastore();
+				Pipeline pipeLine = studio.data().copyApplicationPipeline(store, true);
+				List<Image> imgList;
+				try {
+				    imgList = studio.acquisitions().snap();                
+				    Image img = imgList.get(0);
+				    pipeLine.insertImage(img);
+				    Coords coords = studio.data().createCoords("t=0,p=0,c=0,z=0");
+				    Image processedImg = store.getImage(coords);
+				    Double px = processedImg.getMetadata().getPixelSizeUm();
+				    ImageProcessor ip = studio.data().ij().createProcessor(processedImg);
+				    ImagePlus imp = new ImagePlus("Image", ip);
+				    Calibration cal = imp.getCalibration();
+				    cal.pixelWidth = px;
+				    cal.pixelHeight = px;
+				    cal.pixelDepth = 1;
+				    cal.setUnit("micron");
+				    imp.show();
+				} catch (Exception e) {
+				    e.printStackTrace();
+				}
+				break;
+		    	}
 			case "setExposure": {
 				MMStudio studio = MMStudio.getInstance();
 				double exposure = ((Double) args[0]).intValue();
