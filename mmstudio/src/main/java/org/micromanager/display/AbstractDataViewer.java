@@ -86,7 +86,7 @@ public abstract class AbstractDataViewer implements DataViewer {
     * event dispatch thread. Make sure you are on the right thread when posting
     * such events.</p>
     *
-    * Viewers are required to post the following events:
+    * <p>Viewers are required to post the following events:</p>
     * <ul>
     * <li>{@link DisplaySettingsChangedEvent} (posted by this abstract class)
     * <li>{@link DisplayPositionChangedEvent} (posted by this abstract class)

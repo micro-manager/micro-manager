@@ -17,12 +17,12 @@ package org.micromanager.display.internal.animate;
  * An object that computes the next data position to render in an animated
  * display.
  *
- * This object encapsulates the concept of a position within a dataset and acts
- * as a cursor for animating the display of data.
+ * <p>This object encapsulates the concept of a position within a dataset and acts
+ * as a cursor for animating the display of data.</p>
  *
- * Because datasets can add data points or structure over time, there are the
+ * <p>Because datasets can add data points or structure over time, there are the
  * concepts of partial and full data positions. A partial position may specify
- * only part of the information to select an actual data point
+ * only part of the information to select an actual data point</p>
  *
  * @param <P> the type representing a position in the dataset
  * @author Mark A. Tsuchida
@@ -31,8 +31,8 @@ public interface AnimationStateDelegate<P> {
    /**
     * Get the current data position.
     *
-    * The returned position is a full position with respect to the current
-    * shape of the data.
+    * <p>The returned position is a full position with respect to the current
+    * shape of the data.</p>
     *
     * @return the current data position
     */
@@ -41,9 +41,8 @@ public interface AnimationStateDelegate<P> {
    /**
     * Set the current data position.
     *
-    * <p>
-    * The current data position held by this object does not change other than
-    * by this method and {@code advanceAnimationPosition}.
+    * <p>The current data position held by this object does not change other than
+    * by this method and {@code advanceAnimationPosition}.</p>
     *
     * @param position the new current data position
     */
@@ -52,15 +51,15 @@ public interface AnimationStateDelegate<P> {
    /**
     * Advance the current (last rendered) data position by the given number of
     * frames.
-    * <p>
-    * The number of frames can be theoretical and thus need not be an integer,
-    * but should correspond to number of data points.
-    * <p>
-    * If the position is not to change (because {@code frames} is less than
-    * 0.5), then null should be returned.
-    * <p>
-    * The current data position held by this object does not change other than
-    * by this method and {@code setAnimationPosition}.
+    *
+    * <p>The number of frames can be theoretical and thus need not be an integer,
+    * but should correspond to number of data points.</p>
+    *
+    * <p>If the position is not to change (because {@code frames} is less than
+    * 0.5), then null should be returned.</p>
+    *
+    * <p>The current data position held by this object does not change other than
+    * by this method and {@code setAnimationPosition}.</p>
     *
     * @param frames frames to advance
     * @return the new data position, or null if no change

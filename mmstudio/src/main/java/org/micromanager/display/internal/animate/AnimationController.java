@@ -24,27 +24,31 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.data.Coords;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 
 /**
  * Coordinates and moderates animation of displayed data position.
  *
- * This class is responsible for timing and coordination, but not for
- * determining the sequence of images to animate.
+ * <p>This class is responsible for timing and coordination, but not for
+ * determining the sequence of images to animate.</p>
  *
- * All events resulting in a position change ("scrolling" in user terms) pass
+ * <p>All events resulting in a position change ("scrolling" in user terms) pass
  * through this object, including: playback animation, new incoming images,
- * manual scrolling by the user, and events from interlinked display windows.
+ * manual scrolling by the user, and events from interlinked display windows.</p>
  *
- * The data position type {@code P} is parameterized to support possible future
+ * <p>The data position type {@code P} is parameterized to support possible future
  * extensions such as animation in dilated physical time for non-uniformly
- * spaced time lapse datasets.
+ * spaced time lapse datasets.</p>
  *
  * @param <P> the type used to describe a data position to display
  * @author Mark A. Tsuchida
  */
 public final class AnimationController<P> {
+   /**
+    * Indicates how to handle a new position request.
+    */
    public enum NewPositionHandlingMode {
       IGNORE,
       JUMP_TO_AND_STAY,
@@ -54,43 +58,48 @@ public final class AnimationController<P> {
    /**
     * Listeners are notified on an otherwise nonblocking thread owned by the
     * animation controller (never the EDT).
-    * @param <P> For now only Coords, but parameterized to support future 
+    *
+    * @param <P> For now only Coords, but parameterized to support future
     *            extensions
    */
    public interface Listener<P> {
       void animationShouldDisplayDataPosition(P position);     
       /**
-       * Update range but don't display
+       * Update range but don't display.
+       *
        * @param position Coord 
        */
-      void animationAcknowledgeDataPosition(P position); 
+
+      void animationAcknowledgeDataPosition(P position);
+
       void animationWillJumpToNewDataPosition(P position);
+
       void animationDidJumpToNewDataPosition(P position);
+
       /**
-       * What could this signify? Docs can be useful!
+       * After a certain amount of time, a newly displayed image is no longer considered new.
+       * This function signifies that the image is no longer "new".
        */
       void animationNewDataPositionExpired();
       // TODO Need to also notify of animation start/stop
    }
 
    private final EventListenerSupport<Listener> listeners_ =
-         new EventListenerSupport<> (Listener.class, Listener.class.getClassLoader());
+         new EventListenerSupport<>(Listener.class, Listener.class.getClassLoader());
 
    private final AnimationStateDelegate<P> sequencer_;
 
    private int tickIntervalMs_ = 100;
    private double animationRateFPS_ = 10.0;
-   private NewPositionHandlingMode newPositionMode_ =
-         NewPositionHandlingMode.JUMP_TO_AND_STAY;
-   private final Map<String, NewPositionHandlingMode> newPositionModes_ = 
+   private final Map<String, NewPositionHandlingMode> newPositionModes_ =
            new HashMap<>();
    private int newPositionFlashDurationMs_ = 500;
 
-   private AtomicBoolean animationEnabled_ = new AtomicBoolean(false);
+   private final AtomicBoolean animationEnabled_ = new AtomicBoolean(false);
 
    private final ScheduledExecutorService scheduler_ =
-         Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory.
-               createThreadFactory("AnimationController"));
+         Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory
+               .createThreadFactory("AnimationController"));
 
    private ScheduledFuture<?> scheduledTickFuture_;
    private ScheduledFuture<?> newDataPositionExpiredFuture_;
@@ -111,10 +120,20 @@ public final class AnimationController<P> {
       sequencer_ = sequencer;
    }
 
+   /**
+    * Adds a listener to be notified of animation events.
+    *
+    * @param listener Implementation of the Listener class to be added.
+    */
    public synchronized void addListener(Listener listener) {
       listeners_.addListener(listener, true);
    }
 
+   /**
+    * Removes the Listener from the list of Listenered to be notified of animation events.
+    *
+    * @param listener Listener to be removed.
+    */
    public synchronized void removeListener(Listener listener) {
       listeners_.removeListener(listener);
    }
@@ -131,13 +150,19 @@ public final class AnimationController<P> {
       stopAnimation();
       try {
          scheduler_.awaitTermination(1, TimeUnit.HOURS);
-      }
-      catch (InterruptedException notUsedByUs) {
+      } catch (InterruptedException notUsedByUs) {
          Thread.currentThread().interrupt();
       }
+      ReportingUtils.logDebugMessage("Scheduler in AnimationController was shut down");
       perfMon_ = null;
    }
 
+   /**
+    * Sets the desired interval between automatically updating the displayed image.
+    * Such as - for instance - while playing back time lapse movies.
+    *
+    * @param intervalMs Interval between displaying images.
+    */
    public synchronized void setTickIntervalMs(int intervalMs) {
       if (intervalMs <= 0) {
          throw new IllegalArgumentException("interval must be positive");
@@ -164,6 +189,11 @@ public final class AnimationController<P> {
       return tickIntervalMs_;
    }
 
+   /**
+    * Sets the animation rate in frames per second.
+    *
+    * @param fps Rate in frames per second.
+    */
    public synchronized void setAnimationRateFPS(double fps) {
       if (fps < 0.0) {
          throw new IllegalArgumentException("fps must not be negative");
@@ -175,28 +205,21 @@ public final class AnimationController<P> {
       return animationRateFPS_;
    }
 
-   public synchronized void setNewPositionHandlingMode(String axis, 
-           NewPositionHandlingMode mode) {
+   /**
+    * Sets the mode to be used when displaying a new Position.
+    *
+    * @param axis Axis to which this new mode applies.
+    * @param mode Mode to be used.
+    */
+   public synchronized void setNewPositionHandlingMode(String axis, NewPositionHandlingMode mode) {
       if (mode == null) {
          throw new NullPointerException("mode must not be null");
       }
       newPositionModes_.put(axis, mode);
    }
-   
-   public synchronized void setNewPositionHandlingMode(NewPositionHandlingMode mode) {
-      if (mode == null) {
-         throw new NullPointerException("mode must not be null");
-      }
-      newPositionMode_ = mode;
-   }
-   
-   public synchronized NewPositionHandlingMode getNewPositionHandlingMode(
-              String axis) {
-      return newPositionModes_.get(axis);
-   }
 
-   public synchronized NewPositionHandlingMode getNewPositionHandlingMode() {
-      return newPositionMode_;
+   public synchronized NewPositionHandlingMode getNewPositionHandlingMode(String axis) {
+      return newPositionModes_.get(axis);
    }
 
    public synchronized void setNewPositionFlashDurationMs(int durationMs) {
@@ -210,13 +233,19 @@ public final class AnimationController<P> {
       return newPositionFlashDurationMs_;
    }
 
+   /**
+    * Starts the display animation.
+    */
    public synchronized void startAnimation() {
-      if (animationEnabled_.compareAndSet(true,true)) {
+      if (animationEnabled_.compareAndSet(true, true)) {
          return;
       }
       startTicks(tickIntervalMs_, tickIntervalMs_);
    }
 
+   /**
+    * Stops the display animation.
+    */
    public void stopAnimation() {
       if (animationEnabled_.compareAndSet(false, false)) {
          return;
@@ -230,6 +259,11 @@ public final class AnimationController<P> {
       return animationEnabled_.get();
    }
 
+   /**
+    * Forces the display to the requested display position.
+    *
+    * @param position Position that should be displayed.
+    */
    public synchronized void forceDataPosition(final P position) {
       // Always call listeners from scheduler thread
       scheduler_.schedule(new Runnable() {
@@ -275,22 +309,22 @@ public final class AnimationController<P> {
            
       Coords.CoordsBuilder newDisplayPositionBuilder = newPosition.copyBuilder();
       Coords.CoordsBuilder snapBackPositionBuilder = newPosition.copyBuilder();
-      Boolean foundAxisToBeIgnored = false;
-      Boolean foundFlashBackAxis = false;
+      boolean foundAxisToBeIgnored = false;
+      boolean foundFlashBackAxis = false;
       if (oldPosition != null) {
          for (String axis : newPositionModes_.keySet()) {
-             if (oldPosition.getIndex(axis) != newPosition.getIndex(axis)) {
-                if (newPositionModes_.get(axis).equals(
+            if (oldPosition.getIndex(axis) != newPosition.getIndex(axis)) {
+               if (newPositionModes_.get(axis).equals(
                                NewPositionHandlingMode.IGNORE)) {
-                     newDisplayPositionBuilder.index(axis, oldPosition.getIndex(axis));
-                     snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
-                     foundAxisToBeIgnored = true;
-                } else if (newPositionModes_.get(axis).equals(
+                  newDisplayPositionBuilder.index(axis, oldPosition.getIndex(axis));
+                  snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
+                  foundAxisToBeIgnored = true;
+               } else if (newPositionModes_.get(axis).equals(
                               NewPositionHandlingMode.FLASH_AND_SNAP_BACK)) {
-                     snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
-                     foundFlashBackAxis = true; 
-                }
-             }
+                  snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
+                  foundFlashBackAxis = true;
+               }
+            }
          }
       }
       final Coords newDisplayPosition = newDisplayPositionBuilder.build();
@@ -396,10 +430,8 @@ public final class AnimationController<P> {
       // Wait for cancellation
       try {
          scheduledTickFuture_.get();
-      }
-      catch (ExecutionException | CancellationException e) {
-      }
-      catch (InterruptedException notUsedByUs) {
+      } catch (ExecutionException | CancellationException e) {
+      } catch (InterruptedException notUsedByUs) {
          Thread.currentThread().interrupt();
       }
       scheduledTickFuture_ = null;
@@ -410,6 +442,9 @@ public final class AnimationController<P> {
    }
 
    private synchronized void handleTimerTick() {
+      if (scheduler_.isShutdown()) {
+         return;
+      }
       long thisTickNs = System.nanoTime();
       long elapsedNs = thisTickNs - lastTickNs_;
       lastTickNs_ = thisTickNs;
