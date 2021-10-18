@@ -1,7 +1,11 @@
+import org.micromanager.internal.MMStudio;
 import org.micromanager.data.Image;
 import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.Datastore;
 
-
+import java.util.List;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -10,7 +14,8 @@ import ij.macro.Functions;
 import ij.macro.MacroExtension;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
-import org.micromanager.internal.MMStudio;
+import ij.measure.Calibration;
+
 
 public class MM2_MacroExtensions implements PlugIn, MacroExtension {
    @Override
@@ -23,7 +28,8 @@ public class MM2_MacroExtensions implements PlugIn, MacroExtension {
 	}
 
 	private final ExtensionDescriptor[] extensions = { ExtensionDescriptor.newDescriptor("snap", this),
-			ExtensionDescriptor.newDescriptor("setExposure", this, ARG_NUMBER),
+			ExtensionDescriptor.newDescriptor("snapAndProcess", this),
+                        ExtensionDescriptor.newDescriptor("setExposure", this, ARG_NUMBER),
 			ExtensionDescriptor.newDescriptor("moveRelativeXYZ", this, ARG_NUMBER, ARG_NUMBER, ARG_NUMBER),
 			ExtensionDescriptor.newDescriptor("moveAbsoluteXYZ", this, ARG_NUMBER, ARG_NUMBER, ARG_NUMBER),
 			ExtensionDescriptor.newDescriptor("getStageXYZ", this, ARG_NUMBER + ARG_OUTPUT, ARG_NUMBER + ARG_OUTPUT,
