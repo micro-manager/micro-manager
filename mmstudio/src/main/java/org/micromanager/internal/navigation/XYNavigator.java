@@ -117,7 +117,7 @@ public class XYNavigator {
          dest.setLocation(-dest.getX(), -dest.getY());
       } else {
          // if camera does not toStageSpace image orientation, we'll toStageSpace for it here:
-         dest.setLocation(x * pixSizeUm, y * pixSizeUm);
+         dest.setLocation(- x * pixSizeUm, - y * pixSizeUm);
          if (!correction_) {
             // Order: swapxy, then mirror axis
             if (transposeXY_) {
