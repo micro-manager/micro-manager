@@ -124,8 +124,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    // A way to know from a non-EDT thread that the display has definitely
    // closed (may not be true for a short period after closing)
-   // Guarded by monitor on this
+   // Guarded by monitor on itself
    private volatile boolean closeCompleted_;
+   private final Object closeGuard_ = new Object();
 
    private DisplayWindowControlsFactory controlsFactory_;
 
@@ -220,7 +221,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                  builder.dataProvider_.getSummaryMetadata());
       }
       if (initialDisplaySettings == null) {
-         initialDisplaySettings = new DefaultDisplaySettings.LegacyBuilder().build();
+         initialDisplaySettings = DefaultDisplaySettings.builder().build();
       }
 
       final DisplayController instance =
@@ -628,9 +629,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // way to correctly recombine stats with newer images (when update rate
       // is finite).
       if (images.size() > 1) {
-         Collections.sort(images, (Image o1, Image o2) ->
-                 new Integer(o1.getCoords().getChannel())
-                       .compareTo(o2.getCoords().getChannel()));
+         images.sort((Image o1, Image o2) ->
+               Integer.compare(o1.getCoords().getChannel(), o2.getCoords().getChannel()));
       }
 
 
@@ -742,8 +742,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public List<Overlay> getOverlays() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<List<Overlay>> edtFuture = new FutureTask<>(
-               () -> getOverlays());
+         RunnableFuture<List<Overlay>> edtFuture = new FutureTask<>(this::getOverlays);
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
@@ -919,7 +918,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (perfMon_ != null) {
          perfMon_.sampleTimeInterval("NewImageEvent");
       }
-      synchronized (this) {
+      synchronized (closeGuard_) {
          if (closeCompleted_) {
             return;
          }
@@ -1046,7 +1045,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public ImagePlus getImagePlus() {
       if (!SwingUtilities.isEventDispatchThread()) {
          RunnableFuture<ImagePlus> edtFuture = new FutureTask<>(
-               () -> getImagePlus());
+               this::getImagePlus);
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
@@ -1064,8 +1063,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public boolean requestToClose() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<Boolean> edtFuture = new FutureTask<>(
-               () -> requestToClose());
+         RunnableFuture<Boolean> edtFuture = new FutureTask<>(this::requestToClose);
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
@@ -1088,55 +1086,57 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    @Override
-   public synchronized void close() {
+   public  void close() {
       // close is called from DisplayUIController.windowClosing and from
       // store.requestToClose, so we need to accomodate multiple calls
       // This is a workaround a bug...
-      if (closeCompleted_) {
-         return;
-      }
-      postEvent(DataViewerWillCloseEvent.create(this));
-
-      // attempt to save Display Settings
-      // TODO: Are there problems with multiple viewers on one Datastore?
-      if (dataProvider_ instanceof Datastore) {
-         Datastore ds = (Datastore) dataProvider_;
-         if (ds.getSavePath() != null) {
-            ((DefaultDisplaySettings) getDisplaySettings()).save(ds.getSavePath());
+      synchronized (closeGuard_) {
+         if (closeCompleted_) {
+            return;
          }
-      }
-      dataProvider_.unregisterForEvents(this);
-      try {
-         computeQueue_.removeListener(this);
-         computeQueue_.shutdown();
-      } catch (InterruptedException ie) {
-         // TODO: report exception
-      }
-      perfMon_ = null;
-      animationController_.shutdown();
-      animationController_.removeListener(this);
-      animationController_ = null;
-      controlsFactory_ = null;
-      runnablePool_ = null;
+         postEvent(DataViewerWillCloseEvent.create(this));
 
-      studio_.events().unregisterForEvents(this);
+         // attempt to save Display Settings
+         // TODO: Are there problems with multiple viewers on one Datastore?
+         if (dataProvider_ instanceof Datastore) {
+            Datastore ds = (Datastore) dataProvider_;
+            if (ds.getSavePath() != null) {
+               ((DefaultDisplaySettings) getDisplaySettings()).save(ds.getSavePath());
+            }
+         }
+         dataProvider_.unregisterForEvents(this);
+         try {
+            computeQueue_.removeListener(this);
+            computeQueue_.shutdown();
+         } catch (InterruptedException ie) {
+            // TODO: report exception
+         }
+         perfMon_ = null;
+         animationController_.shutdown();
+         animationController_.removeListener(this);
+         animationController_ = null;
+         controlsFactory_ = null;
+         runnablePool_ = null;
 
-      // need to set the flag before closing the UIController,
-      // otherwise we wil re-enter this function and write bad
-      // display settings to file
-      closeCompleted_ = true;
-      if (uiController_ == null) {
-         ReportingUtils.logError(
-               "DisplayController's reference to UIController is null where it shouldn't be");
-      } else {
-         uiController_.close();
-         uiController_ = null;
+         studio_.events().unregisterForEvents(this);
+
+         // need to set the flag before closing the UIController,
+         // otherwise we wil re-enter this function and write bad
+         // display settings to file
+         closeCompleted_ = true;
+         if (uiController_ == null) {
+            ReportingUtils.logError(
+                  "DisplayController's reference to UIController is null where it shouldn't be");
+         } else {
+            uiController_.close();
+            uiController_ = null;
+         }
+         dispose(); // calls AbstractDataViewer.dispose, which shuts down its eventbus.
+
+         // TODO This event should probably be posted in response to window event
+         // (which can be done with a ComponentListener for the JFrame)
+         postEvent(DataViewerDidBecomeInvisibleEvent.create(this));
       }
-      dispose(); // calls AbstractDataViewer.dispose, which shuts down its eventbus.
-
-      // TODO This event should probably be posted in response to window event
-      // (which can be done with a ComponentListener for the JFrame)
-      postEvent(DataViewerDidBecomeInvisibleEvent.create(this));
    }
 
    /**
@@ -1198,7 +1198,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void toFront() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> toFront());
+         SwingUtilities.invokeLater(this::toFront);
       }
 
       if (uiController_ == null) {
@@ -1210,8 +1210,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public Window getWindow() throws IllegalStateException {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<Window> edtFuture = new FutureTask<>(
-               () -> getWindow());
+         RunnableFuture<Window> edtFuture = new FutureTask<>(this::getWindow);
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();

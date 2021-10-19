@@ -86,7 +86,7 @@ public abstract class AbstractDataViewer implements DataViewer {
     * event dispatch thread. Make sure you are on the right thread when posting
     * such events.</p>
     *
-    * Viewers are required to post the following events:
+    * <p>Viewers are required to post the following events:</p>
     * <ul>
     * <li>{@link DisplaySettingsChangedEvent} (posted by this abstract class)
     * <li>{@link DisplayPositionChangedEvent} (posted by this abstract class)
@@ -220,7 +220,7 @@ public abstract class AbstractDataViewer implements DataViewer {
       if (position == null) {
          throw new NullPointerException("Position must not be null");
       }
-      synchronized (this) {
+      synchronized (AbstractDataViewer.this) {
          final Coords oldPosition = getDisplayPosition();
          if (!forceRedisplay && position.equals(oldPosition)) {
             return;
@@ -265,7 +265,7 @@ public abstract class AbstractDataViewer implements DataViewer {
       if (newPosition == null) {
          throw new NullPointerException("Position must not be null");
       }
-      synchronized (this) {
+      synchronized (AbstractDataViewer.this) {
          if (!displayPosition_.equals(oldPosition)) {
             return false;
          }

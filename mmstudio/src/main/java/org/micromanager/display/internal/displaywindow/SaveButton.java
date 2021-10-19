@@ -48,18 +48,19 @@ public final class SaveButton extends JButton {
                if (dp instanceof Datastore) {
                   Datastore ds = (Datastore) dp;
                   String newSavePath = ds.save(display.getWindow(), false);
-                  if (newSavePath != null && 
-                          display.getDisplaySettings() instanceof DefaultDisplaySettings) {
-                     ( (DefaultDisplaySettings) display.getDisplaySettings()).
-                             save(newSavePath);
+                  if (newSavePath != null
+                        && display.getDisplaySettings() instanceof DefaultDisplaySettings) {
+                     ((DefaultDisplaySettings) display.getDisplaySettings())
+                           .save(newSavePath);
                   }
                } else {
                   // TODO: save button should never have been shown
                   // For now, just log
-                  ReportingUtils.logError("Programming error! Save button pressed, but non-writeable DataProvider found.");
+                  ReportingUtils.logError(
+                        "Programming error! Save button pressed, but non-writeable DataProvider found.");
                }
             } catch (IOException ex) {
-               studio.logs().showError(ex, "Failed to save data to " + savePath );
+               studio.logs().showError(ex, "Failed to save data to " + savePath);
             }
          }
       });

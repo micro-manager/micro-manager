@@ -23,13 +23,12 @@ import org.micromanager.display.DisplayWindow;
  * This is to {@code DisplayWindow} what {@code AbstractDataViewer} is to
  * {@code DataViewer}.
  *
- * Segregate support of deprecated methods from the main implementation.
+ * <p>Segregate support of deprecated methods from the main implementation.
  *
  * @author Mark A. Tsuchida
  */
 public abstract class DisplayWindowAPIAdapter extends AbstractDataViewer
-      implements DisplayWindow
-{
+      implements DisplayWindow {
    protected DisplayWindowAPIAdapter(DisplaySettings initialDisplaySettings) {
       super(initialDisplaySettings);
    }
@@ -51,8 +50,7 @@ public abstract class DisplayWindowAPIAdapter extends AbstractDataViewer
    public Window getAsWindow() {
       try {
          return getWindow();
-      }
-      catch (IllegalStateException e) {
+      } catch (IllegalStateException e) {
          return null;
       }
    }
