@@ -221,7 +221,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                  builder.dataProvider_.getSummaryMetadata());
       }
       if (initialDisplaySettings == null) {
-         initialDisplaySettings = new DefaultDisplaySettings.LegacyBuilder().build();
+         initialDisplaySettings = DefaultDisplaySettings.builder().build();
       }
 
       final DisplayController instance =
@@ -629,9 +629,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // way to correctly recombine stats with newer images (when update rate
       // is finite).
       if (images.size() > 1) {
-         Collections.sort(images, (Image o1, Image o2) ->
-                 new Integer(o1.getCoords().getChannel())
-                       .compareTo(o2.getCoords().getChannel()));
+         images.sort((Image o1, Image o2) ->
+               Integer.compare(o1.getCoords().getChannel(), o2.getCoords().getChannel()));
       }
 
 
@@ -743,8 +742,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public List<Overlay> getOverlays() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<List<Overlay>> edtFuture = new FutureTask<>(
-               () -> getOverlays());
+         RunnableFuture<List<Overlay>> edtFuture = new FutureTask<>(this::getOverlays);
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
@@ -1047,7 +1045,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public ImagePlus getImagePlus() {
       if (!SwingUtilities.isEventDispatchThread()) {
          RunnableFuture<ImagePlus> edtFuture = new FutureTask<>(
-               () -> getImagePlus());
+               this::getImagePlus);
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
@@ -1065,8 +1063,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public boolean requestToClose() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<Boolean> edtFuture = new FutureTask<>(
-               () -> requestToClose());
+         RunnableFuture<Boolean> edtFuture = new FutureTask<>(this::requestToClose);
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
@@ -1093,7 +1090,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // close is called from DisplayUIController.windowClosing and from
       // store.requestToClose, so we need to accomodate multiple calls
       // This is a workaround a bug...
-      synchronized(closeGuard_) {
+      synchronized (closeGuard_) {
          if (closeCompleted_) {
             return;
          }
@@ -1130,8 +1127,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          if (uiController_ == null) {
             ReportingUtils.logError(
                   "DisplayController's reference to UIController is null where it shouldn't be");
-         }
-         else {
+         } else {
             uiController_.close();
             uiController_ = null;
          }
@@ -1202,7 +1198,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void toFront() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> toFront());
+         SwingUtilities.invokeLater(this::toFront);
       }
 
       if (uiController_ == null) {
@@ -1214,8 +1210,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public Window getWindow() throws IllegalStateException {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<Window> edtFuture = new FutureTask<>(
-               () -> getWindow());
+         RunnableFuture<Window> edtFuture = new FutureTask<>(this::getWindow);
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
