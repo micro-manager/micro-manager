@@ -41,10 +41,11 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.overlay.AbstractOverlay;
 
 /**
- * This class draws rectangles on the overlay
+ * This class draws rectangles on the overlay.
+ *
  * @author nico
  */
-public class RectangleOverlay extends AbstractOverlay{
+public class RectangleOverlay extends AbstractOverlay {
    private int x_;
    private int y_;
    private int width_;
@@ -55,15 +56,23 @@ public class RectangleOverlay extends AbstractOverlay{
    public String getTitle() {
       return "Square Overlay";
    }
-   
-   public void set (int x, int y, int width, int height) {
+
+   /**
+    * Sets the dimensions and location of the RectangleOverlay.
+    *
+    * @param x position in pixels
+    * @param y position in pixels
+    * @param width in pixels
+    * @param height in pixels
+    */
+   public void set(int x, int y, int width, int height) {
       x_ = x;
       y_ = y;
       width_ = width;
       height_ = height;
    }
    
-   public void set (Rectangle rect) {
+   public void set(Rectangle rect) {
       set(rect.x, rect.y, rect.width, rect.height);
    }      
    
@@ -71,25 +80,24 @@ public class RectangleOverlay extends AbstractOverlay{
    public void paintOverlay(Graphics2D graphicsContext, Rectangle screenRect,
          DisplaySettings displaySettings,
          List<Image> images, Image primaryImage,
-         Rectangle2D.Float imageViewPort)
-   {
+         Rectangle2D.Float imageViewPort) {
       final double zoomRatio = imageViewPort.width / screenRect.width;
       graphicsContext.setColor(Color.yellow);
       drawRectangle(graphicsContext, (int) (x_ / zoomRatio),
               (int) (y_ / zoomRatio), 
               (int) (width_ / zoomRatio), 
-              (int) (height_ / zoomRatio) );
+              (int) (height_ / zoomRatio));
    }
    
-    void drawRectangle(Graphics2D g, final int x, final int y, final int width, 
-            final int height) {
-       g.draw(new Line2D.Float(x, y, x + width, y));
-       g.draw(new Line2D.Float(x + width, y, x+ width, y + height));
-       g.draw(new Line2D.Float(x+ width, y + height, x, y + height));
-       g.draw(new Line2D.Float(x, y + height, x, y));
-     
-       super.fireOverlayConfigurationChanged();
-    }
+   void drawRectangle(Graphics2D g, final int x, final int y, final int width,
+           final int height) {
+      g.draw(new Line2D.Float(x, y, x + width, y));
+      g.draw(new Line2D.Float(x + width, y, x + width, y + height));
+      g.draw(new Line2D.Float(x + width, y + height, x, y + height));
+      g.draw(new Line2D.Float(x, y + height, x, y));
+
+      super.fireOverlayConfigurationChanged();
+   }
    
    
 }
