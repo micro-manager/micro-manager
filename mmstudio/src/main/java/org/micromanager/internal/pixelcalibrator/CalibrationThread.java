@@ -4,6 +4,7 @@ package org.micromanager.internal.pixelcalibrator;
 import java.awt.geom.AffineTransform;
 
 /**
+ * Helper thread for pixel size calibration.
  *
  * @author nico
  */

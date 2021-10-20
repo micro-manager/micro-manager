@@ -14,16 +14,21 @@ import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.*;
-
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.MathFunctions;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * The idea is to calibrate the camera/stage spatial relation by displaying an 
@@ -37,8 +42,8 @@ import org.micromanager.internal.utils.*;
  * now, but leave here if it turns out to be useful.  To finish, look for 
  * inspiration in AutomaticCalibrationThread and ManualSImpleCalibrationThread.
  * 
- * If not used by 2019, delete.
- * 
+ * <p>If not used by 2019, delete.
+ *
  * @author nico
  */
 public class ManualPreciseCalibrationThread extends CalibrationThread {
@@ -46,8 +51,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
    private final CMMCore core_;
    private final PixelCalibratorDialog dialog_;
    private final RectangleOverlay overlay_;
-   private DisplayController dc_;
-   
+
    private Map<Point2D.Double, Point2D.Double> pointPairs_;
 
    private DisplayWindow liveWin_;
@@ -58,7 +62,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
    private double y;
    private int w;
    private int h;
-   private int side_small;
+   private int sideSmall;
 
    private class CalibrationFailedException extends Exception {
 
@@ -68,7 +72,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          super(msg);
          if (xy0_ != null) {
             try {
-               core_.setXYPosition( xy0_.x, xy0_.y);
+               core_.setXYPosition(xy0_.x, xy0_.y);
                studio_.live().snap(true);
             } catch (Exception ex) {
                // annoying but at this point better to not bother the user 
@@ -80,7 +84,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       }
    }
 
-   ManualPreciseCalibrationThread (Studio app, PixelCalibratorDialog dialog) {
+   ManualPreciseCalibrationThread(Studio app, PixelCalibratorDialog dialog) {
       studio_ = app;
       core_ = studio_.getCMMCore();
       dialog_ = dialog;
@@ -88,15 +92,15 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
    }
 
    private void cleanup() {
+      if (overlay_ != null) {
+         overlay_.setVisible(false);
+      }
+      if (liveWin_ != null) {
+         liveWin_.setCustomTitle("Preview");
          if (overlay_ != null) {
-            overlay_.setVisible(false);
+            liveWin_.removeOverlay(overlay_);
          }
-         if (liveWin_ != null) {
-            liveWin_.setCustomTitle("Preview");
-            if (overlay_ != null) {
-               liveWin_.removeOverlay(overlay_);
-            }
-         }
+      }
    }
 
 
@@ -131,8 +135,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
 
 
    private Point2D.Double runSearch(final double dxi, final double dyi)
-      throws InterruptedException, CalibrationFailedException
-   {
+         throws InterruptedException, CalibrationFailedException {
 
       double dx = dxi;
       double dy = dyi;
@@ -141,11 +144,10 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       // Now continue to double displacements and match acquired half-size 
       // images with expected half-size images
 
-      for (int i=0;i<25;i++) {
-
-         core_.logMessage(dx+","+dy+","+d);
-         if ((2*d.x+side_small/2)>=w/2 || (2*d.y+side_small/2)>=h/2 || (
-                 2*d.x-side_small/2)<-(w/2) || (2*d.y-side_small/2)<-(h/2)) {
+      for (int i = 0; i < 25; i++) {
+         core_.logMessage(dx + "," + dy + "," + d);
+         if ((2 * d.x + sideSmall / 2) >= w / 2 || (2 * d.y + sideSmall / 2) >= h / 2 || (
+                 2 * d.x - sideSmall / 2) < -(w / 2) || (2 * d.y - sideSmall / 2) < -(h / 2)) {
             break;
          }
 
@@ -155,7 +157,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          d.x *= 2;
          d.y *= 2;
 
-         d = measureDisplacement(x+dx, y+dy, d, false);
+         d = measureDisplacement(x + dx, y + dy, d, false);
          incrementProgress();
       }
       Point2D.Double stagePos;
@@ -163,10 +165,9 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          stagePos = core_.getXYStagePosition();
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         stagePos = null;
          throw new CalibrationFailedException(ex.getMessage());
       }
-      pointPairs_.put(new Point2D.Double(d.x, d.y),stagePos);
+      pointPairs_.put(new Point2D.Double(d.x, d.y), stagePos);
       return stagePos;
 
    }
@@ -174,8 +175,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
    
    private Point2D.Double measureDisplacement(double x1, double y1, Point2D.Double d,
            boolean display)
-           throws InterruptedException, CalibrationFailedException 
-   {      
+           throws InterruptedException, CalibrationFailedException {
       if (AutomaticCalibrationThread.interrupted()) {
          throw new InterruptedException();
       }
@@ -190,7 +190,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
    }
    
    private int smallestPowerOf2LessThanOrEqualTo(int x) {
-      return 1 << ((int) Math.floor(Math.log(x)/Math.log(2)));
+      return 1 << ((int) Math.floor(Math.log(x) / Math.log(2)));
    }
 
 
@@ -208,17 +208,18 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       y = p.y;
 
       // First find the smallest detectable displacement.
-      snapImageAt(x,y);
+      snapImageAt(x, y);
 
       try {
          w = studio_.live().getDisplay().getDataProvider().getAnyImage().getWidth();
          h = studio_.live().getDisplay().getDataProvider().getAnyImage().getHeight();
       } catch (IOException io) {
+         ReportingUtils.logError(io);
       }
-      int w_small = smallestPowerOf2LessThanOrEqualTo(w/4);
-      int h_small = smallestPowerOf2LessThanOrEqualTo(h/4);
-      side_small = Math.min(w_small, h_small);
-/*
+      int wSmall = smallestPowerOf2LessThanOrEqualTo(w / 4);
+      int hSmall = smallestPowerOf2LessThanOrEqualTo(h / 4);
+      sideSmall = Math.min(wSmall, hSmall);
+      /*
       referenceImage_ = getSubImage(baseImage, (-side_small/2+w/2),
               (-side_small/2+h/2),side_small,side_small);
 
@@ -230,8 +231,8 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       // we started from after having called runSearch().
       referenceImage_ = getSubImage(baseImage, (-side_small/2+w/2),
             (-side_small/2+h/2),side_small,side_small);
-*/
-      runSearch(0,0.1);
+      */
+      runSearch(0,  0.1);
 
       return MathFunctions.generateAffineTransformFromPointPairs(pointPairs_);
    }
@@ -239,11 +240,9 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
 
    private void measureCorner(final AffineTransform firstApprox, final Point c1, 
            final boolean simulate)
-      throws InterruptedException, CalibrationFailedException
-   {
+         throws InterruptedException, CalibrationFailedException {
       Point2D.Double c1d = new Point2D.Double(c1.x, c1.y);
       Point2D.Double s1 = (Point2D.Double) firstApprox.transform(c1d, null);
-      //Point2D.Double c2 = measureDisplacement(s1.x, s1.y, c1d, false, simulate);
       Point2D.Double s2;
       try {
          s2 = core_.getXYStagePosition();
@@ -254,20 +253,17 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       //pointPairs_.put(new Point2D.Double(c2.x, c2.y), s2);
       incrementProgress();
    }
-   
 
    private AffineTransform getSecondApprox(final AffineTransform firstApprox, 
-           final boolean simulate)
-      throws InterruptedException, CalibrationFailedException
-   {
+           final boolean simulate) throws InterruptedException, CalibrationFailedException {
       pointPairs_.clear();
-      int ax = w/2 - side_small/2;
-      int ay = h/2 - side_small/2;
+      int ax = w / 2 - sideSmall / 2;
+      int ay = h / 2 - sideSmall / 2;
 
-      measureCorner(firstApprox, new Point(-ax,-ay), simulate);
-      measureCorner(firstApprox, new Point(-ax,ay), simulate);
-      measureCorner(firstApprox, new Point(ax,ay), simulate);
-      measureCorner(firstApprox, new Point(ax,-ay), simulate);
+      measureCorner(firstApprox, new Point(-ax, -ay), simulate);
+      measureCorner(firstApprox, new Point(-ax, ay), simulate);
+      measureCorner(firstApprox, new Point(ax, ay), simulate);
+      measureCorner(firstApprox, new Point(ax, -ay), simulate);
       try {
          return MathFunctions.generateAffineTransformFromPointPairs(
                  pointPairs_, 2.0, Double.MAX_VALUE);
@@ -277,35 +273,34 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       return null;
    }
 
-   
+
+   /**
+    * Suppoed to do some action in response to a mouse event.
+    * In reality only check if a modifier key was pressed.
+    * Delete?
+    *
+    * @param dme DisplayMouseevent to be processed.
+    */
    @Subscribe
    public void processMouseEvent(DisplayMouseEvent dme) {
-      if (dme.getEvent().getClickCount() == 1 && 
-              dme.getEvent().getButton() == 1) {
+      if (dme.getEvent().getClickCount() == 1 && dme.getEvent().getButton() == 1) {
          int modifiersEx = dme.getEvent().getModifiersEx();
-         boolean pressed  = InputEvent.BUTTON1_DOWN_MASK == (modifiersEx & InputEvent.BUTTON1_DOWN_MASK);
-         if (pressed) {
-               
-         }
+         boolean pressed  =
+               InputEvent.BUTTON1_DOWN_MASK == (modifiersEx & InputEvent.BUTTON1_DOWN_MASK);
       }
    }
-   
 
    private AffineTransform runCalibration()
-      throws InterruptedException, CalibrationFailedException
-   {
+         throws InterruptedException, CalibrationFailedException {
       return runCalibration(false);
    }
 
-   
    private AffineTransform runCalibration(boolean simulation)
-      throws InterruptedException, CalibrationFailedException
-   {
-      pointPairs_ = new HashMap<Point2D.Double, Point2D.Double>();
+         throws InterruptedException, CalibrationFailedException {
+      pointPairs_ = new HashMap<>();
       try {
-          xy0_ = core_.getXYStagePosition();
-      }
-      catch (Exception e) {
+         xy0_ = core_.getXYStagePosition();
+      } catch (Exception e) {
          throw new CalibrationFailedException(e.getMessage());
       }
       final AffineTransform firstApprox = getFirstApprox();
@@ -315,10 +310,9 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          ReportingUtils.logMessage(secondApprox.toString());
       }
       try {
-         core_.setXYPosition( xy0_.x, xy0_.y);
+         core_.setXYPosition(xy0_.x, xy0_.y);
          studio_.live().snap(true);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new CalibrationFailedException(e.getMessage());
       }
       overlay_.setVisible(false);
@@ -338,35 +332,22 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
 
       try {
          result_ = runCalibration();
-      }
-      catch (InterruptedException e) {
+      } catch (InterruptedException e) {
          // User canceled
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override 
-            public void run() {
-               cleanup();
-               dialog_.calibrationFailed(true);
-            }
+         SwingUtilities.invokeLater(() -> {
+            cleanup();
+            dialog_.calibrationFailed(true);
+         });
+         return;
+      } catch (final CalibrationFailedException e) {
+         SwingUtilities.invokeLater(() -> {
+            cleanup();
+            ReportingUtils.showError(e);
+            dialog_.calibrationFailed(false);
          });
          return;
       }
-      catch (final CalibrationFailedException e) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override 
-            public void run() {
-               cleanup();
-               ReportingUtils.showError(e);
-               dialog_.calibrationFailed(false);
-            }
-         });
-         return;
-      }
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override 
-         public void run() {
-            dialog_.calibrationDone();
-         }
-      });
+      SwingUtilities.invokeLater(dialog_::calibrationDone);
    }
 
    private synchronized void incrementProgress() {
@@ -408,12 +389,9 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          super.add(explanationLabel_, "span 2, wrap");
 
          okButton_ = new JButton("OK");
-         okButton_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae){
-               explanationLabel_.setText(label1Text);
-               okButton_.setVisible(false);
-            }
+         okButton_.addActionListener(ae -> {
+            explanationLabel_.setText(label1Text);
+            okButton_.setVisible(false);
          });
          okButton_.setVisible(false);
          super.add(okButton_, "tag ok");
@@ -437,12 +415,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
 
       public void setLabelText(String newText) {
          if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  setLabelText(newText);
-               }
-             });
+            SwingUtilities.invokeLater(() -> setLabelText(newText));
          }
          explanationLabel_.setText(newText);
       }
@@ -450,10 +423,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       @Override
       public void dispose() {
          super.dispose();
-         if (dc_ != null) {
-            dc_.unregisterForEvents(caller_);
-         }
-         synchronized(CalibrationThread.class) {
+         synchronized (CalibrationThread.class) {
             CalibrationThread.class.notifyAll();
          }
          //running_.set(false);
