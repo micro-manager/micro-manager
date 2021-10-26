@@ -931,7 +931,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             position;
       List<Image> images;
       try {
-         images = dataProvider_.getImagesMatching(channellessPos);
+         images = dataProvider_.getImagesIgnoringAxes(position, Coords.C);
       }
       catch (IOException e) {
          // TODO Should display error
