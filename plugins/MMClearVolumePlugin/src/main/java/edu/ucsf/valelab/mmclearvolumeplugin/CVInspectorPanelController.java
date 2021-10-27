@@ -1,29 +1,11 @@
-/**
- * Binding to ClearVolume 3D viewer View Micro-Manager datasets in 3D
- *
- * AUTHOR: Nico Stuurman COPYRIGHT: Regents of the University of California,
- * 2015 
- * LICENSE: This file is distributed under the BSD license. License text is
- * included with the source distribution.
- *
- * This file is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE.
- *
- * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
- */
-
 
 package edu.ucsf.valelab.mmclearvolumeplugin;
 
 import edu.ucsf.valelab.mmclearvolumeplugin.recorder.CVSnapshot;
 import edu.ucsf.valelab.mmclearvolumeplugin.recorder.CVVideoRecorder;
-
 import edu.ucsf.valelab.mmclearvolumeplugin.slider.RangeSlider;
 import edu.ucsf.valelab.mmclearvolumeplugin.uielements.ScrollerPanel;
 import java.awt.Color;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import javax.swing.JButton;
@@ -32,14 +14,25 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.data.Coords;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
 
 /**
+ * Binding to ClearVolume 3D viewer View Micro-Manager datasets in 3D
+ *
+ * <p>AUTHOR: Nico Stuurman COPYRIGHT: Regents of the University of California,
+ * 2015
+ * LICENSE: This file is distributed under the BSD license. License text is
+ * included with the source distribution.
+ *
+ * <p>This file is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.
+ *
+ * <p>IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  *
  * @author nico
  */
@@ -49,14 +42,16 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
 
    private CVViewer viewer_;
    
-   static public final int SLIDERRANGE = 256;
-   static public final int SLIDERPIXELWIDTH = 296;
-   static public final int XAXIS = 0;
-   static public final int YAXIS = 1;
-   static public final int ZAXIS = 2;
+   public static final int SLIDERRANGE = 256;
+   public static final int SLIDERPIXELWIDTH = 296;
+   public static final int XAXIS = 0;
+   public static final int YAXIS = 1;
+   public static final int ZAXIS = 2;
    
 
-   private RangeSlider xSlider_, ySlider_, zSlider_;
+   private final RangeSlider xSlider_;
+   private RangeSlider ySlider_;
+   private RangeSlider zSlider_;
    private ScrollerPanel sp_;
    private boolean animating_ = false;
    
@@ -86,7 +81,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
            
       JButton resetButton = new JButton("Reset");
       resetButton.setToolTipText("Resets rotation, and centers the complete volume");
-      resetButton.addActionListener( (ActionEvent e) -> {
+      resetButton.addActionListener((ActionEvent e) -> {
          if (getViewer() != null) {
             getViewer().resetRotationTranslation();
          }
@@ -96,7 +91,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       
       JButton centerButton = new JButton("Center");
       centerButton.setToolTipText("Moves middle of visible part to the center");
-      centerButton.addActionListener( (ActionEvent e) -> {
+      centerButton.addActionListener((ActionEvent e) -> {
          if (getViewer() != null) {
             getViewer().center();
          }
@@ -105,7 +100,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       
       JButton straightButton = new JButton("Straighten");
       straightButton.setToolTipText("Rotates the object back onto the xyz axes");
-      straightButton.addActionListener( (ActionEvent e) -> {
+      straightButton.addActionListener((ActionEvent e) -> {
          if (getViewer() != null) {
             getViewer().straighten();
          }
@@ -125,12 +120,15 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       xSlider_ = makeSlider(XAXIS);
       panel_.add(xSlider_, "");
       
-      JButton fullSliderRangeButton = new JButton ("Full");
+      JButton fullSliderRangeButton = new JButton("Full");
       fullSliderRangeButton.addActionListener((ActionEvent e) -> {
          if (getViewer() != null) {
-            xSlider_.setValue(0); xSlider_.setUpperValue(SLIDERRANGE);
-            ySlider_.setValue(0); ySlider_.setUpperValue(SLIDERRANGE);
-            zSlider_.setValue(0); zSlider_.setUpperValue(SLIDERRANGE);
+            xSlider_.setValue(0);
+            xSlider_.setUpperValue(SLIDERRANGE);
+            ySlider_.setValue(0);
+            ySlider_.setUpperValue(SLIDERRANGE);
+            zSlider_.setValue(0);
+            zSlider_.setUpperValue(SLIDERRANGE);
             // TODO: check that this triggers resetting the Viewer's ClipBox
          }
       });
@@ -151,7 +149,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       
       final JButton snapButton = new JButton("Snap 3D"); 
       snapButton.setToolTipText("Snapshot of 3D viewer");
-      snapButton.addActionListener( (ActionEvent e) -> {
+      snapButton.addActionListener((ActionEvent e) -> {
          if (getViewer() != null) {
             CVSnapshot snapper = new CVSnapshot();
             getViewer().attachRecorder(snapper);
@@ -195,8 +193,8 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    }
    * */
    
-   private static int clipValToSliderVal (float clipVal) {
-      return Math.round ( (clipVal + 1) / 2 * SLIDERRANGE );
+   private static int clipValToSliderVal(float clipVal) {
+      return Math.round((clipVal + 1) / 2 * SLIDERRANGE);
    }
 
    public CVViewer getViewer() {
@@ -209,9 +207,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    }
    
    private void toggleAnimation(boolean start) {
-      if (start) {
-         
-      }
+      // TODO: implement
    }
    
    private RangeSlider makeSlider(final int axis) {
@@ -230,12 +226,12 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       return slider;
    }
     
-    private void addLabel(String labelText) {
+   private void addLabel(String labelText) {
       JLabel label = new JLabel(labelText);
       panel_.add(label, "span 3, split 2");
-    }
-    
-    /*
+   }
+
+   /*
     @Subscribe
     public void onAcquisitionStartedEvent(AcquisitionStartedEvent ase) {
        if (attachToNew_.get()) {
@@ -247,7 +243,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
           }
        }
     }
-*/
+   */
 
    @Override
    public String getTitle() {
@@ -255,14 +251,16 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    }
 
    /**
-    * Called whenever the panel is attached to a DataViewer
+    * Called whenever the panel is attached to a DataViewer.
+    *
     * @param viewer - Viewer that the panel is attached to.
     */
    @Override
    public void attachDataViewer(DataViewer viewer) {
-        // although this should always be a valid viewer, check anyways
-      if (! (viewer instanceof CVViewer) )
+      // although this should always be a valid viewer, check anyways
+      if (!(viewer instanceof CVViewer)) {
          return;
+      }
 
       detachDataViewer();
       
@@ -278,7 +276,8 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
          zSlider_.setValue(clipValToSliderVal(clipBox[4]));
          zSlider_.setUpperValue(clipValToSliderVal(clipBox[5]));
       }
-      Coords intendedDimensions = viewer_.getDatastore().getSummaryMetadata().getIntendedDimensions();
+      Coords intendedDimensions = viewer_.getDataProvider()
+            .getSummaryMetadata().getIntendedDimensions();
       if (intendedDimensions != null) {
          if (sp_ != null) {
             sp_.stopUpdateThread();
@@ -318,7 +317,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    }
    
    @Override
-   public void setExpanded (boolean state) {
+   public void setExpanded(boolean state) {
       expanded_ = state;
    }
    

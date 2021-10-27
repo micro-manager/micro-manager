@@ -22,17 +22,15 @@ package edu.ucsf.valelab.mmclearvolumeplugin.uielements;
 
 
 import com.bulenkov.iconloader.IconLoader;
-
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.MouseEvent;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-
-import javax.swing.event.MouseInputAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.event.MouseInputAdapter;
 
 /**
  * This class displays a little play/pause icon with a single-character label,
@@ -57,9 +55,10 @@ public class ScrollBarAnimateIcon extends JButton {
    private Icon curIcon_;
 
    /**
+    * Simple constructor.
     *
-    * @param axis
-    * @param parent
+    * @param axis Axis for which to draw the animate icon.
+    * @param parent Parent UI element
     */
    public ScrollBarAnimateIcon(final String axis, final ScrollerPanel parent) {
       super();
@@ -72,6 +71,9 @@ public class ScrollBarAnimateIcon extends JButton {
      
    }
 
+   /**
+    * Initialize the icon.
+    */
    public void initialize() {
       setSize(BUTTON_WIDTH, BUTTON_HEIGHT);
       setToolTipText("Toggle animation of the " + axis_ + " axis.");
@@ -118,12 +120,14 @@ public class ScrollBarAnimateIcon extends JButton {
 
    /** 
     * Don't require more space than is needed to show the icon.
+    *
     * @return  preferred size
     */
    @Override
    public Dimension getPreferredSize() {
       return new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
    }
+
    @Override
    public Dimension getMinimumSize() {
       return new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);

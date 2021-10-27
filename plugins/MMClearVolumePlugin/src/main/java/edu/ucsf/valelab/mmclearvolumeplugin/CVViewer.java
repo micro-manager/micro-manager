@@ -13,25 +13,27 @@
  * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
+
 package edu.ucsf.valelab.mmclearvolumeplugin;
+
+// Note that this code uses imports for MMStudio internal packages.
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
+import static org.micromanager.data.internal.BufferTools.NATIVE_ORDER;
 
 import clearvolume.renderer.ClearVolumeRendererInterface;
 import clearvolume.renderer.cleargl.recorder.VideoRecorderInterface;
 import clearvolume.renderer.factory.ClearVolumeRendererFactory;
-import clearvolume.transferf.TransferFunction1D;
 import clearvolume.transferf.TransferFunctions;
-
-import com.jogamp.newt.awt.NewtCanvasAWT;
-
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.jogamp.newt.NewtFactory;
+import com.jogamp.newt.awt.NewtCanvasAWT;
 import coremem.enums.NativeTypeEnum;
 import coremem.fragmented.FragmentedMemory;
-
 import edu.ucsf.valelab.mmclearvolumeplugin.events.CanvasDrawCompleteEvent;
-
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
@@ -48,12 +50,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import javax.swing.*;
-
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import org.micromanager.LogManager;
-
 import org.micromanager.Studio;
-import org.micromanager.UserProfile;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -71,13 +71,6 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplaySettings.ColorMode;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.events.ShutdownCommencingEvent;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
@@ -85,24 +78,23 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
-import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.WindowPositioning;
-
-import static org.micromanager.data.internal.BufferTools.NATIVE_ORDER;
 
 
 /**
- * Micro-Manager DataViewer that shows 3D stack in the ClearVolume 3D Renderer
- * 
+ * Micro-Manager DataViewer that shows 3D stack in the ClearVolume 3D Renderer.
+ *
  * @author nico
  */
 public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    private DisplaySettings displaySettings_;
-   private ImageStatsProcessor imageStatsProcessor_;
+   private final ImageStatsProcessor imageStatsProcessor_;
    private final Studio studio_;
    private DataProvider dataProvider_;
    private DataViewer clonedDisplay_;
@@ -111,12 +103,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private final EventBus displayBus_;
    private final CVFrame cvFrame_;
    private int maxValue_;
-   private final Class<?> ourClass_;
    private int activeChannel_ = 0;
    private Coords lastDisplayedCoords_;
    private ImagesAndStats lastCalculatedImagesAndStats_;
    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
-            Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
+                                   Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    
    
    private class CVFrame extends JFrame {
@@ -133,6 +124,13 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       this(studio, null);
    }
 
+   /**
+    * Creates a ClearVolumeVIewer instance.  When provider is not null, will result
+    * in a display with 3D data.
+    *
+    * @param studio Entry point into everything Micro-Manager
+    * @param provider Data to be displayed
+    */
    public CVViewer(final Studio studio, final DataProvider provider) {
       // first make sure that our app's icon will not change:
       // This call still seems to generate a null pointer exception, at 
@@ -145,8 +143,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
             
       imageStatsProcessor_ = ImageStatsProcessor.create();
-      
-      ourClass_ = this.getClass();
+
       studio_ = studio;
       if (provider == null) {
          clonedDisplay_ = studio_.displays().getActiveDataViewer();
@@ -231,11 +228,14 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                          true);
          } catch (NullPointerException npe) {
             if (npe.getMessage().contains("is calling TIS")) {
-               // Error message caused by JOGL since macOS 10.13.4, cannot fix at the moment so silencing it:
+               // Error message caused by JOGL since macOS 10.13.4,
+               // cannot fix at the moment so silencing it:
                // https://github.com/processing/processing/issues/5462
-               // Some discussion on the Apple's developer forums seems to suggest that is not serious:
+               // Some discussion on the Apple's developer forums seems to
+               // suggest that is not serious:
                // https://forums.developer.apple.com/thread/105244
-               studio_.logs().logError("Null Pointer Error caused by upstream jogl code on Mac OS X since 10.13.4");
+               studio_.logs().logError(
+                     "Null Pointer Error caused by upstream jogl code on Mac OS X since 10.13.4");
             } else {
                studio_.logs().logError(npe);
             }
@@ -329,10 +329,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    private void setOneChannelVisible(int chToBeVisible) {
       for (int ch = 0; ch < dataProvider_.getNextIndex(Coords.CHANNEL); ch++) {
-         boolean setVisible = false;
-         if (ch == chToBeVisible) {
-            setVisible = true;
-         }
+         boolean setVisible = ch == chToBeVisible;
          clearVolumeRenderer_.setLayerVisible(ch, setVisible);
       }
    }
@@ -347,6 +344,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
     * There was an update to the display settings, so update the display
     * of the image to reflect the change.  Only change variables that actually
     * changed
+    *
     * @param ds New display settings 
     */
    @Override
@@ -358,16 +356,16 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             setOneChannelVisible(activeChannel_); // todo: get the channel selected in the slider
          }
       }
-      for (int ch = 0; ch < dataProvider_.getNextIndex(Coords.CHANNEL); ch++ ) {
-         if ( displaySettings_.isChannelVisible(ch) != ds.isChannelVisible(ch)) {
-            clearVolumeRenderer_.setLayerVisible(ch, ds.isChannelVisible(ch) );
+      for (int ch = 0; ch < dataProvider_.getNextIndex(Coords.CHANNEL); ch++) {
+         if (displaySettings_.isChannelVisible(ch) != ds.isChannelVisible(ch)) {
+            clearVolumeRenderer_.setLayerVisible(ch, ds.isChannelVisible(ch));
          }
          Color nc = ds.getChannelColor(ch);
          if (ds.getColorMode() == DisplaySettings.ColorMode.GRAYSCALE) {
             nc = Color.WHITE;
          }
-         if (displaySettings_.getChannelColor(ch) != nc || 
-                 displaySettings_.getColorMode() != ds.getColorMode() ) {
+         if (displaySettings_.getChannelColor(ch) != nc
+               || displaySettings_.getColorMode() != ds.getColorMode()) {
             clearVolumeRenderer_.setTransferFunction(ch, TransferFunctions.getGradientForColor(nc));
          }
 
@@ -390,19 +388,19 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          ChannelDisplaySettings displayChannelSettings = displaySettings_.getChannelSettings(ch);
          ChannelDisplaySettings dsChannelSettings = ds.getChannelSettings(ch);
 
-         if ( displayChannelSettings.getComponentSettings(0).getScalingMaximum() != 
-                 dsChannelSettings.getComponentSettings(0).getScalingMaximum()  ||
-              displayChannelSettings.getComponentSettings(0).getScalingMinimum() != 
-                 dsChannelSettings.getComponentSettings(0).getScalingMinimum()  ) {
-            float min = (float) dsChannelSettings.getComponentSettings(0).getScalingMinimum() /
-                    (float) maxValue_; 
-            float max = (float) dsChannelSettings.getComponentSettings(0).getScalingMaximum() /
-                    (float) maxValue_;
+         if (displayChannelSettings.getComponentSettings(0).getScalingMaximum()
+               != dsChannelSettings.getComponentSettings(0).getScalingMaximum()
+               || displayChannelSettings.getComponentSettings(0).getScalingMinimum()
+               != dsChannelSettings.getComponentSettings(0).getScalingMinimum()) {
+            float min = (float) dsChannelSettings.getComponentSettings(0).getScalingMinimum()
+                  / (float) maxValue_;
+            float max = (float) dsChannelSettings.getComponentSettings(0).getScalingMaximum()
+                  / (float) maxValue_;
             clearVolumeRenderer_.setTransferFunctionRange(ch, min, max);
          }
          
-         if (displayChannelSettings.getComponentSettings(0).getScalingGamma() != 
-                 dsChannelSettings.getComponentSettings(0).getScalingGamma() ) {
+         if (displayChannelSettings.getComponentSettings(0).getScalingGamma()
+               != dsChannelSettings.getComponentSettings(0).getScalingGamma()) {
             clearVolumeRenderer_.setGamma(ch, 
                     dsChannelSettings.getComponentSettings(0).getScalingGamma());
          }
@@ -483,8 +481,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
          // Only return the middle image
          
-         Coords coords = Coordinates.builder().z(nrZ / 2).channel(ch).t(0).
-                           stagePosition(0).build();
+         Coords coords = Coordinates.builder().z(nrZ / 2).channel(ch).t(0)
+               .stagePosition(0).build();
          imageList.add(dataProvider_.getImage(coords));
 
       }
@@ -498,10 +496,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    /**
-    * Draws the volume of the given time point in the viewer
+    * Draws the volume of the given time point in the viewer.
+    *
     * @param timePoint zero-based index in the time axis
     * @param position zero-based index into the position axis
-    * @throws IOException 
+    * @throws IOException Possible with disk-back Dataproviders
     */
    public final void drawVolume(final int timePoint, final int position) throws IOException {
       //if (timePoint == currentlyShownTimePoint_)
@@ -518,8 +517,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       for (int ch = 0; ch < nrCh; ch++) {
          FragmentedMemory fragmentedMemory = new FragmentedMemory();
          for (int i = 0; i < nrZ; i++) {
-            Coords coords = Coordinates.builder().z(i).channel(ch).t(timePoint).
-                                                   stagePosition(position).build();
+            Coords coords = Coordinates.builder().z(i).channel(ch).t(timePoint)
+                  .stagePosition(position).build();
             lastDisplayedCoords_ = coords;
 
             // Bypass Micro-Manager api to get access to the pixels to avoid extra copying
@@ -532,14 +531,15 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                   fragmentedMemory.add(ByteBuffer.allocateDirect(pixels.length).put(pixels));
                } else if (image.getBytesPerPixel() == 2) {
                   short[] pixels = ((ShortBuffer) image.getPixelBuffer()).array();
-                  fragmentedMemory.add(ByteBuffer.allocateDirect(2*pixels.length).order(NATIVE_ORDER).asShortBuffer().put(pixels));
+                  fragmentedMemory.add(ByteBuffer.allocateDirect(
+                        2 * pixels.length).order(NATIVE_ORDER).asShortBuffer().put(pixels));
                }
             } else {
-                // if the image is missing, replace with pixels initialized to 0
-                fragmentedMemory.add(ByteBuffer.allocateDirect(
-                        randomImage.getHeight() * 
-                        randomImage.getWidth() * 
-                        randomImage.getBytesPerPixel() ) );
+               // if the image is missing, replace with pixels initialized to 0
+               fragmentedMemory.add(ByteBuffer.allocateDirect(
+                        randomImage.getHeight()
+                              * randomImage.getWidth()
+                              * randomImage.getBytesPerPixel()));
             }
          }
 
@@ -577,7 +577,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          if (displaySettings_.getColorMode() == ColorMode.GRAYSCALE) {
             chColor = Color.WHITE;
          }
-         clearVolumeRenderer_.setLayerVisible(ch, displaySettings_.isChannelVisible(ch) );
+         clearVolumeRenderer_.setLayerVisible(ch, displaySettings_.isChannelVisible(ch));
          clearVolumeRenderer_.setTransferFunction(ch,
                  TransferFunctions.getGradientForColor(chColor));
          ChannelDisplaySettings cd = displaySettings_.getChannelSettings(ch);
@@ -609,7 +609,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    
    /**
     * I would have liked an on/off control here, but the ClearVolume api
-    * only has a toggle function
+    * only has a toggle function.
     */
    public void toggleWireFrameBox() {
       if (clearVolumeRenderer_ != null) {
@@ -629,7 +629,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }
 
-   public void resetRotationTranslation () {
+   public void resetRotationTranslation() {
       if (clearVolumeRenderer_ != null) {
          clearVolumeRenderer_.resetRotationTranslation();
          float x = clearVolumeRenderer_.getTranslationX();
@@ -640,15 +640,15 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
    
    /**
-    * Centers the visible part of the ClipBox
-    * It seems that 0, 0 is in the center of the full volume, and 
+    * Centers the visible part of the ClipBox.
+    * It seems that 0, 0 is in the center of the full volume, and
     * that -1 and 1 are at the edges of the volume
     */
    public void center() {
       if (clearVolumeRenderer_ != null) {
          float[] clipBox = clearVolumeRenderer_.getClipBox();
-         clearVolumeRenderer_.setTranslationX( -(clipBox[1] + clipBox[0]) / 2.0f);
-         clearVolumeRenderer_.setTranslationY( -(clipBox[3] + clipBox[2]) / 2.0f);
+         clearVolumeRenderer_.setTranslationX(-(clipBox[1] + clipBox[0]) / 2.0f);
+         clearVolumeRenderer_.setTranslationY(-(clipBox[3] + clipBox[2]) / 2.0f);
          // do not change TranslationZ, since that mainly changes how close we are
          // to the object, not really the rotation point
          // clearVolumeRenderer_.setTranslationZ( -5);
@@ -673,7 +673,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
    
    public void attachRecorder(VideoRecorderInterface recorder) {
-      Runnable dt = new Thread  (() -> {               
+      Runnable dt = new Thread(() -> {
          clearVolumeRenderer_.setVideoRecorder(recorder);
          clearVolumeRenderer_.toggleRecording();
          // Force an update of the display to start the recording immediately
@@ -683,34 +683,38 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
    
    public void toggleRecording() {
-      Runnable dt = new Thread(() -> {
-         clearVolumeRenderer_.toggleRecording();
-      });
+      Runnable dt = new Thread(() -> clearVolumeRenderer_.toggleRecording());
       SwingUtilities.invokeLater(dt);
    }
 
    /**
     * It appears that the clip range in the ClearVolume Renderer goes from 
-    * -1 to 1
-    * @param axis desired axies (X=0, Y=1, Z=2, defined in ClearVolumePlugin)
+    * -1 to 1.
+    *
+    * @param axis desired axis (X=0, Y=1, Z=2, defined in ClearVolumePlugin)
     * @param minVal minimum value form the slider
     * @param maxVal maxmimum value form the slider
     */
    public void setClip(int axis, int minVal, int maxVal) {
       if (clearVolumeRenderer_ != null) {
-         float min = ( (float) minVal / (float) CVInspectorPanelController.SLIDERRANGE ) * 2 - 1;
-         float max = ( (float) maxVal / (float) CVInspectorPanelController.SLIDERRANGE ) * 2 - 1;
+         float min = ((float) minVal / (float) CVInspectorPanelController.SLIDERRANGE) * 2 - 1;
+         float max = ((float) maxVal / (float) CVInspectorPanelController.SLIDERRANGE) * 2 - 1;
          float[] clipBox = clearVolumeRenderer_.getClipBox();
          switch (axis) {
-                 case CVInspectorPanelController.XAXIS : 
-                    clipBox[0] = min;  clipBox[1] = max;
-                    break;
-                 case CVInspectorPanelController.YAXIS :
-                    clipBox[2] = min;  clipBox[3] = max;
-                    break;
-                  case CVInspectorPanelController.ZAXIS :
-                    clipBox[4] = min;  clipBox[5] = max;
-                    break;
+            case CVInspectorPanelController.XAXIS :
+               clipBox[0] = min;
+               clipBox[1] = max;
+               break;
+            case CVInspectorPanelController.YAXIS :
+               clipBox[2] = min;
+               clipBox[3] = max;
+               break;
+            case CVInspectorPanelController.ZAXIS :
+               clipBox[4] = min;
+               clipBox[5] = max;
+               break;
+            default:
+               studio_.logs().logError("Unknown axis in CVViewer::SetClip");
          }
          clearVolumeRenderer_.setClipBox(clipBox); 
       }
@@ -724,7 +728,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    /**
-    * Find the first DisplayWindow attached to this dataprovider
+    * Find the first DisplayWindow attached to this dataprovider.
     *
     * @param provider first DisplayWindow or null if not found
     */
@@ -745,7 +749,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
           
       DisplaySettings.Builder newSettingsBuilder = displaySettings.copyBuilder();
       Coords baseCoords = getDisplayedImages().get(0).getCoords();
-      Double extremaPercentage = displaySettings.getAutoscaleIgnoredPercentile();
+      double extremaPercentage = displaySettings.getAutoscaleIgnoredPercentile();
       if (extremaPercentage < 0.0) {
          extremaPercentage = 0.0;
       }
@@ -757,13 +761,12 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             for (int j = 0; j < image.getNumComponents(); ++j) {
                IntegerComponentStats componentStats = 
                        lastCalculatedImagesAndStats_.getResult().get(ch).getComponentStats(0);
-               ComponentDisplaySettings.Builder ccB = csCopyBuilder.getComponentSettings(j).copyBuilder();
-               ccB.scalingRange(componentStats.
-                       getAutoscaleMinForQuantile(extremaPercentage), 
-                       componentStats.
-                       getAutoscaleMaxForQuantile(extremaPercentage));
-               ccB.scalingGamma(displaySettings.getChannelSettings(ch).
-                       getComponentSettings(j).getScalingGamma());
+               ComponentDisplaySettings.Builder ccB =
+                     csCopyBuilder.getComponentSettings(j).copyBuilder();
+               ccB.scalingRange(componentStats.getAutoscaleMinForQuantile(extremaPercentage),
+                       componentStats.getAutoscaleMaxForQuantile(extremaPercentage));
+               ccB.scalingGamma(displaySettings.getChannelSettings(ch)
+                     .getComponentSettings(j).getScalingGamma());
                csCopyBuilder.component(j, ccB.build());
             }
             newSettingsBuilder.channel(ch, csCopyBuilder.build());
@@ -785,7 +788,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    @Subscribe
    public void onDataProviderHasNewImage(DataProviderHasNewImageEvent newImage) {
-      if (dataProvider_ != newImage.getDataProvider()){
+      if (dataProvider_ != newImage.getDataProvider()) {
          return;
       }
       Coords newImageCoords = newImage.getCoords();
@@ -806,20 +809,21 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
    
    /**
-    * Check if we have all z slices for all channels at the given time point
-    * This code may be fooled by other axes in the data
+    * Check if we have all z slices for all channels at the given time point.
+    * This code may be fooled by other axes in the data.
+    *
     * @param timePointIndex - time point index
-    * @param dataProvider
-    * @param logger
-    * @return true if complete
+    * @param dataProvider - data that are being displayed
+    * @param logger - Instance of the LogManager to log errors
+    * @return true if complete, false otherwise
     */
-   public static boolean timePointComplete (final int timePointIndex, 
-           final DataProvider dataProvider, final LogManager logger ) {
+   public static boolean timePointComplete(final int timePointIndex,
+           final DataProvider dataProvider, final LogManager logger) {
       Coords zStackCoords = Coordinates.builder().t(timePointIndex).build();
       try {
          final int nrImages = dataProvider.getImagesMatching(zStackCoords).size();
-         Coords intendedDimensions = dataProvider.getSummaryMetadata().
-                 getIntendedDimensions();
+         Coords intendedDimensions = dataProvider.getSummaryMetadata()
+               .getIntendedDimensions();
          return nrImages >= intendedDimensions.getChannel() * intendedDimensions.getZ(); 
       } catch (IOException ioe) {
          logger.showError(ioe, "Error getting number of images from dataset");
@@ -828,8 +832,9 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    @Override
-   public boolean compareAndSetDisplaySettings(DisplaySettings originalSettings, DisplaySettings newSettings) {
-       if (newSettings == null) {
+   public boolean compareAndSetDisplaySettings(DisplaySettings originalSettings,
+                                               DisplaySettings newSettings) {
+      if (newSettings == null) {
          throw new NullPointerException("Display settings must not be null");
       }
       synchronized (this) {
@@ -849,7 +854,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    @Override
    public void setDisplayPosition(Coords position, boolean forceRedisplay) {
       if (forceRedisplay || !position.equals(lastDisplayedCoords_)) {
-         setDisplayedImageTo(position);
+         setDisplayPosition(position);
       }
    }
 
@@ -882,7 +887,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
            Coords newPosition, boolean forceRedisplay) {
       boolean display = originalPosition != newPosition;
       if (display || forceRedisplay) {
-         setDisplayedImageTo(newPosition);
+         setDisplayPosition(newPosition);
       }
       return display;
    }
@@ -904,12 +909,12 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    @Override
    public void addListener(DataViewerListener listener, int priority) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
    public void removeListener(DataViewerListener listener) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
@@ -925,15 +930,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       
       Coords position = lastDisplayedCoords_.copyBuilder().z(middleSlice).build();
       
-       // Always compute stats for all channels
-      Coords channellessPos = position.hasAxis(Coords.CHANNEL) ?
-            position.copyBuilder().removeAxis(Coords.CHANNEL).build() :
-            position;
+      // Always compute stats for all channels
       List<Image> images;
       try {
          images = dataProvider_.getImagesIgnoringAxes(position, Coords.C);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          // TODO Should display error
          images = Collections.emptyList();
       }
@@ -946,8 +947,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       // way to correctly recombine stats with newer images (when update rate
       // is finite).
       if (images.size() > 1) {
-         Collections.sort(images, (Image o1, Image o2) -> new Integer(o1.getCoords().getChannel()).
-                 compareTo(o2.getCoords().getChannel()));
+         Collections.sort(images, (Image o1, Image o2) -> new Integer(o1.getCoords().getChannel())
+               .compareTo(o2.getCoords().getChannel()));
       }
       
       BoundsRectAndMask selection = BoundsRectAndMask.unselected();
