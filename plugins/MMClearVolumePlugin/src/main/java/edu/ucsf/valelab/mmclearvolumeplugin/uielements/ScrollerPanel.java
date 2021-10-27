@@ -20,25 +20,26 @@
 
 package edu.ucsf.valelab.mmclearvolumeplugin.uielements;
 
+// THis class uses imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
 import com.google.common.eventbus.Subscribe;
 import edu.ucsf.valelab.mmclearvolumeplugin.CVViewer;
 import edu.ucsf.valelab.mmclearvolumeplugin.events.CanvasDrawCompleteEvent;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import net.miginfocom.swing.MigLayout;
-
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -47,23 +48,15 @@ import javax.swing.JScrollBar;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
-import org.micromanager.display.DataViewer;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.display.DataViewer;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.PopupButton;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.MMStudio;
 
 /**
  * This class displays a grid of scrollbars for selecting which images in a
@@ -73,7 +66,7 @@ public class ScrollerPanel extends JPanel {
 
    private static final long serialVersionUID = -2504635696950982031L;
 
-  // private final Studio studio_;
+   // private final Studio studio_;
    private final DataProvider dataProvider_;
    private final DataViewer display_;
    private final Thread updateThread_;
@@ -87,10 +80,10 @@ public class ScrollerPanel extends JPanel {
    private double animationFPS_ = 3.0;
    private int animationStepSize_ = 0;
    private long lastAnimationTimeMs_ = 0;
-   private long lastShownTimePoint_ = 0;;
+   private long lastShownTimePoint_ = 0;
    private static final int MAXFPS = 30;
    
-   private final String CV_ANIMATION_FPS = "Animation fps";
+   private static final String CV_ANIMATION_FPS = "Animation fps";
 
    // We turn this off when we want to update the position of several
    // scrollbars in rapid succession, so that we don't post multiple spurious
@@ -119,15 +112,14 @@ public class ScrollerPanel extends JPanel {
       // setting, it is most often set too high for our use.  Better to keep a 
       // separate fps for 3D
 
-      animationFPS_ = MMStudio.getInstance().profile().
-              getSettings(ScrollerPanel.class).getDouble(CV_ANIMATION_FPS, animationFPS_);
+      animationFPS_ = MMStudio.getInstance().profile()
+            .getSettings(ScrollerPanel.class).getDouble(CV_ANIMATION_FPS, animationFPS_);
       
       List<String> axes;
       List<String> axisOrder = dataProvider_.getSummaryMetadata().getOrderedAxes();
       if (axisOrder != null) {
          axes = axisOrder;
-      }
-      else {
+      } else {
          axes = new ArrayList<>(dataProvider_.getAxes());
       }
       for (String axis : axes) {
@@ -139,9 +131,8 @@ public class ScrollerPanel extends JPanel {
 
       // Spin up a new thread to handle changes to the scrollbar positions.
       // See runUpdateThread() for more information.
-      updateThread_ = new Thread(() -> {
-         runUpdateThread();
-      }, "ClearVolume Scrollbar panel update thread");
+      updateThread_ = new Thread(this::runUpdateThread,
+            "ClearVolume Scrollbar panel update thread");
       updateThread_.start();
       dataProvider_.registerForEvents(this);
       display_.registerForEvents(this);
@@ -179,10 +170,9 @@ public class ScrollerPanel extends JPanel {
       positionButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
       positionButton.setMinimumSize(new Dimension(30, 18));
       positionButton.setPreferredSize(new Dimension(30, 18));
-      positionButton.addActionListener((ActionEvent e) -> {
-         new PositionPopup(axis, positionButton).show(
-                 positionButton, 0, positionButton.getHeight());
-      });
+      positionButton.addActionListener((ActionEvent e) ->
+            new PositionPopup(axis, positionButton).show(
+              positionButton, 0, positionButton.getHeight()));
       add(positionButton, "grow 0");
 
       JLabel maxLabel = new JLabel("/ " + dataProvider_.getNextIndex(axis));
@@ -192,9 +182,8 @@ public class ScrollerPanel extends JPanel {
             0, dataProvider_.getNextIndex(axis));
 
       scrollbar.setMinimumSize(new Dimension(1, 1));
-      scrollbar.addAdjustmentListener((AdjustmentEvent e) -> {
-         setPosition(axis, scrollbar.getValue());
-      });
+      scrollbar.addAdjustmentListener((AdjustmentEvent e) ->
+            setPosition(axis, scrollbar.getValue()));
       add(scrollbar, "shrinkx, growx, wrap");
 
       /* Think about:
@@ -216,29 +205,23 @@ public class ScrollerPanel extends JPanel {
          SpinnerModel fpsModel = new FpsSpinnerNumberModel(animationFPS_, 1.0, 50.0);
          final JSpinner playbackFpsSpinner = new JSpinner(fpsModel);
          fpsButton_ = PopupButton.create("FPS: " + animationFPS_, playbackFpsSpinner);
-         playbackFpsSpinner.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-               animationFPS_ = (Double) playbackFpsSpinner.getValue();
-               display_.setDisplaySettings(display_.
-                       getDisplaySettings().copyBuilder().playbackFPS(animationFPS_).build());
-               fpsButton_.setText("FPS: " + animationFPS_);
-               MMStudio.getInstance().profile().
-                     getSettings(ScrollerPanel.class).putDouble(CV_ANIMATION_FPS, 
-                          animationFPS_);
-            }
+         playbackFpsSpinner.addChangeListener(e -> {
+            animationFPS_ = (Double) playbackFpsSpinner.getValue();
+            display_.setDisplaySettings(display_
+                  .getDisplaySettings().copyBuilder().playbackFPS(animationFPS_).build());
+            fpsButton_.setText("FPS: " + animationFPS_);
+            MMStudio.getInstance().profile()
+                  .getSettings(ScrollerPanel.class).putDouble(CV_ANIMATION_FPS,
+                       animationFPS_);
          });
 
          fpsButton_.setFont(fpsButton_.getFont().deriveFont(10.0f));
          int width = 24 + fpsButton_.getFontMetrics(
                  fpsButton_.getFont()).stringWidth("FPS: 100.0");
-         fpsButton_.addPopupButtonListener(new PopupButton.Listener() {
-            @Override
-            public void popupButtonWillShowPopup(PopupButton button) {
-               playbackFpsSpinner.setValue(display_.getDisplaySettings().getPlaybackFPS());
-            }
-         });
-/*
+         fpsButton_.addPopupButtonListener(
+               button -> playbackFpsSpinner.setValue(
+                     display_.getDisplaySettings().getPlaybackFPS()));
+         /*
          fpsButton_.addMouseListener(new MouseInputAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -250,7 +233,10 @@ public class ScrollerPanel extends JPanel {
       }
 
    }
-   
+
+   /**
+    * Stops the update thread.
+    */
    public void stopUpdateThread() {
       shouldStopUpdates_.set(true);      
       // also stop all ongoing animations
@@ -264,7 +250,8 @@ public class ScrollerPanel extends JPanel {
    /**
     * One of our animation icons has changed state; adjust animation for that
     * icon. Called from the ScrollbarAnimateIcon class.
-    * @param axis
+    *
+    * @param axis Axis for which to toggle animation.
     */
    public void toggleAnimation(String axis) {
       axisToState_.get(axis).isAnimated_ = !axisToState_.get(axis).isAnimated_;
@@ -282,7 +269,7 @@ public class ScrollerPanel extends JPanel {
          // We're already where we were told to go.
          return;
       }
-      boolean didChange = axisToState_.get(axis).cachedIndex_ != pos;
+      final boolean didChange = axisToState_.get(axis).cachedIndex_ != pos;
       axisToState_.get(axis).cachedIndex_ = pos;
       // Update controls: the scrollbar and text field. Avoid redundant set
       // commands to avoid posting redundant events (which could hang the EDT).
@@ -291,7 +278,8 @@ public class ScrollerPanel extends JPanel {
          scrollbar.setValue(pos);
       }
       // Add one so displayed values are 1-indexed.
-      String newText = String.valueOf(Math.min(dataProvider_.getNextIndex(axis), Math.max(0, pos + 1)));
+      String newText = String.valueOf(
+            Math.min(dataProvider_.getNextIndex(axis), Math.max(0, pos + 1)));
       JButton button = axisToState_.get(axis).posButton_;
       if (!button.getText().contentEquals(newText)) {
          button.setText(newText);
@@ -327,9 +315,9 @@ public class ScrollerPanel extends JPanel {
       display_.setDisplayPosition(target);
    }
 
-   /**
-    * One of our lock icons changed state; update lock statuses.
-    */
+   //
+   // One of our lock icons changed state; update lock statuses.
+   //
    /*
    @Subscribe
    public void onLockChanged(ScrollbarLockIcon.LockEvent event) {
@@ -338,11 +326,11 @@ public class ScrollerPanel extends JPanel {
       axisToState_.get(axis).lockState_ = lockState;
       updateAnimation();
    }
-*/
-   /**
+   */
+
+   /*
     * Display settings have changed; check for new FPS.
     * @param event
-  
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       if ( event.getDisplay().equals(display_) ) {
@@ -361,7 +349,7 @@ public class ScrollerPanel extends JPanel {
    *   */
    
 
-   /**
+   /*
     * The drawn image has (potentially) changed; start the process of updating
     * our scrollbars to match.
     */
@@ -386,12 +374,13 @@ public class ScrollerPanel extends JPanel {
     * respond to quickly enough.
     */
    private void runUpdateThread() {
-      while(!shouldStopUpdates_.get()) {
+      while (!shouldStopUpdates_.get()) {
          try {
             // Limit ourselves to about 30 FPS.
-            Thread.sleep(1000/MAXFPS);
+            Thread.sleep(1000 / MAXFPS);
+         } catch (InterruptedException e) {
+            ReportingUtils.logError(e);
          }
-         catch (InterruptedException e) {} // Ignore it.
          Coords coords = null;
          // Chew through the queue and take only the last item.
          while (!updateQueue_.isEmpty()) {
@@ -400,7 +389,7 @@ public class ScrollerPanel extends JPanel {
          if (coords == null) {
             continue;
          }
-         synchronized(this) {
+         synchronized (this) {
             shouldPostEvents_ = false;
             for (String axis : axisToState_.keySet()) {
                JScrollBar scroller = axisToState_.get(axis).scrollbar_;
@@ -453,8 +442,7 @@ public class ScrollerPanel extends JPanel {
       if (scrollbar.getMaximum() < axisLen) {
          // Expand the range on the scrollbar.
          scrollbar.setMaximum(axisLen);
-         axisToState_.get(axis).maxLabel_.setText(
-                 "/ " + (String.valueOf(axisLen)));
+         axisToState_.get(axis).maxLabel_.setText("/ " + (axisLen));
       }
       synchronized (this) {
          if (!isAnimating()) {
@@ -467,10 +455,15 @@ public class ScrollerPanel extends JPanel {
       }
       return didAddScroller;
    }
-   
+
+   /**
+    * Called when the dataProvider has a new image.
+    *
+    * @param newImage New Image in the dataProvider
+    */
    @Subscribe
    public void onDataProviderHasNewImage(DataProviderHasNewImageEvent newImage) {
-      if (dataProvider_ != newImage.getDataProvider()){
+      if (dataProvider_ != newImage.getDataProvider()) {
          return;
       }
       Coords newImageCoords = newImage.getCoords();
@@ -478,7 +471,7 @@ public class ScrollerPanel extends JPanel {
               ReportingUtils.getWrapper())) {
          updateScrollbar(Coords.T, newImageCoords.getT());
       } else if (newImageCoords.getT() > lastShownTimePoint_ + 1) {
-         updateScrollbar (Coords.T, newImageCoords.getT() - 1);
+         updateScrollbar(Coords.T, newImageCoords.getT() - 1);
       }
    }       
    
@@ -487,7 +480,7 @@ public class ScrollerPanel extends JPanel {
     * The canvas has finished drawing an image; move to the next one in our
     * animation.
     *
-    * @param event
+    * @param event SIgnals that the canvas draw was done.
     */
    @Subscribe
    public void onCanvasDrawComplete(CanvasDrawCompleteEvent event) {
@@ -532,9 +525,9 @@ public class ScrollerPanel extends JPanel {
             lastAnimationTimeMs_ = System.currentTimeMillis();
             shouldPostEvents_ = false;
             for (String axis : axisToState_.keySet()) {
-                if (axisToState_.get(axis).isAnimated_) {
-                    advancePosition(axis, animationStepSize_);
-                }
+               if (axisToState_.get(axis).isAnimated_) {
+                  advancePosition(axis, animationStepSize_);
+               }
             }
             shouldPostEvents_ = true;
             postDrawEvent();
@@ -546,8 +539,7 @@ public class ScrollerPanel extends JPanel {
       // running).
       if (lastAnimationTimeMs_ == 0) {
          animationTimer_.schedule(task, 0);
-      }
-      else {
+      } else {
          // Target delay between updates
          int delayMs = 1000 / updateFPS;
          long sleepTime = Math.max(0,
@@ -604,7 +596,13 @@ public class ScrollerPanel extends JPanel {
     */
    public class PositionPopup extends JPopupMenu {
       private static final long serialVersionUID = -9058662228484402861L;
-      
+
+      /**
+       * Constructs the Popup.
+       *
+       * @param axis axis for which to create a pop up
+       * @param button button to be used
+       */
       public PositionPopup(final String axis, JButton button) {
          super.add(new JLabel("Set index: "));
          final JTextField field = new JTextField(button.getText());
@@ -616,8 +614,7 @@ public class ScrollerPanel extends JPanel {
                   // while internal are 0-indexed.
                   int newPos = Integer.parseInt(field.getText()) - 1;
                   setPosition(axis, newPos);
-               }
-               catch (NumberFormatException e) {
+               } catch (NumberFormatException e) {
                   // Ignore it
                }
             }

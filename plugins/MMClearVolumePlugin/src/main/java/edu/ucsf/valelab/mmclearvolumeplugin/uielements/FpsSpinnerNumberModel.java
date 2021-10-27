@@ -18,24 +18,33 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package edu.ucsf.valelab.mmclearvolumeplugin.uielements;
 
 import javax.swing.SpinnerNumberModel;
 
 /**
+ * Helper class for Spinner.
  *
  * @author nico
  */
 public class FpsSpinnerNumberModel extends SpinnerNumberModel  {
 
-   private final static int BIGSTEP = 5;
-   private final static int SMALLSTEP = 1;
-   private final static int CUTOFF = 10;
+   private static final int BIGSTEP = 5;
+   private static final int SMALLSTEP = 1;
+   private static final int CUTOFF = 10;
    
    private final double maxValue_;
    private final double minValue_;
 
-   
+
+   /**
+    * Simples constructor.
+    *
+    * @param value Value for the spinner.
+    * @param minValue Minimum allowed value
+    * @param maxValue Maximum allowed value
+    */
    public FpsSpinnerNumberModel(double value, double minValue, double maxValue) {
       super(value, minValue, maxValue, BIGSTEP);
       minValue_ = minValue;
@@ -46,8 +55,8 @@ public class FpsSpinnerNumberModel extends SpinnerNumberModel  {
    @Override
    public Object getNextValue() {
       Number val = super.getNumber();
-      val = (val.doubleValue() >= CUTOFF) ? 
-              val.doubleValue() + BIGSTEP : val.doubleValue() + SMALLSTEP;
+      val = (val.doubleValue() >= CUTOFF)
+            ? val.doubleValue() + BIGSTEP : val.doubleValue() + SMALLSTEP;
       val = (val.doubleValue() > maxValue_) ? maxValue_ : val;
       return val;
    }
@@ -55,8 +64,8 @@ public class FpsSpinnerNumberModel extends SpinnerNumberModel  {
    @Override
    public Object getPreviousValue() {
       Number val = super.getNumber();
-      val = (val.doubleValue() > CUTOFF) ? 
-              val.doubleValue() - BIGSTEP : val.doubleValue() - SMALLSTEP;
+      val = (val.doubleValue() > CUTOFF)
+            ? val.doubleValue() - BIGSTEP : val.doubleValue() - SMALLSTEP;
       val = (val.doubleValue() < minValue_) ? minValue_ : val;
       return val;
    }
