@@ -4,6 +4,8 @@ import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.Metadata;
+
 
 import java.util.List;
 
