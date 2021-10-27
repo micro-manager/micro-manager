@@ -54,35 +54,41 @@ public class MM2_MacroExtensions implements PlugIn, MacroExtension {
 		switch (name) {
 			case "snap": {
 				Studio studio = MMStudio.getInstance();
+				studio.live().setSuspended(true);
 				Image image = studio.live().snap(false).get(0);
 				ImageProcessor ip = studio.data().ij().createProcessor(image);
 				ImagePlus imp = new ImagePlus("Snap", ip);
 				imp.show();
+				studio.live().setSuspended(true);
 				break;
 			}
-			case "snapAndProcess": {
+		        case "snapAndProcess": {
 				Studio studio = MMStudio.getInstance();
+				studio.live().setSuspended(true);
 				Datastore store = studio.data().createRAMDatastore();
 				Pipeline pipeLine = studio.data().copyApplicationPipeline(store, true);
 				List<Image> imgList;
 				try {
-				    imgList = studio.acquisitions().snap();                
+				    imgList = studio.acquisitions().snap();
 				    Image img = imgList.get(0);
 				    pipeLine.insertImage(img);
 				    Coords coords = studio.data().createCoords("t=0,p=0,c=0,z=0");
 				    Image processedImg = store.getImage(coords);
-				    Double px = processedImg.getMetadata().getPixelSizeUm();
+				    Double ps = processedImg.getMetadata().getPixelSizeUm();
+				    Metadata m = processedImg.getMetadata();
 				    ImageProcessor ip = studio.data().ij().createProcessor(processedImg);
-				    ImagePlus imp = new ImagePlus("Image", ip);
+				    ImagePlus imp = new ImagePlus("image", ip);
 				    Calibration cal = imp.getCalibration();
-				    cal.pixelWidth = px;
-				    cal.pixelHeight = px;
+				    cal.pixelWidth = ps;
+				    cal.pixelHeight = ps;
 				    cal.pixelDepth = 1;
 				    cal.setUnit("micron");
+				    imp.setProperty("Info", m.toString());
 				    imp.show();
 				} catch (Exception e) {
 				    e.printStackTrace();
 				}
+				studio.live().setSuspended(false);
 				break;
 		    	}
 			case "setExposure": {
