@@ -190,6 +190,13 @@ public class AutofocusUtils {
             if (iw != null)
                roi = iw.getImagePlus().getRoi();
             
+            if (roi == null) {
+               ReportingUtils.logDebugMessage("No autofocus ROI selected");
+            } else {
+               ReportingUtils.logDebugMessage("Autofocus ROI is width " + roi.getFloatWidth() + " and height " + roi.getFloatHeight() + 
+                     " and X position " + roi.getXBase() + " and Y position " + roi.getYBase());
+            }
+            
             // TODO implement this pref as numeric code like other pull-downs
             final Fitter.FunctionType function = Fitter.getFunctionTypeAsType(
                     prefs_.getString (
@@ -392,6 +399,7 @@ public class AutofocusUtils {
                         ip = ip.crop();
                      }
                      try {
+                        ReportingUtils.logDebugMessage("Autofocus calculation with width " + ip.getWidth() + " and height " + ip.getHeight());
                         focusScores[counter] = afDevice.computeScore(ip);
                      } catch (Exception ex) {
                         done = true;
