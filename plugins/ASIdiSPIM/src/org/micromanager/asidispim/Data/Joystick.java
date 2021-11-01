@@ -198,8 +198,8 @@ public class Joystick {
                props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT, VALUES.get(Joystick.Keys.NONE), true);
             }
          }
-         if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)) {
-            props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.JOYSTICK_ENABLED, Properties.Values.NO, true);
+         for (Devices.Keys dev : Devices.XYSTAGES) {
+            props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, Properties.Values.NO, true);
          }
          for (Devices.Keys dev : Devices.GALVOS) {
             // must be Tiger devices
@@ -225,7 +225,11 @@ public class Joystick {
                }
             }
          }
-         // don't do anything at the moment for XY stages
+         for (Devices.Keys dev : Devices.XYSTAGES) {
+            if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_ENABLED).equals(VALUES.get(jkey)))
+            props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, Properties.Values.NO);
+         }
+
          for (Devices.Keys dev : Devices.GALVOS) {
             // must be Tiger devices
             if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT_X).equals(VALUES.get(jkey))) {
@@ -256,7 +260,7 @@ public class Joystick {
       }
       try {
          if (jkey==Joystick.Keys.JOYSTICK) {  // setting the joystick, not a wheel
-            if (dev == Devices.Keys.XYSTAGE) {
+            if (Devices.XYSTAGES.contains(dev)) {
                props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, "No");
             }
             else {  // must be micro-mirror
@@ -293,7 +297,7 @@ public class Joystick {
       }
       try {
          if (jkey==Joystick.Keys.JOYSTICK) {  // setting the joystick, not a wheel
-            if (dev == Devices.Keys.XYSTAGE) {
+            if (Devices.XYSTAGES.contains(dev)) {
                props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, "Yes");
             }
             else {  // must be micro-mirror

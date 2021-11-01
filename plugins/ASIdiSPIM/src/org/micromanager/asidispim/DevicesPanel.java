@@ -78,21 +78,38 @@ public class DevicesPanel extends ListeningJPanel {
       final JComboBox boxXY_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice,
             Devices.Keys.XYSTAGE, maxSelectorWidth*2); 
       add(boxXY_, "span 2, center, wrap");
+      
+      if (ASIdiSPIM.doubleXYZ) {
+         add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE2) + ":"));
+         final JComboBox boxXY2_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice,
+               Devices.Keys.XYSTAGE2, maxSelectorWidth*2); 
+         add(boxXY2_, "span 2, center, wrap");
+         
+         add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.ZDRIVE1) + ":"));
+         final JComboBox boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+               Devices.Keys.ZDRIVE1, maxSelectorWidth*2);
+         add(boxLowerZ_, "span 2, center, wrap");
 
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.SUPPLEMENTAL_X) + ":"));
-      final JComboBox boxSupX_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
-            Devices.Keys.SUPPLEMENTAL_X, maxSelectorWidth*2); 
-      add(boxSupX_, "span 2, center, wrap");
-      
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":"));
-      final JComboBox boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
-            Devices.Keys.LOWERZDRIVE, maxSelectorWidth*2);
-      add(boxLowerZ_, "span 2, center, wrap");
-      
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":"));
-      final JComboBox boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
-            Devices.Keys.UPPERZDRIVE, maxSelectorWidth*2);
-      add(boxUpperZ_, "span 2, center, wrap");
+         add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.ZDRIVE2) + ":"));
+         final JComboBox boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+               Devices.Keys.ZDRIVE2, maxSelectorWidth*2);
+         add(boxUpperZ_, "span 2, center, wrap");
+      } else {
+         add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.SUPPLEMENTAL_X) + ":"));
+         final JComboBox boxSupX_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+               Devices.Keys.SUPPLEMENTAL_X, maxSelectorWidth*2); 
+         add(boxSupX_, "span 2, center, wrap");
+         
+         add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":"));
+         final JComboBox boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+               Devices.Keys.LOWERZDRIVE, maxSelectorWidth*2);
+         add(boxLowerZ_, "span 2, center, wrap");
+
+         add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":"));
+         final JComboBox boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+               Devices.Keys.UPPERZDRIVE, maxSelectorWidth*2);
+         add(boxUpperZ_, "span 2, center, wrap");
+      }
       
       if (!ASIdiSPIM.oSPIM) {
 

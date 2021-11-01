@@ -81,6 +81,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    
    private final JLabel xPositionLabel_;
    private final JLabel yPositionLabel_;
+   private final JLabel xPositionLabel2_;
+   private final JLabel yPositionLabel2_;
    private final JLabel lowerZPositionLabel_;
    private final JLabel xSupPositionLabel_;
    private final JLabel upperZPositionLabel_;
@@ -158,6 +160,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          }
       });
 
+      
+      if (!ASIdiSPIM.doubleXYZ) {
       boolean sampleOnZ = prefs_.getBoolean(
             MyStrings.PanelNames.SETTINGS.toString(),  
             Properties.Keys.PREFS_SAMPLE_ON_ZSTAGE, false);
@@ -179,6 +183,10 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          loadPanel.add(headDownPosition_, "wrap");
          loadPanel.add(headDownGo, "wrap");
          loadPanel.add(new JLabel("Start Hunting"));
+      }
+      } else { // end if !ASIdiSPIM.doubleXYZ
+         headUpPosition_ = pu.makeFloatEntryField(panelName_, "never used", 0, 5);
+         headDownPosition_ = pu.makeFloatEntryField(panelName_, "never used", 0, 5);
       }
       
       final int positionWidth = 60;
@@ -220,6 +228,78 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          navPanel.add(new JLabel(""), "wrap");
       }
       
+      xPositionLabel2_ = new JLabel("");
+      yPositionLabel2_ = new JLabel("");
+      if (ASIdiSPIM.doubleXYZ) {
+         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE2, Directions.X) + ":"));
+         navPanel.add(xPositionLabel2_);
+         navPanel.add(pu.makeSetPositionField(Devices.Keys.XYSTAGE2, Directions.X, positions_));
+         JFormattedTextField deltaXField2 = pu.makeFloatEntryField(panelName_, "DeltaX", 10.0, 3);
+         navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE2, Directions.X, deltaXField2, "-", -1));
+         navPanel.add(deltaXField2);
+         navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE2, Directions.X, deltaXField2, "+", 1));
+         navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE2, Directions.X));
+         if (!hideSetZero) {
+            navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE2, Directions.X, true), "skip 1, wrap");
+         } else {
+            navPanel.add(new JLabel(""), "wrap");
+         }
+
+         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE2, Directions.Y) + ":"));
+         navPanel.add(yPositionLabel2_);
+         navPanel.add(pu.makeSetPositionField(Devices.Keys.XYSTAGE2, Directions.Y, positions_));
+         JFormattedTextField deltaYField2 = pu.makeFloatEntryField(panelName_, "DeltaY", 10.0, 3);
+         navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE2, Directions.Y, deltaYField2, "-", -1));
+         navPanel.add(deltaYField2);
+         navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE2, Directions.Y, deltaYField2, "+", 1));
+         navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE2, Directions.Y));
+         if (!hideSetZero) {
+            navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE2, Directions.Y, true), "skip 1, wrap");
+         } else {
+            navPanel.add(new JLabel(""), "wrap");
+         }
+      }
+      
+      xSupPositionLabel_ = new JLabel("");
+      upperHPositionLabel_ = new JLabel("");
+      if (ASIdiSPIM.doubleXYZ) {  // reuse existing variables notably lowerZPositionLabel_ (ZDRIVE1) and upperZPositionLabel_ (ZDRIVE2) 
+         
+         lowerZPositionLabel_ = new JLabel("");
+         if (devices_.isValidMMDevice(Devices.Keys.ZDRIVE1)) {
+            navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.ZDRIVE1) + ":"));
+            navPanel.add(lowerZPositionLabel_);
+            navPanel.add(pu.makeSetPositionField(Devices.Keys.ZDRIVE1, Directions.NONE, positions_));
+            JFormattedTextField deltaZField = pu.makeFloatEntryField(panelName_, "DeltaZ1", 10.0, 3);
+            navPanel.add(makeIncrementButton(Devices.Keys.ZDRIVE1, Directions.NONE, deltaZField, "-", -1));
+            navPanel.add(deltaZField);
+            navPanel.add(makeIncrementButton(Devices.Keys.ZDRIVE1, Directions.NONE, deltaZField, "+", 1));
+            navPanel.add(makeMoveToOriginButton(Devices.Keys.ZDRIVE1, Directions.NONE));
+            if (!hideSetZero) {
+               navPanel.add(makeSetOriginHereButton(Devices.Keys.ZDRIVE1, Directions.NONE), "wrap");
+            } else {
+               navPanel.add(new JLabel(""), "wrap");
+            }
+         }
+         
+         upperZPositionLabel_ = new JLabel("");
+         if (devices_.isValidMMDevice(Devices.Keys.ZDRIVE2)) {
+            navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.ZDRIVE2) + ":"));
+            navPanel.add(upperZPositionLabel_);
+            navPanel.add(pu.makeSetPositionField(Devices.Keys.ZDRIVE2, Directions.NONE, positions_));
+            JFormattedTextField deltaFField = pu.makeFloatEntryField(panelName_, "DeltaZ2", 10.0, 3);
+            navPanel.add(makeIncrementButton(Devices.Keys.ZDRIVE2, Directions.NONE, deltaFField, "-", -1));
+            navPanel.add(deltaFField);
+            navPanel.add(makeIncrementButton(Devices.Keys.ZDRIVE2, Directions.NONE, deltaFField, "+", 1));
+            navPanel.add(makeMoveToOriginButton(Devices.Keys.ZDRIVE2, Directions.NONE));
+            if (!hideSetZero) {
+               navPanel.add(makeSetOriginHereButton(Devices.Keys.ZDRIVE2, Directions.NONE, true), "wrap");
+            } else {
+               navPanel.add(new JLabel(""), "wrap");
+            }
+         }
+         
+      } else {  // normal case
+      
       lowerZPositionLabel_ = new JLabel("");
       if (devices_.isValidMMDevice(Devices.Keys.LOWERZDRIVE)) {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.LOWERZDRIVE) + ":"));
@@ -252,7 +332,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          }
       }
       
-      xSupPositionLabel_ = new JLabel("");
       if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.SUPPLEMENTAL_X) + ":"));
          navPanel.add(xSupPositionLabel_);
@@ -296,7 +375,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          }
       }
       
-      upperHPositionLabel_ = new JLabel("");
       if (!ASIdiSPIM.oSPIM) {
       } else {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.UPPERHDRIVE) + ":"));
@@ -314,6 +392,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             navPanel.add(new JLabel(""), "wrap");
          }
       }
+      
+      }  // end !ASIdiSPIM.doubleXYZ
       
       piezoAPositionLabel_ = new JLabel("");
       if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
@@ -382,10 +462,12 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Directions.Y), "wrap");
       }
       
-      if (!ASIdiSPIM.oSPIM) {
-         navPanel.add(loadPanel, "cell 7 4, span 2 6, center, wrap");
-      } else {
-         navPanel.add(loadPanel, "cell 7 5, span 2 6, center, wrap");
+      if (!ASIdiSPIM.doubleXYZ) {
+         if (!ASIdiSPIM.oSPIM) {
+            navPanel.add(loadPanel, "cell 7 4, span 2 6, center, wrap");
+         } else {
+            navPanel.add(loadPanel, "cell 7 5, span 2 6, center, wrap");
+         }
       }
       
       JButton buttonHalt = new JButton("Halt!");
@@ -412,6 +494,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       
       xPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
       yPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      xPositionLabel2_.setMaximumSize(new Dimension(positionWidth, 20));
+      yPositionLabel2_.setMaximumSize(new Dimension(positionWidth, 20));
       lowerZPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
       upperZPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
       piezoAPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
@@ -589,9 +673,16 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    public final void updateStagePositions() {
       xPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.X));   
       yPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.Y));
+      if (ASIdiSPIM.doubleXYZ) {
+         xPositionLabel2_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE2, Directions.X));   
+         yPositionLabel2_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE2, Directions.Y));
+         lowerZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.ZDRIVE1));
+         upperZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.ZDRIVE2));
+      } else {
+         lowerZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.LOWERZDRIVE));
+         upperZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
+      }
       xSupPositionLabel_.setText(positions_.getPositionString(Devices.Keys.SUPPLEMENTAL_X));   
-      lowerZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.LOWERZDRIVE));
-      upperZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
       upperHPositionLabel_.setText(positions_.getPositionString(Devices.Keys.UPPERHDRIVE));
       piezoAPositionLabel_.setText(positions_.getPositionString(Devices.Keys.PIEZOA));
       piezoBPositionLabel_.setText(positions_.getPositionString(Devices.Keys.PIEZOB));
@@ -608,6 +699,10 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    public final void stoppedStagePositions() {
       xPositionLabel_.setText("");
       yPositionLabel_.setText("");
+      if (ASIdiSPIM.doubleXYZ) {
+         xPositionLabel2_.setText("");
+         yPositionLabel2_.setText("");
+      }
       xSupPositionLabel_.setText("");
       lowerZPositionLabel_.setText("");
       upperZPositionLabel_.setText("");
@@ -659,8 +754,9 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
 
    public void haltAllMotion() {
       try {
-         final Set<Devices.Keys> TigerDevices = EnumSet.of(
-               Devices.Keys.UPPERZDRIVE, Devices.Keys.XYSTAGE, Devices.Keys.LOWERZDRIVE);
+         // all 1D stages plus all XY stages
+         Set<Devices.Keys> TigerDevices = EnumSet.copyOf(Devices.STAGES1D);
+         TigerDevices.addAll(Devices.XYSTAGES);
          for (Devices.Keys dev : TigerDevices) {
             if (devices_.isValidMMDevice(dev)
                   && devices_.getMMDeviceLibrary(dev) == Devices.Libraries.ASITIGER) {

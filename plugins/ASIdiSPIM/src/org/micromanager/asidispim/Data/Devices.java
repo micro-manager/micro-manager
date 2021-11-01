@@ -102,6 +102,7 @@ public class Devices {
       TIGERCOMM,
       UPPERHDRIVE, // horizontal drive for oSPIM head
       SHUTTERLOWER,  // shutter to be used with lower camera
+      XYSTAGE2, ZDRIVE1, ZDRIVE2,  // used with ASIdiSPIM.doubleXYZ constant
       // ASGALVOA, ASGALVOB,
       // when adding new devices update Devices constructor, 
       // getDefaultDeviceData(), and Libraries enum
@@ -109,11 +110,14 @@ public class Devices {
    
    public final static Set<Devices.Keys> STAGES1D = EnumSet.of(
          Devices.Keys.LOWERZDRIVE, Devices.Keys.UPPERZDRIVE, Devices.Keys.UPPERHDRIVE,
-         Devices.Keys.PIEZOA, Devices.Keys.PIEZOB, Devices.Keys.SUPPLEMENTAL_X);
+         Devices.Keys.PIEZOA, Devices.Keys.PIEZOB, Devices.Keys.SUPPLEMENTAL_X,
+         Devices.Keys.ZDRIVE1, Devices.Keys.ZDRIVE2);
    public final static Set<Devices.Keys> PIEZOS = EnumSet.of(
          Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
    public final static Set<Devices.Keys> STAGES2D = EnumSet.of(
-         Devices.Keys.XYSTAGE, Devices.Keys.GALVOA, Devices.Keys.GALVOB);
+         Devices.Keys.XYSTAGE, Devices.Keys.XYSTAGE2, Devices.Keys.GALVOA, Devices.Keys.GALVOB);
+   public final static Set<Devices.Keys> XYSTAGES = EnumSet.of(
+         Devices.Keys.XYSTAGE, Devices.Keys.XYSTAGE2);
    public final static Set<Devices.Keys> GALVOS = EnumSet.of(
          Devices.Keys.GALVOA, Devices.Keys.GALVOB);
    public final static Set<Devices.Keys> CAMERAS = EnumSet.of(
@@ -515,6 +519,7 @@ public class Devices {
          }
          break;
       case XYSTAGE:
+      case XYSTAGE2:
          switch (dir) {
          case X: ret += ", X axis"; break;
          case Y: ret += ", Y axis"; break;
@@ -741,6 +746,12 @@ public class Devices {
          return new DeviceData(key, "SPIM Head Horzntl", Sides.NONE, true);
       case SUPPLEMENTAL_X:
          return new DeviceData(key, "Supplemental X", Sides.NONE, true);
+      case XYSTAGE2:
+         return new DeviceData(key, "XY Stage #2", Sides.NONE, true);
+      case ZDRIVE1:
+         return new DeviceData(key, "Z Stage #1", Sides.NONE, true);
+      case ZDRIVE2:
+         return new DeviceData(key, "Z Stage #2", Sides.NONE, true);
          // case ASGALVOA: return new DeviceData(Keys.ASGALVOA,
          // "Anti-striping Micromirror", Sides.A, true);
          // case ASGALVOB: return new DeviceData(Keys.ASGALVOB,
@@ -809,6 +820,9 @@ public class Devices {
       deviceInfo_.put(Keys.XYSTAGE, getDefaultDeviceData(Keys.XYSTAGE));
       deviceInfo_.put(Keys.LOWERZDRIVE, getDefaultDeviceData(Keys.LOWERZDRIVE));
       deviceInfo_.put(Keys.UPPERZDRIVE, getDefaultDeviceData(Keys.UPPERZDRIVE));
+      deviceInfo_.put(Keys.XYSTAGE2, getDefaultDeviceData(Keys.XYSTAGE2));
+      deviceInfo_.put(Keys.ZDRIVE1, getDefaultDeviceData(Keys.ZDRIVE1));
+      deviceInfo_.put(Keys.ZDRIVE2, getDefaultDeviceData(Keys.ZDRIVE2));
       deviceInfo_.put(Keys.PLOGIC, getDefaultDeviceData(Keys.PLOGIC));
       deviceInfo_.put(Keys.PLOGIC_LASER, getDefaultDeviceData(Keys.PLOGIC_LASER));
       deviceInfo_.put(Keys.SHUTTERLOWER, getDefaultDeviceData(Keys.SHUTTERLOWER));
