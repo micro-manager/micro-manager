@@ -59,13 +59,26 @@ public class MyDialogUtils {
       }
    }
    
-   /**
-    * Convenience method to show an error message (also logged) over the plugin frame.
-    * Calls org.micromanager.utils.ReportingUtils() 
-    * @param message
-    */
    public static void showError(String message) {
-      ReportingUtils.showError(message, ASIdiSPIM.getFrame());
+      showError(message, false);
+   }
+   
+   /**
+    * Convenience method to show an error message (also logged) over the plugin frame.
+    * Calls org.micromanager.utils.ReportingUtils() 
+    * @param message
+    * @param hideErrors true if errors are to be logged only and not displayed; false is default
+    */
+   public static void showError(String message, boolean hideErrors) {
+      if (hideErrors) {
+         ReportingUtils.logError(message);
+      } else {
+         ReportingUtils.showError(message, ASIdiSPIM.getFrame());
+      }
+   }
+   
+   public static void showError(Throwable e, String message) {
+      showError(e, message, false);
    }
    
    /**
@@ -73,17 +86,31 @@ public class MyDialogUtils {
     * Calls org.micromanager.utils.ReportingUtils() 
     * @param e exception
     * @param message
+    * @param hideErrors true if errors are to be logged only and not displayed; false is default
     */
-   public static void showError(Throwable e, String message) {
-      ReportingUtils.showError(e, message, ASIdiSPIM.getFrame());
+   public static void showError(Throwable e, String message, boolean hideErrors) {
+      if (hideErrors) {
+         ReportingUtils.logError(e, message);
+      } else {
+         ReportingUtils.showError(e, message, ASIdiSPIM.getFrame());
+      }
+   }
+   
+   public static void showError(Throwable e) {
+      showError(e, false);
    }
    
    /**
     * Convenience method to show an error message (also logged) over the plugin frame.
     * Calls org.micromanager.utils.ReportingUtils() 
     * @param e exception
+    * @param hideErrors true if errors are to be logged only and not displayed; false is default
     */
-   public static void showError(Throwable e) {
-      ReportingUtils.showError(e, ASIdiSPIM.getFrame());
+   public static void showError(Throwable e, boolean hideErrors) {
+      if (hideErrors) {
+         ReportingUtils.logError(e);
+      } else {
+         ReportingUtils.showError(e, ASIdiSPIM.getFrame());
+      }
    }
 }

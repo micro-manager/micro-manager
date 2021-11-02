@@ -999,10 +999,10 @@ public class ControllerUtils {
     * @param settings
     * @return false if there is a fatal error, true if successful
     */
-   public boolean setupHardwareChannelSwitching(final AcquisitionSettings settings) {
+   public boolean setupHardwareChannelSwitching(final AcquisitionSettings settings, boolean hideErrors) {
       
       if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC_LASER)) {
-         MyDialogUtils.showError("PLogic card required for hardware switching");
+         MyDialogUtils.showError("PLogic card required for hardware switching", hideErrors);
          return false;
       }
       
@@ -1011,7 +1011,7 @@ public class ControllerUtils {
       if ((settings.numChannels > 4) &&
             ((channelMode == MultichannelModes.Keys.SLICE_HW) || 
             (channelMode == MultichannelModes.Keys.VOLUME_HW)) ) {
-         MyDialogUtils.showError("PLogic card cannot handle more than 4 channels for hardware switching.");
+         MyDialogUtils.showError("PLogic card cannot handle more than 4 channels for hardware switching.", hideErrors);
          return false;
       }
       
@@ -1031,7 +1031,7 @@ public class ControllerUtils {
          }
          break;
       default:
-         MyDialogUtils.showError("Unknown multichannel mode for hardware switching");
+         MyDialogUtils.showError("Unknown multichannel mode for hardware switching", hideErrors);
          return false;
       }
       
@@ -1054,7 +1054,7 @@ public class ControllerUtils {
                Properties.Values.PLOGIC_PRESET_COUNT_4);
          break;
       default:
-         MyDialogUtils.showError("Hardware channel switching only supports 1-4 channels");
+         MyDialogUtils.showError("Hardware channel switching only supports 1-4 channels", hideErrors);
          return false;
       }
       
@@ -1081,7 +1081,7 @@ public class ControllerUtils {
          if(props_.getPropValueInteger(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_NUMCLOGICELLS) < 24) {
             // restore update setting
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
-            MyDialogUtils.showError("Require 24-cell PLC firmware to use hardware channel swiching with 7-channel shutter");
+            MyDialogUtils.showError("Require 24-cell PLC firmware to use hardware channel swiching with 7-channel shutter", hideErrors);
             return false;
          }
          
@@ -1133,7 +1133,7 @@ public class ControllerUtils {
             if (hardwareChannelUsed[outputNum-5]) {
                // restore update setting
                props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
-               MyDialogUtils.showError("Multiple channels cannot use same laser for PLogic triggering");
+               MyDialogUtils.showError("Multiple channels cannot use same laser for PLogic triggering", hideErrors);
                return false;
             } else {
                hardwareChannelUsed[outputNum-5] = true;
