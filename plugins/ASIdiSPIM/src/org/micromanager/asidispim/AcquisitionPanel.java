@@ -802,7 +802,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // end duration report panel
       
-      buttonTestAcq_ = new JButton("Test Acqusition");
+      buttonTestAcq_ = new JButton("Test Acq");
       buttonTestAcq_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -825,11 +825,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       });
       updateStartButton();  // call once to initialize, isSelected() will be false
       
+      // open the multi-acquisition playlist frame button
+      final JButton buttonOpenPlaylistFrame = new JButton("Playlist...");
+      buttonOpenPlaylistFrame.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+             // TODO: open playlist frame
+         }
+      });
+      // TODO: remove this when this feature exists
+      buttonOpenPlaylistFrame.setEnabled(false);
+
       // make the height of buttons match the start button (easier on the eye)
       Dimension sizeStart = buttonStart_.getPreferredSize();
       Dimension sizeTest = buttonTestAcq_.getPreferredSize();
+      Dimension sizePlaylist = buttonOpenPlaylistFrame.getPreferredSize();
       sizeTest.height = sizeStart.height;
+      sizePlaylist.height = sizeStart.height;
       buttonTestAcq_.setPreferredSize(sizeTest);
+      buttonOpenPlaylistFrame.setPreferredSize(sizePlaylist);
 
       acquisitionStatusLabel_ = new JLabel("");
       acquisitionStatusLabel_.setBackground(prefixField_.getBackground());
@@ -972,7 +986,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       leftColumnPanel_.add(spimMode_, "left, wrap");
       leftColumnPanel_.add(buttonStart_, "split 3, left");
       leftColumnPanel_.add(new JLabel("    "));
-      leftColumnPanel_.add(buttonTestAcq_, "wrap");
+      leftColumnPanel_.add(buttonTestAcq_, "");
+      leftColumnPanel_.add(buttonOpenPlaylistFrame, "wrap");
       leftColumnPanel_.add(new JLabel("Status:"), "split 2, left");
       leftColumnPanel_.add(acquisitionStatusLabel_);
       
@@ -1051,7 +1066,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private void updateStartButton() {
       boolean started = isAcquisitionRequested();
       buttonStart_.setSelected(started);
-      buttonStart_.setText(started ? "Stop Acquisition!" : "Start Acquisition!");
+      buttonStart_.setText(started ? "Stop Acq!" : "Start Acq!");
       buttonStart_.setBackground(started ? Color.red : Color.green);
       buttonStart_.setIcon(started ? Icons.CANCEL : Icons.ARROW_RIGHT);
       buttonTestAcq_.setEnabled(!started);
@@ -1177,9 +1192,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PLUGIN_USE_SIMULT_CAMERAS, false) 
             ? props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_SIMULT_CAMERAS)
                   : 0;
+      acqSettings.saveDirectoryRoot = rootField_.getText();
+      acqSettings.saveNamePrefix = prefixField_.getText();
       return acqSettings;
    }
    
+   // TODO: implement this
+   public void setAcquisitionSettings(final AcquisitionSettings settings) {
+       // refresh ui
+       revalidate();
+       repaint();
+   }
+
    /**
     * gets the correct value for the slice timing's sliceDuration field
     * based on other values of slice timing
