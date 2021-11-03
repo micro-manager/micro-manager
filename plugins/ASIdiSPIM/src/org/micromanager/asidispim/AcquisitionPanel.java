@@ -2453,7 +2453,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             acquisitionRequested_.set(true);
             ASIdiSPIM.getFrame().tabsSetEnabled(false);
             updateStartButton();
-            final boolean hideErrors = ! prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), 
+            final boolean hideErrors = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), 
                   Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, true);
             AcquisitionStatus success = runAcquisitionPrivate(false, Devices.Sides.NONE, hideErrors);
             if (success == AcquisitionStatus.FATAL_ERROR) {
