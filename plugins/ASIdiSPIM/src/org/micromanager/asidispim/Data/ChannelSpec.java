@@ -56,4 +56,12 @@ public class ChannelSpec {
       this.offset_ = orig.offset_;
    }
    
+   @Override
+   public String toString() {
+       return String.format(
+               "%s[useChannel_=%s, group_=%s, config_=%s, offset_=%s]",
+               getClass().getSimpleName(), useChannel_, group_, config_, offset_
+       );
+   }
+
 }

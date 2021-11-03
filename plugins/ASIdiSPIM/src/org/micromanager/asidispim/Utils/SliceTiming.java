@@ -90,8 +90,16 @@ public class SliceTiming {
       } else {
          return false;
       }
-      
-      
    }
 
+   @Override
+   public String toString() {
+       return String.format(
+               "%s[scanDelay=%s, scanNum=%s, scanPeriod=%s, laserDelay=%s, laserDuration=%s, cameraDelay=%s,"
+               + " cameraDuration=%s, cameraExposure=%s, sliceDuration=%s, valid=%s]",
+               getClass().getSimpleName(), 
+               scanDelay, scanNum, scanPeriod, laserDelay, laserDuration, cameraDelay, 
+               cameraDuration, cameraExposure, sliceDuration, valid
+       );
+   }
 }
