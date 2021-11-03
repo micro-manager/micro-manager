@@ -50,6 +50,7 @@ import org.micromanager.asidispim.Utils.MovementDetector;
 import org.micromanager.asidispim.Utils.MovementDetector.Method;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.api.RunnableType;
+import org.micromanager.asidispim.table.AcquisitionTableFrame;
 import org.micromanager.asidispim.api.AcquisitionStatus;
 
 import java.awt.Color;
@@ -292,6 +293,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       runnablesEndTimepoint_ = new ArrayList<Runnable>();
       runnablesStartPosition_ = new ArrayList<Runnable>();
       runnablesEndPosition_ = new ArrayList<Runnable>();
+      
+      final AcquisitionTableFrame playlistFrame = new AcquisitionTableFrame(gui_, this);
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
@@ -831,7 +834,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonOpenPlaylistFrame.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
-             // TODO: open playlist frame
+             playlistFrame.setVisible(true);
          }
       });
       // TODO: remove this when this feature exists
@@ -985,7 +988,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       spimMode_ = acqModes.getComboBox();
       spimMode_.addActionListener(recalculateTimingDisplayAL);
       leftColumnPanel_.add(spimMode_, "left, wrap");
-      leftColumnPanel_.add(buttonStart_, "split 3, left");
+      leftColumnPanel_.add(buttonStart_, "split 4, left");
       leftColumnPanel_.add(new JLabel("    "));
       leftColumnPanel_.add(buttonTestAcq_, "");
       leftColumnPanel_.add(buttonOpenPlaylistFrame, "wrap");
@@ -4932,7 +4935,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       zPositionUm_ = positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
    }
    
-    /**
+   /**
     * Enables or disables the "Multiple positions (XY)" panel.
     * 
     * @param state true to enable the panel
