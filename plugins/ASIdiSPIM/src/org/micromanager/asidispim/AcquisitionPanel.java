@@ -177,6 +177,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JPanel timepointPanel_;
    private final JPanel savePanel_;
    private final JPanel durationPanel_;
+   private final JPanel positionPanel_;
    private final JFormattedTextField rootField_;
    private final JFormattedTextField prefixField_;
    private final JLabel acquisitionStatusLabel_;
@@ -855,17 +856,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       multiChannelPanel_.addDurationLabelListener(this);
       
       // Position Panel
-      final JPanel positionPanel = new JPanel();
-      positionPanel.setLayout(new MigLayout("flowx, fillx","[right]10[left][10][]","[]8[]"));
+      positionPanel_ = new JPanel();
+      positionPanel_.setLayout(new MigLayout("flowx, fillx","[right]10[left][10][]","[]8[]"));
       usePositionsCB_ = pu.makeCheckBox("Multiple positions (XY)",
             Properties.Keys.PREFS_USE_MULTIPOSITION, panelName_, false);
       usePositionsCB_.setToolTipText("Acquire datasest at multiple postions");
       usePositionsCB_.setEnabled(true);
       usePositionsCB_.setFocusPainted(false); 
       componentBorder = 
-            new ComponentTitledBorder(usePositionsCB_, positionPanel, 
+            new ComponentTitledBorder(usePositionsCB_, positionPanel_, 
                   BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
-      positionPanel.setBorder(componentBorder);
+      positionPanel_.setBorder(componentBorder);
       
       usePositionsCB_.addChangeListener(recalculateTimingDisplayCL);
       
@@ -876,10 +877,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.showXYPositionList();
          }
       });
-      positionPanel.add(editPositionListButton);
+      positionPanel_.add(editPositionListButton);
       
       gridButton_ = new JButton("XYZ grid...");
-      positionPanel.add(gridButton_, "wrap");
+      positionPanel_.add(gridButton_, "wrap");
       
       gridFrame_ = new MMFrame("diSPIM_XYZ_grid");
       gridFrame_.setTitle("XYZ Grid");
@@ -905,21 +906,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
           }
       });
       
-      positionPanel.add(new JLabel("Post-move delay [ms]:"));
+      positionPanel_.add(new JLabel("Post-move delay [ms]:"));
       positionDelay_ = pu.makeSpinnerFloat(0.0, 100000.0, 100.0,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_POSITION_DELAY,
             0.0);
-      positionPanel.add(positionDelay_, "wrap");
+      positionPanel_.add(positionDelay_, "wrap");
       
       // enable/disable panel elements depending on checkbox state
       usePositionsCB_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) { 
-            PanelUtils.componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());
+            PanelUtils.componentsSetEnabled(positionPanel_, usePositionsCB_.isSelected());
             gridButton_.setEnabled(true);  // leave this always enabled
          }
       });
-      PanelUtils.componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());  // initialize
+      PanelUtils.componentsSetEnabled(positionPanel_, usePositionsCB_.isSelected());  // initialize
       gridButton_.setEnabled(true);  // leave this always enabled
       
       // end of Position panel
@@ -993,7 +994,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       centerColumnPanel_ = new JPanel(new MigLayout("", "[]", "[]"));
       
-      centerColumnPanel_.add(positionPanel, "growx, wrap");
+      centerColumnPanel_.add(positionPanel_, "growx, wrap");
       centerColumnPanel_.add(multiChannelPanel_, "wrap");
       centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
       centerColumnPanel_.add(useAutofocusCB_, "split 2");
@@ -4931,7 +4932,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       zPositionUm_ = positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
    }
    
-   
+    /**
+    * Enables or disables the "Multiple positions (XY)" panel.
+    * 
+    * @param state true to enable the panel
+    */
+   public void setPositionPanelEnabled(final boolean state) {
+      usePositionsCB_.setSelected(state);
+      PanelUtils.componentsSetEnabled(positionPanel_, usePositionsCB_.isSelected());
+      gridButton_.setEnabled(true); // leave this always enabled
+   }
+
    /***************** API  *******************/
    
    
