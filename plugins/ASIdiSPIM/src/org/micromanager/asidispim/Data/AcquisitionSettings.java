@@ -48,7 +48,7 @@ public class AcquisitionSettings {
       this.useChannels = orig.useChannels;
       this.channelMode = orig.channelMode;
       this.numChannels = orig.numChannels;
-      this.channels = orig.channels;  // should probably make deeper copy
+      this.channels = orig.channels;  // TODO: should probably make deeper copy
       this.channelGroup = orig.channelGroup;
       this.useAutofocus = orig.useAutofocus;
       this.useMovementCorrection = orig.useMovementCorrection;
@@ -68,6 +68,8 @@ public class AcquisitionSettings {
       this.separateTimepoints = orig.separateTimepoints;
       this.usePathPresets = orig.usePathPresets;
       this.numSimultCameras = orig.numSimultCameras;
+      this.saveDirectoryRoot = orig.saveDirectoryRoot;
+      this.saveNamePrefix = orig.saveNamePrefix;
    }
 
    // piezo scanning, vibration, stage scanning, i.e. what is 
@@ -166,4 +168,9 @@ public class AcquisitionSettings {
    // similar but different from doing reflective imaging (both cameras) because this is only on path A
    public int numSimultCameras;
    
+   // the root directory when saving acquistion data
+   public String saveDirectoryRoot;
+   
+   // the name prefix when saving acquisition data
+   public String saveNamePrefix;
 }
