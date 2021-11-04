@@ -452,6 +452,7 @@ public final class MultipageTiffWriter {
       writeImageDescription(ijDescriptionString, ijDescriptionTagPosition_);
       writeDisplaySettings();
       writeComments();
+      CommentsHelper.saveComments(masterStorage_.getDatastore());
 
       executeWritingTask(() -> {
          try {
@@ -466,7 +467,6 @@ public final class MultipageTiffWriter {
          raFile_ = null;
          masterStorage_ = null;
       });
-      CommentsHelper.saveComments(masterStorage_.getDatastore());
    }
 
    /**
