@@ -45,7 +45,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
-import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
@@ -453,7 +452,7 @@ public final class MultipageTiffWriter {
       writeImageDescription(ijDescriptionString, ijDescriptionTagPosition_);
       writeDisplaySettings();
       writeComments();
-      Datastore store = masterStorage_.getDatastore();
+      CommentsHelper.saveComments(masterStorage_.getDatastore());
 
       executeWritingTask(() -> {
          try {
@@ -468,7 +467,6 @@ public final class MultipageTiffWriter {
          raFile_ = null;
          masterStorage_ = null;
       });
-      CommentsHelper.saveComments(store);
    }
 
    /**
