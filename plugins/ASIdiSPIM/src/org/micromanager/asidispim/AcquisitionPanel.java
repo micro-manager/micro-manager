@@ -3286,7 +3286,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          try {
             r.run();
          } catch(Exception ex) {
-            ReportingUtils.logError("runnable threw exception: " + r.toString());
+            MyDialogUtils.showError("start acquisition runnable threw exception: " + r.toString(), hideErrors);
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
 
@@ -3656,7 +3657,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   try {
                      r.run();
                   } catch(Exception ex) {
-                     ReportingUtils.logError("runnable threw exception: " + r.toString());
+                     MyDialogUtils.showError("start timepoint runnable threw exception: " + r.toString(), hideErrors);
+                     return AcquisitionStatus.FATAL_ERROR;
                   }
                }
                
@@ -3711,7 +3713,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      try {
                         r.run();
                      } catch(Exception ex) {
-                        ReportingUtils.logError("runnable threw exception: " + r.toString());
+                        MyDialogUtils.showError("start position runnable threw exception: " + r.toString(), hideErrors);
+                        return AcquisitionStatus.FATAL_ERROR;
                      }
                   }
                   
@@ -4213,7 +4216,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                              try {
                                                 r.run();
                                              } catch(Exception ex) {
-                                                ReportingUtils.logError("runnable threw exception: " + r.toString());
+                                                MyDialogUtils.showError("end timepoint runnable threw exception: " + r.toString(), hideErrors);
+                                                return AcquisitionStatus.FATAL_ERROR;
                                              }
                                           }
 
@@ -4221,7 +4225,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                              try {
                                                 r.run();
                                              } catch(Exception ex) {
-                                                ReportingUtils.logError("runnable threw exception: " + r.toString());
+                                                MyDialogUtils.showError("start timepoint runnable threw exception: " + r.toString(), hideErrors);
+                                                return AcquisitionStatus.FATAL_ERROR;
                                              }
                                           }
                                        }
@@ -4354,7 +4359,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      try {
                         r.run();
                      } catch(Exception ex) {
-                        ReportingUtils.logError("runnable threw exception: " + r.toString());
+                        MyDialogUtils.showError("end position runnable threw exception: " + r.toString(), hideErrors);
+                        return AcquisitionStatus.FATAL_ERROR;
                      }
                   }
                   
@@ -4410,7 +4416,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   try {
                      r.run();
                   } catch(Exception ex) {
-                     ReportingUtils.logError("runnable threw exception: " + r.toString());
+                     MyDialogUtils.showError("end timepoint runnable threw exception: " + r.toString(), hideErrors);
+                     return AcquisitionStatus.FATAL_ERROR;
                   }
                }
                
@@ -4621,7 +4628,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          try {
             r.run();
          } catch(Exception ex) {
-            ReportingUtils.logError("runnable threw exception: " + r.toString());
+            MyDialogUtils.showError("end acquisition runnable threw exception: " + r.toString(), hideErrors);
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
 
