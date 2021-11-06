@@ -4935,16 +4935,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       zPositionUm_ = positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
    }
    
-   /**
-    * Enables or disables the "Multiple positions (XY)" panel.
-    * 
-    * @param state true to enable the panel
-    */
-   public void setPositionPanelEnabled(final boolean state) {
-      usePositionsCB_.setSelected(state);
-      PanelUtils.componentsSetEnabled(positionPanel_, usePositionsCB_.isSelected());
-      gridButton_.setEnabled(true); // leave this always enabled
-   }
 
    /***************** API  *******************/
    
