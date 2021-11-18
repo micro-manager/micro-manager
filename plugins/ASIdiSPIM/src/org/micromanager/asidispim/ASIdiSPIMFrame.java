@@ -426,7 +426,16 @@ public class ASIdiSPIMFrame extends MMFrame
    /**
     * Do not get into the internals of this plugin without relying on
     * ASIdiSPIM.api
-    * @return the currently used instance of the AutofocusPanel;
+    * @return the currently used instance of the SettingsPanel;
+    */
+   public SettingsPanel getSettingsPanel() {
+	   return settingsPanel_;
+   }
+   
+   /**
+    * Do not get into the internals of this plugin without relying on
+    * ASIdiSPIM.api
+    * @return the currently used instance of the Devices object;
     */
    public Devices getDevices() {
       return devices_;

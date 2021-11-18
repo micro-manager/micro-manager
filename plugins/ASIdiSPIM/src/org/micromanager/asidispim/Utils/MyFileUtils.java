@@ -41,4 +41,28 @@ public class MyFileUtils {
         }
     }
     
+    /**
+     * Returns a unique file path. Do not include the "." in the file extension.
+     * 
+     * @param directory the file directory
+     * @param name the file name
+     * @param extension the file extension
+     * @return a unique file path
+     */
+    public static String createUniquePath(final String directory, final String name, final String extension) {
+    	// check if the file path is available => early exit if true
+    	if (!(new File(directory + File.separator + name + "." + extension).exists())) {
+    		return directory + File.separator + name + "." + extension;
+    	}
+    	// otherwise look for an unused file path
+    	String path = "";
+		int count = 0;
+		boolean found = false;
+		while (!found && count < 1000) {
+			path = directory + File.separator + name + "_" + count + "." + extension;
+			found = new File(directory).exists();
+			count++;
+		}
+    	return path;
+    }
 }

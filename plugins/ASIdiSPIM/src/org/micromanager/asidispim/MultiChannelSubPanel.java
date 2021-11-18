@@ -58,6 +58,7 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
@@ -80,6 +81,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    private final Properties props_;
    private final Prefs prefs_;
    private final JCheckBox useChannelsCB_;
+   private final JTable channelTable_;
    private final ChannelTableModel channelTableModel_;
    private final JComboBox channelGroup_;
    private final JComboBox channelMode_;
@@ -171,10 +173,8 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          }
       };
       
-      final JTable channelTable;
       final JScrollPane channelTablePane;
 
-      
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
       useChannelsCB_ = pu.makeCheckBox("Channels",
@@ -196,8 +196,8 @@ public class MultiChannelSubPanel extends ListeningJPanel {
             
       channelTableModel_ = new ChannelTableModel(prefs_, panelName_,
               (String) channelGroup_.getSelectedItem(), this);
-      channelTable = new JTable(channelTableModel_);
-
+      channelTable_ = new JTable(channelTableModel_);
+      
       channelGroup_.addItemListener(new ItemListener() {
          @Override
          public void itemStateChanged(ItemEvent e) {
@@ -223,12 +223,12 @@ public class MultiChannelSubPanel extends ListeningJPanel {
                   "flowy, ins 0",
                   "",
                   "") );
-      channelTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-      TableColumn column_useChannel = channelTable.getColumnModel().getColumn(
+      channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+      TableColumn column_useChannel = channelTable_.getColumnModel().getColumn(
               ChannelTableModel.columnIndex_useChannel);
-      TableColumn column_config = channelTable.getColumnModel().getColumn(
+      TableColumn column_config = channelTable_.getColumnModel().getColumn(
               ChannelTableModel.columnIndex_config);
-      TableColumn column_offset = channelTable.getColumnModel().getColumn(
+      TableColumn column_offset = channelTable_.getColumnModel().getColumn(
             ChannelTableModel.columnIndex_offset);
       column_useChannel.setPreferredWidth(35);
       column_config.setPreferredWidth(100);
@@ -237,9 +237,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
       column_config.setCellEditor(new ChannelConfigEditor(channelGroup_, core_));
       
-      channelTablePane = new JScrollPane(channelTable);
+      channelTablePane = new JScrollPane(channelTable_);
       channelTablePane.setPreferredSize(new Dimension(200,75));
-      channelTablePane.setViewportView(channelTable);
+      channelTablePane.setViewportView(channelTable_);
       tablePanel.add(channelTablePane, "wrap");
       
       Dimension buttonSize = new Dimension(30, 20);
@@ -264,7 +264,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       minusButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            int selectedRows[] = channelTable.getSelectedRows();
+            int selectedRows[] = channelTable_.getSelectedRows();
             for (int row : selectedRows) {
                channelTableModel_.removeChannel(row);
             }
@@ -299,7 +299,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
                comp.setEnabled(enabled);
             }
             channelGroup_.setEnabled(enabled);
-            channelTable.setEnabled(enabled);
+            channelTable_.setEnabled(enabled);
             channelMode_.setEnabled(enabled);
          } 
       });
@@ -571,5 +571,18 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       }
    }
 
-
+   /**
+    * Removes all channels from the table.
+    */
+   public void removeAllChannels() {
+       TableCellEditor editor = channelTable_.getCellEditor();
+       if (editor != null) {
+           editor.stopCellEditing();
+       }
+       final int numChannels = getAllChannels().length;
+       for (int i = numChannels-1; i >= 0; i--) {
+           channelTableModel_.removeChannel(i);
+       }
+   }
+   
 }

@@ -27,6 +27,7 @@ import java.awt.event.ActionListener;
 import java.util.Set;
 
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -49,6 +50,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DeviceUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.utils.ReportingUtils;
 
 
 /**
@@ -57,12 +59,13 @@ import org.micromanager.asidispim.Utils.PanelUtils;
  */
 @SuppressWarnings("serial")
 public class CameraPanel extends ListeningJPanel{
-   final private Devices devices_;
-   final private Properties props_;
-   final private Prefs prefs_;
-   final private Cameras cameras_;
-   final private JComboBox camModeCB_;
-   
+   private final Devices devices_;
+   private final Properties props_;
+   private final Prefs prefs_;
+   private final Cameras cameras_;
+   private final JComboBox camModeCB_;
+   private final JCheckBox useSimultCameras_;
+   private final JSpinner numCameras_;
    
    public CameraPanel(final ScriptInterface gui, final Devices devices, 
            final Properties props, final Prefs prefs, 
@@ -203,12 +206,12 @@ public class CameraPanel extends ListeningJPanel{
       final int MAX_NUMBER_SIMULT_CAMERAS = 4;
       final int maxSelectorWidth = 110;
       simultaneousCamerasPanel.setBorder(PanelUtils.makeTitledBorder("Simultaneous Cameras"));
-      JCheckBox useSimultCameras = pu.makeCheckBox("Use simultaneous cameras on Path A", Properties.Keys.PLUGIN_USE_SIMULT_CAMERAS, panelName_, false);
-      useSimultCameras.setToolTipText("Currently only works with single-sided (path A) configurations"); 
-      simultaneousCamerasPanel.add(useSimultCameras, "span 3, wrap");
-      JSpinner numCameras = pu.makeSpinnerInteger(1, MAX_NUMBER_SIMULT_CAMERAS, Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_SIMULT_CAMERAS, 1);
+      useSimultCameras_ = pu.makeCheckBox("Use simultaneous cameras on Path A", Properties.Keys.PLUGIN_USE_SIMULT_CAMERAS, panelName_, false);
+      useSimultCameras_.setToolTipText("Currently only works with single-sided (path A) configurations"); 
+      simultaneousCamerasPanel.add(useSimultCameras_, "span 3, wrap");
+      numCameras_ = pu.makeSpinnerInteger(1, MAX_NUMBER_SIMULT_CAMERAS, Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_SIMULT_CAMERAS, 1);
       simultaneousCamerasPanel.add(new JLabel("Num simultaneous cameras:"), "span 2");
-      simultaneousCamerasPanel.add(numCameras, "wrap");
+      simultaneousCamerasPanel.add(numCameras_, "wrap");
       DeviceUtils du = new DeviceUtils(gui, devices, props, prefs);
       simultaneousCamerasPanel.add(new JLabel("Camera #1:"));
       simultaneousCamerasPanel.add(du.makeSingleCameraDeviceBox(Devices.Keys.CAMERA_A1, maxSelectorWidth), "growx, span 2, wrap");
@@ -249,7 +252,12 @@ public class CameraPanel extends ListeningJPanel{
    }
    
    public void setSPIMCameraMode(CameraModes.Keys mode) {
-      camModeCB_.setSelectedItem(mode);
+      // check to see if the camera mode is in the JComboBox
+      if (((DefaultComboBoxModel)camModeCB_.getModel()).getIndexOf(mode) != -1) {
+         camModeCB_.setSelectedItem(mode);
+      } else {
+         ReportingUtils.logError("Could not set the SPIM camera mode to " + mode);
+      }
    }
    
    private JToggleButton makeRoiButton(RoiPresets roi, String prefNode, String prefKey) {
@@ -336,6 +344,16 @@ public class CameraPanel extends ListeningJPanel{
       } else {
          return RoiPresets.CUSTOM;
       }
+   }
+   
+   // used when changing acquisition settings
+   public JCheckBox getUseSimultaneousCamerasCheckBox() {
+       return useSimultCameras_;
+   }
+   
+   // used when changing acquisition settings
+   public void setNumSimultaneousCameras(final int n) {
+       numCameras_.setValue(n);
    }
    
 }

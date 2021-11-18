@@ -164,6 +164,9 @@ public class AcquisitionSettings {
    // true if we have side-specific presets that we set during acquisition
    public boolean usePathPresets;
    
+   // true if we are using the advanced timing settings
+   public boolean useAdvancedSliceTiming;
+   
    // non-zero if using simultaneous cameras (path A only, up to 4 separate cameras)
    // similar but different from doing reflective imaging (both cameras) because this is only on path A
    public int numSimultCameras;

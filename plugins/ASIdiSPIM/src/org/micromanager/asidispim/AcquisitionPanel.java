@@ -136,7 +136,8 @@ import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 
 /**
- *
+ * The acquisition panel.
+ * 
  * @author nico
  * @author Jon
  */
@@ -247,6 +248,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final List<Runnable> runnablesEndTimepoint_;
    private final List<Runnable> runnablesStartPosition_;
    private final List<Runnable> runnablesEndPosition_;
+   public String acqName_;
    
    private static final int XYSTAGETIMEOUT = 20000;
    
@@ -294,7 +296,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       runnablesStartPosition_ = new ArrayList<Runnable>();
       runnablesEndPosition_ = new ArrayList<Runnable>();
       
-      final AcquisitionTableFrame playlistFrame = new AcquisitionTableFrame(gui_, this);
+      final AcquisitionTableFrame playlistFrame = new AcquisitionTableFrame(gui_, prefs_, this);
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
@@ -489,9 +491,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // this frame is separate from main plugin window
       
       sliceFrameAdvanced_ = new MMFrame("diSPIM_Advanced_Timing");
-      sliceFrameAdvanced_.setTitle("Advanced timing");
+      sliceFrameAdvanced_.setIconImage(Icons.MICROSCOPE.getImage());
+      sliceFrameAdvanced_.setTitle("Advanced Timing");
       sliceFrameAdvanced_.loadPosition(100, 100);
-
+      
       sliceAdvancedPanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
@@ -743,8 +746,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          @Override
          public void actionPerformed(final ActionEvent e) {
             setRootDirectory(rootField_);
-            prefs_.putString(panelName_, Properties.Keys.PLUGIN_DIRECTORY_ROOT, 
-                    rootField_.getText());
+            prefs_.putString(panelName_, Properties.Keys.PLUGIN_DIRECTORY_ROOT, rootField_.getText());
+            playlistFrame.getAcquisitionTable().updateSaveDirectoryRoot(rootField_.getText());
          }
       });
       browseRootButton.setMargin(new Insets(2, 5, 2, 5));
@@ -761,8 +764,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       prefixField_.addPropertyChangeListener(new PropertyChangeListener() {
          @Override
          public void propertyChange(PropertyChangeEvent evt) {
-            prefs_.putString(panelName_, Properties.Keys.PLUGIN_NAME_PREFIX,
-                  prefixField_.getText());
+            prefs_.putString(panelName_, Properties.Keys.PLUGIN_NAME_PREFIX, prefixField_.getText());
+            playlistFrame.getAcquisitionTable().updateSaveNamePrefix(prefixField_.getText());
          }
       });
       prefixField_.setColumns(textFieldWidth);
@@ -837,8 +840,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
              playlistFrame.setVisible(true);
          }
       });
-      // TODO: remove this when this feature exists
-      buttonOpenPlaylistFrame.setEnabled(false);
 
       // make the height of buttons match the start button (easier on the eye)
       Dimension sizeStart = buttonStart_.getPreferredSize();
@@ -886,12 +887,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       positionPanel_.add(gridButton_, "wrap");
       
       gridFrame_ = new MMFrame("diSPIM_XYZ_grid");
+      gridFrame_.setIconImage(Icons.MICROSCOPE.getImage());
       gridFrame_.setTitle("XYZ Grid");
       gridFrame_.loadPosition(100, 100);
       gridPanel_ = new XYZGridPanel(gui_, devices_, props_, prefs_, posUpdater_, positions_);
       gridFrame_.add(gridPanel_);
       gridFrame_.pack();
       gridFrame_.setResizable(false);
+      
+      // enable access to the XYZ grid frame from the playlist
+      playlistFrame.setXYZGridFrame(gridFrame_);
       
       class GridFrameAdapter extends WindowAdapter {
          @Override
@@ -1196,13 +1201,79 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PLUGIN_USE_SIMULT_CAMERAS, false) 
             ? props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_SIMULT_CAMERAS)
                   : 0;
+      acqSettings.useAdvancedSliceTiming = advancedSliceTimingCB_.isSelected();
       acqSettings.saveDirectoryRoot = rootField_.getText();
       acqSettings.saveNamePrefix = prefixField_.getText();
       return acqSettings;
    }
    
-   // TODO: implement this
-   public void setAcquisitionSettings(final AcquisitionSettings settings) {
+   /**
+    * Sets the acquisition settings from an AcquisitionSettings object, 
+    * updating the ui, so that getCurrentAcquisitionSettings will be 
+    * populated correctly when running an acquisition.
+    * 
+    * @param acqSettings the acquisition settings
+    */
+   public void setAcquisitionSettings(final AcquisitionSettings acqSettings) {
+       // Settings that don't need to update the gui =>
+       // isStageScanning, isStageStepping, numChannels
+
+       // channels
+       multiChannelPanel_.setPanelEnabled(acqSettings.useChannels);
+       multiChannelPanel_.setChannelMode(acqSettings.channelMode);
+       multiChannelPanel_.setChannelGroup(acqSettings.channelGroup);
+       multiChannelPanel_.removeAllChannels();
+       // Note: setChannelEnabled only adds unique presets
+       for (ChannelSpec channel : acqSettings.channels) {
+	       multiChannelPanel_.setChannelEnabled(channel.config_, channel.useChannel_);
+	   }
+       
+       // settings other than channels that need to update the gui
+       spimMode_.setSelectedItem(acqSettings.spimMode);
+       updateCheckBox(useTimepointsCB_, acqSettings.useTimepoints);
+       numTimepoints_.setValue(acqSettings.numTimepoints);
+       acquisitionInterval_.setValue(acqSettings.timepointInterval);
+       updateCheckBox(usePositionsCB_, acqSettings.useMultiPositions);
+       useAutofocusCB_.setSelected(acqSettings.useAutofocus);
+       useMovementCorrectionCB_.setSelected(acqSettings.useMovementCorrection);
+       numSides_.setSelectedIndex(acqSettings.numSides-1);
+       firstSide_.setSelectedItem(acqSettings.firstSideIsA ? "A" : "B");
+       delaySide_.setValue(acqSettings.delayBeforeSide);
+       numSlices_.setValue(acqSettings.numSlices);
+       stepSize_.setValue(acqSettings.stepSizeUm);
+       updateCheckBox(minSlicePeriodCB_, acqSettings.minimizeSlicePeriod);
+       desiredSlicePeriod_.setValue(acqSettings.desiredSlicePeriod);
+       desiredLightExposure_.setValue(acqSettings.desiredLightExposure);
+       separateTimePointsCB_.setSelected(acqSettings.separateTimepoints);
+       rootField_.setText(acqSettings.saveDirectoryRoot);
+       prefixField_.setText(acqSettings.saveNamePrefix);
+       advancedSliceTimingCB_.setSelected(acqSettings.useAdvancedSliceTiming);
+       
+       // update camera panel
+       final CameraPanel cameraPanel = ASIdiSPIM.getFrame().getCameraPanel();
+       cameraPanel.setSPIMCameraMode(acqSettings.cameraMode);
+       cameraPanel.setNumSimultaneousCameras(acqSettings.numSimultCameras);
+       updateCheckBox(cameraPanel.getUseSimultaneousCamerasCheckBox(), 
+               (acqSettings.numSimultCameras > 0) ? true : false);
+       
+       // update settings panel
+       final SettingsPanel settingsPanel = ASIdiSPIM.getFrame().getSettingsPanel();
+       updateCheckBox(settingsPanel.getAcquireBothCamerasCheckBox(), 
+               acqSettings.acquireBothCamerasSimultaneously);
+       updateCheckBox(settingsPanel.getPathGroupCheckBox(), 
+               acqSettings.usePathPresets);
+       
+       // update advanced timing settings frame
+       PanelUtils.setSpinnerFloatValue(delayScan_, acqSettings.sliceTiming.scanDelay);
+       numScansPerSlice_.setValue(acqSettings.sliceTiming.scanNum);
+       PanelUtils.setSpinnerFloatValue(lineScanDuration_, acqSettings.sliceTiming.scanPeriod);
+       PanelUtils.setSpinnerFloatValue(delayLaser_, acqSettings.sliceTiming.laserDelay);
+       PanelUtils.setSpinnerFloatValue(durationLaser_, acqSettings.sliceTiming.laserDuration);
+       PanelUtils.setSpinnerFloatValue(delayCamera_, acqSettings.sliceTiming.cameraDelay);
+       PanelUtils.setSpinnerFloatValue(durationCamera_, acqSettings.sliceTiming.cameraDuration );
+       PanelUtils.setSpinnerFloatValue(exposureCamera_, acqSettings.sliceTiming.cameraExposure );
+       // TODO: alternate scan direction is unaccounted for
+       
        // refresh ui
        revalidate();
        repaint();
@@ -1211,7 +1282,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * gets the correct value for the slice timing's sliceDuration field
     * based on other values of slice timing
-    * @param s
+    * @param s the slice timing
     * @return
     */
    private float getSliceDuration(final SliceTiming s) {
@@ -2457,7 +2528,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, true);
             AcquisitionStatus success = runAcquisitionPrivate(false, Devices.Sides.NONE, hideErrors);
             if (success == AcquisitionStatus.FATAL_ERROR) {
-               ReportingUtils.logError("Fatal error running diSPIM acquisition.");
+               MyDialogUtils.showError("Fatal error running diSPIM acquisition.", hideErrors);
             }
             acquisitionRequested_.set(false);
             updateStartButton();
@@ -2482,7 +2553,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return true if ran without any fatal errors.  If non-fatal error is encountered you can check 
     */
    private AcquisitionStatus runAcquisitionPrivate(boolean testAcq, Devices.Sides testAcqSide, boolean hideErrors) {
-      
       // sanity check, shouldn't call this unless we aren't running an acquisition
       if (gui_.isAcquisitionRunning()) {
          MyDialogUtils.showError("An acquisition is already running", hideErrors);
@@ -3278,7 +3348,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       boolean nonfatalError = false;
       long acqButtonStart = System.currentTimeMillis();
-      String acqName = "";
+      //String acqName = "";
+      acqName_ = "";
       acq_ = null;
       
       // execute any start-acquisition runnables
@@ -3323,7 +3394,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                //   call to closeAcquisitionWindow() fails silently. 
                //   See http://sourceforge.net/p/micro-manager/mailman/message/32999320/
                acq_.promptToSave(false);
-               gui_.closeAcquisitionWindow(acqName);
+               gui_.closeAcquisitionWindow(acqName_);
             } catch (Exception ex) {
                // do nothing if unsuccessful
             }
@@ -3331,9 +3402,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          
          if (acqSettings.separateTimepoints) {
             // call to getUniqueAcquisitionName is extra safety net, we have checked that directory is empty before starting
-            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + String.format("%04d", acqNum));
+            acqName_ = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + String.format("%04d", acqNum));
          } else {
-            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText());
+            acqName_ = gui_.getUniqueAcquisitionName(prefixField_.getText());
          }
          
          long extraStageScanTimeout = 0;
@@ -3378,7 +3449,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // flag that we are actually running acquisition now
             acquisitionRunning_.set(true);
             
-            ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName + " with following settings: " + acqSettingsJSON);
+            ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName_ + " with following settings: " + acqSettingsJSON);
             
             final int numMMChannels;
             if (acqSimultSideA) {
@@ -3388,16 +3459,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
             
             if (acqSimultSideA) {
-               gui_.openAcquisition(acqName, rootDir, 1, numMMChannels,
+               gui_.openAcquisition(acqName_, rootDir, 1, numMMChannels,
                      acqSettings.numSlices*acqSettings.numChannels, nrPositions, true, save);
 //               gui_.openAcquisition(acqName, rootDir, acqSettings.numChannels, numMMChannels,
 //                     acqSettings.numSlices, nrPositions, true, save);
             } else if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                // swap nrFrames and numSlices
-               gui_.openAcquisition(acqName, rootDir, acqSettings.numSlices, numMMChannels,
+               gui_.openAcquisition(acqName_, rootDir, acqSettings.numSlices, numMMChannels,
                   nrFrames, nrPositions, true, save);
             } else {
-               gui_.openAcquisition(acqName, rootDir, nrFrames, numMMChannels,
+               gui_.openAcquisition(acqName_, rootDir, nrFrames, numMMChannels,
                   acqSettings.numSlices, nrPositions, true, save);
             }
             
@@ -3461,8 +3532,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // assign channel names and colors
             for (int i = 0; i < numMMChannels; i++) {
-               gui_.setChannelName(acqName, i, channelNames_[i]);
-               gui_.setChannelColor(acqName, i, getChannelColor(i));
+               gui_.setChannelName(acqName_, i, channelNames_[i]);
+               gui_.setChannelColor(acqName_, i, getChannelColor(i));
             }
             
             if (acqSettings.useMovementCorrection) {
@@ -3482,56 +3553,56 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   : acqSettings.stepSizeUm;  // should be same as PanelUtils.getSpinnerFloatValue(stepSize_)
             
             // initialize acquisition
-            gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
+            gui_.initializeAcquisition(acqName_, (int) core_.getImageWidth(),
                     (int) core_.getImageHeight(), (int) core_.getBytesPerPixel(),
                     (int) core_.getImageBitDepth());
-            gui_.promptToSaveAcquisition(acqName, !testAcq);
+            gui_.promptToSaveAcquisition(acqName_, !testAcq);
             
             // These metadata have to be added after initialization, 
             // otherwise they will not be shown?!
-            gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
+            gui_.setAcquisitionProperty(acqName_, "NumberOfSides", 
                     NumberUtils.intToCoreString(acqSettings.numSides));
-            gui_.setAcquisitionProperty(acqName, "FirstSide", acqSettings.firstSideIsA ? "A" : "B");
-            gui_.setAcquisitionProperty(acqName, "SlicePeriod_ms", 
+            gui_.setAcquisitionProperty(acqName_, "FirstSide", acqSettings.firstSideIsA ? "A" : "B");
+            gui_.setAcquisitionProperty(acqName_, "SlicePeriod_ms", 
                   actualSlicePeriodLabel_.getText());
-            gui_.setAcquisitionProperty(acqName, "LaserExposure_ms",
+            gui_.setAcquisitionProperty(acqName_, "LaserExposure_ms",
                   NumberUtils.doubleToCoreString(acqSettings.desiredLightExposure));
-            gui_.setAcquisitionProperty(acqName, "VolumeDuration",
+            gui_.setAcquisitionProperty(acqName_, "VolumeDuration",
                     actualVolumeDurationLabel_.getText());
-            gui_.setAcquisitionProperty(acqName, "SPIMmode", spimMode.toString()); 
+            gui_.setAcquisitionProperty(acqName_, "SPIMmode", spimMode.toString()); 
             // Multi-page TIFF saving code wants this one (cameras are all 16-bits, so not much reason for anything else)
-            gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
-            gui_.setAcquisitionProperty(acqName, "UseAutofocus", 
+            gui_.setAcquisitionProperty(acqName_, "PixelType", "GRAY16");
+            gui_.setAcquisitionProperty(acqName_, "UseAutofocus", 
                   acqSettings.useAutofocus ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
-            gui_.setAcquisitionProperty(acqName, "UsePathPresets", 
+            gui_.setAcquisitionProperty(acqName_, "UsePathPresets", 
                     acqSettings.usePathPresets ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
-            gui_.setAcquisitionProperty(acqName, "UseMotionCorrection", 
+            gui_.setAcquisitionProperty(acqName_, "UseMotionCorrection", 
                   acqSettings.useMovementCorrection ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
-            gui_.setAcquisitionProperty(acqName, "HardwareTimepoints", 
+            gui_.setAcquisitionProperty(acqName_, "HardwareTimepoints", 
                   acqSettings.hardwareTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
-            gui_.setAcquisitionProperty(acqName, "SeparateTimepoints", 
+            gui_.setAcquisitionProperty(acqName_, "SeparateTimepoints", 
                   acqSettings.separateTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
-            gui_.setAcquisitionProperty(acqName, "CameraMode", acqSettings.cameraMode.toString()); 
-            gui_.setAcquisitionProperty(acqName, "z-step_um", NumberUtils.doubleToCoreString(zStepUm_));
+            gui_.setAcquisitionProperty(acqName_, "CameraMode", acqSettings.cameraMode.toString()); 
+            gui_.setAcquisitionProperty(acqName_, "z-step_um", NumberUtils.doubleToCoreString(zStepUm_));
             // Properties for use by MultiViewRegistration plugin
             // Format is: x_y_z, set to 1 if we should rotate around this axis.
-            gui_.setAcquisitionProperty(acqName, "MVRotationAxis", "0_1_0");
-            gui_.setAcquisitionProperty(acqName, "MVRotations", viewString);
+            gui_.setAcquisitionProperty(acqName_, "MVRotationAxis", "0_1_0");
+            gui_.setAcquisitionProperty(acqName_, "MVRotations", viewString);
             // save XY and SPIM head position in metadata
             // update positions first at expense of two extra serial transactions
             refreshXYZPositions();
-            gui_.setAcquisitionProperty(acqName, "Position_X",
+            gui_.setAcquisitionProperty(acqName_, "Position_X",
                   positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.X));
-            gui_.setAcquisitionProperty(acqName, "Position_Y",
+            gui_.setAcquisitionProperty(acqName_, "Position_Y",
                   positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.Y));
-            gui_.setAcquisitionProperty(acqName, "Position_SPIM_Head",
+            gui_.setAcquisitionProperty(acqName_, "Position_SPIM_Head",
                   positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
-            gui_.setAcquisitionProperty(acqName, "SPIMAcqSettings", acqSettingsJSON);
-            gui_.setAcquisitionProperty(acqName, "SPIMtype", ASIdiSPIM.oSPIM ? "oSPIM" : "diSPIM");
-            gui_.setAcquisitionProperty(acqName, "AcquisitionName", acqName);
-            gui_.setAcquisitionProperty(acqName, "Prefix", acqName);
-            gui_.setAcquisitionProperty(acqName, MMTags.Summary.SLICES_FIRST, Boolean.TRUE.toString());  // whether slices are inner loop compared to channel; not sure why but Nico had this set to true forever so leaving it
-            gui_.setAcquisitionProperty(acqName, MMTags.Summary.TIME_FIRST, Boolean.FALSE.toString()); 
+            gui_.setAcquisitionProperty(acqName_, "SPIMAcqSettings", acqSettingsJSON);
+            gui_.setAcquisitionProperty(acqName_, "SPIMtype", ASIdiSPIM.oSPIM ? "oSPIM" : "diSPIM");
+            gui_.setAcquisitionProperty(acqName_, "AcquisitionName", acqName_);
+            gui_.setAcquisitionProperty(acqName_, "Prefix", acqName_);
+            gui_.setAcquisitionProperty(acqName_, MMTags.Summary.SLICES_FIRST, Boolean.TRUE.toString());  // whether slices are inner loop compared to channel; not sure why but Nico had this set to true forever so leaving it
+            gui_.setAcquisitionProperty(acqName_, MMTags.Summary.TIME_FIRST, Boolean.FALSE.toString()); 
                   //Boolean.toString(acqSimultSideA));   // whether timepoints are inner loop compared to position; false for all diSPIM use cases except simultaneous on PathA where we use timepoints as "channels"
                       
             // get circular buffer ready
@@ -3540,7 +3611,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
-            acq_ = gui_.getAcquisition(acqName);
+            acq_ = gui_.getAcquisition(acqName_);
             
             // Dive into MM internals since script interface does not support pipelines
             imageCache = acq_.getImageCache();
@@ -3580,7 +3651,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // patterned after implementation in MMStudio.java
             // will be null if not saving to disk
             lastAcquisitionPath_ = acq_.getImageCache().getDiskLocation();
-            lastAcquisitionName_ = acqName;
+            lastAcquisitionName_ = acqName_;
             
                            
             // only used when motion correction was requested
@@ -3624,12 +3695,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
             
+            // check if we are raising the SPIM head to the load position between every acquisition
+            final boolean raiseSPIMHead = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), 
+            Properties.Keys.PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS, false);
+            
             // Loop over all the times we trigger the controller's acquisition
             //  (although if multi-channel with volume switching is selected there
             //   is inner loop to trigger once per channel)
             // remember acquisition start time for software-timed timepoints
             // For hardware-timed timepoints we only trigger the controller once
             long acqStart = System.currentTimeMillis();
+            if (raiseSPIMHead) {
+	       	    ASIdiSPIM.getFrame().getNavigationPanel().raiseSPIMHead();
+	            core_.waitForDevice(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
+            }
             for (int trigNum = 0; trigNum < nrFrames; trigNum++) {
                // handle intervals between (software-timed) time points
                // when we are within the same acquisition
@@ -3756,11 +3835,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      
                      final MultiStagePosition nextPosition = positionList.getPosition(positionNum);
                      
-                     // blocking call; will wait for stages to move
-                     // NB: assume planar correction is handled by marked Z position; this seems better
-                     //   than making it impossible for user to select different Z positions e.g. for YZ grid
-                     MultiStagePosition.goToPosition(nextPosition, core_);
-                     
+                     if (!raiseSPIMHead) {
+                         // blocking call; will wait for stages to move
+                         // NB: assume planar correction is handled by marked Z position; this seems better
+                         //   than making it impossible for user to select different Z positions e.g. for YZ grid
+                         MultiStagePosition.goToPosition(nextPosition, core_);
+                     } else {
+                         // get device labels
+                         final String xyStage = devices_.getMMDevice(Devices.Keys.XYSTAGE);
+                         final String upperZDrive = devices_.getMMDevice(Devices.Keys.UPPERZDRIVE);
+                         // move XY and wait for device
+                         core_.setXYPosition(xyStage, nextPosition.getX(), nextPosition.getY());
+                         core_.waitForDevice(xyStage);
+                         // move Z and wait for device
+                         core_.setPosition(upperZDrive, nextPosition.getZ());
+                         core_.waitForDevice(upperZDrive);
+                     }
                      
                      // for stage scanning: restore speed and set up scan at new position 
                      // non-multi-position situation is handled in prepareControllerForAquisition instead
@@ -4455,7 +4545,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // when the user closes a window of the previous acquisition
                // changed r14705 (2014-11-24)
                // gui_.closeAcquisition(acqName);
-               ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
+               ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName_ + 
                      " took: " + (System.currentTimeMillis() - acqButtonStart) + "ms");
                
                // dump errors again
@@ -4943,7 +5033,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       zPositionUm_ = positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
    }
    
-
+   public JCheckBox getMultiplePositionsCheckBox() {
+       return usePositionsCB_;
+   }
+   
+   public void updateCheckBox(final JCheckBox checkBox, final boolean state) {
+       if (state != checkBox.isSelected()) {
+           checkBox.doClick();
+       }
+   }
+   
    /***************** API  *******************/
    
    
@@ -5293,4 +5392,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       runnablesEndPosition_.clear();
    }
    
+   public String getAcqName() {
+	   return acqName_;
+   }
 }

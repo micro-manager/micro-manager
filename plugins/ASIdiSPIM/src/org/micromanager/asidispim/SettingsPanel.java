@@ -77,6 +77,11 @@ public class SettingsPanel extends ListeningJPanel {
    private final JComboBox presetA_;
    private final JComboBox presetB_;
    
+   private final JCheckBox acqFailQuietly_;
+   private final JCheckBox raiseSPIMHead_;
+   private final JCheckBox usePathGroupAcquisition_;
+   private final JCheckBox acqBothCamerasSimult_;
+   
    /**
     * 
     * @param gui Micro-Manager api
@@ -211,13 +216,17 @@ public class SettingsPanel extends ListeningJPanel {
             Properties.Keys.PLUGIN_WRITE_ACQ_SETTINGS_FILE, panelName_, false);
       acqusitionPanel.add(acqSettingsWrite, "wrap");
       
-      final JCheckBox acqBothCamerasSimult = pu.makeCheckBox("Acquire from both cameras simultaneously",
+      acqBothCamerasSimult_ = pu.makeCheckBox("Acquire from both cameras simultaneously",
             Properties.Keys.PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT, panelName_, false);
-      acqusitionPanel.add(acqBothCamerasSimult, "wrap");
+      acqusitionPanel.add(acqBothCamerasSimult_, "wrap");
 
-      final JCheckBox acqFailQuietly = pu.makeCheckBox("Acquisition failures are quiet",
+      acqFailQuietly_ = pu.makeCheckBox("Acquisition failures are quiet",
             Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, panelName_, false);
-      acqusitionPanel.add(acqFailQuietly, "wrap");
+      acqusitionPanel.add(acqFailQuietly_, "wrap");
+      
+      raiseSPIMHead_ = pu.makeCheckBox("Raise SPIM head between acquisitions",
+              Properties.Keys.PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS, panelName_, false);
+      acqusitionPanel.add(raiseSPIMHead_, "wrap");
       
       // end acquisiton panel
       
@@ -364,9 +373,9 @@ public class SettingsPanel extends ListeningJPanel {
          }
       });
       
-      final JCheckBox usePathGroupAcquisition = pu.makeCheckBox("Use path group during acquisition",
+      usePathGroupAcquisition_ = pu.makeCheckBox("Use path group during acquisition",
             Properties.Keys.PLUGIN_USE_PATH_GROUP_ACQ, panelName_, true);
-      setupPanel.add(usePathGroupAcquisition, "span 2, wrap, alignx left");
+      setupPanel.add(usePathGroupAcquisition_, "span 2, wrap, alignx left");
       
       // end Setup Panel settings panel
       
@@ -420,7 +429,6 @@ public class SettingsPanel extends ListeningJPanel {
       
    }
    
-
    private StrVector getAvailablePresetsForPathGroup() {
       final String groupName = (String) pathGroup_.getSelectedItem();
       JComboBox presetBox = new JComboBox();
@@ -456,11 +464,20 @@ public class SettingsPanel extends ListeningJPanel {
          }
       }
    }
+
+   // used when changing acquisition settings
+   public JCheckBox getAcquireBothCamerasCheckBox() {
+       return acqBothCamerasSimult_;
+   }
+   
+   // used when changing acquisition settings
+   public JCheckBox getPathGroupCheckBox() {
+       return usePathGroupAcquisition_;
+   }
    
    @Override
    public void saveSettings() {
 
    }
-   
    
 }
