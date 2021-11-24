@@ -1223,7 +1223,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
        multiChannelPanel_.setChannelMode(acqSettings.channelMode);
        multiChannelPanel_.setChannelGroup(acqSettings.channelGroup);
        multiChannelPanel_.removeAllChannels();
-       // Note: setChannelEnabled only adds unique presets
+       // Note: setChannelEnabled only adds channels with unique preset names
+       // only used channels are saved ("Use?" checkbox is checked)
        for (ChannelSpec channel : acqSettings.channels) {
 	       multiChannelPanel_.setChannelEnabled(channel.config_, channel.useChannel_);
 	   }
