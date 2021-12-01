@@ -20,26 +20,31 @@ import ij.process.FloatPolygon;
 import java.util.List;
 import org.micromanager.projector.internal.OnStateListener;
 
+/**
+ * Abstraction of Projection device.  We currently have Galvos (single point at a time,
+ * could conceivably display patterns), and SLMs (which is the same as a display screen,
+ * i.e. an image with width, height and possibly intensity).
+ */
 public interface ProjectionDevice {
 
    // Properties of device.
-   public String getName();
+   String getName();
 
    /**
-    * Strange function that only seems to have an effect on Rapp bleacher This may need to be
+    * Strange function that only seems to have an effect on Rapp bleacher. This may need to be
     * deprecated
     *
-    * @return
+    * @return channel name
     */
-   public String getChannel();
+   String getChannel();
 
-   public double getXRange();
+   double getXRange();
 
-   public double getYRange();
+   double getYRange();
 
-   public double getXMinimum();
+   double getXMinimum();
 
-   public double getYMinimum();
+   double getYMinimum();
 
    /**
     * Provides the name of a valid shutter device in Micro-Manager The shutter will be opened and
@@ -47,9 +52,9 @@ public interface ProjectionDevice {
     * open for the specified amount of time in the displaySpot function, etc.. If the Shutter is a
     * null object or an empty string or not a valid MM device it will be ignored
     *
-    * @param shutter
+    * @param shutter Name of a shutter device
     */
-   public void setExternalShutter(String shutter);
+   void setExternalShutter(String shutter);
 
    /**
     * returns the external shutter device.  Will be null if no external shutter device was
@@ -57,51 +62,56 @@ public interface ProjectionDevice {
     *
     * @return external shutter
     */
-   public String getExternalShutter();
+   String getExternalShutter();
 
    // ## Alert when something has changed.
-   public void addOnStateListener(OnStateListener listener);
+   void addOnStateListener(OnStateListener listener);
 
    // ## Get/set internal exposure setting
-   public long getExposure();
+   long getExposure();
 
-   public void setExposure(long interval_us);
+   /**
+    * Sets exposure of the projection device in Micro-Seconds.
+    *
+    * @param intervalUs Exposure in Micro-Seconds
+    */
+   void setExposure(long intervalUs);
 
    // ## Control illumination
-   public void turnOn();
+   void turnOn();
 
-   public void turnOff();
+   void turnOff();
 
    /**
     * Displays a spot at location x, y (in Projector coordinates) for a duration set in setExposure.
     * This function will display a spot on an SLM, or point a pointing device to the desired
     * location, and illuminate for the desired duration
     *
-    * @param x
-    * @param y
+    * @param x x position (in Projector coordinates)
+    * @param y y position (in Porjector coordinates)
     */
-   public void displaySpot(double x, double y);
+   void displaySpot(double x, double y);
 
    /**
     * Switches all pixels of an SLM device to the "on"/"Active" position. This function has no
     * effect on a Galvo device
     */
-   public void activateAllPixels();
+   void activateAllPixels();
 
    /**
-    * Projects an x * y checkboard pattern on the SLM has no effect on Galvo device
+    * Projects an x * y checkboard pattern on the SLM has no effect on Galvo device.
     *
     * @param x # of fields (black + white) in x direction
     * @param y # of fields (black + white) in y direction
     */
-   public void showCheckerBoard(int x, int y);
+   void showCheckerBoard(int x, int y);
 
    // ## ROIs
-   public void loadRois(List<FloatPolygon> rois);
+   void loadRois(List<FloatPolygon> rois);
 
-   public void setPolygonRepetitions(int reps);
+   void setPolygonRepetitions(int reps);
 
-   public void runPolygons();
+   void runPolygons();
 
-   public void waitForDevice();
+   void waitForDevice();
 }

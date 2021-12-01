@@ -22,6 +22,8 @@ import org.micromanager.projector.internal.devices.SLM;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
+ * API for Projector (SLM or galvo pair) actions.
+ *
  * @author Nico
  */
 public abstract class ProjectorActions {
@@ -30,7 +32,7 @@ public abstract class ProjectorActions {
     * Creates a ProjectionDevice from the first SLM (or Galvo if no SLM is present) found by the
     * Micro-Manager Core.
     *
-    * @param studio
+    * @param studio The main micro-manager object
     * @return First ProjectionDevice found
     */
    public static ProjectionDevice getProjectionDevice(Studio studio) {
@@ -91,7 +93,7 @@ public abstract class ProjectorActions {
    }
 
    /**
-    * Activates a spot at the center of the Galvo/SLM range
+    * Activates a spot at the center of the Galvo/SLM range.
     *
     * @param dev ProjectionDevice to be used
     */
@@ -105,7 +107,7 @@ public abstract class ProjectorActions {
     * Returns ROIs, transformed by the current mapping.
     *
     * @param rois          Array of ImageJ Rois to be converted
-    * @param mapping
+    * @param mapping       contains information about the camera/device mapping
     * @param cameraROI     current ROI of the camera.  Will be ignored when null
     * @param cameraBinning current binning of the camera.  Assumed to be 1 when null
     * @return list of Rois converted into Polygons
@@ -119,11 +121,11 @@ public abstract class ProjectorActions {
    /**
     * Transform the Roi polygons with the given nonlinear mapping.
     *
-    * @param roiPolygons
-    * @param mapping
+    * @param roiPolygons Polygons to be transformed
+    * @param mapping     Contains information about the camera/device mapping
     * @param cameraROI     current ROI of the camera.  Will be ignored when null
     * @param cameraBinning current binning of the camera.  Assumed to be 1 when null
-    * @return
+    * @return List of polygons in projection device coordinates
     */
    public static List<FloatPolygon> transformRoiPolygons(
          Polygon[] roiPolygons, Mapping mapping, Rectangle cameraROI, Integer cameraBinning) {
@@ -216,6 +218,18 @@ public abstract class ProjectorActions {
       return (Point2D.Double) mapping.getMap().get(bestPoly).transform(pt, null);
    }
 
+   /**
+    * Transforms an image from camera coordinates to projection device coordinates and
+    * displays on the projection device.
+    *
+    * @param mapping Defines the mapping between camera and projection device.
+    * @param dev Projection device
+    * @param inputImage image (in camera coordinates) to be displayed on the projection device
+    * @param width image width
+    * @param height image height
+    * @param cameraROI Current ROI of the camera
+    * @param cameraBinning Current binning of the camera
+    */
    public static void transformAndSetMask(Mapping mapping,
          ProjectionDevice dev, byte[] inputImage, int width, int height,
          Rectangle cameraROI, Integer cameraBinning) {
@@ -247,7 +261,7 @@ public abstract class ProjectorActions {
       slm.displaySLMImage(outputImage);
    }
 
-   /************* Private methods **************/
+   // ************* Private methods ************** //
 
    // Converts an ROI to a Polygon.
    private static Polygon asPolygon(Roi roi) {
@@ -267,7 +281,7 @@ public abstract class ProjectorActions {
       for (Roi roi : rois) {
          switch (roi.getType()) {
             case Roi.POINT:
-               Polygon poly = ((PointRoi) roi).getPolygon();
+               Polygon poly = roi.getPolygon();
                for (int i = 0; i < poly.npoints; ++i) {
                   roiList.add(new PointRoi(
                         poly.xpoints[i],
