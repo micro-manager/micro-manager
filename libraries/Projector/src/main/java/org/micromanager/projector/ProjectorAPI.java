@@ -164,7 +164,7 @@ public class ProjectorAPI {
     * @param on true will enable shoot mode, false will switch it off
     */
    public void enableShootMode(boolean on) {
-      projectorControlForm_.enableShootMode(on);
+      projectorControlForm_.enableShootMode();
    }
 
    /**
