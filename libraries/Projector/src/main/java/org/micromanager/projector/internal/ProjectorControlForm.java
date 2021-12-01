@@ -45,6 +45,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -110,7 +111,7 @@ public class ProjectorControlForm extends JFrame {
    private final MutablePropertyMapView settings_;
    private final boolean isSLM_;
    private Roi[] individualRois_ = {};
-   private Mapping mapping_ = null;
+   private Mapping mapping_;
    private String targetingChannel_;
    private MosaicSequencingFrame mosaicSequencingFrame_;
    private String targetingShutter_;
@@ -137,13 +138,10 @@ public class ProjectorControlForm extends JFrame {
    private javax.swing.JButton allPixelsButton_;
    private javax.swing.JTabbedPane attachToMdaTabbedPane_;
    private javax.swing.JButton calibrateButton_;
-   private javax.swing.JComboBox channelComboBox_;
+   private javax.swing.JComboBox<String> channelComboBox_;
    private javax.swing.JButton checkerBoardButton_;
    private javax.swing.JTextField delayField_;
    private javax.swing.JTextField logDirectoryTextField_;
-   private javax.swing.JButton offButton_;
-   private javax.swing.JButton onButton_;
-   private javax.swing.JLabel phototargetInstructionsLabel;
    private javax.swing.JSpinner pointAndShootIntervalSpinner_;
    private javax.swing.JToggleButton pointAndShootOffButton_;
    private javax.swing.JToggleButton pointAndShootOnButton;
@@ -159,8 +157,7 @@ public class ProjectorControlForm extends JFrame {
    private javax.swing.JLabel roiStatusLabel_;
    private javax.swing.JButton exposeROIsButton_;
    private javax.swing.JButton sequencingButton_;
-   private javax.swing.JButton setRoiButton;
-   private javax.swing.JComboBox shutterComboBox_;
+   private javax.swing.JComboBox<String> shutterComboBox_;
    private javax.swing.JLabel startFrameLabel_;
    private javax.swing.JSpinner startFrameSpinner_;
    private javax.swing.JLabel startTimeLabel_;
@@ -235,8 +232,7 @@ public class ProjectorControlForm extends JFrame {
          public void onAcquisitionStart(AcquisitionStartedEvent ae) {
             Datastore store = ae.getDatastore();
             String savePath = store.getSavePath();
-            mdaLogFile_ = new StringBuilder().append(savePath).append(
-                  File.separator).append("PointAndShoot.log").toString();
+            mdaLogFile_ = savePath + File.separator + "PointAndShoot.log";
          }
 
          @Subscribe
@@ -273,7 +269,9 @@ public class ProjectorControlForm extends JFrame {
       updateROISettings();
    }
 
-   // Show the form, which is a singleton.
+   /**
+    * Shows the singleton form.
+    */
    public static ProjectorControlForm showSingleton(CMMCore core, Studio app) {
       if (formSingleton_ == null) {
          formSingleton_ = new ProjectorControlForm(core, app);
@@ -286,7 +284,7 @@ public class ProjectorControlForm extends JFrame {
     * The ProjectorControlExecution object carries out the "business" side of the projector. Use it
     * for scripting, etc..
     *
-    * @return
+    * @return the ProjectorControlExecution object
     */
    public ProjectorControlExecution exec() {
       return projectorControlExecution_;
@@ -423,8 +421,8 @@ public class ProjectorControlForm extends JFrame {
 
    /**
     * Flips a point if the image was mirrored. TODO: also correct for rotation..
-    * <p>
-    * private Point mirrorIfNecessary(DataViewer dv, Point pOffscreen) { boolean isImageMirrored =
+    *
+    * <p>private Point mirrorIfNecessary(DataViewer dv, Point pOffscreen) { boolean isImageMirrored =
     * false; int imageWidth = 0; DataProvider dp = dv.getDataProvider(); if (dp != null) { try {
     * Image lastImage = dp.getImage(dp.getMaxIndices()); if (lastImage != null) { PropertyMap
     * userData = lastImage.getMetadata().getUserData(); if (userData.containsString("ImageFlipper-Mirror"))
@@ -441,10 +439,9 @@ public class ProjectorControlForm extends JFrame {
       if (dme.getToolId() != ij.gui.Toolbar.HAND) {
          return;
       }
-      if ((dme.getEvent().getID() == MouseEvent.MOUSE_PRESSED) &&
-            dme.getEvent().isShiftDown() &&
-            dme.getEvent().getButton() == 1) {
-         // System.out.println("" + dme.getEvent().getID()+ " " + dme.getEvent().paramString());
+      if ((dme.getEvent().getID() == MouseEvent.MOUSE_PRESSED)
+            && dme.getEvent().isShiftDown()
+            && dme.getEvent().getButton() == 1) {
          if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().isLiveModeOn()) {
             Point2D p2D = dme.getCenterLocation();
             addPointToPointAndShootQueue(p2D);
@@ -453,7 +450,7 @@ public class ProjectorControlForm extends JFrame {
    }
 
    /**
-    * Adds a poingt in image space to the point and shoot queue
+    * Adds a point in image space to the point and shoot queue.
     *
     * @param p2D 2D point on an image produced with the current camera settings Point will be mapped
     *            to corresponding point in Projector coordinates
@@ -476,15 +473,19 @@ public class ProjectorControlForm extends JFrame {
       final Configuration originalConfig
             = projectorControlExecution_.prepareChannel(targetingChannel_);
       PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
-      PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
-            devPoint(devP).
-            originalConfig(originalConfig).
-            canvasPoint(new Point((int) p2D.getX(), (int) p2D.getY())).
-            build();
+      PointAndShootInfo psi = psiBuilder.projectionDevice(dev_)
+            .devPoint(devP)
+            .originalConfig(originalConfig)
+            .canvasPoint(new Point((int) p2D.getX(), (int) p2D.getY()))
+            .build();
       pointAndShootQueue_.add(psi);
    }
 
-   public void enableShootMode(boolean on) {
+   /**
+    * Ensures that the Point and Shoot thread is running.
+    * The thread will take anything in the queue and execure those points.
+    */
+   public void enableShootMode() {
       // restart this thread if it is not running?
       if (pointAndShootThread_ == null || !pointAndShootThread_.isAlive()) {
          pointAndShootThread_ = new Thread(() -> {
@@ -531,14 +532,15 @@ public class ProjectorControlForm extends JFrame {
          return;
       }
       pointAndShooteModeOn_.set(on);
-      enableShootMode(on);
+      enableShootMode();
 
-      if (!on & pointAndShootViewer_ != null) {
+      if (!on && pointAndShootViewer_ != null) {
          pointAndShootViewer_.unregisterForEvents(this);
          pointAndShootViewer_ = null;
       }
-      if (on && pointAndShootViewer_ != null &&
-            pointAndShootViewer_ != studio_.displays().getActiveDataViewer()) {
+      if (on
+            && pointAndShootViewer_ != null
+            && pointAndShootViewer_ != studio_.displays().getActiveDataViewer()) {
          pointAndShootViewer_.unregisterForEvents(this);
          pointAndShootViewer_ = null;
       }
@@ -554,7 +556,7 @@ public class ProjectorControlForm extends JFrame {
    /**
     * Creates the log file - names with the current date - if it did not yet exist.
     *
-    * @return
+    * @return Writer to the log file
     */
    private BufferedWriter checkLogFile() {
       if (logFileWriter_ == null || logFile_ == null || !(new File(logFile_)).exists()) {
@@ -562,17 +564,16 @@ public class ProjectorControlForm extends JFrame {
             return null;
          }
          String currentDate = LOGFILEDATE_FORMATTER.format(new Date());
-         logFile_ = new StringBuilder().append(
-               logDirectoryTextField_.getText()).append(
-               File.separator).append(
-               currentDate).append(
-               ".log").toString();
+         logFile_ = logDirectoryTextField_.getText()
+               + File.separator
+               + currentDate
+               + ".log";
          try {
             OutputStreamWriter writer = new OutputStreamWriter(
-                  new FileOutputStream(logFile_), "UTF-8");
+                  new FileOutputStream(logFile_), StandardCharsets.UTF_8);
             // not sure if buffering is useful
             logFileWriter_ = new BufferedWriter(writer, 128);
-         } catch (UnsupportedEncodingException | FileNotFoundException ex) {
+         } catch (FileNotFoundException ex) {
             studio_.alerts().postAlert("Error opening logfile", this.getClass(),
                   "Failed to open log file");
          }
@@ -581,9 +582,9 @@ public class ProjectorControlForm extends JFrame {
    }
 
    /**
-    * Creates logfile in the acquisition directory of current MDA
+    * Creates logfile in the acquisition directory of current MDA.
     *
-    * @return
+    * @return Writer to the log file
     */
    private BufferedWriter checkMDALogFile() {
       if (mdaLogFile_ == null) {
@@ -592,9 +593,9 @@ public class ProjectorControlForm extends JFrame {
       if (mdaLogFileWriter_ == null) {
          try {
             OutputStreamWriter writer = new OutputStreamWriter(
-                  new FileOutputStream(mdaLogFile_), "UTF-8");
+                  new FileOutputStream(mdaLogFile_), StandardCharsets.UTF_8);
             mdaLogFileWriter_ = new BufferedWriter(writer, 128);
-         } catch (UnsupportedEncodingException | FileNotFoundException ex) {
+         } catch (FileNotFoundException ex) {
             studio_.alerts().postAlert("Error opening MDA logfile", this.getClass(),
                   "Failed to open MDA log file");
          }
@@ -606,7 +607,7 @@ public class ProjectorControlForm extends JFrame {
     * Writes a point (screen coordinates) to the logfile, preceded by the current date and time in
     * ms.
     *
-    * @param p
+    * @param p Point to be written to the logfile.
     */
    private void logPoint(Point p) {
       BufferedWriter logFileWriter = checkLogFile();
@@ -614,9 +615,8 @@ public class ProjectorControlForm extends JFrame {
       if (logFileWriter == null && mdaLogFileWriter == null) {
          return;
       }
-      String logLine = new StringBuilder(LOGTIME_FORMATTER.format(new Date())).
-            append("\t").append(p.x).append("\t").append(p.y)
-            .toString();  // could use nanoseconds instead...
+      String logLine = LOGTIME_FORMATTER.format(new Date())
+            + "\t" + p.x + "\t" + p.y;  // could use nanoseconds instead...
       try {
          if (logFileWriter != null) {
             logFileWriter.write(logLine);
@@ -637,9 +637,10 @@ public class ProjectorControlForm extends JFrame {
    // ## Manipulating ROIs
 
 
-   // Returns the current ROIs for a given ImageWindow. If selectedOnly
-   // is true, then returns only those ROIs selected in the ROI Manager.
-   // If no ROIs are selected, then all ROIs are returned.
+   /** Returns the current ROIs for a given ImageWindow. If selectedOnly
+    * is true, then returns only those ROIs selected in the ROI Manager.
+    * If no ROIs are selected, then all ROIs are returned.
+    */
    public static Roi[] getRois(ImagePlus plus, boolean selectedOnly) {
       Roi[] rois = new Roi[]{};
       Roi[] roiMgrRois = {};
@@ -700,6 +701,10 @@ public class ProjectorControlForm extends JFrame {
    }
 
 
+   /**
+    * Sets an roi.
+    * @param rois Roi to be applied to the device
+    */
    public void setROIs(Roi[] rois) {
       if (mapping_ == null) {
          throw new RuntimeException(
@@ -780,6 +785,7 @@ public class ProjectorControlForm extends JFrame {
     * @deprecated - Use the {@link ProjectorControlExecution#runAtIntervals(long, boolean, long,
     * java.lang.Runnable, java.util.concurrent.Callable)} method instead
     */
+   @Deprecated
    private Runnable runAtIntervals(final long firstTimeMs,
          boolean repeat,
          final long intervalTimeMs,
@@ -901,7 +907,7 @@ public class ProjectorControlForm extends JFrame {
 
 
    /**
-    * Returns singleton instance if it exists, null otherwise
+    * Returns singleton instance if it exists, null otherwise.
     *
     * @return singleton instance if it exists, null otherwise
     */
@@ -955,14 +961,10 @@ public class ProjectorControlForm extends JFrame {
     */
    @SuppressWarnings("unchecked")
    private void initComponents() {
-      onButton_ = new JButton();
-      offButton_ = new JButton();
       pointAndShootOnButton = new JToggleButton();
       pointAndShootOffButton_ = new JToggleButton();
-      phototargetInstructionsLabel = new JLabel();
       roiLoopLabel_ = new JLabel();
       roiLoopTimesLabel_ = new JLabel();
-      setRoiButton = new JButton();
       exposeROIsButton_ = new JButton();
       roiLoopSpinner_ = new JSpinner();
       useInMDAcheckBox = new JCheckBox();
@@ -983,47 +985,49 @@ public class ProjectorControlForm extends JFrame {
       repeatEveryFrameUnitLabel_ = new JLabel();
       calibrateButton_ = new JButton();
       allPixelsButton_ = new JButton();
-      channelComboBox_ = new JComboBox();
-      shutterComboBox_ = new JComboBox();
+      channelComboBox_ = new JComboBox<>();
+      shutterComboBox_ = new JComboBox<>();
       delayField_ = new JTextField();
       checkerBoardButton_ = new JButton();
       pointAndShootIntervalSpinner_ = new JSpinner();
       logDirectoryTextField_ = new JTextField();
 
-      JPanel asyncRoiPanel = new JPanel();
-      JButton centerButton = new JButton();
-      JButton clearLogDirButton = new JButton();
-      JButton openLogDirButton = new JButton();
-      JButton logDirectoryChooserButton = new JButton();
-      JTabbedPane mainTabbedPane = new JTabbedPane();
-      JPanel pointAndShootTab = new JPanel();
-      JButton roiManagerButton = new JButton();
-      JPanel roisTab = new JPanel();
-      JPanel setupTab = new JPanel();
+      final JPanel asyncRoiPanel = new JPanel();
+      final JButton centerButton = new JButton();
+      final JButton clearLogDirButton = new JButton();
+      final JButton openLogDirButton = new JButton();
+      final JButton onButton = new JButton();
+      final JButton offButton = new JButton();
+      final JLabel photoTargetInstructionsLabel = new JLabel();
+      final JButton setRoiButton = new JButton();
+      final JButton logDirectoryChooserButton = new JButton();
+      final JTabbedPane mainTabbedPane = new JTabbedPane();
+      final JPanel pointAndShootTab = new JPanel();
+      final JButton roiManagerButton = new JButton();
+      final JPanel roisTab = new JPanel();
+      final JPanel setupTab = new JPanel();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Projector Controls");
       setResizable(false);
 
-      onButton_.setText("On");
-      onButton_.addActionListener((ActionEvent evt) -> {
+      onButton.setText("On");
+      onButton.addActionListener((ActionEvent evt) -> {
          dev_.turnOn();
          targetingShutterOriginallyOpen_ =
                projectorControlExecution_.prepareShutter(targetingShutter_);
          updatePointAndShoot(false);
       });
 
-      offButton_.setText("Off");
-      offButton_.setSelected(true);
-      offButton_.addActionListener((ActionEvent evt) -> {
+      offButton.setText("Off");
+      offButton.setSelected(true);
+      offButton.addActionListener((ActionEvent evt) -> {
          dev_.turnOff();
          projectorControlExecution_.returnShutter(targetingShutter_,
                targetingShutterOriginallyOpen_);
       });
 
-      mainTabbedPane.addChangeListener((ChangeEvent evt) -> {
-         updatePointAndShoot(false);
-      });
+      mainTabbedPane.addChangeListener((ChangeEvent evt) -> updatePointAndShoot(false));
 
       pointAndShootOnButton.setText("On");
       pointAndShootOnButton.setMaximumSize(new Dimension(75, 23));
@@ -1041,11 +1045,9 @@ public class ProjectorControlForm extends JFrame {
 
       pointAndShootOffButton_.setText("Off");
       pointAndShootOffButton_.setPreferredSize(new Dimension(75, 23));
-      pointAndShootOffButton_.addActionListener((ActionEvent evt) -> {
-         updatePointAndShoot(false);
-      });
+      pointAndShootOffButton_.addActionListener((ActionEvent evt) -> updatePointAndShoot(false));
 
-      phototargetInstructionsLabel.setText(
+      photoTargetInstructionsLabel.setText(
             "(To phototarget, Shift + click on the image, use ImageJ hand-tool)");
 
       logDirectoryChooserButton.setText("...");
@@ -1066,6 +1068,7 @@ public class ProjectorControlForm extends JFrame {
                logFileWriter_.flush();
                logFileWriter_.close();
             } catch (IOException ioe) {
+               studio_.logs().logError(ioe, "Failed to close Projector log file");
             } finally {
                logFileWriter_ = null;
             }
@@ -1073,8 +1076,11 @@ public class ProjectorControlForm extends JFrame {
          String logDirectory = logDirectoryTextField_.getText();
          File logDir = new File(logDirectory);
          if (logDir.isDirectory()) {
-            for (File logFile : logDir.listFiles()) {
-               logFile.delete();
+            java.io.File[] files = logDir.listFiles();
+            if (files != null) {
+               for (File logFile : files) {
+                  logFile.delete();
+               }
             }
          }
       });
@@ -1097,7 +1103,7 @@ public class ProjectorControlForm extends JFrame {
       pointAndShootTab.add(pointAndShootOnButton);
       pointAndShootTab.add(pointAndShootOffButton_, "wrap");
 
-      pointAndShootTab.add(phototargetInstructionsLabel, "span 3, wrap");
+      pointAndShootTab.add(photoTargetInstructionsLabel, "span 3, wrap");
 
       pointAndShootTab.add(new JLabel("Log Directory"), "span3, split 3");
       pointAndShootTab.add(logDirectoryTextField_, "grow");
@@ -1114,7 +1120,9 @@ public class ProjectorControlForm extends JFrame {
 
       setRoiButton.setText("Set ROI(s)");
       setRoiButton.setToolTipText(
-            "Specify an ROI you wish to be phototargeted by using the ImageJ ROI tools (point, rectangle, oval, polygon). Then press Set ROI(s) to send the ROIs to the phototargeting device. To initiate phototargeting, press Go!");
+            "Specify an ROI you wish to be phototargeted by using the ImageJ ROI tools "
+            + "(point, rectangle, oval, polygon). Then press Set ROI(s) to send the ROIs "
+            + "to the phototargeting device. To initiate phototargeting, press Go!");
       setRoiButton.addActionListener((ActionEvent evt) -> {
          try {
             sendCurrentImageWindowRois();
@@ -1125,52 +1133,35 @@ public class ProjectorControlForm extends JFrame {
       });
 
       exposeROIsButton_.setText("Expose ROIs now!");
-      exposeROIsButton_.addActionListener((ActionEvent evt) -> {
-         new Thread(() -> {
-            projectorControlExecution_.exposeRois(
-                  dev_, targetingChannel_, targetingShutter_, individualRois_);
-         }).start();
-      });
+      exposeROIsButton_.addActionListener((ActionEvent evt) ->
+            new Thread(() -> projectorControlExecution_.exposeRois(
+                dev_, targetingChannel_, targetingShutter_, individualRois_)).start());
 
       roiLoopSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      roiLoopSpinner_.addChangeListener((ChangeEvent evt) -> {
-         updateROISettings();
-      });
+      roiLoopSpinner_.addChangeListener((ChangeEvent evt) -> updateROISettings());
       roiLoopSpinner_.setValue(settings_.getInteger(Terms.NRROIREPETITIONS, 1));
 
       useInMDAcheckBox.setText("Run ROIs in Multi-Dimensional Acquisition");
-      useInMDAcheckBox.addActionListener((ActionEvent evt) -> {
-         updateROISettings();
-      });
+      useInMDAcheckBox.addActionListener((ActionEvent evt) -> updateROISettings());
 
       roiStatusLabel_.setText("No ROIs submitted yet");
 
       roiManagerButton.setText("ROI Manager >>");
-      roiManagerButton.addActionListener((ActionEvent evt) -> {
-         Utils.showRoiManager();
-      });
+      roiManagerButton.addActionListener((ActionEvent evt) -> Utils.showRoiManager());
 
       sequencingButton_.setText("Sequencing...");
-      sequencingButton_.addActionListener((ActionEvent evt) -> {
-         showMosaicSequencingWindow();
-      });
+      sequencingButton_.addActionListener((ActionEvent evt) -> showMosaicSequencingWindow());
 
       startTimeLabel_.setText("Start Time");
 
       startFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      startTimeSpinner_.addChangeListener((ChangeEvent evt) -> {
-         updateROISettings();
-      });
+      startTimeSpinner_.addChangeListener((ChangeEvent evt) -> updateROISettings());
 
       repeatCheckBoxTime_.setText("Repeat every");
-      repeatCheckBoxTime_.addActionListener((ActionEvent evt) -> {
-         updateROISettings();
-      });
+      repeatCheckBoxTime_.addActionListener((ActionEvent evt) -> updateROISettings());
 
       repeatEveryFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      repeatEveryIntervalSpinner_.addChangeListener((ChangeEvent evt) -> {
-         updateROISettings();
-      });
+      repeatEveryIntervalSpinner_.addChangeListener((ChangeEvent evt) -> updateROISettings());
 
       repeatEveryIntervalUnitLabel_.setText("seconds");
 
@@ -1191,19 +1182,13 @@ public class ProjectorControlForm extends JFrame {
       startFrameLabel_.setText("Start Frame");
       repeatEveryFrameUnitLabel_.setText("frames");
       repeatCheckBox_.setText("Repeat every");
-      repeatCheckBox_.addActionListener((ActionEvent evt) -> {
-         updateROISettings();
-      });
+      repeatCheckBox_.addActionListener((ActionEvent evt) -> updateROISettings());
 
       startFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      startFrameSpinner_.addChangeListener((ChangeEvent evt) -> {
-         updateROISettings();
-      });
+      startFrameSpinner_.addChangeListener((ChangeEvent evt) -> updateROISettings());
 
       repeatEveryFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      repeatEveryFrameSpinner_.addChangeListener((ChangeEvent evt) -> {
-         updateROISettings();
-      });
+      repeatEveryFrameSpinner_.addChangeListener((ChangeEvent evt) -> updateROISettings());
 
       syncRoiPanel_.setLayout(new MigLayout());
 
@@ -1252,9 +1237,7 @@ public class ProjectorControlForm extends JFrame {
       });
 
       allPixelsButton_.setText("All Pixels");
-      allPixelsButton_.addActionListener((ActionEvent evt) -> {
-         dev_.activateAllPixels();
-      });
+      allPixelsButton_.addActionListener((ActionEvent evt) -> dev_.activateAllPixels());
 
       centerButton.setText("Center spot");
       centerButton.addActionListener((ActionEvent evt) -> {
@@ -1262,7 +1245,7 @@ public class ProjectorControlForm extends JFrame {
          ProjectorActions.displayCenterSpot(dev_);
       });
 
-      channelComboBox_.setModel(new DefaultComboBoxModel(
+      channelComboBox_.setModel(new DefaultComboBoxModel<>(
             new String[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
       channelComboBox_.addActionListener((ActionEvent evt) -> {
          final String channel = (String) channelComboBox_.getSelectedItem();
@@ -1270,7 +1253,7 @@ public class ProjectorControlForm extends JFrame {
          settings_.putString(Terms.PTCHANNEL, channel);
       });
 
-      shutterComboBox_.setModel(new DefaultComboBoxModel(
+      shutterComboBox_.setModel(new DefaultComboBoxModel<>(
             new String[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
       shutterComboBox_.addActionListener((ActionEvent evt) -> {
          final String shutter = (String) shutterComboBox_.getSelectedItem();
@@ -1281,9 +1264,7 @@ public class ProjectorControlForm extends JFrame {
       delayField_.setText("0");
 
       checkerBoardButton_.setText("CheckerBoard");
-      checkerBoardButton_.addActionListener((ActionEvent evt) -> {
-         dev_.showCheckerBoard(16, 16);
-      });
+      checkerBoardButton_.addActionListener((ActionEvent evt) -> dev_.showCheckerBoard(16, 16));
 
       setupTab.setLayout(new MigLayout("", "", "[40]"));
 
@@ -1307,12 +1288,9 @@ public class ProjectorControlForm extends JFrame {
       pointAndShootIntervalSpinner_.setMaximumSize(new Dimension(75, 20));
       pointAndShootIntervalSpinner_.setMinimumSize(new Dimension(75, 20));
       pointAndShootIntervalSpinner_.setPreferredSize(new Dimension(75, 20));
-      pointAndShootIntervalSpinner_.addChangeListener((ChangeEvent evt) -> {
-         updateExposure();
-      });
-      pointAndShootIntervalSpinner_.addVetoableChangeListener((PropertyChangeEvent evt) -> {
-         updateExposure();
-      });
+      pointAndShootIntervalSpinner_.addChangeListener((ChangeEvent evt) -> updateExposure());
+      pointAndShootIntervalSpinner_.addVetoableChangeListener((PropertyChangeEvent evt) ->
+            updateExposure());
       pointAndShootIntervalSpinner_.setValue(settings_.getDouble(Terms.EXPOSURE, 0.0));
 
       this.getContentPane().setLayout(new MigLayout());
@@ -1320,22 +1298,23 @@ public class ProjectorControlForm extends JFrame {
       this.getContentPane().add(new JLabel("Exposure time:"));
       this.getContentPane().add(pointAndShootIntervalSpinner_, "w 75");
       this.getContentPane().add(new JLabel("ms"), "gapx 18px 18px");
-      this.getContentPane().add(onButton_, "gapx 80px 6px");
-      this.getContentPane().add(offButton_, "gapx 6px 6px, wrap");
+      this.getContentPane().add(onButton, "gapx 80px 6px");
+      this.getContentPane().add(offButton, "gapx 6px 6px, wrap");
 
       this.getContentPane().add(mainTabbedPane, "span 5, wrap");
 
       pack();
    }
 
-   /****************** Deprecated functions ******************/
+   // *****************  Deprecated functions ****************** //
 
 
    /**
     * Illuminate the polygons ROIs that have been previously uploaded to phototargeter.
     *
-    * @deprecated Use {@link ProjectorControlExecution#exposeRois(org.micromanager.projector.ProjectionDevice,
-    * java.lang.String, java.lang.String, Roi[]) } instead
+    * @deprecated Use
+    *     {@link ProjectorControlExecution#exposeRois(org.micromanager.projector.ProjectionDevice,
+    *     java.lang.String, java.lang.String, Roi[]) } instead
     */
    @Deprecated
    public void runRois() {
@@ -1350,10 +1329,10 @@ public class ProjectorControlForm extends JFrame {
     * particular firstFrame and, if repeat is true, thereafter again every frameRepeatInterval
     * frames.
     *
-    * @param firstFrame
-    * @param repeat
-    * @param frameRepeatInveral
-    * @param runPolygons
+    * @param firstFrame frame number where photo targeting should start
+    * @param repeat how oftem the targeting should be repeated
+    * @param frameRepeatInveral Interbal (in frame numbers) between repeats
+    * @param runPolygons patterns to be photo-targetted.
     * @deprecated - User ProjectorControlExecution.attachRoisToMDA instead
     */
    @Deprecated
