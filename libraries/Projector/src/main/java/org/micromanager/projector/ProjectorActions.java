@@ -188,8 +188,8 @@ public abstract class ProjectorActions {
             cameraBinning = 1;
          }
          double factor = (double) cameraBinning / (double) mapping.getBinning();
-         pt.x = (pt.x + cameraROI.x) * factor;
-         pt.y = (pt.y + cameraROI.y) * factor;
+         pt.x = (pt.x + cameraROI.x - mapping.getCameraROI().getX()) * factor;
+         pt.y = (pt.y + cameraROI.y - mapping.getCameraROI().getY()) * factor;
       }
       Set<Polygon> set = mapping.getMap().keySet();
       // First find out if the given point is inside a cell, and if so,
