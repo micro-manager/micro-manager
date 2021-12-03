@@ -25,11 +25,11 @@ import org.micromanager.events.LiveModeEvent;
 /**
  * This class signals that live mode has been turned on or off.
  *
- * This event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>This event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public final class DefaultLiveModeEvent implements LiveModeEvent {
-   private boolean isOn_;
+   private final boolean isOn_;
 
 
    public DefaultLiveModeEvent(boolean isOn) {
@@ -38,8 +38,8 @@ public final class DefaultLiveModeEvent implements LiveModeEvent {
 
    /**
     * Informs the caller if live mode is on or off.
-    * @return True if live mode has been turned on, false if it has been turned
-    *         off.
+    *
+    * @return True if live mode has been turned on, false if it has been turned off.
     */
    @Override
    public boolean isOn() {

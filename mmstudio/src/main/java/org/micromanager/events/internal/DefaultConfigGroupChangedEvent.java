@@ -17,17 +17,21 @@ public class DefaultConfigGroupChangedEvent implements ConfigGroupChangedEvent {
    }
 
    /**
+    * Name of the newly selected configuration (preset).
+    *
     * @return The name of the newly selected configuration
     */
    public String getNewConfig() {
-         return newConfig_;
-      }
+      return newConfig_;
+   }
 
    /**
+    * Name of the Group to which this configuration (Preset) belongs.
+    *
     * @return Name of the group to which this newly selected configuration belongs.
-   */
+    */
    public String getGroupName() {
-         return groupName_;
-      }
+      return groupName_;
+   }
 }
 

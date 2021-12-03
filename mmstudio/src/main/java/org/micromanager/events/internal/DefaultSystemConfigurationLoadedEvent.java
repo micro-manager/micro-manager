@@ -5,8 +5,8 @@ import org.micromanager.events.SystemConfigurationLoadedEvent;
 /**
  * This interface signals when a configuration file is loaded.
  *
- * This event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>This event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public class DefaultSystemConfigurationLoadedEvent  implements
         SystemConfigurationLoadedEvent {

@@ -7,8 +7,8 @@ import org.micromanager.events.GUIRefreshEvent;
  * (e.g. when the user clicks the "Refresh" button or when code calls the
  * refreshGUI() method in CompatibilityInterface).
  *
- * This event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>This event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public class DefaultGUIRefreshEvent implements GUIRefreshEvent {
 }

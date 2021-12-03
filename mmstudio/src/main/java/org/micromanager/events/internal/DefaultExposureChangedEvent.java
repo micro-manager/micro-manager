@@ -5,8 +5,8 @@ import org.micromanager.events.ExposureChangedEvent;
 /**
  * This class signals when the exposure time for a given camera has changed.
  *
- * This event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>This event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public class DefaultExposureChangedEvent implements ExposureChangedEvent {
    private final String cameraName_;
@@ -19,17 +19,19 @@ public class DefaultExposureChangedEvent implements ExposureChangedEvent {
 
    /**
     * Camera whose exposure time changed.
+    *
     * @return Camera whose exposure time changed.
     */
    public String getCameraName() {
-         return cameraName_;
-      }
+      return cameraName_;
+   }
 
    /**
-    * New exposure time
+    * New exposure time.
+    *
     * @return New exposure time.
     */
    public double getNewExposureTime() {
-         return newExposureTime_;
-      }
+      return newExposureTime_;
+   }
 }
