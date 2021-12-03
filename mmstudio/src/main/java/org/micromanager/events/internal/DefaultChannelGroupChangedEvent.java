@@ -4,10 +4,10 @@ import org.micromanager.events.ChannelGroupChangedEvent;
 
 
 /**
- * Event signaling that the "Channel Group" changed
+ * Event signaling that the "Channel Group" changed.
  *
- * This event is posted on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>This event is posted on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public class DefaultChannelGroupChangedEvent implements ChannelGroupChangedEvent {
    private final String channelGroup_;
@@ -17,7 +17,8 @@ public class DefaultChannelGroupChangedEvent implements ChannelGroupChangedEvent
    }
 
    /**
-    * Provides the name of the newly selected channel group
+    * Provides the name of the newly selected channel group.
+    *
     * @return name of the newly selected ChannelGroup
     */
    @Override

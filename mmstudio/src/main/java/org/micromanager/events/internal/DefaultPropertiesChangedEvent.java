@@ -9,8 +9,8 @@ import org.micromanager.events.PropertiesChangedEvent;
  * Since the Core callbacks into this event, there is a mismatch here that needs
  * to be resolved.
  *
- * This event posts on the Studio event bus,
- * so subscribe using {@link org.micromanager.events.EventManager}.
+ * <p>This event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public class DefaultPropertiesChangedEvent implements PropertiesChangedEvent {
 }

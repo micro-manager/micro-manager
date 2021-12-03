@@ -11,18 +11,19 @@ import org.micromanager.ApplicationSkin;
 import org.micromanager.events.ApplicationSkinEvent;
 
 /**
+ * Event signalling that the Application Skin was changed.
  *
  * @author marc
  */
 public final class DefaultApplicationSkinEvent implements ApplicationSkinEvent {
-    private final ApplicationSkin.SkinMode mode_;
+   private final ApplicationSkin.SkinMode mode_;
 
-    public DefaultApplicationSkinEvent(ApplicationSkin.SkinMode mode) {
-        mode_ = mode;
-    }
+   public DefaultApplicationSkinEvent(ApplicationSkin.SkinMode mode) {
+      mode_ = mode;
+   }
     
-    @Override
-    public ApplicationSkin.SkinMode getSkinMode() {
-        return mode_;
-    }
+   @Override
+   public ApplicationSkin.SkinMode getSkinMode() {
+      return mode_;
+   }
 }
