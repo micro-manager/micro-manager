@@ -24,11 +24,4 @@
 		<target name="package"/>
 		<target name="package-symbols"/>
 	</ant>
-
-	<ant antfile="build.xml" useNativeBaseDir="true">
-		<property name="mm.architecture" value="Win32"/>
-		<target name="stage"/>
-		<target name="package"/>
-		<target name="package-symbols"/>
-	</ant>
 </project>

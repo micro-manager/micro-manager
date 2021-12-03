@@ -33,15 +33,8 @@
 		<arg value="update-force-pristine"/>
 	</exec>
 
-	<!-- Build Win32 and x64 and stage in same directory -->
-
 	<ant antfile="build.xml" useNativeBaseDir="true">
 		<property name="mm.architecture" value="x64"/>
-		<target name="stage"/>
-	</ant>
-
-	<ant antfile="build.xml" useNativeBaseDir="true">
-		<property name="mm.architecture" value="Win32"/>
 		<target name="stage"/>
 	</ant>
 </project>
