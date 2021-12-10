@@ -236,7 +236,7 @@ END_OF_PATCH
 # Now build the patched source.
 
 ./bootstrap.sh
-./b2 --prefix=${MM_DEPS_PREFIX} link=static threading=multi architecture=x86 address-model=32_64 \
+./b2 --prefix=${MM_DEPS_PREFIX} link=static threading=multi architecture=x86 address-model=64 \
   cflags="${MM_CFLAGS}" cxxflags="${MM_CXXFLAGS}" \
   --with-atomic --with-chrono --with-date_time --with-filesystem --with-log --with-system --with-thread --with-timer \
   $MM_PARALLELMAKEFLAG install
@@ -546,7 +546,7 @@ PKG_CONFIG_PATH=$MM_DEPS_PREFIX/lib/pkgconfig cmake \
 -DCMAKE_CXX_COMPILER:STRING=/usr/bin/clang++ \
 -DCMAKE_CXX_FLAGS:STRING="-v" \
 -DCMAKE_INSTALL_PREFIX="$MM_DEPS_PREFIX" \
--DCMAKE_OSX_ARCHITECTURES:STRING="i386;x86_64" \
+-DCMAKE_OSX_ARCHITECTURES:STRING="x86_64" \
 -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.9 \
 -DCMAKE_OSX_SYSROOT:STRING=$SDKROOT \
 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
