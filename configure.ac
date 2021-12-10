@@ -311,7 +311,7 @@ AM_CONDITIONAL([INSTALL_MMDEVAPI], [test x$install_mmdevapi = xtrue])
 ##
 
 AC_MSG_CHECKING([for proprietary device adapter source])
-AS_IF([test -f "$srcdir/$MM_CPP_DIR/SecretDeviceAdapters/configure"],
+AS_IF([test -f "$srcdir/mmCoreAndDevices/SecretDeviceAdapters/configure"],
    [build_secretdeviceadapters=yes], [build_secretdeviceadapters=no])
 AM_CONDITIONAL([BUILD_SECRETDEVICEADAPTERS],
    [test "x$build_secretdeviceadapters" = xyes])
