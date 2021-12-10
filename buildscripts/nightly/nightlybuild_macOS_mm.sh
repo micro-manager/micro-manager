@@ -133,9 +133,9 @@ make fetchdeps # Safe, since everything is checksummed
 
 make $MAKEFLAGS
 
-# Remove x86_64 from device adapters that depend on 32-bit only frameworks.
-# Hamamatsu is 32-bit only even though dcamapi.framework contains an
-# unsupported 64-bit binary.
+# Remove device adapters that build for x86_64 but depend on 32-bit-only
+# frameworks. This is only for safety; these adapters should not build if their
+# dependencies are not installed in /Library/Frameworks.
 for file in $MM_CPP_DIR/DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
             $MM_CPP_DIR/DeviceAdapters/PrincetonInstruments/.libs/libmmgr_dal_PrincetonInstruments \
             $MM_CPP_DIR/DeviceAdapters/QCam/.libs/libmmgr_dal_QCam \
@@ -143,10 +143,7 @@ for file in $MM_CPP_DIR/DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
             $MM_CPP_DIR/DeviceAdapters/Spot/.libs/libmmgr_dal_Spot \
             $MM_CPP_DIR/SecretDeviceAdapters/HamamatsuMac/.libs/libmmgr_dal_Hamamatsu
 do
-   if [ -f $file ]; then
-      lipo -extract i386 -output $file.i386 $file
-      mv $file.i386 $file
-   fi
+   rm -f $file
 done
 
 
