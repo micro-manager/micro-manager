@@ -145,6 +145,18 @@ popd
 
 tar xzf ../downloads/hidapi-0.8.0-rc1.tar.gz
 pushd hidapi-hidapi-0.8.0-rc1
+patch -p2 <<'END_OF_PATCH'
+--- a/hidapi-hidapi-0.8.0-rc1/configure.ac	2021-12-10 12:07:50.000000000 -0600
++++ b/hidapi-hidapi-0.8.0-rc1/configure.ac	2021-12-10 12:08:29.000000000 -0600
+@@ -20,7 +20,6 @@
+ 
+ AC_CONFIG_MACRO_DIR([m4])
+ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+-AC_CONFIG_MACRO_DIR([m4])
+ 
+ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+ LT_INIT
+END_OF_PATCH
 ./bootstrap
 eval ./configure $MM_DEPS_CONFIGUREFLAGS --enable-static --disable-shared --with-pic
 make
