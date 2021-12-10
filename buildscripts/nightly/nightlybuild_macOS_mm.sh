@@ -44,7 +44,7 @@ pushd "`dirname $0`/../.." >/dev/null; MM_SRCDIR=`pwd`; popd >/dev/null
 
 # GNU libtool (i.e. any libtoolized project) can mess around with the value of
 # MACOSX_DEPLOYMENT_TARGET, so passing the correct compiler and linker flags
-# (clang -mmacosx-version-min=10.5; ld -macosx_version_min 10.5) is not enough;
+# (clang -mmacosx-version-min=10.9; ld -macosx_version_min 10.9) is not enough;
 # we need to set this environment variable. It is also simpler than using
 # command line flags.  Do the same for SDKROOT (instead of clang -isysroot; ld
 # -syslibroot).

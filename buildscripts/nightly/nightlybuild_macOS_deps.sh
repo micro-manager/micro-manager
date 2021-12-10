@@ -47,7 +47,7 @@ source "`dirname $0`/nightlybuild_macOS_defs.sh"
 
 # GNU libtool (i.e. any libtoolized project) can mess around with the value of
 # MACOSX_DEPLOYMENT_TARGET, so passing the correct compiler and linker flags
-# (clang -mmacosx-version-min=10.5; ld -macosx_version_min 10.5) is not enough;
+# (clang -mmacosx-version-min=10.9; ld -macosx_version_min 10.9) is not enough;
 # we need to set this environment variable. It is also simpler than using
 # command line flags.  Do the same for SDKROOT (instead of clang -isysroot; ld
 # -syslibroot).
@@ -547,7 +547,7 @@ PKG_CONFIG_PATH=$MM_DEPS_PREFIX/lib/pkgconfig cmake \
 -DCMAKE_CXX_FLAGS:STRING="-v" \
 -DCMAKE_INSTALL_PREFIX="$MM_DEPS_PREFIX" \
 -DCMAKE_OSX_ARCHITECTURES:STRING="i386;x86_64" \
--DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.5 \
+-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.9 \
 -DCMAKE_OSX_SYSROOT:STRING=$SDKROOT \
 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
 -DENABLE_PRECOMPILED_HEADERS:BOOL=ON \
