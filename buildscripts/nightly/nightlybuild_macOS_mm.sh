@@ -166,7 +166,9 @@ mkdir -p $MM_STAGEDIR/libgphoto2/libgphoto2
 mkdir -p $MM_STAGEDIR/libgphoto2/libgphoto2_port
 cp $MM_DEPS_PREFIX/lib/libgphoto2/2.5.2/*.so $MM_STAGEDIR/libgphoto2/libgphoto2
 cp $MM_DEPS_PREFIX/lib/libgphoto2_port/0.10.0/*.so $MM_STAGEDIR/libgphoto2/libgphoto2_port
+echo 'Staging portable app with mkportableapp.py...'
 buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
+   --verbose \
    --srcdir $MM_DEPS_PREFIX/lib \
    --destdir $MM_STAGEDIR \
    --forbid-from $MM_BUILDDIR/share \
@@ -175,6 +177,7 @@ buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
    --forbid-from /usr/local \
    --map-path 'libltdl*.dylib:libgphoto2' \
    --map-path 'libgphoto2*.dylib:libgphoto2'
+echo 'Finished staging portable app'
 
 
 # Stage third-party JARs.
