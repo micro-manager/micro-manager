@@ -136,12 +136,12 @@ make $MAKEFLAGS
 # Remove device adapters that build for x86_64 but depend on 32-bit-only
 # frameworks. This is only for safety; these adapters should not build if their
 # dependencies are not installed in /Library/Frameworks.
-for file in $MM_CPP_DIR/DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
-            $MM_CPP_DIR/DeviceAdapters/PrincetonInstruments/.libs/libmmgr_dal_PrincetonInstruments \
-            $MM_CPP_DIR/DeviceAdapters/QCam/.libs/libmmgr_dal_QCam \
-            $MM_CPP_DIR/DeviceAdapters/ScionCam/.libs/libmmgr_dal_ScionCam \
-            $MM_CPP_DIR/DeviceAdapters/Spot/.libs/libmmgr_dal_Spot \
-            $MM_CPP_DIR/SecretDeviceAdapters/HamamatsuMac/.libs/libmmgr_dal_Hamamatsu
+for file in mmCoreAndDevices/DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
+            mmCoreAndDevices/DeviceAdapters/PrincetonInstruments/.libs/libmmgr_dal_PrincetonInstruments \
+            mmCoreAndDevices/DeviceAdapters/QCam/.libs/libmmgr_dal_QCam \
+            mmCoreAndDevices/DeviceAdapters/ScionCam/.libs/libmmgr_dal_ScionCam \
+            mmCoreAndDevices/DeviceAdapters/Spot/.libs/libmmgr_dal_Spot \
+            mmCoreAndDevices/SecretDeviceAdapters/HamamatsuMac/.libs/libmmgr_dal_Hamamatsu
 do
    rm -f $file
 done
