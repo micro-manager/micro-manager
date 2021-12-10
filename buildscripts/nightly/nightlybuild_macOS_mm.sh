@@ -71,15 +71,6 @@ if [ "$skip_autogen" != yes ]; then
    sh autogen.sh
 fi
 
-# Note on Java variables.
-# JDK 1.6 from Apple and its development kit need to be installed. We could
-# conceivably use JDK 1.7 to cross-compile to 1.6, but that would still need
-# the 1.6 classpath and a -bootclasspath flag to javac.
-# To build with JDK 1.6 when /usr/bin/javac points to JDK 1.7, we need to set
-# JAVA_HOME. But this breaks the build because 1.6.0.jdk does not contain
-# (symlinks to) the JNI headers as whould be expected for a Java home. So we
-# explicitly set JNI_CPPFLAGS.
-
 # Note on OpenCV library flags.
 # Since OpenCV is a CMake project, it does not produce the convenient libtool
 # .la files that specify the link dependencies for its static libraries. It
@@ -118,8 +109,8 @@ $EVAL ./configure \
    --with-gphoto2 \
    --with-freeimageplus \
    $MM_CONFIGUREFLAGS \
-   "JAVA_HOME=\"/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home\"" \
-   "JNI_CPPFLAGS=\"-I/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home/include -I/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home/include/darwin\"" \
+   "JAVA_HOME=\"$MM_JDK_HOME\"" \
+   "JNI_CPPFLAGS=\"-I$MM_JDK_HOME/include -I$MM_JDK_HOME/include/darwin\"" \
    "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.8 -target 1.8\"" \
    "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
    "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \

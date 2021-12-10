@@ -37,3 +37,5 @@ MM_DEPS_CONFIGUREFLAGS_NOCPPLD="--prefix=\"\$MM_DEPS_PREFIX\" $MM_CONFIGUREFLAGS
 MM_DEPS_CONFIGUREFLAGS="--prefix=\"\$MM_DEPS_PREFIX\" $MM_CONFIGUREFLAGS"
 
 MM_PARALLELMAKEFLAG=-j$(sysctl -n hw.ncpu)
+
+MM_JDK_HOME=/Library/Java/JavaVirtualMachines/zulu-8.jdk/Contents/Home
