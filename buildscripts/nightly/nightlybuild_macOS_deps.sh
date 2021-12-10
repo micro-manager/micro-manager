@@ -272,6 +272,21 @@ patch -p1 <<'END_OF_PATCH'
  //     class AutoArray -- a workaround for systems with
 END_OF_PATCH
 
+# Patch to add another missing #include
+patch -p2 <<'END_OF_PATCH'
+--- a/FreeImage3154/Source/ZLib/gzguts.h	2021-12-10 13:02:41.000000000 -0600
++++ b/FreeImage3154/Source/ZLib/gzguts.h	2021-12-10 13:03:06.000000000 -0600
+@@ -29,6 +29,8 @@
+ 
+ #ifdef _WIN32
+ #  include <stddef.h>
++#else
++#  include <unistd.h>
+ #endif
+ 
+ #if defined(__TURBOC__) || defined(_MSC_VER) || defined(_WIN32)
+END_OF_PATCH
+
 make -f Makefile.clang $MM_PARALLELMAKEFLAG CC="$MM_CC" CXX="$MM_CXX" MM_CPPFLAGS="$MM_CPPFLAGS"
 cp Dist/FreeImage.h $MM_DEPS_PREFIX/include
 cp Dist/libfreeimage.a $MM_DEPS_PREFIX/lib
