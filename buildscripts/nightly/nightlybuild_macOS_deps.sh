@@ -74,7 +74,7 @@ if [ "$do_download" = yes ]; then
    [ -f libgphoto2-2.5.2.tar.bz2 ] || curl -L -o libgphoto2-2.5.2.tar.bz2 http://sourceforge.net/projects/gphoto/files/libgphoto/2.5.2/libgphoto2-2.5.2.tar.bz2/download
    [ -f FreeImage3154.zip ] || curl -LO http://downloads.sourceforge.net/freeimage/FreeImage3154.zip
    [ -f libdc1394-2.2.1.tar.gz ] || curl -L -o libdc1394-2.2.1.tar.gz http://sourceforge.net/projects/libdc1394/files/libdc1394-2/2.2.1/libdc1394-2.2.1.tar.gz/download
-   [ -f opencv-2.4.9.zip ] || curl -L -o opencv-2.4.9.zip http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/2.4.9/opencv-2.4.9.zip/download
+   [ -f opencv-2.4.13.6.zip ] || curl -L -o opencv-2.4.13.6.zip https://github.com/opencv/opencv/archive/refs/tags/2.4.13.6.zip
 fi
 
 cat >sha1sums <<EOF
@@ -87,7 +87,7 @@ a52219b12dbc8d33fc096468591170fda71316c0  libexif-0.6.21.tar.bz2
 6b70ff6feec62a955bef1fc9a2b16dd07f0e277a  libgphoto2-2.5.2.tar.bz2
 1d30057a127b2016cf9b4f0f8f2ba92547670f96  FreeImage3154.zip
 b92c9670b68c4e5011148f16c87532bef2e5b808  libdc1394-2.2.1.tar.gz
-4f5166e2bd22bd6167cb56dd04f2c6ed68148b2c  opencv-2.4.9.zip
+a6c3d6ac8091e3311fc44125e017dd1e88e74825  opencv-2.4.13.6.zip
 EOF
 shasum -c sha1sums || { echo "SHA1 checksum mismatch or missing file; remove file and rerun with -d flag"; exit 1; }
 
@@ -404,8 +404,8 @@ popd
 
 ############### TODO check deployment target and sdkroot; set cflags and cxxflags (esp. -v)
 
-unzip -oq ../downloads/opencv-2.4.9.zip
-pushd opencv-2.4.9
+unzip -oq ../downloads/opencv-2.4.13.6.zip
+pushd opencv-2.4.13.6
 # OpenCV modules: highgui depends on imgproc; imgproc depends on core; OpenCVgrabber requires highgui and core
 mkdir -p build-for-mm && cd build-for-mm
 PKG_CONFIG_PATH=$MM_DEPS_PREFIX/lib/pkgconfig cmake \
