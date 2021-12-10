@@ -87,7 +87,7 @@ def get_all_macho(dir):
          if is_macho_file(file):
             macho_files.append(os.path.relpath(file, dir))
    return macho_files
-   
+
 
 def process_libs(destdir, staged_seeds, srcdir,
                  path_map, forbidden_dirs):
@@ -127,6 +127,11 @@ def process_libs(destdir, staged_seeds, srcdir,
             update_dep(os.path.join(destdir, staged_lib), dep,
                        loader_relpath(staged_lib, staged_lib))
 
+         elif dep == os.path.basename(staged_lib).replace('.jnilib', '.dylib'):
+            # Special case for JOGL jnilibs, which have incorrect suffixes
+            # recorded in the load commands. Don't bother to fix.
+            continue
+
          elif dep in staged_path_map: # dep is already staged
             if arch_status != "all":
                raise RuntimeError("{} has dependency {} " +
@@ -159,7 +164,7 @@ def process_libs(destdir, staged_seeds, srcdir,
    for ignored in sorted(ignored_deps):
       print("external dependency: {}".format(ignored))
 
-            
+
 def map_path(file, path_map):
    # path_map is a sequence of pairs (pattern, dest), where pattern is either a
    # shell glob pattern matching files or a non-glob directory path ending in
