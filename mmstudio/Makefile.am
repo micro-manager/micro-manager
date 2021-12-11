@@ -22,7 +22,7 @@ javadoc:
 	-rm -rf doc
 	$(MKDIR_P) doc
 	javadoc \
-		-classpath ../$(MM_CPP_DIR)/MMCoreJ_wrap/MMCoreJ.jar:../dependencies/artifacts/compile/"*":../dependencies/artifacts/imagej/"*" \
+		-classpath ../mmCoreAndDevices/MMCoreJ_wrap/MMCoreJ.jar:../dependencies/artifacts/compile/"*":../dependencies/artifacts/imagej/"*" \
 		-d doc \
 		-sourcepath $(srcdir)/src/main/java \
 		-subpackages org.micromanager \
