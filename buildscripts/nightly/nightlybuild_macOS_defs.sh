@@ -11,9 +11,10 @@ MM_STAGEDIR="$MM_BUILDDIR/stage"
 # only run on the macOS version of the build host or newer. Also, mixing
 # different minimum versions may cause C++ linking issues.
 # 10.9 is the oldest deployment target that uses libc++ (vs libstdc++).
-MM_MACOSX_VERSION_SDK=12.0
 MM_MACOSX_VERSION_MIN=10.9
-MM_MACOSX_SDKROOT="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX${MM_MACOSX_VERSION_SDK}.sdk"
+
+# We don't use a fixed macOS SDK version, but need a fixed path to the SDK.
+MM_MACOSX_SDKROOT=$(xcode-select --print-path)/SDKs/MacOSX.sdk
 
 # TODO Third-party frameworks should be in $MM_DEPS_PREFIX/Library/Frameworks,
 # once build supports it.
