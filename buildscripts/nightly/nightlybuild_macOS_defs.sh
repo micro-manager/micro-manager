@@ -38,4 +38,7 @@ MM_DEPS_CONFIGUREFLAGS="--prefix=\"\$MM_DEPS_PREFIX\" $MM_CONFIGUREFLAGS"
 
 MM_PARALLELMAKEFLAG=-j$(sysctl -n hw.ncpu)
 
-MM_JDK_HOME=/Library/Java/JavaVirtualMachines/zulu-8.jdk/Contents/Home
+# Get the appropriate JAVA_HOME, requiring exactly Java 8 (should work with
+# temurin, adoptopenjdk, zulu, etc.)
+# Would pass '-a x86_64' here, but that doesn't seem to actually work.
+MM_JDK_HOME=$(/usr/libexec/java_home -v 1.8 -F)
