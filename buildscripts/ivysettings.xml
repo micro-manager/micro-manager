@@ -2,7 +2,7 @@
 	<settings defaultResolver="resolver-chain"/>
 
 	<resolvers>
-		<ibiblio name="central" m2compatible="true"/>
+		<ibiblio name="central" m2compatible="true" root="https://repo1.maven.org/maven2/"/>
 		<ibiblio name="scijava-org" m2compatible="true" root="https://maven.scijava.org/content/groups/public"/>
 
 		<filesystem name="thirdpartypublic">
