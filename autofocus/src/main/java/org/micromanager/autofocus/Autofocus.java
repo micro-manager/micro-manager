@@ -44,17 +44,10 @@ import org.micromanager.internal.utils.PropertyItem;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-/*
+/**
+ * This plugin take a stack of snapshots and computes their sharpness.
  * Created on June 2nd 2007
  * author: Pakpoom Subsoontorn & Hernan Garcia
- */
-
-/**
- * ImageJ plugin wrapper for uManager.
- */
-
-/* This plugin take a stack of snapshots and computes their sharpness
-
  */
 @Plugin(type = AutofocusPlugin.class)
 public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin  {
@@ -87,6 +80,10 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
    private String channelGroup_;
    private double curDist_;
 
+   /**
+    * Constructors creates needed properties.
+    *
+    */
    public Autofocus() {
       super.createProperty(KEY_SIZE_FIRST, Double.toString(sizeFirst_));
       super.createProperty(KEY_NUM_FIRST, Integer.toString(numFirst_));
@@ -116,6 +113,11 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
 
    }
 
+   /**
+    * Old fashioned run method.
+    *
+    * @param arg Unsure what should go here, please fill in.
+    */
    public void run(String arg) {
       long t0 = System.currentTimeMillis();
       double bestDist = 5000;
@@ -326,30 +328,7 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
       int ow = (int) (((1 - cropSize_) / 2) * core_.getImageWidth());
       int oh = (int) (((1 - cropSize_) / 2) * core_.getImageHeight());
 
-      // double[][] medPix = new double[width][height];
       double sharpNess = 0;
-      //double[] windo = new double[9];
-
-      /*Apply 3x3 median filter to reduce noise*/
-
-      /*   for (int i=0; i<width; i++){
-         for (int j=0; j<height; j++){
-
-	    windo[0] = (double)impro.getPixel(ow+i-1,oh+j-1);
-	    windo[1] = (double)impro.getPixel(ow+i,oh+j-1);
-            windo[2] = (double)impro.getPixel(ow+i+1,oh+j-1);
-            windo[3] = (double)impro.getPixel(ow+i-1,oh+j);
-            windo[4] = (double)impro.getPixel(ow+i,oh+j);
-            windo[5] = (double)impro.getPixel(ow+i+1,oh+j);
-            windo[6] = (double)impro.getPixel(ow+i-1,oh+j+1);
-            windo[7] = (double)impro.getPixel(ow+i,oh+j+1);
-            windo[8] = (double)impro.getPixel(ow+i+1,oh+j+1);
-
-            medPix[i][j] = median(windo);
-         } 
-	 }*/        
-
-      //tPrev = System.currentTimeMillis();     
 
       impro.medianFilter();
       int[] ken = {2, 1, 0, 1, 0, -1, 0, -1, -2};
@@ -360,17 +339,8 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
          } 
       }
 
-      // tcur = System.currentTimeMillis()-tPrev;
       // Edge detection using a 3x3 filter: [-2 -1 0; -1 0 1; 0 1 2].
       // Then sum all pixel values. Ideally, the sum is large if most edges are sharp
-
-      /*  for (int k=1; k<width-1; k++){
-         for (int l=1; l<height-1; l++){
-
-	     sharpNess = sharpNess + Math.pow((-2*medPix[k-1][l-1]- medPix[k][l-1]-medPix[k-1][l]+medPix[k+1][l]+medPix[k][l+1]+2*medPix[k+1][l+1]),2);
-
-         } 
-	 }*/
 
       return sharpNess;
    }
@@ -478,6 +448,11 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
       return 0;
    }
 
+   /**
+    * Supplies this plugin with the Studio object.
+    *
+    * @param app The always present Studio object.
+    */
    public void setContext(Studio app) {
       app_ = app;
       core_ = app.getCMMCore();
