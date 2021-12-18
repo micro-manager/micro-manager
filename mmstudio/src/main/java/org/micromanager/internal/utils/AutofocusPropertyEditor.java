@@ -228,6 +228,7 @@ public final class AutofocusPropertyEditor extends JDialog {
    
    protected void changeAFMethod(String focusDev) {
       cellEditor_.stopEditing();
+      methodCombo_.setSelectedItem(focusDev);
       afMgr_.setAutofocusMethodByName(focusDev);
 
       updateStatus();
