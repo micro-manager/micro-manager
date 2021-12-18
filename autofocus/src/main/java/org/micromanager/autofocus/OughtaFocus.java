@@ -34,6 +34,7 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Rectangle;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.function.Function;
 import javax.swing.SwingUtilities;
@@ -388,8 +389,7 @@ class BrentFocuser {
             try {
                return measureFocusScore(d);
             } catch (Exception e) {
-               String msg = String.format("Focus score measurement failed at Z = %d", d);
-               throw new RuntimeException(msg, e);
+               throw new RuntimeException(e);
             }
          }
       );
@@ -449,8 +449,9 @@ class BrentFocuser {
                  + ", Tz=" + tZ + ", Ti=" + tI + ", Tc=" + tC);
          return score;
       } catch (Exception e) {
-         studio_.logs().logError(e);
-         throw e;
+         String zString = new DecimalFormat("0.00#").format(z);
+         Exception ex = new Exception(e.getMessage() + ". Position: " + zString, e);
+         throw ex;
       }
    }
 
