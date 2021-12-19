@@ -304,11 +304,6 @@ public final class MMStudio implements Studio {
       alertManager_ = new DefaultAlertManager(studio_);
       
       afMgr_ = new DefaultAutofocusManager(studio_);
-      afMgr_.refresh();
-      String afDevice = profile().getSettings(MMStudio.class).getString(AUTOFOCUS_DEVICE, "");
-      if (afMgr_.hasDevice(afDevice)) {
-         afMgr_.setAutofocusMethodByName(afDevice);
-      }
 
       posListManager_ = new DefaultPositionListManager(this);
       acqEngine_.setPositionList(posListManager_.getPositionList());
@@ -770,12 +765,9 @@ public final class MMStudio implements Studio {
       if (ui_.frame() != null) {
          ui_.frame().savePrefs();
       }
+
       // NOTE: do not save auto shutter state
-      if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
-         profile().getSettings(MMStudio.class).putString(
-               AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
-      }
-      
+
       try {
          ui_.frame().getConfigPad().saveSettings();
          hotKeys_.saveSettings(userProfileAdmin_.getProfile());
@@ -870,7 +862,6 @@ public final class MMStudio implements Studio {
                   .loadHardwareConfiguration(sysConfigFile_);
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
-            afMgr_.initialize();
             // in case 3rdparties use this deprecated code:
             events().post(new AutofocusPluginShouldInitializeEvent());
             FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));

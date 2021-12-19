@@ -142,6 +142,8 @@ public final class DefaultAutofocusManager implements AutofocusManager {
     * Show the options for the currently selected autofocus method.
     */
    public void showOptionsDialog() {
+      refresh();
+      initialize();
       if (afDlg_ == null) {
          afDlg_ = new AutofocusPropertyEditor(studio_, this);
       }
