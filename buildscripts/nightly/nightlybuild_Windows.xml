@@ -15,7 +15,7 @@
 	<!-- Specify -listener org.apache.tools.ant.XmlLogger on the command
 	     line to enable. -->
 	<tstamp/>
-	<property name="XmlLogger.file" location="buildlog_${DSTAMP}T${TSTAMP}.xml"/>
+	<property name="XmlLogger.file" location="buildlog.xml"/>
 
 
 	<ant antfile="build.xml" useNativeBaseDir="true">
