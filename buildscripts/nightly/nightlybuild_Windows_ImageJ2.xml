@@ -18,7 +18,7 @@
 	<!-- Specify -listener org.apache.tools.ant.XmlLogger on the command
 	     line to enable. -->
 	<tstamp/>
-	<property name="XmlLogger.file" location="buildlog_${DSTAMP}T${TSTAMP}.xml"/>
+	<property name="XmlLogger.file" location="buildlog.xml"/>
 
 	<property name="mm.build.for.imagej2updater" value="true"/>
 	<property name="mm.installdir" location="stage/ImageJ2.app"/>
