@@ -5,7 +5,9 @@
 			<filterchain><striplinebreaks/></filterchain>
 		</loadfile>
 
-		<tstamp/>
+		<tstamp>
+			<format property="DSTAMP" pattern="yyyyMMdd" timezone="GMT-8"/>
+		</tstamp>
 
 		<!-- TODO Add SVN revision (use Apache Subversion Ant Library) -->
 
