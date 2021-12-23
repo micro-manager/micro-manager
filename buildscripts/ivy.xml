@@ -100,6 +100,9 @@
 
 		<!-- Run-time-only dependencies -->
 		<dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
-		<exclude org="com.googlecode.efficient-java-matrix-library"/>
-     </dependencies>
+
+      <!-- Always exclude these -->
+      <exclude org="com.googlecode.efficient-java-matrix-library"/>
+      <exclude org="log4j"/>
+   </dependencies>
 </ivy-module>
