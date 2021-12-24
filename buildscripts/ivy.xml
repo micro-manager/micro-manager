@@ -1,108 +1,108 @@
 <ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
-	<!-- Dependencies for all of Micro-Manager (MMStudio and plugins) -->
-	<!-- TODO List dependencies for each project -->
-	<info organisation="org.micromanager" module="micromanager"/>
+   <!-- Dependencies for all of Micro-Manager (MMStudio and plugins) -->
+   <!-- TODO List dependencies for each project -->
+   <info organisation="org.micromanager" module="micromanager"/>
 
-	<configurations
+   <configurations
       defaultconfmapping="build->default;test->default;compile->default;optional->default;imagej->default;runtime->default">
-		<conf name="build" visibility="private" description="needed for building only"/>
-		<conf name="test" visibility="private" description="needed for testing only"/>
-		<conf name="compile" description="compile-time dependencies, except for ij.jar"/>
-		<conf name="optional" description="optional compile-time dependencies"/>
-		<conf name="imagej" description="ij.jar only"/>
-		<conf name="runtime" description="runtime-only dependencies"/>
-	</configurations>
+      <conf name="build" visibility="private" description="needed for building only"/>
+      <conf name="test" visibility="private" description="needed for testing only"/>
+      <conf name="compile" description="compile-time dependencies, except for ij.jar"/>
+      <conf name="optional" description="optional compile-time dependencies"/>
+      <conf name="imagej" description="ij.jar only"/>
+      <conf name="runtime" description="runtime-only dependencies"/>
+   </configurations>
 
-	<dependencies defaultconf="compile">
-		<dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
-		<dependency conf="test" org="junit" name="junit" rev="4.11"/>
-		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
-		<dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
+   <dependencies defaultconf="compile">
+      <dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
+      <dependency conf="test" org="junit" name="junit" rev="4.11"/>
+      <dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
+      <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
 
-		<dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.6.1"/>
-		<dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
-		<dependency org="com.google.guava" name="guava" rev="17.0"/>
-		<dependency org="com.google.protobuf" name="protobuf-java" rev="2.6.1"/><!-- transitive dep of TSFProto -->
-		<dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
-		<dependency org="net.imglib2" name="imglib2" rev="5.6.3"/>
-		<dependency org="ome" name="formats-api" rev="5.1.1"/>
-		<dependency org="ome" name="formats-common" rev="5.1.1"/>
-		<dependency org="ome" name="ome-xml" rev="5.1.1"/>
-		<dependency org="org.apache-extras.beanshell" name="bsh" rev="2.0b6"/>
-		<dependency org="org.apache.commons" name="commons-lang3" rev="3.5"/>
-		<dependency org="org.apache.commons" name="commons-math" rev="2.2"/>
-		<dependency org="org.apache.commons" name="commons-math3" rev="3.6.1"/>
-		<dependency org="org.clojure" name="clojure" rev="1.3.0"/>
-		<dependency org="org.clojure" name="core.cache" rev="0.6.2"/>
-		<dependency org="org.clojure" name="core.memoize" rev="0.5.2"/>
-		<dependency org="org.clojure" name="data.json" rev="0.1.1"/>
-		<dependency org="org.jfree" name="jcommon" rev="1.0.24"/>
-		<dependency org="org.jfree" name="jfreechart" rev="1.5.0"/>
-		<dependency org="org.scijava" name="scijava-common" rev="2.77.0"/>
-		<!-- Magellan dependencies -->
-		<!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
-		<dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
-		<dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.12.3">
+      <dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.6.1"/>
+      <dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
+      <dependency org="com.google.guava" name="guava" rev="17.0"/>
+      <dependency org="com.google.protobuf" name="protobuf-java" rev="2.6.1"/><!-- transitive dep of TSFProto -->
+      <dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
+      <dependency org="net.imglib2" name="imglib2" rev="5.6.3"/>
+      <dependency org="ome" name="formats-api" rev="5.1.1"/>
+      <dependency org="ome" name="formats-common" rev="5.1.1"/>
+      <dependency org="ome" name="ome-xml" rev="5.1.1"/>
+      <dependency org="org.apache-extras.beanshell" name="bsh" rev="2.0b6"/>
+      <dependency org="org.apache.commons" name="commons-lang3" rev="3.5"/>
+      <dependency org="org.apache.commons" name="commons-math" rev="2.2"/>
+      <dependency org="org.apache.commons" name="commons-math3" rev="3.6.1"/>
+      <dependency org="org.clojure" name="clojure" rev="1.3.0"/>
+      <dependency org="org.clojure" name="core.cache" rev="0.6.2"/>
+      <dependency org="org.clojure" name="core.memoize" rev="0.5.2"/>
+      <dependency org="org.clojure" name="data.json" rev="0.1.1"/>
+      <dependency org="org.jfree" name="jcommon" rev="1.0.24"/>
+      <dependency org="org.jfree" name="jfreechart" rev="1.5.0"/>
+      <dependency org="org.scijava" name="scijava-common" rev="2.77.0"/>
+      <!-- Magellan dependencies -->
+      <!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
+      <dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
+      <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.12.3">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.5.2">
+      <dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.5.2">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.4.7">
+      <dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.4.7">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.22.0">
+      <dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.22.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 
-		<dependency org="io.scif" name="scifio" rev="0.37.3"/>
+      <dependency org="io.scif" name="scifio" rev="0.37.3"/>
 
       <!-- Delete once "parent" package upgrade to a log4j free version -->
       <dependency org="jitk" name="jitk-tps" rev="3.0.2"/>
 
-		<dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
-		<!--<dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/> -->
-		<dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>
-		<dependency org="net.clearcontrol" name="coremem" rev="0.4.5"/>
+      <dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
+      <!--<dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/> -->
+      <dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>
+      <dependency org="net.clearcontrol" name="coremem" rev="0.4.5"/>
 
       <!--jogl and gluegen are a pain! They are in central, but named in a way that is hard to re-concile with ivy.  Rename and use a copy from 3rdpartypublic -->
-		<dependency org="org.jogamp.gluegen" name="gluegen-rt-local" rev="2.3.2"/>
-		<dependency org="org.jogamp.gluegen" name="gluegen-rt-main-local" rev="2.3.2"/>
-		<dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-macosx-universal" rev="2.3.2"/>
-		<dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-amd64" rev="2.3.2"/>
-		<dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-i586" rev="2.3.2"/>
-		<dependency org="org.jogamp.gluegen" name="gluegen" rev="2.3.2"/>
-		<dependency org="org.jogamp.jogl" name="jogl-all-local" rev="2.3.2"/>
-		<dependency org="org.jogamp.jogl" name="jogl-all-main-local" rev="2.3.2"/>
-		<dependency org="org.jogamp.jogl" name="jogl-all-natives-macosx-universal" rev="2.3.2"/>
-		<dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-amd64" rev="2.3.2"/>
-		<dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-i586" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-local" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-main-local" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-macosx-universal" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-amd64" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-i586" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-local" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-main-local" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-natives-macosx-universal" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-amd64" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-i586" rev="2.3.2"/>
 
-		<!-- Patched version of clearvolume from Nico -->
-		<dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
+      <!-- Patched version of clearvolume from Nico -->
+      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
       <!-- cl-kernel-binding from nico brings in clij-kernels, and clij version of the cleacl libraries.  Ugly, but the harsh truth if we want to use this code -->
       <dependency org="org.micromanager" name="cl-kernel-bindings" rev="0.1.1-SNAPSHOT"/>
 
 
 
-		<dependency org="org.boofcv" name="boofcv-ip" rev="0.36"/>
-		<dependency org="org.boofcv" name="boofcv-geo" rev="0.36"/>
-		<dependency org="org.georegression" name="georegression" rev="0.22"/>
-		<dependency org="org.ddogleg" name="ddogleg" rev="0.18"/>
-		<dependency org="org.ejml" name="ejml-core" rev="0.38"/>
+      <dependency org="org.boofcv" name="boofcv-ip" rev="0.36"/>
+      <dependency org="org.boofcv" name="boofcv-geo" rev="0.36"/>
+      <dependency org="org.georegression" name="georegression" rev="0.22"/>
+      <dependency org="org.ddogleg" name="ddogleg" rev="0.18"/>
+      <dependency org="org.ejml" name="ejml-core" rev="0.38"/>
 
-		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
-		<dependency org="" name="iconloader" rev="GIT"/>
-		<!---		<dependency org="" name="TSFProto" rev="SVN"/>--><!-- dependency on protobuf-java will not be resolved -->
+      <!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
+      <dependency org="" name="iconloader" rev="GIT"/>
+      <!---      <dependency org="" name="TSFProto" rev="SVN"/>--><!-- dependency on protobuf-java will not be resolved -->
 
-		<!-- Magellan dependencies; not open source; not in Maven -->
-		<dependency conf="optional" org="" name="DT1.2" rev=""/>
+      <!-- Magellan dependencies; not open source; not in Maven -->
+      <dependency conf="optional" org="" name="DT1.2" rev=""/>
 
       <!-- Gamepad plugin dependency; only works on Windows; not in Maven -->
       <dependency conf="optional"  name="jxinput" rev="0.8"/>
 
-		<!-- Run-time-only dependencies -->
-		<dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
+      <!-- Run-time-only dependencies -->
+      <dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
 
       <!-- Always exclude these -->
       <exclude org="com.googlecode.efficient-java-matrix-library"/>
