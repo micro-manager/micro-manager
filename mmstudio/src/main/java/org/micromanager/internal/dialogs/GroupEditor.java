@@ -17,6 +17,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.internal.dialogs;
 
 import java.awt.Dimension;
@@ -34,13 +35,29 @@ import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.PropertyTableData;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.SortFunctionObjects;
+import org.micromanager.internal.utils.WindowPositioning;
 
+/**
+ * Creates the dialog in which the user sets the properties that should belong to a group.
+ */
 public final class GroupEditor extends ConfigDialog {
 
    private static final long serialVersionUID = 8281144157746745260L;
-   private static final String DISPLAY_SHUTTER_WARNING = "Warn user before saving a config group that includes shutter state.";
+   private static final String DISPLAY_SHUTTER_WARNING =
+         "Warn user before saving a config group that includes shutter state.";
 
+   /**
+    * Group editor constructor.
+    *
+    * @param groupName Name of the group to be edited
+    * @param presetName Name of the preset that is edited (not sure why this is needed here).
+    * @param studio The omnipresent Studio object
+    * @param newItem Whether this is a new (true) or existing (false) item (? group or preset?)
+    */
    public GroupEditor(String groupName, String presetName, Studio studio, boolean newItem) {
       super(groupName, presetName, studio, newItem);
       instructionsText_ = "Specify properties in this configuration group:";
@@ -52,8 +69,9 @@ public final class GroupEditor extends ConfigDialog {
       scrollPaneTop_ = 140;
       numColumns_ = 3;
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(studio);
-      data_ = ptdb.groupName(groupName).presetName(presetName).propertyValueColumn(2).
-              propertyUsedColumn(1).groupOnly(false).allowChangingProperties(false).allowChangesOnlyWhenUsed(false).isPixelSizeConfig(false).build();
+      data_ = ptdb.groupName(groupName).presetName(presetName).propertyValueColumn(2)
+            .propertyUsedColumn(1).groupOnly(false).allowChangingProperties(false)
+            .allowChangesOnlyWhenUsed(false).isPixelSizeConfig(false).build();
       initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       initialize();
@@ -70,42 +88,43 @@ public final class GroupEditor extends ConfigDialog {
       List<PropertyItem> shutters = new ArrayList<>();
       for (PropertyItem item : data_.getProperties()) {
          try {
-            if (item.confInclude && item.name.contentEquals("State") &&
-                  core_.getDeviceType(item.device) == DeviceType.ShutterDevice) {
+            if (item.confInclude
+                  && item.name.contentEquals("State")
+                  && core_.getDeviceType(item.device) == DeviceType.ShutterDevice) {
                if (item.allowed.length != 2) {
                   // Has more than two allowed values, ergo doesn't reflect
                   // the shutter openness.
                   continue;
                }
-               if ((item.allowed[0].contentEquals("0") &&
-                     item.allowed[1].contentEquals("1")) ||
-                   (item.allowed[0].contentEquals("1") &&
-                     item.allowed[1].contentEquals("0"))) {
+               if ((item.allowed[0].contentEquals("0")
+                     && item.allowed[1].contentEquals("1"))
+                     || (item.allowed[0].contentEquals("1")
+                     && item.allowed[1].contentEquals("0"))) {
                   shutters.add(item);
                }
             }
-         }
-         catch (Exception e) {
-            studio_.logs().logError(e, "Error getting information on device/property " + item.device + "/" + item.name);
+         } catch (Exception e) {
+            studio_.logs().logError(e, "Error getting information on device/property "
+                  + item.device + "/" + item.name);
          }
       }
       // Warn user about including shutter state in config groups.
-      if (shutters.size() > 0 && studio_.profile().getSettings(GroupEditor.class).
-              getBoolean(DISPLAY_SHUTTER_WARNING, true)) {
+      if (shutters.size() > 0 && studio_.profile().getSettings(GroupEditor.class)
+            .getBoolean(DISPLAY_SHUTTER_WARNING, true)) {
          JPanel contents = new JPanel(new MigLayout("fill, flowy"));
          // NB I would prefer to use a JTextArea here, and use its automatic
          // line wrapping, but that causes a NullPointerException when laying
          // out the dialog, for unknown reasons.
          JLabel warning = new JLabel(
-            "<html>It looks like this config group contains a property that<br>" +
-            "controls whether or not a shutter is open. If you intend<br>" +
-            "to use this config group to control the current channel,<br>" +
-            "you should be aware that including shutter state properties<br>" +
-            "can lead to bad interactions with the autoshutter system.<br>" +
-            "If you want to use different shutters for different channel<br>" +
-            "presets, you should use the Core-Shutter property.<br><br>" +
-            "Would you like to remove the shutter state property from<br>" +
-            "this config group?</html>");
+               "<html>It looks like this config group contains a property that<br>"
+                     + "controls whether or not a shutter is open. If you intend<br>"
+                     + "to use this config group to control the current channel,<br>"
+                     + "you should be aware that including shutter state properties<br>"
+                     + "can lead to bad interactions with the autoshutter system.<br>"
+                     + "If you want to use different shutters for different channel<br>"
+                     + "presets, you should use the Core-Shutter property.<br><br>"
+                     + "Would you like to remove the shutter state property from<br>"
+                     + "this config group?</html>");
          contents.add(warning, "growx");
 
          JCheckBox neverAgain = new JCheckBox(
@@ -121,8 +140,7 @@ public final class GroupEditor extends ConfigDialog {
          if (selection == 2) {
             // User cancelled.
             return;
-         }
-         else if (selection == 1) {
+         } else if (selection == 1) {
             for (PropertyItem shutter : shutters) {
                shutter.confInclude = false;
             }
@@ -135,8 +153,14 @@ public final class GroupEditor extends ConfigDialog {
       }
    }
 
+   /**
+    * "Writes" the configuration to the core.
+    *
+    * @param initName Original name of the configuration
+    * @param newName New name for this configuration (can be same as initname)
+    * @return True when successful,  false on failure
+    */
    public boolean writeGroup(String initName, String newName) {
-
       // Check that at least one property has been selected.
       int itemsIncludedCount = 0;
       for (PropertyItem item : data_.getProperties()) {
@@ -159,7 +183,8 @@ public final class GroupEditor extends ConfigDialog {
       StrVector groups = core_.getAvailableConfigGroups();
       for (int i = 0; i < groups.size(); i++) {
          if (groups.get(i).contentEquals(newName) && !newName.contentEquals(initName)) {
-            showMessageDialog("A group by this name already exists. Please enter a different name.");
+            showMessageDialog(
+                  "A group by this name already exists. Please enter a different name.");
             return false;
          }
       }
@@ -180,15 +205,21 @@ public final class GroupEditor extends ConfigDialog {
                   second = core_.getConfigData(initName, cfgs.get(j));
                   for (PropertyItem item : data_.getProperties()) {
                      if (item.confInclude) {
-                        if (first.isPropertyIncluded(item.device, item.name) && second.isPropertyIncluded(item.device, item.name)) {
-                           if (!first.getSetting(item.device, item.name).getPropertyValue().contentEquals(second.getSetting(item.device, item.name).getPropertyValue())) {
+                        if (first.isPropertyIncluded(item.device, item.name)
+                              && second.isPropertyIncluded(item.device, item.name)) {
+                           if (!first.getSetting(item.device, item.name).getPropertyValue()
+                                 .contentEquals(second.getSetting(item.device, item.name)
+                                       .getPropertyValue())) {
                               same = false;
                            }
                         }
                      }
                   }
                   if (same) {
-                     showMessageDialog("By removing properties, you would create duplicate presets.\nTo avoid duplicates when you remove properties, you should\nfirst delete some of the presets in this group.");
+                     showMessageDialog(
+                           "By removing properties, you would create duplicate presets.\n"
+                           + "To avoid duplicates when you remove properties, you should\n"
+                           + "first delete some of the presets in this group.");
                      return false;
                   }
 
@@ -231,7 +262,8 @@ public final class GroupEditor extends ConfigDialog {
                            }
                         }
                         if (allNumeric) {
-                           Arrays.sort(item.allowed, new SortFunctionObjects.NumericPrefixStringComp());
+                           Arrays.sort(item.allowed,
+                                 new SortFunctionObjects.NumericPrefixStringComp());
                         } else {
                            Arrays.sort(item.allowed);
                         }
@@ -239,13 +271,15 @@ public final class GroupEditor extends ConfigDialog {
 
                      for (String allowedValue : item.allowed) {
                         if (!allowedValue.equals("")) {
-                           // Make sure that forbiddedn characters do not make it into the Preset Name
+                           // Ensure that forbidden characters do not make it into the Preset Name
                            String presetName = allowedValue.replaceAll("[/\\*!']", "-");
-                           core_.defineConfig(newName, presetName, item.device, item.name, allowedValue);
+                           core_.defineConfig(newName, presetName,
+                                 item.device, item.name, allowedValue);
                         }
                      }
                   } else {
-                     core_.defineConfig(newName, "NewPreset", item.device, item.name, item.getValueInCoreFormat());
+                     core_.defineConfig(newName, "NewPreset",
+                           item.device, item.name, item.getValueInCoreFormat());
                   }
                }
             }
@@ -257,7 +291,7 @@ public final class GroupEditor extends ConfigDialog {
          if (itemsIncludedCount > 1) {
             new PresetEditor(newName, "NewPreset", studio_, false);
          }
-      } else {// An existing configuration group is being modified.
+      } else { // An existing configuration group is being modified.
          // Apply configuration settings to all properties in the group.
          String cfg;
          Configuration unionCfg;
@@ -270,16 +304,21 @@ public final class GroupEditor extends ConfigDialog {
                   // If some presets have this property when they shouldn't, delete it.
                   for (int i = 0; i < cfgs.size(); i++) {
                      cfg = cfgs.get(i);
-                     if (core_.getConfigData(newName, cfg).isPropertyIncluded(item.device, item.name)) {
+                     if (core_.getConfigData(newName, cfg).isPropertyIncluded(
+                           item.device, item.name)) {
                         core_.deleteConfig(newName, cfg, item.device, item.name);
                      }
                   }
-               } else if (item.confInclude && !unionCfg.isPropertyIncluded(item.device, item.name)) {
-                  // If some presets don't have this property when they should, add it with current values.
+               } else if (item.confInclude
+                     && !unionCfg.isPropertyIncluded(item.device, item.name)) {
+                  // If some presets don't have this property when they should,
+                  // add it with current values.
                   for (int i = 0; i < cfgs.size(); i++) {
                      cfg = cfgs.get(i);
-                     if (!core_.getConfigData(groupName_, cfg).isPropertyIncluded(item.device, item.name)) {
-                        core_.defineConfig(newName, cfg, item.device, item.name, item.getValueInCoreFormat());
+                     if (!core_.getConfigData(groupName_, cfg)
+                           .isPropertyIncluded(item.device, item.name)) {
+                        core_.defineConfig(newName, cfg, item.device, item.name,
+                              item.getValueInCoreFormat());
                      }
                   }
                }

@@ -30,9 +30,16 @@ import mmcorej.Configuration;
 import mmcorej.DoubleVector;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.AffineUtils;
+import org.micromanager.internal.utils.CalibrationList;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.PropertyTableData;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
+ * Editor for Pixel configuration presets.
  *
  * @author nico
  */
@@ -43,8 +50,15 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
    private DoubleVector affineTransform_;
    private final AffineEditorPanel affineEditorPanel_;
    private final CalibrationListDlg parent_;
-   private final double fractionErrorAllowed_ = 0.2;
 
+   /**
+    * Creates the Pixel configuration preset editor.
+    *
+    * @param pixelSizeConfigName Pixel Size configuration name
+    * @param parent GUI element that this one should be shown in front of.
+    * @param pixelSize Starting pixel size
+    * @param newItem True when this is a new pixel configuration, false when it already exists.
+    */
    public PixelPresetEditor(String pixelSizeConfigName, 
          CalibrationListDlg parent, String pixelSize, boolean newItem) {
       super("ConfigPixelSize", pixelSizeConfigName, parent.getStudio(), newItem);
@@ -70,9 +84,9 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       }
       
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(parent.getStudio());
-      data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
-              propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).
-              allowChangesOnlyWhenUsed(true).isPixelSizeConfig(true).build();
+      data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1)
+            .propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true)
+            .allowChangesOnlyWhenUsed(true).isPixelSizeConfig(true).build();
       data_.setShowReadOnly(true);
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
@@ -94,19 +108,20 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
                  affineEditorPanel_.getAffineTransform());
          double predictedPixelSize = AffineUtils.deducePixelSize(affineTransform);
          double inputSize = NumberUtils.displayStringToDouble(pixelSizeField_.getText());
-         if (predictedPixelSize > (1 + fractionErrorAllowed_) * inputSize ||
-               predictedPixelSize < (1 - fractionErrorAllowed_) * inputSize  ) {
+         double fractionErrorAllowed = 0.2;
+         if (predictedPixelSize > (1 + fractionErrorAllowed) * inputSize
+               || predictedPixelSize < (1 - fractionErrorAllowed) * inputSize) {
             Object[] options = { "Yes", "No"};
-            Object selectedValue = JOptionPane.showOptionDialog(null,
+            int selectedValue = JOptionPane.showOptionDialog(null,
                     "Affine transform appears wrong.  Calculate from pixelSize?", "",
                      JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
                      null, options, options[0]);
-            if (selectedValue instanceof Integer &&  0 == ((Integer)selectedValue)) {
+            if (0 == selectedValue) {
                affineEditorPanel_.calculate();
             }
          }
 
-         if(writeGroup(nameField_.getText())) {
+         if (writeGroup(nameField_.getText())) {
             this.dispose();
          }
 
@@ -126,8 +141,13 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       super.dispose();
    }
 
+   /**
+    * "Writes" the pixel size configuration to the core.
+    *
+    * @param newName Name of the pixel size configuration
+    * @return True on success, false on failure
+    */
    public boolean writeGroup(String newName) {
-
       // Check that at least one property has been selected.
       int itemsIncludedCount = 0;
       for (PropertyItem item : data_.getProperties()) {
@@ -148,35 +168,36 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
 
       try {
          // Check if duplicate presets would be created.
-         CalibrationList calibrationList_ = new CalibrationList(core_);
-         calibrationList_.getCalibrationsFromCore();
+         CalibrationList calibrationList = new CalibrationList(core_);
+         calibrationList.getCalibrationsFromCore();
          Configuration otherPreset;
-         Configuration oldPreset = null;
          boolean same = false;
 
          // Compare the new added preset with all other presets.
-         for (int j =0 ; j < calibrationList_.size(); j++) {
-            String otherPresetName = calibrationList_.get(j).getLabel();
+         for (int j = 0; j < calibrationList.size(); j++) {
+            String otherPresetName = calibrationList.get(j).getLabel();
             otherPreset = core_.getPixelSizeConfigData(otherPresetName);
 
-            if(!newItem_ && otherPresetName.equals(presetName_)) {
+            if (!newItem_ && otherPresetName.equals(presetName_)) {
                continue;
             }
 
             same = true;
-            // Save the old preset in case we need to restore the old properties
-            if(otherPresetName.contentEquals(presetName_)) {
-               oldPreset = core_.getPixelSizeConfigData(otherPresetName);
-            }
-            for (PropertyItem item:data_.getProperties()) {
-               if (item.confInclude)
-                  if (otherPreset.isPropertyIncluded(item.device, item.name))
-                     if (! item.getValueInCoreFormat().contentEquals(otherPreset.getSetting(item.device, item.name).getPropertyValue()) )
+            for (PropertyItem item : data_.getProperties()) {
+               if (item.confInclude) {
+                  if (otherPreset.isPropertyIncluded(item.device, item.name)) {
+                     if (!item.getValueInCoreFormat().contentEquals(
+                           otherPreset.getSetting(item.device, item.name).getPropertyValue())) {
                         same = false;
+                     }
+                  }
+               }
             }
 
             if (same) {
-               showMessageDialog("This combination of properties is already found in the \"" + otherPresetName + "\" preset.\nPlease choose unique property values for your new preset.");
+               showMessageDialog("This combination of properties is already found in the \""
+                     + otherPresetName
+                     + "\" preset.\nPlease choose unique property values for your new preset.");
                return false;
             }
          }
@@ -196,14 +217,8 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
          core_.definePixelSizeConfig(newName);
          for (PropertyItem item : data_.getProperties()) {
             if (item.confInclude) {
-               // if no duplicate presets will be created, then allow this preset to be added
-               if(!same) {
-                  core_.definePixelSizeConfig(newName, item.device, item.name, item.getValueInCoreFormat());
-               }
-               // if fails to edit an existing preset due to the duplicate presets, keep the old preset
-               else {
-                  core_.definePixelSizeConfig(newName, item.device, item.name, oldPreset.getSetting(item.device, item.name).getPropertyValue());
-               }
+               core_.definePixelSizeConfig(newName, item.device, item.name,
+                     item.getValueInCoreFormat());
             }
          }
 
@@ -245,7 +260,8 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
    @Override
    public void setPixelSize(double pixelSizeUm) {
       pixelSize_ = NumberUtils.doubleToDisplayString(pixelSizeUm);
-      pixelSizeField_.setText(pixelSize_); }
+      pixelSizeField_.setText(pixelSize_);
+   }
 
    @Override
    public AffineTransform getAffineTransform() {
