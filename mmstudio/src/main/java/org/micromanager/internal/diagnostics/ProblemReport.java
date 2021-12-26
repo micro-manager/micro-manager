@@ -34,7 +34,6 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
-
 import mmcorej.CMMCore;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -405,8 +404,7 @@ public final class ProblemReport {
    private static String readTextFile(File file) throws IOException {
       // On Windows, the files may contain CRLF newlines, so it is important
       // to read as text, line by line.
-      return Files.lines(file.toPath()).
-         collect(Collectors.joining("\n"));
+      return Files.lines(file.toPath()).collect(Collectors.joining("\n"));
    }
 
    private static void writeTextFile(java.io.File file, String text) {

@@ -12,13 +12,15 @@
 package org.micromanager.internal.diagnostics;
 
 class OperatingSystemInfoSection implements SystemInfo.SystemInfoSection {
-   public String getTitle() { return "Operating system version information"; }
+   public String getTitle() {
+      return "Operating system version information";
+   }
 
    public String getReport() {
       StringBuilder sb = new StringBuilder();
-      sb.append("Operating system: ").append(System.getProperty("os.name")).
-         append(" (").append(System.getProperty("os.arch")).append(") ").
-         append(System.getProperty("os.version")).append('\n');
+      sb.append("Operating system: ").append(System.getProperty("os.name"))
+            .append(" (").append(System.getProperty("os.arch")).append(") ")
+            .append(System.getProperty("os.version")).append('\n');
       return sb.toString();
    }
 }

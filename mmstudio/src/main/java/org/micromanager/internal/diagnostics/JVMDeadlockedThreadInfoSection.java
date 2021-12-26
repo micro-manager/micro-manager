@@ -14,27 +14,30 @@ package org.micromanager.internal.diagnostics;
 import java.lang.management.ThreadInfo;
 
 class JVMDeadlockedThreadInfoSection implements SystemInfo.SystemInfoSection {
-   public String getTitle() { return "Deadlocked Java threads"; }
+   public String getTitle() {
+      return "Deadlocked Java threads";
+   }
 
    public String getReport() {
       StringBuilder sb = new StringBuilder();
 
-      java.lang.management.ThreadMXBean threadMXB = java.lang.management.ManagementFactory.getThreadMXBean();
+      java.lang.management.ThreadMXBean threadMXB =
+            java.lang.management.ManagementFactory.getThreadMXBean();
       long[] deadlockedThreadIds = threadMXB.findDeadlockedThreads();
 
       if (deadlockedThreadIds != null && deadlockedThreadIds.length > 0) {
-         sb.append("Deadlocked Java threads: ").
-            append(Integer.toString(deadlockedThreadIds.length)).append(" detected\n");
+         sb.append("Deadlocked Java threads: ")
+               .append(deadlockedThreadIds.length).append(" detected\n");
 
          java.util.Arrays.sort(deadlockedThreadIds);
          ThreadInfo[] deadlockedInfos = threadMXB.getThreadInfo(deadlockedThreadIds, true, true);
          for (ThreadInfo tInfo : deadlockedInfos) {
-            sb.append("Deadlocked Java thread: id ").append(Long.toString(tInfo.getThreadId())).
-               append(" (\"").append(tInfo.getThreadName()).append("\"):").append('\n');
+            sb.append("Deadlocked Java thread: id ").append(tInfo.getThreadId())
+                  .append(" (\"").append(tInfo.getThreadName()).append("\"):").append('\n');
 
             java.lang.management.LockInfo blockingLock = tInfo.getLockInfo();
-            sb.append("  Blocked waiting to lock ").append(blockingLock.getClassName()).append(' ').
-               append(Integer.toString(blockingLock.getIdentityHashCode())).append('\n');
+            sb.append("  Blocked waiting to lock ").append(blockingLock.getClassName()).append(' ')
+                  .append(blockingLock.getIdentityHashCode()).append('\n');
 
             java.lang.management.MonitorInfo[] monitors = tInfo.getLockedMonitors();
             java.lang.management.LockInfo[] synchronizers = tInfo.getLockedSynchronizers();
@@ -44,20 +47,19 @@ class JVMDeadlockedThreadInfoSection implements SystemInfo.SystemInfoSection {
 
                for (java.lang.management.MonitorInfo monitor : monitors) {
                   if (monitor.getLockedStackFrame().equals(frame)) {
-                     sb.append("      where monitor was locked: ").
-                        append(monitor.getClassName()).append(' ').
-                        append(Integer.toString(monitor.getIdentityHashCode())).append('\n');
+                     sb.append("      where monitor was locked: ")
+                           .append(monitor.getClassName()).append(' ')
+                           .append(monitor.getIdentityHashCode()).append('\n');
                   }
                }
             }
             for (java.lang.management.LockInfo sync : synchronizers) {
-               sb.append("  Ownable synchronizer is locked: ").
-                  append(sync.getClassName()).append(' ').
-                  append(Integer.toString(sync.getIdentityHashCode())).append('\n');
+               sb.append("  Ownable synchronizer is locked: ")
+                     .append(sync.getClassName()).append(' ')
+                     .append(sync.getIdentityHashCode()).append('\n');
             }
          }
-      }
-      else {
+      } else {
          sb.append("Deadlocked Java threads: none detected");
       }
 

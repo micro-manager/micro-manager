@@ -13,7 +13,9 @@ package org.micromanager.internal.diagnostics;
 
 class CorePropertyCacheInfoSection implements SystemInfo.SystemInfoSection {
    @Override
-   public String getTitle() { return "Core information"; }
+   public String getTitle() {
+      return "Core information";
+   }
 
    @Override
    public String getReport() {
@@ -30,13 +32,11 @@ class CorePropertyCacheInfoSection implements SystemInfo.SystemInfoSection {
             final String name = s.getPropertyName();
             final String value = s.getPropertyValue();
             final String roString = s.getReadOnly() ? " [RO]" : "";
-            sb.append("  ").append(device).append("/").append(name).
-                    append(roString).append(" = ").append(value).append('\n');
-         }
-         catch (Exception e) {
-            sb.append("  Error while getting cache item ").
-                    append(Long.toString(i)).append(": ").
-                    append(e.getMessage()).append('\n');
+            sb.append("  ").append(device).append("/").append(name)
+                  .append(roString).append(" = ").append(value).append('\n');
+         } catch (Exception e) {
+            sb.append("  Error while getting cache item ")
+                  .append(i).append(": ").append(e.getMessage()).append('\n');
          }
       }
       return sb.toString();
