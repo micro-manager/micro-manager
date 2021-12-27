@@ -27,7 +27,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
@@ -44,7 +53,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.WindowPositioning;
 
 
-final public class PipelineFrame extends JFrame
+public final class PipelineFrame extends JFrame
       implements ListSelectionListener {
 
    private static final String TITLE = "On-The-Fly Processor Pipeline";
@@ -54,12 +63,10 @@ final public class PipelineFrame extends JFrame
    private final JPopupMenu addProcessorPopup_;
 
    private final PipelineTable pipelineTable_;
-   private final JScrollPane pipelineScrollPane_;
 
    private final JButton removeButton_;
    private final JButton moveUpButton_;
    private final JButton moveDownButton_;
-   private final JButton replayButton_;
 
    public PipelineFrame(Studio studio) {
       super(TITLE);
@@ -81,13 +88,13 @@ final public class PipelineFrame extends JFrame
       pipelineTable_.setRowHeight(pipelineTable_.getRowHeight() * 2);
       pipelineTable_.getSelectionModel().addListSelectionListener(this);
 
-      pipelineScrollPane_ = new JScrollPane(pipelineTable_,
+      JScrollPane pipelineScrollPane = new JScrollPane(pipelineTable_,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      pipelineScrollPane_.setPreferredSize(new Dimension(370, 80));
-      pipelineScrollPane_.setMinimumSize(new Dimension(370,
+      pipelineScrollPane.setPreferredSize(new Dimension(370, 80));
+      pipelineScrollPane.setMinimumSize(new Dimension(370,
             pipelineTable_.getRowHeight()));
-      add(pipelineScrollPane_, "growx, growy");
+      add(pipelineScrollPane, "growx, growy");
 
       add(new JLabel(downwardsArrow), "split 2");
       add(new JLabel("<html><b>Dataset</b></html>"), "wrap");
@@ -109,36 +116,21 @@ final public class PipelineFrame extends JFrame
       add(addButton, "sizegroup btns, skip 1, split 5");
 
       removeButton_ = new JButton("Remove");
-      removeButton_.setIcon(new ImageIcon (MMStudio.class.getResource(
+      removeButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
             "/org/micromanager/icons/minus.png")));
-      removeButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            removeSelectedConfigurator();
-         }
-      });
+      removeButton_.addActionListener(e -> removeSelectedConfigurator());
       add(removeButton_, "sizegroup btns");
 
       moveUpButton_ = new JButton("Move Up");
-      moveUpButton_.setIcon(new ImageIcon (MMStudio.class.getResource(
+      moveUpButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
             "/org/micromanager/icons/arrow_up.png")));
-      moveUpButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            moveSelectedConfigurator(-1);
-         }
-      });
+      moveUpButton_.addActionListener(e -> moveSelectedConfigurator(-1));
       add(moveUpButton_, "sizegroup btns");
 
       moveDownButton_ = new JButton("Move Down");
-      moveDownButton_.setIcon(new ImageIcon (MMStudio.class.getResource(
+      moveDownButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
             "/org/micromanager/icons/arrow_down.png")));
-      moveDownButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            moveSelectedConfigurator(+1);
-         }
-      });
+      moveDownButton_.addActionListener(e -> moveSelectedConfigurator(+1));
       add(moveDownButton_, "sizegroup btns, gapbottom push");
 
       JLabel explanationLabel = new JLabel(
@@ -148,19 +140,16 @@ final public class PipelineFrame extends JFrame
             + "</div></html>");
       add(explanationLabel);
 
-      replayButton_ = new JButton("Process Old Data");
-      replayButton_.setToolTipText("Apply the current enabled processors to an existing dataset.");
-      replayButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (getTableModel().getEnabledConfigurators(false).size() == 0) {
-               studio_.logs().showError("Please set up a pipeline first.");
-               return;
-            }
-            ProcessExistingDataDialog.makeDialog(studio_);
+      JButton replayButton = new JButton("Process Old Data");
+      replayButton.setToolTipText("Apply the current enabled processors to an existing dataset.");
+      replayButton.addActionListener(e -> {
+         if (getTableModel().getEnabledConfigurators(false).size() == 0) {
+            studio_.logs().showError("Please set up a pipeline first.");
+            return;
          }
+         ProcessExistingDataDialog.makeDialog(studio_);
       });
-      add(replayButton_);
+      add(replayButton);
 
       //
       // Overall constraints
@@ -210,7 +199,8 @@ final public class PipelineFrame extends JFrame
    /**
     * A new ProcessorPlugin was registered; re-load our list of registered
     * processors.
-    * @param event
+    *
+    * @param event contains information about the type of plugin.
     */
    @Subscribe
    public void onNewPlugin(NewPluginEvent event) {
@@ -228,8 +218,7 @@ final public class PipelineFrame extends JFrame
          if (getTableModel().restorePipelineFromProfile(studio_)) {
             setVisible(true);
          }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio_.logs().logError(e, "Failed to reload pipeline");
       }
    }
@@ -256,11 +245,11 @@ final public class PipelineFrame extends JFrame
       final HashMap<String, ProcessorPlugin> plugins = studio_.plugins().getProcessorPlugins();
       // Maps the plugin's declared name to the key in the above plugins
       // object.
-      final HashMap<String, String> nameToPath = new HashMap<String, String>();
+      final HashMap<String, String> nameToPath = new HashMap<>();
       for (String pluginPath : plugins.keySet()) {
          nameToPath.put(plugins.get(pluginPath).getName(), pluginPath);
       }
-      ArrayList<String> names = new ArrayList<String>(nameToPath.keySet());
+      ArrayList<String> names = new ArrayList<>(nameToPath.keySet());
       Collections.sort(names);
       addProcessorPopup_.removeAll();
       final PropertyMap blankSettings = PropertyMaps.builder().build();
@@ -294,8 +283,8 @@ final public class PipelineFrame extends JFrame
       int i = pipelineTable_.getSelectedRow();
       getTableModel().moveConfigurator(pipelineTable_.getSelectedConfigurator(), offset);
       // Retain the selection
-      pipelineTable_.getSelectionModel().
-            setSelectionInterval(i + offset, i + offset);
+      pipelineTable_.getSelectionModel()
+            .setSelectionInterval(i + offset, i + offset);
    }
 
    /**
@@ -338,12 +327,13 @@ final public class PipelineFrame extends JFrame
       return getTableModel().getPipelineFactories(true);
    }
 
-   private List<ProcessorConfigurator> convertWrappersToConfigurators(List<ConfiguratorWrapper> configs){
-        ArrayList<ProcessorConfigurator> result = new ArrayList<ProcessorConfigurator>();
-        for (ConfiguratorWrapper config : configs) {
-            result.add(config.getConfigurator());
-        }
-        return result; 
+   private List<ProcessorConfigurator>
+         convertWrappersToConfigurators(List<ConfiguratorWrapper> configs) {
+      ArrayList<ProcessorConfigurator> result = new ArrayList<>();
+      for (ConfiguratorWrapper config : configs) {
+         result.add(config.getConfigurator());
+      }
+      return result;
    }
    
    /**
@@ -353,53 +343,53 @@ final public class PipelineFrame extends JFrame
       return convertWrappersToConfigurators(getTableModel().getPipelineConfigurators());
    }
    
-    /**
+   /**
     * Return a list of the enabled configurators.
     */
    public List<ProcessorConfigurator> getEnabledPipelineConfigurators() {
-        List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(false);
-        return convertWrappersToConfigurators(configs);
+      List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(false);
+      return convertWrappersToConfigurators(configs);
    }
    
-    /**
+   /**
     * Return a list of the live-mode enabled configurators.
     */
    public List<ProcessorConfigurator> getEnabledLivePipelineConfigurators() {
-        List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(true);
-        return convertWrappersToConfigurators(configs);
+      List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(true);
+      return convertWrappersToConfigurators(configs);
    }
    
-    /*
+   /**
     * Set whether or not a configurator is enabled.
     */
    public void setConfiguratorEnabled(int row, boolean enabled) {
-       int column = getTableModel().ENABLED_COLUMN;
-       getTableModel().setValueAt(enabled, row, column);
+      int column = getTableModel().ENABLED_COLUMN;
+      getTableModel().setValueAt(enabled, row, column);
    }
    
-   /*
-   * Set whether or not a configurator is enabled for live mode
-   */
-    public void setConfiguratorEnabledLive(int row, boolean enabled) {
-       int column = getTableModel().ENABLED_LIVE_COLUMN;
-       getTableModel().setValueAt(enabled, row, column);
-    }
+   /**
+    * Set whether or not a configurator is enabled for live mode.
+    */
+   public void setConfiguratorEnabledLive(int row, boolean enabled) {
+      int column = getTableModel().ENABLED_LIVE_COLUMN;
+      getTableModel().setValueAt(enabled, row, column);
+   }
    
-    /*
+   /**
     * Get whether or not a configurator is enabled.
     */
    public boolean getConfiguratorEnabled(int row) {
-       int column = getTableModel().ENABLED_COLUMN;
-       return (boolean) getTableModel().getValueAt(row, column);
+      int column = getTableModel().ENABLED_COLUMN;
+      return (boolean) getTableModel().getValueAt(row, column);
    }
    
-   /*
-   * Get whether or not a configurator is enabled for live mode
-   */
-    public boolean getConfiguratorEnabledLive(int row) {
-       int column = getTableModel().ENABLED_LIVE_COLUMN;
-       return (boolean) getTableModel().getValueAt(row, column);
-    }
+   /**
+    * Get whether or not a configurator is enabled for live mode.
+    */
+   public boolean getConfiguratorEnabledLive(int row) {
+      int column = getTableModel().ENABLED_LIVE_COLUMN;
+      return (boolean) getTableModel().getValueAt(row, column);
+   }
 
    /**
     * Clear the pipeline table.
