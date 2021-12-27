@@ -4,6 +4,7 @@ package org.micromanager.internal.hcwizard;
 import java.util.Comparator;
 
 /**
+ * Utility class to help sort devices.
  *
  * @author nico
  */

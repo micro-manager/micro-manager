@@ -1,16 +1,22 @@
 package org.micromanager.internal.hcwizard;
 
-import java.awt.*;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.DeviceDetectionStatus;
@@ -19,18 +25,23 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.PropertyNameCellRenderer;
+import org.micromanager.internal.utils.PropertyValueCellEditor;
+import org.micromanager.internal.utils.PropertyValueCellRenderer;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 public final class DeviceSetupDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private static final String SCAN_PORTS = "Scan Ports";
 
-   private final JPanel contents_;
    private final CMMCore core_;
    private final Studio studio_;
    private Device portDev_;
    private final MicroscopeModel model_;
-   private Device device_;
+   private final Device device_;
    private final JTable propTable_;
    private final JButton detectButton_;
    private DetectorJDialog progressDialog_;
@@ -56,25 +67,24 @@ public final class DeviceSetupDlg extends JDialog {
       portDev_ = null;
       device_ = d;
 
-      setTitle("Device: " + device_.getAdapterName() + "; Library: " +
-            device_.getLibrary());
+      setTitle("Device: " + device_.getAdapterName() + "; Library: "
+            + device_.getLibrary());
 
-      contents_ = new JPanel(new MigLayout("fill, insets 5"));
-      setContentPane(contents_);
-      contents_.add(new JLabel("Device name: "), "split");
+      JPanel contents = new JPanel(new MigLayout("fill, insets 5"));
+      setContentPane(contents);
+      contents.add(new JLabel("Device name: "), "split");
 
       String parent = device_.getParentHub();
 
       devName_ = new JTextField(device_.getName());
-      contents_.add(devName_, "width 165" +
-            ((parent.length() == 0) ? ", wrap" : ""));
+      contents.add(devName_, "width 165" + ((parent.length() == 0) ? ", wrap" : ""));
       if (parent.length() != 0) {
-         contents_.add(new JLabel("Parent: " + parent), "wrap");
+         contents.add(new JLabel("Parent: " + parent), "wrap");
       }
 
-      contents_.add(new JLabel("Initialization Properties"), "wrap");
+      contents.add(new JLabel("Initialization Properties"), "wrap");
       JScrollPane propertiesScroller = new JScrollPane();
-      contents_.add(propertiesScroller, "spanx, growx, height 165!, wrap");
+      contents.add(propertiesScroller, "spanx, growx, height 165!, wrap");
 
       propTable_ = new DaytimeNighttime.Table();
       propTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -82,18 +92,13 @@ public final class DeviceSetupDlg extends JDialog {
       propertiesScroller.setViewportView(propTable_);
 
       portSettingsPanel_ = new JPanel(new MigLayout("fill, insets 0"));
-      contents_.add(portSettingsPanel_, "hidemode 2, spanx, growx, wrap");
+      contents.add(portSettingsPanel_, "hidemode 2, spanx, growx, wrap");
 
       portSettingsPanel_.add(new JLabel("Port Properties (RS232 Settings)"));
 
       detectButton_ = new JButton(SCAN_PORTS);
       detectButton_.setEnabled(false);
-      detectButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            scanPorts();
-         }
-      });
+      detectButton_.addActionListener(e -> scanPorts());
 
       detectButton_.setToolTipText("Scan COM ports to detect this device");
       portSettingsPanel_.add(detectButton_, "gapleft push, wrap");
@@ -115,40 +120,27 @@ public final class DeviceSetupDlg extends JDialog {
             new MigLayout("fillx, insets 0", "0[grow]0[]0[]0"));
 
       JButton helpButton = new JButton("Help");
-      helpButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               ij.plugin.BrowserLauncher.openURL(
+      helpButton.addActionListener(e -> {
+         try {
+            ij.plugin.BrowserLauncher.openURL(
                   DevicesPage.WEBSITE_ROOT + device_.getLibrary());
-            } catch (IOException e1) {
-               ReportingUtils.showError(e1);
-            }
+         } catch (IOException e1) {
+            ReportingUtils.showError(e1);
          }
       });
       buttonPane.add(helpButton, "alignx left");
 
       JButton okButton = new JButton("OK");
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            onOK();
-         }
-      });
+      okButton.addActionListener(e -> onOK());
       okButton.setActionCommand("OK");
       buttonPane.add(okButton, "gapleft push");
       getRootPane().setDefaultButton(okButton);
 
       JButton cancelButton = new JButton("Cancel");
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            onCancel();
-         }
-      });
+      cancelButton.addActionListener(e -> onCancel());
       cancelButton.setActionCommand("Cancel");
       buttonPane.add(cancelButton, "wrap");
-      contents_.add(buttonPane, "spanx, growx, wrap");
+      contents.add(buttonPane, "spanx, growx, wrap");
 
       pack();
       loadSettings();
@@ -161,12 +153,13 @@ public final class DeviceSetupDlg extends JDialog {
 
    protected void onOK() {
       propTable_.editingStopped(null);
-      String oldName = device_.getName();
-      String newName = devName_.getText();
+      final String oldName = device_.getName();
+      final String newName = devName_.getText();
 
       if (device_.getName().compareTo(devName_.getText()) != 0) {
          if (model_.findDevice(devName_.getText()) != null) {
-            showMessage("Device name " + devName_.getText() + " is already in use.\nPress Cancel and try again.");
+            showMessage("Device name " + devName_.getText()
+                  + " is already in use.\nPress Cancel and try again.");
             return;
          }
 
@@ -184,8 +177,9 @@ public final class DeviceSetupDlg extends JDialog {
       }
 
       Device d = model_.findDevice(devName_.getText());
-      if (d==null) {
-         showMessage("Device " + devName_.getText() + " is not loaded properly.\nPress Cancel and try again.");
+      if (d == null) {
+         showMessage("Device " + devName_.getText()
+               + " is not loaded properly.\nPress Cancel and try again.");
          return;
       }
 
@@ -200,8 +194,9 @@ public final class DeviceSetupDlg extends JDialog {
 
       if (initializeDevice()) {
          dispose();
-         if (portDev_ != null)
+         if (portDev_ != null) {
             model_.useSerialPort(portDev_, true);
+         }
          model_.setModified(true);
       } else {
          // initialization failed
@@ -211,28 +206,29 @@ public final class DeviceSetupDlg extends JDialog {
 
       // make sure parent refs are updated
       if (!oldName.contentEquals(newName)) {
-         Device devs[] = model_.getDevices();
-         for (int i=0; i<devs.length; i++) {
-            if (devs[i].getParentHub().contentEquals(oldName)) {
-               devs[i].setParentHub(newName);
+         Device[] devs = model_.getDevices();
+         for (Device dev : devs) {
+            if (dev.getParentHub().contentEquals(oldName)) {
+               dev.setParentHub(newName);
             }
          }
       }
    }
 
    private void scanPorts() {
-      if (detectTask_ != null && detectTask_.isAlive())
+      if (detectTask_ != null && detectTask_.isAlive()) {
          return;
+      }
       int response = JOptionPane.showConfirmDialog(DeviceSetupDlg.this,
-         "\u00b5Manager will attempt to automatically detect the " +
-         "serial port and port settings\nrequired to communicate with " +
-         "this device.\n\nWARNING: this will send messages through all " +
-         "connected serial ports, potentially\ninterfering with other " +
-         "serial devices connected to this computer. We strongly\n" +
-         "recommend turning off all other serial devices prior to " +
-         "starting this scan.",
-         "Automatically Scan Serial Ports",
-         JOptionPane.OK_CANCEL_OPTION);
+            "\u00b5Manager will attempt to automatically detect the "
+                  + "serial port and port settings\nrequired to communicate with "
+                  + "this device.\n\nWARNING: this will send messages through all "
+                  + "connected serial ports, potentially\ninterfering with other "
+                  + "serial devices connected to this computer. We strongly\n"
+                  + "recommend turning off all other serial devices prior to "
+                  + "starting this scan.",
+            "Automatically Scan Serial Ports",
+            JOptionPane.OK_CANCEL_OPTION);
       if (response != JOptionPane.OK_OPTION) {
          // User cancelled.
          return;
@@ -253,27 +249,28 @@ public final class DeviceSetupDlg extends JDialog {
       rebuildPropTable();
 
       // setup com ports
-      ArrayList<Device> ports = new ArrayList<Device>();
-      Device avPorts[] = model_.getAvailableSerialPorts();
-      for(int i=0; i<avPorts.length; i++) {
-//         if (!model_.isPortInUse(avPorts[i]))
-//            ports.add(avPorts[i]);
-//         else if (device_.getPort().compareTo(avPorts[i].getName()) == 0)
-//            ports.add(avPorts[i]);
+      ArrayList<Device> ports = new ArrayList<>();
+      Device[] avPorts = model_.getAvailableSerialPorts();
+      for (Device avPort : avPorts) {
          // NOTE: commented out code was intended to exclude ports
          // that were already used by other devices.
          // But, at this point we have to list all ports (used or not)
          // to provide compatibility with older device adapters that share the same port
-         ports.add(avPorts[i]);
+         //         if (!model_.isPortInUse(avPorts[i]))
+         //            ports.add(avPorts[i]);
+         //         else if (device_.getPort().compareTo(avPorts[i].getName()) == 0)
+         //            ports.add(avPorts[i]);
+         ports.add(avPort);
       }
 
       // identify "port" properties and assign available com ports declared for use
       boolean anyPorts = false;
       boolean anyProps = false;
-      for (int i=0; i<device_.getNumberOfProperties(); i++) {
+      for (int i = 0; i < device_.getNumberOfProperties(); i++) {
          PropertyItem p = device_.getProperty(i);
-         if (p.preInit)
+         if (p.preInit) {
             anyProps = true;
+         }
 
          if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
             anyPorts = true;
@@ -282,9 +279,10 @@ public final class DeviceSetupDlg extends JDialog {
                JOptionPane.showMessageDialog(null, "There are no unused ports available!");
                return;
             }
-            String allowed[] = new String[ports.size()];
-            for (int k=0; k<ports.size(); k++)
+            String[] allowed = new String[ports.size()];
+            for (int k = 0; k < ports.size(); k++) {
                allowed[k] = ports.get(k).getName();
+            }
             p.allowed = allowed;
 
             rebuildComTable(p.value);
@@ -303,43 +301,45 @@ public final class DeviceSetupDlg extends JDialog {
       PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer(studio_);
       PropertyNameCellRenderer propNameRenderer = new PropertyNameCellRenderer(studio_);
       if (propTable_.getColumnCount() == 0) {
-          TableColumn column;
-          column = new TableColumn(0, 200, propNameRenderer, null);
-          propTable_.addColumn(column);
-          column = new TableColumn(1, 200, propNameRenderer, null);
-          propTable_.addColumn(column);
-          column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
-          propTable_.addColumn(column);
+         TableColumn column;
+         column = new TableColumn(0, 200, propNameRenderer, null);
+         propTable_.addColumn(column);
+         column = new TableColumn(1, 200, propNameRenderer, null);
+         propTable_.addColumn(column);
+         column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
+         propTable_.addColumn(column);
       }
       tm.fireTableStructureChanged();
       tm.fireTableDataChanged();
       boolean any = false;
-      Device devices[] = model_.getDevices();
+      Device[] devices = model_.getDevices();
       //  build list of devices to look for on the serial ports
-      for (int i = 0; i < devices.length; i++) {
-          for (int j = 0; j < devices[i].getNumberOfProperties(); j++) {
-              PropertyItem p = devices[i].getProperty(j);
-              if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0 &&
-                    core_.supportsDeviceDetection(devices[i].getName())) {
-                  any = true;
-                  break;
-              }
-          }
-          if (any) {
-              break;
-          }
+      for (Device device : devices) {
+         for (int j = 0; j < device.getNumberOfProperties(); j++) {
+            PropertyItem p = device.getProperty(j);
+            if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0
+                  && core_.supportsDeviceDetection(device.getName())) {
+               any = true;
+               break;
+            }
+         }
+         if (any) {
+            break;
+         }
       }
       detectButton_.setEnabled(any);
       propTable_.repaint();
    }
 
    public void rebuildComTable(String portName) {
-      if (portName == null)
+      if (portName == null) {
          return;
+      }
 
       portDev_ = model_.findSerialPort(portName);
-      if (portDev_ == null)
+      if (portDev_ == null) {
          return;
+      }
 
       // load port if necessary
       StrVector loadedPorts = core_.getLoadedDevicesOfType(DeviceType.SerialDevice);
@@ -370,13 +370,13 @@ public final class DeviceSetupDlg extends JDialog {
       PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer(studio_);
       PropertyNameCellRenderer propNameRenderer = new PropertyNameCellRenderer(studio_);
       if (comTable_.getColumnCount() == 0) {
-          TableColumn column;
-          column = new TableColumn(0, 200, propNameRenderer, null);
-          comTable_.addColumn(column);
-          column = new TableColumn(1, 200, propNameRenderer, null);
-          comTable_.addColumn(column);
-          column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
-          comTable_.addColumn(column);
+         TableColumn column;
+         column = new TableColumn(0, 200, propNameRenderer, null);
+         comTable_.addColumn(column);
+         column = new TableColumn(1, 200, propNameRenderer, null);
+         comTable_.addColumn(column);
+         column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
+         comTable_.addColumn(column);
       }
       tm.fireTableStructureChanged();
       tm.fireTableDataChanged();
@@ -392,8 +392,8 @@ public final class DeviceSetupDlg extends JDialog {
          }
 
          // transfer properties to device
-         PropertyTableModel ptm = (PropertyTableModel)propTable_.getModel();
-         for (int i=0; i<ptm.getRowCount(); i++) {
+         PropertyTableModel ptm = (PropertyTableModel) propTable_.getModel();
+         for (int i = 0; i < ptm.getRowCount(); i++) {
             Setting s = ptm.getSetting(i);
             core_.setProperty(device_.getName(), s.propertyName_, s.propertyValue_);
          }
@@ -435,10 +435,11 @@ public final class DeviceSetupDlg extends JDialog {
                PropertyItem prop = portDev_.getProperty(j);
                if (prop.preInit) {
                   core_.setProperty(portDev_.getName(), prop.name, prop.value);
-                  if (portDev_.findSetupProperty(prop.name) == null)
+                  if (portDev_.findSetupProperty(prop.name) == null) {
                      portDev_.addSetupProperty(new PropertyItem(prop.name, prop.value, true));
-                  else
+                  } else {
                      portDev_.setSetupPropertyValue(prop.name, prop.value);
+                  }
                }
             }
             core_.initializeDevice(portDev_.getName());
@@ -463,11 +464,10 @@ public final class DeviceSetupDlg extends JDialog {
    }
 
    /**
-    * Thread that performs device detection
+    * Thread that performs device detection.
     */
    private class DetectionTask extends Thread {
-
-      private String foundPorts[];
+      private String[] foundPorts;
       private String selectedPort;
 
       DetectionTask(String id) {
@@ -481,21 +481,21 @@ public final class DeviceSetupDlg extends JDialog {
          boolean currentDebugLogSetting = core_.debugLogEnabled();
          String resultPorts = "";
          try {
-            ArrayList<Device> ports = new ArrayList<Device>();
+            ArrayList<Device> ports = new ArrayList<>();
             model_.removeDuplicateComPorts();
-            Device availablePorts[] = model_.getAvailableSerialPorts();
+            Device[] availablePorts = model_.getAvailableSerialPorts();
             String portsInModel = "Serial ports available in configuration: ";
-            for (int ip = 0; ip < availablePorts.length; ++ip) {
+            for (Device availablePort : availablePorts) {
                // NOTE: commented out code was intended to avoid checking ports
                // that were already used by other devices.
                // But, at this point we have to check all ports (used or not)
                // to provide compatibility with older device adapters that
                // share the same port
-//               if (!model_.isPortInUse(availablePorts[ip])) {
-//                  ports.add(availablePorts[ip]);
-//               }
+               //               if (!model_.isPortInUse(availablePorts[ip])) {
+               //                  ports.add(availablePorts[ip]);
+               //               }
 
-               ports.add(availablePorts[ip]);
+               ports.add(availablePort);
             }
             for (Device p1 : ports) {
                if (0 < portsInModel.length()) {
@@ -506,40 +506,41 @@ public final class DeviceSetupDlg extends JDialog {
 
             // if the device does respond on any port, only communicating ports
             // are allowed in the drop down
-            Map<String, ArrayList<String>> portsFoundCommunicating = new HashMap<String, ArrayList<String>>();
+            Map<String, ArrayList<String>> portsFoundCommunicating = new HashMap<>();
             // if the device does not respond on any port, let the user pick
             // any port that was setup with a valid serial port name, etc.
             String looking = "";
 
             // during detection we'll generate lots of spurious error messages.
-            ReportingUtils.logMessage("Starting port scanning; expect lots of spurious error messages");
-            for (int i = 0; i < ports.size(); i++) {
+            ReportingUtils.logMessage(
+                  "Starting port scanning; expect lots of spurious error messages");
+            for (Device port : ports) {
                looking = "";
                try {
                   core_.setProperty(device_.getName(), MMCoreJ.getG_Keyword_Port(),
-                        ports.get(i).getName());
+                        port.getName());
                   if (0 < looking.length()) {
                      looking += "\n";
                   }
-                  looking += device_.getName() + " on " + ports.get(i).getName();
+                  looking += device_.getName() + " on " + port.getName();
                } catch (Exception e) {
                   // USB devices will try to open the interface and return an
                   // error on failure so do not show, but only log the error
                   ReportingUtils.logError(e);
                }
 
-               progressDialog_.ProgressText("Looking for:\n" + looking);
+               progressDialog_.progressText("Looking for:\n" + looking);
                DeviceDetectionStatus st = core_.detectDevice(device_.getName());
 
                if (st == DeviceDetectionStatus.Unimplemented) {
                   JOptionPane.showMessageDialog(null,
                         "This device does not support auto-detection.\n" +
-                        "You have to manually choose port and settings.");
+                              "You have to manually choose port and settings.");
                   scanStatus_.setText("Scan failed");
                   return;
                }
 
-               if (progressDialog_.CancelRequest()) {
+               if (progressDialog_.cancelRequest()) {
                   ReportingUtils.logMessage("Scan cancelled by user");
                   scanStatus_.setText("Scan cancelled");
                   return;
@@ -550,9 +551,9 @@ public final class DeviceSetupDlg extends JDialog {
                         device_.getName());
                   if (null == llist) {
                      portsFoundCommunicating.put(device_.getName(),
-                           llist = new ArrayList<String>());
+                           llist = new ArrayList<>());
                   }
-                  llist.add(ports.get(i).getName());
+                  llist.add(port.getName());
                }
             }
 
@@ -577,40 +578,42 @@ public final class DeviceSetupDlg extends JDialog {
                selectedPort = "";
                if (0 < foundPorts.length) {
                   if (foundPorts.length > 1) {
-                     String selectedValue = (String)JOptionPane.showInputDialog(null, "Multiple ports found, choose one", "Port",
-                                            JOptionPane.INFORMATION_MESSAGE, null, foundPorts, foundPorts[0]);
+                     String selectedValue = (String) JOptionPane.showInputDialog(
+                           null, "Multiple ports found, choose one", "Port",
+                           JOptionPane.INFORMATION_MESSAGE, null,
+                           foundPorts, foundPorts[0]);
                      // select the last found port
                      p.value = selectedValue;
-                  }
-                  else {
+                  } else {
                      p.value = foundPorts[0];
                   }
                   selectedPort = p.value;
                }
             }
-            progressDialog_.ProgressText("Found:\n " + resultPorts);
+            progressDialog_.progressText("Found:\n " + resultPorts);
             try {
                Thread.sleep(900);
             } catch (InterruptedException ex) {
             }
          } finally { // matches try at entry
             progressDialog_.setVisible(false);
-            ReportingUtils.logMessage("Finished port scanning; spurious error messages no longer expected");
+            ReportingUtils.logMessage(
+                  "Finished port scanning; spurious error messages no longer expected");
             if (resultPorts.contentEquals("")) {
                scanStatus_.setText("No valid ports found");
-            }
-            else {
+            } else {
                scanStatus_.setText("Scan completed successfully");
             }
             rebuildPropTable();
             if (! (selectedPort.length() == 0)) {
                Device pd = model_.findSerialPort(selectedPort);
-               if (pd != null)
+               if (pd != null) {
                   try {
                      pd.loadDataFromHardware(core_);
                   } catch (Exception e) {
                      ReportingUtils.logError(e);
                   }
+               }
                rebuildComTable(selectedPort);
             }
             // restore normal operation of the Detect button

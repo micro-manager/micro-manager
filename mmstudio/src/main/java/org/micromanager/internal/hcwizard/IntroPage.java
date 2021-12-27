@@ -20,6 +20,7 @@
 //
 // CVS:          $Id: IntroPage.java 6334 2011-01-24 23:07:39Z arthur $
 //
+
 package org.micromanager.internal.hcwizard;
 
 import java.awt.Cursor;
@@ -40,15 +41,13 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public final class IntroPage extends PagePanel {
    private static final long serialVersionUID = 1L;
-   private final ButtonGroup buttonGroup = new ButtonGroup();
-   private JTextField filePathField_;
-   private boolean initialized_ = false;
+   private final JTextField filePathField_;
    private final JRadioButton modifyRadioButton_;
-   private final JRadioButton createNewRadioButton_;
-   private JButton browseButton_;
+   private final JButton browseButton_;
+   private boolean initialized_ = false;
 
    /**
-    * Create the panel
+    * Create the panel.
     */
    public IntroPage() {
       super();
@@ -57,11 +56,12 @@ public final class IntroPage extends PagePanel {
       setLayout(new MigLayout("fillx, flowy"));
 
       JTextArea help = createHelpText(
-               "This wizard will walk you through setting up \u00b5Manager to control the hardware in your system.");
+               "This wizard will walk you through setting up \u00b5Manager to control "
+               + "the hardware in your system.");
       add(help, "growx");
 
-      createNewRadioButton_ = new JRadioButton("Create new configuration");
-      createNewRadioButton_.addActionListener(new ActionListener() {
+      JRadioButton createNewRadioButton = new JRadioButton("Create new configuration");
+      createNewRadioButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             model_.reset();
@@ -71,8 +71,9 @@ public final class IntroPage extends PagePanel {
             browseButton_.setEnabled(false);
          }
       });
-      buttonGroup.add(createNewRadioButton_);
-      add(createNewRadioButton_);
+      ButtonGroup buttonGroup = new ButtonGroup();
+      buttonGroup.add(createNewRadioButton);
+      add(createNewRadioButton);
 
       modifyRadioButton_ = new JRadioButton("Modify or explore existing configuration");
       buttonGroup.add(modifyRadioButton_);
@@ -90,15 +91,10 @@ public final class IntroPage extends PagePanel {
       add(filePathField_, "growx");
 
       browseButton_ = new JButton("Browse...");
-      browseButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            loadConfiguration();
-         }
-      });
+      browseButton_.addActionListener(arg0 -> loadConfiguration());
       add(browseButton_, "gapleft push");
 
-      createNewRadioButton_.setSelected(true);
+      createNewRadioButton.setSelected(true);
       filePathField_.setEnabled(false);
       browseButton_.setEnabled(false);
    }
@@ -106,14 +102,15 @@ public final class IntroPage extends PagePanel {
    @Override
    public void loadSettings() {
       // load settings
-      if (model_ != null)
+      if (model_ != null) {
          filePathField_.setText(model_.getFileName());
+      }
       
       if (filePathField_.getText().length() > 0) {
          modifyRadioButton_.setSelected(true);
          filePathField_.setEnabled(true);
          browseButton_.setEnabled(true);
-     }
+      }
    }
 
    @Override
@@ -139,9 +136,10 @@ public final class IntroPage extends PagePanel {
 
    @Override
    public boolean exitPage(boolean toNextPage) {
-      if (modifyRadioButton_.isSelected() && (!initialized_ || filePathField_.getText().compareTo(model_.getFileName()) != 0)) {
+      if (modifyRadioButton_.isSelected()
+            && (!initialized_ || filePathField_.getText().compareTo(model_.getFileName()) != 0)) {
          Cursor oldCur = getCursor();
-			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
          try {
             model_.loadFromFile(filePathField_.getText());
          } catch (MMConfigFileException e) {
@@ -164,8 +162,9 @@ public final class IntroPage extends PagePanel {
    private void loadConfiguration() {
       File f = FileDialogs.openFile(parent_, "Choose a config file",
               FileDialogs.MM_CONFIG_FILE);
-      if (f == null)
+      if (f == null) {
          return;
+      }
       filePathField_.setText(f.getAbsolutePath());
    }
 }

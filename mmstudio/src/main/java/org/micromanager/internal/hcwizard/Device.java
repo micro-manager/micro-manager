@@ -36,41 +36,41 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Data structure describing a general MM device.
- * Part of the MicroscopeModel. 
+ * Part of the MicroscopeModel.
  *
- */public final class Device {
-      // This class behaves simultaneously as any device type, so it has the
-      // information for all device types. Not sure why subclasses were not
-      // used....
-      private String name_;
-      private String adapterName_;
-      private String library_;
-      private PropertyItem properties_[];
-      private ArrayList<PropertyItem> setupProperties_;
-      private String description_;
-      private DeviceType type_;
-      private Hashtable<Integer, Label> setupLabels_;
-      private double delayMs_;
-      private boolean usesDelay_;
-      private int focusDirection_ = 0;
-      private int numPos_ = 0;
-      private String parentHub_;
-      private String childDevices_[];
-      private boolean initialized_;
+ */
+public final class Device {
+   // This class behaves simultaneously as any device type, so it has the
+   // information for all device types. Not sure why subclasses were not
+   // used....
+   private final String adapterName_;
+   private final String library_;
+   private final ArrayList<PropertyItem> setupProperties_;
+   private final String description_;
+   private final Hashtable<Integer, Label> setupLabels_;
+   private String name_;
+   private PropertyItem[] properties_;
+   private DeviceType type_;
+   private double delayMs_;
+   private boolean usesDelay_;
+   private int focusDirection_ = 0;
+   private int numPos_ = 0;
+   private String parentHub_;
+   private String[] childDevices_;
+   private boolean initialized_;
 
    public Device(String name, String lib, String adapterName, String descr, 
-           boolean discoverable, String master,Vector<String> slaves ) {
+           boolean discoverable, String main, Vector<String> followers) {
       name_ = name;
       library_ = lib;
       adapterName_ = adapterName;
       description_ = descr;
       type_ = DeviceType.AnyType;
-      setupLabels_ = new Hashtable<Integer, Label>();
+      setupLabels_ = new Hashtable<>();
       properties_ = new PropertyItem[0];
-      setupProperties_ = new ArrayList<PropertyItem>();
+      setupProperties_ = new ArrayList<>();
       usesDelay_ = false;
       delayMs_ = 0.0;
-      parentHub_ = new String();
       childDevices_ = new String[0];
       initialized_ = false;
    }
@@ -81,12 +81,11 @@ import org.micromanager.internal.utils.ReportingUtils;
       adapterName_ = adapterName;
       description_ = descr;
       type_ = DeviceType.AnyType;
-      setupLabels_ = new Hashtable<Integer, Label>();
+      setupLabels_ = new Hashtable<>();
       properties_ = new PropertyItem[0];
-      setupProperties_ = new ArrayList<PropertyItem>();
+      setupProperties_ = new ArrayList<>();
       usesDelay_ = false;
       delayMs_ = 0.0;
-      parentHub_ = new String();
       childDevices_ = new String[0];
    }
 
@@ -103,7 +102,7 @@ import org.micromanager.internal.utils.ReportingUtils;
    }
    
    public String getTypeAsString() {
-      String devType = new String("Unknown");
+      String devType = "Unknown";
       
       if (type_ == DeviceType.CameraDevice) {
          devType = "Camera";
@@ -132,9 +131,9 @@ import org.micromanager.internal.utils.ReportingUtils;
       } else if (type_ == DeviceType.XYStageDevice) {
          devType = "XY Stage";    
       } else if (type_ == DeviceType.StateDevice) {
-          devType = "Discrete State Device";    
+         devType = "Discrete State Device";
       } else if (type_ == DeviceType.MagnifierDevice) {
-          devType = "Magnifier";    
+         devType = "Magnifier";
       } else if (type_ == DeviceType.GalvoDevice) {
          devType = "Galvo";
       } else {
@@ -146,7 +145,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 
    /**
     * Obtain all properties and their current values.
-    * @param core
+    *
+    * @param core The Micro-Manager core.
     * @throws Exception
     */
    public void loadDataFromHardware(CMMCore core) throws Exception {
@@ -159,7 +159,7 @@ import org.micromanager.internal.utils.ReportingUtils;
       type_ = core.getDeviceType(name_);
       usesDelay_ = core.usesDeviceDelay(name_);
       
-      for (int j=0; j<propNames.size(); j++){
+      for (int j = 0; j < propNames.size(); j++) {
          properties_[j] = new PropertyItem();
          properties_[j].name = propNames.get(j);
          properties_[j].value = core.getProperty(name_, propNames.get(j));
@@ -167,17 +167,18 @@ import org.micromanager.internal.utils.ReportingUtils;
          properties_[j].preInit = core.isPropertyPreInit(name_, propNames.get(j));
          properties_[j].type = core.getPropertyType(name_, propNames.get(j));
          StrVector values = core.getAllowedPropertyValues(name_, propNames.get(j));
-         properties_[j].allowed = new String[(int)values.size()];
-         for (int k=0; k<values.size(); k++){
+         properties_[j].allowed = new String[(int) values.size()];
+         for (int k = 0; k < values.size(); k++) {
             properties_[j].allowed[k] = values.get(k);
          }
-        properties_[j].sort();
+         properties_[j].sort();
       }
       
       if (type_ == DeviceType.StateDevice) {
          numPos_ = core.getNumberOfStates(name_);
-      } else
+      } else {
          numPos_ = 0;
+      }
    }
    
    public static Device[] getLibraryContents(String libName, CMMCore core) throws Exception {
@@ -185,8 +186,8 @@ import org.micromanager.internal.utils.ReportingUtils;
       StrVector devDescrs = core.getAvailableDeviceDescriptions(libName);
       LongVector devTypes = core.getAvailableDeviceTypes(libName);
       
-      Device[] devList = new Device[(int)adapterNames.size()];
-      for (int i=0; i<adapterNames.size(); i++) {
+      Device[] devList = new Device[(int) adapterNames.size()];
+      for (int i = 0; i < adapterNames.size(); i++) {
 
          // not all adapters fill this yet
          devList[i] = new Device("Undefined", libName, adapterNames.get(i), devDescrs.get(i));
@@ -209,10 +210,11 @@ import org.micromanager.internal.utils.ReportingUtils;
    }
    
    public String[] getPreInitProperties() {
-      Vector<String> piProps = new Vector<String>();
+      Vector<String> piProps = new Vector<>();
       for (PropertyItem p : properties_) {
-         if (p.preInit)
+         if (p.preInit) {
             piProps.add(p.name);
+         }
       }
       return piProps.toArray(new String[piProps.size()]);
    }
@@ -234,6 +236,7 @@ import org.micromanager.internal.utils.ReportingUtils;
    public String getAdapterName() {
       return adapterName_;
    }
+
    public String getDescription() {
       return description_;
    }
@@ -243,7 +246,7 @@ import org.micromanager.internal.utils.ReportingUtils;
    }
    
    public void addSetupLabel(Label lab) {
-      setupLabels_.put(new Integer(lab.state_), lab);
+      setupLabels_.put(lab.state_, lab);
    }
 
    public void getFocusDirectionFromHardware(CMMCore core) throws Exception {
@@ -256,7 +259,7 @@ import org.micromanager.internal.utils.ReportingUtils;
       // we can only add the state labels after initialization of the device!!
       if (type_ == DeviceType.StateDevice)  {
          StrVector stateLabels = core.getStateLabels(name_);
-         numPos_ = (int)stateLabels.size();
+         numPos_ = (int) stateLabels.size();
          setupLabels_.clear();
          for (int state = 0; state < numPos_; state++) {
             setSetupLabel(state, stateLabels.get(state));
@@ -279,15 +282,17 @@ import org.micromanager.internal.utils.ReportingUtils;
    public String getPropertyValue(String propName) throws MMConfigFileException {
 
       PropertyItem p = findProperty(propName);
-      if (p == null)
+      if (p == null) {
          throw new MMConfigFileException("Property " + propName + " is not defined");
+      }
       return p.value;
    }
    
    public void setPropertyValue(String name, String value) throws MMConfigFileException {
       PropertyItem p = findProperty(name);
-      if (p == null)
+      if (p == null) {
          throw new MMConfigFileException("Property " + name + " is not defined");
+      }
       p.value = value;
    }
    
@@ -300,17 +305,18 @@ import org.micromanager.internal.utils.ReportingUtils;
    }
    
    public String getSetupPropertyValue(String propName) throws MMConfigFileException {
-
       PropertyItem p = findSetupProperty(propName);
-      if (p == null)
+      if (p == null) {
          throw new MMConfigFileException("Property " + propName + " is not defined");
+      }
       return p.value;
    }
    
    public void setSetupPropertyValue(String name, String value) throws MMConfigFileException {
       PropertyItem p = findSetupProperty(name);
-      if (p == null)
+      if (p == null) {
          throw new MMConfigFileException("Property " + name + " is not defined");
+      }
       p.value = value;
    }
 
@@ -341,42 +347,45 @@ import org.micromanager.internal.utils.ReportingUtils;
    }
    
    public Label getSetupLabelByState(int j) {
-      return setupLabels_.get(new Integer(j));
+      return setupLabels_.get(j);
    }
    
    public void setSetupLabel(int pos, String label) {
-      Label l = setupLabels_.get(new Integer(pos));
+      Label l = setupLabels_.get(pos);
       if (l == null) {
          // label does not exist so we must create one
-         setupLabels_.put(new Integer(pos), new Label(label, pos));
-      } else
+         setupLabels_.put(pos, new Label(label, pos));
+      } else {
          l.label_ = label;
+      }
    }
    
    public boolean isCore() {
       return name_.contentEquals(new StringBuffer().append(MMCoreJ.getG_Keyword_CoreDevice()));
    }
+
    public void setName(String newName) {
       name_ = newName;
    }
    
    public PropertyItem findProperty(String name) {
-      for (int i=0; i<properties_.length; i++) {
-         PropertyItem p = properties_[i];
-         if (p.name.contentEquals(new StringBuffer().append(name)))
+      for (PropertyItem p : properties_) {
+         if (p.name.contentEquals(new StringBuffer().append(name))) {
             return p;
+         }
       }
       return null;
    }
    
    public PropertyItem findSetupProperty(String name) {
-      for (int i=0; i<setupProperties_.size(); i++) {
-         PropertyItem p = setupProperties_.get(i);
-         if (p.name.contentEquals(new StringBuffer().append(name)))
+      for (PropertyItem p : setupProperties_) {
+         if (p.name.contentEquals(new StringBuffer().append(name))) {
             return p;
+         }
       }
       return null;
    }
+
    public double getDelay() {
       return delayMs_;
    }
@@ -392,11 +401,9 @@ import org.micromanager.internal.utils.ReportingUtils;
    public void setFocusDirection(int direction) {
       if (direction > 0) {
          focusDirection_ = +1;
-      }
-      else if (direction < 0) {
+      } else if (direction < 0) {
          focusDirection_ = -1;
-      }
-      else {
+      } else {
          focusDirection_ = 0;
       }
    }
@@ -427,13 +434,14 @@ import org.micromanager.internal.utils.ReportingUtils;
    
    public void updateSetupProperties() {
       setupProperties_.clear();
-      for (int i=0; i<properties_.length; i++) {
-         setupProperties_.add(new PropertyItem(properties_[i].name, properties_[i].value, properties_[i].preInit));
+      for (PropertyItem propertyItem : properties_) {
+         setupProperties_
+               .add(new PropertyItem(propertyItem.name, propertyItem.value, propertyItem.preInit));
       }
    }
       
    public String getPort() {
-      for (int i=0; i<getNumberOfProperties(); i++) {
+      for (int i = 0; i < getNumberOfProperties(); i++) {
          PropertyItem p = getProperty(i);
          if (p != null && p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
             return p.value;
@@ -443,12 +451,8 @@ import org.micromanager.internal.utils.ReportingUtils;
    }
 
    public Label[] getAllSetupLabels() {
-//      Vector<Label> labels = new Vector<Label>();
-//      for (Integer state : setupLabels_.keySet()) {
-//         labels.add(setupLabels_.get(state));
-//      }
-      Label lblArray[] = new Label[setupLabels_.size()];
+      Label[] lblArray = new Label[setupLabels_.size()];
       return setupLabels_.values().toArray(lblArray);
    }
    
- }
+}

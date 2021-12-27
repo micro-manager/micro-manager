@@ -11,7 +11,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 class ComPropTableModel extends AbstractTableModel implements MMPropertyTableModel {
    private static final long serialVersionUID = 1L;
-   public final String[] COLUMN_NAMES = new String[] {
+   public static final String[] COLUMN_NAMES = new String[] {
          "Device",
          "Property",
          "Value"
@@ -19,7 +19,7 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
    
    MicroscopeModel model_;
    Device dev_;
-   PropertyItem props_[];
+   PropertyItem[] props_;
    
    public ComPropTableModel(MicroscopeModel model, Device portDev) {
       updateValues(model, portDev);
@@ -34,27 +34,28 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
          ReportingUtils.logMessage("Property Baudrate is not defined");
       }
       
-      if (!dev.isSerialPort())
+      if (!dev.isSerialPort()) {
          return;
+      }
       
       model_.dumpComPortsSetupProps(); // ?
       
-      ArrayList<PropertyItem> props = new ArrayList<PropertyItem>();
-      ArrayList<String> dn = new ArrayList<String>();
-      for (int i=0; i<dev_.getNumberOfProperties(); i++) {
+      ArrayList<PropertyItem> props = new ArrayList<>();
+      ArrayList<String> dn = new ArrayList<>();
+      for (int i = 0; i < dev_.getNumberOfProperties(); i++) {
          PropertyItem p = dev_.getProperty(i);
          if (!p.readOnly) {
             props.add(p);
             dn.add(dev_.getName());
             PropertyItem setupProp = dev_.findSetupProperty(p.name);
-            if (setupProp != null)
+            if (setupProp != null) {
                p.value = setupProp.value;
-          
+            }
          }
       }
       
       props_ = new PropertyItem[props.size()];
-      for (int i=0; i<props.size(); i++) {
+      for (int i = 0; i < props.size(); i++) {
          props_[i] = props.get(i);
       }
    }
@@ -62,27 +63,30 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
    public int getRowCount() {
       return props_.length;
    }
+
    public int getColumnCount() {
       return COLUMN_NAMES.length;
    }
+
    @Override
    public String getColumnName(int columnIndex) {
       return COLUMN_NAMES[columnIndex];
    }
+
    public Object getValueAt(int rowIndex, int columnIndex) {
-      
-      if (columnIndex == 0)
+      if (columnIndex == 0) {
          return dev_.getName();
-      else if (columnIndex == 1)
+      } else if (columnIndex == 1) {
          return props_[rowIndex].name;
-      else
+      } else {
          return props_[rowIndex].value;
+      }
    }
    
    public void setValueAt(Object value, int row, int col) {
       if (col == 2) {
          try {
-            props_[row].value = (String)value;
+            props_[row].value = (String) value;
             dev_.setPropertyValue(props_[row].name, props_[row].value);
             fireTableCellUpdated(row, col);
             System.out.println("setVal " + dev_.getPropertyValue("BaudRate"));
@@ -93,10 +97,7 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
    }
    
    public boolean isCellEditable(int nRow, int nCol) {
-      if(nCol == 2 && !props_[nRow].readOnly)
-         return true;
-      else
-         return false;
+      return nCol == 2 && !props_[nRow].readOnly;
    }
    
    public void refresh() {
@@ -112,8 +113,9 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
    }
    
    public PropertyItem getProperty(Setting s) {
-      if (dev_.getName().compareTo(s.deviceName_) == 0)
+      if (dev_.getName().compareTo(s.deviceName_) == 0) {
          return dev_.findSetupProperty(s.propertyName_);
+      }
       return null;
    }
    

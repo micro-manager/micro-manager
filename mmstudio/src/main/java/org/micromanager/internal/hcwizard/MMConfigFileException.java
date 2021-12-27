@@ -20,6 +20,7 @@
 //
 // CVS:          $Id: MMConfigFileException.java 1281 2008-06-04 20:59:50Z nenad $
 //
+
 package org.micromanager.internal.hcwizard;
 
 /**
@@ -32,14 +33,14 @@ public final class MMConfigFileException extends Exception {
    
    public MMConfigFileException(final String message) {
       super(message);
-  }
+   }
 
-  public MMConfigFileException(final Throwable t) {
+   public MMConfigFileException(final Throwable t) {
       super(t.getMessage());
       this.cause = t;
-  }
+   }
 
-  public Throwable getCause() {
+   public Throwable getCause() {
       return this.cause;
-  }
+   }
 }
