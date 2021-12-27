@@ -13,6 +13,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //CVS:          $Id$
 //
+
 package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.Subscribe;
@@ -24,33 +25,34 @@ import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 
 /**
- * The MMPositionListDlg class extends PositionListDlg to be used as the singleton PositionListDlg used in the MMStudio API
- * In addition to the normal behavior of a PositionListDlg, this object will:
+ * The MMPositionListDlg class extends PositionListDlg to be used as the singleton
+ * PositionListDlg used in the MMStudio API. In addition to the normal behavior of
+ * a PositionListDlg, this object will:
  *   1: Update an AcqControlDlg window each time the position list is modified.
- *   2: Post a DefaultNewPositionListEvent to the MMStudio EventManager each time the position list is modified.
+ *   2: Post a DefaultNewPositionListEvent to the MMStudio EventManager each time
+ *      the position list is modified.
  *   3: Save preferences to the MMStudio UserProfile.
  */
 public final class MMPositionListDlg extends PositionListDlg {
 
-    public MMPositionListDlg(Studio studio, PositionList posList) {
-        super(studio, posList);
+   public MMPositionListDlg(Studio studio, PositionList posList) {
+      super(studio, posList);
 
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent arg0) {
-               saveDims();
-            }
-        });
-        
-    }
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent arg0) {
+            saveDims();
+         }
+      });
+   }
     
-    @Override
-    protected void updatePositionData() {
-        studio_.positions().setPositionList(getPositionList());
-        super.updatePositionData();
-    }
+   @Override
+   protected void updatePositionData() {
+      studio_.positions().setPositionList(getPositionList());
+      super.updatePositionData();
+   }
     
-    private void saveDims() {
+   private void saveDims() {
       int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
       studio_.profile().getSettings(PositionListDlg.class).putInteger(POS_COL0_WIDTH,
             posCol0Width);
@@ -69,9 +71,9 @@ public final class MMPositionListDlg extends PositionListDlg {
    
    @Subscribe
    public void onNewPositionList(NewPositionListEvent nple) {
-       PositionList pl = nple.getPositionList();
-       if (this.getPositionList() != pl) { // Without this check we will enter an infinite loop.
-            this.setPositionList(nple.getPositionList());
-       }
+      PositionList pl = nple.getPositionList();
+      if (this.getPositionList() != pl) { // Without this check we will enter an infinite loop.
+         this.setPositionList(nple.getPositionList());
+      }
    }
 }

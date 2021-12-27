@@ -25,7 +25,7 @@ import javax.swing.table.AbstractTableModel;
 import org.micromanager.internal.MMStudio;
 
 /**
- * Model holding axis data, used to determine which axis will be recorded
+ * Model holding axis data, used to determine which axis will be recorded.
  */
 class AxisTableModel extends AbstractTableModel {
    private static final long serialVersionUID = 1L;
@@ -33,7 +33,7 @@ class AxisTableModel extends AbstractTableModel {
    private final AxisList axisList_;
    private final JTable axisTable_;
    private final EventBus bus_;
-   public final String[] COLUMN_NAMES = new String[] {
+   public final String[] columnNames = new String[] {
          "Use",
          "Stage name"
    };
@@ -44,9 +44,9 @@ class AxisTableModel extends AbstractTableModel {
       bus_ = bus;
       // restore the usage settings from our previous session
       for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
-         axisList_.get(i).setUse(MMStudio.getInstance().profile().
-                 getSettings(AxisTableModel.class).
-                 getBoolean(axisList_.get(i).getAxisName(), true ) );
+         axisList_.get(i).setUse(MMStudio.getInstance().profile()
+               .getSettings(AxisTableModel.class)
+               .getBoolean(axisList_.get(i).getAxisName(), true));
       }
    }
 
@@ -54,14 +54,17 @@ class AxisTableModel extends AbstractTableModel {
    public int getRowCount() {
       return axisList_.getNumberOfPositions();
    }
+
    @Override
    public int getColumnCount() {
-      return COLUMN_NAMES.length;
+      return columnNames.length;
    }
+
    @Override
    public String getColumnName(int columnIndex) {
-      return COLUMN_NAMES[columnIndex];
+      return columnNames[columnIndex];
    }
+
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
       AxisData aD = axisList_.get(rowIndex);
@@ -97,8 +100,8 @@ class AxisTableModel extends AbstractTableModel {
       if (columnIndex == 0) { // i.e. action was in the column with checkboxes
          axisList_.get(rowIndex).setUse((Boolean) value);
          // store new choice to profile
-         MMStudio.getInstance().profile().getSettings(AxisTableModel.class).
-                 putBoolean(axisList_.get(rowIndex).getAxisName(),
+         MMStudio.getInstance().profile().getSettings(AxisTableModel.class)
+               .putBoolean(axisList_.get(rowIndex).getAxisName(),
                             (Boolean) value);
          bus_.post(new MoversChangedEvent());
       }
