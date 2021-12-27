@@ -22,7 +22,6 @@ import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 
 public final class ConfigMenu {
 
-   private final JMenu configMenu_;
    private final JMenu switchConfigurationMenu_;
 
    private final MMStudio mmStudio_;
@@ -34,52 +33,35 @@ public final class ConfigMenu {
       core_ = mmStudio_.core();
       switchConfigurationMenu_ = new JMenu();
 
-      configMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Devices");
+      JMenu configMenu = GUIUtils.createMenuInMenuBar(menuBar, "Devices");
 
-      GUIUtils.addMenuItem(configMenu_, "Device Property Browser...",
+      GUIUtils.addMenuItem(configMenu, "Device Property Browser...",
             "View and set device states and features",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    mmStudio_.uiManager().createPropertyEditor();
-                 }
-              });
+            () -> mmStudio_.uiManager().createPropertyEditor());
 
-      configMenu_.addSeparator();
+      configMenu.addSeparator();
 
-      GUIUtils.addMenuItem(configMenu_, "Hardware Configuration Wizard...",
+      GUIUtils.addMenuItem(configMenu, "Hardware Configuration Wizard...",
             "Set up hardware devices or modify an existing hardware configuration",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    runHardwareWizard();
-                 }
-              });
+            this::runHardwareWizard);
 
-      GUIUtils.addMenuItem(configMenu_, "Load Hardware Configuration...",
+      GUIUtils.addMenuItem(configMenu, "Load Hardware Configuration...",
             "Load hardware setup from a file",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    loadConfiguration();
-                    // TODO: this may be redundant.
-                    mmStudio_.uiManager().initializeGUI();
-                 }
-              });
+            () -> {
+               loadConfiguration();
+               // TODO: this may be redundant.
+               mmStudio_.uiManager().initializeGUI();
+            });
 
-      GUIUtils.addMenuItem(configMenu_, "Reload Hardware Configuration",
+      GUIUtils.addMenuItem(configMenu, "Reload Hardware Configuration",
             "Reload the current hardware configuration and initialize device control",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    mmStudio_.loadSystemConfiguration();
-                    // TODO: this is redundant.
-                    mmStudio_.uiManager().initializeGUI();
-                 }
-              });
+            () -> {
+               mmStudio_.loadSystemConfiguration();
+               // TODO: this is redundant.
+               mmStudio_.uiManager().initializeGUI();
+            });
 
-      for (int i=0; i<5; i++)
-      {
+      for (int i = 0; i < 5; i++) {
          JMenuItem configItem = new JMenuItem();
          configItem.setText(Integer.toString(i));
          switchConfigurationMenu_.add(configItem);
@@ -87,28 +69,20 @@ public final class ConfigMenu {
 
       switchConfigurationMenu_.setText("Switch Hardware Configuration");
       switchConfigurationMenu_.setToolTipText("Switch to a recently used hardware configuration");
-      configMenu_.add(switchConfigurationMenu_);
+      configMenu.add(switchConfigurationMenu_);
 
-      GUIUtils.addMenuItem(configMenu_, "Save Hardware Configuration As...",
+      GUIUtils.addMenuItem(configMenu, "Save Hardware Configuration As...",
               "Save the current hardware configuration",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    mmStudio_.uiManager().promptToSaveConfigPresets();
-                    mmStudio_.uiManager().updateChannelCombos();
-                 }
-              });
-
-      configMenu_.addSeparator();
-
-      GUIUtils.addMenuItem(configMenu_, "Pixel Size Calibration...",
-            "Define pixel sizes and how they depend on hardware state",
-            new Runnable() {
-               @Override
-               public void run() {
-                  mmStudio_.uiManager().createCalibrationListDlg();
-               }
+            () -> {
+               mmStudio_.uiManager().promptToSaveConfigPresets();
+               mmStudio_.uiManager().updateChannelCombos();
             });
+
+      configMenu.addSeparator();
+
+      GUIUtils.addMenuItem(configMenu, "Pixel Size Calibration...",
+            "Define pixel sizes and how they depend on hardware state",
+            () -> mmStudio_.uiManager().createCalibrationListDlg());
 
       mmStudio_.events().registerForEvents(this);
    }
@@ -123,12 +97,7 @@ public final class ConfigMenu {
 
    private void runHardwareWizard() {
       if (SwingUtilities.isEventDispatchThread()) {
-         new Thread(new Runnable() {
-            @Override
-            public void run() {
-               runHardwareWizard();
-            }
-         }).start();
+         new Thread(this::runHardwareWizard).start();
          return;
       }
       
@@ -158,7 +127,7 @@ public final class ConfigMenu {
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
          // run Configurator
-         ConfigWizard cfg = null;
+         ConfigWizard cfg;
          MainFrame frame = mmStudio_.uiManager().frame();
          try {
             frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -169,8 +138,7 @@ public final class ConfigMenu {
             waiter.dispose();
          }
 
-         if (cfg == null)
-         {
+         if (cfg == null) {
             ReportingUtils.showError("Failed to launch Hardware Configuration Wizard");
             return;
          }
@@ -188,15 +156,20 @@ public final class ConfigMenu {
       }
    }
 
+   /**
+    * Handles event signalling that a configuration was loaded.
+    *
+    * @param event  This event has nothing special to it
+    */
    @Subscribe
    public void onSystemConfigurationLoaded(SystemConfigurationLoadedEvent event) {
       switchConfigurationMenu_.removeAll();
-      HashSet<String> seenConfigs = new HashSet<String>();
+      HashSet<String> seenConfigs = new HashSet<>();
 
-      for (final String configFile : HardwareConfigurationManager.
-            getRecentlyUsedConfigFilesFromProfile(mmStudio_.profile())) {
-         if (configFile.equals(mmStudio_.getSysConfigFile()) ||
-               seenConfigs.contains(configFile)) {
+      for (final String configFile : HardwareConfigurationManager
+            .getRecentlyUsedConfigFilesFromProfile(mmStudio_.profile())) {
+         if (configFile.equals(mmStudio_.getSysConfigFile())
+               || seenConfigs.contains(configFile)) {
             continue;
          }
          String label = configFile;
@@ -205,12 +178,7 @@ public final class ConfigMenu {
          }
          GUIUtils.addMenuItem(switchConfigurationMenu_,
                  label, null,
-                 new Runnable() {
-            @Override
-            public void run() {
-               mmStudio_.setSysConfigFile(configFile);
-            }
-         });
+               () -> mmStudio_.setSysConfigFile(configFile));
          seenConfigs.add(configFile);
       }
    }
