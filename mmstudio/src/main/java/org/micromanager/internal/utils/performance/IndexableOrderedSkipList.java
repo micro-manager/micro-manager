@@ -27,11 +27,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * An indexable skip list, sorted by key of type K, that also keeps track of
  * the order of insertion.
  *
- * This data structure is designed for running quantile computation. It allows
+ * <p>This data structure is designed for running quantile computation. It allows
  * maintaining a sorted list of values that can be quickly (O(log N)) indexed
  * and from which the oldest inserted values can be removed efficiently.
  *
- * See <a href="https://en.wikipedia.org/wiki/Skip_list">Skip List</a> on
+ * <p>See <a href="https://en.wikipedia.org/wiki/Skip_list">Skip List</a> on
  * Wikipedia, which also mentions the idea of using an indexable skip list for
  * running median computation.
  *
@@ -43,21 +43,18 @@ import java.util.concurrent.atomic.AtomicLong;
 final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
 
    private static final class Cell<K extends Comparable<K>, V>
-         implements Comparable<Cell<K, V>>
-   {
-
+         implements Comparable<Cell<K, V>> {
       private final List<Cell<K, V>> nexts_;
       private final List<Integer> distances_;
-      private Cell<K, V> nextInserted_;
       private final K key_;
-      private V value_;
+      private final V value_;
       private static final AtomicLong nextSerial_ = new AtomicLong(0);
       private final long serialNr_;
+      private Cell<K, V> nextInserted_;
 
       Cell(int levels, K key, V value) {
-         nexts_ = new ArrayList<Cell<K, V>>(
-               Collections.nCopies(levels, (Cell<K, V>) null));
-         distances_ = new ArrayList<Integer>(Collections.nCopies(levels, 0));
+         nexts_ = new ArrayList<>(Collections.nCopies(levels, null));
+         distances_ = new ArrayList<>(Collections.nCopies(levels, 0));
          nextInserted_ = null;
          key_ = key;
          value_ = value;
@@ -65,7 +62,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
       }
 
       Map.Entry<K, V> getEntry() {
-         return new AbstractMap.SimpleEntry<K, V>(key_, value_);
+         return new AbstractMap.SimpleEntry<>(key_, value_);
       }
 
       void setNext(int level, Cell<K, V> next, int distance) {
@@ -116,6 +113,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
                serialNr_ < other.serialNr_ ? -1 : 0;
       }
    }
+
    private final int levels_;
    private final Cell<K, V> skipListHead_;
    private final Cell<K, V> orderHead_;
@@ -124,20 +122,20 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    private final Random random_ = new Random();
 
    public static <K extends Comparable<K>, V>
-   IndexableOrderedSkipList<K, V> create(int levels) {
+         IndexableOrderedSkipList<K, V> create(int levels) {
       if (levels < 1) {
          throw new IllegalArgumentException();
       }
-      return new IndexableOrderedSkipList<K, V>(levels);
+      return new IndexableOrderedSkipList<>(levels);
    }
 
    private IndexableOrderedSkipList(int levels) {
       levels_ = levels;
-      skipListHead_ = new Cell<K, V>(levels_, null, null);
+      skipListHead_ = new Cell<>(levels_, null, null);
       for (int level = 0; level < levels_; ++level) {
          skipListHead_.setNext(level, skipListHead_, 1);
       }
-      orderHead_ = new Cell<K, V>(levels, null, null);
+      orderHead_ = new Cell<>(levels, null, null);
       orderHead_.setNextInserted(orderHead_);
       lastInserted_ = orderHead_;
    }
@@ -157,8 +155,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    // Sign of return value: is negative if the new cell is skipped in the
    // current level; positive otherwise.
    private int insertIntoLevel(int level, final Cell<K, V> newCell,
-         final Cell<K, V> upperLevelLeft, final Cell<K, V> upperLevelRight)
-   {
+         final Cell<K, V> upperLevelLeft, final Cell<K, V> upperLevelRight) {
       Cell<K, V> left = upperLevelLeft;
       int distanceFromUpperLeftToLeft = 0;
       for (;;) {
@@ -168,23 +165,19 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
                left.setNext(0, newCell, 1);
                newCell.setNext(0, right, 1);
                return distanceFromUpperLeftToLeft + 1;
-            }
-            else {
+            } else {
                int lowerLevelResult =
                      insertIntoLevel(level - 1, newCell, left, right);
                boolean skipping = lowerLevelResult < 0;
-               int distanceFromLeftToNew = skipping ?
-                     -lowerLevelResult : lowerLevelResult;
+               int distanceFromLeftToNew = skipping ? -lowerLevelResult : lowerLevelResult;
                boolean skip;
                if (!skipping && fiftyPercentChance()) {
                   skip = false;
                   int distanceFromLeftToRight = left.getDistance(level);
-                  int distanceFromNewToRight = distanceFromLeftToRight -
-                        distanceFromLeftToNew + 1;
+                  int distanceFromNewToRight = distanceFromLeftToRight - distanceFromLeftToNew + 1;
                   newCell.setNext(level, right, distanceFromNewToRight);
                   left.setNext(level, newCell, distanceFromLeftToNew);
-               }
-               else {
+               } else {
                   skip = true;
                   left.incrementDistance(level);
                }
@@ -212,8 +205,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    }
 
    private void removeFromLevel(int level, final Cell<K, V> oldCell,
-         final Cell<K, V> upperLevelLeft)
-   {
+         final Cell<K, V> upperLevelLeft) {
       Cell<K, V> left = upperLevelLeft;
       for (;;) {
          Cell<K, V> right = left.getNext(level);
@@ -225,8 +217,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
             if (cmp == 0) {
                left.setNext(level, oldCell.getNext(level),
                      left.getDistance(level) + oldCell.getDistance(level) - 1);
-            }
-            else {
+            } else {
                left.decrementDistance(level);
             }
             return;
@@ -253,7 +244,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    }
 
    public List<Map.Entry<K, V>> sublist(int start, int length) {
-      List<Map.Entry<K, V>> ret = new ArrayList<Map.Entry<K, V>>(length);
+      List<Map.Entry<K, V>> ret = new ArrayList<>(length);
       Cell<K, V> cell = getCellAtIndex(start);
       for (int i = 0; i < length; ++i) {
          if (cell == skipListHead_) {
@@ -270,8 +261,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    }
 
    private Cell<K, V> getCellAtIndexImpl(int level, int index,
-         final Cell<K, V> upperLevelLeft, int upperLeftIndex)
-   {
+         final Cell<K, V> upperLevelLeft, int upperLeftIndex) {
       int leftIndex = upperLeftIndex;
       Cell<K, V> left = upperLevelLeft;
       for (;;) {
@@ -291,10 +281,11 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    }
 
    Boolean overrideFiftyPercentChanceForDeterministicTesting = null;
+
    private boolean fiftyPercentChance() {
-      return overrideFiftyPercentChanceForDeterministicTesting == null ?
-            random_.nextBoolean() :
-            overrideFiftyPercentChanceForDeterministicTesting;
+      return overrideFiftyPercentChanceForDeterministicTesting == null
+            ? random_.nextBoolean()
+            : overrideFiftyPercentChanceForDeterministicTesting;
    }
 
    String dump() {

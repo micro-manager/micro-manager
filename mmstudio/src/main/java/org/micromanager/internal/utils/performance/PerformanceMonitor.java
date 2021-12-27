@@ -25,8 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Collection of exponentially smoothed statistics for monitoring dynamic
  * performance.
  *
- * Performance Monitor UI is enabled by setting the system property "org.micromanager.showperfmon".
- * This can be done from code/script panel:
+ * <p>Performance Monitor UI is enabled by setting the system property
+ * "org.micromanager.showperfmon". This can be done from code/script panel:
  * https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#setProperty-java.lang.String-java.lang.String-
  * (System.setProperty("org.micromanager.showperfmon", "true"))
  * Or from JVM command line args:
@@ -60,15 +60,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class PerformanceMonitor {
    private final double timeConstantMs_; // We could make this settable
 
-   private final ConcurrentHashMap<String, ExponentialSmoothing> stats_ =
-         new ConcurrentHashMap<String, ExponentialSmoothing>();
+   private final ConcurrentHashMap<String, ExponentialSmoothing> stats_ = new ConcurrentHashMap<>();
    private final ConcurrentHashMap<String, TimeIntervalExponentialSmoothing>
-         intervalStats_ =
-         new ConcurrentHashMap<String, TimeIntervalExponentialSmoothing>();
+         intervalStats_ = new ConcurrentHashMap<>();
 
    public static PerformanceMonitor createWithTimeConstantMs(
-         double timeConstantMs)
-   {
+         double timeConstantMs) {
       return new PerformanceMonitor(timeConstantMs);
    }
 
@@ -96,27 +93,17 @@ public final class PerformanceMonitor {
    }
 
    public List<Map.Entry<String, ? extends AbstractExponentialSmoothing>>
-         getEntries()
-   {
+         getEntries() {
       // Combine stats into a single sorted list
-
       List<Map.Entry<String, ? extends AbstractExponentialSmoothing>> entries =
-            new ArrayList<Map.Entry<String, ? extends AbstractExponentialSmoothing>>();
+            new ArrayList<>();
       entries.addAll(stats_.entrySet());
       for (Map.Entry<String, TimeIntervalExponentialSmoothing> e : intervalStats_.entrySet()) {
-         entries.add(new AbstractMap.SimpleEntry<String, TimeIntervalExponentialSmoothing>(
+         entries.add(new AbstractMap.SimpleEntry<>(
                e.getKey() + " (interval, ms)", e.getValue()));
       }
 
-      Collections.sort(entries, new Comparator<Map.Entry<String, ? extends AbstractExponentialSmoothing>>() {
-         @Override
-         public int compare(
-               Map.Entry<String, ? extends AbstractExponentialSmoothing> o1,
-               Map.Entry<String, ? extends AbstractExponentialSmoothing> o2)
-         {
-            return o1.getKey().compareTo(o2.getKey());
-         }
-      });
+      Collections.sort(entries, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
       return entries;
    }
 
@@ -132,8 +119,8 @@ public final class PerformanceMonitor {
 
       StringBuilder sb = new StringBuilder();
       for (Map.Entry<String, ? extends AbstractExponentialSmoothing> e : entries) {
-         sb.append(String.format(keyFormat, e.getKey())).append(": ").
-               append(e.getValue().toString()).append("\n");
+         sb.append(String.format(keyFormat, e.getKey())).append(": ")
+               .append(e.getValue().toString()).append("\n");
       }
       if (sb.length() > 0) {
          sb.deleteCharAt(sb.length() - 1); // Remove trailing newline

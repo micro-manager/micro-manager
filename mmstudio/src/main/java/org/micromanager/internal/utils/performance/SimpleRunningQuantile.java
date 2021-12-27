@@ -22,14 +22,14 @@ import java.util.List;
 /**
  * Compute running median and quantiles from a dynamic time series.
  *
- * This implementation simply keeps the last N values, and sorts them when
+ * <p>This implementation simply keeps the last N values, and sorts them when
  * requested.
  *
  * @author Mark A. Tsuchida
  */
 public class SimpleRunningQuantile implements RunningQuantile {
    private final int size_;
-   private final Deque<Double> values_ = new ArrayDeque<Double>();
+   private final Deque<Double> values_ = new ArrayDeque<>();
 
    public static SimpleRunningQuantile create(int size) {
       return new SimpleRunningQuantile(size);
@@ -60,14 +60,12 @@ public class SimpleRunningQuantile implements RunningQuantile {
          return values_.getFirst();
       }
 
-      List<Double> sorted = new ArrayList<Double>(values_);
+      List<Double> sorted = new ArrayList<>(values_);
       Collections.sort(sorted);
       double realIndex = q * (size - 1);
       int floor = (int) Math.floor(realIndex);
       int ceiling = floor + 1;
-      double quantile =
-            (ceiling - realIndex) * sorted.get(floor) +
-            (realIndex - floor) * sorted.get(ceiling);
-      return quantile;
+      return (ceiling - realIndex) * sorted.get(floor)
+            + (realIndex - floor) * sorted.get(ceiling);
    }
 }
