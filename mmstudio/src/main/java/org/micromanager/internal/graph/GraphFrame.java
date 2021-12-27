@@ -37,6 +37,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * XY Graph window.
+ * Used by the Line Profile utility.
  *
  */
 public final class GraphFrame extends JFrame {
