@@ -24,8 +24,6 @@ package org.micromanager.internal.pixelcalibrator;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -63,9 +61,8 @@ public class PixelCalibratorDialog extends JFrame {
    private CalibrationThread calibrationThread_;
 
    private JProgressBar calibrationProgressBar_;
-   private JLabel explanationLabel_;
-   private JComboBox safeTravelRadiusComboBox_;
-   private JComboBox methodComboBox_;
+   private JComboBox<String> safeTravelRadiusComboBox_;
+   private JComboBox<String> methodComboBox_;
    private JButton startButton_;
    private JButton stopButton_;
    private JCheckBox debug_;
@@ -93,13 +90,12 @@ public class PixelCalibratorDialog extends JFrame {
    }
 
    private void initComponents() {
-
-      explanationLabel_ = new JLabel();
+      final JLabel explanationLabel_ = new JLabel();
       calibrationProgressBar_ = new JProgressBar();
       startButton_ = new JButton();
       stopButton_ = new JButton();
-      safeTravelRadiusComboBox_ = new JComboBox();
-      methodComboBox_ = new JComboBox();
+      safeTravelRadiusComboBox_ = new JComboBox<>();
+      methodComboBox_ = new JComboBox<>();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Pixel Calibrator");
@@ -122,7 +118,7 @@ public class PixelCalibratorDialog extends JFrame {
             + "<li>Press Start (below).</li></ol></html>");
 
       final JLabel methodLabel = new JLabel("Select method:");
-      methodComboBox_.setModel(new DefaultComboBoxModel(
+      methodComboBox_.setModel(new DefaultComboBoxModel<>(
               new String[] {METHOD_AUTO, METHOD_MANUAL_SIMPLE}));
       final String mKey = "methodComboxSelection";
       final Class ourClass = this.getClass();
@@ -133,7 +129,7 @@ public class PixelCalibratorDialog extends JFrame {
               (String) methodComboBox_.getSelectedItem()));
       
       final JLabel safeTravelLabel = new JLabel("Safe travel radius, um:");
-      safeTravelRadiusComboBox_.setModel(new DefaultComboBoxModel(
+      safeTravelRadiusComboBox_.setModel(new DefaultComboBoxModel<>(
               new String[] { "1000", "10000", "100000" }));
 
       calibrationProgressBar_.setForeground(new java.awt.Color(255, 0, 51));

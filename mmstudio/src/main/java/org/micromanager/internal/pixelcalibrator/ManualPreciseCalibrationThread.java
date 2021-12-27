@@ -146,8 +146,10 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
 
       for (int i = 0; i < 25; i++) {
          core_.logMessage(dx + "," + dy + "," + d);
-         if ((2 * d.x + sideSmall / 2) >= w / 2 || (2 * d.y + sideSmall / 2) >= h / 2 || (
-                 2 * d.x - sideSmall / 2) < -(w / 2) || (2 * d.y - sideSmall / 2) < -(h / 2)) {
+         if ((2 * d.x + sideSmall / 2.) >= w / 2.
+               || (2 * d.y + sideSmall / 2.) >= h / 2.
+               || (2 * d.x - sideSmall / 2.) < -(w / 2.)
+               || (2 * d.y - sideSmall / 2.) < -(h / 2.)) {
             break;
          }
 
@@ -397,12 +399,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          super.add(okButton_, "tag ok");
 
          JButton cancelButton = new JButton("Cancel");
-         cancelButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               dispose();
-            }
-         });
+         cancelButton.addActionListener(e -> dispose());
          super.add(cancelButton, "tag cancel, wrap");
          super.pack();
 
