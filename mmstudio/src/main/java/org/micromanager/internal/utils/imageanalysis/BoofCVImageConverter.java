@@ -24,7 +24,7 @@ import org.micromanager.data.internal.DefaultImage;
  * Collection of static functions that convert between ImageJ, Micro-Manager,
  * and BoofCV images. Unless otherwise noted, pixels are not copied, but 
  * references are handed over.  Therefore, be careful changing pixels
- * 
+ *
  * @author Nico
  */
 public final class BoofCVImageConverter {
@@ -42,7 +42,7 @@ public final class BoofCVImageConverter {
    
    public static ImageGray<? extends ImageGray<?>> mmToBoofCV(Image image, boolean copy) {
       ImageGray<? extends ImageGray<?>> outImage;
-      switch (image.getBytesPerPixel()){
+      switch (image.getBytesPerPixel()) {
          case 1 : 
             GrayU8 tmp8Image = new GrayU8(); 
             if (copy) {
@@ -79,20 +79,22 @@ public final class BoofCVImageConverter {
    }
    
    /**
-    * Converts a boofCV image into a MM image
+    * Converts a boofCV image into a MM image.
     * Currently only supports GrayU8 and GrayU16, returns null for other types
+    *
     * @param input input boofCV
     * @param c     Coords that will be added to the image  
     * @param md    Metadata to be added to the image
     * @return     MM image
     */
-   public static Image boofCVToMM (ImageGray<? extends ImageGray<?>> input, Coords c, Metadata md) {
+   public static Image boofCVToMM(ImageGray<? extends ImageGray<?>> input, Coords c, Metadata md) {
       return boofCVToMM(input, true, c, md);
    } 
    
-      /**
-    * Converts a boofCV image into a MM image
+   /**
+    * Converts a boofCV image into a MM image.
     * Currently only supports GrayU8 and GrayU16, returns null for other types
+    *
     * @param input input boofCV
     * @param copy  if true a copy of the pixel data will be used, when false,
     *                pixels will be shared between boofCV image and MM image
@@ -100,19 +102,20 @@ public final class BoofCVImageConverter {
     * @param md    Metadata to be added to the image
     * @return     MM image
     */
-   public static Image boofCVToMM (ImageGray<? extends ImageGray<?>> input, boolean copy, Coords c, Metadata md) {
-      Image output = null;
+   public static Image boofCVToMM(ImageGray<? extends ImageGray<?>> input, boolean copy,
+                                   Coords c, Metadata md) {
+      Image output;
       if (input.getDataType().equals(ImageDataType.U8)) {
          GrayU8 in8 = (GrayU8) input;
          Object pixels = copy ? in8.getData().clone() : in8.getData();
          output = new DefaultImage(pixels, input.getWidth(), input.getHeight(), 1, 1, c, md);
-      } 
-      if (input.getDataType().equals(ImageDataType.U16)) {
+      } else if (input.getDataType().equals(ImageDataType.U16)) {
          GrayU16 in16 = (GrayU16) input;
          Object pixels = copy ? in16.getData().clone() : in16.getData();
          output = new DefaultImage(pixels, input.getWidth(), input.getHeight(), 2, 1, c, md);
       } else {
          // Todo: throw exception?  return null for now
+         return null;
       }
       
       return output;
@@ -120,10 +123,10 @@ public final class BoofCVImageConverter {
    
    
    /**
-    * Converts a BoofCV image into an ImageJ ImageProcessor
+    * Converts a BoofCV image into an ImageJ ImageProcessor.
     * 
-    * TODO: support other types besides GrayU8 and GrayU16
-    * 
+    * <p>TODO: support other types besides GrayU8 and GrayU16
+    *
     * @param imgG Input BoofCV image
     * @param copy If true, pixels will be copied, otherwise a reference to 
     *             the BoofCV image's pixels will be handed to the ImageProcerros
@@ -143,10 +146,10 @@ public final class BoofCVImageConverter {
          
          if (copy) {
             ip = new ShortProcessor(imgG.width, imgG.height, 
-                    ((GrayU16) imgG).getData().clone(), null );
+                    ((GrayU16) imgG).getData().clone(), null);
          } else {
             ip = new ShortProcessor(imgG.width, imgG.height, 
-                    ((GrayU16) imgG).getData(), null );
+                    ((GrayU16) imgG).getData(), null);
          }
       } else if (imgG instanceof GrayF32) {
          if (copy) {            
@@ -161,14 +164,14 @@ public final class BoofCVImageConverter {
    }
    
    /**
-    * Converts an ImageJ ImageProcessor to a BoofCV image
-    * 
+    * Converts an ImageJ ImageProcessor to a BoofCV image.
+    *
     * @param ip
     * @param copy
     * @return 
     */
    
-   public static ImageGray<? extends ImageGray<?>> convert (ImageProcessor ip, boolean copy) {
+   public static ImageGray<? extends ImageGray<?>> convert(ImageProcessor ip, boolean copy) {
       ImageGray<? extends ImageGray<?>> ig = null;
       if (ip instanceof ByteProcessor) {
          GrayU8 tmp8Image = new GrayU8(); //ip.getWidth(), ip.getHeight());
@@ -204,10 +207,10 @@ public final class BoofCVImageConverter {
       return ig;
    }
    
-    /**
+   /**
     * Utility function.  Extracts region from a MM dataset and returns as 
     * a BoofCV ImageGray.  Points to the same pixel data as the original
-    * 
+    *
     * @param dp Micro-Manager Datasource
     * @param cb Micro-Manager Coords Builder (for efficiency)
     * @param frame Frame number from which we want the image data
@@ -227,10 +230,10 @@ public final class BoofCVImageConverter {
       Image img = dp.getImage(coord);
       
       ImageGray<? extends ImageGray<?>> ig = BoofCVImageConverter.mmToBoofCV(img, false);
-      if (p.getX() - halfBoxSize < 0 ||
-              p.getY() - halfBoxSize < 0 ||
-              p.getX() + halfBoxSize >= ig.getWidth() ||
-              p.getY() + halfBoxSize >= ig.getHeight()) {
+      if (p.getX() - halfBoxSize < 0
+            || p.getY() - halfBoxSize < 0
+            || p.getX() + halfBoxSize >= ig.getWidth()
+            || p.getY() + halfBoxSize >= ig.getHeight()) {
          return null; // TODO: we'll get stuck at the edge
       }
       /* this has very strange consequences...
@@ -256,12 +259,14 @@ public final class BoofCVImageConverter {
    }
    
    /**
-    * Converts a Java affine transform into a Georegression Affine transform
+    * Converts a Java affine transform into a Georegression Affine transform.
+    *
     * @param in
     * @return 
     */
    public static Affine2D_F64 convertAff(AffineTransform in) {
-      return new Affine2D_F64(in.getScaleX(), in.getShearX(), in.getShearY(), in.getScaleY(), 0.0, 0.0);
+      return new Affine2D_F64(in.getScaleX(), in.getShearX(), in.getShearY(),
+            in.getScaleY(), 0.0, 0.0);
    }
    
 }
