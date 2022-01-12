@@ -38,7 +38,7 @@ import javax.swing.table.TableCellEditor;
  * Color chooser for channel data.
  */
 public final class ColorEditor extends AbstractCellEditor implements TableCellEditor,
-ActionListener {
+      ActionListener {
    private static final long serialVersionUID = -5497293610937812813L;
    Color currentColor;
    JButton button;
@@ -81,9 +81,8 @@ ActionListener {
       if (EDIT.equals(e.getActionCommand())) {
          colorChooser.setColor(currentColor);
          dialog.setVisible(true);
-      }
-      // User pressed dialog's "OK" button.
-      else {
+      } else {
+         // User pressed dialog's "OK" button.
          currentColor = colorChooser.getColor();
          model_.setValueAt(currentColor, row_, column_);
          button.setBackground(currentColor);
@@ -109,7 +108,7 @@ ActionListener {
          int row,
          int column) {
       row_ = row;
-      currentColor = (Color)value;
+      currentColor = (Color) value;
       button.setBackground(currentColor);
       button.setForeground(currentColor);
       button.setOpaque(true);

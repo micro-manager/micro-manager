@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.internal.utils;
 
 import com.google.common.eventbus.SubscriberExceptionContext;
@@ -22,11 +23,11 @@ public class EventBusExceptionLogger implements SubscriberExceptionHandler {
 
    @Override
    public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
-      String message = "Exception thrown by EventBus subscriber:\n" +
-            "Event: " + sec.getEvent() + "\n" +
-            "EventBus: " + sec.getEventBus() + "\n" +
-            "Subscriber: " + sec.getSubscriber() + "\n" +
-            "Subscriber Method: " + sec.getSubscriberMethod();
+      String message = "Exception thrown by EventBus subscriber:\n"
+            + "Event: " + sec.getEvent() + "\n"
+            + "EventBus: " + sec.getEventBus() + "\n"
+            + "Subscriber: " + sec.getSubscriber() + "\n"
+            + "Subscriber Method: " + sec.getSubscriberMethod();
       ReportingUtils.logError(thrwbl, message);
    }
 }

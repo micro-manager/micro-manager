@@ -3,10 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.internal.utils;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import javax.swing.JTextField;
@@ -18,7 +17,7 @@ import org.apache.commons.lang3.event.EventListenerSupport;
 /**
  * A JTextField with a single listener interface for value change.
  *
- * The listener receives a call on every change. Enter key selects the text.
+ * <p>The listener receives a call on every change. Enter key selects the text.
  * The listener is given a chance to validate the value on Enter key or loss of
  * focus.
  *
@@ -26,7 +25,7 @@ import org.apache.commons.lang3.event.EventListenerSupport;
  */
 public class DynamicTextField extends JTextField {
    /**
-    * Listener interface for DynamicTextField
+    * Listener interface for DynamicTextField.
     */
    public interface Listener {
       /**
@@ -34,14 +33,14 @@ public class DynamicTextField extends JTextField {
        *
        * @param source the text field
        * @param shouldForceValidation true if Enter key was pressed or text
-       * field lost focus (listener should validate value and revert if invalid)
+       *        field lost focus (listener should validate value and revert if invalid)
        */
       void textFieldValueChanged(DynamicTextField source,
             boolean shouldForceValidation);
    }
 
    private final EventListenerSupport<Listener> listeners_ =
-         new EventListenerSupport(Listener.class, Listener.class.getClassLoader());
+         new EventListenerSupport<>(Listener.class, Listener.class.getClassLoader());
    private DocumentListener documentListener_;
 
    public DynamicTextField() {
@@ -108,12 +107,9 @@ public class DynamicTextField extends JTextField {
       };
       getDocument().addDocumentListener(documentListener_);
 
-      addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            listeners_.fire().textFieldValueChanged(DynamicTextField.this, true);
-            selectAll();
-         }
+      addActionListener(e -> {
+         listeners_.fire().textFieldValueChanged(DynamicTextField.this, true);
+         selectAll();
       });
 
       addFocusListener(new FocusAdapter() {

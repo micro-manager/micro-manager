@@ -1,12 +1,13 @@
 package org.micromanager.internal.utils;
 
+import static java.lang.Math.exp;
+import static java.lang.Math.log;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Shape;
 import java.awt.color.ColorSpace;
 import java.awt.geom.Ellipse2D;
-import static java.lang.Math.exp;
-import static java.lang.Math.log;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -73,11 +74,11 @@ public final class ColorPalettes {
    // Selection of the first three colors based on recommendations from
    // Ankur Jain at the Vale lab.
    private static final Color[] COLORBLIND_FRIENDLY_COLORS = new Color[] {
-      new Color(  0, 114, 178), // Blue
+      new Color(0, 114, 178), // Blue
       new Color(213,  94,   0), // Vermillion
-      new Color(  0, 158, 115), // Bluish Green
+      new Color(0, 158, 115), // Bluish Green
       new Color(230, 159,   0), // Orange
-      new Color( 86, 180, 233), // Sky Blue
+      new Color(86, 180, 233), // Sky Blue
       new Color(240, 228,  66), // Yellow
       new Color(204, 121, 167), // Reddish Purple
    };
@@ -91,8 +92,8 @@ public final class ColorPalettes {
    //
    //
 
-   private static final Map<String, Float> WAVELENGTHS =
-         new LinkedHashMap<String, Float>();
+   private static final Map<String, Float> WAVELENGTHS = new LinkedHashMap<>();
+
    static {
       // Don't expect these numbers to be scientifically accurate in any sense;
       // the goal here is to guess at reasonable-ish colors to assign as
@@ -150,11 +151,13 @@ public final class ColorPalettes {
       WAVELENGTHS.put("fam", 516f);
       WAVELENGTHS.put("tr", 615f);
    }
+
    private static final Pattern NM_PATTERN = Pattern.compile(
          // 3-digit number
          "(^|\\D)(\\d\\d\\d)(\\D|$)"
    );
    private static final int NM_GROUP_INDEX = 2;
+
    public static Color guessColor(String channelName) {
       String name = channelName.toLowerCase();
       Float lambda = WAVELENGTHS.get(name);
@@ -174,12 +177,11 @@ public final class ColorPalettes {
       Matcher matcher = NM_PATTERN.matcher(name);
       if (matcher.find()) {
          try {
-            int nanometers = Integer.valueOf(matcher.group(NM_GROUP_INDEX)) + STOKES_SHIFT;
+            int nanometers = Integer.parseInt(matcher.group(NM_GROUP_INDEX)) + STOKES_SHIFT;
             if (380 <= nanometers && nanometers <= 800) {
                return colorForMonochromaticWavelenth(nanometers);
             }
-         }
-         catch (NumberFormatException e) {
+         } catch (NumberFormatException e) {
          }
       }
       return Color.WHITE;
@@ -188,9 +190,9 @@ public final class ColorPalettes {
    public static Color colorForMonochromaticWavelenth(double lambdaNm) {
       lambdaNm = Math.max(380.0, Math.min(680.0, lambdaNm));
 
-      float x = (float) ApproxCIE1964.x(lambdaNm);
-      float y = (float) ApproxCIE1964.y(lambdaNm);
-      float z = (float) ApproxCIE1964.z(lambdaNm);
+      float x = (float) ApproxCIE1964.xcie(lambdaNm);
+      float y = (float) ApproxCIE1964.ycie(lambdaNm);
+      float z = (float) ApproxCIE1964.zcie(lambdaNm);
 
       // Normalization factor scaled by 0.45 to prevent sRGB from saturating.
       float n = 0.45f / (x + y + z);
@@ -209,31 +211,30 @@ public final class ColorPalettes {
 
    /**
     * Approximation of CIE 1964 standard observer color matching functions.
-    * <p>
-    * Analytical approximations given in:<br>
+    *
+    * <p>Analytical approximations given in:<br>
     * Chris Wyman, Peter-Pike Sloan, and Peter Shirley, 2013.
     * Simple Analytic Approximations to the CIE XYZ Color Matching Functions.
     * <a href="http://jcgt.org/published/0002/02/01/">Journal of Computer
     * Graphics Techniques, 2(2):1-11</a>.
-    * <p>
-    * The 1964 (rather than 1931) approximations are used here since they are
+    *
+    * <p>The 1964 (rather than 1931) approximations are used here since they are
     * better than the simple 1931 approximations but simpler than the piecewise
     * approximations for 1931.
     */
    private static final class ApproxCIE1964 {
-      private static double x(double lambda) {
+      private static double xcie(double lambda) {
          double f1 = log((lambda + 570.1) / 1014.0);
          double f2 = log((1338.0 - lambda) / 743.5);
-         return 0.398 * exp(-1250.0 * f1 * f1) +
-               1.132 * exp(-234.0 * f2 * f2);
+         return 0.398 * exp(-1250.0 * f1 * f1) + 1.132 * exp(-234.0 * f2 * f2);
       }
 
-      private static double y(double lambda) {
+      private static double ycie(double lambda) {
          double f = (lambda - 556.1) / 46.14;
          return 1.011 * exp(-0.5 * f * f);
       }
 
-      private static double z(double lambda) {
+      private static double zcie(double lambda) {
          double f = log((lambda - 265.8) / 180.4);
          return 2.060 * exp(-32.0 * f * f);
       }
@@ -251,9 +252,9 @@ public final class ColorPalettes {
       XYSeries sdata = new XYSeries("s", false);
       XYSeries vdata = new XYSeries("v", false);
       for (int lambda = 380; lambda <= 680; ++lambda) {
-         xdata.add(lambda, ApproxCIE1964.x(lambda));
-         ydata.add(lambda, ApproxCIE1964.y(lambda));
-         zdata.add(lambda, ApproxCIE1964.z(lambda));
+         xdata.add(lambda, ApproxCIE1964.xcie(lambda));
+         ydata.add(lambda, ApproxCIE1964.ycie(lambda));
+         zdata.add(lambda, ApproxCIE1964.zcie(lambda));
 
          Color c = colorForMonochromaticWavelenth(lambda);
          float[] rgb = c.getRGBColorComponents(new float[3]);
@@ -303,11 +304,10 @@ public final class ColorPalettes {
       JFrame f = new JFrame();
       f.setLayout(new MigLayout());
       for (String name : new String[] {
-         "DAPI", "FITC", "TRITC", "TexR",
-         "BFP", "CFP", "GFP", "YFP", "RFP", "mCherry",
-         "laser488", "647laser", "Alexa555", "12345"
-      })
-      {
+            "DAPI", "FITC", "TRITC", "TexR",
+            "BFP", "CFP", "GFP", "YFP", "RFP", "mCherry",
+            "laser488", "647laser", "Alexa555", "12345"
+      }) {
          JLabel label = new JLabel(name);
          label.setOpaque(true);
          label.setBackground(guessColor(name));

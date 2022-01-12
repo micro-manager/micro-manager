@@ -31,18 +31,18 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.menus.FileMenu;
 
 /**
- * DragDropUtil
- * Handler for drop events in Micro-Manager
+ * Handler for drop events in Micro-Manager.
  * Checks if files or folders are dropped onto Micro-Manager, and 
  * tries to open them.
- * 
- * @author nico
+ *
+ * @author Nico Stuurman
  * 
  */
 public final class DragDropUtil implements DropTargetListener {
@@ -73,24 +73,23 @@ public final class DragDropUtil implements DropTargetListener {
    }
 
    /**
-    * This function does the actual work
-    * @param dtde
+    * This function does the actual work.
+    *
+    * @param dropTargetDropEvent Event signalling that a Drop occurred
     */
    @Override
-   public void drop(final DropTargetDropEvent dtde) {
-
+   public void drop(final DropTargetDropEvent dropTargetDropEvent) {
       try {
-         Transferable tr = dtde.getTransferable();
+         Transferable tr = dropTargetDropEvent.getTransferable();
          DataFlavor[] flavors = tr.getTransferDataFlavors();
-         for (int i = 0; i < flavors.length; i++) {
+         for (DataFlavor flavor : flavors) {
+            if (flavor.isFlavorJavaFileListType()) {
 
-            if (flavors[i].isFlavorJavaFileListType()) {
+               dropTargetDropEvent.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 
-               dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-
-               java.util.List list = (java.util.List) tr.getTransferData(flavors[i]);
-               for (int j = 0; j < list.size(); j++) {
-                  File f = (File) list.get(j);
+               List<Object> list = (List<Object>) tr.getTransferData(flavor);
+               for (Object o : list) {
+                  File f = (File) o;
                   String dirtmp = f.getPath();
                   if (f.isFile()) {
                      dirtmp = f.getParent();
@@ -98,15 +97,10 @@ public final class DragDropUtil implements DropTargetListener {
                   final String dir = dirtmp;
 
                   // to not block the UI of the OS, open in a separate thread          
-                  new Thread() {
-                     @Override
-                     public void run() {
-                        loadData(dir);
-                     }
-                  }.start();
+                  new Thread(() -> loadData(dir)).start();
 
                }
-               dtde.dropComplete(true);
+               dropTargetDropEvent.dropComplete(true);
                return;
             }
          }
