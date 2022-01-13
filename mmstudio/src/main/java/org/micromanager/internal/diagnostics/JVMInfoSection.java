@@ -12,18 +12,20 @@
 package org.micromanager.internal.diagnostics;
 
 class JVMInfoSection implements SystemInfo.SystemInfoSection {
-   public String getTitle() { return "Java version information"; }
+   public String getTitle() {
+      return "Java version information";
+   }
 
    public String getReport() {
       StringBuilder sb = new StringBuilder();
 
       sb.append("Java version: ").append(System.getProperty("java.version")).append('\n');
 
-      sb.append("Java runtime: ").append(System.getProperty("java.runtime.name")).append(' ').
-         append(System.getProperty("java.runtime.version")).append('\n');
+      sb.append("Java runtime: ").append(System.getProperty("java.runtime.name")).append(' ')
+            .append(System.getProperty("java.runtime.version")).append('\n');
 
-      sb.append("JVM: ").append(System.getProperty("java.vm.name")).append("; ").
-         append(System.getProperty("java.vm.info"));
+      sb.append("JVM: ").append(System.getProperty("java.vm.name")).append("; ")
+            .append(System.getProperty("java.vm.info"));
 
       String jvmArch = System.getProperty("sun.arch.data.model");
       if (jvmArch != null) {

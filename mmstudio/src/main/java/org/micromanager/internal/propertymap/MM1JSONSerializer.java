@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.internal.propertymap;
 
 import com.google.common.collect.Lists;
@@ -25,8 +26,8 @@ import org.micromanager.PropertyMaps;
 
 /**
  * Serialize and deserialize generic JSON (as opposed to property map).
- * <p>
- * This JSON format is used in the Micro-Manager image file formats (despite
+ *
+ * <p>This JSON format is used in the Micro-Manager image file formats (despite
  * the 'MM1' name, the file format is used by MM 2.0, too, with some
  * extensions).
  * The format is defined as follows.
@@ -49,17 +50,17 @@ import org.micromanager.PropertyMaps;
  * uncertainty of numerical type mapping), but only specially restricted
  * property maps can be written to the format. Such property maps contain
  * primitive types and strings only.
- * <p>
- * Our strategy for reading this format is to use a generic reader to slurp the
+ *
+ * <p>Our strategy for reading this format is to use a generic reader to slurp the
  * JSON into a property map, then use high-level-format-specific knowledge to
  * convert them into the canonical modern property map format for the target
  * data structure.
- * <p>
- * Writing the format works in the opposite order: data is first packaged into
+ *
+ * <p>Writing the format works in the opposite order: data is first packaged into
  * a modern property map, then translated into a restricted property map
  * representing the required persistence format for the data structure.
- * <p>
- * This class implements the bidirectional conversion between JSON and the
+ *
+ * <p>This class implements the bidirectional conversion between JSON and the
  * restricted property map.
  *
  * @author Mark A. Tsuchida
@@ -67,14 +68,13 @@ import org.micromanager.PropertyMaps;
 public final class MM1JSONSerializer {
    /**
     * Read an MM1 JSON string into a property map.
-    * <p>
-    * <strong>Warning</Strong>: There is no way to determine exact numerical
+    *
+    * <p><strong>Warning</Strong>: There is no way to determine exact numerical
     * types from this JSON format, so all numbers will be placed in the
     * returned map as longs (if representable as such) or doubles. As a special
     * case, empty arrays are treated as absent.
     *
-    * @param json
-    * @return
+    * @param json JSON to translate into a PropertyMap
     * @throws IOException if there was a syntax or format error
     */
    @SuppressWarnings("UseSpecificCatch")
@@ -84,8 +84,7 @@ public final class MM1JSONSerializer {
          reader.setLenient(true);
          JsonParser parser = new JsonParser();
          return fromGson(parser.parse(reader));
-      }
-      catch (Exception e) {
+      }  catch (Exception e) {
          throw new IOException("Invalid data", e);
       }
    }
@@ -105,22 +104,20 @@ public final class MM1JSONSerializer {
             JsonObject jo = value.getAsJsonObject();
             if (jo.has("PropType") && jo.has("PropVal")) {
                if (jo.get("PropVal").isJsonObject()) {
-               LegacyPropertyMap1Deserializer.
-                     constructPropertyMap1Property(builder, key,
+                  LegacyPropertyMap1Deserializer
+                        .constructPropertyMap1Property(builder, key,
                            jo.get("PropType").getAsString(),
                            jo.get("PropVal").getAsJsonObject());
-               } else if (jo.get("PropVal").isJsonPrimitive() ){
-                  LegacyPropertyMap1Deserializer.
-                          constructPropertyMap1Property(builder, key,
+               } else if (jo.get("PropVal").isJsonPrimitive()) {
+                  LegacyPropertyMap1Deserializer
+                        .constructPropertyMap1Property(builder, key,
                            jo.get("PropType").getAsString(),
                            jo.get("PropVal").getAsJsonPrimitive());
                }
-            }
-            else {
+            } else {
                builder.putPropertyMap(key, fromGson(jo));
             }
-         }
-         else if (value.isJsonArray()) {
+         } else if (value.isJsonArray()) {
             if (value.getAsJsonArray().size() == 0) {
                continue;
             }
@@ -136,16 +133,14 @@ public final class MM1JSONSerializer {
                if (strings != null && jp.isString()) {
                   strings.add(jp.getAsString());
                   ok = true;
-               }
-               else {
+               } else {
                   strings = null;
                }
 
                if (booleans != null && jp.isBoolean()) {
                   booleans.add(jp.getAsBoolean());
                   ok = true;
-               }
-               else {
+               } else {
                   booleans = null;
                }
 
@@ -155,8 +150,7 @@ public final class MM1JSONSerializer {
                      try {
                         longs.add(n.longValueExact());
                         ok = true;
-                     }
-                     catch (ArithmeticException e) {
+                     }  catch (ArithmeticException e) {
                         longs = null;
                      }
                   }
@@ -164,8 +158,7 @@ public final class MM1JSONSerializer {
                      doubles.add(n.doubleValue());
                      ok = true;
                   }
-               }
-               else {
+               } else {
                   longs = null;
                   doubles = null;
                }
@@ -176,31 +169,24 @@ public final class MM1JSONSerializer {
             }
             if (strings != null) {
                builder.putStringList(key, strings);
-            }
-            else if (booleans != null) {
+            } else if (booleans != null) {
                builder.putBooleanList(key, booleans);
-            }
-            else if (longs != null) {
+            } else if (longs != null) {
                builder.putLongList(key, longs);
-            }
-            else if (doubles != null) {
+            } else if (doubles != null) {
                builder.putDoubleList(key, doubles);
             }
-         }
-         else if (value.isJsonPrimitive()) {
+         } else if (value.isJsonPrimitive()) {
             JsonPrimitive jp = value.getAsJsonPrimitive();
             if (jp.isString()) {
                builder.putString(key, value.getAsString());
-            }
-            else if (jp.isBoolean()) {
+            } else if (jp.isBoolean()) {
                builder.putBoolean(key, value.getAsBoolean());
-            }
-            else if (jp.isNumber()) {
+            } else if (jp.isNumber()) {
                BigDecimal n = jp.getAsBigDecimal();
                try {
                   builder.putLong(key, n.longValueExact());
-               }
-               catch (ArithmeticException e) {
+               } catch (ArithmeticException e) {
                   builder.putDouble(key, n.doubleValue());
                }
             }
@@ -210,10 +196,12 @@ public final class MM1JSONSerializer {
    }
 
    /**
-    * @param map
-    * @return
+    * Translates a PropertyMap to JSON.
+    *
+    * @param map PropertyMap to be translated.
+    * @return String with JSON code represting the input PropertyMap.
     * @throws IllegalArgumentException if {@code map} contains value types not
-    * supported by the legacy JSON format
+    *         supported by the legacy JSON format
     */
    public static String toJSON(PropertyMap map) {
       Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -227,8 +215,7 @@ public final class MM1JSONSerializer {
          if (valueClass.isArray()) {
             Class<?> elementClass = valueClass.getComponentType();
             jo.add(key, scalarToGson(map, key, elementClass));
-         }
-         else {
+         } else {
             jo.add(key, scalarToGson(map, key, valueClass));
          }
       }
@@ -236,92 +223,73 @@ public final class MM1JSONSerializer {
    }
 
    private static JsonElement arrayToGson(PropertyMap source,
-         String key, Class<?> elementClass)
-   {
+         String key, Class<?> elementClass) {
       JsonArray ja = new JsonArray();
       if (elementClass == String.class) {
          for (String s : source.getStringList(key)) {
             ja.add(new JsonPrimitive(s));
          }
-      }
-      else if (elementClass == boolean.class) {
+      } else if (elementClass == boolean.class) {
          for (boolean b : source.getBooleanList(key)) {
             ja.add(new JsonPrimitive(b));
          }
-      }
-      else if (elementClass == byte.class) {
+      } else if (elementClass == byte.class) {
          for (byte n : source.getByteList(key)) {
             ja.add(new JsonPrimitive(n));
          }
-      }
-      else if (elementClass == short.class) {
+      } else if (elementClass == short.class) {
          for (short n : source.getShortList(key)) {
             ja.add(new JsonPrimitive(n));
          }
-      }
-      else if (elementClass == int.class) {
+      } else if (elementClass == int.class) {
          for (int n : source.getIntegerList(key)) {
             ja.add(new JsonPrimitive(n));
          }
-      }
-      else if (elementClass == long.class) {
+      } else if (elementClass == long.class) {
          for (long n : source.getLongList(key)) {
             ja.add(new JsonPrimitive(n));
          }
-      }
-      else if (elementClass == float.class) {
+      } else if (elementClass == float.class) {
          for (float n : source.getFloatList(key)) {
             ja.add(new JsonPrimitive(n));
          }
-      }
-      else if (elementClass == double.class) {
+      } else if (elementClass == double.class) {
          for (double n : source.getDoubleList(key)) {
             ja.add(new JsonPrimitive(n));
          }
-      }
-      else {
+      } else {
          throw new IllegalArgumentException(
-               "Legacy JSON format cannot encode array of type " +
-                     elementClass.getSimpleName());
+               "Legacy JSON format cannot encode array of type "
+                     + elementClass.getSimpleName());
       }
       return ja;
    }
 
    private static JsonElement scalarToGson(PropertyMap source,
-         String key, Class<?> valueClass)
-   {
+         String key, Class<?> valueClass)  {
       if (valueClass == String.class) {
          return new JsonPrimitive(source.getString(key, null));
-      }
-      else if (valueClass == boolean.class) {
+      } else if (valueClass == boolean.class) {
          return new JsonPrimitive(source.getBoolean(key, false));
-      }
-      else if (valueClass == byte.class) {
+      } else if (valueClass == byte.class) {
          return new JsonPrimitive(source.getByte(key, (byte) 0));
-      }
-      else if (valueClass == short.class) {
+      } else if (valueClass == short.class) {
          return new JsonPrimitive(source.getShort(key, (short) 0));
-      }
-      else if (valueClass == int.class) {
+      } else if (valueClass == int.class) {
          return new JsonPrimitive(source.getInteger(key, 0));
-      }
-      else if (valueClass == long.class) {
+      } else if (valueClass == long.class) {
          return new JsonPrimitive(source.getLong(key, 0L));
-      }
-      else if (valueClass == float.class) {
+      } else if (valueClass == float.class) {
          return new JsonPrimitive(source.getFloat(key, 0.0f));
-      }
-      else if (valueClass == double.class) {
+      } else if (valueClass == double.class) {
          return new JsonPrimitive(source.getDouble(key, 0.0));
-      }
-      else if (valueClass == PropertyMap.class) {
+      } else if (valueClass == PropertyMap.class) {
          PropertyMap nested = source.getPropertyMap(key, null);
          return toGson(nested);
-      }
-      else {
+      } else {
          throw new IllegalArgumentException(
-               "Legacy JSON format cannot encode value of type " +
-                     valueClass.getSimpleName());
+               "Legacy JSON format cannot encode value of type "
+                     + valueClass.getSimpleName());
       }
    }
 }

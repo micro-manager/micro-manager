@@ -269,8 +269,10 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       for (int i = 0; i < 25; i++) {
 
          core_.logMessage(dx + "," + dy + "," + d);
-         if ((2 * d.x + sideSmall / 2) >= w / 2 || (2 * d.y + sideSmall / 2) >= h / 2
-               || (2 * d.x - sideSmall / 2) < -(w / 2) || (2 * d.y - sideSmall / 2) < -(h / 2)) {
+         if ((2.0f * d.x + sideSmall / 2.0f) >= w / 2.
+               || (2 * d.y + sideSmall / 2.) >= h / 2.
+               || (2 * d.x - sideSmall / 2.) < -(w / 2.)
+               || (2 * d.y - sideSmall / 2.) < -(h / 2.)) {
             break;
          }
 

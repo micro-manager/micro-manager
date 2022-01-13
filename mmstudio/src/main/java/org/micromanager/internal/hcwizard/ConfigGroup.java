@@ -33,8 +33,8 @@ public final class ConfigGroup {
    Hashtable<String, ConfigPreset> configs_;
    
    public ConfigGroup(String name) {
-      name_ = new String(name);
-      configs_ = new Hashtable<String, ConfigPreset>();
+      name_ = name;
+      configs_ = new Hashtable<>();
    }
    
    public void addConfigPreset(ConfigPreset p) {
@@ -56,15 +56,16 @@ public final class ConfigGroup {
    }
    
    public ConfigPreset[] getConfigPresets() {
-      Object objs[] = configs_.values().toArray();
+      Object[] objs = configs_.values().toArray();
       ConfigPreset[] cps = new ConfigPreset[objs.length];
-      for (int i=0; i<objs.length; i++)
-         cps[i] = (ConfigPreset)objs[i];
+      for (int i = 0; i < objs.length; i++) {
+         cps[i] = (ConfigPreset) objs[i];
+      }
       return cps;
    }
    
    public String toString() {
-      return new String("Group: " + name_);
+      return "Group: " + name_;
    }
 
    public void removePreset(String name) {

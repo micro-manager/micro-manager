@@ -6,14 +6,16 @@ import bsh.ParseException;
 import bsh.TargetError;
 import org.micromanager.internal.utils.MMScriptException;
 
+/**
+ * Executes Beanshell on user-supplied scripts.
+ */
 public final class BeanshellEngine implements ScriptingEngine {
    Interpreter interp_;
    boolean running_ = false;
-   boolean error_ = false;
    EvalThread evalThd_;
    boolean stop_ = false;
    private final ScriptPanel panel_;
-   private Interpreter interp_old_;
+   private Interpreter interpOld_;
 
    public final class EvalThread extends Thread {
       String script_;
@@ -21,18 +23,16 @@ public final class BeanshellEngine implements ScriptingEngine {
 
       public EvalThread(String script) {
          script_ = script;
-         errorText_ = new String();
       }
 
       @Override
       public void run() {
          stop_ = false;
          running_ = true;
-         errorText_ = new String();
          try {
             interp_.eval(script_);
-         } catch (TargetError e){
-            int lineNo = e.getErrorLineNumber(); 
+         } catch (TargetError e) {
+            int lineNo = e.getErrorLineNumber();
             panel_.displayError(formatBeanshellError(e, lineNo), lineNo);
          } catch (ParseException e) {
             // special handling of the parse errors beacuse beanshell error object
@@ -46,7 +46,7 @@ public final class BeanshellEngine implements ScriptingEngine {
                panel_.displayError("Parse error: " + msg);
             }
          } catch (EvalError e) {
-            int lineNo = e.getErrorLineNumber(); 
+            int lineNo = e.getErrorLineNumber();
             panel_.displayError(formatBeanshellError(e, lineNo), lineNo);
          } finally {
             running_ = false;
@@ -61,13 +61,13 @@ public final class BeanshellEngine implements ScriptingEngine {
    
    @Override
    public void setInterpreter(Interpreter interp) {
-	   interp_old_ = interp_;
-	   interp_ = interp;
+      interpOld_ = interp_;
+      interp_ = interp;
    }
    
    @Override
    public void resetInterpreter() {
-	   interp_ = interp_old_;
+      interp_ = interpOld_;
    }
    
    public BeanshellEngine(ScriptPanel panel) {
@@ -96,8 +96,9 @@ public final class BeanshellEngine implements ScriptingEngine {
    
    @Override
    public void evaluateAsync(String script) throws MMScriptException {
-      if (evalThd_.isAlive())
+      if (evalThd_.isAlive()) {
          throw new MMScriptException("Another script execution in progress!");
+      }
 
       evalThd_ = new EvalThread(script);
       evalThd_.start();
@@ -118,8 +119,7 @@ public final class BeanshellEngine implements ScriptingEngine {
       if (evalThd_.isAlive()) {
          if (shouldInterrupt) {
             evalThd_.interrupt();
-         }
-         else {
+         } else {
             // HACK: kill the thread.
             evalThd_.stop();
             stop_ = true;
@@ -129,28 +129,31 @@ public final class BeanshellEngine implements ScriptingEngine {
 
    @Override
    public boolean stopRequestPending() {
-      if (evalThd_.isAlive() && stop_)
+      if (evalThd_.isAlive() && stop_) {
          return stop_;
+      }
       stop_ = false;
       return stop_;
    }
    
    private String formatBeanshellError(EvalError e, int line) {
       if (e instanceof TargetError) {
-         Throwable t = ((TargetError)e).getTarget();
+         Throwable t = ((TargetError) e).getTarget();
          if (t instanceof NullPointerException) {
             // Null Pointer Exceptions do not seem to have much more information
             // However, do make clear to the user that this is a npe
             return "Line " + line + ": Null Pointer Exception"; 
          }
-         return "Line " + line + ": run-time error : " + (t != null ? t.getMessage() : e.getErrorText());       
+         return "Line " + line + ": run-time error : " + (t != null ? t.getMessage()
+               : e.getErrorText());
       } else if (e instanceof ParseException) {
          return "Line " + line + ": syntax error : " + e.getErrorText();  
-      } else if (e instanceof EvalError) {
+      } else if (e != null) {
          return "Line " + line + ": evaluation error : " + e.getMessage();
       } else {
          Throwable t = e.getCause();
-         return "Line " + line + ": general error : " + (t != null ? t.getMessage() : e.getErrorText());
+         return "Line " + line + ": general error : "
+               + (t != null ? t.getMessage() : e.getErrorText());
       }
    }
    

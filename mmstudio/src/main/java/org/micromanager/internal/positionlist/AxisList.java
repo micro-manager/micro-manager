@@ -14,44 +14,46 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * of this class
  */
 class AxisList {
-   private ArrayList<AxisData> axisList_ = new ArrayList<AxisData>();
-   private CMMCore core_;
+   private final ArrayList<AxisData> axisList_ = new ArrayList<>();
+   private final CMMCore core_;
 
    public AxisList(CMMCore core) {
-       core_ = core;
-       // Initialize the axisList.
-       // TODO settings are only read, never written ???
-       UserProfile profile = MMStudio.getInstance().profile();
-       MutablePropertyMapView settings = profile.getSettings(AxisList.class);
-       try {
-          // add 1D stages
-          StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
-          for (int i=0; i<stages.size(); i++) {
-             axisList_.add(new AxisData(settings.getBoolean(stages.get(i), true),
-                     stages.get(i), AxisData.AxisType.oneD));
-          }
-          // read 2-axis stages
-          StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
-          for (int i=0; i<stages2D.size(); i++) {
-             axisList_.add(new AxisData(settings.getBoolean(stages2D.get(i), true),
+      core_ = core;
+      // Initialize the axisList.
+      // TODO settings are only read, never written ???
+      UserProfile profile = MMStudio.getInstance().profile();
+      MutablePropertyMapView settings = profile.getSettings(AxisList.class);
+      try {
+         // add 1D stages
+         StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
+         for (int i = 0; i < stages.size(); i++) {
+            axisList_.add(new AxisData(settings.getBoolean(stages.get(i), true),
+                    stages.get(i), AxisData.AxisType.oneD));
+         }
+         // read 2-axis stages
+         StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
+         for (int i = 0; i < stages2D.size(); i++) {
+            axisList_.add(new AxisData(settings.getBoolean(stages2D.get(i), true),
                      stages2D.get(i), AxisData.AxisType.twoD));
-          }
-       } catch (Exception e) {
-          ReportingUtils.showError(e);
-       }
+         }
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
    }
 
    public AxisData get(int i) {
-      if (i >=0 && i < axisList_.size()) {
+      if (i >= 0 && i < axisList_.size()) {
          return axisList_.get(i);
       }
       return null;
    }
+
    public int getNumberOfPositions() {
       return axisList_.size();
    }
+
    public boolean use(String axisName) {
-      for (int i=0; i< axisList_.size(); i++) {
+      for (int i = 0; i < axisList_.size(); i++) {
          if (axisName.equals(get(i).getAxisName())) {
             return get(i).getUse();
          }

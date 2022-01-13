@@ -20,10 +20,11 @@
 //
 // CVS:          $Id: Label.java 2 2007-02-27 23:33:17Z nenad $
 //
+
 package org.micromanager.internal.hcwizard;
 
 /**
- * Label data for state devices
+ * Label data for state devices.
  *
  */
 public final class Label {
@@ -31,7 +32,7 @@ public final class Label {
    int state_;
    
    public Label() {
-      label_ = new String("Undefined");
+      label_ = "Undefined";
       state_ = 0;
    }
    

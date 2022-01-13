@@ -27,13 +27,26 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.table.TableColumn;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.BevelBorder;
+import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import net.miginfocom.swing.MigLayout;
@@ -41,9 +54,18 @@ import org.micromanager.Studio;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.PropertyNameCellRenderer;
+import org.micromanager.internal.utils.PropertyTableData;
+import org.micromanager.internal.utils.PropertyUsageCellEditor;
+import org.micromanager.internal.utils.PropertyUsageCellRenderer;
+import org.micromanager.internal.utils.PropertyValueCellEditor;
+import org.micromanager.internal.utils.PropertyValueCellRenderer;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.ShowFlags;
+import org.micromanager.internal.utils.ShowFlagsPanel;
 
-/*
+/**
  * A base class from which GroupEditor and PresetEditor are derived.
  */
 public abstract class ConfigDialog extends JDialog {
@@ -55,7 +77,6 @@ public abstract class ConfigDialog extends JDialog {
 
    protected JTable table_;
    protected PropertyTableData data_;
-   private JScrollPane scrollPane_;
 
    protected ShowFlags flags_;
    protected ShowFlagsPanel showFlagsPanel_;
@@ -85,7 +106,7 @@ public abstract class ConfigDialog extends JDialog {
    protected int numColumns_ = 3;
    protected int numRowsBeforeFilters_ = 1;
 
-   protected boolean newItem_ = true;
+   protected boolean newItem_;
    protected boolean showFlagsPanelVisible_ = true;
 
    protected int scrollPaneTop_;
@@ -125,7 +146,6 @@ public abstract class ConfigDialog extends JDialog {
     * Assign ENTER and ESCAPE keystrokes to be equivalent to OK and Cancel
     * buttons, respectively.
     */
-   @SuppressWarnings("serial")
    protected void setupKeys() {
       // Get the InputMap and ActionMap of the RootPane of this JDialog.
       InputMap inputMap = getRootPane().getInputMap(
@@ -170,19 +190,17 @@ public abstract class ConfigDialog extends JDialog {
     * Used for affine transform in pixel editors.
     */
    protected void initializeBetweenWidgetsAndTable() {
-      return;
    }
 
    protected void initializeWidgets() {
       
-      if (showFlagsPanelVisible_ ) {
+      if (showFlagsPanelVisible_) {
          flags_.load(ConfigDialog.class);
          Configuration cfg;
          try {
             if (presetName_.length() == 0) {
                cfg = new Configuration();
-            }
-            else {
+            } else {
                cfg = core_.getConfigState(groupName_, presetName_);
             }
             showFlagsPanel_ = new ShowFlagsPanel(data_, flags_, core_, cfg);
@@ -192,7 +210,7 @@ public abstract class ConfigDialog extends JDialog {
          }
       }
 
-      JPanel topMidPanel = new JPanel(
+      final JPanel topMidPanel = new JPanel(
             new MigLayout("flowx, insets 0 6 0 0, gap 2"));
 
       instructionsTextArea_ = new JTextArea();
@@ -209,7 +227,9 @@ public abstract class ConfigDialog extends JDialog {
 
       nameField_ = new JTextField();
       nameField_.setFont(new Font("Arial", Font.PLAIN, 12));
-      // nameField_.setFont(new Font("Arial", Font.BOLD, 16));  // should consider increasing font size for entry field for readability, but would want to do it in multiple places for consistency
+      // nameField_.setFont(new Font("Arial", Font.BOLD, 16));
+      // should consider increasing font size for entry field for readability,
+      // but would want to do it in multiple places for consistency
       nameField_.setText(initName_);
       nameField_.setEditable(true);
       nameField_.setSelectionStart(0);
@@ -235,64 +255,56 @@ public abstract class ConfigDialog extends JDialog {
             new MigLayout("flowy, insets 0 6 0 0, gap 2"));
 
       okButton_ = new JButton("OK");
-      okButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (table_.isEditing() && table_.getCellEditor() != null) {
-               table_.getCellEditor().stopCellEditing();
-            }
-            okChosen();
+      okButton_.addActionListener(e -> {
+         if (table_.isEditing() && table_.getCellEditor() != null) {
+            table_.getCellEditor().stopCellEditing();
          }
+         okChosen();
       });
       topRightPanel.add(okButton_, "gapleft push, split 2, width 90!");
 
       cancelButton_ = new JButton("Cancel");
-      cancelButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            dispose();
-         }
-      });
+      cancelButton_.addActionListener(e -> dispose());
       topRightPanel.add(cancelButton_, "width 90!");
 
       add(topMidPanel, "flowx, split 2");
       add(topRightPanel, "gapleft push, flowx");
 
       // Override x button to make it have same behavior as Cancel button
-      this.addWindowListener(new WindowAdapter()
-      {
+      this.addWindowListener(new WindowAdapter() {
          @Override
-         public void windowClosing(WindowEvent e) { dispose(); }
+         public void windowClosing(WindowEvent e) {
+            dispose();
+         }
       });
    }
 
    public void initializePropertyTable() {
-        scrollPane_ = new JScrollPane();
-        scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));
-        scrollPane_.setBorder(new BevelBorder(BevelBorder.LOWERED));
-        int extraWidth = scrollPane_.getVerticalScrollBar().getPreferredSize().width;
-        add(scrollPane_, "flowy, span, growx, growy, push, width pref+" + extraWidth + "px");
+      JScrollPane scrollPane = new JScrollPane();
+      scrollPane.setFont(new Font("Arial", Font.PLAIN, 10));
+      scrollPane.setBorder(new BevelBorder(BevelBorder.LOWERED));
+      int extraWidth = scrollPane.getVerticalScrollBar().getPreferredSize().width;
+      add(scrollPane, "flowy, span, growx, growy, push, width pref+" + extraWidth + "px");
 
-        table_ = new DaytimeNighttime.Table();
-        table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        table_.setAutoCreateColumnsFromModel(false);
-        scrollPane_.setViewportView(table_);
-        table_.setModel(data_);
+      table_ = new DaytimeNighttime.Table();
+      table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+      table_.setAutoCreateColumnsFromModel(false);
+      scrollPane.setViewportView(table_);
+      table_.setModel(data_);
 
-        if (numColumns_ == 3) {
-            table_.addColumn(new TableColumn(0, 200, 
-                    new PropertyNameCellRenderer(studio_), null));
-            table_.addColumn(new TableColumn(1, 75, 
-                    new PropertyUsageCellRenderer(studio_), new PropertyUsageCellEditor()));
-            table_.addColumn(new TableColumn(2, 200, 
-                    new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(true)));
-        } else if (numColumns_ == 2) {
-            table_.addColumn(new TableColumn(0, 200, 
-                    new PropertyNameCellRenderer(studio_), null));
-            table_.addColumn(new TableColumn(1, 200, 
-                    new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(false)));
-        }
-
+      if (numColumns_ == 3) {
+         table_.addColumn(new TableColumn(0, 200,
+                 new PropertyNameCellRenderer(studio_), null));
+         table_.addColumn(new TableColumn(1, 75,
+                 new PropertyUsageCellRenderer(studio_), new PropertyUsageCellEditor()));
+         table_.addColumn(new TableColumn(2, 200,
+                 new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(true)));
+      } else if (numColumns_ == 2) {
+         table_.addColumn(new TableColumn(0, 200,
+                 new PropertyNameCellRenderer(studio_), null));
+         table_.addColumn(new TableColumn(1, 200,
+                 new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(false)));
+      }
    }
 
    public abstract void okChosen();
@@ -340,7 +352,7 @@ public abstract class ConfigDialog extends JDialog {
       // avoid re-executing a refresh because of callbacks while we are
       // updating
       if (!data_.updating()) {
-        data_.update(true);
+         data_.update(true);
       }
    }
 

@@ -14,23 +14,36 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 
 /**
+ * Class that creates and manages the Window menu in the Micro-Manager application.
  *
- * @author nico
+ * @author Nico Stuurman
  */
 public class WindowMenu {
    private final MMStudio studio_;
    private final JMenu windowMenu_;
    private final List<JMenuItem> menuItems_;
 
+   /**
+    * Create the Window menu.
+    *
+    * @param studio The omnipresent Micro-Manager Studio object
+    * @param menuBar The menubar to which this WindowMenu belongs
+    */
    public WindowMenu(MMStudio studio, JMenuBar menuBar) {
       studio_ = studio;
       menuItems_ = new ArrayList<>();
 
-      windowMenu_= GUIUtils.createMenuInMenuBar(menuBar, "Window");
+      windowMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Window");
       
       studio_.displays().registerForEvents(this);
    }
-   
+
+   /**
+    * Handles event signalling that a DataViewer was opened.  Usually this will result in
+    * addition of the DataViewer to our menu.
+    *
+    * @param e Event with information about the newly added DataViewer
+    */
    @Subscribe
    public void onEvent(DataViewerAddedEvent e) {
       String name = e.getDataViewer().getName();
@@ -40,15 +53,21 @@ public class WindowMenu {
             return;
          }
       }
-      menuItems_.add (GUIUtils.addMenuItem(windowMenu_, name, name, () -> {
+      menuItems_.add(GUIUtils.addMenuItem(windowMenu_, name, name, () -> {
          if (e.getDataViewer() instanceof DisplayWindow) {
             DisplayWindow dw = (DisplayWindow) e.getDataViewer();
             dw.toFront();
          }
       }));
    }
-   
-   
+
+
+   /**
+    * Handles event signalling that a DataViewer will close.  Usually this results in removal
+    * of the corresponding entry in the Windows Menu.
+    *
+    * @param e Contains information about the DataViewer that will close.
+    */
    @Subscribe
    public void onEvent(DataViewerWillCloseEvent e) {   
       String name = e.getDataViewer().getName();

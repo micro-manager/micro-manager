@@ -10,7 +10,7 @@ import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 
 /**
- * Editor component for the position list table
+ * Editor component for the position list table.
  */
 public final class CellEditor extends AbstractCellEditor implements TableCellEditor, 
         FocusListener {
@@ -43,11 +43,11 @@ public final class CellEditor extends AbstractCellEditor implements TableCellEdi
    public Component getTableCellEditorComponent(JTable table, Object value,
          boolean isSelected, int rowIndex, int colIndex) {
 
-     editingCol_ = colIndex;
+      editingCol_ = colIndex;
 
       // Configure the component with the specified value
       if (colIndex == 0) {
-         text_.setText((String)value);
+         text_.setText((String) value);
          return text_;
       }
 
@@ -59,7 +59,7 @@ public final class CellEditor extends AbstractCellEditor implements TableCellEdi
    @Override
    public Object getCellEditorValue() {
       if (editingCol_ == 0) {
-            return text_.getText();
+         return text_.getText();
       }
       return null;
    }

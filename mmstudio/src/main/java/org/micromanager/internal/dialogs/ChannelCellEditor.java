@@ -47,7 +47,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
 
       ChannelTableModel model = (ChannelTableModel) table.getModel();
       ArrayList<ChannelSpec> channels = model.getChannels();
-     channel_ = channels.get(rowIndex);
+      channel_ = channels.get(rowIndex);
 
       colIndex = table.convertColumnIndexToModel(colIndex);
 
@@ -61,7 +61,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          return checkBox_;
       } else if (colIndex == 2 || colIndex == 3) {
          // exposure and z offset
-         text_.setText(NumberUtils.doubleToDisplayString((Double)value));
+         text_.setText(NumberUtils.doubleToDisplayString((Double) value));
          return text_;
       } else if (colIndex == 4) {
          checkBox_.removeChangeListener(checkBoxChangeListener_);
@@ -142,9 +142,11 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
 
    private class CheckBoxChangeListener implements ChangeListener {
       private final ChannelCellEditor cce_;
+
       public CheckBoxChangeListener(ChannelCellEditor cce) {
          cce_ = cce;
       }
+
       @Override
       public void stateChanged(ChangeEvent e) {
          if (checkBox_.isSelected() != checkBoxValue_) {

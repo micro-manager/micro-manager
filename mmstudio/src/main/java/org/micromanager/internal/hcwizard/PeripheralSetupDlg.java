@@ -6,7 +6,14 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
@@ -22,10 +29,9 @@ public final class PeripheralSetupDlg extends JDialog {
    private static final int DESCRIPTIONCOLUMN = 2;
    private static final int SELECTIONCOLUMN = 3;
 
-   private class DeviceTable_TableModel extends AbstractTableModel {
-
+   private class DeviceTableTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
-      public final String[] COLUMN_NAMES = new String[]{
+      public final String[] columnNames = new String[]{
          "Name",
          "Adapter/Library",
          "Description",
@@ -33,9 +39,9 @@ public final class PeripheralSetupDlg extends JDialog {
       };
       Vector<Boolean> selected_;
 
-      public DeviceTable_TableModel() {
-         selected_ = new Vector<Boolean>();
-         for (int i=0; i<peripherals_.size(); i++) {
+      public DeviceTableTableModel() {
+         selected_ = new Vector<>();
+         for (int i = 0; i < peripherals_.size(); i++) {
             selected_.add(false);
          }
       }
@@ -47,12 +53,12 @@ public final class PeripheralSetupDlg extends JDialog {
 
       @Override
       public int getColumnCount() {
-         return COLUMN_NAMES.length;
+         return columnNames.length;
       }
 
       @Override
       public String getColumnName(int columnIndex) {
-         return COLUMN_NAMES[columnIndex];
+         return columnNames[columnIndex];
       }
 
       @Override
@@ -70,7 +76,8 @@ public final class PeripheralSetupDlg extends JDialog {
          if (columnIndex == NAMECOLUMN) {
             return peripherals_.get(rowIndex).getName();
          } else if (columnIndex == ADAPTERCOLUMN) {
-            return new String(peripherals_.get(rowIndex).getAdapterName() + "/" + peripherals_.get(rowIndex).getLibrary());
+            return peripherals_.get(rowIndex).getAdapterName() + "/"
+                  + peripherals_.get(rowIndex).getLibrary();
          } else if (columnIndex == DESCRIPTIONCOLUMN) {
             return peripherals_.get(rowIndex).getDescription();
          } else if (SELECTIONCOLUMN == columnIndex) {
@@ -85,7 +92,6 @@ public final class PeripheralSetupDlg extends JDialog {
          switch (col) {
             case NAMECOLUMN: {
                String n = (String) value;
-               String o = peripherals_.get(row).getName();
                peripherals_.get(row).setName(n);
                try {
                   //model_.changeDeviceName(o, n);
@@ -101,6 +107,8 @@ public final class PeripheralSetupDlg extends JDialog {
                break;
             case SELECTIONCOLUMN:
                selected_.set(row, (Boolean) value);
+               break;
+            default:
                break;
          }
       }
@@ -119,6 +127,8 @@ public final class PeripheralSetupDlg extends JDialog {
             case SELECTIONCOLUMN:
                ret = true;
                break;
+            default:
+               break;
          }
          return ret;
       }
@@ -132,12 +142,10 @@ public final class PeripheralSetupDlg extends JDialog {
       }
 
    }
-   private JTable deviceTable_;
-   private JScrollPane scrollPane_;
-   private MicroscopeModel model_;
-   private String hub_;
-   private final JPanel contentPanel = new JPanel();
-   private Vector<Device> peripherals_;
+
+   private final JTable deviceTable_;
+   private final MicroscopeModel model_;
+   private final Vector<Device> peripherals_;
 
    public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub, Vector<Device> per) {
       super();
@@ -149,59 +157,49 @@ public final class PeripheralSetupDlg extends JDialog {
       //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
       setResizable(false);
-      hub_ = hub;
       model_ = mod;
       peripherals_ = per;
 
       getContentPane().setLayout(new BorderLayout());
+      JPanel contentPanel = new JPanel();
       contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
       getContentPane().add(contentPanel, BorderLayout.CENTER);
       contentPanel.setLayout(null);
-      
-      scrollPane_ = new JScrollPane();
-      scrollPane_.setBounds(10, 36, 453, 236);
-      contentPanel.add(scrollPane_);
+
+      JScrollPane scrollPane = new JScrollPane();
+      scrollPane.setBounds(10, 36, 453, 236);
+      contentPanel.add(scrollPane);
 
       deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      scrollPane_.setViewportView(deviceTable_);
+      scrollPane.setViewportView(deviceTable_);
       
       JLabel lblNewLabel = new JLabel("HUB (parent device):");
       lblNewLabel.setBounds(10, 11, 111, 14);
       contentPanel.add(lblNewLabel);
       
-      JLabel lblParentDev = new JLabel(hub_);
+      JLabel lblParentDev = new JLabel(hub);
       lblParentDev.setBounds(131, 11, 332, 14);
       contentPanel.add(lblParentDev);
       
-      {
+         {
          JPanel buttonPane = new JPanel();
          buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
          getContentPane().add(buttonPane, BorderLayout.SOUTH);
-         {
-            JButton okButton = new JButton("OK");
-            okButton.addActionListener(new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  onOK();
-               }
-            });
-            okButton.setActionCommand("OK");
-            buttonPane.add(okButton);
-            getRootPane().setDefaultButton(okButton);
+            {
+               JButton okButton = new JButton("OK");
+               okButton.addActionListener(e -> onOK());
+               okButton.setActionCommand("OK");
+               buttonPane.add(okButton);
+               getRootPane().setDefaultButton(okButton);
+            }
+            {
+               JButton cancelButton = new JButton("Cancel");
+               cancelButton.addActionListener(e -> onCancel());
+               cancelButton.setActionCommand("Cancel");
+               buttonPane.add(cancelButton);
+            }
          }
-         {
-            JButton cancelButton = new JButton("Cancel");
-            cancelButton.addActionListener(new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  onCancel();
-               }
-            });
-            cancelButton.setActionCommand("Cancel");
-            buttonPane.add(cancelButton);
-         }
-      }
       
       rebuildTable();
    }
@@ -227,7 +225,7 @@ public final class PeripheralSetupDlg extends JDialog {
    }
 
    public final void rebuildTable() {
-      DeviceTable_TableModel tmd = new DeviceTable_TableModel();
+      DeviceTableTableModel tmd = new DeviceTableTableModel();
       deviceTable_.setModel(tmd);
       tmd.fireTableStructureChanged();
       tmd.fireTableDataChanged();
@@ -238,21 +236,6 @@ public final class PeripheralSetupDlg extends JDialog {
    }
 
    public void onOK() {
-//      try {
-//         DeviceTable_TableModel tmd = (DeviceTable_TableModel) deviceTable_.getModel();
-//
-//         Vector<String> hubs = new Vector<String>();
-//         for (int i=0; i < peripherals_.size(); i++) {
-//            hubs.add(new String(hub_));
-//         }
-//         Vector<Boolean> sel = tmd.getSelected();
-//         model_.AddSelectedPeripherals(core_, peripherals_, hubs, sel);
-//         model_.loadDeviceDataFromHardware(core_);
-//      } catch (Exception e) {
-//         handleError(e.getMessage());
-//      } finally {
-//         dispose();
-//      }
       dispose();
    }
    
@@ -261,12 +244,13 @@ public final class PeripheralSetupDlg extends JDialog {
    }
 
    public Device[] getSelectedPeripherals() {
-      DeviceTable_TableModel tmd = (DeviceTable_TableModel) deviceTable_.getModel();
-      Vector<Device> sel = new Vector<Device>();
+      DeviceTableTableModel tmd = (DeviceTableTableModel) deviceTable_.getModel();
+      Vector<Device> sel = new Vector<>();
       Vector<Boolean> selFlags = tmd.getSelected();
-      for (int i=0; i<peripherals_.size(); i++) {
-         if (selFlags.get(i))
+      for (int i = 0; i < peripherals_.size(); i++) {
+         if (selFlags.get(i)) {
             sel.add(peripherals_.get(i));
+         }
       }
       return sel.toArray(new Device[sel.size()]);
    }

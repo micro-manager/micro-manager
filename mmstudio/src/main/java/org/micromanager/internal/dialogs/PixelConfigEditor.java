@@ -26,9 +26,15 @@ import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.AffineUtils;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.PropertyTableData;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
+ * Editor for Pixel Size Configurations.
  *
  * @author nico
  */
@@ -40,6 +46,15 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    private final AffineEditorPanel affineEditorPanel_;
    private final CalibrationListDlg parent_;
 
+   /**
+    * Creates the editor.
+    *
+    * @param pixelSizeConfigName Name for the pixel size configurator
+    * @param parent GUI element that is the "parent" for this one
+    * @param pixelSize Pixel size to start with
+    * @param newItem Whether or not this is a new pixel size config (i.e. false will edit
+    *                and existing config)
+    */
    public PixelConfigEditor(String pixelSizeConfigName, CalibrationListDlg parent, 
          String pixelSize, boolean newItem) {
       super("ConfigPixelSize", pixelSizeConfigName, parent.getStudio(), 
@@ -57,8 +72,9 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       numColumns_ = 3;
       numRowsBeforeFilters_ = 2;
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(parent.getStudio());
-      data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(2).
-              propertyUsedColumn(1).groupOnly(false).allowChangingProperties(true).allowChangesOnlyWhenUsed(true).isPixelSizeConfig(true).build();
+      data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(2)
+            .propertyUsedColumn(1).groupOnly(false).allowChangingProperties(true)
+            .allowChangesOnlyWhenUsed(true).isPixelSizeConfig(true).build();
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       parent_ = parent;
@@ -89,8 +105,13 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       super.dispose();
    }
 
+   /**
+    * "Writes" the pixel size config to the core.
+    *
+    * @param newName name of the pixel size config to be written
+    * @return True on succes, false on failure
+    */
    public boolean writeGroup(String newName) {
-
       // Check that at least one property has been selected.
       int itemsIncludedCount = 0;
       for (PropertyItem item : data_.getProperties()) {
@@ -121,12 +142,13 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
 
          for (PropertyItem item : data_.getProperties()) {
             if (item.confInclude) {
-               core_.definePixelSizeConfig(newName, item.device, item.name, item.getValueInCoreFormat());              
+               core_.definePixelSizeConfig(newName, item.device, item.name,
+                     item.getValueInCoreFormat());
             }
          }
          pixelSize_ = pixelSizeField_.getText();
          core_.setPixelSizeUm(newName, NumberUtils.displayStringToDouble(pixelSize_));
-         core_.setPixelSizeAffine(newName, affineEditorPanel_.getAffineTransform() );
+         core_.setPixelSizeAffine(newName, affineEditorPanel_.getAffineTransform());
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -148,7 +170,8 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    
    @Override
    protected void initializeWidgets() {
-      presetName_ = "";  // makes sure initializeWidgets() has the right behavior when loading ShowFlagsPanel
+      // makes sure initializeWidgets() has the right behavior when loading ShowFlagsPanel
+      presetName_ = "";
       super.initializeWidgets();
    }
    
@@ -160,7 +183,8 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    @Override
    public void setPixelSize(double pixelSizeUm) {
       pixelSize_ = NumberUtils.doubleToDisplayString(pixelSizeUm);
-      pixelSizeField_.setText(pixelSize_); }
+      pixelSizeField_.setText(pixelSize_);
+   }
 
    @Override
    public AffineTransform getAffineTransform() {

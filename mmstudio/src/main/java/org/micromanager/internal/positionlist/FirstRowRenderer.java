@@ -8,7 +8,7 @@ import javax.swing.table.TableCellRenderer;
 import org.micromanager.Studio;
 
 /**
- * Renders the first row of the position list table
+ * Renders the first row of the position list table.
  */
 class FirstRowRenderer extends JLabel implements TableCellRenderer {
    private static final long serialVersionUID = 1L;

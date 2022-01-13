@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.internal.dialogs;
 
 import java.awt.Dimension;
@@ -38,7 +39,7 @@ public class ConfigSelectionUIController {
    private ChangeListener currentProfileListener_;
 
    private final JPanel panel_;
-   private final JComboBox configComboBox_ = new JComboBox();
+   private final JComboBox<String> configComboBox_ = new JComboBox<>();
    private final JButton browseButton_ = new JButton();
 
    private static final String NO_HARDWARE_CONFIG_ITEM = "(none)";
@@ -47,30 +48,16 @@ public class ConfigSelectionUIController {
       final ConfigSelectionUIController ret =
             new ConfigSelectionUIController(admin);
 
-      ret.configComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            ret.handleConfigSelection();
-         }
-      });
-      ret.browseButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            ret.handleBrowse();
-         }
-      });
+      ret.configComboBox_.addActionListener(e -> ret.handleConfigSelection());
+      ret.browseButton_.addActionListener(e -> ret.handleBrowse());
 
       // Add listener for user profile change, while we are shown
-      ret.panel_.addHierarchyListener(new HierarchyListener() {
-         @Override
-         public void hierarchyChanged(HierarchyEvent e) {
-            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-               if (ret.panel_.isShowing()) {
-                  ret.uiWasShown();
-               }
-               else {
-                  ret.uiWasHidden();
-               }
+      ret.panel_.addHierarchyListener(e -> {
+         if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+            if (ret.panel_.isShowing()) {
+               ret.uiWasShown();
+            } else {
+               ret.uiWasHidden();
             }
          }
       });
@@ -93,8 +80,8 @@ public class ConfigSelectionUIController {
       panel_.add(browseButton_, new CC().width("pref!").height("pref!"));
 
       configComboBox_.setToolTipText(
-            "<html>Select the hardware configuration to load.<br />" +
-                  "Use the \"...\" button to browse for the configuration file.</html>");
+            "<html>Select the hardware configuration to load.<br />"
+                  + "Use the \"...\" button to browse for the configuration file.</html>");
       browseButton_.setToolTipText("Select a hardware configuration file");
    }
 
@@ -134,12 +121,7 @@ public class ConfigSelectionUIController {
    }
 
    private void uiWasShown() {
-      currentProfileListener_ = new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            handleProfileSwitch();
-         }
-      };
+      currentProfileListener_ = e -> handleProfileSwitch();
       admin_.addCurrentProfileChangeListener(currentProfileListener_);
 
       handleProfileSwitch();
@@ -155,15 +137,14 @@ public class ConfigSelectionUIController {
       UserProfile profile;
       try {
          profile = admin_.getNonSavingProfile(admin_.getUUIDOfCurrentProfile());
-      }
-      catch (IOException ex) {
+      } catch (IOException ex) {
          ReportingUtils.showError(ex, "There was an error reading the user profile");
          // Leave combo box unpopulated; browse button should still work.
          return;
       }
 
-      for (String path : HardwareConfigurationManager.
-            getRecentlyUsedConfigFilesFromProfile(profile)) {
+      for (String path : HardwareConfigurationManager
+            .getRecentlyUsedConfigFilesFromProfile(profile)) {
          configComboBox_.addItem(path);
       }
       configComboBox_.addItem(NO_HARDWARE_CONFIG_ITEM);

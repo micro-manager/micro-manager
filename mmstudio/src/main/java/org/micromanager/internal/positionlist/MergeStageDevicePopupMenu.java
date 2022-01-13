@@ -1,7 +1,5 @@
 package org.micromanager.internal.positionlist;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Vector;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -15,7 +13,7 @@ import mmcorej.StrVector;
  */
 class MergeStageDevicePopupMenu extends JPopupMenu {
    public MergeStageDevicePopupMenu(final PositionListDlg parent, CMMCore core) {
-      Vector<String> options = new Vector<String>();
+      Vector<String> options = new Vector<>();
       StrVector xyStages = core.getLoadedDevicesOfType(DeviceType.XYStageDevice);
       for (int i = 0; i < xyStages.size(); ++i) {
          options.add(xyStages.get(i));
@@ -25,19 +23,14 @@ class MergeStageDevicePopupMenu extends JPopupMenu {
          options.add(stages.get(i));
       }
 
-      for (int i = 0; i < options.size(); ++i) {
-         final String deviceName = options.get(i);
-         JMenuItem item = new JMenuItem(String.format("Merge with %s current position", deviceName));
+      for (final String deviceName : options) {
+         JMenuItem item =
+               new JMenuItem(String.format("Merge with %s current position", deviceName));
          if (!parent.useDrive(deviceName)) {
             item.setEnabled(false);
             item.setText(item.getText() + " (inactive)");
          }
-         item.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-               parent.mergePositionsWithDevice(deviceName);
-            }
-         });
+         item.addActionListener(event -> parent.mergePositionsWithDevice(deviceName));
          add(item);
       }
    }

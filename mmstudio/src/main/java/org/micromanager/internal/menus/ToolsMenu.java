@@ -24,9 +24,13 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 import org.micromanager.quickaccess.internal.QuickAccessPanelEvent;
 
+/**
+ * This class is responsible for Micro-Manager's Tools Menu.
+ */
 public final class ToolsMenu {
 
-   private static final String MOUSE_MOVES_STAGE = "whether or not the hand tool can be used to move the stage";
+   private static final String MOUSE_MOVES_STAGE =
+         "whether or not the hand tool can be used to move the stage";
 
    private final JMenu quickAccessMenu_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
@@ -34,47 +38,51 @@ public final class ToolsMenu {
    private final MMStudio mmStudio_;
    private final CMMCore core_;
 
+   /**
+    * Create Micro-Manager's Tools Menu.
+    */
    @SuppressWarnings("LeakingThisInConstructor")
    public ToolsMenu(MMStudio studio, JMenuBar menuBar) {
       mmStudio_ = studio;
       core_ = mmStudio_.core();
       quickAccessMenu_ = new JMenu("Quick Access Panels");
 
-      JMenu toolsMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Tools");
+      JMenu toolsMenu = GUIUtils.createMenuInMenuBar(menuBar, "Tools");
 
-      GUIUtils.addMenuItem(toolsMenu_, "Refresh GUI",
+      GUIUtils.addMenuItem(toolsMenu, "Refresh GUI",
               "Refresh all GUI controls directly from the hardware", () -> {
                  core_.updateSystemStateCache();
                  mmStudio_.uiManager().updateGUI(true);
               },
               "arrow_refresh.png");
 
-      toolsMenu_.addSeparator();
+      toolsMenu.addSeparator();
 
-      GUIUtils.addMenuItem(toolsMenu_, "Script Panel...",
+      GUIUtils.addMenuItem(toolsMenu, "Script Panel...",
               "Open Micro-Manager script editor window",
               mmStudio_.uiManager()::showScriptPanel);
 
       populateQuickAccessMenu();
-      toolsMenu_.add(quickAccessMenu_);
+      toolsMenu.add(quickAccessMenu_);
 
-      GUIUtils.addMenuItem(toolsMenu_, "Shortcuts...",
-              "Create keyboard shortcuts to activate image acquisition, mark positions, or run custom scripts",
+      GUIUtils.addMenuItem(toolsMenu, "Shortcuts...",
+              "Create keyboard shortcuts to activate image acquisition, "
+               + "mark positions, or run custom scripts",
               HotKeysDialog::new);
 
-      GUIUtils.addMenuItem(toolsMenu_, "Messages...",
+      GUIUtils.addMenuItem(toolsMenu, "Messages...",
               "Show the Messages window", () -> ((DefaultAlertManager)
                       mmStudio_.alerts()).alertsWindow().showWithoutFocus(),
               "bell.png");
 
-      toolsMenu_.addSeparator();
+      toolsMenu.addSeparator();
 
-      GUIUtils.addMenuItem(toolsMenu_, "Stage Control...",
+      GUIUtils.addMenuItem(toolsMenu, "Stage Control...",
               "Control the stage position with a virtual joystick",
                () -> StageControlFrame.showStageControl(mmStudio_),
               "move.png");
 
-      centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
+      centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu,
               "Mouse Moves Stage (Use Hand Tool)",
               "When enabled, double clicking or dragging in the snap/live\n"
               + "window moves the XY-stage. Requires the hand tool.", () -> {
@@ -84,26 +92,26 @@ public final class ToolsMenu {
                  centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
                          "/org/micromanager/icons/" + icon));
               },
-              getMouseMovesStage() );
+              getMouseMovesStage());
       String icon = getMouseMovesStage() ? "move_hand_on.png" : "move_hand.png";
       centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
               "/org/micromanager/icons/" + icon));
 
-      GUIUtils.addMenuItem(toolsMenu_, "Stage Position List...",
+      GUIUtils.addMenuItem(toolsMenu, "Stage Position List...",
               "Open the stage position list window",
               () -> mmStudio_.app().showPositionList(),
               "application_view_list.png");
 
-      toolsMenu_.addSeparator();
+      toolsMenu.addSeparator();
 
-      GUIUtils.addMenuItem(toolsMenu_, "Multi-Dimensional Acquisition...",
+      GUIUtils.addMenuItem(toolsMenu, "Multi-Dimensional Acquisition...",
               "Open multi-dimensional acquisition setup window",
               mmStudio_.uiManager()::openAcqControlDialog,
               "film.png");
 
-      toolsMenu_.addSeparator();
+      toolsMenu.addSeparator();
 
-      GUIUtils.addMenuItem(toolsMenu_, "Options...",
+      GUIUtils.addMenuItem(toolsMenu, "Options...",
               "Set a variety of Micro-Manager configuration options", () -> {
                  final int oldBufsize = mmStudio_.settings().getCircularBufferSize();
 
@@ -179,6 +187,12 @@ public final class ToolsMenu {
       populateQuickAccessMenu();
    }
 
+   /**
+    * Handles event signalling that a change in control of the stage by the mouse occurred.
+    *
+    * @param event Signals whether the user does or does not want to control the stage
+    *              with the mouse.
+    */
    @Subscribe
    public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
       String icon = event.isEnabled() ? "move_hand_on.png" : "move_hand.png";
@@ -188,13 +202,13 @@ public final class ToolsMenu {
    }
 
    public boolean getMouseMovesStage() {
-      return mmStudio_.profile().getSettings(ToolsMenu.class).
-              getBoolean(MOUSE_MOVES_STAGE, false);
+      return mmStudio_.profile().getSettings(ToolsMenu.class)
+            .getBoolean(MOUSE_MOVES_STAGE, false);
    }
 
    public void setMouseMovesStage(boolean doesMove) {
-      mmStudio_.profile().getSettings(ToolsMenu.class).
-              putBoolean(MOUSE_MOVES_STAGE, doesMove);
+      mmStudio_.profile().getSettings(ToolsMenu.class)
+            .putBoolean(MOUSE_MOVES_STAGE, doesMove);
    }
 
 }

@@ -57,8 +57,7 @@ public final class PipelineTable extends JTable {
             int row, int column) {
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
-         }
-         else {
+         } else {
             panel_.setBackground(table.getBackground());
          }
          return panel_;
@@ -99,8 +98,7 @@ public final class PipelineTable extends JTable {
 
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
-         }
-         else {
+         } else {
             panel_.setBackground(table.getBackground());
          }
          return panel_;
@@ -131,8 +129,7 @@ public final class PipelineTable extends JTable {
       if (i >= 0) {
          Object cellValue = getModel().getValueAt(i,
                PipelineTableModel.CONFIGURE_COLUMN);
-         ConfiguratorWrapper processor = (ConfiguratorWrapper) cellValue;
-         return processor;
+         return (ConfiguratorWrapper) cellValue;
       }
       return null;
    }

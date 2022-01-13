@@ -20,7 +20,6 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.data.internal.DefaultNewPipelineEvent;
 import org.micromanager.internal.MMStudio;
@@ -35,10 +34,10 @@ public final class PipelineTableModel extends AbstractTableModel {
    private static final int NUM_COLUMNS = 4;
    private static final String SAVED_PIPELINE = "saved pipeline configuration";
 
-   private ArrayList<ConfiguratorWrapper> pipelineConfigs_;
+   private final ArrayList<ConfiguratorWrapper> pipelineConfigs_;
 
    PipelineTableModel() {
-      pipelineConfigs_ = new ArrayList<ConfiguratorWrapper>();
+      pipelineConfigs_ = new ArrayList<>();
    }
 
    public void addConfigurator(ConfiguratorWrapper configurator) {
@@ -55,7 +54,7 @@ public final class PipelineTableModel extends AbstractTableModel {
    public void clearPipeline() {
       // Create a copy of the list as we'll be removing from it as we iterate
       // over it.
-      for (ConfiguratorWrapper config : new ArrayList<ConfiguratorWrapper>(pipelineConfigs_)) {
+      for (ConfiguratorWrapper config : new ArrayList<>(pipelineConfigs_)) {
          removeConfigurator(config);
       }
    }
@@ -83,12 +82,13 @@ public final class PipelineTableModel extends AbstractTableModel {
 
    /**
     * Provide a list of factories for all enabled processors.
+    *
     * @param isLiveMode if true, select configurators enabled for live, if
     *        false, select generally-enabled configurators.
     */
    public List<ProcessorFactory> getPipelineFactories(boolean isLiveMode) {
       List<ConfiguratorWrapper> configs = getEnabledConfigurators(isLiveMode);
-      ArrayList<ProcessorFactory> result = new ArrayList<ProcessorFactory>();
+      ArrayList<ProcessorFactory> result = new ArrayList<>();
       for (ConfiguratorWrapper config : configs) {
          PropertyMap settings = config.getConfigurator().getSettings();
          result.add(config.getPlugin().createFactory(settings));
@@ -103,15 +103,15 @@ public final class PipelineTableModel extends AbstractTableModel {
       return pipelineConfigs_;
    }
 
-   /*
-   Provide a list of all enabled configurators. If the argument is true then only configurators
-   that are enabled for live mode are returned.
+   /**
+    * Provide a list of all enabled configurators. If the argument is true then only configurators
+    * that are enabled for live mode are returned.
    */
    public List<ConfiguratorWrapper> getEnabledConfigurators(boolean isLiveMode) {
-      ArrayList<ConfiguratorWrapper> result = new ArrayList<ConfiguratorWrapper>();
+      ArrayList<ConfiguratorWrapper> result = new ArrayList<>();
       for (ConfiguratorWrapper config : pipelineConfigs_) {
-         if ((isLiveMode && config.isEnabledInLive()) ||
-               (!isLiveMode && config.isEnabled())) {
+         if ((isLiveMode && config.isEnabledInLive())
+               || (!isLiveMode && config.isEnabled())) {
             result.add(config);
          }
       }
@@ -138,8 +138,9 @@ public final class PipelineTableModel extends AbstractTableModel {
             return String.class;
          case CONFIGURE_COLUMN:
             return ConfiguratorWrapper.class;
+         default:
+            return Object.class;
       }
-      return Object.class;
    }
 
    @Override
@@ -153,8 +154,9 @@ public final class PipelineTableModel extends AbstractTableModel {
             return "Processor";
          case CONFIGURE_COLUMN:
             return "Settings";
+         default:
+            return "";
       }
-      return "";
    }
 
    @Override
@@ -182,8 +184,9 @@ public final class PipelineTableModel extends AbstractTableModel {
             return pipelineConfigs_.get(row).getName();
          case CONFIGURE_COLUMN:
             return pipelineConfigs_.get(row);
+         default:
+            return null;
       }
-      return null;
    }
 
    @Override
@@ -191,8 +194,7 @@ public final class PipelineTableModel extends AbstractTableModel {
       if (column == ENABLED_COLUMN) {
          pipelineConfigs_.get(row).setEnabled((Boolean) value);
          fireTableDataChanged();
-      }
-      else if (column == ENABLED_LIVE_COLUMN) {
+      } else if (column == ENABLED_LIVE_COLUMN) {
          pipelineConfigs_.get(row).setEnabledInLive((Boolean) value);
          fireTableDataChanged();
       }
@@ -212,7 +214,7 @@ public final class PipelineTableModel extends AbstractTableModel {
     * restored later.
     */
    public void savePipelineToProfile(Studio studio) {
-      ArrayList<String> serializedConfigs = new ArrayList<String>();
+      ArrayList<String> serializedConfigs = new ArrayList<>();
       for (ConfiguratorWrapper config : pipelineConfigs_) {
          serializedConfigs.add(config.toJSON());
       }
@@ -225,9 +227,9 @@ public final class PipelineTableModel extends AbstractTableModel {
     * updated the model.
     */
    public boolean restorePipelineFromProfile(Studio studio) {
-      List<String> serializedConfigs = studio.profile().
-              getSettings(PipelineTableModel.class).
-              getStringList(SAVED_PIPELINE, new String[] {});
+      List<String> serializedConfigs = studio.profile()
+            .getSettings(PipelineTableModel.class)
+            .getStringList(SAVED_PIPELINE, new String[] {});
       boolean didUpdate = false;
       for (String configString : serializedConfigs) {
          ConfiguratorWrapper config = ConfiguratorWrapper.fromString(

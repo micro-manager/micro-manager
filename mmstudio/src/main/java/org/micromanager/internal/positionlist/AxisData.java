@@ -20,7 +20,9 @@
 package org.micromanager.internal.positionlist;
 
 class AxisData {
-   public enum AxisType {oneD, twoD};
+   public enum AxisType {
+      oneD, twoD
+   }
 
    private boolean use_;
    private final String axisName_;
@@ -31,9 +33,20 @@ class AxisData {
       axisName_ = axisName;
       type_ = type;
    }
-   public boolean getUse() {return use_;}
-   public String getAxisName() {return axisName_;}
-   public AxisType getType() {return type_;}
+
+   public boolean getUse() {
+      return use_;
+   }
+
+   public String getAxisName() {
+      return axisName_;
+   }
+
+   public AxisType getType() {
+      return type_;
+   }
    
-   public void setUse(boolean use) {use_ = use;}
+   public void setUse(boolean use) {
+      use_ = use;
+   }
 }

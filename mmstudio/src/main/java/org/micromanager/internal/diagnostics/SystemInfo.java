@@ -33,7 +33,9 @@ public final class SystemInfo {
    }
 
    public interface SystemInfoSection {
+
       String getTitle();
+
       String getReport();
 
       // In addition to implementing the above methods, implementing classes
@@ -45,7 +47,7 @@ public final class SystemInfo {
 
    // Private for the time being
    private static List<SystemInfoSection> getAllSections(boolean includeUnchanging) {
-      List<SystemInfoSection> sections = new ArrayList<SystemInfoSection>();
+      List<SystemInfoSection> sections = new ArrayList<>();
 
       if (includeUnchanging) {
          sections.add(new MMVersionInfoSection());

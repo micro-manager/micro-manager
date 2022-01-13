@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.internal.propertymap;
 
 import com.google.gson.Gson;
@@ -46,8 +47,8 @@ public final class PropertyMapJSONSerializer {
    private static class VersionedMap {
       String encoding; // Always 'UTF-8'; included only to aid posterity
       String format; // Always 'Micro-Manager Property Map'
-      int major_version;
-      int minor_version;
+      int majorVersion;
+      int minorVersion;
       PropertyMap map;
 
       VersionedMap() {
@@ -69,8 +70,8 @@ public final class PropertyMapJSONSerializer {
          // is completely unrelated to the specific keys stored within. When
          // the contents require versioning, they should be given their own
          // version.
-         major_version = 2;
-         minor_version = 0;
+         majorVersion = 2;
+         minorVersion = 0;
 
          map = propertyMap;
       }
@@ -89,17 +90,15 @@ public final class PropertyMapJSONSerializer {
          this.type = type;
          if (value instanceof List<?>) {
             this.array = (List<?>) value;
-         }
-         else {
+         } else {
             this.scalar = value;
          }
       }
 
       void construct(Builder builder, String key) {
          if (array != null) {
-            type.constructArray(builder, key, (List<?>) array);
-         }
-         else {
+            type.constructArray(builder, key, array);
+         } else {
             type.construct(builder, key, scalar);
          }
       }
@@ -120,26 +119,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return new JsonPrimitive((Boolean) value);
          }
+
          @Override
          Boolean deserialize(JsonElement je, JsonDeserializationContext context) {
             return je.getAsBoolean();
          }
+
          @Override
          Class<Boolean> getScalarClass() {
             return boolean.class;
          }
+
          @Override
          Boolean extractValue(PropertyMap map, String key) {
             return map.getBoolean(key, false);
          }
+
          @Override
          List<Boolean> extractArray(PropertyMap map, String key) {
             return map.getBooleanList(key, (List<Boolean>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
-            builder.putBoolean(key, ((Boolean) value).booleanValue());
+            builder.putBoolean(key, (Boolean) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putBooleanList(key, (List<Boolean>) values);
@@ -151,26 +156,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return new JsonPrimitive((Byte) value);
          }
+
          @Override
          Byte deserialize(JsonElement je, JsonDeserializationContext context) {
             return je.getAsByte();
          }
+
          @Override
          Class<Byte> getScalarClass() {
             return byte.class;
          }
+
          @Override
          Byte extractValue(PropertyMap map, String key) {
             return map.getByte(key, (byte) 0);
          }
+
          @Override
          List<Byte> extractArray(PropertyMap map, String key) {
             return map.getByteList(key, (List<Byte>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
             builder.putByte(key, (Byte) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putByteList(key, (List<Byte>) values);
@@ -182,26 +193,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return new JsonPrimitive((Short) value);
          }
+
          @Override
          Short deserialize(JsonElement je, JsonDeserializationContext context) {
             return je.getAsShort();
          }
+
          @Override
          Class<Short> getScalarClass() {
             return short.class;
          }
+
          @Override
          Short extractValue(PropertyMap map, String key) {
             return map.getShort(key, (short) 0);
          }
+
          @Override
          List<Short> extractArray(PropertyMap map, String key) {
             return map.getShortList(key, (List<Short>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
             builder.putShort(key, (Short) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putShortList(key, (List<Short>) values);
@@ -213,26 +230,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return new JsonPrimitive((Integer) value);
          }
+
          @Override
          Integer deserialize(JsonElement je, JsonDeserializationContext context) {
             return je.getAsInt();
          }
+
          @Override
          Class<Integer> getScalarClass() {
             return int.class;
          }
+
          @Override
          Object extractValue(PropertyMap map, String key) {
             return map.getInteger(key, 0);
          }
+
          @Override
          List<?> extractArray(PropertyMap map, String key) {
             return map.getIntegerList(key, (List<Integer>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
-            builder.putInteger(key, ((Integer) value).intValue());
+            builder.putInteger(key, (Integer) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putIntegerList(key, (List<Integer>) values);
@@ -244,26 +267,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return new JsonPrimitive((Long) value);
          }
+
          @Override
          Object deserialize(JsonElement je, JsonDeserializationContext context) {
             return je.getAsLong();
          }
+
          @Override
          Class<?> getScalarClass() {
             return long.class;
          }
+
          @Override
          Object extractValue(PropertyMap map, String key) {
             return map.getLong(key, 0L);
          }
+
          @Override
          List<?> extractArray(PropertyMap map, String key) {
             return map.getLongList(key, (List<Long>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
-            builder.putLong(key, ((Long) value).longValue());
+            builder.putLong(key, (Long) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putLongList(key, (List<Long>) values);
@@ -275,26 +304,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return new JsonPrimitive((Float) value);
          }
+
          @Override
          Object deserialize(JsonElement je, JsonDeserializationContext context) {
             return je.getAsFloat();
          }
+
          @Override
          Class<?> getScalarClass() {
             return float.class;
          }
+
          @Override
          Object extractValue(PropertyMap map, String key) {
             return map.getFloat(key, 0.0f);
          }
+
          @Override
          List<?> extractArray(PropertyMap map, String key) {
             return map.getFloatList(key, (List<Float>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
             builder.putFloat(key, (Float) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putFloatList(key, (List<Float>) values);
@@ -306,26 +341,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return new JsonPrimitive((Double) value);
          }
+
          @Override
          Object deserialize(JsonElement je, JsonDeserializationContext context) {
             return je.getAsDouble();
          }
+
          @Override
          Class<?> getScalarClass() {
             return double.class;
          }
+
          @Override
          Object extractValue(PropertyMap map, String key) {
             return map.getDouble(key, 0.0);
          }
+
          @Override
          List<?> extractArray(PropertyMap map, String key) {
             return map.getDoubleList(key, (List<Double>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
-            builder.putDouble(key, ((Double) value).doubleValue());
+            builder.putDouble(key, (Double) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putDoubleList(key, (List<Double>) values);
@@ -337,26 +378,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return new JsonPrimitive((String) value);
          }
+
          @Override
          String deserialize(JsonElement je, JsonDeserializationContext context) {
             return je.getAsString();
          }
+
          @Override
          Class<String> getScalarClass() {
             return String.class;
          }
+
          @Override
          String extractValue(PropertyMap map, String key) {
             return map.getString(key, null);
          }
+
          @Override
          List<String> extractArray(PropertyMap map, String key) {
             return map.getStringList(key, (List<String>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
             builder.putString(key, (String) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putStringList(key, (List<String>) values);
@@ -368,26 +415,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return new JsonPrimitive(((java.util.UUID) value).toString());
          }
+
          @Override
          Object deserialize(JsonElement je, JsonDeserializationContext context) {
             return java.util.UUID.fromString(je.getAsString());
          }
+
          @Override
          Class<?> getScalarClass() {
             return java.util.UUID.class;
          }
+
          @Override
          Object extractValue(PropertyMap map, String key) {
             return map.getUUID(key, null);
          }
+
          @Override
          List<?> extractArray(PropertyMap map, String key) {
             return map.getUUIDList(key, (List<java.util.UUID>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
             builder.putUUID(key, (java.util.UUID) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putUUIDList(key, (List<java.util.UUID>) values);
@@ -411,6 +464,7 @@ public final class PropertyMapJSONSerializer {
                   ((Color) value).getRGBComponents(null)[3]));
             return jo;
          }
+
          @Override
          Object deserialize(JsonElement je, JsonDeserializationContext context) {
             JsonObject jo = je.getAsJsonObject();
@@ -423,22 +477,27 @@ public final class PropertyMapJSONSerializer {
                   components.get(2).getAsFloat(),
                   jo.get("Alpha").getAsFloat());
          }
+
          @Override
          Class<?> getScalarClass() {
             return Color.class;
          }
+
          @Override
          Object extractValue(PropertyMap map, String key) {
             return map.getColor(key, null);
          }
+
          @Override
          List<?> extractArray(PropertyMap map, String key) {
             return map.getColorList(key, (List<Color>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
             builder.putColor(key, (Color) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putColorList(key, (List<Color>) values);
@@ -499,26 +558,32 @@ public final class PropertyMapJSONSerializer {
          JsonElement serialize(Object value, JsonSerializationContext context) {
             return context.serialize(value);
          }
+
          @Override
          Object deserialize(JsonElement je, JsonDeserializationContext context) {
             return context.deserialize(je, PropertyMap.class);
          }
+
          @Override
          Class<?> getScalarClass() {
             return PropertyMap.class;
          }
+
          @Override
          Object extractValue(PropertyMap map, String key) {
             return map.getPropertyMap(key, null);
          }
+
          @Override
          List<?> extractArray(PropertyMap map, String key) {
             return map.getPropertyMapList(key, (List<PropertyMap>) null);
          }
+
          @Override
          void construct(Builder builder, String key, Object value) {
             builder.putPropertyMap(key, (PropertyMap) value);
          }
+
          @Override
          void constructArray(Builder builder, String key, List<?> values) {
             builder.putPropertyMapList(key, (List<PropertyMap>) values);
@@ -664,36 +729,38 @@ public final class PropertyMapJSONSerializer {
       ;
 
       abstract JsonElement serialize(Object value, JsonSerializationContext context);
+
       abstract Object deserialize(JsonElement je, JsonDeserializationContext context);
 
       abstract Class<?> getScalarClass();
+
       Class<?> getArrayClass() {
          return Array.newInstance(getScalarClass(), 0).getClass();
       }
+
       abstract Object extractValue(PropertyMap map, String key);
+
       abstract List<?> extractArray(PropertyMap map, String key);
 
       abstract void construct(Builder builder, String key, Object value);
+
       abstract void constructArray(Builder builder, String key, List<?> values);
    }
 
    private static class ValueSerDes
-         implements JsonSerializer<TypeAndValue>, JsonDeserializer<TypeAndValue>
-   {
+         implements JsonSerializer<TypeAndValue>, JsonDeserializer<TypeAndValue> {
       @Override
       public JsonElement serialize(TypeAndValue t, Type type,
-            JsonSerializationContext context)
-      {
+            JsonSerializationContext context) {
          JsonObject ret = new JsonObject();
          ret.addProperty(Keys.TYPE, t.type.name());
          if (t.array != null) {
             JsonArray ja = new JsonArray();
-            for (Object value : (List<?>) t.array) {
+            for (Object value :  t.array) {
                ja.add(t.type.serialize(value, context));
             }
             ret.add(Keys.ARRAY, ja);
-         }
-         else {
+         } else {
             ret.add(Keys.SCALAR, t.type.serialize(t.scalar, context));
          }
          return ret;
@@ -701,40 +768,34 @@ public final class PropertyMapJSONSerializer {
 
       @Override
       public TypeAndValue deserialize(JsonElement je, Type type,
-            JsonDeserializationContext context) throws JsonParseException
-      {
-          TypeAndValue tv = new TypeAndValue();
-          try {
+            JsonDeserializationContext context) throws JsonParseException {
+         TypeAndValue tv = new TypeAndValue();
+         try {
             JsonObject jo = je.getAsJsonObject();
             tv.type = ValueType.valueOf(jo.get(Keys.TYPE).getAsString());
             if (jo.get(Keys.SCALAR) == null || jo.get(Keys.SCALAR).isJsonNull()) {
-               List<Object> values = new ArrayList<Object>();
+               List<Object> values = new ArrayList<>();
                for (JsonElement ae : jo.get(Keys.ARRAY).getAsJsonArray()) {
                   values.add(tv.type.deserialize(ae, context));
                }
                tv.array = values;
-            }
-            else {
+            } else {
                tv.scalar = tv.type.deserialize(jo.get(Keys.SCALAR), context);
             }
-          }
-          catch (JsonParseException e) {
-             throw e;
-          }
-          catch (Exception e) {
-             throw new JsonParseException(e);
-          }
-          return tv;
+         } catch (JsonParseException e) {
+            throw e;
+         } catch (Exception e) {
+            throw new JsonParseException(e);
+         }
+         return tv;
       }
    }
 
    private static class PropertyMapSerDes
-         implements JsonSerializer<PropertyMap>, JsonDeserializer<PropertyMap>
-   {
+         implements JsonSerializer<PropertyMap>, JsonDeserializer<PropertyMap> {
       @Override
       public JsonElement serialize(PropertyMap t, Type type,
-            JsonSerializationContext context)
-      {
+            JsonSerializationContext context) {
          JsonObject jo = new JsonObject();
          for (Map.Entry<String, TypeAndValue> e : extractValuesAndTypes(t)) {
             jo.add(e.getKey(), context.serialize(e.getValue()));
@@ -744,8 +805,7 @@ public final class PropertyMapJSONSerializer {
 
       @Override
       public PropertyMap deserialize(JsonElement json, Type typeOfT,
-            JsonDeserializationContext context) throws JsonParseException
-      {
+            JsonDeserializationContext context) throws JsonParseException {
          Builder builder = PropertyMaps.builder();
          JsonObject jo = json.getAsJsonObject();
          for (Map.Entry<String, JsonElement> e : jo.entrySet()) {
@@ -760,18 +820,15 @@ public final class PropertyMapJSONSerializer {
 
    // Convert property map to list of key-TypeAndValue pairs
    private static Iterable<Map.Entry<String, TypeAndValue>> extractValuesAndTypes(
-         PropertyMap map)
-   {
-      List<Map.Entry<String, TypeAndValue>> ret =
-            new ArrayList<Map.Entry<String, TypeAndValue>>();
+         PropertyMap map) {
+      List<Map.Entry<String, TypeAndValue>> ret = new ArrayList<>();
       for (String key : map.keySet()) {
          for (ValueType t : ValueType.values()) {
             if (t.getScalarClass().isAssignableFrom(map.getValueTypeForKey(key))) {
                ret.add(new AbstractMap.SimpleEntry(key,
                      new TypeAndValue(t, t.extractValue(map, key))));
                break;
-            }
-            else if (t.getArrayClass().isAssignableFrom(map.getValueTypeForKey(key))) {
+            } else if (t.getArrayClass().isAssignableFrom(map.getValueTypeForKey(key))) {
                ret.add(new AbstractMap.SimpleEntry(key,
                      new TypeAndValue(t, t.extractArray(map, key))));
                break;
@@ -780,39 +837,34 @@ public final class PropertyMapJSONSerializer {
       }
 
       // For readability only
-      Collections.sort(ret, new Comparator<Map.Entry<String, TypeAndValue>>() {
-         @Override
-         public int compare(Map.Entry<String, TypeAndValue> o1, Map.Entry<String, TypeAndValue> o2) {
-            return o1.getKey().compareTo(o2.getKey());
-         }
-      });
+      Collections.sort(ret, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
 
       return ret;
    }
 
    private static Gson makeGson() {
-      return new GsonBuilder().
-            setPrettyPrinting().
-            disableHtmlEscaping().
-            serializeSpecialFloatingPointValues().
-            registerTypeAdapter(TypeAndValue.class, new ValueSerDes()).
-            registerTypeHierarchyAdapter(PropertyMap.class, new PropertyMapSerDes()).
-            create();
+      return new GsonBuilder()
+            .setPrettyPrinting()
+            .disableHtmlEscaping()
+            .serializeSpecialFloatingPointValues()
+            .registerTypeAdapter(TypeAndValue.class, new ValueSerDes())
+            .registerTypeHierarchyAdapter(PropertyMap.class, new PropertyMapSerDes())
+            .create();
    }
 
    /**
     * Deserialize from a Gson JsonElement.
     *
-    * This method can be used when a modern property map is embedded within a
+    * <p>This method can be used when a modern property map is embedded within a
     * larger JSON data stream.
-    * <p>
-    * Only the modern format is supported; PropertyMap "1.0" will fail.
-    * <p>
-    * <strong>Warning:</strong> Throws various unchecked exceptions for format
+    *
+    * <p>Only the modern format is supported; PropertyMap "1.0" will fail.
+    *
+    * <p><strong>Warning:</strong> Throws various unchecked exceptions for format
     * errors.
     *
-    * @param je
-    * @return
+    * @param je GSON JSonElement to be de-serialized
+    * @return PropertyMap representation of the input
     */
    public static PropertyMap fromGson(JsonElement je) {
       return makeGson().fromJson(je, PropertyMap.class);
@@ -828,31 +880,30 @@ public final class PropertyMapJSONSerializer {
 
       VersionedMap data = makeGson().fromJson(json, VersionedMap.class);
       VersionedMap template = new VersionedMap(null);
-      if (data == null ||
-            !template.format.equals(data.format) ||
-            !template.encoding.equals(data.encoding))
-      {
+      if (data == null
+            || !template.format.equals(data.format)
+            || !template.encoding.equals(data.encoding)) {
          // We can be pretty sure that any legacy JSON will satisfy the above
          // condition, although the opposite is not generally true.
          try {
             return LegacyPropertyMap1Deserializer.fromJSON(json);
+         } catch (Exception e) {
+            throw new IOException(
+                  "Invalid property map format; attempted to interpret as legacy format but "
+                        + "that didn't work either", e);
          }
-         catch (Exception e) {
-            throw new IOException("Invalid property map format; attempted to interpret as legacy format but that didn't work either", e);
-         }
-      }
-      else if (data.major_version > template.major_version) {
-         throw new IOException("Properties are saved in a newer format that is incompatible with this version of the application.");
-      }
-      else if (data.major_version < 2) {
+      } else if (data.majorVersion > template.majorVersion) {
+         throw new IOException(
+               "Properties are saved in a newer format that is incompatible with this "
+                     + "version of the application.");
+      } else if (data.majorVersion < 2) {
          // Never used with this way of versioning
          throw new IOException("Invalid property map format");
-      }
-      else if (data.major_version < template.major_version) {
+      } else if (data.majorVersion < template.majorVersion) {
          // When template.major_version becomes >2, conversion from old format
          // should be added here.
       }
-      if (data.minor_version > template.major_version) {
+      if (data.minorVersion > template.majorVersion) {
          // TODO We could in this case silently accept unknown value types
          // (and somehow preserve them in the returned property map so that
          // they can be resaved).
@@ -863,11 +914,9 @@ public final class PropertyMapJSONSerializer {
    public static PropertyMap fromJSON(String json) throws IOException {
       try {
          return fromJSONImpl(json);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          throw e;
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new IOException(e);
       }
    }

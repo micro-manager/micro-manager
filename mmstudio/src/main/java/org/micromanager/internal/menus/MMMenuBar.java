@@ -20,13 +20,16 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 
 /**
- * This class is the standard Micro-Manager menu bar
+ * This class is the standard Micro-Manager menu bar.
  */
 public final class MMMenuBar extends JMenuBar {
    private FileMenu fileMenu_;
    private ToolsMenu toolsMenu_;
    private final MMStudio mmStudio_;
-   
+
+   /**
+    * Creates the standard Micro-Manager menu bar.
+    */
    public static MMMenuBar createMenuBar(MMStudio mmStudio) {
       MMMenuBar result = new MMMenuBar(mmStudio);
       result.createSubMenus();

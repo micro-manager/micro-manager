@@ -12,6 +12,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.internal.pipelineinterface;
 
 import java.io.IOException;
@@ -32,9 +33,9 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Configurator, for ease of use.
  */
 public final class ConfiguratorWrapper {
-   private ProcessorPlugin plugin_;
-   private ProcessorConfigurator configurator_;
-   private String name_;
+   private final ProcessorPlugin plugin_;
+   private final ProcessorConfigurator configurator_;
+   private final String name_;
    private boolean isEnabled_;
    private boolean isEnabledInLive_;
 
@@ -87,8 +88,7 @@ public final class ConfiguratorWrapper {
          json.put("pluginName", plugin_.getClass().getName());
          json.put("configSettings", configurator_.getSettings().toJSON());
          return json.toString();
-      }
-      catch (JSONException e) {
+      } catch (JSONException e) {
          ReportingUtils.logError(e, "Unable to serialize ConfiguratorWrapper");
          return null;
       }
@@ -105,8 +105,7 @@ public final class ConfiguratorWrapper {
          PropertyMap settings;
          try {
             settings = PropertyMaps.fromJSON(json.getString("configSettings"));
-         }
-         catch (IOException ex) {
+         } catch (IOException ex) {
             throw new RuntimeException("Failed to parse pipeline config pmap JSON", ex);
          }
          ProcessorConfigurator configurator = plugin.createConfigurator(settings);
@@ -116,14 +115,13 @@ public final class ConfiguratorWrapper {
          // This flag was added later.
          if (json.has("isEnabledInLive")) {
             result.setEnabledInLive(json.getBoolean("isEnabledInLive"));
-         }
-         else {
+         } else {
             result.setEnabledInLive(result.isEnabled());
          }
          return result;
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Error deserializing ConfiguratorWrapper from [" + contents + "]");
+      } catch (JSONException e) {
+         ReportingUtils.logError(e,
+               "Error deserializing ConfiguratorWrapper from [" + contents + "]");
          return null;
       }
    }

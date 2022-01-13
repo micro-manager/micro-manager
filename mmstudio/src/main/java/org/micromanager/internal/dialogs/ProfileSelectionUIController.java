@@ -31,14 +31,13 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JComboBox;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
@@ -69,10 +68,9 @@ public final class ProfileSelectionUIController
    private ChangeListener profileIndexListener_;
 
    private final JPanel panel_;
-   private final JComboBox profileComboBox_ = new JComboBox();
+   private final JComboBox<ProfileComboItem> profileComboBox_ = new JComboBox<>();
    private final PopupButton gearButton_;
 
-   private final JPopupMenu gearMenu_ = new JPopupMenu();
    private final JMenuItem gearMenuNewProfileItem_ =
          new JMenuItem("New User Profile...");
    private final JMenuItem gearMenuDuplicateProfileItem_ =
@@ -87,14 +85,17 @@ public final class ProfileSelectionUIController
    private static class ProfileComboItem {
       final UUID uuid_;
       final String name_;
+
       ProfileComboItem(UUID uuid, String name) {
          uuid_ = uuid;
          name_ = name;
       }
+
       @Override
       public String toString() {
          return name_;
       }
+
       UUID getUUID() {
          return uuid_;
       }
@@ -113,16 +114,12 @@ public final class ProfileSelectionUIController
          item.addActionListener(ret);
       }
 
-      ret.panel_.addHierarchyListener(new HierarchyListener() {
-         @Override
-         public void hierarchyChanged(HierarchyEvent e) {
-            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-               if (ret.panel_.isShowing()) {
-                  ret.uiWasShown();
-               }
-               else {
-                  ret.uiWasHidden();
-               }
+      ret.panel_.addHierarchyListener(e -> {
+         if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+            if (ret.panel_.isShowing()) {
+               ret.uiWasShown();
+            } else {
+               ret.uiWasHidden();
             }
          }
       });
@@ -130,23 +127,24 @@ public final class ProfileSelectionUIController
       return ret;
    }
 
-   private ProfileSelectionUIController(Application app, UserProfileAdmin admin) throws IOException {
+   private ProfileSelectionUIController(Application app, UserProfileAdmin admin) {
       app_ = app;
       admin_ = admin;
 
-
-      profileComboBox_.setPrototypeDisplayValue("");
+      ProfileComboItem blank = new ProfileComboItem(UUID.randomUUID(), "");
+      profileComboBox_.setPrototypeDisplayValue(blank);
       profileComboBox_.setMaximumRowCount(32);
 
-      gearMenu_.add(gearMenuNewProfileItem_);
-      gearMenu_.add(gearMenuDuplicateProfileItem_);
-      gearMenu_.add(gearMenuRenameProfileItem_);
-      gearMenu_.add(gearMenuDeleteProfileItem_);
-      gearMenu_.add(gearMenuReadOnlyCheckBox_);
+      JPopupMenu gearMenu = new JPopupMenu();
+      gearMenu.add(gearMenuNewProfileItem_);
+      gearMenu.add(gearMenuDuplicateProfileItem_);
+      gearMenu.add(gearMenuRenameProfileItem_);
+      gearMenu.add(gearMenuDeleteProfileItem_);
+      gearMenu.add(gearMenuReadOnlyCheckBox_);
 
       gearButton_ = PopupButton.create(
             IconLoader.getIcon("/org/micromanager/icons/gear.png"),
-            gearMenu_);
+            gearMenu);
       gearButton_.setPreferredSize(new Dimension(24, 22));
 
       panel_ = new JPanel(new MigLayout(
@@ -154,8 +152,8 @@ public final class ProfileSelectionUIController
       panel_.add(profileComboBox_, new CC().growX().pushX());
       panel_.add(gearButton_, new CC().width("pref!").height("pref!"));
       profileComboBox_.setToolTipText(
-            "<html>Select the user profile for this session.<br />" +
-                  "Settings and preferences are saved in each user profile.</html>");
+            "<html>Select the user profile for this session.<br />"
+                  + "Settings and preferences are saved in each user profile.</html>");
       gearButton_.setToolTipText(
             "Manage user profiles");
    }
@@ -165,8 +163,7 @@ public final class ProfileSelectionUIController
       Map<UUID, String> profiles;
       try {
          profiles = admin_.getProfileUUIDsAndNames();
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          // If the profiles are not accessible, we should have gotten an error
          // before reaching here. Just leave combo box empty.
          ReportingUtils.logError(e, "Error getting profile index");
@@ -174,9 +171,9 @@ public final class ProfileSelectionUIController
       }
     
       // Sort profiles by name
-      Ordering<UUID> valueComparator = Ordering.
-              from(String.CASE_INSENSITIVE_ORDER).
-              onResultOf(Functions.forMap(profiles));
+      Ordering<UUID> valueComparator = Ordering
+            .from(String.CASE_INSENSITIVE_ORDER)
+            .onResultOf(Functions.forMap(profiles));
       Map<UUID, String> sortedProfiles = ImmutableSortedMap.copyOf(profiles, valueComparator);
     
       // Default profile first
@@ -209,7 +206,7 @@ public final class ProfileSelectionUIController
 
    private void setSelectedProfileUUID(UUID uuid) {
       for (int i = 0; i < profileComboBox_.getItemCount(); ++i) {
-         ProfileComboItem item = (ProfileComboItem) profileComboBox_.getItemAt(i);
+         ProfileComboItem item =  profileComboBox_.getItemAt(i);
          if (item.getUUID().equals(uuid)) {
             profileComboBox_.setSelectedIndex(i);
             break;
@@ -229,30 +226,25 @@ public final class ProfileSelectionUIController
    public void actionPerformed(ActionEvent event) {
       if (event.getSource() == profileComboBox_) {
          handleProfileSelection();
-      }
-      else if (event.getSource() == gearMenuNewProfileItem_) {
+      } else if (event.getSource() == gearMenuNewProfileItem_) {
          handleNewProfile();
-      }
-      else if (event.getSource() == gearMenuDuplicateProfileItem_) {
+      } else if (event.getSource() == gearMenuDuplicateProfileItem_) {
          handleDuplicateProfile();
-      }
-      else if (event.getSource() == gearMenuRenameProfileItem_) {
+      } else if (event.getSource() == gearMenuRenameProfileItem_) {
          handleRenameProfile();
-      }
-      else if (event.getSource() == gearMenuDeleteProfileItem_) {
+      } else if (event.getSource() == gearMenuDeleteProfileItem_) {
          handleDeleteProfile();
-      }
-      else if (event.getSource() == gearMenuReadOnlyCheckBox_) {
+      } else if (event.getSource() == gearMenuReadOnlyCheckBox_) {
          handleReadOnlyAction();
       }
    }
 
-   private void handleReadOnlyAction(){
+   private void handleReadOnlyAction() {
       UUID uuid = admin_.getUUIDOfCurrentProfile();
       if (uuid != null) {
-          try {
+         try {
             admin_.setProfileReadOnly(gearMenuReadOnlyCheckBox_.isSelected());
-          } catch (IOException e) {}
+         } catch (IOException e) { }
       }
    }
    
@@ -266,8 +258,7 @@ public final class ProfileSelectionUIController
             }
             gearMenuReadOnlyCheckBox_.setSelected(admin_.isProfileReadOnly());
          }
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          ReportingUtils.showError(e,
                "There was an error accessing the selected profile.");
       }
@@ -292,8 +283,7 @@ public final class ProfileSelectionUIController
          } while (!isProfileNameAvailable(name));
          UUID uuid = admin_.createProfile(name);
          admin_.setCurrentUserProfile(uuid);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          ReportingUtils.showError(e,
                "There was an error creating the User Profile",
                parent);
@@ -307,8 +297,7 @@ public final class ProfileSelectionUIController
          if (originalUUID == null) { // Just in case
             return;
          }
-         String originalName = admin_.getProfileUUIDsAndNames().
-               get(originalUUID);
+         String originalName = admin_.getProfileUUIDsAndNames().get(originalUUID);
          String name = null;
          do {
             if (name != null) {
@@ -326,8 +315,7 @@ public final class ProfileSelectionUIController
          } while (!isProfileNameAvailable(name));
          UUID uuid = admin_.duplicateProfile(originalUUID, name);
          admin_.setCurrentUserProfile(uuid);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          ReportingUtils.showError(e,
                "There was an error creating the User Profile",
                parent);
@@ -361,8 +349,7 @@ public final class ProfileSelectionUIController
          } while (!isProfileNameAvailable(newName));
          admin_.renameProfile(uuid, newName);
          admin_.setCurrentUserProfile(uuid);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          ReportingUtils.showError(e,
                "There was an error creating the User Profile",
                parent);
@@ -379,9 +366,8 @@ public final class ProfileSelectionUIController
          String profileName = admin_.getProfileUUIDsAndNames().get(uuid);
          int answer = JOptionPane.showConfirmDialog(parent,
                String.format(
-                     "<html>Are you sure you want to delete the user profile " +
-                           "\"%s\"?<br />" +
-                           "This cannot be undone.</html>",
+                     "<html>Are you sure you want to delete the user profile "
+                           + "\"%s\"?<br />" + "This cannot be undone.</html>",
                      profileName),
                "Delete User Profile",
                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -389,8 +375,7 @@ public final class ProfileSelectionUIController
             return;
          }
          admin_.removeProfile(uuid);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          ReportingUtils.showError(e,
                "There was an error deleting the User Profile",
                parent);
@@ -402,20 +387,10 @@ public final class ProfileSelectionUIController
    }
 
    private void uiWasShown() {
-      currentProfileListener_ = new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            setSelectedProfileUUID(admin_.getUUIDOfCurrentProfile());
-         }
-      };
+      currentProfileListener_ = e -> setSelectedProfileUUID(admin_.getUUIDOfCurrentProfile());
       admin_.addCurrentProfileChangeListener(currentProfileListener_);
 
-      profileIndexListener_ = new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            populateComboBox();
-         }
-      };
+      profileIndexListener_ = e -> populateComboBox();
       admin_.addIndexChangeListener(profileIndexListener_);
 
       populateComboBox();
@@ -438,10 +413,9 @@ public final class ProfileSelectionUIController
          f.add(c.getUI());
          f.pack();
          f.setVisible(true);
-      }
-      catch (IOException ex) {
-         Logger.getLogger(ProfileSelectionUIController.class.getName()).
-               log(Level.SEVERE, null, ex);
+      } catch (IOException ex) {
+         Logger.getLogger(ProfileSelectionUIController.class.getName())
+               .log(Level.SEVERE, null, ex);
       }
    }
 }
