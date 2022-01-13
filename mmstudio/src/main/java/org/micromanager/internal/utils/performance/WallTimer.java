@@ -31,7 +31,7 @@ public class WallTimer {
    }
 
    public long getNs() {
-      return System.nanoTime()- startNs_;
+      return System.nanoTime() - startNs_;
    }
 
    public double getMs() {

@@ -17,25 +17,34 @@ import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
+/**
+ * Collection of handy functions. Could probably be moved to the few places they are
+ * actually used.
+ */
 public final class JavaUtils {
 
    /**
     * Call a private method without arguments.
-    * @param obj
-    * @param theClass
-    * @param methodName
-    * @return 
-    * @throws java.lang.NoSuchMethodException
-    * @throws java.lang.IllegalAccessException
-    * @throws java.lang.reflect.InvocationTargetException
+    *
+    * @param obj Object on which to call a method
+    * @param theClass Class to which this object belongs
+    * @param methodName Name of the method to call
+    * @return  result of the method
+    * @throws NoSuchMethodException if the method was not found
+    * @throws IllegalAccessException if we still failed to call this method
+    * @throws IllegalArgumentException if arguments were incorrect
+    * @throws InvocationTargetException can happen
     */
-   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName)
+         throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
       return invokeRestrictedMethod(obj, theClass, methodName, (Object) null);
    }
 
    /**
     * Call a private method using reflection. Use looks like
-    * invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object param1, Class paramType1, Object param2, Class paramType2, ...)
+    * invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object param1,
+    * Class paramType1, Object param2, Class paramType2, ...)
+    *
     * @param obj
     * @param theClass
     * @param methodName
@@ -45,7 +54,10 @@ public final class JavaUtils {
     * @throws java.lang.IllegalAccessException
     * @throws java.lang.reflect.InvocationTargetException
     */
-   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object... paramsAndTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName,
+                                               Object... paramsAndTypes)
+         throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+         InvocationTargetException {
       Object[] params;
       Class[] paramTypes;
       int l;
@@ -66,11 +78,12 @@ public final class JavaUtils {
       return invokeRestrictedMethod(obj, theClass, methodName, params, paramTypes);
    }
 
-   /*
+   /**
     * Invoked a method of a private or protected field.
     * Pass a null first argument for static methods.
     */
-   public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName, Object[] params, Class[] paramTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+   public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName,
+                                               Object[] params, Class[] paramTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
       Method method = theClass.getDeclaredMethod(methodName, paramTypes);
       Object result;
 
@@ -228,8 +241,7 @@ public final class JavaUtils {
             path = path.substring(0, bang);
          }
          return path;
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          ReportingUtils.logError(e, "Unable to get path of jar");
          return "";
       }
@@ -247,7 +259,7 @@ public final class JavaUtils {
             } catch (URISyntaxException ignored) { }
          } else if (resource.getProtocol().equals("jar")) {
             String path = resource.getPath();
-            d = new Date( new File(path.substring(5, path.indexOf("!"))).lastModified() );
+            d = new Date(new File(path.substring(5, path.indexOf("!"))).lastModified() );
          } else if (resource.getProtocol().equals("zip")) {
             String path = resource.getPath();
             File jarFileOnDisk = new File(path.substring(0, path.indexOf("!")));

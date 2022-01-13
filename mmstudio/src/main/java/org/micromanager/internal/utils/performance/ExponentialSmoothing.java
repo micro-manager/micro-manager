@@ -25,8 +25,7 @@ public final class ExponentialSmoothing extends AbstractExponentialSmoothing {
       return new ExponentialSmoothing(timeConstantMs);
    }
 
-   private ExponentialSmoothing(double timeConstantMs)
-   {
+   private ExponentialSmoothing(double timeConstantMs) {
       super(timeConstantMs);
    }
 
@@ -34,8 +33,7 @@ public final class ExponentialSmoothing extends AbstractExponentialSmoothing {
       if (!isTimingStarted()) {
          markTime();
          initializeStats(x);
-      }
-      else {
+      } else {
          updateStats(markTimeAndGetDeltaTMs(), x);
       }
    }

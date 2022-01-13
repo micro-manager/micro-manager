@@ -16,10 +16,10 @@ package org.micromanager.internal.utils.performance;
 /**
  * Base implementation for exponential smoothing of time series statistic.
  *
- * This provides a common implementation for {@link ExponentialSmoothing} and
+ * <p>This provides a common implementation for {@link ExponentialSmoothing} and
  * {@link TimeIntervalExponentialSmoothing}.
  *
- * See https://en.wikipedia.org/wiki/Exponential_smoothing
+ * <p>See https://en.wikipedia.org/wiki/Exponential_smoothing
  *
  * @author Mark A. Tsuchida
  */
@@ -49,8 +49,7 @@ public class AbstractExponentialSmoothing {
    }
 
    public double getStandardDeviation() {
-      return Math.sqrt(rollingSquareAverage_ -
-            rollingAverage_ * rollingAverage_);
+      return Math.sqrt(rollingSquareAverage_ - rollingAverage_ * rollingAverage_);
    }
 
    @Override
@@ -93,8 +92,7 @@ public class AbstractExponentialSmoothing {
       final double alpha = alpha(deltaTMs);
       rollingAverage_ = alpha * x + (1.0 - alpha) * rollingAverage_;
 
-      rollingSquareAverage_ = alpha * (x * x) +
-            (1.0 - alpha) * rollingSquareAverage_;
+      rollingSquareAverage_ = alpha * (x * x) + (1.0 - alpha) * rollingSquareAverage_;
 
       ++count_;
    }

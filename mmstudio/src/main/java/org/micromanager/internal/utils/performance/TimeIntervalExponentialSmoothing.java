@@ -20,8 +20,7 @@ package org.micromanager.internal.utils.performance;
  * @author Mark A. Tsuchida
  */
 public final class TimeIntervalExponentialSmoothing
-      extends AbstractExponentialSmoothing
-{
+      extends AbstractExponentialSmoothing {
    public static TimeIntervalExponentialSmoothing createWithTimeConstantMs(double timeConstantMs) {
       return new TimeIntervalExponentialSmoothing(timeConstantMs);
    }
@@ -37,8 +36,7 @@ public final class TimeIntervalExponentialSmoothing
       double deltaTMs = markTimeAndGetDeltaTMs();
       if (!isStatsInitialized()) {
          initializeStats(deltaTMs);
-      }
-      else {
+      } else {
          updateStats(deltaTMs, deltaTMs);
       }
    }

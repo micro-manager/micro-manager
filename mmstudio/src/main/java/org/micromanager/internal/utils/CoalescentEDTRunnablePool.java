@@ -25,10 +25,8 @@ import javax.swing.SwingUtilities;
  */
 public class CoalescentEDTRunnablePool {
    // Guarded by monitor on this
-   private final Map<Class<?>, CoalescentRunnable> coalescedRunnables_ =
-         new HashMap<Class<?>, CoalescentRunnable>();
-   private final Map<Class<?>, Long> skipCounts_ =
-         new HashMap<Class<?>, Long>();
+   private final Map<Class<?>, CoalescentRunnable> coalescedRunnables_ = new HashMap<>();
+   private final Map<Class<?>, Long> skipCounts_ = new HashMap<>();
 
    public static CoalescentEDTRunnablePool create() {
       return new CoalescentEDTRunnablePool();
@@ -41,11 +39,11 @@ public class CoalescentEDTRunnablePool {
     * Invoke the given runnable on the EDT, coalescing multiple invocations on
     * the event queue.
     *
-    * This is a mechanism to coalesce refresh-like tasks, in the manner of
+    * <p>This is a mechanism to coalesce refresh-like tasks, in the manner of
     * Swing's {@code RepaintManager}, without having to replace the system
     * global event queue via EventQueue.push.
     *
-    * The given runnable is scheduled to run on the EDT, just as with
+    * <p>The given runnable is scheduled to run on the EDT, just as with
     * {@code SwingUtilities.invokeLater}, but when invoked, all outstanding
     * runnables with the same "coalescence class"
     * (see CoalescentRunnable.getCoalescenceClass) will be coalesced and the
@@ -60,26 +58,22 @@ public class CoalescentEDTRunnablePool {
                coalescedRunnables_.get(coalescenceClass);
          if (coalesced != null) {
             coalesced = coalesced.coalesceWith(runnable);
-         }
-         else {
+         } else {
             coalesced = runnable;
          }
          coalescedRunnables_.put(coalescenceClass, coalesced);
       }
 
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            final CoalescentRunnable coalesced;
-            synchronized (CoalescentEDTRunnablePool.this) {
-               coalesced = coalescedRunnables_.remove(coalescenceClass);
-            }
-            if (coalesced == null) {
-               return; // Already handled by previous invocations
-            }
-
-            coalesced.run();
+      SwingUtilities.invokeLater(() -> {
+         final CoalescentRunnable coalesced;
+         synchronized (CoalescentEDTRunnablePool.this) {
+            coalesced = coalescedRunnables_.remove(coalescenceClass);
          }
+         if (coalesced == null) {
+            return; // Already handled by previous invocations
+         }
+
+         coalesced.run();
       });
    }
 
@@ -87,15 +81,14 @@ public class CoalescentEDTRunnablePool {
     * Like {@code invokeLaterWithCoalescence}, but defers invocation until the
     * last scheduled task on the event queue is processed.
     *
-    * Note that if you keep calling this method at a higher rate than the EDT
+    * <p>Note that if you keep calling this method at a higher rate than the EDT
     * is processing events, the runnable will not be executed until the EDT
     * becomes otherwise idle.
     *
     * @param runnable the coalescent runnable to invoke on the EDT
     */
    public void invokeAsLateAsPossibleWithCoalescence(
-         CoalescentRunnable runnable)
-   {
+         CoalescentRunnable runnable) {
       final Class<?> coalescenceClass = runnable.getCoalescenceClass();
       synchronized (this) {
          CoalescentRunnable coalesced =
@@ -106,40 +99,37 @@ public class CoalescentEDTRunnablePool {
             Long oldSkipCount = skipCounts_.get(coalescenceClass);
             skipCounts_.put(coalescenceClass,
                   (oldSkipCount == null ? 0 : oldSkipCount) + 1);
-         }
-         else {
+         } else {
             coalesced = runnable;
          }
          coalescedRunnables_.put(coalescenceClass, coalesced);
       }
 
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            final CoalescentRunnable coalesced;
-            synchronized (CoalescentEDTRunnablePool.this) {
-               Long skipCount = skipCounts_.get(coalescenceClass);
-               if (skipCount != null && skipCount > 0) {
-                  skipCounts_.put(coalescenceClass, skipCount - 1);
-                  return;
-               }
-               coalesced = coalescedRunnables_.remove(coalescenceClass);
+      SwingUtilities.invokeLater(() -> {
+         final CoalescentRunnable coalesced;
+         synchronized (CoalescentEDTRunnablePool.this) {
+            Long skipCount = skipCounts_.get(coalescenceClass);
+            if (skipCount != null && skipCount > 0) {
+               skipCounts_.put(coalescenceClass, skipCount - 1);
+               return;
             }
-            if (coalesced == null) {
-               return; // Be defensive
-            }
-
-            coalesced.run();
+            coalesced = coalescedRunnables_.remove(coalescenceClass);
          }
+         if (coalesced == null) {
+            return; // Be defensive
+         }
+
+         coalesced.run();
       });
    }
 
    /**
     * A "coalescent" runnable, for use with {@code invokeLaterWithCoalescence}.
     */
-   public static interface CoalescentRunnable extends Runnable {
+   public interface CoalescentRunnable extends Runnable {
       /**
        * Return a tag class used to group instances that can be coalesced.
+       *
        * @return a tag class
        */
       Class<?> getCoalescenceClass();
@@ -147,11 +137,11 @@ public class CoalescentEDTRunnablePool {
       /**
        * Return a new runnable formed by coalescing this instance with another.
        *
-       * It is guaranteed that {@code another} has the same coalescence class
+       * <p>It is guaranteed that {@code another} has the same coalescence class
        * as this instance, and that {@code another} was scheduled <i>after</i>
        * this instance (or the instances coalesced to form this instance).
        *
-       * Note that this method should not have any side effects.
+       * <p>Note that this method should not have any side effects.
        *
        * @param later a newer coalescent runnable with which to coalesce
        * @return the coalesced runnable formed from this instance and {@code

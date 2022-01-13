@@ -9,7 +9,7 @@ import org.micromanager.Studio;
 
 /**
  * Makes C++ autofocus devices appear similarly to autofocus devices implemented
- * in Java
+ * in Java.
  * 
  * 
  */
@@ -23,8 +23,9 @@ public final class CoreAutofocus implements AutofocusPlugin {
 
    @Override
    public double fullFocus() throws MMException {
-      if (core_ == null)
+      if (core_ == null) {
          return 0.0;
+      }
 
       try {
          core_.setAutoFocusDevice(devName_);
@@ -48,8 +49,9 @@ public final class CoreAutofocus implements AutofocusPlugin {
 
    @Override
    public double incrementalFocus() throws MMException {
-      if (core_ == null)
+      if (core_ == null) {
          return 0.0;
+      }
 
       try {
          core_.setAutoFocusDevice(devName_);
@@ -68,16 +70,18 @@ public final class CoreAutofocus implements AutofocusPlugin {
    }
 
    @Override
-   public String[] getPropertyNames(){
-      Vector<String> propNames = new Vector<String>();
+   public String[] getPropertyNames() {
+      Vector<String> propNames = new Vector<>();
       try {
          core_.setAutoFocusDevice(devName_);
          StrVector propNamesVect = core_.getDevicePropertyNames(devName_);
-         for (int i = 0; i < propNamesVect.size(); i++)
+         for (int i = 0; i < propNamesVect.size(); i++) {
             if (!core_.isPropertyReadOnly(devName_, propNamesVect.get(i))
                   && !core_.isPropertyPreInit(devName_,
-                        propNamesVect.get(i)))
+                        propNamesVect.get(i))) {
                propNames.add(propNamesVect.get(i));
+            }
+         }
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -87,7 +91,7 @@ public final class CoreAutofocus implements AutofocusPlugin {
    @Override
    public PropertyItem[] getProperties() {
       StrVector propNamesVect;
-      Vector<PropertyItem> props = new Vector<PropertyItem>();
+      Vector<PropertyItem> props = new Vector<>();
       try {
          core_.setAutoFocusDevice(devName_);
          propNamesVect = core_.getDevicePropertyNames(devName_);
@@ -104,8 +108,9 @@ public final class CoreAutofocus implements AutofocusPlugin {
 
             StrVector vals = core_.getAllowedPropertyValues(devName_, p.name);
             p.allowed = new String[(int) vals.size()];
-            for (int j = 0; j < vals.size(); j++)
+            for (int j = 0; j < vals.size(); j++) {
                p.allowed[j] = vals.get(j);
+            }
 
             props.add(p);
          }
@@ -141,8 +146,9 @@ public final class CoreAutofocus implements AutofocusPlugin {
 
             StrVector vals = core_.getAllowedPropertyValues(devName_, p.name);
             p.allowed = new String[(int) vals.size()];
-            for (int j = 0; j < vals.size(); j++)
+            for (int j = 0; j < vals.size(); j++) {
                p.allowed[j] = vals.get(j);
+            }
             return p;
          } else {
             throw new MMException("Unknown property: " + name);
@@ -166,7 +172,7 @@ public final class CoreAutofocus implements AutofocusPlugin {
       try {
          core_.setAutoFocusDevice(devName_);
       } catch (Exception e) {
-          ReportingUtils.logError(e);
+         ReportingUtils.logError(e);
          return 0;
       }
       return core_.getCurrentFocusScore();

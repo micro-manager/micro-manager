@@ -20,10 +20,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
@@ -32,13 +32,11 @@ import mmcorej.StrVector;
 public final class CalibrationList {
    private final ArrayList<Calibration> calibrationList_;
    private String label_;
-   private final Hashtable<String, String> properties_;
    private final CMMCore core_;
    
    public CalibrationList(final CMMCore core) {
-      calibrationList_ = new ArrayList<Calibration>();
+      calibrationList_ = new ArrayList<>();
       label_ = "Undefined";
-      properties_ = new Hashtable<String, String>();
       core_ = core;
    }
 
@@ -61,7 +59,7 @@ public final class CalibrationList {
    
    /**
     * @return index of active calibration in the list or null if not found
-    * or an error occurred
+    *         or an error occurred
     */
    public Integer getActiveCalibration() {
       try {
@@ -79,7 +77,8 @@ public final class CalibrationList {
    }
    
    /**
-    * Add one Calibration to the list
+    * Add one Calibration to the list.
+    *
     * @param cl Calibration to be added to the list
     */
    public void add(Calibration cl) {
@@ -87,62 +86,27 @@ public final class CalibrationList {
    }
    
    /**
-    * Number of calibrations
+    * Number of calibrations.
+    *
     * @return number of calibrations in the list
     */
    public int size() {
-     return calibrationList_.size();
+      return calibrationList_.size();
    }
    
    /**
-    * Returns calibration  based on index
+    * Returns calibration  based on index.
+    *
     * @param idx - position index
     * @return calibration
     */
    public Calibration get(int idx) {
       return calibrationList_.get(idx);
    }
-   
-   /**
-    * Add a generalized property-value pair to the calibration
-    * @param key
-    * @param value
-    *
-   public void setProperty(String key, String value) {
-      properties_.put(key, value);
-   }
 
-   **
-    * Return the array of property keys (names) associated with this calibration
-    *
-   public String[] getPropertyNames() {
-      String keys[] = new String[properties_.size()];
-      int i=0;
-      for (Enumeration<String> e = properties_.keys(); e.hasMoreElements();)
-         keys[i++] = e.nextElement();
-      return keys;
-   }
-   
-   **
-    * Checks if the calibration has a particular property
-    *
-   public boolean hasProperty(String key) {
-      return properties_.containsKey(key);
-   }
-   
-   **
-    * Returns property value for a given key (name) 
-    *
-   public String getProperty(String key) {
-      if (properties_.containsKey(key))
-         return properties_.get(key);
-      else
-         return null;
-   }
-   */
-   
    /**
-    * Returns calibration label
+    * Returns calibration label.
+    *
     * @return Label of the calibration
     */
    public String getLabel() {
@@ -150,7 +114,8 @@ public final class CalibrationList {
    }
 
    /**
-    * Sets  label of the calibration
+    * Sets  label of the calibration.
+    *
     * @param label - Name of the calibration
     */
    public void setLabel(String label) {

@@ -83,7 +83,7 @@ public final class MMKeyDispatcher implements KeyEventDispatcher{
 
       if (HotKeys.KEYS.containsKey(ke.getKeyCode())) {
          if (checkSource(ke))
-            return HotKeys.KEYS.get(ke.getKeyCode()).ExecuteAction();
+            return HotKeys.KEYS.get(ke.getKeyCode()).executeAction();
       }
       return false;
    }

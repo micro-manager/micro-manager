@@ -61,9 +61,7 @@ public class SkipListRunningQuantile implements RunningQuantile {
       int floor = (int) Math.floor(realIndex);
       int ceiling = floor + 1;
       List<Map.Entry<Double, Integer>> pair = values_.sublist(floor, 2);
-      double quantile =
-            (ceiling - realIndex) * pair.get(0).getKey() +
-            (realIndex - floor) * pair.get(1).getKey();
-      return quantile;
+      return (ceiling - realIndex) * pair.get(0).getKey()
+            + (realIndex - floor) * pair.get(1).getKey();
    }
 }

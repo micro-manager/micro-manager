@@ -19,7 +19,7 @@ import java.lang.management.ThreadMXBean;
 /**
  * Times CPU usage on the current thread.
  *
- * This is intended for use around a time-consuming, single-threaded task.
+ * <p>This is intended for use around a time-consuming, single-threaded task.
  * Accuracy is platform-dependent.
  * Recommended for tasks taking 10 ms or longer.
  *

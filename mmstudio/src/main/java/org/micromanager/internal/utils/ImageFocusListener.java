@@ -9,5 +9,5 @@ import ij.gui.ImageWindow;
  * call GUIUtils.registerImageFocusListener(ImageFocusListener l);
  */
 public interface ImageFocusListener {
-   public void focusReceived(ImageWindow focusedWindow);
+   void focusReceived(ImageWindow focusedWindow);
 }

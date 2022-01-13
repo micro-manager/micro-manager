@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.internal.utils;
 
 import com.google.common.collect.Maps;
@@ -22,9 +23,8 @@ public final class ChainedMapView<K, V> implements Map<K, V> {
    private final Map<K, V> fallback_;
 
    public static <K, V> ChainedMapView<K, V> create(
-         Map<K, V> front, Map<K, V> fallback)
-   {
-      return new ChainedMapView<K, V>(front, fallback);
+         Map<K, V> front, Map<K, V> fallback) {
+      return new ChainedMapView<>(front, fallback);
    }
 
    private ChainedMapView(Map<K, V> front, Map<K, V> fallback) {
@@ -34,8 +34,8 @@ public final class ChainedMapView<K, V> implements Map<K, V> {
 
    @Override
    public int size() {
-      return front_.size() +
-            Sets.difference(fallback_.keySet(), front_.keySet()).size();
+      return front_.size()
+            + Sets.difference(fallback_.keySet(), front_.keySet()).size();
    }
 
    @Override
@@ -93,7 +93,7 @@ public final class ChainedMapView<K, V> implements Map<K, V> {
    public Collection<V> values() {
       // Not strictly a view, but since we're unmodifiable...
       // (to construct a real view, we probably need a custom Collection)
-      Set<V> values = new HashSet<V>();
+      Set<V> values = new HashSet<>();
       values.addAll(front_.values());
       values.addAll(Maps.difference(fallback_, front_).entriesOnlyOnLeft().values());
       return Collections.unmodifiableSet(values);
