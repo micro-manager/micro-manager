@@ -109,7 +109,7 @@ public class Hardware {
     }
 
     public int getImageType() {
-        return ImageUtils.BppToImageType(core_.getBytesPerPixel());
+        return ImageUtils.bppToImageType(core_.getBytesPerPixel());
     }
 
     public double getZPosition() {
