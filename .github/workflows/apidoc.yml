@@ -24,7 +24,7 @@ jobs:
           tar cf ../html.tar -C doxygen/out/MMDevice/html .
 
       - uses: actions/checkout@v2
-        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/main'
         with:
           repository: micro-manager/apidoc
           ssh-key: ${{ secrets.SSH_KEY_DEPLOY_TO_APIDOC }}
@@ -32,7 +32,7 @@ jobs:
           path: apidoc
 
       - name: Publish HTML
-        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/main'
         run: |
           cd apidoc
           ./prepare_pages_branch.sh MMDevice/latest
@@ -61,7 +61,7 @@ jobs:
           tar cf ../html.tar -C doxygen/out/MMCore/html .
 
       - uses: actions/checkout@v2
-        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/main'
         with:
           repository: micro-manager/apidoc
           ssh-key: ${{ secrets.SSH_KEY_DEPLOY_TO_APIDOC }}
@@ -69,7 +69,7 @@ jobs:
           path: apidoc
 
       - name: Publish HTML
-        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/main'
         run: |
           cd apidoc
           ./prepare_pages_branch.sh MMCore/latest
@@ -129,7 +129,7 @@ jobs:
           tar cf ../../html.tar -C javadoc .
 
       - uses: actions/checkout@v2
-        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/main'
         with:
           repository: micro-manager/apidoc
           ssh-key: ${{ secrets.SSH_KEY_DEPLOY_TO_APIDOC }}
@@ -137,7 +137,7 @@ jobs:
           path: apidoc
 
       - name: Publish Javadoc
-        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/main'
         run: |
           cd apidoc
           ./prepare_pages_branch.sh mmcorej/latest
@@ -221,7 +221,7 @@ jobs:
           tar cf ../../html.tar -C doc .
 
       - uses: actions/checkout@v2
-        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/main'
         with:
           repository: micro-manager/apidoc
           ssh-key: ${{ secrets.SSH_KEY_DEPLOY_TO_APIDOC }}
@@ -229,7 +229,7 @@ jobs:
           path: apidoc
 
       - name: Publish Javadoc
-        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/master'
+        if: github.repository == 'micro-manager/micro-manager' && github.ref == 'refs/heads/main'
         run: |
           cd apidoc
           ./prepare_pages_branch.sh mmstudio/latest
