@@ -59,7 +59,7 @@ public class DensityProfiler implements DensityMonitor {
 
       profileWin_.setAutoScale();
       profileWin_.setData(densProfileData_);
-      profileWin_.SetXLimits(xmin, xmax);
+      profileWin_.setXLimits(xmin, xmax);
       profileWin_.setVisible(true);
    }
    
