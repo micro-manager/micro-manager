@@ -116,13 +116,13 @@ int Tsi3Cam::Initialize()
 {
 	// shutdown WILL be called if you return an error code
 	LogMessage("Initializing TSI3 camera...");
-	LogMessage("TSI SDK path: " + sdkPath);
+	//LogMessage("TSI SDK path: " + sdkPath);
 	
 	const int maxSdkStringLength = 1024;
-	string kernelPath(sdkPath);
-	kernelPath += "thorlabs_unified_sdk_kernel.dll";
+	//string kernelPath(sdkPath);
+	//kernelPath += "thorlabs_unified_sdk_kernel.dll";
 
-   if (tl_camera_sdk_dll_initialize(kernelPath.c_str()))
+   if (tl_camera_sdk_dll_initialize())
    {
       return ERR_TSI_DLL_LOAD_FAILED;
    }
