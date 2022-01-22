@@ -107,6 +107,13 @@ cd "$MM_DEPS_PREFIX"/src
 tar xjf ../downloads/boost_1_77_0.tar.bz2
 pushd boost_1_77_0
 ./bootstrap.sh
+cat >project-config.jam <<EOF
+import option ;
+import feature ;
+using clang : ${MM_ARCH} : clang++ ${MM_ARCH_FLAGS} ;
+project : default-build <toolset>clang-${MM_ARCH} ;
+option.set keep-going : false ;
+EOF
 ./b2 --prefix=${MM_DEPS_PREFIX} link=static threading=multi architecture=x86 address-model=64 \
   cflags="${MM_CFLAGS}" cxxflags="${MM_CXXFLAGS}" \
   --with-atomic --with-chrono --with-date_time --with-filesystem --with-system --with-thread \
