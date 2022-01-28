@@ -55,7 +55,7 @@ public final class Device {
    private boolean usesDelay_;
    private int focusDirection_ = 0;
    private int numPos_ = 0;
-   private String parentHub_;
+   private String parentHub_ = "";
    private String[] childDevices_;
    private boolean initialized_;
 
