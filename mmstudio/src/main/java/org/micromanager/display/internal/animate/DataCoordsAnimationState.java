@@ -14,18 +14,17 @@
 package org.micromanager.display.internal.animate;
 
 import com.google.common.collect.Lists;
+import java.util.Collection;
+import java.util.List;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
 import org.micromanager.data.internal.DefaultCoords;
 
-import java.util.Collection;
-import java.util.List;
-
 /**
  * Manages the position within a dataset displayed during animated playback.
  *
- * Keeps track of the current position of the animation, and computes the
- * position that should be displayed next.
+ * <p>Keeps track of the current position of the animation, and computes the
+ * position that should be displayed next.</p>
  *
  * @author Mark A. Tsuchida
  */
@@ -36,8 +35,11 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
     */
    public interface CoordsProvider {
       List<String> getOrderedAxes();
+
       int getMaximumExtentOfAxis(String axis); // O(1) recommended
+
       boolean coordsExist(Coords c);
+
       Collection<String> getAnimatedAxes();
    }
 
@@ -47,6 +49,12 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
    // Fractional part of last advancement, tracked to avoid frame rate error.
    private double cumulativeFrameCountError_ = 0.0;
 
+   /**
+    * Instead of constructor.
+    *
+    * @param delegate
+    * @return
+    */
    public static DataCoordsAnimationState create(CoordsProvider delegate) {
       if (delegate == null) {
          throw new NullPointerException();
@@ -75,8 +83,7 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
    }
 
    private Coords advanceAnimationPositionImpl(double frames,
-         boolean skipNonExistent)
-   {
+         boolean skipNonExistent) {
       final Coords prevPos = animationCoords_;
       final List<String> axes = delegate_.getOrderedAxes();
       // TODO: this is coming from the summarymetadata.  If the axes list was not

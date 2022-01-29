@@ -98,8 +98,9 @@ final class PerformanceMonitorTableModel extends AbstractTableModel {
             return String.format("%.3g", entry.getValue().getAverage());
          case COL_STDEV:
             return String.format("%.3g", entry.getValue().getStandardDeviation());
+         default:
+            throw new IndexOutOfBoundsException();
       }
-      throw new IndexOutOfBoundsException();
    }
 
    @Override

@@ -32,6 +32,10 @@ public class Mapping {
       cameraBinning_ = cameraBinning;
    }
 
+   /**
+    * Builder to create immutable Mapping object.
+    *
+    */
    public static class Builder {
 
       private Map<Polygon, AffineTransform> transformMap_;

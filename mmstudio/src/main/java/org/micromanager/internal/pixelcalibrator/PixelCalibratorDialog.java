@@ -23,13 +23,17 @@
 package org.micromanager.internal.pixelcalibrator;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
-import javax.swing.*;
-
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
@@ -40,6 +44,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 
 /**
+ * Displays the Pixel Calibrator Dialog.
  *
  * @author arthur, Nico
  */
@@ -56,18 +61,17 @@ public class PixelCalibratorDialog extends JFrame {
    private CalibrationThread calibrationThread_;
 
    private JProgressBar calibrationProgressBar_;
-   private JLabel explanationLabel_;
-   private JComboBox safeTravelRadiusComboBox_;
-   private JComboBox methodComboBox_;
+   private JComboBox<String> safeTravelRadiusComboBox_;
+   private JComboBox<String> methodComboBox_;
    private JButton startButton_;
    private JButton stopButton_;
    private JCheckBox debug_;
 
-    /** 
+   /**
      * The  PixelCalibratorDialog executes an automated calibration of 
      * pixel size and the relation between stage movement and camera resulting
      * in an affine transform.  Data are returned to the PixelSizeProvider
-     * 
+     *
      * @param studio - Current studio instance
      * @param psp - PixelSizeProvider that is requesting our services
      */
@@ -86,13 +90,12 @@ public class PixelCalibratorDialog extends JFrame {
    }
 
    private void initComponents() {
-
-      explanationLabel_ = new JLabel();
+      final JLabel explanationLabel_ = new JLabel();
       calibrationProgressBar_ = new JProgressBar();
       startButton_ = new JButton();
       stopButton_ = new JButton();
-      safeTravelRadiusComboBox_ = new JComboBox();
-      methodComboBox_ = new JComboBox();
+      safeTravelRadiusComboBox_ = new JComboBox<>();
+      methodComboBox_ = new JComboBox<>();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Pixel Calibrator");
@@ -106,51 +109,37 @@ public class PixelCalibratorDialog extends JFrame {
          }
       });
 
-      explanationLabel_.setText("<html>This plugin measures the size " +
-              "of the current camera's pixels at the sample plane.<br><br>" +
-              "To calibrate:<br><ol><li>Make sure you are using a correctly " +
-              "calibrated motorized xy stage.</li><li>Choose a nonperiodic " +
-              "specimen (e.g., a cell) and adjust <br>your illumination and focus " +
-              "until you obtain crisp, high-contrast images. " +
-              "<li>Press Start (below).</li></ol></html>");
+      explanationLabel_.setText("<html>This plugin measures the size "
+            + "of the current camera's pixels at the sample plane.<br><br>"
+            + "To calibrate:<br><ol><li>Make sure you are using a correctly "
+            + "calibrated motorized xy stage.</li><li>Choose a nonperiodic "
+            + "specimen (e.g., a cell) and adjust <br>your illumination and focus "
+            + "until you obtain crisp, high-contrast images. "
+            + "<li>Press Start (below).</li></ol></html>");
 
-      JLabel methodLabel = new JLabel("Select method:");
-      methodComboBox_.setModel(new DefaultComboBoxModel(
-              new String[] {METHOD_AUTO, METHOD_MANUAL_SIMPLE} ) );
+      final JLabel methodLabel = new JLabel("Select method:");
+      methodComboBox_.setModel(new DefaultComboBoxModel<>(
+              new String[] {METHOD_AUTO, METHOD_MANUAL_SIMPLE}));
       final String mKey = "methodComboxSelection";
       final Class ourClass = this.getClass();
-      methodComboBox_.setSelectedItem(studio_.profile().getSettings(ourClass).
-              getString(mKey, METHOD_MANUAL_SIMPLE ) );
-      methodComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            studio_.profile().getSettings(ourClass).putString(mKey, 
-                    (String) methodComboBox_.getSelectedItem());
-         }
-      });
+      methodComboBox_.setSelectedItem(studio_.profile().getSettings(ourClass)
+            .getString(mKey, METHOD_MANUAL_SIMPLE));
+      methodComboBox_.addActionListener(
+            e -> studio_.profile().getSettings(ourClass).putString(mKey,
+              (String) methodComboBox_.getSelectedItem()));
       
-      JLabel safeTravelLabel = new JLabel("Safe travel radius, um:");
-      safeTravelRadiusComboBox_.setModel(new DefaultComboBoxModel(
+      final JLabel safeTravelLabel = new JLabel("Safe travel radius, um:");
+      safeTravelRadiusComboBox_.setModel(new DefaultComboBoxModel<>(
               new String[] { "1000", "10000", "100000" }));
 
       calibrationProgressBar_.setForeground(new java.awt.Color(255, 0, 51));
 
       startButton_.setText("Start");
-      startButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            startCalibration();
-         }
-      });
+      startButton_.addActionListener(evt -> startCalibration());
 
       stopButton_.setText("Stop");
       stopButton_.setEnabled(false);
-      stopButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            stopCalibration();
-         }
-      });
+      stopButton_.addActionListener(evt -> stopCalibration());
       
       debug_ = new JCheckBox("debug");
       debug_.setSelected(false);
@@ -171,25 +160,27 @@ public class PixelCalibratorDialog extends JFrame {
    }
 
 
+   /**
+    * Updates the GUI based on current progress.
+    *
+    * @param running Whether or not the calibration is still running.
+    * @param progress Progress.
+    */
    public void updateStatus(final boolean running, final double progress) {
-
-      GUIUtils.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            if (!running) {
-               startButton_.setEnabled(true);
-               stopButton_.setEnabled(false);
-               calibrationProgressBar_.setEnabled(false);
-               safeTravelRadiusComboBox_.setEnabled(true);
-            } else {
-               toFront();
-               startButton_.setEnabled(false);
-               stopButton_.setEnabled(true);
-               calibrationProgressBar_.setEnabled(true);
-               safeTravelRadiusComboBox_.setEnabled(false);
-            }
-            calibrationProgressBar_.setValue((int) (progress * 100));
+      GUIUtils.invokeLater(() -> {
+         if (!running) {
+            startButton_.setEnabled(true);
+            stopButton_.setEnabled(false);
+            calibrationProgressBar_.setEnabled(false);
+            safeTravelRadiusComboBox_.setEnabled(true);
+         } else {
+            toFront();
+            startButton_.setEnabled(false);
+            stopButton_.setEnabled(true);
+            calibrationProgressBar_.setEnabled(true);
+            safeTravelRadiusComboBox_.setEnabled(false);
          }
+         calibrationProgressBar_.setValue((int) (progress * 100));
       });
 
    }
@@ -205,6 +196,8 @@ public class PixelCalibratorDialog extends JFrame {
    }
    
    /**
+    * Signals that application shutdown is starting.
+    *
     * @param event indicating that shutdown is happening
     */
    @Subscribe
@@ -225,7 +218,7 @@ public class PixelCalibratorDialog extends JFrame {
          calibrationThread_ = new ManualPreciseCalibrationThread(studio_, this);
       }
       if (calibrationThread_ != null && !calibrationThread_.isAlive()) {
-            calibrationThread_.start();
+         calibrationThread_.start();
       }
       updateStatus(true, 0);
       
@@ -234,7 +227,7 @@ public class PixelCalibratorDialog extends JFrame {
    
    private void stopCalibration() {
       if (calibrationThread_ != null && calibrationThread_.isAlive()) {
-         synchronized(CalibrationThread.class) {
+         synchronized (CalibrationThread.class) {
             CalibrationThread.class.notify();
          }
          calibrationThread_.interrupt();
@@ -264,16 +257,19 @@ public class PixelCalibratorDialog extends JFrame {
 
       double pixelSize = AffineUtils.deducePixelSize(result);
       double[] measurements = AffineUtils.affineToMeasurements(result);
-//      xScale, yScale, rotationDeg, shear
+      // xScale, yScale, rotationDeg, shear
       int response = JOptionPane.showConfirmDialog(this,
-            String.format("Affine transform parameters: XScale=%.4f YScale=%.4f Rotation (degrees)=%.2f Shear=%.4f\n",                     
+            String.format("Affine transform parameters: XScale=%.4f YScale=%.4f Rotation "
+                  + "(degrees)=%.2f Shear=%.4f\n",
                     measurements[0], measurements[1], 
-                    measurements[2], measurements[3]) + 
-            "<html>If this is a correct result, Xscale and YScale should have absoulte value of roughly the number of &#956;m/pixel,</html>\n" +
-                    "rotation should give the angle between the corrdinate system of the camera and the stage, and the shear\nvalue shoud be very small.\n\n" +
-            "<html>The Pixel Calibrator plugin measured a pixel size of " + 
-                    pixelSize + " &#956;m.<br>" + 
-                    "Do you wish to copy these to your pixel calibration settings?</html>",
+                    measurements[2], measurements[3])
+                  + "<html>If this is a correct result, Xscale and YScale should have absolute "
+                  + "value of roughly the number of &#956;m/pixel,</html>\n"
+                  + "rotation should give the angle between the coordinate system of the camera "
+                  + "and the stage, and the shear\nvalue shoud be very small.\n\n"
+                  + "<html>The Pixel Calibrator plugin measured a pixel size of "
+                  + pixelSize + " &#956;m.<br>"
+                  + "Do you wish to copy these to your pixel calibration settings?</html>",
             "Calibration succeeded!",
             JOptionPane.YES_NO_OPTION);
 
@@ -287,14 +283,15 @@ public class PixelCalibratorDialog extends JFrame {
    }
    
    private void showFailureMessage() {
-      ReportingUtils.showMessage("Calibration failed. Please improve the contrast by adjusting the\n" +
-            "sample, focus and illumination. Also make sure the specimen is\n" +
-            "securely immobilized on the stage. When you are ready, press\n" +
-            "Start to try again.");
+      ReportingUtils.showMessage("Calibration failed. Please improve the contrast by "
+            + "adjusting the\n"
+            + "sample, focus and illumination. Also make sure the specimen is\n"
+            + "securely immobilized on the stage. When you are ready, press\n"
+            + "Start to try again.");
    }
    
  
-   // The following functions are used by the spawend threads to communicate
+   // The following functions are used by the spawned threads to communicate
    // back to this dialog
     
 
@@ -307,6 +304,11 @@ public class PixelCalibratorDialog extends JFrame {
       promptToSaveResult();
    }
 
+   /**
+    * Called when calibration failed.
+    *
+    * @param canceled true when the user cancelled calibration.
+    */
    public void calibrationFailed(boolean canceled) {
       this.updateStatus(false, 0.);
       if (!canceled) {
@@ -318,19 +320,18 @@ public class PixelCalibratorDialog extends JFrame {
       return Double.parseDouble(
                     safeTravelRadiusComboBox_.getSelectedItem().toString());
    }
+
    public boolean debugMode() {
       return debug_.isSelected();
    }
-   
+
+   /**
+    * Updates the GUI with current status of the calibration.
+    */
    public void update() {
       calibrationThread_.getProgress();
       final double progress = calibrationThread_.getProgress() / 24.;
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            updateStatus(calibrationThread_.isAlive(), progress);
-         }
-      });
+      SwingUtilities.invokeLater(() -> updateStatus(calibrationThread_.isAlive(), progress));
 
    }
 

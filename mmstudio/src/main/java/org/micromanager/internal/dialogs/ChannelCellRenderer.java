@@ -16,7 +16,7 @@ import org.micromanager.internal.utils.NumberUtils;
 public final class ChannelCellRenderer extends JLabel implements TableCellRenderer {
 
    private static final long serialVersionUID = -4328340719459382679L;
-   private AcquisitionEngine acqEng_;
+   private final AcquisitionEngine acqEng_;
 
    // This method is called each time a cell in a column
    // using this renderer needs to be rendered.

@@ -10,7 +10,7 @@ public final class AcqOrderMode {
    public static final int POS_TIME_SLICE_CHANNEL = 2;
    public static final int POS_TIME_CHANNEL_SLICE = 3;
 
-   private int id_;
+   private final int id_;
    private boolean timeEnabled_;
    private boolean posEnabled_;
    private boolean sliceEnabled_;
@@ -50,8 +50,7 @@ public final class AcqOrderMode {
       for (String axis : ordering) {
          if (axis.contentEquals("Slice")) {
             tmp.add("Z");
-         }
-         else {
+         } else {
             tmp.add(axis.substring(0, 1));
          }
       }
@@ -93,21 +92,18 @@ public final class AcqOrderMode {
    }
 
    private ArrayList<String> getOrdering() {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       if (timeEnabled_ && posEnabled_) {
          if (id_ == TIME_POS_CHANNEL_SLICE || id_ == TIME_POS_SLICE_CHANNEL) {
             result.add("Time");
             result.add("Position");
-         }
-         else {
+         } else {
             result.add("Position");
             result.add("Time");
          }
-      }
-      else if (timeEnabled_) {
+      } else if (timeEnabled_) {
          result.add("Time");
-      }
-      else if (posEnabled_) {
+      } else if (posEnabled_) {
          result.add("Position");
       }
 
@@ -115,16 +111,13 @@ public final class AcqOrderMode {
          if (id_ == TIME_POS_CHANNEL_SLICE || id_ == POS_TIME_CHANNEL_SLICE) {
             result.add("Channel");
             result.add("Slice");
-         }
-         else {
+         } else {
             result.add("Slice");
             result.add("Channel");
          }
-      }
-      else if (channelEnabled_) {
+      } else if (channelEnabled_) {
          result.add("Channel");
-      }
-      else if (sliceEnabled_) {
+      } else if (sliceEnabled_) {
          result.add("Slice");
       }
 

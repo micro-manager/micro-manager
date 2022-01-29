@@ -26,8 +26,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
-import javax.swing.*;
-
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
+import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.Studio;
@@ -38,7 +45,10 @@ import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.StartupSettings;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.script.ScriptPanel;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.UIMonitor;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.internal.zmq.ZMQSocketWrapper;
 
 /**
@@ -48,19 +58,21 @@ import org.micromanager.internal.zmq.ZMQSocketWrapper;
 public final class OptionsDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private static final String IS_DEBUG_LOG_ENABLED = "is debug logging enabled";
-   private static final String SHOULD_CLOSE_ON_EXIT = "should close the entire program when the Micro-Manager plugin is closed";
+   private static final String SHOULD_CLOSE_ON_EXIT =
+         "should close the entire program when the Micro-Manager plugin is closed";
 
    private final JTextField startupScriptFile_;
    private final JTextField bufSizeField_;
-   private JTextField logDeleteDaysField_;
-   private final JComboBox comboDisplayBackground_;
+   private final JTextField logDeleteDaysField_;
+   private final JComboBox<String> comboDisplayBackground_;
 
-   private CMMCore core_;
-   private MMStudio mmStudio_;
+   private final CMMCore core_;
+   private final MMStudio mmStudio_;
    private final UserProfile profile_;
 
    /**
-    * Create the dialog
+    * Create the dialog.
+    *
     * @param core - The Micro-Manager Core object
     * @param mmStudio - MMStudio object (including Studio implementation) 
     */
@@ -92,7 +104,8 @@ public final class OptionsDlg extends JDialog {
 
       final JCheckBox debugLogEnabledCheckBox = new JCheckBox();
       debugLogEnabledCheckBox.setText("Enable debug logging");
-      debugLogEnabledCheckBox.setToolTipText("Enable verbose logging for troubleshooting and debugging");
+      debugLogEnabledCheckBox.setToolTipText(
+            "Enable verbose logging for troubleshooting and debugging");
       debugLogEnabledCheckBox.setSelected(isDebugLoggingEnabled(mmStudio_));
       debugLogEnabledCheckBox.addActionListener((final ActionEvent e) -> {
          boolean isEnabled = debugLogEnabledCheckBox.isSelected();
@@ -105,7 +118,8 @@ public final class OptionsDlg extends JDialog {
       final JCheckBox alwaysUseDefaultProfileCheckBox = new JCheckBox(
               "Always use the default user profile");
       alwaysUseDefaultProfileCheckBox.setToolTipText(
-              "Always use the default user profile; no prompt will be displayed to select a profile at startup.");
+              "Always use the default user profile; "
+              + "no prompt will be displayed to select a profile at startup.");
       alwaysUseDefaultProfileCheckBox.setSelected(
               startupSettings.shouldSkipProfileSelectionAtStartup());
       alwaysUseDefaultProfileCheckBox.addActionListener((ActionEvent e) -> {
@@ -125,10 +139,9 @@ public final class OptionsDlg extends JDialog {
       // of these two is selected
       askForConfigFileCheckBox.setText("Ask for config file at startup");
       askForConfigFileCheckBox.setSelected(!startupSettings.shouldSkipConfigSelectionAtStartup());
-      askForConfigFileCheckBox.addActionListener((ActionEvent arg0) -> {
-         startupSettings.setSkipConfigSelectionAtStartup(
-                 !askForConfigFileCheckBox.isSelected());
-      });
+      askForConfigFileCheckBox.addActionListener((ActionEvent arg0) ->
+            startupSettings.setSkipConfigSelectionAtStartup(
+              !askForConfigFileCheckBox.isSelected()));
       askForConfigFileCheckBox.setSelected(
               !startupSettings.shouldSkipConfigSelectionAtStartup());
       askForConfigFileCheckBox.setEnabled(alwaysUseDefaultProfileCheckBox.isSelected());
@@ -136,17 +149,16 @@ public final class OptionsDlg extends JDialog {
       final JCheckBox deleteLogCheckBox = new JCheckBox();
       deleteLogCheckBox.setText("Delete log files after");
       deleteLogCheckBox.setSelected(mmStudio_.settings().getShouldDeleteOldCoreLogs());
-      deleteLogCheckBox.addActionListener((ActionEvent e) -> {
-         mmStudio_.settings().setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
-      });
+      deleteLogCheckBox.addActionListener((ActionEvent e) ->
+            mmStudio_.settings().setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected()));
 
       logDeleteDaysField_ =
-         new JTextField(Integer.toString(mmStudio_.settings().getCoreLogLifetimeDays()), 2);
+            new JTextField(Integer.toString(mmStudio_.settings().getCoreLogLifetimeDays()), 2);
 
       final JButton deleteLogFilesButton = new JButton();
       deleteLogFilesButton.setText("Delete Log Files Now");
-      deleteLogFilesButton.setToolTipText("Delete all CoreLog files except " +
-            "for the current one");
+      deleteLogFilesButton.setToolTipText("Delete all CoreLog files except "
+            + "for the current one");
       deleteLogFilesButton.addActionListener((final ActionEvent e) -> {
          String dir1 =
                  LogFileManager.getLogFileDirectory().getAbsolutePath();
@@ -155,15 +167,14 @@ public final class OptionsDlg extends JDialog {
          String dirs;
          if (dir1.equals(dir2)) {
             dirs = dir1;
-         }
-         else {
+         } else {
             dirs = dir1 + " and " + dir2;
          }
          
          int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
-                 "<html><body><p style='width: 400px;'>" +
-                         "Delete all CoreLog files in " + dirs + "?" +
-                                 "</p></body></html>",
+                 "<html><body><p style='width: 400px;'>"
+                       + "Delete all CoreLog files in " + dirs + "?"
+                       + "</p></body></html>",
                  "Delete Log Files",
                  JOptionPane.YES_NO_OPTION,
                  JOptionPane.QUESTION_MESSAGE);
@@ -202,7 +213,7 @@ public final class OptionsDlg extends JDialog {
       for (int i = 0; i < SkinMode.values().length; ++i) {
          options[i] = SkinMode.values()[i].getDesc();
       }
-      comboDisplayBackground_ = new JComboBox(options);
+      comboDisplayBackground_ = new JComboBox<>(options);
       comboDisplayBackground_.setMaximumRowCount(2);
       comboDisplayBackground_.setSelectedItem(mmStudio_.app().skin().getSkin().getDesc());
       comboDisplayBackground_.addActionListener((ActionEvent e) -> {
@@ -222,34 +233,34 @@ public final class OptionsDlg extends JDialog {
       });
 
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();
-      metadataFileWithMultipageTiffCheckBox.setText("Create metadata.txt file with Image Stack Files");
+      metadataFileWithMultipageTiffCheckBox.setText(
+            "Create metadata.txt file with Image Stack Files");
       metadataFileWithMultipageTiffCheckBox.setSelected(
             StorageMultipageTiff.getShouldGenerateMetadataFile());
-      metadataFileWithMultipageTiffCheckBox.addActionListener((ActionEvent arg0) -> {
-         StorageMultipageTiff.setShouldGenerateMetadataFile(metadataFileWithMultipageTiffCheckBox.isSelected());
-      });
+      metadataFileWithMultipageTiffCheckBox.addActionListener((ActionEvent arg0) ->
+            StorageMultipageTiff.setShouldGenerateMetadataFile(
+                  metadataFileWithMultipageTiffCheckBox.isSelected()));
       
       final JCheckBox separateFilesForPositionsMPTiffCheckBox = new JCheckBox();
-      separateFilesForPositionsMPTiffCheckBox.setText("Save XY positions in separate Image Stack Files");
+      separateFilesForPositionsMPTiffCheckBox.setText(
+            "Save XY positions in separate Image Stack Files");
       separateFilesForPositionsMPTiffCheckBox.setSelected(
             StorageMultipageTiff.getShouldSplitPositions());
-      separateFilesForPositionsMPTiffCheckBox.addActionListener((ActionEvent arg0) -> {
-         StorageMultipageTiff.setShouldSplitPositions(separateFilesForPositionsMPTiffCheckBox.isSelected());
-      });
+      separateFilesForPositionsMPTiffCheckBox.addActionListener((ActionEvent arg0) ->
+            StorageMultipageTiff.setShouldSplitPositions(
+                  separateFilesForPositionsMPTiffCheckBox.isSelected()));
   
       final JCheckBox syncExposureMainAndMDA = new JCheckBox();
       syncExposureMainAndMDA.setText("Sync exposure between Main and MDA windows");
       syncExposureMainAndMDA.setSelected(AcqControlDlg.getShouldSyncExposure());
-      syncExposureMainAndMDA.addActionListener((ActionEvent arg0) -> {
-         AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected());
-      });
+      syncExposureMainAndMDA.addActionListener((ActionEvent arg0) ->
+            AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected()));
   
       final JCheckBox hideMDAdisplay = new JCheckBox();
       hideMDAdisplay.setText("Hide MDA display");
       hideMDAdisplay.setSelected(AcqControlDlg.getShouldHideMDADisplay());
-      hideMDAdisplay.addActionListener((ActionEvent arg0) -> {
-         AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
-      });
+      hideMDAdisplay.addActionListener((ActionEvent arg0) ->
+            AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected()));
       
       final JCheckBox runServer = new JCheckBox();
       runServer.setText("Run server on port " + ZMQSocketWrapper.STARTING_PORT_NUMBER);
@@ -265,11 +276,7 @@ public final class OptionsDlg extends JDialog {
 
       final JButton closeButton = new JButton();
       closeButton.setText("Close");
-      closeButton.addActionListener((final ActionEvent ev) -> {
-         closeRequested();
-      });
-  
-
+      closeButton.addActionListener((final ActionEvent ev) -> closeRequested());
 
       super.setLayout(new net.miginfocom.swing.MigLayout(
                "fill, insets dialog",
@@ -291,8 +298,8 @@ public final class OptionsDlg extends JDialog {
 
       super.add(new JSeparator(), "wrap");
 
-      if (mmStudio_.profileAdmin().getUUIDOfCurrentProfile() ==
-              mmStudio_.profileAdmin().getUUIDOfDefaultProfile()) {
+      if (mmStudio_.profileAdmin().getUUIDOfCurrentProfile()
+            == mmStudio_.profileAdmin().getUUIDOfDefaultProfile()) {
          super.add(alwaysUseDefaultProfileCheckBox, "wrap");
          super.add(askForConfigFileCheckBox, "wrap");
       }
@@ -338,8 +345,7 @@ public final class OptionsDlg extends JDialog {
             NumberUtils.displayStringToInt(bufSizeField_.getText());
          deleteLogDays =
             NumberUtils.displayStringToInt(logDeleteDaysField_.getText());
-      }
-      catch (ParseException ex) {
+      } catch (ParseException ex) {
          ReportingUtils.showError(ex);
          return;
       }

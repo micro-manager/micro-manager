@@ -29,6 +29,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import javax.swing.AbstractCellEditor;
@@ -158,8 +159,10 @@ public final class AutofocusPropertyEditor extends JDialog {
       springLayout
             .putConstraint(SpringLayout.EAST, refreshButton, 110,
                   SpringLayout.WEST, getContentPane());
-      refreshButton.setIcon(new ImageIcon(getClass().getResource(
-              "/org/micromanager/icons/arrow_refresh.png")));
+      URL resource =  getClass().getResource("/org/micromanager/icons/arrow_refresh.png");
+      if (resource != null) {
+         refreshButton.setIcon(new ImageIcon(resource));
+      }
       refreshButton.setFont(new Font("Arial", Font.PLAIN, 10));
       getContentPane().add(refreshButton);
       refreshButton.addActionListener(e -> refresh());
@@ -228,6 +231,7 @@ public final class AutofocusPropertyEditor extends JDialog {
    
    protected void changeAFMethod(String focusDev) {
       cellEditor_.stopEditing();
+      methodCombo_.setSelectedItem(focusDev);
       afMgr_.setAutofocusMethodByName(focusDev);
 
       updateStatus();
@@ -409,7 +413,7 @@ public final class AutofocusPropertyEditor extends JDialog {
          
          for (PropertyItem property : properties) {
             if (!property.preInit) {
-               if ((showReadOnly_ && property.readOnly) || !property.readOnly) {
+               if (showReadOnly_ || !property.readOnly) {
                   propList_.add(property);
                }
             }
@@ -594,10 +598,6 @@ public final class AutofocusPropertyEditor extends JDialog {
       public void validate() {}
 
       public void revalidate() {}
-
-      protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {}
-
-      public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
 
    }
 }

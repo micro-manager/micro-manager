@@ -18,6 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.display.internal.displaywindow;
 
 import javax.swing.SpinnerNumberModel;
@@ -28,9 +29,9 @@ import javax.swing.SpinnerNumberModel;
  */
 public class FpsSpinnerNumberModel extends SpinnerNumberModel  {
 
-   private final static int BIGSTEP = 5;
-   private final static int SMALLSTEP = 1;
-   private final static int CUTOFF = 10;
+   private static final int BIGSTEP = 5;
+   private static final int SMALLSTEP = 1;
+   private static final int CUTOFF = 10;
    
    private final double maxValue_;
    private final double minValue_;
@@ -46,8 +47,8 @@ public class FpsSpinnerNumberModel extends SpinnerNumberModel  {
    @Override
    public Object getNextValue() {
       Number val = super.getNumber();
-      val = (val.doubleValue() >= CUTOFF) ? 
-              val.doubleValue() + BIGSTEP : val.doubleValue() + SMALLSTEP;
+      val = (val.doubleValue() >= CUTOFF)
+            ? val.doubleValue() + BIGSTEP : val.doubleValue() + SMALLSTEP;
       val = (val.doubleValue() > maxValue_) ? maxValue_ : val;
       return val;
    }
@@ -55,8 +56,8 @@ public class FpsSpinnerNumberModel extends SpinnerNumberModel  {
    @Override
    public Object getPreviousValue() {
       Number val = super.getNumber();
-      val = (val.doubleValue() > CUTOFF) ? 
-              val.doubleValue() - BIGSTEP : val.doubleValue() - SMALLSTEP;
+      val = (val.doubleValue() > CUTOFF)
+            ? val.doubleValue() - BIGSTEP : val.doubleValue() - SMALLSTEP;
       val = (val.doubleValue() < minValue_) ? minValue_ : val;
       return val;
    }

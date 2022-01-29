@@ -121,6 +121,7 @@ public final class MainFrame extends JFrame {
 
    private final CMMCore core_;
    private final MMStudio mmStudio_;
+   private boolean exitOnClose_;
 
    private ConfigPadButtonPanel configPadButtonPanel_;
 
@@ -197,7 +198,13 @@ public final class MainFrame extends JFrame {
          // Shut down when this window is closed.
          @Override
          public void windowClosing(WindowEvent event) {
-            mmStudio_.closeSequence(false);
+            if (mmStudio_.closeSequence(false)) {
+               if (exitOnClose_) {
+                  System.exit(0);
+               } else {
+                  dispose();
+               }
+            }
          }
       });
    }
@@ -546,7 +553,9 @@ public final class MainFrame extends JFrame {
       handMovesButton_ = new JToggleButton(
             IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
       handMovesButton_.setToolTipText(
-            "When set, you can double-click on the Snap/Live view to move the stage. Requires pixel sizes to be set (see Pixel Calibration), and that you use the hand tool.");
+            "When set, you can double-click on the Snap/Live view to move the stage. "
+            + "Requires pixel sizes to be set (see Pixel Calibration), "
+            + "and that you use the hand tool.");
       handMovesButton_.addActionListener((ActionEvent e) -> {
          boolean isSelected = handMovesButton_.isSelected();
          mmStudio_.updateCenterAndDragListener(isSelected);
@@ -603,16 +612,12 @@ public final class MainFrame extends JFrame {
    /**
     * Bit superfluous.  Sets the exit strategy.
     *
-    * @param closeOnExit whether or not to quit the app when closing the window.
+    * @param exitOnClose whether or not to quit the app when closing the window.
     *                    When running as a Fiji plugin it is strange to exit the app,
     *                    whereas Micro-Manager users are used to it.
     */
-   public final void setExitStrategy(boolean closeOnExit) {
-      if (closeOnExit) {
-         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      } else {
-         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-      }
+   public final void setExitStrategy(boolean exitOnClose) {
+      exitOnClose_  = exitOnClose;
    }
 
    protected void setConfigSaveButtonStatus(boolean changed) {
@@ -829,6 +834,11 @@ public final class MainFrame extends JFrame {
       textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));
    }
 
+   /**
+    * Returns the exposure time currently displayed in the main frame.
+    *
+    * @return Exposure time in ms as displayed in the UI.
+    */
    public double getDisplayedExposureTime() {
       try {
          return NumberUtils.displayStringToDouble(textFieldExp_.getText());
@@ -838,6 +848,13 @@ public final class MainFrame extends JFrame {
       return -1;
    }
 
+   /**
+    * Enable/disable ROI buttons.
+    * Could be useful for cameras that do not support ROIS, but this function currently
+    * does not appear to be used.
+    *
+    * @param enabled Whether to enable (true) or disable (false) the buttons.
+    */
    public void enableRoiButtons(final boolean enabled) {
       SwingUtilities.invokeLater(() -> {
          setRoiButton_.setEnabled(enabled);

@@ -35,7 +35,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Wizard panel used as the abstract base class for all pages.
  */
-public abstract class PagePanel extends JPanel{
+public abstract class PagePanel extends JPanel {
    private static final long serialVersionUID = -4598248516499305300L;
    private static final Font HELP_FONT = new Font("Arial", Font.PLAIN, 14);
    protected MicroscopeModel model_;
@@ -44,11 +44,8 @@ public abstract class PagePanel extends JPanel{
    protected String title_;
    protected Dialog parent_;
 
-   protected static final String CFG_PATH = "cfg_path";
-
    public PagePanel() {
       super();
-      title_ = new String();
    }
 
    public void setModel(MicroscopeModel model, Studio studio) {

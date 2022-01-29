@@ -1,11 +1,8 @@
 package org.micromanager.internal.menus;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JMenu;
@@ -13,8 +10,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-
-import com.google.common.eventbus.Subscribe;
 import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.SciFIODataProvider;
@@ -38,6 +33,12 @@ public final class FileMenu {
    private final MutablePropertyMapView settings_;
    private boolean enableCloseAll_ = false;
 
+   /**
+    * Creates the File Menu in the application.
+    *
+    * @param studio The always present Studio object
+    * @param menuBar The menuBar object to which this FileMenu belongs
+    */
    public FileMenu(Studio studio, JMenuBar menuBar) {
       studio_ = studio;
       studio_.displays().registerForEvents(this);
@@ -58,6 +59,7 @@ public final class FileMenu {
          @Override
          public void menuDeselected(MenuEvent e) {
          }
+
          @Override
          public void menuCanceled(MenuEvent e) {
          }
@@ -70,79 +72,54 @@ public final class FileMenu {
     */
    private void populateMenu(JMenu fileMenu) {
       GUIUtils.addMenuItem(fileMenu, "Open (Virtual)...", null,
-         new Runnable() {
-            @Override
-            public void run() {
-               promptToOpenFile(true);
-            }
-      });
+            () -> promptToOpenFile(true));
 
       fileMenu.add(makeOpenRecentMenu(true));
 
       GUIUtils.addMenuItem(fileMenu, "Open (RAM)...", null,
-         new Runnable() {
-            @Override
-            public void run() {
-               promptToOpenFile(false);
-            }
-      });
+            () -> promptToOpenFile(false));
 
       fileMenu.add(makeOpenRecentMenu(false));
       
-      GUIUtils.addMenuItem(fileMenu, "Open (SciFIO)...", null, () -> {
-         openSciFIO();
-      });
+      GUIUtils.addMenuItem(fileMenu, "Open (SciFIO)...", null, this::openSciFIO);
 
       fileMenu.addSeparator();
 
       JMenuItem closeAllItem = GUIUtils.addMenuItem(
               fileMenu, "Close All Images...", null,
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    studio_.displays().promptToCloseWindows();
-                 }
-              });
+            () -> studio_.displays().promptToCloseWindows());
       closeAllItem.setEnabled(enableCloseAll_);
 
 
       fileMenu.addSeparator();
 
       GUIUtils.addMenuItem(fileMenu, "Exit", null,
-         new Runnable() {
-            @Override
-            public void run() {
-               ((MMStudio) studio_).closeSequence(false);
-            }
-         }
+            () -> ((MMStudio) studio_).closeSequence(false)
       );
    }
 
    private void promptToOpenFile(final boolean isVirtual) {
-      new Thread(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               Datastore store = studio_.data().promptForDataToLoad(
-                       studio_.app().getMainWindow(), isVirtual);
-               if (store == null) {
-                  // User cancelled.
-                  return;
-               }
-               if (store.getAnyImage() == null) {
-                  studio_.logs().showError("Unable to load any images; file may be invalid.");
-                  return;
-               }
-               // Note: the order is important, since the Inspector will only 
-               // become aware of the display once its store is managed.
-               studio_.displays().manage(store);
-               studio_.displays().loadDisplays(store);
-               updateFileHistory(store.getSavePath());
-            } catch (IOException ex) {
-               // ugly overloading of IOException to indicate user cancelling.
-               if (!ex.getMessage().equals("User Canceled")) {
-                  ReportingUtils.showError(ex, "There was an error when opening data");
-               }
+      new Thread(() -> {
+         try {
+            Datastore store = studio_.data().promptForDataToLoad(
+                    studio_.app().getMainWindow(), isVirtual);
+            if (store == null) {
+               // User cancelled.
+               return;
+            }
+            if (store.getAnyImage() == null) {
+               studio_.logs().showError("Unable to load any images; file may be invalid.");
+               return;
+            }
+            // Note: the order is important, since the Inspector will only
+            // become aware of the display once its store is managed.
+            studio_.displays().manage(store);
+            studio_.displays().loadDisplays(store);
+            updateFileHistory(store.getSavePath());
+         } catch (IOException ex) {
+            // ugly overloading of IOException to indicate user cancelling.
+            if (!ex.getMessage().equals("User Canceled")) {
+               ReportingUtils.showError(ex, "There was an error when opening data");
             }
          }
       }).start();
@@ -153,21 +130,18 @@ public final class FileMenu {
       File file = FileDialogs.openFile(null,
               "Please select an image data set", FileDialogs.SCIFIO_DATA);
       if (file != null) {
-         new Thread(new Runnable() {
-            @Override
-            public void run() {
-               try {
-                  SciFIODataProvider sdp = new SciFIODataProvider(studio_, file.getAbsolutePath());
-                  if (sdp.getAnyImage() == null) {
-                     studio_.logs().showError("Unable to load images");
-                  }
-                  DisplayWindow display = studio_.displays().createDisplay(sdp);
-                  studio_.displays().addViewer(display);
-               } catch (IOException ioe) {
-                  // ugly overloading of IOException to indicate user cancelling.
-                  if (!ioe.getMessage().equals("User Canceled")) {
-                     studio_.logs().showError(ioe, "There was an error while opening data");
-                  }
+         new Thread(() -> {
+            try {
+               SciFIODataProvider sdp = new SciFIODataProvider(studio_, file.getAbsolutePath());
+               if (sdp.getAnyImage() == null) {
+                  studio_.logs().showError("Unable to load images");
+               }
+               DisplayWindow display = studio_.displays().createDisplay(sdp);
+               studio_.displays().addViewer(display);
+            } catch (IOException ioe) {
+               // ugly overloading of IOException to indicate user cancelling.
+               if (!ioe.getMessage().equals("User Canceled")) {
+                  studio_.logs().showError(ioe, "There was an error while opening data");
                }
             }
          }).start();
@@ -184,37 +158,28 @@ public final class FileMenu {
       Collections.reverse(files);
       for (final String path : files) {
          JMenuItem item = new JMenuItem(path);
-         item.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               new Thread(new Runnable() {
-                  @Override
-                  public void run() {
-                     try {
-                        MMStudio internalStudio = (MMStudio) studio_;
-                        Datastore store = studio_.data().loadData( 
-                                 internalStudio.getApplication().getMainWindow(), 
-                                 path,
-                                 isVirtual);
-                        if (store != null && store.getAnyImage() != null) {
-                           studio_.displays().manage(store);
-                           studio_.displays().loadDisplays(store);
-                        }
-                        else {
-                           studio_.logs().showError("Unable to load any images; file may be invalid or missing.");
-                        }
-                        updateFileHistory(path);
-                     }
-                     catch (IOException ioe) {
-                        // ugly overloading of IOException to indicate user cancelling.
-                        if (!ioe.getMessage().equals("User Canceled")) {
-                           ReportingUtils.showError(ioe, "There was an error while opening data");
-                        }
-                     }
-                  }
-               }).start();
+         item.addActionListener(e -> new Thread(() -> {
+            try {
+               MMStudio internalStudio = (MMStudio) studio_;
+               Datastore store = studio_.data()
+                     .loadData(internalStudio.getApplication().getMainWindow(),
+                        path,
+                        isVirtual);
+               if (store != null && store.getAnyImage() != null) {
+                  studio_.displays().manage(store);
+                  studio_.displays().loadDisplays(store);
+               } else {
+                  studio_.logs().showError(
+                        "Unable to load any images; file may be invalid or missing.");
+               }
+               updateFileHistory(path);
+            } catch (IOException ioe) {
+               // ugly overloading of IOException to indicate user cancelling.
+               if (!ioe.getMessage().equals("User Canceled")) {
+                  ReportingUtils.showError(ioe, "There was an error while opening data");
+               }
             }
-         });
+         }).start());
          result.add(item);
       }
       return result;
@@ -223,6 +188,7 @@ public final class FileMenu {
    /**
     * Whenever a file is opened, add it to our history of recently-opened
     * files.
+    *
     * @param newFile file to be added to history
     */
    public void updateFileHistory(String newFile) {

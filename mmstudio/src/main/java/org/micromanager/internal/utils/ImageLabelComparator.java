@@ -18,6 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.internal.utils;
 
 import java.util.Comparator;
@@ -51,32 +52,38 @@ public final class ImageLabelComparator implements Comparator<String> {
       String[] indices1 = s1.split("_");
       String[] indices2 = s2.split("_");
       if (timeFirst_) {
-         int position1 = Integer.parseInt(indices1[3]), position2 = Integer.parseInt(indices2[3]);
+         int position1 = Integer.parseInt(indices1[3]);
+         int position2 = Integer.parseInt(indices2[3]);
          if (position1 != position2) {
             return position1 - position2;
          }
-         int frame1 = Integer.parseInt(indices1[2]), frame2 = Integer.parseInt(indices2[2]);
+         int frame1 = Integer.parseInt(indices1[2]);
+         int frame2 = Integer.parseInt(indices2[2]);
          if (frame1 != frame2) {
             return frame1 - frame2;
          }
       } else {
-         int frame1 = Integer.parseInt(indices1[2]), frame2 = Integer.parseInt(indices2[2]);
+         int frame1 = Integer.parseInt(indices1[2]);
+         int frame2 = Integer.parseInt(indices2[2]);
          if (frame1 != frame2) {
             return frame1 - frame2;
          }
-         int position1 = Integer.parseInt(indices1[3]), position2 = Integer.parseInt(indices2[3]);
+         int position1 = Integer.parseInt(indices1[3]);
+         int position2 = Integer.parseInt(indices2[3]);
          if (position1 != position2) {
             return position1 - position2;
          }
       }
       if (slicesFirst_) {
-         int channel1 = Integer.parseInt(indices1[0]), channel2 = Integer.parseInt(indices2[0]);
+         int channel1 = Integer.parseInt(indices1[0]);
+         int channel2 = Integer.parseInt(indices2[0]);
          if (channel1 != channel2) {
             return channel1 - channel2;
          }
          return Integer.parseInt(indices1[1]) - Integer.parseInt(indices2[1]);
       } else {
-         int slice1 = Integer.parseInt(indices1[1]), slice2 = Integer.parseInt(indices2[1]);
+         int slice1 = Integer.parseInt(indices1[1]);
+         int slice2 = Integer.parseInt(indices2[1]);
          if (slice1 != slice2) {
             return slice1 - slice2;
          }

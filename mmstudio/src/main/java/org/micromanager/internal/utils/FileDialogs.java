@@ -46,56 +46,60 @@ public final class FileDialogs {
    }
 
    public static final FileType MM_CONFIG_FILE = new FileType("MM_CONFIG_FILE",
-      "Micro-Manager Config File", "./MyScope.cfg", true, "cfg");
+         "Micro-Manager Config File", "./MyScope.cfg", true, "cfg");
 
    public static final FileType MM_DATA_SET = new FileType("MM_DATA_SET",
-      "Micro-Manager Image Location", System.getProperty("user.home") + "/Untitled",
-      false, (String[]) null);
+         "Micro-Manager Image Location", System.getProperty("user.home") + "/Untitled",
+         false, (String[]) null);
    
    public static final FileType SCIFIO_DATA = new FileType("SciFIO_Data_Set",
            "Image Location", System.getProperty("user.home") + "/Untitled.tif",
-            false, "tif", "jpg", "avi", "png", "jpg" );
+            false, "tif", "jpg", "avi", "png", "jpg");
 
-   public static final FileType ACQ_SETTINGS_FILE = new FileType("ACQ_SETTINGS_FILE", "Acquisition settings",
-           System.getProperty("user.home") + "/AcqSettings.txt",
-           true, "txt");
+   public static final FileType ACQ_SETTINGS_FILE = new FileType(
+            "ACQ_SETTINGS_FILE",
+         "Acquisition settings",
+         System.getProperty("user.home") + "/AcqSettings.txt",
+         true, "txt");
 
    private static class GeneralFileFilter
            extends javax.swing.filechooser.FileFilter
-           implements java.io.FilenameFilter
-   {
+           implements java.io.FilenameFilter {
       private final String fileDescription_;
       private final String[] fileSuffixes_;
+
       public GeneralFileFilter(String fileDescription, final String [] fileSuffixes) {
          fileDescription_ = fileDescription;
          fileSuffixes_ = fileSuffixes;
       }
+
       @Override
       public boolean accept(File pathname) {
          String name = pathname.getName();
          int n = name.lastIndexOf(".");
-         String suffix = name.substring(1+n).toLowerCase();
+         String suffix = name.substring(1 + n).toLowerCase();
          if (fileSuffixes_ == null || fileSuffixes_.length == 0) {
             return true;
          }
          if (!JavaUtils.isMac() && pathname.isDirectory()) {
             return true;
          }
-         for (int i=0; i<fileSuffixes_.length; ++i) {
-            if (fileSuffixes_[i] != null && fileSuffixes_[i].toLowerCase().contentEquals(suffix)) {
+         for (String s : fileSuffixes_) {
+            if (s != null && s.toLowerCase().contentEquals(suffix)) {
                return true;
             }
          }
          return false;
       }
-      @Override
-      public String getDescription() {
-         return fileDescription_;
-      }
 
       @Override
       public boolean accept(File dir, String name) {
          return accept(new File(dir, name));
+      }
+
+      @Override
+      public String getDescription() {
+         return fileDescription_;
       }
    }
 
@@ -112,10 +116,10 @@ public final class FileDialogs {
 
       if (JavaUtils.isMac()) {
          if (selectDirectories) {
-         // For Mac we only select directories, unfortunately!
+            // For Mac we only select directories, unfortunately!
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
          }
-         int mode = load? FileDialog.LOAD : FileDialog.SAVE;
+         int mode = load ? FileDialog.LOAD : FileDialog.SAVE;
          FileDialog fd;
          if (parent instanceof Dialog) {
             fd = new FileDialog((Dialog) parent, title, mode);
@@ -127,8 +131,7 @@ public final class FileDialogs {
          if (startFile != null) {
             if (startFile.isDirectory()) {
                fd.setDirectory(startFile.getAbsolutePath());
-            }
-            else {
+            } else {
                fd.setDirectory(startFile.getParent());
             }
             if (!load && suggestFileName) {
@@ -143,7 +146,7 @@ public final class FileDialogs {
             System.setProperty("apple.awt.fileDialogForDirectories", "false");
          }
          if (fd.getFile() != null) {
-           selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
+            selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
             if (mode == FileDialog.SAVE) {
                if (! filter.accept(selectedFile)) {
                   selectedFile = new File(selectedFile.getAbsolutePath()
@@ -164,15 +167,6 @@ public final class FileDialogs {
          JFileChooser fc = new JFileChooser();
          if (startFile != null) {
             fc.setSelectedFile(startFile);
-            /* This code leads to undesired behavior for "simple" files.
-               It may be here for specific behavior of certain File Selectors
-               I'll leave it here in case undesired behavior pops up (NS, 20200708, delete after 20210101)
-            if ((!load && suggestFileName) || startFile.isDirectory()) {
-               fc.setSelectedFile(startFile);
-            } else {
-               fc.setSelectedFile(startFile.getParentFile());
-            }
-            */
          }
          skin.resume();
          fc.setDialogTitle(title);

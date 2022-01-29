@@ -16,6 +16,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public final class ThreadExceptionLogger implements Thread.UncaughtExceptionHandler {
    private static boolean setUp_ = false;
+
    public static void setUp() {
       if (setUp_) {
          return;
@@ -46,8 +47,8 @@ public final class ThreadExceptionLogger implements Thread.UncaughtExceptionHand
 
    @Override
    public void uncaughtException(Thread t, Throwable e) {
-      ReportingUtils.logMessage("Thread " + t.getId() + " (" + t.getName() +
-            ") terminated with uncaught exception");
+      ReportingUtils.logMessage("Thread " + t.getId() + " (" + t.getName()
+            + ") terminated with uncaught exception");
       logException(e);
       if (chainedHandler_ != null) {
          chainedHandler_.uncaughtException(t, e);

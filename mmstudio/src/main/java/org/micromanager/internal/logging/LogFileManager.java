@@ -27,8 +27,8 @@ public final class LogFileManager {
          return filename;
       }
 
-      return new File(getLogFileDirectory(), makeLogFileLeafName()).
-         getAbsolutePath();
+      return new File(getLogFileDirectory(), makeLogFileLeafName())
+            .getAbsolutePath();
    }
 
    public static void deleteLogFilesDaysOld(int days, String fileToExclude) {
@@ -36,8 +36,7 @@ public final class LogFileManager {
       if (fileToExclude != null && fileToExclude.length() > 0) {
          try {
             excludedFile = new File(fileToExclude).getCanonicalFile();
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
             // Leave excludedFile null. (If we can't get the canonical path for
             // it, we are probably not in danger of deleting it.)
          }
@@ -92,21 +91,20 @@ public final class LogFileManager {
    }
 
    private static String makeLogFileLeafName() {
-      String dateTime = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss").
-         format(new java.util.Date());
+      String dateTime = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
+            .format(new java.util.Date());
 
       // Try to get the process id. This method is not guaranteed to give
       // the pid on all platforms/JVMs, but then, having the pid is not
       // essential either. Just make sure not to fail if it doesn't work.
       java.lang.management.RuntimeMXBean rtMXB =
-         java.lang.management.ManagementFactory.getRuntimeMXBean();
+            java.lang.management.ManagementFactory.getRuntimeMXBean();
       // jvmName is usually a string like 1234@host.example.com
       String jvmName = rtMXB.getName();
       String pidStr;
       try {
          pidStr = "_pid" + Integer.parseInt(jvmName.split("@")[0]);
-      }
-      catch (NumberFormatException e) {
+      } catch (NumberFormatException e) {
          pidStr = "";
       }
 
@@ -122,8 +120,8 @@ public final class LogFileManager {
 
    private static Calendar getLogFileDate(String filename) {
       Pattern modernPattern = Pattern.compile(
-            "CoreLog(\\d{4})(\\d{2})(\\d{2})T" +
-            "(\\d{2})(\\d{2})(\\d{2})(_pid\\d+)?\\.txt");
+            "CoreLog(\\d{4})(\\d{2})(\\d{2})T"
+                  + "(\\d{2})(\\d{2})(\\d{2})(_pid\\d+)?\\.txt");
       Matcher m = modernPattern.matcher(filename);
       if (m.matches()) {
          int year = Integer.parseInt(m.group(1));
@@ -139,7 +137,7 @@ public final class LogFileManager {
 
    private static Calendar getLegacyLogFileDate(String filename) {
       Pattern legacyPattern =
-         Pattern.compile("CoreLog(\\d{4})(\\d{2})(\\d{2})\\.txt");
+            Pattern.compile("CoreLog(\\d{4})(\\d{2})(\\d{2})\\.txt");
       Matcher m = legacyPattern.matcher(filename);
       if (m.matches()) {
          int year = Integer.parseInt(m.group(1));
@@ -156,8 +154,7 @@ public final class LogFileManager {
          if (file.getCanonicalFile().equals(canonicalExcludedFile)) {
             return true;
          }
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          return true;
       }
       return false;

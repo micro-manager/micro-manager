@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.display.internal.displaywindow;
 
 import com.google.common.eventbus.Subscribe;
@@ -43,7 +38,8 @@ class AxisLinker {
 
       @Override
       public boolean receivePropagatedValue(Integer value) {
-         Coords oldPos, newPos;
+         Coords oldPos;
+         Coords newPos;
          do {
             oldPos = viewer_.getDisplayPosition();
             // TODO Is there a more efficient way to break the loop?
@@ -70,16 +66,14 @@ class AxisLinker {
    }
 
    public static AxisLinker create(LinkManager linkManager,
-         DisplayController viewer, String axis)
-   {
+         DisplayController viewer, String axis) {
       AxisLinker instance = new AxisLinker(linkManager, viewer, axis);
       viewer.registerForEvents(instance);
       return instance;
    }
 
    private AxisLinker(LinkManager linkManager, DisplayController viewer,
-         String axis)
-   {
+         String axis) {
       linkManager_ = linkManager;
       viewer_ = viewer;
       axis_ = axis;

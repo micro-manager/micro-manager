@@ -16,8 +16,8 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //CVS:          $Id$
 //
-package org.micromanager.internal.pluginmanagement;
 
+package org.micromanager.internal.pluginmanagement;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,12 +34,12 @@ import org.scijava.plugin.DefaultPluginFinder;
 import org.scijava.plugin.PluginIndex;
 import org.scijava.plugin.PluginInfo;
 
+/**
+ * Recursively seek through the directory structure under the specified
+ * root and generate a list of files that match the given extension.
+ * Just a passthrough to the actual recursive method.
+ */
 public final class PluginFinder {
-   /**
-    * Recursively seek through the directory structure under the specified
-    * root and generate a list of files that match the given extension.
-    * Just a passthrough to the actual recursive method.
-    */
    private static ArrayList<String> findPaths(String root, String extension) {
       ArrayList<String> result = new ArrayList<>();
       // Short-circuit if we're called with a non-directory.
@@ -59,8 +59,7 @@ public final class PluginFinder {
       for (File item : items) {
          if (item.getAbsolutePath().endsWith(extension)) {
             result.add(item.getAbsolutePath());
-         }
-         else if (item.isDirectory()) {
+         } else if (item.isDirectory()) {
             recursiveFindPaths(item, extension, result);
          }
       }
@@ -77,8 +76,7 @@ public final class PluginFinder {
          URL jarURL;
          try {
             jarURL = new File(jarPath).toURI().toURL();
-         }
-         catch (MalformedURLException e) {
+         } catch (MalformedURLException e) {
             ReportingUtils.logError("Unable to generate URL from path " + jarPath + "; skipping");
             continue;
          }
@@ -98,8 +96,7 @@ public final class PluginFinder {
             loader.setBlockInheritedResources(true);
             result.addAll(findPluginsWithLoader(loader));
             loader.setBlockInheritedResources(false);
-         }
-         catch (Throwable e) {
+         } catch (Throwable e) {
             ReportingUtils.logError(e, "Unable to load JAR at " + jarURL);
          }
       }
@@ -114,8 +111,7 @@ public final class PluginFinder {
       for (PluginInfo info : index.getAll()) {
          try {
             result.add(info.loadClass());
-         }
-         catch (InstantiableException e) {
+         } catch (InstantiableException e) {
             ReportingUtils.logError(e, "Unable to instantiate class for " + info);
          }
       }
@@ -124,8 +120,8 @@ public final class PluginFinder {
 
    /**
     * Custom class loader for loading plugin classes and resources.
-    * 
-    * The only difference from URLClassLoader is that it allows temporary
+    *
+    * <p>The only difference from URLClassLoader is that it allows temporary
     * blockage of resource enumeration and loading from the parent loader.
     */
    private static class PluginClassLoader extends URLClassLoader {
@@ -146,8 +142,7 @@ public final class PluginFinder {
             // will return null if the resource is not found in our specific
             // jar.
             return findResource(name);
-         }
-         else {
+         } else {
             return super.getResource(name);
          }
       }
@@ -156,8 +151,7 @@ public final class PluginFinder {
       public Enumeration<URL> getResources(String name) throws IOException {
          if (blockInheritedResources_) {
             return findResources(name);
-         }
-         else {
+         } else {
             return super.getResources(name);
          }
       }

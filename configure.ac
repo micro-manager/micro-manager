@@ -1,9 +1,7 @@
-
-m4_define([MM_CPP_DIR], [mmCoreAndDevices])  # Define a macro substitution to be used in this file.
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR(MM_CPP_DIR[/MMCore/MMCore.cpp])
+AC_CONFIG_SRCDIR([mmCoreAndDevices/MMCore/MMCore.cpp])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign 1.11])
@@ -45,10 +43,6 @@ can_build_mmcore=yes
 ##
 ## MMCoreJ
 ##
-
-# Define a shell variable based on the earlier m4_define
-[MM_CPP_DIR]=MM_CPP_DIR
-AC_ARG_VAR([MM_CPP_DIR], [The directory containing the c++ code])
 
 # SWIG
 AC_ARG_VAR([SWIG], [Simple Wrapper and Interface Generator])
@@ -311,14 +305,14 @@ AM_CONDITIONAL([INSTALL_MMDEVAPI], [test x$install_mmdevapi = xtrue])
 ##
 
 AC_MSG_CHECKING([for proprietary device adapter source])
-AS_IF([test -f "$srcdir/$MM_CPP_DIR/SecretDeviceAdapters/configure"],
+AS_IF([test -f "$srcdir/mmCoreAndDevices/SecretDeviceAdapters/configure"],
    [build_secretdeviceadapters=yes], [build_secretdeviceadapters=no])
 AM_CONDITIONAL([BUILD_SECRETDEVICEADAPTERS],
    [test "x$build_secretdeviceadapters" = xyes])
 
-AC_CONFIG_SUBDIRS(MM_CPP_DIR[/DeviceAdapters])
+AC_CONFIG_SUBDIRS([mmCoreAndDevices/DeviceAdapters])
 AS_IF([test "x$build_secretdeviceadapters" = xyes], [
-   AC_CONFIG_SUBDIRS(MM_CPP_DIR[/SecretDeviceAdapters])
+   AC_CONFIG_SUBDIRS([mmCoreAndDevices/SecretDeviceAdapters])
 ])
 
 
@@ -330,11 +324,11 @@ AC_CONFIG_FILES(m4_strip([
    Makefile
    buildscripts/AntExtensions/Makefile
    testing/Makefile
-   ]MM_CPP_DIR[/MMDevice/Makefile
-   ]MM_CPP_DIR[/MMDevice/unittest/Makefile
-   ]MM_CPP_DIR[/MMCore/Makefile
-   ]MM_CPP_DIR[/MMCore/unittest/Makefile
-   ]MM_CPP_DIR[/MMCoreJ_wrap/Makefile
+   mmCoreAndDevices/MMDevice/Makefile
+   mmCoreAndDevices/MMDevice/unittest/Makefile
+   mmCoreAndDevices/MMCore/Makefile
+   mmCoreAndDevices/MMCore/unittest/Makefile
+   mmCoreAndDevices/MMCoreJ_wrap/Makefile
    mmstudio/Makefile
    acqEngine/Makefile
    libraries/Makefile

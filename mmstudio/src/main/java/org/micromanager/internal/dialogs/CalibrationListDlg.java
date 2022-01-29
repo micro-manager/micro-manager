@@ -27,36 +27,45 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
-import java.awt.event.*;
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.*;
+import org.micromanager.internal.utils.Calibration;
+import org.micromanager.internal.utils.CalibrationList;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
-/*
+/**
  * Dialog for listing pixel size configuration presets and the corresponding
  * pixel size for each.
  */
 public final class CalibrationListDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private static final String TITLE = "Calibration Editor";
-   public static final String PIXEL_SIZE_GROUP = "ConfigPixelSize";
 
-   private JTable calTable_;
-   private SpringLayout springLayout;
-   private CMMCore core_;
-   private CalibrationList calibrationList_;
+   private final JTable calTable_;
+   private final CMMCore core_;
+   private final CalibrationList calibrationList_;
    private Studio studio_;
    private ConfigDialog configDialog_;
    private boolean disposed_ = false;
 
    private class CalTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
-      public final String[] COLUMN_NAMES = new String[] {
+      public final String[] columnNames = new String[] {
             "Label",
             "Pixel Size [um]"
       };
@@ -73,12 +82,12 @@ public final class CalibrationListDlg extends JDialog {
       
       @Override
       public int getColumnCount() {
-         return COLUMN_NAMES.length;
+         return columnNames.length;
       }
 
       @Override
       public String getColumnName(int columnIndex) {
-         return COLUMN_NAMES[columnIndex];
+         return columnNames[columnIndex];
       }
 
       @Override
@@ -129,7 +138,7 @@ public final class CalibrationListDlg extends JDialog {
          return columnIndex == 1;
       }
 
-      private void handleException (Exception e) {
+      private void handleException(Exception e) {
          String errText = "Exception occurred: " + e.getMessage();
          JOptionPane.showMessageDialog(null, errText);
       }
@@ -137,14 +146,15 @@ public final class CalibrationListDlg extends JDialog {
 
 
    /**
-    * Create the dialog
+    * Create the dialog.
+    *
     * @param core - The Micro-Manager core object
     */
    public CalibrationListDlg(CMMCore core) {
       super();
       core_ = core;
       super.setTitle("Pixel Size Calibration");
-      springLayout = new SpringLayout();
+      SpringLayout springLayout = new SpringLayout();
       super.getContentPane().setLayout(springLayout);
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
@@ -154,7 +164,7 @@ public final class CalibrationListDlg extends JDialog {
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       Rectangle r = super.getBounds();
-      r.x +=1;
+      r.x += 1;
       
       final JScrollPane scrollPane = new JScrollPane();
       super.getContentPane().add(scrollPane);
@@ -178,8 +188,8 @@ public final class CalibrationListDlg extends JDialog {
             if (rowIndex < 0) {
                return "";
             }
-            CalTableModel ptm = (CalTableModel)calTable_.getModel();
-            String label = (String)ptm.getValueAt(rowIndex, 0);
+            CalTableModel ptm = (CalTableModel) calTable_.getModel();
+            String label = (String) ptm.getValueAt(rowIndex, 0);
             try {
                if (core_.isPixelSizeConfigDefined(label)) {
                   Configuration cfg = core_.getPixelSizeConfigData(label);
@@ -205,9 +215,7 @@ public final class CalibrationListDlg extends JDialog {
 
       final JButton newButton = new JButton();
       newButton.setFont(new Font("", Font.PLAIN, 10));
-      newButton.addActionListener((ActionEvent arg0) -> {
-         addNewCalibration();
-      });
+      newButton.addActionListener((ActionEvent arg0) -> addNewCalibration());
       newButton.setText("New");
       super.getContentPane().add(newButton);
       springLayout.putConstraint(SpringLayout.SOUTH, newButton, 40, 
@@ -219,9 +227,7 @@ public final class CalibrationListDlg extends JDialog {
 
       final JButton editButton = new JButton();
       editButton.setFont(new Font("", Font.PLAIN, 10));
-      editButton.addActionListener((ActionEvent arg0) -> {
-         editCalibration();
-      });
+      editButton.addActionListener((ActionEvent arg0) -> editCalibration());
       editButton.setText("Edit");
       super.getContentPane().add(editButton);
       springLayout.putConstraint(SpringLayout.SOUTH, editButton, 65, 
@@ -237,9 +243,7 @@ public final class CalibrationListDlg extends JDialog {
 
       final JButton removeButton = new JButton();
       removeButton.setFont(new Font("", Font.PLAIN, 10));
-      removeButton.addActionListener((ActionEvent arg0) -> {
-         removeCalibration();
-      });
+      removeButton.addActionListener((ActionEvent arg0) -> removeCalibration());
      
       removeButton.setText("Remove");
       super.getContentPane().add(removeButton);
@@ -256,9 +260,7 @@ public final class CalibrationListDlg extends JDialog {
 
       final JButton removeAllButton = new JButton();
       removeAllButton.setFont(new Font("", Font.PLAIN, 10));
-      removeAllButton.addActionListener((ActionEvent arg0) -> {
-         removeAllCalibrations();
-      });
+      removeAllButton.addActionListener((ActionEvent arg0) -> removeAllCalibrations());
       removeAllButton.setText("Remove All");
       super.getContentPane().add(removeAllButton);
       springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, 111, 
@@ -271,9 +273,7 @@ public final class CalibrationListDlg extends JDialog {
               SpringLayout.WEST, removeButton);
       final JButton closeButton = new JButton();
       closeButton.setFont(new Font("", Font.PLAIN, 10));
-      closeButton.addActionListener((ActionEvent arg0) -> {
-         dispose();
-      });
+      closeButton.addActionListener((ActionEvent arg0) -> dispose());
 
       closeButton.setText("Close");
       super.getContentPane().add(closeButton);
@@ -291,6 +291,9 @@ public final class CalibrationListDlg extends JDialog {
               SpringLayout.WEST, removeButton);
    }
 
+   /**
+    * Adds a new calibration to the list.
+    */
    public void addNewCalibration() {
       if (configDialog_ != null) {
          configDialog_.setVisible(true);
@@ -301,27 +304,30 @@ public final class CalibrationListDlg extends JDialog {
       if (editPreset(name, "0.00", true)) {
          // Clear calibrationlist and re-read from core
          calibrationList_.getCalibrationsFromCore();
-         CalTableModel ptm = (CalTableModel)calTable_.getModel();
+         CalTableModel ptm = (CalTableModel) calTable_.getModel();
          ptm.fireTableDataChanged();
          ((MMStudio) studio_).setConfigChanged(true);
          studio_.app().refreshGUI();
       }
    }
 
+   /**
+    * Edits the currently selected calibration.
+    */
    public void editCalibration() {
       if (configDialog_ != null) {
          configDialog_.setVisible(true);
          configDialog_.toFront();
          return;
       }
-      CalTableModel ptm = (CalTableModel)calTable_.getModel();
+      CalTableModel ptm = (CalTableModel) calTable_.getModel();
       int idx = calTable_.getSelectedRow();
       if (idx < 0) {
          handleError("A Pixel Size Calibration must be selected first.");
          return;
       }
-      String size = (String)ptm.getValueAt(idx, 1);
-      String label = (String)ptm.getValueAt(idx, 0);
+      String size = (String) ptm.getValueAt(idx, 1);
+      String label = (String) ptm.getValueAt(idx, 0);
       if (editPreset(label, size, false)) {
          calibrationList_.getCalibrationsFromCore();
          ptm.fireTableDataChanged();
@@ -330,14 +336,12 @@ public final class CalibrationListDlg extends JDialog {
       }
    }
 
-   public void updateCalibrations() {
-      refreshCalibrations();
-      ((MMStudio) studio_).setConfigChanged(true);
-      studio_.app().refreshGUI();
-   }
-   
+
+   /**
+    * Replaces currently displaced calibrations with calibrations as known by the core.
+    */
    public void refreshCalibrations() {
-      CalTableModel ptm = (CalTableModel)calTable_.getModel();
+      CalTableModel ptm = (CalTableModel) calTable_.getModel();
       calibrationList_.getCalibrationsFromCore();
       ptm.fireTableDataChanged();
       int row = ptm.getCurrentPixelConfigRow();
@@ -354,7 +358,7 @@ public final class CalibrationListDlg extends JDialog {
    @Override
    public void dispose() {
       if (!disposed_) {
-         if (studio_ != null && !disposed_) {
+         if (studio_ != null) {
             studio_.events().unregisterForEvents(this);
             MMStudio mmStudio = (MMStudio) studio_;
             if (mmStudio.hasConfigChanged()) {
@@ -377,6 +381,8 @@ public final class CalibrationListDlg extends JDialog {
    }
     
    /**
+    * Handle the event signalling that the application is shutting down.
+    *
     * @param event indicating that shutdown is happening
     */
    @Subscribe
@@ -386,16 +392,20 @@ public final class CalibrationListDlg extends JDialog {
       }
    }
 
+   /**
+    * Removes the selected calibration from the display and core.
+    */
    public void removeCalibration() {
-      CalTableModel ptm = (CalTableModel)calTable_.getModel();
+      CalTableModel ptm = (CalTableModel) calTable_.getModel();
       int idx = calTable_.getSelectedRow();
-      String label = (String)ptm.getValueAt(idx, 0);
-      int result = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove calibration group " + label + "?",
+      String label = (String) ptm.getValueAt(idx, 0);
+      int result = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to remove calibration group " + label + "?",
             TITLE,
-            JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);                                
-      if (result == JOptionPane.OK_OPTION) {                                                            
+            JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
+      if (result == JOptionPane.OK_OPTION) {
          try {
-            core_.deletePixelSizeConfig(label);                                                                      
+            core_.deletePixelSizeConfig(label);
          } catch (Exception e) {
             handleException(e);
          }
@@ -406,8 +416,12 @@ public final class CalibrationListDlg extends JDialog {
       }
    }
 
+   /**
+    * Removes all calibrations from the display and core.
+    */
    public void removeAllCalibrations() {
-      int result = JOptionPane.showConfirmDialog(this, "Are you absolutely sure you want to remove all calibrations? (No Undo possible!)",
+      int result = JOptionPane.showConfirmDialog(this,
+            "Are you absolutely sure you want to remove all calibrations? (No Undo possible!)",
             TITLE,
             JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
       if (result == JOptionPane.OK_OPTION) {
@@ -419,16 +433,25 @@ public final class CalibrationListDlg extends JDialog {
             handleException(e);
          }
          calibrationList_.getCalibrationsFromCore();
-         CalTableModel ptm = (CalTableModel)calTable_.getModel();
+         CalTableModel ptm = (CalTableModel) calTable_.getModel();
          ptm.fireTableDataChanged();
          studio_.app().refreshGUI();
          ((MMStudio) studio_).setConfigChanged(true);
       }
    }
 
+   /**
+    * Edits the given pixel size calibration.
+    *
+    * @param calibrationName Name of the pixel size calibration to be editted.
+    * @param pixelSize Pixel size of this calibration.
+    * @param newConfig If true, the calibration does not exist yet.
+    * @return True on success, false on failure.
+    */
    public boolean editPreset(String calibrationName, String pixelSize, boolean newConfig) {
       int result = JOptionPane.showConfirmDialog(this,
-            "Devices will move to the settings being edited. Please make sure there is no danger of collision.",
+            "Devices will move to the settings being edited. "
+            + "Please make sure there is no danger of collision.",
             TITLE,
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
       if (result == JOptionPane.OK_OPTION) {
@@ -443,7 +466,12 @@ public final class CalibrationListDlg extends JDialog {
       }
       return false;
    }
-   
+
+   /**
+    * Clean up after editing a preset.
+    *
+    * @param dialog Object that did the editing.
+    */
    public void endedEditingPreset(ConfigDialog dialog) {
       if (dialog.equals(configDialog_)) {
          configDialog_ = null;
@@ -454,11 +482,11 @@ public final class CalibrationListDlg extends JDialog {
       return studio_;
    }
 
-   private void handleException (Exception e) {
+   private void handleException(Exception e) {
       ReportingUtils.showError(e, this);
    }
 
-   private void handleError (String errText) {
+   private void handleError(String errText) {
       ReportingUtils.showError(errText, this);
    }
 }

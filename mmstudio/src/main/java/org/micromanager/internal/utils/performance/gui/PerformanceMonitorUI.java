@@ -13,8 +13,6 @@
 
 package org.micromanager.internal.utils.performance.gui;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -24,63 +22,48 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 
 /**
  * Display time series performance statistics in a frame.
+ *
  * @author Mark A. Tsuchida
  */
 public class PerformanceMonitorUI {
    private final PerformanceMonitor monitor_;
-   private Timer timer_;
-
    private PerformanceMonitorTableModel model_;
-   private JTable table_;
-   private JScrollPane scrollPane_;
-   private JFrame frame_;
 
    private static final String SYSPROP = "org.micromanager.showperfmon";
+
    static {
       // Temporary - for debugging
       // System.setProperty("org.micromanager.showperfmon", "true");
    }
 
    public static PerformanceMonitorUI create(PerformanceMonitor monitor,
-         String title)
-   {
+         String title) {
       return new PerformanceMonitorUI(monitor, title);
    }
 
-   private PerformanceMonitorUI(PerformanceMonitor monitor, final String title)
-   {
+   private PerformanceMonitorUI(PerformanceMonitor monitor, final String title) {
       monitor_ = monitor;
       if (!Boolean.getBoolean(SYSPROP)) {
          return;
       }
 
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            showUI(title);
-         }
-      });
+      SwingUtilities.invokeLater(() -> showUI(title));
    }
 
    private void showUI(String title) {
       model_ = new PerformanceMonitorTableModel();
-      table_ = new JTable(model_);
-      scrollPane_ = new JScrollPane(table_);
-      frame_ = new JFrame();
+      JTable table = new JTable(model_);
+      JScrollPane scrollPane = new JScrollPane(table);
+      JFrame frame = new JFrame();
 
-      table_.setFillsViewportHeight(true);
+      table.setFillsViewportHeight(true);
 
-      frame_.setTitle(title);
-      frame_.add(scrollPane_);
-      frame_.pack();
+      frame.setTitle(title);
+      frame.add(scrollPane);
+      frame.pack();
 
-      frame_.setVisible(true);
-      timer_ = new Timer(1000, new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            model_.setData(monitor_.getEntries());
-         }
-      });
-      timer_.start();
+      frame.setVisible(true);
+      Timer timer = new Timer(1000, e -> model_.setData(monitor_.getEntries()));
+      timer.start();
    }
 }

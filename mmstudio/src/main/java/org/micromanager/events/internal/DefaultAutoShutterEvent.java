@@ -28,7 +28,8 @@ import org.micromanager.events.AutoShutterEvent;
  *  {@link org.micromanager.events.EventManager}.
  */
 public final class DefaultAutoShutterEvent implements AutoShutterEvent {
-   private boolean isAutoOn_;
+   private final boolean isAutoOn_;
+
    public DefaultAutoShutterEvent(boolean isOn) {
       isAutoOn_ = isOn;
    }

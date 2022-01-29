@@ -20,6 +20,7 @@
 //
 // CVS:          $Id: Setting.java 2 2007-02-27 23:33:17Z nenad $
 //
+
 package org.micromanager.internal.hcwizard;
 
 /**
@@ -32,9 +33,8 @@ public final class Setting {
    public String propertyValue_;
    
    public Setting() {
-      deviceName_ = new String("NoName");
-      propertyName_ = new String("Undefined");
-      propertyValue_ = new String();
+      deviceName_ = "NoName";
+      propertyName_ = "Undefined";
    }
    
    public Setting(String devName, String propName, String propVal) {
@@ -47,9 +47,9 @@ public final class Setting {
     * Comapres two settings based on their content.
     */
    public boolean isEqualTo(Setting s) {
-      if (deviceName_.compareTo(s.deviceName_) == 0 &&
-          propertyName_.compareTo(s.propertyName_) == 0 &&
-          propertyValue_.compareTo(s.propertyValue_) == 0) {
+      if (deviceName_.compareTo(s.deviceName_) == 0
+            && propertyName_.compareTo(s.propertyName_) == 0
+            && propertyValue_.compareTo(s.propertyValue_) == 0) {
          return true;
       }
       return false;
@@ -60,9 +60,9 @@ public final class Setting {
     * is not taken into account.
     */
    public boolean matches(Setting s) {
-      if (deviceName_.compareTo(s.deviceName_) == 0 &&
-            propertyName_.compareTo(s.propertyName_) == 0) {
-           return true;
+      if (deviceName_.compareTo(s.deviceName_) == 0
+            && propertyName_.compareTo(s.propertyName_) == 0) {
+         return true;
       }
       return false;
    }

@@ -16,6 +16,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //CVS:          $Id$
 //
+
 package org.micromanager.internal.pluginmanagement;
 
 import java.awt.event.ActionEvent;
@@ -37,13 +38,13 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
+import org.micromanager.display.inspector.InspectorPanelPlugin;
 import org.micromanager.display.overlay.OverlayPlugin;
 import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.SortedMenu;
 import org.micromanager.quickaccess.QuickAccessPlugin;
-import org.micromanager.display.inspector.InspectorPanelPlugin;
 
 /**
  * Implementation of the {@link PluginManager} API.
@@ -52,7 +53,8 @@ public final class DefaultPluginManager implements PluginManager {
 
    // List of the types of plugins we allow.
    // TODO Remove this list and just load all MMGenericPlugin instances
-   private static final ArrayList<Class> VALID_CLASSES = new ArrayList<Class>();
+   private static final ArrayList<Class> VALID_CLASSES = new ArrayList<>();
+
    static {
       VALID_CLASSES.add(AcquisitionDialogPlugin.class);
       VALID_CLASSES.add(AutofocusPlugin.class);
@@ -78,18 +80,14 @@ public final class DefaultPluginManager implements PluginManager {
       for (Class classType : VALID_CLASSES) {
          pluginTypeToPlugins_.put(classType, new ArrayList<>());
       }
-      loadingThread_ = new Thread(new Runnable() {
-         @Override
-         public void run() {
-            loadPlugins();
-         }
-      }, "Plugin loading thread");
+      loadingThread_ = new Thread(this::loadPlugins, "Plugin loading thread");
       loadingThread_.start();
    }
 
    /**
     * Join the loading thread for the specified amount of time, to wait for
     * plugin loading to complete.
+    *
     * @param timeoutMs return after no more than this amount of milliseconds
     * @throws java.lang.InterruptedException
     */
@@ -99,6 +97,7 @@ public final class DefaultPluginManager implements PluginManager {
 
    /**
     * Return true if the loading thread is done.
+    *
     * @return false if the loading thread is still running, true otherwise
     */
    public boolean isInitializationComplete() {
@@ -111,7 +110,7 @@ public final class DefaultPluginManager implements PluginManager {
     * regular plugins.
     */
    private void loadPlugins() {
-      long startTime = System.currentTimeMillis();
+      final long startTime = System.currentTimeMillis();
       String dir = System.getProperty("org.micromanager.plugin.path",
                System.getProperty("user.dir") + "/mmplugins");
       ReportingUtils.logMessage("Searching for plugins in " + dir);
@@ -129,8 +128,8 @@ public final class DefaultPluginManager implements PluginManager {
       loadPlugins(PluginFinder.findPluginsWithLoader(
             ((MMStudio) studio_).getClass().getClassLoader()));
 
-      ReportingUtils.logMessage("Plugin loading took " +
-            (System.currentTimeMillis() - startTime) + "ms");
+      ReportingUtils.logMessage("Plugin loading took "
+            + (System.currentTimeMillis() - startTime) + "ms");
    }
 
    /**
@@ -148,15 +147,14 @@ public final class DefaultPluginManager implements PluginManager {
             MMGenericPlugin plugin = (MMGenericPlugin) pluginClass.newInstance();
             ReportingUtils.logMessage("Found plugin " + plugin);
             addPlugin(plugin);
-         }
-         catch (InstantiationException e) {
+         } catch (InstantiationException e) {
             ReportingUtils.logError(e, "Error instantiating plugin class " + pluginClass);
-         }
-         catch (IllegalAccessException e) {
-            ReportingUtils.logError(e, "Access exception instantiating plugin class " + pluginClass);
-         }
-         catch (NoClassDefFoundError e) {
-            ReportingUtils.logError(e, "Dependency not found for plugin class " + pluginClass);            
+         } catch (IllegalAccessException e) {
+            ReportingUtils.logError(e,
+                  "Access exception instantiating plugin class " + pluginClass);
+         } catch (NoClassDefFoundError e) {
+            ReportingUtils.logError(e,
+                  "Dependency not found for plugin class " + pluginClass);
          }
       }
    }
@@ -183,17 +181,11 @@ public final class DefaultPluginManager implements PluginManager {
    private void addSubMenuItem(JMenu rootMenu, HashMap<String, JMenu> subMenus,
          String subMenu, String title, final Runnable selectAction) {
       JMenuItem item = new JMenuItem(title);
-      item.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            selectAction.run();
-         }
-      });
+      item.addActionListener(e -> selectAction.run());
       if (subMenu.equals("")) {
          // Add it to the root menu.
          rootMenu.add(item);
-      }
-      else {
+      } else {
          if (!subMenus.containsKey(subMenu)) {
             // Create a new menu.
             SortedMenu menu = new SortedMenu(subMenu);
@@ -201,12 +193,8 @@ public final class DefaultPluginManager implements PluginManager {
             // to it first.
             if (subMenu.equals(PROCESSOR_MENU)) {
                JMenuItem configure = new JMenuItem("Configure Processors...");
-               configure.addActionListener(new ActionListener() {
-                  @Override
-                  public void actionPerformed(ActionEvent e) {
-                     ((MMStudio) studio_).uiManager().showPipelineFrame();
-                  }
-               });
+               configure.addActionListener(
+                     e -> ((MMStudio) studio_).uiManager().showPipelineFrame());
                menu.addUnsorted(configure);
                menu.addSeparator();
             }
@@ -225,12 +213,7 @@ public final class DefaultPluginManager implements PluginManager {
    private void addProcessorPluginToMenu(JMenu menu,
          HashMap<String, JMenu> subMenus, final ProcessorPlugin plugin) {
       addSubMenuItem(menu, subMenus, PROCESSOR_MENU, plugin.getName(),
-            new Runnable() {
-               @Override
-               public void run() {
-                  studio_.data().addAndConfigureProcessor(plugin);
-               }
-            }
+            () -> studio_.data().addAndConfigureProcessor(plugin)
       );
    }
 
@@ -321,12 +304,7 @@ public final class DefaultPluginManager implements PluginManager {
       for (final MenuPlugin plugin : getMenuPlugins().values()) {
          // Add it to the menu.
          addSubMenuItem(menu, subMenus, plugin.getSubMenu(), plugin.getName(),
-               new Runnable() {
-                  @Override
-                  public void run() {
-                     plugin.onPluginSelected();
-                  }
-               }
+               plugin::onPluginSelected
          );
       }
       for (ProcessorPlugin plugin : getProcessorPlugins().values()) {

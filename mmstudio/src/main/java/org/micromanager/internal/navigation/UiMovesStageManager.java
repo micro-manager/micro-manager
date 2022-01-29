@@ -61,7 +61,7 @@ public final class UiMovesStageManager {
     *
     * @param display Display to which we will listen for events
     */
-   public void activate(final DisplayController display) {
+   public synchronized void activate(final DisplayController display) {
       deActivate(display); // ensure that there will always be only one listener per display
       CenterAndDragListener dragListener = null;
       ZWheelListener wheelListener = null;
@@ -79,9 +79,17 @@ public final class UiMovesStageManager {
          // them off so that the user can use the ImageJ shortcuts
          studio_.events().registerForEvents(keyListener);
       }
-      displayToDragListener_.put(display, dragListener);
-      displayToWheelListener_.put(display, wheelListener);
-      displayToKeyListener_.put(display, keyListener);
+
+      // TODO: evaluate if these synchronized blacks are really needed.
+      synchronized (displayToDragListener_) {
+         displayToDragListener_.put(display, dragListener);
+      }
+      synchronized (displayToWheelListener_) {
+         displayToWheelListener_.put(display, wheelListener);
+      }
+      synchronized (displayToKeyListener_) {
+         displayToKeyListener_.put(display, keyListener);
+      }
    }
 
    /**

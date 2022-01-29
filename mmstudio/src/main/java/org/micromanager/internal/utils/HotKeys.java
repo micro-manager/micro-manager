@@ -16,8 +16,9 @@ import org.micromanager.UserProfile;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
+ * Load and save HotKey settings from/to Profile and File.
  *
- * @author nico
+ * @author Nico Stuurman
  */
 public final class HotKeys {
    private static final int STOP = -1;
@@ -31,14 +32,15 @@ public final class HotKeys {
    // a single thread (I think), this should be safe.
    // Howvere, if this changes in the future, please synchronize this structure
    public static final LinkedHashMap<Integer, HotKeyAction> KEYS =
-           new LinkedHashMap<Integer, HotKeyAction>();
+           new LinkedHashMap<>();
 
    // HACK HACK HACK TODO: there should be a cleaner way to disable hotkeys!
    public  static boolean active_ = true;
 
    /**
-    * Restore previously listed hotkeys from profile
-    * @param profile 
+    * Restore previously listed hotkeys from profile.
+    *
+    * @param profile  Profile where the hotkeys should be saved.
     */
    public void loadSettings(UserProfile profile) {
       MutablePropertyMapView settings = profile.getSettings(HotKeys.class);
@@ -64,24 +66,27 @@ public final class HotKeys {
             }
          }
          i++;
-      }
-      while (key != STOP);
+      } while (key != STOP);
    }
-   
+
+   /**
+    * Saves HotKeys to the User Profile.
+    *
+    * @param profile Profile used to save HotKeys
+    */
    public void saveSettings(UserProfile profile) {
-      Iterator it = KEYS.entrySet().iterator();
+      Iterator<Map.Entry<Integer, HotKeyAction>> it = KEYS.entrySet().iterator();
       int i = 0;
       MutablePropertyMapView settings = profile.getSettings(HotKeys.class);
       while (it.hasNext()) {
-         Map.Entry pairs = (Map.Entry) it.next();
-         settings.putInteger(KEY + i, 
-                 ((Integer) pairs.getKey()));
-         HotKeyAction action = (HotKeyAction) pairs.getValue();
+         Map.Entry<Integer, HotKeyAction> pairs = it.next();
+         settings.putInteger(KEY + i, pairs.getKey());
+         HotKeyAction action = pairs.getValue();
          settings.putInteger(TYPE + i, action.type_);
          if (action.type_ == HotKeyAction.GUICOMMAND) {
             settings.putInteger(GUICOMMAND + i, action.guiCommand_);
          } else {
-           settings.putString(FILENAME + i,
+            settings.putString(FILENAME + i,
                   action.beanShellScript_.getAbsolutePath());
          }
          i++;
@@ -91,13 +96,20 @@ public final class HotKeys {
       profile.getSettings(HotKeys.class).putInteger(KEY + i, STOP);
    }
 
+   /**
+    * Loads HotKey settings from a file. Will do nothing if the file can not
+    * be read.
+    *
+    * @param f File where HotKeys were previously written to.
+    * @throws FileNotFoundException  Unlikely to happen as the code checks if the file can be read
+    *                                  and returns without Exception if the File can not be read.
+    */
    public static void load(File f) throws FileNotFoundException {
       if (f == null || !f.canRead()) {
          return;
       }
 
-      DataInputStream in = new DataInputStream
-              (new BufferedInputStream(new FileInputStream(f)));
+      DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(f)));
       KEYS.clear();
       try {
          while (in.available() > 0) {
@@ -108,10 +120,9 @@ public final class HotKeys {
                int guiCommand = in.readInt();
                HotKeyAction action = new HotKeyAction(guiCommand);
                KEYS.put(key, action);
-            }
-            else {
+            } else {
                int strLength = in.readInt();
-               for (int i=0; i < strLength; i ++) {
+               for (int i = 0; i < strLength; i++) {
                   filePath += in.readChar();
                }
                HotKeyAction action = new HotKeyAction(new File(filePath));
@@ -123,25 +134,25 @@ public final class HotKeys {
          ReportingUtils.showError("Error while reading in Shortcuts");
       }
    }
-   /*
-    * Save Hotkeys to a file
+
+   /**
+    * Save Hotkeys to a file.
     * File needs to exist and be writeable
     */
    public static void save(File f) throws FileNotFoundException {
-      if (f== null || !f.canWrite()) {
+      if (f == null || !f.canWrite()) {
          return;
       }
 
-      DataOutputStream out = new DataOutputStream
-              (new BufferedOutputStream(new FileOutputStream(f)));
+      DataOutputStream out =
+            new DataOutputStream(new BufferedOutputStream(new FileOutputStream(f)));
 
-      Iterator it = KEYS.entrySet().iterator();
-      int i = 0;
+      Iterator<Map.Entry<Integer, HotKeyAction>> it = KEYS.entrySet().iterator();
       while (it.hasNext()) {
          try {
-            Map.Entry pairs = (Map.Entry) it.next();
-            out.writeInt(((Integer) pairs.getKey()));
-            HotKeyAction action = (HotKeyAction) pairs.getValue();
+            Map.Entry<Integer, HotKeyAction> pairs = it.next();
+            out.writeInt(pairs.getKey());
+            HotKeyAction action = pairs.getValue();
             out.writeInt(action.type_);
             if (action.type_ == HotKeyAction.GUICOMMAND) {
                out.writeInt(action.guiCommand_);
@@ -149,7 +160,6 @@ public final class HotKeys {
                out.writeInt(action.beanShellScript_.getAbsolutePath().length());
                out.writeChars(action.beanShellScript_.getAbsolutePath());
             }
-            i++;
          } catch (IOException ex) {
             ReportingUtils.showError("Error while saving Shortcuts");
          }

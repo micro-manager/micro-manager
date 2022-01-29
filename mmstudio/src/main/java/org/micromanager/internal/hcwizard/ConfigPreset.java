@@ -41,12 +41,12 @@ public final class ConfigPreset {
    
    public ConfigPreset() {
       name_ = "Undefined";
-      settings_ = new ArrayList<Setting>();
+      settings_ = new ArrayList<>();
    }
    
    public ConfigPreset(String name) {
       name_ = name;
-      settings_ = new ArrayList<Setting>();
+      settings_ = new ArrayList<>();
    }
    
    public String getName() {
@@ -54,9 +54,10 @@ public final class ConfigPreset {
    }
    
    public boolean addSetting(Setting s) {
-      for (int i=0; i<settings_.size(); i++) {
-         if (getSetting(i).isEqualTo(s))
+      for (int i = 0; i < settings_.size(); i++) {
+         if (getSetting(i).isEqualTo(s)) {
             return false;
+         }
          if (getSetting(i).matches(s)) {
             // replace existing
             settings_.set(i, s);
@@ -69,7 +70,7 @@ public final class ConfigPreset {
    }
    
    public boolean matchSetting(Setting s) {
-      for (int i=0; i<settings_.size(); i++) {
+      for (int i = 0; i < settings_.size(); i++) {
          if (getSetting(i).matches(s)) {
             return true;
          }
@@ -78,7 +79,7 @@ public final class ConfigPreset {
    }
    
    public boolean removeSetting(Setting s) {
-      for (int i=0; i<settings_.size(); i++) {
+      for (int i = 0; i < settings_.size(); i++) {
          if (getSetting(i).isEqualTo(s)) {
             settings_.remove(i);
             return true;

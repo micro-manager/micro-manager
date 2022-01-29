@@ -12,23 +12,28 @@
 package org.micromanager.internal.diagnostics;
 
 class JVMMemoryInfoSection implements SystemInfo.SystemInfoSection {
-   public String getTitle() { return "JVM memory information"; }
+   public String getTitle() {
+      return "JVM memory information";
+   }
 
    public String getReport() {
       StringBuilder sb = new StringBuilder();
 
-      java.lang.management.MemoryMXBean memMXB = java.lang.management.ManagementFactory.getMemoryMXBean();
-      sb.append("JVM heap memory usage: ").append(formatMemUsage(memMXB.getHeapMemoryUsage())).append('\n');
-      sb.append("JVM non-heap memory usage: ").append(formatMemUsage(memMXB.getNonHeapMemoryUsage()));
+      java.lang.management.MemoryMXBean memMXB =
+            java.lang.management.ManagementFactory.getMemoryMXBean();
+      sb.append("JVM heap memory usage: ").append(formatMemUsage(memMXB.getHeapMemoryUsage()))
+            .append('\n');
+      sb.append("JVM non-heap memory usage: ")
+            .append(formatMemUsage(memMXB.getNonHeapMemoryUsage()));
 
       return sb.toString();
    }
 
    private String formatMemUsage(java.lang.management.MemoryUsage usage) {
       StringBuilder sb = new StringBuilder();
-      sb.append("used = ").append(formatMemSize(usage.getUsed())).
-         append("; committed = ").append(formatMemSize(usage.getCommitted())).
-         append("; max = ").append(formatMemSize(usage.getMax()));
+      sb.append("used = ").append(formatMemSize(usage.getUsed()))
+            .append("; committed = ").append(formatMemSize(usage.getCommitted()))
+            .append("; max = ").append(formatMemSize(usage.getMax()));
       return sb.toString();
    }
 
@@ -37,18 +42,17 @@ class JVMMemoryInfoSection implements SystemInfo.SystemInfoSection {
          return "unavailable";
       }
       if (size < 1024) {
-         return Long.toString(size) + " bytes";
+         return size + " bytes";
       }
 
-      double bytes = size;
       java.text.NumberFormat format = new java.text.DecimalFormat("#.0");
 
       if (size < 1024 * 1024) {
-         return Long.toString(size) + " (" + format.format(bytes / 1024) + " KiB)";
+         return size + " (" + format.format((double) size / 1024) + " KiB)";
       }
       if (size < 1024 * 1024 * 1024) {
-         return Long.toString(size) + " (" + format.format(bytes / (1024 * 1024)) + " MiB)";
+         return size + " (" + format.format((double) size / (1024 * 1024)) + " MiB)";
       }
-      return Long.toString(size) + " (" + format.format(bytes / (1024 * 1024 * 1024)) + " GiB)";
+      return size + " (" + format.format((double) size / (1024 * 1024 * 1024)) + " GiB)";
    }
 }

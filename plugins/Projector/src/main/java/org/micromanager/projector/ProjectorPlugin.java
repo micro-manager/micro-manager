@@ -19,25 +19,27 @@ package org.micromanager.projector;
 import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-
+import org.micromanager.projector.internal.ProjectorControlForm;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-import org.micromanager.projector.internal.ProjectorControlForm;
-
-// The Projector plugin provides a user interface for calibration and control
-// of SLM- and Galvo-based phototargeting devices. Phototargeting can be
-// ad-hoc or planned as part of a multi-dimensional acquisition.
+/** The Projector plugin provides a user interface for calibration and control
+ * of SLM- and Galvo-based phototargeting devices. Phototargeting can be
+ * ad-hoc or planned as part of a multi-dimensional acquisition.
+ */
 @Plugin(type = MenuPlugin.class)
 public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Projector";
    public static final String TOOLTIP_DESCRIPTION =
-      "Control galvo or SLM devices that project a spot or pattern " +
-      "on the sample";
+         "Control galvo or SLM devices that project a spot or pattern "
+               + "on the sample";
    
    private Studio app_;
    private CMMCore core_;
 
+   /**
+    * Disposes of the Projector control form.
+    */
    public void dispose() {
       ProjectorControlForm pcf = ProjectorControlForm.getSingleton();
       if (pcf != null) {
@@ -55,10 +57,10 @@ public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
    // if it's not visible.
    @Override
    public void onPluginSelected() {
-      if (core_.getSLMDevice().length()==0 && core_.getGalvoDevice().length()==0) {
-         app_.logs().showMessage("Please load an SLM (Spatial Light Modulator) " +
-               "or a Galvo-based phototargeting device " +
-               "before using the Projector plugin.");
+      if (core_.getSLMDevice().length() == 0 && core_.getGalvoDevice().length() == 0) {
+         app_.logs().showMessage("Please load an SLM (Spatial Light Modulator) "
+               + "or a Galvo-based phototargeting device "
+               + "before using the Projector plugin.");
          return;
       }
       ProjectorControlForm.showSingleton(core_, app_);

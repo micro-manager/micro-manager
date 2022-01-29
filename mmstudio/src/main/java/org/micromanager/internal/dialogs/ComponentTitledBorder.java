@@ -18,13 +18,13 @@ import javax.swing.border.Border;
 /**
  * MySwing: Advanced Swing Utilites
  * Copyright (C) 2005  Santhosh Kumar T
- * <p>
- * This library is free software; you can redistribute it and/or
+ *
+ * <p>This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * <p>
- * This library is distributed in the hope that it will be useful,
+ *
+ * <p>This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
@@ -73,7 +73,9 @@ public final class ComponentTitledBorder implements Border, MouseListener, Swing
          Point pt = me.getPoint();
          pt.translate(-offset, 0);
          comp.setBounds(rect);
-         comp.dispatchEvent(new MouseEvent(comp, me.getID(), me.getWhen(), me.getModifiers(), pt.x, pt.y, me.getClickCount(), me.isPopupTrigger(), me.getButton()));
+         comp.dispatchEvent(new MouseEvent(
+               comp, me.getID(), me.getWhen(), me.getModifiers(), pt.x, pt.y,
+               me.getClickCount(), me.isPopupTrigger(), me.getButton()));
          if (!comp.isValid()) {
             container.repaint();
          }

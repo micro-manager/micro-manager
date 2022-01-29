@@ -734,9 +734,8 @@ public final class StageControlFrame extends JFrame {
 
       // checkbox to enable Snap after Move
       snapAfterMoveCB_  = new JCheckBox("Snap after Move");
-      snapAfterMoveCB_.addItemListener((ItemEvent e) -> {
-         settings_.putBoolean(SNAP, snapAfterMoveCB_.isSelected());
-      });
+      snapAfterMoveCB_.addItemListener((ItemEvent e) ->
+            settings_.putBoolean(SNAP, snapAfterMoveCB_.isSelected()));
       snapAfterMoveCB_.setSelected(settings_.getBoolean(SNAP, true));
       result.add(snapAfterMoveCB_, "left, wrap");
 

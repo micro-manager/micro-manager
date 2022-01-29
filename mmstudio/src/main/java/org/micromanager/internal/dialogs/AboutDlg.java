@@ -49,32 +49,33 @@ import org.micromanager.internal.utils.GUIUtils;
  */
 public final class AboutDlg extends JDialog {
    private static final long serialVersionUID = 1L;
-   private final JTextArea welcomeTextArea_;
-   private final JTextArea homeHttphcs100ximagingcomBugTextArea;
    private final JTextArea versionInfo_;
    
    public static String COPYRIGHT_TEXT = 
-      
-      "Copyright University of California San Francisco, 2010. All rights reserved.\n\n" +
-      "Additional copyright on portions of this software by the following institutions, projects or individuals:" +
-      " Wayne Rasband, NIH, Joachim Walter, BeanShell, JSON, logix4u, libserial, boost.org, Todd Klark, Ramon de Klein, " +
-      "MIT, University of Dundee, Board of Regents of the University of Wisconsin-Madison, Glencoe Software, and  SLF4J";
-   
+         "Copyright University of California San Francisco, 2010-2021. All rights reserved.\n\n"
+         + "Additional copyright on portions of this software by the following institutions, "
+         + "projects or individuals: Wayne Rasband, NIH, Joachim Walter, BeanShell, JSON, "
+         + "logix4u, libserial, boost.org, Todd Klark, Ramon de Klein, "
+         + "MIT, University of Dundee, Board of Regents of the University of Wisconsin-Madison, "
+         + "Glencoe Software, and  SLF4J";
+
+   /**
+    * Creates the About Micro-Manager dialog.
+    */
    public AboutDlg() {
       super();
       Dimension winSize = new Dimension(384, 392);
       setSize(winSize);
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       setName("aboutDlg");
-      // Java 1.5 specific:
-      //setAlwaysOnTop(true);
       setResizable(false);
       setModal(true);
       getContentPane().setLayout(null);
       setTitle("About Micro-Manager");
       
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
+      setLocation(screenSize.width / 2 - (winSize.width / 2),
+            screenSize.height / 2 - (winSize.height / 2));
 
       final JLabel micromanageLabel = new JLabel();
       micromanageLabel.setFont(new Font("", Font.BOLD, 16));
@@ -106,12 +107,7 @@ public final class AboutDlg extends JDialog {
 
       final JButton okButton = new JButton();
       okButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            dispose();
-         }
-      });
+      okButton.addActionListener(e -> dispose());
       okButton.setText("OK");
       okButton.setBounds(145, 322, 91, 28);
       getContentPane().add(okButton);
@@ -123,7 +119,7 @@ public final class AboutDlg extends JDialog {
       versionInfo_.setBounds(5, 49, 368, 66);
       getContentPane().add(versionInfo_);
 
-      homeHttphcs100ximagingcomBugTextArea = new JTextArea();
+      JTextArea homeHttphcs100ximagingcomBugTextArea = new JTextArea();
       homeHttphcs100ximagingcomBugTextArea.setEditable(false);
       homeHttphcs100ximagingcomBugTextArea.setBorder(new LineBorder(Color.black, 1, false));
       homeHttphcs100ximagingcomBugTextArea.setFont(new Font("Courier New", Font.PLAIN, 12));
@@ -132,22 +128,22 @@ public final class AboutDlg extends JDialog {
       getContentPane().add(homeHttphcs100ximagingcomBugTextArea);
 
       final JLabel label = new JLabel();
-      label.setIcon(new ImageIcon(getClass().getResource( 
-              "/org/micromanager/icons/microscope.gif")));
+      label.setIcon(new ImageIcon(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       label.setBounds(6, 14, 32, 32);
       getContentPane().add(label);
 
-      welcomeTextArea_ = new JTextArea();
-      welcomeTextArea_.setBorder(new LineBorder(Color.black, 1, false));
-      welcomeTextArea_.setWrapStyleWord(true);
-      welcomeTextArea_.setText("Copyright University of California San Francisco, 2010. All rights reserved.\r\nCopyright 100X Imaging Inc, 2010. All rights reserved\r\n\r\nAdditional copyright on portions of this software by the following institutions, projects or individuals: Wayne Rasband, NIH, Joachim Walter, boost.org, BeanShell, JSON, logix4u, libserial, Todd Klark and Ramon de Klein");
-      welcomeTextArea_.setMargin(new Insets(10, 10, 10, 10));
-      welcomeTextArea_.setLineWrap(true);
-      welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
-      welcomeTextArea_.setFocusable(false);
-      welcomeTextArea_.setEditable(false);
-      welcomeTextArea_.setBounds(5, 126, 368, 87);
-      getContentPane().add(welcomeTextArea_);
+      JTextArea welcomeTextArea = new JTextArea();
+      welcomeTextArea.setBorder(new LineBorder(Color.black, 1, false));
+      welcomeTextArea.setWrapStyleWord(true);
+      welcomeTextArea.setText(COPYRIGHT_TEXT);
+      welcomeTextArea.setMargin(new Insets(10, 10, 10, 10));
+      welcomeTextArea.setLineWrap(true);
+      welcomeTextArea.setFont(new Font("Arial", Font.PLAIN, 10));
+      welcomeTextArea.setFocusable(false);
+      welcomeTextArea.setEditable(false);
+      welcomeTextArea.setBounds(5, 126, 368, 87);
+      getContentPane().add(welcomeTextArea);
    }
    
    public void setVersionInfo(String verText) {

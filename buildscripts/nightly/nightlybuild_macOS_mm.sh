@@ -39,12 +39,12 @@ done
 ## Setup
 ##
 
-source "`dirname $0`/nightlybuild_OSX_defs.sh"
+source "`dirname $0`/nightlybuild_macOS_defs.sh"
 pushd "`dirname $0`/../.." >/dev/null; MM_SRCDIR=`pwd`; popd >/dev/null
 
 # GNU libtool (i.e. any libtoolized project) can mess around with the value of
 # MACOSX_DEPLOYMENT_TARGET, so passing the correct compiler and linker flags
-# (clang -mmacosx-version-min=10.5; ld -macosx_version_min 10.5) is not enough;
+# (clang -mmacosx-version-min=10.9; ld -macosx_version_min 10.9) is not enough;
 # we need to set this environment variable. It is also simpler than using
 # command line flags.  Do the same for SDKROOT (instead of clang -isysroot; ld
 # -syslibroot).
@@ -63,22 +63,15 @@ cd $MM_SRCDIR
 
 if [ -z "$MM_VERSION" ]; then
    MM_VERSION="$(cat version.txt)"
-   [ "$use_release_version" = yes ] || MM_VERSION="$MM_VERSION-$(date +%Y%m%d)"
+   # Include date unless release build; use US Pacific _Standard_ Time.
+   # Note that POSIX TZ has the sign inverted comapred to the usual GMT-8.
+   [ "$use_release_version" = yes ] || MM_VERSION="$MM_VERSION-$(TZ=Etc/GMT+8 date +%Y%m%d)"
 fi
 sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/main/java/org/micromanager/internal/MMVersion.java || exit
 
 if [ "$skip_autogen" != yes ]; then
    sh autogen.sh
 fi
-
-# Note on Java variables.
-# JDK 1.6 from Apple and its development kit need to be installed. We could
-# conceivably use JDK 1.7 to cross-compile to 1.6, but that would still need
-# the 1.6 classpath and a -bootclasspath flag to javac.
-# To build with JDK 1.6 when /usr/bin/javac points to JDK 1.7, we need to set
-# JAVA_HOME. But this breaks the build because 1.6.0.jdk does not contain
-# (symlinks to) the JNI headers as whould be expected for a Java home. So we
-# explicitly set JNI_CPPFLAGS.
 
 # Note on OpenCV library flags.
 # Since OpenCV is a CMake project, it does not produce the convenient libtool
@@ -118,8 +111,8 @@ $EVAL ./configure \
    --with-gphoto2 \
    --with-freeimageplus \
    $MM_CONFIGUREFLAGS \
-   "JAVA_HOME=\"/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home\"" \
-   "JNI_CPPFLAGS=\"-I/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home/include -I/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home/include/darwin\"" \
+   "JAVA_HOME=\"$MM_JDK_HOME\"" \
+   "JNI_CPPFLAGS=\"-I$MM_JDK_HOME/include -I$MM_JDK_HOME/include/darwin\"" \
    "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.8 -target 1.8\"" \
    "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
    "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \
@@ -142,20 +135,17 @@ make fetchdeps # Safe, since everything is checksummed
 
 make $MAKEFLAGS
 
-# Remove x86_64 from device adapters that depend on 32-bit only frameworks.
-# Hamamatsu is 32-bit only even though dcamapi.framework contains an
-# unsupported 64-bit binary.
-for file in $MM_CPP_DIR/DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
-            $MM_CPP_DIR/DeviceAdapters/PrincetonInstruments/.libs/libmmgr_dal_PrincetonInstruments \
-            $MM_CPP_DIR/DeviceAdapters/QCam/.libs/libmmgr_dal_QCam \
-            $MM_CPP_DIR/DeviceAdapters/ScionCam/.libs/libmmgr_dal_ScionCam \
-            $MM_CPP_DIR/DeviceAdapters/Spot/.libs/libmmgr_dal_Spot \
-            $MM_CPP_DIR/SecretDeviceAdapters/HamamatsuMac/.libs/libmmgr_dal_Hamamatsu
+# Remove device adapters that build for x86_64 but depend on 32-bit-only
+# frameworks. This is only for safety; these adapters should not build if their
+# dependencies are not installed in /Library/Frameworks.
+for file in mmCoreAndDevices/DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
+            mmCoreAndDevices/DeviceAdapters/PrincetonInstruments/.libs/libmmgr_dal_PrincetonInstruments \
+            mmCoreAndDevices/DeviceAdapters/QCam/.libs/libmmgr_dal_QCam \
+            mmCoreAndDevices/DeviceAdapters/ScionCam/.libs/libmmgr_dal_ScionCam \
+            mmCoreAndDevices/DeviceAdapters/Spot/.libs/libmmgr_dal_Spot \
+            mmCoreAndDevices/SecretDeviceAdapters/HamamatsuMac/.libs/libmmgr_dal_Hamamatsu
 do
-   if [ -f $file ]; then
-      lipo -extract i386 -output $file.i386 $file
-      mv $file.i386 $file
-   fi
+   rm -f $file
 done
 
 
@@ -178,7 +168,9 @@ mkdir -p $MM_STAGEDIR/libgphoto2/libgphoto2
 mkdir -p $MM_STAGEDIR/libgphoto2/libgphoto2_port
 cp $MM_DEPS_PREFIX/lib/libgphoto2/2.5.2/*.so $MM_STAGEDIR/libgphoto2/libgphoto2
 cp $MM_DEPS_PREFIX/lib/libgphoto2_port/0.10.0/*.so $MM_STAGEDIR/libgphoto2/libgphoto2_port
+echo 'Staging portable app with mkportableapp.py...'
 buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
+   --verbose \
    --srcdir $MM_DEPS_PREFIX/lib \
    --destdir $MM_STAGEDIR \
    --forbid-from $MM_BUILDDIR/share \
@@ -187,6 +179,7 @@ buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
    --forbid-from /usr/local \
    --map-path 'libltdl*.dylib:libgphoto2' \
    --map-path 'libgphoto2*.dylib:libgphoto2'
+echo 'Finished staging portable app'
 
 
 # Stage third-party JARs.

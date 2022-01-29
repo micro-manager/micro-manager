@@ -34,7 +34,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 /**
  * Component containing multi-dimensional scroll bars to select display position.
  *
- * This is a passive UI component and does not (and should not) contain any
+ * <p>This is a passive UI component and does not (and should not) contain any
  * application logic.
  *
  * @author Mark A. Tsuchida, based in part on earlier version by Chris Weisiger
@@ -43,8 +43,10 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
    public interface Listener {
       void scrollBarPanelHeightWillChange(MDScrollBarPanel panel,
             int currentHeight);
+
       void scrollBarPanelHeightDidChange(MDScrollBarPanel panel,
             int oldHeight, int newHeight);
+
       void scrollBarPanelDidChangePositionInUI(MDScrollBarPanel panel);
    }
 
@@ -53,7 +55,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
    }
 
    private final EventListenerSupport<Listener> listeners_ =
-         new EventListenerSupport<> (Listener.class, Listener.class.getClassLoader());
+         new EventListenerSupport<>(Listener.class, Listener.class.getClassLoader());
 
    private final ControlsFactory leftControlsFactory_;
    private final ControlsFactory rightControlsFactory_;
@@ -77,15 +79,13 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
 
    @MustCallOnEDT
    static MDScrollBarPanel create(ControlsFactory leftControlsFactory,
-         ControlsFactory rightControlsFactory)
-   {
+         ControlsFactory rightControlsFactory) {
       return new MDScrollBarPanel(leftControlsFactory, rightControlsFactory);
    }
 
    @MustCallOnEDT
    private MDScrollBarPanel(ControlsFactory leftControlsFactory,
-         ControlsFactory rightControlsFactory)
-   {
+         ControlsFactory rightControlsFactory) {
       super(new MigLayout(new LC().insets("0").gridGap("0", "0").fillX()));
       leftControlsFactory_ = leftControlsFactory;
       rightControlsFactory_ = rightControlsFactory;
@@ -108,8 +108,8 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
 
    /**
     * Set the axes for which to display scroll bars.
-    * <p>
-    * State of existing axes (based on string name matching) is preserved, even
+    *
+    * <p>State of existing axes (based on string name matching) is preserved, even
     * if axes are reordered.
     *
     * @param axes
@@ -132,8 +132,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
             if (existingIndex >= 0) {
                newPanels.add(rowPanels_.get(existingIndex));
                newScrollBarPositions.add(scrollBarPositions_.get(existingIndex));
-            }
-            else {
+            } else {
                newPanels.add(makeRowPanel(axis, 0));
                newScrollBarPositions.add(0);
             }
@@ -166,8 +165,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
             listeners_.fire().scrollBarPanelHeightDidChange(this,
                   oldHeight, newHeight);
          }
-      }
-      finally {
+      } finally {
          shouldSuppressAdjustmentEvents_ = false;
       }
    }
@@ -192,8 +190,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
          BoundedRangeModel scrollModel = getScrollBarForAxis(axis).getModel();
          scrollModel.setRangeProperties(scrollModel.getValue(),
                (length > 0 ? 1 : 0), 0, length, false);
-      }
-      finally {
+      } finally {
          shouldSuppressAdjustmentEvents_ = false;
       }
    }
@@ -212,8 +209,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
          if (index >= 0) { // Should be true
             scrollBarPositions_.set(index, position);
          }
-      }
-      finally {
+      } finally {
          shouldSuppressAdjustmentEvents_ = false;
       }
    }
@@ -227,8 +223,8 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
    private JScrollBar getScrollBarForAxis(String axis) {
       int index = axes_.indexOf(axis);
       if (index < 0) {
-         throw new NoSuchElementException(getClass().getSimpleName() +
-               " has no axis " + axis);
+         throw new NoSuchElementException(getClass().getSimpleName()
+               + " has no axis " + axis);
       }
       JPanel rowPanel = rowPanels_.get(index);
       for (Component c : rowPanel.getComponents()) {

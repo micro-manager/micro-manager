@@ -1,7 +1,8 @@
 
 package org.micromanager.internal.dialogs;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
 import java.text.NumberFormat;
@@ -20,9 +21,10 @@ import org.micromanager.Studio;
 import org.micromanager.internal.pixelcalibrator.PixelCalibratorDialog;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.PropertyItem;
 
 /**
+ * Generates the Panel for the user to input the affine transform relating
+ * the image on the camera to stage movement.
  *
  * @author nico
  */
@@ -32,12 +34,19 @@ public class AffineEditorPanel extends JPanel {
    
    private final Studio studio_;
    private final PixelSizeProvider pixelSizeProvider_;
-   private final DoubleVector affineTransform_;
    private final AffineTableModel atm_;
    private static final int PRECISION = 5;
    private final NumberFormat format_;
    private PixelCalibratorDialog pcd_;
-   
+
+   /**
+    * Generates the panel to let the user interact with the affine transform
+    * relating stage movement to the image on the camera.
+    *
+    * @param studio The omnipresent Studio object.
+    * @param psp Object that holds information about the transform
+    * @param affineTransform Affine transform as a DoubleVector for exchange with the Core
+    */
    public AffineEditorPanel(Studio studio, PixelSizeProvider psp, DoubleVector affineTransform) {
       super(new MigLayout("align center, flowx"));
       
@@ -46,7 +55,7 @@ public class AffineEditorPanel extends JPanel {
       if (affineTransform == null) {
          affineTransform = AffineUtils.noTransform();
       }
-      affineTransform_ = affineTransform;
+      final DoubleVector affineTransform_ = affineTransform;
       final DoubleVector originalAffineTransform = copyDoubleVector(affineTransform);
 
       format_ = NumberFormat.getInstance();
@@ -65,24 +74,22 @@ public class AffineEditorPanel extends JPanel {
       table.setModel(atm_);
       table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
       table.setCellSelectionEnabled(true);
-      table.setBorder(BorderFactory.createLineBorder(Color.GRAY,1));
+      table.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
       
       for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
          table.getColumnModel().getColumn(col).setMaxWidth(75);
       }
-      super.add( new JLabel("<html><center>Affine transforms define the relation between <br> " +
-              "camera and stage movement</center></html>"), " span 2, center, wrap") ;
+      super.add(new JLabel("<html><center>Affine transforms define the relation between <br> "
+            + "camera and stage movement</center></html>"), " span 2, center, wrap");
       table.setFillsViewportHeight(true);
 
       super.add(table);
 
       JButton calcButton = new JButton("Calculate");
-      calcButton.addActionListener((ActionEvent e) -> {
-         calculate();
-      });
+      calcButton.addActionListener((ActionEvent e) -> calculate());
       super.add(calcButton, "flowy, split 3, center, width 90!");
       
-      JButton measureButton = new JButton ("Measure");
+      JButton measureButton = new JButton("Measure");
       measureButton.addActionListener((ActionEvent e) -> {
          if (pcd_ == null) {
             pcd_ = new PixelCalibratorDialog(studio_, pixelSizeProvider_);
@@ -94,10 +101,9 @@ public class AffineEditorPanel extends JPanel {
       });
       super.add(measureButton, "center, width 90!");
       
-      JButton resetButton = new JButton ("Reset");
-      resetButton.addActionListener((ActionEvent e) -> {
-         atm_.setAffineTransform(originalAffineTransform);
-      });
+      JButton resetButton = new JButton("Reset");
+      resetButton.addActionListener((ActionEvent e) ->
+            atm_.setAffineTransform(originalAffineTransform));
       super.add(resetButton, "center, width 90!");
       
       Border clbb = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
@@ -108,7 +114,13 @@ public class AffineEditorPanel extends JPanel {
    public DoubleVector getAffineTransform() {
       return atm_.getAffineTransform();
    }
-   
+
+   /**
+    * Utility function to provide a copy of a DoubleVector.
+    *
+    * @param in DoubleVector to be copied.
+    * @return Copy of the input
+    */
    public static DoubleVector copyDoubleVector(DoubleVector in) {
       DoubleVector out = new DoubleVector(in.size());
       for (int i = 0; i < in.size(); i++) {
@@ -120,13 +132,22 @@ public class AffineEditorPanel extends JPanel {
    public void setAffineTransform(DoubleVector newAft) {
       atm_.setAffineTransform(newAft);
    }
-   
+
+   /**
+    * Disposes the panel.
+    */
    public void cleanup() {
       if (pcd_ != null) {
          pcd_.dispose();
       }
    }
 
+   /**
+    * Given the pixel size of the pixelSizeProvider, calculates an affinetransform
+    * (assuming perfect alignment of the stage with the camera), and sets the affine
+    * transform. Useful to get a start with an affine transform if it proves difficult
+    * to measure.
+    */
    public void calculate() {
       AffineTransform javaAtf = AffineUtils.doubleToAffine(AffineUtils.noTransform());
       double scale = pixelSizeProvider_.getPixelSize();
@@ -134,11 +155,10 @@ public class AffineEditorPanel extends JPanel {
       atm_.setAffineTransform(AffineUtils.affineToDouble(javaAtf));
    }
 
-   /*******************Renderer******************************/
+   /*******************Renderer.******************************/
    
    private class AffineCellRenderer implements TableCellRenderer {
 
-      PropertyItem item_;
       JLabel lab_ = new JLabel();
       
       public AffineCellRenderer() {
@@ -149,14 +169,14 @@ public class AffineEditorPanel extends JPanel {
       // using this renderer needs to be rendered.
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
-              boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
+            boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
          lab_.setOpaque(true);
          lab_.setHorizontalAlignment(JLabel.LEFT);
 
          Component comp;
 
-         lab_.setText(format_.format( (Double) value));
+         lab_.setText(format_.format(value));
          comp = lab_;
 
          if (rowIndex == 2) {
@@ -173,7 +193,7 @@ public class AffineEditorPanel extends JPanel {
       }
    }
 
-   /************************Table Model**********************/
+   /************************Table Model.**********************/
    
    private class AffineTableModel extends AbstractTableModel {
 
@@ -200,20 +220,22 @@ public class AffineEditorPanel extends JPanel {
       }
 
       @Override
-      public int getRowCount() {return 3;}
+      public int getRowCount() {
+         return 3;
+      }
 
       @Override
-      public int getColumnCount() {return 3;}
+      public int getColumnCount() {
+         return 3;
+      }
 
       @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (rowIndex < 2) {
             return affineTransform_.get(rowIndex * 3 + columnIndex);
-         }
-         else if (columnIndex == 0 || columnIndex == 1) {
+         } else if (columnIndex == 0 || columnIndex == 1) {
             return 0.0;
-         }
-         else {
+         } else {
             return 1.0;
          }
       }

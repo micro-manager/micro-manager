@@ -32,8 +32,6 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,8 +50,8 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.IntroPlugin;
 import org.micromanager.Studio;
-import org.micromanager.internal.StartupSettings;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.StartupSettings;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.UserProfileAdmin;
@@ -65,9 +63,6 @@ import org.micromanager.profile.internal.UserProfileAdmin;
 public final class IntroDlg extends JDialog {
    private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
 
-   private IntroPlugin plugin_ = null;
-
-   private final JTextArea welcomeTextArea_;
    private boolean okFlag_ = true;
 
    private ProfileSelectionUIController profileController_;
@@ -76,38 +71,42 @@ public final class IntroDlg extends JDialog {
    private boolean skipProfileSelection_ = false;
 
    public static String DISCLAIMER_TEXT =
-      "This software is distributed free of charge in the hope that it will be useful, " +
-      "but WITHOUT ANY WARRANTY; without even the implied warranty " +
-      "of merchantability or fitness for a particular purpose. In no event shall the copyright owner or contributors " +
-      "be liable for any direct, indirect, incidental, special, examplary, or consequential damages.\n\n" +
-      
-      "Copyright University of California San Francisco, 2005-2020. All rights reserved.";
+         "This software is distributed free of charge in the hope that it will be useful, "
+               + "but WITHOUT ANY WARRANTY; without even the implied warranty "
+               + "of merchantability or fitness for a particular purpose. In no event shall "
+               + "the copyright owner or contributors be liable for any direct, indirect, "
+               + "incidental, special, examplary, or consequential damages.\n\nCopyright "
+               + "University of California San Francisco, 2005-2020. All rights reserved.";
 
    public static String SUPPORT_TEXT =
-      "Micro-Manager was funded by grants from the Sandler Foundation and NIH, and is now supported by the CZI.";
+         "Micro-Manager was funded by grants from the Sandler Foundation and NIH, "
+         + "and is now supported by the CZI.";
 
    public static String CITATION_TEXT =
-      "If you have found this software useful, please cite Micro-Manager in your publications.";
-
+         "If you have found this software useful, please cite Micro-Manager in your publications.";
 
    /**
-    * Shows the Splash screen
+    * Shows the Splash screen.
+    *
     * @param studio Instance of MMStudio.  Can not be null.
-    * @param versionStr 
+    * @param versionStr Micro-Manager version, will be displayed for the used.
     */
    public IntroDlg(Studio studio, String versionStr) {
-      super((Window) null); // Passing null here causes the dialog to have an invisible parent frame that shows up in the task bar.
+      // Passing null here causes the dialog to have an invisible parent frame that
+      // shows up in the task bar.
+      super((Window) null);
+
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
       // Select a plugin to use to customize the dialog.
-      Map<String, IntroPlugin> plugins = studio == null ?
-            Collections.<String, IntroPlugin>emptyMap() :
-            studio.plugins().getIntroPlugins();
+      Map<String, IntroPlugin> plugins = studio == null
+            ? Collections.emptyMap() : studio.plugins().getIntroPlugins();
+      IntroPlugin plugin = null;
       if (plugins.size() > 0) {
          // Take the alphabetically first intro plugin we see.
          ArrayList<String> names = new ArrayList<>(plugins.keySet());
          Collections.sort(names);
-         plugin_ = plugins.get(names.get(0));
+         plugin = plugins.get(names.get(0));
          if (plugins.size() > 1) {
             ReportingUtils.logError("Multiple IntroPlugins found; using " + names.get(0));
          }
@@ -120,18 +119,17 @@ public final class IntroDlg extends JDialog {
       super.setModal(true);
       super.setUndecorated(true);
       if (!IJ.isMacOSX()) {
-        ((JPanel) super.getContentPane()).setBorder(BorderFactory.createLineBorder(Color.GRAY));
+         ((JPanel) super.getContentPane()).setBorder(BorderFactory.createLineBorder(Color.GRAY));
       }
 
       JPanel contentsPanel = new JPanel(new MigLayout(
             new LC().insets("0").gridGap("0", "0")));
       JLabel introImage = new JLabel();
-      if (plugin_ == null || plugin_.getSplashImage() == null) {
+      if (plugin == null || plugin.getSplashImage() == null) {
          introImage.setIcon(new ImageIcon(getClass().getResource(
                  "/org/micromanager/icons/splash.gif")));
-      }
-      else {
-         introImage.setIcon(plugin_.getSplashImage());
+      } else {
+         introImage.setIcon(plugin.getSplashImage());
       }
       introImage.setBorder(new LineBorder(Color.black, 1, false));
       contentsPanel.add(introImage, new CC().width("pref:pref:pref").pushX().wrap());
@@ -165,37 +163,32 @@ public final class IntroDlg extends JDialog {
 
          configController_ = ConfigSelectionUIController.create(admin_);
          contentsPanel.add(configController_.getUI(), new CC().growX().gapRight("5").wrap());
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          ReportingUtils.showError(e,
                "There was an error accessing the user profiles.");
       }
 
-      welcomeTextArea_ = new JTextArea() {
+      JTextArea welcomeTextArea = new JTextArea() {
          @Override
          public Insets getInsets() {
-            return new Insets(10,10,10,10);
+            return new Insets(10, 10, 10, 10);
          }
       };
-      welcomeTextArea_.setBorder(BorderFactory.createEtchedBorder());
-      welcomeTextArea_.setWrapStyleWord(true);
-      welcomeTextArea_.setText(DISCLAIMER_TEXT + "\n\n" +
-            SUPPORT_TEXT + "\n\n" + CITATION_TEXT);
+      welcomeTextArea.setBorder(BorderFactory.createEtchedBorder());
+      welcomeTextArea.setWrapStyleWord(true);
+      welcomeTextArea.setText(DISCLAIMER_TEXT + "\n\n" + SUPPORT_TEXT + "\n\n" + CITATION_TEXT);
 
-      welcomeTextArea_.setLineWrap(true);
-      welcomeTextArea_.setFont(DEFAULT_FONT);
-      welcomeTextArea_.setFocusable(false);
-      welcomeTextArea_.setEditable(false);
-      contentsPanel.add(welcomeTextArea_, new CC().gapLeft("5").growX().gapRight("5").wrap());
+      welcomeTextArea.setLineWrap(true);
+      welcomeTextArea.setFont(DEFAULT_FONT);
+      welcomeTextArea.setFocusable(false);
+      welcomeTextArea.setEditable(false);
+      contentsPanel.add(welcomeTextArea, new CC().gapLeft("5").growX().gapRight("5").wrap());
 
       final JButton okButton = new JButton();
       okButton.setFont(DEFAULT_FONT);
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            okFlag_ = true;
-            setVisible(false);
-         }
+      okButton.addActionListener(e -> {
+         okFlag_ = true;
+         setVisible(false);
       });
       okButton.setText("OK");
       super.getRootPane().setDefaultButton(okButton);
@@ -203,12 +196,9 @@ public final class IntroDlg extends JDialog {
 
       final JButton cancelButton = new JButton();
       cancelButton.setFont(DEFAULT_FONT);
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            okFlag_ = false;
-            setVisible(false);
-         }
+      cancelButton.addActionListener(e -> {
+         okFlag_ = false;
+         setVisible(false);
       });
       cancelButton.setText("Cancel");
 

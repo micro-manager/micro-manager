@@ -20,6 +20,7 @@
 //
 // CVS:          $Id: RolesPage.java 7141 2011-05-04 17:01:07Z karlh $
 //
+
 package org.micromanager.internal.hcwizard;
 
 import java.awt.event.ActionEvent;
@@ -39,19 +40,18 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * Wizard page for editing device roles 
+ * Wizard page for editing device roles .
  */
 public final class RolesPage extends PagePanel {
    private static final long serialVersionUID = 1L;
-   private JComboBox focusComboBox_;
-   private JComboBox shutterComboBox_;
-   private JComboBox cameraComboBox_;
-   private JCheckBox autoshutterCheckBox_;
+   private final JComboBox<String> focusComboBox_;
+   private final JComboBox<String> shutterComboBox_;
+   private final JComboBox<String> cameraComboBox_;
+   private final JCheckBox autoshutterCheckBox_;
    private final JPanel focusDirectionPanel_;
-   private static final String HELP_FILE_NAME = "conf_roles_page.html";
 
    /**
-    * Create the panel
+    * Create the panel.
     */
    public RolesPage() {
       super();
@@ -63,58 +63,55 @@ public final class RolesPage extends PagePanel {
       add(help, "growx, span, wrap");
 
       add(new JLabel("Default Camera: "), "split");
-      cameraComboBox_ = new JComboBox();
+      cameraComboBox_ = new JComboBox<>();
       cameraComboBox_.setAutoscrolls(true);
-      cameraComboBox_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            try {
-               model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreCamera(), (String)cameraComboBox_.getSelectedItem());
-            } catch (MMConfigFileException e) {
-               ReportingUtils.showError(e);
-            }
+      cameraComboBox_.addActionListener(arg0 -> {
+         try {
+            model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+                  MMCoreJ.getG_Keyword_CoreCamera(), (String) cameraComboBox_.getSelectedItem());
+         } catch (MMConfigFileException e) {
+            ReportingUtils.showError(e);
          }
       });
       add(cameraComboBox_, "wrap");
 
       add(new JLabel("Default Shutter: "), "split");
-      shutterComboBox_ = new JComboBox();
-      shutterComboBox_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            try {
-               model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreShutter(), (String)shutterComboBox_.getSelectedItem());
-            } catch (MMConfigFileException e) {
-               handleError(e.getMessage());;
-            }
+      shutterComboBox_ = new JComboBox<>();
+      shutterComboBox_.addActionListener(arg0 -> {
+         try {
+            model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+                  MMCoreJ.getG_Keyword_CoreShutter(), (String) shutterComboBox_.getSelectedItem());
+         } catch (MMConfigFileException e) {
+            handleError(e.getMessage());
          }
       });
       add(shutterComboBox_, "wrap");
 
       add(new JLabel("Default Focus Stage: "), "split");
-      focusComboBox_ = new JComboBox();
-      focusComboBox_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            try {
-               model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreFocus(), (String)focusComboBox_.getSelectedItem());
-            } catch (MMConfigFileException e) {
-               handleError(e.getMessage());;
-            }
+      focusComboBox_ = new JComboBox<>();
+      focusComboBox_.addActionListener(arg0 -> {
+         try {
+            model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+                  MMCoreJ.getG_Keyword_CoreFocus(), (String) focusComboBox_.getSelectedItem());
+         } catch (MMConfigFileException e) {
+            handleError(e.getMessage());
          }
       });
       add(focusComboBox_, "wrap");
 
       autoshutterCheckBox_ = new JCheckBox("Use Autoshutter By Default");
-      autoshutterCheckBox_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            try {
-               String as = new String();
-               if (autoshutterCheckBox_.isSelected())
-                  as = "1";
-               else
-                  as = "0";
-               model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreAutoShutter(), as);
-            } catch (MMConfigFileException e) {
-               ReportingUtils.showError(e);
+      autoshutterCheckBox_.addActionListener(arg0 -> {
+         try {
+            String as;
+            if (autoshutterCheckBox_.isSelected()) {
+               as = "1";
+            } else {
+               as = "0";
             }
+            model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+                  MMCoreJ.getG_Keyword_CoreAutoShutter(), as);
+         } catch (MMConfigFileException e) {
+            ReportingUtils.showError(e);
          }
       });
       add(autoshutterCheckBox_, "wrap");
@@ -126,9 +123,9 @@ public final class RolesPage extends PagePanel {
 
    public boolean enterPage(boolean next) {
       // find all relevant devices
-      StrVector cameras = null;
-      StrVector shutters = null;
-      StrVector stages = null;
+      StrVector cameras;
+      StrVector shutters;
+      StrVector stages;
       try {
          cameras = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
          shutters = core_.getLoadedDevicesOfType(DeviceType.ShutterDevice);
@@ -139,43 +136,52 @@ public final class RolesPage extends PagePanel {
       }
       
       if (cameras != null) {
-         String items[] = new String[(int)cameras.size()+1];
+         String[] items = new String[(int) cameras.size() + 1];
          items[0] = "";
-         for (int i=0; i<cameras.size(); i++)
-            items[i+1] = cameras.get(i);
+         for (int i = 0; i < cameras.size(); i++) {
+            items[i + 1] = cameras.get(i);
+         }
 
-         if(1 == cameras.size()) try{
-               model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreCamera(),cameras.get(0));
-               }
-               catch( Exception e){
+         if (1 == cameras.size()) {
+            try {
+               model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+                     MMCoreJ.getG_Keyword_CoreCamera(), cameras.get(0));
+            } catch (Exception e) {
             }
+         }
          GUIUtils.replaceComboContents(cameraComboBox_, items);
       }
        
       if (shutters != null) {
-         String items[] = new String[(int)shutters.size()+1];
+         String[] items = new String[(int) shutters.size() + 1];
          items[0] = "";
-         for (int i=0; i<shutters.size(); i++)
-            items[i+1] = shutters.get(i);
-         if( 1 == shutters.size()) try{
-            model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreShutter(), shutters.get(0));
+         for (int i = 0; i < shutters.size(); i++) {
+            items[i + 1] = shutters.get(i);
          }
-         catch(Exception e){
+         if (1 == shutters.size()) {
+            try {
+               model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+                     MMCoreJ.getG_Keyword_CoreShutter(), shutters.get(0));
+            } catch (Exception e) {
+            }
          }
          GUIUtils.replaceComboContents(shutterComboBox_, items);
       }
       
-       if (stages != null) {
-         String items[] = new String[(int)stages.size()+1];
+      if (stages != null) {
+         String[] items = new String[(int) stages.size() + 1];
          items[0] = "";
-         for (int i=0; i<stages.size(); i++)
-            items[i+1] = stages.get(i);
-
-         if( 1 == stages.size()) try{
-            model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreFocus(), stages.get(0));
+         for (int i = 0; i < stages.size(); i++) {
+            items[i + 1] = stages.get(i);
          }
-         catch( Exception e){
 
+         if (1 == stages.size()) {
+            try {
+               model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+                     MMCoreJ.getG_Keyword_CoreFocus(), stages.get(0));
+            } catch (Exception e) {
+
+            }
          }
          
          GUIUtils.replaceComboContents(focusComboBox_, items);
@@ -183,30 +189,34 @@ public final class RolesPage extends PagePanel {
       }
    
       try {
-         String camera = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreCamera());
-         if (model_.findDevice(camera) != null)
+         String camera = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+               MMCoreJ.getG_Keyword_CoreCamera());
+         if (model_.findDevice(camera) != null) {
             cameraComboBox_.setSelectedItem(camera);
-         else
+         } else {
             cameraComboBox_.setSelectedItem("");
+         }
          
-         String shutter = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreShutter());
-         if (model_.findDevice(shutter) != null)
+         String shutter = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+               MMCoreJ.getG_Keyword_CoreShutter());
+         if (model_.findDevice(shutter) != null) {
             shutterComboBox_.setSelectedItem(shutter);
-         else
+         } else {
             shutterComboBox_.setSelectedItem("");
+         }
          
-         String focus = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreFocus());
-         if (model_.findDevice(focus) != null)
+         String focus = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+               MMCoreJ.getG_Keyword_CoreFocus());
+         if (model_.findDevice(focus) != null) {
             focusComboBox_.setSelectedItem(focus);
-         else
+         } else {
             focusComboBox_.setSelectedItem("");
+         }
          
-         String as = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreAutoShutter());
-         if (as.compareTo("1") == 0)
-            autoshutterCheckBox_.setSelected(true);
-         else
-            autoshutterCheckBox_.setSelected(false);
-     } catch (MMConfigFileException e) {
+         String as = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
+               MMCoreJ.getG_Keyword_CoreAutoShutter());
+         autoshutterCheckBox_.setSelected(as.compareTo("1") == 0);
+      } catch (MMConfigFileException e) {
          ReportingUtils.showError(e);
       }
 
@@ -219,31 +229,28 @@ public final class RolesPage extends PagePanel {
 
          try {
             model_.loadFocusDirectionsFromHardware(core_);
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             ReportingUtils.logError(e);
          }
-         for (final String stageLabel : Arrays.asList(stages.toArray())) {
+         for (final String stageLabel : stages.toArray()) {
             final Device stage = model_.findDevice(stageLabel);
             if (stage == null) {
                continue;
             }
             int direction = stage.getFocusDirection();
-            final JComboBox comboBox = new JComboBox(new String[] {
-               "Unknown",
-               "Positive Toward Sample",
-               "Positive Away From Sample",
+            final JComboBox<String> comboBox = new JComboBox<>(new String[] {
+                  "Unknown",
+                  "Positive Toward Sample",
+                  "Positive Away From Sample",
             });
             comboBox.setSelectedIndex(direction < 0 ? 2 : direction);
-            comboBox.addActionListener(new ActionListener() {
-               @Override public void actionPerformed(ActionEvent e) {
-                  int i = comboBox.getSelectedIndex();
-                  if (i == 2) {
-                     i = -1;
-                  }
-                  stage.setFocusDirection(i);
-                  core_.setFocusDirection(stageLabel, i);
+            comboBox.addActionListener(e -> {
+               int i = comboBox.getSelectedIndex();
+               if (i == 2) {
+                  i = -1;
                }
+               stage.setFocusDirection(i);
+               core_.setFocusDirection(stageLabel, i);
             });
             focusDirectionPanel_.add(new JLabel(stageLabel + ":"),
                   "split, span");
@@ -252,7 +259,7 @@ public final class RolesPage extends PagePanel {
       }
 
       return true;
-  }
+   }
 
    public boolean exitPage(boolean next) {
       // TODO Auto-generated method stub

@@ -39,7 +39,6 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.AWTEventListener;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -49,20 +48,34 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Vector;
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.InputVerifier;
+import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
 
 
 public final class GUIUtils {
-   private static final String DIALOG_POSITION = "dialogPosition";
    public static final Font buttonFont = new Font("Arial", Font.PLAIN, 10);
 
-   public static void setComboSelection(JComboBox cb, String sel){
+   public static void setComboSelection(JComboBox<String> cb, String sel) {
       ActionListener[] listeners = cb.getActionListeners();
       for (ActionListener listener : listeners) {
          cb.removeActionListener(listener);
@@ -73,7 +86,7 @@ public final class GUIUtils {
       }
    }
 
-   public static void replaceComboContents(JComboBox cb, String[] items) {
+   public static void replaceComboContents(JComboBox<String> cb, String[] items) {
       
       // remove listeners
       ActionListener[] listeners = cb.getActionListeners();
@@ -81,8 +94,9 @@ public final class GUIUtils {
          cb.removeActionListener(listener);
       }
 
-      if (cb.getItemCount() > 0)
+      if (cb.getItemCount() > 0) {
          cb.removeAllItems();
+      }
       
       // add contents
       for (String item : items) {
@@ -131,17 +145,8 @@ public final class GUIUtils {
             //Send notification that display may have changed, so that display count is updated.
             envClass.getDeclaredMethod("displayChanged").invoke(envClass.cast(ge));
          }
-      } catch (ClassNotFoundException e) {
-         ReportingUtils.logError(e);
-      } catch (NoSuchMethodException e) {
-         ReportingUtils.logError(e);
-      } catch (SecurityException e) {
-         ReportingUtils.logError(e);
-      } catch (IllegalAccessException e) {
-         ReportingUtils.logError(e);
-      } catch (IllegalArgumentException e) {
-         ReportingUtils.logError(e);
-      } catch (InvocationTargetException e) {
+      } catch (ClassNotFoundException | NoSuchMethodException | SecurityException
+            | IllegalArgumentException | InvocationTargetException | IllegalAccessException e) {
          ReportingUtils.logError(e);
       }
 
@@ -156,16 +161,15 @@ public final class GUIUtils {
       }
    }
 
-    public static void stopEditingOnLosingFocus(final JTable table) {
-       table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
-    }
+   public static void stopEditingOnLosingFocus(final JTable table) {
+      table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+   }
 
-    /**
-     * Verifies if the given point is visible on the screen.
-     * From http://www.java2s.com/Code/Java/Swing-JFC/Verifiesifthegivenpointisvisibleonthescreen.htm
-     * @param   location     The given location on the screen.
-     * @return           True if the location is on the screen, false otherwise.
-
+   /**
+    * Verifies if the given point is visible on the screen.
+    * From http://www.java2s.com/Code/Java/Swing-JFC/Verifiesifthegivenpointisvisibleonthescreen.htm
+    * @param   location     The given location on the screen.
+    * @return           True if the location is on the screen, false otherwise.
     */
    public static boolean isLocationInScreenBounds(Point location) {
       GraphicsConfiguration config = getGraphicsConfigurationContaining(
@@ -213,8 +217,8 @@ public final class GUIUtils {
       double bestArea = -1;
       for (GraphicsConfiguration config : getConfigs()) {
          Rectangle2D intersect = rect.createIntersection(config.getBounds());
-         if (intersect != null &&
-               intersect.getWidth() * intersect.getHeight() > bestArea) {
+         if (intersect != null
+               && intersect.getWidth() * intersect.getHeight() > bestArea) {
             bestArea = intersect.getWidth() * intersect.getHeight();
             best = config;
          }
@@ -248,10 +252,8 @@ public final class GUIUtils {
                   if (event.getSource() instanceof ImageWindow) {
                      ImageWindow focusedWindow = WindowManager.getCurrentWindow();
                      if (currentImageWindow_ != focusedWindow) {
-                        //if (focusedWindow.isVisible() && focusedWindow instanceof ImageWindow) {
                            listener.focusReceived(focusedWindow);
                            currentImageWindow_ = focusedWindow;
-                        //}
                      }
                   }
                }
@@ -267,7 +269,8 @@ public final class GUIUtils {
     * Wraps SwingUtilities.invokeAndWait so that if it is being called
     * from the EDT, then the runnable is simply run.
     */
-   public static void invokeAndWait(Runnable r) throws InterruptedException, InvocationTargetException {
+   public static void invokeAndWait(Runnable r)
+         throws InterruptedException, InvocationTargetException {
       if (SwingUtilities.isEventDispatchThread()) {
          r.run();
       } else {
@@ -275,7 +278,7 @@ public final class GUIUtils {
       }
    }
 
-      /*
+   /**
     * Wraps SwingUtilities.invokeLater so that if it is being called
     * from the EDT, then the runnable is simply run.
     */
@@ -296,18 +299,18 @@ public final class GUIUtils {
     */
    public static void setToolTipText(JComponent component,
             String toolTipText) {
-      if (JavaUtils.isMac()) {// running on a mac
+      if (JavaUtils.isMac()) { // running on a mac
          component.setToolTipText(toolTipText);
-      }
-      else {
+      } else {
          component.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(toolTipText));
       }
-    }
+   }
 
    /////////////////////// MENU ITEM UTILITY METHODS ///////////
    
    /**
     * Adds a menu to the specified menu bar.
+    *
     * @param menuBar
     * @param menuName
     * @return 
@@ -319,7 +322,7 @@ public final class GUIUtils {
       return menu;
    }
    
-    /**
+   /**
      * Adds a menu item to the specified parent menu.
     * @param parentMenu - "top level" menu
     * @param menuItem - prepared menuitem
@@ -335,12 +338,7 @@ public final class GUIUtils {
          setToolTipText(menuItem, menuItemToolTip);
       }
       if (menuActionRunnable != null) {
-         menuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ignoreEvent) {
-               menuActionRunnable.run();
-            }
-         });
+         menuItem.addActionListener(ignoreEvent -> menuActionRunnable.run());
       }
       parentMenu.add(menuItem);
       return menuItem;
@@ -362,7 +360,7 @@ public final class GUIUtils {
               menuItemToolTip, menuActionRunnable);      
    }
    
-      /**
+   /**
     * Adds a menu item with given text and icon to the specified parent menu.
     * @param parentMenu - "top level" menu
     * @param menuItemText - name as it appears in the menu
@@ -402,7 +400,7 @@ public final class GUIUtils {
    ////////////// END MENU ITEM UTILITY METHODS ////////////////
 
    public interface StringValidator {
-      public void validate(String string);
+      void validate(String string);
    }
    
    // If the user attempts to edit a text field, but doesn't enter a valid input,
@@ -410,7 +408,8 @@ public final class GUIUtils {
    // user what kind of input is needed. If the user presses OK, then verifier
    // returns false. If user presses CANCEL, then verifier reverts the 
    // value and returns true.
-   public static InputVerifier textFieldInputVerifier(final JTextField field, final StringValidator validator) {
+   public static InputVerifier textFieldInputVerifier(final JTextField field,
+                                                      final StringValidator validator) {
       return new InputVerifier() {
          private String lastGoodValue = field.getText();
 
@@ -443,93 +442,77 @@ public final class GUIUtils {
       };
    }
 
-   public static void enforceValidTextField(final JTextField field, final StringValidator validator) {
+   public static void enforceValidTextField(final JTextField field,
+                                            final StringValidator validator) {
       field.setInputVerifier(textFieldInputVerifier(field, validator));
    }
 
    public static StringValidator integerStringValidator(final int minValue, final int maxValue) {
-      return new StringValidator() {
-         @Override
-         public void validate(String string) {
-            try {
-               int value = Integer.parseInt(string.trim());
-               if ((value < minValue) || (value > maxValue)) {
-                  throw new RuntimeException("Value should be between " + minValue + " and " + maxValue);
-               }
-            } catch (NumberFormatException e) {
-               throw new RuntimeException("Please enter an integer.");
+      return string -> {
+         try {
+            int value = Integer.parseInt(string.trim());
+            if ((value < minValue) || (value > maxValue)) {
+               throw new RuntimeException("Value should be between "
+                     + minValue + " and " + maxValue);
             }
+         } catch (NumberFormatException e) {
+            throw new RuntimeException("Please enter an integer.");
          }
       };
    }
    
    // TODO: this is only used by the Projector plugin and should probably
    // be moved into it.
-   public static void enforceIntegerTextField(final JTextField field, final int minValue, final int maxValue) {
+   public static void enforceIntegerTextField(final JTextField field,
+                                              final int minValue, final int maxValue) {
       enforceValidTextField(field, integerStringValidator(minValue, maxValue));
    }
 
    // TODO: this is only used by the Projector plugin and should probably
    // be moved into it.
    public static int getIntValue(JTextField component) {
-     return Integer.parseInt(component.getText());
+      return Integer.parseInt(component.getText());
    }
    
    private static void enableOnTableEvent(final JTable table, final JComponent component) {
-      table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-         @Override
-         public void valueChanged(ListSelectionEvent e) {
-            if (!e.getValueIsAdjusting()) {
-               if (component.getParent().isEnabled()) {
-                  if (table.getSelectedRowCount() > 0) {
-                     component.setEnabled(true);
-                  } else {
-                     component.setEnabled(false);
-                  }
-               }
+      table.getSelectionModel().addListSelectionListener(e -> {
+         if (!e.getValueIsAdjusting()) {
+            if (component.getParent().isEnabled()) {
+               component.setEnabled(table.getSelectedRowCount() > 0);
             }
          }
       });
    }
    
    public static void makeIntoMoveRowUpButton(final JTable table, JButton button) {
-      button.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int rowIndex = table.getSelectedRow();
-            if (rowIndex > 0) {
-               ((DefaultTableModel) table.getModel()).moveRow(rowIndex, rowIndex, rowIndex - 1);
-               table.setRowSelectionInterval(rowIndex - 1, rowIndex - 1);
-            }
+      button.addActionListener(e -> {
+         int rowIndex = table.getSelectedRow();
+         if (rowIndex > 0) {
+            ((DefaultTableModel) table.getModel()).moveRow(rowIndex, rowIndex, rowIndex - 1);
+            table.setRowSelectionInterval(rowIndex - 1, rowIndex - 1);
          }
       });
       enableOnTableEvent(table, button);
    }
       
    public static void makeIntoMoveRowDownButton(final JTable table, JButton button) {
-      button.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int rowIndex = table.getSelectedRow();
-            if (rowIndex < table.getRowCount() - 1) {
-               ((DefaultTableModel) table.getModel()).moveRow(rowIndex, rowIndex, rowIndex + 1);
-               table.setRowSelectionInterval(rowIndex + 1, rowIndex + 1);
-            }
+      button.addActionListener(e -> {
+         int rowIndex = table.getSelectedRow();
+         if (rowIndex < table.getRowCount() - 1) {
+            ((DefaultTableModel) table.getModel()).moveRow(rowIndex, rowIndex, rowIndex + 1);
+            table.setRowSelectionInterval(rowIndex + 1, rowIndex + 1);
          }
       });
       enableOnTableEvent(table, button);
    }
    
    public static void makeIntoDeleteRowButton(final JTable table, JButton button) {
-      button.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int rowIndex = table.getSelectedRow();
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
-            model.removeRow(rowIndex);
-            if (rowIndex < table.getRowCount()) {
-               table.setRowSelectionInterval(rowIndex, rowIndex);
-            }
+      button.addActionListener(e -> {
+         int rowIndex = table.getSelectedRow();
+         DefaultTableModel model = (DefaultTableModel) table.getModel();
+         model.removeRow(rowIndex);
+         if (rowIndex < table.getRowCount()) {
+            table.setRowSelectionInterval(rowIndex, rowIndex);
          }
       });
       enableOnTableEvent(table, button);
@@ -537,15 +520,12 @@ public final class GUIUtils {
    
    @SuppressWarnings("unchecked")
    public static void makeIntoCloneRowButton(final JTable table, JButton button) {
-      button.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int rowIndex = table.getSelectedRow();
-            DefaultTableModel model = (DefaultTableModel) table.getModel();
-            Vector rowData = (Vector) model.getDataVector().elementAt(rowIndex);       
-            model.insertRow(rowIndex + 1, new Vector(rowData));
-            table.setRowSelectionInterval(rowIndex + 1, rowIndex + 1);
-         }
+      button.addActionListener(e -> {
+         int rowIndex = table.getSelectedRow();
+         DefaultTableModel model = (DefaultTableModel) table.getModel();
+         Vector rowData = (Vector) model.getDataVector().elementAt(rowIndex);
+         model.insertRow(rowIndex + 1, new Vector(rowData));
+         table.setRowSelectionInterval(rowIndex + 1, rowIndex + 1);
       });
       enableOnTableEvent(table, button);
    }
@@ -564,7 +544,9 @@ public final class GUIUtils {
                int row = table.getEditingRow();
                int column = table.getEditingColumn();
                // Don't proceed if we aren't already editing.
-               if (row < 0 || column < 0) return;
+               if (row < 0 || column < 0) {
+                  return;
+               }
                if (column == (table.getColumnCount() - 1)) {
                   column = 0;
                   row = row + 1 % table.getRowCount();
@@ -578,21 +560,19 @@ public final class GUIUtils {
    }
 
    public static Runnable makeURLRunnable(final String url) {
-       return new Runnable() {
-          @Override
-          public void run() {
-             try {
-                ij.plugin.BrowserLauncher.openURL(url);
-             } catch (IOException e1) {
-                ReportingUtils.showError(e1);
-             }
-          }
-       };
+      return () -> {
+         try {
+            ij.plugin.BrowserLauncher.openURL(url);
+         } catch (IOException e1) {
+            ReportingUtils.showError(e1);
+         }
+      };
    }
 
    /**
     * Center the provided Window within the screen contained by the provided
     * other window.
+    *
     * @param child Window to be centered on the relevant screen
     * @param source parent Window.  Used to figure out the screen we should be on
     * 

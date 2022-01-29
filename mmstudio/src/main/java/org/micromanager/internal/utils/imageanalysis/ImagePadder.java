@@ -3,8 +3,6 @@ package org.micromanager.internal.utils.imageanalysis;
 
 import boofcv.alg.misc.GImageMiscOps;
 import boofcv.alg.misc.GPixelMath;
-import boofcv.alg.misc.PixelMath;
-import boofcv.core.image.ConvertImage;
 import boofcv.core.image.GConvertImage;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU16;
@@ -40,21 +38,21 @@ public class ImagePadder {
       ImageGray output = null;
       ImageGray lrSide = null;
       ImageGray tbSide = null;
-      GrayF32 sideMask = new GrayF32(halfWidth, height);
-      GrayF32 sideTmp = new GrayF32(halfWidth, height);
-      GrayF32 tbMask = new GrayF32(2*width, halfHeight);
-      GrayF32 tbTmp = new GrayF32(2*width, halfHeight);
+      final GrayF32 sideMask = new GrayF32(halfWidth, height);
+      final GrayF32 sideTmp = new GrayF32(halfWidth, height);
+      final GrayF32 tbMask = new GrayF32(2 * width, halfHeight);
+      final GrayF32 tbTmp = new GrayF32(2 * width, halfHeight);
       if (null != input.getImageType().getDataType()) {
          switch (input.getImageType().getDataType()) {
             case U16:
-               output =  new GrayU16(2*width, 2*height);
+               output =  new GrayU16(2 * width, 2 * height);
                lrSide = new GrayU16(halfWidth, height);
-               tbSide = new GrayU16(2*width, halfHeight);
+               tbSide = new GrayU16(2 * width, halfHeight);
                break;
             case U8:
-               output = new GrayU8(2*width, 2*height);
+               output = new GrayU8(2 * width, 2 * height);
                lrSide = new GrayU8(halfWidth, height);
-               tbSide = new GrayU8(2*width, halfHeight);
+               tbSide = new GrayU8(2 * width, halfHeight);
                break;
                // TODO: throw unsupportedtype exception
             default:
@@ -86,20 +84,20 @@ public class ImagePadder {
       // Now top/bottom copy
       GImageMiscOps.copy(0, halfHeight, 0, 0, 2 * width, halfHeight, output, tbSide);
       GImageMiscOps.flipVertical(tbSide);
-      tbMask.setData(topHanWindow1DA(2*width, halfHeight));
+      tbMask.setData(topHanWindow1DA(2 * width, halfHeight));
       GConvertImage.convert(tbSide, tbTmp);
       GPixelMath.multiply(tbTmp, tbMask, tbTmp);
       GConvertImage.convert(tbTmp, tbSide);
-      GImageMiscOps.copy(0, 0, 0, 0, 2*width, halfHeight, tbSide, output);
+      GImageMiscOps.copy(0, 0, 0, 0, 2 * width, halfHeight, tbSide, output);
       
       // Bottom
-      GImageMiscOps.copy(0, height, 0, 0, 2*width, halfHeight, output, tbSide);
+      GImageMiscOps.copy(0, height, 0, 0, 2 * width, halfHeight, output, tbSide);
       GImageMiscOps.flipVertical(tbSide);
-      tbMask.setData(bottomHanWindow1DA(2*width, halfHeight));
+      tbMask.setData(bottomHanWindow1DA(2 * width, halfHeight));
       GConvertImage.convert(tbSide, tbTmp);
       GPixelMath.multiply(tbTmp, tbMask, tbTmp);
       GConvertImage.convert(tbTmp, tbSide);
-      GImageMiscOps.copy(0, 0, 0, height + halfHeight, 2*width, halfHeight, tbSide, output);
+      GImageMiscOps.copy(0, 0, 0, height + halfHeight, 2 * width, halfHeight, tbSide, output);
       
       
       // image i
@@ -108,14 +106,15 @@ public class ImagePadder {
    }
    
    
-    /**
+   /**
     * Creates a HanWindow specific for the padPreibisch function
-    * Left half is 0, followed by a "half" HanWindow ending at 1.0
+    * Left half is 0, followed by a "half" HanWindow ending at 1.0.
+    *
     * @param width
     * @param height
     * @return 
     */
-   public static float[] leftHanWindow1DA (int width, int height) {
+   public static float[] leftHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[width];
       int halfEdgeSize = (int) (width / 2);
 
@@ -131,19 +130,19 @@ public class ImagePadder {
          }
       }
       return han2DArray;
-      
    }
    
    /**
     * Creates a HanWindow specific for the padPreibisch function
-    * Right half is 0, followed by a "half" HanWindow ending at 1.0
+    * Right half is 0, followed by a "half" HanWindow ending at 1.0.
+    *
     * @param width
     * @param height
     * @return 
     */
-   public static float[] rightHanWindow1DA (int width, int height) {
+   public static float[] rightHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[width];
-      int halfEdgeSize = (int) (width / 2);
+      int halfEdgeSize = width / 2;
 
       for (int i = 0; i < halfEdgeSize; i++) {
          han1DArray[halfEdgeSize - i - 1] = (float) (0.5 * (1 - Math.cos(2 * Math.PI * i / width)));
@@ -162,14 +161,15 @@ public class ImagePadder {
    
    /**
     * Creates a HanWindow specific for the padPreibisch function
-    * Top half is 0, followed by a "half" HanWindow ending at 1.0
+    * Top half is 0, followed by a "half" HanWindow ending at 1.0.
+    *
     * @param width
     * @param height
     * @return 
     */
-   public static float[] topHanWindow1DA (int width, int height) {
+   public static float[] topHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[height];
-      int halfHeight = (int) (height / 2);
+      int halfHeight = height / 2;
 
       for (int i = 0; i < halfHeight; i++) {
          han1DArray[halfHeight + i] = (float) (0.5 * (1 - Math.cos(2 * Math.PI * i / height)));
@@ -187,14 +187,15 @@ public class ImagePadder {
    
    /**
     * Creates a HanWindow specific for the padPreibisch function
-    * Top half is 0, followed by a "half" HanWindow ending at 1.0
+    * Top half is 0, followed by a "half" HanWindow ending at 1.0.
+    *
     * @param width
     * @param height
     * @return 
     */
-   public static float[] bottomHanWindow1DA (int width, int height) {
+   public static float[] bottomHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[height];
-      int halfHeight = (int) (height / 2);
+      int halfHeight = height / 2;
 
       for (int i = 0; i < halfHeight; i++) {
          han1DArray[halfHeight + i] = (float) (0.5 * (1 - Math.cos(2 * Math.PI * i / height)));

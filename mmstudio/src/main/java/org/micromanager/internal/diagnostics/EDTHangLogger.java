@@ -28,7 +28,7 @@ import mmcorej.CMMCore;
 /**
  * Log event dispatch thread hangs to the CoreLog.
  *
- * Note: Failure to call stop() before destructing the Core will result in a
+ * <p>Note: Failure to call stop() before destructing the Core will result in a
  * crash.
  */
 public final class EDTHangLogger {
@@ -53,11 +53,11 @@ public final class EDTHangLogger {
    private CMMCore core_;
    private Timer timer_;
 
-   private final long NEVER = -1;
-   private final long MS_PER_NS = 1000 * 1000;
+   private static final long NEVER = -1;
+   private static final long MS_PER_NS = 1000 * 1000;
 
-   private long heartbeatTimeoutMs_;
-   private long hangCheckIntervalMs_;
+   private final long heartbeatTimeoutMs_;
+   private final long hangCheckIntervalMs_;
 
    private long heartbeatTimebaseNs_ = NEVER;
    private long lastHeartbeatNs_ = NEVER;
@@ -69,8 +69,7 @@ public final class EDTHangLogger {
    private static EDTHangLogger instance_;
 
    public static void startDefault(CMMCore core, long heartbeatTimeoutMs,
-         long hangCheckIntervalMs)
-   {
+         long hangCheckIntervalMs) {
       if (instance_ != null) {
          stopDefault();
       }
@@ -88,7 +87,8 @@ public final class EDTHangLogger {
    // Logging for debugging this class itself, normally disabled
    // (DEBUG_LEVEL kept non-final so that value can be overridden during
    // interactive debugging if necessary.)
-   private static int DEBUG_LEVEL = 0; // 0, 1, or 2
+   private static final int DEBUG_LEVEL = 0; // 0, 1, or 2
+
    private void logDebug(int level, String message) {
       if (core_ != null && level <= DEBUG_LEVEL) {
          core_.logMessage("EDTHangLogger DEBUG: " + message, true);
@@ -104,8 +104,7 @@ public final class EDTHangLogger {
 
 
    public EDTHangLogger(CMMCore core, long heartbeatTimeoutMs,
-         long hangCheckIntervalMs)
-   {
+         long hangCheckIntervalMs) {
       core_ = core;
       timer_ = new Timer("EDTHangLogger timer", true);
       heartbeatTimeoutMs_ = Math.max(0, heartbeatTimeoutMs);
@@ -113,9 +112,9 @@ public final class EDTHangLogger {
 
       setupHeartbeat();
 
-      logMessage("Started monitoring of EDT hangs\n" +
-            "[heartbeat timeout = " + heartbeatTimeoutMs_ +
-            " ms, hang check interval = " + hangCheckIntervalMs_ + " ms]");
+      logMessage("Started monitoring of EDT hangs\n"
+            + "[heartbeat timeout = " + heartbeatTimeoutMs_
+            + " ms, hang check interval = " + hangCheckIntervalMs_ + " ms]");
    }
 
    public synchronized void stop() {
@@ -140,11 +139,7 @@ public final class EDTHangLogger {
 
       logDebug(2, "Setting up heartbeat");
 
-      EventQueue.invokeLater(new Runnable() {
-         @Override public void run() {
-            heartbeat();
-         }
-      });
+      EventQueue.invokeLater(this::heartbeat);
 
       TimerTask checkTask = new TimerTask() {
          @Override public void run() {
@@ -160,12 +155,12 @@ public final class EDTHangLogger {
       lastHeartbeatNs_ = System.nanoTime();
       if (missedHeartbeat_) {
          long elapsedSinceTimebaseMs =
-            (lastHeartbeatNs_ - heartbeatTimebaseNs_) / MS_PER_NS;
-         logMessage("First heartbeat after miss (" +
-               elapsedSinceTimebaseMs + " ms since timebase)");
+               (lastHeartbeatNs_ - heartbeatTimebaseNs_) / MS_PER_NS;
+         logMessage("First heartbeat after miss ("
+               + elapsedSinceTimebaseMs + " ms since timebase)");
       }
-      logDebug(2, "Heartbeat after " +
-            (lastHeartbeatNs_ - heartbeatTimebaseNs_) + " ns");
+      logDebug(2, "Heartbeat after "
+            + (lastHeartbeatNs_ - heartbeatTimebaseNs_) + " ns");
    }
 
    private synchronized void checkForHeartbeat(boolean firstCheck) {
@@ -181,9 +176,7 @@ public final class EDTHangLogger {
 
       // Add a sentinel to the event queue so that peekEvent() does not
       // return empty.
-      EventQueue.invokeLater(new Runnable() {
-         @Override public void run() {}
-      });
+      EventQueue.invokeLater(() -> {});
 
       // Get the next event in the event queue to use as reference point. (We
       // cannot get the _current_ event since there is no method to access it
@@ -195,20 +188,18 @@ public final class EDTHangLogger {
       if (nextEvent == null) {
          if (lastHeartbeatNs_ != NEVER) {
             logDebug(1, "Appears to have unstuck, heartbeat detected after all");
-         }
-         else {
+         } else {
             logDebug(1, "UNEXPECTED: Found no next event despite missing heartbeat");
          }
          setupHeartbeat();
          return;
       }
 
-      nextEventWeakRef_ = new WeakReference<AWTEvent>(nextEvent);
+      nextEventWeakRef_ = new WeakReference<>(nextEvent);
 
       if (firstCheck) {
          logMessage("Missed heartbeat; waiting to see if we are stuck on a single event");
-      }
-      else {
+      } else {
          // TODO If missing HB for long time, dump stacktraces even if we can't
          // detect a hang on a single event
       }
@@ -246,12 +237,12 @@ public final class EDTHangLogger {
          long elapsedTimeMs = (now - hangCheckStartNs_) / MS_PER_NS;
          long elapsedSinceTimebaseMs = (now - heartbeatTimebaseNs_) / MS_PER_NS;
 
-         logMessage("Event handling has exceeded at least " + elapsedTimeMs +
-               " ms (currently " + elapsedSinceTimebaseMs +
-               " ms since heartbeat timebase)\n" +
-               "Stack traces follow " +
-               "(note: thread states queried later than stack traces)" +
-               formatStackTraces(traces));
+         logMessage("Event handling has exceeded at least " + elapsedTimeMs
+               + " ms (currently " + elapsedSinceTimebaseMs
+               + " ms since heartbeat timebase)\n"
+               + "Stack traces follow "
+               + "(note: thread states queried later than stack traces)"
+               + formatStackTraces(traces));
       }
 
       logDebug(1, "Scheduling hang recheck");
@@ -273,13 +264,8 @@ public final class EDTHangLogger {
       StringBuilder sb = new StringBuilder();
 
       // Sort by thread id
-      List<Thread> threads = new ArrayList<Thread>(traces.keySet());
-      Collections.sort(threads, new Comparator<Thread>() {
-         @Override
-         public int compare(Thread t1, Thread t2) {
-            return new Long(t1.getId()).compareTo(t2.getId());
-         }
-      });
+      List<Thread> threads = new ArrayList<>(traces.keySet());
+      Collections.sort(threads, (t1, t2) -> new Long(t1.getId()).compareTo(t2.getId()));
 
       for (Thread thread : threads) {
          formatThreadStackTrace(sb, thread, traces.get(thread));
@@ -289,11 +275,11 @@ public final class EDTHangLogger {
    }
 
    private void formatThreadStackTrace(StringBuilder sb, Thread thread,
-         StackTraceElement[] trace)
-   {
+         StackTraceElement[] trace) {
       sb.append("\n");
-      sb.append("Thread " + thread.getId() + " [" + thread.getName() +
-            "] " + thread.getState().toString());
+      sb.append("Thread ").append(thread.getId()).append(" [")
+            .append(thread.getName()).append("] ")
+            .append(thread.getState());
       for (StackTraceElement frame : trace) {
          sb.append("\n  at ");
          sb.append(frame);

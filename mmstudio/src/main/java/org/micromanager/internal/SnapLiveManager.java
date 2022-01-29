@@ -638,7 +638,7 @@ public final class SnapLiveManager extends DataViewerListener
       }
 
       boolean shouldReset = shouldForceReset_;
-      if (store_ != null) {
+      if (store_ != null && !store_.isFrozen()) {
          List<String> channelNames = store_.getSummaryMetadata().getChannelNameList();
          String curChannel = "";
          try {

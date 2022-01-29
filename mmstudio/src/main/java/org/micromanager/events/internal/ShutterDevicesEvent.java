@@ -27,7 +27,7 @@ import java.util.List;
  * shutter devices to other entities.
  */
 public final class ShutterDevicesEvent {
-   private List<String> devices_;
+   private final List<String> devices_;
 
    public ShutterDevicesEvent(List<String> devices) {
       devices_ = devices;

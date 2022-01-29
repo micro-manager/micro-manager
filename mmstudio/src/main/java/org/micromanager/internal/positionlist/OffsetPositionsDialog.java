@@ -21,11 +21,13 @@ package org.micromanager.internal.positionlist;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import javax.swing.*;
-
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -40,13 +42,13 @@ import org.micromanager.internal.utils.WindowPositioning;
  */
 class OffsetPositionsDialog extends JDialog {
    
-   private PositionListDlg parent_;
+   private final PositionListDlg parent_;
    private final CMMCore core_;
    // This panel holds dynamically-generated inputs appropriate to the 
    // device we want to set offsets for.
    private final JPanel axisPanel_;
    // Inputs used to set the offsets.
-   private ArrayList<JTextField> axisInputs_;
+   private final ArrayList<JTextField> axisInputs_;
    // Name of the device we're setting offsets for.
    private String deviceName_;
 
@@ -55,7 +57,7 @@ class OffsetPositionsDialog extends JDialog {
       
       parent_ = parent;
       core_ = core;
-      axisInputs_ = new ArrayList<JTextField>();
+      axisInputs_ = new ArrayList<>();
 
       // center dialog on the parent dialog
       int parentCenterX = (int) (parent.getX() + 0.5 * parent.getWidth());
@@ -63,7 +65,7 @@ class OffsetPositionsDialog extends JDialog {
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
               getClass().getResource("/org/micromanager/icons/microscope.gif")));
-      super.setBounds(parentCenterX - 160,parentCenterY - 150, 320, 300);
+      super.setBounds(parentCenterX - 160, parentCenterY - 150, 320, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
       setTitle("Add offset to stage positions");
@@ -78,7 +80,7 @@ class OffsetPositionsDialog extends JDialog {
 
       // Add a menu to select a positioner, and then a panel which will
       // dynamically get the text fields for the positioner as appropriate.
-      ArrayList<String> options = new ArrayList<String>();
+      ArrayList<String> options = new ArrayList<>();
       StrVector xyStages = core.getLoadedDevicesOfType(DeviceType.XYStageDevice);
       for (int i = 0; i < xyStages.size(); ++i) {
          options.add(xyStages.get(i));
@@ -90,12 +92,9 @@ class OffsetPositionsDialog extends JDialog {
       deviceName_ = options.get(0);
 
       final JComboBox stageOptions = new JComboBox(options.toArray());
-      stageOptions.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            String stageName = (String) stageOptions.getSelectedItem();
-            setControlsFor(stageName);
-         }
+      stageOptions.addActionListener(event -> {
+         String stageName = (String) stageOptions.getSelectedItem();
+         setControlsFor(stageName);
       });
       add(new JLabel("Select stage device: "), "span 2");
       add(stageOptions, "wrap");
@@ -104,35 +103,26 @@ class OffsetPositionsDialog extends JDialog {
       add(axisPanel_, "span 4, align left, wrap");
       
       JButton okButton = new JButton("OK");
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            ArrayList<Float> offsets = new ArrayList<>();
-            for (JTextField input : axisInputs_) {
-               try {
-                  Float value = Float.parseFloat(input.getText());
-                  offsets.add(value);
-               }
-               catch (NumberFormatException e) {
-                  // Invalid format; just use 0.
-                  offsets.add(new Float(0));
-               }
+      okButton.addActionListener(event -> {
+         ArrayList<Float> offsets = new ArrayList<>();
+         for (JTextField input : axisInputs_) {
+            try {
+               Float value = Float.parseFloat(input.getText());
+               offsets.add(value);
+            } catch (NumberFormatException e) {
+               // Invalid format; just use 0.
+               offsets.add((float) 0);
             }
-            parent_.offsetSelectedSites(deviceName_, offsets);
-            dispose();
          }
+         parent_.offsetSelectedSites(deviceName_, offsets);
+         dispose();
       });
       
       getRootPane().setDefaultButton(okButton);
       add(okButton, "tag ok, span 4, split");
 
       JButton cancelButton = new JButton("Cancel");
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-            public void actionPerformed(ActionEvent event) {
-               dispose();
-            }
-      });
+      cancelButton.addActionListener(event -> dispose());
       add(cancelButton, "tag cancel, wrap");
 
       setControlsFor(deviceName_);
@@ -151,12 +141,11 @@ class OffsetPositionsDialog extends JDialog {
       deviceName_ = deviceName;
 
       // Determine the axis labels.
-      ArrayList<String> axes = new ArrayList<String>();
+      ArrayList<String> axes = new ArrayList<>();
       DeviceType type;
       try {
          type = core_.getDeviceType(deviceName);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          // Something went wrong; give up.
          ReportingUtils.logError("Couldn't determine type of device named " + deviceName);
          return;
@@ -164,8 +153,7 @@ class OffsetPositionsDialog extends JDialog {
       if (type == DeviceType.StageDevice) {
          // Dealing with a Z device; only one label.
          axes.add("Z offset:");
-      }
-      else if (type == DeviceType.XYStageDevice) {
+      } else if (type == DeviceType.XYStageDevice) {
          // Two axes.
          axes.add("X offset:");
          axes.add("Y offset:");

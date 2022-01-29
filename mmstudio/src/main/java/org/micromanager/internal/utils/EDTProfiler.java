@@ -1,8 +1,6 @@
 package org.micromanager.internal.utils;
 
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,29 +12,21 @@ import javax.swing.SwingUtilities;
 public final class EDTProfiler {
    private static final int INTERVAL = 100;
    
-   private Timer timer_;
+   private final Timer timer_;
    private final LinkedList<Long> startTimes_;
    private final LinkedList<Long> executionTimes_;
    
    
    public EDTProfiler() {
-      timer_ = new Timer(  );
-      startTimes_ = new LinkedList<Long>();
-      executionTimes_ = new LinkedList<Long>();
+      timer_ = new Timer();
+      startTimes_ = new LinkedList<>();
+      executionTimes_ = new LinkedList<>();
       JFrame frame = new JFrame();
       JButton stop = new JButton("stop");
-      stop.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            end();
-         }});
+      stop.addActionListener(e -> end());
       JButton start = new JButton("start");
-      start.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            start();
-         }});
-      frame.setLayout(new GridLayout(2,1));
+      start.addActionListener(e -> start());
+      frame.setLayout(new GridLayout(2, 1));
       frame.add(start);
       frame.add(stop);
       frame.pack();
@@ -44,14 +34,14 @@ public final class EDTProfiler {
    }
    
    private void start() {
-      timer_.schedule(getTask(),0, INTERVAL);
+      timer_.schedule(getTask(), 0, INTERVAL);
    }
    
    private void end() {
       timer_.cancel();
-      for (int i = 0; i < startTimes_.size(); i ++) {
-         String print = startTimes_.get(i) +"\t";
-         if ( i < executionTimes_.size() ) {
+      for (int i = 0; i < startTimes_.size(); i++) {
+         String print = startTimes_.get(i) + "\t";
+         if (i < executionTimes_.size()) {
             print += executionTimes_.get(i) + "";
          }
          System.out.println(print);         
@@ -63,11 +53,7 @@ public final class EDTProfiler {
          @Override
          public void run() {
             startTimes_.add(System.currentTimeMillis());
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  executionTimes_.add(System.currentTimeMillis());
-               }});
+            SwingUtilities.invokeLater(() -> executionTimes_.add(System.currentTimeMillis()));
          }     
       };
    }

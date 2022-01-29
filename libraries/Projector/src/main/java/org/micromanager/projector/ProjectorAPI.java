@@ -41,7 +41,7 @@ public class ProjectorAPI {
    }
 
    /**
-    * Activates a spot at the center of the Galvo/SLM range
+    * Activates a spot at the center of the Galvo/SLM range.
     *
     * @param dev ProjectionDevice to be used
     */
@@ -81,11 +81,11 @@ public class ProjectorAPI {
    /**
     * Transform the Roi polygons with the given nonlinear mapping.
     *
-    * @param roiPolygons
-    * @param mapping
+    * @param roiPolygons Polygons to be transformed
+    * @param mapping Contains mapping between camera and projector
     * @param cameraROI     current ROI of the camera.  Will be ignored when null
     * @param cameraBinning current binning of the camera.  Assumed to be 1 when null
-    * @return
+    * @return Transformed polygons
     */
    public List<FloatPolygon> transformRoiPolygons(
          Polygon[] roiPolygons, Mapping mapping, Rectangle cameraROI, Integer cameraBinning) {
@@ -164,7 +164,7 @@ public class ProjectorAPI {
     * @param on true will enable shoot mode, false will switch it off
     */
    public void enableShootMode(boolean on) {
-      projectorControlForm_.enableShootMode(on);
+      projectorControlForm_.enableShootMode();
    }
 
    /**

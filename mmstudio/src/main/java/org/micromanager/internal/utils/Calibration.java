@@ -21,6 +21,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 //
+
 package org.micromanager.internal.utils;
 
 import java.text.DecimalFormat;
@@ -30,7 +31,7 @@ public final class Calibration {
    private Double pixelSize_;
    private String calibrationName_;
    private Configuration configuration_;
-   private static DecimalFormat fmt = new DecimalFormat("#0.000");
+   private static final DecimalFormat fmt = new DecimalFormat("#0.000");
    
    public Calibration() {
       calibrationName_ = "Undefined";

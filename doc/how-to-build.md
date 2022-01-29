@@ -222,9 +222,13 @@ If unresolved dependences on some Java libraries:
 [ivy:resolve] ::::::::::::::::::::::::::::::::::::::::::::::
 ```
 
-Take a look at [issue #708](https://github.com/micro-manager/micro-manager/issues/708)
+Take a look at [issue #708](https://github.com/micro-manager/micro-manager/issues/708) and 
+[837](https://github.com/micro-manager/micro-manager/issues/837). You may need `DT1.2`,`jxinput`,
+`iconloader` from original [svn site](https://valelab4.ucsf.edu/svn/3rdpartypublic/classext/). You should not run
+`make fetchdeps` again after you copied jar files to `dependencies/artifacts/compile`, otherwise
+`make fetchdeps` will remove copyed files. 
 
-### C++17 refuse dynamic exception 
+#### C++17 refuse dynamic exception 
 
 If your gcc( such as gcc 11) compile MM by `ISO C++17` or newer than C++14 in default, 
 it will stop by dynamic exception related error:

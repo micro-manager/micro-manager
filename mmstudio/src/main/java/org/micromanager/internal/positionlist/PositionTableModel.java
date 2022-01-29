@@ -27,7 +27,7 @@ import org.micromanager.StagePosition;
 
 class PositionTableModel extends AbstractTableModel {
    private static final long serialVersionUID = 1L;
-   public final String[] COLUMN_NAMES = new String[] {
+   public final String[] columnNames = new String[] {
          "Label",
          "Position [um]"
    };
@@ -46,30 +46,32 @@ class PositionTableModel extends AbstractTableModel {
    public int getRowCount() {
       return posList_.getNumberOfPositions() + 1;
    }
+
    @Override
    public int getColumnCount() {
-      return COLUMN_NAMES.length;
+      return columnNames.length;
    }
+
    @Override
    public String getColumnName(int columnIndex) {
-      return COLUMN_NAMES[columnIndex];
+      return columnNames[columnIndex];
    }
+
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
       MultiStagePosition msp;
       if (rowIndex == 0) {
          msp = curMsp_;
-      }
-      else {
-         msp = posList_.getPosition(rowIndex -1);
+      } else {
+         msp = posList_.getPosition(rowIndex - 1);
       }
       if (columnIndex == 0) {
          return msp.getLabel();
       } else if (columnIndex == 1) {
          StringBuilder sb = new StringBuilder();
-         for (int i=0; i<msp.size(); i++) {
+         for (int i = 0; i < msp.size(); i++) {
             StagePosition sp = msp.get(i);
-            if (i!=0) {
+            if (i != 0) {
                sb.append(";");
             }
             sb.append(sp.getVerbose());
@@ -79,16 +81,15 @@ class PositionTableModel extends AbstractTableModel {
          return null;
       }
    }
+
    @Override
    public boolean isCellEditable(int rowIndex, int columnIndex) {
       if (rowIndex == 0) {
          return false;
       }
-      if (columnIndex == 0) {
-         return true;
-      }
-      return false;
+      return columnIndex == 0;
    }
+
    @Override
    public void setValueAt(Object value, int rowIndex, int columnIndex) {
       if (columnIndex == 0) {

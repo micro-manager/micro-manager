@@ -12,7 +12,9 @@
 package org.micromanager.internal.diagnostics;
 
 class JavaSystemPropertiesInfoSection implements SystemInfo.SystemInfoSection {
-   public String getTitle() { return "Java system properties"; }
+   public String getTitle() {
+      return "Java system properties";
+   }
 
    public String getReport() {
       String pathSep = System.getProperty("path.separator");
@@ -24,7 +26,7 @@ class JavaSystemPropertiesInfoSection implements SystemInfo.SystemInfoSection {
       sb.append("Java system properties:\n");
 
       java.util.Properties sysProps = System.getProperties();
-      java.util.List<String> propKeys = new java.util.ArrayList<String>();
+      java.util.List<String> propKeys = new java.util.ArrayList<>();
       java.util.Enumeration<Object> e = sysProps.keys();
       while (e.hasMoreElements()) {
          propKeys.add((String) e.nextElement());
@@ -32,13 +34,12 @@ class JavaSystemPropertiesInfoSection implements SystemInfo.SystemInfoSection {
       java.util.Collections.sort(propKeys);
       for (String k : propKeys) {
          if (pathSep != null && pathListProperties_.contains(k)) {
-            sb.append("  ").append(k).append(" (split at \'").append(pathSep).append("\') =\n");
+            sb.append("  ").append(k).append(" (split at '").append(pathSep).append("') =\n");
             String[] paths = sysProps.getProperty(k).split(pathSep);
             for (String path : paths) {
                sb.append("    ").append(path).append('\n');
             }
-         }
-         else {
+         } else {
             sb.append("  ").append(k).append(" = ").append(sysProps.getProperty(k)).append('\n');
          }
       }
@@ -48,8 +49,9 @@ class JavaSystemPropertiesInfoSection implements SystemInfo.SystemInfoSection {
    }
 
    private static final java.util.Set<String> pathListProperties_;
+
    static {
-      pathListProperties_ = new java.util.HashSet<String>();
+      pathListProperties_ = new java.util.HashSet<>();
       pathListProperties_.add("java.class.path");
       pathListProperties_.add("java.library.path");
       pathListProperties_.add("sun.boot.class.path");

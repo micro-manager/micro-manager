@@ -30,8 +30,14 @@ print ("Installed devices: ",devs);
 Ext.getDeviceProperties("Camera",props);
 print ("Available Properties for Camera device: ",props);
 Ext.setDeviceProperty("Camera","Mode","Noise");
+Ext.getDeviceProperty("Camera","BitDepth",value);
+print (value);
 
 // snapping images
 Ext.setExposure(100);
-Ext.snap();
+// snaps an image from the camera
+Ext.snap(); 
+// snaps and runs the image through the on-the-fly processing pipeline
+Ext.snapAndProcess(); 
+
 ```

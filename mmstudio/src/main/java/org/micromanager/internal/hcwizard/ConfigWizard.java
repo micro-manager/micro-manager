@@ -19,6 +19,7 @@
 //            CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //            INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.internal.hcwizard;
 
 import java.awt.Color;
@@ -44,8 +45,14 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.*;
-
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
@@ -66,7 +73,7 @@ public final class ConfigWizard extends JDialog {
    private JPanel pagePanel_;
    private JButton backButton_;
    private JButton nextButton_;
-   private PagePanel pages_[];
+   private PagePanel[] pages_;
    private int curPage_ = 0;
    private MicroscopeModel microModel_;
    private final CMMCore core_;
@@ -78,7 +85,8 @@ public final class ConfigWizard extends JDialog {
 
 
    /**
-    * Create the application
+    * Create the application.
+    *
     * @param studio Current Studio instance
     * @param defFile
     */
@@ -93,7 +101,7 @@ public final class ConfigWizard extends JDialog {
    }
 
    /**
-    * Initialize the contents of the frame
+    * Initialize the contents of the frame.
     */
    private void initialize() {
       org.micromanager.internal.utils.HotKeys.active_ = false;
@@ -101,7 +109,7 @@ public final class ConfigWizard extends JDialog {
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
-           onCloseWindow();
+            onCloseWindow();
          }
       });
       getContentPane().setLayout(new MigLayout());
@@ -121,9 +129,7 @@ public final class ConfigWizard extends JDialog {
       add(pagePanel_, "width 700!, height 600!, span, wrap");
 
       backButton_ = new JButton();
-      backButton_.addActionListener((ActionEvent arg0) -> {
-         setPage(curPage_ - 1);
-      });
+      backButton_.addActionListener((ActionEvent arg0) -> setPage(curPage_ - 1));
       backButton_.setText("< Back");
       add(backButton_, "span, split, alignx right");
 
@@ -142,8 +148,8 @@ public final class ConfigWizard extends JDialog {
 
       // Create microscope model used by pages.
       microModel_ = new MicroscopeModel();
-      microModel_.setSendConfiguration(studio_.profile().
-              getSettings(ConfigWizard.class).getBoolean(CFG_OKAY_TO_SEND, true));
+      microModel_.setSendConfiguration(studio_.profile()
+            .getSettings(ConfigWizard.class).getBoolean(CFG_OKAY_TO_SEND, true));
       microModel_.loadAvailableDeviceList(core_);
       microModel_.setFileName(defaultPath_);
 
@@ -161,7 +167,8 @@ public final class ConfigWizard extends JDialog {
          try {
             pages_[i].setModel(microModel_, studio_);
             pages_[i].loadSettings();
-            pages_[i].setTitle("Step " + (i + 1) + " of " + pages_.length + ": " + pages_[i].getTitle());
+            pages_[i].setTitle("Step " + (i + 1) + " of "
+                  + pages_.length + ": " + pages_[i].getTitle());
             pages_[i].setParentDialog(this);
          } catch (Exception e) {
             ReportingUtils.logError(e);
@@ -178,14 +185,12 @@ public final class ConfigWizard extends JDialog {
       // Only invoke from off the EDT, so that pages may do heavy work without
       // hanging the UI.
       if (SwingUtilities.isEventDispatchThread()) {
-         new Thread(() -> {
-            setPage(i);
-         }).start();
+         new Thread(() -> setPage(i)).start();
          return;
       }
       // try to exit the current page
       if (i > 0) {
-         if (!pages_[curPage_].exitPage(curPage_ < i ? true : false)) {
+         if (!pages_[curPage_].exitPage(curPage_ < i)) {
             return;
          }
       }
@@ -193,7 +198,7 @@ public final class ConfigWizard extends JDialog {
       int newPage = Math.max(0, Math.min(pages_.length - 1, i));
 
       // try to enter the new page
-      if (!pages_[newPage].enterPage(curPage_ > newPage ? true : false)) {
+      if (!pages_[newPage].enterPage(curPage_ > newPage)) {
          return;
       }
 
@@ -206,11 +211,7 @@ public final class ConfigWizard extends JDialog {
       getContentPane().repaint();
       pages_[curPage_].refresh();
 
-      if (curPage_ == 0) {
-         backButton_.setEnabled(false);
-      } else {
-         backButton_.setEnabled(true);
-      }
+      backButton_.setEnabled(curPage_ != 0);
 
       if (curPage_ == pages_.length - 1) {
          nextButton_.setText("Finish");
@@ -247,10 +248,10 @@ public final class ConfigWizard extends JDialog {
                   String physicalAddress = "00-00-00-00-00-00";
 
                   StrVector ss = core_.getMACAddresses();
-                  if (0 < ss.size()){
+                  if (0 < ss.size()) {
                      String pa2 = ss.get(0);
-                     if(null != pa2){
-                        if( 0 <  pa2.length()){
+                     if (null != pa2) {
+                        if (0 <  pa2.length()) {
                            physicalAddress = pa2;
                         }
                      }
@@ -259,7 +260,8 @@ public final class ConfigWizard extends JDialog {
                   prependedLine += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
                } catch (UnknownHostException e) {
                }
-               prependedLine += "User: " + core_.getUserId() + " configuration file: " + conff.getName() + "\n";
+               prependedLine += "User: " + core_.getUserId() + " configuration file: "
+                     + conff.getName() + "\n";
             } catch (Throwable t) {
             }
 
@@ -277,14 +279,14 @@ public final class ConfigWizard extends JDialog {
             while (-1 != (c = reader.read())) {
                writer.write(c);
             }
-            try{
+            try {
                reader.close();
-            } catch(IOException e) {
+            } catch (IOException e) {
                ReportingUtils.logError(e);
             }
             try {
                writer.close();
-            } catch(IOException e) {
+            } catch (IOException e) {
                ReportingUtils.logError(e);
             }
             try {
@@ -294,29 +296,21 @@ public final class ConfigWizard extends JDialog {
                List<File> flist = new ArrayList<>();
                flist.add(fileToSend);
                // for each of a colleciton of files to send...
-               for (Object o0 : flist) {
-                  File f0 = (File) o0;
+               for (File o0 : flist) {
+                  File f0 = o0;
                   try {
                      httpu.upload(url, f0);
-                  } catch (java.net.UnknownHostException e) {
-                     returnValue = e.toString();
-
-                  } catch (IOException e) {
-                     returnValue = e.toString();
-                  } catch (SecurityException e) {
-                     returnValue = e.toString();
                   } catch (Exception e) {
                      returnValue = e.toString();
                   }
                }
             } catch (MalformedURLException e) {
                returnValue = e.toString();
-            }
-
-            finally {
+            } finally {
                // now delete the temporary file
-               if(!fileToSend.delete()) {
-                  ReportingUtils.logError("Couldn't delete temporary file " +qualifiedConfigFileName );
+               if (!fileToSend.delete()) {
+                  ReportingUtils.logError(
+                        "Couldn't delete temporary file " + qualifiedConfigFileName);
                }
             }
          }
@@ -346,6 +340,8 @@ public final class ConfigWizard extends JDialog {
                break;
             case 2: // Cancel
                return;
+            default:
+               return;
          }
       }
       if (microModel_.getSendConfiguration()) {
@@ -363,10 +359,11 @@ public final class ConfigWizard extends JDialog {
                statusMessage_ = UploadCurrentConfigFile();
             }
 
-            public String Status() {
+            public String status() {
                return statusMessage_;
             }
          }
+
          Uploader u = new Uploader();
          u.start();
          try {
@@ -374,14 +371,14 @@ public final class ConfigWizard extends JDialog {
          } catch (InterruptedException ex) {
             Logger.getLogger(ConfigWizard.class.getName()).log(Level.SEVERE, null, ex);
          }
-         if (0 < u.Status().length()) {
-            ReportingUtils.logError("Error uploading configuration file: " + u.Status());
+         if (0 < u.status().length()) {
+            ReportingUtils.logError("Error uploading configuration file: " + u.status());
             //ReportingUtils.showMessage("Error uploading configuration file:\n" + u.Status());
          }
       }
 
       studio_.profile().getSettings(ConfigWizard.class).putBoolean(
-           CFG_OKAY_TO_SEND, microModel_.getSendConfiguration());
+            CFG_OKAY_TO_SEND, microModel_.getSendConfiguration());
 
       org.micromanager.internal.utils.HotKeys.active_ = true;
       dispose();
@@ -407,7 +404,7 @@ public final class ConfigWizard extends JDialog {
    }
 
    /**
-    * Read string out of stream
+    * Read string out of stream.
     */
    private static String readStream(InputStream is) throws IOException {
       StringBuffer bf = new StringBuffer();

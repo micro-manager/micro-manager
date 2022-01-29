@@ -4,6 +4,7 @@ package org.micromanager.internal.utils.imageanalysis;
 /**
  * Code to generate Making Windows (https://en.wikipedia.org/wiki/Window_function)
  * for instance useful when masking edges to avoid Fourier border artefacts
+ *
  * @author nico
  */
 public class AnalysisWindows2D {
@@ -26,11 +27,12 @@ public class AnalysisWindows2D {
    }
    
    /**
-    * returns a hanWindow as a single array.  
+    * returns a hanWindow as a single array.
+    *
     * @param edgeSize
     * @return 
     */
-   public static float[] hanWindow1DA (int edgeSize) {
+   public static float[] hanWindow1DA(int edgeSize) {
       float[] han1DArray = new float[edgeSize];
 
       for (int i = 0; i < edgeSize; i++) {
