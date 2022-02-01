@@ -35,8 +35,8 @@ public class AsiGamepad implements MenuPlugin, SciJavaPlugin {
 
 	public final static String MENU_NAME = "ASI Gamepad";
 	public final static String TOOLTIP_DESCRIPTION = "XBox Controller for MicroManager";
-	public final static String VERSION_STRING = "0.0";
-	public final static String COPYRIGHT_STRING = "Applied Scientific Instrumentation (ASI), 2018";
+	public final static String VERSION_STRING = "0.2";
+	public final static String COPYRIGHT_STRING = "Applied Scientific Instrumentation (ASI), 2018-2022";
 
 	private static AsiGamepadFrame asiGamepadFrame = null;
 
@@ -58,9 +58,9 @@ public class AsiGamepad implements MenuPlugin, SciJavaPlugin {
 
 	@Override
 	public void onPluginSelected() {
-		// close frame before re-load if already open
+		// close frame before reload if already open
 		dispose();
-		// create brand new instance of plugin frame every time
+		// create a new instance of plugin frame every time
 		try {
 			asiGamepadFrame = new AsiGamepadFrame(mm_);
 			// gui_.addMMListener(agf_frame);
@@ -82,11 +82,7 @@ public class AsiGamepad implements MenuPlugin, SciJavaPlugin {
 
 	@Override
 	public String getVersion() {
-		if(asiGamepadFrame !=null) {
-		return Float.toString(asiGamepadFrame.plugin_ver);
-		}else {
 		return VERSION_STRING;
-		}
 	}
 
 	public void dispose() {
@@ -95,7 +91,6 @@ public class AsiGamepad implements MenuPlugin, SciJavaPlugin {
 			//ReportingUtils.logMessage("!!!!closed from main gamepad class!!!!");
 			asiGamepadFrame.dispatchEvent(wev);
 		}
-
 	}
 
 	/**
