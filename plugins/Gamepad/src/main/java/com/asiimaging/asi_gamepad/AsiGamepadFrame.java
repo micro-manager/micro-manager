@@ -429,16 +429,12 @@ public class AsiGamepadFrame extends JFrame {
 	public void dispose() {
 		//ReportingUtils.logMessage("!!!!closed from main frame!!!!");
 		mytimer_.stop();
-		mytimer_=null;
-		btn_table=null;
-		axis_table=null;
-		ctrl=null;
-		ba=null;
-
+		mytimer_ = null;
+		btn_table = null;
+		axis_table = null;
+		ctrl = null;
+		ba = null;
 		super.dispose();
 	}
 
-	public AxisTable getAxisTable() {
-		return axis_table;
-	}
 }
