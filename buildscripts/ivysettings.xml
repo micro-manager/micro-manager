@@ -11,10 +11,6 @@
 			<artifact pattern="${ivy.settings.dir}/../../3rdpartypublic/classext/[artifact].[ext]"/>
 		</filesystem>
 
-      <filesystem name="thirdpartypublic3d"><!-- jogl/gluegen jars need separate handling-->
-			<artifact pattern="${ivy.settings.dir}/../../3rdpartypublic/javalib3d/[artifact]-[revision].[ext]"/>
-		</filesystem>
-
 		<filesystem name="thirdpartynonfree">
 			<artifact pattern="${ivy.settings.dir}/../../3rdparty/classext/[artifact].[ext]"/>
 		</filesystem>
