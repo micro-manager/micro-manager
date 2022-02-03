@@ -65,18 +65,30 @@
       <dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>
       <dependency org="net.clearcontrol" name="coremem" rev="0.4.5"/>
 
-      <!--jogl and gluegen are a pain! They are in central, but named in a way that is hard to re-concile with ivy.  Rename and use a copy from 3rdpartypublic -->
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-local" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-main-local" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-macosx-universal" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-amd64" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-i586" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-local" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-main-local" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-natives-macosx-universal" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-amd64" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-i586" rev="2.3.2"/>
+      <!--jogl and gluegen are a pain! They are in central, but named in a way that is hard to re-concile with ivy. -->
+      <!--thus, hard coding the artifact definitions solves the problem, and it is used here as a work-around -->
+      <dependency org="org.jogamp.jogl" name="jogl-all-main" rev="2.3.2">
+         <artifact name="jogl-all-main"/>
+         <artifact name="jogl-all-main" e:classifier="sources"/>
+         <artifact name="jogl-all-main" e:classifier="javadoc"/>
+      </dependency>
+      <dependency org="org.jogamp.jogl" name="jogl-all" rev="2.3.2">
+         <artifact name="jogl-all"/>
+         <artifact name="jogl-all" e:classifier="natives-linux-i586"/>
+         <artifact name="jogl-all" e:classifier="natives-macosx-universal"/>
+         <artifact name="jogl-all" e:classifier="natives-windows-amd64"/>
+         <artifact name="jogl-all" e:classifier="natives-windows-i586"/>
+      </dependency>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-main" rev="2.3.2">
+         <artifact name="gluegen-rt-main"/>
+      </dependency>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt" rev="2.3.2">
+         <artifact name="gluegen-rt"/>
+         <artifact name="gluegen-rt" e:classifier="natives-linux-i586"/>
+         <artifact name="gluegen-rt" e:classifier="natives-macosx-universal"/>
+         <artifact name="gluegen-rt" e:classifier="natives-windows-amd64"/>
+         <artifact name="gluegen-rt" e:classifier="natives-windows-i586"/>
+      </dependency>
 
       <!-- Patched version of clearvolume from Nico -->
       <dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
