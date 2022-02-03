@@ -81,8 +81,6 @@
       </dependency>
       <dependency org="org.jogamp.gluegen" name="gluegen-rt-main" rev="2.3.2">
          <artifact name="gluegen-rt-main"/>
-         <artifact name="gluegen-rt-main" e:classifier="sources"/>
-         <artifact name="gluegen-rt-main" e:classifier="javadoc"/>
       </dependency>
       <dependency org="org.jogamp.gluegen" name="gluegen-rt" rev="2.3.2">
          <artifact name="gluegen-rt"/>

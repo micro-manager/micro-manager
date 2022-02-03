@@ -29,21 +29,17 @@
    </target>
 
    <target name="install-Win32">
-      <copy tofile="${mm.dll.installdir}/gluegen-rt.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x86/gluegen-rt.dll"/>
-      <copy tofile="${mm.dll.installdir}/jogl_desktop.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x86/jogl_desktop.dll"/>
-      <copy tofile="${mm.dll.installdir}/jogl_mobile.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x86/jogl_mobile.dll"/>
-      <copy tofile="${mm.dll.installdir}/nativewindow_awt.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x86/nativewindow_awt.dll"/>
-      <copy tofile="${mm.dll.installdir}/nativewindow_win32.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x86/nativewindow_win32.dll"/>
-      <copy tofile="${mm.dll.installdir}/newt.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x64/newt.dll"/>
+      <zipfileset src="${mm.basedir}/dependencies/artifacts/compile/gluegen-rt-2.3.2-natives-windows-i586.jar"
+                  includes="natives/windows-i586/gluegen-rt.dll" fullpath="${mm.dll.installdir}/gluegen-rt.dll"/>
+      <zipfileset src="${mm.basedir}/dependencies/artifacts/compile/jogl-all-2.3.2-natives-windows-i586.jar"
+                  includes="natives/windows-i586/*.dll" fullpath="${mm.dll.installdir}"/>
    </target>
 
 
    <target name="install-x64">
-      <copy tofile="${mm.dll.installdir}/gluegen-rt.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x64/gluegen-rt.dll"/>
-      <copy tofile="${mm.dll.installdir}/jogl_desktop.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x64/jogl_desktop.dll"/>
-      <copy tofile="${mm.dll.installdir}/jogl_mobile.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x64/jogl_mobile.dll"/>
-      <copy tofile="${mm.dll.installdir}/nativewindow_awt.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x64/nativewindow_awt.dll"/>
-      <copy tofile="${mm.dll.installdir}/nativewindow_win32.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x64/nativewindow_win32.dll"/>
-      <copy tofile="${mm.dll.installdir}/newt.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x64/newt.dll"/>
+      <zipfileset src="${mm.basedir}/dependencies/artifacts/compile/gluegen-rt-2.3.2-natives-windows-amd64.jar"
+                  includes="natives/windows-amd64/gluegen-rt.dll" fullpath="${mm.dll.installdir}/gluegen-rt.dll"/>
+      <zipfileset src="${mm.basedir}/dependencies/artifacts/compile/jogl-all-2.3.2-natives-windows-amd64.jar"
+                  includes="natives/windows-amd64/*.dll" fullpath="${mm.dll.installdir}"/>
    </target>
 </project>
