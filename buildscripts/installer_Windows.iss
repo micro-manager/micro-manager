@@ -129,6 +129,14 @@ Type: files; Name: "{app}\mmgr_dal_CONEX.dll"
 ; Retired
 Type: files; Name: "{app}\mmgr_dal_Hamamatsu.dll"
 
+; JOGL DLLs, now auto-extracted from Jars
+Type: files; Name: "{app}\gluegen-rt.dll"
+Type: files; Name: "{app}\jogl_desktop.dll"
+Type: files; Name: "{app}\jogl_mobile.dll"
+Type: files; Name: "{app}\nativewindow_awt.dll"
+Type: files; Name: "{app}\nativewindow_win32.dll"
+Type: files; Name: "{app}\newt.dll"
+
 [Files]
 
 ; ImageJ files
