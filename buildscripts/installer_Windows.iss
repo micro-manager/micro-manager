@@ -68,12 +68,10 @@ Type: filesandordirs; Name: {app}\Microsoft.VC90.MFCLOC
 Type: filesandordirs; Name: {app}\Microsoft.VC90.OPENMP
 
 [Files]
-Source: "..\..\3rdparty\Microsoft\vcredist\2008SP1\vcredist_{#MMArch_x86x64}.exe"; DestDir: "{app}"; DestName: "vcredist_{#MMArch_x86x64}_2008SP1.exe"; Flags: deleteafterinstall
-Source: "..\..\3rdparty\Microsoft\vcredist\2010SP1\vcredist_{#MMArch_x86x64}.exe"; DestDir: "{app}"; DestName: "vcredist_{#MMArch_x86x64}_2010SP1.exe"; Flags: deleteafterinstall
+Source: "..\..\3rdparty\Microsoft\vcredist\2015-2022\vc_redist.{#MMArch_x86x64}.exe"; DestDir: "{app}"; DestName: "vc_redist.{#MMArch_x86x64}.exe"; Flags: deleteafterinstall
 
 [Run]
-Filename: "{app}\vcredist_{#MMArch_x86x64}_2008SP1.exe"; Parameters: "/q"; Description: "Microsoft Visual C++ 2008 SP1 Redistributable Package"; StatusMsg: "Installing Microsoft Visual C++ 2008 SP1 Redistributable Package"
-Filename: "{app}\vcredist_{#MMArch_x86x64}_2010SP1.exe"; Parameters: "/q"; Description: "Microsoft Visual C++ 2010 SP1 Redistributable Package"; StatusMsg: "Installing Microsoft Visual C++ 2010 SP1 Redistributable Package"
+Filename: "{app}\vc_redist.{#MMArch_x86x64}.exe"; Parameters: "/quiet /norestart"; Description: "Microsoft Visual C++ Redistributable"; StatusMsg: "Installing Microsoft Visual C++ Redistributable"
 
 
 ;;
