@@ -71,7 +71,7 @@ Type: filesandordirs; Name: {app}\Microsoft.VC90.OPENMP
 Source: "..\..\3rdparty\Microsoft\vcredist\2015-2022\vc_redist.{#MMArch_x86x64}.exe"; DestDir: "{app}"; DestName: "vc_redist.{#MMArch_x86x64}.exe"; Flags: deleteafterinstall
 
 [Run]
-Filename: "{app}\vc_redist.{#MMArch_x86x64}.exe"; Parameters: "/quiet"; Description: "Microsoft Visual C++ Redistributable"; StatusMsg: "Installing Microsoft Visual C++ Redistributable"
+Filename: "{app}\vc_redist.{#MMArch_x86x64}.exe"; Parameters: "/quiet /norestart"; Description: "Microsoft Visual C++ Redistributable"; StatusMsg: "Installing Microsoft Visual C++ Redistributable"
 
 
 ;;
