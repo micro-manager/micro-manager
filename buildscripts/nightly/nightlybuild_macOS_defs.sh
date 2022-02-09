@@ -23,6 +23,7 @@ MM_CFLAGS="-O2 -g -Wall"
 MM_CXXFLAGS="$MM_CFLAGS -std=c++03"
 MM_LDFLAGS="-L$MM_DEPS_PREFIX/lib -F/Library/Frameworks"
 
+MM_ARCH="x86_64"
 MM_ARCH_FLAGS="-arch x86_64"
 MM_CC="clang $MM_ARCH_FLAGS"
 MM_CXX="clang++ $MM_ARCH_FLAGS"

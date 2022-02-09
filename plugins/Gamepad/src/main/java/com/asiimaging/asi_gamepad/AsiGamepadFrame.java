@@ -80,7 +80,7 @@ public class AsiGamepadFrame extends JFrame {
 
 
 	//Constants
-	public final float plugin_ver = (float) 0.1;
+	//public final float plugin_ver = (float) 0.1;
 
 	private final int gpad_poll_time=100;//millisec between polling state
 	private final float axis_deadcount =(float) 0.1;
@@ -162,7 +162,7 @@ public class AsiGamepadFrame extends JFrame {
 		btn_asi.addActionListener(e -> open_uri(ASI_LINK));
 
 		// finalize the window
-		setTitle("ASI Gamepad Beta "+ plugin_ver);
+		setTitle("ASI Gamepad Beta " + AsiGamepad.VERSION_STRING);
 		pack();           // shrinks the window as much as it can
 
 		// take care of shutdown tasks when window is closed
@@ -200,14 +200,18 @@ public class AsiGamepadFrame extends JFrame {
 
 		saveFilter = new FileNameExtensionFilter("Save File","save");
 
-	}//end asi_gamepad_frame
+		// change plugin icon to a microscope
+		setIconImage(Icons.MICROSCOPE.getImage());
+
+		// allow the API to access the table => plugin must be open
+		GamepadAPI.setAxisTable(axis_table);
+	}
 
 /**
  * opens url in browser
  * @param link url in string
  */
 	private void open_uri(String link) {
-
 		if (Desktop.isDesktopSupported()) {
 			try {
 				Desktop.getDesktop().browse(new URI(link));
@@ -245,7 +249,7 @@ public class AsiGamepadFrame extends JFrame {
 			//note the order , the order data written is the same order it should be retrived. 
 			//lets write plugin version to file , maybe useful in future
 			
-			out.writeFloat(plugin_ver);
+			out.writeFloat(Float.parseFloat(AsiGamepad.VERSION_STRING));
 			
 			DefaultTableModel model = (DefaultTableModel) btn_table.table.getModel();
 
@@ -425,12 +429,11 @@ public class AsiGamepadFrame extends JFrame {
 	public void dispose() {
 		//ReportingUtils.logMessage("!!!!closed from main frame!!!!");
 		mytimer_.stop();
-		mytimer_=null;
-		btn_table=null;
-		axis_table=null;
-		ctrl=null;
-		ba=null;
-
+		mytimer_ = null;
+		btn_table = null;
+		axis_table = null;
+		ctrl = null;
+		ba = null;
 		super.dispose();
 	}
 

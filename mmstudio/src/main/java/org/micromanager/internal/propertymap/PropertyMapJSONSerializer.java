@@ -28,7 +28,6 @@ import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.micromanager.PropertyMap;
@@ -47,8 +46,10 @@ public final class PropertyMapJSONSerializer {
    private static class VersionedMap {
       String encoding; // Always 'UTF-8'; included only to aid posterity
       String format; // Always 'Micro-Manager Property Map'
-      int majorVersion;
-      int minorVersion;
+      // Note these variable names are non-standard but should not be changed since they
+      // are used as keys in the JSON/GSON serializing/deserializing.
+      int major_version;
+      int minor_version;
       PropertyMap map;
 
       VersionedMap() {
@@ -70,8 +71,8 @@ public final class PropertyMapJSONSerializer {
          // is completely unrelated to the specific keys stored within. When
          // the contents require versioning, they should be given their own
          // version.
-         majorVersion = 2;
-         minorVersion = 0;
+         major_version = 2;
+         minor_version = 0;
 
          map = propertyMap;
       }
@@ -892,18 +893,18 @@ public final class PropertyMapJSONSerializer {
                   "Invalid property map format; attempted to interpret as legacy format but "
                         + "that didn't work either", e);
          }
-      } else if (data.majorVersion > template.majorVersion) {
+      } else if (data.major_version > template.major_version) {
          throw new IOException(
                "Properties are saved in a newer format that is incompatible with this "
                      + "version of the application.");
-      } else if (data.majorVersion < 2) {
+      } else if (data.major_version < 2) {
          // Never used with this way of versioning
          throw new IOException("Invalid property map format");
-      } else if (data.majorVersion < template.majorVersion) {
+      } else if (data.major_version < template.major_version) {
          // When template.major_version becomes >2, conversion from old format
          // should be added here.
       }
-      if (data.minorVersion > template.majorVersion) {
+      if (data.minor_version > template.major_version) {
          // TODO We could in this case silently accept unknown value types
          // (and somehow preserve them in the returned property map so that
          // they can be resaved).
