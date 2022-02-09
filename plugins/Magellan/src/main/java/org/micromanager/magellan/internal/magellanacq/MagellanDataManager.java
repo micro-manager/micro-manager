@@ -242,7 +242,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
          storage_.finishedWriting();
       }
       display_.setWindowTitle(getUniqueAcqName() + " (Finished)");
-      displayCommunicationExecutor_.shutdownNow();
+      displayCommunicationExecutor_.shutdown();
       displayCommunicationExecutor_ = null;
    }
 

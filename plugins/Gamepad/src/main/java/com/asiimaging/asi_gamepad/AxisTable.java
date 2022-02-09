@@ -184,7 +184,8 @@ public class AxisTable extends JPanel implements TableModelListener {
 				break;
 			case 3:
 				settings_.putFloat(table_.getValueAt(row, 0) + MULTIPLIER,
-						(Float) table_.getValueAt(row, column));
+						Float.parseFloat((String)table_.getValueAt(row, column)));
+						   //(Float) table_.getValueAt(row, column));
 				break;
 		}
 
