@@ -35,7 +35,7 @@ import org.apache.commons.math.util.MathUtils;
 public class AffineUtils {
 
    public static DoubleVector noTransform() {
-      DoubleVector affineTransform = new DoubleVector(6);
+      DoubleVector affineTransform = new DoubleVector(6, 0);
       for (int i = 1; i < 6; i++) {
          affineTransform.set(i, 0.0);
       }
@@ -55,7 +55,7 @@ public class AffineUtils {
    }
    
    public static DoubleVector affineToDouble(AffineTransform atf) {
-      DoubleVector out = new DoubleVector(6);
+      DoubleVector out = new DoubleVector(6, 0);
       out.set(0, atf.getScaleX());
       out.set(1, atf.getShearX());
       out.set(2, atf.getTranslateX());

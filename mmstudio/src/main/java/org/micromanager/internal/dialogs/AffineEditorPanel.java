@@ -122,7 +122,7 @@ public class AffineEditorPanel extends JPanel {
     * @return Copy of the input
     */
    public static DoubleVector copyDoubleVector(DoubleVector in) {
-      DoubleVector out = new DoubleVector(in.size());
+      DoubleVector out = new DoubleVector(in.size(), 0);
       for (int i = 0; i < in.size(); i++) {
          out.set(i, in.get(i));
       }

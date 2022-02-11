@@ -670,7 +670,7 @@ public final class MicroscopeModel {
                if (tokens.length == 8) {
                   ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
                   if (cp != null) {
-                     DoubleVector aft = new DoubleVector(6);
+                     DoubleVector aft = new DoubleVector(6, 0);
                      for (int i = 0; i < 6; i++) {
                         aft.set(i, Double.parseDouble(tokens[i + 2]));
                      }
