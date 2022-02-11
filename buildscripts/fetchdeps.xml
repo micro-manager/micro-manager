@@ -4,6 +4,9 @@
 	<!-- Where to put retrieved dependency JARs -->
 	<property name="mm.ivy.lib.dir" location="${mm.basedir}/dependencies/artifacts"/>
 
+	<!-- Don't halt on failure by default; we have optional dependencies. -->
+	<property name="mm.ivy.failonerror" value="false"/>
+
 	<target name="download-ivy" unless="offline">
 		<property name="ivy.install.version" value="2.3.0"/>
 		<mkdir dir="${mm.basedir}/dependencies/ivy"/>
@@ -41,8 +44,7 @@
 		<property name="ivy.lib.dir" location="${mm.ivy.lib.dir}"/>
 
 		<ivy:configure file="${mm.basedir}/buildscripts/ivysettings.xml"/>
-		<!-- Don't halt on failure, since we have a few optional dependencies. -->
-		<ivy:resolve haltonfailure="false"/>
+		<ivy:resolve haltonfailure="${mm.ivy.failonerror}"/>
 		<ivy:retrieve
          symlink="${ivy.useSymlinks}"
 			pattern="${ivy.lib.dir}/[conf]/[artifact]-[revision](-[classifier]).[ext]"

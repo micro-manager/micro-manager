@@ -9,7 +9,7 @@
 			<artifact pattern="${ivy.settings.dir}/../../3rdpartypublic/classext/[artifact].[ext]"/>
 		</filesystem>
 
-		<filesystem name="thirdpartynonfree">
+		<filesystem name="thirdpartyprivate">
 			<artifact pattern="${ivy.settings.dir}/../../3rdparty/classext/[artifact].[ext]"/>
 		</filesystem>
 
@@ -17,7 +17,7 @@
 			<resolver ref="central"/>
 			<resolver ref="imagej-net"/>
 			<resolver ref="thirdpartypublic"/>
-			<resolver ref="thirdpartynonfree"/>
+			<resolver ref="thirdpartyprivate"/>
 		</chain>
 	</resolvers>
 </ivysettings>
