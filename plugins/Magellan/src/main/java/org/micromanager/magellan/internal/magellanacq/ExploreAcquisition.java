@@ -33,19 +33,21 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import mmcorej.org.json.JSONArray;
+
+import org.micromanager.acqj.main.AcqEngMetadata;
+import org.micromanager.acqj.main.Acquisition;
+import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
-import org.micromanager.acqj.api.AcqEventModules;
-import org.micromanager.acqj.api.channels.ChannelSetting;
-import org.micromanager.acqj.api.xystage.XYStagePosition;
-import org.micromanager.acqj.internal.acqengj.Engine;
+import org.micromanager.acqj.internal.AcquisitionEventIterator;
+import org.micromanager.acqj.util.AcqEventModules;
+import org.micromanager.acqj.util.ChannelSetting;
+import org.micromanager.acqj.util.xytiling.XYStagePosition;
+import org.micromanager.acqj.internal.Engine;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.SingleChannelSetting;
 import org.micromanager.magellan.internal.gui.GUI;
-import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
 import org.micromanager.multiresstorage.StorageAPI;
 import org.micromanager.remote.RemoteViewerStorageAdapter;
 

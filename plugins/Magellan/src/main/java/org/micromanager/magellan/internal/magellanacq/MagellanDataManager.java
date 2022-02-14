@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.acqj.internal.acqengj.Engine;
+import org.micromanager.acqj.internal.Engine;
 import org.micromanager.magellan.internal.gui.MagellanViewer;
 import java.awt.Color;
 import java.awt.Point;
@@ -38,10 +38,10 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.AcqEngMetadata;
+import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.api.DataSink;
-import org.micromanager.acqj.api.xystage.XYStagePosition;
-import org.micromanager.acqj.api.Acquisition;
+import org.micromanager.acqj.util.xytiling.XYStagePosition;
+import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
