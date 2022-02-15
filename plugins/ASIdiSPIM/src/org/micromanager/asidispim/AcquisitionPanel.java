@@ -3852,7 +3852,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                          core_.setPosition(upperZDrive, nextPosition.getZ());
                          core_.waitForDevice(upperZDrive);
                      }
-                     
+
+                     // update local stage positions after move (xPositionUm_, yPositionUm_, zPositionUm_)
+                     refreshXYZPositions();
+
                      // for stage scanning: restore speed and set up scan at new position 
                      // non-multi-position situation is handled in prepareControllerForAquisition instead
                      if (acqSettings.isStageScanning) {
