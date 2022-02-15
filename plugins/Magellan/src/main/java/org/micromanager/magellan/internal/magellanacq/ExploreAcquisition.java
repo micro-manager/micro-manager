@@ -144,7 +144,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
 
    //Called by pycromanager
    public StorageAPI getStorage() {
-      return dataSink_ == null ? null : ((RemoteViewerStorageAdapter) dataSink_).getStorage();
+      return dataSink_ == null ? null : ((MagellanDataManager) dataSink_).getStorage();
    }
 
    private void createXYPositions() {
