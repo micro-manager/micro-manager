@@ -32,8 +32,8 @@ import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
-import org.micromanager.acqj.api.xystage.XYStagePosition;
-import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
+import org.micromanager.acqj.util.xytiling.XYStagePosition;
+import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.magellan.internal.gui.GUI;
 
 /**

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Random;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
-import org.micromanager.acqj.internal.acqengj.Engine;
+import org.micromanager.acqj.internal.Engine;
 import org.micromanager.magellan.internal.magellanacq.MagellanGUIAcquisitionSettings;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.GlobalSettings;

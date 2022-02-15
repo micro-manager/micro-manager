@@ -2,7 +2,7 @@ package org.micromanager.magellan.api;
 
 import java.awt.geom.Point2D;
 
-import org.micromanager.acqj.api.Acquisition;
+import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
