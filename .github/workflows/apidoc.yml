@@ -14,6 +14,7 @@ jobs:
 
       - name: Install Doxygen
         run: |
+          sudo apt-get update
           sudo apt-get -y install doxygen
 
       - name: Build HTML
@@ -51,6 +52,7 @@ jobs:
 
       - name: Install Doxygen
         run: |
+          sudo apt-get update
           sudo apt-get -y install doxygen
 
       - name: Build HTML
@@ -88,6 +90,7 @@ jobs:
 
       - name: Install tools and dependencies
         run: |
+          sudo apt-get update
           sudo apt-get -y install build-essential autoconf automake libtool \
                                   autoconf-archive pkg-config doxygen
           sudo apt-get -y install libpcre3-dev  # For SWIG-3
@@ -156,6 +159,7 @@ jobs:
 
       - name: Install tools and dependencies
         run: |
+          sudo apt-get update
           sudo apt-get -y install build-essential autoconf automake libtool \
                                   autoconf-archive pkg-config
           sudo apt-get -y install libboost-all-dev
