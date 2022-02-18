@@ -1,4 +1,3 @@
 [submodule "mmCoreAndDevices"]
 	path = mmCoreAndDevices
 	url=https://github.com/micro-manager/mmCoreAndDevices.git
-	branch = main
