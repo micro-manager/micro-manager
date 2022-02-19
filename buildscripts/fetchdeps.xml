@@ -51,6 +51,5 @@
 		<!-- Ensure directory exists even if no optional JARs are retrieved.
 			 Needed to prevent downstream errors. -->
 		<mkdir dir="${mm.ivy.lib.dir}/optional"/>
-		<ant antfile="${mm.basedir}/buildscripts/git.xml" target="clone-reps"/>
 	</target>
 </project>
