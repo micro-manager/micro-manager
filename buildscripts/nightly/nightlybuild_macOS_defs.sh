@@ -20,7 +20,7 @@ MM_MACOSX_SDKROOT=$(xcode-select --print-path)/SDKs/MacOSX.sdk
 # once build supports it.
 MM_CPPFLAGS="-I$MM_DEPS_PREFIX/include -F/Library/Frameworks"
 MM_CFLAGS="-O2 -g -Wall"
-MM_CXXFLAGS="$MM_CFLAGS -std=c++03"
+MM_CXXFLAGS="$MM_CFLAGS"
 MM_LDFLAGS="-L$MM_DEPS_PREFIX/lib -F/Library/Frameworks"
 
 MM_ARCH="x86_64"
