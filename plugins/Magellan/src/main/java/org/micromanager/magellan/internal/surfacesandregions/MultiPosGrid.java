@@ -16,8 +16,8 @@
 //
 package org.micromanager.magellan.internal.surfacesandregions;
 
-import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
-import org.micromanager.acqj.api.xystage.XYStagePosition;
+import org.micromanager.acqj.internal.AffineTransformUtils;
+import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import java.awt.geom.Point2D;
 import java.util.List;
 import org.micromanager.magellan.internal.main.Magellan;

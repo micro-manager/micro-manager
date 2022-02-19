@@ -184,7 +184,6 @@ public final class DaytimeNighttime implements ApplicationSkin {
     * adhere to our custom look and feel; see suspendToMode() below.
     */
    private void setMode(SkinMode mode, boolean shouldUpdateUI) {
-      storeSkin(mode);
 
       // Ensure every GUI object type gets the right background color.
       for (String key : BACKGROUND_COLOR_KEYS) {

@@ -97,12 +97,24 @@ def read_entry(line, target):
     ordinal, repeat = int(ordinal), int(repeat)
     entry_lines.append(m.group(2))
     while True:
+        # For the most part, multi-line entries are indented by 7 spaces, to
+        # justify with the first line (following the '>'). But "Property
+        # reassignment" messages can contain quoted strings that break this
+        # rule. Still, such lines do start with a space and never look like an
+        # entry's first line.
         line = yield
-        m = re.match(r"^ {7}(.*)$", line)
+        m = re.match(r"^ {7}(.*)$", line) # Most continuation lines
         if m:
             entry_lines.append(m.group(1))
             continue
-        break
+        if not line: # Empty line after last entry
+            break
+        m = re.match(r"^ *([:0-9]+)>(.*)$", line) # Next entry
+        if m:
+            break
+        # If we get here, we have a line that continues the current entry, but
+        # has fewer than 7 spaces of indent.
+        entry_lines.append(line.lstrip(" "))
     target.send(Entry(ordinal, repeat, entry_lines))
     return line
 
@@ -163,6 +175,10 @@ def read_log(entry_target, summary_target):
     assert line.startswith("Build started ")
 
     line = yield
+    assert line.startswith("Logging verbosity")
+    # The first entry lacks a newline before it.
+    line = line.split(".", 1)[1]
+
     line = yield from read_entries(line, entry_target)
 
     while not line.strip():

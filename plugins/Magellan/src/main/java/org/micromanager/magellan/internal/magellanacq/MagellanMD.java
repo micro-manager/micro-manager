@@ -5,11 +5,10 @@
  */
 package org.micromanager.magellan.internal.magellanacq;
 
-import java.awt.Color;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.AcqEngMetadata;
+import org.micromanager.acqj.main.AcqEngMetadata;
 
 /**
  * Magellan specific metadata
