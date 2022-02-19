@@ -388,9 +388,10 @@ echo "   Install dependency JARs:                no"
 echo ""
 fi # build_java_app
 
+echo "Now you can build and install by typing:"
 if test "x$use_java" = xyes; then
-echo "First type 'make fetchdeps' once to download Java build dependencies."
+echo "    make fetchdeps  # To download Java dependencies"
 fi
-echo "Type 'make' to build."
-echo "Then type 'make install' to install."
+echo "    make"
+echo "    make install"
 echo ""
