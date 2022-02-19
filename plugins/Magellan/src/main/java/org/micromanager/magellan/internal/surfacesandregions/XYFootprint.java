@@ -20,7 +20,7 @@ package org.micromanager.magellan.internal.surfacesandregions;
 import java.awt.geom.Point2D;
 
 import org.micromanager.PositionList;
-import org.micromanager.acqj.api.xystage.XYStagePosition;
+import org.micromanager.acqj.util.xytiling.XYStagePosition;
 
 import java.util.List;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
