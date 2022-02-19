@@ -43,7 +43,7 @@ import javax.swing.SwingConstants;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
-import org.apache.commons.lang.time.DurationFormatUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
