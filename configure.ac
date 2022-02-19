@@ -1,6 +1,6 @@
-AC_PREREQ([2.64])
-AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
-AC_CONFIG_MACRO_DIR([m4])
+AC_PREREQ([2.69])
+AC_INIT([Micro-Manager], [2])
+AC_CONFIG_MACRO_DIR([mmCoreAndDevices/m4])
 AC_CONFIG_SRCDIR([mmCoreAndDevices/MMCore/MMCore.cpp])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -9,8 +9,8 @@ LT_PREREQ([2.2.6])
 LT_INIT([disable-static])
 AC_PROG_MKDIR_P
 
-AC_PROG_CXX([clang++ llvm-g++ g++ c++])
-AC_PROG_CC([clang llvm-gcc gcc cc])
+AC_PROG_CC([cc gcc clang])
+AC_PROG_CXX([c++ g++ clang++])
 
 
 # Testing (googletest, googlemock)
@@ -283,7 +283,6 @@ AM_CONDITIONAL([INSTALL_DEPENDENCY_JARS],
 ## Leftover stuff (needs cleanup)
 ##
 
-AC_HEADER_STDC
 AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE
@@ -389,9 +388,10 @@ echo "   Install dependency JARs:                no"
 echo ""
 fi # build_java_app
 
+echo "Now you can build and install by typing:"
 if test "x$use_java" = xyes; then
-echo "First type 'make fetchdeps' once to download Java build dependencies."
+echo "    make fetchdeps  # To download Java dependencies"
 fi
-echo "Type 'make' to build."
-echo "Then type 'make install' to install."
+echo "    make"
+echo "    make install"
 echo ""

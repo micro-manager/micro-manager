@@ -1,6 +1,6 @@
 
 AUTOMAKE_OPTIONS = foreign
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I mmCoreAndDevices/m4
 
 if BUILD_MMCOREJ
 
