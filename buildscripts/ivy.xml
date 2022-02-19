@@ -32,6 +32,7 @@
       <dependency org="org.apache.commons" name="commons-lang3" rev="3.5"/>
       <dependency org="org.apache.commons" name="commons-math" rev="2.2"/>
       <dependency org="org.apache.commons" name="commons-math3" rev="3.6.1"/>
+      <dependency org="commons-io" name="commons-io" rev="2.11.0"/>
       <dependency org="org.clojure" name="clojure" rev="1.3.0"/>
       <dependency org="org.clojure" name="core.cache" rev="0.6.2"/>
       <dependency org="org.clojure" name="core.memoize" rev="0.5.2"/>
@@ -61,14 +62,11 @@
       <dependency org="jitk" name="jitk-tps" rev="3.0.2"/>
 
       <!-- ClearVolume dependencies -->
-      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.2"/>
-      <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/>
+      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
+<!--      <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/>-->
       <dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
       <dependency org="net.clearcontrol" name="clearcl" rev="0.6.2"/>
       <dependency org="net.clearcontrol" name="coremem" rev="0.4.7"/>
-
-      <dependency org="org.apache.commons" name="commons-lang3" rev="3.12.0"/>
-      <dependency org="commons-io" name="commons-io" rev="2.11.0"/>
 
       <!--jogl and gluegen are a pain! They are in central, but named in a way that is hard to re-concile with ivy. -->
       <!--thus, hard coding the artifact definitions solves the problem, and it is used here as a work-around -->
