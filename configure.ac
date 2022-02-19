@@ -9,8 +9,8 @@ LT_PREREQ([2.2.6])
 LT_INIT([disable-static])
 AC_PROG_MKDIR_P
 
-AC_PROG_CXX([clang++ llvm-g++ g++ c++])
-AC_PROG_CC([clang llvm-gcc gcc cc])
+AC_PROG_CC([cc gcc clang])
+AC_PROG_CXX([c++ g++ clang++])
 
 
 # Testing (googletest, googlemock)
