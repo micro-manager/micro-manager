@@ -227,19 +227,3 @@ Take a look at [issue #708](https://github.com/micro-manager/micro-manager/issue
 `iconloader` from original [svn site](https://valelab4.ucsf.edu/svn/3rdpartypublic/classext/). You should not run
 `make fetchdeps` again after you copied jar files to `dependencies/artifacts/compile`, otherwise
 `make fetchdeps` will remove copyed files. 
-
-#### C++17 refuse dynamic exception 
-
-If your gcc( such as gcc 11) compile MM by `ISO C++17` or newer than C++14 in default, 
-it will stop by dynamic exception related error:
-
-        ImageMetadata.h:334:56: error: ISO C++17 does not allow dynamic exception specifications
-        334 |    MetadataArrayTag GetArrayTag(const char* key) const throw (MetadataKeyError)
-
-Since C++17 removed dynamic exception specifications, as a result of
-[P0003](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0003r5.html), 
-which had been deprecated since C++11. Before MM codes are updated, you
-need to add CXXFLAGS `-std=c++11` or `-std=c++14`. To do so run this command
-before `./autogen.sh`:
-
-        export CXXFLAGS="-std=c++11"

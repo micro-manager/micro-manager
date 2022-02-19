@@ -11,6 +11,7 @@ AC_PROG_MKDIR_P
 
 AC_PROG_CC([cc gcc clang])
 AC_PROG_CXX([c++ g++ clang++])
+AX_CXX_COMPILE_STDCXX([14], [noext])
 
 
 # Testing (googletest, googlemock)

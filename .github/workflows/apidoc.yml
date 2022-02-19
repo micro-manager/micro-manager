@@ -120,7 +120,7 @@ jobs:
         run: |
           cd micro-manager
           ./autogen.sh
-          ./configure CXXFLAGS=-std=c++03 JAVA_HOME=$JAVA_HOME_8_X64
+          ./configure JAVA_HOME=$JAVA_HOME_8_X64
           make -C mmCoreAndDevices/MMCoreJ_wrap MMCoreJ_wrap.h
 
       - name: Build Javadoc
@@ -210,7 +210,7 @@ jobs:
         run: |
           cd micro-manager
           ./autogen.sh
-          ./configure CXXFLAGS=-std=c++03 JAVA_HOME=$JAVA_HOME_8_X64
+          ./configure JAVA_HOME=$JAVA_HOME_8_X64
           make fetchdeps
           make -C buildscripts/AntExtensions
           make -C mmCoreAndDevices/MMDevice -j3
