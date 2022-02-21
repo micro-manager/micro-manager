@@ -84,3 +84,4 @@ test-reports/
 /DeviceAdapters/DirectElectron/src/DEMessaging/DEServer.pb.h
 bin
 .vs/
+.vscode/
