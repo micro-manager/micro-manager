@@ -1,32 +1,39 @@
-How to build and install Micro-Manager
-======================================
+# How to build and install Micro-Manager
 
-Overview
---------
+## Overview
 
-Currently, Micro-Manager has two, more or less orthogonal, build systems: one
-for Unix (OS X and Linux), and one for Windows.
+Currently, Micro-Manager has two build systems: one for Unix (macOS and Linux),
+and one for Windows.
+
+The Unix build system uses GNU Autotools (`./configure` and `make`), but calls
+Apache Ant to build Java modules.
+
+The Windows build system uses Apache Ant as the main routine, but calls a
+Visual Studio solution to build the C++ modules. Developers of C++ modules on
+Windows can build directly using Visual Studio only.
+
+The Ant build files (`build.xml`) for Java modules are shared between the two
+build systems, but all other Ant files are only used on Windows.
+
+It should be noted that it is not very practical to build a "complete"
+Micro-Manager installation outside of the core development team. That requires
+having dozens of device vendor SDKs, some of which are hard to obtain or are
+not gratis. The Unix build system will generally disable device adapters for
+which you do not have dependencies during configuration. The Windows build
+system only achieves this effect by ignoring C++ compile errors by default.
 
 
-Building on Windows
--------------------
+## Building on Windows
 
-The Windows build uses Microsoft Windows SDK 7.1 and Visual Studio 2010 SP1
-Express for the C++ components, and Apache Ant for the Java components and
-for automating the entire build.
+The Windows C++ build currently requires Microsoft Visual Studio 2019. You can
+also use Visual Studio 2022, provided that you select "MSVC v142 - VS 2019 C++
+build tools" in the installer (you can modify an existing installation).
 
 (Instructions are to be written here. For now, please refer to the
 [wiki page](https://micro-manager.org/wiki/Building_MM_on_Windows)).
 
 
-Building on Unix
-----------------
-
-The Unix build uses the GNU Build System (aka Autotools, aka configure &
-make).
-
-Note: The Unix build scripts were reworked in April, 2014, and some details
-have changed.
+## Building on Unix
 
 
 ### Getting the prerequisites
@@ -35,34 +42,71 @@ There are several packages that are required to build and/or run
 Micro-Manager. It is usually easiest to install these using the distribution's
 package manager (on Linux) or using Homebrew (on OS X).
 
-On OS X, start by installing Xcode 5.x. After installing, make sure to open
-the Xcode app once and allow it to install the command line tools.
+#### C and C++ compilers
 
-On Linux, ensure that you have gcc and g++ installed.
+macOS: Install the Xcode Command Line Tools (`xcode-select --install`).
 
-Packages required for building are:
+Ubuntu: `sudo apt install build-essential`
 
-- autoconf
-- automake
-- libtool
-- pkg-config
-- swig
+#### Build tools
 
-(On OS X, do not confuse Apple's `/usr/bin/libtool` with GNU Libtool. We need
+macOS: `brew install git subversion autoconf automake libtool pkg-config ant`
+
+Ubuntu: `sudo apt install git subversion build-essential autoconf automake libtool pkg-config autoconf-archive`
+
+(On macOS, do not confuse Apple's `/usr/bin/libtool` with GNU Libtool. We need
 the latter. Homebrew installs GNU Libtool as `glibtool`.)
 
-You will also need subversion to obtain Micro-Manager source code.
+(Requirement for `autoconf-archive` on Ubuntu is likely a bug.)
 
-Required dependencies are:
+#### SWIG 3.x
 
-- Boost 1.46 or later
+SWIG 4.x currently does not work for building a correct MMCoreJ
+([micro-manager/mmCoreAndDevices#37](https://github.com/micro-manager/mmCoreAndDevices/issues/37)).
+
+Ubuntu:
+
+```sh
+sudo apt install libpcre3-dev
+curl -LO https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
+tar xzf swig-3.0.12.tar.gz
+cd swig-3.0.12
+./configure
+make -j3
+sudo make install
+```
+
+This installs `swig` in `/usr/local/bin` by default. Make sure that directory
+comes before `/usr/bin` in `PATH` while building Micro-Manager.
+
+#### Boost C++ libraries
+
+A recent version of the Boost C++ libraries is required (1.77.0 has been
+tested). If building for local use, you can install it using the package
+manager:
+
+macOS: `brew install boost`
+
+Ubuntu: `sudo apt install libboost-all-dev`
+
+#### JDK and Ant
 
 To build MMCoreJ and the Java application (Micro-Manager Studio), you will need
-a Java Development Kit. Micro-Manager Java code is written in Java 1.6. On OS
-X, either Apple's Java 1.6 or Oracle JDK 1.7 will work. On Linux, OpenJDK 1.6
-or 1.7 should work well. (For JDK versions, 1.x is the same as x.)
+a Java Development Kit (JDK). Micro-Manager Java code is written in Java 8
+(a.k.a. Java 1.8).
 
-Building the Java components also requires Apache Ant (pre-installed on OS X).
+On macOS, install Temurin or Zulu JDK 8, and set `JAVA_HOME`:
+
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 1.8 -F)
+echo $JAVA_HOME  # Make sure path looks correct
+```
+
+Building the Java components also requires Apache Ant.
+
+Ubuntu: `sudo apt install openjdk-8-jdk ant`
+
+#### Other
 
 Many Linux distributions split library packages into runtimes and development
 files. If you are using such a distribution, make sure to get the packages
@@ -81,24 +125,24 @@ the same parent directory.
 
 ### Configuring
 
-To build from an SVN working copy, you will first need to generate the
-`configure` script. This can be done with the command
+To build from source, you will first need to generate the `configure` script.
+This can be done with the command
 
     ./autogen.sh
 
-If you want to compile and install only special device adapters based on your
-microscope, you can skip these unused devices by editing `configure.ac` and
-`Makefile.am` under `/mmCoreAndDevices/DeviceAdapters`. For example, if you
+Hack: If you want to compile and install only specific device adapters based on
+your microscope, you can skip these unused devices by editing `configure.ac`
+and `Makefile.am` under `mmCoreAndDevices/DeviceAdapters`. For example, if you
 delete `DemoCamera` in `SUBDIRS` section of `Makefile.am` and `m4_define`
 function of `configure.ac`, building will go through without `DemoCamera`
 module. It will help you to keep simplicity and skip the device adapters failed
-to compile at your machine now( but it will be better if you feedback issues at the
-same time). Then run `./autogen.sh` again.
+to compile at your machine now( but it will be better if you feedback issues at
+the same time). Then run `./autogen.sh` again.
 
 Now, you will run `./configure`. There are many ways to configure
 Micro-Manager, but you will most likely want to choose one of two major
 installation styles: a traditional Unix-style installation and installation as
-an ImageJ plugin.
+an ImageJ plugin (recommended).
 
 The traditional Unix-style will put Micro-Manager libraries (including device
 adapters) into `$prefix/lib/micro-manager` and other files (including JARs)
@@ -156,14 +200,14 @@ to run Micro-Manager Studio (if it was configured to be built).
 If `./configure` does not find your JDK (Java Development Kit), try the
 following.
 
-1. If the environment variable `$JAVA_HOME` is set, try unsetting it before
-   running `configure`. It might be pointing to a Java installation that
+1. On Linux, if the environment variable `$JAVA_HOME` is set, try unsetting it
+   before running `configure`. It might be pointing to a Java installation that
    doesn't contain all the required files (e.g. it may be pointing to a JRE
    (Java Runtime Environment) rather than a JDK). Not setting `JAVA_HOME` may
    allow `configure` to autodetect a suitable Java home.
 
 2. Find the desirable JDK home on your system. This is a directory that usually
-   has "jdk" and the Java version number (such as 1.6) in its name, and
+   has "jdk" and the Java version number (such as 1.8) in its name, and
    contains the directories `bin` (in which `java`, `javac`, and `jar` are
    found) and `include` (in which `jni.h` is found). Pass
    `--with-java=/path/to/java/home` to `configure`. For example:
@@ -171,25 +215,6 @@ following.
         ./configure --with-java=/usr/lib64/jvm/java-1.7.0-openjdk-1.7.0
         # or, on OS X,
         ./configure --with-java=/Library/Java/JavaVirtualMachines/1.7.0_55.jdk/Contents/Home
-
-3. On OS X, if you are using Apple's JDK 1.6, the previous step may not be
-   sufficient, because the Java home directory
-   (`/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contenst/Home`) does
-   not contain `jni.h` and related headers. There are two solutions to this
-   problem.
-
-   The first is to download and install Apple's Java Development Package (you
-   need an Apple Developer account to download it). This will place `jni.h` in
-   `/System/Library/Frameworks/JavaVM.framework/Headers`, which should be
-   automatically detected by `./configure`.
-
-   The second is to use the copy of `jni.h` and friends included with the OS X
-   SDK. To do so, run:
-
-        ./configure JAVA_HOME=/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home JNI_CPPFLAGS="-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/JavaVM.framework/Headers"
-
-   You may need to adjust the version of the platform SDK from `10.9` to one of
-   the versions you have.
 
 
 #### Specifying where to find external packages
