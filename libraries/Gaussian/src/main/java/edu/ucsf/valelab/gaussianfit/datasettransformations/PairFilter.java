@@ -170,33 +170,35 @@ public class PairFilter {
                            orientations.add(NearestPoint2D.orientation(pCh1, pCh2));
                         }
                      }
-                     double distAvg = ListUtils.listAvg(distances);
-                     double distStd = ListUtils.listStdDev(distances, distAvg);
-                     double orientationAvg = ListUtils.listAvg(orientations);
-                     double orientationStd = ListUtils.listStdDev(orientations,
-                           orientationAvg);
+                     if (!distances.isEmpty()) {
+                        double distAvg = ListUtils.listAvg(distances);
+                        double distStd = ListUtils.listStdDev(distances, distAvg);
+                        double orientationAvg = ListUtils.listAvg(orientations);
+                        double orientationStd = ListUtils.listStdDev(orientations,
+                                orientationAvg);
 
-                     // now repeat going through the list and apply the criteria
-                     it2 = gsCh1.get(q).iterator();
-                     while (it2.hasNext()) {
-                        SpotData gs = (SpotData) it2.next();
-                        Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                        Point2D.Double pCh2 = npsByPosition.get(gs.getPosition() - 1)
-                              .findKDWSE(pCh1);
-                        if (pCh2 != null) {
-                           double d2 = NearestPoint2D.distance2(pCh1, pCh2);
-                           double d = Math.sqrt(d2);
-                           // we can possibly add the same criterium for orientation
-                           if (d > distAvg - deviationMax * distStd
-                                 && d < distAvg + deviationMax * distStd) {
-                              correctedData.add(gs);
-                              // we have to find the matching spot in channel 2!
-                              for (SpotData gsCh2 : xySpotsCh2.get(gs.getPosition() - 1)) {
-                                 if (gsCh2.getFrame() == frame) {
-                                    if (gsCh2.getChannel() == 2) {
-                                       if (gsCh2.getXCenter() == pCh2.x
-                                             && gsCh2.getYCenter() == pCh2.y) {
-                                          correctedData.add(gsCh2);
+                        // now repeat going through the list and apply the criteria
+                        it2 = gsCh1.get(q).iterator();
+                        while (it2.hasNext()) {
+                           SpotData gs = (SpotData) it2.next();
+                           Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+                           Point2D.Double pCh2 = npsByPosition.get(gs.getPosition() - 1)
+                                   .findKDWSE(pCh1);
+                           if (pCh2 != null) {
+                              double d2 = NearestPoint2D.distance2(pCh1, pCh2);
+                              double d = Math.sqrt(d2);
+                              // we can possibly add the same criterium for orientation
+                              if (d > distAvg - deviationMax * distStd
+                                      && d < distAvg + deviationMax * distStd) {
+                                 correctedData.add(gs);
+                                 // we have to find the matching spot in channel 2!
+                                 for (SpotData gsCh2 : xySpotsCh2.get(gs.getPosition() - 1)) {
+                                    if (gsCh2.getFrame() == frame) {
+                                       if (gsCh2.getChannel() == 2) {
+                                          if (gsCh2.getXCenter() == pCh2.x
+                                                  && gsCh2.getYCenter() == pCh2.y) {
+                                             correctedData.add(gsCh2);
+                                          }
                                        }
                                     }
                                  }
@@ -217,8 +219,9 @@ public class PairFilter {
             } catch (OutOfMemoryError oom) {
                System.gc();
                ij.IJ.error("Out of Memory");
+            } finally {
+               isRunning_.set(false);
             }
-            isRunning_.set(false);
          }
       };
 
