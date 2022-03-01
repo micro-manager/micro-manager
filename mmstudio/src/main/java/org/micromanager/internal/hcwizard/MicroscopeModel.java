@@ -351,7 +351,9 @@ public final class MicroscopeModel {
       for (Device dev : devices_) {
          Label[] setupLabels = dev.getAllSetupLabels();
          for (int j = 0; j < setupLabels.length; j++) {
-            core.defineStateLabel(dev.getName(), setupLabels[j].state_, setupLabels[j].label_);
+            String defaultName =  "State-" + setupLabels[j].state_;
+            if (!setupLabels[j].label_.equals(defaultName))
+               core.defineStateLabel(dev.getName(), setupLabels[j].state_, setupLabels[j].label_);
          }
       }
    }
