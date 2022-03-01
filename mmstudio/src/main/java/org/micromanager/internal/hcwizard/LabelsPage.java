@@ -176,7 +176,7 @@ public final class LabelsPage extends PagePanel {
          Device[] devs = model.getDevices();
          devices_.clear();
          for (Device dev : devs) {
-            if (dev.isStateDevice()) {
+            if (dev.isStateDevice() && (dev.findProperty("Label") != null)) {
                devices_.add(dev);
             }
          }
