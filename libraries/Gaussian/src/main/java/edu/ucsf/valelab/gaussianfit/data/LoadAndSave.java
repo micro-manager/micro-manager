@@ -498,8 +498,11 @@ public class LoadAndSave {
          boolean bypassFileDialog,
          String dir,
          final JFrame caller) {
-      String[] parts = rowData[0].getName().split(File.separator);
-      String name = parts[parts.length - 1];
+      String name = rowData[0].getName();
+      if (rowData[0].getName().contains(File.separator)) {
+         String[] parts = rowData[0].getName().split(File.separator);
+         name = parts[parts.length - 1];
+      }
       String fn = name + EXTENSION;
       if (!bypassFileDialog) {
          FileDialog fd = new FileDialog(caller, "Save Spot Data", FileDialog.SAVE);
