@@ -1177,7 +1177,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (uiController_ == null) {
          return;
       }
-      uiController_.setFullScreenMode(enable);
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> setFullScreen(enable));
+      } else {
+         uiController_.setFullScreenMode(enable);
+      }
    }
 
    @Override
@@ -1185,6 +1189,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (uiController_ == null) {
          return false;
       }
+
       return uiController_.isFullScreenMode();
    }
 
