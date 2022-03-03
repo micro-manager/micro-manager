@@ -1174,12 +1174,23 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void setFullScreen(boolean enable) {
-      throw new UnsupportedOperationException();
+      if (uiController_ == null) {
+         return;
+      }
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> setFullScreen(enable));
+      } else {
+         uiController_.setFullScreenMode(enable);
+      }
    }
 
    @Override
    public boolean isFullScreen() {
-      throw new UnsupportedOperationException();
+      if (uiController_ == null) {
+         return false;
+      }
+
+      return uiController_.isFullScreenMode();
    }
 
    @Override
