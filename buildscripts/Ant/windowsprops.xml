@@ -137,34 +137,30 @@
 				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /p:MM_BUILDDIR=${mm.outdir} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
 
 			<!-- Find the bat file that activates the Visual Studio environment -->
-			<local name="modernVSDevCmdBat"/>
+			<local name="vsDevCmdBat"/>
 			<!-- Use vswhere to find the location of the most recent VSDevCmd.bat installed -->
 			<echo file="temp.bat">
 				@echo off
 				for /f "usebackq delims=#" %%a in (`"%programfiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -latest -property installationPath`) do set VsDevCmd_Path=%%a\Common7\Tools\VsDevCmd.bat
 				echo %VsDevCmd_Path%
 			</echo>
-			<exec executable="cmd" outputproperty="modernVSDevCmdBat">
+			<exec executable="cmd" outputproperty="vsDevCmdBat">
 				<arg value="/c"/>
 				<arg value="temp.bat"/>
 			</exec>
 			<delete file="temp.bat"/>
-			
-			<!-- If the modern VS activation Bat wasn't found then try the 2010 version -->			
-			<local name="activateVSVarsBat"/>
-			<condition property="activateVSVarsBat" value="${modernVSDevCmdBat}" else="${mm.env.VS100COMNTOOLS}vsvars32.bat">
-				<available file="${modernVSDevCmdBat}"/>
-			</condition>
 
-            <fail message="Cannot locate vsvars32.bat for Visual Studio 2010 or VSDevCmd.bat for VisualStudio >2010">
-                <condition> <not> <available file="${activateVSVarsBat}"/> </not> </condition>
-            </fail>	
+			<fail message="Cannot locate VsDevCmd.bat from Visual Studio">
+				<condition>
+					<not><available file="${vsDevCmdBat}"/></not>
+				</condition>
+			</fail>
 			
 			<local name="temp.bat"/>
 			<tempfile property="temp.bat" prefix="msbuild" suffix=".bat" destdir="${mm.intdir}"/>
 			<echo file="${temp.bat}">
 				@echo off
-				call "${activateVSVarsBat}"
+				call "${vsDevCmdBat}"
 				if errorlevel 1 exit /b
 				msbuild ${msbuild.params}
 			</echo>
