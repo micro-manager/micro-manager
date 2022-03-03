@@ -30,6 +30,7 @@ import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -304,7 +305,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          frame.setUndecorated(true);
          frame.setResizable(false);
          frame.setBounds(
-                 GUIUtils.getFullScreenBounds(frame.getGraphicsConfiguration()));
+                 GUIUtils.getFullScreenBounds(frame_.getGraphicsConfiguration()));
          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
       }
       setTitle(frame);
@@ -1223,11 +1224,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    @MustCallOnEDT
    void setFullScreenMode(boolean fullScreen) {
+      Window activeWindow = javax.swing.FocusManager.getCurrentManager().getActiveWindow();
+      boolean reactivateWindow = false;
       if (fullScreen) {
          if (!isFullScreenMode()) {
+            reactivateWindow = !frame_.isActive();
             frame_.setVisible(false);
             fullScreenFrame_ = makeFrame(true);
             fullScreenFrame_.add(contentPanel_);
+            contentPanel_.invalidate();
+            fullScreenFrame_.validate();
             fullScreenFrame_.setVisible(true);
             fullScreenFrame_.addWindowListener(this);
          }
@@ -1237,6 +1243,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          fullScreenButton_.setToolTipText("Exit full screen mode");
       } else {
          if (isFullScreenMode()) {
+            reactivateWindow = !fullScreenFrame_.isActive();
             fullScreenFrame_.removeWindowListener(this);
             fullScreenFrame_.setVisible(false);
             frame_.add(contentPanel_);
@@ -1250,6 +1257,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
          fullScreenButton_.setIcon(IconLoader.getIcon(
                  "/org/micromanager/icons/fullscreen.png"));
          fullScreenButton_.setToolTipText("View in full screen mode");
+      }
+      if (reactivateWindow) {
+         activeWindow.toFront();
       }
    }
 
