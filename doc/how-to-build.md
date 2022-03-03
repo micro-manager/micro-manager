@@ -98,7 +98,7 @@ a Java Development Kit (JDK). Micro-Manager Java code is written in Java 8
 On macOS, install Temurin or Zulu JDK 8, and set `JAVA_HOME`:
 
 ```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 1.8 -F)
+export JAVA_HOME=$(/usr/libexec/java_home -v 1.8 -F)
 echo $JAVA_HOME  # Make sure path looks correct
 ```
 
