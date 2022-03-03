@@ -495,14 +495,15 @@ public final class MultipageTiffWriter {
     * @return true if there is enough space, false otherwise
     */
    public boolean hasSpaceToWrite(Image img, int omeMDLength) {
+      boolean splitByFrame = true;
       PropertyMap mdPmap = ((DefaultMetadata) img.getMetadata()).toPropertyMap();
       int mdLength = NonPropertyMapJSONFormats.metadata().toJSON(mdPmap).length();
       int ifdsize = ENTRIES_PER_IFD * 12 + 4 + 16;
       int channelsLeft = numChannels_ - img.getCoords().getC();
       int slicesLeft = numSlices_ - img.getCoords().getZ();
-      int axis1Size = 1;
-      int axis1ImagesLeft = 1; 
-      int axis2ImagesLeft = 1;
+      int axis1Size;
+      int axis1ImagesLeft; 
+      int axis2ImagesLeft;
       if (orderedAxes_.get(0).equals("z") ) {
           axis1Size = numSlices_;
           axis1ImagesLeft = slicesLeft;
@@ -515,11 +516,29 @@ public final class MultipageTiffWriter {
       }
       // 5 MB extra padding...just to be safe...
       int extraPadding = 5000000; 
-      long size = ifdsize + (mdLength + bytesPerImagePixels_) * axis1ImagesLeft 
-            + (mdLength + bytesPerImagePixels_) * axis1Size * axis2ImagesLeft 
-            + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL 
-            + extraPadding + filePosition_;
-      size += omeMDLength;
+      long singleImageBytes = ifdsize + mdLength + bytesPerImagePixels_;
+      // Check if a single frame will fit in a file
+      long frameSize = singleImageBytes * numChannels_ * numSlices_
+                       + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL 
+                       + extraPadding;
+      if (frameSize > MAX_FILE_SIZE) {
+          splitByFrame = false;
+      }
+      long size;
+      // If everything went ok, try to split "intelligently", keeping frames together
+      if (splitByFrame) {
+          size = singleImageBytes * axis1ImagesLeft 
+                 + singleImageBytes * axis1Size * axis2ImagesLeft 
+                 + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL 
+                 + extraPadding + filePosition_;
+          size += omeMDLength;
+      // Otherwise, default back to the original behavior
+      } else {
+          size = singleImageBytes + SPACE_FOR_COMMENTS
+                 + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL 
+                 + extraPadding + filePosition_;
+          size += omeMDLength;
+      }
       
       return size < MAX_FILE_SIZE;
    }
