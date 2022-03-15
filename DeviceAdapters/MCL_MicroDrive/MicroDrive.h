@@ -94,6 +94,7 @@ License:	Distributed under the BSD license.
 	MICRODRIVE_API  int     MCL_GetAxisInfo(unsigned char *axis_bitmap, int handle);
 	MICRODRIVE_API  int     MCL_GetFullStepSize(double *stepSize, int handle);
 	MICRODRIVE_API	int		MCL_GetTirfModuleCalibration(double *calMM, int handle);
+	MICRODRIVE_API	int		MCL_GetTirfModuleAxis(int *tirfAxis, int handle);
 
 #ifdef __cplusplus
 }

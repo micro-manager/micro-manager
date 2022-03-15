@@ -11,20 +11,26 @@ License:	Distributed under the BSD license.
 class HandleListType
 {
 public:
-	HandleListType(int handle, int type);
+	HandleListType(int handle, int type, int axis1, int axis2);
 	~HandleListType();
 
-	void Initialize(int handle, int type);
-	
-	int getType();
-	int getHandle();
+	bool IsControlling(int handle, int a1, int a2);
 
-	void setType(int type);
-	void setHandle(int handle);
+	int GetType();
+	int GetHandle();
+	int GetAxis1();
+	int GetAxis2();
+
+	void SetType(int type);
+	void SetHandle(int handle);
+	void SetAxis1(int axis);
+	void SetAxis2(int axis);
 
 	bool operator==(const HandleListType &rhs);
 
 private:
 	int handle_;
 	int type_;
+	int axis1_;
+	int axis2_;
 };

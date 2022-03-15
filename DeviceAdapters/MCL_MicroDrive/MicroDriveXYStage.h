@@ -122,6 +122,7 @@ private:
    bool deviceHasTirfModuleAxis_;
    bool axis1IsTirfModule_;
    bool axis2IsTirfModule_;
+   bool hasUnknownTirfModuleAxis_;
    double tirfModCalibrationMm_;
 };
 

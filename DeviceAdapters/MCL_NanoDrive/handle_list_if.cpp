@@ -70,12 +70,24 @@ bool HandleExistsOnLockedList(HandleListType device)
 
 	for (vector<HandleListType>::iterator it = ::gHandleList->begin(); it != ::gHandleList->end(); ++it)
 	{
-		if ((*it) == device) {
+		if ((*it).IsControlling(device.GetHandle(), device.GetAxis1(), device.GetAxis2())) {
 			return true;
 		}
 	}
 	return false;
 }
+
+int HandleListCount()
+{
+	int count = 0;
+
+	for (vector<HandleListType>::iterator it = ::gHandleList->begin(); it != ::gHandleList->end(); ++it)
+	{
+		count++;
+	}
+	return count;
+}
+
 
 bool HandleExistsOnLockedList(int handle)
 {
@@ -84,7 +96,7 @@ bool HandleExistsOnLockedList(int handle)
 
 	for (vector<HandleListType>::iterator it = ::gHandleList->begin(); it != ::gHandleList->end(); ++it)
 	{
-		if ((*it).getHandle() == handle) {
+		if ((*it).GetHandle() == handle) {
 			return true;
 		}
 	}

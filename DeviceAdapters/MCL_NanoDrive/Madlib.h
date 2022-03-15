@@ -18,6 +18,9 @@ License:	Distributed under the BSD license.
 #define		MCL_SEQ_NOT_VALID		-10
 #define		MCL_BLOCKED_BY_TIRFLOCK -11
 
+#define		PROFILE_BIT_SUPPORTS_SEQ 0x0100
+#define		PROFILE_BIT_SUPPORTS_LASTCOMMANDED 0x0008
+
 #pragma pack(push, 1)
 struct ProductInformation {
 	unsigned char  axis_bitmap; //bitmap of available axis
@@ -42,6 +45,7 @@ MADLIB_API  void	MCL_ReleaseLibrary();
 
 MADLIB_API  int		MCL_GrabAllHandles();
 MADLIB_API  int		MCL_GetAllHandles(int *handles, int size);
+MADLIB_API  int		MCL_NumberOfCurrentHandles();
 MADLIB_API  void	MCL_ReleaseHandle(int handle);
 MADLIB_API	double	MCL_SingleReadN(unsigned int axis, int handle);
 MADLIB_API	int		MCL_SingleWriteN(double position, unsigned int axis, int handle);

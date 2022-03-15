@@ -31,6 +31,7 @@ MCL_MicroDrive_ZStage::MCL_MicroDrive_ZStage() :
 	imToleranceUm_(.250),
 	deviceHasTirfModuleAxis_(false),
 	axisIsTirfModule_(false),
+	hasUnknownTirfModuleAxis_(false),
 	tirfModCalibrationMm_(0.0)
 {
 	InitializeDefaultErrorMessages();
@@ -155,17 +156,37 @@ int MCL_MicroDrive_ZStage::Initialize()
 		return MCL_INVALID_HANDLE;
 	}
 
-	// Discover device information.
+	// Check TIRF mod settings.
 	err = MCL_GetTirfModuleCalibration(&tirfModCalibrationMm_, deviceHandle);
-	if(err == MCL_SUCCESS)
+	if (err == MCL_SUCCESS)
 	{
-		deviceHasTirfModuleAxis_ = true;
-		if (IsAxisADefaultTirfModuleAxis(devicePid, deviceAxisBitmap, deviceAxis))
+		// If we have a calibration we may also have the assigned tirf module axis.
+		int tirfAxis = 0;
+		err = MCL_GetTirfModuleAxis(&tirfAxis, deviceHandle);
+		if (err == MCL_SUCCESS)
 		{
-			axisIsTirfModule_ = true;
+			// Check if one of the device adapter axes match the tirf mod axis.
+			hasUnknownTirfModuleAxis_ = false;
+			if (tirfAxis == deviceAxis)
+			{
+				deviceHasTirfModuleAxis_ = true;
+				axisIsTirfModule_ = true;
+			}
+		}
+		else
+		{
+			// If the tirf mod axis data is not available use a heuristic to determine if 
+			// our device adapter axes are a tirf mod axis.
+			hasUnknownTirfModuleAxis_ = true;
+			deviceHasTirfModuleAxis_ = true;
+			if (IsAxisADefaultTirfModuleAxis(devicePid, deviceAxisBitmap, deviceAxis))
+			{
+				axisIsTirfModule_ = true;
+			}
 		}
 	}
 
+	// Discover device information.
 	double ignore1, ignore2;
 	err = MCL_MDInformation(&encoderResolution_, &stepSize_mm_, &maxVelocity_, &ignore1, &ignore2, &minVelocity_, deviceHandle);
 	if (err != MCL_SUCCESS)
@@ -690,7 +711,12 @@ int MCL_MicroDrive_ZStage::CreateZStageProperties()
 	{
 		// Axis is tirfModule
 		pAct = new CPropertyAction(this, &MCL_MicroDrive_ZStage::OnIsTirfModule);
-		err = CreateProperty(g_Keyword_IsTirfModuleAxis, axisIsTirfModule_ ? g_Listword_Yes : g_Listword_No, MM::String, false, pAct);
+		err = CreateProperty(
+				g_Keyword_IsTirfModuleAxis,
+				axisIsTirfModule_ ? g_Listword_Yes : g_Listword_No,
+				MM::String, 
+				hasUnknownTirfModuleAxis_ ? false : true,
+				pAct);
 		if (err != DEVICE_OK)
 			return err;
 		err = SetAllowedValues(g_Keyword_IsTirfModuleAxis, yesNoList);

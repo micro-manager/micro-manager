@@ -25,7 +25,7 @@ public:
 	MCL_NanoDrive_XYStage();
 	~MCL_NanoDrive_XYStage();
 
-	bool Busy();
+	bool Busy() { return false; }
 	void GetName(char* name) const;
 
 	int Initialize();
@@ -45,10 +45,12 @@ public:
 	virtual double GetStepSizeXUm();
 	virtual double GetStepSizeYUm();
 	virtual int IsXYStageSequenceable(bool& isSequenceable) const;
-	int getHandle(){  return MCLhandle_;}
-
 
 	// Action interface
+	int OnLowerLimitX(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnUpperLimitX(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLowerLimitY(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnUpperLimitY(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPositionXUm(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPositionYUm(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnSettlingTimeXMs(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -58,37 +60,37 @@ public:
     int OnCommandChangedY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-	int SetDeviceProperties();
-	int SetPositionXUm(double x);
-	int SetPositionYUm(double y);
-	void PauseDevice(int axis);
+	int InitDeviceAdapter();
+	int CreateDeviceProperties();
+
+	int SetPositionXUm(double x, bool pauseForSettingTime);
+	int SetPositionYUm(double y, bool pauseForSettingTime);
 	int SetPositionUm(double x, double y);
     int GetPositionUm(double& x, double& y);
+	void GetLastCommandedPosition(double& x, double& y);
 
-	bool busy_;
-	bool initialized_;
-	bool is20Bit_;
-
-	int MCLhandle_;
+	int handle_;
+	int serialNumber_;
+	int axisX_;
+	int axisY_;
+	double calibrationX_;
+	double calibrationY_;
 
 	double stepSizeX_um_;
 	double stepSizeY_um_;
+	double lowerLimitX_;
+	double upperLimitX_;
+	double lowerLimitY_;
+	double upperLimitY_;
 
-	double xMin_;
-	double xMax_;
-	double yMin_;
-	double yMax_;
-	
-	int serialNumber_;
 	int settlingTimeX_ms_;
 	int settlingTimeY_ms_;
-
-	double curXpos_;
-	double curYpos_;
-
-	bool firstWriteX_;
-	bool firstWriteY_;
-
 	double commandedX_;
 	double commandedY_;
+
+	bool initialized_;
+	bool is20Bit_;
+	bool firstWriteX_;
+	bool firstWriteY_;
+	bool supportsLastCommanded_;
 };

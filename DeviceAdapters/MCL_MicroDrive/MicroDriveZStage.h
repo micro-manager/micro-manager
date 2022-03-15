@@ -105,5 +105,6 @@ private:
 	// Tirf-Module State
 	bool deviceHasTirfModuleAxis_;
 	bool axisIsTirfModule_;
+	bool hasUnknownTirfModuleAxis_;
 	double tirfModCalibrationMm_;
 };

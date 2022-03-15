@@ -34,6 +34,7 @@ MicroDriveXYStage::MicroDriveXYStage():
 	deviceHasTirfModuleAxis_(false),
 	axis1IsTirfModule_(false),
 	axis2IsTirfModule_(false),
+	hasUnknownTirfModuleAxis_(false),
 	tirfModCalibrationMm_(0.0)
 {
    InitializeDefaultErrorMessages();
@@ -161,21 +162,46 @@ int MicroDriveXYStage::Initialize()
 		return MCL_INVALID_HANDLE;
 	}
 
-	// Discover device information.
+	// Check TIRF mod settings.
 	err = MCL_GetTirfModuleCalibration(&tirfModCalibrationMm_, deviceHandle);
 	if (err == MCL_SUCCESS)
 	{
-		deviceHasTirfModuleAxis_ = true;
-		if (IsAxisADefaultTirfModuleAxis(devicePid, deviceAxisBitmap, deviceAxis))
+		// If we have a calibration we may also have the assigned tirf module axis.
+		int tirfAxis = 0;
+		err = MCL_GetTirfModuleAxis(&tirfAxis, deviceHandle);
+		if (err == MCL_SUCCESS)
 		{
-			axis1IsTirfModule_ = true;
+			// Check if one of the device adapter axes match the tirf mod axis.
+			hasUnknownTirfModuleAxis_ = false;
+			if (tirfAxis == deviceAxis)
+			{
+				deviceHasTirfModuleAxis_ = true;
+				axis1IsTirfModule_ = true;
+			}
+			else if (tirfAxis == (deviceAxis + 1))
+			{
+				deviceHasTirfModuleAxis_ = true;
+				axis2IsTirfModule_ = true;
+			}
 		}
-		if (IsAxisADefaultTirfModuleAxis(devicePid, deviceAxisBitmap, deviceAxis+1))
+		else
 		{
-			axis2IsTirfModule_ = true;
+			// If the tirf mod axis data is not available use a heuristic to determine if 
+			// our device adapter axes are a tirf mod axis.
+			hasUnknownTirfModuleAxis_ = true;
+			deviceHasTirfModuleAxis_ = true;
+			if (IsAxisADefaultTirfModuleAxis(devicePid, deviceAxisBitmap, deviceAxis))
+			{
+				axis1IsTirfModule_ = true;
+			}
+			if (IsAxisADefaultTirfModuleAxis(devicePid, deviceAxisBitmap, deviceAxis + 1))
+			{
+				axis2IsTirfModule_ = true;
+			}
 		}
 	}
 
+	// Discover device information.
 	err = MCL_MDInformation(&encoderResolution_, &stepSize_mm_, &maxVelocity_, &maxVelocityTwoAxis_, &maxVelocityThreeAxis_, &minVelocity_, deviceHandle);
 	if (err != MCL_SUCCESS)
 	{
@@ -334,7 +360,12 @@ int MicroDriveXYStage::CreateMicroDriveXYProperties()
 	{
 		// Axis is tirfModule
 		pAct = new CPropertyAction(this, &MicroDriveXYStage::OnIsTirfModuleAxis1);
-		err = CreateProperty(g_Keyword_IsTirfModuleAxis1, axis1IsTirfModule_ ? g_Listword_Yes : g_Listword_No, MM::String, false, pAct);
+		err = CreateProperty(
+				g_Keyword_IsTirfModuleAxis1,
+				axis1IsTirfModule_ ? g_Listword_Yes : g_Listword_No,
+				MM::String,
+				hasUnknownTirfModuleAxis_ ? false : true,
+				pAct);
 		if (err != DEVICE_OK)
 			return err;
 		err = SetAllowedValues(g_Keyword_IsTirfModuleAxis1, yesNoList);
@@ -342,7 +373,12 @@ int MicroDriveXYStage::CreateMicroDriveXYProperties()
 			return err;
 
 		pAct = new CPropertyAction(this, &MicroDriveXYStage::OnIsTirfModuleAxis2);
-		err = CreateProperty(g_Keyword_IsTirfModuleAxis2, axis2IsTirfModule_ ? g_Listword_Yes : g_Listword_No, MM::String, false, pAct);
+		err = CreateProperty(
+				g_Keyword_IsTirfModuleAxis2,
+				axis2IsTirfModule_ ? g_Listword_Yes : g_Listword_No,
+				MM::String,
+				hasUnknownTirfModuleAxis_ ? false : true,
+				pAct);
 		if (err != DEVICE_OK)
 			return err;
 		err = SetAllowedValues(g_Keyword_IsTirfModuleAxis2, yesNoList);

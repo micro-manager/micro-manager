@@ -24,69 +24,73 @@ class MCL_NanoDrive_ZStage : public CStageBase<MCL_NanoDrive_ZStage>
 {
 public:
 
-  MCL_NanoDrive_ZStage();
-  ~MCL_NanoDrive_ZStage();
+	MCL_NanoDrive_ZStage();
+	~MCL_NanoDrive_ZStage();
 
-  bool Busy();
-  void GetName(char* pszName) const;
+	bool Busy() { return false; }
+	void GetName(char* pszName) const;
 
-  int Initialize();
-  int Shutdown();
+	int Initialize();
+	int Shutdown();
      
-  // Stage API
-  virtual int SetPositionUm(double pos);
-  virtual int GetPositionUm(double& pos);
-  virtual int SetRelativePositionUm(double d); 
-  virtual double GetStepSize();
-  virtual int SetPositionSteps(long steps);
-  virtual int GetPositionSteps(long& steps);
-  virtual int SetOrigin();
-  virtual int GetLimits(double& lower, double& upper);
-  virtual int IsStageSequenceable(bool& isSequenceable) const;
-  virtual int GetStageSequenceMaxLength(long& nrEvents) const;
-  virtual int StartStageSequence();
-  virtual int StopStageSequence();
-  virtual int ClearStageSequence();
-  virtual int AddToStageSequence(double position);
-  virtual int SendStageSequence();
-  virtual bool IsContinuousFocusDrive() const;
+	// Stage API
+	virtual int SetPositionUm(double pos);
+	virtual int GetPositionUm(double& pos);
+	virtual int SetRelativePositionUm(double d); 
+	virtual double GetStepSize();
+	virtual int SetPositionSteps(long steps);
+	virtual int GetPositionSteps(long& steps);
+	virtual int SetOrigin();
+	virtual int GetLimits(double& lower, double& upper);
+	virtual int IsStageSequenceable(bool& isSequenceable) const;
+	virtual int GetStageSequenceMaxLength(long& nrEvents) const;
+	virtual int StartStageSequence();
+	virtual int StopStageSequence();
+	virtual int ClearStageSequence();
+	virtual int AddToStageSequence(double position);
+	virtual int SendStageSequence();
+	virtual bool IsContinuousFocusDrive() const;
 
-  int getHandle(){ return MCLhandle_;}
-
-  // Action interface
-  int OnPositionUm(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int OnSettlingTimeZMs(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int OnSetOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int OnCommandChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int OnSetSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int OnSetShiftSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int OnSetTirfLock(MM::PropertyBase* pProp, MM::ActionType eAct);
+	// Action interface
+	int OnLowerLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnUpperLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPositionUm(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSettlingTimeZMs(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSetOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCommandChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTLC(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSetSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSetShiftSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSetTirfLock(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSetTirfBlockedAction(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int CreateZStageProperties();
+	int InitDeviceAdapter();
+	int CreateZStageProperties();
+	double GetLastCommandedPosition();
 
-   double stepSize_um_;
-   bool busy_;
-   bool initialized_;
-   double lowerLimit_;
-   double upperLimit_;
-   int MCLhandle_;
-   double calibration_;
-   int serialNumber_;
-   int settlingTimeZ_ms_;
-   double commandedZ_;
-   int dacBits_;
+	int handle_;
+	int serialNumber_;
+	int axis_;
+	double calibration_;
+	int dacBits_;
+	int seqMaxSize_;
 
-   double curZpos_;
-   bool firstWrite_;
-   
-   bool canSupportSeq_;
-   bool supportsSeq_;
-   int seqMaxSize_;
-   bool shiftSequence_;
-   std::vector<double> sequence_;
+	double stepSize_um_;
+	double lowerLimit_;
+	double upperLimit_;
 
-   bool axisUsedForTirfControl_;
+	int settlingTimeZ_ms_;
+	double commandedZ_;
 
-   int axis_;
+	std::vector<double> sequence_;
+
+	bool initialized_;
+	bool firstWrite_; 
+	bool supportsLastCommanded_;
+	bool canSupportSeq_;
+	bool supportsSeq_;
+	bool shiftSequence_;
+	bool axisUsedForTirfControl_;
+	bool ignoreZMovesInTirfLock_;
 };
