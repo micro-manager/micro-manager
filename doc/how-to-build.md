@@ -36,6 +36,39 @@ build tools" in the installer (you can modify an existing installation).
 ## Building on Unix
 
 
+### Ubuntu Quickstart
+These commands should bring a complete build on Ubuntu. See below sections for more detail.
+
+
+[mamba](https://mamba.readthedocs.io/) is a fast implementation of the cross platform environment manager [conda](https://docs.conda.io/en/latest/). It will
+allow for easy isolation of the micromanager dependencies and installation. The easiest way to install mamba is with the links here: https://github.com/conda-forge/miniforge#miniforge3
+
+If you don't want to install `mamba` you can replace all the `mamba` commands below with `conda`
+
+```bash
+sudo apt install git subversion build-essential autoconf automake libtool pkg-config autoconf-archive openjdk-8-jdk ant libboost-all-dev
+
+git clone https://github.com/micro-manager/micro-manager.git
+cd micro-manager
+git submodule update --init --recursive
+
+mamba create -n micro-manager -c conda-forge swig=3 openjdk=8
+mamba activate micro-manager
+
+./autogen.sh
+./configure
+mkdir ../3rdpartypublic; pushd ../3rdpartypublic
+svn checkout https://valelab4.ucsf.edu/svn/3rdpartypublic/classext
+popd
+make fetchdeps
+make -j4
+sudo make install
+```
+
+You can avoid using `sudo` for `make install` if you specify the prefix when using `configure`.
+
+After installing you can start micromanager from the terminal with the `micromanager` command
+
 ### Getting the prerequisites
 
 There are several packages that are required to build and/or run
@@ -66,6 +99,13 @@ SWIG 4.x currently does not work for building a correct MMCoreJ
 
 Ubuntu:
 
+The easiest way to get SWIG is via conda-forge
+```sh
+mamba create -n micro-manager -c conda-forge swig=3
+conda activate micro-manager
+```
+
+Alternatively you can build it from source:
 ```sh
 sudo apt install libpcre3-dev
 curl -LO https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
@@ -224,31 +264,3 @@ the package, whereas the all-caps variables (`FOO`) listed at the end of
 `./configure --help` will override any automatic detection and be used
 unmodified.
 
-
-#### Failing to fetch on Ubuntu 18.04 and newer
-
-If unresolved dependences on some Java libraries:
-
-```
-[ivy:resolve] ::::::::::::::::::::::::::::::::::::::::::::::
-[ivy:resolve] :: UNRESOLVED DEPENDENCIES ::
-[ivy:resolve] ::::::::::::::::::::::::::::::::::::::::::::::
-[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-local;2.3.2: not found
-[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-main-local;2.3.2: not found
-[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-natives-macosx-universal;2.3.2: not found
-[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-natives-windows-amd64;2.3.2: not found
-[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-natives-windows-i586;2.3.2: not found
-[ivy:resolve] :: org.jogamp.jogl#jogl-all-local;2.3.2: not found
-[ivy:resolve] :: org.jogamp.jogl#jogl-all-main-local;2.3.2: not found
-[ivy:resolve] :: org.jogamp.jogl#jogl-all-natives-macosx-universal;2.3.2: not found
-[ivy:resolve] :: org.jogamp.jogl#jogl-all-natives-windows-amd64;2.3.2: not found
-[ivy:resolve] :: org.jogamp.jogl#jogl-all-natives-windows-i586;2.3.2: not found
-[ivy:resolve] :: #DT1.2;: not found
-[ivy:resolve] ::::::::::::::::::::::::::::::::::::::::::::::
-```
-
-Take a look at [issue #708](https://github.com/micro-manager/micro-manager/issues/708) and 
-[837](https://github.com/micro-manager/micro-manager/issues/837). You may need `DT1.2`,`jxinput`,
-`iconloader` from original [svn site](https://valelab4.ucsf.edu/svn/3rdpartypublic/classext/). You should not run
-`make fetchdeps` again after you copied jar files to `dependencies/artifacts/compile`, otherwise
-`make fetchdeps` will remove copyed files. 
