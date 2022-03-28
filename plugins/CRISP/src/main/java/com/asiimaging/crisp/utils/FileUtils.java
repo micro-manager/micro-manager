@@ -43,7 +43,7 @@ public class FileUtils {
         return Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
     }
 
-    public static void saveFile(final List<String> contents, final String filePath) throws IOException {
-        Files.write(Paths.get(filePath), contents, StandardCharsets.UTF_8);
+    public static void saveFile(final List<String> contents, final String filePath, final String extension) throws IOException {
+        Files.write(Paths.get(filePath + extension), contents, StandardCharsets.UTF_8);
     }
 }

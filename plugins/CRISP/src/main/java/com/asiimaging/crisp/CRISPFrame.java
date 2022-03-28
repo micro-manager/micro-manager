@@ -15,9 +15,10 @@ import java.util.Objects;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
-import com.asiimaging.crisp.device.CRISP;
-import com.asiimaging.crisp.device.CRISPTimer;
-import com.asiimaging.crisp.device.ControllerType;
+import com.asiimaging.devices.crisp.CRISP;
+import com.asiimaging.devices.crisp.CRISPTimer;
+import com.asiimaging.devices.crisp.ControllerType;
+import com.asiimaging.devices.zstage.ZStage;
 import com.asiimaging.ui.Panel;
 import org.micromanager.Studio;
 
@@ -49,7 +50,9 @@ public class CRISPFrame extends JFrame {
     private ButtonPanel buttonPanel;
     private StatusPanel statusPanel;
     private SpinnerPanel spinnerPanel;
-    
+
+    private final ZStage zStage;
+
     private final CRISP crisp;
     private final CRISPTimer timer;
     private final UserSettings settings;
@@ -74,6 +77,7 @@ public class CRISPFrame extends JFrame {
         this.core = studio.core();
         
         crisp = new CRISP(studio);
+        zStage = new ZStage(studio);
         timer = new CRISPTimer(crisp);
 
         // some ui panels require both crisp and the timer
@@ -85,6 +89,7 @@ public class CRISPFrame extends JFrame {
         // only call after the required objects exist
         // required objects: crisp, timer, and settings
         detectDevice();
+        zStage.findDevice();
 
         // window closing handler
         registerWindowEventHandlers();
@@ -130,7 +135,7 @@ public class CRISPFrame extends JFrame {
             spinnerPanel.setEnabledFocusLockSpinners(false);
             buttonPanel.setCalibrationButtonStates(false);
         }
-        
+
         // disable update rate spinner if using old firmware
         if (crisp.getDeviceType() == ControllerType.TIGER) {
             if (crisp.getFirmwareVersion() < 3.38) {
@@ -142,9 +147,7 @@ public class CRISPFrame extends JFrame {
                 spinnerPanel.setEnabledUpdateRateSpinner(false);
             }
         }
-        
-        // TODO: support this feature on Tiger
-        plotPanel.disableFocusCurveButtonTiger();
+
     }
     
     /**
@@ -202,7 +205,7 @@ public class CRISPFrame extends JFrame {
             "",
             ""
         );
-
+        //statusPanel.update2();
         // color the panels to make editing the ui easier
         if (DEBUG) {
             leftPanel.setBackground(Color.RED);
@@ -249,8 +252,15 @@ public class CRISPFrame extends JFrame {
         return spinnerPanel;
     }
 
+    public CRISPTimer getTimer() {
+        return timer;
+    }
+
     public CRISP getCRISP() {
         return crisp;
     }
-    
+
+    public ZStage getZStage() {
+        return zStage;
+    }
 }

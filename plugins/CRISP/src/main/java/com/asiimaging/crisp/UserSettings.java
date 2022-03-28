@@ -7,9 +7,9 @@
 package com.asiimaging.crisp;
 
 import com.asiimaging.crisp.data.Defaults;
-import com.asiimaging.crisp.device.CRISP;
-import com.asiimaging.crisp.device.CRISPSettings;
-import com.asiimaging.crisp.device.CRISPTimer;
+import com.asiimaging.devices.crisp.CRISP;
+import com.asiimaging.devices.crisp.CRISPSettings;
+import com.asiimaging.devices.crisp.CRISPTimer;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.micromanager.Studio;

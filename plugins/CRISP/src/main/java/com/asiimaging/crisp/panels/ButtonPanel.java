@@ -8,8 +8,8 @@ package com.asiimaging.crisp.panels;
 
 import java.util.Objects;
 
-import com.asiimaging.crisp.device.CRISP;
-import com.asiimaging.crisp.device.CRISPTimer;
+import com.asiimaging.devices.crisp.CRISP;
+import com.asiimaging.devices.crisp.CRISPTimer;
 import com.asiimaging.ui.Button;
 import com.asiimaging.ui.Panel;
 

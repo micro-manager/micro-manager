@@ -10,7 +10,7 @@ import java.awt.Dimension;
 import java.util.Objects;
 import javax.swing.JLabel;
 
-import com.asiimaging.crisp.device.CRISP;
+import com.asiimaging.devices.crisp.CRISP;
 import com.asiimaging.ui.Panel;
 import net.miginfocom.swing.MigLayout;
 

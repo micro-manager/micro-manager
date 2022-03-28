@@ -8,9 +8,9 @@ package com.asiimaging.crisp.panels;
 
 import com.asiimaging.crisp.data.Defaults;
 import com.asiimaging.crisp.data.Ranges;
-import com.asiimaging.crisp.device.CRISP;
-import com.asiimaging.crisp.device.CRISPSettings;
-import com.asiimaging.crisp.device.CRISPTimer;
+import com.asiimaging.devices.crisp.CRISP;
+import com.asiimaging.devices.crisp.CRISPSettings;
+import com.asiimaging.devices.crisp.CRISPTimer;
 import com.asiimaging.crisp.utils.DialogUtils;
 import com.asiimaging.ui.Button;
 import com.asiimaging.ui.CheckBox;
@@ -126,7 +126,7 @@ public class SpinnerPanel extends Panel {
         final String[] labels = {CRISPSettings.DEFAULT_PROFILE_NAME};
         cmbSelectSettings = new ComboBox(labels, labels[0], 100, 20);
         
-        // increase and decrease  number of software settings
+        // increase and decrease number of software settings
         btnAddNewSettings = new Button("+", 40, 20);
         btnRemoveSettings = new Button("-", 40, 20);
 

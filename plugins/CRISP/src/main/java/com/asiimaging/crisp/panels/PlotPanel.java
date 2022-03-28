@@ -10,13 +10,13 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingWorker;
 
 import com.asiimaging.crisp.CRISPFrame;
 import com.asiimaging.crisp.CRISPPlugin;
-import com.asiimaging.crisp.device.CRISP;
+import com.asiimaging.devices.crisp.CRISPFocus;
+import com.asiimaging.devices.crisp.ControllerType;
 import com.asiimaging.crisp.plot.FocusDataSet;
 import com.asiimaging.crisp.plot.PlotFrame;
 import com.asiimaging.crisp.utils.FileUtils;
@@ -92,7 +92,7 @@ public class PlotPanel extends Panel {
         PlotFrame.createPlotWindow(
             "CRISP Data Plot",
             "Focus Curve",
-            "Position", // (\u00B5m)
+            "Position (\u00B5m)",
             "Error",
             data
         );
@@ -144,7 +144,7 @@ public class PlotPanel extends Panel {
             PlotFrame.createPlotWindow(
                 "CRISP Data Viewer",
                 "Focus Curve",
-                "Position", // (\u00B5m)
+                "Position (\u00B5m)",
                 "Error",
                 data
             );
@@ -160,21 +160,38 @@ public class PlotPanel extends Panel {
      */
     private void getFocusCurve(final boolean isPollingEnabled) {
         final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            
+
+            FocusDataSet data;
+
             @Override
             protected Void doInBackground() throws Exception {
-                frame.getCRISP().getFocusCurve();
+                if (frame.getCRISP().getDeviceType() == ControllerType.TIGER) {
+                    data = CRISPFocus.getFocusCurveData(frame.getCRISP(), frame.getZStage());
+                } else {
+                    frame.getCRISP().getFocusCurve();
+                }
                 return null;
             }
             
             @Override
             protected void done() {
+                if (frame.getCRISP().getDeviceType() == ControllerType.TIGER) {
+                    // create a plot window out of the focus curve data and display it
+                    PlotFrame.createPlotWindow(
+                            "CRISP Data Plot",
+                            "Focus Curve",
+                            "Position (\u00B5m)",
+                            "Error",
+                            data
+                    );
+                } else {
+                    showPlotWindow();
+                }
                 // enable polling if it was on previously
                 if (isPollingEnabled) {
                     frame.getSpinnerPanel().setPollingCheckBox(true);
                 }
                 btnPlot.setEnabled(true);
-                showPlotWindow();
             }
             
         };
