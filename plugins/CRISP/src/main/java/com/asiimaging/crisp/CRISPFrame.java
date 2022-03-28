@@ -205,7 +205,7 @@ public class CRISPFrame extends JFrame {
             "",
             ""
         );
-        //statusPanel.update2();
+        
         // color the panels to make editing the ui easier
         if (DEBUG) {
             leftPanel.setBackground(Color.RED);
