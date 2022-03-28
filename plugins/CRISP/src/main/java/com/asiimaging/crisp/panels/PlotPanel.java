@@ -72,13 +72,6 @@ public class PlotPanel extends Panel {
         add(btnView, "");
         add(lblVersion, "");
     }
-    
-    public void disableFocusCurveButtonTiger() {
-        if (frame.getCRISP().isTiger()) {
-            btnPlot.setEnabled(false);
-            btnPlot.setToolTipText("This feature is not available on Tiger yet.");
-        }
-    }
 
     private void showPlotWindow() {
         // data is now stored in device property strings
@@ -92,7 +85,7 @@ public class PlotPanel extends Panel {
         PlotFrame.createPlotWindow(
             "CRISP Data Plot",
             "Focus Curve",
-            "Position (\u00B5m)",
+            "Position",
             "Error",
             data
         );
@@ -144,7 +137,7 @@ public class PlotPanel extends Panel {
             PlotFrame.createPlotWindow(
                 "CRISP Data Viewer",
                 "Focus Curve",
-                "Position (\u00B5m)",
+                "Position",
                 "Error",
                 data
             );
