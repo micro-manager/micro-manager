@@ -71,7 +71,7 @@ public class PlotFrame extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
     
-    public static PlotFrame createPlotWindow(
+    public static void createPlotWindow(
             final String windowTitle, 
             final String plotTitle, 
             final String xAxisLabel, 
@@ -121,15 +121,14 @@ public class PlotFrame extends JFrame {
         plotFrame.add(plotFrame.panel, "wrap");
         plotFrame.add(plotFrame.btnSaveData, "");
         plotFrame.setVisible(true);
-        return plotFrame;
     }
     
     private void registerEventHandlers() {
         btnSaveData.registerListener(e -> {
             // open a file browser
-            final File file = FileDialogs.openFile(
+            final File file = FileDialogs.save(
                     this,
-                    "Please select the file to open",
+                    "Save the focus curve data...",
                     FOCUS_CURVE_FILE_TYPE
             );
 
@@ -139,7 +138,7 @@ public class PlotFrame extends JFrame {
 
             // save the focus curve data as CSV
             try {
-                FileUtils.saveFile(data.toCSV(), file.toString());
+                FileUtils.saveFile(data.toCSV(), file.toString(), ".csv");
             } catch (IOException ex) {
                 // TODO: log or show the error
                 //DialogUtils.showMessage(btnSaveData, "Failed to save the data.");

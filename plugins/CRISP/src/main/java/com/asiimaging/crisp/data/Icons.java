@@ -13,23 +13,15 @@ import org.micromanager.Studio;
 
 /**
  * A storage class to hold Micro-Manager Icons.
+ *
+ * This is used to replace the default Java window icon with the Micro-Manager window icon.
  */
 public final class Icons {
 
-    private static final URL CANCEL_PATH = Studio.class.getResource("/org/micromanager/icons/cancel.png");
-    private static final URL CAMERA_PATH = Studio.class.getResource("/org/micromanager/icons/camera.png");
-    private static final URL CAMERA_GO_PATH = Studio.class.getResource("/org/micromanager/icons/camera_go.png");
-    private static final URL ARROW_UP_PATH = Studio.class.getResource("/org/micromanager/icons/arrow_up.png");
-    private static final URL ARROW_DOWN_PATH = Studio.class.getResource("/org/micromanager/icons/arrow_down.png");
-    private static final URL ARROW_RIGHT_PATH = Studio.class.getResource("/org/micromanager/icons/arrow_right.png");
+    // resource location
     private static final URL MICROSCOPE_PATH = Studio.class.getResource("/org/micromanager/icons/microscope.gif");
 
-    public static final ImageIcon CANCEL = new ImageIcon(Objects.requireNonNull(CANCEL_PATH));
-    public static final ImageIcon CAMERA = new ImageIcon(Objects.requireNonNull(CAMERA_PATH));
-    public static final ImageIcon CAMERA_GO = new ImageIcon(Objects.requireNonNull(CAMERA_GO_PATH));
-    public static final ImageIcon ARROW_UP = new ImageIcon(Objects.requireNonNull(ARROW_UP_PATH));
-    public static final ImageIcon ARROW_DOWN = new ImageIcon(Objects.requireNonNull(ARROW_DOWN_PATH));
-    public static final ImageIcon ARROW_RIGHT = new ImageIcon(Objects.requireNonNull(ARROW_RIGHT_PATH));
+    // convert to ImageIcon
     public static final ImageIcon MICROSCOPE = new ImageIcon(Objects.requireNonNull(MICROSCOPE_PATH));
 
 }
