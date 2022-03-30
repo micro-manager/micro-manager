@@ -119,13 +119,13 @@ public final class AboutDlg extends JDialog {
       versionInfo_.setBounds(5, 49, 368, 66);
       getContentPane().add(versionInfo_);
 
-      JTextArea homeHttphcs100ximagingcomBugTextArea = new JTextArea();
-      homeHttphcs100ximagingcomBugTextArea.setEditable(false);
-      homeHttphcs100ximagingcomBugTextArea.setBorder(new LineBorder(Color.black, 1, false));
-      homeHttphcs100ximagingcomBugTextArea.setFont(new Font("Courier New", Font.PLAIN, 12));
-      homeHttphcs100ximagingcomBugTextArea.setText(" home:               http://www.micro-manager.org\r\n bug reports:        bugs@micro-manager.org\r\n feature requests:   features@micro-manager.org\r\n");
-      homeHttphcs100ximagingcomBugTextArea.setBounds(5, 219, 368, 47);
-      getContentPane().add(homeHttphcs100ximagingcomBugTextArea);
+      JTextArea contactInfoTextArea = new JTextArea();
+      contactInfoTextArea.setEditable(false);
+      contactInfoTextArea.setBorder(new LineBorder(Color.black, 1, false));
+      contactInfoTextArea.setFont(new Font("Courier New", Font.PLAIN, 12));
+      contactInfoTextArea.setText(" Website & Docs: https://micro-manager.org\n Support:        https://forum.image.sc\n                 (tag micro-manager)");
+      contactInfoTextArea.setBounds(5, 219, 368, 47);
+      getContentPane().add(contactInfoTextArea);
 
       final JLabel label = new JLabel();
       label.setIcon(new ImageIcon(
