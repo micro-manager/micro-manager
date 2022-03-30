@@ -521,6 +521,7 @@ public final class MultipageTiffWriter {
       long frameSize = singleImageBytes * numChannels_ * numSlices_
                        + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL 
                        + extraPadding;
+      frameSize += omeMDLength;
       if (frameSize > MAX_FILE_SIZE) {
           splitByFrame = false;
       }
