@@ -697,13 +697,13 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       double x;
       double y;
       if (cols > 1) {
-         x = -cols * ySpacing_ / 2.0 + ySpacing_ * col + ySpacing_ / 2.0;
+         x = -cols * xSpacing_ / 2.0 + xSpacing_ * col + xSpacing_ / 2.0;
       } else {
          x = 0.0;
       }
 
       if (rows > 1) {
-         y = -rows * xSpacing_ / 2.0 + xSpacing_ * row + xSpacing_ / 2.0;
+         y = -rows * ySpacing_ / 2.0 + ySpacing_ * row + ySpacing_ / 2.0;
       } else {
          y = 0.0;
       }
