@@ -41,6 +41,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -117,7 +118,9 @@ public final class MultipageTiffWriter {
    private long indexMapFirstEntry_;
    private int bufferPosition_;
    private final int numChannels_;
+   private int numSlices_;
    private int numFrames_;
+   private List<String> orderedAxes_;
    private final HashMap<Coords, Long> coordsToOffset_;
    private long nextIFDOffsetLocation_ = -1;
    private final boolean rgb_;
@@ -157,6 +160,8 @@ public final class MultipageTiffWriter {
       rgb_ = repImage.getNumComponents() > 1;
       numChannels_ = masterStorage_.getIntendedSize(Coords.CHANNEL);
       numFrames_ = masterStorage_.getIntendedSize(Coords.TIME_POINT);
+      numSlices_ = masterStorage_.getIntendedSize(Coords.Z_SLICE);
+      orderedAxes_ = masterStorage_.getSummaryMetadata().getOrderedAxes();
       imageWidth_ = repImage.getWidth();
       imageHeight_ = repImage.getHeight();
       byteDepth_ = repImage.getBytesPerPixel() / repImage.getNumComponents();
@@ -196,7 +201,6 @@ public final class MultipageTiffWriter {
             firstImage);
 
       //This is an overestimate of file size because file gets truncated at end
-      final int numSlices_ = masterStorage_.getIntendedSize(Coords.Z_SLICE);
       long fileSize = Math.min(MAX_FILE_SIZE,
             NonPropertyMapJSONFormats.summaryMetadata().toJSON(summaryPmap).length()
                   + 2000000
@@ -491,14 +495,51 @@ public final class MultipageTiffWriter {
     * @return true if there is enough space, false otherwise
     */
    public boolean hasSpaceToWrite(Image img, int omeMDLength) {
+      boolean splitByFrame = true;
       PropertyMap mdPmap = ((DefaultMetadata) img.getMetadata()).toPropertyMap();
       int mdLength = NonPropertyMapJSONFormats.metadata().toJSON(mdPmap).length();
       int ifdsize = ENTRIES_PER_IFD * 12 + 4 + 16;
+      int channelsLeft = numChannels_ - img.getCoords().getC();
+      int slicesLeft = numSlices_ - img.getCoords().getZ();
+      int axis1Size;
+      int axis1ImagesLeft; 
+      int axis2ImagesLeft;
+      if (orderedAxes_.get(0).equals("z") ) {
+          axis1Size = numSlices_;
+          axis1ImagesLeft = slicesLeft;
+          axis2ImagesLeft = channelsLeft;
+      } else {
+          // Defaults to channels-first order in the event AxisOrder is not set
+          axis1Size = numChannels_;
+          axis1ImagesLeft = channelsLeft;
+          axis2ImagesLeft = slicesLeft;
+      }
       // 5 MB extra padding...just to be safe...
       int extraPadding = 5000000; 
-      long size = mdLength + ifdsize + bytesPerImagePixels_ + SPACE_FOR_COMMENTS
-            + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
-      size += omeMDLength;
+      long singleImageBytes = ifdsize + mdLength + bytesPerImagePixels_;
+      // Check if a single frame will fit in a file
+      long frameSize = singleImageBytes * numChannels_ * numSlices_
+                       + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL 
+                       + extraPadding;
+      frameSize += omeMDLength;
+      if (frameSize > MAX_FILE_SIZE) {
+          splitByFrame = false;
+      }
+      long size;
+      // If everything went ok, try to split "intelligently", keeping frames together
+      if (splitByFrame) {
+          size = singleImageBytes * axis1ImagesLeft 
+                 + singleImageBytes * axis1Size * axis2ImagesLeft 
+                 + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL 
+                 + extraPadding + filePosition_;
+          size += omeMDLength;
+      // Otherwise, default back to the original behavior
+      } else {
+          size = singleImageBytes + SPACE_FOR_COMMENTS
+                 + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL 
+                 + extraPadding + filePosition_;
+          size += omeMDLength;
+      }
       
       return size < MAX_FILE_SIZE;
    }
