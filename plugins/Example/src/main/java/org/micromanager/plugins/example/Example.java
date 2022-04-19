@@ -32,6 +32,7 @@
 
 package org.micromanager.plugins.example;
 
+import microscenery.network.VolumeReceiver;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 

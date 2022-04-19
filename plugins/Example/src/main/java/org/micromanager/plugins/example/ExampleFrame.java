@@ -31,6 +31,8 @@ import java.util.List;
 import javax.swing.*;
 
 
+import microscenery.MMConnection;
+import microscenery.MMVolumeSender;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Image;
@@ -51,6 +53,9 @@ public class ExampleFrame extends JFrame {
    private JTextField userText_;
    private final JLabel imageInfoLabel_;
    private final JLabel exposureTimeLabel_;
+   private MMVolumeSender sender;
+
+
 
    public ExampleFrame(Studio studio) {
       super("Example Plugin GUI");
@@ -68,18 +73,17 @@ public class ExampleFrame extends JFrame {
       userText_.setText("Something happened!");
       super.add(userText_);
 
-      JButton alertButton = new JButton("Alert me!");
-      // Clicking on this button will invoke the ActionListener, which in turn
-      // will show a text alert to the user.
-      alertButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // Use the contents of userText_ as the text.
-            studio_.alerts().postAlert("Example Alert!",
-               ExampleFrame.class, userText_.getText());
-         }
+      JButton sendButton = new JButton("Start Sending");
+      sendButton.addActionListener(e -> {
+         sender = new MMVolumeSender(studio_.core());
+         MMConnection con = sender.getMmConnection();
+         userText_.setText(con.getWidth() +"x" + con.getHeight() +"x" + con.getSlices() );
       });
-      super.add(alertButton, "wrap");
+      super.add(sendButton, "wrap");
+
+      JButton stopButton = new JButton("Stop Sending");
+      stopButton.addActionListener(e -> sender.stop());
+      super.add(stopButton, "wrap");
 
       // Snap an image, show the image in the Snap/Live view, and show some
       // stats on the image in our frame.
