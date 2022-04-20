@@ -171,6 +171,11 @@ public final class Device {
          for (int k = 0; k < values.size(); k++) {
             properties_[j].allowed[k] = values.get(k);
          }
+         properties_[j].hasRange = core.hasPropertyLimits(name_, propNames.get(j));
+         if (properties_[j].hasRange) {
+            properties_[j].lowerLimit = core.getPropertyLowerLimit(name_, propNames.get(j));
+            properties_[j].upperLimit = core.getPropertyUpperLimit(name_, propNames.get(j));
+         }
          properties_[j].sort();
       }
       
