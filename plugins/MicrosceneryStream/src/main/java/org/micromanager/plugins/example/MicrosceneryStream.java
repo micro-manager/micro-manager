@@ -75,7 +75,7 @@ public class MicrosceneryStream implements SciJavaPlugin, MenuPlugin {
     */
    @Override
    public String getSubMenu() {
-      return "Developer Tools";
+      return "Streaming";
    }
 
    /**
@@ -83,7 +83,7 @@ public class MicrosceneryStream implements SciJavaPlugin, MenuPlugin {
     */
    @Override
    public String getName() {
-      return "Example plugin";
+      return "microscenery";
    }
 
    @Override
@@ -93,7 +93,7 @@ public class MicrosceneryStream implements SciJavaPlugin, MenuPlugin {
 
    @Override
    public String getVersion() {
-      return "2.0";
+      return "0.1";
    }
 
    @Override

@@ -50,79 +50,88 @@ import org.micromanager.internal.utils.WindowPositioning;
 public class MicrosceneryStreamFrame extends JFrame {
 
    private Studio studio_;
-   private JTextField userText_;
-   private final JLabel imageInfoLabel_;
-   private final JLabel exposureTimeLabel_;
+   private JTextField portText_;
+   private JTextField slicesText_;
+   private JLabel statusLabel_;
+//   private final JLabel imageInfoLabel_;
+//   private final JLabel exposureTimeLabel_;
    private MMVolumeSender sender;
 
 
 
    public MicrosceneryStreamFrame(Studio studio) {
-      super("Example Plugin GUI");
+      super("Microscenery Stream Plugin");
       studio_ = studio;
 
-      super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
+      super.setLayout(new MigLayout());//"fill, insets 2, gap 2, flowx"));
 
-      JLabel title = new JLabel("I'm an example plugin!");
-      title.setFont(new Font("Arial", Font.BOLD, 14));
-      super.add(title, "span, alignx center, wrap");
+      super.add(new JLabel("Port: "));
+      portText_ = new JTextField(10);
+      portText_.setText("4000");
+      super.add(portText_,"wrap");
 
-      // Create a text field for the user to customize their alerts.
-      super.add(new JLabel("Alert text: "));
-      userText_ = new JTextField(30);
-      userText_.setText("Something happened!");
-      super.add(userText_);
+      super.add(new JLabel("Slices: "));
+      slicesText_ = new JTextField(10);
+      slicesText_.setText("100");
+      super.add(slicesText_,"wrap");
+
+      super.add(new JLabel("Status: "));
+      statusLabel_ = new JLabel("uninitalized");
+      super.add(statusLabel_,"wrap");
 
       JButton sendButton = new JButton("Start Sending");
       sendButton.addActionListener(e -> {
          sender = new MMVolumeSender(studio_.core());
-         MMConnection con = sender.getMmConnection();
-         userText_.setText(con.getWidth() +"x" + con.getHeight() +"x" + con.getSlices() );
+         //MMConnection con = sender.getMmConnection();
+         statusLabel_.setText("started");
       });
-      super.add(sendButton, "wrap");
+      super.add(sendButton);
 
       JButton stopButton = new JButton("Stop Sending");
-      stopButton.addActionListener(e -> sender.stop());
+      stopButton.addActionListener(e -> {
+         sender.stop();
+         statusLabel_.setText("stopped");
+      });
       super.add(stopButton, "wrap");
 
-      // Snap an image, show the image in the Snap/Live view, and show some
-      // stats on the image in our frame.
-      imageInfoLabel_ = new JLabel();
-      super.add(imageInfoLabel_, "growx, split, span");
-      JButton snapButton = new JButton("Snap Image");
-      snapButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // Multiple images are returned only if there are multiple
-            // cameras. We only care about the first image.
-            List<Image> images = studio_.live().snap(true);
-            Image firstImage = images.get(0);
-            showImageInfo(firstImage);
-         }
-      });
-      super.add(snapButton, "wrap");
-
-      exposureTimeLabel_ = new JLabel("");
-      super.add(exposureTimeLabel_, "split, span, growx");
-
-      // Run an acquisition using the current MDA parameters.
-      JButton acquireButton = new JButton("Run Acquisition");
-      acquireButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // All GUI event handlers are invoked on the EDT (Event Dispatch
-            // Thread). Acquisitions are not allowed to be started from the
-            // EDT. Therefore we must make a new thread to run this.
-            Thread acqThread = new Thread(new Runnable() {
-               @Override
-               public void run() {
-                  studio_.acquisitions().runAcquisition();
-               }
-            });
-            acqThread.start();
-         }
-      });
-      super.add(acquireButton, "wrap");
+//      // Snap an image, show the image in the Snap/Live view, and show some
+//      // stats on the image in our frame.
+//      imageInfoLabel_ = new JLabel();
+//      super.add(imageInfoLabel_, "growx, split, span");
+//      JButton snapButton = new JButton("Snap Image");
+//      snapButton.addActionListener(new ActionListener() {
+//         @Override
+//         public void actionPerformed(ActionEvent e) {
+//            // Multiple images are returned only if there are multiple
+//            // cameras. We only care about the first image.
+//            List<Image> images = studio_.live().snap(true);
+//            Image firstImage = images.get(0);
+//            showImageInfo(firstImage);
+//         }
+//      });
+//      super.add(snapButton, "wrap");
+//
+//      exposureTimeLabel_ = new JLabel("");
+//      super.add(exposureTimeLabel_, "split, span, growx");
+//
+//      // Run an acquisition using the current MDA parameters.
+//      JButton acquireButton = new JButton("Run Acquisition");
+//      acquireButton.addActionListener(new ActionListener() {
+//         @Override
+//         public void actionPerformed(ActionEvent e) {
+//            // All GUI event handlers are invoked on the EDT (Event Dispatch
+//            // Thread). Acquisitions are not allowed to be started from the
+//            // EDT. Therefore we must make a new thread to run this.
+//            Thread acqThread = new Thread(new Runnable() {
+//               @Override
+//               public void run() {
+//                  studio_.acquisitions().runAcquisition();
+//               }
+//            });
+//            acqThread.start();
+//         }
+//      });
+//      super.add(acquireButton, "wrap");
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
               getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -141,27 +150,27 @@ public class MicrosceneryStreamFrame extends JFrame {
       studio_.events().registerForEvents(this);
    }
 
-   /**
-    * To be invoked, this method must be public and take a single parameter
-    * which is the type of the event we care about.
-    * @param event
-    */
-   @Subscribe
-   public void onExposureChanged(ExposureChangedEvent event) {
-      exposureTimeLabel_.setText(String.format("Camera %s exposure time set to %.2fms",
-               event.getCameraName(), event.getNewExposureTime()));
-   }
-
-   /**
-    * Display some information on the data in the provided image.
-    */
-   private void showImageInfo(Image image) {
-      // See DisplayManager for information on these parameters.
-      //HistogramData data = studio_.displays().calculateHistogram(
-      //   image, 0, 16, 16, 0, true);
-      imageInfoLabel_.setText(String.format(
-            "Image size: %dx%d", // min: %d, max: %d, mean: %d, std: %.2f",
-            image.getWidth(), image.getHeight() ) ); //, data.getMinVal(),
-            //data.getMaxVal(), data.getMean(), data.getStdDev()));
-   }
+//   /**
+//    * To be invoked, this method must be public and take a single parameter
+//    * which is the type of the event we care about.
+//    * @param event
+//    */
+//   @Subscribe
+//   public void onExposureChanged(ExposureChangedEvent event) {
+//      exposureTimeLabel_.setText(String.format("Camera %s exposure time set to %.2fms",
+//               event.getCameraName(), event.getNewExposureTime()));
+//   }
+//
+//   /**
+//    * Display some information on the data in the provided image.
+//    */
+//   private void showImageInfo(Image image) {
+//      // See DisplayManager for information on these parameters.
+//      //HistogramData data = studio_.displays().calculateHistogram(
+//      //   image, 0, 16, 16, 0, true);
+//      imageInfoLabel_.setText(String.format(
+//            "Image size: %dx%d", // min: %d, max: %d, mean: %d, std: %.2f",
+//            image.getWidth(), image.getHeight() ) ); //, data.getMinVal(),
+//            //data.getMaxVal(), data.getMean(), data.getStdDev()));
+//   }
 }
