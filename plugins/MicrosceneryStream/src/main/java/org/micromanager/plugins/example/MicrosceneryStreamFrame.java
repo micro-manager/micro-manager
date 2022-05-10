@@ -20,23 +20,15 @@
  */
 package org.micromanager.plugins.example;
 
-import com.google.common.eventbus.Subscribe;
-
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.Font;
-import java.util.List;
 
 import javax.swing.*;
 
 
-import microscenery.MMConnection;
+import microscenery.ControlledVolumeStreamServer;
 import microscenery.MMVolumeSender;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.data.Image;
-import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
 
@@ -46,29 +38,26 @@ import org.micromanager.internal.utils.WindowPositioning;
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
 
-
 public class MicrosceneryStreamFrame extends JFrame {
 
    private Studio studio_;
-   private JTextField portText_;
    private JTextField slicesText_;
    private JLabel statusLabel_;
 //   private final JLabel imageInfoLabel_;
 //   private final JLabel exposureTimeLabel_;
-   private MMVolumeSender sender;
+   private ControlledVolumeStreamServer msServer;
 
 
 
    public MicrosceneryStreamFrame(Studio studio) {
       super("Microscenery Stream Plugin");
       studio_ = studio;
+      msServer = new ControlledVolumeStreamServer(studio_.core());
 
       super.setLayout(new MigLayout());//"fill, insets 2, gap 2, flowx"));
 
       super.add(new JLabel("Port: "));
-      portText_ = new JTextField(10);
-      portText_.setText("4000");
-      super.add(portText_,"wrap");
+      super.add(new JLabel(msServer.getVolumeSender().getBasePort() +""),"wrap");
 
       super.add(new JLabel("Slices: "));
       slicesText_ = new JTextField(10);
@@ -81,7 +70,7 @@ public class MicrosceneryStreamFrame extends JFrame {
 
       JButton sendButton = new JButton("Start Sending");
       sendButton.addActionListener(e -> {
-         sender = new MMVolumeSender(studio_.core());
+         msServer.start();
          //MMConnection con = sender.getMmConnection();
          statusLabel_.setText("started");
       });
@@ -89,7 +78,7 @@ public class MicrosceneryStreamFrame extends JFrame {
 
       JButton stopButton = new JButton("Stop Sending");
       stopButton.addActionListener(e -> {
-         sender.stop();
+         msServer.pause();
          statusLabel_.setText("stopped");
       });
       super.add(stopButton, "wrap");
