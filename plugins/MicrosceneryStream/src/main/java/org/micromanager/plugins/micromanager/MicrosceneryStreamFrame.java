@@ -18,15 +18,16 @@
  * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
-package org.micromanager.plugins.example;
+package org.micromanager.plugins.micromanager;
 
 import java.awt.Toolkit;
 
 import javax.swing.*;
 
 
+import kotlin.Unit;
 import microscenery.ControlledVolumeStreamServer;
-import microscenery.MMVolumeSender;
+import microscenery.network.ServerSignal;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
@@ -59,27 +60,34 @@ public class MicrosceneryStreamFrame extends JFrame {
       super.add(new JLabel("Port: "));
       super.add(new JLabel(msServer.getVolumeSender().getBasePort() +""),"wrap");
 
+      super.add(new JLabel("Status: "));
+      statusLabel_ = new JLabel("uninitalized");
+      super.add(statusLabel_, "wrap");
+      msServer.getStatusChange().add(status -> {
+         updateStatusLabel(status);
+         return Unit.INSTANCE;
+      });
+
       super.add(new JLabel("Slices: "));
       slicesText_ = new JTextField(10);
       slicesText_.setText("100");
       super.add(slicesText_,"wrap");
 
-      super.add(new JLabel("Status: "));
-      statusLabel_ = new JLabel("uninitalized");
-      super.add(statusLabel_,"wrap");
+
+      JButton updateButton = new JButton("Update Params");
+      updateButton.addActionListener(e -> {
+      });
+      super.add(updateButton);
 
       JButton sendButton = new JButton("Start Sending");
       sendButton.addActionListener(e -> {
          msServer.start();
-         //MMConnection con = sender.getMmConnection();
-         statusLabel_.setText("started");
       });
       super.add(sendButton);
 
       JButton stopButton = new JButton("Stop Sending");
       stopButton.addActionListener(e -> {
          msServer.pause();
-         statusLabel_.setText("stopped");
       });
       super.add(stopButton, "wrap");
 
@@ -162,4 +170,18 @@ public class MicrosceneryStreamFrame extends JFrame {
 //            image.getWidth(), image.getHeight() ) ); //, data.getMinVal(),
 //            //data.getMaxVal(), data.getMean(), data.getStdDev()));
 //   }
+
+   private void updateStatusLabel(ServerSignal.Status status){
+      switch (status.getState()){
+         case Paused:
+            statusLabel_.setText("Paused");
+            break;
+         case Imaging:
+            statusLabel_.setText("Imaging");
+            break;
+         case ShuttingDown:
+            statusLabel_.setText("ShuttingDown");
+            break;
+      }
+   }
 }

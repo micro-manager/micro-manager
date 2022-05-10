@@ -30,7 +30,7 @@
  */
 
 
-package org.micromanager.plugins.example;
+package org.micromanager.plugins.micromanager;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
@@ -88,7 +88,7 @@ public class MicrosceneryStream implements SciJavaPlugin, MenuPlugin {
 
    @Override
    public String getHelpText() {
-      return "Help text that is displayed in certain contexts to tell the user what the plugin does.";
+      return "Stream data to microscenery";
    }
 
    @Override
@@ -98,6 +98,6 @@ public class MicrosceneryStream implements SciJavaPlugin, MenuPlugin {
 
    @Override
    public String getCopyright() {
-      return "University of California, 2012-2015";
+      return "Jan";
    }
 }
