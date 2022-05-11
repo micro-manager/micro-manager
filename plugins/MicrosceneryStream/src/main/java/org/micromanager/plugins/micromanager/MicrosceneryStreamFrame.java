@@ -21,10 +21,12 @@
 package org.micromanager.plugins.micromanager;
 
 import java.awt.Toolkit;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 
 
+import graphics.scenery.Settings;
 import kotlin.Unit;
 import microscenery.ControlledVolumeStreamServer;
 import microscenery.network.ServerSignal;
@@ -41,43 +43,93 @@ import org.micromanager.internal.utils.WindowPositioning;
 
 public class MicrosceneryStreamFrame extends JFrame {
 
-   private Studio studio_;
-   private JTextField slicesText_;
-   private JLabel statusLabel_;
-//   private final JLabel imageInfoLabel_;
-//   private final JLabel exposureTimeLabel_;
-   private ControlledVolumeStreamServer msServer;
+   private final JLabel statusLabel_;
+   private final JLabel portLabel_;
 
+   private final JTextField minZText_;
+   private final JTextField maxZText_;
+   private final JTextField stepsText_;
+   private final JLabel stepSizeLabel_;
+
+   //   private final JLabel imageInfoLabel_;
+//   private final JLabel exposureTimeLabel_;
+   private final ControlledVolumeStreamServer msServer;
+   private Settings msSettings;
 
 
    public MicrosceneryStreamFrame(Studio studio) {
       super("Microscenery Stream Plugin");
-      studio_ = studio;
-      msServer = new ControlledVolumeStreamServer(studio_.core());
+      msServer = new ControlledVolumeStreamServer(studio.core());
+      msSettings = msServer.getSettings();
 
       super.setLayout(new MigLayout());//"fill, insets 2, gap 2, flowx"));
 
-      super.add(new JLabel("Port: "));
-      super.add(new JLabel(msServer.getVolumeSender().getBasePort() +""),"wrap");
+      super.add(new JLabel("Ports: "));
+      portLabel_ = new JLabel(msServer.getBasePort() +""
+              + msServer.getVolumeSender().usedPorts().stream().map(p -> " ,"+p).collect(Collectors.joining()));
+      super.add(portLabel_);
+
+      super.add(new JLabel("Clients: "));
+      JLabel connectionsLabel_ = new JLabel("0");
+      super.add(connectionsLabel_,"wrap");
+
+
+      super.add(new JLabel("Min Z: "));
+      minZText_ = new JTextField(10);
+      minZText_.setText("0");
+      super.add(minZText_,"");
+
+      super.add(new JLabel("Max Z: "));
+      maxZText_ = new JTextField(10);
+      maxZText_.setText("100");
+      super.add(maxZText_,"wrap");
+
+
+      super.add(new JLabel("Steps: "));
+      stepsText_ = new JTextField(10);
+      stepsText_.setText("100");
+      super.add(stepsText_,"");
+
+      super.add(new JLabel("Step size: "));
+      stepSizeLabel_ = new JLabel("0");
+      super.add(stepSizeLabel_,"wrap");
+
+      { // Z settings
+         Double minZ = msSettings.get("MMConnection.minZ", 0.0f).doubleValue();
+         Double maxZ = msSettings.get("MMConnection.maxZ", 10.0f).doubleValue();
+         Integer steps = msSettings.get("MMConnection.slices", 10);
+         minZText_.setText(minZ.toString());
+         maxZText_.setText(maxZ.toString());
+         stepsText_.setText(steps.toString());
+         stepSizeLabel_.setText(((maxZ - minZ) / steps) + "");
+      }
 
       super.add(new JLabel("Status: "));
       statusLabel_ = new JLabel("uninitalized");
       super.add(statusLabel_, "wrap");
-      msServer.getStatusChange().add(status -> {
-         updateStatusLabel(status);
-         return Unit.INSTANCE;
+
+
+      JButton applyButton = new JButton("Apply Params");
+      applyButton.addActionListener(e -> {
+         try {
+            Double minZ = Double.parseDouble(minZText_.getText());
+            Double maxZ = Double.parseDouble(maxZText_.getText());
+            int steps = Integer.parseInt(stepsText_.getText());
+            double stepSize = (maxZ - minZ) / steps;
+            if (stepSize <= 0){
+               JOptionPane.showMessageDialog(null, "Max Z has to be lager than Min Z");
+               return;
+            }
+            stepSizeLabel_.setText(stepSize + "");
+
+            msSettings.set("MMConnection.minZ", minZ.floatValue());
+            msSettings.set("MMConnection.maxZ", maxZ.floatValue());
+            msSettings.set("MMConnection.slices", steps);
+         } catch (NumberFormatException exc){
+            JOptionPane.showMessageDialog(null, "Values could not be parsed. Max and Min Z need to be a floating point number and steps an integer. ");
+         }
       });
-
-      super.add(new JLabel("Slices: "));
-      slicesText_ = new JTextField(10);
-      slicesText_.setText("100");
-      super.add(slicesText_,"wrap");
-
-
-      JButton updateButton = new JButton("Update Params");
-      updateButton.addActionListener(e -> {
-      });
-      super.add(updateButton);
+      super.add(applyButton);
 
       JButton sendButton = new JButton("Start Sending");
       sendButton.addActionListener(e -> {
@@ -137,6 +189,13 @@ public class MicrosceneryStreamFrame extends JFrame {
 
       super.pack();
 
+
+      updateLabels(msServer.getStatus());
+      msServer.getStatusChange().add(status -> {
+         updateLabels(status);
+         return Unit.INSTANCE;
+      });
+
       // Registering this class for events means that its event handlers
       // (that is, methods with the @Subscribe annotation) will be invoked when
       // an event occurs. You need to call the right registerForEvents() method
@@ -144,7 +203,7 @@ public class MicrosceneryStreamFrame extends JFrame {
       // there's also Datastore.registerForEvents() for events specific to one
       // Datastore, and DisplayWindow.registerForEvents() for events specific
       // to one image display window.
-      studio_.events().registerForEvents(this);
+      studio.events().registerForEvents(this);
    }
 
 //   /**
@@ -171,7 +230,16 @@ public class MicrosceneryStreamFrame extends JFrame {
 //            //data.getMaxVal(), data.getMean(), data.getStdDev()));
 //   }
 
-   private void updateStatusLabel(ServerSignal.Status status){
+   private void updateLabels(ServerSignal.Status status){
+
+      // ports label
+      portLabel_.setText(msServer.getBasePort() +""
+              + status.getDataPorts().stream().map(p -> " ,"+p).collect(Collectors.joining()));
+
+      // connections label
+      stepSizeLabel_.setText(status.getConnectedClients() +"");
+
+      // status label
       switch (status.getState()){
          case Paused:
             statusLabel_.setText("Paused");
