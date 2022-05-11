@@ -1,3 +1,0 @@
-<project name="Example" default="jar">
-	<import file="../javapluginbuild.xml"/>
-</project>
