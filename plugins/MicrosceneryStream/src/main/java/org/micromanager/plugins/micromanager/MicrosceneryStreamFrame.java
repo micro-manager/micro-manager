@@ -32,6 +32,7 @@ import microscenery.ControlledVolumeStreamServer;
 import microscenery.network.ServerSignal;
 import net.miginfocom.swing.MigLayout;
 
+import org.joml.Vector3i;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
 
@@ -45,16 +46,18 @@ public class MicrosceneryStreamFrame extends JFrame {
 
    private final JLabel statusLabel_;
    private final JLabel portLabel_;
+   private final JLabel connectionsLabel_;
 
    private final JTextField minZText_;
    private final JTextField maxZText_;
    private final JTextField stepsText_;
    private final JLabel stepSizeLabel_;
+   private final JLabel dimensionsLabel_;
 
    //   private final JLabel imageInfoLabel_;
 //   private final JLabel exposureTimeLabel_;
    private final ControlledVolumeStreamServer msServer;
-   private Settings msSettings;
+   private final Settings msSettings;
 
 
    public MicrosceneryStreamFrame(Studio studio) {
@@ -70,7 +73,7 @@ public class MicrosceneryStreamFrame extends JFrame {
       super.add(portLabel_);
 
       super.add(new JLabel("Clients: "));
-      JLabel connectionsLabel_ = new JLabel("0");
+      connectionsLabel_ = new JLabel("0");
       super.add(connectionsLabel_,"wrap");
 
 
@@ -106,7 +109,11 @@ public class MicrosceneryStreamFrame extends JFrame {
 
       super.add(new JLabel("Status: "));
       statusLabel_ = new JLabel("uninitalized");
-      super.add(statusLabel_, "wrap");
+      super.add(statusLabel_, "");
+
+      super.add(new JLabel("Stack dimensions: "));
+      dimensionsLabel_ = new JLabel("uninitalized");
+      super.add(dimensionsLabel_, "wrap");
 
 
       JButton applyButton = new JButton("Apply Params");
@@ -131,13 +138,13 @@ public class MicrosceneryStreamFrame extends JFrame {
       });
       super.add(applyButton);
 
-      JButton sendButton = new JButton("Start Sending");
+      JButton sendButton = new JButton("Start Imaging");
       sendButton.addActionListener(e -> {
          msServer.start();
       });
       super.add(sendButton);
 
-      JButton stopButton = new JButton("Stop Sending");
+      JButton stopButton = new JButton("Stop Imaging");
       stopButton.addActionListener(e -> {
          msServer.pause();
       });
@@ -237,7 +244,7 @@ public class MicrosceneryStreamFrame extends JFrame {
               + status.getDataPorts().stream().map(p -> " ,"+p).collect(Collectors.joining()));
 
       // connections label
-      stepSizeLabel_.setText(status.getConnectedClients() +"");
+      connectionsLabel_.setText(status.getConnectedClients() +"");
 
       // status label
       switch (status.getState()){
@@ -251,5 +258,9 @@ public class MicrosceneryStreamFrame extends JFrame {
             statusLabel_.setText("ShuttingDown");
             break;
       }
+
+      // dimensions label
+      Vector3i d = status.getImageSize();
+      dimensionsLabel_.setText(d.x + "x" + d.y + "x" +d.z);
    }
 }
