@@ -21,6 +21,8 @@
 package org.micromanager.plugins.micromanager;
 
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
@@ -53,6 +55,7 @@ public class MicrosceneryStreamFrame extends JFrame {
    private final JTextField stepsText_;
    private final JLabel stepSizeLabel_;
    private final JLabel dimensionsLabel_;
+   private final JLabel timesLabel;
 
    //   private final JLabel imageInfoLabel_;
 //   private final JLabel exposureTimeLabel_;
@@ -113,11 +116,21 @@ public class MicrosceneryStreamFrame extends JFrame {
 
       super.add(new JLabel("Stack dimensions: "));
       dimensionsLabel_ = new JLabel("uninitalized");
-      super.add(dimensionsLabel_, "wrap");
+      super.add(dimensionsLabel_, "");
+
+      super.add(new JLabel("Acq time: "));
+      timesLabel = new JLabel("uninitalized");
+      super.add(timesLabel, "wrap");
+      final Timer timer = new Timer(500, null);
+      ActionListener listener = e -> timesLabel.setText("c:"+msServer.getMmConnection().getMeancopyTime()
+              +" s:"+msServer.getMmConnection().getMeanSnapTime() );
+      timer.addActionListener(listener);
+      timer.start();
 
 
       JButton applyButton = new JButton("Apply Params");
       applyButton.addActionListener(e -> {
+
          try {
             Double minZ = Double.parseDouble(minZText_.getText());
             Double maxZ = Double.parseDouble(maxZText_.getText());
@@ -139,15 +152,11 @@ public class MicrosceneryStreamFrame extends JFrame {
       super.add(applyButton);
 
       JButton sendButton = new JButton("Start Imaging");
-      sendButton.addActionListener(e -> {
-         msServer.start();
-      });
+      sendButton.addActionListener(e -> msServer.start());
       super.add(sendButton);
 
       JButton stopButton = new JButton("Stop Imaging");
-      stopButton.addActionListener(e -> {
-         msServer.pause();
-      });
+      stopButton.addActionListener(e -> msServer.pause());
       super.add(stopButton, "wrap");
 
 //      // Snap an image, show the image in the Snap/Live view, and show some

@@ -10,5 +10,7 @@ For orginal readme see parent repo.
 - copy microscenerys deprendencies from the '/lib' folder into '\dependencies\artifacts\compile' and '..\Micro-Manager-2.0gamma\plugins\Micro-Manager'
 - run 'ant jar'
 - copy the content from '\build\Java\plugins' to '..\Micro-Manager-2.0gamma\plugins\Micro-Manager' or the actual mmplugin folder.
+- remove the old kryo version, mm brings
 
 - check for logs in '..\Micro-Manager-2.0gamma\CoreLogs'
+
