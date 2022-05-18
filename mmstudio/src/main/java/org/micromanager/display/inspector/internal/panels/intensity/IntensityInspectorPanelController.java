@@ -281,6 +281,7 @@ public class IntensityInspectorPanelController
          if (viewer_ != null) {
             ChannelIntensityController chanController
                   = ChannelIntensityController.create(viewer_, i);
+            chanController.setHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected());
             channelControllers_.add(chanController);
             channelHistogramsPanel_.add(chanController.getChannelPanel(),
                   new CC().growY());
