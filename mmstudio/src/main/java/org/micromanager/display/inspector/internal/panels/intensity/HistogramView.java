@@ -728,7 +728,7 @@ public final class HistogramView extends JPanel {
       Graphics2D g2d = (Graphics2D) g.create();
       g2d.setColor(OVERLAY_COLOR);
       g2d.setFont(g.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
-      FontMetrics metrics = g.getFontMetrics();
+      FontMetrics metrics = g2d.getFontMetrics();
       g2d.drawString(text, graphTopRight.x - metrics.stringWidth(text) - 3,
             graphTopRight.y + metrics.getAscent());
    }
