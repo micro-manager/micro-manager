@@ -22,6 +22,7 @@ import java.util.Arrays;
  * @author Mark A. Tsuchida
  */
 public final class IntegerComponentStats {
+   private final Integer bitDepth_;
    private final long[] histogram_;
    private final int binWidthPowerOf2_;
    private final long pixelCount_;
@@ -33,6 +34,7 @@ public final class IntegerComponentStats {
    private final transient long[] cumulativeDistrib_;
 
    public static class Builder {
+      private Integer bitDepth_;
       private long[] histogram_;
       private int binWidthPowerOf2_;
       private long pixelCount_;
@@ -43,6 +45,15 @@ public final class IntegerComponentStats {
       private long sumOfSquares_;
 
       private Builder() {
+      }
+
+      public Builder bitDepth(Integer depth) {
+         Preconditions.checkArgument(depth == null || depth >= 0);
+         if (depth == 0) {
+            depth = null;
+         }
+         bitDepth_ = depth;
+         return this;
       }
 
       public Builder histogram(long[] binsIncludingOutOfRange, int binWidthPowerOf2) {
@@ -92,6 +103,7 @@ public final class IntegerComponentStats {
    }
 
    private IntegerComponentStats(Builder b) {
+      bitDepth_ = b.bitDepth_;
       histogram_ = b.histogram_ != null
             ? Arrays.copyOf(b.histogram_, b.histogram_.length) :
             null;
@@ -103,6 +115,14 @@ public final class IntegerComponentStats {
       sum_ = b.sum_;
       sumOfSquares_ = b.sumOfSquares_;
       cumulativeDistrib_ = computeCumulativeDistribution();
+   }
+
+   public Integer getBitDepth() {
+      // This is usually equal to the bit depth corresponding to the bin count
+      // and bin width, but may be null if the camera bit depth was unknown.
+      // I.e., this is based on knowledge of the data, not the integer type
+      // used to contain it.
+      return bitDepth_;
    }
 
    public long[] getInRangeHistogram() {

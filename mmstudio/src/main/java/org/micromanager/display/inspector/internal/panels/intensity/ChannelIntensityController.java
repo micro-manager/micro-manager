@@ -9,7 +9,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -24,7 +23,6 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
-import org.micromanager.data.Image;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DataViewer;
@@ -53,6 +51,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private final ColorSwatch channelColorSwatch_ = new ColorSwatch();
    private final JLabel channelNameLabel_ = new JLabel();
    private final JToggleButton channelVisibleButton_ = new JToggleButton();
+   private final JToggleButton[] componentButtons_ = new JToggleButton[3];
 
    private final HistogramView histogram_ = HistogramView.create();
    private final JButton histoRangeDownButton_ = new JButton();
@@ -90,17 +89,21 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
 
       public void setBits(ChannelDisplaySettings settings) {
-         // TODO: evaluate handling of special case "Camera Bits"
+         String newSelection = null;
          if (settings.useCameraRange()) {
-            this.setSelectedItem("Camera Depth");
+            newSelection = "Camera Depth";
          } else {
             int bits = settings.getHistoRangeBits();
-            if (bits > 3 && (bits - 4) < this.getSize()) {
-               this.setSelectedItem(this.getElementAt(bits - 4));
+            if (bits > 3 && (bits - 4) < getSize()) {
+               newSelection = getElementAt(bits - 4);
             }
          }
-      }
 
+         // Avoid updating when no change
+         if (newSelection != null && !newSelection.equals(getSelectedItem())) {
+            setSelectedItem(newSelection);
+         }
+      }
    }
 
    // Panel showing min/max/avg/std.
@@ -242,6 +245,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
    }
 
+   private static final Color[] RGB_COLORS = new Color[] {
+         Color.RED, Color.GREEN, Color.BLUE
+   };
+
    private static final Icon[] RGB_ICONS_ACTIVE = new Icon[] {
          IconLoader.getIcon("/org/micromanager/icons/rgb_red.png"),
          IconLoader.getIcon("/org/micromanager/icons/rgb_green.png"),
@@ -264,7 +271,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    public static ChannelIntensityController create(DataViewer viewer, int channelIndex) {
       ChannelIntensityController instance = new ChannelIntensityController(viewer, channelIndex);
       instance.histogram_.addListener(instance);
-      viewer.registerForEvents(instance); // TODO Unregister!
+      instance.newDisplaySettings(viewer.getDisplaySettings());
+      viewer.registerForEvents(instance);
       return instance;
    }
 
@@ -272,17 +280,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       viewer_ = viewer;
       channelIndex_ = channelIndex;
 
-      JToggleButton[] componentButtons = new JToggleButton[3];
       for (int i = 0; i < 3; ++i) {
-         componentButtons[i] = new JToggleButton(RGB_ICONS_INACTIVE[i]);
-         componentButtons[i].setSelectedIcon(RGB_ICONS_ACTIVE[i]);
-         componentButtons[i].setBorder(BorderFactory.createEmptyBorder());
-         componentButtons[i].setBorderPainted(false);
-         componentButtons[i].setOpaque(true);
-         // TODO: These buttons do nothing, so do not show until they are active
-         componentButtons[i].setVisible(false);
+         componentButtons_[i] = new JToggleButton(RGB_ICONS_INACTIVE[i]);
+         componentButtons_[i].setSelectedIcon(RGB_ICONS_ACTIVE[i]);
+         componentButtons_[i].setBorder(BorderFactory.createEmptyBorder());
+         componentButtons_[i].setBorderPainted(false);
+         componentButtons_[i].setOpaque(true);
+         componentButtons_[i].setVisible(false);
+         componentButtons_[i].setSelected(i == 0);
+         final int ii = i;
+         componentButtons_[i].addActionListener((ActionEvent e) -> handleComponentSelection(ii));
       }
-      componentButtons[0].setSelected(true);
 
       channelPanel_.setLayout(new MigLayout(
             new LC().fill().insets("0").gridGap("0", "0")));
@@ -290,9 +298,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       channelPanel_.add(channelVisibleButton_, new CC().gapBefore("rel").split(2));
       channelPanel_.add(channelColorSwatch_, new CC().gapBefore("rel").width("32").wrap());
       channelPanel_.add(channelNameLabel_, new CC().gapBefore("rel").pushX().wrap("rel:rel:push"));
-      channelPanel_.add(componentButtons[0], new CC().gapBefore("push").gapAfter("0").split(3));
-      channelPanel_.add(componentButtons[1], new CC().gapAfter("0"));
-      channelPanel_.add(componentButtons[2], new CC().gapAfter("push").wrap("rel"));
+      channelPanel_.add(componentButtons_[0], new CC().gapBefore("push").gapAfter("0").split(3));
+      channelPanel_.add(componentButtons_[1], new CC().gapAfter("0"));
+      channelPanel_.add(componentButtons_[2], new CC().gapAfter("push").wrap("rel"));
       JButton fullscaleButton = new JButton("Fullscale");
       channelPanel_.add(fullscaleButton, new CC().pushX().wrap());
       JButton autostretchOnceButton = new JButton("Auto Once");
@@ -405,47 +413,44 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
       histogram_.setOverlayText(null);
 
-      // TODO RGB: Use selected component for aggregate stats
-      int component = 0;
-
-      IntegerComponentStats componentStats = stats_.getComponentStats(component);
-
-      long min = componentStats.getMinIntensity();
+      int selectedComponent = getSelectedComponent();
+      IntegerComponentStats selectedStats = stats_.getComponentStats(selectedComponent);
+      long min = selectedStats.getMinIntensity();
       intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
-      long max = componentStats.getMaxIntensity();
+      long max = selectedStats.getMaxIntensity();
       intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
-      long mean = componentStats.getMeanIntensity();
+      long mean = selectedStats.getMeanIntensity();
       intensityStatsPanel_.setMean(mean >= 0 ? Long.toString(mean) : null);
-      double stdev = componentStats.getStandardDeviation();
+      double stdev = selectedStats.getStandardDeviation();
       intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
             String.format("%1.2e", stdev));
 
-      try {
-         Image anyImage = viewer_.getDataProvider().getAnyImage();
-         if (anyImage == null) {
-            return;
-         }
-         final DisplaySettings settings = viewer_.getDisplaySettings();
-         cameraBits_ = anyImage.getMetadata().getBitDepth(); // can throw IOException
-         ChannelDisplaySettings cSettings = histoRangeComboBoxModel_.getBits(
-               viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);
+      cameraBits_ = stats_.getComponentStats(0).getBitDepth();
 
-         int rangeBits;
-         if (cameraBits_ == null || !cSettings.useCameraRange()) {
-            rangeBits = cSettings.getHistoRangeBits();
-         } else {
-            rangeBits = cameraBits_;
-         }
-         long[] data = componentStats.getInRangeHistogram();
+      final DisplaySettings displaySettings = viewer_.getDisplaySettings();
+      ChannelDisplaySettings chanDispSettings = histoRangeComboBoxModel_.getBits(
+              displaySettings.getChannelSettings(channelIndex_), cameraBits_);
+
+      int rangeBits;
+      if (cameraBits_ == null || !chanDispSettings.useCameraRange()) {
+         rangeBits = chanDispSettings.getHistoRangeBits();
+      } else {
+         rangeBits = cameraBits_;
+      }
+
+      int numComponents = stats_.getNumberOfComponents();
+      setRGBMode(numComponents > 1);
+
+      for (int c = 0; c < numComponents; c++) {
+         IntegerComponentStats cStats = stats_.getComponentStats(c);
+         long[] data = cStats.getInRangeHistogram();
          if (data != null) {
-            int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
-            histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
-            histogram_.setROIIndicator(componentStats.isROIStats());
+            int lengthToUse = Math.min(data.length, (1 << rangeBits));
+            int rangeMax = lengthToUse - 1;
+            histogram_.setComponentGraph(c, data, lengthToUse, rangeMax);
+            histogram_.setROIIndicator(cStats.isROIStats());
          }
-
-         updateScalingIndicators(settings, componentStats, component);
-      } catch (IOException ioEx) {
-         // TODO: log this exception
+         updateScalingIndicators(displaySettings, cStats, c);
       }
    }
 
@@ -535,6 +540,39 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                         channelSettings.copyBuilder().color(newColor).build()).build();
          } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       }
+   }
+
+   @MustCallOnEDT
+   private void setRGBMode(boolean isRGB) {
+      boolean wasRGB = componentButtons_[0].isVisible();
+      if (isRGB == wasRGB) {
+         return;
+      }
+
+      for (int i = 0; i < componentButtons_.length; i++) {
+         componentButtons_[i].setVisible(isRGB);
+      }
+
+      // Reapply display settings with correct component handling
+      newDisplaySettings(viewer_.getDisplaySettings());
+   }
+
+   @MustCallOnEDT
+   private void handleComponentSelection(int component) {
+      for (int i = 0; i < 3; i++) {
+         componentButtons_[i].setSelected(i == component);
+      }
+      histogram_.setSelectedComponent(component);
+   }
+
+   @MustCallOnEDT
+   private int getSelectedComponent() {
+      for (int i = 0; i < 3; i++) {
+         if (componentButtons_[i].isSelected()) {
+            return i;
+         }
+      }
+      return 0; // Shouldn't reach
    }
 
    private void handleFullscale() {
@@ -678,39 +716,25 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             settings.getChannelSettings(channelIndex_);
       channelVisibleButton_.setSelected(channelSettings.isVisible());
       channelColorSwatch_.setColor(channelSettings.getColor());
-      // TODO Component selector: this from dataset (on attachment, or first image)
-      // TODO Error-free way to get number of components?
-      int numComponents;
-      try {
-         Image anyImage = viewer_.getDataProvider().getAnyImage();
-         if (anyImage == null) {
-            return;
-         }
-         numComponents = anyImage.getNumComponents();
-      } catch (IOException e) {
-         numComponents = 1;
-      }
-      if (numComponents == 1) {
-         channelNameLabel_.setText(channelSettings.getName());
-         histogram_.setComponentColor(0, channelSettings.getColor(),
-               channelSettings.getColor());
+      channelNameLabel_.setText(channelSettings.getName());
+
+      histoRangeComboBoxModel_.setBits(channelSettings);
+
+      int numComponents = stats_ == null ? 1 : stats_.getNumberOfComponents();
+      if (numComponents <= 1) {
          histogram_.setGamma(channelSettings
-               .getComponentSettings(0)
-               .getScalingGamma());
-         // Need to remove actionListeners before setting the histoRangeBox
-         ActionListener[] actionListeners = histoRangeComboBox_.getActionListeners();
-         for (ActionListener al : actionListeners) {
-            histoRangeComboBox_.removeActionListener(al);
-         }
-         histoRangeComboBoxModel_.setBits(channelSettings);
-         for (ActionListener al : actionListeners) {
-            histoRangeComboBox_.addActionListener(al);
-         }
+                 .getComponentSettings(0)
+                 .getScalingGamma());
       }
-      for (int comp = 0; comp < numComponents; ++comp) {
+
+      for (int c = 0; c < numComponents; c++) {
+         Color color = numComponents <= 1 ? channelSettings.getColor() : RGB_COLORS[c];
+         Color highlight = numComponents <= 1 ? Color.YELLOW : color;
+         histogram_.setComponentColor(c, color, highlight);
+
          if (stats_ != null) {
-            IntegerComponentStats componentStats = stats_.getComponentStats(comp);
-            updateScalingIndicators(settings, componentStats, comp);
+            IntegerComponentStats componentStats = stats_.getComponentStats(c);
+            updateScalingIndicators(settings, componentStats, c);
          }
       }
    }

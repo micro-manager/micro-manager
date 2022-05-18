@@ -178,15 +178,11 @@ public final class HistogramView extends JPanel {
       listeners_.removeListener(listener);
    }
 
-   /**
-    * Sets which component is selected (presumable used in RGB images).
-    *
-    * @param component index of selected component.
-    */
    public void setSelectedComponent(int component) {
       Preconditions.checkElementIndex(component, componentStates_.size());
       selectedComponent_ = component;
       cachedGammaMappingPath_ = null;
+      repaint();
    }
 
    public void setComponentGraph(int component, long[] graph, long rangeMax) {
