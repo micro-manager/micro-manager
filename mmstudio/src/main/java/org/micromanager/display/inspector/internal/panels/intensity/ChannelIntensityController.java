@@ -583,7 +583,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          ChannelDisplaySettings channelSettings =
                oldDisplaySettings.getChannelSettings(channelIndex_);
          ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
-         int nComponents = 1; // TODO
+         int nComponents = stats_.getNumberOfComponents();
          for (int i = 0; i < nComponents; ++i) {
             try {
                int cameraBits = viewer_.getDataProvider().getAnyImage(). // can throw IOException
@@ -615,7 +615,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          ChannelDisplaySettings channelSettings =
                oldDisplaySettings.getChannelSettings(channelIndex_);
          ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
-         int nComponents = 1; // TODO
+         int nComponents = stats_.getNumberOfComponents();
          for (int i = 0; i < nComponents; ++i) {
             IntegerComponentStats stats = stats_.getComponentStats(i);
             long min = stats.getAutoscaleMinForQuantile(q);
