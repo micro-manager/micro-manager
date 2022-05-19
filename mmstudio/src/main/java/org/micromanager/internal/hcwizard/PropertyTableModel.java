@@ -25,6 +25,7 @@ package org.micromanager.internal.hcwizard;
 
 import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
+import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.internal.utils.MMPropertyTableModel;
 import org.micromanager.internal.utils.PropertyItem;
@@ -50,7 +51,9 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    PropertyItem[] props_;
    String[] devNames_;
    DeviceSetupDlg setupDlg_;
-   
+   CMMCore core_;
+
+   // OK to delete?
    public PropertyTableModel(MicroscopeModel model, int mode) {
       setupDlg_ = null;
       updateValues(model, mode, null);
@@ -59,7 +62,8 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    /**
     * Handles single device case.
     */
-   public PropertyTableModel(MicroscopeModel model, Device dev, DeviceSetupDlg dlg) {
+   public PropertyTableModel(MicroscopeModel model, CMMCore core, Device dev, DeviceSetupDlg dlg) {
+      core_ = core;
       setupDlg_ = dlg;
       updateValues(model, PREINIT, dev);
    }
@@ -147,14 +151,19 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    }
    
    public void setValueAt(Object value, int row, int col) {
-      // Device dev = model_.findDevice(devNames_[row]);
       if (col == 2) {
          try {
+            Device dev = model_.findDevice(devNames_[row]);
             props_[row].value = (String) value;
-            fireTableCellUpdated(row, col);
             if (props_[row].name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0 && setupDlg_ != null) {
                setupDlg_.rebuildComTable(props_[row].value);
             }
+            // set the property in the device, so that it can change other pre-init properties
+            dev.setPropertyValueInHardware(core_, props_[row].name, props_[row].value);
+            // reload the device to update possibly change pre-init properties
+            dev.loadDataFromHardware(core_);
+            // the listener will rebuild the table to reflect possibly changed pre-init properties
+            fireTableCellUpdated(row, col);
          } catch (Exception e) {
             ReportingUtils.logError(e.getMessage());
          }

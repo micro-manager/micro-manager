@@ -300,6 +300,14 @@ public final class Device {
       }
       p.value = value;
    }
+
+   public void setPropertyValueInHardware(CMMCore core, String propName, String value) throws MMConfigFileException {
+      try {
+         core.setProperty(name_, propName, value);
+      } catch (Exception ex) {
+         core.logMessage("HCW Device " + name_ + " failed to set property " + propName + " to value " + value);
+      }
+   }
    
    public int getNumberOfSetupProperties() {
       return setupProperties_.size();
