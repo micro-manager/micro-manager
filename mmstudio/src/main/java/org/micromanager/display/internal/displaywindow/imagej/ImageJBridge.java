@@ -447,9 +447,11 @@ public final class ImageJBridge {
    }
 
    @MustCallOnEDT
-   public void mm2ijSetIntensityScaling(int channelOrComponent, int min, int max) {
-      colorModeStrategy_.applyScaling(channelOrComponent, min, max);
-      mm2ijRepaint();
+   public void mm2ijSetIntensityScaling(int channelOrComponent, int min, int max, boolean defer) {
+      colorModeStrategy_.applyScaling(channelOrComponent, min, max, defer);
+      if (!defer) {
+         mm2ijRepaint();
+      }
    }
 
    @MustCallOnEDT

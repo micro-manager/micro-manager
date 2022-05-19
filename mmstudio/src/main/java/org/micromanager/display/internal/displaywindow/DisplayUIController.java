@@ -1031,7 +1031,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                      componentSettings.getScalingMaximum()));
                int min = (int) Math.min(max - 1,
                      componentSettings.getScalingMinimum());
-               ijBridge_.mm2ijSetIntensityScaling(i, min, max);
+               ijBridge_.mm2ijSetIntensityScaling(i, min, max, false);
             }
             double gamma = componentSettings.getScalingGamma();
             ijBridge_.mm2ijSetIntensityGamma(i, gamma);
@@ -1044,23 +1044,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       } else {
          for (int chNr = 0; chNr < nChannels; chNr++) {
-            // Note: Since the UI currently manipulates all components
-            // identically, and setting a component results in many calculations
-            // and redrawing the image, for performance reasons we only set one
-            // component. Setting components differently in a performant way
-            //  will need a bit of re-architecting.
-            // int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
-            // for (int i = 0; i < nComponents; ++i) {
-            int i = 0;
-            ComponentDisplaySettings componentSettings
-                  = settings.getChannelSettings(0).getComponentSettings(i);
-            int max = Math.min(Integer.MAX_VALUE,
-                  (int) componentSettings.getScalingMaximum());
-            int min = Math.max(1, (Math.min(max - 1,
-                  (int) componentSettings.getScalingMinimum())));
-            max = Math.max(min + 1, max);
-            ijBridge_.mm2ijSetIntensityScaling(i, min, max);
-            //}
+            int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
+            for (int i = 0; i < nComponents; ++i) {
+               ComponentDisplaySettings componentSettings
+                     = settings.getChannelSettings(0).getComponentSettings(i);
+               int max = Math.min(Integer.MAX_VALUE,
+                     (int) componentSettings.getScalingMaximum());
+               int min = Math.max(1, (Math.min(max - 1,
+                     (int) componentSettings.getScalingMinimum())));
+               max = Math.max(min + 1, max);
+               ijBridge_.mm2ijSetIntensityScaling(i, min, max, i < nComponents - 1);
+            }
          }
       }
 
@@ -1076,26 +1070,33 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return;
       }
 
-      // TODO RGB
       // TODO "uniform" scaling
 
       int nChannels = ijBridge_.getIJNumberOfChannels();
       double q = settings.getAutoscaleIgnoredQuantile();
-      for (int i = 0; i < nChannels; ++i) {
+      for (int ch = 0; ch < nChannels; ++ch) {
          int statsIndex = 0;
-         for (int j = 0; j < images.getRequest().getNumberOfImages(); ++j) {
-            Coords c = images.getRequest().getImage(j).getCoords();
+         for (int i = 0; i < images.getRequest().getNumberOfImages(); ++i) {
+            Coords c = images.getRequest().getImage(i).getCoords();
             if (c.hasAxis(Coords.CHANNEL)) {
-               if (c.getChannel() == i) {
-                  statsIndex = j;
+               if (c.getChannel() == ch) {
+                  statsIndex = i;
+                  break;
                }
             }
          }
 
-         if (images.getResult().size() > statsIndex) {
-            ImageStats stats = images.getResult().get(statsIndex);
+         ImageStats stats;
+         try {
+            stats = images.getResult().get(statsIndex);
+         } catch (IndexOutOfBoundsException e) {
+            continue;
+         }
+
+         int nComponents = stats.getNumberOfComponents();
+         for (int compo = 0; compo < nComponents; compo++) {
             long[] minMax = new long[2];
-            stats.getComponentStats(0).getAutoscaleMinMaxForQuantile(q, minMax);
+            stats.getComponentStats(compo).getAutoscaleMinMaxForQuantile(q, minMax);
             long min = minMax[0];
             long max = minMax[1];
 
@@ -1125,14 +1126,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // autostretch enabled (see, immutability is really nice!).
             // It will still be nice to remove this if we ever can.
             DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings)
-                  settings.getChannelSettings(i).getComponentSettings(0);
+                  settings.getChannelSettings(ch).getComponentSettings(compo);
             dcds.hackScalingMinimum(min);
             dcds.hackScalingMaximum(max);
 
-            ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
-         } else {
-            ReportingUtils.logMessage("DisplayUIController: Received request to "
-                  + "autostretch image for which no statistics are available");
+            int ijIndex = nComponents > 1 ? compo : ch;
+            boolean defer = nComponents > 1 && compo < nComponents - 1;
+            ijBridge_.mm2ijSetIntensityScaling(ijIndex, (int) min, (int) max, defer);
          }
       }
    }
