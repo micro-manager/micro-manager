@@ -2,7 +2,7 @@ package org.micromanager.display;
 
 /**
  * Certain cameras (such as RGB cameras) can produce images where each pixel has multiple
- * components.  This inteface determines how these components should be displayed.
+ * components.  This interface determines how these components should be displayed.
  *
  * @author mark
  */

@@ -73,11 +73,11 @@ public final class DefaultComponentDisplaySettings
       return scalingMax_;
    }
 
-   public void setScalingMinimum(long min) {
+   public void hackScalingMinimum(long min) {
       scalingMin_ = min;
    }
-
-   public void setScalingMaximum(long max) {
+   
+   public void hackScalingMaximum(long max) {
       scalingMax_ = max;
    }
 

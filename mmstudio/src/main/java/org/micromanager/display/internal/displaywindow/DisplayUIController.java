@@ -1109,13 +1109,29 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // object with completely new ComnponentDisplaySettings, but it seems
             // more than a little bit excessive to do that on every autostrech update
             // so we take the shortcut here
+            //
+            // Mark T. 2022-05-19: It is not stated above _why_ it is
+            // that the autostretched min/max in the DisplaySettings need to
+            // be always up to date. The intended semantics were that the
+            // scaling min/max should be considered invalid when autostretch
+            // is enabled, so any code that relies on those values is
+            // incorrect. However, one could say that thanks to those
+            // semantics, "correct" components should not have a problem even
+            // if the scaling min/max is mutated, as long as this is only done
+            // when autostretch is enabled. So I'm leaving this as is for now.
+            // Fortunately, we don't have to worry about autostretch having
+            // been switched off before we reach here, since we are only
+            // modifying the DisplaySettings instance passed to us, which had
+            // autostretch enabled (see, immutability is really nice!).
+            // It will still be nice to remove this if we ever can.
             DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings)
                   settings.getChannelSettings(i).getComponentSettings(0);
-            dcds.setScalingMinimum(min);
-            dcds.setScalingMaximum(max);
+            dcds.hackScalingMinimum(min);
+            dcds.hackScalingMaximum(max);
+
             ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
          } else {
-            ReportingUtils.logMessage("DisplayUICOntroller: Received request to "
+            ReportingUtils.logMessage("DisplayUIController: Received request to "
                   + "autostretch image for which no statistics are available");
          }
       }
