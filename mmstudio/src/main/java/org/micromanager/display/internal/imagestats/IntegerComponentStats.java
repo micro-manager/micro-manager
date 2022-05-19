@@ -194,20 +194,38 @@ public final class IntegerComponentStats {
       return maximum_;
    }
 
-   public long getAutoscaleMinForQuantile(double q) {
-      if (q >= 0.5) {
-         // Safe, in-range value that is less than max
-         return Math.max(0L, (long) Math.round(getQuantile(0.5)) - 1L);
-      }
-      return (long) Math.round(getQuantile(q));
-   }
+   // Guarantees that the returned (max - min) >= 2. Also guarantees that,
+   // if all pixels have the same value, they will not be at the edge of the
+   // range unless all pixels are zero or saturated.
+   public void getAutoscaleMinMaxForQuantile(double q, long[] minMax) {
+      Preconditions.checkNotNull(minMax);
+      Preconditions.checkArgument(minMax.length == 2);
 
-   public long getAutoscaleMaxForQuantile(double q) {
-      if (q >= 0.5) {
-         // Safe, in-range value that is greater than min
-         return Math.max(1L, (long) Math.round(getQuantile(0.5)));
+      long min = Math.round(getQuantile(q));
+      // Subtract 1 to convert from bin edge index to intensity value
+      long max = Math.round(getQuantile(1.0 - q)) - 1L;
+
+      if (max - min < 2) { // Range width < 3
+         // For example, if all pixels have the same intensity I, we will
+         // reach here and 'mid' will equal I.
+         // We may also reach here if all pixels have intensity I or I + 1;
+         // in this case we will end up increasing the range by 1 bin, but
+         // this should be harmless.
+         long mid = (min + max) / 2;
+         if (mid <= getHistogramRangeMin()) {
+            min = getHistogramRangeMin();
+            max = min + 2;
+         } else if (mid >= getHistogramRangeMax()) {
+            max = getHistogramRangeMax();
+            min = max - 2;
+         } else {
+            min = mid - 1;
+            max = mid + 1;
+         }
       }
-      return (long) Math.round(getQuantile(1.0 - q)) - 1L;
+
+      minMax[0] = min;
+      minMax[1] = max;
    }
 
    // Note: return value is in range 0 to (1 + range max), because it is in the

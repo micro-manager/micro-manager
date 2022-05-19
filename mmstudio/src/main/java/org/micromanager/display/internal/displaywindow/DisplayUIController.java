@@ -1094,20 +1094,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
          if (images.getResult().size() > statsIndex) {
             ImageStats stats = images.getResult().get(statsIndex);
-            long min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
-            long max = Math.min(Integer.MAX_VALUE,
-                  stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
-            // NS 2019-05-29: This should not be done here, but in IntegerComponentsStats
-            // however, I do not understand that code enough to touch it....
-            // This at least fixes the display somewhat (showing black for
-            // a saturated image is really, really bad!)
-            if (min == max) {
-               if (max == 0) {
-                  max++;
-               } else {
-                  min--;
-               }
-            }
+            long[] minMax = new long[2];
+            stats.getComponentStats(0).getAutoscaleMinMaxForQuantile(q, minMax);
+            long min = minMax[0];
+            long max = minMax[1];
+
             // NS 2019-08-15: We really do need to write the min and max to
             // the DisplaySettings (there already is a work-around in the
             // IntensityInspectorPanelController handleAutostretch function, but

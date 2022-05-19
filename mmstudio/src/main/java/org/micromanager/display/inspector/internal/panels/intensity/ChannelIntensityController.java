@@ -461,8 +461,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       long max;
       if (settings.isAutostretchEnabled()) {
          double q = settings.getAutoscaleIgnoredQuantile();
-         min = componentStats.getAutoscaleMinForQuantile(q);
-         max = componentStats.getAutoscaleMaxForQuantile(q);
+         long[] minMax = new long[2];
+         componentStats.getAutoscaleMinMaxForQuantile(q, minMax);
+         min = minMax[0];
+         max = minMax[1];
       } else {
          ComponentDisplaySettings componentSettings =
                settings.getChannelSettings(channelIndex_)
@@ -618,8 +620,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          int nComponents = stats_.getNumberOfComponents();
          for (int i = 0; i < nComponents; ++i) {
             IntegerComponentStats stats = stats_.getComponentStats(i);
-            long min = stats.getAutoscaleMinForQuantile(q);
-            long max = stats.getAutoscaleMaxForQuantile(q);
+            long[] minMax = new long[2];
+            stats.getAutoscaleMinMaxForQuantile(q, minMax);
+            long min = minMax[0];
+            long max = minMax[1];
             builder.component(i,
                   channelSettings.getComponentSettings(i).copyBuilder()
                         .scalingRange(min, max).build());
