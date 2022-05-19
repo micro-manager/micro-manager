@@ -81,15 +81,15 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
          devices_[0] = dev;
       }
       
-      model_.dumpComPortsSetupProps(); // >>>>>>>
-      
+      model_.dumpComPortsSetupProps();
+
       ArrayList<PropertyItem> props = new ArrayList<>();
       ArrayList<String> dn = new ArrayList<>();
       for (Device device : devices_) {
          for (int j = 0; j < device.getNumberOfProperties(); j++) {
             PropertyItem p = device.getProperty(j);
             if (mode == PREINIT) {
-               if (!p.readOnly && p.preInit && !device.isSerialPort() && !p.readOnly) {
+               if (!p.readOnly && p.preInit && !device.isSerialPort()) {
                   props.add(p);
                   dn.add(device.getName());
                   PropertyItem setupProp = device.findSetupProperty(p.name);
