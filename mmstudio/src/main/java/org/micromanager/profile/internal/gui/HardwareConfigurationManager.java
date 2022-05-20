@@ -17,7 +17,9 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
+import org.micromanager.Studio;
 import org.micromanager.UserProfile;
+import org.micromanager.events.internal.DefaultSystemConfigurationLoadedEvent;
 import org.micromanager.profile.internal.LegacyMM1Preferences;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.profile.UserProfileMigration;
@@ -72,17 +74,18 @@ public class HardwareConfigurationManager {
    }
 
    private final UserProfile profile_;
+   private final Studio studio_;
    private final CMMCore core_;
    private File currentConfiguration_;
 
-   public static HardwareConfigurationManager create(UserProfile profile,
-         CMMCore core) {
-      return new HardwareConfigurationManager(profile, core);
+   public static HardwareConfigurationManager create(UserProfile profile, Studio studio) {
+      return new HardwareConfigurationManager(profile, studio);
    }
 
-   private HardwareConfigurationManager(UserProfile profile, CMMCore core) {
+   private HardwareConfigurationManager(UserProfile profile, Studio studio) {
       profile_ = profile;
-      core_ = core;
+      studio_ = studio;
+      core_ = studio.getCMMCore();
    }
 
    /**
@@ -146,6 +149,7 @@ public class HardwareConfigurationManager {
       currentConfiguration_ = file;
       // TODO Modal dialog
       core_.loadSystemConfiguration(file.getAbsolutePath());
+      studio_.events().post(new DefaultSystemConfigurationLoadedEvent());
    }
 
    private void rememberLoadedConfig(File newFile) {
