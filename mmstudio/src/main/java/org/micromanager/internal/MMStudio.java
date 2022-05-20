@@ -858,7 +858,7 @@ public final class MMStudio implements Studio {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
             coreCallback_.setIgnoring(true);
-            HardwareConfigurationManager.create(profile(), core_)
+            HardwareConfigurationManager.create(profile(), this)
                   .loadHardwareConfiguration(sysConfigFile_);
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
