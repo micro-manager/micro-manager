@@ -1,7 +1,6 @@
 package org.micromanager.internal.utils;
 
 import java.awt.Component;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -25,7 +24,7 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
     private static final long serialVersionUID = 1L;
     // This is the component that will handle the editing of the cell value
     JTextField text_ = new JTextField();
-    JComboBox combo_ = new JComboBox();
+    JComboBox<String> combo_ = new JComboBox<>();
     SliderPanel slider_ = new SliderPanel();
 
     PropertyItem item_;
@@ -43,19 +42,8 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
         disableExcluded_ = disableExcluded;
 
         // end editing on selection change
-        combo_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                fireEditingStopped();
-            }
-        });
-
-        slider_.addEditActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                fireEditingStopped();
-            }
-        });
+        combo_.addActionListener(e -> fireEditingStopped());
+        slider_.addEditActionListener(e -> fireEditingStopped());
 
         slider_.addSliderMouseListener(new MouseAdapter() {
             @Override
@@ -111,8 +99,8 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
                 }
             } else {
                 ActionListener[] l = combo_.getActionListeners();
-                for (int i = 0; i < l.length; i++) {
-                    combo_.removeActionListener(l[i]);
+                for (ActionListener actionListener : l) {
+                    combo_.removeActionListener(actionListener);
                 }
                 combo_.removeAllItems();
                 for (int i = 0; i < item_.allowed.length; i++) {
@@ -121,13 +109,7 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
                 combo_.setSelectedItem(item_.value);
 
                 // end editing on selection change
-                combo_.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        fireEditingStopped();
-                    }
-                });
+                combo_.addActionListener(e -> fireEditingStopped());
 
                 return combo_;
             }

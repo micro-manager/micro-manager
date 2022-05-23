@@ -25,6 +25,7 @@ package org.micromanager.internal.hcwizard;
 
 import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
+import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.internal.utils.MMPropertyTableModel;
 import org.micromanager.internal.utils.PropertyItem;
@@ -40,76 +41,46 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
          "Property",
          "Value"
    };
-   
-   // TODO: should be enum in Java 5.0
-   public static final int PREINIT = 1;
-   public static final int COMPORT = 2;
-   
+
    MicroscopeModel model_;
    Device[] devices_;
    PropertyItem[] props_;
    String[] devNames_;
    DeviceSetupDlg setupDlg_;
-   
-   public PropertyTableModel(MicroscopeModel model, int mode) {
-      setupDlg_ = null;
-      updateValues(model, mode, null);
-   }
+   CMMCore core_;
+
 
    /**
     * Handles single device case.
     */
-   public PropertyTableModel(MicroscopeModel model, Device dev, DeviceSetupDlg dlg) {
+   public PropertyTableModel(MicroscopeModel model, CMMCore core, Device dev, DeviceSetupDlg dlg) {
+      core_ = core;
       setupDlg_ = dlg;
-      updateValues(model, PREINIT, dev);
+      updateValues(model, dev);
    }
 
-   public void updateValues(MicroscopeModel model, int mode, Device dev) {
+   public void updateValues(MicroscopeModel model, Device dev) {
       model_ = model;
       if (dev == null) {
-         if (mode == COMPORT) {
-            devices_ = model.getAvailableSerialPorts();
-         } else {
             devices_ = model.getDevices();
-         }
       } else {
          devices_ = new Device[1];
          devices_[0] = dev;
       }
       
-      model_.dumpComPortsSetupProps(); // >>>>>>>
-      
+      model_.dumpComPortsSetupProps();
+
       ArrayList<PropertyItem> props = new ArrayList<>();
       ArrayList<String> dn = new ArrayList<>();
       for (Device device : devices_) {
          for (int j = 0; j < device.getNumberOfProperties(); j++) {
             PropertyItem p = device.getProperty(j);
-            if (mode == PREINIT) {
-               if (!p.readOnly && p.preInit && !device.isSerialPort() && !p.readOnly) {
-                  props.add(p);
-                  dn.add(device.getName());
-                  PropertyItem setupProp = device.findSetupProperty(p.name);
-                  if (setupProp != null) {
-                     p.value = setupProp.value;
-                  }
-               }
-            } else if (mode == COMPORT) {
-               if (device.isSerialPort() && model_.isPortInUse(device) && !p.readOnly) {
-                  props.add(p);
-                  dn.add(device.getName());
-                  PropertyItem setupProp = device.findSetupProperty(p.name);
-                  if (setupProp != null) {
-                     p.value = setupProp.value;
-                  }
-               }
-            } else {
-               if (!p.readOnly && !device.isSerialPort()) {
-                  props.add(p);
-                  dn.add(device.getName());
-                  PropertyItem setupProp = device.findSetupProperty(p.name);
-                  if (setupProp != null) {
-                     p.value = setupProp.value;
-                  }
+            if (!p.readOnly && p.preInit && !device.isSerialPort()) {
+               props.add(p);
+               dn.add(device.getName());
+               PropertyItem setupProp = device.findSetupProperty(p.name);
+               if (setupProp != null) {
+                  p.value = setupProp.value;
                }
             }
          }
@@ -147,14 +118,19 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    }
    
    public void setValueAt(Object value, int row, int col) {
-      // Device dev = model_.findDevice(devNames_[row]);
       if (col == 2) {
          try {
+            Device dev = model_.findDevice(devNames_[row]);
             props_[row].value = (String) value;
-            fireTableCellUpdated(row, col);
             if (props_[row].name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0 && setupDlg_ != null) {
                setupDlg_.rebuildComTable(props_[row].value);
             }
+            // set the property in the device, so that it can change other pre-init properties
+            dev.setPropertyValueInHardware(core_, props_[row].name, props_[row].value);
+            // reload the device to update possibly change pre-init properties
+            dev.loadDataFromHardware(core_);
+            // the listener will rebuild the table to reflect possibly changed pre-init properties
+            fireTableCellUpdated(row, col);
          } catch (Exception e) {
             ReportingUtils.logError(e.getMessage());
          }

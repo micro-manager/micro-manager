@@ -1,8 +1,6 @@
 package org.micromanager.internal.hcwizard;
 
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +15,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.DeviceDetectionStatus;
@@ -294,8 +294,7 @@ public final class DeviceSetupDlg extends JDialog {
    }
 
    private void rebuildPropTable() {
-
-      PropertyTableModel tm = new PropertyTableModel(model_, device_, this);
+      PropertyTableModel tm = new PropertyTableModel(model_, core_, device_, this);
       propTable_.setModel(tm);
       PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
       PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer(studio_);
@@ -329,6 +328,13 @@ public final class DeviceSetupDlg extends JDialog {
       }
       detectButton_.setEnabled(any);
       propTable_.repaint();
+      propTable_.putClientProperty("terminateEditOnFocusLost", true);
+      tm.addTableModelListener(new TableModelListener() {
+         @Override
+         public void tableChanged(TableModelEvent e) {
+            rebuildPropTable();
+         }
+      });
    }
 
    public void rebuildComTable(String portName) {

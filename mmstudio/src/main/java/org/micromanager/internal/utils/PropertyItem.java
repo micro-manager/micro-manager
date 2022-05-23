@@ -14,7 +14,7 @@ public class PropertyItem {
    public String value;   // property value
    public boolean readOnly = false;    // is it read-only ?
    public boolean preInit = false; // is it a pre-initialization property ?
-   public String allowed[];            // the list of allowed values
+   public String[] allowed;            // the list of allowed values
    public boolean confInclude = false; // is it included in the current configuration ?
    public boolean hasRange = false; // is there a range for values
    public double lowerLimit = 0.0;
@@ -22,9 +22,7 @@ public class PropertyItem {
    public PropertyType type;
    
    public PropertyItem() {
-      device = new String();
       name = "Undefined";
-      value = new String();
       allowed = new String[0];
    }
 
@@ -46,8 +44,7 @@ public class PropertyItem {
       ReportingUtils.logMessage("Property : " + name);
       ReportingUtils.logMessage("Property : " + value);
       ReportingUtils.logMessage("   allowed :");
-      for (int i=0; i<allowed.length; i++)
-         ReportingUtils.logMessage("   " + allowed[i]);
+      for (String s : allowed) ReportingUtils.logMessage("   " + s);
       
    }
    
@@ -122,22 +119,22 @@ public class PropertyItem {
                boolean allNumeric = true;
                // test that first character of every possible value is a numeral
                // if so, show user the list sorted by the numeric prefix
-               for (int k = 0; k < allowed.length; k++) {
-                  if ( null != allowed[k]){
-                     if( 0 < allowed[k].length()){
-                        if (!Character.isDigit(allowed[k].charAt(0))) {
-                           allNumeric = false;
-                           break;
+                for (String s : allowed) {
+                    if (null != s) {
+                        if (0 < s.length()) {
+                            if (!Character.isDigit(s.charAt(0))) {
+                                allNumeric = false;
+                                break;
+                            }
+                        } else {
+                            allNumeric = false;
+                            break;
                         }
-                     }else {
+                    } else {
                         allNumeric = false;
                         break;
-                     }
-                  }else {
-                     allNumeric = false;
-                     break;
-                  }
-               }
+                    }
+                }
 
                if (allNumeric) {
                   Arrays.sort(allowed, new SortFunctionObjects.NumericPrefixStringComp());

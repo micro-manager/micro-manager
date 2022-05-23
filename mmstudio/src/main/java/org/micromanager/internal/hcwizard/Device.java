@@ -300,6 +300,14 @@ public final class Device {
       }
       p.value = value;
    }
+
+   public void setPropertyValueInHardware(CMMCore core, String propName, String value)  {
+      try {
+         core.setProperty(name_, propName, value);
+      } catch (Exception ex) {
+         core.logMessage("HCW Device " + name_ + " failed to set property " + propName + " to value " + value);
+      }
+   }
    
    public int getNumberOfSetupProperties() {
       return setupProperties_.size();
@@ -405,7 +413,7 @@ public final class Device {
 
    public void setFocusDirection(int direction) {
       if (direction > 0) {
-         focusDirection_ = +1;
+         focusDirection_ = 1;
       } else if (direction < 0) {
          focusDirection_ = -1;
       } else {
