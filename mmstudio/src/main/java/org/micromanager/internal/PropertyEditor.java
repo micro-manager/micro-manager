@@ -36,6 +36,7 @@ import javax.swing.JTable;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
+import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
@@ -216,14 +217,24 @@ public final class PropertyEditor extends JFrame {
 
       @Override
       public void setValueAt(Object value, int row, int col) {
-         PropertyItem item = propListVisible_.get(row);
-         studio_.logs().logMessage("Setting value " + value + " at row " + row);
-         if (col == propertyValueColumn_) {
-            setValueInCore(item, value);
+         try {
+            PropertyItem item = propListVisible_.get(row);
+            if (core_.getDeviceType(item.device) == DeviceType.CameraDevice) {
+               studio_.live().setSuspended(true);
+            }
+            studio_.logs().logMessage("Setting value " + value + " at row " + row);
+            if (col == propertyValueColumn_) {
+               setValueInCore(item, value);
+            }
+            core_.updateSystemStateCache();
+            if (core_.getDeviceType(item.device) == DeviceType.CameraDevice) {
+               studio_.live().setSuspended(false);
+            }
+            studio_.app().refreshGUIFromCache();
+            fireTableCellUpdated(row, col);
+         } catch (Exception ex) {
+            studio_.logs().logError(ex);
          }
-         core_.updateSystemStateCache();
-         studio_.app().refreshGUIFromCache();
-         fireTableCellUpdated(row, col);
       }
 
       public void update(String device, String propName, String newValue) {
