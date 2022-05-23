@@ -41,11 +41,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
          "Property",
          "Value"
    };
-   
-   // TODO: should be enum in Java 5.0
-   public static final int PREINIT = 1;
-   public static final int COMPORT = 2;
-   
+
    MicroscopeModel model_;
    Device[] devices_;
    PropertyItem[] props_;
@@ -53,11 +49,6 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    DeviceSetupDlg setupDlg_;
    CMMCore core_;
 
-   // OK to delete?
-   public PropertyTableModel(MicroscopeModel model, int mode) {
-      setupDlg_ = null;
-      updateValues(model, mode, null);
-   }
 
    /**
     * Handles single device case.
@@ -65,17 +56,13 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    public PropertyTableModel(MicroscopeModel model, CMMCore core, Device dev, DeviceSetupDlg dlg) {
       core_ = core;
       setupDlg_ = dlg;
-      updateValues(model, PREINIT, dev);
+      updateValues(model, dev);
    }
 
-   public void updateValues(MicroscopeModel model, int mode, Device dev) {
+   public void updateValues(MicroscopeModel model, Device dev) {
       model_ = model;
       if (dev == null) {
-         if (mode == COMPORT) {
-            devices_ = model.getAvailableSerialPorts();
-         } else {
             devices_ = model.getDevices();
-         }
       } else {
          devices_ = new Device[1];
          devices_[0] = dev;
@@ -88,32 +75,12 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
       for (Device device : devices_) {
          for (int j = 0; j < device.getNumberOfProperties(); j++) {
             PropertyItem p = device.getProperty(j);
-            if (mode == PREINIT) {
-               if (!p.readOnly && p.preInit && !device.isSerialPort()) {
-                  props.add(p);
-                  dn.add(device.getName());
-                  PropertyItem setupProp = device.findSetupProperty(p.name);
-                  if (setupProp != null) {
-                     p.value = setupProp.value;
-                  }
-               }
-            } else if (mode == COMPORT) {
-               if (device.isSerialPort() && model_.isPortInUse(device) && !p.readOnly) {
-                  props.add(p);
-                  dn.add(device.getName());
-                  PropertyItem setupProp = device.findSetupProperty(p.name);
-                  if (setupProp != null) {
-                     p.value = setupProp.value;
-                  }
-               }
-            } else {
-               if (!p.readOnly && !device.isSerialPort()) {
-                  props.add(p);
-                  dn.add(device.getName());
-                  PropertyItem setupProp = device.findSetupProperty(p.name);
-                  if (setupProp != null) {
-                     p.value = setupProp.value;
-                  }
+            if (!p.readOnly && p.preInit && !device.isSerialPort()) {
+               props.add(p);
+               dn.add(device.getName());
+               PropertyItem setupProp = device.findSetupProperty(p.name);
+               if (setupProp != null) {
+                  p.value = setupProp.value;
                }
             }
          }
