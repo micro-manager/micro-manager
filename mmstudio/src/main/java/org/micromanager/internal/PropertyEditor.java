@@ -217,15 +217,16 @@ public final class PropertyEditor extends JFrame {
 
       @Override
       public void setValueAt(Object value, int row, int col) {
+         if (col != propertyValueColumn_) {
+            return;
+         }
          try {
             PropertyItem item = propListVisible_.get(row);
             if (core_.getDeviceType(item.device) == DeviceType.CameraDevice) {
                studio_.live().setSuspended(true);
             }
             studio_.logs().logMessage("Setting value " + value + " at row " + row);
-            if (col == propertyValueColumn_) {
-               setValueInCore(item, value);
-            }
+            setValueInCore(item, value);
             core_.updateSystemStateCache();
             if (core_.getDeviceType(item.device) == DeviceType.CameraDevice) {
                studio_.live().setSuspended(false);
