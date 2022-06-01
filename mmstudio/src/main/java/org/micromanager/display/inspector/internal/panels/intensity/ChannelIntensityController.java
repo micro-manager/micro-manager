@@ -9,7 +9,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
@@ -31,7 +30,6 @@ import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEv
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.internal.utils.MustCallOnEDT;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Controls brightness / contrast / gamma in the display of a single channel.
@@ -587,19 +585,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
          int nComponents = stats_.getNumberOfComponents();
          for (int i = 0; i < nComponents; ++i) {
-            try {
-               int cameraBits = viewer_.getDataProvider().getAnyImage(). // can throw IOException
-                     getMetadata().getBitDepth();
-               long max = 1 << cameraBits;
-               builder.component(i,
-                     channelSettings.getComponentSettings(i).copyBuilder()
-                           .scalingRange(0L,
-                                 max >= 0 ? max : Long.MAX_VALUE)
-                           .build());
-            } catch (IOException ioe) {
-               // if we could not find an image, we have bigger problems
-               ReportingUtils.logError(ioe);
-            }
+            long max = 1 << stats_.getComponentStats(0).getBitDepth();
+            builder.component(i,
+                  channelSettings.getComponentSettings(i).copyBuilder()
+                        .scalingRange(0L, max >= 0 ? max : Long.MAX_VALUE)
+                        .build());
          }
          newDisplaySettings = oldDisplaySettings
                .copyBuilderWithChannelSettings(channelIndex_, builder.build())
