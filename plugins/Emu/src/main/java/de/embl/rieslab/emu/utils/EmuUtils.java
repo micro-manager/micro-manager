@@ -7,126 +7,126 @@ public class EmuUtils {
 
 
     public static boolean isNumeric(String s) {
-    	if(s != null){
-	    	if(s.matches("[-+]?\\d*\\.?\\d+")){
-	    		return true;
-	    	} else if(s.matches("[-+]?\\d*\\,?\\d+")){
-	    		return true;
-	    	}
-    	}
-        return false;  
-    }  
-    
-	public static boolean isInteger(String str) {
-	    if (str == null) {
-	        return false;
-	    }
-	    int length = str.length();
-	    if (length == 0) {
-	        return false;
-	    }
-	    int i = 0;
-	    if (str.charAt(0) == '-' || str.charAt(0) == '+') {
-	        if (length == 1) {
-	            return false;
-	        }
-	        i = 1;
-	    }
-	    for (; i < length; i++) {
-	        char c = str.charAt(i);
-	        if (c < '0' || c > '9') {
-	            return false;
-	        }
-	    }
-	    return true;
-	}
-	
-	/*
-	 * From https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html
-	 */
-	public static boolean isFloat(String val) {
-		if(val == null) {
-			return false;
-		}
-		
-		final String Digits     = "(\\p{Digit}+)";
-		final String HexDigits  = "(\\p{XDigit}+)";
-		// an exponent is 'e' or 'E' followed by an optionally 
-		// signed decimal integer.
-		final String Exp        = "[eE][+-]?"+Digits;
-		final String fpRegex    =
-		    ("[\\x00-\\x20]*"+ // Optional leading "whitespace"
-		    "[+-]?(" +         // Optional sign character
-		    "NaN|" +           // "NaN" string
-		    "Infinity|" +      // "Infinity" string
+        if (s != null) {
+            if (s.matches("[-+]?\\d*\\.?\\d+")) {
+                return true;
+            } else if (s.matches("[-+]?\\d*\\,?\\d+")) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-		    // A decimal floating-point string representing a finite positive
-		    // number without a leading sign has at most five basic pieces:
-		    // Digits . Digits ExponentPart FloatTypeSuffix
-		    // 
-		    // Since this method allows integer-only strings as input
-		    // in addition to strings of floating-point literals, the
-		    // two sub-patterns below are simplifications of the grammar
-		    // productions from the Java Language Specification, 2nd 
-		    // edition, section 3.10.2.
+    public static boolean isInteger(String str) {
+        if (str == null) {
+            return false;
+        }
+        int length = str.length();
+        if (length == 0) {
+            return false;
+        }
+        int i = 0;
+        if (str.charAt(0) == '-' || str.charAt(0) == '+') {
+            if (length == 1) {
+                return false;
+            }
+            i = 1;
+        }
+        for (; i < length; i++) {
+            char c = str.charAt(i);
+            if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+        return true;
+    }
 
-		    // Digits ._opt Digits_opt ExponentPart_opt FloatTypeSuffix_opt
-		    "((("+Digits+"(\\.)?("+Digits+"?)("+Exp+")?)|"+
+    /*
+     * From https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html
+     */
+    public static boolean isFloat(String val) {
+        if (val == null) {
+            return false;
+        }
 
-		    // . Digits ExponentPart_opt FloatTypeSuffix_opt
-		    "(\\.("+Digits+")("+Exp+")?)|"+
+        final String Digits = "(\\p{Digit}+)";
+        final String HexDigits = "(\\p{XDigit}+)";
+        // an exponent is 'e' or 'E' followed by an optionally
+        // signed decimal integer.
+        final String Exp = "[eE][+-]?" + Digits;
+        final String fpRegex =
+                ("[\\x00-\\x20]*" + // Optional leading "whitespace"
+                        "[+-]?(" +         // Optional sign character
+                        "NaN|" +           // "NaN" string
+                        "Infinity|" +      // "Infinity" string
 
-		    // Hexadecimal strings
-		    "((" +
-		    // 0[xX] HexDigits ._opt BinaryExponent FloatTypeSuffix_opt
-		    "(0[xX]" + HexDigits + "(\\.)?)|" +
+                        // A decimal floating-point string representing a finite positive
+                        // number without a leading sign has at most five basic pieces:
+                        // Digits . Digits ExponentPart FloatTypeSuffix
+                        //
+                        // Since this method allows integer-only strings as input
+                        // in addition to strings of floating-point literals, the
+                        // two sub-patterns below are simplifications of the grammar
+                        // productions from the Java Language Specification, 2nd
+                        // edition, section 3.10.2.
 
-		    // 0[xX] HexDigits_opt . HexDigits BinaryExponent FloatTypeSuffix_opt
-		    "(0[xX]" + HexDigits + "?(\\.)" + HexDigits + ")" +
+                        // Digits ._opt Digits_opt ExponentPart_opt FloatTypeSuffix_opt
+                        "(((" + Digits + "(\\.)?(" + Digits + "?)(" + Exp + ")?)|" +
 
-		    ")[pP][+-]?" + Digits + "))" +
-		    "[fFdD]?))" +
-		    "[\\x00-\\x20]*");// Optional trailing "whitespace"
+                        // . Digits ExponentPart_opt FloatTypeSuffix_opt
+                        "(\\.(" + Digits + ")(" + Exp + ")?)|" +
 
-		if (Pattern.matches(fpRegex, val)){
-		    return true;
-		} else {
-		    return false;
-		}	
-	}
-	
-	public static double round(double value, int precision) {
-	    int scale = (int) Math.pow(10, precision);
-	    return (double) Math.round(value * scale) / scale;
-	}
-	
-	public static Color getColorFromStringArray(String[] c){
-		if(c.length==3){
-			if(isInteger(c[0])&&isInteger(c[1])&&isInteger(c[2])){
-				return new Color(Integer.parseInt(c[0]),Integer.parseInt(c[1]),Integer.parseInt(c[2]));
-			}
-		}
-		return null;
-	}
-	
-	public static boolean isBool(String s) {
-		if(s != null && (s.equals("true") || s.equals("false"))){
-			return true;
-		}
-		return false;
-	}
-	
-	public static boolean convertStringToBool(String s){
-		if(s.equals("true")){
-			return true;
-		}
-		return false;
-	}
+                        // Hexadecimal strings
+                        "((" +
+                        // 0[xX] HexDigits ._opt BinaryExponent FloatTypeSuffix_opt
+                        "(0[xX]" + HexDigits + "(\\.)?)|" +
 
-	public static int roundToInt(double d) {
-		if(d < 0) {
-			return (int) (d-0.5);
-		}
-		return (int) (d+0.5);
-	}
+                        // 0[xX] HexDigits_opt . HexDigits BinaryExponent FloatTypeSuffix_opt
+                        "(0[xX]" + HexDigits + "?(\\.)" + HexDigits + ")" +
+
+                        ")[pP][+-]?" + Digits + "))" +
+                        "[fFdD]?))" +
+                        "[\\x00-\\x20]*");// Optional trailing "whitespace"
+
+        if (Pattern.matches(fpRegex, val)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static double round(double value, int precision) {
+        int scale = (int) Math.pow(10, precision);
+        return (double) Math.round(value * scale) / scale;
+    }
+
+    public static Color getColorFromStringArray(String[] c) {
+        if (c.length == 3) {
+            if (isInteger(c[0]) && isInteger(c[1]) && isInteger(c[2])) {
+                return new Color(Integer.parseInt(c[0]), Integer.parseInt(c[1]), Integer.parseInt(c[2]));
+            }
+        }
+        return null;
+    }
+
+    public static boolean isBool(String s) {
+        if (s != null && (s.equals("true") || s.equals("false"))) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean convertStringToBool(String s) {
+        if (s.equals("true")) {
+            return true;
+        }
+        return false;
+    }
+
+    public static int roundToInt(double d) {
+        if (d < 0) {
+            return (int) (d - 0.5);
+        }
+        return (int) (d + 0.5);
+    }
 }
