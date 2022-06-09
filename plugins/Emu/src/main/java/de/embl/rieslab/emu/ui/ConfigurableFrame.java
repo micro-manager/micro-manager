@@ -9,23 +9,22 @@ import de.embl.rieslab.emu.utils.settings.Setting;
 
 /**
  * Interface giving access to a list of {@link ConfigurablePanel}s and maps of UIProperties and UIparameters.
- * 
- * @author Joran Deschamps
  *
+ * @author Joran Deschamps
  */
 public interface ConfigurableFrame {
 
-	public ArrayList<ConfigurablePanel> getConfigurablePanels();
-	
-	public HashMap<String, UIProperty> getUIProperties();
-	
-	@SuppressWarnings("rawtypes")
-	public HashMap<String, UIParameter> getUIParameters();
+    public ArrayList<ConfigurablePanel> getConfigurablePanels();
 
-	@SuppressWarnings("rawtypes")
-	public HashMap<String, Setting> getDefaultPluginSettings();
-	
-	@SuppressWarnings("rawtypes")
-	public HashMap<String, Setting> getCurrentPluginSettings();
+    public HashMap<String, UIProperty> getUIProperties();
+
+    @SuppressWarnings("rawtypes")
+    public HashMap<String, UIParameter> getUIParameters();
+
+    @SuppressWarnings("rawtypes")
+    public HashMap<String, Setting> getDefaultPluginSettings();
+
+    @SuppressWarnings("rawtypes")
+    public HashMap<String, Setting> getCurrentPluginSettings();
 
 }
