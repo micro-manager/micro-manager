@@ -44,7 +44,15 @@ public final class ConfigGroup {
    public String getName() {
       return name_;
    }
-   
+
+   /**
+    * Adds a property to a configuration preset.  Will create the preset if not already defined.
+    *
+    * @param presetName Name of the preset
+    * @param device Name of the device whose property will be added
+    * @param property Property name
+    * @param value Value of the property
+    */
    public void addConfigSetting(String presetName, String device, String property, String value) {
       ConfigPreset cp = configs_.get(presetName);
       if (cp == null) {
@@ -54,7 +62,12 @@ public final class ConfigGroup {
       
       cp.addSetting(new Setting(device, property, value));
    }
-   
+
+   /**
+    * Access to Configuration Presets.
+    *
+    * @return Array of configuration Presets.
+    */
    public ConfigPreset[] getConfigPresets() {
       Object[] objs = configs_.values().toArray();
       ConfigPreset[] cps = new ConfigPreset[objs.length];
@@ -80,6 +93,12 @@ public final class ConfigGroup {
       name_ = name;
    }
 
+   /**
+    * Changes the name of a configuration preset.
+    *
+    * @param prs Preset to be renamed.
+    * @param name New name of the Preset.
+    */
    public void renamePreset(ConfigPreset prs, String name) {
       configs_.remove(prs.getName());
       prs.setName(name);

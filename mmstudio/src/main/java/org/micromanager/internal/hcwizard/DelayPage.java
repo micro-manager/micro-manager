@@ -181,6 +181,12 @@ public final class DelayPage extends PagePanel {
       return true;
    }
 
+   /**
+    * Exits current page.
+    *
+    * @param next Whether or not to move to the next page.
+    * @return True on success.
+    */
    public boolean exitPage(boolean next) {
       CellEditor ce = deviceTable_.getCellEditor();
       if (ce != null) {

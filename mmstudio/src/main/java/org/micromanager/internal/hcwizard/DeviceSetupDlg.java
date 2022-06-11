@@ -33,6 +33,10 @@ import org.micromanager.internal.utils.PropertyValueCellRenderer;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 
+/**
+ * Displays the Device Setup dialog, aka shows the pre-initialization properties.
+ * This also is the place where a serial (COM) port will be configured.
+ */
 public final class DeviceSetupDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private static final String SCAN_PORTS = "Scan Ports";
@@ -307,6 +311,9 @@ public final class DeviceSetupDlg extends JDialog {
          propTable_.addColumn(column);
          column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
          propTable_.addColumn(column);
+      } else {
+         propTable_.getColumnModel().getColumn(2).setCellRenderer(propValueRenderer);
+         propTable_.getColumnModel().getColumn(2).setCellEditor(propValueEditor);
       }
       tm.fireTableStructureChanged();
       tm.fireTableDataChanged();
@@ -337,6 +344,11 @@ public final class DeviceSetupDlg extends JDialog {
       });
    }
 
+   /**
+    * Rebuilds the table that shows the COM port properties.
+    *
+    * @param portName Name of the serial port (i.e. its MM deviceName).
+    */
    public void rebuildComTable(String portName) {
       if (portName == null) {
          return;
@@ -540,8 +552,8 @@ public final class DeviceSetupDlg extends JDialog {
 
                if (st == DeviceDetectionStatus.Unimplemented) {
                   JOptionPane.showMessageDialog(null,
-                        "This device does not support auto-detection.\n" +
-                              "You have to manually choose port and settings.");
+                        "This device does not support auto-detection.\n"
+                              + "You have to manually choose port and settings.");
                   scanStatus_.setText("Scan failed");
                   return;
                }
@@ -600,6 +612,7 @@ public final class DeviceSetupDlg extends JDialog {
             try {
                Thread.sleep(900);
             } catch (InterruptedException ex) {
+               studio_.logs().logError(ex);
             }
          } finally { // matches try at entry
             progressDialog_.setVisible(false);
@@ -631,6 +644,7 @@ public final class DeviceSetupDlg extends JDialog {
          try {
             join();
          } catch (InterruptedException ex) {
+            studio_.logs().logError(ex);
          }
       }
    }

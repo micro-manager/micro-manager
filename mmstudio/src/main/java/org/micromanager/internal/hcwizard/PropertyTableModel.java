@@ -62,7 +62,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    public void updateValues(MicroscopeModel model, Device dev) {
       model_ = model;
       if (dev == null) {
-            devices_ = model.getDevices();
+         devices_ = model.getDevices();
       } else {
          devices_ = new Device[1];
          devices_[0] = dev;
@@ -127,7 +127,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
             }
             // set the property in the device, so that it can change other pre-init properties
             dev.setPropertyValueInHardware(core_, props_[row].name, props_[row].value);
-            // reload the device to update possibly change pre-init properties
+            // reload the device to update possibly changed pre-init properties
             dev.loadDataFromHardware(core_);
             // the listener will rebuild the table to reflect possibly changed pre-init properties
             fireTableCellUpdated(row, col);
