@@ -88,7 +88,7 @@ public final class ConfigWizard extends JDialog {
     * Create the application.
     *
     * @param studio Current Studio instance
-    * @param defFile
+    * @param defFile Configuration file to be used.
     */
    public ConfigWizard(Studio studio, String defFile) {
       super();
@@ -222,7 +222,7 @@ public final class ConfigWizard extends JDialog {
       titleLabel_.setText(pages_[curPage_].getTitle());
    }
 
-   private String UploadCurrentConfigFile() {
+   private String uploadCurrentConfigFile() {
       String returnValue = "";
       try {
          HttpUtils httpu = new HttpUtils();
@@ -259,10 +259,12 @@ public final class ConfigWizard extends JDialog {
                   qualifiedConfigFileName += physicalAddress;
                   prependedLine += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
                } catch (UnknownHostException e) {
+                  studio_.logs().logError(e);
                }
                prependedLine += "User: " + core_.getUserId() + " configuration file: "
                      + conff.getName() + "\n";
             } catch (Throwable t) {
+               studio_.logs().logError(t.getMessage());
             }
 
             // can raw IP address have :'s in them? (ipv6??)
@@ -356,7 +358,7 @@ public final class ConfigWizard extends JDialog {
 
             @Override
             public void run() {
-               statusMessage_ = UploadCurrentConfigFile();
+               statusMessage_ = uploadCurrentConfigFile();
             }
 
             public String status() {

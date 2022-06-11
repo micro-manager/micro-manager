@@ -62,7 +62,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    public void updateValues(MicroscopeModel model, Device dev) {
       model_ = model;
       if (dev == null) {
-            devices_ = model.getDevices();
+         devices_ = model.getDevices();
       } else {
          devices_ = new Device[1];
          devices_[0] = dev;
