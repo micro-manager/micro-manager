@@ -307,6 +307,9 @@ public final class DeviceSetupDlg extends JDialog {
          propTable_.addColumn(column);
          column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
          propTable_.addColumn(column);
+      } else {
+         propTable_.getColumnModel().getColumn(2).setCellRenderer(propValueRenderer);
+         propTable_.getColumnModel().getColumn(2).setCellEditor(propValueEditor);
       }
       tm.fireTableStructureChanged();
       tm.fireTableDataChanged();
