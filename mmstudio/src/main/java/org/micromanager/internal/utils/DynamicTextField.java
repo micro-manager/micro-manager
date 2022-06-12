@@ -31,12 +31,12 @@ public class DynamicTextField extends JTextField {
       /**
        * Called when the text field text has changed.
        *
-       * @param source the text field
+       * @param source                the text field
        * @param shouldForceValidation true if Enter key was pressed or text
-       *        field lost focus (listener should validate value and revert if invalid)
+       *                              field lost focus (listener should validate value and revert if invalid)
        */
       void textFieldValueChanged(DynamicTextField source,
-            boolean shouldForceValidation);
+                                 boolean shouldForceValidation);
    }
 
    private final EventListenerSupport<Listener> listeners_ =

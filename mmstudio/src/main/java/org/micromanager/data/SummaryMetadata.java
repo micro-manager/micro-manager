@@ -48,43 +48,57 @@ public interface SummaryMetadata {
       @Override
       Builder userName(String userName);
 
-      @Override Builder profileName(String profileName);
+      @Override
+      Builder profileName(String profileName);
 
-      @Override Builder computerName(String computerName);
+      @Override
+      Builder computerName(String computerName);
 
-      @Override Builder directory(String directory);
+      @Override
+      Builder directory(String directory);
 
-      @Override Builder channelGroup(String channelGroup);
+      @Override
+      Builder channelGroup(String channelGroup);
 
-      @Override Builder channelNames(String... channelNames);
+      @Override
+      Builder channelNames(String... channelNames);
 
       Builder channelNames(Iterable<String> channelNames);
 
-      @Override Builder zStepUm(Double zStepUm);
+      @Override
+      Builder zStepUm(Double zStepUm);
 
-      @Override Builder waitInterval(Double waitInterval);
+      @Override
+      Builder waitInterval(Double waitInterval);
 
       Builder customIntervalsMs(double... customIntervalsMs);
 
       Builder customIntervalsMs(Iterable<Double> customIntervalsMs);
 
-      @Override Builder axisOrder(String... axisOrder);
+      @Override
+      Builder axisOrder(String... axisOrder);
 
       Builder axisOrder(Iterable<String> axisOrder);
 
-      @Override Builder intendedDimensions(Coords intendedDimensions);
+      @Override
+      Builder intendedDimensions(Coords intendedDimensions);
 
-      @Override Builder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
+      @Override
+      Builder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
 
-      @Override Builder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
+      @Override
+      Builder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
 
-      @Override Builder startDate(String startDate);
+      @Override
+      Builder startDate(String startDate);
 
-      @Override Builder stagePositions(MultiStagePosition... stagePositions);
+      @Override
+      Builder stagePositions(MultiStagePosition... stagePositions);
 
       Builder stagePositions(Iterable<MultiStagePosition> stagePositions);
 
-      @Override Builder userData(PropertyMap userData);
+      @Override
+      Builder userData(PropertyMap userData);
    }
 
    /**
@@ -275,7 +289,7 @@ public interface SummaryMetadata {
    /**
     * Deprecated.
     *
-    * @return - Array with Axis ordered as described for getOrderedAxes() 
+    * @return - Array with Axis ordered as described for getOrderedAxes()
     * @deprecated - Use getOrdereddAxes() instead
     */
    @Deprecated

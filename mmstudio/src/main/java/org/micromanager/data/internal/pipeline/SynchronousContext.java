@@ -26,7 +26,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public final class SynchronousContext extends BaseContext {
    public SynchronousContext(Processor processor, Datastore store,
-         DefaultPipeline parent) {
+                             DefaultPipeline parent) {
       super(processor, store, parent);
    }
 
@@ -49,8 +49,7 @@ public final class SynchronousContext extends BaseContext {
       else {
          try {
             processor_.processImage(wrapper.getImage(), this);
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             ReportingUtils.logError(e, "Processor failed to process image");
             // Pass the exception to our parent.
             parent_.exceptionOccurred(e);

@@ -3,8 +3,6 @@ package org.micromanager.internal.hcwizard;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Vector;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -31,11 +29,11 @@ public final class PeripheralSetupDlg extends JDialog {
 
    private class DeviceTableTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
-      public final String[] columnNames = new String[]{
-         "Name",
-         "Adapter/Library",
-         "Description",
-         "Selected"
+      public final String[] columnNames = new String[] {
+            "Name",
+            "Adapter/Library",
+            "Description",
+            "Selected"
       };
       Vector<Boolean> selected_;
 
@@ -75,14 +73,18 @@ public final class PeripheralSetupDlg extends JDialog {
 
          if (columnIndex == NAMECOLUMN) {
             return peripherals_.get(rowIndex).getName();
-         } else if (columnIndex == ADAPTERCOLUMN) {
+         }
+         else if (columnIndex == ADAPTERCOLUMN) {
             return peripherals_.get(rowIndex).getAdapterName() + "/"
                   + peripherals_.get(rowIndex).getLibrary();
-         } else if (columnIndex == DESCRIPTIONCOLUMN) {
+         }
+         else if (columnIndex == DESCRIPTIONCOLUMN) {
             return peripherals_.get(rowIndex).getDescription();
-         } else if (SELECTIONCOLUMN == columnIndex) {
+         }
+         else if (SELECTIONCOLUMN == columnIndex) {
             return selected_.get(rowIndex);
-         } else {
+         }
+         else {
             return null;
          }
       }
@@ -151,7 +153,7 @@ public final class PeripheralSetupDlg extends JDialog {
       super();
       setTitle("Peripheral Devices Setup");
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 479, 353);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       //setModalityType(ModalityType.APPLICATION_MODAL);
@@ -173,34 +175,34 @@ public final class PeripheralSetupDlg extends JDialog {
       deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       scrollPane.setViewportView(deviceTable_);
-      
+
       JLabel lblNewLabel = new JLabel("HUB (parent device):");
       lblNewLabel.setBounds(10, 11, 111, 14);
       contentPanel.add(lblNewLabel);
-      
+
       JLabel lblParentDev = new JLabel(hub);
       lblParentDev.setBounds(131, 11, 332, 14);
       contentPanel.add(lblParentDev);
-      
-         {
+
+      {
          JPanel buttonPane = new JPanel();
          buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
          getContentPane().add(buttonPane, BorderLayout.SOUTH);
-            {
-               JButton okButton = new JButton("OK");
-               okButton.addActionListener(e -> onOK());
-               okButton.setActionCommand("OK");
-               buttonPane.add(okButton);
-               getRootPane().setDefaultButton(okButton);
-            }
-            {
-               JButton cancelButton = new JButton("Cancel");
-               cancelButton.addActionListener(e -> onCancel());
-               cancelButton.setActionCommand("Cancel");
-               buttonPane.add(cancelButton);
-            }
+         {
+            JButton okButton = new JButton("OK");
+            okButton.addActionListener(e -> onOK());
+            okButton.setActionCommand("OK");
+            buttonPane.add(okButton);
+            getRootPane().setDefaultButton(okButton);
          }
-      
+         {
+            JButton cancelButton = new JButton("Cancel");
+            cancelButton.addActionListener(e -> onCancel());
+            cancelButton.setActionCommand("Cancel");
+            buttonPane.add(cancelButton);
+         }
+      }
+
       rebuildTable();
    }
 
@@ -238,7 +240,7 @@ public final class PeripheralSetupDlg extends JDialog {
    public void onOK() {
       dispose();
    }
-   
+
    public void onCancel() {
       dispose();
    }

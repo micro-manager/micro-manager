@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.displaywindow.imagej;
 
 import com.google.common.base.Preconditions;
@@ -11,7 +12,6 @@ import java.awt.Color;
 import java.util.Collections;
 
 /**
- *
  * @author mark
  */
 class GrayscaleColorModeStrategy extends ColorColorModeStrategy {

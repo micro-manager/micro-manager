@@ -14,13 +14,13 @@ public class DefaultChannelExposureEvent implements ChannelExposureEvent {
    /**
     * Constructs the event signalling that a channel's default exposure time changed.
     *
-    * @param newExposureTime New Exposure Time (ms)
-    * @param channelGroup Group to which this channel belongs
-    * @param channel Channel (Preset)
+    * @param newExposureTime    New Exposure Time (ms)
+    * @param channelGroup       Group to which this channel belongs
+    * @param channel            Channel (Preset)
     * @param isMainExposureTime True if this channel is currently the "active" channel
     */
    public DefaultChannelExposureEvent(double newExposureTime, String channelGroup,
-                               String channel, boolean isMainExposureTime) {
+                                      String channel, boolean isMainExposureTime) {
       newExposureTime_ = newExposureTime;
       channelGroup_ = channelGroup;
       channel_ = channel;

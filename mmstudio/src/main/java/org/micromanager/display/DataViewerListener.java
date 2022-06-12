@@ -1,4 +1,3 @@
-
 package org.micromanager.display;
 
 /**
@@ -7,13 +6,13 @@ package org.micromanager.display;
  * @author nico
  */
 public abstract class DataViewerListener {
-   
+
    /**
     * Whether or not the DataViewer can be closed.
     *
     * @param viewer - DataViewer asking if it can be closed
     * @return if true, this delegate has no qualms about closing this dataViewer
     */
-   
+
    public abstract boolean canCloseViewer(DataViewer viewer);
 }

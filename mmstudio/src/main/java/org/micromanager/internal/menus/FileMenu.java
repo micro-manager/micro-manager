@@ -36,7 +36,7 @@ public final class FileMenu {
    /**
     * Creates the File Menu in the application.
     *
-    * @param studio The always present Studio object
+    * @param studio  The always present Studio object
     * @param menuBar The menuBar object to which this FileMenu belongs
     */
    public FileMenu(Studio studio, JMenuBar menuBar) {
@@ -80,13 +80,13 @@ public final class FileMenu {
             () -> promptToOpenFile(false));
 
       fileMenu.add(makeOpenRecentMenu(false));
-      
+
       GUIUtils.addMenuItem(fileMenu, "Open (SciFIO)...", null, this::openSciFIO);
 
       fileMenu.addSeparator();
 
       JMenuItem closeAllItem = GUIUtils.addMenuItem(
-              fileMenu, "Close All Images...", null,
+            fileMenu, "Close All Images...", null,
             () -> studio_.displays().promptToCloseWindows());
       closeAllItem.setEnabled(enableCloseAll_);
 
@@ -102,7 +102,7 @@ public final class FileMenu {
       new Thread(() -> {
          try {
             Datastore store = studio_.data().promptForDataToLoad(
-                    studio_.app().getMainWindow(), isVirtual);
+                  studio_.app().getMainWindow(), isVirtual);
             if (store == null) {
                // User cancelled.
                return;
@@ -124,11 +124,11 @@ public final class FileMenu {
          }
       }).start();
    }
-   
-   
+
+
    private void openSciFIO() {
       File file = FileDialogs.openFile(null,
-              "Please select an image data set", FileDialogs.SCIFIO_DATA);
+            "Please select an image data set", FileDialogs.SCIFIO_DATA);
       if (file != null) {
          new Thread(() -> {
             try {
@@ -150,7 +150,7 @@ public final class FileMenu {
 
    private JMenu makeOpenRecentMenu(final boolean isVirtual) {
       JMenu result = new JMenu(String.format("Open Recent (%s)",
-               isVirtual ? "Virtual" : "RAM"));
+            isVirtual ? "Virtual" : "RAM"));
 
       List<String> files = getRecentFiles();
       // History is from oldest to newest; we want newest to oldest so new
@@ -163,12 +163,13 @@ public final class FileMenu {
                MMStudio internalStudio = (MMStudio) studio_;
                Datastore store = studio_.data()
                      .loadData(internalStudio.getApplication().getMainWindow(),
-                        path,
-                        isVirtual);
+                           path,
+                           isVirtual);
                if (store != null && store.getAnyImage() != null) {
                   studio_.displays().manage(store);
                   studio_.displays().loadDisplays(store);
-               } else {
+               }
+               else {
                   studio_.logs().showError(
                         "Unable to load any images; file may be invalid or missing.");
                }

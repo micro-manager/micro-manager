@@ -1,4 +1,3 @@
-
 package org.micromanager.display.inspector.internal.panels.intensity;
 
 import org.micromanager.Studio;

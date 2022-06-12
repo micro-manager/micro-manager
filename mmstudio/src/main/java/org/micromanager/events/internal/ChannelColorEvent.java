@@ -15,8 +15,8 @@ public class ChannelColorEvent {
     * Creates an event signalling that the color of a channel has changed.
     *
     * @param channelGroup Channel group to which this channel (Preset) belongs.
-    * @param channel Preset
-    * @param color New color for this channel (Preset)
+    * @param channel      Preset
+    * @param color        New color for this channel (Preset)
     */
    public ChannelColorEvent(String channelGroup, String channel, Color color) {
       channelGroup_ = channelGroup;

@@ -33,7 +33,6 @@ import javax.swing.JComponent;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
-import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.TextUtils;
@@ -93,7 +92,7 @@ public final class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin 
       JButton result = new JButton(
             TextUtils.truncateFilename(file.getName(), 15),
             studio_.quickAccess().getCustomIcon(config,
-               IconLoader.getIcon("/org/micromanager/icons/film_file.png"))) {
+                  IconLoader.getIcon("/org/micromanager/icons/film_file.png"))) {
          @Override
          public Dimension getPreferredSize() {
             return QuickAccessPlugin.getPaddedCellSize();
@@ -107,7 +106,7 @@ public final class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin 
          public void actionPerformed(ActionEvent event) {
             if (!file.exists()) {
                studio_.logs().showError("Unable to find settings file at " +
-                  file.getAbsolutePath());
+                     file.getAbsolutePath());
             }
             else {
                runAcquisition(file.getAbsolutePath());
@@ -127,11 +126,9 @@ public final class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin 
             try {
                studio_.acquisitions().loadAcquisition(path);
                studio_.acquisitions().runAcquisition();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                studio_.logs().showError(e, "Error loading settings from " + path);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                studio_.logs().showError(e, "Unable to run acquisition");
             }
          }
@@ -148,6 +145,6 @@ public final class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin 
       }
       FileDialogs.storePath(FileDialogs.ACQ_SETTINGS_FILE, file);
       return PropertyMaps.builder().putString("settingsPath",
-              file.getAbsolutePath()).build();
+            file.getAbsolutePath()).build();
    }
 }

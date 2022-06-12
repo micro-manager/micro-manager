@@ -45,9 +45,9 @@ import javax.swing.MenuElement;
 import javax.swing.MenuSelectionManager;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import net.miginfocom.swing.MigLayout;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.GUIUtils;
@@ -66,7 +66,7 @@ public final class DraggableIcon extends JLabel {
     * ".png" postpended when they are actually loaded.
     */
    private static final String[] JAR_ICONS = new String[] {
-      "application_view_list", "arrow_down", "arrow_inout", "arrow_out",
+         "application_view_list", "arrow_down", "arrow_inout", "arrow_out",
          "arrow_refresh", "arrow_right", "arrow_up", "asterisk_orange",
          "camera", "camera_go", "camera_plus_arrow", "cancel", "chart_curve",
          "cog", "color_filter", "contrast", "control_pause",
@@ -97,12 +97,13 @@ public final class DraggableIcon extends JLabel {
     * from the controlsPanel_ when dragged out of the grid. Otherwise, we
     * want to create a new control when the icon is dragged into the grid.
     * If icon is null, then we generate an icon from the JComponent.
+    *
     * @param size Number of cells (width x height) taken up by the icon.
     */
    public DraggableIcon(Studio studio, QuickAccessFrame frame,
-         final JComponent component, ImageIcon icon,
-         final QuickAccessPlugin plugin, boolean isReified,
-         final ControlCell parentCell, Dimension size) {
+                        final JComponent component, ImageIcon icon,
+                        final QuickAccessPlugin plugin, boolean isReified,
+                        final ControlCell parentCell, Dimension size) {
       studio_ = studio;
       frame_ = frame;
       component_ = component;
@@ -117,9 +118,9 @@ public final class DraggableIcon extends JLabel {
             Image image = ScreenImage.createImage(component);
             image = resizeToFit(image);
             icon_ = new ImageIcon(image);
-         }
-         catch (Exception e) {
-            studio_.logs().logError(e, "Unable to create icon for Quick Access Plugin " + plugin.getName());
+         } catch (Exception e) {
+            studio_.logs()
+                  .logError(e, "Unable to create icon for Quick Access Plugin " + plugin.getName());
          }
       }
       setIcon(icon_);
@@ -139,7 +140,7 @@ public final class DraggableIcon extends JLabel {
             // Right-click, or control click (for OSX support), for a
             // customizable-icon plugin.
             else if ((SwingUtilities.isRightMouseButton(e) ||
-                     e.isControlDown()) &&
+                  e.isControlDown()) &&
                   isReified_ && parentCell_ != null &&
                   plugin_ instanceof WidgetPlugin &&
                   ((WidgetPlugin) plugin_).getCanCustomizeIcon()) {
@@ -149,11 +150,13 @@ public final class DraggableIcon extends JLabel {
                menu.show(DraggableIcon.this, e.getX(), e.getY());
             }
          }
+
          @Override
          public void mouseDragged(MouseEvent e) {
             frame_.updateMouse(e);
             frame_.repaint();
          }
+
          @Override
          public void mouseReleased(MouseEvent e) {
             frame_.stopDragging();
@@ -166,7 +169,7 @@ public final class DraggableIcon extends JLabel {
                   frame_.removeControl(parentCell_, true);
                }
                else if (frame_.canFitRect(
-                        new Rectangle(p.x, p.y, getSize().width,
+                     new Rectangle(p.x, p.y, getSize().width,
                            getSize().height), parentCell_)) {
                   // Move it to a new location.
                   frame_.moveControl(parentCell_, p);
@@ -235,11 +238,11 @@ public final class DraggableIcon extends JLabel {
 
          addItem(menu, "Image File...", "span, split 2", null, 0,
                new Runnable() {
-            @Override
-            public void run() {
-               loadIconFromFile();
-            }
-         });
+                  @Override
+                  public void run() {
+                     loadIconFromFile();
+                  }
+               });
          addItem(menu, "Color Swatch...", "wrap",
                DefaultQuickAccessManager.createSwatch(Color.RED, 16), 1,
                new Runnable() {
@@ -267,7 +270,7 @@ public final class DraggableIcon extends JLabel {
        * Add an entry to our grid of options.
        */
       private void addItem(final JPopupMenu menu, final String name,
-            String params, Icon icon, int index, final Runnable action) {
+                           String params, Icon icon, int index, final Runnable action) {
          final JLabel label;
          if (name != null) {
             label = new JLabel(name, icon, SwingConstants.LEADING);
@@ -314,16 +317,14 @@ public final class DraggableIcon extends JLabel {
             iconJson.put(DefaultQuickAccessManager.ICON_PATH,
                   imageFile.getAbsolutePath());
             config = config.copyBuilder()
-               .putString(WidgetPlugin.CUSTOM_ICON_STRING, iconJson.toString())
-               .build();
+                  .putString(WidgetPlugin.CUSTOM_ICON_STRING, iconJson.toString())
+                  .build();
             frame_.removeControl(parentCell_, false);
             frame_.addControl(new ControlCell(studio_, frame_, plugin_,
-                     config, parentCell_.getRect()));
-         }
-         catch (IOException e) {
+                  config, parentCell_.getRect()));
+         } catch (IOException e) {
             studio_.logs().showError(e, "Unable to open file " + chooser.getSelectedFile());
-         }
-         catch (JSONException e) {
+         } catch (JSONException e) {
             studio_.logs().logError(e, "Unable to save icon JSON");
          }
       }
@@ -341,21 +342,21 @@ public final class DraggableIcon extends JLabel {
                   DefaultQuickAccessManager.COLOR_SWATCH);
             iconJson.put(DefaultQuickAccessManager.ICON_COLOR, color.getRGB());
             config = config.copyBuilder()
-               .putString(WidgetPlugin.CUSTOM_ICON_STRING, iconJson.toString())
-               .build();
+                  .putString(WidgetPlugin.CUSTOM_ICON_STRING, iconJson.toString())
+                  .build();
             frame_.removeControl(parentCell_, false);
             frame_.addControl(new ControlCell(studio_, frame_, plugin_,
-                     config, parentCell_.getRect()));
-         }
-         catch (JSONException e) {
+                  config, parentCell_.getRect()));
+         } catch (JSONException e) {
             studio_.logs().logError(e, "Unable to create color swatch icon");
          }
       }
 
       /**
        * Use the specified icon from the jar.
+       *
        * @param name The filename, minus ".png", and not including the
-       * "/org/micromanager/icons/" bit either.
+       *             "/org/micromanager/icons/" bit either.
        */
       private void loadJarIcon(String name) {
          PropertyMap config = parentCell_.getConfig();
@@ -365,13 +366,12 @@ public final class DraggableIcon extends JLabel {
                   DefaultQuickAccessManager.JAR_ICON);
             iconJson.put(DefaultQuickAccessManager.ICON_PATH, name);
             config = config.copyBuilder()
-               .putString(WidgetPlugin.CUSTOM_ICON_STRING, iconJson.toString())
-               .build();
+                  .putString(WidgetPlugin.CUSTOM_ICON_STRING, iconJson.toString())
+                  .build();
             frame_.removeControl(parentCell_, false);
             frame_.addControl(new ControlCell(studio_, frame_, plugin_,
-                     config, parentCell_.getRect()));
-         }
-         catch (JSONException e) {
+                  config, parentCell_.getRect()));
+         } catch (JSONException e) {
             studio_.logs().logError(e, "Unable to create color swatch icon");
          }
       }
@@ -387,13 +387,17 @@ public final class DraggableIcon extends JLabel {
       }
 
       @Override
-      public void menuSelectionChanged(boolean isIncluded) {}
+      public void menuSelectionChanged(boolean isIncluded) {
+      }
+
       @Override
       public void processKeyEvent(KeyEvent event, MenuElement[] path,
-            MenuSelectionManager manager) {}
+                                  MenuSelectionManager manager) {
+      }
+
       @Override
       public void processMouseEvent(MouseEvent event, MenuElement[] path,
-            MenuSelectionManager manager) {
+                                    MenuSelectionManager manager) {
          super.processMouseMotionEvent(event);
       }
    }

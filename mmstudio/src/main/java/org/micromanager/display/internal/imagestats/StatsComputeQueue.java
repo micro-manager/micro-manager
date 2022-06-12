@@ -26,6 +26,7 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 
 /**
  * Facade to manage background, rate-limited image stats computation.
+ *
  * @author Mark A. Tsuchida
  */
 public final class StatsComputeQueue {
@@ -36,7 +37,7 @@ public final class StatsComputeQueue {
 
    // Guarded by monitor on this
    private final EventListenerSupport<Listener> listeners_ =
-           new EventListenerSupport<> (Listener.class, Listener.class.getClassLoader());
+         new EventListenerSupport<>(Listener.class, Listener.class.getClassLoader());
 
    // Only accessed from compute executor thread
    private final ImageStatsProcessor processor_ = ImageStatsProcessor.create();
@@ -141,8 +142,7 @@ public final class StatsComputeQueue {
    }
 
    private void submitCompute(final long sequenceNumber, final int priority,
-         final ImageStatsRequest request, final long waitTargetNs)
-   {
+                              final ImageStatsRequest request, final long waitTargetNs) {
       while (computeFutures_.size() <= priority) {
          computeFutures_.add(null);
       }
@@ -163,8 +163,7 @@ public final class StatsComputeQueue {
                      perfMon_.sample("Compute pre-delay (ms)", waitNs / 1000000);
                   }
                   Thread.sleep(waitNs / 1000000L, (int) (waitNs % 1000000L));
-               }
-               catch (InterruptedException cancel) {
+               } catch (InterruptedException cancel) {
                   if (perfMon_ != null) {
                      perfMon_.sampleTimeInterval("Compute pre-delay interrupted");
                   }
@@ -175,8 +174,7 @@ public final class StatsComputeQueue {
             final ImagesAndStats result;
             try {
                result = processor_.process(sequenceNumber, request, false);
-            }
-            catch (InterruptedException shouldNotHappen) {
+            } catch (InterruptedException shouldNotHappen) {
                Thread.currentThread().interrupt();
                if (perfMon_ != null) {
                   perfMon_.sampleTimeInterval("Compute interrupted (!)");
@@ -202,8 +200,7 @@ public final class StatsComputeQueue {
    }
 
    private void submitBypass(final long sequenceNumber, final int priority,
-         final ImageStatsRequest request)
-   {
+                             final ImageStatsRequest request) {
       while (bypassFutures_.size() <= priority) {
          bypassFutures_.add(null);
       }
@@ -241,11 +238,9 @@ public final class StatsComputeQueue {
    }
 
    private synchronized void submitResult(long sequenceNumber,
-         final int priority, final ImagesAndStats result)
-   {
+                                          final int priority, final ImagesAndStats result) {
       if (sequenceNumber < lastResultSequenceNumber_ &&
-            result.isRealStats())
-      {
+            result.isRealStats()) {
          // Prevent late-arriving stats from causing animation to retrogress.
          // If this result contains new stats, it will still be applied to the
          // stored stats to be applied to subsequent bypassed requests.
@@ -255,8 +250,7 @@ public final class StatsComputeQueue {
          return;
       }
       else if (sequenceNumber <= lastResultSequenceNumber_ &&
-            !result.isRealStats())
-      {
+            !result.isRealStats()) {
          // In the event that the bypasses images arrive after
          // the computed stats for the same request, discard.
          if (perfMon_ != null) {
@@ -298,8 +292,7 @@ public final class StatsComputeQueue {
                if (waitNs > 0) {
                   Thread.sleep(waitNs / 1000000, (int) (waitNs % 1000000));
                }
-            }
-            catch (InterruptedException unexpected) {
+            } catch (InterruptedException unexpected) {
             }
 
             synchronized (StatsComputeQueue.this) {

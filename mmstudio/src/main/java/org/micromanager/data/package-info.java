@@ -7,4 +7,5 @@
  * Event classes in this package are specific to a single Datastore, and can
  * be subscribed to via the Datastore.registerForEvents() method.
  */
+
 package org.micromanager.data;

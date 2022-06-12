@@ -138,7 +138,7 @@ public interface PropertyMap {
       @Override
       Builder putLong(String key, Long value);
 
-      Builder putLongList(String key, long ... values);
+      Builder putLongList(String key, long... values);
 
       Builder putLongList(String key, Iterable<Long> values);
 
@@ -255,13 +255,15 @@ public interface PropertyMap {
       /**
        * Deprecated.
        *
-       * @deprecated Use {@link #putIntegerList} instead. */
+       * @deprecated Use {@link #putIntegerList} instead.
+       */
       @Deprecated
       @Override
       PropertyMapBuilder putIntArray(String key, Integer[] values);
 
       /**
        * Deprecated.
+       *
        * @deprecated Use {@link #putLongList} instead.
        */
       @Deprecated
@@ -382,6 +384,7 @@ public interface PropertyMap {
    Class<?> getValueTypeForKey(String key);
 
    OpaqueValue getAsOpaqueValue(String key);
+
    String getValueAsString(String key, String aDefault);
 
    //
@@ -434,7 +437,7 @@ public interface PropertyMap {
 
    boolean containsLongList(String key);
 
-   long[] getLongList(String key, long ... defaults);
+   long[] getLongList(String key, long... defaults);
 
    List<Long> getLongList(String key, Iterable<Long> defaults);
 
@@ -478,7 +481,7 @@ public interface PropertyMap {
     * following types correctly: {@code Byte, Short, Integer, Long, Float,
     * Double}.</p>
     *
-    * @param key Key to the property
+    * @param key      Key to the property
     * @param aDefault Default value to be used if the property was not a number or not found
     * @return Number value of the property
     */
@@ -594,8 +597,8 @@ public interface PropertyMap {
     * <p>If the value stored in the property map is not one of the allowed values
     * for {@code enumType}, {@code aDefault} will be returned.</p>
     *
-    * @param <E> the enum class
-    * @param key the property key
+    * @param <E>      the enum class
+    * @param key      the property key
     * @param enumType the enum class
     * @param aDefault a default value to return if the key is missing or
     *                 the stored value is an enum but not a known value for the given enum
@@ -618,13 +621,14 @@ public interface PropertyMap {
     * <p>Unless all of the values stored in the property map are allowed values of
     * {@code enumType}, {@code defaults} will be returned.</p>
     *
-    * @param <E> the enum class
-    * @param key the property key
+    * @param <E>      the enum class
+    * @param key      the property key
     * @param enumType the enum class
     * @param defaults a default collection
     * @return the list of enum values for {@code key}
     */
-   <E extends Enum<E>> List<E> getStringListAsEnumList(String key, Class<E> enumType, Iterable<E> defaults);
+   <E extends Enum<E>> List<E> getStringListAsEnumList(String key, Class<E> enumType,
+                                                       Iterable<E> defaults);
 
 
    /**
@@ -643,8 +647,8 @@ public interface PropertyMap {
     * <p>To create a property map back from the saved file, see {@link
     * PropertyMaps#loadJSON}.</p>
     *
-    * @param file the file to write to
-    * @param overwrite if false and file exists, don't write and return false
+    * @param file         the file to write to
+    * @param overwrite    if false and file exists, don't write and return false
     * @param createBackup if true and overwriting, first rename the existing
     *                     file by appending "~" to its name
     * @return true if the file was successfully written

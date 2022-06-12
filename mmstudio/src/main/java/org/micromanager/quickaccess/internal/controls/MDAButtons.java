@@ -79,7 +79,7 @@ public final class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-               "/org/micromanager/icons/film@2x.png"));
+            "/org/micromanager/icons/film@2x.png"));
    }
 
    // We are not actually configurable.
@@ -118,18 +118,21 @@ public final class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
             result.width = (int) (result.width * .4);
             return result;
          }
+
          @Override
          public Dimension getMaximumSize() {
             return getPreferredSize();
          }
+
          @Subscribe
          public void onAcquisitionStart(AcquisitionStartedEvent event) {
             if (studio_.acquisitions().isOurAcquisition(event.getSource())) {
                setIcon(IconLoader.getIcon(
-                        "/org/micromanager/icons/cancel.png"));
+                     "/org/micromanager/icons/cancel.png"));
                setText("Stop!");
             }
          }
+
          @Subscribe
          public void onAcquisitionEnded(AcquisitionEndedEvent event) {
             if (studio_.acquisitions().isOurAcquisition(event.getSource())) {
@@ -149,10 +152,9 @@ public final class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
                   public void run() {
                      try {
                         studio_.acquisitions().runAcquisition();
-                     }
-                     catch (Exception e) {
+                     } catch (Exception e) {
                         studio_.logs().showError(e,
-                           "Error running acquisition.");
+                              "Error running acquisition.");
                      }
                   }
                }).start();

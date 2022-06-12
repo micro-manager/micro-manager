@@ -40,7 +40,7 @@ public final class ConfiguratorWrapper {
    private boolean isEnabledInLive_;
 
    public ConfiguratorWrapper(ProcessorPlugin plugin,
-         ProcessorConfigurator configurator, String name) {
+                              ProcessorConfigurator configurator, String name) {
       plugin_ = plugin;
       configurator_ = configurator;
       name_ = name;
@@ -115,7 +115,8 @@ public final class ConfiguratorWrapper {
          // This flag was added later.
          if (json.has("isEnabledInLive")) {
             result.setEnabledInLive(json.getBoolean("isEnabledInLive"));
-         } else {
+         }
+         else {
             result.setEnabledInLive(result.isEnabled());
          }
          return result;

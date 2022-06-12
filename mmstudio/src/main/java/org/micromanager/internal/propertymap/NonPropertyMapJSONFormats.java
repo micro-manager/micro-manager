@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.propertymap;
 
 
@@ -86,8 +85,8 @@ import org.micromanager.internal.MMStudio;
 /**
  * High-level format conversion between MM1-style JSON and modern property maps.
  *
- * @see MM1JSONSerializer
  * @author Mark A. Tsuchida
+ * @see MM1JSONSerializer
  */
 public abstract class NonPropertyMapJSONFormats {
    private static final NonPropertyMapJSONFormats METADATA_INSTANCE =
@@ -99,9 +98,9 @@ public abstract class NonPropertyMapJSONFormats {
    private static final NonPropertyMapJSONFormats MSP_INSTANCE =
          new MultiStagePositionFormat();
    private static final NonPropertyMapJSONFormats MSDP_Instance =
-           new MultiStageDevicePositionFormat();
+         new MultiStageDevicePositionFormat();
    private static final NonPropertyMapJSONFormats OLD_MSP_INSTANCE =
-           new StagePosition();
+         new StagePosition();
    private static final NonPropertyMapJSONFormats COORDS_INSTANCE =
          new CoordsFormat();
    private static final NonPropertyMapJSONFormats IMAGE_FORMAT_INSTANCE =
@@ -122,11 +121,11 @@ public abstract class NonPropertyMapJSONFormats {
    public static NonPropertyMapJSONFormats multiStagePosition() {
       return MSP_INSTANCE;
    }
-   
+
    public static NonPropertyMapJSONFormats multiStageDevicePosition() {
       return MSDP_Instance;
    }
-   
+
    public static NonPropertyMapJSONFormats oldStagePosition() {
       return OLD_MSP_INSTANCE;
    }
@@ -302,7 +301,7 @@ public abstract class NonPropertyMapJSONFormats {
             } catch (UnsupportedOperationException uoe) {
                MMStudio.getInstance().logs().logError(uoe, "Key: " + key);
             }
-         
+
          }
       }
    }
@@ -383,8 +382,8 @@ public abstract class NonPropertyMapJSONFormats {
          }
       }
    }
-   
-   
+
+
    /**
     * The problematic x-y-z-as-first-and-second-axes format.
     */

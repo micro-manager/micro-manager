@@ -85,7 +85,7 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-               "/org/micromanager/icons/color_filter@2x.png"));
+            "/org/micromanager/icons/color_filter@2x.png"));
    }
 
    @Override
@@ -108,7 +108,7 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
       };
       result.setOpaque(true);
       result.setBackground(new Color(config.getInteger("backgroundColor",
-                  Color.GREEN.getRGB())));
+            Color.GREEN.getRGB())));
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
       result.addActionListener(new ActionListener() {
@@ -118,10 +118,9 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
                studio_.core().setConfig(group, preset);
                studio_.core().waitForConfig(group, preset);
                studio_.app().refreshGUIFromCache();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                studio_.logs().showError(e, "Error setting config group " +
-                  group + " to mode " + preset);
+                     group + " to mode " + preset);
             }
          }
       });
@@ -131,7 +130,9 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public PropertyMap configureControl(final Frame parent) {
       JPanel contents = new JPanel(new MigLayout("flowx"));
-      contents.add(new JLabel("Select which configuration group and preset to set when the button is clicked."), "span, wrap");
+      contents.add(new JLabel(
+                  "Select which configuration group and preset to set when the button is clicked."),
+            "span, wrap");
 
       // Changing the dropdowns may change the color of this label, so we need
       // to create it now before we specify dropdown behavior.
@@ -167,18 +168,17 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             try {
                String curPreset = studio_.core().getCurrentConfig(group);
                presetSelector.setSelectedItem(curPreset);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                studio_.logs().logError(e, "Invalid configuration group name " + group);
             }
             // Try to get a new color for the color picker. This won't do
             // anything useful when not dealing with channel groups, in which
             // case the color will remain the same.
             pickerLabel.setBackground(
-                    RememberedDisplaySettings.loadChannel(studio_,
-                            (String) groupSelector.getSelectedItem(), 
-                            (String) presetSelector.getSelectedItem(),
-                            null).getColor());
+                  RememberedDisplaySettings.loadChannel(studio_,
+                        (String) groupSelector.getSelectedItem(),
+                        (String) presetSelector.getSelectedItem(),
+                        null).getColor());
          }
       });
 
@@ -189,10 +189,10 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             // anything useful when not dealing with channel groups, in which
             // case the color will remain the same.
             pickerLabel.setBackground(
-               RememberedDisplaySettings.loadChannel(studio_,
-                       (String) groupSelector.getSelectedItem(),
-                       (String) presetSelector.getSelectedItem(),
-                       null).getColor());
+                  RememberedDisplaySettings.loadChannel(studio_,
+                        (String) groupSelector.getSelectedItem(),
+                        (String) presetSelector.getSelectedItem(),
+                        null).getColor());
          }
       });
       // Default to the Channel group, if available.
@@ -203,8 +203,7 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             try {
                presetSelector.setSelectedItem(studio_.core().getCurrentConfig(group));
                didSetDefault = true;
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                studio_.logs().logError(e, "Unable to get config for group " + group);
             }
             break;
@@ -224,8 +223,8 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
          @Override
          public void mouseClicked(MouseEvent e) {
             Color newColor = JColorChooser.showDialog(parent,
-               "Choose a background color for this preset.",
-               pickerLabel.getBackground());
+                  "Choose a background color for this preset.",
+                  pickerLabel.getBackground());
             pickerLabel.setBackground(newColor);
          }
       });
@@ -235,10 +234,10 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             "Configure presets button", JOptionPane.PLAIN_MESSAGE);
 
       return PropertyMaps.builder()
-         .putString("configGroup", (String) groupSelector.getSelectedItem())
-         .putString("presetName", (String) presetSelector.getSelectedItem())
-         .putInteger("backgroundColor", pickerLabel.getBackground().getRGB())
-         .build();
+            .putString("configGroup", (String) groupSelector.getSelectedItem())
+            .putString("presetName", (String) presetSelector.getSelectedItem())
+            .putInteger("backgroundColor", pickerLabel.getBackground().getRGB())
+            .build();
    }
 
    @Override

@@ -25,17 +25,17 @@ import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
 
 /**
- * This class signifies that new summary metadata has been set for a 
+ * This class signifies that new summary metadata has been set for a
  * DataProvider.
- *
+ * <p>
  * This Event posts on the DataProvider bus.
  * Subscribe using {@link DataProvider#registerForEvents(Object)}.
  */
-public final class DefaultNewSummaryMetadataEvent implements 
-        DataProviderHasNewSummaryMetadataEvent {
-   
+public final class DefaultNewSummaryMetadataEvent implements
+      DataProviderHasNewSummaryMetadataEvent {
+
    private final SummaryMetadata metadata_;
-   
+
    public DefaultNewSummaryMetadataEvent(SummaryMetadata metadata) {
       metadata_ = metadata;
    }

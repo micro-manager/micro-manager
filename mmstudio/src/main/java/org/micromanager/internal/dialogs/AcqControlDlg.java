@@ -115,21 +115,20 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * <p>TODO: GUI settings and acquisition engine settings are continuously synchronized.
  * This causes a lot of overhead and a lot of room for bugs.  Separate these better,
  * and only synchronize when really needed. </p>
- *
  */
 public final class AcqControlDlg extends JFrame implements PropertyChangeListener,
-        AcqSettingsListener, TableModelListener {
+      AcqSettingsListener, TableModelListener {
 
    private static final long serialVersionUID = 1L;
    private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
    private static final String RELATIVE_Z = "Relative Z";
    private static final String ABSOLUTE_Z = "Absolute Z";
-   private static final String SHOULD_SYNC_EXPOSURE = 
-           "should sync exposure times between main window and Acquire dialog";
-   private static final String SHOULD_HIDE_DISPLAY = 
-           "should hide image display windows for multi-dimensional acquisitions";
-   private static final String SHOULD_CHECK_EXPOSURE_SANITY = 
-           "whether to prompt the user if their exposure times seem excessively long";
+   private static final String SHOULD_SYNC_EXPOSURE =
+         "should sync exposure times between main window and Acquire dialog";
+   private static final String SHOULD_HIDE_DISPLAY =
+         "should hide image display windows for multi-dimensional acquisitions";
+   private static final String SHOULD_CHECK_EXPOSURE_SANITY =
+         "whether to prompt the user if their exposure times seem excessively long";
    private static final String BUTTON_SIZE = "width 80!, height 22!";
    private static final String PANEL_CONSTRAINT = "fillx, gap 2, insets 2";
 
@@ -214,7 +213,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * Acquisition control dialog box.
     * Specification of all parameters required for the acquisition.
     *
-    * @param acqEng - acquisition engine
+    * @param acqEng   - acquisition engine
     * @param mmStudio - ScriptInterface
     */
    public AcqControlDlg(AcquisitionWrapperEngine acqEng, MMStudio mmStudio) {
@@ -225,8 +224,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       settings_ = profile_.getSettings(this.getClass());
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              MMStudio.class.getResource(
-                      "/org/micromanager/icons/microscope.gif")));
+            MMStudio.class.getResource(
+                  "/org/micromanager/icons/microscope.gif")));
 
       super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -244,16 +243,16 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       super.setTitle("Multi-Dimensional Acquisition");
       super.setLayout(new MigLayout("fill, flowy, gap 2, insets 6",
-              "[grow, fill]",
-              "[][grow][][]"));
+            "[grow, fill]",
+            "[][grow][][]"));
 
       // Contains timepoints, multiple positions, and Z-slices; acquisition
       // order, autofocus, and summary; control buttons, in three columns.
 
       JPanel topLeftPanel = new JPanel(new MigLayout(
-              "fill, flowy, insets 0",
-              "[grow, fill]",
-              "[]push[]push[]"));
+            "fill, flowy, insets 0",
+            "[grow, fill]",
+            "[]push[]push[]"));
       topLeftPanel.add(createTimePoints());
       topLeftPanel.add(createMultiPositions());
       topLeftPanel.add(createZStacks());
@@ -303,7 +302,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       columnOrder_ = new int[columnCount];
       for (int k = 0; k < columnCount; k++) {
          columnWidth_[k] = settings_.getInteger(ACQ_COLUMN_WIDTH + k,
-                 ACQ_DEFAULT_COLUMN_WIDTH);
+               ACQ_DEFAULT_COLUMN_WIDTH);
          columnOrder_[k] = settings_.getInteger(ACQ_COLUMN_ORDER + k, k);
       }
 
@@ -348,7 +347,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             + "properties with multiple preset values");
       savePanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
             "Save images continuously to disk as the acquisition proceeds. If not enabled, "
-            + "then images will be stored in RAM and may be saved later."));
+                  + "then images will be stored in RAM and may be saved later."));
 
       super.pack();
       Dimension size = super.getPreferredSize();
@@ -426,7 +425,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             column = new TableColumn(model_.getColumnCount() - 1, 200, cr, ce);
             column.setPreferredWidth(columnWidth_[model_.getColumnCount() - 1]);
 
-         } else {
+         }
+         else {
             column = new TableColumn(colIndex, 200, cellRenderer, channelCellEditor_);
             column.setPreferredWidth(columnWidth_[colIndex]);
             // HACK: the "Configuration" tab should be wider than the others.
@@ -465,11 +465,11 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JPanel createTimePoints() {
       framesPanel_ = createCheckBoxPanel("Time Points");
       framesPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT + ", hidemode 3",
-               "[grow, fill]", "[grow, fill]"));
+            "[grow, fill]", "[grow, fill]"));
 
       defaultTimesPanel_ = new JPanel(
             new MigLayout("fill, gap 2, insets 0",
-               "push[][][]push", "[][][]"));
+                  "push[][][]push", "[][][]"));
       framesPanel_.add(defaultTimesPanel_, "grow");
 
       customTimesPanel_ = new JPanel(
@@ -496,8 +496,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       intervalLabel.setFont(DEFAULT_FONT);
       intervalLabel.setToolTipText(
             "Interval between successive time points.  Setting an interval "
-            + "less than the exposure time will cause micromanager to acquire "
-            + "a 'burst' of images as fast as possible");
+                  + "less than the exposure time will cause micromanager to acquire "
+                  + "a 'burst' of images as fast as possible");
       defaultTimesPanel_.add(intervalLabel, "alignx label");
 
       interval_ = new JFormattedTextField(numberFormat_);
@@ -508,7 +508,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       defaultTimesPanel_.add(interval_);
 
       timeUnitCombo_ = new JComboBox<>();
-      timeUnitCombo_.setModel(new DefaultComboBoxModel<>(new String[]{"ms", "s", "min"}));
+      timeUnitCombo_.setModel(new DefaultComboBoxModel<>(new String[] {"ms", "s", "min"}));
       timeUnitCombo_.setFont(DEFAULT_FONT);
       // We shove this thing to the left a bit so that it takes up the same
       // vertical space as the spinner for the number of timepoints.
@@ -529,8 +529,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
       disableCustomIntervalsButton.addActionListener((ActionEvent e) ->
-              acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder()
-                    .useCustomIntervals(false).build()));
+            acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder()
+                  .useCustomIntervals(false).build()));
       disableCustomIntervalsButton.setFont(DEFAULT_FONT);
 
       customTimesPanel_.add(overrideLabel, "alignx center, wrap");
@@ -543,7 +543,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JPanel createMultiPositions() {
       positionsPanel_ = createCheckBoxPanel("Multiple Positions (XY)");
       positionsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT,
-               "[grow]", "[grow, fill]"));
+            "[grow]", "[grow, fill]"));
       listButton_ = new JButton("Edit Position List...");
       listButton_.setToolTipText("Open XY list dialog");
       listButton_.setIcon(IconLoader.getIcon(
@@ -719,7 +719,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private CheckBoxPanel createChannelsPanel() {
       CheckBoxPanel channelsPanel = createCheckBoxPanel("Channels");
       channelsPanel.setLayout(new MigLayout("fill, gap 2, insets 2",
-               "[grow][]", "[][grow]"));
+            "[grow][]", "[][grow]"));
 
       final JLabel channelsLabel = new JLabel("Channel group:");
       channelsLabel.setFont(DEFAULT_FONT);
@@ -735,7 +735,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             if (mmStudio_.getAutofocusManager() != null) {
                mmStudio_.getAutofocusManager().refresh();
             }
-         } else {
+         }
+         else {
             updateGroupsCombo(); // NS 2021-05-6: not sure what this is needed for.
          }
       });
@@ -785,7 +786,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       upButton.setFont(DEFAULT_FONT);
       upButton.setMargin(new Insets(0, 0, 0, 0));
       upButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-              "Move currently selected channel up (Channels higher on list are acquired first)"));
+            "Move currently selected channel up (Channels higher on list are acquired first)"));
       upButton.addActionListener((ActionEvent e) -> {
          int sel = channelTable_.getSelectedRow();
          if (sel > -1) {
@@ -802,7 +803,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       downButton.setMargin(new Insets(0, 0, 0, 0));
       downButton.setText("Down");
       downButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-              "Move currently selected channel down (Channels lower on list are acquired later)"));
+            "Move currently selected channel down (Channels lower on list are acquired later)"));
       downButton.addActionListener((ActionEvent e) -> {
          int sel = channelTable_.getSelectedRow();
          if (sel > -1) {
@@ -867,7 +868,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JPanel createSavePanel() {
       savePanel_ = createCheckBoxPanel("Save Images");
       savePanel_.setLayout(new MigLayout(PANEL_CONSTRAINT,
-               "[][grow, fill][]", "[][][]"));
+            "[][grow, fill][]", "[][][]"));
 
       final JLabel rootLabel = new JLabel("Directory root:");
       rootLabel.setFont(DEFAULT_FONT);
@@ -912,7 +913,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       multiButton_.setFont(DEFAULT_FONT);
       multiButton_.addActionListener(e -> {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
-                           Datastore.SaveMode.MULTIPAGE_TIFF);
+               Datastore.SaveMode.MULTIPAGE_TIFF);
          applySettingsFromGUI();
       });
       savePanel_.add(multiButton_, "gapafter push");
@@ -924,9 +925,11 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       Datastore.SaveMode mode = mmStudio_.data().getPreferredSaveMode();
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          singleButton_.setSelected(true);
-      } else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
+      }
+      else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
          multiButton_.setSelected(true);
-      } else {
+      }
+      else {
          ReportingUtils.logError("Unrecognized save mode " + mode);
       }
 
@@ -937,7 +940,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JPanel createCommentsPanel(JTextArea commentTextArea, FocusListener focusListener) {
       ComponentTitledPanel commentsPanel = createLabelPanel("Acquisition Comments");
       commentsPanel.setLayout(new MigLayout(PANEL_CONSTRAINT,
-               "[grow, fill]", "[]"));
+            "[grow, fill]", "[]"));
 
       commentTextArea.setRows(4);
       commentTextArea.setFont(new Font("", Font.PLAIN, 10));
@@ -948,8 +951,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       JScrollPane commentScrollPane = new JScrollPane();
       commentScrollPane.setBorder(BorderFactory.createCompoundBorder(
-               BorderFactory.createLoweredBevelBorder(),
-               BorderFactory.createEtchedBorder()));
+            BorderFactory.createLoweredBevelBorder(),
+            BorderFactory.createEtchedBorder()));
       commentScrollPane.setViewportView(commentTextArea);
 
       commentsPanel.add(commentScrollPane, "wmin 0, height pref!, span");
@@ -967,8 +970,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
-   /** 
-    * Called when a field's "value" property changes. 
+   /**
+    * Called when a field's "value" property changes.
     * Causes the Summary to be updated.
     *
     * @param e Property that changed.
@@ -1005,9 +1008,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    public void onChannelColorEvent(ChannelColorEvent event) {
       model_.setChannelColor(event.getChannelGroup(), event.getChannel(), event.getColor());
       ChannelDisplaySettings newCDS =
-              RememberedDisplaySettings.loadChannel(mmStudio_, event.getChannelGroup(),
-                      event.getChannel(), null).copyBuilder().color(event.getColor())
-                    .build();
+            RememberedDisplaySettings.loadChannel(mmStudio_, event.getChannelGroup(),
+                  event.getChannel(), null).copyBuilder().color(event.getColor())
+                  .build();
       RememberedDisplaySettings.storeChannel(mmStudio_, event.getChannelGroup(),
             event.getChannel(), newCDS);
    }
@@ -1027,9 +1030,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             String channel = mmStudio_.core().getCurrentConfig(channelGroup);
             if (model_.hasChannel(channelGroup, channel)) {
                double exposure = model_.getChannelExposureTime(
-                       channelGroup, channel, 10.0);
+                     channelGroup, channel, 10.0);
                mmStudio_.app().setChannelExposureTime(channelGroup, channel,
-                       exposure);
+                     exposure);
             }
          } catch (Exception e) {
             mmStudio_.logs().logError(e, "Error getting channel exposure time");
@@ -1045,7 +1048,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
       acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder()
-              .channelGroup(event.getNewChannelGroup()).build());
+            .channelGroup(event.getNewChannelGroup()).build());
       updateChannelAndGroupCombo();
    }
 
@@ -1187,7 +1190,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private void updateGUIFromSequenceSettings(final SequenceSettings sequenceSettings) {
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(() -> updateGUIFromSequenceSettings(sequenceSettings));
-      } else {
+      }
+      else {
          if (disableGUItoSettings_) {
             return;
          }
@@ -1196,8 +1200,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          numFrames_.setValue(sequenceSettings.numFrames());
          timeUnitCombo_.setSelectedIndex(sequenceSettings.displayTimeUnit());
          interval_.setText(numberFormat_.format(convertMsToTime(
-                 sequenceSettings.intervalMs(),
-                 timeUnitCombo_.getSelectedIndex())));
+               sequenceSettings.intervalMs(),
+               timeUnitCombo_.getSelectedIndex())));
 
          boolean framesEnabled = sequenceSettings.useFrames();
          framesPanel_.setSelected(framesEnabled);
@@ -1237,7 +1241,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
          for (AcqOrderMode mode : acqOrderModes_) {
             mode.setEnabled(framesPanel_.isSelected(), positionsPanel_.isSelected(),
-                    slicesPanel_.isSelected(), channelsPanel_.isSelected());
+                  slicesPanel_.isSelected(), channelsPanel_.isSelected());
          }
          // add correct acquisition order options
          int selectedIndex = sequenceSettings.acqOrderMode();
@@ -1247,28 +1251,33 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          }
          acqOrderBox_.removeAllItems();
          if (framesPanel_.isSelected() && positionsPanel_.isSelected()
-                 && slicesPanel_.isSelected() && channelsPanel_.isSelected()) {
+               && slicesPanel_.isSelected() && channelsPanel_.isSelected()) {
             acqOrderBox_.addItem(acqOrderModes_[0]);
             acqOrderBox_.addItem(acqOrderModes_[1]);
             acqOrderBox_.addItem(acqOrderModes_[2]);
             acqOrderBox_.addItem(acqOrderModes_[3]);
-         } else if (framesPanel_.isSelected() && positionsPanel_.isSelected()) {
+         }
+         else if (framesPanel_.isSelected() && positionsPanel_.isSelected()) {
             if (selectedIndex == 0 || selectedIndex == 2) {
                acqOrderBox_.addItem(acqOrderModes_[0]);
                acqOrderBox_.addItem(acqOrderModes_[2]);
-            } else {
+            }
+            else {
                acqOrderBox_.addItem(acqOrderModes_[1]);
                acqOrderBox_.addItem(acqOrderModes_[3]);
             }
-         } else if (channelsPanel_.isSelected() && slicesPanel_.isSelected()) {
+         }
+         else if (channelsPanel_.isSelected() && slicesPanel_.isSelected()) {
             if (selectedIndex == 0 || selectedIndex == 1) {
                acqOrderBox_.addItem(acqOrderModes_[0]);
                acqOrderBox_.addItem(acqOrderModes_[1]);
-            } else {
+            }
+            else {
                acqOrderBox_.addItem(acqOrderModes_[2]);
                acqOrderBox_.addItem(acqOrderModes_[3]);
             }
-         } else {
+         }
+         else {
             acqOrderBox_.addItem(acqOrderModes_[selectedIndex]);
          }
          acqOrderBox_.setSelectedItem(acqOrderModes_[sequenceSettings.acqOrderMode()]);
@@ -1284,7 +1293,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          DefaultDatastore.setPreferredSaveMode(mmStudio_, sequenceSettings.saveMode());
          if (sequenceSettings.saveMode() == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
             singleButton_.setSelected(true);
-         } else if (sequenceSettings.saveMode() == Datastore.SaveMode.MULTIPAGE_TIFF) {
+         }
+         else if (sequenceSettings.saveMode() == Datastore.SaveMode.MULTIPAGE_TIFF) {
             multiButton_.setSelected(true);
          }
 
@@ -1311,7 +1321,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    public void onNewPositionList(NewPositionListEvent newPositionListEvent) {
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(() -> onNewPositionList(newPositionListEvent));
-      } else {
+      }
+      else {
          acqEng_.setPositionList(newPositionListEvent.getPositionList());
          // update summary
          summaryTextArea_.setText(acqEng_.getVerboseSummary());
@@ -1340,7 +1351,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * Returns the TableColumn associated with the specified column
     * index in the model.
     *
-    * @param table table in which to find the column.
+    * @param table            table in which to find the column.
     * @param columnModelIndex index to look for the TableColumn.
     * @return the TableColumn or null if not found.
     */
@@ -1357,12 +1368,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    protected void setRootDirectory() {
       File result = FileDialogs.openDir(this,
-              "Please choose a directory root for image data",
-              FileDialogs.MM_DATA_SET);
+            "Please choose a directory root for image data",
+            FileDialogs.MM_DATA_SET);
       if (result != null) {
          rootField_.setText(result.getAbsolutePath().trim());
          acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder()
-                 .root(result.getAbsolutePath().trim()).build());
+               .root(result.getAbsolutePath().trim()).build());
          //acqEng_.getSequenceSettings().root = result.getAbsolutePath().trim();
       }
    }
@@ -1420,7 +1431,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          } catch (InvocationTargetException e) {
             ReportingUtils.logError(e, "Error updating GUI");
          }
-      } else {
+      }
+      else {
          throw new IOException("Can not read file: " + path);
       }
    }
@@ -1428,7 +1440,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    protected void saveAcqSettingsToFile() {
       saveAcqSettingsToProfile();
       File file = FileDialogs.save(this, "Save the acquisition settings file",
-              FileDialogs.ACQ_SETTINGS_FILE);
+            FileDialogs.ACQ_SETTINGS_FILE);
       if (file != null) {
          try {
             SequenceSettings settings = acqEng_.getSequenceSettings();
@@ -1451,7 +1463,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private boolean warnMemoryMayNotBeSufficient() {
       if (savePanel_.isSelected()) {
          return false;
-      } 
+      }
 
       long acqTotalBytes = acqEng_.getTotalMemory();
       if (acqTotalBytes < 0) {
@@ -1461,7 +1473,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       // get memory than can be used within JVM:
       // https://stackoverflow.com/questions/12807797/java-get-available-memory
       long allocatedMemory = (Runtime.getRuntime().totalMemory()
-              - Runtime.getRuntime().freeMemory());
+            - Runtime.getRuntime().freeMemory());
       long freeRam = Runtime.getRuntime().maxMemory() - allocatedMemory;
 
       // There is no hard reason for the 80% factor.
@@ -1475,20 +1487,21 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          style.append("font-size:").append(font.getSize()).append("pt;");
          Color c = label.getForeground();
          style.append(("color:rgb(")).append(c.getRed()).append(",")
-                 .append(c.getGreen()).append(",").append(c.getBlue()).append(")");
+               .append(c.getGreen()).append(",").append(c.getBlue()).append(")");
 
          int availableMemoryMB = (int) (freeRam / (1024 * 1024));
 
          String paneTxt = "<html><body style="
-                 + style + "><p width='400'>"
-                 + "Available memory (approximate estimate: " + availableMemoryMB
-                 + " MB) may not be sufficient. "
-                 + "Once memory is full, the acquisition may slow down or fail.</p>"
-                 + "<p width='400'>See <a style=\"" + style + ""
-                 + "\" href=https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Memory_Settings> "
-                 + " the configuration guide</a> for ways to make more memory available.</p>"
-                 + "<p width='400'>Would you like to start the acquisition anyway?</p>"
-                 + "</body></html>";
+               + style + "><p width='400'>"
+               + "Available memory (approximate estimate: " + availableMemoryMB
+               + " MB) may not be sufficient. "
+               + "Once memory is full, the acquisition may slow down or fail.</p>"
+               + "<p width='400'>See <a style=\"" + style + ""
+               +
+               "\" href=https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Memory_Settings> "
+               + " the configuration guide</a> for ways to make more memory available.</p>"
+               + "<p width='400'>Would you like to start the acquisition anyway?</p>"
+               + "</body></html>";
          JEditorPane ep = new JEditorPane("text/html", paneTxt);
 
          // handle link events
@@ -1505,7 +1518,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ep.setBackground(label.getBackground());
 
          int answer = JOptionPane.showConfirmDialog(this, ep,
-                 "Not enough memory", JOptionPane.YES_NO_OPTION);
+               "Not enough memory", JOptionPane.YES_NO_OPTION);
          return answer != JOptionPane.YES_OPTION;
       }
       return false;
@@ -1550,7 +1563,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                   : String.format("these channels: %s", badChannels);
             String message = String.format(
                   "Found unusually long exposure times for %s. "
-                  + "Are you sure you want to run this acquisition?",
+                        + "Are you sure you want to run this acquisition?",
                   channelString);
             JCheckBox neverAgain = new JCheckBox("Do not ask me again.");
             int response = JOptionPane.showConfirmDialog(this,
@@ -1611,7 +1624,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * Can this be replaced with something more solid?
     *
     * @param numbers array to search in.
-    * @param key value to look for.
+    * @param key     value to look for.
     * @return index to the value if found, -1 otherwise.
     */
    public static int search(int[] numbers, int key) {
@@ -1654,8 +1667,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.useFrames(framesPanel_.isSelected());
          ssb.numFrames((Integer) numFrames_.getValue());
          ssb.intervalMs(convertTimeToMs(
-                 NumberUtils.displayStringToDouble(interval_.getText()),
-                 timeUnitCombo_.getSelectedIndex()));
+               NumberUtils.displayStringToDouble(interval_.getText()),
+               timeUnitCombo_.getSelectedIndex()));
          ssb.displayTimeUnit(timeUnitCombo_.getSelectedIndex());
          ssb.useCustomIntervals(acqEng_.getSequenceSettings().useCustomIntervals());
          ssb.customIntervalsMs(acqEng_.getSequenceSettings().customIntervalsMs());
@@ -1673,7 +1686,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.channels(((ChannelTableModel) channelTable_.getModel()).getChannels());
 
          ssb.skipAutofocusCount(
-                 NumberUtils.displayStringToInt(afSkipInterval_.getValue().toString()));
+               NumberUtils.displayStringToInt(afSkipInterval_.getValue().toString()));
          ssb.keepShutterOpenChannels(chanKeepShutterOpenCheckBox_.isSelected());
          ssb.keepShutterOpenSlices(stackKeepShutterOpenCheckBox_.isSelected());
 
@@ -1698,11 +1711,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       // Save preferred save mode.
       if (singleButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
-                 Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
-      } else if (multiButton_.isSelected()) {
+               Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+      }
+      else if (multiButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
-                 Datastore.SaveMode.MULTIPAGE_TIFF);
-      } else {
+               Datastore.SaveMode.MULTIPAGE_TIFF);
+      }
+      else {
          ReportingUtils.logError(
                "Unknown save mode button or no save mode buttons selected");
       }
@@ -1784,7 +1799,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          // convert from absolute to relative
          newTop = zTopUm - curZ;
          newBottom = zBottomUm - curZ;
-      } else {
+      }
+      else {
          // convert from relative to absolute
          newTop = zTopUm + curZ;
          newBottom = zBottomUm + curZ;
@@ -1818,7 +1834,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       public void setBorder(Border border) {
          if (compTitledBorder != null && borderSet_) {
             compTitledBorder.setBorder(border);
-         } else {
+         }
+         else {
             super.setBorder(border);
          }
       }
@@ -1894,8 +1911,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                boolean enable = checkBox.isSelected();
                thisPanel.setChildrenEnabled(enable);
             }
-            
-            public void writeObject(java.io.ObjectOutputStream stream) throws MMException  {
+
+            public void writeObject(java.io.ObjectOutputStream stream) throws MMException {
                throw new MMException("Do not serialize this class");
             }
          });
@@ -1914,7 +1931,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                for (Component subComp1 : subComp) {
                   subComp1.setEnabled(enabled);
                }
-            } else {
+            }
+            else {
                comp1.setEnabled(enabled);
             }
          }
@@ -1945,7 +1963,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    public static boolean getShouldSyncExposure() {
       return MMStudio.getInstance().profile().getSettings(
-              AcqControlDlg.class).getBoolean(SHOULD_SYNC_EXPOSURE, true);
+            AcqControlDlg.class).getBoolean(SHOULD_SYNC_EXPOSURE, true);
    }
 
    public static void setShouldSyncExposure(boolean shouldSync) {
@@ -1960,16 +1978,16 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    public static void setShouldHideMDADisplay(boolean shouldHide) {
       MMStudio.getInstance().profile().getSettings(AcqControlDlg.class)
-              .putBoolean(SHOULD_HIDE_DISPLAY, shouldHide);
+            .putBoolean(SHOULD_HIDE_DISPLAY, shouldHide);
    }
 
    public boolean getShouldCheckExposureSanity() {
       return profile_.getSettings(AcqControlDlg.class)
-              .getBoolean(SHOULD_CHECK_EXPOSURE_SANITY, true);
+            .getBoolean(SHOULD_CHECK_EXPOSURE_SANITY, true);
    }
 
    public void setShouldCheckExposureSanity(boolean shouldCheck) {
       profile_.getSettings(AcqControlDlg.class)
-              .putBoolean(SHOULD_CHECK_EXPOSURE_SANITY, shouldCheck);
+            .putBoolean(SHOULD_CHECK_EXPOSURE_SANITY, shouldCheck);
    }
 }

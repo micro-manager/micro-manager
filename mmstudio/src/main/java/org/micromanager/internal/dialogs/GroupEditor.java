@@ -53,10 +53,10 @@ public final class GroupEditor extends ConfigDialog {
    /**
     * Group editor constructor.
     *
-    * @param groupName Name of the group to be edited
+    * @param groupName  Name of the group to be edited
     * @param presetName Name of the preset that is edited (not sure why this is needed here).
-    * @param studio The omnipresent Studio object
-    * @param newItem Whether this is a new (true) or existing (false) item (? group or preset?)
+    * @param studio     The omnipresent Studio object
+    * @param newItem    Whether this is a new (true) or existing (false) item (? group or preset?)
     */
    public GroupEditor(String groupName, String presetName, Studio studio, boolean newItem) {
       super(groupName, presetName, studio, newItem);
@@ -136,11 +136,12 @@ public final class GroupEditor extends ConfigDialog {
                JOptionPane.WARNING_MESSAGE, 0, null,
                buttons, buttons[0]);
          studio_.profile().getSettings(GroupEditor.class).putBoolean(
-                 DISPLAY_SHUTTER_WARNING, !neverAgain.isSelected());
+               DISPLAY_SHUTTER_WARNING, !neverAgain.isSelected());
          if (selection == 2) {
             // User cancelled.
             return;
-         } else if (selection == 1) {
+         }
+         else if (selection == 1) {
             for (PropertyItem shutter : shutters) {
                shutter.confInclude = false;
             }
@@ -157,7 +158,7 @@ public final class GroupEditor extends ConfigDialog {
     * "Writes" the configuration to the core.
     *
     * @param initName Original name of the configuration
-    * @param newName New name for this configuration (can be same as initname)
+    * @param newName  New name for this configuration (can be same as initname)
     * @return True when successful,  false on failure
     */
    public boolean writeGroup(String initName, String newName) {
@@ -218,8 +219,8 @@ public final class GroupEditor extends ConfigDialog {
                   if (same) {
                      showMessageDialog(
                            "By removing properties, you would create duplicate presets.\n"
-                           + "To avoid duplicates when you remove properties, you should\n"
-                           + "first delete some of the presets in this group.");
+                                 + "To avoid duplicates when you remove properties, you should\n"
+                                 + "first delete some of the presets in this group.");
                      return false;
                   }
 
@@ -249,9 +250,11 @@ public final class GroupEditor extends ConfigDialog {
                      /* ensure sorting of the property value list: */
                      if (PropertyType.Float == item.type) {
                         Arrays.sort(item.allowed, new SortFunctionObjects.DoubleStringComp());
-                     } else if (PropertyType.Integer == item.type) {
+                     }
+                     else if (PropertyType.Integer == item.type) {
                         Arrays.sort(item.allowed, new SortFunctionObjects.IntStringComp());
-                     } else if (PropertyType.String == item.type) {
+                     }
+                     else if (PropertyType.String == item.type) {
                         boolean allNumeric = true;
                         // test that first character of every possible value is a numeral
                         // if so, show user the list sorted by the numeric prefix
@@ -264,7 +267,8 @@ public final class GroupEditor extends ConfigDialog {
                         if (allNumeric) {
                            Arrays.sort(item.allowed,
                                  new SortFunctionObjects.NumericPrefixStringComp());
-                        } else {
+                        }
+                        else {
                            Arrays.sort(item.allowed);
                         }
                      }
@@ -277,7 +281,8 @@ public final class GroupEditor extends ConfigDialog {
                                  item.device, item.name, allowedValue);
                         }
                      }
-                  } else {
+                  }
+                  else {
                      core_.defineConfig(newName, "NewPreset",
                            item.device, item.name, item.getValueInCoreFormat());
                   }
@@ -291,7 +296,8 @@ public final class GroupEditor extends ConfigDialog {
          if (itemsIncludedCount > 1) {
             new PresetEditor(newName, "NewPreset", studio_, false);
          }
-      } else { // An existing configuration group is being modified.
+      }
+      else { // An existing configuration group is being modified.
          // Apply configuration settings to all properties in the group.
          String cfg;
          Configuration unionCfg;
@@ -309,7 +315,8 @@ public final class GroupEditor extends ConfigDialog {
                         core_.deleteConfig(newName, cfg, item.device, item.name);
                      }
                   }
-               } else if (item.confInclude
+               }
+               else if (item.confInclude
                      && !unionCfg.isPropertyIncluded(item.device, item.name)) {
                   // If some presets don't have this property when they should,
                   // add it with current values.

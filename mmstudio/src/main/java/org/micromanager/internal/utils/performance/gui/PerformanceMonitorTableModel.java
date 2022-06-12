@@ -20,7 +20,6 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.performance.AbstractExponentialSmoothing;
 
 /**
- *
  * @author Mark A. Tsuchida
  */
 final class PerformanceMonitorTableModel extends AbstractTableModel {

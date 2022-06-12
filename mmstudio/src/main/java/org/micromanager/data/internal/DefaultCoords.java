@@ -65,7 +65,8 @@ public final class DefaultCoords implements Coords {
          if (i < 0) {
             axes_.add(axis);
             indices_.add(index);
-         } else {
+         }
+         else {
             indices_.set(i, index);
          }
          return this;
@@ -83,7 +84,7 @@ public final class DefaultCoords implements Coords {
 
       @Override
       public Builder offset(String axis, int offset)
-              throws IllegalArgumentException, IndexOutOfBoundsException {
+            throws IllegalArgumentException, IndexOutOfBoundsException {
          int i = axes_.indexOf(axis);
          int oldIndex = 0;
          if (i >= 0) {
@@ -92,8 +93,8 @@ public final class DefaultCoords implements Coords {
          int newIndex = oldIndex + offset;
          if (newIndex < 0) {
             throw new IndexOutOfBoundsException(
-                    "Offset would make Coords have negative index for axis \"" +
-                            axis + "\"");
+                  "Offset would make Coords have negative index for axis \"" +
+                        axis + "\"");
          }
          index(axis, newIndex);
          return this;
@@ -376,6 +377,7 @@ public final class DefaultCoords implements Coords {
    /**
     * Generate a normalized string representation of this Coords, that we can
     * later parse out using {@link #fromNormalizedString}.
+    *
     * @deprecated TODO: why is this deprecated and how should this be replaced?
     */
    @Deprecated
@@ -407,21 +409,30 @@ public final class DefaultCoords implements Coords {
          }
          String axis = components[0];
          if (!isValidAxis(axis)) {
-            throw new IllegalArgumentException("Malformatted coords string: axis " + axis + " is not a valid name");
+            throw new IllegalArgumentException(
+                  "Malformatted coords string: axis " + axis + " is not a valid name");
          }
 
          // Shorthands allowed for axis names
-         if (axis.equals("t")) axis = TIME_POINT;
-         if (axis.equals("p")) axis = STAGE_POSITION;
-         if (axis.equals("z")) axis = Z_SLICE;
-         if (axis.equals("c")) axis = CHANNEL;
+         if (axis.equals("t")) {
+            axis = TIME_POINT;
+         }
+         if (axis.equals("p")) {
+            axis = STAGE_POSITION;
+         }
+         if (axis.equals("z")) {
+            axis = Z_SLICE;
+         }
+         if (axis.equals("c")) {
+            axis = CHANNEL;
+         }
 
          int index;
          try {
             index = Integer.parseInt(components[1]);
-         }
-         catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Malformatted coords string: position of axis " + axis + " is not an integer");
+         } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                  "Malformatted coords string: position of axis " + axis + " is not an integer");
          }
 
          builder.index(axis, index);
@@ -432,6 +443,7 @@ public final class DefaultCoords implements Coords {
 
    private static Pattern AXIS_NAME_PATTERN =
          Pattern.compile("[A-Za-z]+[A-Za-z0-9_]*");
+
    public static boolean isValidAxis(String axis) {
       return AXIS_NAME_PATTERN.matcher(axis).matches();
    }

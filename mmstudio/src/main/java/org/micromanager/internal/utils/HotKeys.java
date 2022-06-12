@@ -32,15 +32,15 @@ public final class HotKeys {
    // a single thread (I think), this should be safe.
    // Howvere, if this changes in the future, please synchronize this structure
    public static final LinkedHashMap<Integer, HotKeyAction> KEYS =
-           new LinkedHashMap<>();
+         new LinkedHashMap<>();
 
    // HACK HACK HACK TODO: there should be a cleaner way to disable hotkeys!
-   public  static boolean active_ = true;
+   public static boolean active_ = true;
 
    /**
     * Restore previously listed hotkeys from profile.
     *
-    * @param profile  Profile where the hotkeys should be saved.
+    * @param profile Profile where the hotkeys should be saved.
     */
    public void loadSettings(UserProfile profile) {
       MutablePropertyMapView settings = profile.getSettings(HotKeys.class);
@@ -59,7 +59,8 @@ public final class HotKeys {
                      HotKeyAction.SNAP);
                HotKeyAction action = new HotKeyAction(guiCommand);
                KEYS.put(key, action);
-            }  else {
+            }
+            else {
                file = new File(settings.getString(FILENAME + i, ""));
                HotKeyAction action = new HotKeyAction(file);
                KEYS.put(key, action);
@@ -85,7 +86,8 @@ public final class HotKeys {
          settings.putInteger(TYPE + i, action.type_);
          if (action.type_ == HotKeyAction.GUICOMMAND) {
             settings.putInteger(GUICOMMAND + i, action.guiCommand_);
-         } else {
+         }
+         else {
             settings.putString(FILENAME + i,
                   action.beanShellScript_.getAbsolutePath());
          }
@@ -101,8 +103,8 @@ public final class HotKeys {
     * be read.
     *
     * @param f File where HotKeys were previously written to.
-    * @throws FileNotFoundException  Unlikely to happen as the code checks if the file can be read
-    *                                  and returns without Exception if the File can not be read.
+    * @throws FileNotFoundException Unlikely to happen as the code checks if the file can be read
+    *                               and returns without Exception if the File can not be read.
     */
    public static void load(File f) throws FileNotFoundException {
       if (f == null || !f.canRead()) {
@@ -120,7 +122,8 @@ public final class HotKeys {
                int guiCommand = in.readInt();
                HotKeyAction action = new HotKeyAction(guiCommand);
                KEYS.put(key, action);
-            } else {
+            }
+            else {
                int strLength = in.readInt();
                for (int i = 0; i < strLength; i++) {
                   filePath += in.readChar();
@@ -156,7 +159,8 @@ public final class HotKeys {
             out.writeInt(action.type_);
             if (action.type_ == HotKeyAction.GUICOMMAND) {
                out.writeInt(action.guiCommand_);
-            } else {
+            }
+            else {
                out.writeInt(action.beanShellScript_.getAbsolutePath().length());
                out.writeChars(action.beanShellScript_.getAbsolutePath());
             }

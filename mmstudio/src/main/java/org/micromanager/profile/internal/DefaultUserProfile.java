@@ -3,9 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.profile.internal;
 
-import org.micromanager.propertymap.MutablePropertyMapView;
+import static org.micromanager.PropertyMaps.emptyPropertyMap;
+
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.io.IOException;
@@ -13,10 +15,10 @@ import java.util.UUID;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
-import static org.micromanager.PropertyMaps.emptyPropertyMap;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Implementation of UserProfile.
@@ -55,7 +57,7 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
 
 
    public static DefaultUserProfile create(UserProfileAdmin admin,
-         UUID profileUUID, PropertyMap settings) {
+                                           UUID profileUUID, PropertyMap settings) {
       DefaultUserProfile ret =
             new DefaultUserProfile(admin, profileUUID, settings);
 
@@ -66,7 +68,7 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
    }
 
    private DefaultUserProfile(UserProfileAdmin admin, UUID profileUUID,
-         PropertyMap settings) {
+                              PropertyMap settings) {
       admin_ = admin;
       uuid_ = profileUUID;
       ownersAndProperties_ = settings;
@@ -114,8 +116,8 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
       return fallbackProfile_ == null ?
             getSettingsWithoutFallback(owner) :
             ((DefaultPropertyMap) getSettingsWithoutFallback(owner)).
-            createChainedView(
-                  fallbackProfile_.getSettingsWithoutFallback(owner));
+                  createChainedView(
+                        fallbackProfile_.getSettingsWithoutFallback(owner));
    }
 
    // ALL modifications are via this method.
@@ -153,8 +155,7 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
       }
       try {
          return admin_.getProfileName(uuid_);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          return "<name unavailable>";
       }
    }
@@ -189,17 +190,23 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
    @Override
    @Deprecated
    public void setString(Class<?> c, final String key, final String value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putString(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putString(key, value).build();
+         }
+      });
    }
 
    @Override
    @Deprecated
    public void setStringArray(Class<?> c, final String key, final String[] value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putStringArray(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putStringArray(key, value).build();
+         }
+      });
    }
 
    @Override
@@ -217,17 +224,23 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
    @Override
    @Deprecated
    public void setInt(Class<?> c, final String key, final Integer value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putInt(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putInt(key, value).build();
+         }
+      });
    }
 
    @Override
    @Deprecated
    public void setIntArray(Class<?> c, final String key, final Integer[] value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putIntArray(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putIntArray(key, value).build();
+         }
+      });
    }
 
    @Override
@@ -245,17 +258,23 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
    @Override
    @Deprecated
    public void setLong(Class<?> c, final String key, final Long value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putLong(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putLong(key, value).build();
+         }
+      });
    }
 
    @Override
    @Deprecated
    public void setLongArray(Class<?> c, final String key, final Long[] value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putLongArray(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putLongArray(key, value).build();
+         }
+      });
    }
 
    @Override
@@ -273,17 +292,23 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
    @Override
    @Deprecated
    public void setDouble(Class<?> c, final String key, final Double value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putDouble(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putDouble(key, value).build();
+         }
+      });
    }
 
    @Override
    @Deprecated
    public void setDoubleArray(Class<?> c, final String key, final Double[] value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putDoubleArray(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putDoubleArray(key, value).build();
+         }
+      });
    }
 
    @Override
@@ -301,17 +326,23 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
    @Override
    @Deprecated
    public void setBoolean(Class<?> c, final String key, final Boolean value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putBoolean(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putBoolean(key, value).build();
+         }
+      });
    }
 
    @Override
    @Deprecated
    public void setBooleanArray(Class<?> c, final String key, final Boolean[] value) {
-      editProperty(c, new Editor() { @Override public PropertyMap edit(PropertyMap input) {
-         return input.copyBuilder().putBooleanArray(key, value).build();
-      }});
+      editProperty(c, new Editor() {
+         @Override
+         public PropertyMap edit(PropertyMap input) {
+            return input.copyBuilder().putBooleanArray(key, value).build();
+         }
+      });
    }
 
    @Deprecated

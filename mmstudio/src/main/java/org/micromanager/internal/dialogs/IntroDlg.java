@@ -57,7 +57,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.UserProfileAdmin;
 
 /**
- * Splash screen and introduction dialog. 
+ * Splash screen and introduction dialog.
  * Opens up at startup and allows selection of the configuration file.
  */
 public final class IntroDlg extends JDialog {
@@ -80,7 +80,7 @@ public final class IntroDlg extends JDialog {
 
    public static String SUPPORT_TEXT =
          "Micro-Manager was funded by grants from the Sandler Foundation and NIH, "
-         + "and is now supported by the CZI.";
+               + "and is now supported by the CZI.";
 
    public static String CITATION_TEXT =
          "If you have found this software useful, please cite Micro-Manager in your publications.";
@@ -88,7 +88,7 @@ public final class IntroDlg extends JDialog {
    /**
     * Shows the Splash screen.
     *
-    * @param studio Instance of MMStudio.  Can not be null.
+    * @param studio     Instance of MMStudio.  Can not be null.
     * @param versionStr Micro-Manager version, will be displayed for the used.
     */
    public IntroDlg(Studio studio, String versionStr) {
@@ -127,8 +127,9 @@ public final class IntroDlg extends JDialog {
       JLabel introImage = new JLabel();
       if (plugin == null || plugin.getSplashImage() == null) {
          introImage.setIcon(new ImageIcon(getClass().getResource(
-                 "/org/micromanager/icons/splash.gif")));
-      } else {
+               "/org/micromanager/icons/splash.gif")));
+      }
+      else {
          introImage.setIcon(plugin.getSplashImage());
       }
       introImage.setBorder(new LineBorder(Color.black, 1, false));
@@ -148,14 +149,14 @@ public final class IntroDlg extends JDialog {
          admin_ = ((MMStudio) studio).profileAdmin();
          profileController_ = ProfileSelectionUIController.create(studio.app(), admin_);
          StartupSettings startupSettings = StartupSettings.create(
-                 admin_.getNonSavingProfile(admin_.getUUIDOfCurrentProfile()));
+               admin_.getNonSavingProfile(admin_.getUUIDOfCurrentProfile()));
          skipProfileSelection_ = startupSettings.shouldSkipProfileSelectionAtStartup();
          if (!skipProfileSelection_) {
             JLabel userProfileLabel = new JLabel("User Profile:");
             userProfileLabel.setFont(DEFAULT_FONT);
             contentsPanel.add(userProfileLabel, new CC().gapTop("5").gapLeft("5").wrap());
             contentsPanel.add(profileController_.getUI(), new CC().growX().gapRight("5").wrap());
-         } 
+         }
          final JLabel loadConfigurationLabel = new JLabel();
          loadConfigurationLabel.setFont(DEFAULT_FONT);
          loadConfigurationLabel.setText("Hardware Configuration File:");

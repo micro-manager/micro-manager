@@ -26,7 +26,7 @@ public final class CustomTimesDialog extends JDialog {
     * Creates the Custom Time Dialog.  Originally coded by Henry Pinkard.
     *
     * @param acqEng Acquisition Engine Object.
-    * @param gui The omnipresent Studio object.
+    * @param gui    The omnipresent Studio object.
     */
    public CustomTimesDialog(AcquisitionEngine acqEng, Studio gui) {
       this.setModal(true);
@@ -41,7 +41,7 @@ public final class CustomTimesDialog extends JDialog {
 
 
       customTimeIntervalsPanel_ = new CustomTimeIntervalsPanel(acqEng, gui,
-           this);
+            this);
       getContentPane().add(customTimeIntervalsPanel_);
 
       final JPanel closeButtonPanel = new JPanel();

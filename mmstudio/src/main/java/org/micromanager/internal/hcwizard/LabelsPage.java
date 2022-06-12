@@ -44,7 +44,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Wizard page to define labels for state devices.
- *
  */
 public final class LabelsPage extends PagePanel {
    private static final long serialVersionUID = 1L;
@@ -71,7 +70,8 @@ public final class LabelsPage extends PagePanel {
 
          if (lsm.isSelectionEmpty()) {
             ltm.setData(model_, null);
-         } else {
+         }
+         else {
             // first make sure that active edits are stored
             if (ltm.getColumnCount() > 0) {
                if (labelTable_.isEditing()) {
@@ -139,7 +139,8 @@ public final class LabelsPage extends PagePanel {
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (columnIndex == 0) {
             return Integer.toString(rowIndex);
-         } else {
+         }
+         else {
             return labels_[rowIndex];
          }
       }
@@ -214,9 +215,10 @@ public final class LabelsPage extends PagePanel {
 
       JTextArea help = createHelpText(
             "Some devices, such as filter wheels and objective turrets, have discrete positions "
-            + "that can have names assigned to them. For example, position 1 of a filter wheel "
-            + "could be the DAPI channel, position 2 the FITC channel, etc. "
-            + "Assign names to positions here.");
+                  +
+                  "that can have names assigned to them. For example, position 1 of a filter wheel "
+                  + "could be the DAPI channel, position 2 the FITC channel, etc. "
+                  + "Assign names to positions here.");
       add(help, "spanx, growx, wrap");
       final JScrollPane devScrollPane = new JScrollPane();
       add(devScrollPane, "growy, width 200!");
@@ -295,7 +297,8 @@ public final class LabelsPage extends PagePanel {
                Label lab = dev.getSetupLabelByState(i);
                if (lab != null) {
                   labels[i] = lab.label_;
-               } else {
+               }
+               else {
                   labels[i] = "State-" + i;
                }
             }

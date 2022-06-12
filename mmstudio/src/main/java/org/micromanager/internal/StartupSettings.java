@@ -51,7 +51,8 @@ public class StartupSettings {
       ;
 
       @Override
-      public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {}
+      public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {
+      }
    }
 
    static {

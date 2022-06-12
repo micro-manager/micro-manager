@@ -30,41 +30,43 @@ import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 
 class ZGeneratorAverage implements ZGenerator {
-     Map <String, Double> averageZPositions_;
-     /**
-     * Constructor
-     * @param positionList initial position list
-     */  
-    public ZGeneratorAverage (PositionList positionList) {
-       MultiStagePosition msp0;
-       StagePosition sp;
-       double c;
+   Map<String, Double> averageZPositions_;
 
-       averageZPositions_ = new HashMap<String, Double>(5);
-       //Loop over single axis stages and calculate their mean value     
-       msp0 =  positionList.getPosition(0);        
-       for (int a=0; a<msp0.size(); a++){
-           sp = msp0.get(a);
-           if (sp.is1DStagePosition()){
-              c = sp.get1DPosition();
-              //Calculate sum of positions for current axis
-              for (int p=1; p<positionList.getNumberOfPositions(); p++){
-                  c = c + positionList.getPosition(p).get(a).get1DPosition();
-              }
+   /**
+    * Constructor
+    *
+    * @param positionList initial position list
+    */
+   public ZGeneratorAverage(PositionList positionList) {
+      MultiStagePosition msp0;
+      StagePosition sp;
+      double c;
 
-              Double z = c / positionList.getNumberOfPositions(); //average
-              averageZPositions_.put(sp.getStageDeviceLabel(), z);
-           }
-       }        
-    } 
+      averageZPositions_ = new HashMap<String, Double>(5);
+      //Loop over single axis stages and calculate their mean value
+      msp0 = positionList.getPosition(0);
+      for (int a = 0; a < msp0.size(); a++) {
+         sp = msp0.get(a);
+         if (sp.is1DStagePosition()) {
+            c = sp.get1DPosition();
+            //Calculate sum of positions for current axis
+            for (int p = 1; p < positionList.getNumberOfPositions(); p++) {
+               c = c + positionList.getPosition(p).get(a).get1DPosition();
+            }
 
-    @Override
-    public double getZ(double X, double Y, String axis) {
-        return averageZPositions_.get(axis);
-    }
+            Double z = c / positionList.getNumberOfPositions(); //average
+            averageZPositions_.put(sp.getStageDeviceLabel(), z);
+         }
+      }
+   }
 
-    @Override
-    public String getDescription(){
-        return ZGenerator.Type.AVERAGE.toString();   
-    }
+   @Override
+   public double getZ(double X, double Y, String axis) {
+      return averageZPositions_.get(axis);
+   }
+
+   @Override
+   public String getDescription() {
+      return ZGenerator.Type.AVERAGE.toString();
+   }
 }

@@ -44,20 +44,20 @@ import org.micromanager.EventPublisher;
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.inspector.InspectorPanelController;
+import org.micromanager.display.inspector.InspectorPanelPlugin;
 import org.micromanager.display.internal.DataViewerCollection;
+import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.InspectorDidCloseEvent;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.scijava.plugin.Plugin;
-import org.micromanager.display.inspector.InspectorPanelController;
-import org.micromanager.display.inspector.InspectorPanelPlugin;
-import org.micromanager.display.internal.displaywindow.DisplayController;
-import org.micromanager.events.ShutdownCommencingEvent;
 
 
 /**
@@ -66,8 +66,7 @@ import org.micromanager.events.ShutdownCommencingEvent;
  * @author Mark A. Tsuchida, based in part on earlier version by Chris Weisiger
  */
 public final class InspectorController
-      implements EventPublisher, PopupMenuListener, Closeable
-{
+      implements EventPublisher, PopupMenuListener, Closeable {
    private static final String FRONTMOST_VIEWER_ITEM = "Frontmost Window";
 
    private final DataViewerCollection viewerCollection_;
@@ -90,21 +89,23 @@ public final class InspectorController
    private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
    /**
-    * Since it is very difficult to associated an InpectorSectionController 
-    * and InspectorSectionController with a plugin, and/or each other, 
+    * Since it is very difficult to associated an InpectorSectionController
+    * and InspectorSectionController with a plugin, and/or each other,
     * we do it here manually.
     */
    private class SectionInfo {
       public final InspectorPanelController inspectorPanelController_;
       public final InspectorSectionController inspectorSectionController_;
       public final InspectorPanelPlugin plugin_;
-      public SectionInfo (InspectorPanelController ipc, 
-              InspectorSectionController isc, InspectorPanelPlugin p){
+
+      public SectionInfo(InspectorPanelController ipc,
+                         InspectorSectionController isc, InspectorPanelPlugin p) {
          inspectorPanelController_ = ipc;
          inspectorSectionController_ = isc;
          plugin_ = p;
       }
    }
+
    // Type for combo box items (data viewers)
    private static final class ViewerItem {
       private final DataViewer viewer_;
@@ -140,7 +141,7 @@ public final class InspectorController
    private void makeUI() {
       frame_ = new JFrame();
       frame_.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       frame_.addWindowListener(new WindowAdapter() {
          @Override
@@ -190,7 +191,7 @@ public final class InspectorController
 
       // Initialize Sections
       List<InspectorPanelPlugin> plugins = new ArrayList<InspectorPanelPlugin>(
-      studio_.plugins().getInspectorPlugins().values());
+            studio_.plugins().getInspectorPlugins().values());
       Collections.sort(plugins, new Comparator<InspectorPanelPlugin>() {
          @Override
          public int compare(InspectorPanelPlugin o1, InspectorPanelPlugin o2) {
@@ -201,24 +202,25 @@ public final class InspectorController
       });
       for (InspectorPanelPlugin plugin : plugins) {
          InspectorPanelController panelController = plugin.createPanelController(studio_);
-         InspectorSectionController section = InspectorSectionController.create(this, panelController);
+         InspectorSectionController section =
+               InspectorSectionController.create(this, panelController);
          panelController.addInspectorPanelListener(section);
          SectionInfo secInfo = new SectionInfo(panelController, section, plugin);
          sections_.add(secInfo);
       }
-      
+
       sectionsPane_ = VerticalMultiSplitPane.create(sections_.size(), true);
       for (int i = 0; i < sections_.size(); ++i) {
-         InspectorSectionController sectionController = 
-                 sections_.get(i).inspectorSectionController_;
+         InspectorSectionController sectionController =
+               sections_.get(i).inspectorSectionController_;
          sectionsPane_.setComponentAtIndex(i,
                sectionController.getSectionPanel());
          sectionsPane_.setComponentResizeEnabled(i,
                sectionController.isVerticallyResizableByUser() &&
-               sectionController.isExpanded());
+                     sectionController.isExpanded());
       }
       scrollPane_.setViewportView(sectionsPane_);
-      
+
       frame_.add(headerPanel_, new CC().growX().pushX().wrap());
       frame_.add(scrollPane_, new CC().grow().push().wrap());
 
@@ -245,7 +247,7 @@ public final class InspectorController
       }
       eventBus_.post(InspectorDidCloseEvent.create(this));
    }
-   
+
    @Subscribe
    public void closeRequested(ShutdownCommencingEvent sce) {
       if (!sce.isCanceled()) {
@@ -318,10 +320,9 @@ public final class InspectorController
    void inspectorSectionWillChangeHeight(InspectorSectionController section) {
    }
 
-   void inspectorSectionDidChangeHeight(InspectorSectionController section)
-   {
+   void inspectorSectionDidChangeHeight(InspectorSectionController section) {
       int index = -1;
-      for (int i=0; i < sections_.size(); i++) {
+      for (int i = 0; i < sections_.size(); i++) {
          if (section.equals(sections_.get(i).inspectorSectionController_)) {
             index = i;
          }
@@ -375,7 +376,8 @@ public final class InspectorController
          if (vi.getDataViewer() instanceof DisplayController) {
             ((DisplayController) vi.getDataViewer()).getWindow().toFront();
          }
-      } else if (selectedItem instanceof String) {
+      }
+      else if (selectedItem instanceof String) {
          List<DataViewer> viewers = viewerCollection_.getAllDataViewers();
          for (DataViewer viewer : viewers) {
             if (viewer.getName().equals(selectedItem)) {
@@ -435,16 +437,17 @@ public final class InspectorController
       }
       if (viewer != viewer_) {
          frame_.setTitle(String.format("Inspect \"%s\"", viewer.getName()));
-         
+
          for (SectionInfo secInfo : sections_) { // attach each individual section to the viewer.
             if (secInfo.plugin_.isApplicableToDataViewer(viewer)) {
                secInfo.inspectorSectionController_.setEnabled(true);
                secInfo.inspectorPanelController_.attachDataViewer(viewer);
-            } else {
+            }
+            else {
                secInfo.inspectorSectionController_.setEnabled(false);
             }
          }
-         
+
          viewer_ = viewer;
       }
    }
@@ -471,10 +474,15 @@ public final class InspectorController
    // attach to
    private interface AttachmentStrategy {
       void attachmentStrategySelected();
+
       void viewerShown(DataViewer viewer);
+
       void viewerHidden(DataViewer viewer);
+
       void viewerActivated(DataViewer viewer);
+
       void viewerDeactivated(DataViewer viewer);
+
       void viewerWillClose(DataViewer viewer);
    }
 
@@ -557,8 +565,7 @@ public final class InspectorController
    }
 
    private class FrontmostAttachmentStrategy
-         implements AttachmentStrategy
-   {
+         implements AttachmentStrategy {
       private DataViewer viewer_;
 
       @Override

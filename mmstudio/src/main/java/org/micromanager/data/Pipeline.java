@@ -41,11 +41,11 @@ public interface Pipeline {
     *
     * @param source Source SummaryMetadata to be input into the Pipeline.
     * @throws org.micromanager.data.DatastoreFrozenException if the Datastore
-    *         is frozen at the time this method is called.
-    * @throws DatastoreRewriteException if the Datastore has already had
-    *         SummaryMetadata set for it at the time this method is called.
-    * @throws PipelineErrorException if processing of images has already
-    *         started at the time this method is called.
+    *                                                        is frozen at the time this method is called.
+    * @throws DatastoreRewriteException                      if the Datastore has already had
+    *                                                        SummaryMetadata set for it at the time this method is called.
+    * @throws PipelineErrorException                         if processing of images has already
+    *                                                        started at the time this method is called.
     */
    void insertSummaryMetadata(SummaryMetadata source) throws IOException, PipelineErrorException;
 
@@ -76,16 +76,16 @@ public interface Pipeline {
     *
     * @param image Image to be processed by the Pipeline.
     * @throws org.micromanager.data.DatastoreFrozenException if the Datastore
-    *         is frozen at the time this method is called, or if this pipeline
-    *         has no Processors in it and the Datastore is frozen. If the
-    *         Datastore is frozen at some point after this method is called,
-    *         then the exception will not be thrown.
-    * @throws DatastoreRewriteException if this pipeline has no Processors in it and
-    *         the inserted Image has coordinates that match an Image that is
-    *         already in the Datastore.
-    * @throws org.micromanager.data.PipelineErrorException if the pipeline is
-    *         in an error state; see the getExceptions() and clearExceptions()
-    *         methods.
+    *                                                        is frozen at the time this method is called, or if this pipeline
+    *                                                        has no Processors in it and the Datastore is frozen. If the
+    *                                                        Datastore is frozen at some point after this method is called,
+    *                                                        then the exception will not be thrown.
+    * @throws DatastoreRewriteException                      if this pipeline has no Processors in it and
+    *                                                        the inserted Image has coordinates that match an Image that is
+    *                                                        already in the Datastore.
+    * @throws org.micromanager.data.PipelineErrorException   if the pipeline is
+    *                                                        in an error state; see the getExceptions() and clearExceptions()
+    *                                                        methods.
     */
    void insertImage(Image image) throws IOException, PipelineErrorException;
 
@@ -139,7 +139,7 @@ public interface Pipeline {
     * to insertImage() will provoke a PipelineErrorException.
     *
     * @return list containing any exceptions that have occurred during
-    *         processing of images
+    * processing of images
     */
    List<Exception> getExceptions();
 

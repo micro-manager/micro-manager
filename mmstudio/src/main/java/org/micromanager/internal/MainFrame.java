@@ -133,7 +133,7 @@ public final class MainFrame extends JFrame {
     * Main Frame constructor.
     *
     * @param mmStudio implementation of Studio object.
-    * @param core Hardware interface.
+    * @param core     Hardware interface.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MainFrame(MMStudio mmStudio, CMMCore core) {
@@ -144,7 +144,7 @@ public final class MainFrame extends JFrame {
       core_ = core;
 
       super.setTitle(String.format("%s %s", MICRO_MANAGER_TITLE,
-               MMVersion.VERSION_STRING));
+            MMVersion.VERSION_STRING));
 
       JPanel contents = new JPanel();
       // Minimize insets.
@@ -171,7 +171,7 @@ public final class MainFrame extends JFrame {
       // pack().
       super.pack();
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setMinimumSize(super.getSize());
       super.setBounds(100, 100, 644, 220);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
@@ -201,7 +201,8 @@ public final class MainFrame extends JFrame {
             if (mmStudio_.closeSequence(false)) {
                if (exitOnClose_) {
                   System.exit(0);
-               } else {
+               }
+               else {
                   dispose();
                }
             }
@@ -215,7 +216,7 @@ public final class MainFrame extends JFrame {
    }
 
    private JButton createButton(String text, String iconPath,
-         String help, final Runnable action) {
+                                String help, final Runnable action) {
       Icon icon = null;
       if (iconPath != null) {
          icon = IconLoader.getIcon("/org/micromanager/icons/" + iconPath);
@@ -231,8 +232,8 @@ public final class MainFrame extends JFrame {
    private static JLabel createLabel(String text, boolean big) {
       final JLabel label = new JLabel();
       label.setFont(new Font("Arial",
-              big ? Font.BOLD : Font.PLAIN,
-              big ? 11 : 10));
+            big ? Font.BOLD : Font.PLAIN,
+            big ? 11 : 10));
       label.setText(text);
       return label;
    }
@@ -333,7 +334,7 @@ public final class MainFrame extends JFrame {
             "flowx, growx, pushy 0, split 2");
 
       saveConfigButton_ = createButton("Save", null,
-         "Save current presets to the configuration file", () ->
+            "Save current presets to the configuration file", () ->
                   mmStudio_.uiManager().promptToSaveConfigPresets());
       subPanel.add(saveConfigButton_,
             "pushy 0, gapleft push, alignx right, w 88!, h 20!");
@@ -351,7 +352,7 @@ public final class MainFrame extends JFrame {
       return subPanel;
    }
 
-   /** 
+   /**
     * Generate the "Snap", "Live", "Snap to album", "MDA", and "Refresh"
     * buttons.
     */
@@ -361,41 +362,41 @@ public final class MainFrame extends JFrame {
       JButton snapButton =
             (JButton) QuickAccessFactory.makeGUI(
                   mmStudio_.plugins().getQuickAccessPlugins().get(
-                  "org.micromanager.quickaccess.internal.controls.SnapButton"));
+                        "org.micromanager.quickaccess.internal.controls.SnapButton"));
       snapButton.setFont(defaultFont_);
       subPanel.add(snapButton, BIGBUTTON_SIZE);
 
       JButton liveButton =
             (JButton) QuickAccessFactory.makeGUI(
                   mmStudio_.plugins().getQuickAccessPlugins().get(
-                  "org.micromanager.quickaccess.internal.controls.LiveButton"));
+                        "org.micromanager.quickaccess.internal.controls.LiveButton"));
       liveButton.setFont(defaultFont_);
       subPanel.add(liveButton, BIGBUTTON_SIZE);
 
       JButton albumButton = createButton("Album", "camera_plus_arrow.png",
             "Acquire single frame and add to an album", () -> {
-            try {
-               mmStudio_.album().addImages(mmStudio_.live().snap(false));
-            } catch (IOException ioEx) {
-               mmStudio_.logs().showError(ioEx);
-            }
-         });
+               try {
+                  mmStudio_.album().addImages(mmStudio_.live().snap(false));
+               } catch (IOException ioEx) {
+                  mmStudio_.logs().showError(ioEx);
+               }
+            });
       subPanel.add(albumButton, BIGBUTTON_SIZE);
 
       subPanel.add(AcquisitionSelector.makeSelector(mmStudio_), BIGBUTTON_SIZE);
 
       JButton refreshButton = createButton("Refresh", "arrow_refresh.png",
             "Refresh all GUI controls directly from the hardware", () -> {
-            mmStudio_.live().setSuspended(true);
-            core_.updateSystemStateCache();
-            mmStudio_.uiManager().updateGUI(true);
-            mmStudio_.live().setSuspended(false);
-         });
+               mmStudio_.live().setSuspended(true);
+               core_.updateSystemStateCache();
+               mmStudio_.uiManager().updateGUI(true);
+               mmStudio_.live().setSuspended(false);
+            });
       subPanel.add(refreshButton, BIGBUTTON_SIZE);
 
       JButton closeAllButton = (JButton) QuickAccessFactory.makeGUI(
             mmStudio_.plugins().getQuickAccessPlugins().get(
-               "org.micromanager.quickaccess.internal.controls.CloseAllButton"));
+                  "org.micromanager.quickaccess.internal.controls.CloseAllButton"));
       closeAllButton.setFont(defaultFont_);
       // HACK: Windows will helpfully replace "All" with "..." unless we do
       // this.
@@ -412,7 +413,7 @@ public final class MainFrame extends JFrame {
             "You have messages requesting your attention. Click to show the Messages window.",
             () -> {
                ((DefaultAlertManager) mmStudio_.alerts()).alertsWindow().showWithoutFocus();
-         });
+            });
       alertButton_.setVisible(false);
       result.add(alertButton_, "width 30!, height 20!, hidemode 2");
       alertLabel_ = new JLabel("");
@@ -485,7 +486,7 @@ public final class MainFrame extends JFrame {
       // fail when setting the minimum size of the frame.
       labelImageDimensions_ = createLabel(" ", false);
       labelImageDimensions_.setBorder(new MatteBorder(1, 0, 0, 0,
-               new Color(200, 200, 200)));
+            new Color(200, 200, 200)));
       overPanel.add(labelImageDimensions_, "growx, pushy 0, span, gap 2 0 2 0");
       return overPanel;
    }
@@ -494,7 +495,7 @@ public final class MainFrame extends JFrame {
       JPanel subPanel = new JPanel(
             new MigLayout("flowx, insets 0 1 0 1, gap 0, fill"));
       subPanel.setBorder(new MatteBorder(0, 0, 1, 0,
-               new Color(200, 200, 200)));
+            new Color(200, 200, 200)));
       profileName_ = new JLabel();
       profileName_.setFont(defaultFont_);
       profileName_.setText("Profile: " + mmStudio_.profile().getProfileName());
@@ -516,20 +517,20 @@ public final class MainFrame extends JFrame {
       roiPanel.add(createLabel("ROI", true),
             "span 2, alignx center, growx, wrap");
       setRoiButton_ = createButton(null, "shape_handles.png",
-         "Set Region Of Interest to selected rectangle", () -> {
-            mmStudio_.roiManager().setROI();
-         });
+            "Set Region Of Interest to selected rectangle", () -> {
+               mmStudio_.roiManager().setROI();
+            });
       roiPanel.add(setRoiButton_, SMALLBUTTON_SIZE);
       centerQuadButton_ = createButton(null, "center_quad.png",
-         "Set Region Of Interest to center quad of camera", () -> {
-            mmStudio_.roiManager().setCenterQuad();
-         });
+            "Set Region Of Interest to center quad of camera", () -> {
+               mmStudio_.roiManager().setCenterQuad();
+            });
       roiPanel.add(centerQuadButton_, SMALLBUTTON_SIZE);
 
       clearRoiButton_ = createButton(null, "arrow_out.png",
-         "Reset Region of Interest to full frame", () -> {
-            mmStudio_.roiManager().clearROI();
-         });
+            "Reset Region of Interest to full frame", () -> {
+               mmStudio_.roiManager().clearROI();
+            });
       roiPanel.add(clearRoiButton_, SMALLBUTTON_SIZE);
 
       subPanel.add(roiPanel);
@@ -543,7 +544,7 @@ public final class MainFrame extends JFrame {
       AbstractButton moveButton = createButton(null, "move.png",
             "Control the current stage with a virtual joystick", () -> {
                StageControlFrame.showStageControl(mmStudio_);
-         });
+            });
       stagePanel.add(moveButton, SMALLBUTTON_SIZE);
 
       // This icon is based on the public-domain icons at
@@ -554,8 +555,8 @@ public final class MainFrame extends JFrame {
             IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
       handMovesButton_.setToolTipText(
             "When set, you can double-click on the Snap/Live view to move the stage. "
-            + "Requires pixel sizes to be set (see Pixel Calibration), "
-            + "and that you use the hand tool.");
+                  + "Requires pixel sizes to be set (see Pixel Calibration), "
+                  + "and that you use the hand tool.");
       handMovesButton_.addActionListener((ActionEvent e) -> {
          boolean isSelected = handMovesButton_.isSelected();
          mmStudio_.updateCenterAndDragListener(isSelected);
@@ -566,7 +567,7 @@ public final class MainFrame extends JFrame {
       AbstractButton listButton = createButton(null, "application_view_list.png",
             "Show the Stage Position List dialog", () -> {
                mmStudio_.app().showPositionList();
-         });
+            });
       stagePanel.add(listButton, SMALLBUTTON_SIZE);
 
       subPanel.add(stagePanel, "gapleft 16");
@@ -578,9 +579,9 @@ public final class MainFrame extends JFrame {
       // Icon based on the public-domain icon at
       // http://www.clker.com/clipart-267005.html
       autofocusNowButton_ = createButton(null, "binoculars.png",
-         "Autofocus now", () -> {
-            mmStudio_.autofocusNow();
-         });
+            "Autofocus now", () -> {
+               mmStudio_.autofocusNow();
+            });
       autoPanel.add(autofocusNowButton_, SMALLBUTTON_SIZE);
 
       // Icon based on the public-domain icon at
@@ -588,7 +589,7 @@ public final class MainFrame extends JFrame {
       autofocusConfigureButton_ = createButton(null,
             "wrench.png", "Set autofocus options", () -> {
                mmStudio_.app().showAutofocusDialog();
-         });
+            });
       autoPanel.add(autofocusConfigureButton_, SMALLBUTTON_SIZE);
 
       subPanel.add(autoPanel, "gapleft 16");
@@ -617,7 +618,7 @@ public final class MainFrame extends JFrame {
     *                    whereas Micro-Manager users are used to it.
     */
    public final void setExitStrategy(boolean exitOnClose) {
-      exitOnClose_  = exitOnClose;
+      exitOnClose_ = exitOnClose;
    }
 
    protected void setConfigSaveButtonStatus(boolean changed) {
@@ -627,7 +628,7 @@ public final class MainFrame extends JFrame {
    /**
     * Updates Status line in main window.
     *
-    * @param text text to be shown 
+    * @param text text to be shown
     */
    public void updateInfoDisplay(String text) {
       labelImageDimensions_.setText(text);
@@ -669,7 +670,8 @@ public final class MainFrame extends JFrame {
       }
       if (activeShutter != null) {
          shutterComboBox_.setSelectedItem(activeShutter);
-      } else {
+      }
+      else {
          shutterComboBox_.setSelectedItem("");
       }
    }
@@ -723,7 +725,7 @@ public final class MainFrame extends JFrame {
    private void setHandMovesButton(boolean state) {
       String icon = state ? "move_hand_on.png" : "move_hand.png";
       handMovesButton_.setIcon(IconLoader.getIcon(
-              "/org/micromanager/icons/" + icon));
+            "/org/micromanager/icons/" + icon));
       handMovesButton_.setSelected(state);
    }
 
@@ -773,7 +775,7 @@ public final class MainFrame extends JFrame {
 
       try {
          StrVector binSizes = core_.getAllowedPropertyValues(
-                 cameraLabel, MMCoreJ.getG_Keyword_Binning());
+               cameraLabel, MMCoreJ.getG_Keyword_Binning());
          final List<String> items = sortBinningItems(Arrays.asList(binSizes.toArray()));
 
          listeners = comboBinning_.getActionListeners();

@@ -75,7 +75,7 @@ import org.micromanager.internal.utils.TextUtils;
 public final class StorageSinglePlaneTiffSeries implements Storage {
    private static final HashSet<String> ALLOWED_AXES = new HashSet<>(
          Arrays.asList(Coords.CHANNEL, Coords.T, Coords.Z,
-            Coords.STAGE_POSITION));
+               Coords.STAGE_POSITION));
    private final DefaultDatastore store_;
    private final String dir_;
    private boolean firstElement_;
@@ -93,13 +93,13 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    /**
     * Implements storing single plane TIff series.
     *
-    * @param store Datastore using this storage implementation.
-    * @param directory Path on disk used to store data.
+    * @param store      Datastore using this storage implementation.
+    * @param directory  Path on disk used to store data.
     * @param newDataSet Whether this is a new (true) or existing (false) dataset.
     * @throws IOException As can be expected with disk-based storage.
     */
    public StorageSinglePlaneTiffSeries(DefaultDatastore store,
-         String directory, boolean newDataSet) throws IOException {
+                                       String directory, boolean newDataSet) throws IOException {
       store_ = store;
       dir_ = directory;
       store_.setSavePath(dir_);
@@ -197,7 +197,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          NonPropertyMapJSONFormats.coords().addToGson(jo,
                ((DefaultCoords) image.getCoords()).toPropertyMap());
          Metadata imgMetadata = image.getMetadata().copyBuilderPreservingUUID()
-                 .fileName(fileName).build();
+               .fileName(fileName).build();
          NonPropertyMapJSONFormats.metadata().addToGson(jo,
                ((DefaultMetadata) imgMetadata).toPropertyMap());
 
@@ -219,7 +219,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       for (String axis : coords.getAxes()) {
          if (coords.getIndex(axis) > maxIndices_.getIndex(axis)) {
             maxIndices_ = maxIndices_.copyBuilder().index(
-                    axis, coords.getIndex(axis)).build();
+                  axis, coords.getIndex(axis)).build();
          }
       }
    }
@@ -267,7 +267,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                ReportingUtils.logError(e, "Unable to extract image dimensions from JSON metadata");
                return null;
             }
-         } else {
+         }
+         else {
             ReportingUtils.logError("Unable to reconstruct metadata for image at " + coords);
          }
 
@@ -278,13 +279,16 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          if (proc instanceof ByteProcessor) {
             bytesPerPixel = 1;
             numComponents = 1;
-         } else if (proc instanceof ShortProcessor) {
+         }
+         else if (proc instanceof ShortProcessor) {
             bytesPerPixel = 2;
             numComponents = 1;
-         } else if (proc instanceof ColorProcessor) {
+         }
+         else if (proc instanceof ColorProcessor) {
             bytesPerPixel = 4;
             numComponents = 3;
-         } else {
+         }
+         else {
             ReportingUtils.logError("Received an ImageProcessor of unrecognized type " + proc);
             return null;
          }
@@ -398,7 +402,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       if (channelIndex < 0 || channelIndex >= orderedChannelNames_.size()) {
          ReportingUtils.logError("Invalid channel index " + channelIndex
                + " into channel list " + orderedChannelNames_);
-      } else {
+      }
+      else {
          channel = orderedChannelNames_.get(coords.getChannel());
       }
       return String.format("img_%09d_%s_%03d.tif",
@@ -435,13 +440,13 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    private void writeFrameMetadata(final Image image, final String metadataJSON,
-           final String fileName) {
+                                   final String fileName) {
       try {
          String coordsKey = "Coords-" + fileName;
-         
+
          // Use 0 for situations where there's no index information.
          int pos = Math.max(0, image.getCoords().getStagePosition());
-         JsonObject jo = new JsonObject();         
+         JsonObject jo = new JsonObject();
          NonPropertyMapJSONFormats.coords().addToGson(jo,
                ((DefaultCoords) image.getCoords()).toPropertyMap());
          Gson gson = new GsonBuilder().disableHtmlEscaping()
@@ -476,10 +481,11 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
 
    private void saveImageFile(Image image, String path, String tiffFileName,
-         String metadataJSON) {
+                              String metadataJSON) {
       if (firstImage_ == null) {
          firstImage_ = image;
-      } else {
+      }
+      else {
          ImageSizeChecker.checkImageSizes(firstImage_, image);
       }
       try {
@@ -501,15 +507,18 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                rgbPixels[i] |= (rawPixels[4 * i] & 0xFF);
             }
             ((ColorProcessor) proc).setPixels(rgbPixels);
-         } else if (numComponents == 1 && bytesPerPixel == 1) {
+         }
+         else if (numComponents == 1 && bytesPerPixel == 1) {
             // Byte
             proc = new ByteProcessor(width, height);
             proc.setPixels((byte[]) pixels);
-         } else if (numComponents == 1 && bytesPerPixel == 2) {
+         }
+         else if (numComponents == 1 && bytesPerPixel == 2) {
             // Short
             proc = new ShortProcessor(width, height);
             proc.setPixels((short[]) pixels);
-         } else {
+         }
+         else {
             throw new IllegalArgumentException(String.format(
                   "Unexpected image format with %d bytes per pixel and %d components",
                   bytesPerPixel, numComponents));
@@ -522,7 +531,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
 
    private void saveImageProcessor(ImageProcessor ip, Image image,
-         String path, String tiffFileName, String metadataJSON) {
+                                   String path, String tiffFileName, String metadataJSON) {
       // TODO: why is this check here?
       if (ip == null) {
          return;
@@ -533,7 +542,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    private void applyPixelSizeCalibration(final ImagePlus ip,
-         Metadata metadata) {
+                                          Metadata metadata) {
       Double pixSizeUm = metadata.getPixelSizeUm();
       if (pixSizeUm != null && pixSizeUm > 0) {
          ij.measure.Calibration cal = new ij.measure.Calibration();
@@ -554,14 +563,14 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    /**
     * Saves an ImageJ ImagePlus object.
     *
-    * @param imp The ImagePlus to be saved.
-    * @param image Not used
-    * @param path Location on disk to save to.
+    * @param imp          The ImagePlus to be saved.
+    * @param image        Not used
+    * @param path         Location on disk to save to.
     * @param tiffFileName Temporary name to be sued.
     * @param metadataJSON Metadata in JSON format
     */
    public void saveImagePlus(ImagePlus imp, Image image,
-         String path, String tiffFileName, String metadataJSON) {
+                             String path, String tiffFileName, String metadataJSON) {
       imp.setProperty("Info", metadataJSON);
 
       FileSaver fs = new FileSaver(imp);
@@ -578,8 +587,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       }
 
       if (positionIndexToName_.containsKey(pos)
-              && positionIndexToName_.get(pos) != null
-              && !positionIndexToName_.get(pos).contentEquals(posName)) {
+            && positionIndexToName_.get(pos) != null
+            && !positionIndexToName_.get(pos).contentEquals(posName)) {
          throw new IOException("Position name changed during acquisition.");
       }
 
@@ -632,7 +641,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          // positions in this dataset.
          positions.add("");
          isMultiPosition_ = false;
-      } else {
+      }
+      else {
          // Generate a list of position names by assuming all directories
          // in this directory are for specific positions.
          // TODO: the order of names in this list could easily not match the
@@ -651,7 +661,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       }
 
       for (int positionIndex = 0; positionIndex < positions.size();
-            ++positionIndex) {
+           ++positionIndex) {
          String position = positions.get(positionIndex);
          JsonObject data = readJSONMetadata(position);
          if (data == null) {
@@ -688,8 +698,9 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                   File f = new File(key);
                   fileName = f.getName();
                   coords = DefaultCoords.fromPropertyMap(
-                     NonPropertyMapJSONFormats.coords().fromGson(entry.getValue()));
-               } else if (key.startsWith("FrameKey-")) {
+                        NonPropertyMapJSONFormats.coords().fromGson(entry.getValue()));
+               }
+               else if (key.startsWith("FrameKey-")) {
                   // 1.4 method. SummaryMetadata must be reconstructed.
                   JsonObject jo = entry.getValue().getAsJsonObject();
                   if (jo.has(PropertyKey.SUMMARY.key())) {
@@ -713,7 +724,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
                   assignChannelsToIndices(position);
                   fileName = create14FileName(coords);
-               } else { // Posibly "Metadata-*"
+               }
+               else { // Posibly "Metadata-*"
                   // Not a key we can extract useful information from.
                   continue;
                }

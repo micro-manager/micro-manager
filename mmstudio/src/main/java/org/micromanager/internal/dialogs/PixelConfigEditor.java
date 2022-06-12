@@ -50,14 +50,14 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
     * Creates the editor.
     *
     * @param pixelSizeConfigName Name for the pixel size configurator
-    * @param parent GUI element that is the "parent" for this one
-    * @param pixelSize Pixel size to start with
-    * @param newItem Whether or not this is a new pixel size config (i.e. false will edit
-    *                and existing config)
+    * @param parent              GUI element that is the "parent" for this one
+    * @param pixelSize           Pixel size to start with
+    * @param newItem             Whether or not this is a new pixel size config (i.e. false will edit
+    *                            and existing config)
     */
-   public PixelConfigEditor(String pixelSizeConfigName, CalibrationListDlg parent, 
-         String pixelSize, boolean newItem) {
-      super("ConfigPixelSize", pixelSizeConfigName, parent.getStudio(), 
+   public PixelConfigEditor(String pixelSizeConfigName, CalibrationListDlg parent,
+                            String pixelSize, boolean newItem) {
+      super("ConfigPixelSize", pixelSizeConfigName, parent.getStudio(),
             newItem);
       // note: pixelSizeConfigName is called presetName_ in ConfigDialog
       instructionsText_ = "Specify all properties affecting pixel size.";
@@ -78,11 +78,11 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       parent_ = parent;
-      affineEditorPanel_ = new AffineEditorPanel(parent.getStudio(), this, 
+      affineEditorPanel_ = new AffineEditorPanel(parent.getStudio(), this,
             AffineUtils.noTransform());
       super.initialize();
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 550, 600);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(500, 530));
@@ -93,7 +93,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       writeGroup(nameField_.getText());
       this.dispose();
    }
-   
+
    @Override
    public void dispose() {
       if (parent_ != null) {
@@ -156,7 +156,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       ((MMStudio) studio_).setConfigChanged(true);
       return true;
    }
-   
+
    @Override
    public Double getPixelSize() {
       try {
@@ -167,14 +167,14 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       }
       return 0.0;
    }
-   
+
    @Override
    protected void initializeWidgets() {
       // makes sure initializeWidgets() has the right behavior when loading ShowFlagsPanel
       presetName_ = "";
       super.initializeWidgets();
    }
-   
+
    @Override
    protected void initializeBetweenWidgetsAndTable() {
       add(affineEditorPanel_, "growx, center");

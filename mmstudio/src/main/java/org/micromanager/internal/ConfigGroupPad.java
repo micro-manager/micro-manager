@@ -55,7 +55,7 @@ public final class ConfigGroupPad extends JScrollPane {
    private StateTableData data_;
    private static final String COLUMN_WIDTH = "group_col_width";
 
-   
+
    public ConfigGroupPad(Studio studio) {
       super();
       studio_ = studio;
@@ -74,16 +74,16 @@ public final class ConfigGroupPad extends JScrollPane {
       table_.setAutoCreateColumnsFromModel(false);
       table_.setRowSelectionAllowed(true);
       setViewportView(table_);
-      
+
       data_ = new StateTableData(studio_.core());
       table_.setModel(data_);
 
 
-      table_.addColumn(new TableColumn(0, 200, 
-              new StateGroupCellRenderer(studio_), null));
-      table_.addColumn(new TableColumn(1, 200, 
-              new StatePresetCellRenderer(studio_), new StatePresetCellEditor()));
-      
+      table_.addColumn(new TableColumn(0, 200,
+            new StateGroupCellRenderer(studio_), null));
+      table_.addColumn(new TableColumn(1, 200,
+            new StatePresetCellRenderer(studio_), new StatePresetCellEditor()));
+
       int colWidth = studio_.profile().getSettings(this.getClass())
             .getInteger(COLUMN_WIDTH, 0);
       if (colWidth > 0) {
@@ -97,7 +97,7 @@ public final class ConfigGroupPad extends JScrollPane {
    public void saveSettings() {
       if (table_ != null) {
          studio_.profile().getSettings(this.getClass()).putInteger(
-                 COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
+               COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
       }
    }
 
@@ -118,7 +118,7 @@ public final class ConfigGroupPad extends JScrollPane {
    /**
     * Sets the display to the provided group and config.
     *
-    * @param groupName ConfigGroup
+    * @param groupName  ConfigGroup
     * @param configName ConfigName
     */
    public void refreshGroup(String groupName, String configName) {
@@ -138,7 +138,8 @@ public final class ConfigGroupPad extends JScrollPane {
       int idx = table_.getSelectedRow();
       if (idx < 0 || data_.getRowCount() <= 0) {
          return "";
-      } else {
+      }
+      else {
          return (String) data_.getValueAt(idx, 0);
       }
    }
@@ -165,7 +166,8 @@ public final class ConfigGroupPad extends JScrollPane {
       int idx = table_.getSelectedRow();
       if (idx < 0 || data_.getRowCount() <= 0) {
          return "";
-      } else {
+      }
+      else {
          try {
             return data_.core_.getCurrentConfig((String) data_.getValueAt(idx, 0));
          } catch (Exception e) {
@@ -176,8 +178,8 @@ public final class ConfigGroupPad extends JScrollPane {
    }
 
 
-
    ////////////////////////////////////////////////////////////////////////////
+
    /**
     * Property table data model, representing state devices.
     */
@@ -215,14 +217,15 @@ public final class ConfigGroupPad extends JScrollPane {
             StateItem item = groupList_.get(row);
             if (col == 0) {
                return item.group;
-            } else if (col == 1) {
+            }
+            else if (col == 1) {
                return item.config;
             }
          }
          return null;
       }
 
-      
+
       @Override
       public void setValueAt(Object value, int row, int col) {
          StateItem item = groupList_.get(row);
@@ -234,14 +237,17 @@ public final class ConfigGroupPad extends JScrollPane {
                      if (item.hasLimits && item.isInteger()) {
                         core_.setProperty(item.device, item.name,
                               NumberUtils.intStringDisplayToCore(value));
-                     } else if (item.hasLimits && !item.isInteger()) {
+                     }
+                     else if (item.hasLimits && !item.isInteger()) {
                         core_.setProperty(item.device, item.name,
                               NumberUtils.doubleStringDisplayToCore(value));
-                     } else {
+                     }
+                     else {
                         core_.setProperty(item.device, item.name, value.toString());
                      }
                      core_.waitForDevice(item.device);
-                  } else {
+                  }
+                  else {
                      core_.setConfig(item.group, value.toString());
                      core_.waitForConfig(item.group, value.toString());
                   }
@@ -249,14 +255,14 @@ public final class ConfigGroupPad extends JScrollPane {
                   // Associate exposure time with presets in current channel group
                   if (item.group.equals(core_.getChannelGroup())) {
                      core_.setExposure(
-                             studio_.app().getChannelExposureTime(
-                                     item.group, value.toString(), core_.getExposure()));
+                           studio_.app().getChannelExposureTime(
+                                 item.group, value.toString(), core_.getExposure()));
                   }
-                  
+
                   // By updating the system cache here we are able to use it in 
                   // `refreshStatus` and when updating the GUI rather than needing 
                   // repeatedly query the same properties in both operations.
-                  studio_.core().updateSystemStateCache(); 
+                  studio_.core().updateSystemStateCache();
                   refreshStatus();
                   table_.repaint();
                   // This is a little superfluous, but it is nice that we
@@ -268,7 +274,8 @@ public final class ConfigGroupPad extends JScrollPane {
                      // MMStudio.refreshGUI().
                      MMStudio parentGUI = (MMStudio) studio_;
                      parentGUI.uiManager().updateGUI(false, true);
-                  } else {
+                  }
+                  else {
                      studio_.app().refreshGUIFromCache();
                   }
 
@@ -311,7 +318,8 @@ public final class ConfigGroupPad extends JScrollPane {
                item.group = group;
                if (fromCache) {
                   item.config = core_.getCurrentConfigFromCache(item.group);
-               } else {
+               }
+               else {
                   item.config = core_.getCurrentConfig(item.group);
                }
                item.allowed = core_.getAvailableConfigs(item.group).toArray();
@@ -320,7 +328,8 @@ public final class ConfigGroupPad extends JScrollPane {
                if (item.config.length() > 0) {
                   Configuration curCfg = core_.getConfigData(item.group, item.config);
                   item.descr = curCfg.getVerbose();
-               } else {
+               }
+               else {
                   item.descr = "";
                }
 
@@ -338,7 +347,8 @@ public final class ConfigGroupPad extends JScrollPane {
                         if (fromCache) {
                            item.setValueFromCoreString(
                                  core_.getPropertyFromCache(item.device, item.name));
-                        } else {
+                        }
+                        else {
                            item.setValueFromCoreString(
                                  core_.getProperty(item.device, item.name));
                         }
@@ -370,13 +380,15 @@ public final class ConfigGroupPad extends JScrollPane {
             for (StateItem item : groupList_) {
                if (item.singleProp) {
                   item.config = core_.getProperty(item.device, item.name);
-               } else {
+               }
+               else {
                   item.config = core_.getCurrentConfigFromCache(item.group);
                   // set descr to current situation so that Tooltips get updated
                   if (item.config.length() > 0) {
                      Configuration curCfg = core_.getConfigData(item.group, item.config);
                      item.descr = curCfg.getVerbose();
-                  } else {
+                  }
+                  else {
                      item.descr = "";
                   }
                }
@@ -390,7 +402,7 @@ public final class ConfigGroupPad extends JScrollPane {
       /**
        * TODO.
        *
-       * @param groupName Group name.
+       * @param groupName  Group name.
        * @param configName Configuration name.
        */
       public void refreshGroup(String groupName, String configName) {

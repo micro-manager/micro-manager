@@ -55,7 +55,7 @@ public final class ImageUtils {
       return makeProcessor(core, null);
    }
 
-   
+
    public static ImageProcessor makeProcessor(CMMCore core, Object imgArray) {
       int w = (int) core.getImageWidth();
       int h = (int) core.getImageHeight();
@@ -80,7 +80,8 @@ public final class ImageUtils {
    public static ImageProcessor makeProcessor(int type, int w, int h, Object imgArray) {
       if (imgArray == null) {
          return makeProcessor(type, w, h);
-      } else {
+      }
+      else {
          switch (type) {
             case ImagePlus.GRAY8:
                return new ByteProcessor(w, h, (byte[]) imgArray, null);
@@ -100,12 +101,12 @@ public final class ImageUtils {
          }
       }
    }
-   
+
    public static ImageProcessor makeProcessor(TaggedImage taggedImage) {
       final JSONObject tags = taggedImage.tags;
       try {
          return makeProcessor(MDUtils.getIJType(tags), MDUtils.getWidth(tags),
-              MDUtils.getHeight(tags), taggedImage.pix);
+               MDUtils.getHeight(tags), taggedImage.pix);
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return null;
@@ -115,27 +116,32 @@ public final class ImageUtils {
    public static ImageProcessor makeProcessor(int type, int w, int h) {
       if (type == ImagePlus.GRAY8) {
          return new ByteProcessor(w, h);
-      } else if (type == ImagePlus.GRAY16) {
+      }
+      else if (type == ImagePlus.GRAY16) {
          return new ShortProcessor(w, h);
-      } else if (type == ImagePlus.GRAY32) {
+      }
+      else if (type == ImagePlus.GRAY32) {
          return new FloatProcessor(w, h);
-      } else if (type == ImagePlus.COLOR_RGB) {
+      }
+      else if (type == ImagePlus.COLOR_RGB) {
          return new ColorProcessor(w, h);
-      } else {
+      }
+      else {
          return null;
       }
    }
-   
+
    public static ImageProcessor makeMonochromeProcessor(TaggedImage taggedImage) {
       try {
          ImageProcessor processor;
          if (MDUtils.isRGB32(taggedImage)) {
             ColorProcessor colorProcessor = new ColorProcessor(
-                        MDUtils.getWidth(taggedImage.tags), 
-                        MDUtils.getHeight(taggedImage.tags), 
-                        convertRGB32UBytesToInt((byte []) taggedImage.pix));
+                  MDUtils.getWidth(taggedImage.tags),
+                  MDUtils.getHeight(taggedImage.tags),
+                  convertRGB32UBytesToInt((byte[]) taggedImage.pix));
             processor = colorProcessor.convertToByteProcessor();
-         } else {
+         }
+         else {
             processor = makeProcessor(taggedImage);
          }
          return processor;
@@ -147,84 +153,91 @@ public final class ImageUtils {
 
 
    public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2)
-           throws MMException {
+         throws MMException {
       if ((proc1.getWidth() != proc2.getWidth())
-              || (proc1.getHeight() != proc2.getHeight())) {
+            || (proc1.getHeight() != proc2.getHeight())) {
          throw new MMException("Error: Images are of unequal size");
       }
       try {
          if (proc1 instanceof ByteProcessor && proc2 instanceof ByteProcessor) {
             return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
-         } else if (proc1 instanceof ShortProcessor && proc2 instanceof ShortProcessor) {
+         }
+         else if (proc1 instanceof ShortProcessor && proc2 instanceof ShortProcessor) {
             return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
-         } else if (proc1 instanceof ShortProcessor && proc2 instanceof ByteProcessor) {
+         }
+         else if (proc1 instanceof ShortProcessor && proc2 instanceof ByteProcessor) {
             return subtractShortByteProcessors((ShortProcessor) proc1, (ByteProcessor) proc2);
-         } else if (proc1 instanceof ShortProcessor && proc2 instanceof FloatProcessor) {
+         }
+         else if (proc1 instanceof ShortProcessor && proc2 instanceof FloatProcessor) {
             return subtractShortFloatProcessors((ShortProcessor) proc1, (FloatProcessor) proc2);
-         } else if (proc1 instanceof FloatProcessor && proc2 instanceof ByteProcessor) {
+         }
+         else if (proc1 instanceof FloatProcessor && proc2 instanceof ByteProcessor) {
             return subtractFloatProcessors((FloatProcessor) proc1, (ByteProcessor) proc2);
-         } else if (proc1 instanceof FloatProcessor && proc2 instanceof ShortProcessor) {
+         }
+         else if (proc1 instanceof FloatProcessor && proc2 instanceof ShortProcessor) {
             return subtractFloatProcessors((FloatProcessor) proc1, (ShortProcessor) proc2);
-         } else if (proc1 instanceof FloatProcessor) {
+         }
+         else if (proc1 instanceof FloatProcessor) {
             return subtractFloatProcessors((FloatProcessor) proc1, (FloatProcessor) proc2);
-         } else {
+         }
+         else {
             throw new MMException("Types of images to be subtracted were not compatible");
          }
       } catch (ClassCastException ex) {
          throw new MMException("Types of images to be subtracted were not compatible");
       }
    }
-   
+
    public static ImageProcessor subtractFloatProcessors(FloatProcessor proc1,
-         ByteProcessor proc2) {
+                                                        ByteProcessor proc2) {
       return new FloatProcessor(proc1.getWidth(), proc1.getHeight(),
             subtractPixelArrays((float[]) proc1.getPixels(),
-            (byte[]) proc2.getPixels()),
+                  (byte[]) proc2.getPixels()),
             null);
    }
-   
-   public static ImageProcessor subtractFloatProcessors(FloatProcessor proc1, 
-           ShortProcessor proc2) {
+
+   public static ImageProcessor subtractFloatProcessors(FloatProcessor proc1,
+                                                        ShortProcessor proc2) {
       return new FloatProcessor(proc1.getWidth(), proc1.getHeight(),
-               subtractPixelArrays((float[]) proc1.getPixels(), 
-               (short[]) proc2.getPixels()),
-               null);
+            subtractPixelArrays((float[]) proc1.getPixels(),
+                  (short[]) proc2.getPixels()),
+            null);
    }
-   
+
    public static ImageProcessor subtractFloatProcessors(FloatProcessor proc1,
                                                         FloatProcessor proc2) {
       return new FloatProcessor(proc1.getWidth(), proc1.getHeight(),
-               subtractPixelArrays((float[]) proc1.getPixels(), (float[]) proc2.getPixels()),
-               null);
+            subtractPixelArrays((float[]) proc1.getPixels(), (float[]) proc2.getPixels()),
+            null);
    }
-   
+
    private static ByteProcessor subtractByteProcessors(ByteProcessor proc1, ByteProcessor proc2) {
       return new ByteProcessor(proc1.getWidth(), proc1.getHeight(),
-              subtractPixelArrays((byte []) proc1.getPixels(), (byte []) proc2.getPixels()),
-              null);
+            subtractPixelArrays((byte[]) proc1.getPixels(), (byte[]) proc2.getPixels()),
+            null);
    }
-   
+
    private static ShortProcessor subtractShortByteProcessors(ShortProcessor proc1,
                                                              ByteProcessor proc2) {
       return new ShortProcessor(proc1.getWidth(), proc1.getHeight(),
-              subtractPixelArrays((short []) proc1.getPixels(), (byte []) proc2.getPixels()),
-              null);
+            subtractPixelArrays((short[]) proc1.getPixels(), (byte[]) proc2.getPixels()),
+            null);
    }
-   
+
    private static ShortProcessor subtractShortProcessors(ShortProcessor proc1,
                                                          ShortProcessor proc2) {
       return new ShortProcessor(proc1.getWidth(), proc1.getHeight(),
-              subtractPixelArrays((short []) proc1.getPixels(), (short []) proc2.getPixels()),
-              null);
+            subtractPixelArrays((short[]) proc1.getPixels(), (short[]) proc2.getPixels()),
+            null);
    }
-   
+
    private static ShortProcessor subtractShortFloatProcessors(ShortProcessor proc1,
                                                               FloatProcessor proc2) {
       return new ShortProcessor(proc1.getWidth(), proc1.getHeight(),
-               subtractPixelArrays((short[]) proc1.getPixels(), (float []) proc2.getPixels()),
-                null);
+            subtractPixelArrays((short[]) proc1.getPixels(), (float[]) proc2.getPixels()),
+            null);
    }
-   
+
    public static byte[] subtractPixelArrays(byte[] array1, byte[] array2) {
       int l = array1.length;
       byte[] result = new byte[l];
@@ -233,7 +246,7 @@ public final class ImageUtils {
       }
       return result;
    }
-   
+
    public static short[] subtractPixelArrays(short[] array1, short[] array2) {
       int l = array1.length;
       short[] result = new short[l];
@@ -242,7 +255,7 @@ public final class ImageUtils {
       }
       return result;
    }
-   
+
    public static short[] subtractPixelArrays(short[] array1, byte[] array2) {
       int l = array1.length;
       short[] result = new short[l];
@@ -251,7 +264,7 @@ public final class ImageUtils {
       }
       return result;
    }
-   
+
    public static short[] subtractPixelArrays(short[] array1, float[] array2) {
       int l = array1.length;
       short[] result = new short[l];
@@ -270,7 +283,7 @@ public final class ImageUtils {
       }
       return result;
    }
-   
+
    public static float[] subtractPixelArrays(float[] array1, short[] array2) {
       int l = array1.length;
       float[] result = new float[l];
@@ -279,7 +292,7 @@ public final class ImageUtils {
       }
       return result;
    }
-   
+
    public static float[] subtractPixelArrays(float[] array1, float[] array2) {
       int l = array1.length;
       float[] result = new float[l];
@@ -288,9 +301,8 @@ public final class ImageUtils {
       }
       return result;
    }
-   
-   
-   
+
+
    /*
     * Finds the position of the maximum pixel value.
     */
@@ -311,7 +323,7 @@ public final class ImageUtils {
       return new Point(x, y);
    }
 
-   
+
    public static Point findMaxPixel(ImageProcessor proc) {
       int width = proc.getWidth();
       int imax = findArrayMax(proc.getPixels());
@@ -334,18 +346,19 @@ public final class ImageUtils {
    }
 
    private static int findArrayMax(Object pix) {
-      if (pix instanceof byte []) {
+      if (pix instanceof byte[]) {
          return findArrayMax((byte[]) pix);
       }
-      if (pix instanceof int []) {
+      if (pix instanceof int[]) {
          return findArrayMax((int[]) pix);
       }
-      if (pix instanceof short []) {
+      if (pix instanceof short[]) {
          return findArrayMax((short[]) pix);
       }
-      if (pix instanceof float []) {
+      if (pix instanceof float[]) {
          return findArrayMax((float[]) pix);
-      } else {
+      }
+      else {
          return -1;
       }
    }
@@ -407,7 +420,7 @@ public final class ImageUtils {
       return imax;
    }
 
-   public static byte[] convertRGB32IntToBytes(int [] pixels) {
+   public static byte[] convertRGB32IntToBytes(int[] pixels) {
       byte[] bytes = new byte[pixels.length * 4];
       int j = 0;
       for (int i = 0; i < pixels.length; ++i) {
@@ -418,38 +431,39 @@ public final class ImageUtils {
       }
       return bytes;
    }
-   
+
    /**
     * Converts a sequence of 4 bytes into an int.
     * Note that this function assumes bytes to be signed.  Most data
-    * coming from MMCore will have unsigned bytes, so used the appropriate 
+    * coming from MMCore will have unsigned bytes, so used the appropriate
     * function for that conversion.
     *
     * @param pixels
-    * @return 
+    * @return
     */
    public static int[] convertRGB32BytesToInt(byte[] pixels) {
       int[] ints = new int[pixels.length / 4];
       for (int i = 0; i < ints.length; ++i) {
-         ints[i] =  (pixels[4 * i])
-                 + ((pixels[4 * i + 1]) << 8)
-                 + ((pixels[4 * i + 2]) << 16);
+         ints[i] = (pixels[4 * i])
+               + ((pixels[4 * i + 1]) << 8)
+               + ((pixels[4 * i + 2]) << 16);
       }
       return ints;
    }
 
    /**
     * Used to convert unsigned bytes coming from the C++ later into
-    * ints that can be used by ImageJ. 
+    * ints that can be used by ImageJ.
+    *
     * @param pixels
-    * @return 
+    * @return
     */
    public static int[] convertRGB32UBytesToInt(byte[] pixels) {
       int[] ints = new int[pixels.length / 4];
       for (int i = 0; i < ints.length; ++i) {
-         ints[i] =  (pixels[4 * i] & 0xff)
-                 + ((pixels[4 * i + 1] & 0xff) << 8)
-                 + ((pixels[4 * i + 2] & 0xff) << 16);
+         ints[i] = (pixels[4 * i] & 0xff)
+               + ((pixels[4 * i + 1] & 0xff) << 8)
+               + ((pixels[4 * i + 2] & 0xff) << 16);
       }
       return ints;
    }
@@ -479,9 +493,9 @@ public final class ImageUtils {
    }
 
    public static byte[][] getColorPlanesFromRGB32(byte[] pixels) {
-      byte [] r = new byte[pixels.length / 4];
-      byte [] g = new byte[pixels.length / 4];
-      byte [] b = new byte[pixels.length / 4];
+      byte[] r = new byte[pixels.length / 4];
+      byte[] g = new byte[pixels.length / 4];
+      byte[] b = new byte[pixels.length / 4];
 
       int j = 0;
       for (int i = 0; i < pixels.length / 4; ++i) {
@@ -490,15 +504,15 @@ public final class ImageUtils {
          r[i] = pixels[j++];
          j++; // skip "A" byte.
       }
-       
+
       byte[][] planes = {r, g, b};
       return planes;
    }
 
    public static short[][] getColorPlanesFromRGB64(short[] pixels) {
-      short [] r = new short[pixels.length / 4];
-      short [] g = new short[pixels.length / 4];
-      short [] b = new short[pixels.length / 4];
+      short[] r = new short[pixels.length / 4];
+      short[] g = new short[pixels.length / 4];
+      short[] b = new short[pixels.length / 4];
 
       int j = 0;
       for (int i = 0; i < pixels.length / 4; ++i) {
@@ -521,7 +535,7 @@ public final class ImageUtils {
          return null;
       }
 
-      byte [] p = new byte[pixels.length / 4];
+      byte[] p = new byte[pixels.length / 4];
 
       for (int i = 0; i < p.length; ++i) {
          p[i] = pixels[(2 - channel) + 4 * i]; //B,G,R
@@ -537,7 +551,7 @@ public final class ImageUtils {
          return null;
       }
 
-      short [] p = new short[pixels.length / 4];
+      short[] p = new short[pixels.length / 4];
 
       for (int i = 0; i < p.length; ++i) {
          p[i] = pixels[(2 - channel) + 4 * i]; // B,G,R
@@ -545,16 +559,16 @@ public final class ImageUtils {
       return p;
    }
 
-   
+
    public static LUT makeLUT(Color color, double gamma) {
       int r = color.getRed();
       int g = color.getGreen();
       int b = color.getBlue();
 
       int size = 256;
-      byte [] rs = new byte[size];
-      byte [] gs = new byte[size];
-      byte [] bs = new byte[size];
+      byte[] rs = new byte[size];
+      byte[] gs = new byte[size];
+      byte[] bs = new byte[size];
 
       double xn;
       double yn;
@@ -580,7 +594,7 @@ public final class ImageUtils {
 
    public static int getMin(final Object pixels) {
       if (pixels instanceof byte[]) {
-         byte[] bytes = (byte []) pixels;
+         byte[] bytes = (byte[]) pixels;
          int min = Integer.MAX_VALUE;
          for (int i = 0; i < bytes.length; ++i) {
             min = Math.min(min, unsignedValue(bytes[i]));
@@ -588,7 +602,7 @@ public final class ImageUtils {
          return min;
       }
       if (pixels instanceof short[]) {
-         short[] shorts = (short []) pixels;
+         short[] shorts = (short[]) pixels;
          int min = Integer.MAX_VALUE;
          for (int i = 0; i < shorts.length; ++i) {
             min = Math.min(min, unsignedValue(shorts[i]));
@@ -600,7 +614,7 @@ public final class ImageUtils {
 
    public static int getMax(final Object pixels) {
       if (pixels instanceof byte[]) {
-         byte[] bytes = (byte []) pixels;
+         byte[] bytes = (byte[]) pixels;
          int max = Integer.MIN_VALUE;
          for (int i = 0; i < bytes.length; ++i) {
             max = Math.max(max, unsignedValue(bytes[i]));
@@ -608,7 +622,7 @@ public final class ImageUtils {
          return max;
       }
       if (pixels instanceof short[]) {
-         short[] shorts = (short []) pixels;
+         short[] shorts = (short[]) pixels;
          int min = Integer.MIN_VALUE;
          for (int i = 0; i < shorts.length; ++i) {
             min = Math.max(min, unsignedValue(shorts[i]));
@@ -617,14 +631,14 @@ public final class ImageUtils {
       }
       return -1;
    }
-   
+
    public static int[] getMinMax(final Object pixels) {
       int[] result = new int[2];
       int max = Integer.MIN_VALUE;
       int min = Integer.MAX_VALUE;
 
       if (pixels instanceof byte[]) {
-         byte[] bytes = (byte []) pixels;
+         byte[] bytes = (byte[]) pixels;
          for (int i = 0; i < bytes.length; ++i) {
             max = Math.max(max, unsignedValue(bytes[i]));
             min = Math.min(min, unsignedValue(bytes[i]));
@@ -634,7 +648,7 @@ public final class ImageUtils {
          return result;
       }
       if (pixels instanceof short[]) {
-         short[] shorts = (short []) pixels;
+         short[] shorts = (short[]) pixels;
          for (int i = 0; i < shorts.length; ++i) {
             min = Math.min(min, unsignedValue(shorts[i]));
             max = Math.max(max, unsignedValue(shorts[i]));
@@ -663,7 +677,7 @@ public final class ImageUtils {
          return null;
       }
    }
-   
+
    /**
     * Executes ImageJ-based Fourier space cross-correlation
     * This should have the exact same result as the ImageJ FFT - FD Math - Correlate
@@ -673,7 +687,7 @@ public final class ImageUtils {
     * @param proc2 input pixels of second image
     * @return imageProcessor containing a real space image of the cross-correlation landscape
     */
-   
+
    public static ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
       /*
       ImageGray<? extends ImageGray<?>> bc1 = BoofCVImageConverter.convert(proc1, false);
@@ -689,7 +703,7 @@ public final class ImageUtils {
       h2.transform();
       // Conjugate multiplication in the frequency domain is equivalent to 
       // correlation in the space domain
-      FHT result = h1.conjugateMultiply(h2);   
+      FHT result = h1.conjugateMultiply(h2);
       result.inverseTransform(); // Transform back to space domain.
       result.swapQuadrants(); // This needs to be done after transforming.
       // to get back to the original.

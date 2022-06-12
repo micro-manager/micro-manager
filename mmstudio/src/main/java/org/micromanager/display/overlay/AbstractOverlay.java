@@ -13,7 +13,7 @@ import org.micromanager.display.DisplaySettings;
 
 /**
  * Abstract implementation of {@link Overlay}.
- *
+ * <p>
  * Custom overlays should extend this class.
  *
  * @author Mark A. Tsuchida
@@ -32,10 +32,9 @@ public abstract class AbstractOverlay implements Overlay {
     */
    @Override
    public void paintOverlay(Graphics2D graphicsContext, Rectangle screenRect,
-         DisplaySettings displaySettings,
-         List<Image> images, Image primaryImage,
-         Rectangle2D.Float imageViewPort)
-   {
+                            DisplaySettings displaySettings,
+                            List<Image> images, Image primaryImage,
+                            Rectangle2D.Float imageViewPort) {
       // Draw nothing
    }
 
@@ -100,6 +99,7 @@ public abstract class AbstractOverlay implements Overlay {
     * {@inheritDoc}
     * <p>
     * This implementation takes care of managing listeners.
+    *
     * @see #fireOverlayConfigurationChanged
     */
    @Override
@@ -111,6 +111,7 @@ public abstract class AbstractOverlay implements Overlay {
     * {@inheritDoc}
     * <p>
     * This implementation takes care of managing listeners.
+    *
     * @see #fireOverlayConfigurationChanged
     */
    @Override

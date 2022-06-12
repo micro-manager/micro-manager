@@ -27,8 +27,8 @@ import org.micromanager.PropertyMap;
 
 
 /**
- * This interface defines the metadata for Images. Note that Metadatas are 
- * immutable; if you need to modify one, create a new one using a 
+ * This interface defines the metadata for Images. Note that Metadatas are
+ * immutable; if you need to modify one, create a new one using a
  * MetadataBuilder.
  * All fields of the Metadata that are not explicitly initialized will default
  * to null.
@@ -78,8 +78,11 @@ public interface Metadata {
       @Override
       Builder receivedTime(String receivedTime);
 
-      /** Same as {@link #roi}. Use {@code roi} in new code. */
-      @Override Builder ROI(Rectangle roi);
+      /**
+       * Same as {@link #roi}. Use {@code roi} in new code.
+       */
+      @Override
+      Builder ROI(Rectangle roi);
 
       Builder roi(Rectangle roi);
 
@@ -92,7 +95,8 @@ public interface Metadata {
        *                  "DeviceLabel-PropertyName" format, and values should be strings
        *                  (numbers will be converted to strings)
        */
-      @Override Builder scopeData(PropertyMap scopeData);
+      @Override
+      Builder scopeData(PropertyMap scopeData);
 
       /**
        * Add user-defined data.
@@ -102,7 +106,8 @@ public interface Metadata {
        * @param userData any valid (potentially nested) property map containing
        *                 user data
        */
-      @Override Builder userData(PropertyMap userData);
+      @Override
+      Builder userData(PropertyMap userData);
 
       /**
        * Deprecated.
@@ -190,8 +195,8 @@ public interface Metadata {
    }
 
 
-   /** 
-    * Return a builder with the same content, preserving the image UUID. 
+   /**
+    * Return a builder with the same content, preserving the image UUID.
     * The UUID is a unique identifier for the image. Micro-Manager uses this
     * field to determine if two images are truly different, so if you copy this
     * Metadata instance to apply to a new image, use another builder.
@@ -199,7 +204,7 @@ public interface Metadata {
     * @return Builder, useful for command chaining
     */
    Builder copyBuilderPreservingUUID();
-   
+
    /**
     * Return a builder with the same content, assigning a new image UUID.
     * The UUID is a unique identifier for the image. Micro-Manager uses this
@@ -209,7 +214,7 @@ public interface Metadata {
     * @return Builder, useful for command chaining
     */
    Builder copyBuilderWithNewUUID();
-   
+
    /**
     * Return a builder with the same content but removing the image UUID.
     * The UUID is a unique identifier for the image. Micro-Manager uses this
@@ -223,9 +228,9 @@ public interface Metadata {
     * Deprecated.
     *
     * @deprecated Use the appropriate of the following:
-    *     {@link #copyBuilderPreservingUUID}, {@link #copyBuilderWithNewUUID},
-    *     {@link #copyBuilderRemovingUUID}. This method is equivalent to
-    *     {@code copyBuilderPreservingUUID}.
+    * {@link #copyBuilderPreservingUUID}, {@link #copyBuilderWithNewUUID},
+    * {@link #copyBuilderRemovingUUID}. This method is equivalent to
+    * {@code copyBuilderPreservingUUID}.
     */
    @Deprecated
    MetadataBuilder copy();
@@ -238,99 +243,99 @@ public interface Metadata {
     */
    boolean hasElapsedTimeMs();
 
-   /** 
+   /**
     * The time at which Micro-Manager received this image, in milliseconds.
     * There can be substantial jitter in this value; as a rule of thumb it
     * should not be assumed to be accurate to better than 20ms or so.
     *
     * @return Milliseconds since the start of the acquisition up to the moment
-    *         this image was received by Micro-Manager
+    * this image was received by Micro-Manager
     * @deprecated - use Double {@link #getElapsedTimeMs(double) } instead
-   */
+    */
    @Deprecated
    Double getElapsedTimeMs();
-   
+
    /**
     * Time in milliseconds since the start of the given data acquisition
-    * at which the image was received by Micro-Manager.  This is a proxy 
+    * at which the image was received by Micro-Manager.  This is a proxy
     * for the time at which the exposure happened, but there is considerable
     * jitter so it should not be assumed to be accurate to more than ~20 ms.
     *
     * @param defaultValue - value returned of the image metadata did not contain
-    *                       information about the elapsed time
+    *                     information about the elapsed time
     * @return Milliseconds since the start of the acquisition up to the moment
-    *         this image was received by Micro-Manager
+    * this image was received by Micro-Manager
     */
    double getElapsedTimeMs(double defaultValue);
 
-   
-   /** 
+
+   /**
     * How long of an exposure was used to collect this image.
     *
     * @return Camera exposure (in ms) of this image
     */
    Double getExposureMs();
-   
-   /** 
+
+   /**
     * The aspect ratio of the pixels in this image, as a Y/X ratio (e.g.
     * 2.0 means that the pixels are twice as tall as they are wide).
     *
-    * @return  Pixel aspect ratio
+    * @return Pixel aspect ratio
     */
    Double getPixelAspect();
-   
-   /** 
+
+   /**
     * How much of the sample, in microns, a single pixel of the camera sees.
     *
-    * @return Sample pixel size in microns 
+    * @return Sample pixel size in microns
     */
    Double getPixelSizeUm();
-   
+
    /**
     * Geometric relation between stage movement (in microns) and pixels.
     *
     * @return Affine transform describing geometric relation between stage
-    *         movement (in microns) and camera (in pixels)
+    * movement (in microns) and camera (in pixels)
     */
    AffineTransform getPixelSizeAffine();
-   
-   /** 
+
+   /**
     * The X stage position of the sample for this image.
     *
     * @return X position of the default XY stage for this image
     */
    Double getXPositionUm();
-   
-   /** 
+
+   /**
     * The Y stage position of the sample for this image.
     *
     * @return Y position of the default XY stage for this image
     */
    Double getYPositionUm();
-   
-   /** 
+
+   /**
     * The Z stage position of the sample for this image.
     *
     * @return Position of the default focus stage for this image
     */
    Double getZPositionUm();
-   
-   /** 
+
+   /**
     * The binning mode of the camera for this image.
     *
-    * @return binning mode of the camera for this image 
+    * @return binning mode of the camera for this image
     */
    Integer getBinning();
-   
-   /** 
+
+   /**
     * The number of bits used to represent each pixel (e.g. 12-bit means that
     * pixel values range from 0 to 4095).
     *
     * @return Number of bits used to represent each pixel
-     */
+    */
    Integer getBitDepth();
-   
-   /** 
+
+   /**
     * The sequence number of this image, for sequence acquisitions.
     *
     * @return sequence number of this image
@@ -350,28 +355,28 @@ public interface Metadata {
     */
    PropertyMap getScopeData();
 
-   /** 
+   /**
     * Arbitrary additional metadata added by third-party code.
     *
-    * @return arbitrary additional metadata added by third-party code 
+    * @return arbitrary additional metadata added by third-party code
     */
    PropertyMap getUserData();
-   
-   /** 
+
+   /**
     * The ROI of the camera when acquiring this image.
     *
     * @return Camera ROI
     */
    Rectangle getROI();
-   
-   /** 
+
+   /**
     * The name of the camera for this image.
     *
     * @return Camera name
     */
    String getCamera();
-   
-   /** 
+
+   /**
     * Any name attached to the stage position at which this image was acquired.
     *
     * @return Name of the position at which this image was acquired
@@ -380,7 +385,7 @@ public interface Metadata {
    @Deprecated
    String getPositionName();
 
-   /** 
+   /**
     * Any name attached to the stage position at which this image was
     * acquired.
     *
@@ -401,7 +406,7 @@ public interface Metadata {
     * @return Time at which this image was received by Micro-Manager
     */
    String getReceivedTime();
-   
+
    /**
     * A unique identifier for this specific image. Micro-Manager uses this
     * field to determine if two images are truly different, so if you copy this

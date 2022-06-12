@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.displaywindow.imagej;
 
 import com.google.common.base.Preconditions;
@@ -19,6 +20,7 @@ import java.util.List;
 
 /**
  * Common base implementation for non-LUT (continuous) color modes.
+ *
  * @author Mark A. Tsuchida
  */
 abstract class AbstractColorModeStrategy implements ColorModeStrategy {
@@ -72,7 +74,11 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
    }
 
    protected abstract LUT getLUT(int index, double gamma);
-   protected boolean isVisibleInComposite(int index) { return true; }
+
+   protected boolean isVisibleInComposite(int index) {
+      return true;
+   }
+
    protected abstract int getModeForCompositeImage();
 
    private LUT getCachedLUT(int index) {
@@ -134,7 +140,7 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
          }
       }
       if (compositeImage.getMode() == CompositeImage.COMPOSITE) {
-   		boolean[] active = compositeImage.getActiveChannels();
+         boolean[] active = compositeImage.getActiveChannels();
          for (int i = 0; i < active.length; i++) {
             active[i] = isVisibleInComposite(i);
          }

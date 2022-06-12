@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.profile.internal;
 
 import com.google.common.base.Preconditions;
@@ -21,8 +22,8 @@ import org.micromanager.profile.UserProfileMigration;
  * Migrations are run when registered (on currently loaded profiles) and when
  * a profile is loaded.
  *
- * @see org.micromanager.profile.UserProfileMigration
  * @author Mark A. Tsuchida
+ * @see org.micromanager.profile.UserProfileMigration
  */
 public final class UserProfileMigratorImpl {
    private UserProfileMigratorImpl() {
@@ -45,13 +46,13 @@ public final class UserProfileMigratorImpl {
       private final List<UserProfileMigration> migrations_;
 
       public static UserProfileMigrationsRegisteredEvent create(Class<?> owner,
-            List<UserProfileMigration> migrations) {
+                                                                List<UserProfileMigration> migrations) {
          return new RegisteredEvent(
                owner, migrations);
       }
 
       private RegisteredEvent(Class<?> owner,
-            List<UserProfileMigration> migrations) {
+                              List<UserProfileMigration> migrations) {
          owner_ = owner;
          migrations_ = migrations;
       }
@@ -73,7 +74,7 @@ public final class UserProfileMigratorImpl {
    }
 
    public static void registerMigrations(Class<?> newOwner,
-         UserProfileMigration... migrations) {
+                                         UserProfileMigration... migrations) {
       Preconditions.checkNotNull(newOwner);
       if (migrations == null) {
          return;
@@ -95,7 +96,7 @@ public final class UserProfileMigratorImpl {
    }
 
    private static void runMigration(UserProfile profile, Class<?> newOwner,
-         UserProfileMigration migration) {
+                                    UserProfileMigration migration) {
       if (((DefaultUserProfile) profile).getSettingsWithoutFallback(newOwner).
             containsKey(migration.name())) {
          return;

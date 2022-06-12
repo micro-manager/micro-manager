@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.link.internal;
 
 import java.util.concurrent.ExecutorService;
@@ -10,7 +11,6 @@ import java.util.concurrent.Executors;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 /**
- *
  * @author mark
  */
 public final class LinkageFactory {
@@ -28,8 +28,7 @@ public final class LinkageFactory {
       return Linkage.create(executor_);
    }
 
-   void linkToPeer(final LinkEndpoint target, final LinkEndpoint initiator)
-   {
+   void linkToPeer(final LinkEndpoint target, final LinkEndpoint initiator) {
       executor_.submit(new Runnable() {
          @Override
          @SuppressWarnings("NestedSynchronizedStatement")

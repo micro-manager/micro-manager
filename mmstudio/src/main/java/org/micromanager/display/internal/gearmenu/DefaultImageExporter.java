@@ -22,7 +22,6 @@
 package org.micromanager.display.internal.gearmenu;
 
 import com.google.common.eventbus.Subscribe;
-import org.micromanager.display.internal.displaywindow.DisplayController;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
@@ -44,7 +43,7 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayDidShowImageEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
-import org.micromanager.display.ImageExporter.OutputFormat;
+import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -62,10 +61,9 @@ public final class DefaultImageExporter implements ImageExporter {
       private ExporterLoop child_;
 
       /**
-       * 
-       * @param axis Axis over which to iterate
+       * @param axis  Axis over which to iterate
        * @param start First coordinate to be exported
-       * @param stop Last coordinate to be exported (will be included!)
+       * @param stop  Last coordinate to be exported (will be included!)
        */
       public ExporterLoop(String axis, int start, int stop) {
          axis_ = axis;
@@ -76,6 +74,7 @@ public final class DefaultImageExporter implements ImageExporter {
       /**
        * Insert a new innermost ExporterLoop -- recursively propagates the
        * provided child to the end of the list.
+       *
        * @param child
        */
       public void setInnermostLoop(ExporterLoop child) {
@@ -89,6 +88,7 @@ public final class DefaultImageExporter implements ImageExporter {
 
       /**
        * Recursively propagate a display through the list.
+       *
        * @param display
        */
       public void setDisplay(DisplayWindow display) {
@@ -104,11 +104,12 @@ public final class DefaultImageExporter implements ImageExporter {
        * Iterate over our specified axis, while running any inner loop(s),
        * determining which images will be exported. Use the provided
        * base coordinates to cover for any coords we aren't iterating over.
+       *
        * @param baseCoords
        * @param result
        */
       public void selectImageCoords(Coords baseCoords,
-            ArrayList<Coords> result) {
+                                    ArrayList<Coords> result) {
          for (int i = startIndex_; i <= stopIndex_; ++i) {
             Coords newCoords = baseCoords.copyBuilder().index(axis_, i).build();
             if (child_ == null) {
@@ -198,6 +199,7 @@ public final class DefaultImageExporter implements ImageExporter {
     * This method gets called twice for each image we export: once for the
     * display responding to our request to set the image coordinates, and
     * then once for the display painting to our provided Graphics object.
+    *
     * @param event
     */
    @Subscribe
@@ -210,7 +212,8 @@ public final class DefaultImageExporter implements ImageExporter {
                // gets drawn twice, resulting in duplication of some images
                // Keep the Coords of the last drawn image, and make sure that  
                // the current image is differnt.
-               if (lastDrawnCoords_ != null && lastDrawnCoords_.equals(event.getPrimaryImage().getCoords())) {
+               if (lastDrawnCoords_ != null &&
+                     lastDrawnCoords_.equals(event.getPrimaryImage().getCoords())) {
                   return;
                }
                lastDrawnCoords_ = event.getPrimaryImage().getCoords();
@@ -224,7 +227,7 @@ public final class DefaultImageExporter implements ImageExporter {
                // DefaultDisplayWindow.
                Dimension canvasSize = dc.getUIController().getIJImageCanvas().getSize();
                currentImage_ = new BufferedImage(canvasSize.width,
-                       canvasSize.height, BufferedImage.TYPE_INT_RGB);
+                     canvasSize.height, BufferedImage.TYPE_INT_RGB);
                currentGraphics_ = currentImage_.getGraphics();
                dc.getUIController().getIJImageCanvas().paint(currentGraphics_);
 
@@ -234,10 +237,11 @@ public final class DefaultImageExporter implements ImageExporter {
                   if (stack_ == null) {
                      // Create the ImageJ stack object to add images to.
                      stack_ = new ImageStack(currentImage_.getWidth(),
-                             currentImage_.getHeight());
+                           currentImage_.getHeight());
                   }
                   addToStack(stack_, currentImage_);
-               } else {
+               }
+               else {
                   // Save the image to disk in appropriate format.
                   exportImage(currentImage_, sequenceNum_++);
                }
@@ -259,35 +263,37 @@ public final class DefaultImageExporter implements ImageExporter {
    private void exportImage(BufferedImage image, int sequenceNum) {
       String filename = getOutputFilename(isSingleShot_ ? -1 : sequenceNum);
       File file = new File(filename);
-      if (null != format_) switch (format_) {
-         case OUTPUT_PNG:
-            try {
-               ImageIO.write(image, "png", file);
-            }
-            catch (IOException e) {
-               ReportingUtils.logError(e, "Error writing exported PNG image");
-            }  break;
-         case OUTPUT_JPG:
-            // Set the compression quality.
-            float quality = jpegQuality_ / ((float) 100.0);
-            ImageWriter writer = ImageIO.getImageWritersByFormatName(
-                    "jpeg").next();
-            ImageWriteParam param = writer.getDefaultWriteParam();
-            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            param.setCompressionQuality(quality);
-            try {
-               ImageOutputStream stream = ImageIO.createImageOutputStream(file);
-               writer.setOutput(stream);
-               writer.write(image);
-               stream.close();
-            }
-            catch (IOException e) {
-               ReportingUtils.logError(e, "Error writing exported JPEG image");
-            }  writer.dispose();
-            break;
-         default:
-            ReportingUtils.logError("Unrecognized save format " + format_);
-            break;
+      if (null != format_) {
+         switch (format_) {
+            case OUTPUT_PNG:
+               try {
+                  ImageIO.write(image, "png", file);
+               } catch (IOException e) {
+                  ReportingUtils.logError(e, "Error writing exported PNG image");
+               }
+               break;
+            case OUTPUT_JPG:
+               // Set the compression quality.
+               float quality = jpegQuality_ / ((float) 100.0);
+               ImageWriter writer = ImageIO.getImageWritersByFormatName(
+                     "jpeg").next();
+               ImageWriteParam param = writer.getDefaultWriteParam();
+               param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+               param.setCompressionQuality(quality);
+               try {
+                  ImageOutputStream stream = ImageIO.createImageOutputStream(file);
+                  writer.setOutput(stream);
+                  writer.write(image);
+                  stream.close();
+               } catch (IOException e) {
+                  ReportingUtils.logError(e, "Error writing exported JPEG image");
+               }
+               writer.dispose();
+               break;
+            default:
+               ReportingUtils.logError("Unrecognized save format " + format_);
+               break;
+         }
       }
    }
 
@@ -305,7 +311,7 @@ public final class DefaultImageExporter implements ImageExporter {
     * file. Return the list of image coordinates to be exported.
     */
    private ArrayList<Coords> prepAndSanityCheck()
-      throws IOException, IllegalArgumentException {
+         throws IOException, IllegalArgumentException {
       if (format_ == null) {
          throw new IllegalArgumentException("No output format was selected");
       }
@@ -331,7 +337,9 @@ public final class DefaultImageExporter implements ImageExporter {
       if (format_ != OutputFormat.OUTPUT_IMAGEJ) {
          if (directory_ == null || prefix_ == null) {
             // Can't save.
-            throw new IllegalArgumentException(String.format("Save parameters for exporter were not properly set (directory %s, prefix %s)", directory_, prefix_));
+            throw new IllegalArgumentException(String.format(
+                  "Save parameters for exporter were not properly set (directory %s, prefix %s)",
+                  directory_, prefix_));
          }
          // Check for potential file overwrites.
          if (coords.size() == 1) {
@@ -359,6 +367,7 @@ public final class DefaultImageExporter implements ImageExporter {
 
    /**
     * Generate a filename to save the nth image.
+    *
     * @param n image index, or -1 for a single-shot export (of only one image).
     */
    private String getOutputFilename(int n) {
@@ -386,8 +395,7 @@ public final class DefaultImageExporter implements ImageExporter {
       // Don't run two exports at the same time.
       try {
          waitForExport();
-      }
-      catch (InterruptedException e) {
+      } catch (InterruptedException e) {
          // Give up.
          ReportingUtils.logError(e, "Interrupted while waiting for other export to finish.");
          return;
@@ -409,7 +417,7 @@ public final class DefaultImageExporter implements ImageExporter {
             @Override
             public void run() {
                // force update, of the onDrawComplete callback will not be invoked
-              display_.setDisplayPosition(coords.get(0), true);
+               display_.setDisplayPosition(coords.get(0), true);
             }
          }, "Image export thread");
       }
@@ -428,9 +436,9 @@ public final class DefaultImageExporter implements ImageExporter {
                   while (drawFlag_.get()) {
                      try {
                         Thread.sleep(10);
-                     }
-                     catch (InterruptedException e) {
-                        ReportingUtils.logError("Interrupted while waiting for drawing to complete.");
+                     } catch (InterruptedException e) {
+                        ReportingUtils
+                              .logError("Interrupted while waiting for drawing to complete.");
                         return;
                      }
                   }
@@ -448,8 +456,7 @@ public final class DefaultImageExporter implements ImageExporter {
             while (!doneFlag_.get()) {
                try {
                   Thread.sleep(100);
-               }
-               catch (InterruptedException e) {
+               } catch (InterruptedException e) {
                   ReportingUtils.logError("Interrupted while waiting for export to complete.");
                   return;
                }

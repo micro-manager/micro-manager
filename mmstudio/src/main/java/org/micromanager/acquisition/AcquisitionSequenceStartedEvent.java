@@ -25,8 +25,8 @@ package org.micromanager.acquisition;
  * can be described by a {@link SequenceSettings}, it provides access to those
  * {@link SequenceSettings}.
  *
- *  <p>The default implementation of this event posts on the Studio event bus,
- *  so subscribe to this event using {@link org.micromanager.events.EventManager}.</p>
+ * <p>The default implementation of this event posts on the Studio event bus,
+ * so subscribe to this event using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface AcquisitionSequenceStartedEvent extends AcquisitionStartedEvent {
    /**

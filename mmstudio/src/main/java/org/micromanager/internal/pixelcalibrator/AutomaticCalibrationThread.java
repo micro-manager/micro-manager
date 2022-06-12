@@ -59,12 +59,12 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private final CMMCore core_;
    private final PixelCalibratorDialog dialog_;
    private final RectangleOverlay overlay_;
-   
+
    private DisplayWindow liveWin_;
    private ImageProcessor referenceImage_;
    private GrayF32 windowImage_; // normalized window used for apodization
    private final boolean useWindow_ = false;
-   
+
    private Point2D.Double xy0_;
 
    private double x;
@@ -73,7 +73,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private int h;
    private int sideSmall;
    private static int index_;
-   
+
    private class PointPair {
       private final Point2D.Double p1_;
       private final Point2D.Double p2_;
@@ -140,19 +140,19 @@ public class AutomaticCalibrationThread extends CalibrationThread {
     * Accurate to one pixel only.  ???  Seems accurate to 0.1 pixel...
     */
    public static Point2D.Double measureDisplacement(ImageProcessor proc1,
-           ImageProcessor proc2, boolean display) {
+                                                    ImageProcessor proc2, boolean display) {
       // Increasing the box size will make finding the procedure more robust with respect to errors.
       final int boxSize = 64;
       final int halfBoxSize = boxSize / 2;
       ImageProcessor result = ImageUtils.crossCorrelate(proc1, proc2);
-      ImageProcessor resultCenter = getSubImage(result, 
-              result.getWidth() / 2 - halfBoxSize, 
-              result.getHeight() / 2 - halfBoxSize, 
-              boxSize, 
-              boxSize);
+      ImageProcessor resultCenter = getSubImage(result,
+            result.getWidth() / 2 - halfBoxSize,
+            result.getHeight() / 2 - halfBoxSize,
+            boxSize,
+            boxSize);
       resultCenter.setInterpolationMethod(ImageProcessor.BICUBIC);
       ImageProcessor resultCenterScaled = resultCenter.resize(
-              resultCenter.getWidth() * 10);
+            resultCenter.getWidth() * 10);
       ImagePlus img = new ImagePlus("Cal" + index_, resultCenterScaled);
       index_++;
       // TODO: use a (Gaussian?) fit rather than finding the maximum
@@ -198,10 +198,10 @@ public class AutomaticCalibrationThread extends CalibrationThread {
     * Returns an ROI as a separate ImageProcessor.
     *
     * @param proc input ImageProcessor
-    * @param x x location of ROI in pixels
-    * @param y y location of ROI in pixels
-    * @param w width in pixels
-    * @param h height in pixels
+    * @param x    x location of ROI in pixels
+    * @param y    y location of ROI in pixels
+    * @param w    width in pixels
+    * @param h    height in pixels
     * @return ROI as an ImageProcessor
     */
    public static ImageProcessor getSubImage(ImageProcessor proc, int x, int y, int w, int h) {
@@ -216,12 +216,13 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       return getSubImage(slideProc, x, y, width, height);
    }
 
-   private ImageProcessor snapImageAt(double x, double y, boolean simulate) 
-           throws CalibrationFailedException {
+   private ImageProcessor snapImageAt(double x, double y, boolean simulate)
+         throws CalibrationFailedException {
       if (simulate) {
          return simulateAcquire(theSlide, (int) (x + (3 * Math.random() - 1.5)),
-                 (int) (y + (3 * Math.random() - 1.5)));
-      } else {
+               (int) (y + (3 * Math.random() - 1.5)));
+      }
+      else {
          try {
             Point2D.Double p0 = core_.getXYStagePosition();
             if (p0.distance(x, y) > (dialog_.safeTravelRadius() / 2)) {
@@ -254,8 +255,6 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    }
 
 
-
-
    private PointPair runSearch(final double dxi, final double dyi, final boolean simulate)
          throws InterruptedException, CalibrationFailedException {
 
@@ -278,7 +277,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
 
          dx *= 2;
          dy *= 2;
-         
+
          d.x *= 2;
          d.y *= 2;
 
@@ -300,9 +299,9 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    /**
     * Multiplies two ImageProcessors.
     *
-    * @param input First ImageProcessor to be multiplied.
+    * @param input  First ImageProcessor to be multiplied.
     * @param input2 Second ImageProcessor to be multiplies.
-    * @return  pixel by pixel multiplication of the two ImageProcessors.
+    * @return pixel by pixel multiplication of the two ImageProcessors.
     */
    public static ImageProcessor multiply(ImageProcessor input, GrayF32 input2) {
       // TODO: check input and output sizes
@@ -323,7 +322,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    public static ImageProcessor subtractMinimum(ImageProcessor input) {
       GrayU16 shortInputAsBoofCV = new GrayU16(input.getWidth(), input.getHeight());
       GConvertImage.convert(BoofCVImageConverter.convert(input, false), shortInputAsBoofCV);
-      double min =   GImageStatistics.min(shortInputAsBoofCV);
+      double min = GImageStatistics.min(shortInputAsBoofCV);
       GrayU16 resultAsBoofCV = new GrayU16(input.getWidth(), input.getHeight());
       PixelMath.minus(shortInputAsBoofCV, (int) min, resultAsBoofCV);
       return BoofCVImageConverter.convert(resultAsBoofCV, false);
@@ -332,7 +331,6 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private int smallestPowerOf2LessThanOrEqualTo(int x) {
       return 1 << ((int) Math.floor(Math.log(x) / Math.log(2)));
    }
-
 
 
    private AffineTransform getFirstApprox(final boolean simulate)
@@ -344,7 +342,8 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       if (simulate) {
          x = 0.;
          y = 0.;
-      } else {
+      }
+      else {
          Point2D.Double p;
          try {
             p = core_.getXYStagePosition();
@@ -365,9 +364,9 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       int hSmall = smallestPowerOf2LessThanOrEqualTo(h / 4);
       sideSmall = Math.min(wSmall, hSmall);
       referenceImage_ = getSubImage(baseImage, (-sideSmall / 2 + w / 2),
-              (-sideSmall / 2 + h / 2), sideSmall, sideSmall);
+            (-sideSmall / 2 + h / 2), sideSmall, sideSmall);
       referenceImage_ = subtractMinimum(referenceImage_);
-      
+
       if (useWindow_) {
          float[] windowPixels = AnalysisWindows2D.hanWindow1DA(sideSmall);
          windowImage_ = new GrayF32();
@@ -381,26 +380,27 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       pointPairs.put(new Point2D.Double(0., 0.), new Point2D.Double(x, y));
       PointPair pp = runSearch(0.1, 0, simulate);
       pointPairs.put(pp.getFirst(), pp.getSecond());
-      
+
 
       // Re-acquire the reference image, since we may not be exactly where 
       // we started from after having called runSearch().
       referenceImage_ = getSubImage(baseImage, (-sideSmall / 2 + w / 2),
             (-sideSmall / 2 + h / 2), sideSmall, sideSmall);
       referenceImage_ = subtractMinimum(referenceImage_);
-      if (useWindow_) {  
+      if (useWindow_) {
          referenceImage_ = multiply(referenceImage_, windowImage_);
       }
 
       pp = runSearch(0, 0.1, simulate);
       pointPairs.put(pp.getFirst(), pp.getSecond());
-      
+
       return MathFunctions.generateAffineTransformFromPointPairs(pointPairs);
    }
-   
 
-   private PointPair measureCorner(final AffineTransform firstApprox, final Point c1, 
-           final boolean simulate) throws InterruptedException, CalibrationFailedException {
+
+   private PointPair measureCorner(final AffineTransform firstApprox, final Point c1,
+                                   final boolean simulate)
+         throws InterruptedException, CalibrationFailedException {
       Point2D.Double c1d = new Point2D.Double(c1.x, c1.y);
       Point2D.Double s1 = (Point2D.Double) firstApprox.transform(c1d, null);
       Point2D.Double c2 = measureDisplacement(s1.x, s1.y, c1d, dialog_.debugMode(), simulate);
@@ -412,13 +412,14 @@ public class AutomaticCalibrationThread extends CalibrationThread {
          throw new CalibrationFailedException(ex.getMessage());
       }
       incrementProgress();
-      
+
       return new PointPair(new Point2D.Double(c2.x, c2.y), s2);
    }
-   
 
-   private AffineTransform getSecondApprox(final AffineTransform firstApprox, 
-           final boolean simulate) throws InterruptedException, CalibrationFailedException {
+
+   private AffineTransform getSecondApprox(final AffineTransform firstApprox,
+                                           final boolean simulate)
+         throws InterruptedException, CalibrationFailedException {
       Map<Point2D.Double, Point2D.Double> pointPairs = new HashMap<>();
       // used to be side_small / 2, but it works better
       // to stay a bit away from the extreme corners
@@ -436,7 +437,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       try {
          // pointpairs, max error in pixels, max error in microns
          return MathFunctions.generateAffineTransformFromPointPairs(
-                 pointPairs, 5.0, Double.MAX_VALUE);
+               pointPairs, 5.0, Double.MAX_VALUE);
       } catch (Exception ex) {
          ReportingUtils.logError(ex.getMessage());
       }
@@ -487,8 +488,8 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       try {
          result_ = runCalibration();
          try {
-            String binning = core_.getProperty(core_.getCameraDevice(), 
-                    MMCoreJ.getG_Keyword_Binning());
+            String binning = core_.getProperty(core_.getCameraDevice(),
+                  MMCoreJ.getG_Keyword_Binning());
             int binNr = NumberUtils.coreStringToInt(binning);
             if (binNr != 1) {
                result_.scale(1.0 / (double) binNr, 1.0 / (double) binNr);

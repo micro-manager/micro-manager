@@ -25,7 +25,7 @@ class SendReportControlPanel extends ControlPanel {
    }
 
    SendReportControlPanel(ProblemReportController controller,
-         boolean allowRestart) {
+                          boolean allowRestart) {
       controller_ = controller;
 
       closeButton_ = new JButton("Close");
@@ -34,7 +34,8 @@ class SendReportControlPanel extends ControlPanel {
       if (allowRestart) {
          startOverButton_ = new JButton("Start Over");
          startOverButton_.addActionListener(e -> controller_.startLogCapture());
-      } else {
+      }
+      else {
          startOverButton_ = null;
       }
 
@@ -42,12 +43,13 @@ class SendReportControlPanel extends ControlPanel {
       viewButton.addActionListener(e -> controller_.displayReport());
 
       setLayout(new net.miginfocom.swing.MigLayout(
-               "fillx, insets 0", "", ""));
+            "fillx, insets 0", "", ""));
 
       if (startOverButton_ != null) {
          add(closeButton_, "span 2, split 3, sizegroup cancelbtns");
          add(startOverButton_, "gapright push, sizegroup cancelbtns");
-      } else {
+      }
+      else {
          add(closeButton_, "span 2, split 2, gapright push, sizegroup cancelbtns");
       }
       add(viewButton, "");

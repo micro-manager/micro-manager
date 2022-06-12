@@ -18,10 +18,11 @@ import net.imglib2.type.numeric.IntegerType;
 
 /**
  * A {@code BinMapper1d} for use with {@code net.imglib2.histogram.Histogram1d}.
- *
+ * <p>
  * Unlike the default {@code Integer1dBinMapper} provided by ImgLib2, which
  * only allows size-1 bins, this allows histograms to have size 1, 2, 4, 8, ...
  * bins. For example, a 256-bin histogram can be created for a 16-bit image.
+ *
  * @author Mark A. Tsuchida
  */
 public class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<T> {
@@ -41,8 +42,7 @@ public class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<
     * @return
     */
    public static <T extends IntegerType<T>> PowerOf2BinMapper<T>
-       create(int sampleDepthPowerOf2, int binCountPowerOf2)
-   {
+   create(int sampleDepthPowerOf2, int binCountPowerOf2) {
       return new PowerOf2BinMapper<T>(sampleDepthPowerOf2, binCountPowerOf2);
    }
 

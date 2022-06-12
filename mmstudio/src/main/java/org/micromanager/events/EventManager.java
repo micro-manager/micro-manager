@@ -34,7 +34,7 @@ public interface EventManager {
     * those events occur.
     *
     * @param obj The object that should be subscribed to receive event
-    *        notifications.
+    *            notifications.
     */
    void registerForEvents(Object obj);
 

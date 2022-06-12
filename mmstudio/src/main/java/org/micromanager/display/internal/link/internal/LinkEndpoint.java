@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.link.internal;
 
 import java.util.Collection;
@@ -11,7 +12,6 @@ import org.micromanager.EventPublisher;
 import org.micromanager.display.internal.link.LinkAnchor;
 
 /**
- *
  * @author mark
  */
 public interface LinkEndpoint extends EventPublisher {
@@ -19,7 +19,9 @@ public interface LinkEndpoint extends EventPublisher {
 
    // Forwarded to anchor
    Object getLinkageGroup();
+
    Object getCurrentValue();
+
    boolean receivePropagatedValue(Object value);
 
    // For anchor to call
@@ -27,15 +29,22 @@ public interface LinkEndpoint extends EventPublisher {
 
    // For anchor users to call via anchor
    boolean hasLinkablePeers();
+
    List<LinkEndpoint> getLinkablePeers();
+
    void linkToPeer(LinkEndpoint peer);
+
    void unlink();
+
    boolean isLinked();
+
    Collection<LinkEndpoint> getLinkedPeers();
+
    boolean isOutOfSync();
 
    // Interface for LinkEndpointPool
    void joinPool(LinkEndpointPool pool);
+
    void leavePool(LinkEndpointPool pool);
 
    // Interface for LinkEndpointManager
@@ -43,8 +52,11 @@ public interface LinkEndpoint extends EventPublisher {
 
    // Interface for Linkage
    void linkageDidAdmitEndpoint(Linkage linkage);
+
    void linkageWillExpelEndpoint(Linkage linkage);
+
    void linkageDidTransferEndpoint(Linkage oldLinkage, Linkage newLinkage);
+
    boolean linkageRequiresResync();
 
    // Interface for LinkageFactory

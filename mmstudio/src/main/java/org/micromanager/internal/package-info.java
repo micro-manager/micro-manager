@@ -11,4 +11,5 @@
  * @see <a href="https://commons.apache.org/proper/commons-lang/apidocs/index.html?org/apache/commons/lang3/">Apache Commons Lang 3 Javadoc</a>
  * @see <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/">Apache Commons Math 3 Javadoc</a>
  */
+
 package org.micromanager.internal;

@@ -90,7 +90,7 @@ public final class PropertyEditor extends JFrame {
       createComponents();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 550, 600);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setMinimumSize(new Dimension(420, 400));
@@ -107,10 +107,10 @@ public final class PropertyEditor extends JFrame {
       table_.setAutoCreateColumnsFromModel(false);
       table_.setModel(data_);
 
-      table_.addColumn(new TableColumn(0, 200, 
-              new PropertyNameCellRenderer(studio_), null));
-      table_.addColumn(new TableColumn(1, 200, 
-              new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(false)));
+      table_.addColumn(new TableColumn(0, 200,
+            new PropertyNameCellRenderer(studio_), null));
+      table_.addColumn(new TableColumn(1, 200,
+            new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(false)));
    }
 
    private void createComponents() {
@@ -136,17 +136,17 @@ public final class PropertyEditor extends JFrame {
       setTitle("Device Property Browser");
 
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      
+
       final JButton refreshButton = new JButton("Refresh",
             new ImageIcon(getClass().getResource(
-              "/org/micromanager/icons/arrow_refresh.png")));
-      
+                  "/org/micromanager/icons/arrow_refresh.png")));
+
       Font defaultFont = new Font("Arial", Font.PLAIN, 10);
-      
+
       add(new ShowFlagsPanel(data_, flags_, core_,
-               core_.getSystemStateCache()),
+                  core_.getSystemStateCache()),
             "split 2, aligny top, gapbottom 10");
-      
+
       refreshButton.setFont(defaultFont);
       refreshButton.addActionListener((ActionEvent e) -> {
          refresh(false);
@@ -199,18 +199,19 @@ public final class PropertyEditor extends JFrame {
       /**
        * Constructor.
        *
-       * @param studio API object.
-       * @param groupName Configuration Group
-       * @param presetName Configuration Preset
+       * @param studio              API object.
+       * @param groupName           Configuration Group
+       * @param presetName          Configuration Preset
        * @param propertyValueColumn ???
-       * @param propertyUsedColumn indicates if the property will be used in this config group.
-       * @param parentComponent ???
+       * @param propertyUsedColumn  indicates if the property will be used in this config group.
+       * @param parentComponent     ???
        */
       public PropertyEditorTableData(Studio studio, String groupName, String presetName,
-            int propertyValueColumn, int propertyUsedColumn, Component parentComponent) {
+                                     int propertyValueColumn, int propertyUsedColumn,
+                                     Component parentComponent) {
 
          super(studio, groupName, presetName, propertyValueColumn,
-                 propertyUsedColumn, false, true, false, false);
+               propertyUsedColumn, false, true, false, false);
       }
 
       private static final long serialVersionUID = 1L;

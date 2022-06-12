@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.event;
 
 import org.micromanager.display.inspector.internal.InspectorController;
 
 /**
- *
  * @author mark
  */
 public class InspectorDidCloseEvent {

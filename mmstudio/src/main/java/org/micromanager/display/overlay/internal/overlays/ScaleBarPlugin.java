@@ -20,10 +20,10 @@
 
 package org.micromanager.display.overlay.internal.overlays;
 
+import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayPlugin;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
-import org.micromanager.display.overlay.Overlay;
 
 /**
  * The scale bar overlay plugin.

@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.imagestats;
 
 import java.awt.Rectangle;
 import java.util.Arrays;
 
 /**
- *
  * @author mark
  */
 public class BoundsRectAndMask {

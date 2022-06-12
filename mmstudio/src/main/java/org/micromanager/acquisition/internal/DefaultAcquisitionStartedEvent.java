@@ -20,13 +20,13 @@
 
 package org.micromanager.acquisition.internal;
 
+import org.micromanager.acquisition.AcquisitionSequenceStartedEvent;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
-import org.micromanager.acquisition.AcquisitionSequenceStartedEvent;
 
 /**
- *  * This implementation of this event is posted on the Studio event bus,
- *  * so subscribe to this event using {@link org.micromanager.events.EventManager}.
+ * * This implementation of this event is posted on the Studio event bus,
+ * * so subscribe to this event using {@link org.micromanager.events.EventManager}.
  */
 public final class DefaultAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
    private Datastore store_;
@@ -34,7 +34,7 @@ public final class DefaultAcquisitionStartedEvent implements AcquisitionSequence
    private SequenceSettings settings_;
 
    public DefaultAcquisitionStartedEvent(Datastore store, Object source,
-         SequenceSettings settings) {
+                                         SequenceSettings settings) {
       store_ = store;
       source_ = source;
       settings_ = settings;

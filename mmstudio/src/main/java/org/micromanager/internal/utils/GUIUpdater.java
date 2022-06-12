@@ -24,11 +24,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.SwingUtilities;
 
 /**
- *
  * @author arthur and henry
- * DO NOT USE.  This code is only here so that the DataBrowser plugin can still 
+ * DO NOT USE.  This code is only here so that the DataBrowser plugin can still
  * compile.  Remove after this dependency in the DataBrowser has been removed.
- * 
  * @deprecated
  */
 @Deprecated

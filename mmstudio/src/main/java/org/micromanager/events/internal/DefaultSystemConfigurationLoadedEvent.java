@@ -8,6 +8,6 @@ import org.micromanager.events.SystemConfigurationLoadedEvent;
  * <p>This event posts on the Studio event bus,
  * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
-public class DefaultSystemConfigurationLoadedEvent  implements
-        SystemConfigurationLoadedEvent {
+public class DefaultSystemConfigurationLoadedEvent implements
+      SystemConfigurationLoadedEvent {
 }

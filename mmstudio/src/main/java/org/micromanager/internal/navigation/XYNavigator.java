@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.navigation;
 
 import com.google.common.util.concurrent.AtomicDouble;
@@ -102,8 +101,8 @@ public class XYNavigator {
     * and orientation booleans, determined using the getOrientation function.
     *
     * @param pixSizeUm - pixelSize in micron
-    * @param x - Desired x movement in pixels
-    * @param y - Desired y movement in pixels
+    * @param x         - Desired x movement in pixels
+    * @param y         - Desired y movement in pixels
     * @return - Needed stage movement as a Point2D.Double
     */
    private Point2D toStageSpace(double pixSizeUm, double x, double y) {
@@ -115,9 +114,10 @@ public class XYNavigator {
          // not sure why, but for the stage movement to be correct, we need
          // to invert both axes"
          dest.setLocation(-dest.getX(), -dest.getY());
-      } else {
+      }
+      else {
          // if camera does not toStageSpace image orientation, we'll toStageSpace for it here:
-         dest.setLocation(- x * pixSizeUm, - y * pixSizeUm);
+         dest.setLocation(-x * pixSizeUm, -y * pixSizeUm);
          if (!correction_) {
             // Order: swapxy, then mirror axis
             if (transposeXY_) {
@@ -200,8 +200,8 @@ public class XYNavigator {
     * it will add the movement to its future movement task.
     *
     * @param xyStage xyStage to be moved
-    * @param xRel x distance (in microns) to move the stage
-    * @param yRel y distance (in microns) to move the stage
+    * @param xRel    x distance (in microns) to move the stage
+    * @param yRel    y distance (in microns) to move the stage
     */
    public void moveXYStageUm(String xyStage, double xRel, double yRel) {
       if (!xyStageMoverMap_.containsKey(xyStage)) {
@@ -217,7 +217,6 @@ public class XYNavigator {
     *
     * <p>This should reduce the number of commands send to the stage when the UI
     * is firing requests faster than the stage can execute them.
-    *
     */
    private class XYStageTask implements Runnable {
       private final String xyStage_;

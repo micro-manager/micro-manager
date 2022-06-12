@@ -117,7 +117,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * intensity scaling range for all displayed channels. If continuous
     * autostretching was enabled, it is disabled.</p>
     *
-    *<p> Calls are ignored if the display has closed.</p>
+    * <p> Calls are ignored if the display has closed.</p>
     *
     * <p>This method can be called from any thread. However, you should call it
     * from the Swing/AWT event dispatch thread if you want to correctly
@@ -175,13 +175,12 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * dispatch thread is not waiting for your thread to finish something).</p>
     *
     * @return the {@code ImagePlus} used by the window, which may be a
-    *         {@code CompositeImage}, or {@code null} if none has been created or if
-    *         the display has closed.
-    *
+    * {@code CompositeImage}, or {@code null} if none has been created or if
+    * the display has closed.
     * @deprecated Directly accessing the {@code ImagePlus} of an MMStudio
-    *             display window will generally result in very fragile code. Consider
-    *             accessing image data through {@link #getDataProvider}. For drawing
-    *             overlay graphics, see {@link #addOverlay}.
+    * display window will generally result in very fragile code. Consider
+    * accessing image data through {@link #getDataProvider}. For drawing
+    * overlay graphics, see {@link #addOverlay}.
     */
    @Deprecated
    ImagePlus getImagePlus();
@@ -195,7 +194,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * <p>Calls are ignored if the display has already closed.</p>
     *
     * @return true if the display is closed, or was already closed; false
-    *         if it remains open
+    * if it remains open
     */
    boolean requestToClose();
 
@@ -238,7 +237,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * dispatch thread is not waiting for your thread to finish something).</p>
     *
     * @return whether full screen mode is enabled ({@code false} if the
-    *         display has closed
+    * display has closed
     */
    boolean isFullScreen();
 
@@ -297,8 +296,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * Get the {@code java.awt.Window} used for this image display.
     *
     * @return the {@code java.awt.Window} used by this image display, or
-    *         {@code null} if the display has been closed
-    *
+    * {@code null} if the display has been closed
     * @deprecated use {@link #getWindow} instead
     */
    @Deprecated

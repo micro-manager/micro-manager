@@ -60,9 +60,9 @@ class LogCaptureControlPanel extends ControlPanel {
       });
 
       setLayout(new net.miginfocom.swing.MigLayout(
-               "fillx, insets 0",
-               "[fill]",
-               "unrel[]unrel[]unrel[][]"));
+            "fillx, insets 0",
+            "[fill]",
+            "unrel[]unrel[]unrel[][]"));
 
       javax.swing.JProgressBar activityIndicator = new javax.swing.JProgressBar();
       activityIndicator.setIndeterminate(true);

@@ -50,11 +50,11 @@ public final class GraphData {
          yMin = 0.0;
          yMax = 0.0;
       }
-      
+
       double getRangeX() {
          return xMax - xMin;
       }
-      
+
       double getRangeY() {
          return yMax - yMin;
       }
@@ -63,25 +63,25 @@ public final class GraphData {
          return String.format("[X: %.2f to %.2f; Y: %.2f to %.2f]", xMin, xMax, yMin, yMax);
       }
    }
-   
+
    public GraphData() {
       xVals_ = new double[100];
       yVals_ = new double[100];
-      
+
       for (int i = 0; i < xVals_.length; i++) {
          xVals_[i] = i;
          //yVals_[i] = 100.0 * Math.sin(2.0 *i*Math.PI / 50.0);
          yVals_[i] = 0.0;
       }
    }
-   
+
    public Bounds getBounds() {
       Bounds b = new Bounds();
       b.xMax = Double.MIN_VALUE;
       b.xMin = Double.MAX_VALUE;
       b.yMax = Double.MIN_VALUE;
       b.yMin = Double.MAX_VALUE;
-      
+
       for (int i = 0; i < xVals_.length; i++) {
          if (xVals_[i] > b.xMax) {
             b.xMax = xVals_[i];
@@ -100,17 +100,18 @@ public final class GraphData {
       }
       return b;
    }
-   
+
    public int getSize() {
       return xVals_.length;
    }
-   
+
    public Point2D.Double getPoint(int index) {
       double x = xVals_[index];
       double y;
       if (index < yVals_.length) {
          y = yVals_[index];
-      } else {
+      }
+      else {
          y = 0.0;
       }
       return new Point2D.Double(x, y);
@@ -119,10 +120,10 @@ public final class GraphData {
    public void setData(double[] xVals, double[] yVals) {
       xVals_ = xVals;
       yVals_ = yVals;
-      
+
       // TODO: adjust lengths
    }
-   
+
    public void setData(double[] yVals) {
       yVals_ = yVals;
       xVals_ = new double[yVals.length];
@@ -130,7 +131,7 @@ public final class GraphData {
          xVals_[i] = i;
       }
    }
-   
+
    public void setData(int[] yIntVals) {
       yVals_ = new double[yIntVals.length];
       xVals_ = new double[yIntVals.length];

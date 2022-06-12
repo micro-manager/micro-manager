@@ -39,9 +39,9 @@ import net.miginfocom.swing.MigLayout;
  * broken out into subcategories and using a scrollpane if necessary.
  */
 public final class CategorizedAlert extends DefaultAlert {
-   
+
    private String historyText_ = "";
-   
+
    /**
     * This class represents one row in the display, one category of alert type.
     */
@@ -66,7 +66,7 @@ public final class CategorizedAlert extends DefaultAlert {
                boolean isSelected = showAllButton_.isSelected();
                setBorder(isSelected ? BorderFactory.createLineBorder(Color.GRAY, 1) : null);
                showAllButton_.setText(
-                  isSelected ? "Hide" : "Show All " + numMessages_);
+                     isSelected ? "Hide" : "Show All " + numMessages_);
                historyPanel_.setVisible(isSelected);
             }
          });
@@ -100,8 +100,8 @@ public final class CategorizedAlert extends DefaultAlert {
          numMessages_++;
          if (numMessages_ > 2) {
             showAllButton_.setText((showAllButton_.isSelected() ?
-                     "Hide" :
-                     "Show All " + numMessages_));
+                  "Hide" :
+                  "Show All " + numMessages_));
             if (!showAllButton_.isVisible()) {
                showAllButton_.setVisible(true);
             }
@@ -111,11 +111,11 @@ public final class CategorizedAlert extends DefaultAlert {
 
    // This tracks all of our different categories and the message history for
    // each.
-   private final HashMap<Class<?>, CategoryDisplay> categories_ = 
-           new HashMap<Class<?>, CategoryDisplay>();
+   private final HashMap<Class<?>, CategoryDisplay> categories_ =
+         new HashMap<Class<?>, CategoryDisplay>();
    // CategoryDisplays that have a null category.
-   private final ArrayList<CategoryDisplay> nullCategories_ = 
-           new ArrayList<CategoryDisplay>();
+   private final ArrayList<CategoryDisplay> nullCategories_ =
+         new ArrayList<CategoryDisplay>();
 
    /**
     * Sets up the contents of the alert before passing them to the constructor,
@@ -165,9 +165,9 @@ public final class CategorizedAlert extends DefaultAlert {
       });
       parent_.textUpdated(this);
    }
-   
+
    public String getAllText() {
       return historyText_;
    }
-   
+
 }

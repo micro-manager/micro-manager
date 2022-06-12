@@ -46,13 +46,14 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Micro-Manager.
  */
 public final class IJVersionCheckDlg extends JDialog {
-   private static final String HAS_OPTED_OUT = 
-           "user has opted out of receiving warnings about compatibility with the version of ImageJ they are using";
+   private static final String HAS_OPTED_OUT =
+         "user has opted out of receiving warnings about compatibility with the version of ImageJ they are using";
    private static final ArrayList<String> ALLOWED_VERSIONS = new ArrayList<String>(
          Arrays.asList(new String[] {"1.51s"}));
 
    /**
     * Show the warning dialog, if applicable and user has not opted out.
+    *
     * @param studio
     */
    public static void execute(Studio studio) {
@@ -76,7 +77,7 @@ public final class IJVersionCheckDlg extends JDialog {
     */
    private static boolean getHasOptedOut(Studio studio) {
       return studio.profile().getSettings(IJVersionCheckDlg.class).
-              getBoolean(HAS_OPTED_OUT, false);
+            getBoolean(HAS_OPTED_OUT, false);
    }
 
    /**
@@ -84,13 +85,14 @@ public final class IJVersionCheckDlg extends JDialog {
     */
    private static void setHasOptedOut(Studio studio, boolean hasOptedOut) {
       studio.profile().getSettings(IJVersionCheckDlg.class).
-              putBoolean(HAS_OPTED_OUT, hasOptedOut);
+            putBoolean(HAS_OPTED_OUT, hasOptedOut);
    }
 
    /**
     * Show the dialog.
+    *
     * @param studio
-    * @param badVersion - User's version.  
+    * @param badVersion - User's version.
     */
    public IJVersionCheckDlg(Studio studio, String badVersion) {
       super();
@@ -102,7 +104,7 @@ public final class IJVersionCheckDlg extends JDialog {
       // Build a comma-delimited string of good versions.
       String goodVersions = "";
       for (String version : ALLOWED_VERSIONS) {
-         if (!version.equals(ALLOWED_VERSIONS.get(ALLOWED_VERSIONS.size() -1))) {
+         if (!version.equals(ALLOWED_VERSIONS.get(ALLOWED_VERSIONS.size() - 1))) {
             goodVersions += ", ";
          }
          goodVersions += version;
@@ -115,8 +117,9 @@ public final class IJVersionCheckDlg extends JDialog {
       }
       JLabel warning = new JLabel(
             "<html><body>The version of ImageJ you are running may not be compatible with<br>this version of Micro-Manager.<br>" +
-                  "You are running ImageJ " + badVersion + ";<br>this version of Micro-Manager " + goodVersions +
-            ".</body></html>");
+                  "You are running ImageJ " + badVersion + ";<br>this version of Micro-Manager " +
+                  goodVersions +
+                  ".</body></html>");
 
       warning.setIcon(UIManager.getIcon("OptionPane.warningIcon"));
       contents.add(warning);

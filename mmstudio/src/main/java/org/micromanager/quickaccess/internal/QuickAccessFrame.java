@@ -168,13 +168,13 @@ public final class QuickAccessFrame extends JFrame {
       try {
          numCols_ = config.getInt("numCols");
          numRows_ = config.getInt("numRows");
-         setTitle(((DefaultQuickAccessManager) studio_.quickAccess()).getUniqueTitle(this, 
-                  config.optString("title", DEFAULT_TITLE)));
+         setTitle(((DefaultQuickAccessManager) studio_.quickAccess()).getUniqueTitle(this,
+               config.optString("title", DEFAULT_TITLE)));
          configurePanel_.updateSpinners(numCols_, numRows_);
          JSONArray cells = config.getJSONArray("cells");
          for (int i = 0; i < cells.length(); ++i) {
             addControl(ControlCell.fromJSON(cells.getJSONObject(i),
-                     studio_, this));
+                  studio_, this));
          }
          JSONArray dividers = config.getJSONArray("dividers");
          for (int i = 0; i < dividers.length(); ++i) {
@@ -254,7 +254,7 @@ public final class QuickAccessFrame extends JFrame {
     * according to the provided MouseEvent.
     *
     * @param icon - Icon being dragged
-    * @param e - The MouseEvent that started all of this
+    * @param e    - The MouseEvent that started all of this
     */
    public void startDragging(DraggableIcon icon, MouseEvent e) {
       draggedIcon_ = icon;
@@ -469,10 +469,10 @@ public final class QuickAccessFrame extends JFrame {
       private final boolean isConfigurePanel_;
       // Current divider under the mouse, for drawing.
       private Divider curDivider_;
-      
+
       public GridPanel(boolean isConfigurePanel) {
          super(new SparseGridLayout(QuickAccessPlugin.CELL_WIDTH,
-                  QuickAccessPlugin.CELL_HEIGHT));
+               QuickAccessPlugin.CELL_HEIGHT));
          isConfigurePanel_ = isConfigurePanel;
          if (isConfigurePanel_) {
             // We need to listen for mouse events that aren't claimed by our
@@ -485,7 +485,8 @@ public final class QuickAccessFrame extends JFrame {
                   if (divider != null) {
                      if (dividers_.contains(divider)) {
                         dividers_.remove(divider);
-                     } else {
+                     }
+                     else {
                         dividers_.add(divider);
                      }
                      GridPanel.this.repaint();
@@ -526,7 +527,8 @@ public final class QuickAccessFrame extends JFrame {
             // Horizontal divider.
             return new Divider(new Point(column, row),
                   new Point(column, row + 1));
-         } else {
+         }
+         else {
             // Vertical divider.
             return new Divider(new Point(column, row),
                   new Point(column + 1, row));
@@ -654,7 +656,7 @@ public final class QuickAccessFrame extends JFrame {
 
          subPanel.add(new JLabel("Open on launch: "), "split 2, span");
          openSelect_ = new JComboBox<>(new String[] {OPEN_NEVER,
-            OPEN_ALWAYS, OPEN_REMEMBER});
+               OPEN_ALWAYS, OPEN_REMEMBER});
          // The OPEN_REMEMBER string is kinda large and blows out the size
          // of the combobox, so use the OPEN_ALWAYS string to set size.
          openSelect_.setPrototypeDisplayValue(OPEN_ALWAYS);
@@ -662,9 +664,9 @@ public final class QuickAccessFrame extends JFrame {
          subPanel.add(openSelect_, "wrap");
 
          subPanel.add(new JLabel(
-               "<html>Drag controls into the grid above to add them to the panel.<br>"
-               + "Click on grid lines to add or remove dividers. Right-click<br> "
-               + " on a control in the grid to customize its icon (when possible).</html>"),
+                     "<html>Drag controls into the grid above to add them to the panel.<br>"
+                           + "Click on grid lines to add or remove dividers. Right-click<br> "
+                           + " on a control in the grid to customize its icon (when possible).</html>"),
                "span, wrap, gaptop 10");
 
          add(subPanel, "span, wrap");
@@ -695,8 +697,8 @@ public final class QuickAccessFrame extends JFrame {
             iconPanel.add(name, "alignx center");
             buttonsPanel.add(iconPanel,
                   String.format("alignx center, w %d!, h %d!",
-                  QuickAccessPlugin.CELL_WIDTH,
-                  QuickAccessPlugin.CELL_HEIGHT));
+                        QuickAccessPlugin.CELL_WIDTH,
+                        QuickAccessPlugin.CELL_HEIGHT));
          }
          add(buttonsPanel, "span, wrap");
       }

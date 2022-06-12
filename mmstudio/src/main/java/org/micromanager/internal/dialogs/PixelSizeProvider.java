@@ -31,7 +31,7 @@ import java.awt.geom.AffineTransform;
  * @author nico
  */
 public interface PixelSizeProvider {
-   
+
    /**
     * Provides the current (for instance, the value just entered by the user)
     * pixel size (in microns).
@@ -39,21 +39,21 @@ public interface PixelSizeProvider {
     * @return Pixel size (in microns)
     */
    Double getPixelSize();
-   
+
    /**
     * Sets the pixel size as displayed in the PixelSizeProvider.
     *
     * @param pixelSizeUm - pixel size in microns that will be set in the PixelSizeProvier
     */
    void setPixelSize(double pixelSizeUm);
-   
+
    /**
     * Returns the affine transform as currently known by the PixelSizeProvider.
     *
     * @return - affine transform as currently known by the PixelSizeProvider
     */
    AffineTransform getAffineTransform();
-   
+
    /**
     * Sets the affine transform as known by the provider.
     *

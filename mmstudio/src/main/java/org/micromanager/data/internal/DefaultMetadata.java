@@ -20,16 +20,34 @@
 
 package org.micromanager.data.internal;
 
+import static org.micromanager.data.internal.PropertyKey.BINNING;
+import static org.micromanager.data.internal.PropertyKey.BIT_DEPTH;
+import static org.micromanager.data.internal.PropertyKey.CAMERA;
+import static org.micromanager.data.internal.PropertyKey.ELAPSED_TIME_MS;
+import static org.micromanager.data.internal.PropertyKey.EXPOSURE_MS;
+import static org.micromanager.data.internal.PropertyKey.FILE_NAME;
+import static org.micromanager.data.internal.PropertyKey.IMAGE_NUMBER;
+import static org.micromanager.data.internal.PropertyKey.PIXEL_ASPECT;
+import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_AFFINE;
+import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_UM;
+import static org.micromanager.data.internal.PropertyKey.POSITION_NAME;
+import static org.micromanager.data.internal.PropertyKey.RECEIVED_TIME;
+import static org.micromanager.data.internal.PropertyKey.ROI;
+import static org.micromanager.data.internal.PropertyKey.SCOPE_DATA;
+import static org.micromanager.data.internal.PropertyKey.USER_DATA;
+import static org.micromanager.data.internal.PropertyKey.X_POSITION_UM;
+import static org.micromanager.data.internal.PropertyKey.Y_POSITION_UM;
+import static org.micromanager.data.internal.PropertyKey.Z_POSITION_UM;
+
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.UUID;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Metadata;
-import static org.micromanager.data.internal.PropertyKey.*;
 
 /**
- * This class holds the metadata for ImagePlanes. It is intended to be 
+ * This class holds the metadata for ImagePlanes. It is intended to be
  * immutable; construct new Metadatas using a MetadataBuilder, or by using
  * the copy() method (which provides a MetadataBuilder). Any fields that are
  * not explicitly set will default to null.
@@ -127,8 +145,8 @@ public final class DefaultMetadata implements Metadata {
          b_.putDouble(PIXEL_SIZE_UM.key(), pixelSizeUm);
          return this;
       }
-      
-      @Override 
+
+      @Override
       public Builder pixelSizeAffine(AffineTransform aff) {
          b_.putAffineTransform(PIXEL_SIZE_AFFINE.key(), aff);
          return this;
@@ -266,19 +284,19 @@ public final class DefaultMetadata implements Metadata {
       return pmap_.containsKey(EXPOSURE_MS.key()) ?
             pmap_.getDouble(EXPOSURE_MS.key(), Double.NaN) : null;
    }
-      
+
    @Override
    @Deprecated
    public Double getElapsedTimeMs() {
       return pmap_.containsKey(ELAPSED_TIME_MS.key()) ?
             pmap_.getDouble(ELAPSED_TIME_MS.key(), Double.NaN) : null;
    }
-   
+
    @Override
    public boolean hasElapsedTimeMs() {
       return pmap_.containsKey(ELAPSED_TIME_MS.key());
    }
-   
+
    @Override
    public double getElapsedTimeMs(double exposureMs) {
       return pmap_.getDouble(ELAPSED_TIME_MS.key(), exposureMs);
@@ -306,17 +324,17 @@ public final class DefaultMetadata implements Metadata {
    public String getPositionName() {
       return pmap_.getString(POSITION_NAME.key(), null);
    }
-   
+
    @Override
    public boolean hasPositionName() {
       return pmap_.containsKey(POSITION_NAME.key());
    }
-   
+
    @Override
    public String getPositionName(String defaultPosName) {
       return pmap_.getString(POSITION_NAME.key(), defaultPosName);
    }
-   
+
 
    @Override
    public Double getXPositionUm() {
@@ -341,7 +359,7 @@ public final class DefaultMetadata implements Metadata {
       return pmap_.containsKey(PIXEL_SIZE_UM.key()) ?
             pmap_.getDouble(PIXEL_SIZE_UM.key(), Double.NaN) : null;
    }
-   
+
    @Override
    public AffineTransform getPixelSizeAffine() {
       return pmap_.getAffineTransform(PIXEL_SIZE_AFFINE.key(), null);

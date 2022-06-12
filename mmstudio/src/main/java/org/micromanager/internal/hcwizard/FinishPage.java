@@ -26,8 +26,6 @@ package org.micromanager.internal.hcwizard;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -42,7 +40,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * The last wizard page.
- *
  */
 public final class FinishPage extends PagePanel {
 
@@ -92,7 +89,8 @@ public final class FinishPage extends PagePanel {
       sendCheck_.setSelected(model_.getSendConfiguration());
       if (model_.creatingNew_) {
          fileNameField_.setText("");
-      } else {
+      }
+      else {
          fileNameField_.setText(model_.getFileName());
       }
       return true;

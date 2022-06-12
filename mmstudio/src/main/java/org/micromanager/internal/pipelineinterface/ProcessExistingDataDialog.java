@@ -53,7 +53,7 @@ public final class ProcessExistingDataDialog extends JDialog {
    private static final String OUTPUT_OPTION = "Output Option";
    private static final String OPTION_SINGLE_TIFF = "Option Single";
    private static final String OPTION_MULTI_TIFF = "Option Multi";
-   private static final String OPTION_RAM = "Option RAM"; 
+   private static final String OPTION_RAM = "Option RAM";
    private static final String OUTPUT_PATH = "Output path";
    private static final String SAVE_NAME = "Save name";
    private static final String SHOW = "Show";
@@ -82,7 +82,7 @@ public final class ProcessExistingDataDialog extends JDialog {
 
       JPanel contents = new JPanel(new MigLayout("insets dialog"));
       contents.add(new JLabel("<html>This dialog allows you to process an existing dataset, "
-            + "either<br>one that is currently loaded or one that is saved to disk.</html>"),
+                  + "either<br>one that is currently loaded or one that is saved to disk.</html>"),
             "spanx, wrap");
 
       contents.add(new JLabel("Input Data:"), "split, spanx");
@@ -123,9 +123,11 @@ public final class ProcessExistingDataDialog extends JDialog {
                showDisplay_.setSelected(true);
                settings_.putBoolean(SHOW, true);
                settings_.putString(OUTPUT_OPTION, OPTION_RAM);
-            } else if (outputSingleplane_.isSelected()) {              
+            }
+            else if (outputSingleplane_.isSelected()) {
                settings_.putString(OUTPUT_OPTION, OPTION_SINGLE_TIFF);
-            } else if (outputMultipage_.isSelected()) {
+            }
+            else if (outputMultipage_.isSelected()) {
                settings_.putString(OUTPUT_OPTION, OPTION_MULTI_TIFF);
             }
             outputPath_.setEnabled(!outputRam_.isSelected());
@@ -149,8 +151,8 @@ public final class ProcessExistingDataDialog extends JDialog {
       browseButton_.setToolTipText("Browse for a directory to save to");
       browseButton_.addActionListener(e -> {
          File result = FileDialogs.openDir(ProcessExistingDataDialog.this,
-                 "Please choose a directory to save to",
-                 FileDialogs.MM_DATA_SET);
+               "Please choose a directory to save to",
+               FileDialogs.MM_DATA_SET);
          if (result != null) {
             outputPath_.setText(result.getAbsolutePath());
          }
@@ -163,7 +165,7 @@ public final class ProcessExistingDataDialog extends JDialog {
       outputName_.setText(settings_.getString(SAVE_NAME, ""));
       contents.add(outputName_, "wrap");
 
-      
+
       showDisplay_.setToolTipText("Display the processed data in a new image window");
       showDisplay_.setSelected(settings_.getBoolean(SHOW, true));
       contents.add(showDisplay_, "spanx, alignx right, wrap");
@@ -177,7 +179,8 @@ public final class ProcessExistingDataDialog extends JDialog {
       if (JavaUtils.isMac()) {
          contents.add(cancelButton, "split 2, align right, flowx");
          contents.add(okButton);
-      } else {
+      }
+      else {
          contents.add(okButton, "split 2, align right, flowx");
          contents.add(cancelButton);
       }
@@ -185,7 +188,7 @@ public final class ProcessExistingDataDialog extends JDialog {
       super.add(contents);
       super.pack();
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setVisible(true);
@@ -261,7 +264,8 @@ public final class ProcessExistingDataDialog extends JDialog {
       Datastore destination;
       if (outputRam_.isSelected()) {
          destination = studio_.data().createRAMDatastore();
-      } else {
+      }
+      else {
          String path = outputPath_.getText();
          if (path.contentEquals("")) {
             studio_.logs().showError("Please choose a location to save data to.");
@@ -271,14 +275,15 @@ public final class ProcessExistingDataDialog extends JDialog {
          try {
             if (outputSingleplane_.isSelected()) {
                destination = studio_.data().createSinglePlaneTIFFSeriesDatastore(path);
-            } else {
+            }
+            else {
                // TODO: we should imitate the source dataset when possible for
                // deciding whether to generate metadata.txt and whether to
                // split positions.
                destination = studio_.data().createMultipageTIFFDatastore(
                      path, true, true);
             }
-         }  catch (IOException e) {
+         } catch (IOException e) {
             studio_.logs().showError(e, "Unable to open " + path + " for writing");
             return;
          }
@@ -293,7 +298,8 @@ public final class ProcessExistingDataDialog extends JDialog {
             studio_.logs().showError(e, "Error loading data");
             return;
          }
-      } else {
+      }
+      else {
          // Find the display with matching name.
          for (DisplayWindow display : studio_.displays().getAllImageWindows()) {
             if (display.getName().contentEquals(input)) {
@@ -304,10 +310,10 @@ public final class ProcessExistingDataDialog extends JDialog {
             }
          }
       }
- 
+
       // All inputs validated; time to process data.
       dispose();
-          
+
       if (source == null) {
          studio_.logs().showError("The data source named " + input + " is no longer available.");
          return;
@@ -321,7 +327,7 @@ public final class ProcessExistingDataDialog extends JDialog {
 
       ProgressMonitor monitor = new ProgressMonitor(this,
             "Processing images...", "", 0, source.getNumImages());
-      
+
       Pipeline pipeline = studio_.data().copyApplicationPipeline(
             destination, false);
       try {

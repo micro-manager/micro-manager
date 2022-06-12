@@ -22,7 +22,8 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
 
    @Override
    public Component getTableCellRendererComponent(JTable table, Object value,
-           boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
+                                                  boolean isSelected, boolean hasFocus,
+                                                  int rowIndex, int colIndex) {
 
       MMPropertyTableModel data = (MMPropertyTableModel) table.getModel();
       item_ = data.getPropertyItem(rowIndex);
@@ -36,7 +37,8 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
          SliderPanel slider = new SliderPanel();
          if (item_.isInteger()) {
             slider.setLimits((int) item_.lowerLimit, (int) item_.upperLimit);
-         } else {
+         }
+         else {
             slider.setLimits(item_.lowerLimit, item_.upperLimit);
          }
          try {
@@ -48,7 +50,8 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
          }
          slider.setToolTipText(item_.value);
          comp = slider;
-      } else {
+      }
+      else {
          lab_.setText(item_.value);
          comp = lab_;
       }
@@ -56,7 +59,8 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
       if (item_.readOnly) {
          comp.setBackground(studio_.app().skin().getDisabledBackgroundColor());
          comp.setForeground(studio_.app().skin().getDisabledTextColor());
-      } else {
+      }
+      else {
          comp.setBackground(studio_.app().skin().getBackgroundColor());
          comp.setForeground(studio_.app().skin().getEnabledTextColor());
       }
@@ -65,7 +69,8 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
          comp.setEnabled(false);
          // For legibility's sake, we always use the "enabled" color.
          comp.setForeground(studio_.app().skin().getEnabledTextColor());
-      } else {
+      }
+      else {
          comp.setEnabled(true);
       }
 

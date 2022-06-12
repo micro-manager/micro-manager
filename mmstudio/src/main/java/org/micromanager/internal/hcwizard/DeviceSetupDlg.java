@@ -62,7 +62,7 @@ public final class DeviceSetupDlg extends JDialog {
       super();
       setModal(true);
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       model_ = mod;
@@ -202,7 +202,8 @@ public final class DeviceSetupDlg extends JDialog {
             model_.useSerialPort(portDev_, true);
          }
          model_.setModified(true);
-      } else {
+      }
+      else {
          // initialization failed
          device_.setInitialized(false);
          return;
@@ -311,7 +312,8 @@ public final class DeviceSetupDlg extends JDialog {
          propTable_.addColumn(column);
          column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
          propTable_.addColumn(column);
-      } else {
+      }
+      else {
          propTable_.getColumnModel().getColumn(2).setCellRenderer(propValueRenderer);
          propTable_.getColumnModel().getColumn(2).setCellEditor(propValueEditor);
       }
@@ -455,7 +457,8 @@ public final class DeviceSetupDlg extends JDialog {
                   core_.setProperty(portDev_.getName(), prop.name, prop.value);
                   if (portDev_.findSetupProperty(prop.name) == null) {
                      portDev_.addSetupProperty(new PropertyItem(prop.name, prop.value, true));
-                  } else {
+                  }
+                  else {
                      portDev_.setSetupPropertyValue(prop.name, prop.value);
                   }
                }
@@ -602,7 +605,8 @@ public final class DeviceSetupDlg extends JDialog {
                            foundPorts, foundPorts[0]);
                      // select the last found port
                      p.value = selectedValue;
-                  } else {
+                  }
+                  else {
                      p.value = foundPorts[0];
                   }
                   selectedPort = p.value;
@@ -620,11 +624,12 @@ public final class DeviceSetupDlg extends JDialog {
                   "Finished port scanning; spurious error messages no longer expected");
             if (resultPorts.contentEquals("")) {
                scanStatus_.setText("No valid ports found");
-            } else {
+            }
+            else {
                scanStatus_.setText("Scan completed successfully");
             }
             rebuildPropTable();
-            if (! (selectedPort.length() == 0)) {
+            if (!(selectedPort.length() == 0)) {
                Device pd = model_.findSerialPort(selectedPort);
                if (pd != null) {
                   try {

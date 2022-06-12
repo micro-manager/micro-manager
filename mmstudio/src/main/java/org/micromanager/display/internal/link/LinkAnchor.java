@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.link;
 
 import java.util.Collection;
@@ -12,16 +13,16 @@ import java.util.List;
 /**
  * An object that serves as a port for bidirectional linking of arbitrary
  * attributes to other anchors.
- *
+ * <p>
  * To create a concrete anchor, you must extend {@link AbstractLinkAnchor}.
  *
- * @author Mark A. Tsuchida
  * @param <T> the type of the value to be linked
+ * @author Mark A. Tsuchida
  */
 public interface LinkAnchor<T> {
    /**
     * Return a tag object designating the linkage group of this anchor.
-    *
+    * <p>
     * The linkage group determines the set of mutually compatible (linkable)
     * anchors.
     * <p>
@@ -34,6 +35,7 @@ public interface LinkAnchor<T> {
 
    /**
     * Return the current local value of the linked attribute.
+    *
     * @return
     */
    T getCurrentValue();
@@ -61,6 +63,7 @@ public interface LinkAnchor<T> {
 
    /**
     * Get all linkable peer anchors.
+    *
     * @return
     */
    List<LinkAnchor<T>> getLinkablePeers();
@@ -68,6 +71,7 @@ public interface LinkAnchor<T> {
    /**
     * Form a bidirectional link with the given anchor, and any other anchors
     * already linked to the given one.
+    *
     * @param peer the anchor to link to
     */
    void linkToPeer(LinkAnchor<T> peer);
@@ -79,6 +83,7 @@ public interface LinkAnchor<T> {
 
    /**
     * Return whether this anchor is linked to others.
+    *
     * @return
     * @see AnchorDidMakeLinkEvent
     * @see AnchorWillBreakLinkEvent
@@ -87,6 +92,7 @@ public interface LinkAnchor<T> {
 
    /**
     * Return the currently linked peers.
+    *
     * @return
     */
    Collection<LinkAnchor<T>> getLinkedPeers();

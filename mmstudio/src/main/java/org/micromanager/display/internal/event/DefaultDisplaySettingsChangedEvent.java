@@ -20,25 +20,25 @@ import org.micromanager.display.DisplaySettingsChangedEvent;
 
 /**
  * Standard implementation of {@code NewDisplaySettingsEvent}.
+ *
  * @author Chris Weisiger and Mark A. Tsuchida
  */
 public final class DefaultDisplaySettingsChangedEvent
-      implements DisplaySettingsChangedEvent
-{
+      implements DisplaySettingsChangedEvent {
    private final DisplaySettings newSettings_;
    private final DisplaySettings oldSettings_;
    private final DataViewer viewer_;
 
    public static DefaultDisplaySettingsChangedEvent create(DataViewer viewer,
-         DisplaySettings oldSettings, DisplaySettings newSettings)
-   {
+                                                           DisplaySettings oldSettings,
+                                                           DisplaySettings newSettings) {
       return new DefaultDisplaySettingsChangedEvent(viewer,
             oldSettings, newSettings);
    }
 
    private DefaultDisplaySettingsChangedEvent(DataViewer viewer,
-         DisplaySettings oldSettings, DisplaySettings newSettings)
-   {
+                                              DisplaySettings oldSettings,
+                                              DisplaySettings newSettings) {
       viewer_ = viewer;
       oldSettings_ = oldSettings;
       newSettings_ = newSettings;
@@ -46,6 +46,7 @@ public final class DefaultDisplaySettingsChangedEvent
 
    /**
     * Get the new display settings.
+    *
     * @return the new display settings
     */
    @Override
@@ -55,7 +56,7 @@ public final class DefaultDisplaySettingsChangedEvent
 
    /**
     * Get the display settings before the change being handled.
-    *
+    * <p>
     * Comparing this with the return value of {@code getDisplaySettings} can
     * reveal what exactly is to be changed.
     *
@@ -68,6 +69,7 @@ public final class DefaultDisplaySettingsChangedEvent
 
    /**
     * Get the data viewer.
+    *
     * @return the data viewer for which the new display settings is to be
     * applied
     */
@@ -78,6 +80,7 @@ public final class DefaultDisplaySettingsChangedEvent
 
    /**
     * Old name for {@code getDataViewer}.
+    *
     * @return the data viewer for which the new display settings is to be
     * applied
     * @deprecated use {@code getDataViewer} instead

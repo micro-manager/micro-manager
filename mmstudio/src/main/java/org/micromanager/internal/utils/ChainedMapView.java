@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
  * @author mark
  */
 public final class ChainedMapView<K, V> implements Map<K, V> {

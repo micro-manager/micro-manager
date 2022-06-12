@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
 
 /**
  * An annotation to mark methods that must be called on the EDT.
- *
+ * <p>
  * Does not have any functionality or enforcement (yet).
  *
  * @author Mark Tsuchida

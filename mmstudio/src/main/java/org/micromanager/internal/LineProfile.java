@@ -10,7 +10,6 @@ import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
-//import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher.ImageStatsChangedEvent;
 import org.micromanager.internal.graph.GraphData;

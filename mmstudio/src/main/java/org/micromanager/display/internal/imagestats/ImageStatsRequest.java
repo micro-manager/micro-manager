@@ -23,6 +23,7 @@ import org.micromanager.data.Image;
 
 /**
  * An image together with parameters for statistics computation.
+ *
  * @author Mark A. Tsuchida
  */
 public final class ImageStatsRequest {
@@ -31,16 +32,14 @@ public final class ImageStatsRequest {
    private final BoundsRectAndMask roi_;
 
    public static ImageStatsRequest create(Coords nominalCoords,
-         List<Image> images,
-         BoundsRectAndMask roi)
-   {
+                                          List<Image> images,
+                                          BoundsRectAndMask roi) {
       return new ImageStatsRequest(nominalCoords, images, roi);
    }
 
    private ImageStatsRequest(Coords nominalCoords,
-         List<Image> images,
-         BoundsRectAndMask roi)
-   {
+                             List<Image> images,
+                             BoundsRectAndMask roi) {
       Preconditions.checkNotNull(nominalCoords);
       Preconditions.checkNotNull(images);
       nominalCoords_ = nominalCoords;

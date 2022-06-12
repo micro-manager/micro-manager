@@ -36,7 +36,7 @@ public final class AcqOrderMode {
       }
       return name.toString();
    }
-   
+
    /**
     * Generates a string describing the ordering, e.g.
     * "T1,P1,Z1,C1; T1,P1,Z1,C2; ...; T1,P1,Z2,C1; T1,P1,Z2,C2; ...;
@@ -50,7 +50,8 @@ public final class AcqOrderMode {
       for (String axis : ordering) {
          if (axis.contentEquals("Slice")) {
             tmp.add("Z");
-         } else {
+         }
+         else {
             tmp.add(axis.substring(0, 1));
          }
       }
@@ -97,13 +98,16 @@ public final class AcqOrderMode {
          if (id_ == TIME_POS_CHANNEL_SLICE || id_ == TIME_POS_SLICE_CHANNEL) {
             result.add("Time");
             result.add("Position");
-         } else {
+         }
+         else {
             result.add("Position");
             result.add("Time");
          }
-      } else if (timeEnabled_) {
+      }
+      else if (timeEnabled_) {
          result.add("Time");
-      } else if (posEnabled_) {
+      }
+      else if (posEnabled_) {
          result.add("Position");
       }
 
@@ -111,13 +115,16 @@ public final class AcqOrderMode {
          if (id_ == TIME_POS_CHANNEL_SLICE || id_ == POS_TIME_CHANNEL_SLICE) {
             result.add("Channel");
             result.add("Slice");
-         } else {
+         }
+         else {
             result.add("Slice");
             result.add("Channel");
          }
-      } else if (channelEnabled_) {
+      }
+      else if (channelEnabled_) {
          result.add("Channel");
-      } else if (sliceEnabled_) {
+      }
+      else if (sliceEnabled_) {
          result.add("Slice");
       }
 
@@ -130,7 +137,7 @@ public final class AcqOrderMode {
       sliceEnabled_ = slice;
       channelEnabled_ = channel;
    }
-   
+
    public int getID() {
       return id_;
    }

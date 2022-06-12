@@ -25,24 +25,23 @@ package org.micromanager.internal.hcwizard;
 
 /**
  * Data structure for device settings.
- *
  */
 public final class Setting {
    public String deviceName_;
    public String propertyName_;
    public String propertyValue_;
-   
+
    public Setting() {
       deviceName_ = "NoName";
       propertyName_ = "Undefined";
    }
-   
+
    public Setting(String devName, String propName, String propVal) {
       deviceName_ = devName;
       propertyName_ = propName;
       propertyValue_ = propVal;
    }
-   
+
    /**
     * Comapres two settings based on their content.
     */
@@ -54,7 +53,7 @@ public final class Setting {
       }
       return false;
    }
-   
+
    /**
     * Two settings match if deviceName and propertyName are the same. The value
     * is not taken into account.
@@ -66,7 +65,7 @@ public final class Setting {
       }
       return false;
    }
-   
+
    public String toString() {
       return new String(deviceName_ + ":" + propertyName_ + "=" + propertyValue_);
    }

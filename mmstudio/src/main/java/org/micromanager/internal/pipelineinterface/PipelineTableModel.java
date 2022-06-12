@@ -60,7 +60,7 @@ public final class PipelineTableModel extends AbstractTableModel {
    }
 
    public void moveConfigurator(ConfiguratorWrapper configurator,
-         int offset) {
+                                int offset) {
       int oldIndex = pipelineConfigs_.indexOf(configurator);
       if (oldIndex < 0) {
          return;
@@ -84,7 +84,7 @@ public final class PipelineTableModel extends AbstractTableModel {
     * Provide a list of factories for all enabled processors.
     *
     * @param isLiveMode if true, select configurators enabled for live, if
-    *        false, select generally-enabled configurators.
+    *                   false, select generally-enabled configurators.
     */
    public List<ProcessorFactory> getPipelineFactories(boolean isLiveMode) {
       List<ConfiguratorWrapper> configs = getEnabledConfigurators(isLiveMode);
@@ -106,7 +106,7 @@ public final class PipelineTableModel extends AbstractTableModel {
    /**
     * Provide a list of all enabled configurators. If the argument is true then only configurators
     * that are enabled for live mode are returned.
-   */
+    */
    public List<ConfiguratorWrapper> getEnabledConfigurators(boolean isLiveMode) {
       ArrayList<ConfiguratorWrapper> result = new ArrayList<>();
       for (ConfiguratorWrapper config : pipelineConfigs_) {
@@ -194,7 +194,8 @@ public final class PipelineTableModel extends AbstractTableModel {
       if (column == ENABLED_COLUMN) {
          pipelineConfigs_.get(row).setEnabled((Boolean) value);
          fireTableDataChanged();
-      } else if (column == ENABLED_LIVE_COLUMN) {
+      }
+      else if (column == ENABLED_LIVE_COLUMN) {
          pipelineConfigs_.get(row).setEnabledInLive((Boolean) value);
          fireTableDataChanged();
       }

@@ -24,26 +24,25 @@ package org.micromanager.display.internal.displaywindow;
 import javax.swing.SpinnerNumberModel;
 
 /**
- *
  * @author nico
  */
-public class FpsSpinnerNumberModel extends SpinnerNumberModel  {
+public class FpsSpinnerNumberModel extends SpinnerNumberModel {
 
    private static final int BIGSTEP = 5;
    private static final int SMALLSTEP = 1;
    private static final int CUTOFF = 10;
-   
+
    private final double maxValue_;
    private final double minValue_;
 
-   
+
    public FpsSpinnerNumberModel(double value, double minValue, double maxValue) {
       super(value, minValue, maxValue, BIGSTEP);
       minValue_ = minValue;
       maxValue_ = maxValue;
    }
-   
-  
+
+
    @Override
    public Object getNextValue() {
       Number val = super.getNumber();
@@ -61,6 +60,6 @@ public class FpsSpinnerNumberModel extends SpinnerNumberModel  {
       val = (val.doubleValue() < minValue_) ? minValue_ : val;
       return val;
    }
-   
-   
+
+
 }

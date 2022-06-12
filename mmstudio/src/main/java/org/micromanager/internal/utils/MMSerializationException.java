@@ -7,19 +7,20 @@ public final class MMSerializationException extends Exception {
 
    /**
     * Constructs a MMAcqDataException with an explanatory message.
+    *
     * @param message Detail about the reason for the exception.
     */
    public MMSerializationException(String message) {
-       super(MSG_PREFIX + message);
+      super(MSG_PREFIX + message);
    }
 
    public MMSerializationException(Throwable t) {
-       super(MSG_PREFIX + t.getMessage());
-       this.cause = t;
+      super(MSG_PREFIX + t.getMessage());
+      this.cause = t;
    }
 
    @Override
    public Throwable getCause() {
-       return this.cause;
+      return this.cause;
    }
 }

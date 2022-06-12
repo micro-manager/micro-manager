@@ -120,8 +120,7 @@ public final class SnapButton extends WidgetPlugin implements SciJavaPlugin {
                if (!result.isDisplayable()) {
                   try {
                      studio_.events().unregisterForEvents(this);
-                  }
-                  catch (IllegalArgumentException ex) {
+                  } catch (IllegalArgumentException ex) {
                      // We were already unsubscribed; ignore it.
                   }
                }

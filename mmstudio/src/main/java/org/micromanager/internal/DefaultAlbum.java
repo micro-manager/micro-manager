@@ -54,7 +54,7 @@ public final class DefaultAlbum implements Album {
    private Integer curTime_ = null;
    private Pipeline pipeline_;
    private final Object pipelineLock_ = new Object();
-   
+
    public DefaultAlbum(Studio studio) {
       studio_ = studio;
       studio_.displays().registerForEvents(this);
@@ -74,9 +74,9 @@ public final class DefaultAlbum implements Album {
          Image storedImage = store_.getAnyImage();
          if (storedImage != null) {
             if (image.getBytesPerPixel() != storedImage.getBytesPerPixel()
-                    || image.getWidth() != storedImage.getWidth()
-                    || image.getHeight() != storedImage.getHeight()
-                    || image.getNumComponents() != storedImage.getNumComponents()) {
+                  || image.getWidth() != storedImage.getWidth()
+                  || image.getHeight() != storedImage.getHeight()
+                  || image.getNumComponents() != storedImage.getNumComponents()) {
                mustCreateNew = true;
             }
          }
@@ -105,7 +105,7 @@ public final class DefaultAlbum implements Album {
       */
       if (mustCreateNew) {
          // Need to create a new album.
-         
+
          store_ = studio_.data().createRAMDatastore();
 
          try {
@@ -114,7 +114,7 @@ public final class DefaultAlbum implements Album {
             smb.channelGroup(studio_.core().getChannelGroup());
             // TODO: can there be other axes than T?
             smb.channelNames(curChannel).axisOrder(
-                    Coords.T, Coords.C, Coords.Z, Coords.P);
+                  Coords.T, Coords.C, Coords.Z, Coords.P);
             store_.setSummaryMetadata(smb.build());
          } catch (DatastoreFrozenException | DatastoreRewriteException e) {
             // This should never happen!
@@ -124,24 +124,24 @@ public final class DefaultAlbum implements Album {
          display_ = studio_.displays().createDisplay(store_);
          display_.setCustomTitle("Album");
          DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
-                 studio_.profile(),
-                 PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+               studio_.profile(),
+               PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
          if (ds == null) {
             ds = DefaultDisplaySettings.builder().colorMode(
-                    DisplaySettings.ColorMode.GRAYSCALE).build();
+                  DisplaySettings.ColorMode.GRAYSCALE).build();
          }
          for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
             ds = ds.copyBuilderWithChannelSettings(ch,
-                    RememberedDisplaySettings.loadChannel(studio_,
-                            store_.getSummaryMetadata().getChannelGroup(),
-                            store_.getSummaryMetadata().getSafeChannelName(ch),
-                            Color.white)).build();
+                  RememberedDisplaySettings.loadChannel(studio_,
+                        store_.getSummaryMetadata().getChannelGroup(),
+                        store_.getSummaryMetadata().getSafeChannelName(ch),
+                        Color.white)).build();
          }
          display_.setDisplaySettings(ds);
 
          curTime_ = null;
       }
-      
+
       Coords newCoords = createAlbumCoords(image);
 
       try {
@@ -170,11 +170,11 @@ public final class DefaultAlbum implements Album {
                // This should never happen, because we use an erasable
                // Datastore.
                studio_.logs().showError(e,
-                       "Unable to insert image into pipeline; this should never happen.");
+                     "Unable to insert image into pipeline; this should never happen.");
             } catch (PipelineErrorException e) {
                // Notify the user, and halt live.
                studio_.logs().showError(e,
-                       "An error occurred while processing images.");
+                     "An error occurred while processing images.");
                pipeline_.clearExceptions();
             }
          }
@@ -194,7 +194,7 @@ public final class DefaultAlbum implements Album {
     *
     * @param image Image that will be added
     * @return Coords that can be used to insert the image into the Album Store.
-    * @throws IOException  Not sure where this can be thrown.
+    * @throws IOException Not sure where this can be thrown.
     */
    public Coords createAlbumCoords(Image image) throws IOException {
       // We want to add new images to the next timepoint, or to the current
@@ -202,7 +202,8 @@ public final class DefaultAlbum implements Album {
       // timepoint.
       if (curTime_ == null) {
          curTime_ = 0;
-      } else {
+      }
+      else {
          // Try to find images at this timepoint and channel, which would mean
          // we need to move to the next timepoint.
          Coords matcher = Coordinates.builder()
@@ -245,7 +246,7 @@ public final class DefaultAlbum implements Album {
       if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
          ((DefaultDisplaySettings) display_.getDisplaySettings())
                .saveToProfile(studio_.profile(),
-                         PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
+                     PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
       }
    }
 

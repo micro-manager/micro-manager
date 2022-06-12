@@ -23,12 +23,11 @@ package org.micromanager.data.internal;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
-import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 
 /**
  * This class signifies that an image has been added to a Datastore.
- *
+ * <p>
  * This Event posts on the DataProvider bus.
  * Subscribe using {@link DataProvider#registerForEvents(Object)}.
  */
@@ -43,6 +42,7 @@ public final class DefaultNewImageEvent implements DataProviderHasNewImageEvent 
 
    /**
     * Provides the newly-added image.
+    *
     * @return the Image that was just added to the DataProvider.
     */
    @Override
@@ -61,6 +61,7 @@ public final class DefaultNewImageEvent implements DataProviderHasNewImageEvent 
    /**
     * Provides the DataProvider this image was added to; potentially useful for
     * code that listens to events from multiple DataProviders.
+    *
     * @return the DataProvider this image was added to.
     */
    @Override

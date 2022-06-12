@@ -48,58 +48,71 @@ class LegacyPropertyMap1Deserializer {
    }
 
    static void constructPropertyMap1Property(PropertyMap.Builder builder,
-         String key, String typeName, JsonElement valueElement) {
+                                             String key, String typeName,
+                                             JsonElement valueElement) {
       if ("String".equals(typeName)) {
          builder.putString(key, valueElement.getAsString());
-      } else if ("Integer".equals(typeName)) {
+      }
+      else if ("Integer".equals(typeName)) {
          builder.putInteger(key, valueElement.getAsInt());
-      } else if ("Long".equals(typeName)) {
+      }
+      else if ("Long".equals(typeName)) {
          builder.putLong(key, valueElement.getAsLong());
-      } else if ("Double".equals(typeName)) {
+      }
+      else if ("Double".equals(typeName)) {
          builder.putDouble(key, valueElement.getAsDouble());
-      } else if ("Boolean".equals(typeName)) {
+      }
+      else if ("Boolean".equals(typeName)) {
          builder.putBoolean(key, valueElement.getAsBoolean());
-      } else if ("String array".equals(typeName)) {
+      }
+      else if ("String array".equals(typeName)) {
          List<String> values = new ArrayList<>();
          for (JsonElement ae : valueElement.getAsJsonArray()) {
             values.add(ae.getAsString());
          }
          builder.putStringList(key, values);
-      } else if ("Integer array".equals(typeName)) {
+      }
+      else if ("Integer array".equals(typeName)) {
          List<Integer> values = new ArrayList<>();
          for (JsonElement ae : valueElement.getAsJsonArray()) {
             values.add(ae.getAsInt());
          }
          builder.putIntegerList(key, values);
-      } else if ("Long array".equals(typeName)) {
+      }
+      else if ("Long array".equals(typeName)) {
          List<Long> values = new ArrayList<>();
          for (JsonElement ae : valueElement.getAsJsonArray()) {
             values.add(ae.getAsLong());
          }
          builder.putLongList(key, values);
-      } else if ("Double array".equals(typeName)) {
+      }
+      else if ("Double array".equals(typeName)) {
          List<Double> values = new ArrayList<>();
          for (JsonElement ae : valueElement.getAsJsonArray()) {
             values.add(ae.getAsDouble());
          }
          builder.putDoubleList(key, values);
-      } else if ("Boolean array".equals(typeName)) {
+      }
+      else if ("Boolean array".equals(typeName)) {
          List<Boolean> values = new ArrayList<>();
          for (JsonElement ae : valueElement.getAsJsonArray()) {
             values.add(ae.getAsBoolean());
          }
          builder.putBooleanList(key, values);
-      } else if ("Property map".equals(typeName)) {
+      }
+      else if ("Property map".equals(typeName)) {
          JsonObject submap = valueElement.getAsJsonObject();
          builder.putPropertyMap(key, parsePM1JSON(submap));
-      } else if ("Object".equals(typeName)) {
+      }
+      else if ("Object".equals(typeName)) {
          // Hidden support for backward-compat
          String base64EncodedSerializedObject = valueElement.getAsString();
          byte[] serializedObject = BaseEncoding.base64().decode(
                base64EncodedSerializedObject);
          ((DefaultPropertyMap.Builder) builder)
                .putLegacySerializedObject(key, serializedObject);
-      } else {
+      }
+      else {
          throw new JsonParseException("Valid JSON but not valid property map (unknown propType)");
       }
    }

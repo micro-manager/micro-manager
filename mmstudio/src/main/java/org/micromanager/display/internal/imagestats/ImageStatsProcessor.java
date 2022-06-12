@@ -46,7 +46,6 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.WallTimer;
 
 /**
- *
  * @author Mark A. Tsuchida
  */
 public final class ImageStatsProcessor {
@@ -77,10 +76,9 @@ public final class ImageStatsProcessor {
    }
 
    public ImagesAndStats process(final long sequenceNumber,
-         final ImageStatsRequest request,
-         boolean interruptible)
-         throws InterruptedException
-   {
+                                 final ImageStatsRequest request,
+                                 boolean interruptible)
+         throws InterruptedException {
       WallTimer timer = WallTimer.createStarted();
 
       ImageStats[] results = new ImageStats[request.getNumberOfImages()];
@@ -101,15 +99,13 @@ public final class ImageStatsProcessor {
             while (results[i] == null) {
                try {
                   results[i] = futures.get(i).get();
-               }
-               catch (InterruptedException ie) {
+               } catch (InterruptedException ie) {
                   if (interruptible) {
                      throw ie;
                   }
                }
             }
-         }
-         catch (ExecutionException ex) {
+         } catch (ExecutionException ex) {
             throw new RuntimeException(ex);
          }
       }
@@ -123,9 +119,8 @@ public final class ImageStatsProcessor {
    }
 
    private ImageStats computeStats(Image image,
-         ImageStatsRequest request, int index)
-         throws ClassCastException
-   {
+                                   ImageStatsRequest request, int index)
+         throws ClassCastException {
       CPUTimer cpuTimer = CPUTimer.createStarted();
 
       int nComponents = image.getNumComponents();
@@ -165,7 +160,8 @@ public final class ImageStatsProcessor {
       }
 
       // If (the used part of) the mask has no pixels, revert to full image
-      IterableInterval<UnsignedByteType> mask = wrapROIMask(maskBytes, nComponents, maskBounds, statsBounds);
+      IterableInterval<UnsignedByteType> mask =
+            wrapROIMask(maskBytes, nComponents, maskBounds, statsBounds);
       boolean maskEmpty = true;
       for (Cursor<UnsignedByteType> c = mask.cursor(); c.hasNext(); c.fwd()) {
          if (c.get().getInteger() >= MASK_THRESH) {
@@ -211,8 +207,7 @@ public final class ImageStatsProcessor {
    private <T extends IntegerType<T>> ImageStats compute(
          IterableInterval<T> img, IterableInterval<UnsignedByteType> mask,
          int nComponents, int sampleBitDepth, int binCountPowerOf2,
-         boolean isROI, int index)
-   {
+         boolean isROI, int index) {
       // It's easier to debug if we check first...
       Preconditions.checkArgument(img.numDimensions() == 3);
       Preconditions.checkArgument(img.dimension(0) == nComponents);
@@ -292,8 +287,7 @@ public final class ImageStatsProcessor {
    }
 
    private <T extends IntegerType<T>> IterableInterval<T> clipToRect(
-         Img<T> fullImg, int nComponents, Rectangle statsBounds)
-   {
+         Img<T> fullImg, int nComponents, Rectangle statsBounds) {
       Preconditions.checkNotNull(statsBounds);
       return Views.interval(fullImg,
             Intervals.createMinSize(
@@ -303,8 +297,7 @@ public final class ImageStatsProcessor {
    }
 
    private IterableInterval<UnsignedByteType> wrapROIMask(
-         byte[] rawMask, int nComponents, Rectangle maskBounds, Rectangle statsBounds)
-   {
+         byte[] rawMask, int nComponents, Rectangle maskBounds, Rectangle statsBounds) {
       Preconditions.checkNotNull(maskBounds);
       Preconditions.checkNotNull(statsBounds);
       if (rawMask == null) {
@@ -323,11 +316,11 @@ public final class ImageStatsProcessor {
             maskBounds.x, maskBounds.y);
 
       // Add the component dimension and clip to the intersection with the image
-      long[] min = { 0, statsBounds.x, statsBounds.y };
-      long[] max = { nComponents - 1, statsBounds.x + statsBounds.width - 1,
-         statsBounds.y + statsBounds.height - 1 };
+      long[] min = {0, statsBounds.x, statsBounds.y};
+      long[] max = {nComponents - 1, statsBounds.x + statsBounds.width - 1,
+            statsBounds.y + statsBounds.height - 1};
       MixedTransform t = new MixedTransform(3, 2);
-      t.setComponentMapping(new int[] { 1, 2 });
+      t.setComponentMapping(new int[] {1, 2});
       return Views.iterable(Views.interval(
             new MixedTransformView<UnsignedByteType>(mask, t),
             min, max

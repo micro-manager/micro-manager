@@ -16,7 +16,6 @@ package org.micromanager.internal.utils.performance;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -93,7 +92,7 @@ public final class PerformanceMonitor {
    }
 
    public List<Map.Entry<String, ? extends AbstractExponentialSmoothing>>
-         getEntries() {
+   getEntries() {
       // Combine stats into a single sorted list
       List<Map.Entry<String, ? extends AbstractExponentialSmoothing>> entries =
             new ArrayList<>();

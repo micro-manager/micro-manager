@@ -23,7 +23,7 @@ package org.micromanager.data;
 import org.micromanager.MMEvent;
 
 /**
- * This class signifies that new summary metadata has been set for a 
+ * This class signifies that new summary metadata has been set for a
  * DataProvider.
  *
  * <p>The default implementation of this Event posts on the DataProvider

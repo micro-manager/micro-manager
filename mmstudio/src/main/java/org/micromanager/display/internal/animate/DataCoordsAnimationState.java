@@ -83,7 +83,7 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
    }
 
    private Coords advanceAnimationPositionImpl(double frames,
-         boolean skipNonExistent) {
+                                               boolean skipNonExistent) {
       final Coords prevPos = animationCoords_;
       final List<String> axes = delegate_.getOrderedAxes();
       // TODO: this is coming from the summarymetadata.  If the axes list was not

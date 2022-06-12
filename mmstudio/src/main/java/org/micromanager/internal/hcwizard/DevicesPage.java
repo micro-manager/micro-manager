@@ -82,6 +82,7 @@ public final class DevicesPage extends PagePanel implements
    private final AtomicBoolean amLoadingPage_;
 
    ///////////////////////////////////////////////////////////
+
    /**
     * Inner class DeviceTable_TableModel.
     */
@@ -94,19 +95,19 @@ public final class DevicesPage extends PagePanel implements
             "Description",
             "Status"
       };
-      
+
       MicroscopeModel model_;
       Device[] devices_;
 
       public DeviceTableTableModel(MicroscopeModel model) {
          setMicroscopeModel(model);
       }
-      
+
       public final void setMicroscopeModel(MicroscopeModel mod) {
          devices_ = mod.getDevices();
          model_ = mod;
       }
-      
+
       @Override
       public int getRowCount() {
          return devices_.length;
@@ -124,7 +125,7 @@ public final class DevicesPage extends PagePanel implements
 
       @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
-         
+
          switch (columnIndex) {
             case 0:
                return devices_[rowIndex].getName();
@@ -135,7 +136,8 @@ public final class DevicesPage extends PagePanel implements
             default:
                if (devices_[rowIndex].isCore()) {
                   return "Default";
-               } else {
+               }
+               else {
                   return devices_[rowIndex].isInitialized() ? "OK" : "Failed";
                }
          }
@@ -154,18 +156,18 @@ public final class DevicesPage extends PagePanel implements
             }
          }
       }
-     
+
       @Override
       public boolean isCellEditable(int nRow, int nCol) {
          return false;
       }
-      
+
       public void refresh() {
          devices_ = model_.getDevices();
          this.fireTableDataChanged();
       }
    }
-   
+
    ////////////////////////////////////////////////////////////////
    class TreeWContextMenu extends JTree implements ActionListener {
       private static final long serialVersionUID = 1L;
@@ -214,14 +216,15 @@ public final class DevicesPage extends PagePanel implements
       public void actionPerformed(ActionEvent ae) {
          if (ae.getActionCommand().equals("help")) {
             dp_.displayDocumentation();
-         } else if (ae.getActionCommand().equals("add")) {
+         }
+         else if (ae.getActionCommand().equals("add")) {
             if (dp_.addDevice()) {
                dp_.rebuildDevicesTable();
             }
          }
       }
    }
-   
+
    //////////////////////////////////////////////////
    class TreeMouseListener extends MouseAdapter {
       @Override
@@ -247,7 +250,7 @@ public final class DevicesPage extends PagePanel implements
 
       add(createHelpText(
             "Select devices from the \"Available Devices\" list to include in this configuration."),
-               "spanx, growx, wrap");
+            "spanx, growx, wrap");
       JLabel lblNewLabel = new JLabel("Installed Devices:");
       lblNewLabel.setFont(new Font("Arial", Font.BOLD, 11));
       add(lblNewLabel, "wrap");
@@ -288,7 +291,7 @@ public final class DevicesPage extends PagePanel implements
       add(availDevices, "split, spanx");
 
       byLibCombo_ = new JComboBox<>(new String[] {
-         "List by Module", "List by Type"});
+            "List by Module", "List by Type"});
       byLibCombo_.addActionListener(arg0 -> {
          listByLib_ = byLibCombo_.getSelectedIndex() == 0;
          buildTree();
@@ -314,7 +317,7 @@ public final class DevicesPage extends PagePanel implements
          return;
       }
       String devName = (String) deviceTable_.getValueAt(selRow, 0);
-      
+
       Device dev = model_.findDevice(devName);
 
       String[] installed = dev.getPeripherals();
@@ -355,7 +358,8 @@ public final class DevicesPage extends PagePanel implements
                      core_.unloadDevice(device.getName());
                      model_.removeDevice(device.getName());
                   }
-               } else {
+               }
+               else {
                   core_.initializeDevice(device.getName());
                   device.setInitialized(true);
                }
@@ -364,7 +368,8 @@ public final class DevicesPage extends PagePanel implements
             }
          }
          rebuildDevicesTable();
-      } else {
+      }
+      else {
          handleError("There are no available peripheral devices.");
       }
    }
@@ -375,7 +380,7 @@ public final class DevicesPage extends PagePanel implements
          return;
       }
       String devName = (String) deviceTable_.getValueAt(selRow, 0);
-      
+
       Device dev = model_.findDevice(devName);
       try {
          dev.loadDataFromHardware(core_);
@@ -385,7 +390,7 @@ public final class DevicesPage extends PagePanel implements
       }
       DeviceSetupDlg dlg = new DeviceSetupDlg(model_, studio_, dev);
       model_.setModified(true);
-      
+
       if (!dev.isInitialized()) {
          // user canceled or things did not work out
          int ret = JOptionPane.showConfirmDialog(this,
@@ -410,7 +415,7 @@ public final class DevicesPage extends PagePanel implements
          return;
       }
       String devName = (String) deviceTable_.getValueAt(sel, 0);
-      
+
       if (devName.contentEquals(new StringBuffer().append(MMCoreJ.getG_Keyword_CoreDevice()))) {
          handleError(MMCoreJ.getG_Keyword_CoreDevice() + " device can't be removed!");
          return;
@@ -424,26 +429,27 @@ public final class DevicesPage extends PagePanel implements
       }
       rebuildDevicesTable();
    }
-      
+
    public void rebuildDevicesTable() {
       TableModel tm = deviceTable_.getModel();
       DeviceTableTableModel tmd;
       if (tm instanceof DeviceTableTableModel) {
          tmd = (DeviceTableTableModel) deviceTable_.getModel();
          tmd.refresh();
-      } else {
+      }
+      else {
          tmd = new DeviceTableTableModel(model_);
          deviceTable_.setModel(tmd);
       }
       tmd.fireTableStructureChanged();
       tmd.fireTableDataChanged();
    }
-   
+
    @Override
    public void refresh() {
       rebuildDevicesTable();
    }
-   
+
    @Override
    public boolean enterPage(final boolean fromNextPage) {
       Cursor oldCur = getCursor();
@@ -531,7 +537,7 @@ public final class DevicesPage extends PagePanel implements
                         + "any changes exit the wizard without saving the configuration.");
             return !toNextPage;
          }
-          
+
          // refresh parent ID references (backward compatibility with old config files)
          try {
             if (d.getParentHub().length() == 0) {
@@ -551,10 +557,10 @@ public final class DevicesPage extends PagePanel implements
    @Override
    public void loadSettings() {
    }
-   
+
    @Override
    public void saveSettings() {
-      
+
    }
 
 
@@ -570,7 +576,7 @@ public final class DevicesPage extends PagePanel implements
          removeButton.setEnabled(false);
          return;
       }
-      
+
       String devName = (String) deviceTable_.getValueAt(row, 0);
       Device dev = model_.findDevice(devName);
       if (dev == null) {
@@ -582,13 +588,13 @@ public final class DevicesPage extends PagePanel implements
          peripheralsButton.setEnabled(false);
          return;
       }
-      
+
       // if device is hub it may have some children available
       peripheralsButton.setEnabled(dev.isHub() && dev.getPeripherals().length > 0);
 
       // settings can be edited unless device is core
       editButton.setEnabled(!dev.isCore());
-      
+
       // any selected device can be removed unless it is Core
       removeButton.setEnabled(!dev.isCore());
    }
@@ -606,7 +612,8 @@ public final class DevicesPage extends PagePanel implements
                if (uo != null) {
                   if (uo.getClass().isArray()) {
                      libraryDocumentationName_ = ((Object[]) uo)[0].toString();
-                  } else {
+                  }
+                  else {
                      libraryDocumentationName_ = uo.toString();
                   }
                }
@@ -614,7 +621,7 @@ public final class DevicesPage extends PagePanel implements
          }
       }
    }
-  
+
    private boolean addDevice() {
       int[] srows = theTree_.getSelectionRows();
       if (srows == null) {
@@ -711,7 +718,8 @@ public final class DevicesPage extends PagePanel implements
                               core_.unloadDevice(device.getName());
                               model_.removeDevice(device.getName());
                            }
-                        } else {
+                        }
+                        else {
                            core_.initializeDevice(device.getName());
                            device.setInitialized(true);
                         }
@@ -722,7 +730,7 @@ public final class DevicesPage extends PagePanel implements
                         refresh();
                      }
                   }
-               } 
+               }
 
             }
          }
@@ -733,12 +741,13 @@ public final class DevicesPage extends PagePanel implements
    private void buildTree() {
       if (listByLib_) {
          buildTreeByLib(model_);
-      } else {
+      }
+      else {
          buildTreeByType(model_);
       }
       availableScrollPane_.setViewportView(theTree_);
    }
-   
+
    private void buildTreeByType(MicroscopeModel model) {
       Device[] devices = model.getAvailableDevicesCompact();
 
@@ -747,7 +756,8 @@ public final class DevicesPage extends PagePanel implements
       for (Device device : devices) {
          if (nodes.containsKey(device.getTypeAsString())) {
             nodes.get(device.getTypeAsString()).add(device);
-         } else {
+         }
+         else {
             Vector<Device> v = new Vector<>();
             v.add(device);
             nodes.put(device.getTypeAsString(), v);
@@ -802,7 +812,7 @@ public final class DevicesPage extends PagePanel implements
             // we are processing
          }
          Object[] userObject =
-                  {device.getLibrary(), device.getAdapterName(), device.getDescription(),
+               {device.getLibrary(), device.getAdapterName(), device.getDescription(),
                      device.isHub()};
          DeviceTreeNode aLeaf = new DeviceTreeNode("", true);
          aLeaf.setUserObject(userObject);
@@ -813,8 +823,8 @@ public final class DevicesPage extends PagePanel implements
          DeviceTreeNode nd = new DeviceTreeNode(lib + " (unavailable)", true);
          root.add(nd);
       }
-      
-      
+
+
       // try building a tree
       theTree_ = new TreeWContextMenu(root, this);
       theTree_.addTreeSelectionListener(this);
@@ -837,30 +847,30 @@ public final class DevicesPage extends PagePanel implements
    @Override
    public void mouseClicked(MouseEvent e) {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void mousePressed(MouseEvent e) {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void mouseReleased(MouseEvent e) {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void mouseEntered(MouseEvent e) {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void mouseExited(MouseEvent e) {
       // TODO Auto-generated method stub
-      
+
    }
 }

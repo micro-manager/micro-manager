@@ -1,11 +1,8 @@
-
 package org.micromanager.internal.pixelcalibrator;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Point;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -31,17 +28,17 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 
 /**
- * The idea is to calibrate the camera/stage spatial relation by displaying an 
+ * The idea is to calibrate the camera/stage spatial relation by displaying an
  * image, have the user click on something they clearly recognize, move the stage
  * have the user click again, etc.., and then calculate an affine transform
  * relating the stage movement with the user-provided image movement.
- * It is not clear if this will ever be precise.  Matching could possibly 
- * be augmented with cross-correlation.  
+ * It is not clear if this will ever be precise.  Matching could possibly
+ * be augmented with cross-correlation.
  * Since we have automated calibration (sometimes) working, and a simple
  * manual procedure to determine directionality, I will not finish this code
- * now, but leave here if it turns out to be useful.  To finish, look for 
+ * now, but leave here if it turns out to be useful.  To finish, look for
  * inspiration in AutomaticCalibrationThread and ManualSImpleCalibrationThread.
- * 
+ *
  * <p>If not used by 2019, delete.
  *
  * @author nico
@@ -55,7 +52,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
    private Map<Point2D.Double, Point2D.Double> pointPairs_;
 
    private DisplayWindow liveWin_;
-   
+
    private Point2D.Double xy0_;
 
    private double x;
@@ -105,7 +102,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
 
 
    private void snapImageAt(double x, double y)
-           throws CalibrationFailedException {
+         throws CalibrationFailedException {
       try {
          Point2D.Double p0 = core_.getXYStagePosition();
          if (p0.distance(x, y) > (dialog_.safeTravelRadius() / 2)) {
@@ -155,7 +152,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
 
          dx *= 2;
          dy *= 2;
-         
+
          d.x *= 2;
          d.y *= 2;
 
@@ -174,30 +171,30 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
 
    }
 
-   
+
    private Point2D.Double measureDisplacement(double x1, double y1, Point2D.Double d,
-           boolean display)
-           throws InterruptedException, CalibrationFailedException {
+                                              boolean display)
+         throws InterruptedException, CalibrationFailedException {
       if (AutomaticCalibrationThread.interrupted()) {
          throw new InterruptedException();
       }
       snapImageAt(x1, y1);
       // TODO: 
       // Prompt the user to click and register the location
-      
+
       // overlay_.set(guessRect);
       Point2D.Double dChange = new Point2D.Double();
       // TODO: dChange should be the displacement from the reference point
       return new Point2D.Double(d.x + dChange.x, d.y + dChange.y);
    }
-   
+
    private int smallestPowerOf2LessThanOrEqualTo(int x) {
       return 1 << ((int) Math.floor(Math.log(x) / Math.log(2)));
    }
 
 
    private AffineTransform getFirstApprox()
-           throws InterruptedException, CalibrationFailedException {
+         throws InterruptedException, CalibrationFailedException {
 
       Point2D.Double p;
       try {
@@ -234,14 +231,14 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       referenceImage_ = getSubImage(baseImage, (-side_small/2+w/2),
             (-side_small/2+h/2),side_small,side_small);
       */
-      runSearch(0,  0.1);
+      runSearch(0, 0.1);
 
       return MathFunctions.generateAffineTransformFromPointPairs(pointPairs_);
    }
-   
 
-   private void measureCorner(final AffineTransform firstApprox, final Point c1, 
-           final boolean simulate)
+
+   private void measureCorner(final AffineTransform firstApprox, final Point c1,
+                              final boolean simulate)
          throws InterruptedException, CalibrationFailedException {
       Point2D.Double c1d = new Point2D.Double(c1.x, c1.y);
       Point2D.Double s1 = (Point2D.Double) firstApprox.transform(c1d, null);
@@ -256,8 +253,9 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       incrementProgress();
    }
 
-   private AffineTransform getSecondApprox(final AffineTransform firstApprox, 
-           final boolean simulate) throws InterruptedException, CalibrationFailedException {
+   private AffineTransform getSecondApprox(final AffineTransform firstApprox,
+                                           final boolean simulate)
+         throws InterruptedException, CalibrationFailedException {
       pointPairs_.clear();
       int ax = w / 2 - sideSmall / 2;
       int ay = h / 2 - sideSmall / 2;
@@ -268,7 +266,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       measureCorner(firstApprox, new Point(ax, -ay), simulate);
       try {
          return MathFunctions.generateAffineTransformFromPointPairs(
-                 pointPairs_, 2.0, Double.MAX_VALUE);
+               pointPairs_, 2.0, Double.MAX_VALUE);
       } catch (Exception ex) {
          ReportingUtils.logError(ex.getMessage());
       }
@@ -287,7 +285,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
    public void processMouseEvent(DisplayMouseEvent dme) {
       if (dme.getEvent().getClickCount() == 1 && dme.getEvent().getButton() == 1) {
          int modifiersEx = dme.getEvent().getModifiersEx();
-         boolean pressed  =
+         boolean pressed =
                InputEvent.BUTTON1_DOWN_MASK == (modifiersEx & InputEvent.BUTTON1_DOWN_MASK);
       }
    }
@@ -360,8 +358,8 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
    synchronized void setProgress(int value) {
       progress_ = value;
    }
-   
-   
+
+
    private class DialogFrame extends JFrame {
 
       private static final long serialVersionUID = -7944616693940334489L;
@@ -381,12 +379,12 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          });
          super.setLayout(new MigLayout());
          final String label1Text = "<html>This method creates an affine transform based on"
-                 + " a <br>pixelSize of "
-                 + NumberUtils.doubleToDisplayString(dialog_.getCalibratedPixelSize() * 1000.0)
-                 + " nm per pixel.  If this is not "
-                 + "correct, <br>please cancel and first set the correct pixelSize.<br><br>"
-                 + "Focus the image in the Preview window and use the <br>mouse pointer to click "
-                 + "on an object somehwere <br>near the center of the image.";
+               + " a <br>pixelSize of "
+               + NumberUtils.doubleToDisplayString(dialog_.getCalibratedPixelSize() * 1000.0)
+               + " nm per pixel.  If this is not "
+               + "correct, <br>please cancel and first set the correct pixelSize.<br><br>"
+               + "Focus the image in the Preview window and use the <br>mouse pointer to click "
+               + "on an object somehwere <br>near the center of the image.";
          explanationLabel_.setText(label1Text);
          super.add(explanationLabel_, "span 2, wrap");
 
@@ -404,7 +402,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          super.pack();
 
          super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-                 getClass().getResource("/org/micromanager/icons/microscope.gif")));
+               getClass().getResource("/org/micromanager/icons/microscope.gif")));
          super.setLocation(200, 200);
          WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
          super.setVisible(true);

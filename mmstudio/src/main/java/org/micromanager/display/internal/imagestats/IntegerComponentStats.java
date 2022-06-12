@@ -18,6 +18,7 @@ import java.util.Arrays;
 
 /**
  * Statistics of a single color component of an image; immutable.
+ *
  * @author Mark A. Tsuchida
  */
 public final class IntegerComponentStats {
@@ -230,7 +231,7 @@ public final class IntegerComponentStats {
       long leftEdge = (binIndex - 1) * binWidth;
       double binFraction =
             (countBelowQuantile - cumDistrib[binIndex - 1]) /
-            (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
+                  (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
       return leftEdge + binFraction * binWidth;
    }
 
@@ -251,8 +252,7 @@ public final class IntegerComponentStats {
    }
 
    private int binarySearch(long[] sorted, int startIndex, int endIndex,
-         long value)
-   {
+                            long value) {
       if (endIndex - startIndex <= 1) {
          return startIndex;
       }

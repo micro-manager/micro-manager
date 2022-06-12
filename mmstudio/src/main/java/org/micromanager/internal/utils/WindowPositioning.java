@@ -44,7 +44,8 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * @author Mark A. Tsuchida
  */
 public final class WindowPositioning {
-   private WindowPositioning() {} // Non-instantiable
+   private WindowPositioning() {
+   } // Non-instantiable
 
    private static final int CASCADING_OFFSET_HORIZONTAL = 20;
    private static final int CASCADING_OFFSET_VERTICAL = 24;
@@ -85,15 +86,15 @@ public final class WindowPositioning {
     * <p>If you want to also cascade the window, you must call this method
     * <i>before</i> calling {@code cascade}.
     *
-    * @param window the window whose position should be restored and remembered
+    * @param window           the window whose position should be restored and remembered
     * @param positioningClass a class that identifies the type of the window
-    *          (must not be null)
-    * @param positioningKey a string that further identifies the type of the
-    *          window (may be null)
+    *                         (must not be null)
+    * @param positioningKey   a string that further identifies the type of the
+    *                         window (may be null)
     */
    @MustCallOnEDT
    public static void setUpBoundsMemory(Window window,
-         Class<?> positioningClass, String positioningKey) {
+                                        Class<?> positioningClass, String positioningKey) {
       GeometrySaver.createAndRestoreBounds(
             window,
             positioningClass,
@@ -110,13 +111,13 @@ public final class WindowPositioning {
     *
     * <p>See {@code restoreAndMemorizeBounds} for further details.
     *
-    * @param window window for which to set up location memory
+    * @param window           window for which to set up location memory
     * @param positioningClass Class to which to tie the location memory
-    * @param positioningKey Some key, unsure if this can be empty
+    * @param positioningKey   Some key, unsure if this can be empty
     */
    @MustCallOnEDT
    public static void setUpLocationMemory(Window window,
-         Class<?> positioningClass, String positioningKey) {
+                                          Class<?> positioningClass, String positioningKey) {
       GeometrySaver.createAndRestoreLocation(window,
             positioningClass, positioningKey);
    }
@@ -139,9 +140,9 @@ public final class WindowPositioning {
     * new-to-old order in order to get correct position memory behavior.
     * Front-to-back order might be a good enough approximation to this.
     *
-    * @param window the window to position
+    * @param window         the window to position
     * @param cascadingClass a class that identifies the group of windows to be
-    *          cascaded with respect to each other
+    *                       cascaded with respect to each other
     */
    @MustCallOnEDT
    public static void cascade(Window window, Class<?> cascadingClass) {
@@ -180,7 +181,7 @@ public final class WindowPositioning {
             .getLocalGraphicsEnvironment().getScreenDevices()) {
          GraphicsConfiguration gConfig = gDevice.getDefaultConfiguration();
          Rectangle bounds = Geometry.insettedRectangle(gConfig.getBounds(),
-                  Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
+               Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
          Point nearestPoint =
                Geometry.nearestPointInRectangle(location, bounds);
          double distance = nearestPoint.distance(location);
@@ -222,20 +223,21 @@ public final class WindowPositioning {
                      Math.max(0,
                            (bounds.y + bounds.height) - (screenBounds.y + screenBounds.height))));
          window.setLocation(bounds.getLocation());
-      } else {
+      }
+      else {
          // When we are cascading, we "reset" the cascade by moving to the top
          // of the screen, preserving the horizontal position. If we are
          // getting significantly beyond the right edge of the screen, we also
          // jump to the left edge, and move down one vertical offset.
          Point resetCursor = cascade.getResetCursor();
          location = window.getLocation();
-         if (location.y + window.getHeight() >  screenBounds.y + screenBounds.height) {
+         if (location.y + window.getHeight() > screenBounds.y + screenBounds.height) {
             location.y = resetCursor.y;
          }
          if (location.x + window.getWidth() - (screenBounds.x + screenBounds.width)
                > screenBounds.width / 2) {
             location.x = screenBounds.x;
-            location.y  = resetCursor.y + CASCADING_OFFSET_VERTICAL;
+            location.y = resetCursor.y + CASCADING_OFFSET_VERTICAL;
          }
          if (!screenBounds.contains(location)) {
             // Falling off the screen; do an all-reset
@@ -281,7 +283,8 @@ public final class WindowPositioning {
       private final Window window_;
 
       static GeometrySaver createAndRestoreBounds(Window window,
-            Class<?> positioningClass, String positioningKey) {
+                                                  Class<?> positioningClass,
+                                                  String positioningKey) {
          GeometrySaver saver =
                new GeometrySaver(window, positioningClass, positioningKey,
                      Mode.MEMORIZE_BOUNDS);
@@ -291,7 +294,8 @@ public final class WindowPositioning {
       }
 
       static GeometrySaver createAndRestoreLocation(Window window,
-            Class<?> positioningClass, String positioningKey) {
+                                                    Class<?> positioningClass,
+                                                    String positioningKey) {
          GeometrySaver saver =
                new GeometrySaver(window, positioningClass, positioningKey,
                      Mode.MEMORIZE_LOCATION);
@@ -301,7 +305,7 @@ public final class WindowPositioning {
       }
 
       private GeometrySaver(Window window, Class<?> positioningClass,
-            String positioningKey, Mode mode) {
+                            String positioningKey, Mode mode) {
          Preconditions.checkNotNull(window);
          window_ = window;
          positioningClass_ = positioningClass;
@@ -329,7 +333,7 @@ public final class WindowPositioning {
 
          Rectangle bounds = window.getBounds();
          MutablePropertyMapView settings = MMStudio.getInstance()
-                                             .profile().getSettings(getClass());
+               .profile().getSettings(getClass());
          PropertyMap classPmap = settings.getPropertyMap(
                positioningClass_.getCanonicalName(),
                PropertyMaps.emptyPropertyMap());
@@ -360,7 +364,7 @@ public final class WindowPositioning {
          PropertyMap pmap = MMStudio.getInstance().profile().getSettings(getClass())
                .getPropertyMap(positioningClass_.getCanonicalName(),
                      PropertyMaps.emptyPropertyMap()).getPropertyMap(
-                           positioningKey_, PropertyMaps.emptyPropertyMap());
+                     positioningKey_, PropertyMaps.emptyPropertyMap());
 
          switch (mode_) {
             case MEMORIZE_BOUNDS:

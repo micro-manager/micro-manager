@@ -14,7 +14,7 @@ public final class DefaultEventManager implements EventManager {
 
    private final EventBus bus_;
    private final LogManager logger_;
-   
+
    /**
     * This DefaultEventManager is basically a pass-through to the Google (formerly Guava) Eventbus.
     */

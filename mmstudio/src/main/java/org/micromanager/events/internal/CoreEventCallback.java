@@ -62,21 +62,23 @@ public final class CoreEventCallback extends MMEventCallback {
       // TODO: remove test once acquisition engine is fully multithreaded
       if (engine_ != null && engine_.isAcquisitionRunning()) {
          core_.logMessage("Notification from MMCore ignored because acquisition is running!", true);
-      } else if (ignoreCoreEvents_) {
+      }
+      else if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          core_.logMessage("Notification from MMCore!", true);
          core_.updateSystemStateCache();
          // see OnPropertyChanged for reasons to run this on the EDT
-         SwingUtilities.invokeLater(() ->  studio_.events().post(
-                    new DefaultPropertiesChangedEvent()));
+         SwingUtilities.invokeLater(() -> studio_.events().post(
+               new DefaultPropertiesChangedEvent()));
       }
    }
 
    @Override
    public void onPropertyChanged(String deviceName, String propName, String propValue) {
       core_.logMessage("Notification for Device: " + deviceName + " Property: "
-              + propName + " changed to value: " + propValue, true);
+            + propName + " changed to value: " + propValue, true);
       // Not running this on the EDT causes rare deadlocks, for instance:
       // user stops or starts live mode while a callback is received will
       // result in deadlock.  Hopefully, always running this on the EDT
@@ -86,7 +88,8 @@ public final class CoreEventCallback extends MMEventCallback {
       // (see https://github.com/micro-manager/micro-manager/issues/498)
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          SwingUtilities.invokeLater(() -> studio_.events().post(
                new DefaultPropertyChangedEvent(deviceName, propName, propValue)));
       }
@@ -96,7 +99,8 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onChannelGroupChanged(String newChannelGroupName) {
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          SwingUtilities.invokeLater(() -> studio_.events().post(
                new DefaultChannelGroupChangedEvent(newChannelGroupName)));
       }
@@ -106,7 +110,8 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onConfigGroupChanged(String groupName, String newConfig) {
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          // see OnPropertyChanged for reasons to run this on the EDT
          SwingUtilities.invokeLater(() -> studio_.events().post(
                new DefaultConfigGroupChangedEvent(groupName, newConfig)));
@@ -117,7 +122,8 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onSystemConfigurationLoaded() {
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          // see OnPropertyChanged for reasons to run this on the EDT
          SwingUtilities.invokeLater(() -> studio_.events().post(
                new DefaultSystemConfigurationLoadedEvent()));
@@ -128,19 +134,21 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onPixelSizeChanged(double newPixelSizeUm) {
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          // see OnPropertyChanged for reasons to run this on the EDT
          SwingUtilities.invokeLater(() -> studio_.events().post(
                new DefaultPixelSizeChangedEvent(newPixelSizeUm)));
       }
    }
-   
+
    @Override
    public void onPixelSizeAffineChanged(double npa0, double npa1, double npa2,
-           double npa3, double npa4, double npa5) {
+                                        double npa3, double npa4, double npa5) {
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          double[] flatMatrix = {npa0, npa1, npa2, npa3, npa4, npa5};
          AffineTransform newPixelSizeAffine = new AffineTransform(flatMatrix);
          // see OnPropertyChanged for reasons to run this on the EDT
@@ -153,7 +161,8 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onStagePositionChanged(String deviceName, double pos) {
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          // see OnPropertyChanged for reasons to run this on the EDT
          SwingUtilities.invokeLater(() -> studio_.events().post(
                new DefaultStagePositionChangedEvent(deviceName, pos)));
@@ -164,7 +173,8 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          // see OnPropertyChanged for reasons to run this on the EDT
          SwingUtilities.invokeLater(() -> studio_.events().post(
                new DefaultXYStagePositionChangedEvent(deviceName, xPos, yPos)));
@@ -175,7 +185,8 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onExposureChanged(String deviceName, double exposure) {
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          // see OnPropertyChanged for reasons to run this on the EDT
          SwingUtilities.invokeLater(() -> studio_.events().post(
                new DefaultExposureChangedEvent(deviceName, exposure)));
@@ -186,7 +197,8 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onSLMExposureChanged(String deviceName, double exposure) {
       if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);
-      } else {
+      }
+      else {
          // see OnPropertyChanged for reasons to run this on the EDT
          SwingUtilities.invokeLater(() -> studio_.events().post(
                new DefaultSLMExposureChangedEvent(deviceName, exposure)));

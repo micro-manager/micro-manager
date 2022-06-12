@@ -60,7 +60,7 @@ public class MMCache {
     * in the bottom of the main window.  TODO: evaluate.
     *
     * @param studio (singleton) Studion object.
-    * @param frame MainFrame.
+    * @param frame  MainFrame.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMCache(Studio studio, MainFrame frame) {
@@ -124,7 +124,7 @@ public class MMCache {
       pixSizeUm_ = event.getNewPixelSizeUm();
       updateInfoDisplay();
    }
-   
+
    @Subscribe
    public void onPixelSizeAffineChanged(PixelSizeAffineChangedEvent event) {
       affineTransform_ = event.getNewPixelSizeAffine();
@@ -233,23 +233,23 @@ public class MMCache {
    public double getPixelSizeUm() {
       return pixSizeUm_;
    }
-   
+
    public AffineTransform getPixelSizeAffine() {
       return affineTransform_;
    }
-   
+
    public String getCameraLabel() {
       return cameraLabel_;
    }
-   
+
    public String getZStageLabel() {
       return zStageLabel_;
    }
-   
+
    public String getXYStageLabel() {
       return xyStageLabel_;
    }
-   
+
    public String getShutterLabel() {
       return shutterLabel_;
    }

@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.profile.internal;
 
 import java.io.File;
@@ -11,8 +12,6 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A file-based lock to prevent profiles from being written by multiple
@@ -48,14 +47,12 @@ final class ProfileWriteLock {
          channel_ = raf_.getChannel();
          try {
             lock_ = channel_.tryLock();
-         }
-         catch (OverlappingFileLockException e) {
+         } catch (OverlappingFileLockException e) {
             // Second write lock in this JVM
             return false;
          }
          return lock_ != null;
-      }
-      finally {
+      } finally {
          if (lock_ == null) {
             if (channel_ != null) {
                channel_.close();
@@ -82,11 +79,9 @@ final class ProfileWriteLock {
          if (lock != null) {
             Thread.sleep(15000);
          }
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          System.err.println(e.getMessage());
-      }
-      catch (InterruptedException e) {
+      } catch (InterruptedException e) {
       }
    }
 }

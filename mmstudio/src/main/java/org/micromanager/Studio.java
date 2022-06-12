@@ -132,7 +132,7 @@ public interface Studio {
    /**
     * Provides access to the Core and its functionality.
     *
-    * @return Micro-Manager core object. 
+    * @return Micro-Manager core object.
     */
    CMMCore core();
 
@@ -140,7 +140,7 @@ public interface Studio {
     * Provides access to the Core and its functionality. Identical to core()
     * except in name.
     *
-    * @return Micro-Manager core object. 
+    * @return Micro-Manager core object.
     */
    CMMCore getCMMCore();
 
@@ -220,7 +220,7 @@ public interface Studio {
     * Provides access to the Snap/Live display and associated logic. Identical
     * to live() except in name.
     *
-    * @return SnapLiveManager instance. 
+    * @return SnapLiveManager instance.
     */
    SnapLiveManager getSnapLiveManager();
 

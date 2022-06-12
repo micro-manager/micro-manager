@@ -53,11 +53,13 @@ public final class PipelineTable extends JTable {
 
       @Override
       public Component getTableCellRendererComponent(JTable table,
-            Object dataProcessor, boolean isSelected, boolean hasFocus,
-            int row, int column) {
+                                                     Object dataProcessor, boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row, int column) {
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
-         } else {
+         }
+         else {
             panel_.setBackground(table.getBackground());
          }
          return panel_;
@@ -91,14 +93,16 @@ public final class PipelineTable extends JTable {
 
       @Override
       public Component getTableCellEditorComponent(JTable table,
-            Object cellValue, boolean isSelected, int row, int column) {
+                                                   Object cellValue, boolean isSelected, int row,
+                                                   int column) {
 
          ConfiguratorWrapper configurator = (ConfiguratorWrapper) cellValue;
          configurator_ = configurator;
 
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
-         } else {
+         }
+         else {
             panel_.setBackground(table.getBackground());
          }
          return panel_;
@@ -117,7 +121,7 @@ public final class PipelineTable extends JTable {
 
       // Shrink the checkbox columns down to size.
       for (int columnID : new int[] {PipelineTableModel.ENABLED_COLUMN,
-         PipelineTableModel.ENABLED_LIVE_COLUMN}) {
+            PipelineTableModel.ENABLED_LIVE_COLUMN}) {
          TableColumn column = getColumnModel().getColumn(columnID);
          column.setMinWidth(column.getPreferredWidth());
          column.setMaxWidth(column.getPreferredWidth());

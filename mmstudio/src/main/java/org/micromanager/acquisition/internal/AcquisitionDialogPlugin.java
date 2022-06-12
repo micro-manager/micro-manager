@@ -34,6 +34,7 @@ import org.micromanager.MMPlugin;
 public interface AcquisitionDialogPlugin extends MMPlugin {
    /**
     * Provide an ImageIcon for display in the selection menu. May be null.
+    *
     * @return an ImageIcon for use when selecting this plugin, or null.
     */
    public ImageIcon getIcon();

@@ -20,6 +20,7 @@
 //
 // CVS:          $Id$
 //
+
 package org.micromanager.internal.utils;
 
 import com.google.common.io.Files;
@@ -31,27 +32,28 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 
 public final class TextUtils {
-   
+
    static public String readTextFile(String path) throws IOException {
       String newLine = System.getProperty("line.separator");
       StringBuffer sb = new StringBuffer();
       BufferedReader input = new BufferedReader(new FileReader(path));
       String line;
       while (null != (line = input.readLine())) {
-         if (sb.length() > 0)
+         if (sb.length() > 0) {
             sb.append(newLine);
+         }
          sb.append(line);
       }
-      
+
       return sb.toString();
    }
-   
+
    static public void writeTextFile(String path, String content) throws IOException {
-      BufferedWriter output= new BufferedWriter(new FileWriter(path));
+      BufferedWriter output = new BufferedWriter(new FileWriter(path));
       output.append(content);
       output.close();
    }
-   
+
    public static final DecimalFormat FMT0 = new DecimalFormat("#0");
    public static final DecimalFormat FMT1 = new DecimalFormat("#0.0");
    public static final DecimalFormat FMT2 = new DecimalFormat("#0.00");
@@ -70,7 +72,7 @@ public final class TextUtils {
          if (name.length() > maxLen) {
             int len = name.length();
             name = name.substring(0, maxLen / 2 - 3) + "..." +
-               name.substring(len - maxLen / 2, len);
+                  name.substring(len - maxLen / 2, len);
          }
       }
       return name;

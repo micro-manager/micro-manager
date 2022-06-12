@@ -20,11 +20,9 @@
 //
 // CVS:          $Id: AcquisitionEngine.java 318 2007-07-02 22:29:55Z nenad $
 //
+
 package org.micromanager.acquisition.internal;
 
-import java.awt.Color;
-import java.nio.channels.Channel;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PositionList;
@@ -64,12 +62,13 @@ public interface AcquisitionEngine {
     * Sets whether the Live window will be updated during acquisition
     */
    public void setUpdateLiveWindow(boolean b);
-   
+
    // run-time control
 
    /**
     * Starts acquisition as defined in the Multi-Dimensional Acquisition Window.
     * Returns the Datastore for the acquisition.
+    *
     * @throws MMException
     */
    public Datastore acquire() throws MMException;
@@ -82,7 +81,8 @@ public interface AcquisitionEngine {
 
    /**
     * Stops a running Acquisition
-    * @param   interrupted when set, multifield acquisition will also be stopped
+    *
+    * @param interrupted when set, multifield acquisition will also be stopped
     */
    public void stop(boolean interrupted);
 
@@ -118,7 +118,7 @@ public interface AcquisitionEngine {
     * Pause/Unpause a running acquisition
     */
    public void setPause(boolean state);
-   
+
 
    /**
     * Find out which groups are available
@@ -133,9 +133,8 @@ public interface AcquisitionEngine {
    public void clear();
 
    SequenceSettings getSequenceSettings();
+
    void setSequenceSettings(SequenceSettings sequenceSettings);
-
-
 
 
    // utility
@@ -150,6 +149,7 @@ public interface AcquisitionEngine {
 
    /**
     * Find out which channels are currently available for the selected channel group.
+    *
     * @return - list of channel (preset) names
     */
    String[] getChannelConfigs();
@@ -161,12 +161,14 @@ public interface AcquisitionEngine {
 
    /**
     * Set the channel group if the current hardware configuration permits.
+    *
     * @param newGroup
     * @return - true if successful
     */
    boolean setChannelGroup(String newGroup);
 
    void setChannel(int row, ChannelSpec sp);
+
    void setChannels(ArrayList<ChannelSpec> channels);
 
    double getFrameIntervalMs();
@@ -199,7 +201,7 @@ public interface AcquisitionEngine {
     * events will be run.
     */
    public boolean isFinished();
-   
+
    /*
     * Attach a runnable to the acquisition engine. Each index (f, p, c, s) can
     * be specified. Passing a value of -1 should result in the runnable being attached
@@ -226,6 +228,6 @@ public interface AcquisitionEngine {
    public void addSettingsListener(AcqSettingsListener listener);
 
    public void removeSettingsListener(AcqSettingsListener listener);
-   
+
    public void setShouldDisplayImages(boolean shouldDisplay);
 }

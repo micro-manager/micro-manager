@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.utils;
 
 import java.awt.AWTEvent;
@@ -18,7 +17,6 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
 /**
- *
  * @author Arthur
  */
 public final class UIMonitor {
@@ -28,9 +26,11 @@ public final class UIMonitor {
    private static String getComponentText(Component component) {
       if (component instanceof AbstractButton) {
          return ((AbstractButton) component).getText();
-      } else if (component instanceof Button) {
+      }
+      else if (component instanceof Button) {
          return ((Button) component).getLabel();
-      } else {
+      }
+      else {
          return "";
       }
    }
@@ -46,16 +46,21 @@ public final class UIMonitor {
    private static String getClickAction(Component component) {
       if (component instanceof JToggleButton) {
          return "toggled " + (((JToggleButton) component).isSelected() ? "on" : "off");
-      } else if (component instanceof JCheckBoxMenuItem) {
+      }
+      else if (component instanceof JCheckBoxMenuItem) {
          return "toggled " + (((JCheckBoxMenuItem) component).isSelected() ? "on" : "off");
-      } else if (component instanceof JList) {
-          return null;
-      } else if (component instanceof JSlider) {
+      }
+      else if (component instanceof JList) {
+         return null;
+      }
+      else if (component instanceof JSlider) {
          return "set to \"" + ((JSlider) component).getValue() + "\"";
-      } else if (component instanceof JTabbedPane) {
+      }
+      else if (component instanceof JTabbedPane) {
          JTabbedPane tabbedPane = (JTabbedPane) component;
          return "set to \"" + tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()) + "\"";
-      } else {
+      }
+      else {
          return "clicked";
       }
    }
@@ -71,7 +76,7 @@ public final class UIMonitor {
       }
       return null;
    }
-   
+
 
    private static void handleAWTEvent(AWTEvent event) {
       final int eventID = event.getID();
@@ -102,9 +107,12 @@ public final class UIMonitor {
             }
             if (identifier != null && action != null) {
                try {
-                  String message = "[UI] " + identifier + action + " in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (Component) source)).getClass().getSimpleName() + ".";
+                  String message = "[UI] " + identifier + action + " in " + ((Window) SwingUtilities
+                        .getAncestorOfClass(Window.class, (Component) source)).getClass()
+                        .getSimpleName() + ".";
                   ReportingUtils.logDebugMessage(message);
-               } catch (NullPointerException npe) {}
+               } catch (NullPointerException npe) {
+               }
             }
          }
       }
@@ -130,15 +138,16 @@ public final class UIMonitor {
 
    public static void enable(final boolean on) {
       SwingUtilities.invokeLater(
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    if (on) {
-                       enable();
-                    } else {
-                       disable();
-                    }
-                 }
-              });
+            new Runnable() {
+               @Override
+               public void run() {
+                  if (on) {
+                     enable();
+                  }
+                  else {
+                     disable();
+                  }
+               }
+            });
    }
 }

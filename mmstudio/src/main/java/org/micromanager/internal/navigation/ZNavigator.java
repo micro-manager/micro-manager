@@ -27,7 +27,7 @@ public class ZNavigator {
    /**
     * Sets the position of the stage.
     *
-    * @param stage name of the stage to move.
+    * @param stage            name of the stage to move.
     * @param relativeMovement Amount of the relative movement in microns.
     */
    public void setPosition(String stage, double relativeMovement) {
@@ -56,7 +56,7 @@ public class ZNavigator {
          stage_ = stage;
          moveMemory_ = new AtomicDouble(0.0);
          executorService_ = Executors.newSingleThreadExecutor(
-                 ThreadFactoryFactory.createThreadFactory("ZNavigator-" + stage));
+               ThreadFactoryFactory.createThreadFactory("ZNavigator-" + stage));
       }
 
       public void setPosition(double pos) {
@@ -79,7 +79,7 @@ public class ZNavigator {
                studio_.core().waitForDevice(stage_);
                double z = studio_.core().getPosition(stage_);
                studio_.events().post(
-                       new DefaultStagePositionChangedEvent(stage_, z));
+                     new DefaultStagePositionChangedEvent(stage_, z));
             }
          } catch (Exception ex) {
             ReportingUtils.showError(ex);

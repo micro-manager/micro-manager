@@ -1,4 +1,3 @@
-
 package org.micromanager.data.internal;
 
 import java.io.IOException;
@@ -17,7 +16,7 @@ import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 
 /**
  * TODO: Not sure if Swingworker is the best implementation.
- * However, it has nice facilities to give user feedback about progress 
+ * However, it has nice facilities to give user feedback about progress
  * of saving (using the setProgress function) *
  *
  * @author nico
@@ -33,9 +32,9 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
     * Takes care of most of the dirty work saving data to various targets.
     *
     * @param studio The ever present Studio object.
-    * @param store Datastore that is using this Datasaver.
-    * @param mode Mode (currently, RAM, Single TIffs or MultiPage Tiffs).
-    * @param path Path/directory for disk-based storage.
+    * @param store  Datastore that is using this Datasaver.
+    * @param mode   Mode (currently, RAM, Single TIffs or MultiPage Tiffs).
+    * @param path   Path/directory for disk-based storage.
     * @throws IOException Thrown by disk-based mthods.
     */
    public DefaultDataSaver(Studio studio,
@@ -45,23 +44,25 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       this.studio = studio;
       store_ = store;
       path_ = path;
-      
+
       duplicate_ = new DefaultDatastore(this.studio);
 
       if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
          saver_ = new StorageMultipageTiff(studio.app().getMainWindow(),
-                 duplicate_,
-                 path_, true, true,
-                 StorageMultipageTiff.getShouldSplitPositions());
-      } else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-         saver_ = new StorageSinglePlaneTiffSeries(duplicate_, path_, true);
-      } else {
-         throw new IllegalArgumentException("Unrecognized mode parameter "
-                 + mode);
+               duplicate_,
+               path_, true, true,
+               StorageMultipageTiff.getShouldSplitPositions());
       }
-      
+      else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+         saver_ = new StorageSinglePlaneTiffSeries(duplicate_, path_, true);
+      }
+      else {
+         throw new IllegalArgumentException("Unrecognized mode parameter "
+               + mode);
+      }
+
    }
-   
+
    @Override
    protected Void doInBackground() throws IOException {
       SummaryMetadata summary = store_.getSummaryMetadata();
@@ -77,11 +78,11 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
          }
          summary = summary.copyBuilder().intendedDimensions(builder.build()).build();
       }
-      
+
       final SummaryMetadata fSummary = summary;
       duplicate_.setStorage(saver_);
       duplicate_.setSummaryMetadata(fSummary);
-      
+
       // Copy images ordered by stage position index.
       // Doing otherwise causes errors when trying to write the OMEMetadata
       // (we get an ArrayIndexOutOfBoundsException when calling
@@ -94,7 +95,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       // z and channel as well), since FileSet.writeImage() assumes that
       // timepoints are written sequentially and can potentially cause
       // invalid metadata if they are not.     
-      
+
       // To have data opened correctly in ImageJ, they need to be ordered 
       // in Time, Slice, Channel order (which ImageJ calls "xyctz" order)
       final List<String> orderedAxes = new ArrayList<>();
@@ -104,7 +105,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
             orderedAxes.add(axis);
          }
       }
-      
+
       ArrayList<Coords> tmp = new ArrayList<>();
       for (Coords coords : store_.getUnorderedImageCoords()) {
          tmp.add(coords);
@@ -114,8 +115,8 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
          int p2 = b.getStagePosition();
          if (p1 != p2) {
             return p1 < p2 ? -1 : 1;
-         }        
-         
+         }
+
          for (String axis : orderedAxes) {
             switch (axis) {
                case Coords.P:
@@ -179,7 +180,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       } catch (ExecutionException | InterruptedException e) {
          studio.logs().showError(e, "Failed to save to " + path_);
       }
-      
+
       studio.alerts().postAlert("Finished saving", this.getClass(), path_);
    }
 

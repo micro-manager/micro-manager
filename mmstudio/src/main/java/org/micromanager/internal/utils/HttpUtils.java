@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.utils;
 
 import java.io.DataOutputStream;
@@ -9,7 +8,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- *
  * @author karlhoover
  */
 public final class HttpUtils {

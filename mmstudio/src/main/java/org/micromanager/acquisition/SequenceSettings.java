@@ -37,7 +37,6 @@ import org.micromanager.data.Datastore;
  * <p>
  * Maintainer note: This should be an interface, but kept as a class for backward
  * compatibility.</p>
- *
  */
 public final class SequenceSettings {
    // version ID for the sequence settings
@@ -152,7 +151,7 @@ public final class SequenceSettings {
          keepShutterOpenChannels = k;
          return this;
       }
-      
+
       public Builder useAutofocus(boolean u) {
          useAutofocus = u;
          return this;
@@ -254,7 +253,8 @@ public final class SequenceSettings {
          return this;
       }
 
-      public Builder() {}
+      public Builder() {
+      }
 
       /**
        * Construct a Builder using the given SequenceSettings (copy builder).
@@ -262,7 +262,7 @@ public final class SequenceSettings {
        * @param s SequenceSettings to apply to this builder.
        */
       public Builder(SequenceSettings s) {
-         numFrames =  s.numFrames;
+         numFrames = s.numFrames;
          intervalMs = s.intervalMs;
          displayTimeUnit = s.displayTimeUnit;
          useCustomIntervals = s.useCustomIntervals;
@@ -302,7 +302,7 @@ public final class SequenceSettings {
        */
       public SequenceSettings build() {
          SequenceSettings s = new SequenceSettings();
-         s.numFrames =  numFrames;
+         s.numFrames = numFrames;
          s.intervalMs = intervalMs;
          s.displayTimeUnit = displayTimeUnit;
          s.useCustomIntervals = useCustomIntervals;
@@ -565,7 +565,7 @@ public final class SequenceSettings {
     *
     * @return Copy of this SequenceSettings.
     * @deprecated When used correctly, SequenceSettings are immutable.
-    *             If you really need a copy, use copyBuilder().build();
+    * If you really need a copy, use copyBuilder().build();
     */
    @Deprecated
    public SequenceSettings copy() {
@@ -601,7 +601,7 @@ public final class SequenceSettings {
     * and {@link #customIntervalsMs()} are set.
     */
    public double intervalMs() {
-      return  intervalMs;
+      return intervalMs;
    }
 
    /**
@@ -754,7 +754,7 @@ public final class SequenceSettings {
     * Whether to acquire at multiple positions (defined in the positionList).
     *
     * @return True if positions in the list should all be visited,
-    *         when false, only acquired at current position
+    * when false, only acquired at current position
     */
    public boolean usePositionList() {
       return usePositionList;
@@ -793,7 +793,7 @@ public final class SequenceSettings {
     * Whether to acquire multiple channels during the acquisition.
     */
    public boolean useChannels() {
-      return  useChannels;
+      return useChannels;
    }
 
    /**

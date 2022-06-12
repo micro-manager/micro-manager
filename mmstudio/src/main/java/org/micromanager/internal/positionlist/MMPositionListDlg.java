@@ -28,10 +28,10 @@ import org.micromanager.events.internal.InternalShutdownCommencingEvent;
  * The MMPositionListDlg class extends PositionListDlg to be used as the singleton
  * PositionListDlg used in the MMStudio API. In addition to the normal behavior of
  * a PositionListDlg, this object will:
- *   1: Update an AcqControlDlg window each time the position list is modified.
- *   2: Post a DefaultNewPositionListEvent to the MMStudio EventManager each time
- *      the position list is modified.
- *   3: Save preferences to the MMStudio UserProfile.
+ * 1: Update an AcqControlDlg window each time the position list is modified.
+ * 2: Post a DefaultNewPositionListEvent to the MMStudio EventManager each time
+ * the position list is modified.
+ * 3: Save preferences to the MMStudio UserProfile.
  */
 public final class MMPositionListDlg extends PositionListDlg {
 
@@ -45,13 +45,13 @@ public final class MMPositionListDlg extends PositionListDlg {
          }
       });
    }
-    
+
    @Override
    protected void updatePositionData() {
       studio_.positions().setPositionList(getPositionList());
       super.updatePositionData();
    }
-    
+
    private void saveDims() {
       int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
       studio_.profile().getSettings(PositionListDlg.class).putInteger(POS_COL0_WIDTH,
@@ -60,15 +60,15 @@ public final class MMPositionListDlg extends PositionListDlg {
       studio_.profile().getSettings(PositionListDlg.class).putInteger(AXIS_COL0_WIDTH,
             axisCol0Width);
    }
-    
+
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.isCanceled()) {
          saveDims();
          dispose();
       }
-   }   
-   
+   }
+
    @Subscribe
    public void onNewPositionList(NewPositionListEvent nple) {
       PositionList pl = nple.getPositionList();

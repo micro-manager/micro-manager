@@ -1,4 +1,3 @@
-
 package org.micromanager.display.internal;
 
 import com.google.common.base.Preconditions;
@@ -8,19 +7,16 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ComponentDisplaySettings;
 
 /**
- *
  * @author mark
  */
 public final class DefaultComponentDisplaySettings
-      implements ComponentDisplaySettings
-{
+      implements ComponentDisplaySettings {
    private long scalingMin_;
    private long scalingMax_;
    private final double gamma_;
 
    private static final class Builder
-         implements ComponentDisplaySettings.Builder
-   {
+         implements ComponentDisplaySettings.Builder {
       private long scalingMin_ = 0;
       private long scalingMax_ = Long.MAX_VALUE;
       private double gamma_ = 1.0;
@@ -76,11 +72,11 @@ public final class DefaultComponentDisplaySettings
    public long getScalingMaximum() {
       return scalingMax_;
    }
-   
+
    public void setScalingMinimum(long min) {
       scalingMin_ = min;
    }
-   
+
    public void setScalingMaximum(long max) {
       scalingMax_ = max;
    }
@@ -106,10 +102,10 @@ public final class DefaultComponentDisplaySettings
             putDouble(PropertyKey.GAMMA.key(), gamma_).
             build();
    }
-   
+
    public static ComponentDisplaySettings fromPropertyMap(PropertyMap pMap) {
       Builder b = new Builder();
-      
+
       if (pMap.containsLong(PropertyKey.SCALING_MIN.key())) {
          b.scalingMinimum(pMap.getLong(PropertyKey.SCALING_MIN.key(), b.scalingMin_));
       }
@@ -119,8 +115,8 @@ public final class DefaultComponentDisplaySettings
       if (pMap.containsDouble(PropertyKey.GAMMA.key())) {
          b.scalingGamma(pMap.getDouble(PropertyKey.GAMMA.key(), b.gamma_));
       }
-      
+
       return b.build();
    }
-   
+
 }

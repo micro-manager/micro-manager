@@ -49,7 +49,7 @@ public interface DisplayManager extends EventPublisher {
     * default values.
     *
     * @return The DisplaySettings as of the last time the user clicked the
-    *         "Set as default" button in the Settings tab of a DisplayWindow.
+    * "Set as default" button in the Settings tab of a DisplayWindow.
     */
    DisplaySettings getStandardDisplaySettings();
 
@@ -61,43 +61,43 @@ public interface DisplayManager extends EventPublisher {
     */
    @Deprecated
    DisplaySettings.Builder getDisplaySettingsBuilder();
-   
-   
+
+
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.
     *
     * @return A DisplaySettingsBuilder with no pre-set values.
     */
    DisplaySettings.Builder displaySettingsBuilder();
-   
+
    /**
     * Generates a blank channelDisplaySettings Builder with all null values.
     *
     * @return a blank ChannelDisplaySettings Builder
     */
    ChannelDisplaySettings.Builder channelDisplaySettingsBuilder();
-   
-   
+
+
    /**
     * Generates a blank componentSettings Builder with all null values.
     *
     * @return a blank componentSettings builder
     */
    ComponentDisplaySettings.Builder componentDisplaySettingsBuilder();
-   
-   
+
+
    /**
     * Generate a ContrastSettings object with the provided values. This version
     * of the method is to be used for single-component images.
     *
     * @param contrastMin The highest pixel intensity corresponding to black.
     * @param contrastMax The lowest pixel intensity corresponding to full
-    *        intensity.
-    * @param gamma The gamma curve parameter.
-    * @param isVisible Whether or not this channel is visible in the display
-    *        when the display is showing multiple channels simultaneously.
+    *                    intensity.
+    * @param gamma       The gamma curve parameter.
+    * @param isVisible   Whether or not this channel is visible in the display
+    *                    when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object, whose properties are
-    *         all length-1 arrays with the provided values.
+    * all length-1 arrays with the provided values.
     * @deprecated Use {@link DisplaySettings#getAllChannelSettings()} instead.
     */
    @Deprecated
@@ -109,17 +109,16 @@ public interface DisplayManager extends EventPublisher {
     * Generate a ContrastSettings object with the provided values. This version
     * of the method is to be used for multi-component (e.g. RGB) images.
     *
-    * @param contrastMins Array with the highest pixel intensity corresponding 
-    *        to black, for each component.
+    * @param contrastMins  Array with the highest pixel intensity corresponding
+    *                      to black, for each component.
     * @param contrastMaxes Array with the lowest pixel intensity corresponding to full
-    *        intensity, for each component.
-    * @param gammas Array with the gamma curve parameters. NOTE: for now this parameter is
-    *        not used to control display of multi-component images.
-    * @param isVisible Whether or not this channel is visible in the display
-    *        when the display is showing multiple channels simultaneously.
+    *                      intensity, for each component.
+    * @param gammas        Array with the gamma curve parameters. NOTE: for now this parameter is
+    *                      not used to control display of multi-component images.
+    * @param isVisible     Whether or not this channel is visible in the display
+    *                      when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object.
     * @deprecated
-    *
     */
    @Deprecated
    DisplaySettings.ContrastSettings getContrastSettings(
@@ -149,19 +148,19 @@ public interface DisplayManager extends EventPublisher {
     * that will appear underneath the axis scrollbars.
     *
     * @param dataProvider The DataProvider whose data should be displayed.
-    * @param factory A ControlsFactory used to create custom controls for
-    *        the DisplayWindow. May be null.
+    * @param factory      A ControlsFactory used to create custom controls for
+    *                     the DisplayWindow. May be null.
     * @return The created DisplayWindow.
     */
    DisplayWindow createDisplay(DataProvider dataProvider,
-         DisplayWindowControlsFactory factory);
+                               DisplayWindowControlsFactory factory);
 
    /**
     * Create a new Inspector window that shows information for the specified
     * DataViewer, or for the topmost window if the DataViewer is null.
     *
     * @param display The DataViewer the inspector should show information on,
-    *        or null to show information on the topmost window.
+    *                or null to show information on the topmost window.
     */
    void createInspectorForDataViewer(DataViewer display);
 
@@ -217,13 +216,13 @@ public interface DisplayManager extends EventPublisher {
     * Specifically, this method does the following things:
     * - Add the DataProvider to the list returned by getDataProviders().
     * - Find all currently-existing DisplayWindows for this DataProvider and
-    *   associate them (thus, getDisplays() for this DataProvider will return the
-    *   displays)
+    * associate them (thus, getDisplays() for this DataProvider will return the
+    * displays)
     * - When the last DisplayWindow for the DataProvider is closed:
     * -- If the DataProvider has not been saved, prompt the user to save (and if
-    *    they cancel, closing the DisplayWindow is halted)
+    * they cancel, closing the DisplayWindow is halted)
     * -- The DataProvider is frozen, which may have side-effects like finalizing
-    *    writing of image data to disk
+    * writing of image data to disk
     * -- The DataProvider is removed from the list returned by getDatastores().
     * By default, new DataProvider created by the createNewDatastore() method
     * are not managed, which means you are responsible for ensuring that they
@@ -268,7 +267,7 @@ public interface DisplayManager extends EventPublisher {
     *
     * @param store Datastore of interest to the caller
     * @return A list of all DisplayWindows Micro-Manager knows are associated
-    *         with the specified Datastore, or null.
+    * with the specified Datastore, or null.
     * @deprecated replaced by {@link #getDisplays(DataProvider)}
     */
    @Deprecated
@@ -280,7 +279,7 @@ public interface DisplayManager extends EventPublisher {
     *
     * @param dataProvider DataProvider of interest to the caller
     * @return A list of all DisplayWindows Micro-Manager knows are associated
-    *         with the specified Datastore, or null.
+    * with the specified Datastore, or null.
     */
    List<DisplayWindow> getDisplays(DataProvider dataProvider);
 
@@ -293,7 +292,7 @@ public interface DisplayManager extends EventPublisher {
     * @return The front-most {@code DisplayWindow}, or null.
     * @deprecated Use {@code getActiveDataViewer()} instead
     */
-   @Deprecated 
+   @Deprecated
    DisplayWindow getCurrentWindow();
 
    /**
@@ -331,10 +330,10 @@ public interface DisplayManager extends EventPublisher {
     * prompt that is generated when the last DisplayWindow for a managed
     * Datastore is closed.
     *
-    * @param store The Datastore to save.
+    * @param store   The Datastore to save.
     * @param display The DisplayWindow over which to show the prompt.
     * @return true if saving was successful or the user explicitly declined
-    *         to save; false if the user cancelled or if saving failed.
+    * to save; false if the user cancelled or if saving failed.
     * @throws java.io.IOException Can be thrown when file IO causes an exception.
     */
    boolean promptToSave(Datastore store, DisplayWindow display) throws IOException;
@@ -353,7 +352,7 @@ public interface DisplayManager extends EventPublisher {
     *
     * @param provider DataProvider for which displays should be closed
     * @return True if all windows were closed; false otherwise (e.g. because
-    *         the user canceled saving).
+    * the user canceled saving).
     */
    boolean closeDisplaysFor(DataProvider provider);
 
@@ -369,15 +368,15 @@ public interface DisplayManager extends EventPublisher {
     * Close all open image windows.
     *
     * @param shouldPromptToSave If true, then any open windows for Datastores
-    *        that have not been saved will show a prompt to save, and if the
-    *        user chooses not to save a file, then the process of closing
-    *        windows will be halted. If false, then all windows will be closed
-    *        regardless of whether or not the data they show has been saved,
-    *        with no prompting of the user whatsoever. Note that the
-    *        corresponding File menu option to close all open windows does
-    *        prompt the user to ensure they are absolutely certain they want to
-    *        close all open windows without prompts to save; this API call does
-    *        not have that prompt.
+    *                           that have not been saved will show a prompt to save, and if the
+    *                           user chooses not to save a file, then the process of closing
+    *                           windows will be halted. If false, then all windows will be closed
+    *                           regardless of whether or not the data they show has been saved,
+    *                           with no prompting of the user whatsoever. Note that the
+    *                           corresponding File menu option to close all open windows does
+    *                           prompt the user to ensure they are absolutely certain they want to
+    *                           close all open windows without prompts to save; this API call does
+    *                           not have that prompt.
     * @return true if all windows are closed; false if any window did not close.
     */
    boolean closeAllDisplayWindows(boolean shouldPromptToSave);

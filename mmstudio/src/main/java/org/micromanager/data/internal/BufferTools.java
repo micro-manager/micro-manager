@@ -1,8 +1,4 @@
-
 package org.micromanager.data.internal;
-
-import java.util.Arrays;
-import org.micromanager.internal.utils.ReportingUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
@@ -10,38 +6,40 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.Arrays;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- *
  * @author Arthur
  */
 public final class BufferTools {
-   
+
    public static ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
-   
+
    public static ByteBuffer directBufferFromBytes(byte[] bytes) {
       return ByteBuffer.allocateDirect(bytes.length).put(bytes);
    }
-   
+
    public static ShortBuffer directBufferFromShorts(short[] shorts) {
-      return ByteBuffer.allocateDirect(2*shorts.length).order(NATIVE_ORDER).asShortBuffer().put(shorts);
+      return ByteBuffer.allocateDirect(2 * shorts.length).order(NATIVE_ORDER).asShortBuffer()
+            .put(shorts);
    }
-   
+
    public static IntBuffer directBufferFromInts(int[] ints) {
-      return ByteBuffer.allocateDirect(4*ints.length).order(NATIVE_ORDER).asIntBuffer().put(ints);
+      return ByteBuffer.allocateDirect(4 * ints.length).order(NATIVE_ORDER).asIntBuffer().put(ints);
    }
-      
+
    public static byte[] bytesFromBuffer(ByteBuffer buffer) {
-      synchronized(buffer) {
+      synchronized (buffer) {
          byte[] bytes = new byte[buffer.capacity()];
          buffer.rewind();
          buffer.get(bytes);
          return bytes;
       }
    }
-   
+
    public static short[] shortsFromBuffer(ShortBuffer buffer) {
-      synchronized(buffer) {
+      synchronized (buffer) {
          short[] shorts = new short[buffer.capacity()];
          buffer.rewind();
          buffer.get(shorts);
@@ -50,7 +48,7 @@ public final class BufferTools {
    }
 
    public static int[] intsFromBuffer(IntBuffer buffer) {
-      synchronized(buffer) {
+      synchronized (buffer) {
          int[] ints = new int[buffer.capacity()];
          buffer.rewind();
          buffer.get(ints);
@@ -59,12 +57,14 @@ public final class BufferTools {
    }
 
    public static Object arrayFromBuffer(Buffer buffer) {
-      synchronized(buffer) {
+      synchronized (buffer) {
          if (buffer instanceof ByteBuffer) {
             return bytesFromBuffer((ByteBuffer) buffer);
-         } else if (buffer instanceof ShortBuffer) {
+         }
+         else if (buffer instanceof ShortBuffer) {
             return shortsFromBuffer((ShortBuffer) buffer);
-         } else if (buffer instanceof IntBuffer) {
+         }
+         else if (buffer instanceof IntBuffer) {
             return intsFromBuffer((IntBuffer) buffer);
          }
       }
@@ -72,12 +72,12 @@ public final class BufferTools {
    }
 
    /**
-    *  Convert a buffer to an array of `byte` regardless of the underlying data type of the buffer
-    *  Useful for low-level data manipulation and for efficiently streaming data over a socket. The
-    *  returned buffer is a copy of the original data.
-    *  
+    * Convert a buffer to an array of `byte` regardless of the underlying data type of the buffer
+    * Useful for low-level data manipulation and for efficiently streaming data over a socket. The
+    * returned buffer is a copy of the original data.
+    *
     * @param rawPixels A buffer of pixel data. IntBuffer, ShortBuffer, and ByteBuffer are currently
-    *                   supported.
+    *                  supported.
     * @return An array of `byte` containing a copy of the raw data of the rawPixels buffer.
     */
    public static byte[] getByteArray(Buffer rawPixels) {
@@ -90,7 +90,8 @@ public final class BufferTools {
          buf.rewind();
          byte[] arr = bb.array();
          return Arrays.copyOf(arr, arr.length);
-      } else if (rawPixels instanceof ShortBuffer) {
+      }
+      else if (rawPixels instanceof ShortBuffer) {
          ShortBuffer buf = (ShortBuffer) rawPixels;
          ByteBuffer bb = ByteBuffer.allocate(rawPixels.remaining() * 2);
          while (buf.hasRemaining()) {
@@ -99,25 +100,29 @@ public final class BufferTools {
          buf.rewind();
          byte[] arr = bb.array();
          return Arrays.copyOf(arr, arr.length);
-      } else if (rawPixels instanceof ByteBuffer) {
+      }
+      else if (rawPixels instanceof ByteBuffer) {
          byte[] arr = ((ByteBuffer) rawPixels).array();
          return Arrays.copyOf(arr, arr.length);
-      } else {
+      }
+      else {
          throw new RuntimeException(("Unhandled Case."));
       }
    }
-   
+
    public static Buffer directBufferFromArray(Object primitiveArray) {
       if (primitiveArray instanceof byte[]) {
-         return directBufferFromBytes((byte []) primitiveArray);
-      } else if (primitiveArray instanceof short[]) {
-         return directBufferFromShorts((short []) primitiveArray);
-      } else if (primitiveArray instanceof int[]) {
-         return directBufferFromInts((int []) primitiveArray);
+         return directBufferFromBytes((byte[]) primitiveArray);
+      }
+      else if (primitiveArray instanceof short[]) {
+         return directBufferFromShorts((short[]) primitiveArray);
+      }
+      else if (primitiveArray instanceof int[]) {
+         return directBufferFromInts((int[]) primitiveArray);
       }
       return null;
    }
-   
+
    public static ByteBuffer directBufferFromString(String string) {
       try {
          return directBufferFromBytes(string.getBytes("UTF-8"));
@@ -146,9 +151,9 @@ public final class BufferTools {
             buffer = ShortBuffer.wrap((short[]) pixels);
             break;
          default:
-            throw new UnsupportedOperationException ("Unimplemented pixel component size");
+            throw new UnsupportedOperationException("Unimplemented pixel component size");
       }
       return buffer;
    }
-   
+
 }

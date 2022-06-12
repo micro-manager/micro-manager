@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.menus;
 
 import com.google.common.eventbus.Subscribe;
@@ -26,7 +25,7 @@ public class WindowMenu {
    /**
     * Create the Window menu.
     *
-    * @param studio The omnipresent Micro-Manager Studio object
+    * @param studio  The omnipresent Micro-Manager Studio object
     * @param menuBar The menubar to which this WindowMenu belongs
     */
    public WindowMenu(MMStudio studio, JMenuBar menuBar) {
@@ -34,7 +33,7 @@ public class WindowMenu {
       menuItems_ = new ArrayList<>();
 
       windowMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Window");
-      
+
       studio_.displays().registerForEvents(this);
    }
 
@@ -69,7 +68,7 @@ public class WindowMenu {
     * @param e Contains information about the DataViewer that will close.
     */
    @Subscribe
-   public void onEvent(DataViewerWillCloseEvent e) {   
+   public void onEvent(DataViewerWillCloseEvent e) {
       String name = e.getDataViewer().getName();
       for (JMenuItem mItem : menuItems_) {
          if (mItem.getText().equals(name)) {
@@ -79,5 +78,5 @@ public class WindowMenu {
          }
       }
    }
-   
+
 }

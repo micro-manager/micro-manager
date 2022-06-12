@@ -32,12 +32,12 @@ public final class Calibration {
    private String calibrationName_;
    private Configuration configuration_;
    private static final DecimalFormat fmt = new DecimalFormat("#0.000");
-   
+
    public Calibration() {
       calibrationName_ = "Undefined";
       pixelSize_ = 0.0;
    }
-   
+
    public String getVerbose() {
       return calibrationName_ + "(" + fmt.format(pixelSize_) + ")";
    }

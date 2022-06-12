@@ -54,12 +54,13 @@ public final class PluginFinder {
    }
 
    private static void recursiveFindPaths(File root, String extension,
-         ArrayList<String> result) {
+                                          ArrayList<String> result) {
       File[] items = root.listFiles();
       for (File item : items) {
          if (item.getAbsolutePath().endsWith(extension)) {
             result.add(item.getAbsolutePath());
-         } else if (item.isDirectory()) {
+         }
+         else if (item.isDirectory()) {
             recursiveFindPaths(item, extension, result);
          }
       }
@@ -92,7 +93,7 @@ public final class PluginFinder {
          // cause the entire process of loading plugins to fail.
          try {
             PluginClassLoader loader = new PluginClassLoader(jarURL,
-                   MMStudio.getInstance().getClass().getClassLoader());
+                  MMStudio.getInstance().getClass().getClassLoader());
             loader.setBlockInheritedResources(true);
             result.addAll(findPluginsWithLoader(loader));
             loader.setBlockInheritedResources(false);
@@ -142,7 +143,8 @@ public final class PluginFinder {
             // will return null if the resource is not found in our specific
             // jar.
             return findResource(name);
-         } else {
+         }
+         else {
             return super.getResource(name);
          }
       }
@@ -151,7 +153,8 @@ public final class PluginFinder {
       public Enumeration<URL> getResources(String name) throws IOException {
          if (blockInheritedResources_) {
             return findResources(name);
-         } else {
+         }
+         else {
             return super.getResources(name);
          }
       }

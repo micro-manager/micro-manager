@@ -37,7 +37,6 @@ import org.micromanager.LogManager;
 import org.micromanager.internal.MMStudio;
 
 /**
- *
  * @author arthur
  */
 public final class ReportingUtils {
@@ -114,6 +113,7 @@ public final class ReportingUtils {
    }
 
    private static final Wrapper staticWrapper_;
+
    static {
       staticWrapper_ = new Wrapper();
    }
@@ -142,7 +142,8 @@ public final class ReportingUtils {
    public static void logMessage(String msg) {
       if (core_ == null) {
          System.out.println(msg);
-      } else {
+      }
+      else {
          core_.logMessage(msg);
       }
    }
@@ -150,7 +151,8 @@ public final class ReportingUtils {
    public static void logDebugMessage(String msg) {
       if (core_ == null) {
          System.out.println(msg);
-      } else {
+      }
+      else {
          core_.logMessage(msg, true);
       }
    }
@@ -163,7 +165,8 @@ public final class ReportingUtils {
       }
       if (core_ == null) {
          System.out.println(msg);
-      } else {
+      }
+      else {
          core_.logMessage(msg, true);
       }
    }
@@ -171,7 +174,7 @@ public final class ReportingUtils {
    public static void showMessage(final String msg) {
       JOptionPane.showMessageDialog(null, msg);
    }
-   
+
    public static void showMessage(final String msg, Component parent) {
       JOptionPane.showMessageDialog(parent, msg);
    }
@@ -180,8 +183,9 @@ public final class ReportingUtils {
       if (e != null) {
          String stackTrace = getStackTraceAsString(e);
          logMessage(msg + "\n" + e.toString() + " in "
-                 + Thread.currentThread().toString() + "\n" + stackTrace + "\n");
-      } else {
+               + Thread.currentThread().toString() + "\n" + stackTrace + "\n");
+      }
+      else {
          logMessage("Error: " + msg);
       }
    }
@@ -197,19 +201,24 @@ public final class ReportingUtils {
    public static void showError(Throwable e, String msg, Component parent) {
       logError(e, msg);
 
-      if (!show_)
+      if (!show_) {
          return;
+      }
 
       String fullMsg;
       if (e != null && e.getMessage() != null && msg.length() > 0) {
          fullMsg = "Error: " + msg + "\n" + e.getMessage();
-      } else if (e != null && e.getMessage() != null) {
+      }
+      else if (e != null && e.getMessage() != null) {
          fullMsg = e.getMessage();
-      } else if (msg.length() > 0) {
+      }
+      else if (msg.length() > 0) {
          fullMsg = "Error: " + msg;
-      } else if (e != null) {
+      }
+      else if (e != null) {
          fullMsg = "Error: " + e.getStackTrace()[0];
-      } else {
+      }
+      else {
          fullMsg = "Unknown error (please check CoreLog.txt file for more information)";
       }
 
@@ -218,7 +227,7 @@ public final class ReportingUtils {
 
    private static String formatAlertMessage(String[] lines) {
       com.google.common.escape.Escaper escaper =
-         com.google.common.html.HtmlEscapers.htmlEscaper();
+            com.google.common.html.HtmlEscapers.htmlEscaper();
       StringBuilder sb = new StringBuilder();
       sb.append("<html>");
       for (String line : lines) {
@@ -231,7 +240,7 @@ public final class ReportingUtils {
    }
 
    private static void showErrorMessage(final String fullMsg,
-         final Component parent) {
+                                        final Component parent) {
       int maxNrLines = 10;
       String lines[] = fullMsg.split("\n");
       if (lines.length < maxNrLines) {
@@ -240,10 +249,11 @@ public final class ReportingUtils {
             @Override
             public void run() {
                JOptionPane.showMessageDialog(parent, wrappedMsg,
-                       "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+                     "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
             }
          });
-      } else {
+      }
+      else {
          JTextArea area = new JTextArea(fullMsg);
          area.setRows(maxNrLines);
          area.setColumns(50);
@@ -253,7 +263,7 @@ public final class ReportingUtils {
             @Override
             public void run() {
                JOptionPane.showMessageDialog(parent, pane,
-                       "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+                     "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
             }
          });
       }
@@ -287,7 +297,8 @@ public final class ReportingUtils {
       Throwable cause = aThrowable.getCause();
       if (cause != null) {
          return result + "Caused by: " + cause.toString() + "\n" + getStackTraceAsString(cause);
-      } else {
+      }
+      else {
          return result;
       }
    }
@@ -340,20 +351,23 @@ public final class ReportingUtils {
 
       if (null != owningFrame_) {
          Calendar c = Calendar.getInstance();
-         final JOptionPane optionPane = new JOptionPane(c.getTime().toString() + " " + message, JOptionPane.WARNING_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+         final JOptionPane optionPane =
+               new JOptionPane(c.getTime().toString() + " " + message, JOptionPane.WARNING_MESSAGE,
+                     JOptionPane.OK_CANCEL_OPTION);
          /* the false parameter is for not modal */
          final JDialog dialog = new JDialog(owningFrame_, "μManager Warning: ", false);
          optionPane.addPropertyChangeListener(
-                 new PropertyChangeListener() {
+               new PropertyChangeListener() {
 
-                    @Override
-                    public void propertyChange(PropertyChangeEvent e) {
-                       String prop = e.getPropertyName();
-                       if (dialog.isVisible() && (e.getSource() == optionPane) && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
-                          dialog.setVisible(false);
-                       }
-                    }
-                 });
+                  @Override
+                  public void propertyChange(PropertyChangeEvent e) {
+                     String prop = e.getPropertyName();
+                     if (dialog.isVisible() && (e.getSource() == optionPane) &&
+                           (prop.equals(JOptionPane.VALUE_PROPERTY))) {
+                        dialog.setVisible(false);
+                     }
+                  }
+               });
          dialog.setContentPane(optionPane);
          /* adapting the frame size to its content */
          dialog.pack();

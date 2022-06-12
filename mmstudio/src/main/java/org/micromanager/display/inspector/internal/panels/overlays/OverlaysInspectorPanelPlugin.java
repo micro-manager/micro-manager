@@ -3,18 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.inspector.internal.panels.overlays;
 
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.InspectorPanelController;
+import org.micromanager.display.inspector.InspectorPanelPlugin;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
-import org.micromanager.display.inspector.InspectorPanelPlugin;
 
 /**
- *
  * @author mark
  */
 @Plugin(type = InspectorPanelPlugin.class,

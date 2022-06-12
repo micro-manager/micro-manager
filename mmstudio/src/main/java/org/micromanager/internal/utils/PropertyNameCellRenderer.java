@@ -28,42 +28,50 @@ import javax.swing.table.TableCellRenderer;
 import org.micromanager.Studio;
 
 /**
- *
  * @author arthur
  */
 public final class PropertyNameCellRenderer implements TableCellRenderer {
 
-    PropertyItem item_;
-    private final Studio studio_;
-    
-    public PropertyNameCellRenderer(Studio studio) {
-       super();
-       studio_ = studio;
-    }
+   PropertyItem item_;
+   private final Studio studio_;
 
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, 
-            boolean isSelected, boolean hasFocus, int rowIndex, int column) {
-       MMPropertyTableModel data = (MMPropertyTableModel) table.getModel();
-       item_ = data.getPropertyItem(rowIndex);
-       JLabel lab = new JLabel();
-       lab.setOpaque(true);
-       lab.setHorizontalAlignment(JLabel.LEFT);
-       lab.setText((String) value);
+   public PropertyNameCellRenderer(Studio studio) {
+      super();
+      studio_ = studio;
+   }
 
-       if (item_.readOnly) {
-           lab.setBackground(studio_.app().skin().getDisabledBackgroundColor());
-           lab.setForeground(studio_.app().skin().getDisabledTextColor());
-        } else {
-           lab.setBackground(studio_.app().skin().getBackgroundColor());
-           lab.setForeground(studio_.app().skin().getEnabledTextColor());
-        }    
-        return lab;
-    }
+   @Override
+   public Component getTableCellRendererComponent(JTable table, Object value,
+                                                  boolean isSelected, boolean hasFocus,
+                                                  int rowIndex, int column) {
+      MMPropertyTableModel data = (MMPropertyTableModel) table.getModel();
+      item_ = data.getPropertyItem(rowIndex);
+      JLabel lab = new JLabel();
+      lab.setOpaque(true);
+      lab.setHorizontalAlignment(JLabel.LEFT);
+      lab.setText((String) value);
 
-    // The following methods override the defaults for performance reasons
-    public void validate() {}
-    public void revalidate() {}
-    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {}
-    public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
+      if (item_.readOnly) {
+         lab.setBackground(studio_.app().skin().getDisabledBackgroundColor());
+         lab.setForeground(studio_.app().skin().getDisabledTextColor());
+      }
+      else {
+         lab.setBackground(studio_.app().skin().getBackgroundColor());
+         lab.setForeground(studio_.app().skin().getEnabledTextColor());
+      }
+      return lab;
+   }
+
+   // The following methods override the defaults for performance reasons
+   public void validate() {
+   }
+
+   public void revalidate() {
+   }
+
+   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+   }
+
+   public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+   }
 }

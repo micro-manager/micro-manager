@@ -46,19 +46,19 @@ import org.apache.commons.lang3.event.EventListenerSupport;
  */
 public class PopupButton extends JToggleButton
       implements PopupMenuListener, HierarchyListener,
-      WindowFocusListener, ComponentListener
-{
+      WindowFocusListener, ComponentListener {
    public interface Listener {
       /**
        * Provides the listener an opportunity to configure or swap the popup
        * before it is displayed.
+       *
        * @param button
        */
       void popupButtonWillShowPopup(PopupButton button);
    }
 
    private final EventListenerSupport<Listener> listeners_ =
-         new EventListenerSupport<> (Listener.class, Listener.class.getClassLoader());
+         new EventListenerSupport<>(Listener.class, Listener.class.getClassLoader());
 
    private JPopupMenu popup_;
    private JComponent component_;
@@ -124,9 +124,8 @@ public class PopupButton extends JToggleButton
          public void mousePressed(MouseEvent e) {
             long timeSincePopupMenuWasBecomingInvisibleMs =
                   System.currentTimeMillis() -
-                  timeWhenPopupWasBecomingInvisibleMs_;
-            if (timeSincePopupMenuWasBecomingInvisibleMs < 50)
-            {
+                        timeWhenPopupWasBecomingInvisibleMs_;
+            if (timeSincePopupMenuWasBecomingInvisibleMs < 50) {
                currentMousePressOnButtonIsToCancelPopup_ = true;
             }
          }
@@ -166,7 +165,7 @@ public class PopupButton extends JToggleButton
          popup_.addPopupMenuListener(this);
       }
    }
-   
+
    public JComponent getPopupComponent() {
       return component_;
    }
@@ -226,8 +225,7 @@ public class PopupButton extends JToggleButton
    public void windowLostFocus(WindowEvent e) {
       Window windowGainingFocus = e.getOppositeWindow();
       if (windowGainingFocus != null &&
-            windowGainingFocus.isAncestorOf(popup_))
-      {
+            windowGainingFocus.isAncestorOf(popup_)) {
          return;
       }
 

@@ -75,8 +75,7 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
    private boolean debug = false;
 
    public static VerticalMultiSplitPane create(int numChildren,
-         boolean continuousLayout)
-   {
+                                               boolean continuousLayout) {
       return new VerticalMultiSplitPane(numChildren, continuousLayout);
    }
 
@@ -110,46 +109,46 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
          if (splitPanelUI instanceof BasicSplitPaneUI) {
             ((BasicSplitPaneUI) splitPanelUI).getDivider().
                   addMouseListener(new MouseAdapter() {
-               @Override
-               public void mouseEntered(MouseEvent e) {
-                  if (debug) {
-                     System.err.println("ENTERED");
-                  }
-                  if (!isTrackingDividerDrag_) {
-                     prepareForDividerDrag(splitPane);
-                  }
-                  isUnprepareForDragPending_ = false;
-               }
+                     @Override
+                     public void mouseEntered(MouseEvent e) {
+                        if (debug) {
+                           System.err.println("ENTERED");
+                        }
+                        if (!isTrackingDividerDrag_) {
+                           prepareForDividerDrag(splitPane);
+                        }
+                        isUnprepareForDragPending_ = false;
+                     }
 
-               @Override
-               public void mouseExited(MouseEvent e) {
-                  if (debug) {
-                     System.err.println("EXITED");
-                  }
-                  if (!isTrackingDividerDrag_) {
-                     unprepareForDividerDrag();
-                  }
-                  else {
-                     isUnprepareForDragPending_ = true;
-                  }
-               }
+                     @Override
+                     public void mouseExited(MouseEvent e) {
+                        if (debug) {
+                           System.err.println("EXITED");
+                        }
+                        if (!isTrackingDividerDrag_) {
+                           unprepareForDividerDrag();
+                        }
+                        else {
+                           isUnprepareForDragPending_ = true;
+                        }
+                     }
 
-               @Override
-               public void mousePressed(MouseEvent e) {
-                  if (debug) {
-                     System.err.println("PRESSED");
-                  }
-                  startTrackingDividerDrag();
-               }
+                     @Override
+                     public void mousePressed(MouseEvent e) {
+                        if (debug) {
+                           System.err.println("PRESSED");
+                        }
+                        startTrackingDividerDrag();
+                     }
 
-               @Override
-               public void mouseReleased(MouseEvent e) {
-                  if (debug) {
-                     System.err.println("RELEASED");
-                  }
-                  finishTrackingDividerDrag();
-               }
-            });
+                     @Override
+                     public void mouseReleased(MouseEvent e) {
+                        if (debug) {
+                           System.err.println("RELEASED");
+                        }
+                        finishTrackingDividerDrag();
+                     }
+                  });
          }
       }
 
@@ -197,7 +196,7 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
    /**
     * Resize this multi-split pane so that every component is at its preferred
     * height.
-    *
+    * <p>
     * Call this after changing the preferred size of any of the components.
     */
    public void resizeToFitPreferredSizes() {
@@ -267,7 +266,7 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
       VerticalMultiSplitPane.this.revalidate();
       isPreparedForDividerDrag_ = true;
    }
-   
+
    private void unprepareForDividerDrag() {
       if (!isPreparedForDividerDrag_) {
          return;
@@ -308,14 +307,13 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
 
    @Override // Scrollable
    public int getScrollableUnitIncrement(Rectangle visibleRect,
-         int orientation, int direction) {
+                                         int orientation, int direction) {
       return 10;
    }
 
    @Override // Scrollable
    public int getScrollableBlockIncrement(Rectangle visibleRect,
-         int orientation, int direction)
-   {
+                                          int orientation, int direction) {
       if (orientation == SwingConstants.HORIZONTAL) {
          return 10; // Whatever...
       }

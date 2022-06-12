@@ -61,15 +61,15 @@ class FileSet {
    private int ifdCount_ = 0;
    private StorageMultipageTiff masterStorage_;
    int nextExpectedChannel_ = 0;
-   int  nextExpectedSlice_ = 0;
+   int nextExpectedSlice_ = 0;
    int nextExpectedFrame_ = 0;
    int currentFrame_ = 0;
 
-   
+
    public FileSet(Image firstImage, StorageMultipageTiff masterStorage,
-         OMEMetadata omeMetadata,
-         boolean splitByXYPosition, boolean separateMetadataFile) throws IOException {
-      tiffWriters_ = new LinkedList<>();  
+                  OMEMetadata omeMetadata,
+                  boolean splitByXYPosition, boolean separateMetadataFile) throws IOException {
+      tiffWriters_ = new LinkedList<>();
       masterStorage_ = masterStorage;
       omeMetadata_ = omeMetadata;
       splitByXYPosition_ = splitByXYPosition;
@@ -91,15 +91,15 @@ class FileSet {
    public String getCurrentUUID() {
       return currentTiffUUID_;
    }
-   
+
    public String getCurrentFilename() {
       return currentTiffFilename_;
    }
-   
+
    public boolean hasSpaceForFullOMEXML(int mdLength) {
       return tiffWriters_.getLast().hasSpaceForFullOMEMetadata(mdLength);
    }
-   
+
    public void finished(String omeXML, String ijDescription) throws IOException {
       if (finished_) {
          return;
@@ -149,20 +149,20 @@ class FileSet {
       //check if current writer is out of space, if so, make a new one
       if (!tiffWriters_.getLast().hasSpaceToWrite(img, SPACE_FOR_PARTIAL_OME_MD)) {
          //write index map here but still need to call close() at end of acq
-         tiffWriters_.getLast().finish();          
+         tiffWriters_.getLast().finish();
 
          currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".ome.tif";
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID();
          ifdCount_ = 0;
          tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
                img, currentTiffFilename_));
-         
+
          //Add new filename to image tags
          img = img.copyWithMetadata(img.getMetadata()
                .copyBuilderPreservingUUID()
                .fileName(currentTiffFilename_)
                .build());
-      }      
+      }
 
       //write image
       tiffWriters_.getLast().writeImage(img);
@@ -170,7 +170,8 @@ class FileSet {
       if (expectedImageOrder_) {
          if (splitByXYPosition_) {
             checkForExpectedImageOrder(img.getCoords());
-         } else {
+         }
+         else {
             expectedImageOrder_ = false;
          }
       }
@@ -188,7 +189,7 @@ class FileSet {
          currentFrame_ = frame;
 
          omeMetadata_.addImageTagsToOME(img.getCoords(), img.getMetadata(),
-                 ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
+               ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
       } catch (UnsupportedOperationException uoe) {
          throw (uoe);
       } catch (Exception ex) {
@@ -254,7 +255,8 @@ class FileSet {
       }
       if (prefix.length() == 0) {
          baseFilename = "MMStack";
-      } else {
+      }
+      else {
          baseFilename = prefix + "_MMStack";
       }
 
@@ -270,7 +272,8 @@ class FileSet {
          // At least handle the case where the default name is used.
          if (posName != null && !posName.isEmpty() && !posName.equals("Default")) {
             baseFilename += "_" + posName;
-         } else {
+         }
+         else {
             baseFilename += "_" + "Pos" + posIndex;
          }
       }
@@ -339,7 +342,7 @@ class FileSet {
          }
       }
    }
-   
+
    void checkForExpectedImageOrder(Coords coords) {
       //Determine next expected indices
       int channel = coords.getChannel();
@@ -366,7 +369,8 @@ class FileSet {
                nextExpectedFrame_ = frame + 1;
             }
          }
-      } else {
+      }
+      else {
          nextExpectedChannel_ = channel + 1;
          if (nextExpectedChannel_ == masterStorage_.getIntendedSize(Coords.CHANNEL)) {
             nextExpectedChannel_ = 0;

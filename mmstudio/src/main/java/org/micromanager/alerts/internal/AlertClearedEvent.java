@@ -27,6 +27,7 @@ package org.micromanager.alerts.internal;
  */
 public final class AlertClearedEvent {
    private DefaultAlert alert_;
+
    public AlertClearedEvent(DefaultAlert alert) {
       alert_ = alert;
    }

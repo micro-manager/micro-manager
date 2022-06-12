@@ -46,9 +46,9 @@ public interface CompatibilityInterface {
     *
     * @param version - minimum version needen to run this code
     * @return true if the run-time Micro-Manager version is less than the
-    *          one specified
+    * one specified
     * @throws NumberFormatException if the version number is not in the format
-    *          expected.
+    *                               expected.
     */
    boolean versionLessThan(String version) throws NumberFormatException;
 
@@ -66,9 +66,8 @@ public interface CompatibilityInterface {
     * the Java Preferences. Will return null if no transform is found.
     *
     * @param config The configuration (per core.getCurrentPixelSizeConfig())
-    *        to find the affine transform for.
+    *               to find the affine transform for.
     * @return The transform describing how the camera maps to the stage.
-    *
     * @deprecated - Use core.getPixelSizeAffineByID(config) instead
     */
    @Deprecated
@@ -79,10 +78,10 @@ public interface CompatibilityInterface {
     * the stage coordinates. The value will be stored in the user's profile.
     *
     * @param transform The new transform to use.
-    * @param config The configuration (per core.getCurrentPixelSizeConfig())
-    *        to set the affine transform for.
+    * @param config    The configuration (per core.getCurrentPixelSizeConfig())
+    *                  to set the affine transform for.
     * @deprecated - Use core.setPixelSizeAffine(config, DoubleVector transform)
-    *                instead
+    * instead
     */
    @Deprecated
    void setCameraTransform(AffineTransform transform, String config);

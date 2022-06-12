@@ -26,17 +26,18 @@ public final class JavaUtils {
    /**
     * Call a private method without arguments.
     *
-    * @param obj Object on which to call a method
-    * @param theClass Class to which this object belongs
+    * @param obj        Object on which to call a method
+    * @param theClass   Class to which this object belongs
     * @param methodName Name of the method to call
-    * @return  result of the method
-    * @throws NoSuchMethodException if the method was not found
-    * @throws IllegalAccessException if we still failed to call this method
-    * @throws IllegalArgumentException if arguments were incorrect
+    * @return result of the method
+    * @throws NoSuchMethodException     if the method was not found
+    * @throws IllegalAccessException    if we still failed to call this method
+    * @throws IllegalArgumentException  if arguments were incorrect
     * @throws InvocationTargetException can happen
     */
    public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName)
-         throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+         throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+         InvocationTargetException {
       return invokeRestrictedMethod(obj, theClass, methodName, (Object) null);
    }
 
@@ -49,7 +50,7 @@ public final class JavaUtils {
     * @param theClass
     * @param methodName
     * @param paramsAndTypes
-    * @return 
+    * @return
     * @throws java.lang.NoSuchMethodException
     * @throws java.lang.IllegalAccessException
     * @throws java.lang.reflect.InvocationTargetException
@@ -65,7 +66,8 @@ public final class JavaUtils {
          l = paramsAndTypes.length;
          params = new Object[l / 2];
          paramTypes = new Class[l / 2];
-      } else {
+      }
+      else {
          l = 0;
          params = null;
          paramTypes = null;
@@ -83,7 +85,9 @@ public final class JavaUtils {
     * Pass a null first argument for static methods.
     */
    public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName,
-                                               Object[] params, Class[] paramTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+                                               Object[] params, Class[] paramTypes)
+         throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+         InvocationTargetException {
       Method method = theClass.getDeclaredMethod(methodName, paramTypes);
       Object result;
 
@@ -91,7 +95,8 @@ public final class JavaUtils {
       method.setAccessible(true);
       if (params == null) {
          result = method.invoke(obj);
-      } else {
+      }
+      else {
          result = method.invoke(obj, params);
       }
       method.setAccessible(wasAccessible);
@@ -102,7 +107,8 @@ public final class JavaUtils {
     * Returns a value of a private or protected field. Method of last resort!
     * Pass a null first argument for static fields.
     */
-   public static Object getRestrictedFieldValue(Object obj, Class theClass, String fieldName) throws NoSuchFieldException {
+   public static Object getRestrictedFieldValue(Object obj, Class theClass, String fieldName)
+         throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
       try {
@@ -118,7 +124,8 @@ public final class JavaUtils {
     * last resort!
     * Pass a null first argument for static fields.
     */
-   public static void setRestrictedFieldValue(Object obj, Class theClass, String fieldName, Object value) throws NoSuchFieldException {
+   public static void setRestrictedFieldValue(Object obj, Class theClass, String fieldName,
+                                              Object value) throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
       try {
@@ -170,16 +177,17 @@ public final class JavaUtils {
    }
 
    /**
-    * Find out how much unused memory (in bytes) is still available 
+    * Find out how much unused memory (in bytes) is still available
     * for the JVM to use.
     * On a MacBook Pro this call takes 0.5 usec.
+    *
     * @return amount of unused memory in bytes
     */
    public static long getAvailableUnusedMemory() {
       Runtime r = Runtime.getRuntime();
-      return   r.maxMemory()   // how large the JVM heap can get
-             - r.totalMemory() // current size of heap (<= r.maxMemory())
-             + r.freeMemory(); // how much of currently allocated heap is unused
+      return r.maxMemory()   // how large the JVM heap can get
+            - r.totalMemory() // current size of heap (<= r.maxMemory())
+            + r.freeMemory(); // how much of currently allocated heap is unused
    }
 
    public static String getApplicationDataPath() {
@@ -190,7 +198,8 @@ public final class JavaUtils {
          String os = System.getProperty("os.name").toLowerCase();
          if (os.contains("xp")) {
             return System.getenv("APPDATA") + "/Micro-Manager/";
-         } else { // Assume Vista or newer
+         }
+         else { // Assume Vista or newer
             return System.getenv("LOCALAPPDATA") + "/Micro-Manager/";
          }
       }
@@ -250,30 +259,35 @@ public final class JavaUtils {
    // Copied from http://stackoverflow.com/questions/3336392/java-print-time-of-last-compilation
    public static Date getBuildTime() {
       Date d = null;
-      Class<?> currentClass = new Object() {}.getClass().getEnclosingClass();
+      Class<?> currentClass = new Object() {
+      }.getClass().getEnclosingClass();
       URL resource = currentClass.getResource(currentClass.getSimpleName() + ".class");
       if (resource != null) {
          if (resource.getProtocol().equals("file")) {
             try {
                d = new Date(new File(resource.toURI()).lastModified());
-            } catch (URISyntaxException ignored) { }
-         } else if (resource.getProtocol().equals("jar")) {
+            } catch (URISyntaxException ignored) {
+            }
+         }
+         else if (resource.getProtocol().equals("jar")) {
             String path = resource.getPath();
-            d = new Date(new File(path.substring(5, path.indexOf("!"))).lastModified() );
-         } else if (resource.getProtocol().equals("zip")) {
+            d = new Date(new File(path.substring(5, path.indexOf("!"))).lastModified());
+         }
+         else if (resource.getProtocol().equals("zip")) {
             String path = resource.getPath();
             File jarFileOnDisk = new File(path.substring(0, path.indexOf("!")));
             //long jfodLastModifiedLong = jarFileOnDisk.lastModified ();
             //Date jfodLasModifiedDate = new Date(jfodLastModifiedLong);
             try {
-               JarFile jf = new JarFile (jarFileOnDisk);
-               ZipEntry ze = jf.getEntry (path.substring(path.indexOf("!") + 2))
-;//Skip the ! and the /
-               long zeTimeLong = ze.getTime ();
+               JarFile jf = new JarFile(jarFileOnDisk);
+               ZipEntry ze =
+                     jf.getEntry(path.substring(path.indexOf("!") + 2));//Skip the ! and the /
+               long zeTimeLong = ze.getTime();
                Date zeTimeDate = new Date(zeTimeLong);
                d = zeTimeDate;
-            } catch (IOException ignored) {}
-            catch (RuntimeException ignored) {}
+            } catch (IOException ignored) {
+            } catch (RuntimeException ignored) {
+            }
          }
       }
       return d;

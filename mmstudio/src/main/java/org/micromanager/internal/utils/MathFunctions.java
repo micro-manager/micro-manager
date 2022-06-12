@@ -19,6 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // CVS:          
+
 package org.micromanager.internal.utils;
 
 import java.awt.geom.AffineTransform;
@@ -43,10 +44,11 @@ public final class MathFunctions {
    /*
     * Creates an AffineTransform object that maps a source planar coordinate system to
     * a destination planar coordinate system. At least three point pairs are needed.
-    * 
+    *
     * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
     */
-   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double, Point2D.Double> pointPairs) {
+   public static AffineTransform generateAffineTransformFromPointPairs(
+         Map<Point2D.Double, Point2D.Double> pointPairs) {
       RealMatrix u = new Array2DRowRealMatrix(pointPairs.size(), 3);
       RealMatrix v = new Array2DRowRealMatrix(pointPairs.size(), 3);
 
@@ -82,7 +84,7 @@ public final class MathFunctions {
     *
     * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
     */
-   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double, 
+   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double,
          Point2D.Double> pointPairs, double srcTol, double destTol) throws Exception {
       AffineTransform transform = generateAffineTransformFromPointPairs(pointPairs);
       double srcDevSqSum = 0;
@@ -128,7 +130,8 @@ public final class MathFunctions {
 
    public static void runAffineTest() {
 
-      Map<Point2D.Double, Point2D.Double> pointPairs = new HashMap<Point2D.Double, Point2D.Double>();
+      Map<Point2D.Double, Point2D.Double> pointPairs =
+            new HashMap<Point2D.Double, Point2D.Double>();
 
 
       // Create sample src and dest points:

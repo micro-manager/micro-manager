@@ -3,4 +3,5 @@
  * EventManager.registerForEvents() method. The EventManager can be accessed
  * via Studio.events().
  */
+
 package org.micromanager.events;

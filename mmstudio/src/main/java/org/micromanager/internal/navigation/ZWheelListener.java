@@ -26,8 +26,8 @@ import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 
 /**
  * Classs that translates changes in the mouse wheel into Z stage movements.
-*/
-public final class ZWheelListener  {
+ */
+public final class ZWheelListener {
    private static final double MOVE_INCREMENT = 0.20;
    private final Studio studio_;
    private final ZNavigator zNavigator_;
@@ -36,7 +36,7 @@ public final class ZWheelListener  {
       studio_ = studio;
       zNavigator_ = zNavigator;
    }
-   
+
 
    /**
     * Receives mouseWheel events from the display manager and moves the z stage.

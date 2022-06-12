@@ -17,9 +17,9 @@ public class DefaultPropertyChangedEvent implements PropertyChangedEvent {
    /**
     * Event signalling that a Property changed its value.
     *
-    * @param device Device to which this property belongs.
+    * @param device   Device to which this property belongs.
     * @param property Name of the Property that changed.
-    * @param value New value of the Property.
+    * @param value    New value of the Property.
     */
    public DefaultPropertyChangedEvent(String device, String property, String value) {
       device_ = device;

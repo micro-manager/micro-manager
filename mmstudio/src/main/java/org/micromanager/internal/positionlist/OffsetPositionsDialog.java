@@ -41,7 +41,7 @@ import org.micromanager.internal.utils.WindowPositioning;
  * PositionListDlg.offsetSelectedSites to adjust positions.
  */
 class OffsetPositionsDialog extends JDialog {
-   
+
    private final PositionListDlg parent_;
    private final CMMCore core_;
    // This panel holds dynamically-generated inputs appropriate to the 
@@ -54,7 +54,7 @@ class OffsetPositionsDialog extends JDialog {
 
    public OffsetPositionsDialog(PositionListDlg parent, CMMCore core) {
       super();
-      
+
       parent_ = parent;
       core_ = core;
       axisInputs_ = new ArrayList<>();
@@ -64,17 +64,17 @@ class OffsetPositionsDialog extends JDialog {
       int parentCenterY = (int) (parent.getY() + 0.5 * parent.getHeight());
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(parentCenterX - 160, parentCenterY - 150, 320, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
-      
+
       setTitle("Add offset to stage positions");
       setResizable(false);
       setModal(true);
       setLayout(new MigLayout("flowx"));
 
       JLabel label = new JLabel("<html><p>Add "
-              + "offsets to the currently-selected stage positions.</p></html>");
+            + "offsets to the currently-selected stage positions.</p></html>");
       label.setPreferredSize(new Dimension(300, 20));
       add(label, "span 4, align center, wrap");
 
@@ -101,7 +101,7 @@ class OffsetPositionsDialog extends JDialog {
 
       axisPanel_ = new JPanel(new MigLayout("flowy"));
       add(axisPanel_, "span 4, align left, wrap");
-      
+
       JButton okButton = new JButton("OK");
       okButton.addActionListener(event -> {
          ArrayList<Float> offsets = new ArrayList<>();
@@ -117,7 +117,7 @@ class OffsetPositionsDialog extends JDialog {
          parent_.offsetSelectedSites(deviceName_, offsets);
          dispose();
       });
-      
+
       getRootPane().setDefaultButton(okButton);
       add(okButton, "tag ok, span 4, split");
 
@@ -153,7 +153,8 @@ class OffsetPositionsDialog extends JDialog {
       if (type == DeviceType.StageDevice) {
          // Dealing with a Z device; only one label.
          axes.add("Z offset:");
-      } else if (type == DeviceType.XYStageDevice) {
+      }
+      else if (type == DeviceType.XYStageDevice) {
          // Two axes.
          axes.add("X offset:");
          axes.add("Y offset:");

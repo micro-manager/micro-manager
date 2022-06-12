@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- *
  * @author Mark A. Tsuchida
  */
 public final class ImagesAndStats {
@@ -29,20 +28,18 @@ public final class ImagesAndStats {
 
 
    public static ImagesAndStats create(long sequenceNumber,
-         ImageStatsRequest input,
-         ImageStats... stats)
-   {
+                                       ImageStatsRequest input,
+                                       ImageStats... stats) {
       return new ImagesAndStats(sequenceNumber, input, stats);
    }
 
    private ImagesAndStats(long sequenceNumber, ImageStatsRequest input,
-         ImageStats... stats)
-   {
+                          ImageStats... stats) {
       this(sequenceNumber, input, input, stats);
    }
 
    private ImagesAndStats(long sequenceNumber, ImageStatsRequest request,
-         ImageStatsRequest originalInput, ImageStats... stats) {
+                          ImageStatsRequest originalInput, ImageStats... stats) {
       statsSequenceNumber_ = sequenceNumber;
       request_ = request;
       originalRequest_ = originalInput;
@@ -51,7 +48,7 @@ public final class ImagesAndStats {
 
    public ImagesAndStats copyForRequest(ImageStatsRequest request) {
       return new ImagesAndStats(statsSequenceNumber_, request, request_,
-            stats_.toArray(new ImageStats[]{}));
+            stats_.toArray(new ImageStats[] {}));
    }
 
    // Return serial number given to real stats (can be used to determine if

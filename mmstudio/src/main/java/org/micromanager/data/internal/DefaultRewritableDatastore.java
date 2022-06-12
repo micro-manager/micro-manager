@@ -34,12 +34,13 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public final class DefaultRewritableDatastore extends DefaultDatastore implements RewritableDatastore {
+public final class DefaultRewritableDatastore extends DefaultDatastore
+      implements RewritableDatastore {
 
    public DefaultRewritableDatastore(MMStudio mmStudio) {
       super(mmStudio);
    }
-   
+
    @Override
    public void setStorage(Storage storage) {
       if (!(storage instanceof RewritableStorage)) {
@@ -60,8 +61,7 @@ public final class DefaultRewritableDatastore extends DefaultDatastore implement
    public void putImage(Image image) throws IOException {
       try {
          super.putImage(image);
-      }
-      catch (DatastoreRewriteException e) {
+      } catch (DatastoreRewriteException e) {
          Image oldImage;
          oldImage = storage_.getImage(image.getCoords());
          // We call the storage's method directly instead of using our
@@ -70,10 +70,10 @@ public final class DefaultRewritableDatastore extends DefaultDatastore implement
          try {
             super.putImage(image);
             bus_.post(new DefaultImageOverwrittenEvent(image, oldImage, this));
-         }
-         catch (DatastoreRewriteException e2) {
+         } catch (DatastoreRewriteException e2) {
             // This should never happen.
-            ReportingUtils.logError(e2, "Unable to insert image after having cleared space for it.");
+            ReportingUtils
+                  .logError(e2, "Unable to insert image after having cleared space for it.");
          }
       }
 

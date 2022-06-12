@@ -20,6 +20,26 @@
 
 package org.micromanager.data.internal;
 
+import static org.micromanager.data.internal.PropertyKey.AXIS_ORDER;
+import static org.micromanager.data.internal.PropertyKey.CHANNEL_GROUP;
+import static org.micromanager.data.internal.PropertyKey.CHANNEL_NAMES;
+import static org.micromanager.data.internal.PropertyKey.COMPUTER_NAME;
+import static org.micromanager.data.internal.PropertyKey.CUSTOM_INTERVALS_MS;
+import static org.micromanager.data.internal.PropertyKey.DIRECTORY;
+import static org.micromanager.data.internal.PropertyKey.INTENDED_DIMENSIONS;
+import static org.micromanager.data.internal.PropertyKey.INTERVAL_MS;
+import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS;
+import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_SLICES;
+import static org.micromanager.data.internal.PropertyKey.METADATA_VERSION;
+import static org.micromanager.data.internal.PropertyKey.MICRO_MANAGER_VERSION;
+import static org.micromanager.data.internal.PropertyKey.PREFIX;
+import static org.micromanager.data.internal.PropertyKey.PROFILE_NAME;
+import static org.micromanager.data.internal.PropertyKey.STAGE_POSITIONS;
+import static org.micromanager.data.internal.PropertyKey.START_TIME;
+import static org.micromanager.data.internal.PropertyKey.USER_DATA;
+import static org.micromanager.data.internal.PropertyKey.USER_NAME;
+import static org.micromanager.data.internal.PropertyKey.Z_STEP_UM;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -33,7 +53,6 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
 import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
-import static org.micromanager.data.internal.PropertyKey.*;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -59,10 +78,8 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
       try {
          b.computerName(InetAddress.getLocalHost().getHostName());
-      }
-      catch (UnknownHostException e) {
-      }
-      catch (Exception e) {
+      } catch (UnknownHostException e) {
+      } catch (Exception e) {
          // Apple Java 6 might throw other exceptions when there is no network
          // interface.
       }
@@ -83,10 +100,10 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          }
          b_ = PropertyMaps.builder().
                putString(MICRO_MANAGER_VERSION.key(), version).
-               putString(METADATA_VERSION.key(), CURRENT_METADATA_VERSION). 
-                 // TODO: we should not depend on the defaults provided here
-                 // Many bugs manifest themselves if this field is not set
-               putStringList(AXIS_ORDER.key(), Coords.C, Coords.T, Coords.Z, Coords.P);
+               putString(METADATA_VERSION.key(), CURRENT_METADATA_VERSION).
+               // TODO: we should not depend on the defaults provided here
+               // Many bugs manifest themselves if this field is not set
+                     putStringList(AXIS_ORDER.key(), Coords.C, Coords.T, Coords.Z, Coords.P);
       }
 
       private Builder(PropertyMap toCopy) {
@@ -191,7 +208,8 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
       @Override
       public Builder intendedDimensions(Coords intendedDimensions) {
-         b_.putPropertyMap(INTENDED_DIMENSIONS.key(), ((DefaultCoords) intendedDimensions).toPropertyMap());
+         b_.putPropertyMap(INTENDED_DIMENSIONS.key(),
+               ((DefaultCoords) intendedDimensions).toPropertyMap());
          return this;
       }
 
@@ -266,7 +284,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          getUserData();
       } catch (Exception ex) {
          ReportingUtils.showError(ex,
-                 "Encountered an error reading metadata.  Please report (Help > Report a Problem)");
+               "Encountered an error reading metadata.  Please report (Help > Report a Problem)");
       }
    }
 
@@ -365,11 +383,10 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    /**
-    * 
     * @return Array with axes used in this data set in desired order
     * @deprecated use getOrderedAxes instead
     */
-   
+
    @Override
    @Deprecated
    public String[] getAxisOrder() {

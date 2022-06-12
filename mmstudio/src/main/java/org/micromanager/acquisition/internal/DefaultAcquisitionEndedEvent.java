@@ -20,18 +20,19 @@
 
 package org.micromanager.acquisition.internal;
 
-import org.micromanager.data.Datastore;
 import org.micromanager.acquisition.AcquisitionEndedEvent;
+import org.micromanager.data.Datastore;
 
 /**
  * This event signifies that an acquisition has been ended.
- *
+ * <p>
  * This default implementation of this event is posted on the studio event bus,
  * i.e. subscribe to this event using {@link org.micromanager.events.EventManager}
  */
 public final class DefaultAcquisitionEndedEvent implements AcquisitionEndedEvent {
    private Datastore store_;
    private Object source_;
+
    public DefaultAcquisitionEndedEvent(Datastore store, Object source) {
       store_ = store;
       source_ = source;

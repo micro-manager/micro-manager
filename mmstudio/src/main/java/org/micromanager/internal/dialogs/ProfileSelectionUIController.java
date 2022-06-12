@@ -44,7 +44,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
@@ -78,8 +77,8 @@ public final class ProfileSelectionUIController
    private final JMenuItem gearMenuRenameProfileItem_ =
          new JMenuItem("Rename Profile...");
    private final JMenuItem gearMenuDeleteProfileItem_ =
-         new JMenuItem("Delete User Profile..."); 
-   private final JCheckBoxMenuItem gearMenuReadOnlyCheckBox_ = 
+         new JMenuItem("Delete User Profile...");
+   private final JCheckBoxMenuItem gearMenuReadOnlyCheckBox_ =
          new JCheckBoxMenuItem("Profile Read Only");
 
    private static class ProfileComboItem {
@@ -118,7 +117,8 @@ public final class ProfileSelectionUIController
          if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
             if (ret.panel_.isShowing()) {
                ret.uiWasShown();
-            } else {
+            }
+            else {
                ret.uiWasHidden();
             }
          }
@@ -169,18 +169,18 @@ public final class ProfileSelectionUIController
          ReportingUtils.logError(e, "Error getting profile index");
          return;
       }
-    
+
       // Sort profiles by name
       Ordering<UUID> valueComparator = Ordering
             .from(String.CASE_INSENSITIVE_ORDER)
             .onResultOf(Functions.forMap(profiles));
       Map<UUID, String> sortedProfiles = ImmutableSortedMap.copyOf(profiles, valueComparator);
-    
+
       // Default profile first
       UUID defaultUUID = admin_.getUUIDOfDefaultProfile();
       profileComboBox_.addItem(new ProfileComboItem(defaultUUID, profiles.get(
             defaultUUID)));
-      
+
       // Remainder in sorted order
       for (Map.Entry<UUID, String> e : sortedProfiles.entrySet()) {
          if (defaultUUID.equals(e.getKey())) {
@@ -206,7 +206,7 @@ public final class ProfileSelectionUIController
 
    private void setSelectedProfileUUID(UUID uuid) {
       for (int i = 0; i < profileComboBox_.getItemCount(); ++i) {
-         ProfileComboItem item =  profileComboBox_.getItemAt(i);
+         ProfileComboItem item = profileComboBox_.getItemAt(i);
          if (item.getUUID().equals(uuid)) {
             profileComboBox_.setSelectedIndex(i);
             break;
@@ -226,15 +226,20 @@ public final class ProfileSelectionUIController
    public void actionPerformed(ActionEvent event) {
       if (event.getSource() == profileComboBox_) {
          handleProfileSelection();
-      } else if (event.getSource() == gearMenuNewProfileItem_) {
+      }
+      else if (event.getSource() == gearMenuNewProfileItem_) {
          handleNewProfile();
-      } else if (event.getSource() == gearMenuDuplicateProfileItem_) {
+      }
+      else if (event.getSource() == gearMenuDuplicateProfileItem_) {
          handleDuplicateProfile();
-      } else if (event.getSource() == gearMenuRenameProfileItem_) {
+      }
+      else if (event.getSource() == gearMenuRenameProfileItem_) {
          handleRenameProfile();
-      } else if (event.getSource() == gearMenuDeleteProfileItem_) {
+      }
+      else if (event.getSource() == gearMenuDeleteProfileItem_) {
          handleDeleteProfile();
-      } else if (event.getSource() == gearMenuReadOnlyCheckBox_) {
+      }
+      else if (event.getSource() == gearMenuReadOnlyCheckBox_) {
          handleReadOnlyAction();
       }
    }
@@ -244,10 +249,11 @@ public final class ProfileSelectionUIController
       if (uuid != null) {
          try {
             admin_.setProfileReadOnly(gearMenuReadOnlyCheckBox_.isSelected());
-         } catch (IOException e) { }
+         } catch (IOException e) {
+         }
       }
    }
-   
+
    private void handleProfileSelection() {
       try {
          UUID uuid = getSelectedProfileUUID();

@@ -28,12 +28,11 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 
-
 public final class CalibrationList {
    private final ArrayList<Calibration> calibrationList_;
    private String label_;
    private final CMMCore core_;
-   
+
    public CalibrationList(final CMMCore core) {
       calibrationList_ = new ArrayList<>();
       label_ = "Undefined";
@@ -56,10 +55,10 @@ public final class CalibrationList {
          }
       }
    }
-   
+
    /**
     * @return index of active calibration in the list or null if not found
-    *         or an error occurred
+    * or an error occurred
     */
    public Integer getActiveCalibration() {
       try {
@@ -72,10 +71,10 @@ public final class CalibrationList {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-      
+
       return null;
    }
-   
+
    /**
     * Add one Calibration to the list.
     *
@@ -84,7 +83,7 @@ public final class CalibrationList {
    public void add(Calibration cl) {
       calibrationList_.add(cl);
    }
-   
+
    /**
     * Number of calibrations.
     *
@@ -93,7 +92,7 @@ public final class CalibrationList {
    public int size() {
       return calibrationList_.size();
    }
-   
+
    /**
     * Returns calibration  based on index.
     *

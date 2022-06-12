@@ -47,7 +47,8 @@ public final class AcquisitionSelector {
    public static JComponent makeSelector(Studio studio) {
       // This requires access to non-API methods.
       DefaultPluginManager pluginMan = (DefaultPluginManager) studio.plugins();
-      final HashMap<String, AcquisitionDialogPlugin> plugins = pluginMan.getAcquisitionDialogPlugins();
+      final HashMap<String, AcquisitionDialogPlugin> plugins =
+            pluginMan.getAcquisitionDialogPlugins();
       final JButton button = new JButton();
       button.setMargin(new Insets(0, 0, 0, 0));
       button.setFont(GUIUtils.buttonFont);
@@ -82,8 +83,8 @@ public final class AcquisitionSelector {
     * Show a popup menu allowing the user to select which plugin to run.
     */
    private static void showPopupMenu(JComponent parent,
-         final HashMap<String, AcquisitionDialogPlugin> plugins,
-         MouseEvent event) {
+                                     final HashMap<String, AcquisitionDialogPlugin> plugins,
+                                     MouseEvent event) {
       JPopupMenu menu = new JPopupMenu();
       ArrayList<String> names = new ArrayList<>(plugins.keySet());
       Collections.sort(names);
@@ -103,21 +104,24 @@ public final class AcquisitionSelector {
     */
    private static class PluginRenderer extends JLabel implements ListCellRenderer {
       private final Studio studio_;
+
       public PluginRenderer(Studio studio) {
          super();
          studio_ = studio;
          super.setOpaque(true);
       }
+
       @Override
       public Component getListCellRendererComponent(JList list,
-            Object value, int index, boolean isSelected, boolean hasFocus) {
+                                                    Object value, int index, boolean isSelected,
+                                                    boolean hasFocus) {
          JLabel label = (JLabel) value;
          setText(label.getText());
          setIcon(label.getIcon());
          setFont(label.getFont());
          // TODO this color is wrong in daytime mode.
-         setBackground(isSelected ? studio_.app().skin().getLightBackgroundColor() : 
-                 studio_.app().skin().getBackgroundColor());
+         setBackground(isSelected ? studio_.app().skin().getLightBackgroundColor() :
+               studio_.app().skin().getBackgroundColor());
          return this;
       }
    }

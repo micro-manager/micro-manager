@@ -37,7 +37,7 @@ class AxisTableModel extends AbstractTableModel {
          "Use",
          "Stage name"
    };
-  
+
    public AxisTableModel(AxisList list, JTable table, EventBus bus) {
       axisList_ = list;
       axisTable_ = table;
@@ -71,22 +71,23 @@ class AxisTableModel extends AbstractTableModel {
       if (aD != null) {
          if (columnIndex == 0) {
             return aD.getUse();
-         } else if (columnIndex == 1) {
+         }
+         else if (columnIndex == 1) {
             return aD.getAxisName();
          }
       }
       return null;
    }
-   
+
    @Override
    public Class<?> getColumnClass(int c) {
       return getValueAt(0, c).getClass();
    }
-   
+
    public void setEditable(boolean state) {
       isEditable_ = state;
    }
-   
+
    @Override
    public boolean isCellEditable(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
@@ -94,7 +95,7 @@ class AxisTableModel extends AbstractTableModel {
       }
       return false;
    }
-   
+
    @Override
    public void setValueAt(Object value, int rowIndex, int columnIndex) {
       if (columnIndex == 0) { // i.e. action was in the column with checkboxes
@@ -102,7 +103,7 @@ class AxisTableModel extends AbstractTableModel {
          // store new choice to profile
          MMStudio.getInstance().profile().getSettings(AxisTableModel.class)
                .putBoolean(axisList_.get(rowIndex).getAxisName(),
-                            (Boolean) value);
+                     (Boolean) value);
          bus_.post(new MoversChangedEvent());
       }
       fireTableCellUpdated(rowIndex, columnIndex);

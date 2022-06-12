@@ -99,7 +99,7 @@ public final class ProblemReport {
     * If there are any errors writing to storageDirectory, they are silently
     * ignored (and the report will behave as if it were non-persistent).
     *
-    * @param core the Core.
+    * @param core             the Core.
     * @param storageDirectory where to save the report data.
     */
    public static ProblemReport newPersistentReport(CMMCore core,
@@ -191,7 +191,8 @@ public final class ProblemReport {
                ReportingUtils.logError(dealWithLater);
             }
          }
-      } else {
+      }
+      else {
          try {
             logFile = File.createTempFile("MMCoreLogCapture", ".txt");
          } catch (IOException dealWithLater) {
@@ -200,7 +201,7 @@ public final class ProblemReport {
       }
       if (logFile == null || !logFile.canWrite()) {
          capturedLogContent_ =
-            "<<<Cannot write to temporary file for log capture>>>";
+               "<<<Cannot write to temporary file for log capture>>>";
          return;
       }
       String filename = logFile.getAbsolutePath();
@@ -439,7 +440,7 @@ public final class ProblemReport {
          if (!readmeFile.isFile()) {
             String readme =
                   "This directory contains an in-progress (or crashed) \n"
-                  + "Micro-Manager Problem Report. It is safe to delete.";
+                        + "Micro-Manager Problem Report. It is safe to delete.";
             writeTextFile(readmeFile, readme);
          }
       }
@@ -462,16 +463,18 @@ public final class ProblemReport {
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
       class MyDateSerializer implements JsonSerializer<Date> {
-         @Override public JsonElement serialize(Date src,
-               Type srcType,
-               JsonSerializationContext context) {
+         @Override
+         public JsonElement serialize(Date src,
+                                      Type srcType,
+                                      JsonSerializationContext context) {
             return new JsonPrimitive(format.format(src));
          }
       }
 
       class MyDateDeserializer implements JsonDeserializer<Date> {
-         @Override public Date deserialize(JsonElement json, Type dstType,
-               JsonDeserializationContext context) throws JsonParseException {
+         @Override
+         public Date deserialize(JsonElement json, Type dstType,
+                                 JsonDeserializationContext context) throws JsonParseException {
             try {
                return format.parse(json.getAsJsonPrimitive().getAsString());
             } catch (java.text.ParseException e) {
@@ -493,7 +496,8 @@ public final class ProblemReport {
 
       if (deferredSyncTimer_ == null) {
          TimerTask task = new TimerTask() {
-            @Override public void run() {
+            @Override
+            public void run() {
                syncMetadata();
             }
          };
@@ -534,7 +538,8 @@ public final class ProblemReport {
          syncMetadata();
          writeTextFile(new File(reportDir_, START_CFG_FILENAME),
                startCfg_.getContent());
-      } else if (metadata_.startCfgFilename != null) {
+      }
+      else if (metadata_.startCfgFilename != null) {
          new File(reportDir_, START_CFG_FILENAME).delete();
          metadata_.startCfgFilename = null;
       }
@@ -551,7 +556,8 @@ public final class ProblemReport {
          syncMetadata();
          writeTextFile(new File(reportDir_, END_CFG_FILENAME),
                endCfg_.getContent());
-      } else if (metadata_.endCfgFilename != null) {
+      }
+      else if (metadata_.endCfgFilename != null) {
          new File(reportDir_, END_CFG_FILENAME).delete();
          metadata_.endCfgFilename = null;
       }
@@ -599,7 +605,8 @@ public final class ProblemReport {
       File logDir;
       if (metadata_.currentDir != null) {
          logDir = new File(metadata_.currentDir);
-      } else {
+      }
+      else {
          // Try the current current directory, in case we get lucky.
          logDir = new File(System.getProperty("user.dir"));
       }
@@ -631,7 +638,7 @@ public final class ProblemReport {
          this(filename, new File(filename));
       }
 
-      public NamedTextFile(File file) throws IOException  {
+      public NamedTextFile(File file) throws IOException {
          this(file.getAbsolutePath(), file);
       }
 

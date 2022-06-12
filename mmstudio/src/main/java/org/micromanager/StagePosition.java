@@ -65,7 +65,7 @@ public class StagePosition {
     * The stage device label.
     *
     * @deprecated Use {@link #set1DPosition} or {@link #set2DPosition} to set;
-    *             use {@link #getStageDeviceLabel} to access.
+    * use {@link #getStageDeviceLabel} to access.
     */
    @Deprecated
    public String stageName;
@@ -74,8 +74,8 @@ public class StagePosition {
     * The number of stage axes. Must be 1 or 2.
     *
     * @deprecated Use {@link #set1DPosition} or {@link #set2DPosition} to set;
-    *             use {@link #getNumberOfStageAxes}, {@link #is1DStagePosition}, or
-    *             {@link #is2DStagePosition} to access.
+    * use {@link #getNumberOfStageAxes}, {@link #is1DStagePosition}, or
+    * {@link #is2DStagePosition} to access.
     */
    @Deprecated
    public int numAxes;
@@ -84,7 +84,7 @@ public class StagePosition {
     * Creates a new StapePosition for a 1 axis drive.
     *
     * @param stageDeviceLabel name of the stage/drive
-    * @param z position
+    * @param z                position
     * @return StagePosition object based on the input
     */
    public static StagePosition create1D(String stageDeviceLabel, double z) {
@@ -97,12 +97,12 @@ public class StagePosition {
     * Creates a new StapePosition for a 2 axis drive.
     *
     * @param stageDeviceLabel name of the stage/drive
-    * @param x position-x
-    * @param y position-y
+    * @param x                position-x
+    * @param y                position-y
     * @return StagePosition object based on the input
     */
    public static StagePosition create2D(String stageDeviceLabel,
-         double x, double y) {
+                                        double x, double y) {
       StagePosition ret = new StagePosition();
       ret.set2DPosition(stageDeviceLabel, x, y);
       return ret;
@@ -142,8 +142,8 @@ public class StagePosition {
     * Sets the position of an XY stage device in this StagePosition instance.
     *
     * @param stageDeviceLabel String identifying the stage
-    * @param x New x position
-    * @param y New Y position
+    * @param x                New x position
+    * @param y                New Y position
     */
    public void set2DPosition(String stageDeviceLabel, double x, double y) {
       stageName = stageDeviceLabel;
@@ -157,7 +157,7 @@ public class StagePosition {
     * Sets the position of a stage device in this StagePosition instance.
     *
     * @param stageDeviceLabel String identifying the stage
-    * @param z New position
+    * @param z                New position
     */
    public void set1DPosition(String stageDeviceLabel, double z) {
       stageName = stageDeviceLabel;
@@ -202,10 +202,12 @@ public class StagePosition {
    public String getVerbose() {
       if (numAxes == 1) {
          return stageName + "(" + NumberUtils.doubleToDisplayString(x) + ")";
-      } else if (numAxes == 2) {
+      }
+      else if (numAxes == 2) {
          return stageName + "(" + NumberUtils.doubleToDisplayString(x)
                + "," + NumberUtils.doubleToDisplayString(y) + ")";
-      } else {
+      }
+      else {
          return stageName + "(" + NumberUtils.doubleToDisplayString(x)
                + "," + NumberUtils.doubleToDisplayString(y)
                + "," + NumberUtils.doubleToDisplayString(z) + ")";

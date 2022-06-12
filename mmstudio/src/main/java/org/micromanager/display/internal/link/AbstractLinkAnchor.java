@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.link;
 
 import com.google.common.base.Preconditions;
@@ -17,13 +18,16 @@ import org.micromanager.display.internal.link.internal.LinkEndpoint;
 public abstract class AbstractLinkAnchor<T> implements LinkAnchor<T> {
    private LinkEndpoint endpoint_;
 
-   /** Used by the framework; user code should not call. */
+   /**
+    * Used by the framework; user code should not call.
+    */
    public void setInternalEndpoint(LinkEndpoint endpoint) {
       endpoint_ = endpoint;
    }
 
    /**
     * Notify the linked peers that the linked value has changed.
+    *
     * @param value
     */
    protected final synchronized void propagateValue(T value) {

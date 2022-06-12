@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.imagestats;
 
 import java.util.ArrayList;
@@ -10,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- *
  * @author mark
  */
 public class ImageStats {

@@ -26,7 +26,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Mark A. Tsuchida
  */
 public final class ThreadFactoryFactory {
-   private ThreadFactoryFactory() {}
+   private ThreadFactoryFactory() {
+   }
 
    public static ThreadFactory createThreadFactory(final String poolName) {
       return new Factory(poolName);

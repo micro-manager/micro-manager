@@ -23,4 +23,5 @@ package org.micromanager.quickaccess.internal;
  * This event signifies that a new Quick Access Panel has been created or
  * destroyed.
  */
-public final class QuickAccessPanelEvent {}
+public final class QuickAccessPanelEvent {
+}

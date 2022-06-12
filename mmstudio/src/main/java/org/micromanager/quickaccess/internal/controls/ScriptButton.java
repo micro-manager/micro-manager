@@ -106,7 +106,7 @@ public final class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
          public void actionPerformed(ActionEvent event) {
             if (!file.exists()) {
                studio_.logs().showError("Unable to find script file at " +
-                  file.getAbsolutePath());
+                     file.getAbsolutePath());
             }
             else {
                studio_.scripter().runFile(file);
@@ -124,6 +124,6 @@ public final class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
          return null;
       }
       return PropertyMaps.builder().putString("scriptPath",
-              file.getAbsolutePath()).build();
+            file.getAbsolutePath()).build();
    }
 }

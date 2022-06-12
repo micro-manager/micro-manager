@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.link.internal;
 
 import com.google.common.base.Preconditions;
@@ -16,7 +17,6 @@ import org.micromanager.display.internal.link.LinkAnchor;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 
 /**
- *
  * @author Mark A. Tsuchida
  * @author based on original link framework by Chris Weisiger
  */
@@ -213,8 +213,7 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
 
    @Override
    public synchronized void linkageDidTransferEndpoint(Linkage oldLinkage,
-         Linkage newLinkage)
-   {
+                                                       Linkage newLinkage) {
       Preconditions.checkState(linkage_ == oldLinkage);
       linkage_ = newLinkage;
    }

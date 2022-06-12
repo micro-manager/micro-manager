@@ -29,7 +29,6 @@ public interface EventPublisher {
     * annotation. See Guava Event Bus documentation for how this works.
     *
     * @param recipient the object to register
-    *
     * @see #unregisterForEvents
     */
    void registerForEvents(Object recipient);
@@ -38,7 +37,6 @@ public interface EventPublisher {
     * Unregister an object from the viewer event bus.
     *
     * @param recipient the object to unregister
-    *
     * @see #registerForEvents
     */
    void unregisterForEvents(Object recipient);

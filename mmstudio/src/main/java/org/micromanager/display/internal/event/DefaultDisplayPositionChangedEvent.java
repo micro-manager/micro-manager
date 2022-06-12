@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.event;
 
 import org.micromanager.data.Coords;
@@ -12,26 +13,23 @@ import org.micromanager.display.DisplayPositionChangedEvent;
 /**
  * This event posts when the position (i.e., Channel, Time, Position, Slice,
  * possibly other Axes) in the display changed.
- *
+ * <p>
  * This event posts on the DataViewer event bus.
  * Register using {@link DataViewer#registerForEvents(Object)}.
  */
 public class DefaultDisplayPositionChangedEvent
-      implements DisplayPositionChangedEvent
-{
+      implements DisplayPositionChangedEvent {
    private final DataViewer viewer_;
    private final Coords newPosition_;
    private final Coords oldPosition_;
-   
+
    public static DisplayPositionChangedEvent create(DataViewer viewer,
-         Coords oldPosition, Coords newPosition)
-   {
+                                                    Coords oldPosition, Coords newPosition) {
       return new DefaultDisplayPositionChangedEvent(viewer, oldPosition, newPosition);
    }
-   
+
    private DefaultDisplayPositionChangedEvent(DataViewer viewer,
-         Coords oldPosition, Coords newPosition)
-   {
+                                              Coords oldPosition, Coords newPosition) {
       viewer_ = viewer;
       newPosition_ = newPosition;
       oldPosition_ = oldPosition;

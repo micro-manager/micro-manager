@@ -47,7 +47,7 @@ public class MMUIManager {
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
    private ScriptPanel scriptPanel_;
-   private PipelineFrame pipelineFrame_;    
+   private PipelineFrame pipelineFrame_;
    private MMMenuBar mmMenuBar_;
    private MainFrame frame_;
    private final MMStudio studio_;
@@ -62,7 +62,7 @@ public class MMUIManager {
     */
    public MMUIManager(MMStudio studio) {
       studio_ = studio;
-      
+
       //Initialize Tooltips
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
@@ -163,7 +163,7 @@ public class MMUIManager {
       } catch (Exception exc) {
          ReportingUtils.showError(exc,
                "\nAcquisition window failed to open due to invalid or corrupted settings.\n"
-               + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
+                     + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
       }
    }
 
@@ -199,7 +199,7 @@ public class MMUIManager {
 
       if (propertyBrowser_ != null) {
          propertyBrowser_.getToolkit().getSystemEventQueue().postEvent(
-                 new WindowEvent(propertyBrowser_, WindowEvent.WINDOW_CLOSING));
+               new WindowEvent(propertyBrowser_, WindowEvent.WINDOW_CLOSING));
          propertyBrowser_.dispose();
       }
 
@@ -263,8 +263,8 @@ public class MMUIManager {
     * Updates the GUI with the hardware state.
     *
     * @param updateConfigPadStructure Whether or not to update the Config Pad.
-    * @param fromCache When true, use the cache in the core, otherwise, ask
-    *                  the hardware (which will update the cache).
+    * @param fromCache                When true, use the cache in the core, otherwise, ask
+    *                                 the hardware (which will update the cache).
     */
    public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
       ReportingUtils.logMessage("Updating GUI; config pad = "
@@ -326,7 +326,7 @@ public class MMUIManager {
          frame_.configureBinningComboForCamera(studio_.cache().getCameraLabel());
       }
    }
-   
+
    // TODO: This method should be renamed!
    // resetGUIForNewHardwareConfig or something like that.
    // TODO: this method should be automatically invoked when
@@ -342,7 +342,7 @@ public class MMUIManager {
          if (studio_.cache() != null) {
             studio_.cache().refreshValues();
             if (studio_.getAcquisitionEngine() != null) {
-               studio_.getAcquisitionEngine().setZStageDevice(studio_.cache().getZStageLabel());  
+               studio_.getAcquisitionEngine().setZStageDevice(studio_.cache().getZStageLabel());
             }
          }
 
@@ -392,7 +392,7 @@ public class MMUIManager {
     *
     * @return current PositionList.  Handle with care as dangerous things can happen
     * @deprecated Direct access to the PositionList should not be allowed, but
-    *             currently is the only way to modify the StagePositions in the current PositionList
+    * currently is the only way to modify the StagePositions in the current PositionList
     */
    @Deprecated
    public PositionList getPositionList() {

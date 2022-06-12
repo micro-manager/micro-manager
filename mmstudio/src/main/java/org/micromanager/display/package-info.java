@@ -5,4 +5,5 @@
  * Events in this package are specific to a single DisplayWindow, and can
  * be subscribed to via DisplayWindow.registerForEvents().
  */
+
 package org.micromanager.display;

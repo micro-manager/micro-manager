@@ -1,5 +1,3 @@
-
-
 package org.micromanager.internal.utils;
 
 import ij.gui.ImageWindow;

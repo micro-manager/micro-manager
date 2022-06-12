@@ -20,6 +20,14 @@
 
 package org.micromanager.data.internal;
 
+import java.awt.Component;
+import java.awt.Window;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.ProgressMonitor;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import org.micromanager.PropertyMap;
@@ -46,15 +54,6 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-import javax.swing.JOptionPane;
-import javax.swing.ProgressMonitor;
-import java.awt.Component;
-import java.awt.Window;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * This implementation of the DataManager interface provides general utility
  * access to Micro-Manager's data objects.
@@ -63,10 +62,10 @@ public final class DefaultDataManager implements DataManager {
    private static final String CANCEL_OPTION = "Cancel";
    private static final String CONTINUE_OPTION = "Continue";
    private static final String VIRTUAL_OPTION = "Use Virtual";
-   
+
    private final MMStudio studio_;
    private final ImageJConverter ijConverter_;
-   
+
    public DefaultDataManager(MMStudio studio) {
       studio_ = studio;
       ijConverter_ = new DefaultImageJConverter(studio);
@@ -116,18 +115,20 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore createMultipageTIFFDatastore(String directory,
-         boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions)
+                                                 boolean shouldGenerateSeparateMetadata,
+                                                 boolean shouldSplitPositions)
          throws IOException {
       DefaultDatastore result = new DefaultDatastore(studio_);
       result.setStorage(new StorageMultipageTiff(null, result, directory, true,
-               shouldGenerateSeparateMetadata, shouldSplitPositions));
+            shouldGenerateSeparateMetadata, shouldSplitPositions));
       return result;
    }
 
    @Override
    public Datastore createMultipageTIFFDatastore(Datastore storeToCopy,
-         String directory, boolean shouldGenerateSeparateMetadata,
-         boolean shouldSplitPositions) throws IOException {
+                                                 String directory,
+                                                 boolean shouldGenerateSeparateMetadata,
+                                                 boolean shouldSplitPositions) throws IOException {
       throw new UnsupportedOperationException();
    }
 
@@ -141,7 +142,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore createSinglePlaneTIFFSeriesDatastore(Datastore storeToCopy,
-         String directory) throws IOException {
+                                                         String directory) throws IOException {
       throw new UnsupportedOperationException();
    }
 
@@ -164,8 +165,7 @@ public final class DefaultDataManager implements DataManager {
                String[] fields = item.split("_");
                maxSuffix = Math.max(maxSuffix,
                      Integer.parseInt(fields[fields.length - 1]));
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                // No suffix available to use.
             }
          }
@@ -187,14 +187,15 @@ public final class DefaultDataManager implements DataManager {
       }
       return loadData(parent, file.getPath(), isVirtual);
    }
-   
-    @Override
+
+   @Override
    public Datastore loadData(String directory, boolean isVirtual) throws IOException {
       return loadData(null, directory, isVirtual);
    }
 
    @Override
-   public Datastore loadData(Component parent, String directory, boolean isVirtual) throws IOException {
+   public Datastore loadData(Component parent, String directory, boolean isVirtual)
+         throws IOException {
       // If the user selected a TIFF file, select the directory the file is
       // in.
       File dirFile = new File(directory);
@@ -211,7 +212,7 @@ public final class DefaultDataManager implements DataManager {
       }
       else {
          result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
-                  false));
+               false));
       }
       if (!isVirtual) {
          // Check for available RAM. I'm fairly certain that we should only
@@ -222,11 +223,11 @@ public final class DefaultDataManager implements DataManager {
          // an overflow situation before converting to (signed) long in the
          // assignment.
          long bytes = ((long) result.getNumImages()) * image.getWidth() *
-            image.getHeight() * image.getBytesPerPixel();
+               image.getHeight() * image.getBytesPerPixel();
          if (bytes > JavaUtils.getAvailableUnusedMemory() * 0.9) {
             // Allow the user to back out of loading to RAM.
             String[] options = new String[] {CONTINUE_OPTION, CANCEL_OPTION,
-               VIRTUAL_OPTION};
+                  VIRTUAL_OPTION};
             int selection = JOptionPane.showOptionDialog(null,
                   "There may not be enough memory to load this data into RAM. Continue anyway, or open as a virtual dataset?",
                   "Insufficient Memory Warning", 0,
@@ -246,19 +247,17 @@ public final class DefaultDataManager implements DataManager {
          DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
          try {
             tmp.copyFrom(result, monitor);
-         }
-         catch (UserCancelledException uce) {
+         } catch (UserCancelledException uce) {
             // HACK: to not add an exception to the api, add a message to the 
             // exception that is in the api.  It would be much better to 
             // extend the api....
-            throw new IOException ("User Canceled");
-         }
-         catch (OutOfMemoryError e) {
+            throw new IOException("User Canceled");
+         } catch (OutOfMemoryError e) {
             // Unable to allocate enough direct memory for our images.
-            ReportingUtils.showError("Insufficient memory to open dataset. Try opening in virtual mode instead.");
+            ReportingUtils.showError(
+                  "Insufficient memory to open dataset. Try opening in virtual mode instead.");
             return null;
-         }
-         finally {
+         } finally {
             result.close();
             result = tmp;
             monitor.close();
@@ -280,11 +279,14 @@ public final class DefaultDataManager implements DataManager {
       Object pixelClone;
       if (pixels instanceof byte[]) {
          pixelClone = ((byte[]) pixels).clone();
-      } else if (pixels instanceof short[]) {
+      }
+      else if (pixels instanceof short[]) {
          pixelClone = ((short[]) pixels).clone();
-      } else if (pixels instanceof int[]) {
+      }
+      else if (pixels instanceof int[]) {
          pixelClone = ((int[]) pixels).clone();
-      } else {
+      }
+      else {
          throw new IllegalArgumentException("Pixel type is not supported.  It could not be cloned");
       }
       return new DefaultImage(pixelClone, width, height, bytesPerPixel,
@@ -293,9 +295,9 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Image wrapImage(Object pixels, int width, int height, int bytesPerPixel,
-                             int numComponents, Coords coords, Metadata metadata) {
+                          int numComponents, Coords coords, Metadata metadata) {
       return new DefaultImage(pixels, width, height, bytesPerPixel,
-              numComponents, coords, metadata);
+            numComponents, coords, metadata);
    }
 
    @Override
@@ -305,7 +307,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Image convertTaggedImage(TaggedImage tagged, Coords coords,
-         Metadata metadata) throws JSONException {
+                                   Metadata metadata) throws JSONException {
       return new DefaultImage(tagged, coords, metadata);
    }
 
@@ -345,7 +347,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Pipeline createPipeline(List<ProcessorFactory> factories,
-         Datastore store, boolean isSynchronous) {
+                                  Datastore store, boolean isSynchronous) {
       ArrayList<Processor> processors = new ArrayList<>();
       for (ProcessorFactory factory : factories) {
          processors.add(factory.createProcessor());
@@ -355,7 +357,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Pipeline copyApplicationPipeline(Datastore store,
-         boolean isSynchronous) {
+                                           boolean isSynchronous) {
       return createPipeline(studio_.uiManager().getPipelineFrame().getPipelineFactories(),
             store, isSynchronous);
    }
@@ -368,22 +370,24 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public List<ProcessorConfigurator> getApplicationPipelineConfigurators(boolean includeDisabled) {
-       if (includeDisabled) {
-        return studio_.uiManager().getPipelineFrame().getPipelineConfigurators();
-       } else {
-           return studio_.uiManager().getPipelineFrame().getEnabledPipelineConfigurators();
-       }
+      if (includeDisabled) {
+         return studio_.uiManager().getPipelineFrame().getPipelineConfigurators();
+      }
+      else {
+         return studio_.uiManager().getPipelineFrame().getEnabledPipelineConfigurators();
+      }
    }
-   
-     @Override
-    public List<ProcessorConfigurator> getLivePipelineConfigurators(boolean includeDisabled) {
-        if (includeDisabled) {
-            return studio_.uiManager().getPipelineFrame().getPipelineConfigurators();
-        } else {
-           return studio_.uiManager().getPipelineFrame().getEnabledLivePipelineConfigurators();
-        }
-    }
-    
+
+   @Override
+   public List<ProcessorConfigurator> getLivePipelineConfigurators(boolean includeDisabled) {
+      if (includeDisabled) {
+         return studio_.uiManager().getPipelineFrame().getPipelineConfigurators();
+      }
+      else {
+         return studio_.uiManager().getPipelineFrame().getEnabledLivePipelineConfigurators();
+      }
+   }
+
 
    @Override
    public void clearPipeline() {
@@ -398,7 +402,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public void addConfiguredProcessor(ProcessorConfigurator config,
-         ProcessorPlugin plugin) {
+                                      ProcessorPlugin plugin) {
       studio_.uiManager().getPipelineFrame().addConfiguredProcessor(config, plugin);
    }
 
@@ -410,25 +414,25 @@ public final class DefaultDataManager implements DataManager {
       }
    }
 
-    @Override
-    public boolean isApplicationPipelineStepEnabled(int index) {
-        return studio_.uiManager().getPipelineFrame().getConfiguratorEnabled(index);
-    }
-    
-    @Override
-    public void setApplicationPipelineStepEnabled(int index, boolean enabled) {
-        studio_.uiManager().getPipelineFrame().setConfiguratorEnabled(index, enabled);
-    }
-    
-    @Override
-    public boolean isLivePipelineStepEnabled(int index) {
-        return studio_.uiManager().getPipelineFrame().getConfiguratorEnabledLive(index);
-    }
-    
-    @Override
-    public void setLivePipelineStepEnabled(int index, boolean enabled) {
-        studio_.uiManager().getPipelineFrame().setConfiguratorEnabledLive(index, enabled);
-    }
+   @Override
+   public boolean isApplicationPipelineStepEnabled(int index) {
+      return studio_.uiManager().getPipelineFrame().getConfiguratorEnabled(index);
+   }
+
+   @Override
+   public void setApplicationPipelineStepEnabled(int index, boolean enabled) {
+      studio_.uiManager().getPipelineFrame().setConfiguratorEnabled(index, enabled);
+   }
+
+   @Override
+   public boolean isLivePipelineStepEnabled(int index) {
+      return studio_.uiManager().getPipelineFrame().getConfiguratorEnabledLive(index);
+   }
+
+   @Override
+   public void setLivePipelineStepEnabled(int index, boolean enabled) {
+      studio_.uiManager().getPipelineFrame().setConfiguratorEnabledLive(index, enabled);
+   }
 
    @Override
    public void notifyPipelineChanged() {

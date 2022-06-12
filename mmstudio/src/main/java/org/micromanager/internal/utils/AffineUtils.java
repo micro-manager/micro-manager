@@ -43,17 +43,17 @@ public class AffineUtils {
       affineTransform.set(4, 1.0);
       return affineTransform;
    }
-   
+
    public static AffineTransform doubleToAffine(DoubleVector atf) {
       if (atf.size() != 6) {
          double[] flatMatrix = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
          return new AffineTransform(flatMatrix);
       }
       double[] flatMatrix = {atf.get(0), atf.get(3), atf.get(1),
-         atf.get(4), atf.get(2), atf.get(5)};
+            atf.get(4), atf.get(2), atf.get(5)};
       return new AffineTransform(flatMatrix);
    }
-   
+
    public static DoubleVector affineToDouble(AffineTransform atf) {
       DoubleVector out = new DoubleVector(6);
       out.set(0, atf.getScaleX());
@@ -64,7 +64,7 @@ public class AffineUtils {
       out.set(5, atf.getTranslateY());
       return out;
    }
-   
+
    /**
     * Convert affine transform to human-interpretable measurements of rotation, scale, and shear.
     *
@@ -83,12 +83,15 @@ public class AffineUtils {
          if (matrix[1] > 0 && matrix[0] >= 0) {
             //first quadrant, make sure angle is positive (in case ts exactly 90 degrees
             angle = Math.abs(angle);
-         } else if (matrix[1] > 0 && matrix[0] < 0) {
+         }
+         else if (matrix[1] > 0 && matrix[0] < 0) {
             //second quadrant
             angle = Math.abs(angle - 2 * (Math.PI / 2 + angle));
-         } else if (matrix[1] <= 0 && matrix[0] >= 0) {
+         }
+         else if (matrix[1] <= 0 && matrix[0] >= 0) {
             //fourth quadrant, do nothing
-         } else {
+         }
+         else {
             //third quadrant, subtract 90 degrees
             angle += 2 * (Math.PI / 2 - angle);
             angle *= -1; //make sure angle is negative
@@ -109,14 +112,14 @@ public class AffineUtils {
          //should now be left with shear transform;
          double shear = at2.getShearX();
          double rotationDeg = angle / Math.PI * 180.0;
-         return new double[]{xScale, yScale, rotationDeg, shear};
+         return new double[] {xScale, yScale, rotationDeg, shear};
       } catch (NoninvertibleTransformException ex) {
-         return new double[]{0, 0, 0, 0};
+         return new double[] {0, 0, 0, 0};
       }
    }
-   
+
    public static double deducePixelSize(AffineTransform atf) {
       return MathUtils.round(Math.sqrt(Math.abs(atf.getDeterminant())), 4);
    }
-   
+
 }

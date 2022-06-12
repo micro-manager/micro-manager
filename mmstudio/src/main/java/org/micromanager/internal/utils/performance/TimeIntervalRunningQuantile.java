@@ -14,7 +14,6 @@
 package org.micromanager.internal.utils.performance;
 
 /**
- *
  * @author Mark A. Tsuchida
  */
 public class TimeIntervalRunningQuantile implements RunningQuantile {

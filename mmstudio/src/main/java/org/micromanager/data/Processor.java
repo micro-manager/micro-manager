@@ -34,7 +34,7 @@ public interface Processor {
     * SummaryMetadata unmodified.
     *
     * @param source Source SummaryMetadata, as generated from the input to this
-    *        Processor.
+    *               Processor.
     * @return New SummaryMetadata, modified from the source by the Processor.
     */
    default SummaryMetadata processSummaryMetadata(SummaryMetadata source) {
@@ -49,7 +49,7 @@ public interface Processor {
     * projections). However, it is not legal to output Images outside of this
     * function call (e.g. via thread-based systems).
     *
-    * @param image input Image
+    * @param image   input Image
     * @param context ProcessorContext to be used to hand the processed image to
     */
    void processImage(Image image, ProcessorContext context);
@@ -63,5 +63,6 @@ public interface Processor {
     *
     * @param context ProcessorContext that can be used to hand images to
     */
-   default void cleanup(ProcessorContext context) {}
+   default void cleanup(ProcessorContext context) {
+   }
 }

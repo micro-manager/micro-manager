@@ -115,12 +115,12 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
    private final StyleContext styleContext_;
    private Interpreter beanshellREPLint_;
    private JConsole cons_;
-   
+
    public static final FileType BSH_FILE
-           = new FileType("BSH_FILE", "Beanshell files",
-                    System.getProperty("user.home") + "/MyScript.bsh",
-                    true, "bsh");
-   
+         = new FileType("BSH_FILE", "Beanshell files",
+         System.getProperty("user.home") + "/MyScript.bsh",
+         true, "bsh");
+
    private static final String SCRIPT_FILE = "script_file_";
    private static final String RIGHT_DIVIDER_LOCATION = "right_divider_location";
    private static final String DIVIDER_LOCATION = "divider_location";
@@ -145,7 +145,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          scriptFileArray_ = new ArrayList<>();
          lastModArray_ = new ArrayList<>();
       }
-      
+
       public Boolean hasScriptAlready(File f) {
          boolean preExisting = false;
          for (File scriptFile : scriptFileArray_) {
@@ -155,7 +155,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          }
          return preExisting;
       }
-      
+
       public void addScript(File f) {
          if (!hasScriptAlready(f)) {
             scriptFileArray_.add(f);
@@ -238,7 +238,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (rowIndex >= 0 && (isScriptAvailable(rowIndex, columnIndex))) {
             return scriptFileArray_.get((rowIndex * COLUMN_COUNT) + columnIndex).getName();
-         } 
+         }
          return null;
       }
    }
@@ -285,12 +285,13 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
                   } catch (IOException | MMScriptException ee) {
                      ReportingUtils.logError(ee);
                   }
-               } else if (EXT_ACQ.equals(getExtension(file))) {
+               }
+               else if (EXT_ACQ.equals(getExtension(file))) {
                   scriptArea_.setText("mm.loadAcquisition(\"" + file.getAbsolutePath()
                         + "\");\ngui.startAcquisition();");
                   scriptPaneSaved_ = true;
                }
-                  
+
             }
          }
          lastRowSelected_ = row;
@@ -324,7 +325,8 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
                }
             }
             tmpFile.deleteOnExit();
-         } else {
+         }
+         else {
             ReportingUtils.logError("Failed to find Script Panel Beanshell startup script");
          }
       } catch (IOException e) {
@@ -352,16 +354,16 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
    public JConsole getREPLCons() {
       return cons_;
    }
-   
+
    private void readFileToTextArea(File file, RSyntaxTextArea rsa)
-           throws FileNotFoundException,  IOException, MMScriptException {
+         throws FileNotFoundException, IOException, MMScriptException {
       try (FileReader in = new FileReader(file)) {
          rsa.setRows(1);
          rsa.read(in, null);
          rsa.setCaretPosition(0);
       }
    }
-   
+
    /**
     * Create the dialog.
     *
@@ -376,7 +378,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
 
       // Beanshell REPL Console
       createBeanshellREPL();
-      
+
       // Needed when Cancel button is pressed upon save file warning
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -388,7 +390,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
             }
             settings_.putInteger(RIGHT_DIVIDER_LOCATION,
                   rightSplitPane_.getDividerLocation());
-                  settings_.putInteger(DIVIDER_LOCATION, splitPane_.getDividerLocation());
+            settings_.putInteger(DIVIDER_LOCATION, splitPane_.getDividerLocation());
             saveScriptsToPrefs();
             setVisible(false);
          }
@@ -398,17 +400,17 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
 
       interp_ = new BeanshellEngine(this);
       interp_.setInterpreter(beanshellREPLint_);
-      
+
       setTitle("Script Panel");
       setIconImage(Toolkit.getDefaultToolkit().getImage(
-               MMStudio.class.getResource("/org/micromanager/icons/microscope.gif")));
+            MMStudio.class.getResource("/org/micromanager/icons/microscope.gif")));
 
       int buttonHeight = 15;
       final Dimension buttonSize = new Dimension(80, buttonHeight);
-      final  int gap = 5; // determines gap between buttons
+      final int gap = 5; // determines gap between buttons
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 550, 495);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
@@ -444,7 +446,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       spLeft.putConstraint(SpringLayout.NORTH, removeButton, gap, SpringLayout.NORTH, leftPanel);
       spLeft.putConstraint(SpringLayout.WEST, removeButton, gap, SpringLayout.EAST, addButton);
       leftPanel.add(removeButton);
-     
+
 
       final JButton hotkeyButton = new JButton();
       hotkeyButton.setMargin(new Insets(0, 0, 0, 0));
@@ -460,7 +462,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       spLeft.putConstraint(SpringLayout.NORTH, hotkeyButton, gap, SpringLayout.NORTH, leftPanel);
       spLeft.putConstraint(SpringLayout.WEST, hotkeyButton, gap, SpringLayout.EAST, removeButton);
       leftPanel.add(hotkeyButton);
-      
+
       // Scrollpane for shortcut table
       final JScrollPane scrollPane = new JScrollPane();
       leftPanel.add(scrollPane);
@@ -468,13 +470,13 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       spLeft.putConstraint(SpringLayout.SOUTH, scrollPane, -gap, SpringLayout.SOUTH, leftPanel);
       spLeft.putConstraint(SpringLayout.WEST, scrollPane, gap, SpringLayout.WEST, leftPanel);
       spLeft.putConstraint(SpringLayout.NORTH, scrollPane, gap, SpringLayout.SOUTH, removeButton);
- 
-      
+
+
       scriptArea_ = new RSyntaxTextArea(1, 20);
       scriptArea_.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
       scriptArea_.setCodeFoldingEnabled(true);
       scriptArea_.setAutoIndentEnabled(true);
-      
+
       scriptArea_.getDocument().putProperty(PlainDocument.tabSizeAttribute, 3);
       scriptArea_.setBackground(Color.WHITE);
       scriptArea_.getDocument().addDocumentListener(new MyDocumentListener());
@@ -483,23 +485,23 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       scriptArea_.setPreferredSize(new Dimension(800, 300));
       scriptPaneSaved_ = true;
       scriptArea_.setFocusTraversalKeysEnabled(false);
-      
-      
+
+
       sp = new RTextScrollPane(scriptArea_);
       sp.setFocusTraversalKeysEnabled(false);
-      sp.setLineNumbersEnabled(true);     
+      sp.setLineNumbersEnabled(true);
 
       spTopRight.putConstraint(SpringLayout.EAST, sp, 0, SpringLayout.EAST, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.SOUTH, sp, - (buttonHeight + 2 * gap), 
-              SpringLayout.SOUTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.SOUTH, sp, -(buttonHeight + 2 * gap),
+            SpringLayout.SOUTH, topRightPanel);
       spTopRight.putConstraint(SpringLayout.WEST, sp, 0, SpringLayout.WEST, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.NORTH, sp, buttonHeight + 2 * gap, 
-              SpringLayout.NORTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.NORTH, sp, buttonHeight + 2 * gap,
+            SpringLayout.NORTH, topRightPanel);
       topRightPanel.add(sp);
-      
+
 
       bottomRightPanel.add(cons_);
-      
+
       // Immediate Pane (executes single lines of script)
       immediatePane_ = new JTextField();
       immediatePane_.setFont(new Font("Courier New", Font.PLAIN, 12));
@@ -513,7 +515,8 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_KP_UP || e.getKeyCode() == KeyEvent.VK_UP) {
                doImmediatePaneHistoryUp();
-            } else if (e.getKeyCode() == KeyEvent.VK_KP_DOWN
+            }
+            else if (e.getKeyCode() == KeyEvent.VK_KP_DOWN
                   || e.getKeyCode() == KeyEvent.VK_DOWN) {
                doImmediatePaneHistoryDown();
             }
@@ -540,10 +543,10 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
 
       // disable user input to the messagePane
       messagePane_.setKeymap(null);
-          
-      
+
+
       // ----- Pane with script buttons -------//
-      
+
       scriptTable_ = new DaytimeNighttime.Table();
       scriptTable_.setFont(new Font("", Font.PLAIN, 12));
       model_ = new ScriptTableModel();
@@ -560,9 +563,9 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       // catch double clicks
       scriptTable_.addMouseListener(this);
 
-      
+
       // -------- top row of buttons -------- //
-      
+
       runButton_ = new JButton();
       topRightPanel.add(runButton_);
       runButton_.setFont(new Font("", Font.PLAIN, 10));
@@ -573,7 +576,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
             SpringLayout.NORTH, runButton_, gap, SpringLayout.NORTH, topRightPanel);
       spTopRight.putConstraint(
             SpringLayout.WEST, runButton_, gap, SpringLayout.WEST, topRightPanel);
-      
+
       stopButton_ = new JButton();
       topRightPanel.add(stopButton_);
       stopButton_.setFont(new Font("", Font.PLAIN, 10));
@@ -608,7 +611,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
             SpringLayout.NORTH, openButton, gap, SpringLayout.NORTH, topRightPanel);
       spTopRight.putConstraint(
             SpringLayout.WEST, openButton, gap, SpringLayout.EAST, newButton);
-      
+
       final JButton saveButton = new JButton();
       topRightPanel.add(saveButton);
       saveButton.setFont(new Font("", Font.PLAIN, 10));
@@ -619,7 +622,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
             SpringLayout.NORTH, saveButton, gap, SpringLayout.NORTH, topRightPanel);
       spTopRight.putConstraint(
             SpringLayout.WEST, saveButton, gap, SpringLayout.EAST, openButton);
-      
+
       final JButton saveAsButton = new JButton();
       saveAsButton.setMargin(new Insets(0, 0, 0, 0));
       topRightPanel.add(saveAsButton);
@@ -639,7 +642,8 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       helpButton.setFont(new Font("", Font.PLAIN, 10));
       helpButton.addActionListener((ActionEvent e) -> {
          try {
-            ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Version_2.0_Users_Guide#Script_Panel");
+            ij.plugin.BrowserLauncher
+                  .openURL("https://micro-manager.org/wiki/Version_2.0_Users_Guide#Script_Panel");
          } catch (IOException e1) {
             ReportingUtils.showError(e1, scriptPanelFrame);
          }
@@ -654,25 +658,25 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       JLabel fLabel = new JLabel("Find:");
       topRightPanel.add(fLabel);
       fLabel.setFont(new Font("", Font.PLAIN, 10));
-      spTopRight.putConstraint(SpringLayout.SOUTH, fLabel, -gap, 
-              SpringLayout.SOUTH, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.WEST, fLabel, gap, 
-              SpringLayout.WEST, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.SOUTH, fLabel, -gap,
+            SpringLayout.SOUTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.WEST, fLabel, gap,
+            SpringLayout.WEST, topRightPanel);
 
-      
+
       // ---------- Find area --------- //
-      
+
       // Find text field
       final JTextField findTextField = new JTextField(20);
       topRightPanel.add(findTextField);
       findTextField.setFont(new Font("", Font.PLAIN, 10));
-      spTopRight.putConstraint(SpringLayout.SOUTH, findTextField, 0, 
-              SpringLayout.SOUTH, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.WEST, findTextField, gap, 
-              SpringLayout.EAST, fLabel);
+      spTopRight.putConstraint(SpringLayout.SOUTH, findTextField, 0,
+            SpringLayout.SOUTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.WEST, findTextField, gap,
+            SpringLayout.EAST, fLabel);
 
       final SearchContext context = new SearchContext();
-           
+
       // find next Button
       final JButton findButton = new JButton();
       topRightPanel.add(findButton);
@@ -681,10 +685,10 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
             find(context, findTextField.getText(), false));
       findButton.setText("Find Next");
       findButton.setPreferredSize(buttonSize);
-      spTopRight.putConstraint(SpringLayout.SOUTH, findButton, -gap, 
-              SpringLayout.SOUTH, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.WEST, findButton, gap, 
-              SpringLayout.EAST, findTextField);
+      spTopRight.putConstraint(SpringLayout.SOUTH, findButton, -gap,
+            SpringLayout.SOUTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.WEST, findButton, gap,
+            SpringLayout.EAST, findTextField);
 
       // find previous Button
       final JButton findRevButton = new JButton();
@@ -694,17 +698,16 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
             find(context, findTextField.getText(), true));
       findRevButton.setText("Find Previous");
       findRevButton.setPreferredSize(buttonSize);
-      spTopRight.putConstraint(SpringLayout.SOUTH, findRevButton, -gap, 
-              SpringLayout.SOUTH, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.WEST, findRevButton, gap, 
-              SpringLayout.EAST, findButton);
+      spTopRight.putConstraint(SpringLayout.SOUTH, findRevButton, -gap,
+            SpringLayout.SOUTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.WEST, findRevButton, gap,
+            SpringLayout.EAST, findButton);
 
 
-      
       // Set up basic structure
       leftPanel.setMinimumSize(new Dimension(180, 130));
-      rightSplitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
-              topRightPanel, bottomRightPanel);
+      rightSplitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+            topRightPanel, bottomRightPanel);
       rightSplitPane_.setOneTouchExpandable(true);
       int rightDividerLocation = settings_.getInteger(RIGHT_DIVIDER_LOCATION, 200);
       rightSplitPane_.setDividerLocation(rightDividerLocation);
@@ -717,7 +720,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       splitPane_.setResizeWeight(0.0);
 
       getContentPane().add(splitPane_);
-      
+
       // Load the shortcut table based on saved preferences
       getScriptsFromPrefs();
 
@@ -770,14 +773,14 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          scriptPaneSaved_ = false;
       }
    }
- 
-   
+
+
    /**
     * Executes search in script currently shown in scriptArea_.
     *
-    * @param context - SearchContext instance, passed into function so that we 
-    *                   only need a single instance
-    * @param text - Search string
+    * @param context - SearchContext instance, passed into function so that we
+    *                only need a single instance
+    * @param text    - Search string
     * @param reverse - Search backward when true
     */
    private void find(SearchContext context, String text, boolean reverse) {
@@ -794,7 +797,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       if (!found.wasFound()) {
          studio_.logs().showMessage("\"" + text + "\" was not found", this);
       }
-      
+
    }
 
    /**
@@ -810,7 +813,8 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       String message;
       if (scriptFile_ != null) {
          message = "Save changes to " + scriptFile_.getName() + "?";
-      } else {
+      }
+      else {
          message = "Save script?";
       }
       int result = JOptionPane.showConfirmDialog(this,
@@ -820,12 +824,13 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       if (result == JOptionPane.NO_OPTION) {
          // avoid prompting again:
          scriptPaneSaved_ = true;
-      } else {
+      }
+      else {
          saveScript(row);
       }
 
-      return true;                                                           
-   } 
+      return true;
+   }
 
    /**
     * Lets the user select a script file to add to the shortcut table.
@@ -833,12 +838,14 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
    private void addScript() {
       if (scriptFile_ != null && !model_.hasScriptAlready(scriptFile_)) {
          addScriptToModel(scriptFile_);
-      } else if (scriptFile_ == null && ! scriptPaneSaved_) {
+      }
+      else if (scriptFile_ == null && !scriptPaneSaved_) {
          if (!promptToSave(-1)) {
             return;
          }
          addScriptToModel(scriptFile_);
-      } else {
+      }
+      else {
          // check for changes and offer to save if needed
          if (!promptToSave(-1)) {
             return;
@@ -853,7 +860,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          }
       }
    }
-   
+
    private void addScriptToModel(File curFile) {
       model_.addScript(curFile);
       model_.fireTableDataChanged();
@@ -955,7 +962,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       runPane();
       interp_.resetInterpreter();
    }
-   
+
    /**
     * Runs the content of the editor Pane.
     */
@@ -993,7 +1000,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          runButton_.setEnabled(false);
          stopButton_.setText("Interrupt");
          stopButton_.setEnabled(true);
-         
+
          interp_.evaluateAsync(scriptArea_.getText());
 
          // Spawn a thread that waits for the execution thread to exit and then
@@ -1032,7 +1039,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       }
    }
 
-   public static   String getContents(File aFile) {
+   public static String getContents(File aFile) {
       StringBuilder contents = new StringBuilder();
 
       try {
@@ -1040,10 +1047,10 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          //FileReader always assumes default encoding is OK!
          try (BufferedReader input = new BufferedReader(new FileReader(aFile))) {
             /*
-            * readLine is a bit quirky :
-            * it returns the content of a line MINUS the newline.
-            * it returns null only for the END of the stream.
-            * it returns an empty String if two newlines appear in a row.
+             * readLine is a bit quirky :
+             * it returns the content of a line MINUS the newline.
+             * it returns null only for the END of the stream.
+             * it returns an empty String if two newlines appear in a row.
              */
             String line;
             while ((line = input.readLine()) != null) {
@@ -1059,7 +1066,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
    }
 
    /**
-    * Empties the editor Pane and deselects the shortcuts, in effect creating 
+    * Empties the editor Pane and deselects the shortcuts, in effect creating
     * a 'blank' editor pane.
     */
    private void newPane() {
@@ -1069,7 +1076,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       }
 
       int row = scriptTable_.getSelectedRow();
-      int column =  scriptTable_.getSelectedColumn();
+      int column = scriptTable_.getSelectedColumn();
       scriptTable_.changeSelection(row, column, true, false);
       scriptArea_.setText("");
       scriptPaneSaved_ = true;
@@ -1113,7 +1120,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       } catch (EvalError | MMScriptException e) {
          handleException(e);
       }
-   }  
+   }
 
    private void runImmediatePane() {
       try {
@@ -1144,7 +1151,8 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       if (immediatePaneHistoryIndex_ < immediatePaneHistory_.size()) {
          immediatePane_.setText(
                immediatePaneHistory_.get(immediatePaneHistoryIndex_));
-      } else {
+      }
+      else {
          immediatePane_.setText("");
       }
    }
@@ -1169,7 +1177,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
    /**
     * Displays text string in message window in color red.
     *
-    * @param text - text to be displayed
+    * @param text       - text to be displayed
     * @param lineNumber - line to be highlighted in red
     */
    public void messageException(String text, int lineNumber) {
@@ -1197,10 +1205,10 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       } catch (EvalError e) {
          ReportingUtils.logError(e);
          promptStr = "bsh % ";
-      } 
+      }
       cons_.print("\n" + promptStr, studio_.app().skin().getEnabledTextColor());
    }
-   
+
    /**
     * Clears the content of the message window.
     */
@@ -1240,7 +1248,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
             }
          }
          j++;
-      }  while ((script != null) && (!script.equals("")) && isFile);
+      } while ((script != null) && (!script.equals("")) && isFile);
    }
 
 
@@ -1267,19 +1275,19 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       // Add one empty script, so as not to read in stale variables
       settings_.putString(SCRIPT_FILE + scriptFileArray.size(), "");
    }
-   
+
    private void finishUp() {
       if (!promptToSave(-1)) {
          return;
       }
-      settings_.putInteger(RIGHT_DIVIDER_LOCATION, 
-              rightSplitPane_.getDividerLocation());
+      settings_.putInteger(RIGHT_DIVIDER_LOCATION,
+            rightSplitPane_.getDividerLocation());
       settings_.putInteger(DIVIDER_LOCATION,
             splitPane_.getDividerLocation());
       saveScriptsToPrefs();
       setVisible(false);
    }
-   
+
    @Override
    public void dispose() {
       finishUp();
@@ -1291,7 +1299,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       String s = f.getName();
       int i = s.lastIndexOf('.');
 
-      if (i > 0 &&  i < s.length() - 1) {
+      if (i > 0 && i < s.length() - 1) {
          ext = s.substring(i + 1).toLowerCase();
       }
       return ext;
@@ -1300,30 +1308,30 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
    /**
     * MouseListener implementation.
     *
-    * @param  e MouseEvent to listen to
+    * @param e MouseEvent to listen to
     */
    @Override
    public void mouseClicked(MouseEvent e) {
       if (e.getClickCount() >= 2) {
          runPane();
       }
-   }  
-            
-   @Override
-   public void mousePressed(MouseEvent e) { 
    }
-                                                                             
+
    @Override
-   public void mouseReleased(MouseEvent e) {                                 
-   }                                                                         
-                                                                             
+   public void mousePressed(MouseEvent e) {
+   }
+
    @Override
-   public void mouseEntered(MouseEvent e) {                                  
-   }                                                                         
-                                                                             
+   public void mouseReleased(MouseEvent e) {
+   }
+
    @Override
-   public void mouseExited(MouseEvent e) {                                   
-   } 
+   public void mouseEntered(MouseEvent e) {
+   }
+
+   @Override
+   public void mouseExited(MouseEvent e) {
+   }
 
    class ImmediatePaneListener implements ActionListener {
       @Override
@@ -1340,7 +1348,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       String msg_;
       boolean error_ = false;
       int lineNumber_ = -1;
-      
+
       public ExecuteDisplayMessage(String txt, boolean error, int lineNumber) {
          msg_ = txt;
          error_ = error;
@@ -1351,21 +1359,22 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          msg_ = txt;
          error_ = error;
       }
-      
+
       public ExecuteDisplayMessage(String txt) {
          msg_ = txt;
       }
-      
+
       @Override
       public void run() {
          if (error_) {
             messageException(msg_, lineNumber_);
-         } else {
+         }
+         else {
             message(msg_);
          }
       }
    }
-   
+
    public void displayMessage(String message) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(message));
       studio_.logs().logMessage(message);
@@ -1375,7 +1384,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true));
       ReportingUtils.logError(text);
    }
-   
+
    public void displayError(String text, int lineNumber) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true, lineNumber));
       ReportingUtils.logError(text);
@@ -1440,8 +1449,8 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          beanshellREPLint_.setConsole(cons_);
          // this call appears to fail on linux so catch the error that was reported:
       } catch (bsh.InterpreterError bi) {
-         ReportingUtils.logError("Called to Beanshell setConsole failed. Probably inocuous." 
-                 + bi.getMessage());
+         ReportingUtils.logError("Called to Beanshell setConsole failed. Probably inocuous."
+               + bi.getMessage());
       }
 
       initializeInterpreter();

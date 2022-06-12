@@ -31,9 +31,8 @@ import org.micromanager.display.internal.event.DisplayMouseEvent;
  * Implementation of the Center And DragListener that lets the user "drag" the stage.
  *
  * @author OD, nico
- *
  */
-public final class CenterAndDragListener  {
+public final class CenterAndDragListener {
 
    private final Studio studio_;
    private final XYNavigator xyNavigator_;
@@ -44,7 +43,6 @@ public final class CenterAndDragListener  {
       studio_ = studio;
       xyNavigator_ = xyNavigator;
    }
-   
 
 
    /**
@@ -70,8 +68,8 @@ public final class CenterAndDragListener  {
 
                // Calculate the center point of the event
                final Point center = new Point(
-                       location.x + location.width / 2,
-                       location.y + location.height / 2);
+                     location.x + location.width / 2,
+                     location.y + location.height / 2);
 
                // calculate needed relative movement in pixels
                double tmpXPixels = (0.5 * width) - center.x;
@@ -84,8 +82,8 @@ public final class CenterAndDragListener  {
             // record start position for a drag
             // Calculate the center point of the event
             final Point center = new Point(
-                    dme.getLocation().x + dme.getLocation().width / 2,
-                    dme.getLocation().y + dme.getLocation().height / 2);
+                  dme.getLocation().x + dme.getLocation().width / 2,
+                  dme.getLocation().y + dme.getLocation().height / 2);
             lastX_ = center.x;
             lastY_ = center.y;
             break;
@@ -94,8 +92,8 @@ public final class CenterAndDragListener  {
 
             // Get coordinates of event
             final Point center2 = new Point(
-                    dme.getLocation().x + dme.getLocation().width / 2,
-                    dme.getLocation().y + dme.getLocation().height / 2);
+                  dme.getLocation().x + dme.getLocation().width / 2,
+                  dme.getLocation().y + dme.getLocation().height / 2);
 
             // calculate needed relative movement
             double tmpXUm = center2.x - lastX_;

@@ -32,7 +32,6 @@ import org.micromanager.PropertyMap;
 import org.micromanager.internal.utils.ChainedMapView;
 
 /**
- *
  * @author mark
  */
 public final class DefaultPropertyMap implements PropertyMap {
@@ -190,16 +189,17 @@ public final class DefaultPropertyMap implements PropertyMap {
    @Override
    public String getValueAsString(String key, String aDefault) {
       if (map_.containsKey(key)) {
-         
+
          if (containsDoubleList(key) || containsStringList(key)) {
             StringBuilder strb = new StringBuilder();
-            
+
             if (containsDoubleList(key)) {
                double[] doubles = getDoubleList(key);
                for (double d : doubles) {
                   strb.append(d).append(", ");
                }
-            } else if (containsStringList(key)) {
+            }
+            else if (containsStringList(key)) {
                List<String> strList = getStringList(key);
                for (String str : strList) {
                   strb.append(str).append(", ");
@@ -211,7 +211,7 @@ public final class DefaultPropertyMap implements PropertyMap {
             }
             return result;
          }
-         
+
          // not a Double or String List
          return map_.get(key).toString();
       }
@@ -223,143 +223,178 @@ public final class DefaultPropertyMap implements PropertyMap {
 
    // Primitive type contains/get
 
-   @Override public boolean containsBoolean(String key) {
+   @Override
+   public boolean containsBoolean(String key) {
       return containsPrimitiveScalar(key, Primitive.BOOLEAN);
    }
 
-   @Override public boolean getBoolean(String key, boolean aDefault) {
+   @Override
+   public boolean getBoolean(String key, boolean aDefault) {
       return getPrimitiveScalar(key, Primitive.BOOLEAN, aDefault);
    }
 
-   @Override public boolean containsBooleanList(String key) {
+   @Override
+   public boolean containsBooleanList(String key) {
       return containsPrimitiveArray(key, Primitive.BOOLEAN);
    }
 
-   @Override public boolean[] getBooleanList(String key, boolean... defaults) {
+   @Override
+   public boolean[] getBooleanList(String key, boolean... defaults) {
       return getPrimitiveArray(key, Primitive.BOOLEAN, defaults);
    }
 
-   @Override public List<Boolean> getBooleanList(String key, Iterable<Boolean> defaults) {
+   @Override
+   public List<Boolean> getBooleanList(String key, Iterable<Boolean> defaults) {
       return getBoxedList(key, Primitive.BOOLEAN, defaults);
    }
 
-   @Override public boolean containsByte(String key) {
+   @Override
+   public boolean containsByte(String key) {
       return containsPrimitiveScalar(key, Primitive.BYTE);
    }
 
-   @Override public byte getByte(String key, byte aDefault) {
+   @Override
+   public byte getByte(String key, byte aDefault) {
       return getPrimitiveScalar(key, Primitive.BYTE, aDefault);
    }
 
-   @Override public boolean containsByteList(String key) {
+   @Override
+   public boolean containsByteList(String key) {
       return containsPrimitiveArray(key, Primitive.BYTE);
    }
 
-   @Override public byte[] getByteList(String key, byte... defaults) {
+   @Override
+   public byte[] getByteList(String key, byte... defaults) {
       return getPrimitiveArray(key, Primitive.BYTE, defaults);
    }
 
-   @Override public List<Byte> getByteList(String key, Iterable<Byte> defaults) {
+   @Override
+   public List<Byte> getByteList(String key, Iterable<Byte> defaults) {
       return getBoxedList(key, Primitive.BYTE, defaults);
    }
 
-   @Override public boolean containsShort(String key) {
+   @Override
+   public boolean containsShort(String key) {
       return containsPrimitiveScalar(key, Primitive.SHORT);
    }
 
-   @Override public short getShort(String key, short aDefault) {
+   @Override
+   public short getShort(String key, short aDefault) {
       return getPrimitiveScalar(key, Primitive.SHORT, aDefault);
    }
 
-   @Override public boolean containsShortList(String key) {
+   @Override
+   public boolean containsShortList(String key) {
       return containsPrimitiveArray(key, Primitive.SHORT);
    }
 
-   @Override public short[] getShortList(String key, short... defaults) {
+   @Override
+   public short[] getShortList(String key, short... defaults) {
       return getPrimitiveArray(key, Primitive.SHORT, defaults);
    }
 
-   @Override public List<Short> getShortList(String key, Iterable<Short> defaults) {
+   @Override
+   public List<Short> getShortList(String key, Iterable<Short> defaults) {
       return getBoxedList(key, Primitive.SHORT, defaults);
    }
 
-   @Override public boolean containsInteger(String key) {
+   @Override
+   public boolean containsInteger(String key) {
       return containsPrimitiveScalar(key, Primitive.INT);
    }
 
-   @Override public int getInteger(String key, int aDefault) {
+   @Override
+   public int getInteger(String key, int aDefault) {
       return getPrimitiveScalar(key, Primitive.INT, aDefault);
    }
 
-   @Override public boolean containsIntegerList(String key) {
+   @Override
+   public boolean containsIntegerList(String key) {
       return containsPrimitiveArray(key, Primitive.INT);
    }
 
-   @Override public int[] getIntegerList(String key, int... defaults) {
+   @Override
+   public int[] getIntegerList(String key, int... defaults) {
       return getPrimitiveArray(key, Primitive.INT, defaults);
    }
 
-   @Override public List<Integer> getIntegerList(String key, Iterable<Integer> defaults) {
+   @Override
+   public List<Integer> getIntegerList(String key, Iterable<Integer> defaults) {
       return getBoxedList(key, Primitive.INT, defaults);
    }
 
-   @Override public boolean containsLong(String key) {
+   @Override
+   public boolean containsLong(String key) {
       return containsPrimitiveScalar(key, Primitive.LONG);
    }
 
-   @Override public long getLong(String key, long aDefault) {
+   @Override
+   public long getLong(String key, long aDefault) {
       return getPrimitiveScalar(key, Primitive.LONG, aDefault);
    }
 
-   @Override public boolean containsLongList(String key) {
+   @Override
+   public boolean containsLongList(String key) {
       return containsPrimitiveArray(key, Primitive.LONG);
    }
 
-   @Override public long[] getLongList(String key, long... defaults) {
+   @Override
+   public long[] getLongList(String key, long... defaults) {
       return getPrimitiveArray(key, Primitive.LONG, defaults);
    }
 
-   @Override public List<Long> getLongList(String key, Iterable<Long> defaults) {
+   @Override
+   public List<Long> getLongList(String key, Iterable<Long> defaults) {
       return getBoxedList(key, Primitive.LONG, defaults);
    }
 
-   @Override public boolean containsFloat(String key) {
+   @Override
+   public boolean containsFloat(String key) {
       return containsPrimitiveScalar(key, Primitive.FLOAT);
    }
 
-   @Override public float getFloat(String key, float aDefault) {
+   @Override
+   public float getFloat(String key, float aDefault) {
       return getPrimitiveScalar(key, Primitive.FLOAT, aDefault);
    }
 
-   @Override public boolean containsFloatList(String key) {
+   @Override
+   public boolean containsFloatList(String key) {
       return containsPrimitiveArray(key, Primitive.FLOAT);
    }
 
-   @Override public float[] getFloatList(String key, float... defaults) {
+   @Override
+   public float[] getFloatList(String key, float... defaults) {
       return getPrimitiveArray(key, Primitive.FLOAT, defaults);
    }
 
-   @Override public List<Float> getFloatList(String key, Iterable<Float> defaults) {
+   @Override
+   public List<Float> getFloatList(String key, Iterable<Float> defaults) {
       return getBoxedList(key, Primitive.FLOAT, defaults);
    }
 
-   @Override public boolean containsDouble(String key) {
+   @Override
+   public boolean containsDouble(String key) {
       return containsPrimitiveScalar(key, Primitive.DOUBLE);
    }
 
-   @Override public double getDouble(String key, double aDefault) {
+   @Override
+   public double getDouble(String key, double aDefault) {
       return getPrimitiveScalar(key, Primitive.DOUBLE, aDefault);
    }
 
-   @Override public boolean containsDoubleList(String key) {
+   @Override
+   public boolean containsDoubleList(String key) {
       return containsPrimitiveArray(key, Primitive.DOUBLE);
    }
 
-   @Override public double[] getDoubleList(String key, double... defaults) {
+   @Override
+   public double[] getDoubleList(String key, double... defaults) {
       return getPrimitiveArray(key, Primitive.DOUBLE, defaults);
    }
 
-   @Override public List<Double> getDoubleList(String key, Iterable<Double> defaults) {
+   @Override
+   public List<Double> getDoubleList(String key, Iterable<Double> defaults) {
       return getBoxedList(key, Primitive.DOUBLE, defaults);
    }
 
@@ -410,106 +445,131 @@ public final class DefaultPropertyMap implements PropertyMap {
    // Non-primitive contains/get: Immutable types
    //
 
-   @Override public boolean containsString(String key) {
+   @Override
+   public boolean containsString(String key) {
       return containsNonPrimitiveScalar(key, String.class);
    }
 
-   @Override public String getString(String key, String aDefault) {
+   @Override
+   public String getString(String key, String aDefault) {
       return getNonPrimitiveScalar(key, String.class, aDefault);
    }
 
-   @Override public boolean containsStringList(String key) {
+   @Override
+   public boolean containsStringList(String key) {
       return containsNonPrimitiveArray(key, String.class);
    }
 
-   @Override public List<String> getStringList(String key, String... defaults) {
+   @Override
+   public List<String> getStringList(String key, String... defaults) {
       return getNonPrimitiveArray(key, String.class, defaults);
    }
 
-   @Override public List<String> getStringList(String key, Iterable<String> defaults) {
+   @Override
+   public List<String> getStringList(String key, Iterable<String> defaults) {
       return getNonPrimitiveArray(key, String.class, defaults);
    }
 
-   @Override public boolean containsUUID(String key) {
+   @Override
+   public boolean containsUUID(String key) {
       return containsNonPrimitiveScalar(key, UUID.class);
    }
 
-   @Override public UUID getUUID(String key, UUID aDefault) {
+   @Override
+   public UUID getUUID(String key, UUID aDefault) {
       return getNonPrimitiveScalar(key, UUID.class, aDefault);
    }
 
-   @Override public boolean containsUUIDList(String key) {
+   @Override
+   public boolean containsUUIDList(String key) {
       return containsNonPrimitiveArray(key, UUID.class);
    }
 
-   @Override public List<UUID> getUUIDList(String key, UUID... defaults) {
+   @Override
+   public List<UUID> getUUIDList(String key, UUID... defaults) {
       return getNonPrimitiveArray(key, UUID.class, defaults);
    }
 
-   @Override public List<UUID> getUUIDList(String key, Iterable<UUID> defaults) {
+   @Override
+   public List<UUID> getUUIDList(String key, Iterable<UUID> defaults) {
       return getNonPrimitiveArray(key, UUID.class, defaults);
    }
 
-   @Override public boolean containsColor(String key) {
+   @Override
+   public boolean containsColor(String key) {
       return containsNonPrimitiveScalar(key, Color.class);
    }
 
-   @Override public Color getColor(String key, Color aDefault) {
+   @Override
+   public Color getColor(String key, Color aDefault) {
       return getNonPrimitiveScalar(key, Color.class, aDefault);
    }
 
-   @Override public boolean containsColorList(String key) {
+   @Override
+   public boolean containsColorList(String key) {
       return containsNonPrimitiveArray(key, Color.class);
    }
 
-   @Override public List<Color> getColorList(String key, Color... defaults) {
+   @Override
+   public List<Color> getColorList(String key, Color... defaults) {
       return getNonPrimitiveArray(key, Color.class, defaults);
    }
 
-   @Override public List<Color> getColorList(String key, Iterable<Color> defaults) {
+   @Override
+   public List<Color> getColorList(String key, Iterable<Color> defaults) {
       return getNonPrimitiveArray(key, Color.class, defaults);
    }
 
-   @Override public boolean containsAffineTransform(String key) {
+   @Override
+   public boolean containsAffineTransform(String key) {
       return containsNonPrimitiveScalar(key, AffineTransform.class);
    }
 
-   @Override public AffineTransform getAffineTransform(String key, AffineTransform aDefault) {
+   @Override
+   public AffineTransform getAffineTransform(String key, AffineTransform aDefault) {
       return getNonPrimitiveScalar(key, AffineTransform.class, aDefault);
    }
 
-   @Override public boolean containsAffineTransformList(String key) {
+   @Override
+   public boolean containsAffineTransformList(String key) {
       return containsNonPrimitiveArray(key, AffineTransform.class);
    }
 
-   @Override public List<AffineTransform> getAffineTransformList(String key,
-                                                                 AffineTransform... defaults) {
+   @Override
+   public List<AffineTransform> getAffineTransformList(String key,
+                                                       AffineTransform... defaults) {
       return getNonPrimitiveArray(key, AffineTransform.class, defaults);
    }
 
-   @Override public List<AffineTransform> getAffineTransformList(String key,
-                                                  Iterable<AffineTransform> defaults) {
+   @Override
+   public List<AffineTransform> getAffineTransformList(String key,
+                                                       Iterable<AffineTransform> defaults) {
       return getNonPrimitiveArray(key, AffineTransform.class, defaults);
    }
 
-   @Override public boolean containsPropertyMap(String key) {
+   @Override
+   public boolean containsPropertyMap(String key) {
       return containsNonPrimitiveScalar(key, PropertyMap.class);
    }
 
-   @Override public PropertyMap getPropertyMap(String key, PropertyMap aDefault) {
+   @Override
+   public PropertyMap getPropertyMap(String key, PropertyMap aDefault) {
       return getNonPrimitiveScalar(key, PropertyMap.class, aDefault);
    }
 
-   @Override public boolean containsPropertyMapList(String key) {
+   @Override
+   public boolean containsPropertyMapList(String key) {
       return containsNonPrimitiveArray(key, PropertyMap.class);
    }
 
-   @Override public List<PropertyMap> getPropertyMapList(String key, PropertyMap... defaults) {
+   @Override
+   public List<PropertyMap> getPropertyMapList(String key, PropertyMap... defaults) {
       return getNonPrimitiveArray(key, PropertyMap.class, defaults);
    }
 
-   @Override public List<PropertyMap> getPropertyMapList(String key,
-                                                         Iterable<PropertyMap> defaults) {
+   @Override
+   public List<PropertyMap> getPropertyMapList(String key,
+                                               Iterable<PropertyMap> defaults) {
       return getNonPrimitiveArray(key, PropertyMap.class, defaults);
    }
 
@@ -526,23 +586,28 @@ public final class DefaultPropertyMap implements PropertyMap {
       }
    };
 
-   @Override public boolean containsRectangle(String key) {
+   @Override
+   public boolean containsRectangle(String key) {
       return containsNonPrimitiveScalar(key, Rectangle.class);
    }
 
-   @Override public Rectangle getRectangle(String key, Rectangle aDefault) {
+   @Override
+   public Rectangle getRectangle(String key, Rectangle aDefault) {
       return getClonedNonPrimitiveScalar(key, Rectangle.class, CLONE_RECTANGLE, aDefault);
    }
 
-   @Override public boolean containsRectangleList(String key) {
+   @Override
+   public boolean containsRectangleList(String key) {
       return containsNonPrimitiveArray(key, Rectangle.class);
    }
 
-   @Override public List<Rectangle> getRectangleList(String key, Rectangle... defaults) {
+   @Override
+   public List<Rectangle> getRectangleList(String key, Rectangle... defaults) {
       return getClonedNonPrimitiveArray(key, Rectangle.class, CLONE_RECTANGLE, defaults);
    }
 
-   @Override public List<Rectangle> getRectangleList(String key, Iterable<Rectangle> defaults) {
+   @Override
+   public List<Rectangle> getRectangleList(String key, Iterable<Rectangle> defaults) {
       return getClonedNonPrimitiveArray(key, Rectangle.class, CLONE_RECTANGLE, defaults);
    }
 
@@ -553,23 +618,28 @@ public final class DefaultPropertyMap implements PropertyMap {
       }
    };
 
-   @Override public boolean containsDimension(String key) {
+   @Override
+   public boolean containsDimension(String key) {
       return containsNonPrimitiveScalar(key, Dimension.class);
    }
 
-   @Override public Dimension getDimension(String key, Dimension aDefault) {
+   @Override
+   public Dimension getDimension(String key, Dimension aDefault) {
       return getClonedNonPrimitiveScalar(key, Dimension.class, CLONE_DIMENSION, aDefault);
    }
 
-   @Override public boolean containsDimensionList(String key) {
+   @Override
+   public boolean containsDimensionList(String key) {
       return containsNonPrimitiveArray(key, Dimension.class);
    }
 
-   @Override public List<Dimension> getDimensionList(String key, Dimension... defaults) {
+   @Override
+   public List<Dimension> getDimensionList(String key, Dimension... defaults) {
       return getClonedNonPrimitiveArray(key, Dimension.class, CLONE_DIMENSION, defaults);
    }
 
-   @Override public List<Dimension> getDimensionList(String key, Iterable<Dimension> defaults) {
+   @Override
+   public List<Dimension> getDimensionList(String key, Iterable<Dimension> defaults) {
       return getClonedNonPrimitiveArray(key, Dimension.class, CLONE_DIMENSION, defaults);
    }
 
@@ -580,23 +650,28 @@ public final class DefaultPropertyMap implements PropertyMap {
       }
    };
 
-   @Override public boolean containsPoint(String key) {
+   @Override
+   public boolean containsPoint(String key) {
       return containsNonPrimitiveScalar(key, Point.class);
    }
 
-   @Override public Point getPoint(String key, Point aDefault) {
+   @Override
+   public Point getPoint(String key, Point aDefault) {
       return getClonedNonPrimitiveScalar(key, Point.class, CLONE_POINT, aDefault);
    }
 
-   @Override public boolean containsPointList(String key) {
+   @Override
+   public boolean containsPointList(String key) {
       return containsNonPrimitiveArray(key, Point.class);
    }
 
-   @Override public List<Point> getPointList(String key, Point... defaults) {
+   @Override
+   public List<Point> getPointList(String key, Point... defaults) {
       return getClonedNonPrimitiveArray(key, Point.class, CLONE_POINT, defaults);
    }
 
-   @Override public List<Point> getPointList(String key, Iterable<Point> defaults) {
+   @Override
+   public List<Point> getPointList(String key, Iterable<Point> defaults) {
       return getClonedNonPrimitiveArray(key, Point.class, CLONE_POINT, defaults);
    }
 
@@ -646,13 +721,15 @@ public final class DefaultPropertyMap implements PropertyMap {
 
    @Override
    public <E extends Enum<E>> List<E> getStringListAsEnumList(String key,
-                                                     Class<E> enumType, E... defaultValues) {
+                                                              Class<E> enumType,
+                                                              E... defaultValues) {
       return getStringListAsEnumList(key, enumType, Lists.newArrayList(defaultValues));
    }
 
    @Override
    public <E extends Enum<E>> List<E> getStringListAsEnumList(String key,
-                                         Class<E> enumType, Iterable<E> defaultValues) {
+                                                              Class<E> enumType,
+                                                              Iterable<E> defaultValues) {
       List<E> ret = new ArrayList<E>();
       try {
          for (String s : getStringList(key, (Iterable<String>) null)) {
@@ -674,105 +751,128 @@ public final class DefaultPropertyMap implements PropertyMap {
    // Somebody has to define the mapping between primitve and boxed types...
    private static enum Primitive {
       BOOLEAN(boolean.class, Boolean.class, boolean[].class) {
-         @Override Boolean[] primitiveToBoxedArray(Object a) {
+         @Override
+         Boolean[] primitiveToBoxedArray(Object a) {
             return ArrayUtils.toObject((boolean[]) a);
          }
 
-         @Override Object clonePrimitiveArray(Object a) {
+         @Override
+         Object clonePrimitiveArray(Object a) {
             return ((boolean[]) a).clone();
          }
 
-         @Override boolean primitiveArrayEquals(Object a, Object b) {
+         @Override
+         boolean primitiveArrayEquals(Object a, Object b) {
             return Arrays.equals((boolean[]) a, (boolean[]) b);
          }
 
          // Work around a commons.lang3 bug (toPrimitive(Object) returns Boolean[],
          // not boolean[], for Boolean[])
-         @Override Object boxedToPrimitiveArray(Object a) {
+         @Override
+         Object boxedToPrimitiveArray(Object a) {
             return ArrayUtils.toPrimitive((Boolean[]) a);
          }
       },
       BYTE(byte.class, Byte.class, byte[].class) {
-         @Override Byte[] primitiveToBoxedArray(Object a) {
+         @Override
+         Byte[] primitiveToBoxedArray(Object a) {
             return ArrayUtils.toObject((byte[]) a);
          }
 
-         @Override Object clonePrimitiveArray(Object a) {
+         @Override
+         Object clonePrimitiveArray(Object a) {
             return ((byte[]) a).clone();
          }
 
-         @Override boolean primitiveArrayEquals(Object a, Object b) {
+         @Override
+         boolean primitiveArrayEquals(Object a, Object b) {
             return Arrays.equals((byte[]) a, (byte[]) b);
          }
 
          // Work around a commons.lang3 bug (toPrimitive(Object) returns Byte[],
          // not byte[], for Byte[])
-         @Override Object boxedToPrimitiveArray(Object a) {
+         @Override
+         Object boxedToPrimitiveArray(Object a) {
             return ArrayUtils.toPrimitive((Byte[]) a);
          }
       },
       SHORT(short.class, Short.class, short[].class) {
-         @Override Short[] primitiveToBoxedArray(Object a) {
+         @Override
+         Short[] primitiveToBoxedArray(Object a) {
             return ArrayUtils.toObject((short[]) a);
          }
 
-         @Override Object clonePrimitiveArray(Object a) {
+         @Override
+         Object clonePrimitiveArray(Object a) {
             return ((short[]) a).clone();
          }
 
-         @Override boolean primitiveArrayEquals(Object a, Object b) {
+         @Override
+         boolean primitiveArrayEquals(Object a, Object b) {
             return Arrays.equals((short[]) a, (short[]) b);
          }
       },
       INT(int.class, Integer.class, int[].class) {
-         @Override Integer[] primitiveToBoxedArray(Object a) {
+         @Override
+         Integer[] primitiveToBoxedArray(Object a) {
             return ArrayUtils.toObject((int[]) a);
          }
 
-         @Override Object clonePrimitiveArray(Object a) {
+         @Override
+         Object clonePrimitiveArray(Object a) {
             return ((int[]) a).clone();
          }
 
-         @Override boolean primitiveArrayEquals(Object a, Object b) {
+         @Override
+         boolean primitiveArrayEquals(Object a, Object b) {
             return Arrays.equals((int[]) a, (int[]) b);
          }
       },
       LONG(long.class, Long.class, long[].class) {
-         @Override Long[] primitiveToBoxedArray(Object a) {
+         @Override
+         Long[] primitiveToBoxedArray(Object a) {
             return ArrayUtils.toObject((long[]) a);
          }
 
-         @Override Object clonePrimitiveArray(Object a) {
+         @Override
+         Object clonePrimitiveArray(Object a) {
             return ((long[]) a).clone();
          }
 
-         @Override boolean primitiveArrayEquals(Object a, Object b) {
+         @Override
+         boolean primitiveArrayEquals(Object a, Object b) {
             return Arrays.equals((long[]) a, (long[]) b);
          }
       },
       FLOAT(float.class, Float.class, float[].class) {
-         @Override Float[] primitiveToBoxedArray(Object a) {
+         @Override
+         Float[] primitiveToBoxedArray(Object a) {
             return ArrayUtils.toObject((float[]) a);
          }
 
-         @Override Object clonePrimitiveArray(Object a) {
+         @Override
+         Object clonePrimitiveArray(Object a) {
             return ((float[]) a).clone();
          }
 
-         @Override boolean primitiveArrayEquals(Object a, Object b) {
+         @Override
+         boolean primitiveArrayEquals(Object a, Object b) {
             return Arrays.equals((float[]) a, (float[]) b);
          }
       },
       DOUBLE(double.class, Double.class, double[].class) {
-         @Override Double[] primitiveToBoxedArray(Object a) {
+         @Override
+         Double[] primitiveToBoxedArray(Object a) {
             return ArrayUtils.toObject((double[]) a);
          }
 
-         @Override Object clonePrimitiveArray(Object a) {
+         @Override
+         Object clonePrimitiveArray(Object a) {
             return ((double[]) a).clone();
          }
 
-         @Override boolean primitiveArrayEquals(Object a, Object b) {
+         @Override
+         boolean primitiveArrayEquals(Object a, Object b) {
             return Arrays.equals((double[]) a, (double[]) b);
          }
       },
@@ -1003,87 +1103,108 @@ public final class DefaultPropertyMap implements PropertyMap {
       // Primitives
       //
 
-      @Override public Builder putBoolean(String key, Boolean value) {
+      @Override
+      public Builder putBoolean(String key, Boolean value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putBooleanList(String key, boolean... values) {
+      @Override
+      public Builder putBooleanList(String key, boolean... values) {
          return putPrimitiveArray(key, Primitive.BOOLEAN, values);
       }
 
-      @Override public Builder putBooleanList(String key, Iterable<Boolean> values) {
+      @Override
+      public Builder putBooleanList(String key, Iterable<Boolean> values) {
          return putBoxedList(key, Primitive.BOOLEAN, values);
       }
 
-      @Override public Builder putByte(String key, Byte value) {
+      @Override
+      public Builder putByte(String key, Byte value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putByteList(String key, byte... values) {
+      @Override
+      public Builder putByteList(String key, byte... values) {
          return putPrimitiveArray(key, Primitive.BYTE, values);
       }
 
-      @Override public Builder putByteList(String key, Iterable<Byte> values) {
+      @Override
+      public Builder putByteList(String key, Iterable<Byte> values) {
          return putBoxedList(key, Primitive.BYTE, values);
       }
 
-      @Override public Builder putShort(String key, Short value) {
+      @Override
+      public Builder putShort(String key, Short value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putShortList(String key, short... values) {
+      @Override
+      public Builder putShortList(String key, short... values) {
          return putPrimitiveArray(key, Primitive.SHORT, values);
       }
 
-      @Override public Builder putShortList(String key, Iterable<Short> values) {
+      @Override
+      public Builder putShortList(String key, Iterable<Short> values) {
          return putBoxedList(key, Primitive.SHORT, values);
       }
 
-      @Override public Builder putInteger(String key, Integer value) {
+      @Override
+      public Builder putInteger(String key, Integer value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putIntegerList(String key, int... values) {
+      @Override
+      public Builder putIntegerList(String key, int... values) {
          return putPrimitiveArray(key, Primitive.INT, values);
       }
 
-      @Override public Builder putIntegerList(String key, Iterable<Integer> values) {
+      @Override
+      public Builder putIntegerList(String key, Iterable<Integer> values) {
          return putBoxedList(key, Primitive.INT, values);
       }
 
-      @Override public Builder putLong(String key, Long value) {
+      @Override
+      public Builder putLong(String key, Long value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putLongList(String key, long... values) {
+      @Override
+      public Builder putLongList(String key, long... values) {
          return putPrimitiveArray(key, Primitive.LONG, values);
       }
 
-      @Override public Builder putLongList(String key, Iterable<Long> values) {
+      @Override
+      public Builder putLongList(String key, Iterable<Long> values) {
          return putBoxedList(key, Primitive.LONG, values);
       }
 
-      @Override public Builder putFloat(String key, Float value) {
+      @Override
+      public Builder putFloat(String key, Float value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putFloatList(String key, float... values) {
+      @Override
+      public Builder putFloatList(String key, float... values) {
          return putPrimitiveArray(key, Primitive.FLOAT, values);
       }
 
-      @Override public Builder putFloatList(String key, Iterable<Float> values) {
+      @Override
+      public Builder putFloatList(String key, Iterable<Float> values) {
          return putBoxedList(key, Primitive.FLOAT, values);
       }
 
-      @Override public Builder putDouble(String key, Double value) {
+      @Override
+      public Builder putDouble(String key, Double value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putDoubleList(String key, double... values) {
+      @Override
+      public Builder putDoubleList(String key, double... values) {
          return putPrimitiveArray(key, Primitive.DOUBLE, values);
       }
 
-      @Override public Builder putDoubleList(String key, Iterable<Double> values) {
+      @Override
+      public Builder putDoubleList(String key, Iterable<Double> values) {
          return putBoxedList(key, Primitive.DOUBLE, values);
       }
 
@@ -1091,64 +1212,79 @@ public final class DefaultPropertyMap implements PropertyMap {
       // Immutable non-primitives
       //
 
-      @Override public Builder putString(String key, String value) {
+      @Override
+      public Builder putString(String key, String value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putStringList(String key, String... values) {
+      @Override
+      public Builder putStringList(String key, String... values) {
          return putNonPrimitiveArray(key, String.class, values);
       }
 
-      @Override public Builder putStringList(String key, Iterable<String> values) {
+      @Override
+      public Builder putStringList(String key, Iterable<String> values) {
          return putNonPrimitiveArray(key, String.class, values);
       }
 
-      @Override public Builder putUUID(String key, UUID value) {
+      @Override
+      public Builder putUUID(String key, UUID value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putUUIDList(String key, UUID... values) {
+      @Override
+      public Builder putUUIDList(String key, UUID... values) {
          return putNonPrimitiveArray(key, UUID.class, values);
       }
 
-      @Override public Builder putUUIDList(String key, Iterable<UUID> values) {
+      @Override
+      public Builder putUUIDList(String key, Iterable<UUID> values) {
          return putNonPrimitiveArray(key, UUID.class, values);
       }
 
-      @Override public Builder putColor(String key, Color value) {
+      @Override
+      public Builder putColor(String key, Color value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putColorList(String key, Color... values) {
+      @Override
+      public Builder putColorList(String key, Color... values) {
          return putNonPrimitiveArray(key, Color.class, values);
       }
 
-      @Override public Builder putColorList(String key, Iterable<Color> values) {
+      @Override
+      public Builder putColorList(String key, Iterable<Color> values) {
          return putNonPrimitiveArray(key, Color.class, values);
       }
 
-      @Override public Builder putAffineTransform(String key, AffineTransform value) {
+      @Override
+      public Builder putAffineTransform(String key, AffineTransform value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putAffineTransformList(String key, AffineTransform... values) {
+      @Override
+      public Builder putAffineTransformList(String key, AffineTransform... values) {
          return putNonPrimitiveArray(key, AffineTransform.class, values);
       }
 
-      @Override public Builder putAffineTransformList(String key,
-                                                      Iterable<AffineTransform> values) {
+      @Override
+      public Builder putAffineTransformList(String key,
+                                            Iterable<AffineTransform> values) {
          return putNonPrimitiveArray(key, AffineTransform.class, values);
       }
 
-      @Override public Builder putPropertyMap(String key, PropertyMap value) {
+      @Override
+      public Builder putPropertyMap(String key, PropertyMap value) {
          return putScalar(key, value);
       }
 
-      @Override public Builder putPropertyMapList(String key, PropertyMap... values) {
+      @Override
+      public Builder putPropertyMapList(String key, PropertyMap... values) {
          return putNonPrimitiveArray(key, PropertyMap.class, values);
       }
 
-      @Override public Builder putPropertyMapList(String key, Iterable<PropertyMap> values) {
+      @Override
+      public Builder putPropertyMapList(String key, Iterable<PropertyMap> values) {
          return putNonPrimitiveArray(key, PropertyMap.class, values);
       }
 
@@ -1156,39 +1292,48 @@ public final class DefaultPropertyMap implements PropertyMap {
       // Mutable non-primitives (clone before adding!)
       //
 
-      @Override public Builder putRectangle(String key, Rectangle value) {
+      @Override
+      public Builder putRectangle(String key, Rectangle value) {
          return putClonedScalar(key, CLONE_RECTANGLE, value);
       }
 
-      @Override public Builder putRectangleList(String key, Rectangle... values) {
+      @Override
+      public Builder putRectangleList(String key, Rectangle... values) {
          return putClonedNonPrimitiveArray(key, Rectangle.class, CLONE_RECTANGLE, values);
       }
 
-      @Override public Builder putRectangleList(String key, Iterable<Rectangle> values) {
+      @Override
+      public Builder putRectangleList(String key, Iterable<Rectangle> values) {
          return putClonedNonPrimitiveArray(key, Rectangle.class, CLONE_RECTANGLE, values);
       }
 
-      @Override public Builder putDimension(String key, Dimension value) {
+      @Override
+      public Builder putDimension(String key, Dimension value) {
          return putClonedScalar(key, CLONE_DIMENSION, value);
       }
 
-      @Override public Builder putDimensionList(String key, Dimension... values) {
+      @Override
+      public Builder putDimensionList(String key, Dimension... values) {
          return putClonedNonPrimitiveArray(key, Dimension.class, CLONE_DIMENSION, values);
       }
 
-      @Override public Builder putDimensionList(String key, Iterable<Dimension> values) {
+      @Override
+      public Builder putDimensionList(String key, Iterable<Dimension> values) {
          return putClonedNonPrimitiveArray(key, Dimension.class, CLONE_DIMENSION, values);
       }
 
-      @Override public Builder putPoint(String key, Point value) {
+      @Override
+      public Builder putPoint(String key, Point value) {
          return putClonedScalar(key, CLONE_POINT, value);
       }
 
-      @Override public Builder putPointList(String key, Point... values) {
+      @Override
+      public Builder putPointList(String key, Point... values) {
          return putClonedNonPrimitiveArray(key, Point.class, CLONE_POINT, values);
       }
 
-      @Override public Builder putPointList(String key, Iterable<Point> values) {
+      @Override
+      public Builder putPointList(String key, Iterable<Point> values) {
          return putClonedNonPrimitiveArray(key, Point.class, CLONE_POINT, values);
       }
 
@@ -1278,7 +1423,8 @@ public final class DefaultPropertyMap implements PropertyMap {
                Preconditions.checkNotNull(value, "Null not allowed in property map values");
                valueList.add(cloner.clone(value));
             }
-         } else {
+         }
+         else {
             for (T value : values) {
                Preconditions.checkNotNull(value, "Null not allowed in property map values");
                valueList.add(value);

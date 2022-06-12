@@ -55,12 +55,12 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
     * Creates the Pixel configuration preset editor.
     *
     * @param pixelSizeConfigName Pixel Size configuration name
-    * @param parent GUI element that this one should be shown in front of.
-    * @param pixelSize Starting pixel size
-    * @param newItem True when this is a new pixel configuration, false when it already exists.
+    * @param parent              GUI element that this one should be shown in front of.
+    * @param pixelSize           Starting pixel size
+    * @param newItem             True when this is a new pixel configuration, false when it already exists.
     */
-   public PixelPresetEditor(String pixelSizeConfigName, 
-         CalibrationListDlg parent, String pixelSize, boolean newItem) {
+   public PixelPresetEditor(String pixelSizeConfigName,
+                            CalibrationListDlg parent, String pixelSize, boolean newItem) {
       super("ConfigPixelSize", pixelSizeConfigName, parent.getStudio(), newItem);
       // note: pixelSizeConfigName is called presetName_ in ConfigDialog
       instructionsText_ = "Specify pixel size configuration";
@@ -82,7 +82,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       } catch (Exception ex) {
          gui.logs().showError(ex, "Failed to set this Pixel Size configuration");
       }
-      
+
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(parent.getStudio());
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1)
             .propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true)
@@ -95,7 +95,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
 
       super.initialize();  // will call initializeWidgets, which overrides the base class
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 450, 400);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(380, 350));
@@ -105,17 +105,17 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
    public void okChosen() {
       try {
          AffineTransform affineTransform = AffineUtils.doubleToAffine(
-                 affineEditorPanel_.getAffineTransform());
+               affineEditorPanel_.getAffineTransform());
          double predictedPixelSize = AffineUtils.deducePixelSize(affineTransform);
          double inputSize = NumberUtils.displayStringToDouble(pixelSizeField_.getText());
          double fractionErrorAllowed = 0.2;
          if (predictedPixelSize > (1 + fractionErrorAllowed) * inputSize
                || predictedPixelSize < (1 - fractionErrorAllowed) * inputSize) {
-            Object[] options = { "Yes", "No"};
+            Object[] options = {"Yes", "No"};
             int selectedValue = JOptionPane.showOptionDialog(null,
-                    "Affine transform appears wrong.  Calculate from pixelSize?", "",
-                     JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
-                     null, options, options[0]);
+                  "Affine transform appears wrong.  Calculate from pixelSize?", "",
+                  JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
+                  null, options, options[0]);
             if (0 == selectedValue) {
                affineEditorPanel_.calculate();
             }
@@ -127,9 +127,9 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
 
       } catch (HeadlessException | ParseException e) {
          ReportingUtils.showError(e);
-      }      
+      }
    }
-   
+
    @Override
    public void dispose() {
       if (parent_ != null) {
@@ -234,14 +234,15 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       ((MMStudio) studio_).setConfigChanged(true);
       return true;
    }
-     
-   
+
+
    @Override
-    protected void initializeWidgets() {
+   protected void initializeWidgets() {
       super.initializeWidgets();
    }
-   
-   @Override protected void initializeBetweenWidgetsAndTable() {
+
+   @Override
+   protected void initializeBetweenWidgetsAndTable() {
       numRowsBeforeFilters_++;
       add(affineEditorPanel_, "growx, center");
    }

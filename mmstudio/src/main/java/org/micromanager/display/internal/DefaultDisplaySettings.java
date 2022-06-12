@@ -301,7 +301,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     * displays don't end up with copies of the same settings.
     *
     * @param key String for storing settings under different locations, so
-    *        different "types" of displays can have different default settings.
+    *            different "types" of displays can have different default settings.
     * @return display settings that were saved in the preferences
     */
    public static DefaultDisplaySettings getStandardSettings(String key) {
@@ -313,18 +313,18 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       // Seven colors because ImageJ only supports 7 channels; put yellow/cyan
       // first for colorblind-friendliness.
       Color[] defaultColors = new Color[] {Color.YELLOW, Color.CYAN,
-         Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
+            Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
       Integer[] defaultIntColors = colorsToInts(defaultColors);
 
       key += "_";
       // This value used to be an int, then got changed to a double, hence the
       // name change.
       builder.animationFPS(settings.getDouble(
-               key + ANIMATION_FPS_DOUBLE, 10.0));
+            key + ANIMATION_FPS_DOUBLE, 10.0));
       builder.channelColorMode(
             DisplaySettings.ColorMode.fromInt(settings.getInteger(
-               key + CHANNEL_COLOR_MODE,
-               DisplaySettings.ColorMode.COMPOSITE.getIndex())));
+                  key + CHANNEL_COLOR_MODE,
+                  DisplaySettings.ColorMode.COMPOSITE.getIndex())));
       builder.zoom(settings.getDouble(key + ZOOM_RATIO, 1.0));
       builder.shouldSyncChannels(settings.getBoolean(key + SHOULD_SYNC_CHANNELS, false));
       builder.shouldAutostretch(settings.getBoolean(key + SHOULD_AUTOSTRETCH, true));
@@ -335,27 +335,27 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       return builder.build();
    }
 
-  
+
    /**
-    * Saves these DisplaySettings in the UserProfile. Implementers are free to 
+    * Saves these DisplaySettings in the UserProfile. Implementers are free to
     * save copies of the settings themselves.
     *
     * @param profile Profile to which these settings should be saved
-    * @param key Key under which the settings will be stored.
-    *             Will be pre-pended with PROFILEKEY
+    * @param key     Key under which the settings will be stored.
+    *                Will be pre-pended with PROFILEKEY
     */
    public void saveToProfile(UserProfile profile, String key) {
       MutablePropertyMapView mpmv = profile.getSettings(DefaultDisplaySettings.class);
       mpmv.putPropertyMap(PROFILEKEY + "-" + key, this.toPropertyMap());
-   }  
-   
-   
+   }
+
+
    /**
     * Retrieve DisplaySettings from the User Profile.
     *
     * @param profile UserProfile to save these Display Settings to.
-    * @param key Key use to retrieve the DisplaySettings.
-    *             Will be pre-pended with PROFILEKEY.
+    * @param key     Key use to retrieve the DisplaySettings.
+    *                Will be pre-pended with PROFILEKEY.
     * @return Stored DisplaySettings or null if none found.
     */
    public static DisplaySettings restoreFromProfile(UserProfile profile, String key) {
@@ -367,7 +367,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
       return null;
    }
-   
+
 
    /**
     * Return the current color mode setting in the profile, or the provided
@@ -378,7 +378,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     * @param key Profile key to use, as per [get|set]StandardSettings.
     */
    public static ColorMode getStandardColorMode(String key,
-         DisplaySettings.ColorMode defaultVal) {
+                                                DisplaySettings.ColorMode defaultVal) {
       UserProfile profile = MMStudio.getInstance().profile();
       key = key + "_";
       Integer mode = profile.getSettings(DefaultDisplaySettings.class)
@@ -435,11 +435,11 @@ public final class DefaultDisplaySettings implements DisplaySettings {
        *
        * @param contrastMin - new value for contrastMin
        * @param contrastMax - new value for contrastMax
-       * @param gamma - new gamma value
-       * @param isVisible - new boolean to indicate visibility 
+       * @param gamma       - new gamma value
+       * @param isVisible   - new boolean to indicate visibility
        */
       public DefaultContrastSettings(Integer contrastMin, Integer contrastMax,
-            Double gamma, Boolean isVisible) {
+                                     Double gamma, Boolean isVisible) {
          contrastMins_ = new Integer[] {contrastMin};
          contrastMaxes_ = new Integer[] {contrastMax};
          gammas_ = new Double[] {gamma};
@@ -447,7 +447,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       public DefaultContrastSettings(Integer[] contrastMins,
-            Integer[] contrastMaxes, Double[] gammas, Boolean isVisible) {
+                                     Integer[] contrastMaxes, Double[] gammas, Boolean isVisible) {
          contrastMins_ = contrastMins;
          contrastMaxes_ = contrastMaxes;
          gammas_ = gammas;
@@ -595,7 +595,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
 
       @Override
       public DisplaySettingsBuilder safeUpdateChannelColor(Color newColor,
-            int channelIndex) {
+                                                           int channelIndex) {
          channel(channelIndex, getChannelSettings(channelIndex).copyBuilder()
                .color(newColor).build());
          return this;
@@ -727,7 +727,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    @Override
    @Deprecated
    public ContrastSettings getSafeContrastSettings(int index,
-         ContrastSettings defaultVal) {
+                                                   ContrastSettings defaultVal) {
       if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
@@ -752,7 +752,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    @Override
    @Deprecated
    public Integer getSafeContrastMin(int index, int component,
-         Integer defaultVal) {
+                                     Integer defaultVal) {
       if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
@@ -767,7 +767,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    @Override
    @Deprecated
    public Integer getSafeContrastMax(int index, int component,
-         Integer defaultVal) {
+                                     Integer defaultVal) {
       if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
@@ -782,7 +782,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    @Override
    @Deprecated
    public Double getSafeContrastGamma(int index, int component,
-         Double defaultVal) {
+                                      Double defaultVal) {
       if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
@@ -832,7 +832,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
 
    @Override
    public DisplaySettings.Builder copyBuilderWithChannelSettings(int channel,
-         ChannelDisplaySettings settings) {
+                                                                 ChannelDisplaySettings settings) {
       return copyBuilder().channel(channel, settings);
    }
 
@@ -919,7 +919,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
 
          if (tags.has(CHANNEL_COLOR_MODE)) {
             builder.channelColorMode(ColorMode.fromInt(
-                     tags.getInt(CHANNEL_COLOR_MODE)));
+                  tags.getInt(CHANNEL_COLOR_MODE)));
          }
          if (tags.has(ZOOM_RATIO)) {
             builder.zoomRatio(tags.getDouble(ZOOM_RATIO));
@@ -979,7 +979,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       for (ChannelDisplaySettings cs : channelSettings_) {
          channelSettings.add(((DefaultChannelDisplaySettings) cs).toPropertyMap());
       }
-      
+
       return PropertyMaps.builder()
             .putDouble(PropertyKey.ZOOM_RATIO.key(), zoom_)
             .putDouble(PropertyKey.PLAYBACK_FPS.key(), fps_)
@@ -991,20 +991,20 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings)
             .build();
    }
-   
+
    /**
     * Restore DisplaySettings from a PropertyMap.
     * NS: Should this be in the api?
     *
     * @param pMap PropertyMap to be restored to DisplaySettings
-    * @return restored DisplaySettings.  Any missing component will be replaced 
-    *         with the (Builder's) default.
+    * @return restored DisplaySettings.  Any missing component will be replaced
+    * with the (Builder's) default.
     */
    public static DisplaySettings fromPropertyMap(PropertyMap pMap) {
       DefaultDisplaySettings.Builder ddsb = new DefaultDisplaySettings.Builder();
-     
+
       if (pMap != null) {
-         
+
          if (pMap.containsDouble(PropertyKey.ZOOM_RATIO.key())) {
             ddsb.zoomRatio(pMap.getDouble(PropertyKey.ZOOM_RATIO.key(), ddsb.zoom_));
          }
@@ -1013,11 +1013,11 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          }
          if (pMap.containsStringForEnum(PropertyKey.COLOR_MODE.key(), ColorMode.class)) {
             ddsb.colorMode(pMap.getStringAsEnum(PropertyKey.COLOR_MODE.key(),
-                    ColorMode.class, ddsb.mode_));
+                  ColorMode.class, ddsb.mode_));
          }
          if (pMap.containsBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key())) {
             ddsb.uniformChannelScaling(pMap.getBoolean(
-                    PropertyKey.UNIFORM_CHANNEL_SCALING.key(), ddsb.useUniformChannelScaling_));
+                  PropertyKey.UNIFORM_CHANNEL_SCALING.key(), ddsb.useUniformChannelScaling_));
          }
          if (pMap.containsBoolean(PropertyKey.AUTOSTRETCH.key())) {
             ddsb.autostretch(pMap.getBoolean(PropertyKey.AUTOSTRETCH.key(), ddsb.autostretch_));
@@ -1028,11 +1028,11 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          if (pMap.containsDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key())) {
             ddsb.autoscaleIgnoredQuantile(pMap.getDouble(PropertyKey
                         .AUTOSCALE_IGNORED_QUANTILE.key(),
-                    ddsb.extremaQuantile_));
+                  ddsb.extremaQuantile_));
          }
          if (pMap.containsPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key())) {
             List<PropertyMap> propertyMapList = pMap.getPropertyMapList(
-                    PropertyKey.CHANNEL_SETTINGS.key(), new ArrayList<PropertyMap>());
+                  PropertyKey.CHANNEL_SETTINGS.key(), new ArrayList<PropertyMap>());
             for (int i = 0; i < propertyMapList.size(); i++) {
                ddsb.channel(i, DefaultChannelDisplaySettings
                      .fromPropertyMap(propertyMapList.get(i)));
@@ -1048,20 +1048,21 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     *
     * @param sourceFile file to read settings from.
     * @return DisplaySettings restored from file.
-    */  
+    */
    public static DisplaySettings getSavedDisplaySettings(final File sourceFile) {
       if (sourceFile.canRead()) {
          try {
             return DefaultDisplaySettings.fromPropertyMap(PropertyMaps.loadJSON(sourceFile));
          } catch (IOException ioe) {
             ReportingUtils.logError(ioe, "Error reading: " + sourceFile.getPath());
-         }  
-      } else {
+         }
+      }
+      else {
          ReportingUtils.logError("No display settings file found at: " + sourceFile.getPath());
       }
       return null;
    }
-   
+
    /**
     * Saves the current displaySettings to the indicated File.
     * DisplaySettings are saved as a JSON encoded PropertyMap.
@@ -1079,13 +1080,13 @@ public final class DefaultDisplaySettings implements DisplaySettings {
                + destination.getPath());
       }
    }
-   
+
    /**
     * Saves the current displaySettings to a file in the provided path.
-    * This file will be named using a common convention (DisplaySettings.json, 
-    * defined in PropertyKey.DISPLAY_SETTINGS_FILE_NAME).  
+    * This file will be named using a common convention (DisplaySettings.json,
+    * defined in PropertyKey.DISPLAY_SETTINGS_FILE_NAME).
     *
-    * @param path path under which to create the DisplaySettings file 
+    * @param path path under which to create the DisplaySettings file
     */
    public void save(String path) {
       // TODO: test for sanity of input path?      
@@ -1094,5 +1095,5 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       save(displaySettingsFile);
    }
 
-   
+
 }

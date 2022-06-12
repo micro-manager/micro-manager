@@ -20,6 +20,7 @@
 //
 // CVS:          $Id$
 //
+
 package org.micromanager.internal.utils;
 
 public final class MMException extends Exception {
@@ -28,5 +29,5 @@ public final class MMException extends Exception {
    public MMException(String msg) {
       super(msg);
    }
-   
+
 }

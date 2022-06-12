@@ -3,12 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.link.internal;
 
-import org.micromanager.display.internal.link.AbstractLinkAnchor;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
+import org.micromanager.display.internal.link.AbstractLinkAnchor;
 import org.micromanager.display.internal.link.LinkAnchor;
 import org.micromanager.display.internal.link.LinkManager;
 
@@ -51,7 +52,7 @@ public class DefaultLinkManager implements LinkManager {
 
    @Override
    public void unregisterAllAnchors() {
-      for (LinkAnchor<?> anchor :  endpoints_.keySet()) {
+      for (LinkAnchor<?> anchor : endpoints_.keySet()) {
          endpointManager_.unregisterEndpoint(endpoints_.get(anchor));
       }
       endpoints_.clear();

@@ -67,12 +67,12 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
    /**
     * Constructor only sets essential member values.
     *
-    * @param studio Implementation of Studio
-    * @param engine Implementation of the acquisition engine.
+    * @param studio    Implementation of Studio
+    * @param engine    Implementation of the acquisition engine.
     * @param mdaDialog The MDA dialog.
     */
    public DefaultAcquisitionManager(Studio studio,
-         AcquisitionWrapperEngine engine, AcqControlDlg mdaDialog) {
+                                    AcquisitionWrapperEngine engine, AcqControlDlg mdaDialog) {
       studio_ = studio;
       engine_ = engine;
       mdaDialog_ = mdaDialog;
@@ -95,7 +95,8 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
 
    @Override
    public Datastore runAcquisitionWithSettings(SequenceSettings settings,
-         boolean shouldBlock) throws IllegalThreadStateException {
+                                               boolean shouldBlock)
+         throws IllegalThreadStateException {
       return executeAcquisition(settings, shouldBlock);
    }
 
@@ -109,13 +110,15 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          // Use the MDA dialog's runAcquisition logic.
          if (mdaDialog_ != null) {
             store = mdaDialog_.runAcquisition();
-         } else {
+         }
+         else {
             // I'm not sure how this could ever happen, but we have null
             // checks for mdaDialog_ everywhere in this code, with no
             // explanation.
             studio_.logs().showError("Unable to run acquisition as MDA dialog is null");
          }
-      } else {
+      }
+      else {
          // Use the provided settings.
          engine_.setSequenceSettings(settings);
          try {
@@ -162,7 +165,8 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             studio_.logs().showError(e);
          }
          return store;
-      } else {
+      }
+      else {
          throw new IllegalThreadStateException(
                "Acquisition setup window must be open for this command to work.");
       }
@@ -280,10 +284,10 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          studio_.logs().logError(e);
       }
       return new DefaultSummaryMetadata.Builder()
-         .userName(System.getProperty("user.name"))
-         .profileName(studio_.profile().getProfileName())
-         .computerName(computerName)
-         .build();
+            .userName(System.getProperty("user.name"))
+            .profileName(studio_.profile().getProfileName())
+            .computerName(computerName)
+            .build();
    }
 
    @Override
@@ -315,7 +319,8 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             } catch (NumberFormatException e) {
                studio_.logs().logError("Unable to determine binning from " + binning);
             }
-         } else {
+         }
+         else {
             try {
                result.binning(Integer.parseInt(binning));
             } catch (NumberFormatException e) {

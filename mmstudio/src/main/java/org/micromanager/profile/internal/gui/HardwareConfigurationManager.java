@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.profile.internal.gui;
 
 import java.io.File;
@@ -20,13 +21,12 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.events.internal.DefaultSystemConfigurationLoadedEvent;
-import org.micromanager.profile.internal.LegacyMM1Preferences;
-import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.profile.UserProfileMigration;
 import org.micromanager.profile.UserProfileMigrator;
+import org.micromanager.profile.internal.LegacyMM1Preferences;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
- *
  * @author mark
  */
 public class HardwareConfigurationManager {
@@ -65,7 +65,8 @@ public class HardwareConfigurationManager {
       ;
 
       @Override
-      public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {}
+      public void migrate(PropertyMap legacy, MutablePropertyMapView modern) {
+      }
    }
 
    static {
@@ -194,8 +195,7 @@ public class HardwareConfigurationManager {
       HashSet<String> prefKeys;
       try {
          prefKeys = new HashSet<String>(Arrays.asList(root.keys()));
-      }
-      catch (BackingStoreException e) {
+      } catch (BackingStoreException e) {
          return Collections.emptyList();
       }
       List<String> result = new ArrayList<String>(5);

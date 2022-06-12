@@ -1,4 +1,3 @@
-
 package org.micromanager.display;
 
 import java.awt.Color;
@@ -39,7 +38,7 @@ public interface ChannelDisplaySettings {
       Builder histoRangeBits(int bits);
 
       Builder useCameraHistoRange(boolean use);
-      
+
       Builder name(String name);
 
       Builder groupName(String groupName);

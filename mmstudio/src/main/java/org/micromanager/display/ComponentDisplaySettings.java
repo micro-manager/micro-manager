@@ -1,4 +1,3 @@
-
 package org.micromanager.display;
 
 /**
@@ -27,7 +26,7 @@ public interface ComponentDisplaySettings {
 
    long getScalingMaximum();
 
-   double getScalingGamma();  
+   double getScalingGamma();
 
    Builder copyBuilder();
 

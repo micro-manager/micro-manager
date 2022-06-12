@@ -36,11 +36,11 @@ import org.micromanager.PropertyMaps;
 
 
 /**
- *
  * @author mark
  */
 public final class PropertyMapJSONSerializer {
-   private PropertyMapJSONSerializer() { }
+   private PropertyMapJSONSerializer() {
+   }
 
    // Gson-serializable
    private static class VersionedMap {
@@ -91,7 +91,8 @@ public final class PropertyMapJSONSerializer {
          this.type = type;
          if (value instanceof List<?>) {
             this.array = (List<?>) value;
-         } else {
+         }
+         else {
             this.scalar = value;
          }
       }
@@ -99,7 +100,8 @@ public final class PropertyMapJSONSerializer {
       void construct(Builder builder, String key) {
          if (array != null) {
             type.constructArray(builder, key, array);
-         } else {
+         }
+         else {
             type.construct(builder, key, scalar);
          }
       }
@@ -752,16 +754,17 @@ public final class PropertyMapJSONSerializer {
          implements JsonSerializer<TypeAndValue>, JsonDeserializer<TypeAndValue> {
       @Override
       public JsonElement serialize(TypeAndValue t, Type type,
-            JsonSerializationContext context) {
+                                   JsonSerializationContext context) {
          JsonObject ret = new JsonObject();
          ret.addProperty(Keys.TYPE, t.type.name());
          if (t.array != null) {
             JsonArray ja = new JsonArray();
-            for (Object value :  t.array) {
+            for (Object value : t.array) {
                ja.add(t.type.serialize(value, context));
             }
             ret.add(Keys.ARRAY, ja);
-         } else {
+         }
+         else {
             ret.add(Keys.SCALAR, t.type.serialize(t.scalar, context));
          }
          return ret;
@@ -769,7 +772,8 @@ public final class PropertyMapJSONSerializer {
 
       @Override
       public TypeAndValue deserialize(JsonElement je, Type type,
-            JsonDeserializationContext context) throws JsonParseException {
+                                      JsonDeserializationContext context)
+            throws JsonParseException {
          TypeAndValue tv = new TypeAndValue();
          try {
             JsonObject jo = je.getAsJsonObject();
@@ -780,7 +784,8 @@ public final class PropertyMapJSONSerializer {
                   values.add(tv.type.deserialize(ae, context));
                }
                tv.array = values;
-            } else {
+            }
+            else {
                tv.scalar = tv.type.deserialize(jo.get(Keys.SCALAR), context);
             }
          } catch (JsonParseException e) {
@@ -796,7 +801,7 @@ public final class PropertyMapJSONSerializer {
          implements JsonSerializer<PropertyMap>, JsonDeserializer<PropertyMap> {
       @Override
       public JsonElement serialize(PropertyMap t, Type type,
-            JsonSerializationContext context) {
+                                   JsonSerializationContext context) {
          JsonObject jo = new JsonObject();
          for (Map.Entry<String, TypeAndValue> e : extractValuesAndTypes(t)) {
             jo.add(e.getKey(), context.serialize(e.getValue()));
@@ -806,7 +811,7 @@ public final class PropertyMapJSONSerializer {
 
       @Override
       public PropertyMap deserialize(JsonElement json, Type typeOfT,
-            JsonDeserializationContext context) throws JsonParseException {
+                                     JsonDeserializationContext context) throws JsonParseException {
          Builder builder = PropertyMaps.builder();
          JsonObject jo = json.getAsJsonObject();
          for (Map.Entry<String, JsonElement> e : jo.entrySet()) {
@@ -829,7 +834,8 @@ public final class PropertyMapJSONSerializer {
                ret.add(new AbstractMap.SimpleEntry(key,
                      new TypeAndValue(t, t.extractValue(map, key))));
                break;
-            } else if (t.getArrayClass().isAssignableFrom(map.getValueTypeForKey(key))) {
+            }
+            else if (t.getArrayClass().isAssignableFrom(map.getValueTypeForKey(key))) {
                ret.add(new AbstractMap.SimpleEntry(key,
                      new TypeAndValue(t, t.extractArray(map, key))));
                break;
@@ -893,14 +899,17 @@ public final class PropertyMapJSONSerializer {
                   "Invalid property map format; attempted to interpret as legacy format but "
                         + "that didn't work either", e);
          }
-      } else if (data.major_version > template.major_version) {
+      }
+      else if (data.major_version > template.major_version) {
          throw new IOException(
                "Properties are saved in a newer format that is incompatible with this "
                      + "version of the application.");
-      } else if (data.major_version < 2) {
+      }
+      else if (data.major_version < 2) {
          // Never used with this way of versioning
          throw new IOException("Invalid property map format");
-      } else if (data.major_version < template.major_version) {
+      }
+      else if (data.major_version < template.major_version) {
          // When template.major_version becomes >2, conversion from old format
          // should be added here.
       }

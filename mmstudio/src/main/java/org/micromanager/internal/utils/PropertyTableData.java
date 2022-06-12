@@ -29,10 +29,10 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    private boolean showUnused_;
    protected boolean showReadOnly_;
    String[] columnNames_ = new String[3];
-   public List<PropertyItem> propList_ = new ArrayList<>(); 
-       // The table data is stored in here.
-   public List<PropertyItem> propListVisible_ = new ArrayList<>(); 
-      // The table data is stored in here.
+   public List<PropertyItem> propList_ = new ArrayList<>();
+   // The table data is stored in here.
+   public List<PropertyItem> propListVisible_ = new ArrayList<>();
+   // The table data is stored in here.
    protected Map<PropertyItem, Integer> propToRow_ = new HashMap<>();
    protected CMMCore core_ = null;
    Configuration groupData_[];
@@ -53,59 +53,59 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       private boolean allowChangingProperties_;
       private boolean allowChangesOnlyWhenUsed_;
       private boolean isPixelSizeConfig_;
-      
+
       public Builder(final Studio studio) {
          studio_ = studio;
       }
-      
+
       public Builder groupName(final String groupName) {
          groupName_ = groupName;
          return this;
       }
-      
+
       public Builder presetName(final String presetName) {
          presetName_ = presetName;
          return this;
       }
-      
+
       public Builder propertyValueColumn(final int propertyValueColumn) {
          propertyValueColumn_ = propertyValueColumn;
          return this;
       }
-      
+
       public Builder propertyUsedColumn(final int propertyUsedColumn) {
          propertyUsedColumn_ = propertyUsedColumn;
          return this;
       }
-      
+
       public Builder groupOnly(final boolean groupOnly) {
          groupOnly_ = groupOnly;
          return this;
       }
-      
+
       public Builder allowChangingProperties(final boolean allow) {
          allowChangingProperties_ = allow;
          return this;
       }
-      
+
       public Builder allowChangesOnlyWhenUsed(final boolean allow) {
          allowChangesOnlyWhenUsed_ = allow;
          return this;
       }
-      
+
       public Builder isPixelSizeConfig(final boolean is) {
          isPixelSizeConfig_ = is;
          return this;
       }
-      
+
       public PropertyTableData build() {
          return new PropertyTableData(this);
       }
    }
-   
+
    /**
     * PropertyTableData constructor
-    *
+    * <p>
     * This Table model is used by the Device/Property Browser, the GroupEditor,
     * The PresetEditor, and the PixelSizeEditor.  Each of these has slightly
     * different requirements, contributing to a multitude of flags in the
@@ -113,26 +113,26 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
     * to think everything through a bit better.
     *
     * @param studio
-    * @param groupName - Name of group to be edited.  Irrelevant for PixelSize editor
+    * @param groupName                - Name of group to be edited.  Irrelevant for PixelSize editor
     * @param presetName
-    * @param PropertyValueColumn # (zero-based) of "Value" column
-    * @param PropertyUsedColumn  # (zero-based) of "Use" column
-    * @param groupOnly - indicates that only properties included in the group
-    *                    should be shown
-    * @param allowChangingProperties - when true, the PropertyValueColumn will
-    *                    be editable, and changes will propagate to the hardware.
-    *                    Otherwise, the column will be read-only.
+    * @param PropertyValueColumn      # (zero-based) of "Value" column
+    * @param PropertyUsedColumn       # (zero-based) of "Use" column
+    * @param groupOnly                - indicates that only properties included in the group
+    *                                 should be shown
+    * @param allowChangingProperties  - when true, the PropertyValueColumn will
+    *                                 be editable, and changes will propagate to the hardware.
+    *                                 Otherwise, the column will be read-only.
     * @param allowChangesOnlyWhenUsed - when allowChangingProperties is true
-    *              setting this flag will only allow changes to PropertyItems
-    *              that have the "confInclude" flag set to true
-    * @param isPixelSizeConfig - indicates this is a pixel size config rather than
-    *                a standard config.  Pixel config-specific calls to the core
-    *                will be used.
+    *                                 setting this flag will only allow changes to PropertyItems
+    *                                 that have the "confInclude" flag set to true
+    * @param isPixelSizeConfig        - indicates this is a pixel size config rather than
+    *                                 a standard config.  Pixel config-specific calls to the core
+    *                                 will be used.
     */
    protected PropertyTableData(Studio studio, String groupName, String presetName,
-           int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly,
-           boolean allowChangingProperties, boolean allowChangesOnlyWhenUsed,
-           boolean isPixelSizeConfig) {
+                               int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly,
+                               boolean allowChangingProperties, boolean allowChangesOnlyWhenUsed,
+                               boolean isPixelSizeConfig) {
       studio_ = studio;
       core_ = studio_.core();
       groupName_ = groupName;
@@ -145,7 +145,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       allowChangesOnlyWhenUsed_ = allowChangesOnlyWhenUsed;
       isPixelSizeConfig_ = isPixelSizeConfig;
    }
-   
+
    protected PropertyTableData(Builder b) {
       studio_ = b.studio_;
       core_ = studio_.core();
@@ -205,9 +205,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       PropertyItem item = propListVisible_.get(row);
       if (col == propertyNameColumn_) {
          return item.device + "-" + item.name;
-      } else if (col == propertyValueColumn_) {
+      }
+      else if (col == propertyValueColumn_) {
          return item.value;
-      } else if (col == propertyUsedColumn_) {
+      }
+      else if (col == propertyUsedColumn_) {
          return item.confInclude;
       }
 
@@ -219,9 +221,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       try {
          if (item.isInteger()) {
             core_.setProperty(item.device, item.name, NumberUtils.intStringDisplayToCore(value));
-         } else if (item.isFloat()) {
+         }
+         else if (item.isFloat()) {
             core_.setProperty(item.device, item.name, NumberUtils.doubleStringDisplayToCore(value));
-         } else {
+         }
+         else {
             core_.setProperty(item.device, item.name, value.toString());
          }
          item.value = value.toString();
@@ -245,7 +249,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             studio_.app().refreshGUIFromCache();
             setUpdating(false);
          }
-      } else if (col == propertyUsedColumn_) {
+      }
+      else if (col == propertyUsedColumn_) {
          item.confInclude = ((Boolean) value);
       }
       fireTableCellUpdated(row, col);
@@ -262,7 +267,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          if (!allowChangingProperties_) // do not allow editing in the group editor view
          {
             return false;
-         } else {
+         }
+         else {
             if (propListVisible_.get(nRow).readOnly) {
                return false;
             }
@@ -273,9 +279,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                return true;
             }
          }
-      } else if (nCol == propertyUsedColumn_) {
+      }
+      else if (nCol == propertyUsedColumn_) {
          return !groupOnly_;
-      } else {
+      }
+      else {
          return false;
       }
    }
@@ -303,7 +311,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
    // note: public since it is overridden in internal.PropertyEditor
    public void update(ShowFlags flags, String groupName, String presetName,
-           boolean fromCache) {
+                      boolean fromCache) {
       // when updating, we do need to keep track which properties have their
       // "Use" checkbox checked.  Otherwise, this information get lost, which
       // is annoying and confusing for the user
@@ -324,20 +332,25 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          if (isPixelSizeConfig_) {
             if (core_.isPixelSizeConfigDefined(presetName)) {
                cfg = core_.getPixelSizeConfigData(presetName);
-            } else {
+            }
+            else {
                // We need a config, preferably any pixel size config so:
                StrVector availablePixelSizeConfigs = core_.getAvailablePixelSizeConfigs();
                if (availablePixelSizeConfigs.size() > 0) {
                   cfg = core_.getPixelSizeConfigData(availablePixelSizeConfigs.get(0));
-               } else if (fromCache) {
+               }
+               else if (fromCache) {
                   cfg = core_.getConfigGroupStateFromCache(groupName);
-               } else {
+               }
+               else {
                   cfg = core_.getConfigGroupState(groupName);
                }
             }
-         } else if (fromCache) {
+         }
+         else if (fromCache) {
             cfg = core_.getConfigGroupStateFromCache(groupName);
-         } else {
+         }
+         else {
             cfg = core_.getConfigGroupState(groupName);
          }
 
@@ -358,7 +371,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
                         for (PropertyItem usedItem : usedItems) {
                            if (item.device.equals(usedItem.device)
-                                   && item.name.equals(usedItem.name)) {
+                                 && item.name.equals(usedItem.name)) {
                               item.confInclude = true;
                            }
                         }
@@ -414,7 +427,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       for (int row = 0; row < propListVisible_.size(); row++) {
          propToRow_.put(propListVisible_.get(row), row);
       }
-      
+
 
       this.fireTableStructureChanged();
       this.fireTableDataChanged();
@@ -431,17 +444,23 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       Boolean showDevice;
       if (dType == DeviceType.SerialDevice) {
          showDevice = false;
-      } else if (dType == DeviceType.CameraDevice) {
+      }
+      else if (dType == DeviceType.CameraDevice) {
          showDevice = flags.cameras_;
-      } else if (dType == DeviceType.ShutterDevice) {
+      }
+      else if (dType == DeviceType.ShutterDevice) {
          showDevice = flags.shutters_;
-      } else if (dType == DeviceType.StageDevice) {
+      }
+      else if (dType == DeviceType.StageDevice) {
          showDevice = flags.stages_;
-      } else if (dType == DeviceType.XYStageDevice) {
+      }
+      else if (dType == DeviceType.XYStageDevice) {
          showDevice = flags.stages_;
-      } else if (dType == DeviceType.StateDevice) {
+      }
+      else if (dType == DeviceType.StateDevice) {
          showDevice = flags.state_;
-      } else {
+      }
+      else {
          showDevice = flags.other_;
       }
 

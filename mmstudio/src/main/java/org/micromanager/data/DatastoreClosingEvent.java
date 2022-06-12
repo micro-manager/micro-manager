@@ -27,8 +27,8 @@ import org.micromanager.MMEvent;
  * thus that all resources associated with that Datastore, and references to
  * the Datastore, should be removed so that it can be garbage collected.
  *
- *  <p>The default implementation of this event is posted on the Studio event bus,
- *  so subscribe using {@link org.micromanager.events.EventManager}.</p>
+ * <p>The default implementation of this event is posted on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface DatastoreClosingEvent extends MMEvent {
    /**

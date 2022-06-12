@@ -21,9 +21,9 @@ class FirstRowRenderer extends JLabel implements TableCellRenderer {
    }
 
    @Override
-   public Component getTableCellRendererComponent(JTable table, 
-         Object text, boolean isSelected, boolean hasFocus, 
-         int row, int column) {
+   public Component getTableCellRendererComponent(JTable table,
+                                                  Object text, boolean isSelected, boolean hasFocus,
+                                                  int row, int column) {
 
       setText((String) text);
       // HACK: use the "disabled" color for this row to differentiate it from

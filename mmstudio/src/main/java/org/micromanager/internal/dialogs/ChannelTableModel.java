@@ -20,7 +20,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 /**
  * Data representation class for the channels list in the MDA dialog.
  */
-public final class ChannelTableModel extends AbstractTableModel  {
+public final class ChannelTableModel extends AbstractTableModel {
 
    private static final long serialVersionUID = 3290621191844925827L;
    private final Studio studio_;
@@ -28,31 +28,32 @@ public final class ChannelTableModel extends AbstractTableModel  {
    private final MutablePropertyMapView settings_;
    // Not sure why, but the acqEngine API requires an ArrayList rather than a List
    private final ArrayList<ChannelSpec> channels_;
-   public final String[] columnNames_ = new String[]{
-      "Use?",
-      "Configuration",
-      "Exposure",
-      "Z-offset",
-      "Z-stack",
-      "Skip Fr.",
-      "Color"
+   public final String[] columnNames_ = new String[] {
+         "Use?",
+         "Configuration",
+         "Exposure",
+         "Z-offset",
+         "Z-stack",
+         "Skip Fr.",
+         "Color"
    };
-   private final String[] tooltips_ = new String[]{
-      "Toggle channel/group on/off",
-      "Choose preset property values for channel or group",
-      "Set exposure time in ms",
-      TooltipTextMaker.addHTMLBreaksForTooltip(
-            "Set a Z offset specific to this channel/group (the main object in one of "
-            + "the channels/groups is in a different focal plane from the other channels/groups"),
+   private final String[] tooltips_ = new String[] {
+         "Toggle channel/group on/off",
+         "Choose preset property values for channel or group",
+         "Set exposure time in ms",
+         TooltipTextMaker.addHTMLBreaksForTooltip(
+               "Set a Z offset specific to this channel/group (the main object in one of "
+                     +
+                     "the channels/groups is in a different focal plane from the other channels/groups"),
          "Collect images in multiple Z planes?",
-      TooltipTextMaker.addHTMLBreaksForTooltip("Setting 'Skip Frame' to a number other than "
-      + "0 will cause the acquisition to 'skip' taking images in "
-      + "that channel (after taking the first image) for the indicated "
-      + "number of time intervals. The 5D-Image Viewer will 'fill in' these skipped "
-      + "frames with the previous image. In some situations it may be "
-      + "desirable to acquire certain channels at lower sampling rates, "
-      + "to reduce photo-toxicity and to save disk space. "),
-      "Select channel/group color for display in viewer"};
+         TooltipTextMaker.addHTMLBreaksForTooltip("Setting 'Skip Frame' to a number other than "
+               + "0 will cause the acquisition to 'skip' taking images in "
+               + "that channel (after taking the first image) for the indicated "
+               + "number of time intervals. The 5D-Image Viewer will 'fill in' these skipped "
+               + "frames with the previous image. In some situations it may be "
+               + "desirable to acquire certain channels at lower sampling rates, "
+               + "to reduce photo-toxicity and to save disk space. "),
+         "Select channel/group color for display in viewer"};
 
    public String getToolTipText(int columnIndex) {
       return tooltips_[columnIndex];
@@ -73,7 +74,8 @@ public final class ChannelTableModel extends AbstractTableModel  {
    public int getRowCount() {
       if (channels_ == null) {
          return 0;
-      } else {
+      }
+      else {
          return channels_.size();
       }
    }
@@ -93,17 +95,23 @@ public final class ChannelTableModel extends AbstractTableModel  {
       if (channels_ != null && rowIndex < channels_.size()) {
          if (columnIndex == 0) {
             return channels_.get(rowIndex).useChannel();
-         } else if (columnIndex == 1) {
+         }
+         else if (columnIndex == 1) {
             return channels_.get(rowIndex).config();
-         } else if (columnIndex == 2) {
+         }
+         else if (columnIndex == 2) {
             return channels_.get(rowIndex).exposure();
-         } else if (columnIndex == 3) {
+         }
+         else if (columnIndex == 3) {
             return channels_.get(rowIndex).zOffset();
-         } else if (columnIndex == 4) {
+         }
+         else if (columnIndex == 4) {
             return channels_.get(rowIndex).doZStack();
-         } else if (columnIndex == 5) {
+         }
+         else if (columnIndex == 5) {
             return channels_.get(rowIndex).skipFactorFrame();
-         } else if (columnIndex == 6) {
+         }
+         else if (columnIndex == 6) {
             return channels_.get(rowIndex).color();
          }
       }
@@ -125,47 +133,55 @@ public final class ChannelTableModel extends AbstractTableModel  {
       ChannelSpec.Builder cb = channel.copyBuilder();
       if (col == 0) {
          cb.useChannel((Boolean) value);
-      } else if (col == 1) {
+      }
+      else if (col == 1) {
          cb.config(value.toString());
          ChannelSpec cs = ChannelSpec.fromJSONStream(
-                 settings_.getString(channelProfileKey(acqEng_.getSequenceSettings().channelGroup(),
-                         value.toString()), ""));
+               settings_.getString(channelProfileKey(acqEng_.getSequenceSettings().channelGroup(),
+                     value.toString()), ""));
          if (cs == null) {
             // Our fallback color is the colorblind-friendly color for our
             // current row index.
             ChannelDisplaySettings cds =
-                    RememberedDisplaySettings.loadChannel(studio_,
+                  RememberedDisplaySettings.loadChannel(studio_,
                         acqEng_.getSequenceSettings().channelGroup(),
                         value.toString(), new Color(
-                                ColorPalettes.getFromDefaultPalette(row).getRGB()));
+                              ColorPalettes.getFromDefaultPalette(row).getRGB()));
             cb.color(cds.getColor());
             cb.exposure(10.0);
-         } else {
+         }
+         else {
             cb.color(cs.color());
             cb.exposure(cs.exposure());
          }
          channels_.set(row, cb.build());
          this.fireTableCellUpdated(row, 2);
          this.fireTableCellUpdated(row, 6);
-      } else if (col == 2) {
+      }
+      else if (col == 2) {
          cb.exposure(((Double) value));
          if (AcqControlDlg.getShouldSyncExposure()) {
             studio_.app().setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
-                    channel.config(), (Double) value);
-         } else {
-            this.setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
-                    channel.config(), (Double) value);
+                  channel.config(), (Double) value);
          }
-      } else if (col == 3) {
+         else {
+            this.setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
+                  channel.config(), (Double) value);
+         }
+      }
+      else if (col == 3) {
          cb.zOffset((Double) value);
-      } else if (col == 4) {
+      }
+      else if (col == 4) {
          cb.doZStack((Boolean) value);
-      } else if (col == 5) {
+      }
+      else if (col == 5) {
          cb.skipFactorFrame((Integer) value);
-      } else if (col == 6) {
+      }
+      else if (col == 6) {
          if (!channel.color().equals(value)) {
             studio_.events().post(new ChannelColorEvent(
-                    channel.channelGroup(), channel.config(), (Color) value));
+                  channel.channelGroup(), channel.config(), (Color) value));
          }
          cb.color((Color) value);
       }
@@ -204,7 +220,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
                   // Color information is a displaySetting. The ultimate authority
                   // is in RememberedSettings, so look there now
                   Color c = RememberedDisplaySettings.loadChannel(studio_, channel.channelGroup(),
-                          channel.config(), channel.color()).getColor();
+                        channel.config(), channel.color()).getColor();
                   ChannelSpec ch = channel.copyBuilder().color(c).build();
                   channels_.add(ch);
                   break;
@@ -236,12 +252,13 @@ public final class ChannelTableModel extends AbstractTableModel  {
          String config = cb.build().config();
          if (config.length() == 0) {
             ReportingUtils.showMessage("No more channels are available\nin this channel group.");
-         } else {
+         }
+         else {
             // Pick a non-white default color if possible.
             Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
             cb.channelGroup(acqEng_.getSequenceSettings().channelGroup());
             cb.color(RememberedDisplaySettings.loadChannel(studio_,
-                    acqEng_.getSequenceSettings().channelGroup(), config, defaultColor).getColor());
+                  acqEng_.getSequenceSettings().channelGroup(), config, defaultColor).getColor());
             cb.exposure(this.getChannelExposureTime(
                   acqEng_.getSequenceSettings().channelGroup(), config, 10.0));
             channels_.add(cb.build());
@@ -314,7 +331,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
             configNames.add(cs.config());
             // write this config to the profile
             settings_.putString(channelProfileKey(cs.channelGroup(), cs.config()),
-                    ChannelSpec.toJSONStream(cs));
+                  ChannelSpec.toJSONStream(cs));
             if (!acqEng_.isConfigAvailable(cs.config())) {
                it.remove();
             }
@@ -329,7 +346,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
          List<String> newConfigNames = settings_.getStringList("CG:" + newChannelGroup);
          for (String newConfig : newConfigNames) {
             ChannelSpec cs = ChannelSpec.fromJSONStream(
-                    settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
+                  settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
             if (cs != null) {
                // Definite data about colors is in RememberedSettings
                Color csColor = RememberedDisplaySettings.loadChannel(
@@ -359,17 +376,17 @@ public final class ChannelTableModel extends AbstractTableModel  {
       }
       return false;
    }
-   
+
    /**
     * Updates the exposure time in the given preset.
     *
-    * @param channelGroup - if it does not match current channelGroup, 
-    *       no action will be taken
-    * @param channel - preset for which to change exposure time
-    * @param exposure - desired exposure time
+    * @param channelGroup - if it does not match current channelGroup,
+    *                     no action will be taken
+    * @param channel      - preset for which to change exposure time
+    * @param exposure     - desired exposure time
     */
-   public void setChannelExposureTime(String channelGroup, String channel, 
-           double exposure) {
+   public void setChannelExposureTime(String channelGroup, String channel,
+                                      double exposure) {
       if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) {
          return;
       }
@@ -387,7 +404,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
     * Indictes whether the internal channel list contains the given channel.
     *
     * @param channelGroup group to which the channel belongs
-    * @param channel query channel
+    * @param channel      query channel
     * @return true if the internal list contains the channel, false otherwise
     */
    public boolean hasChannel(String channelGroup, String channel) {
@@ -405,13 +422,13 @@ public final class ChannelTableModel extends AbstractTableModel  {
    /**
     * Returns the exposure time of the given preset.
     *
-    * @param channelGroup - if it does not match current channelGroup,
-    *                       default exposure will be returns
-    * @param channel - preset for which to change exposure time
+    * @param channelGroup    - if it does not match current channelGroup,
+    *                        default exposure will be returns
+    * @param channel         - preset for which to change exposure time
     * @param defaultExposure - return when no match was found
     */
    public double getChannelExposureTime(String channelGroup, String channel,
-                                      double defaultExposure) {
+                                        double defaultExposure) {
       if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) {
          return defaultExposure;
       }
@@ -426,9 +443,9 @@ public final class ChannelTableModel extends AbstractTableModel  {
    /**
     * Updates the color of the specified channel.
     *
-    * @param channelGroup  Channelgroup of the channel
-    * @param channelName   Name of the channel
-    * @param color         New color of the channel
+    * @param channelGroup Channelgroup of the channel
+    * @param channelName  Name of the channel
+    * @param color        New color of the channel
     */
    public void setChannelColor(String channelGroup, String channelName, Color color) {
       if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) {
@@ -460,7 +477,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
             configNames.add(cs.config());
             // write this config to the profile
             settings_.putString(channelProfileKey(cs.channelGroup(), cs.config()),
-                    ChannelSpec.toJSONStream(cs));
+                  ChannelSpec.toJSONStream(cs));
          }
       }
       // Stores the config names that we had for the old channelGroup

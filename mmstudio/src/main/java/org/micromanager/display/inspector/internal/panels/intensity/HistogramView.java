@@ -54,7 +54,7 @@ public final class HistogramView extends JPanel {
    /**
     * Listener for changes in histogram min, max and gamma.
     */
-   public  interface Listener {
+   public interface Listener {
       void histogramScalingMinChanged(int component, long newMin);
 
       void histogramScalingMaxChanged(int component, long newMax);
@@ -203,7 +203,7 @@ public final class HistogramView extends JPanel {
       state.graph_ = Arrays.copyOf(graph, graphLen);
       state.rangeMax_ = rangeMax;
 
-      if (component == selectedComponent_  && rangeMaxChanged) {
+      if (component == selectedComponent_ && rangeMaxChanged) {
          nullRectsAndMappingPath();
       }
       state.cachedInterpolatedLogScaledGraph_ = null;
@@ -259,7 +259,7 @@ public final class HistogramView extends JPanel {
       }
       repaint();
    }
-   
+
    private void nullRectsAndMappingPath() {
       scalingMinLabelRect_ = null;
       scalingMaxLabelRect_ = null;
@@ -378,8 +378,9 @@ public final class HistogramView extends JPanel {
          final int s = LUT_HANDLE_SIZE;
          if (top) {
             scalingMaxHandleRect_ = new Rectangle(x, y - s, s, s);
-         } else {
-            scalingMinHandleRect_ =  new Rectangle(x - s, y, s, s);
+         }
+         else {
+            scalingMinHandleRect_ = new Rectangle(x - s, y, s, s);
          }
       }
       return top ? scalingMaxHandleRect_ : scalingMinHandleRect_;
@@ -399,7 +400,8 @@ public final class HistogramView extends JPanel {
          boolean drawOnLeftOfHandle = top;
          if (top && intensity < 0.5 * state.rangeMax_) {
             drawOnLeftOfHandle = false;
-         } else if (!top && intensity > 0.5 * state.rangeMax_) {
+         }
+         else if (!top && intensity > 0.5 * state.rangeMax_) {
             drawOnLeftOfHandle = true;
          }
 
@@ -409,7 +411,8 @@ public final class HistogramView extends JPanel {
          if (top) {
             x += drawOnLeftOfHandle ? -width - 1 : LUT_HANDLE_SIZE;
             scalingMaxLabelRect_ = new Rectangle(x, 0, width, VERTICAL_MARGIN);
-         } else {
+         }
+         else {
             x += drawOnLeftOfHandle ? -width - LUT_HANDLE_SIZE : 2;
             scalingMinLabelRect_ = new Rectangle(x, rect.y + rect.height, width, VERTICAL_MARGIN);
          }
@@ -423,7 +426,8 @@ public final class HistogramView extends JPanel {
          Rectangle rect = getGraphRect();
          if (top) {
             scalingMaxAreaRect_ = new Rectangle(rect.x, 0, rect.width, rect.y);
-         } else {
+         }
+         else {
             scalingMinAreaRect_ = new Rectangle(rect.x, rect.y + rect.height,
                   rect.width, getBounds().height);
          }
@@ -579,7 +583,8 @@ public final class HistogramView extends JPanel {
       g2d.setColor(componentStates_.get(component).color_);
       if (fillHistograms_) {
          g2d.fill(path);
-      } else {
+      }
+      else {
          g2d.setStroke(new BasicStroke(2.0f));
          g2d.draw(path);
       }
@@ -601,7 +606,7 @@ public final class HistogramView extends JPanel {
       g2d.setStroke(new BasicStroke(
             1.0f, BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER, 10.0f,
-            new float[] { 5.0f, 5.0f }, offset));
+            new float[] {5.0f, 5.0f}, offset));
       g2d.draw(new Line2D.Float(loXPos, rect.y, loXPos, rect.y + rect.height));
       g2d.draw(new Line2D.Float(hiXPos, rect.y, hiXPos, rect.y + rect.height));
    }
@@ -625,7 +630,7 @@ public final class HistogramView extends JPanel {
       g2d.setStroke(new BasicStroke(
             1.5f, BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER, 10.0f,
-            new float[] { 5.0f, 5.0f }, offset));
+            new float[] {5.0f, 5.0f}, offset));
       g2d.draw(new Line2D.Float(xPos, rect.y, xPos, rect.y + rect.height));
    }
 
@@ -682,7 +687,8 @@ public final class HistogramView extends JPanel {
       boolean drawOnLeftOfHandle = top;
       if (top && intensity < 0.5 * state.rangeMax_) {
          drawOnLeftOfHandle = false;
-      } else if (!top && intensity > 0.5 * state.rangeMax_) {
+      }
+      else if (!top && intensity > 0.5 * state.rangeMax_) {
          drawOnLeftOfHandle = true;
       }
 
@@ -693,7 +699,8 @@ public final class HistogramView extends JPanel {
       int vOffset = top ? -1 : metrics.getAscent() - 1;
       if (top) {
          x += drawOnLeftOfHandle ? -width - 1 : LUT_HANDLE_SIZE;
-      } else {
+      }
+      else {
          x += drawOnLeftOfHandle ? -width - LUT_HANDLE_SIZE : 2;
       }
       float y = top ? rect.y : rect.y + rect.height;
@@ -843,7 +850,8 @@ public final class HistogramView extends JPanel {
          if (interpolatedLen < state.graph_.length) {
             state.cachedInterpolatedLogScaledGraph_ =
                   makeInterpolatedHistogram(state.graph_, interpolatedLen);
-         } else { // No interpolation necessary
+         }
+         else { // No interpolation necessary
             state.cachedInterpolatedLogScaledGraph_ =
                   new float[state.graph_.length];
             for (int i = 0; i < state.cachedInterpolatedLogScaledGraph_.length; ++i) {
@@ -854,10 +862,10 @@ public final class HistogramView extends JPanel {
          // Apply log scaling if requested
          if (plotLogIntensity_) {
             for (int i = 0; i < state.cachedInterpolatedLogScaledGraph_.length; ++i) {
-               state.cachedInterpolatedLogScaledGraph_[i] = 
-                       state.cachedInterpolatedLogScaledGraph_[i] > 1.0f
-                             ?
-                     (float) Math.log(state.cachedInterpolatedLogScaledGraph_[i]) : 0.0f;
+               state.cachedInterpolatedLogScaledGraph_[i] =
+                     state.cachedInterpolatedLogScaledGraph_[i] > 1.0f
+                           ?
+                           (float) Math.log(state.cachedInterpolatedLogScaledGraph_[i]) : 0.0f;
             }
          }
       }
@@ -927,13 +935,17 @@ public final class HistogramView extends JPanel {
       if (e.getClickCount() == 2) {
          if (isPointInScalingLabel(e.getPoint(), true)) {
             startScalingEdit(true);
-         } else if (isPointInScalingLabel(e.getPoint(), false)) {
+         }
+         else if (isPointInScalingLabel(e.getPoint(), false)) {
             startScalingEdit(false);
-         } else if (isPointInScalingArea(e.getPoint(), true)) {
+         }
+         else if (isPointInScalingArea(e.getPoint(), true)) {
             jumpSetScaling(e.getPoint().x, true);
-         } else if (isPointInScalingArea(e.getPoint(), false)) {
+         }
+         else if (isPointInScalingArea(e.getPoint(), false)) {
             jumpSetScaling(e.getPoint().x, false);
-         } else if (isPointInGammaHandle(e.getPoint())) {
+         }
+         else if (isPointInGammaHandle(e.getPoint())) {
             setGamma(1.0);
             listeners_.fire().histogramGammaChanged(1.0);
          }
@@ -944,10 +956,12 @@ public final class HistogramView extends JPanel {
       if (isPointInScalingHandle(e.getPoint(), true)) {
          handleBeingDragged_ = Handle.SCALING_MAX;
          startScalingHandleDrag(e.getPoint(), true);
-      } else if (isPointInScalingHandle(e.getPoint(), false)) {
+      }
+      else if (isPointInScalingHandle(e.getPoint(), false)) {
          handleBeingDragged_ = Handle.SCALING_MIN;
          startScalingHandleDrag(e.getPoint(), false);
-      } else if (isPointInGammaHandle(e.getPoint())) {
+      }
+      else if (isPointInGammaHandle(e.getPoint())) {
          handleBeingDragged_ = Handle.GAMMA;
          startGammaHandleDrag(e.getPoint());
       }
@@ -970,7 +984,7 @@ public final class HistogramView extends JPanel {
             default:
                throw new AssertionError(handleBeingDragged_.name());
          }
-      }  finally {
+      } finally {
          handleBeingDragged_ = Handle.NONE;
       }
    }
@@ -1026,7 +1040,8 @@ public final class HistogramView extends JPanel {
             intensity1 = Math.max(state.scalingMin_ + 1, intensity1);
             setComponentScaling(selectedComponent_, state.scalingMin_, intensity1);
             listeners_.fire().histogramScalingMaxChanged(selectedComponent_, intensity1);
-         } else {
+         }
+         else {
             intensity1 = Math.min(state.scalingMax_ - 1, intensity1);
             setComponentScaling(selectedComponent_, intensity1, state.scalingMax_);
             listeners_.fire().histogramScalingMinChanged(selectedComponent_, intensity1);
@@ -1043,14 +1058,15 @@ public final class HistogramView extends JPanel {
 
    private void jumpSetScaling(int mouseX, boolean top) {
       ComponentState state = componentStates_.get(selectedComponent_);
-      long intensity =  Math.round(
+      long intensity = Math.round(
             graphXPosToIntensityFraction(mouseX) * state.rangeMax_);
       intensity = Math.max(0, Math.min(state.rangeMax_, intensity));
       if (top) {
          intensity = Math.max(state.scalingMin_ + 1, intensity);
          setComponentScaling(selectedComponent_, state.scalingMin_, intensity);
          listeners_.fire().histogramScalingMaxChanged(selectedComponent_, intensity);
-      } else {
+      }
+      else {
          intensity = Math.min(state.scalingMax_ - 1, intensity);
          setComponentScaling(selectedComponent_, intensity, state.scalingMax_);
          listeners_.fire().histogramScalingMinChanged(selectedComponent_, intensity);
@@ -1090,7 +1106,8 @@ public final class HistogramView extends JPanel {
       if (getValidDragRect().contains(mousePosition)) {
          float intensityFrac = graphXPosToIntensityFraction(mousePosition.x);
          intensity = Math.round(intensityFrac * state.rangeMax_);
-      } else {
+      }
+      else {
          intensity = scalingHandleDragOriginalValue_;
       }
       intensity = Math.max(0, Math.min(state.rangeMax_, intensity));
@@ -1098,7 +1115,8 @@ public final class HistogramView extends JPanel {
          intensity = Math.max(state.scalingMin_ + 1, intensity);
          setComponentScaling(selectedComponent_, state.scalingMin_, intensity);
          listeners_.fire().histogramScalingMaxChanged(selectedComponent_, intensity);
-      } else {
+      }
+      else {
          intensity = Math.min(state.scalingMax_ - 1, intensity);
          setComponentScaling(selectedComponent_, intensity, state.scalingMax_);
          listeners_.fire().histogramScalingMinChanged(selectedComponent_, intensity);
@@ -1109,7 +1127,8 @@ public final class HistogramView extends JPanel {
       double gamma;
       if (getValidDragRect().contains(mousePosition)) {
          gamma = graphPosToGamma(mousePosition.x, mousePosition.y);
-      } else {
+      }
+      else {
          gamma = gammaHandleDragOriginalValue_;
       }
       setGamma(gamma);

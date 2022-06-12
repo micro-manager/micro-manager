@@ -37,7 +37,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  *
  * @author Nico Stuurman
  */
-public final class XYZKeyListener  {
+public final class XYZKeyListener {
    private final CMMCore core_;
    private final MutablePropertyMapView settings_;
    private final ZNavigator zNavigator_;
@@ -59,9 +59,9 @@ public final class XYZKeyListener  {
     * the stage is moving.  Once the stage stops moving, all (added)
     * movement requests will be combined into a single stage movement.
     *
-    * @param studio Our beloved Micro-Manager Studio object
+    * @param studio      Our beloved Micro-Manager Studio object
     * @param xyNavigator Object that manages communication to XY Stages
-    * @param zNavigator Object that manages communication to Z Stages.
+    * @param zNavigator  Object that manages communication to Z Stages.
     */
    public XYZKeyListener(Studio studio, XYNavigator xyNavigator, ZNavigator zNavigator) {
       core_ = studio.getCMMCore();
@@ -73,7 +73,7 @@ public final class XYZKeyListener  {
       zMovesMicron_ = new double[] {1.0, 10.0};
 
       settings_ = studio.profile().getSettings(
-           org.micromanager.internal.dialogs.StageControlFrame.class);
+            org.micromanager.internal.dialogs.StageControlFrame.class);
    }
 
    /**
@@ -105,7 +105,8 @@ public final class XYZKeyListener  {
             if (e.isControlDown()) {
                xMicron = xMovesMicron_[0];
                yMicron = yMovesMicron_[0];
-            } else if (e.isShiftDown()) {
+            }
+            else if (e.isShiftDown()) {
                xMicron = xMovesMicron_[2];
                yMicron = yMovesMicron_[2];
             }

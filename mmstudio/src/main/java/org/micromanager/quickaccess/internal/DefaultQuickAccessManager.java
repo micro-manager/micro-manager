@@ -79,20 +79,20 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
 
    /**
     * Check the user's profile to see if we have any saved settings there.
+    *
     * @param event Event that is fired when MM completes startup
     */
    @Subscribe
    public void onStartupComplete(StartupCompleteEvent event) {
       try {
          String configStr = studio_.profile().
-                 getSettings(QuickAccessManager.class).getString( SAVED_CONFIG, null);
+               getSettings(QuickAccessManager.class).getString(SAVED_CONFIG, null);
          if (configStr == null) {
             // Nothing saved.
             return;
          }
          loadConfig(configStr);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio_.logs().logError(e, "Unable to reload Quick Access config");
       }
    }
@@ -108,8 +108,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
             JSONObject panelConfig = panels.getJSONObject(i);
             addPanel(panelConfig);
          }
-      }
-      catch (JSONException e) {
+      } catch (JSONException e) {
          studio_.logs().logError(e, "Unable to reconstruct Quick Access Window from config.");
       }
    }
@@ -121,7 +120,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       String config = getConfig(false);
       studio_.profile().getSettings(QuickAccessManager.class).
-              putString(SAVED_CONFIG, config);
+            putString(SAVED_CONFIG, config);
    }
 
    /**
@@ -138,8 +137,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
          }
          config.put("panels", panelConfigs);
          return config.toString(isPretty ? 2 : 0);
-      }
-      catch (JSONException e) {
+      } catch (JSONException e) {
          studio_.logs().logError(e, "Error saving Quick Access Window config");
          return "";
       }
@@ -181,8 +179,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
             try {
                Image image = ImageIO.read(new File(iconPath));
                return new ImageIcon(image);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                studio_.logs().showError(e, "Unable to find image at " + iconPath);
             }
          }
@@ -199,8 +196,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
          else {
             studio_.logs().logError("Unsupported icon type " + iconType);
          }
-      }
-      catch (JSONException e) {
+      } catch (JSONException e) {
          studio_.logs().logError(e, "Unable to create custom icon");
       }
       return defaultIcon;
@@ -213,8 +209,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
          FileWriter writer = new FileWriter(file);
          writer.write(settings + "\n");
          writer.close();
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          studio_.logs().logError(e, "Error saving settings to " + file);
       }
    }
@@ -223,8 +218,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    public void loadSettingsFromFile(File file) {
       try {
          loadConfig(Files.toString(file, Charsets.UTF_8));
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          studio_.logs().logError(e, "Error loading settings from " + file);
       }
    }
@@ -260,8 +254,8 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
                "Asked to delete JFrame that isn't a QuickAccessFrame.");
       }
       if (JOptionPane.showConfirmDialog(panel,
-         "Really delete this panel and lose its configuration?",
-         "Confirm Panel Deletion", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            "Really delete this panel and lose its configuration?",
+            "Confirm Panel Deletion", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
          deletePanel((QuickAccessFrame) panel);
          panel.dispose();
       }
@@ -270,8 +264,9 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    /**
     * Provides a unique string for the provided panel, based on the provided
     * base title and the titles of the other panels.
+    *
     * @param panel QuickAccessFrame whose title we want to test
-    * @param base Proposed new title for this frame
+    * @param base  Proposed new title for this frame
     * @return Unique title
     */
    public String getUniqueTitle(QuickAccessFrame panel, String base) {
@@ -311,6 +306,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
 
    /**
     * Remove an existing panel.
+    *
     * @param panel The panel to be removed
     */
    public void deletePanel(QuickAccessFrame panel) {

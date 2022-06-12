@@ -3,21 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.profile.internal;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 /**
- *
  * @author Mark A. Tsuchida
  */
 final class ProfileSaver {
@@ -30,8 +26,7 @@ final class ProfileSaver {
    private final Runnable save_;
 
    public static ProfileSaver create(DefaultUserProfile profile,
-         Runnable save, ScheduledExecutorService saverExecutor)
-   {
+                                     Runnable save, ScheduledExecutorService saverExecutor) {
       ProfileSaver instance = new ProfileSaver(save, saverExecutor);
       profile.registerForEvents(instance);
       return instance;
@@ -71,8 +66,7 @@ final class ProfileSaver {
       try {
          scheduledSave_ = saver_.schedule(save_,
                saveIntervalSeconds_, TimeUnit.SECONDS);
-      }
-      catch (RejectedExecutionException e) {
+      } catch (RejectedExecutionException e) {
          // Saving has been shut down; nothing to do
       }
    }

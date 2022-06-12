@@ -11,12 +11,12 @@ import javax.swing.SwingUtilities;
 
 public final class EDTProfiler {
    private static final int INTERVAL = 100;
-   
+
    private final Timer timer_;
    private final LinkedList<Long> startTimes_;
    private final LinkedList<Long> executionTimes_;
-   
-   
+
+
    public EDTProfiler() {
       timer_ = new Timer();
       startTimes_ = new LinkedList<>();
@@ -32,11 +32,11 @@ public final class EDTProfiler {
       frame.pack();
       frame.setVisible(true);
    }
-   
+
    private void start() {
       timer_.schedule(getTask(), 0, INTERVAL);
    }
-   
+
    private void end() {
       timer_.cancel();
       for (int i = 0; i < startTimes_.size(); i++) {
@@ -44,17 +44,17 @@ public final class EDTProfiler {
          if (i < executionTimes_.size()) {
             print += executionTimes_.get(i) + "";
          }
-         System.out.println(print);         
+         System.out.println(print);
       }
    }
-   
+
    private TimerTask getTask() {
       return new TimerTask() {
          @Override
          public void run() {
             startTimes_.add(System.currentTimeMillis());
             SwingUtilities.invokeLater(() -> executionTimes_.add(System.currentTimeMillis()));
-         }     
+         }
       };
    }
 

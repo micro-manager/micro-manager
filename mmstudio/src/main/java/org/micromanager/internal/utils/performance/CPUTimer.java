@@ -23,8 +23,8 @@ import java.lang.management.ThreadMXBean;
  * Accuracy is platform-dependent.
  * Recommended for tasks taking 10 ms or longer.
  *
- * @see WallTimer
  * @author Mark A. Tsuchida
+ * @see WallTimer
  */
 public final class CPUTimer {
    private static final ThreadMXBean threadMXB_ =

@@ -7,7 +7,7 @@ import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * Table model for device property tables. 
+ * Table model for device property tables.
  */
 class ComPropTableModel extends AbstractTableModel implements MMPropertyTableModel {
    private static final long serialVersionUID = 1L;
@@ -16,11 +16,11 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
          "Property",
          "Value"
    };
-   
+
    MicroscopeModel model_;
    Device dev_;
    PropertyItem[] props_;
-   
+
    public ComPropTableModel(MicroscopeModel model, Device portDev) {
       updateValues(model, portDev);
    }
@@ -33,13 +33,13 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
       } catch (MMConfigFileException e) {
          ReportingUtils.logMessage("Property Baudrate is not defined");
       }
-      
+
       if (!dev.isSerialPort()) {
          return;
       }
-      
+
       model_.dumpComPortsSetupProps(); // ?
-      
+
       ArrayList<PropertyItem> props = new ArrayList<>();
       ArrayList<String> dn = new ArrayList<>();
       for (int i = 0; i < dev_.getNumberOfProperties(); i++) {
@@ -53,13 +53,13 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
             }
          }
       }
-      
+
       props_ = new PropertyItem[props.size()];
       for (int i = 0; i < props.size(); i++) {
          props_[i] = props.get(i);
       }
    }
-   
+
    public int getRowCount() {
       return props_.length;
    }
@@ -76,13 +76,15 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
    public Object getValueAt(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
          return dev_.getName();
-      } else if (columnIndex == 1) {
+      }
+      else if (columnIndex == 1) {
          return props_[rowIndex].name;
-      } else {
+      }
+      else {
          return props_[rowIndex].value;
       }
    }
-   
+
    public void setValueAt(Object value, int row, int col) {
       if (col == 2) {
          try {
@@ -95,30 +97,30 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
          }
       }
    }
-   
+
    public boolean isCellEditable(int nRow, int nCol) {
       return nCol == 2 && !props_[nRow].readOnly;
    }
-   
+
    public void refresh() {
       this.fireTableDataChanged();
    }
-   
+
    public PropertyItem getPropertyItem(int rowIndex) {
       return props_[rowIndex];
    }
-   
+
    public Setting getSetting(int rowIndex) {
       return new Setting(dev_.getName(), props_[rowIndex].name, props_[rowIndex].value);
    }
-   
+
    public PropertyItem getProperty(Setting s) {
       if (dev_.getName().compareTo(s.deviceName_) == 0) {
          return dev_.findSetupProperty(s.propertyName_);
       }
       return null;
    }
-   
+
    public Device getPortDevice() {
       return dev_;
    }

@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.displaywindow.imagej;
 
 import com.google.common.base.Preconditions;
@@ -16,7 +17,7 @@ import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
 /**
  * The color mode strategy for single-color mode.
- *
+ * <p>
  * (No, it's not a typo.)
  *
  * @author mark

@@ -1,12 +1,12 @@
 package org.micromanager.display.overlay;
 
 /**
- *
  * @author mark
  */
 public interface OverlayListener {
    /**
     * Called by the overlay when its title has changed.
+    *
     * @param overlay the caller
     * @see AbstractOverlay#fireOverlayTitleChanged
     */

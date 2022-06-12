@@ -42,10 +42,10 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
    public interface Listener {
       void scrollBarPanelHeightWillChange(MDScrollBarPanel panel,
-            int currentHeight);
+                                          int currentHeight);
 
       void scrollBarPanelHeightDidChange(MDScrollBarPanel panel,
-            int oldHeight, int newHeight);
+                                         int oldHeight, int newHeight);
 
       void scrollBarPanelDidChangePositionInUI(MDScrollBarPanel panel);
    }
@@ -79,13 +79,13 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
 
    @MustCallOnEDT
    static MDScrollBarPanel create(ControlsFactory leftControlsFactory,
-         ControlsFactory rightControlsFactory) {
+                                  ControlsFactory rightControlsFactory) {
       return new MDScrollBarPanel(leftControlsFactory, rightControlsFactory);
    }
 
    @MustCallOnEDT
    private MDScrollBarPanel(ControlsFactory leftControlsFactory,
-         ControlsFactory rightControlsFactory) {
+                            ControlsFactory rightControlsFactory) {
       super(new MigLayout(new LC().insets("0").gridGap("0", "0").fillX()));
       leftControlsFactory_ = leftControlsFactory;
       rightControlsFactory_ = rightControlsFactory;
@@ -132,7 +132,8 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
             if (existingIndex >= 0) {
                newPanels.add(rowPanels_.get(existingIndex));
                newScrollBarPositions.add(scrollBarPositions_.get(existingIndex));
-            } else {
+            }
+            else {
                newPanels.add(makeRowPanel(axis, 0));
                newScrollBarPositions.add(0);
             }
@@ -268,7 +269,8 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
 
       // Skip events that don't actually change the scroll bar position
       JScrollBar scrollBar = (JScrollBar) e.getSource();
-      ROW_LOOP: for (int i = 0; i < axes_.size(); ++i) {
+      ROW_LOOP:
+      for (int i = 0; i < axes_.size(); ++i) {
          JPanel rowPanel = rowPanels_.get(i);
          for (Component c : rowPanel.getComponents()) {
             if (c == scrollBar) {

@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.displaywindow.imagej;
 
 import com.google.common.base.Preconditions;
@@ -17,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
  * @author mark
  */
 class RGBColorModeStrategy implements ColorModeStrategy {
@@ -39,17 +39,17 @@ class RGBColorModeStrategy implements ColorModeStrategy {
    }
 
    /**
-     For now, we use one LUT for Red, Green, and Blue.
-     This behavior can (and should) be changed in the future
-   */
+    * For now, we use one LUT for Red, Green, and Blue.
+    * This behavior can (and should) be changed in the future
+    */
    private int[] getRGBLUTs() {
       if (rgbLUTs_ == null) {
          rgbLUTs_ = new int[256];
          float min = minima_.get(0);
          float max = Math.min(255, maxima_.get(0));
          for (int k = 0; k < 256; ++k) {
-            float f = (float) Math.max(Math.min(1.0, (k - min) / (max - min) ), 0.0);
-            rgbLUTs_[k] = (int) Math.round( 255.0f * f );
+            float f = (float) Math.max(Math.min(1.0, (k - min) / (max - min)), 0.0);
+            rgbLUTs_[k] = (int) Math.round(255.0f * f);
          }
       }
       return rgbLUTs_;
@@ -74,7 +74,7 @@ class RGBColorModeStrategy implements ColorModeStrategy {
          imagePlus_.setStack(stack);
       }
       ((ColorProcessor) imagePlus_.getProcessor()).
-               applyTable(getRGBLUTs());
+            applyTable(getRGBLUTs());
    }
 
    @Override

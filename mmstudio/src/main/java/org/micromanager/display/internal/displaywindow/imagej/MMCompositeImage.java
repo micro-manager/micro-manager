@@ -20,12 +20,11 @@ import ij.ImagePlus;
 /**
  * Wrapped version of ImageJ's {@code CompositeImage}.
  *
- * @see MMImagePlus
  * @author Mark A. Tsuchida, based on older version by Chris Weisiger
+ * @see MMImagePlus
  */
 public final class MMCompositeImage extends CompositeImage
-      implements IMMImagePlus
-{
+      implements IMMImagePlus {
    static MMCompositeImage create(ImageJBridge parent, ImagePlus predecessor) {
       return new MMCompositeImage(parent, predecessor);
    }
@@ -37,8 +36,7 @@ public final class MMCompositeImage extends CompositeImage
 
    @Override
    public void setDimensionsWithoutUpdate(
-         int nChannels, int nSlices, int nFrames)
-   {
+         int nChannels, int nSlices, int nFrames) {
       super.nSlices = nSlices;
       super.nFrames = nFrames;
       super.nChannels = nChannels;

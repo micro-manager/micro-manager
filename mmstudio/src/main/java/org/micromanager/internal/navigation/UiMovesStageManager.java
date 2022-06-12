@@ -109,7 +109,7 @@ public final class UiMovesStageManager {
             }
          }
       }
-      
+
       synchronized (displayToWheelListener_) {
          for (DisplayController display : displayToWheelListener_.keySet()) {
             if (display.equals(displayToDeActivate)) {

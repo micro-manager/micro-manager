@@ -1,4 +1,3 @@
-
 package org.micromanager.data.internal;
 
 import com.google.common.base.Joiner;
@@ -23,7 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.micromanager.Album;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
@@ -39,8 +37,8 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -74,13 +72,13 @@ public enum PropertyKey {
    */
 
    ALBUM_DISPLAY_SETTINGS("AlbumDisplaySettings", Album.class),
-   
+
    ACQUISITION_DISPLAY_SETTINGS("AcquisitionDisplaySettings", AcquisitionManager.class),
-   
+
    AUTOSCALE_IGNORED_QUANTILE("AutoscaleIgnoredQuantile", DisplaySettings.class),
-   
+
    AUTOSTRETCH("Autostretch", DisplaySettings.class),
-   
+
    AXIS_ORDER("AxisOrder", SummaryMetadata.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -123,7 +121,8 @@ public enum PropertyKey {
                dest.putStringList(key(), axes);
                return true;
             }
-         } else {
+         }
+         else {
             // This could be a scripted acquisition that has no information 
             // about axis order.  It is better to guess given what we know
             // about the available axis than not setting this field, since 
@@ -142,7 +141,7 @@ public enum PropertyKey {
                return true;
             }
          }
-      
+
          return false;
       }
 
@@ -175,7 +174,8 @@ public enum PropertyKey {
             String token = jp.getAsString().split("x", 2)[0];
             if (token.length() < 3) {
                dest.putInteger(key(), Integer.parseInt(token));
-            } else {  // another crazy format for binning, no way to figure this out
+            }
+            else {  // another crazy format for binning, no way to figure this out
                dest.putInteger(key(), 1);
             }
          }
@@ -242,12 +242,12 @@ public enum PropertyKey {
          // causing use of an empty string.  The Core-Camera property is sometimes
          // set correctly (but not when collecting images from two cameras
          // running sequences.
-         
+
          // TODO: investigate why the acquisition engine inserts an empty string 
          // fix it, then remove the second if below
-         
-         if (super.extractFromGsonObject(jo, dest) && 
-                 !dest.build().getString(key(), "").isEmpty()) {
+
+         if (super.extractFromGsonObject(jo, dest) &&
+               !dest.build().getString(key(), "").isEmpty()) {
             return true;
          }
          if (jo.has("Core-Camera")) {
@@ -256,12 +256,12 @@ public enum PropertyKey {
                dest.putString(key(), je.getAsString());
                return true;
             } catch (UnsupportedOperationException uoe) {
-                // we get this with data saved in 2.0-beta
+               // we get this with data saved in 2.0-beta
             }
          }
          return false;
-      }      
-      
+      }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
          String string = pmap.getString(key(), null);
@@ -275,6 +275,7 @@ public enum PropertyKey {
    CAMERA_CHANNEL_INDEX("CameraChannelIndex"),
 
    CHANNELS("Channels", SummaryMetadata.class) { // See INTENDED_DIMENSIONS
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.CHANNEL, je.getAsInt());
@@ -292,7 +293,7 @@ public enum PropertyKey {
    },
 
    CHANNEL_SETTINGS("ChannelSettings", DisplaySettings.class),
-   
+
    CHANNEL_COLOR("ChColor"),
    CHANNEL_COLORS("ChColors"),
    CHANNEL_CONTRAST_MAX("ChContrastMax"),
@@ -350,11 +351,11 @@ public enum PropertyKey {
          return ja;
       }
    },
-   
+
    COLOR("Color", ChannelDisplaySettings.class),
 
    COLOR_MODE("ColorMode", DisplaySettings.class),
-   
+
    COMMENT("Comment", SummaryMetadata.class),
 
    COMPLETE_COORDS("completeCoords", Coords.class) {
@@ -393,7 +394,7 @@ public enum PropertyKey {
          return jo;
       }
    },
-   
+
    COMPONENT_SETTINGS("ComponentSettings", ChannelDisplaySettings.class),
 
    COMPUTER_NAME("ComputerName", SummaryMetadata.class) {
@@ -433,7 +434,7 @@ public enum PropertyKey {
          return ja;
       }
    },
-   
+
    DEVICE("Device", MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -462,7 +463,7 @@ public enum PropertyKey {
    },
 
    DISPLAY_SETTINGS("DisplaySettings", SummaryMetadata.class),
-   
+
    DISPLAY_SETTINGS_FILE_NAME("DisplaySettings.json", DisplaySettings.class),
 
    ELAPSED_TIME_MS("ElapsedTime-ms", Metadata.class) {
@@ -536,6 +537,7 @@ public enum PropertyKey {
    },
 
    FRAMES("Frames") { // See INTENDED_DIMENSIONS
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.TIME_POINT, je.getAsInt());
@@ -553,9 +555,9 @@ public enum PropertyKey {
    },
 
    GAMMA("Gamma", ComponentDisplaySettings.class),
-   
+
    GRID_COLUMN("GridColumn", "gridColumn"),
-   
+
    GRID_ROW("GridRow", "gridRow"),
 
    HEIGHT("Height") {
@@ -563,14 +565,14 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
-      
+
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
          // Save zero even if missing
          return new JsonPrimitive(pmap.getInteger(key(), 0));
       }
    },
-   
+
    HISTOGRAM_BIT_DEPTH("HistogramBitDepth", ChannelDisplaySettings.class),
 
    IJ_TYPE("IJType", Image.class) {
@@ -622,7 +624,8 @@ public enum PropertyKey {
          for (String key : fromGson.keySet()) {
             if (fromGson.containsLong(key)) {
                builder.putInteger(key, (int) fromGson.getLong(key, 1));
-            } else {
+            }
+            else {
                // NS: not sure how to handle this.  Can we be sure only to 
                // receive the correct keys?  I see no straight forward way 
                // to copy other properties
@@ -737,6 +740,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -752,6 +756,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -767,6 +772,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -782,6 +788,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -797,6 +804,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -814,21 +822,21 @@ public enum PropertyKey {
          // format. Try the better-defined PM2 first.
          try {
             dest.putPropertyMap(key(), PropertyMapJSONSerializer.fromGson(je));
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             dest.putPropertyMap(key(), MM1JSONSerializer.fromGson(je));
          }
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          // TODO: Figure out what this is supposed to do (I don't even know
          // if multistageposition properties are ever used by anything
          // It is utterly unclear how to perform this translation, but 
          // returning null bombs saving of stage positions...
-            return JsonNull.INSTANCE;
-         }
+         return JsonNull.INSTANCE;
+      }
    },
-   
+
    MULTI_STAGE_POSITION__DEVICE("Device", MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -848,12 +856,13 @@ public enum PropertyKey {
     * So, it seems this keyword catches the DevicePositions field within Multi_Stage_Positions
     * However, the code in here refers to NonPropertyMapJSONFormats.multiStagePosition()
     * which goes through all of the fields listed above
-    * So, handling of the DevicePositions field is a complete hack, as it 
+    * So, handling of the DevicePositions field is a complete hack, as it
     * is unclear from the original design what the intention was, and this whole
     * construction going back and forth between different encodings still gives me
     * headaches even after having stared at it for way too many days....
     */
-   MULTI_STAGE_POSITION__DEVICE_POSITIONS("DevicePositions", "DEVICES", "subpositions", "DeviceCoordinatesUm",
+   MULTI_STAGE_POSITION__DEVICE_POSITIONS("DevicePositions", "DEVICES", "subpositions",
+         "DeviceCoordinatesUm",
          MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -867,35 +876,36 @@ public enum PropertyKey {
                JsonObject jo = e.getAsJsonObject();
                PropertyMap msp =
                      NonPropertyMapJSONFormats.multiStageDevicePosition().
-                     fromGson(jo);
-               
+                           fromGson(jo);
+
                if (msp.size() == 0) { // this may be an old format stage position
                   msp = NonPropertyMapJSONFormats.oldStagePosition().fromGson(jo);
                }
-               
-               if (!msp.containsInteger(STAGE_POSITION__NUMAXES.key())) 
-               {  // "modern" (or also "old"?  who knows...) format that has just the name
+
+               if (!msp.containsInteger(STAGE_POSITION__NUMAXES
+                     .key())) {  // "modern" (or also "old"?  who knows...) format that has just the name
                   // and coordinates for whatever axes the device has
                   devPositions.add(msp);
-               } else { // old format with 3 values
+               }
+               else { // old format with 3 values
                   int n = msp.getInteger(STAGE_POSITION__NUMAXES.key(), 0);
                   if (n < 1 || n > 3) {
                      throw new JsonParseException(
-                             "Unexpected number of stage axes in stage position record");
+                           "Unexpected number of stage axes in stage position record");
                   }
                   double[] coords = new double[n];
                   for (int i = 0; i < n; ++i) {
                      coords[i] = msp.getDouble(ImmutableList.of(
-                             STAGE_POSITION__COORD1_UM.key(),
-                             STAGE_POSITION__COORD2_UM.key(),
-                             STAGE_POSITION__COORD3_UM.key()).get(i), Double.NaN);
+                           STAGE_POSITION__COORD1_UM.key(),
+                           STAGE_POSITION__COORD2_UM.key(),
+                           STAGE_POSITION__COORD3_UM.key()).get(i), Double.NaN);
                   }
                   devPositions.add(PropertyMaps.builder().
-                          putString(STAGE_POSITION__DEVICE.key(),
-                                  msp.getString(STAGE_POSITION__DEVICE.key(), null)).
-                          putDoubleList(STAGE_POSITION__POSITION_UM.key(), coords).
-                          build());
-               } 
+                        putString(STAGE_POSITION__DEVICE.key(),
+                              msp.getString(STAGE_POSITION__DEVICE.key(), null)).
+                        putDoubleList(STAGE_POSITION__POSITION_UM.key(), coords).
+                        build());
+               }
             }
          }
          // MM 1.x stored JSON object with keys = stage names; values = arrays,
@@ -916,7 +926,7 @@ public enum PropertyKey {
          }
          dest.putPropertyMapList(MULTI_STAGE_POSITION__DEVICE_POSITIONS.key(), devPositions);
       }
-      
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsPropertyMapList(key())) {
@@ -972,7 +982,7 @@ public enum PropertyKey {
             // regretfully, the Core and Java representations are permuations
             double[] flatMatrix = {atf[0], atf[3], atf[1], atf[4], atf[2], atf[5]};
             dest.putAffineTransform(key(), new AffineTransform(flatMatrix));
-         }         
+         }
       }
 
       @Override
@@ -989,7 +999,7 @@ public enum PropertyKey {
          return new JsonPrimitive(afString);
       }
    },
-   
+
    PIXEL_SIZE_UM("PixelSizeUm", "PixelSize_um", Metadata.class) {
       @Override
       public String getDescription() {
@@ -1046,8 +1056,9 @@ public enum PropertyKey {
    },
 
    PLAYBACK_FPS("PlaybackFPS", DisplaySettings.class),
-   
+
    POSITIONS("Positions", SummaryMetadata.class) { // See INTENDED_DIMENSIONS
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.STAGE_POSITION, je.getAsInt());
@@ -1096,7 +1107,7 @@ public enum PropertyKey {
          return new JsonPrimitive(pmap.getString(key(), null));
       }
    },
-   
+
    POSITION_UM("Position_um", MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -1217,11 +1228,11 @@ public enum PropertyKey {
    },
 
    ROI_AUTOSCALE("ROIAutoscale", DisplaySettings.class),
-   
+
    SCALING_MIN("ScalingMin", ComponentDisplaySettings.class),
-   
+
    SCALING_MAX("ScalingMax", ComponentDisplaySettings.class),
-   
+
    SCOPE_DATA("ScopeData", "scopeData", Metadata.class) {
       @Override
       public String getDescription() {
@@ -1251,7 +1262,8 @@ public enum PropertyKey {
                String val = "";
                if (jo.get(key).isJsonObject()) {
                   val = jo.get(key).getAsJsonObject().get("PropVal").getAsString();
-               } else if (jo.get(key).isJsonPrimitive()) {
+               }
+               else if (jo.get(key).isJsonPrimitive()) {
                   val = jo.get(key).getAsString();
                }
                builder.putString(key, val);
@@ -1311,10 +1323,11 @@ public enum PropertyKey {
          return ja;
       }
    },
-   
+
    SNAP_LIVE_DISPLAY_SETTINGS("SnapLiveDisplaySettings", SnapLiveManager.class),
 
    SLICES("Slices", SummaryMetadata.class) { // See INTENDED_DIMENSIONS
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.Z_SLICE, je.getAsInt());
@@ -1332,6 +1345,7 @@ public enum PropertyKey {
    },
 
    SLICES_FIRST("SlicesFirst", SummaryMetadata.class) { // See AXIS_ORDER
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putBoolean(key(), je.getAsBoolean());
@@ -1343,8 +1357,8 @@ public enum PropertyKey {
          List<String> axisOrder = pmap.getStringList(AXIS_ORDER.key());
          boolean slicesFirst =
                axisOrder.indexOf(Coords.Z_SLICE) >
-               axisOrder.indexOf(Coords.CHANNEL) &&
-               axisOrder.contains(Coords.CHANNEL);
+                     axisOrder.indexOf(Coords.CHANNEL) &&
+                     axisOrder.contains(Coords.CHANNEL);
          return new JsonPrimitive(pmap.getBoolean(key(), slicesFirst));
       }
    },
@@ -1396,6 +1410,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
       @Override
       public JsonElement convertToGson(PropertyMap source) {
          if (!source.containsString(key())) {
@@ -1408,7 +1423,8 @@ public enum PropertyKey {
    STAGE_POSITION__NUMAXES("NumberOfAxes", "AXES", "numAxes", StagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
-         dest.putInteger(key(), je.getAsInt() * 3); // old style stage positions always had 3 axes...
+         dest.putInteger(key(),
+               je.getAsInt() * 3); // old style stage positions always had 3 axes...
       }
    },
 
@@ -1421,6 +1437,7 @@ public enum PropertyKey {
          }
          dest.putDoubleList(key(), coords);
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap source) {
          if (!source.containsDoubleList((key()))) {
@@ -1435,8 +1452,7 @@ public enum PropertyKey {
    },
 
    STAGE_POSITIONS("StagePositions", "InitialPositionList", "POSITIONS",
-         SummaryMetadata.class, PositionList.class)
-   {
+         SummaryMetadata.class, PositionList.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          List<PropertyMap> positions = Lists.newArrayList();
@@ -1460,6 +1476,7 @@ public enum PropertyKey {
    },
 
    START_TIME("StartTime", "Time", SummaryMetadata.class) { // See also TIME
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
@@ -1478,6 +1495,7 @@ public enum PropertyKey {
    TIME("Time", Metadata.class), // See also START_TIME
 
    TIME_FIRST("TimeFirst") { // See AXIS_ORDER
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putBoolean(key(), je.getAsBoolean());
@@ -1489,18 +1507,18 @@ public enum PropertyKey {
          List<String> axisOrder = pmap.getStringList(AXIS_ORDER.key());
          boolean timeFirst =
                axisOrder.indexOf(Coords.TIME_POINT) >
-               axisOrder.indexOf(Coords.STAGE_POSITION) &&
-               axisOrder.contains(Coords.STAGE_POSITION);
+                     axisOrder.indexOf(Coords.STAGE_POSITION) &&
+                     axisOrder.contains(Coords.STAGE_POSITION);
          return new JsonPrimitive(pmap.getBoolean(key(), timeFirst));
       }
    },
-   
+
    UNIFORM_COMPONENT_SCALING("UniformComponentScaling", ChannelDisplaySettings.class),
 
    UNIFORM_CHANNEL_SCALING("UniformChannelScaling", DisplaySettings.class),
-   
+
    USE_CAMERA_BIT_DEPTH("UseCameraBitDepth", ChannelDisplaySettings.class),
-   
+
    USER_DATA("UserData", "userData", Metadata.class, SummaryMetadata.class) {
       @Override
       public String getDescription() {
@@ -1513,8 +1531,7 @@ public enum PropertyKey {
          // format. Try the better-defined PM2 first.
          try {
             dest.putPropertyMap(key(), PropertyMapJSONSerializer.fromGson(je));
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             dest.putPropertyMap(key(), MM1JSONSerializer.fromGson(je));
          }
       }
@@ -1540,18 +1557,19 @@ public enum PropertyKey {
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (Map.Entry<String, JsonElement> e : jo.entrySet()) {
             try {
-            if (!isKnownKey(e.getKey()) && !e.getValue().isJsonNull() &&
-                  !scopeDataKeys.contains(e.getKey())) {
-               if (e.getValue().isJsonArray()) {
-                  JsonArray jsonArray = e.getValue().getAsJsonArray();
-                  for (int i = 0; i < jsonArray.size(); i++) {
-                     JsonElement je2 = jsonArray.get(i);
-                     builder.putString(e.getKey(), je2.getAsString());
+               if (!isKnownKey(e.getKey()) && !e.getValue().isJsonNull() &&
+                     !scopeDataKeys.contains(e.getKey())) {
+                  if (e.getValue().isJsonArray()) {
+                     JsonArray jsonArray = e.getValue().getAsJsonArray();
+                     for (int i = 0; i < jsonArray.size(); i++) {
+                        JsonElement je2 = jsonArray.get(i);
+                        builder.putString(e.getKey(), je2.getAsString());
+                     }
                   }
-               } else {
-                  builder.putString(e.getKey(), e.getValue().getAsString());
+                  else {
+                     builder.putString(e.getKey(), e.getValue().getAsString());
+                  }
                }
-            }
             } catch (IllegalStateException ise) {
                ReportingUtils.logError(ise, "IllegalStateError reading value of " + e.getKey());
             }
@@ -1562,7 +1580,8 @@ public enum PropertyKey {
 
       @Override
       public JsonElement convertToGson(PropertyMap pmap) {
-         return PropertyMapJSONSerializer.toGson(pmap.getPropertyMap(key(), PropertyMaps.emptyPropertyMap()));
+         return PropertyMapJSONSerializer
+               .toGson(pmap.getPropertyMap(key(), PropertyMaps.emptyPropertyMap()));
       }
    },
 
@@ -1602,7 +1621,7 @@ public enum PropertyKey {
          return null;
       }
    },
-   
+
    VISIBLE("Visible", ChannelDisplaySettings.class),
 
    WIDTH("Width", Image.class) {
@@ -1610,7 +1629,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
-      
+
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
          // Save zero even if missing
@@ -1679,7 +1698,7 @@ public enum PropertyKey {
    },
 
    ZOOM_RATIO("ZoomRatio", DisplaySettings.class),
-   
+
    Z_STEP_UM("z-step_um", SummaryMetadata.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -1702,6 +1721,7 @@ public enum PropertyKey {
    private final Set<Class<?>> affiliations_;
 
    private static final Set<String> ALL_SPELLINGS;
+
    static {
       ImmutableSet.Builder<String> builder = ImmutableSet.builder();
       for (PropertyKey e : values()) {
@@ -1718,8 +1738,7 @@ public enum PropertyKey {
    );
 
    private PropertyKey(String canonical,
-         Object... historicalStringsAndAffiliations)
-   {
+                       Object... historicalStringsAndAffiliations) {
       Preconditions.checkNotNull(canonical);
       canonical_ = canonical;
       List<String> historical = Lists.newArrayList();
@@ -1788,18 +1807,18 @@ public enum PropertyKey {
     * The parsed value must be placed in {@code destination} under the key
     * returned by {@code getCanonicalKey}.
     *
-    * @param element the Gson element
+    * @param element     the Gson element
     * @param destination the property map builder into which the parsed value
-    * should be placed
+    *                    should be placed
     */
    protected void convertFromGson(JsonElement element,
-         PropertyMap.Builder destination)
-   {
+                                  PropertyMap.Builder destination) {
       throw new UnsupportedOperationException(name());
    }
 
    /**
     * Create the JSON element representing the value for this key.
+    *
     * @param source property map in which to find the value for this key
     * @return the JSON element representing the value for this key
     */
@@ -1818,15 +1837,15 @@ public enum PropertyKey {
     * some cases this method can be overridden to add special behavior, such as
     * looking under different keys.
     *
-    * @param source non-property-map JSON object from which to extract the
-    * value for this key
+    * @param source      non-property-map JSON object from which to extract the
+    *                    value for this key
     * @param destination property map builder to which the value should be
-    * stored
+    *                    stored
     * @return true if value was found and placed in {@code destination}; false
     * otherwise
     */
    public boolean extractFromGsonObject(JsonObject source,
-         PropertyMap.Builder destination) {
+                                        PropertyMap.Builder destination) {
       for (String key : getAllKeys()) {
          if (source.has(key) && !source.get(key).isJsonNull()) {
             convertFromGson(source.get(key), destination);
@@ -1839,14 +1858,14 @@ public enum PropertyKey {
    /**
     * Adds the key to a JSON object.
     *
-    * @param source property map in which to find the value for this key
+    * @param source      property map in which to find the value for this key
     * @param destination non-property-map JSON object to which the value should
-    * be added under this key
+    *                    be added under this key
     * @return true if the key was found in {@code source} and was added to
     * {@code destination}; false otherwise
     */
    public boolean storeInGsonObject(PropertyMap source,
-         JsonObject destination) {
+                                    JsonObject destination) {
       JsonElement e = convertToGson(source);
       if (e != null) {
          destination.add(key(), e);

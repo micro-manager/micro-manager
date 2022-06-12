@@ -18,11 +18,11 @@ import java.awt.Point;
 import java.awt.Rectangle;
 
 /**
- *
  * @author mark
  */
 public final class Geometry {
-   private Geometry() {} // Noninstantiable
+   private Geometry() {
+   } // Noninstantiable
 
    public static void insetRectangle(Rectangle rect, Insets insets) {
       rect.x += insets.left;
@@ -43,25 +43,33 @@ public final class Geometry {
       if (point.x < rect.x) {
          if (point.y < rect.y) {
             return new Point(rect.getLocation());
-         } else if (point.y < rect.y + rect.height) {
+         }
+         else if (point.y < rect.y + rect.height) {
             return new Point(rect.x, point.y);
-         } else {
+         }
+         else {
             return new Point(rect.x, rect.y + rect.height - 1);
          }
-      } else if (point.x < rect.x + rect.width) {
+      }
+      else if (point.x < rect.x + rect.width) {
          if (point.y < rect.y) {
             return new Point(point.x, rect.y);
-         } else if (point.y < rect.y + rect.height) {
+         }
+         else if (point.y < rect.y + rect.height) {
             return new Point(point);
-         } else {
+         }
+         else {
             return new Point(point.x, rect.y + rect.height - 1);
          }
-      } else {
+      }
+      else {
          if (point.y < rect.y) {
             return new Point(rect.x + rect.width - 1, rect.y);
-         } else if (point.y < rect.y + rect.height) {
+         }
+         else if (point.y < rect.y + rect.height) {
             return new Point(rect.x + rect.width - 1, point.y);
-         } else {
+         }
+         else {
             return new Point(rect.x + rect.width - 1,
                   rect.y + rect.height - 1);
          }

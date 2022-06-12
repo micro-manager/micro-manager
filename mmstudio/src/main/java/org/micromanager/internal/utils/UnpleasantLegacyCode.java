@@ -21,39 +21,38 @@ public final class UnpleasantLegacyCode {
             // No prefs, or key not found.
             return null;
          }
-      }
-      catch (BackingStoreException e) {
+      } catch (BackingStoreException e) {
          ReportingUtils.logError(e, "Error checking for preferences node");
       }
       ArrayList<byte[]> chunks = new ArrayList<byte[]>();
       byte[] serialBytes = new byte[0];
       int totalLength = 0;
       try {
-          for (String chunkKey:prefs.node(key).keys()) {
-              byte[] chunk = prefs.node(key).getByteArray(chunkKey, new byte[0]);
-              chunks.add(chunk);
-              totalLength += chunk.length;
-          }
-          int pos = 0;
-          serialBytes = new byte[totalLength];
-          for (byte[] chunk : chunks) {
-              System.arraycopy(chunk, 0, serialBytes, pos, chunk.length);
-              pos += chunk.length;
-          }
+         for (String chunkKey : prefs.node(key).keys()) {
+            byte[] chunk = prefs.node(key).getByteArray(chunkKey, new byte[0]);
+            chunks.add(chunk);
+            totalLength += chunk.length;
+         }
+         int pos = 0;
+         serialBytes = new byte[totalLength];
+         for (byte[] chunk : chunks) {
+            System.arraycopy(chunk, 0, serialBytes, pos, chunk.length);
+            pos += chunk.length;
+         }
       } catch (BackingStoreException ex) {
-          ReportingUtils.logError(ex);
+         ReportingUtils.logError(ex);
       }
 
       if (serialBytes.length == 0) {
-          return null;
+         return null;
       }
       ByteArrayInputStream byteStream = new ByteArrayInputStream(serialBytes);
       try {
-          ObjectInputStream objectStream = new ObjectInputStream(byteStream);
-          return (AffineTransform) objectStream.readObject();
+         ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+         return (AffineTransform) objectStream.readObject();
       } catch (Exception e) {
-          ReportingUtils.logError(e, "Failed to get object from preferences.");
-          return null;
+         ReportingUtils.logError(e, "Failed to get object from preferences.");
+         return null;
       }
    }
 }

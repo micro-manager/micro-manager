@@ -44,10 +44,10 @@ public interface AlertManager {
     *
     * @param title Title text to show above the alert. May be null.
     * @param group Object to use for grouping multiple alert texts together.
-    *        May be null; null-group alerts are always displayed.
-    * @param text Text of the alert.
+    *              May be null; null-group alerts are always displayed.
+    * @param text  Text of the alert.
     * @return Either a newly-created Alert, or the Alert that already existed,
-    *         to which this new alert text was added.
+    * to which this new alert text was added.
     */
    Alert postAlert(String title, Class<?> group, String text);
 
@@ -59,7 +59,7 @@ public interface AlertManager {
     * rapidly fill the window with alerts.
     *
     * @param title Title text to show above the main text. May be null.
-    * @param text Initial text to display to the user.
+    * @param text  Initial text to display to the user.
     * @return Newly-created UpdatableAlert
     */
    UpdatableAlert postUpdatableAlert(String title, String text);
@@ -76,7 +76,7 @@ public interface AlertManager {
     * window (the caller is of course responsible for that), it does affect the
     * text that is displayed in the main window.</p>
     *
-    * @param title Title text to show above the custom contents. May be null.
+    * @param title    Title text to show above the custom contents. May be null.
     * @param contents Contents to be inserted into the alert dialog.
     * @return Newly-created Alert
     */

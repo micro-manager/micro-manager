@@ -40,13 +40,13 @@ import org.micromanager.display.DisplaySettings;
  * Swing/AWT event dispatch thread. (This means that Overlay implementations do
  * not need to worry about threading.)
  *
- * @see OverlayPlugin
- *
  * @author Mark A. Tsuchida, based on earlier version by Chris Weisiger
+ * @see OverlayPlugin
  */
 public interface Overlay {
    /**
     * Return a human-readable name for this overlay.
+    *
     * @return the overlay title
     */
    String getTitle();
@@ -55,19 +55,19 @@ public interface Overlay {
     * Paint the overlay to the given graphics context.
     *
     * @param graphicsContext the graphics context to paint with
-    * @param screenRect the screen region displaying part or all of the image,
-    * in the graphics context's coordinates
+    * @param screenRect      the screen region displaying part or all of the image,
+    *                        in the graphics context's coordinates
     * @param displaySettings the current display settings of the display window
-    * @param images the images on which the overlay is to be drawn (multiple
-    * images if in composite color mode)
-    * @param primaryImage the currently selected image (if in composite color
-    * mode) or the single displayed image (otherwise)
-    * @param imageViewPort the visible region of the image, in image coordinates
+    * @param images          the images on which the overlay is to be drawn (multiple
+    *                        images if in composite color mode)
+    * @param primaryImage    the currently selected image (if in composite color
+    *                        mode) or the single displayed image (otherwise)
+    * @param imageViewPort   the visible region of the image, in image coordinates
     */
    void paintOverlay(Graphics2D graphicsContext, Rectangle screenRect,
-         DisplaySettings displaySettings,
-         List<Image> images, Image primaryImage,
-         Rectangle2D.Float imageViewPort);
+                     DisplaySettings displaySettings,
+                     List<Image> images, Image primaryImage,
+                     Rectangle2D.Float imageViewPort);
 
    /**
     * Return the configuration UI component for this overlay.
@@ -104,7 +104,7 @@ public interface Overlay {
     * Configure the overlay with the given parameters.
     *
     * @param config a property map previously returned by
-    * {@code getConfiguration} of an overlay of the same class.
+    *               {@code getConfiguration} of an overlay of the same class.
     */
    void setConfiguration(PropertyMap config);
 

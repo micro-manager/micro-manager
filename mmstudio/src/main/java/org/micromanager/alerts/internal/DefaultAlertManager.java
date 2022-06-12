@@ -29,10 +29,10 @@ import org.micromanager.alerts.UpdatableAlert;
 
 public final class DefaultAlertManager implements AlertManager {
    private final Studio studio_;
-   private final HashMap<String, CategorizedAlert> titleToCategorizedAlert_ = 
-           new HashMap<String, CategorizedAlert>();
-   private final HashMap<String, DefaultAlert> titleToCustomAlert_ = 
-           new HashMap<String, DefaultAlert>();
+   private final HashMap<String, CategorizedAlert> titleToCategorizedAlert_ =
+         new HashMap<String, CategorizedAlert>();
+   private final HashMap<String, DefaultAlert> titleToCustomAlert_ =
+         new HashMap<String, DefaultAlert>();
    private AlertsWindow alertsWindow_;
 
    public DefaultAlertManager(Studio studio) {
@@ -74,8 +74,8 @@ public final class DefaultAlertManager implements AlertManager {
       titleToCustomAlert_.put(title, alert);
       return alert;
    }
-   
+
    public AlertsWindow alertsWindow() {
-       return alertsWindow_;
+      return alertsWindow_;
    }
 }

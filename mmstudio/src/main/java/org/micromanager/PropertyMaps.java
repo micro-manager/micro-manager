@@ -19,7 +19,8 @@ import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
  * @author Mark A. Tsuchida
  */
 public final class PropertyMaps {
-   private PropertyMaps() { }
+   private PropertyMaps() {
+   }
 
    private static final PropertyMap EMPTY_MAP = builder().build();
 
@@ -67,9 +68,9 @@ public final class PropertyMaps {
     *
     * @param file File containing the serialized JSON PropertyMap
     * @return Deserialized PropertyMap
-    * @throws IOException if there was a problem reading {@code file} or if the
-    *                    file contained invalid JSON or if the JSON did not represent
-    *                    a valid property map
+    * @throws IOException                   if there was a problem reading {@code file} or if the
+    *                                       file contained invalid JSON or if the JSON did not represent
+    *                                       a valid property map
     * @throws java.io.FileNotFoundException this subclass of {@code IOException}
     *                                       is thrown if {@code file} does not exist
     */

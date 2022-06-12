@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.inspector.internal.panels.metadata;
 
 import com.google.common.base.Preconditions;
@@ -35,15 +36,14 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayDidShowImageEvent;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
-import org.micromanager.display.DisplayDidShowImageEvent;
 
 /**
- *
  * @author mark
  */
 public final class PlaneMetadataInspectorPanelController extends AbstractInspectorPanelController {
@@ -55,7 +55,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
 
    // Access: guarded by monitor on this
    private boolean displayChangedValuesOnly_;
-   
+
    private static boolean expanded_;
 
    // Access: from background executor only; list must not be modified once set
@@ -85,9 +85,12 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       @Override
       public String getColumnName(int columnIndex) {
          switch (columnIndex) {
-            case 0: return "Key";
-            case 1: return "Value";
-            default: throw new IndexOutOfBoundsException();
+            case 0:
+               return "Key";
+            case 1:
+               return "Value";
+            default:
+               throw new IndexOutOfBoundsException();
          }
       }
 
@@ -95,9 +98,12 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       public Object getValueAt(int rowIndex, int columnIndex) {
          Map.Entry<String, String> entry = displayData_.get(rowIndex);
          switch (columnIndex) {
-            case 0: return entry.getKey();
-            case 1: return entry.getValue();
-            default: throw new IndexOutOfBoundsException();
+            case 0:
+               return entry.getKey();
+            case 1:
+               return entry.getValue();
+            default:
+               throw new IndexOutOfBoundsException();
          }
       }
    };
@@ -170,9 +176,8 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       viewer_.registerForEvents(this);
       final List<Image> images;
       try {
-          images = viewer_.getDisplayedImages();
-      }
-      catch (IOException | NullPointerException e) {
+         images = viewer_.getDisplayedImages();
+      } catch (IOException | NullPointerException e) {
          ReportingUtils.logError("Exception in PlaneMetadataInspectorPanelController");
          return;
       }
@@ -213,17 +218,17 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
    public boolean isVerticallyResizableByUser() {
       return true;
    }
-   
+
    @Override
    public void setExpanded(boolean state) {
       expanded_ = state;
    }
-   
+
    @Override
    public boolean initiallyExpand() {
       return expanded_;
    }
-   
+
    private void updateMetadata(Metadata metadata, boolean evenIfUnchanged) {
       if (!evenIfUnchanged && metadata == metadata_) {
          return;
@@ -301,7 +306,8 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       });
    }
 
-   private final class UpdateTag { }
+   private final class UpdateTag {
+   }
 
    @Subscribe
    public void onEvent(final DisplayDidShowImageEvent e) {

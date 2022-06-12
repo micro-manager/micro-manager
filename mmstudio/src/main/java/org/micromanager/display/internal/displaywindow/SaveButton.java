@@ -53,7 +53,8 @@ public final class SaveButton extends JButton {
                      ((DefaultDisplaySettings) display.getDisplaySettings())
                            .save(newSavePath);
                   }
-               } else {
+               }
+               else {
                   // TODO: save button should never have been shown
                   // For now, just log
                   ReportingUtils.logError(

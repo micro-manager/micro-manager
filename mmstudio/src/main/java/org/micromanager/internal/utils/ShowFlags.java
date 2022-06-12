@@ -35,7 +35,7 @@ public final class ShowFlags {
    public boolean other_ = true;
    public boolean readonly_ = true;
    public String searchFilter_ = "";
-   
+
    private final Studio studio_;
 
    private static final String SHOW_CAMERAS = "show_cameras";
@@ -49,7 +49,7 @@ public final class ShowFlags {
    // TODO consider requiring class at construction
    // then no need to remember which class it is associated with (can't change during use)
    //   but also wouldn't be flexible to change class on the fly (would there ever be a need?)
-   
+
    public ShowFlags(Studio studio) {
       studio_ = studio;
    }

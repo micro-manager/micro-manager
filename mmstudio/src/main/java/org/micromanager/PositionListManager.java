@@ -23,7 +23,6 @@
 package org.micromanager;
 
 
-
 /**
  * This entity provides access to methods for interacting with the Stage
  * PositionList. You can access this class via the Studio.positions() and

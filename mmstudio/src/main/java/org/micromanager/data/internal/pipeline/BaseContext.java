@@ -23,8 +23,6 @@ package org.micromanager.data.internal.pipeline;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
@@ -39,7 +37,7 @@ public abstract class BaseContext implements ProcessorContext {
    protected CountDownLatch flushLatch_;
 
    public BaseContext(Processor processor, Datastore store,
-         DefaultPipeline parent) {
+                      DefaultPipeline parent) {
       processor_ = processor;
       store_ = store;
       parent_ = parent;
@@ -55,8 +53,7 @@ public abstract class BaseContext implements ProcessorContext {
          // Send the image to the Datastore.
          try {
             store_.putImage(image);
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
             // TODO Report to user!
             ReportingUtils.logError(e, "Unable to store processed image");
          }
@@ -90,8 +87,7 @@ public abstract class BaseContext implements ProcessorContext {
       if (sink_ == null) {
          try {
             store_.setSummaryMetadata(summary);
-         }
-         catch (IOException e) {
+         } catch (IOException e) {
             throw new RuntimeException("Failed to set summary metadata", e);
          }
       }

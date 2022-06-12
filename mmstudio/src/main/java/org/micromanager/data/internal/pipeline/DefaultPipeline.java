@@ -34,7 +34,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultPipeline implements Pipeline {
-   
+
    private final List<Processor> processors_;
    private final List<BaseContext> contexts_;
    private final Datastore store_;
@@ -46,7 +46,7 @@ public final class DefaultPipeline implements Pipeline {
 
    @SuppressWarnings("LeakingThisInConstructor")
    public DefaultPipeline(List<Processor> processors, Datastore store,
-         boolean isSynchronous) {
+                          boolean isSynchronous) {
       processors_ = processors;
       store_ = store;
       contexts_ = new ArrayList<BaseContext>();
@@ -68,12 +68,15 @@ public final class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public void insertSummaryMetadata(SummaryMetadata summary) throws IOException, PipelineErrorException {
+   public void insertSummaryMetadata(SummaryMetadata summary)
+         throws IOException, PipelineErrorException {
       if (amHalting_) {
-         throw new PipelineErrorException("Attempted to pass summary metadata through pipeline after it has been halted.");
+         throw new PipelineErrorException(
+               "Attempted to pass summary metadata through pipeline after it has been halted.");
       }
       else if (haveInsertedImages_) {
-         throw new PipelineErrorException("Attempted to pass summary metadata through pipeline after it has started image processing.");
+         throw new PipelineErrorException(
+               "Attempted to pass summary metadata through pipeline after it has started image processing.");
       }
       if (contexts_.isEmpty()) {
          // Insert directly.
@@ -142,8 +145,7 @@ public final class DefaultPipeline implements Pipeline {
       contexts_.get(0).insertImage(new ImageWrapper(null));
       try {
          latch.await();
-      }
-      catch (InterruptedException e) {
+      } catch (InterruptedException e) {
          ReportingUtils.logError("Interrupted while waiting for flush to complete.");
       }
       isHalted_ = true;

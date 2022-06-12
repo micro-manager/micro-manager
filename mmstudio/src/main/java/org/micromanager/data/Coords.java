@@ -47,48 +47,64 @@ import java.util.List;
  * @author Chris Weisiger, Mark A. Tsuchida
  */
 public interface Coords {
-   /** Axis label for the time point (frame) axis. */
+   /**
+    * Axis label for the time point (frame) axis.
+    */
    String TIME_POINT = "time";
 
    /**
     * Same as {@code TIME_POINT} or {@code T}.
     *
     * @deprecated Use discouraged because it reads like a physical time rather
-    *             than the time point index that it is.
+    * than the time point index that it is.
     */
    @Deprecated
    String TIME = TIME_POINT;
 
-   /** Axis label for the time point (frame) axis (short form).
-    * Same as {@code TIME_POINT}. */
+   /**
+    * Axis label for the time point (frame) axis (short form).
+    * Same as {@code TIME_POINT}.
+    */
    String T = TIME_POINT;
 
-   /** Axis label for the stage position axis. */
+   /**
+    * Axis label for the stage position axis.
+    */
    String STAGE_POSITION = "position";
 
-   /** Axis label for the stage position axis (short form).
-    * Same as {@code STAGE_POSTITION}. */
+   /**
+    * Axis label for the stage position axis (short form).
+    * Same as {@code STAGE_POSTITION}.
+    */
    String P = STAGE_POSITION;
 
-   /** Axis label for the Z slice axis. */
+   /**
+    * Axis label for the Z slice axis.
+    */
    String Z_SLICE = "z";
 
-   /** Axis label for the Z slice axis (short form).
-    * Same as {@code Z_SLICE}. 
+   /**
+    * Axis label for the Z slice axis (short form).
+    * Same as {@code Z_SLICE}.
     */
    String Z = Z_SLICE;
 
-   /** Axis label for the channel axis. */
+   /**
+    * Axis label for the channel axis.
+    */
    String CHANNEL = "channel";
 
-   /** Axis label for the channel axis (short form). Same as {@code CHANNEL}. */
+   /**
+    * Axis label for the channel axis (short form). Same as {@code CHANNEL}.
+    */
    String C = CHANNEL;
 
    /**
     * The real Builder for Coords.
     */
    interface Builder extends CoordsBuilder {
-      @Override Coords build();
+      @Override
+      Coords build();
 
       /**
        * Set the channel index.
@@ -97,13 +113,14 @@ public interface Coords {
        * @param channel channel index (0-based)
        * @return this
        */
-      @Override Builder channel(int channel);
+      @Override
+      Builder channel(int channel);
 
-      /** 
+      /**
        * Shorthand for {@link #channel(int) channel}.
        *
        * @param channel channel index (0-based)
-       * @return  this
+       * @return this
        */
       Builder c(int channel);
 
@@ -123,11 +140,11 @@ public interface Coords {
        * @return this
        * @deprecated Due to being confusing with physical time.
        */
-      @Override 
-      @Deprecated 
+      @Override
+      @Deprecated
       Builder time(int timepoint);
 
-      /** 
+      /**
        * Shorthand for {@link #time(int) time}.
        *
        * @param timepoint (0-based)
@@ -144,15 +161,16 @@ public interface Coords {
        */
       Builder zSlice(int slice);
 
-      /** 
+      /**
        * Shorthand for {@link #zSlice(int)}.
        * Set the Z slice index.
        * Equivalent to {@code index(Coords.Z_SLICE, slice)}.
        *
        * @param slice z slice index (0-based)
        * @return this
-       */ 
-      @Override Builder z(int slice);
+       */
+      @Override
+      Builder z(int slice);
 
       /**
        * Set the stage position index.
@@ -161,9 +179,10 @@ public interface Coords {
        * @param index stage position index (0-based)
        * @return this
        */
-      @Override Builder stagePosition(int index);
+      @Override
+      Builder stagePosition(int index);
 
-      /** 
+      /**
        * Shorthand for {@link #stagePosition(int) stagePosition}.
        * Set the stage position index.
        * Equivalent to {@code index(Coords.STAGE_POSITION, index)}.
@@ -178,11 +197,12 @@ public interface Coords {
        *
        * <p>If you set a negative value, the axis will be removed.</p>
        *
-       * @param axis coordinate axis, such as {@code Coords.CHANNEL}
+       * @param axis  coordinate axis, such as {@code Coords.CHANNEL}
        * @param index 0-based index
        * @return this
        */
-      @Override Builder index(String axis, int index);
+      @Override
+      Builder index(String axis, int index);
 
       /**
        * Remove the specified axis.
@@ -190,19 +210,21 @@ public interface Coords {
        * @param axis coordinate axis, such as {@code Coords.CHANNEL}
        * @return this
        */
-      @Override Builder removeAxis(String axis);
+      @Override
+      Builder removeAxis(String axis);
 
       /**
        * Offset the given axis by a given count.
        *
-       * @param axis coordinate axis, such as {@code Coords.CHANNEL}
+       * @param axis   coordinate axis, such as {@code Coords.CHANNEL}
        * @param offset offset to be applied to {@code axis}
        * @return this
-       * @throws IllegalArgumentException if {@code axis} does not exist
+       * @throws IllegalArgumentException  if {@code axis} does not exist
        * @throws IndexOutOfBoundsException if applying the offset would result
        *                                   in a negative index.
        */
-      @Override Builder offset(String axis, int offset)
+      @Override
+      Builder offset(String axis, int offset)
             throws IllegalArgumentException, IndexOutOfBoundsException;
    }
 
@@ -232,7 +254,7 @@ public interface Coords {
     *
     * @param axis coordinate axis such as {@code Coords.CHANNEL}
     * @return index along {@code axis}, or {@code 0} if {@code axis} does not
-    *         exist
+    * exist
     */
    int getIndex(String axis);
 
@@ -242,15 +264,15 @@ public interface Coords {
     * <p>Equivalent to {@code getIndex(Coords.CHANNEL)}.</p>
     *
     * @return channel index, or {@code 0} if this {@code Coords} doesn't
-    *         contain a channel index.
+    * contain a channel index.
     */
    int getChannel();
 
-   /** 
+   /**
     * Shorthand for {@link #getChannel() getChannel}.
     *
     * @return channel index, or {@code 0} if this {@code Coords} doesn't
-    *         contain a channel index.
+    * contain a channel index.
     */
    int getC();
 
@@ -260,35 +282,35 @@ public interface Coords {
     * <p>Equivalent to {@code getIndex(Coords.TIME_POINT)}.</p>
     *
     * @return time point index, or {@code 0} if this {@code Coords} doesn't
-    *         contain a time point index.
+    * contain a time point index.
     */
    int getTimePoint();
 
-   /** 
+   /**
     * Same as {@link #getTimePoint() getTimePoint}.
     *
     * @return time index (0-based)
     * @deprecated Due to looking like the physical time rather than an index.
-    *             Use {@link #getTimePoint() getTmePoint}
+    * Use {@link #getTimePoint() getTmePoint}
     */
    @Deprecated
    int getTime();
 
-   /** 
+   /**
     * Shorthand for {@link #getTimePoint() getTimePoint}.
     *
     * @return time point index, or {@code 0} if this {@code Coords} doesn't
-    *         contain a time point index.
+    * contain a time point index.
     */
    int getT();
 
    /**
     * Get the Z slice index.
-    * 
+    *
     * <p>Equivalent to {@code getIndex(Coords.Z_SLICE)}.</p>
     *
     * @return Z slice index, or {@code 0} if this {@code Coords} doesn't
-    *         contain a Z slice index.
+    * contain a Z slice index.
     */
    int getZSlice();
 
@@ -296,7 +318,7 @@ public interface Coords {
     * Shorthand for {@link #getZSlice() getZSlice}.
     *
     * @return Z slice index, or {@code 0} if this {@code Coords} doesn't
-    *         contain a Z slice index.
+    * contain a Z slice index.
     */
    int getZ();
 
@@ -306,7 +328,7 @@ public interface Coords {
     * <p>Equivalent to {@code getIndex(Coords.STAGE_POSITION)}.</p>
     *
     * @return stage position index, or {@code 0} if this {@code Coords}
-    *         doesn't contain a stage position index.
+    * doesn't contain a stage position index.
     */
    int getStagePosition();
 
@@ -314,7 +336,7 @@ public interface Coords {
     * Shorthand for {@link #getStagePosition() getStagePosition}.
     *
     * @return stage position index, or {@code 0} if this {@code Coords}
-    *         doesn't contain a stage position index.
+    * doesn't contain a stage position index.
     */
    int getP();
 
@@ -392,7 +414,7 @@ public interface Coords {
     *
     * @param axes Names of axes to be represented in the output
     * @return Copy of this Coords, but only with the subset of axes provided in
-    *          the axes param
+    * the axes param
     */
    Coords copyRetainingAxes(String... axes);
 }

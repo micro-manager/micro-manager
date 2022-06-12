@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.inspector.internal;
 
 import java.awt.Component;
@@ -12,7 +13,7 @@ import javax.swing.ListCellRenderer;
 
 /**
  * A {@code ListCellRenderer} allowing separators in a {@code JComboBox}.
- *
+ * <p>
  * Simply set the JComboBox's renderer to an instance of this class, then add
  * a {@code JSeparator} as an item in the JComboBox.
  * <p>
@@ -37,8 +38,8 @@ class ComboBoxSeparatorRenderer implements ListCellRenderer {
 
    @Override
    public Component getListCellRendererComponent(JList list, Object value,
-         int index, boolean isSelected, boolean cellHasFocus)
-   {
+                                                 int index, boolean isSelected,
+                                                 boolean cellHasFocus) {
       if (value instanceof JSeparator) {
          return (JSeparator) value;
       }

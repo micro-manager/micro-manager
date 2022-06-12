@@ -45,7 +45,7 @@ public final class GearButton extends JButton {
       menu_ = new SortedPopupMenu();
       JMenuItem openInspector = new JMenuItem("Image Inspector...");
       openInspector.addActionListener(
-              e -> studio.displays().createInspectorForDataViewer(display));
+            e -> studio.displays().createInspectorForDataViewer(display));
       menu_.addUnsorted(openInspector);
 
       JMenuItem duplicate = new JMenuItem("New Window for This Data");
@@ -87,7 +87,7 @@ public final class GearButton extends JButton {
       // This icon adapted from the public domain icon at
       // https://openclipart.org/detail/35533/tango-emblem-system
       super.setIcon(IconLoader.getIcon(
-               "/org/micromanager/icons/gear.png"));
+            "/org/micromanager/icons/gear.png"));
    }
 
    public void cleanup() {

@@ -13,4 +13,5 @@ import org.scijava.plugin.SciJavaPlugin;
  *
  * @author mark
  */
-public interface MMGenericPlugin extends SciJavaPlugin {}
+public interface MMGenericPlugin extends SciJavaPlugin {
+}

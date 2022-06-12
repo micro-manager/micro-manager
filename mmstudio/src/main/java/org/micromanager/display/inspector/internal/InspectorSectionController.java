@@ -27,9 +27,9 @@ import javax.swing.UIManager;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.utils.PopupButton;
-import org.micromanager.display.inspector.InspectorPanelListener;
 import org.micromanager.display.inspector.InspectorPanelController;
+import org.micromanager.display.inspector.InspectorPanelListener;
+import org.micromanager.internal.utils.PopupButton;
 
 /**
  * Controller for a section in the inspector window.
@@ -48,15 +48,13 @@ final class InspectorSectionController implements InspectorPanelListener {
 
    public static InspectorSectionController create(
          InspectorController inspectorController,
-         InspectorPanelController panelController)
-   {
+         InspectorPanelController panelController) {
       return new InspectorSectionController(
             inspectorController, panelController);
    }
 
    private InspectorSectionController(InspectorController inspectorController,
-         InspectorPanelController panelController)
-   {
+                                      InspectorPanelController panelController) {
       inspectorController_ = inspectorController;
       panelController_ = panelController;
 
@@ -84,7 +82,7 @@ final class InspectorSectionController implements InspectorPanelListener {
          });
       }
       gearButton_.setVisible(panelController.initiallyExpand()
-              && panelController_.getGearMenu() != null);
+            && panelController_.getGearMenu() != null);
 
       headerPanel_.add(headerLabel_, new CC().growX().pushX());
       headerPanel_.add(gearButton_, new CC().hideMode(2));
@@ -147,8 +145,7 @@ final class InspectorSectionController implements InspectorPanelListener {
    }
 
    @Override
-   public void inspectorPanelWillChangeHeight(InspectorPanelController controller)
-   {
+   public void inspectorPanelWillChangeHeight(InspectorPanelController controller) {
       if (!isExpanded()) {
          return;
       }
@@ -156,8 +153,7 @@ final class InspectorSectionController implements InspectorPanelListener {
    }
 
    @Override
-   public void inspectorPanelDidChangeHeight(InspectorPanelController controller)
-   {
+   public void inspectorPanelDidChangeHeight(InspectorPanelController controller) {
       if (!isExpanded()) {
          return;
       }
@@ -168,19 +164,20 @@ final class InspectorSectionController implements InspectorPanelListener {
    public void inspectorPanelDidChangeTitle(InspectorPanelController controller) {
       headerLabel_.setText(controller.getTitle());
    }
-   
+
    public void setEnabled(boolean enabled) {
       // When the section is disabled it will collapse and will not be able to be expanded.
       if (enabled) {
          mouseClickenabled_ = true;
          headerLabel_.setEnabled(true);
-      } else {
+      }
+      else {
          this.setExpanded(false);
-         mouseClickenabled_ = false; 
+         mouseClickenabled_ = false;
          headerLabel_.setEnabled(false);
       }
    }
-   
+
    public boolean isEnabled() {
       return this.headerPanel_.isEnabled();
    }

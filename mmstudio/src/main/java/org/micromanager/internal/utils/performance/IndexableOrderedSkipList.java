@@ -37,7 +37,6 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @param <K> the key type, which must be comparable
  * @param <V> the value type
- *
  * @author Mark A. Tsuchida
  */
 final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
@@ -122,7 +121,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    private final Random random_ = new Random();
 
    public static <K extends Comparable<K>, V>
-         IndexableOrderedSkipList<K, V> create(int levels) {
+   IndexableOrderedSkipList<K, V> create(int levels) {
       if (levels < 1) {
          throw new IllegalArgumentException();
       }
@@ -155,17 +154,18 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    // Sign of return value: is negative if the new cell is skipped in the
    // current level; positive otherwise.
    private int insertIntoLevel(int level, final Cell<K, V> newCell,
-         final Cell<K, V> upperLevelLeft, final Cell<K, V> upperLevelRight) {
+                               final Cell<K, V> upperLevelLeft, final Cell<K, V> upperLevelRight) {
       Cell<K, V> left = upperLevelLeft;
       int distanceFromUpperLeftToLeft = 0;
-      for (;;) {
+      for (; ; ) {
          Cell<K, V> right = left.getNext(level);
          if (right == upperLevelRight || right.compareTo(newCell) > 0) {
             if (level == 0) {
                left.setNext(0, newCell, 1);
                newCell.setNext(0, right, 1);
                return distanceFromUpperLeftToLeft + 1;
-            } else {
+            }
+            else {
                int lowerLevelResult =
                      insertIntoLevel(level - 1, newCell, left, right);
                boolean skipping = lowerLevelResult < 0;
@@ -177,7 +177,8 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
                   int distanceFromNewToRight = distanceFromLeftToRight - distanceFromLeftToNew + 1;
                   newCell.setNext(level, right, distanceFromNewToRight);
                   left.setNext(level, newCell, distanceFromLeftToNew);
-               } else {
+               }
+               else {
                   skip = true;
                   left.incrementDistance(level);
                }
@@ -205,9 +206,9 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    }
 
    private void removeFromLevel(int level, final Cell<K, V> oldCell,
-         final Cell<K, V> upperLevelLeft) {
+                                final Cell<K, V> upperLevelLeft) {
       Cell<K, V> left = upperLevelLeft;
-      for (;;) {
+      for (; ; ) {
          Cell<K, V> right = left.getNext(level);
          int cmp = right.compareTo(oldCell);
          if (cmp >= 0 || right == skipListHead_) {
@@ -217,7 +218,8 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
             if (cmp == 0) {
                left.setNext(level, oldCell.getNext(level),
                      left.getDistance(level) + oldCell.getDistance(level) - 1);
-            } else {
+            }
+            else {
                left.decrementDistance(level);
             }
             return;
@@ -229,7 +231,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    public int size() {
       int ret = 0;
       Cell<K, V> cell = skipListHead_;
-      for (;;) {
+      for (; ; ) {
          Cell<K, V> next = cell.getNext(levels_ - 1);
          ret += cell.getDistance(levels_ - 1);
          if (next == skipListHead_) {
@@ -261,10 +263,10 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    }
 
    private Cell<K, V> getCellAtIndexImpl(int level, int index,
-         final Cell<K, V> upperLevelLeft, int upperLeftIndex) {
+                                         final Cell<K, V> upperLevelLeft, int upperLeftIndex) {
       int leftIndex = upperLeftIndex;
       Cell<K, V> left = upperLevelLeft;
-      for (;;) {
+      for (; ; ) {
          int rightIndex = leftIndex + left.getDistance(level);
          if (rightIndex == index) {
             return left.getNext(level);
@@ -293,7 +295,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
       for (int level = levels_ - 1; level >= 0; --level) {
          Cell<K, V> cell = skipListHead_;
          sb.append('H');
-         for (;;) {
+         for (; ; ) {
             sb.append(Strings.repeat("=", cell.getDistance(level)));
             cell = cell.getNext(level);
             if (cell == skipListHead_) {

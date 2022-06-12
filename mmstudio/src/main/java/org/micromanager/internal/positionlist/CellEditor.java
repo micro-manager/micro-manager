@@ -12,8 +12,8 @@ import javax.swing.table.TableCellEditor;
 /**
  * Editor component for the position list table.
  */
-public final class CellEditor extends AbstractCellEditor implements TableCellEditor, 
-        FocusListener {
+public final class CellEditor extends AbstractCellEditor implements TableCellEditor,
+      FocusListener {
    private static final long serialVersionUID = 3L;
    // This is the component that will handle editing of the cell's value
    JTextField text_ = new JTextField();
@@ -23,7 +23,7 @@ public final class CellEditor extends AbstractCellEditor implements TableCellEdi
       super();
       text_.setFont(editingFont);
    }
-   
+
    public void addListener() {
       text_.addFocusListener(this);
    }
@@ -41,7 +41,7 @@ public final class CellEditor extends AbstractCellEditor implements TableCellEdi
    // This method is called when a cell value is edited by the user.
    @Override
    public Component getTableCellEditorComponent(JTable table, Object value,
-         boolean isSelected, int rowIndex, int colIndex) {
+                                                boolean isSelected, int rowIndex, int colIndex) {
 
       editingCol_ = colIndex;
 
@@ -53,7 +53,7 @@ public final class CellEditor extends AbstractCellEditor implements TableCellEdi
 
       return null;
    }
-                                                                          
+
    // This method is called when editing is completed.
    // It must return the new value to be stored in the cell. 
    @Override

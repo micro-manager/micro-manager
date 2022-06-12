@@ -49,17 +49,17 @@ public class DefaultCompatibilityInterface implements CompatibilityInterface {
          "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
    private static final String AFFINE_TRANSFORM =
          "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
-   
-   
+
+
    public DefaultCompatibilityInterface(Studio studio) {
       studio_ = studio;
    }
-   
+
    @Override
    public String getVersion() {
       return MMVersion.VERSION_STRING;
    }
-   
+
    @Override
    public boolean versionLessThan(String version) throws NumberFormatException {
       String[] v = MMVersion.VERSION_STRING.split(" ", 2);
@@ -108,7 +108,7 @@ public class DefaultCompatibilityInterface implements CompatibilityInterface {
             .getSettings(MMStudio.class).toPropertyMap();
       AffineTransform result =
             ((DefaultPropertyMap) studioSettings).getLegacySerializedObject(
-               AFFINE_TRANSFORM_LEGACY + config, null);
+                  AFFINE_TRANSFORM_LEGACY + config, null);
       if (result != null) {
          // Save it the new way
          setCameraTransform(result, config);

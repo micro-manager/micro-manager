@@ -14,7 +14,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -33,12 +32,10 @@ import org.micromanager.internal.utils.PopupButton;
 import org.scijava.plugin.Plugin;
 
 /**
- *
  * @author mark
  */
 public final class OverlaysInspectorPanelController
-      extends AbstractInspectorPanelController
-{
+      extends AbstractInspectorPanelController {
    private final JPanel panel_ = new JPanel();
    private final JPanel configsPanel_;
    private final PopupButton addOverlayButton_;
@@ -49,7 +46,7 @@ public final class OverlaysInspectorPanelController
    private static final String VISIBLEPMAPKEY = "OverlayVisible";
    private static final String TITLEPMAPKEY = "OverlayTitle";
 
-   
+
    private static boolean expanded_ = false;
 
    // These two lists are kept colinear
@@ -59,6 +56,7 @@ public final class OverlaysInspectorPanelController
 
    private DisplayWindow viewer_;
    private final List<OverlayPlugin> plugins_;
+
    public static OverlaysInspectorPanelController create(Studio studio) {
       return new OverlaysInspectorPanelController(studio);
    }
@@ -88,7 +86,8 @@ public final class OverlaysInspectorPanelController
             IconLoader.getIcon("/org/micromanager/icons/plus_green.png"),
             addOverlayMenu_);
       addOverlayButton_.setHorizontalAlignment(SwingConstants.LEFT);
-      addOverlayButton_.setPreferredSize(new Dimension(addOverlayButton_.getPreferredSize().width, 22));
+      addOverlayButton_
+            .setPreferredSize(new Dimension(addOverlayButton_.getPreferredSize().width, 22));
       addOverlayButton_.setText("Add");
 
       configsPanel_ = new JPanel(
@@ -106,24 +105,27 @@ public final class OverlaysInspectorPanelController
    private void loadSettings(DisplayWindow viewer) {
       //Load the overlays from the profile.
       String providerName = viewer.getDataProvider().getName();
-      List<PropertyMap> settings = profile_.getSettings(this.getClass()).getPropertyMapList(providerName, (PropertyMap[]) null);
+      List<PropertyMap> settings = profile_.getSettings(this.getClass())
+            .getPropertyMapList(providerName, (PropertyMap[]) null);
       if (settings == null) {
          return;
       }
       for (PropertyMap pMap : settings) {
          for (OverlayPlugin p : plugins_) { // We must loop through overlay plugins to determine if they are a match for this setting.
             Overlay o = p.createOverlay();
-            if (pMap.getString(TITLEPMAPKEY, "loadFailed").equals(o.getTitle())) {  // Checking against Overlay 'Title; is the best way we have to link settings with an overlay.
+            if (pMap.getString(TITLEPMAPKEY, "loadFailed").equals(
+                  o.getTitle())) {  // Checking against Overlay 'Title; is the best way we have to link settings with an overlay.
                PropertyMap config = pMap.getPropertyMap(CONFIGPMAPKEY, null);
                o.setConfiguration(config);
                o.setVisible(pMap.getBoolean(VISIBLEPMAPKEY, false));
-               viewer_.addOverlay(o); // The viewer will fire an event that will trigger adding the UI components to the inspector
+               viewer_.addOverlay(
+                     o); // The viewer will fire an event that will trigger adding the UI components to the inspector
                break;
             }
          }
       }
    }
-   
+
    private void saveSettings(DisplayWindow viewer) {
       List<PropertyMap> configList = new ArrayList<>();
       for (Overlay o : this.overlays_) {
@@ -137,7 +139,7 @@ public final class OverlaysInspectorPanelController
       String providerName = viewer.getDataProvider().getName();
       profile_.getSettings(this.getClass()).putPropertyMapList(providerName, configList);
    }
-   
+
    private void handleAddOverlay(OverlayPlugin plugin) {
       Overlay overlay = plugin.createOverlay();
       viewer_.addOverlay(overlay);
@@ -203,9 +205,11 @@ public final class OverlaysInspectorPanelController
    public void detachDataViewer() {
       if (viewer_ != null) {
          saveSettings(viewer_);
-         List<Overlay> overlays = new ArrayList<>(overlays_);  // We iterate over a copy of the overlays_ list to avoid causing a ConcurrentModificationException by removing items from the list while iterating.
+         List<Overlay> overlays = new ArrayList<>(
+               overlays_);  // We iterate over a copy of the overlays_ list to avoid causing a ConcurrentModificationException by removing items from the list while iterating.
          for (Overlay o : overlays) { //We can't manually remove the overlays from `overlays_` we need to allow the `viewer_` to fire off the relevant events so that everything is properly handled.
-            this.handleRemoveOverlay(o);  // The viewer will fire an event that will also remove the UI components from the inspector.
+            this.handleRemoveOverlay(
+                  o);  // The viewer will fire an event that will also remove the UI components from the inspector.
          }
          viewer_.unregisterForEvents(this);
          viewer_ = null;
@@ -221,12 +225,12 @@ public final class OverlaysInspectorPanelController
    public JPanel getPanel() {
       return panel_;
    }
-  
+
    @Override
    public void setExpanded(boolean state) {
       expanded_ = state;
    }
-   
+
    @Override
    public boolean initiallyExpand() {
       return expanded_;

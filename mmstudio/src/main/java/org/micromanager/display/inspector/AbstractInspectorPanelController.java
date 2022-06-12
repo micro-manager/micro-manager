@@ -20,29 +20,26 @@ import org.micromanager.display.DataViewer;
 
 /**
  * A panel containing a section of the inspector window.
- *
+ * <p>
  * In addition to implementing this abstract class, inspector panels must
  * call the appropriate methods of {@code Inspector} to notify the latter of
  * certain changes.
  */
 public abstract class AbstractInspectorPanelController
-      implements InspectorPanelController
-{
+      implements InspectorPanelController {
    private final EventListenerSupport<InspectorPanelListener> listeners_ =
          new EventListenerSupport<InspectorPanelListener>(
                InspectorPanelListener.class, InspectorPanelListener.class.getClassLoader());
 
    @Override
    public final void addInspectorPanelListener(
-         InspectorPanelListener listener)
-   {
+         InspectorPanelListener listener) {
       listeners_.addListener(listener, true);
    }
 
    @Override
    public final void removeInspectorPanelListener(
-         InspectorPanelListener listener)
-   {
+         InspectorPanelListener listener) {
       listeners_.removeListener(listener);
    }
 
@@ -50,8 +47,7 @@ public abstract class AbstractInspectorPanelController
       listeners_.fire().inspectorPanelWillChangeHeight(this);
    }
 
-   protected void fireInspectorPanelDidChangeHeight()
-   {
+   protected void fireInspectorPanelDidChangeHeight() {
       listeners_.fire().inspectorPanelDidChangeHeight(this);
    }
 
@@ -102,7 +98,7 @@ public abstract class AbstractInspectorPanelController
 
    /**
     * Indicate whether the panel can be resized vertically by the user.
-    *
+    * <p>
     * Note that this is independent of whether the panel resizes itself
     * depending on its content.
     *

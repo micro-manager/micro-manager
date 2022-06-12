@@ -81,7 +81,8 @@ public final class ColorEditor extends AbstractCellEditor implements TableCellEd
       if (EDIT.equals(e.getActionCommand())) {
          colorChooser.setColor(currentColor);
          dialog.setVisible(true);
-      } else {
+      }
+      else {
          // User pressed dialog's "OK" button.
          currentColor = colorChooser.getColor();
          model_.setValueAt(currentColor, row_, column_);
@@ -103,10 +104,10 @@ public final class ColorEditor extends AbstractCellEditor implements TableCellEd
    //Implement the one method defined by TableCellEditor.
    @Override
    public Component getTableCellEditorComponent(JTable table,
-         Object value,
-         boolean isSelected,
-         int row,
-         int column) {
+                                                Object value,
+                                                boolean isSelected,
+                                                int row,
+                                                int column) {
       row_ = row;
       currentColor = (Color) value;
       button.setBackground(currentColor);

@@ -47,7 +47,8 @@ public interface IAcquisitionEngine2010 {
     * The specified PositionList and AutofocusPlugin device are used.
     * Everything is returned to initial state after the acquisition is run.
     */
-   public BlockingQueue<TaggedImage> run(SequenceSettings sequenceSettings, boolean cleanup, PositionList positionList, AutofocusPlugin device);
+   public BlockingQueue<TaggedImage> run(SequenceSettings sequenceSettings, boolean cleanup,
+                                         PositionList positionList, AutofocusPlugin device);
 
    /*
     * When run is called, the implementing class should run a multi-dimensional

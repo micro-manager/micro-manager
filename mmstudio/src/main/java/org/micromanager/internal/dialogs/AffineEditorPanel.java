@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.dialogs;
 
 import java.awt.Color;
@@ -31,7 +30,7 @@ import org.micromanager.internal.utils.DaytimeNighttime;
 public class AffineEditorPanel extends JPanel {
 
    private static final long serialVersionUID = 4110816363509484273L;
-   
+
    private final Studio studio_;
    private final PixelSizeProvider pixelSizeProvider_;
    private final AffineTableModel atm_;
@@ -43,13 +42,13 @@ public class AffineEditorPanel extends JPanel {
     * Generates the panel to let the user interact with the affine transform
     * relating stage movement to the image on the camera.
     *
-    * @param studio The omnipresent Studio object.
-    * @param psp Object that holds information about the transform
+    * @param studio          The omnipresent Studio object.
+    * @param psp             Object that holds information about the transform
     * @param affineTransform Affine transform as a DoubleVector for exchange with the Core
     */
    public AffineEditorPanel(Studio studio, PixelSizeProvider psp, DoubleVector affineTransform) {
       super(new MigLayout("align center, flowx"));
-      
+
       studio_ = studio;
       pixelSizeProvider_ = psp;
       if (affineTransform == null) {
@@ -65,6 +64,7 @@ public class AffineEditorPanel extends JPanel {
       final AffineCellRenderer acr = new AffineCellRenderer();
       JTable table = new DaytimeNighttime.Table() {
          private static final long serialVersionUID = -2051835510654466735L;
+
          @Override
          public TableCellRenderer getCellRenderer(int rowIndex, int columnIndex) {
             return acr;
@@ -75,7 +75,7 @@ public class AffineEditorPanel extends JPanel {
       table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
       table.setCellSelectionEnabled(true);
       table.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
-      
+
       for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
          table.getColumnModel().getColumn(col).setMaxWidth(75);
       }
@@ -88,29 +88,30 @@ public class AffineEditorPanel extends JPanel {
       JButton calcButton = new JButton("Calculate");
       calcButton.addActionListener((ActionEvent e) -> calculate());
       super.add(calcButton, "flowy, split 3, center, width 90!");
-      
+
       JButton measureButton = new JButton("Measure");
       measureButton.addActionListener((ActionEvent e) -> {
          if (pcd_ == null) {
             pcd_ = new PixelCalibratorDialog(studio_, pixelSizeProvider_);
             studio_.events().registerForEvents(pcd_);
-         } else {
+         }
+         else {
             pcd_.setVisible(true);
             pcd_.toFront();
          }
       });
       super.add(measureButton, "center, width 90!");
-      
+
       JButton resetButton = new JButton("Reset");
       resetButton.addActionListener((ActionEvent e) ->
             atm_.setAffineTransform(originalAffineTransform));
       super.add(resetButton, "center, width 90!");
-      
+
       Border clbb = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
       super.setBorder(clbb);
-      
+
    }
-   
+
    public DoubleVector getAffineTransform() {
       return atm_.getAffineTransform();
    }
@@ -128,7 +129,7 @@ public class AffineEditorPanel extends JPanel {
       }
       return out;
    }
-   
+
    public void setAffineTransform(DoubleVector newAft) {
       atm_.setAffineTransform(newAft);
    }
@@ -156,20 +157,21 @@ public class AffineEditorPanel extends JPanel {
    }
 
    /*******************Renderer.******************************/
-   
+
    private class AffineCellRenderer implements TableCellRenderer {
 
       JLabel lab_ = new JLabel();
-      
+
       public AffineCellRenderer() {
 
       }
-      
+
       // This method is called each time a cell in a column
       // using this renderer needs to be rendered.
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
-            boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
+                                                     boolean isSelected, boolean hasFocus,
+                                                     int rowIndex, int colIndex) {
 
          lab_.setOpaque(true);
          lab_.setHorizontalAlignment(JLabel.LEFT);
@@ -183,7 +185,8 @@ public class AffineEditorPanel extends JPanel {
             comp.setEnabled(false);
             comp.setBackground(studio_.app().skin().getDisabledBackgroundColor());
             comp.setForeground(studio_.app().skin().getEnabledTextColor());
-         } else {
+         }
+         else {
             comp.setBackground(studio_.app().skin().getBackgroundColor());
             comp.setForeground(studio_.app().skin().getEnabledTextColor());
             comp.setEnabled(true);
@@ -194,26 +197,26 @@ public class AffineEditorPanel extends JPanel {
    }
 
    /************************Table Model.**********************/
-   
+
    private class AffineTableModel extends AbstractTableModel {
 
       private static final long serialVersionUID = 6310218493590295038L;
       private DoubleVector affineTransform_;
-      
+
       public AffineTableModel(DoubleVector affineTransform) {
          affineTransform_ = affineTransform;
       }
-      
+
       public DoubleVector getAffineTransform() {
          return affineTransform_;
       }
-      
+
       public void setAffineTransform(DoubleVector aft) {
          affineTransform_ = copyDoubleVector(aft);
          fireTableDataChanged();
       }
-         
-      
+
+
       @Override
       public String getColumnName(int colIndex) {
          return "col. " + (colIndex + 1);
@@ -233,9 +236,11 @@ public class AffineEditorPanel extends JPanel {
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (rowIndex < 2) {
             return affineTransform_.get(rowIndex * 3 + columnIndex);
-         } else if (columnIndex == 0 || columnIndex == 1) {
+         }
+         else if (columnIndex == 0 || columnIndex == 1) {
             return 0.0;
-         } else {
+         }
+         else {
             return 1.0;
          }
       }
@@ -244,12 +249,12 @@ public class AffineEditorPanel extends JPanel {
       public Class getColumnClass(int c) {
          return Double.class;
       }
-      
+
       @Override
       public boolean isCellEditable(int rowIndex, int columnIndex) {
          return rowIndex < 2;
       }
-      
+
       @Override
       public void setValueAt(Object value, int rowIndex, int colIndex) {
          if (value instanceof Double) {
@@ -257,5 +262,5 @@ public class AffineEditorPanel extends JPanel {
          }
       }
    }
-   
+
 }

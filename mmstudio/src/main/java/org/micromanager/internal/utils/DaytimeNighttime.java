@@ -88,7 +88,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    // Keys that we have to specify manually; nothing will be appended to them.
    private static final String[] MANUAL_TEXT_COLOR_KEYS = new String[] {
-      "Tree.textForeground", "TitledBorder.titleColor", "OptionPane.messageForeground"
+         "Tree.textForeground", "TitledBorder.titleColor", "OptionPane.messageForeground"
    };
 
    // As above, but for background color.
@@ -111,7 +111,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    // Mode we were in before suspendToMode() was called.
    private SkinMode suspendedMode_ = null;
-   
+
    // only the UserProfile is used.  This class could depend on UserProfile
    // instead, but it is unclear to me if the UserProfile can change while 
    // the application executes, so better to always request the pointer that 
@@ -257,7 +257,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
     */
    private void storeSkin(SkinMode mode) {
       studio_.profile().getSettings(
-              DaytimeNighttime.class).putString(
+            DaytimeNighttime.class).putString(
             BACKGROUND_MODE, mode.getDesc());
    }
 

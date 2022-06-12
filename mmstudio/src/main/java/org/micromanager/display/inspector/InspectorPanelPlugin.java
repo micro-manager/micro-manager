@@ -20,7 +20,7 @@ import org.micromanager.display.DataViewer;
 
 /**
  * A plugin providing a panel in the Inspector window.
- *
+ * <p>
  * To create an inspector plugin, annotate your class like this:
  * <pre><code>
  * {@literal @}Plugin(type = InspectorPlugin.class,
