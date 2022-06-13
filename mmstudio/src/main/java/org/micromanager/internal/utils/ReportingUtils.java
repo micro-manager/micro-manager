@@ -260,15 +260,31 @@ public final class ReportingUtils {
    }
 
    public static void showError(Throwable e) {
-      showError(e, "", MMStudio.getInstance().app().getMainWindow());
+      showError(e, "", getMainWindow());
    }
 
    public static void showError(String msg) {
-      showError(null, msg, MMStudio.getInstance().app().getMainWindow());
+      showError(null, msg, getMainWindow());
    }
 
    public static void showError(Throwable e, String msg) {
-      showError(e, msg, MMStudio.getInstance().app().getMainWindow());
+      showError(e, msg, getMainWindow());
+   }
+
+   /**
+    * Introduced to catch null pointer exception when mmstudio.app does not exit yet
+    * Will return null if null pointer exception is thrown.
+    * @return MainWindow or null
+    */
+   public static JFrame getMainWindow() {
+      JFrame mainWindow = null;
+      try {
+         mainWindow = MMStudio.getInstance().app().getMainWindow();
+      } catch (NullPointerException npe) {
+         // this will happen when MM has not fully initialized yet.
+         logError(npe);
+      }
+      return mainWindow;
    }
 
    public static void showError(Throwable e, Component parent) {

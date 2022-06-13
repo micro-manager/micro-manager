@@ -79,6 +79,7 @@ public final class UserProfileAdmin {
 
    private UUID currentProfileUUID_ = null;
    private DefaultUserProfile currentProfile_ = null;
+   private boolean userProfileErrorShown_ = false;
 
    private final EventListenerSupport<ChangeListener> currentProfileListeners_ =
          EventListenerSupport.create(ChangeListener.class);
@@ -259,13 +260,18 @@ public final class UserProfileAdmin {
                   uuid, new ExceptionListener() {
                      @Override
                      public void exceptionThrown(Exception e) {
-                        // TODO User should probably receive warning for the first error.
-                        ReportingUtils.logError(e, "Error saving user profile");
+                        if (userProfileErrorShown_) {
+                           ReportingUtils.logError(e, "Error saving user profile");
+                        } else {
+                           ReportingUtils.showError(e, "Error saving user profile");
+                           userProfileErrorShown_ = true;
+                        }
                      }
                   });
          } catch (IOException ex) {
-            ex.printStackTrace();
-            // TODO Notify user of error
+            String profileDir = getProfilesDirectory().getAbsolutePath();
+            ReportingUtils.showError(ex, "Error reading Micro-Manager profile.  Delete or move "
+                        + profileDir + ".");
             // TODO Virtual profile?
          }
       }
