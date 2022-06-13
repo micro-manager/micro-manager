@@ -1,7 +1,6 @@
 package de.embl.rieslab.emu.ui.uiparameters;
 
 import de.embl.rieslab.emu.ui.ConfigurablePanel;
-import de.embl.rieslab.emu.ui.uiparameters.UIParameter;
 import de.embl.rieslab.emu.utils.EmuUtils;
 
 /**
@@ -11,46 +10,43 @@ import de.embl.rieslab.emu.utils.EmuUtils;
  */
 public class DoubleUIParameter extends UIParameter<Double> {
 
-    public DoubleUIParameter(ConfigurablePanel owner, String label, String description, double val) {
-        super(owner, label, description);
+   public DoubleUIParameter(ConfigurablePanel owner, String label, String description, double val) {
+      super(owner, label, description);
 
-        setValue(val);
-    }
+      setValue(val);
+   }
 
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public UIParameterType getType() {
-        return UIParameterType.DOUBLE;
-    }
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public UIParameterType getType() {
+      return UIParameterType.DOUBLE;
+   }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isSuitable(String val) {
-        if (EmuUtils.isNumeric(val)) {
-            return true;
-        }
-        return false;
-    }
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public boolean isSuitable(String val) {
+      return EmuUtils.isNumeric(val);
+   }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected Double convertValue(String val) {
-        return Double.parseDouble(val);
-    }
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   protected Double convertValue(String val) {
+      return Double.parseDouble(val);
+   }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getStringValue() {
-        return String.valueOf(getValue());
-    }
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public String getStringValue() {
+      return String.valueOf(getValue());
+   }
 
 }

@@ -7,14 +7,15 @@ import java.util.TreeMap;
 
 public class IBeamSmartPlugin implements UIPlugin {
 
-    @Override
-    public ConfigurableMainFrame getMainFrame(SystemController controller, TreeMap<String, String> pluginSettings) {
-        return new IBeamSmartFrame("iBeamSmart", controller, pluginSettings);
-    }
+   @Override
+   public ConfigurableMainFrame getMainFrame(SystemController controller,
+                                             TreeMap<String, String> pluginSettings) {
+      return new IBeamSmartFrame("iBeamSmart", controller, pluginSettings);
+   }
 
-    @Override
-    public String getName() {
-        return "iBeamSmart control";
-    }
+   @Override
+   public String getName() {
+      return "iBeamSmart control";
+   }
 }
 

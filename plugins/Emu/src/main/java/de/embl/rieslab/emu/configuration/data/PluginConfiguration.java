@@ -12,69 +12,70 @@ import java.util.TreeMap;
  */
 public class PluginConfiguration implements Comparable<PluginConfiguration> {
 
-    private String configurationName;
-    private String pluginName;
-    private TreeMap<String, String> properties;
-    private TreeMap<String, String> parameters;
-    private TreeMap<String, String> settings;
+   private String configurationName;
+   private String pluginName;
+   private TreeMap<String, String> properties;
+   private TreeMap<String, String> parameters;
+   private TreeMap<String, String> settings;
 
-    public PluginConfiguration() {
-        // do nothing
-    }
+   public PluginConfiguration() {
+      // do nothing
+   }
 
-    public void configure(String configurationName, String pluginName, Map<String, String> props, Map<String, String> params, Map<String, String> settgs) {
-        this.configurationName = configurationName;
-        this.pluginName = pluginName;
+   public void configure(String configurationName, String pluginName, Map<String, String> props,
+                         Map<String, String> params, Map<String, String> settgs) {
+      this.configurationName = configurationName;
+      this.pluginName = pluginName;
 
-        properties = new TreeMap<String, String>(props);
-        parameters = new TreeMap<String, String>(params);
-        settings = new TreeMap<String, String>(settgs);
-    }
+      properties = new TreeMap<String, String>(props);
+      parameters = new TreeMap<String, String>(params);
+      settings = new TreeMap<String, String>(settgs);
+   }
 
-    public String getConfigurationName() {
-        return configurationName;
-    }
+   public String getConfigurationName() {
+      return configurationName;
+   }
 
-    public void setConfigurationName(String configurationName) {
-        this.configurationName = configurationName;
-    }
+   public void setConfigurationName(String configurationName) {
+      this.configurationName = configurationName;
+   }
 
-    public String getPluginName() {
-        return pluginName;
-    }
+   public String getPluginName() {
+      return pluginName;
+   }
 
-    public void getPluginName(String pluginName) {
-        this.pluginName = pluginName;
-    }
+   public void getPluginName(String pluginName) {
+      this.pluginName = pluginName;
+   }
 
-    public TreeMap<String, String> getProperties() {
-        return properties;
-    }
+   public TreeMap<String, String> getProperties() {
+      return properties;
+   }
 
-    public void setProperties(Map<String, String> properties) {
-        this.properties = new TreeMap<String, String>(properties);
-    }
+   public void setProperties(Map<String, String> properties) {
+      this.properties = new TreeMap<String, String>(properties);
+   }
 
-    public TreeMap<String, String> getParameters() {
-        return parameters;
-    }
+   public TreeMap<String, String> getParameters() {
+      return parameters;
+   }
 
-    public void setParameters(Map<String, String> parameters) {
-        this.parameters = new TreeMap<String, String>(parameters);
-    }
+   public void setParameters(Map<String, String> parameters) {
+      this.parameters = new TreeMap<String, String>(parameters);
+   }
 
-    public TreeMap<String, String> getPluginSettings() {
-        return settings;
-    }
+   public TreeMap<String, String> getPluginSettings() {
+      return settings;
+   }
 
-    public void setPluginSettings(Map<String, String> settgs) {
-        this.settings = new TreeMap<String, String>(settgs);
-    }
+   public void setPluginSettings(Map<String, String> settgs) {
+      this.settings = new TreeMap<String, String>(settgs);
+   }
 
-    @Override
-    public int compareTo(PluginConfiguration OtherUIPlugin) {
-        // TODO should also check if they are related to the same plugin otherwise we might have inconsistencies
-        return configurationName.compareTo(OtherUIPlugin.getConfigurationName());
-    }
+   @Override
+   public int compareTo(PluginConfiguration OtherUIPlugin) {
+      // TODO should also check if they are related to the same plugin otherwise we might have inconsistencies
+      return configurationName.compareTo(OtherUIPlugin.getConfigurationName());
+   }
 
 }

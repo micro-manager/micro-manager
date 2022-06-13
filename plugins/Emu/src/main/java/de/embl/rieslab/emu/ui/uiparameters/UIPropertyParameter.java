@@ -1,7 +1,6 @@
 package de.embl.rieslab.emu.ui.uiparameters;
 
 import de.embl.rieslab.emu.ui.ConfigurablePanel;
-import de.embl.rieslab.emu.ui.uiparameters.UIParameter;
 import de.embl.rieslab.emu.ui.uiproperties.flag.PropertyFlag;
 
 /**
@@ -21,66 +20,64 @@ import de.embl.rieslab.emu.ui.uiproperties.flag.PropertyFlag;
  */
 public class UIPropertyParameter extends UIParameter<String> {
 
-    public static String NO_PROPERTY = "None";
+   public static String NO_PROPERTY = "None";
 
-    private PropertyFlag propertyFlag_;
+   private final PropertyFlag propertyFlag_;
 
-    /**
-     * Constructor with a PropertyFlag to select the relevant UIProperties.
-     *
-     * @param owner        ConfigurablePanel that instantiated the UIParameter
-     * @param name         Name of the UIParameter
-     * @param description  Description of the UIParameter
-     * @param propertyflag PropertyFlag used to select UIProperties
-     */
-    public UIPropertyParameter(ConfigurablePanel owner, String name, String description, PropertyFlag propertyflag) {
-        super(owner, name, description);
+   /**
+    * Constructor with a PropertyFlag to select the relevant UIProperties.
+    *
+    * @param owner        ConfigurablePanel that instantiated the UIParameter
+    * @param name         Name of the UIParameter
+    * @param description  Description of the UIParameter
+    * @param propertyflag PropertyFlag used to select UIProperties
+    */
+   public UIPropertyParameter(ConfigurablePanel owner, String name, String description,
+                              PropertyFlag propertyflag) {
+      super(owner, name, description);
 
-        if (propertyflag == null) {
-            throw new NullPointerException("The UIPropertyParameter's property flag cannot be null.");
-        }
+      if (propertyflag == null) {
+         throw new NullPointerException("The UIPropertyParameter's property flag cannot be null.");
+      }
 
-        propertyFlag_ = propertyflag;
+      propertyFlag_ = propertyflag;
 
-        setValue(NO_PROPERTY);
-    }
+      setValue(NO_PROPERTY);
+   }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public UIParameterType getType() {
-        return UIParameterType.UIPROPERTY;
-    }
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public UIParameterType getType() {
+      return UIParameterType.UIPROPERTY;
+   }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isSuitable(String val) {
-        if (val == null) {
-            return false;
-        }
-        return true;
-    }
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public boolean isSuitable(String val) {
+      return val != null;
+   }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String convertValue(String val) {
-        return val;
-    }
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   protected String convertValue(String val) {
+      return val;
+   }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getStringValue() {
-        return getValue();
-    }
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public String getStringValue() {
+      return getValue();
+   }
 
-    public PropertyFlag getFlag() {
-        return propertyFlag_;
-    }
+   public PropertyFlag getFlag() {
+      return propertyFlag_;
+   }
 }

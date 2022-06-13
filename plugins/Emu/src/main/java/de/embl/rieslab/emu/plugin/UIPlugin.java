@@ -14,20 +14,21 @@ import java.util.TreeMap;
  */
 public interface UIPlugin {
 
-    /**
-     * Returns the name of the plugin, used to identify it and load if set in the configuration.
-     *
-     * @return Plugin's name.
-     */
-    public String getName();
+   /**
+    * Returns the name of the plugin, used to identify it and load if set in the configuration.
+    *
+    * @return Plugin's name.
+    */
+   String getName();
 
 
-    /**
-     * Returns a PropertyMainFrame. If {@code pluginSettings} is empty, then the default settings are used.
-     *
-     * @param controller     EMU system controller.
-     * @param pluginSettings Plugin settings.
-     * @return ConfigurableMainFrame of the plugin
-     */
-    public ConfigurableMainFrame getMainFrame(SystemController controller, TreeMap<String, String> pluginSettings);
+   /**
+    * Returns a PropertyMainFrame. If {@code pluginSettings} is empty, then the default settings are used.
+    *
+    * @param controller     EMU system controller.
+    * @param pluginSettings Plugin settings.
+    * @return ConfigurableMainFrame of the plugin
+    */
+   ConfigurableMainFrame getMainFrame(SystemController controller,
+                                      TreeMap<String, String> pluginSettings);
 }
