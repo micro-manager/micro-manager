@@ -5,6 +5,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ComponentDisplaySettings;
+import org.micromanager.display.ComponentIntensityRange;
 
 /**
  * @author mark
@@ -38,6 +39,11 @@ public final class DefaultComponentDisplaySettings
          scalingMin_ = minIntensity;
          scalingMax_ = maxIntensity;
          return this;
+      }
+
+      @Override
+      public Builder scalingRange(ComponentIntensityRange range) {
+         return scalingRange(range.getMinimum(), range.getMaximum());
       }
 
       @Override

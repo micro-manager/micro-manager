@@ -22,6 +22,8 @@ package org.micromanager.display;
 
 import java.awt.Color;
 import java.util.List;
+import org.micromanager.display.internal.DefaultChannelDisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 
 /**
  * This class defines the parameters that control how a given DisplayWindow
@@ -116,6 +118,8 @@ public interface DisplaySettings {
        * @return builder instance to enable chaining commands
        */
       Builder channels(Iterable<ChannelDisplaySettings> channelSettings);
+
+      Builder intensityScaling(DisplayIntensityRanges ranges);
 
       /**
        * Number of ChannelDisplaySettings in this builder.  Not sure why a builder needs this...
@@ -227,8 +231,9 @@ public interface DisplaySettings {
    Builder copyBuilderWithComponentSettings(
          int channel, int component, ComponentDisplaySettings settings);
 
-
-   // TODO Add static builder() in Java 8
+   static Builder builder() {
+      return DefaultDisplaySettings.builder();
+   }
 
 
    /**
