@@ -20,45 +20,48 @@
 //
 // CVS:          $Id$
 //
+
 package org.micromanager.internal.utils;
 
 import java.io.File;
 import javax.swing.filechooser.FileFilter;
 
 /**
- * File filter class for Open/Save file choosers 
+ * File filter class for Open/Save file choosers.
  */
 public final class ScriptFileFilter extends FileFilter {
-   final private String EXT_BSH;
-   final private String DESCRIPTION;
-   
+   private final String extBsh;
+   private final String description;
+
    public ScriptFileFilter() {
       super();
-      EXT_BSH = new String("bsh");
-      DESCRIPTION = new String("BeanShell files (*.bsh)");
+      extBsh = new String("bsh");
+      description = new String("BeanShell files (*.bsh)");
    }
-   
+
    @Override
-   public boolean accept(File f){
-      if (f.isDirectory())
+   public boolean accept(File f) {
+      if (f.isDirectory()) {
          return true;
-      
-      if (EXT_BSH.equals(getExtension(f)))
+      }
+
+      if (extBsh.equals(getExtension(f))) {
          return true;
+      }
       return false;
    }
-   
-   public String getDescription(){
-      return DESCRIPTION;
+
+   public String getDescription() {
+      return description;
    }
-   
+
    private String getExtension(File f) {
       String ext = null;
       String s = f.getName();
       int i = s.lastIndexOf('.');
-      
-      if (i > 0 &&  i < s.length() - 1) {
-         ext = s.substring(i+1).toLowerCase();
+
+      if (i > 0 && i < s.length() - 1) {
+         ext = s.substring(i + 1).toLowerCase();
       }
       return ext;
    }

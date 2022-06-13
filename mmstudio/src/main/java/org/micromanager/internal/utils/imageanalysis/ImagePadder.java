@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.utils.imageanalysis;
 
 import boofcv.alg.misc.GImageMiscOps;
@@ -10,22 +9,22 @@ import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
 
 /**
- *
  * @author NicoLocal
  */
 public class ImagePadder {
-   
+
    /**
     * Prepares the image for FFT to reduce Gibbs "cross"
     * Uses method described by Preibisch et al. (TODO: ref)
-    * Fast Stitching of Large 3D Biological Datasets 
+    * Fast Stitching of Large 3D Biological Datasets
     * Stephan Preibisch, Stephan Saalfeld and Pavel Tomancak
-    * Max Planck Institute of Molecular Cell Biology and Genetics, 
+    * Max Planck Institute of Molecular Cell Biology and Genetics,
     * Dresden, Germany
     * Doubles the image in size, fills in the edges by mirroring,
     * and using a Han window (only over the edges)
+    *
     * @param input
-    * @return 
+    * @return
     */
    public static ImageGray padPreibisch(ImageGray input) {
       //TODO: define input size requirements and enforce them
@@ -33,7 +32,7 @@ public class ImagePadder {
       int height = input.getHeight();
       int halfWidth = (int) (0.5 * width);
       int halfHeight = (int) (0.5 * height);
-      
+
       //TODO: make implementation more memory and CPU efficient
       ImageGray output = null;
       ImageGray lrSide = null;
@@ -45,7 +44,7 @@ public class ImagePadder {
       if (null != input.getImageType().getDataType()) {
          switch (input.getImageType().getDataType()) {
             case U16:
-               output =  new GrayU16(2 * width, 2 * height);
+               output = new GrayU16(2 * width, 2 * height);
                lrSide = new GrayU16(halfWidth, height);
                tbSide = new GrayU16(2 * width, halfHeight);
                break;
@@ -54,12 +53,12 @@ public class ImagePadder {
                lrSide = new GrayU8(halfWidth, height);
                tbSide = new GrayU8(2 * width, halfHeight);
                break;
-               // TODO: throw unsupportedtype exception
+            // TODO: throw unsupportedtype exception
             default:
                break;
          }
       }
-      
+
       // copy the source to the center of destination, then add mirrored sides,
       // then add mirrored tops and bottom
       GImageMiscOps.copy(0, 0, halfWidth, halfHeight, width, height, input, output);
@@ -78,9 +77,9 @@ public class ImagePadder {
       GConvertImage.convert(lrSide, sideTmp);
       GPixelMath.multiply(sideTmp, sideMask, sideTmp);
       GConvertImage.convert(sideTmp, lrSide);
-      GImageMiscOps.copy(0, 0, width + halfWidth, halfHeight, 
-              halfWidth, height, lrSide, output);
-      
+      GImageMiscOps.copy(0, 0, width + halfWidth, halfHeight,
+            halfWidth, height, lrSide, output);
+
       // Now top/bottom copy
       GImageMiscOps.copy(0, halfHeight, 0, 0, 2 * width, halfHeight, output, tbSide);
       GImageMiscOps.flipVertical(tbSide);
@@ -89,7 +88,7 @@ public class ImagePadder {
       GPixelMath.multiply(tbTmp, tbMask, tbTmp);
       GConvertImage.convert(tbTmp, tbSide);
       GImageMiscOps.copy(0, 0, 0, 0, 2 * width, halfHeight, tbSide, output);
-      
+
       // Bottom
       GImageMiscOps.copy(0, height, 0, 0, 2 * width, halfHeight, output, tbSide);
       GImageMiscOps.flipVertical(tbSide);
@@ -98,21 +97,21 @@ public class ImagePadder {
       GPixelMath.multiply(tbTmp, tbMask, tbTmp);
       GConvertImage.convert(tbTmp, tbSide);
       GImageMiscOps.copy(0, 0, 0, height + halfHeight, 2 * width, halfHeight, tbSide, output);
-      
-      
+
+
       // image i
-      
+
       return output;
    }
-   
-   
+
+
    /**
     * Creates a HanWindow specific for the padPreibisch function
     * Left half is 0, followed by a "half" HanWindow ending at 1.0.
     *
     * @param width
     * @param height
-    * @return 
+    * @return
     */
    public static float[] leftHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[width];
@@ -131,14 +130,14 @@ public class ImagePadder {
       }
       return han2DArray;
    }
-   
+
    /**
     * Creates a HanWindow specific for the padPreibisch function
     * Right half is 0, followed by a "half" HanWindow ending at 1.0.
     *
     * @param width
     * @param height
-    * @return 
+    * @return
     */
    public static float[] rightHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[width];
@@ -156,16 +155,16 @@ public class ImagePadder {
          }
       }
       return han2DArray;
-      
+
    }
-   
+
    /**
     * Creates a HanWindow specific for the padPreibisch function
     * Top half is 0, followed by a "half" HanWindow ending at 1.0.
     *
     * @param width
     * @param height
-    * @return 
+    * @return
     */
    public static float[] topHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[height];
@@ -184,14 +183,14 @@ public class ImagePadder {
       }
       return han2DArray;
    }
-   
+
    /**
     * Creates a HanWindow specific for the padPreibisch function
     * Top half is 0, followed by a "half" HanWindow ending at 1.0.
     *
     * @param width
     * @param height
-    * @return 
+    * @return
     */
    public static float[] bottomHanWindow1DA(int width, int height) {
       float[] han1DArray = new float[height];
@@ -210,5 +209,5 @@ public class ImagePadder {
       }
       return han2DArray;
    }
-   
+
 }

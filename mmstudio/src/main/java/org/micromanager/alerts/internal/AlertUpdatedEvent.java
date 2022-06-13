@@ -28,6 +28,7 @@ package org.micromanager.alerts.internal;
  */
 public final class AlertUpdatedEvent {
    private DefaultAlert alert_;
+
    public AlertUpdatedEvent(DefaultAlert alert) {
       alert_ = alert;
    }

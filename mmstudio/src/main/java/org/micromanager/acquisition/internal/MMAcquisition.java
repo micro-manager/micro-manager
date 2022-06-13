@@ -75,8 +75,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  * functionality in the ScriptInterface.
  */
 public final class MMAcquisition extends DataViewerListener {
-   
-   /** 
+
+   /**
     * Final queue of images immediately prior to insertion into the ImageCache.
     * Only used when running in asynchronous mode.
     */
@@ -94,21 +94,21 @@ public final class MMAcquisition extends DataViewerListener {
    private int imagesExpected_ = 0;
    private UpdatableAlert alert_;
    private UpdatableAlert nextImageAlert_;
-   
+
    private Timer nextFrameAlertGenerator_;
 
    /**
     * MMAcquisition is the glue between acuiqition setting, acquisition engine, and
     * resulting datastore.
     *
-    * @param studio Micro-Manager Studio object.
+    * @param studio          Micro-Manager Studio object.
     * @param summaryMetadata Summarymetadata that will be added to the datastore.
-    * @param eng acquisition engine object.
-    * @param show Whether or not open a display on the ongoing acquisition.
+    * @param eng             acquisition engine object.
+    * @param show            Whether or not open a display on the ongoing acquisition.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMAcquisition(Studio studio, JSONObject summaryMetadata,
-         AcquisitionEngine eng, boolean show) {
+                        AcquisitionEngine eng, boolean show) {
       studio_ = studio;
       eng_ = eng;
       show_ = show;
@@ -176,7 +176,7 @@ public final class MMAcquisition extends DataViewerListener {
       if (show_) {
          studio_.displays().manage(store_);
          display_ = studio_.displays().createDisplay(store_, makeControlsFactory());
-         
+
          // Color handling is a problem. They are no longer part of the summary 
          // metadata.  However, they clearly need to be stored 
          // with the dataset itself.  I guess that it makes sense to store them in 
@@ -184,23 +184,23 @@ public final class MMAcquisition extends DataViewerListener {
          // display settings are stored with the (meta-)data.  
          // Handling the conversion from colors in the summary metadata to display
          // settings here seems clumsy, but I am not sure where else this belongs
-         
+
          // Use settings of last closed acquisition viewer
          DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
-                 studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+               studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
 
          if (dsTmp == null) {
             dsTmp = DefaultDisplaySettings.getStandardSettings(
-                    PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+                  PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
 
          try {
             if (summaryMetadata.has("ChColors")) {
                JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
-      
+
                DisplaySettings.Builder displaySettingsBuilder
-                       = dsTmp.copyBuilder();
-               
+                     = dsTmp.copyBuilder();
+
                final int nrChannels = store_.getSummaryMetadata().getChannelNameList().size();
                // the do-while loop is a way to set display settings in a thread
                // safe way.  See docs to compareAndSetDisplaySettings.
@@ -213,9 +213,9 @@ public final class MMAcquisition extends DataViewerListener {
                   for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
                      displaySettingsBuilder.channel(channelIndex,
                            RememberedDisplaySettings.loadChannel(studio_,
-                           store_.getSummaryMetadata().getChannelGroup(),
-                           store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
-                             null));  // TODO: use chColors as default Color?
+                                 store_.getSummaryMetadata().getChannelGroup(),
+                                 store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
+                                 null));  // TODO: use chColors as default Color?
                      /*
                      ChannelDisplaySettings channelSettings
                              = displaySettingsBuilder.getChannelSettings(channelIndex);
@@ -236,16 +236,16 @@ public final class MMAcquisition extends DataViewerListener {
                       */
                   }
                } while (!display_.compareAndSetDisplaySettings(
-                       display_.getDisplaySettings(), displaySettingsBuilder.build()));
+                     display_.getDisplaySettings(), displaySettingsBuilder.build()));
             } else {
                display_.compareAndSetDisplaySettings(
-                       display_.getDisplaySettings(), dsTmp);
+                     display_.getDisplaySettings(), dsTmp);
             }
          } catch (JSONException je) {
             studio_.logs().logError(je);
             // relatively harmless, but look here when display settings are unexpected
          }
-         
+
          // It is a bit funny that there are listeners and events
          // The listener provides the canClose functionality (which needs to be
          // synchronous), whereas Events are asynchronous
@@ -257,7 +257,7 @@ public final class MMAcquisition extends DataViewerListener {
       }
       store_.registerForEvents(this);
       studio_.events().registerForEvents(this);
-      
+
       // start thread reporting when next frame will be taken
       if (eng.getFrameIntervalMs() > 5000) {
          nextFrameAlertGenerator_ = new Timer(1000, (ActionEvent e) -> {
@@ -316,7 +316,7 @@ public final class MMAcquisition extends DataViewerListener {
             // saving settings (again) may not be needed
             if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
                ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
-                       studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+                     studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
             }
             display_.removeListener(this);
             display_ = null;
@@ -342,7 +342,7 @@ public final class MMAcquisition extends DataViewerListener {
        * buses.
        */
       public static SubscribedButton makeButton(final Studio studio,
-            final ImageIcon icon) {
+                                                final ImageIcon icon) {
          SubscribedButton result = new SubscribedButton(studio, icon);
          studio.events().registerForEvents(result);
          return result;
@@ -374,8 +374,8 @@ public final class MMAcquisition extends DataViewerListener {
    private DisplayWindowControlsFactory makeControlsFactory() {
       return (final DisplayWindow display) -> {
          JButton abortButton = SubscribedButton.makeButton(studio_,
-                 new ImageIcon(
-                         getClass().getResource("/org/micromanager/icons/cancel.png")));
+               new ImageIcon(
+                     getClass().getResource("/org/micromanager/icons/cancel.png")));
          abortButton.setBackground(new Color(255, 255, 255));
          abortButton.setToolTipText("Halt data acquisition");
          abortButton.setFocusable(false);
@@ -387,11 +387,11 @@ public final class MMAcquisition extends DataViewerListener {
          });
          ArrayList<Component> result = new ArrayList<>();
          result.add(abortButton);
-         
+
          final ImageIcon pauseIcon = new ImageIcon(getClass().getResource(
-                 "/org/micromanager/icons/control_pause.png"));
+               "/org/micromanager/icons/control_pause.png"));
          final ImageIcon playIcon = new ImageIcon(getClass().getResource(
-                 "/org/micromanager/icons/resultset_next.png"));
+               "/org/micromanager/icons/resultset_next.png"));
          final JButton pauseButton = SubscribedButton.makeButton(studio_, pauseIcon);
          pauseButton.setToolTipText("Pause data acquisition");
          pauseButton.setFocusable(false);
@@ -409,7 +409,7 @@ public final class MMAcquisition extends DataViewerListener {
             }
          });
          result.add(pauseButton);
-         
+
          return result;
       };
    }
@@ -441,7 +441,7 @@ public final class MMAcquisition extends DataViewerListener {
             }
             // save display settings to profile
             ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
-                    studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
          display_.unregisterForEvents(this);
       }
@@ -478,7 +478,7 @@ public final class MMAcquisition extends DataViewerListener {
       }
       if (event.getDisplaySettings() instanceof DefaultDisplaySettings) {
          ((DefaultDisplaySettings) event.getDisplaySettings()).saveToProfile(
-                 studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+               studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
       }
    }
 
@@ -498,7 +498,7 @@ public final class MMAcquisition extends DataViewerListener {
          alert_.setText("No images expected.");
       }
    }
-   
+
    private void setNextImageAlert(AcquisitionEngine eng) {
       if (imagesExpected_ > 0) {
          int s = (int) ((eng.getNextWakeTime() - System.nanoTime() / 1000000.0) / 1000.0);
@@ -511,10 +511,10 @@ public final class MMAcquisition extends DataViewerListener {
       }
    }
 
-   private static Storage getAppropriateStorage(final Studio studio, 
-           final DefaultDatastore store,
-           final String path, 
-           final boolean isNew) throws IOException {
+   private static Storage getAppropriateStorage(final Studio studio,
+                                                final DefaultDatastore store,
+                                                final String path,
+                                                final boolean isNew) throws IOException {
       Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode(studio);
       if (null != mode) {
          switch (mode) {

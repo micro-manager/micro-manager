@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.inspector.internal.panels.comments;
 
 import org.micromanager.Studio;
@@ -14,7 +15,6 @@ import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
 /**
- *
  * @author mark
  */
 @Plugin(type = InspectorPanelPlugin.class,

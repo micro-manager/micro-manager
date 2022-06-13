@@ -35,7 +35,6 @@ import java.awt.Color;
  *
  * <p>Maintainer note: This should be an interface, but kept as a class for backward
  * compatibility.
- *
  */
 @SuppressWarnings("unused")
 public final class ChannelSpec {
@@ -44,39 +43,56 @@ public final class ChannelSpec {
     */
    public static final class Builder {
 
-      /** Channel group this channel config belongs to. **/
+      /**
+       * Channel group this channel config belongs to.
+       **/
       private String channelGroup_ = "";
 
-      /** Name of the channel. */
+      /**
+       * Name of the channel.
+       */
       private String config_ = "";
 
-      /** Exposure time, in milliseconds. */
+      /**
+       * Exposure time, in milliseconds.
+       */
       private double exposure_ = 10.0;
 
-      /** Z-offset, in microns. */
+      /**
+       * Z-offset, in microns.
+       */
       private double zOffset_ = 0.0;
 
-      /** Whether this channel should be imaged in each Z slice of the stack. */
+      /**
+       * Whether this channel should be imaged in each Z slice of the stack.
+       */
       private Boolean doZStack_ = true;
 
       /**
        * Color to use when displaying this channel.
        *
-       * @deprecated  use ChannelDisplaySettings.color() instead
+       * @deprecated use ChannelDisplaySettings.color() instead
        */
       @Deprecated
       private Color color_ = Color.gray;
 
-      /** Number of frames to skip between each time this channel is imaged. */
+      /**
+       * Number of frames to skip between each time this channel is imaged.
+       */
       private int skipFactorFrame_ = 0;
 
-      /** Whether the channel is enabled for imaging at all. */
+      /**
+       * Whether the channel is enabled for imaging at all.
+       */
       private boolean useChannel_ = true;
 
-      /** Name of the camera to use. */
+      /**
+       * Name of the camera to use.
+       */
       private String camera_ = "";
 
-      public Builder() {}
+      public Builder() {
+      }
 
       public Builder channelGroup(String channelGroup) {
          channelGroup_ = channelGroup;
@@ -106,7 +122,7 @@ public final class ChannelSpec {
       /**
        * Deprecated.
        *
-       * @deprecated  use ChannelDisplaySettings.color() instead
+       * @deprecated use ChannelDisplaySettings.color() instead
        */
       @Deprecated
       public Builder color(Color color) {
@@ -145,7 +161,7 @@ public final class ChannelSpec {
 
       public ChannelSpec build() {
          return new ChannelSpec(channelGroup_, config_, exposure_, zOffset_,
-                 doZStack_, color_, skipFactorFrame_, useChannel_,  camera_);
+               doZStack_, color_, skipFactorFrame_, useChannel_, camera_);
       }
    }
 
@@ -161,14 +177,16 @@ public final class ChannelSpec {
    /**
     * Name of the channel.
     *
-    * @deprecated Use Builder and getters instead **/
+    * @deprecated Use Builder and getters instead
+    **/
    @Deprecated
    public String config = "";
 
    /**
     * Exposure time, in milliseconds.
     *
-    * @deprecated Use Builder and getters instead **/
+    * @deprecated Use Builder and getters instead
+    **/
    @Deprecated
    public double exposure = 10.0;
 
@@ -231,8 +249,8 @@ public final class ChannelSpec {
    }
 
    private ChannelSpec(String mChannelGroup, String mConfig, double mExposure,
-                      double mZOffset, Boolean mDoZStack, Color mColor,
-                      int mSkipFactorFrame, boolean mUseChannel, String mCamera) {
+                       double mZOffset, Boolean mDoZStack, Color mColor,
+                       int mSkipFactorFrame, boolean mUseChannel, String mCamera) {
       channelGroup = mChannelGroup;
       config = mConfig;
       exposure = mExposure;
@@ -246,7 +264,7 @@ public final class ChannelSpec {
 
    public Builder copyBuilder() {
       return new Builder(channelGroup, config, exposure, zOffset, doZStack,
-              color, skipFactorFrame, useChannel, camera);
+            color, skipFactorFrame, useChannel, camera);
    }
 
    public String channelGroup() {

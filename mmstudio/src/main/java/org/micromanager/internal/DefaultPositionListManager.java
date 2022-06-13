@@ -41,7 +41,7 @@ public final class DefaultPositionListManager implements PositionListManager {
     * @return copy of the current PositionList
     */
    @Override
-   public PositionList getPositionList()  {
+   public PositionList getPositionList() {
       return PositionList.newInstance(posList_);
    }
 

@@ -24,17 +24,17 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
 
- /**
-  * This event posts when the DataStore gets a new name, i.e. when
-  * {@link Datastore#setName(String)} is called
-  *
-  * This Event posts on the Datastore bus.
-  * Subscribe using {@link DataProvider#registerForEvents(Object)}.
-  */
+/**
+ * This event posts when the DataStore gets a new name, i.e. when
+ * {@link Datastore#setName(String)} is called
+ *
+ * <p>This Event posts on the Datastore bus.
+ * Subscribe using {@link DataProvider#registerForEvents(Object)}.
+ */
 public class DefaultHasNewNameEvent implements DataProviderHasNewNameEvent {
    private final String newName_;
-   
-   public DefaultHasNewNameEvent (String newName) {
+
+   public DefaultHasNewNameEvent(String newName) {
       newName_ = newName;
    }
 
@@ -45,5 +45,5 @@ public class DefaultHasNewNameEvent implements DataProviderHasNewNameEvent {
    public String getNewName() {
       return newName_;
    }
-   
+
 }

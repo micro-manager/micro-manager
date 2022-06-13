@@ -52,8 +52,8 @@ public interface QuickAccessManager {
     * a custom icon; in such situations this method will return the
     * defaultIcon value instead.
     *
-    * @param config A PropertyMap potentially containing information about
-    *        user-customized icons.
+    * @param config      A PropertyMap potentially containing information about
+    *                    user-customized icons.
     * @param defaultIcon Icon to use if no custom icon information is set.
     * @return A custom Icon derived from the PropertyMap, or the defaultIcon
     *         if no icon information is available.

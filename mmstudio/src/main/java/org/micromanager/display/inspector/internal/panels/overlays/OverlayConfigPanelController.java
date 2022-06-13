@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.inspector.internal.panels.overlays;
 
 import com.bulenkov.iconloader.IconLoader;
@@ -26,7 +27,6 @@ import org.micromanager.display.overlay.OverlayListener;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- *
  * @author mark
  */
 final class OverlayConfigPanelController implements OverlayListener {
@@ -40,14 +40,12 @@ final class OverlayConfigPanelController implements OverlayListener {
    private final JCheckBox enabledCheckBox_;
 
    static OverlayConfigPanelController create(OverlaysInspectorPanelController parent,
-         Overlay overlay)
-   {
+                                              Overlay overlay) {
       return new OverlayConfigPanelController(parent, overlay);
    }
 
    private OverlayConfigPanelController(OverlaysInspectorPanelController parent,
-         Overlay overlay)
-   {
+                                        Overlay overlay) {
       parentController_ = parent;
       overlay_ = overlay;
 
@@ -71,7 +69,8 @@ final class OverlayConfigPanelController implements OverlayListener {
       });
       panel_.add(enabledCheckBox_, new CC());
 
-      removeButton_ = new JButton("Remove", IconLoader.getIcon("/org/micromanager/icons/cross.png"));
+      removeButton_ =
+            new JButton("Remove", IconLoader.getIcon("/org/micromanager/icons/cross.png"));
       removeButton_.setHorizontalAlignment(SwingConstants.LEFT);
       removeButton_.setPreferredSize(new Dimension(removeButton_.getPreferredSize().width, 20));
       removeButton_.addActionListener(new ActionListener() {
@@ -89,10 +88,10 @@ final class OverlayConfigPanelController implements OverlayListener {
          panel_.add(configUI, new CC().grow().push());
       }
       panel_.validate();
-            
+
       ReportingUtils.logMessage("Class: " + this.getClass());
       ReportingUtils.logMessage("Classloader: " + this.getClass().getClassLoader());
-      
+
    }
 
    JPanel getConfigPanel() {

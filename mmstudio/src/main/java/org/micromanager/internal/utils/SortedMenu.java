@@ -19,6 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 //
+
 package org.micromanager.internal.utils;
 
 import java.util.HashSet;
@@ -31,6 +32,7 @@ import javax.swing.JMenuItem;
  */
 public final class SortedMenu extends JMenu {
    private HashSet<JMenuItem> unsortedItems_;
+
    public SortedMenu(String title) {
       super(title);
       unsortedItems_ = new HashSet<JMenuItem>();

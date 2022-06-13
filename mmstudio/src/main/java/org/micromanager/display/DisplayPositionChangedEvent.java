@@ -36,7 +36,7 @@ public interface DisplayPositionChangedEvent extends MMEvent {
     * The dataViewer posting this event.
     *
     * @return The DataViewer posting this event.  Useful when handling multiple
-    *          DataViewers.
+    *     DataViewers.
     */
    DataViewer getDataViewer();
 }

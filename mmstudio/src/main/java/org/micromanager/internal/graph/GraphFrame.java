@@ -38,7 +38,6 @@ import org.micromanager.internal.utils.WindowPositioning;
 /**
  * XY Graph window.
  * Used by the Line Profile utility.
- *
  */
 public final class GraphFrame extends JFrame {
 
@@ -57,7 +56,7 @@ public final class GraphFrame extends JFrame {
       fldYMin.setText(fmt.format(bounds.yMin));
       fldYMax.setText(fmt.format(bounds.yMax));
    }
-   
+
    public void setAutoScale() {
       panel_.setAutoBounds();
       updateBounds();
@@ -106,14 +105,14 @@ public final class GraphFrame extends JFrame {
 
    public GraphFrame(final Runnable refreshAction) {
       super("graph frame");
-     
+
       setFont(new Font("Arial", Font.PLAIN, 10));
-      
+
       setTitle("Graph");
       SpringLayout springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 542, 298);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

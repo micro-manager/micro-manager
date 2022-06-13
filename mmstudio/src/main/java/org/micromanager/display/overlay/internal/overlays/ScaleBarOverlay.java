@@ -163,7 +163,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
    }
 
    private ScaleBarOverlay() {
-            
+
       ReportingUtils.logMessage("Class: " + this.getClass());
       ReportingUtils.logMessage("Classloader: " + this.getClass().getClassLoader());
    }
@@ -175,11 +175,11 @@ public final class ScaleBarOverlay extends AbstractOverlay {
 
    @Override
    public void paintOverlay(Graphics2D g, Rectangle screenRect,
-         DisplaySettings displaySettings,
-         List<Image> images, Image primaryImage,
-         Rectangle2D.Float imageViewPort)
-   {
-      boolean atBottom, atRight;
+                            DisplaySettings displaySettings,
+                            List<Image> images, Image primaryImage,
+                            Rectangle2D.Float imageViewPort) {
+      boolean atBottom;
+      boolean atRight;
       switch (position_) {
          case NORTHWEST:
             atBottom = atRight = false;
@@ -224,15 +224,12 @@ public final class ScaleBarOverlay extends AbstractOverlay {
          double minLengthUm = Math.pow(10.0, minLog);
          if (5.0 * minLengthUm <= maxWidthUm) {
             lengthUm = 5.0 * minLengthUm;
-         }
-         else if (2.0 * minLengthUm <= maxWidthUm) {
+         } else if (2.0 * minLengthUm <= maxWidthUm) {
             lengthUm = 2.0 * minLengthUm;
-         }
-         else {
+         } else {
             lengthUm = minLengthUm;
          }
-      }
-      else {
+      } else {
          lengthUm = lengthUm_;
       }
 
@@ -243,9 +240,8 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       if (drawLabel_) {
          final String labelText;
          if (lengthUm >= 0.9995) {
-            labelText = String.format("%d \u00B5m", (int) Math.round(lengthUm));
-         }
-         else {
+            labelText = String.format("%d \u00B5m", (int) Math.round(lengthUm)); // micro-m, micron
+         } else {
             labelText = String.format("%d nm", (int) Math.round(lengthUm * 1000.0));
          }
          final int labelX = x + (lengthPx - metrics.stringWidth(labelText)) / 2;
@@ -255,8 +251,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       }
       if (fillBar_) {
          g.fillRect(x, y, lengthPx, thickness_);
-      }
-      else {
+      } else {
          g.drawRect(x, y, lengthPx, thickness_);
       }
    }
@@ -270,15 +265,17 @@ public final class ScaleBarOverlay extends AbstractOverlay {
 
    @Override
    public PropertyMap getConfiguration() {
-      return PropertyMaps.builder().
-            putBoolean(Key.DRAW_LABEL.name(), drawLabel_).
-            putBoolean(Key.FILL_BAR.name(), fillBar_).
-            putEnumAsString(Key.COLOR.name(), color_).
-            putFloat(Key.FONT_SIZE.name(), fontSize_).putInteger(Key.X_OFFSET.name(), xOffset_).putInteger(Key.Y_OFFSET.name(), yOffset_).
-            putBoolean(Key.AUTO_LENGTH.name(), autoLength_).
-            putDouble(Key.LENGTH_UM.name(), lengthUm_).putInteger(Key.THICKNESS.name(), thickness_).
-            putEnumAsString(Key.POSITION.name(), position_).
-            build();
+      return PropertyMaps.builder()
+            .putBoolean(Key.DRAW_LABEL.name(), drawLabel_)
+            .putBoolean(Key.FILL_BAR.name(), fillBar_)
+            .putEnumAsString(Key.COLOR.name(), color_)
+            .putFloat(Key.FONT_SIZE.name(), fontSize_).putInteger(Key.X_OFFSET.name(), xOffset_)
+            .putInteger(Key.Y_OFFSET.name(), yOffset_)
+            .putBoolean(Key.AUTO_LENGTH.name(), autoLength_)
+            .putDouble(Key.LENGTH_UM.name(), lengthUm_)
+            .putInteger(Key.THICKNESS.name(), thickness_)
+            .putEnumAsString(Key.POSITION.name(), position_)
+            .build();
    }
 
    @Override
@@ -321,8 +318,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
          lengthUmField_.setText(String.valueOf(lengthUm_));
          thicknessField_.setText(String.valueOf(thickness_));
          positionComboBox_.setSelectedItem(position_);
-      }
-      finally {
+      } finally {
          programmaticallySettingConfiguration_ = false;
       }
    }
@@ -383,41 +379,41 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       lengthUmField_.setHorizontalAlignment(SwingConstants.RIGHT);
       lengthUmField_.setMinimumSize(lengthUmField_.getPreferredSize());
       lengthUmField_.addDynamicTextFieldListener(
-              (DynamicTextField source, boolean shouldForceValidation) -> {
-         handleLengthUm(shouldForceValidation);
-      });
+            (DynamicTextField source, boolean shouldForceValidation) -> {
+               handleLengthUm(shouldForceValidation);
+            });
 
       thicknessField_ = new DynamicTextField(3);
       thicknessField_.setHorizontalAlignment(SwingConstants.RIGHT);
       thicknessField_.setMinimumSize(thicknessField_.getPreferredSize());
       thicknessField_.addDynamicTextFieldListener(
-              (DynamicTextField source, boolean shouldForceValidation) -> {
-         handleThickness(shouldForceValidation);
-      });
+            (DynamicTextField source, boolean shouldForceValidation) -> {
+               handleThickness(shouldForceValidation);
+            });
 
       fontSizeField_ = new DynamicTextField(3);
       fontSizeField_.setHorizontalAlignment(SwingConstants.RIGHT);
       fontSizeField_.setMinimumSize(fontSizeField_.getPreferredSize());
       fontSizeField_.addDynamicTextFieldListener(
-              (DynamicTextField source, boolean shouldForceValidation) -> {
-         handleFontSize(shouldForceValidation);
-      });
+            (DynamicTextField source, boolean shouldForceValidation) -> {
+               handleFontSize(shouldForceValidation);
+            });
 
       xOffsetField_ = new DynamicTextField(3);
       xOffsetField_.setHorizontalAlignment(SwingConstants.RIGHT);
       xOffsetField_.setMinimumSize(xOffsetField_.getPreferredSize());
       xOffsetField_.addDynamicTextFieldListener(
-              (DynamicTextField source, boolean shouldForceValidation) -> {
-         handleOffset(SwingConstants.HORIZONTAL, shouldForceValidation);
-      });
+            (DynamicTextField source, boolean shouldForceValidation) -> {
+               handleOffset(SwingConstants.HORIZONTAL, shouldForceValidation);
+            });
 
       yOffsetField_ = new DynamicTextField(3);
       yOffsetField_.setHorizontalAlignment(SwingConstants.RIGHT);
       yOffsetField_.setMinimumSize(yOffsetField_.getPreferredSize());
       yOffsetField_.addDynamicTextFieldListener(
-              (DynamicTextField source, boolean shouldForceValidation) -> {
-         handleOffset(SwingConstants.VERTICAL, shouldForceValidation);
-      });
+            (DynamicTextField source, boolean shouldForceValidation) -> {
+               handleOffset(SwingConstants.VERTICAL, shouldForceValidation);
+            });
 
 
       configUI_ = new JPanel(new MigLayout(new LC().insets("4")));
@@ -426,7 +422,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       configUI_.add(autoLengthRadio_, new CC().gapAfter("rel"));
       configUI_.add(manualLengthRadio_, new CC().gapAfter("0"));
       configUI_.add(lengthUmField_, new CC().gapAfter("0"));
-      configUI_.add(new JLabel("\u00B5m"), new CC().gapAfter("48"));
+      configUI_.add(new JLabel("\u00B5m"), new CC().gapAfter("48")); // micro-m, i.e. micron
       configUI_.add(new JLabel("Thickness:"), new CC().gapAfter("rel"));
       configUI_.add(thicknessField_, new CC().gapAfter("0"));
       configUI_.add(new JLabel("px"), new CC().wrap());
@@ -460,8 +456,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
          manualLengthRadio_.setSelected(true);
          drawLabelCheckBox_.setEnabled(true);
          fireOverlayConfigurationChanged();
-      }
-      catch (NumberFormatException e) {
+      } catch (NumberFormatException e) {
          if (forceValidation) {
             lengthUmField_.setText(String.valueOf(lengthUm_));
          }
@@ -475,8 +470,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       try {
          fontSize_ = Float.parseFloat(fontSizeField_.getText());
          fireOverlayConfigurationChanged();
-      }
-      catch (NumberFormatException e) {
+      } catch (NumberFormatException e) {
          if (forceValidation) {
             fontSizeField_.setText(String.valueOf(fontSize_));
          }
@@ -490,8 +484,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       try {
          thickness_ = Integer.parseInt(thicknessField_.getText());
          fireOverlayConfigurationChanged();
-      }
-      catch (NumberFormatException e) {
+      } catch (NumberFormatException e) {
          if (forceValidation) {
             thicknessField_.setText(String.valueOf(thickness_));
          }
@@ -502,22 +495,20 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       if (programmaticallySettingConfiguration_) {
          return;
       }
-      JTextField offsetField = orientation == SwingConstants.HORIZONTAL ? xOffsetField_ : yOffsetField_;
+      JTextField offsetField =
+            orientation == SwingConstants.HORIZONTAL ? xOffsetField_ : yOffsetField_;
       try {
          int offset = Integer.parseInt(offsetField.getText());
          if (orientation == SwingConstants.HORIZONTAL) {
             xOffset_ = offset;
-         }
-         else {
+         } else {
             yOffset_ = offset;
          }
          fireOverlayConfigurationChanged();
-      }
-      catch (NumberFormatException e) {
+      } catch (NumberFormatException e) {
          if (forceValidation) {
             offsetField.setText(String.valueOf(
-                  orientation == SwingConstants.HORIZONTAL ?
-                        xOffset_ : yOffset_));
+                  orientation == SwingConstants.HORIZONTAL ? xOffset_ : yOffset_));
          }
       }
    }

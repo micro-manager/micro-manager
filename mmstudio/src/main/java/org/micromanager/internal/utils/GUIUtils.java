@@ -71,7 +71,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
 
-
 public final class GUIUtils {
    public static final Font buttonFont = new Font("Arial", Font.PLAIN, 10);
 
@@ -87,7 +86,7 @@ public final class GUIUtils {
    }
 
    public static void replaceComboContents(JComboBox<String> cb, String[] items) {
-      
+
       // remove listeners
       ActionListener[] listeners = cb.getActionListeners();
       for (ActionListener listener : listeners) {
@@ -97,18 +96,18 @@ public final class GUIUtils {
       if (cb.getItemCount() > 0) {
          cb.removeAllItems();
       }
-      
+
       // add contents
       for (String item : items) {
          cb.addItem(item);
       }
-      
+
       // restore listeners
       for (ActionListener listener : listeners) {
          cb.addActionListener(listener);
       }
    }
-   
+
    public static ChangeListener[] detachChangeListeners(JSpinner spinner) {
       ChangeListener[] listeners = spinner.getChangeListeners();
       for (ChangeListener listener : listeners) {
@@ -116,20 +115,20 @@ public final class GUIUtils {
       }
       return listeners;
    }
-   
+
    public static void reattachChangeListeners(JSpinner spinner, ChangeListener[] listeners) {
       for (ChangeListener listener : listeners) {
          spinner.addChangeListener(listener);
       }
    }
-   
+
    public static void replaceSpinnerValue(JSpinner spinner, double value) {
       ChangeListener[] listeners = detachChangeListeners(spinner);
       spinner.setValue(value);
-      reattachChangeListeners(spinner, listeners);      
+      reattachChangeListeners(spinner, listeners);
    }
 
-   /* 
+   /*
     * This takes care of a Java bug that would throw several exceptions when a
     * Projector device is attached in Windows.
     */
@@ -168,8 +167,9 @@ public final class GUIUtils {
    /**
     * Verifies if the given point is visible on the screen.
     * From http://www.java2s.com/Code/Java/Swing-JFC/Verifiesifthegivenpointisvisibleonthescreen.htm
-    * @param   location     The given location on the screen.
-    * @return           True if the location is on the screen, false otherwise.
+    *
+    * @param location The given location on the screen.
+    * @return True if the location is on the screen, false otherwise.
     */
    public static boolean isLocationInScreenBounds(Point location) {
       GraphicsConfiguration config = getGraphicsConfigurationContaining(
@@ -245,6 +245,7 @@ public final class GUIUtils {
    public static void registerImageFocusListener(final ImageFocusListener listener) {
       AWTEventListener awtEventListener = new AWTEventListener() {
          private ImageWindow currentImageWindow_ = null;
+
          @Override
          public void eventDispatched(AWTEvent event) {
             if (event instanceof WindowEvent) {
@@ -252,8 +253,8 @@ public final class GUIUtils {
                   if (event.getSource() instanceof ImageWindow) {
                      ImageWindow focusedWindow = WindowManager.getCurrentWindow();
                      if (currentImageWindow_ != focusedWindow) {
-                           listener.focusReceived(focusedWindow);
-                           currentImageWindow_ = focusedWindow;
+                        listener.focusReceived(focusedWindow);
+                        currentImageWindow_ = focusedWindow;
                      }
                   }
                }
@@ -262,7 +263,7 @@ public final class GUIUtils {
       };
 
       Toolkit.getDefaultToolkit().addAWTEventListener(awtEventListener,
-              AWTEvent.WINDOW_FOCUS_EVENT_MASK);
+            AWTEvent.WINDOW_FOCUS_EVENT_MASK);
    }
 
    /*
@@ -289,16 +290,14 @@ public final class GUIUtils {
          SwingUtilities.invokeLater(r);
       }
    }
-   
-   
-   
-       
-   /* 
+
+
+   /*
     * Attach properly formatted tooltip text to the specified
     * JComponent.
     */
    public static void setToolTipText(JComponent component,
-            String toolTipText) {
+                                     String toolTipText) {
       if (JavaUtils.isMac()) { // running on a mac
          component.setToolTipText(toolTipText);
       } else {
@@ -307,13 +306,13 @@ public final class GUIUtils {
    }
 
    /////////////////////// MENU ITEM UTILITY METHODS ///////////
-   
+
    /**
     * Adds a menu to the specified menu bar.
     *
     * @param menuBar
     * @param menuName
-    * @return 
+    * @return
     */
    public static JMenu createMenuInMenuBar(final JMenuBar menuBar, final String menuName) {
       final JMenu menu = new JMenu();
@@ -321,19 +320,20 @@ public final class GUIUtils {
       menuBar.add(menu);
       return menu;
    }
-   
+
    /**
-     * Adds a menu item to the specified parent menu.
-    * @param parentMenu - "top level" menu
-    * @param menuItem - prepared menuitem
-    * @param menuItemToolTip 
+    * Adds a menu item to the specified parent menu.
+    *
+    * @param parentMenu         - "top level" menu
+    * @param menuItem           - prepared menuitem
+    * @param menuItemToolTip
     * @param menuActionRunnable - code that will be executed on selection of this menu
-    * @return 
-     */
+    * @return
+    */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
-            JMenuItem menuItem,
-            final String menuItemToolTip,
-           final Runnable menuActionRunnable) {
+                                       JMenuItem menuItem,
+                                       final String menuItemToolTip,
+                                       final Runnable menuActionRunnable) {
       if (menuItemToolTip != null) {
          setToolTipText(menuItem, menuItemToolTip);
       }
@@ -343,66 +343,68 @@ public final class GUIUtils {
       parentMenu.add(menuItem);
       return menuItem;
    }
-   
+
    /**
     * Adds a menu item with given text to the specified parent menu.
-    * @param parentMenu - "top level" menu
-    * @param menuItemText - name as it appears in the menu
-    * @param menuItemToolTip 
+    *
+    * @param parentMenu         - "top level" menu
+    * @param menuItemText       - name as it appears in the menu
+    * @param menuItemToolTip
     * @param menuActionRunnable - code that will be executed on selection of this menu
     * @return menuitem
     */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
-           final String menuItemText,
-           final String menuItemToolTip,
-           final Runnable menuActionRunnable) {
+                                       final String menuItemText,
+                                       final String menuItemToolTip,
+                                       final Runnable menuActionRunnable) {
       return addMenuItem(parentMenu, new JMenuItem(menuItemText),
-              menuItemToolTip, menuActionRunnable);      
+            menuItemToolTip, menuActionRunnable);
    }
-   
+
    /**
     * Adds a menu item with given text and icon to the specified parent menu.
-    * @param parentMenu - "top level" menu
-    * @param menuItemText - name as it appears in the menu
-    * @param menuItemToolTip 
+    *
+    * @param parentMenu         - "top level" menu
+    * @param menuItemText       - name as it appears in the menu
+    * @param menuItemToolTip
     * @param menuActionRunnable - code that will be executed on selection of this menu
     * @param iconFileName
     * @return menuitem
     */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
-           final String menuItemText,
-           final String menuItemToolTip,
-           final Runnable menuActionRunnable,
-           final String iconFileName) {
+                                       final String menuItemText,
+                                       final String menuItemToolTip,
+                                       final Runnable menuActionRunnable,
+                                       final String iconFileName) {
       final JMenuItem menuItem = addMenuItem(parentMenu,
-              menuItemText, menuItemToolTip, menuActionRunnable);
+            menuItemText, menuItemToolTip, menuActionRunnable);
       menuItem.setIcon(
             IconLoader.getIcon("/org/micromanager/icons/" + iconFileName));
       return menuItem;
    }
-  
+
    /*
     * Add a menu item that can be checked or unchecked to the specified
     * parent menu.
     */
    public static JCheckBoxMenuItem addCheckBoxMenuItem(final JMenu parentMenu,
-           final String menuItemText,
-           final String menuItemToolTip,
-           final Runnable menuActionRunnable,
-           final boolean initState) {
+                                                       final String menuItemText,
+                                                       final String menuItemToolTip,
+                                                       final Runnable menuActionRunnable,
+                                                       final boolean initState) {
       final JCheckBoxMenuItem menuItem = (JCheckBoxMenuItem)
-              addMenuItem(parentMenu, new JCheckBoxMenuItem(menuItemText),
-              menuItemToolTip, menuActionRunnable);
+            addMenuItem(parentMenu, new JCheckBoxMenuItem(menuItemText),
+                  menuItemToolTip, menuActionRunnable);
       menuItem.setSelected(initState);
       return menuItem;
    }
-   
+
    ////////////// END MENU ITEM UTILITY METHODS ////////////////
 
    public interface StringValidator {
       void validate(String string);
    }
-   
+
    // If the user attempts to edit a text field, but doesn't enter a valid input,
    // as specifed by the StringValidator, then a dialog pops up that reminds
    // user what kind of input is needed. If the user presses OK, then verifier
@@ -460,7 +462,7 @@ public final class GUIUtils {
          }
       };
    }
-   
+
    // TODO: this is only used by the Projector plugin and should probably
    // be moved into it.
    public static void enforceIntegerTextField(final JTextField field,
@@ -473,7 +475,7 @@ public final class GUIUtils {
    public static int getIntValue(JTextField component) {
       return Integer.parseInt(component.getText());
    }
-   
+
    private static void enableOnTableEvent(final JTable table, final JComponent component) {
       table.getSelectionModel().addListSelectionListener(e -> {
          if (!e.getValueIsAdjusting()) {
@@ -483,7 +485,7 @@ public final class GUIUtils {
          }
       });
    }
-   
+
    public static void makeIntoMoveRowUpButton(final JTable table, JButton button) {
       button.addActionListener(e -> {
          int rowIndex = table.getSelectedRow();
@@ -494,7 +496,7 @@ public final class GUIUtils {
       });
       enableOnTableEvent(table, button);
    }
-      
+
    public static void makeIntoMoveRowDownButton(final JTable table, JButton button) {
       button.addActionListener(e -> {
          int rowIndex = table.getSelectedRow();
@@ -505,7 +507,7 @@ public final class GUIUtils {
       });
       enableOnTableEvent(table, button);
    }
-   
+
    public static void makeIntoDeleteRowButton(final JTable table, JButton button) {
       button.addActionListener(e -> {
          int rowIndex = table.getSelectedRow();
@@ -517,7 +519,7 @@ public final class GUIUtils {
       });
       enableOnTableEvent(table, button);
    }
-   
+
    @SuppressWarnings("unchecked")
    public static void makeIntoCloneRowButton(final JTable table, JButton button) {
       button.addActionListener(e -> {
@@ -529,7 +531,7 @@ public final class GUIUtils {
       });
       enableOnTableEvent(table, button);
    }
-  
+
    public static void startEditingAtCell(JTable table, int row, int column) {
       table.editCellAt(row, column);
       table.getEditorComponent().requestFocusInWindow();
@@ -573,9 +575,8 @@ public final class GUIUtils {
     * Center the provided Window within the screen contained by the provided
     * other window.
     *
-    * @param child Window to be centered on the relevant screen
+    * @param child  Window to be centered on the relevant screen
     * @param source parent Window.  Used to figure out the screen we should be on
-    * 
     */
    public static void centerFrameWithFrame(Window child, Window source) {
       GraphicsConfiguration config = getGraphicsConfigurationContaining(
@@ -583,14 +584,14 @@ public final class GUIUtils {
       // if the top left corner is not on a screen, config will be null
       if (config == null) {
          config = getGraphicsConfigurationContaining(
-               source.getLocation().x + source.getWidth(), 
-                source.getLocation().y + source.getHeight());
+               source.getLocation().x + source.getWidth(),
+               source.getLocation().y + source.getHeight());
       }
       // if we still have no GraphicConfiguration, just grab the first
       if (config == null) {
          config = getConfigs().get(0);
       }
-      
+
       Dimension size = child.getSize();
       Rectangle bounds = config.getBounds();
       child.setLocation(bounds.x + bounds.width / 2 - size.width / 2,
@@ -602,7 +603,7 @@ public final class GUIUtils {
     * specified text.
     */
    public static JDialog createBareMessageDialog(Window parent,
-         String message) {
+                                                 String message) {
       JDialog result = new JDialog();
       result.setUndecorated(true);
       JPanel contents = new JPanel();

@@ -53,7 +53,7 @@ import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
 
 /**
- /**
+ * /**
  * PropertyEditor provides UI for manipulating sets of autofocus properties.
  * JFrame based component for generic manipulation of device properties.
  * Represents the entire system state as a list of triplets:
@@ -68,7 +68,7 @@ public final class AutofocusPropertyEditor extends JDialog {
    private final PropertyTableData data_;
    private final PropertyCellEditor cellEditor_;
    private final JCheckBox showReadonlyCheckBox_;
-   
+
    private static final String PREF_SHOW_READONLY = "show_readonly";
    private final DefaultAutofocusManager afMgr_;
    private JComboBox<String> methodCombo_;
@@ -77,7 +77,7 @@ public final class AutofocusPropertyEditor extends JDialog {
     * Constructs the Autofocus Property Editor.
     *
     * @param studio Gives access to the API of the currently MM instance
-    * @param afmgr We presumably need access to functions not available through the API
+    * @param afmgr  We presumably need access to functions not available through the API
     */
    public AutofocusPropertyEditor(Studio studio, DefaultAutofocusManager afmgr) {
       super();
@@ -88,10 +88,10 @@ public final class AutofocusPropertyEditor extends JDialog {
       JTable table = new DaytimeNighttime.Table();
       table.setAutoCreateColumnsFromModel(false);
       table.setModel(data_);
-     
+
       cellEditor_ = new PropertyCellEditor();
       PropertyCellRenderer renderer = new PropertyCellRenderer(studio);
-     
+
       for (int k = 0; k < data_.getColumnCount(); k++) {
          TableColumn column = new TableColumn(k, 200, renderer, cellEditor_);
          table.addColumn(column);
@@ -106,13 +106,13 @@ public final class AutofocusPropertyEditor extends JDialog {
          public void windowClosing(WindowEvent e) {
             cleanup();
          }
-         
+
          @Override
          public void windowOpened(WindowEvent e) {
             // restore values from the previous session
             showReadonlyCheckBox_.setSelected(
                   profile.getSettings(AutofocusPropertyEditor.class).getBoolean(
-                     PREF_SHOW_READONLY, true));
+                        PREF_SHOW_READONLY, true));
             data_.updateStatus();
             data_.fireTableStructureChanged();
          }
@@ -120,7 +120,7 @@ public final class AutofocusPropertyEditor extends JDialog {
       setTitle("Autofocus properties");
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 400, 300);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
@@ -140,12 +140,12 @@ public final class AutofocusPropertyEditor extends JDialog {
       springLayout
             .putConstraint(SpringLayout.WEST, scrollPane, 5,
                   SpringLayout.WEST, getContentPane());
-      
+
       scrollPane.setViewportView(table);
-      
+
       table = new DaytimeNighttime.Table();
       table.setAutoCreateColumnsFromModel(false);
-      
+
       final JButton refreshButton = new JButton();
       springLayout
             .putConstraint(SpringLayout.NORTH, refreshButton, 10,
@@ -159,7 +159,7 @@ public final class AutofocusPropertyEditor extends JDialog {
       springLayout
             .putConstraint(SpringLayout.EAST, refreshButton, 110,
                   SpringLayout.WEST, getContentPane());
-      URL resource =  getClass().getResource("/org/micromanager/icons/arrow_refresh.png");
+      URL resource = getClass().getResource("/org/micromanager/icons/arrow_refresh.png");
       if (resource != null) {
          refreshButton.setIcon(new ImageIcon(resource));
       }
@@ -186,10 +186,10 @@ public final class AutofocusPropertyEditor extends JDialog {
       });
       showReadonlyCheckBox_.setText("Show read-only properties");
       getContentPane().add(showReadonlyCheckBox_);
-      
+
       // restore values from the previous session
       showReadonlyCheckBox_.setSelected(profile.getSettings(
-               AutofocusPropertyEditor.class).getBoolean(PREF_SHOW_READONLY, true));
+            AutofocusPropertyEditor.class).getBoolean(PREF_SHOW_READONLY, true));
 
       JButton btnClose = new JButton("Close");
       btnClose.addActionListener(arg0 -> {
@@ -212,7 +212,7 @@ public final class AutofocusPropertyEditor extends JDialog {
          }
          if (afMgr_.getAutofocusMethod() != null) {
             methodCombo_.setSelectedItem(afMgr_.getAutofocusMethod().getName());
-         } 
+         }
          methodCombo_.addActionListener(
                arg0 -> changeAFMethod((String) methodCombo_.getSelectedItem()));
          springLayout
@@ -222,13 +222,13 @@ public final class AutofocusPropertyEditor extends JDialog {
                .putConstraint(SpringLayout.SOUTH, methodCombo_, 0, SpringLayout.SOUTH,
                      refreshButton);
          springLayout.putConstraint(SpringLayout.EAST, methodCombo_, -6, SpringLayout.WEST,
-                     btnClose);
+               btnClose);
          getContentPane().add(methodCombo_);
       }
-      
+
       data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
    }
-   
+
    protected void changeAFMethod(String focusDev) {
       cellEditor_.stopEditing();
       methodCombo_.setSelectedItem(focusDev);
@@ -247,7 +247,7 @@ public final class AutofocusPropertyEditor extends JDialog {
    public void rebuild() {
       final String afDevice = afMgr_.getAutofocusMethod().getName();
       ActionListener l = methodCombo_.getActionListeners()[0];
-      
+
       try {
          if (l != null) {
             methodCombo_.removeActionListener(l);
@@ -255,7 +255,7 @@ public final class AutofocusPropertyEditor extends JDialog {
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-       
+
       methodCombo_.removeAllItems();
       String[] afDevs = afMgr_.getAfDevices();
       for (String devName : afDevs) {
@@ -280,7 +280,7 @@ public final class AutofocusPropertyEditor extends JDialog {
          data_.updateStatus();
       }
    }
-   
+
    private void handleException(Exception e) {
       ReportingUtils.showError(e);
    }
@@ -311,45 +311,45 @@ public final class AutofocusPropertyEditor extends JDialog {
             "Property",
             "Value",
       };
-      
+
       ArrayList<PropertyItem> propList_ = new ArrayList<>();
       private boolean showReadOnly_ = true;
-      
+
       public PropertyTableData() {
          updateStatus();
       }
-      
+
       public void setShowReadOnly(boolean show) {
          showReadOnly_ = show;
       }
-                       
+
       @Override
       public int getRowCount() {
          return propList_.size();
       }
-      
+
       @Override
       public int getColumnCount() {
          return columnNames_.length;
       }
-      
+
       public PropertyItem getPropertyItem(int row) {
          return propList_.get(row);
       }
-      
+
       @Override
       public Object getValueAt(int row, int col) {
-         
+
          PropertyItem item = propList_.get(row);
          if (col == 0) {
             return item.device + "-" + item.name;
          } else if (col == 1) {
             return item.value;
          }
-         
+
          return null;
       }
-      
+
       @Override
       public void setValueAt(Object value, int row, int col) {
          PropertyItem item = propList_.get(row);
@@ -361,7 +361,7 @@ public final class AutofocusPropertyEditor extends JDialog {
                } else if (item.isFloat()) {
                   afMgr_.getAutofocusMethod()
                         .setPropertyValue(item.name, NumberUtils.doubleStringDisplayToCore(value));
-               } else  {
+               } else {
                   afMgr_.getAutofocusMethod().setPropertyValue(item.name, value.toString());
                }
 
@@ -373,12 +373,12 @@ public final class AutofocusPropertyEditor extends JDialog {
             }
          }
       }
-      
+
       @Override
       public String getColumnName(int column) {
          return columnNames_[column];
       }
-      
+
       @Override
       public boolean isCellEditable(int nRow, int nCol) {
          if (nCol == 1) {
@@ -387,13 +387,13 @@ public final class AutofocusPropertyEditor extends JDialog {
             return false;
          }
       }
-            
+
       public void refresh() {
          if (afMgr_.getAutofocusMethod() == null) {
             return;
          }
-         
-         try {            
+
+         try {
             for (PropertyItem item : propList_) {
                item.value = afMgr_.getAutofocusMethod().getPropertyValue(item.name);
             }
@@ -402,15 +402,15 @@ public final class AutofocusPropertyEditor extends JDialog {
             handleException(e);
          }
       }
-      
+
       public void updateStatus() {
          propList_.clear();
          PropertyItem[] properties = new PropertyItem[0];
-         
+
          if (afMgr_.getAutofocusMethod() != null) {
             properties = afMgr_.getAutofocusMethod().getProperties();
          }
-         
+
          for (PropertyItem property : properties) {
             if (!property.preInit) {
                if (showReadOnly_ || !property.readOnly) {
@@ -419,10 +419,10 @@ public final class AutofocusPropertyEditor extends JDialog {
             }
          }
          this.fireTableStructureChanged();
-      }   
+      }
 
    }
-   
+
    /**
     * Cell editing using either JTextField or JComboBox depending on whether the
     * property enforces a set of allowed values.
@@ -443,9 +443,9 @@ public final class AutofocusPropertyEditor extends JDialog {
       public PropertyCellEditor() {
          super();
          check_.addActionListener(e -> fireEditingStopped());
-         
+
          slider_.addEditActionListener(e -> fireEditingStopped());
-         
+
          slider_.addSliderMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
@@ -453,7 +453,7 @@ public final class AutofocusPropertyEditor extends JDialog {
             }
          });
       }
-      
+
       public void stopEditing() {
          fireEditingStopped();
       }
@@ -461,20 +461,20 @@ public final class AutofocusPropertyEditor extends JDialog {
       // This method is called when a cell value is edited by the user.
       @Override
       public Component getTableCellEditorComponent(JTable table, Object value,
-            boolean isSelected, int rowIndex, int colIndex) {
-         
+                                                   boolean isSelected, int rowIndex, int colIndex) {
+
          editingCol_ = colIndex;
-                  
+
          PropertyTableData data = (PropertyTableData) table.getModel();
          item_ = data.getPropertyItem(rowIndex);
          // Configure the component with the specified value
-         
+
          if (colIndex == 1) {
             if (item_.allowed.length == 0) {
                if (item_.hasRange) {
                   if (item_.isInteger()) {
                      slider_.setLimits((int) item_.lowerLimit, (int) item_.upperLimit);
-                  } else {
+                  }  else {
                      slider_.setLimits(item_.lowerLimit, item_.upperLimit);
                   }
                   try {
@@ -488,7 +488,7 @@ public final class AutofocusPropertyEditor extends JDialog {
                   return text_;
                }
             }
-         
+
             ActionListener[] l = combo_.getActionListeners();
             for (ActionListener l1 : l) {
                combo_.removeActionListener(l1);
@@ -498,17 +498,17 @@ public final class AutofocusPropertyEditor extends JDialog {
                combo_.addItem(allowed);
             }
             combo_.setSelectedItem(item_.value);
-            
+
             // end editing on selection change
             combo_.addActionListener(e -> fireEditingStopped());
-                       
+
             return combo_;
          } else if (colIndex == 2) {
             return check_;
          }
          return null;
       }
-      
+
       // This method is called when editing is completed.
       // It must return the new value to be stored in the cell.
       @Override
@@ -528,11 +528,11 @@ public final class AutofocusPropertyEditor extends JDialog {
                return check_;
             }
          }
-         
+
          return null;
       }
    }
-   
+
    /**
     * Cell rendering for the device property table.
     */
@@ -541,21 +541,22 @@ public final class AutofocusPropertyEditor extends JDialog {
       // using this renderer needs to be rendered.
       PropertyItem item_;
       Studio studio_;
-      
+
       public PropertyCellRenderer(Studio studio) {
          super();
          studio_ = studio;
       }
-      
+
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
-            boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
-         
+                                                     boolean isSelected, boolean hasFocus,
+                                                     int rowIndex, int colIndex) {
+
          PropertyTableData data = (PropertyTableData) table.getModel();
          item_ = data.getPropertyItem(rowIndex);
-         
+
          Component comp;
-         
+
          if (colIndex == 0) {
             JLabel lab = new JLabel();
             lab.setText((String) value);
@@ -583,21 +584,23 @@ public final class AutofocusPropertyEditor extends JDialog {
          } else {
             comp = new JLabel("Undefinded");
          }
-         
+
          if (item_.readOnly) {
             comp.setBackground(studio_.app().skin().getDisabledBackgroundColor());
             comp.setForeground(studio_.app().skin().getDisabledTextColor());
          } else {
             comp.setBackground(studio_.app().skin().getBackgroundColor());
             comp.setForeground(studio_.app().skin().getEnabledTextColor());
-         }         
+         }
          return comp;
       }
-      
-      // The following methods override the defaults for performance reasons
-      public void validate() {}
 
-      public void revalidate() {}
+      // The following methods override the defaults for performance reasons
+      public void validate() {
+      }
+
+      public void revalidate() {
+      }
 
    }
 }

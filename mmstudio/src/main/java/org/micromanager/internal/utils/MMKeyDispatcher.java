@@ -22,16 +22,21 @@ import java.awt.KeyEventDispatcher;
 import java.awt.event.KeyEvent;
 
 /**
- * Application-wide key dispatcher
+ * Application-wide key dispatcher.
  * It is necessary to use this approach since otherwise ImageJ will steal the
  * shortcuts before we get them
  * Downside is that all keyevents in the application will go through here
+ *
  * @author nico
  */
-public final class MMKeyDispatcher implements KeyEventDispatcher{
+public final class MMKeyDispatcher implements KeyEventDispatcher {
    Class textCanvasClass = null;
-   final Class [] forbiddenClasses_;
+   final Class[] forbiddenClasses_;
 
+   /**
+    * Application-wide Key Dispatcher constructor. Sets UI classes where KeyEvents should not
+    * be processed.
+    */
    public MMKeyDispatcher() {
       try {
          textCanvasClass = ClassLoader.getSystemClassLoader().loadClass("ij.text.TextCanvas");
@@ -44,11 +49,11 @@ public final class MMKeyDispatcher implements KeyEventDispatcher{
        * If there are other areas in the application in which keyevents should
        * not be processed, add those here
        */
-      Class [] forbiddenClasses = {
-         java.awt.TextComponent.class,
-         javax.swing.text.JTextComponent.class,
-         org.fife.ui.rsyntaxtextarea.RSyntaxTextArea.class,
-         textCanvasClass
+      Class[] forbiddenClasses = {
+            java.awt.TextComponent.class,
+            javax.swing.text.JTextComponent.class,
+            org.fife.ui.rsyntaxtextarea.RSyntaxTextArea.class,
+            textCanvasClass
       };
       forbiddenClasses_ = forbiddenClasses;
    }
@@ -59,22 +64,25 @@ public final class MMKeyDispatcher implements KeyEventDispatcher{
     */
    private boolean checkSource(KeyEvent ke) {
       Object source = ke.getSource();
-      for (Class clazz:forbiddenClasses_) {
-         if (clazz != null && clazz.isInstance(source))
+      for (Class clazz : forbiddenClasses_) {
+         if (clazz != null && clazz.isInstance(source)) {
             return false;
+         }
       }
       return true;
    }
 
    /*
-    * 
+    *
     */
    @Override
    public boolean dispatchKeyEvent(KeyEvent ke) {
-      if (!HotKeys.active_)
+      if (!HotKeys.active_) {
          return false;
-      if (ke.getID() != KeyEvent.KEY_PRESSED)
+      }
+      if (ke.getID() != KeyEvent.KEY_PRESSED) {
          return false;
+      }
 
       // Since all key events in the application go through here
       // we need to efficiently determine whether or not to deal with this
@@ -82,8 +90,9 @@ public final class MMKeyDispatcher implements KeyEventDispatcher{
       // so only call this when the key matches
 
       if (HotKeys.KEYS.containsKey(ke.getKeyCode())) {
-         if (checkSource(ke))
+         if (checkSource(ke)) {
             return HotKeys.KEYS.get(ke.getKeyCode()).executeAction();
+         }
       }
       return false;
    }

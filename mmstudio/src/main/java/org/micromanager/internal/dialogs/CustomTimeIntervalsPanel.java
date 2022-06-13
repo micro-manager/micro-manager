@@ -48,12 +48,14 @@ public final class CustomTimeIntervalsPanel extends JPanel {
    private LinearTimeDialog linearTimeDialog_;
    private LogTimeDialog logTimeDialog_;
    private JCheckBox useIntervalsCheckBox_;
+   private Studio gui_;
    private final Window parent_;
 
    @SuppressWarnings("LeakingThisInConstructor")
    public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, Studio gui,
-         Window parent) {
+                                   Window parent) {
       super();
+      gui_ = gui;
       parent_ = parent;
       acqEng_ = acqEng;
       createTable();
@@ -76,7 +78,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
             + " can acquire images.  Intervals can be typed in manually, or created with "
             + "the \"Create Logarithmic Intervals\" and \"Create Constant Intervals\" buttons. "
             + "</html>"
-            );
+      );
       info.setFont(new Font("Arial", Font.PLAIN, 10));
       infoPanel_.add(info);
    }
@@ -144,7 +146,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
       });
       addButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
             "Add new time point (Inserts above currently selected row(s) or at bottom "
-            + "of list if no row selected)"));
+                  + "of list if no row selected)"));
       addButton.setMaximumSize(new Dimension(165, 25));
 
       //linear
@@ -196,7 +198,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
       this.add(topPanel);
       this.add(infoPanel_);
    }
- 
+
    public void syncCheckBoxFromAcqEng() {
       useIntervalsCheckBox_.setEnabled(acqEng_.getSequenceSettings().customIntervalsMs() != null);
       useIntervalsCheckBox_.setSelected(acqEng_.getSequenceSettings().useCustomIntervals());
@@ -255,7 +257,9 @@ public final class CustomTimeIntervalsPanel extends JPanel {
             nValue_.commitEdit();
             aValue_.commitEdit();
             tValue_.commitEdit();
-         } catch (ParseException ex) { }
+         } catch (ParseException ex) {
+            gui_.logs().logError(ex);
+         }
 
          if (!aCheck_.isSelected()) {
             r_ = ((Number) rValue_.getValue()).doubleValue();
@@ -272,7 +276,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
             n_ = (Integer) nValue_.getValue();
             r_ = ((Number) rValue_.getValue()).doubleValue();
             t_ = a_ * Math.pow(r_, n_ - 2);
-         } else  {
+         } else {
             a_ = convertToMS(((Number) aValue_.getValue()).doubleValue(), aCombo_);
             r_ = ((Number) rValue_.getValue()).doubleValue();
             t_ = convertToMS(((Number) tValue_.getValue()).doubleValue(), tCombo_);
@@ -411,7 +415,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          aValue_.setValue(1.0);
          aValue_.setPreferredSize(new Dimension(80, 22));
          aCombo_ = new JComboBox<>();
-         aCombo_.setModel(new DefaultComboBoxModel<>(new String[]{"ms", "s", "min"}));
+         aCombo_.setModel(new DefaultComboBoxModel<>(new String[] {"ms", "s", "min"}));
          aCombo_.setFont(new Font("Arial", Font.PLAIN, 14));
          row1.add(aValue_);
          row1.add(aCombo_);
@@ -425,7 +429,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          tValue_.setValue(1000.0);
          tValue_.setPreferredSize(new Dimension(80, 22));
          tCombo_ = new JComboBox<>();
-         tCombo_.setModel(new DefaultComboBoxModel<>(new String[]{"ms", "s", "min"}));
+         tCombo_.setModel(new DefaultComboBoxModel<>(new String[] {"ms", "s", "min"}));
          tCombo_.setFont(new Font("Arial", Font.PLAIN, 14));
          row3.add(tValue_);
          row3.add(tCombo_);
@@ -437,7 +441,6 @@ public final class CustomTimeIntervalsPanel extends JPanel {
                new Font("Arial", Font.PLAIN, 14));
          row1.add(nValue_);
          row4.add(nValue_);
-
 
 
          ActionListener dynamicUpdater = e -> updateParameterValues();
@@ -546,7 +549,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          JPanel creationTypeRow = new JPanel();
          this.add(creationTypeRow);
          creationTypeCombo_ = new JComboBox<>();
-         creationTypeCombo_.setModel(new DefaultComboBoxModel<>(new String[]{
+         creationTypeCombo_.setModel(new DefaultComboBoxModel<>(new String[] {
                "Replace current time point list", "Add to start of current list",
                "Add to end of current list", "Insert at currently selected position"}));
          creationTypeCombo_.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -619,7 +622,8 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          intervalLabel.setText("Time interval between points");
          intervalLabel.setToolTipText(
                "Interval between successive time points.  Setting an interval"
-               + "of 0 will cause micromanager to acquire 'burts' of images as fast as possible");
+                     + "of 0 will cause micromanager to acquire 'burts' of images as fast "
+                     + "as possible");
          row2.add(intervalLabel);
 
          interval_ = new JFormattedTextField(NumberFormat.getNumberInstance());
@@ -629,7 +633,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          row2.add(interval_);
 
          timeUnitCombo_ = new JComboBox<>();
-         timeUnitCombo_.setModel(new DefaultComboBoxModel<>(new String[]{"ms", "s", "min"}));
+         timeUnitCombo_.setModel(new DefaultComboBoxModel<>(new String[] {"ms", "s", "min"}));
          timeUnitCombo_.setFont(new Font("Arial", Font.PLAIN, 14));
          row2.add(timeUnitCombo_);
 
@@ -637,7 +641,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          JPanel row3 = new JPanel();
          this.add(row3);
          creationTypeCombo_ = new JComboBox<>();
-         creationTypeCombo_.setModel(new DefaultComboBoxModel<>(new String[]{
+         creationTypeCombo_.setModel(new DefaultComboBoxModel<>(new String[] {
                "Replace current time point list", "Add to start of current list",
                "Add to end of current list", "Insert at currently selected position"}));
          creationTypeCombo_.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -697,7 +701,6 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          });
 
 
-
       }
    }
 
@@ -717,7 +720,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
    private class TimeIntervalTableModel extends AbstractTableModel {
 
       private static final long serialVersionUID = 1L;
-      public final String[] columnNames_ = new String[]{
+      public final String[] columnNames_ = new String[] {
             "Frame Index", "Time interval (ms)", "Elapsed time(ms)"};
       private final ArrayList<Double> timeIntervals_;
 

@@ -25,17 +25,16 @@ package org.micromanager.internal.hcwizard;
 
 /**
  * Label data for state devices.
- *
  */
 public final class Label {
    String label_;
    int state_;
-   
+
    public Label() {
       label_ = "Undefined";
       state_ = 0;
    }
-   
+
    public Label(String lab, int pos) {
       label_ = lab;
       state_ = pos;

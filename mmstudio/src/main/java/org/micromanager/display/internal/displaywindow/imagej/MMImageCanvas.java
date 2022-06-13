@@ -22,7 +22,17 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Window;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import javax.swing.SwingUtilities;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
@@ -32,8 +42,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  * @author Mark A. Tsuchida, parts based on older version by Chris Weisiger
  */
 public final class MMImageCanvas extends ImageCanvas
-      implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener
-{
+      implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener {
    private ImageJBridge parent_;
 
    private Dimension preferredSize_;
@@ -61,7 +70,7 @@ public final class MMImageCanvas extends ImageCanvas
             instance.handleHierarchyChanged(e);
          }
       });
-      
+
       instance.addMouseWheelListener(instance);
 
       instance.addKeyListener(instance);
@@ -73,7 +82,8 @@ public final class MMImageCanvas extends ImageCanvas
       super(parent.getIJImagePlus());
       parent_ = parent;
 
-      // Remove existing key listeners.  Ours will send unprocessed keyEvents through to ImageJ (which handles keyEvents)
+      // Remove existing key listeners.  Ours will send unprocessed keyEvents
+      // through to ImageJ (which handles keyEvents)
       for (KeyListener kl : super.getKeyListeners()) {
          super.removeKeyListener(kl);
       }
@@ -100,7 +110,7 @@ public final class MMImageCanvas extends ImageCanvas
       }
       return new Dimension(preferredSize_);
    }
-   
+
    @Override
    @Deprecated
    public Dimension preferredSize() {
@@ -120,18 +130,18 @@ public final class MMImageCanvas extends ImageCanvas
       return preferredSize_ != null;
    }
 
+   /**
+    * The ImageJ canvas knows best what its current size is,
+    * adjust our display to the current size.
+    */
+   public void setSizeToCurrent() {
+      setSize(super.dstWidth, super.dstHeight);
+   }
+
    @Override
    public void setSize(Dimension newSize) {
       // ImageJ forgets to override this overloaded version
       setSize(newSize.width, newSize.height);
-   }
-   
-   /**
-    * The ImageJ canvas knows best what its current size is,
-    * Adjust our display to the current size
-    */
-   public void setSizeToCurrent() {
-      setSize(super.dstWidth, super.dstHeight);
    }
 
    @Override
@@ -159,7 +169,7 @@ public final class MMImageCanvas extends ImageCanvas
    private void handleComponentResized() {
       super.setSize(getWidth(), getHeight()); // Update dest rect
       setSourceRect(parent_.computeSourceRectForCanvasSize(
-                  getMagnification(), getWidth(), getHeight(), getSrcRect()));
+            getMagnification(), getWidth(), getHeight(), getSrcRect()));
 
       // Keep the AWT-Swing mixture happy
       Container parent = getParent();
@@ -257,6 +267,7 @@ public final class MMImageCanvas extends ImageCanvas
     * Zooms in by making the window bigger.  If it can't be made bigger, then
     * make the source rectangle smaller and center it on the position in the
     * canvas where the cursor was when zooming started
+    *
     * @param centerScreenX x position of the cursor when zooming started
     * @param centerScreenY y position of the cursor when zooming started
     */
@@ -363,10 +374,10 @@ public final class MMImageCanvas extends ImageCanvas
       // 3) Notifies ImageWindow, which notifies ImagePlus, which shows
       // ImageJ status line with location and pixel value
    }
-   
+
    @Override
    public void mouseWheelMoved(MouseWheelEvent e) {
-      parent_.ij2mmMouseWheelMoved(e);   
+      parent_.ij2mmMouseWheelMoved(e);
    }
 
    @Override
@@ -395,7 +406,7 @@ public final class MMImageCanvas extends ImageCanvas
 
    @Override
    public void keyPressed(KeyEvent e) {
-      if (!parent_.ij2mmKeyPressConsumed(e) ) {
+      if (!parent_.ij2mmKeyPressConsumed(e)) {
          IJ.getInstance().keyPressed(e);
       }
    }

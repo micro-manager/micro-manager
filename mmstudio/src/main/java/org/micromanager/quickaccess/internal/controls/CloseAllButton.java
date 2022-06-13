@@ -62,7 +62,7 @@ public final class CloseAllButton extends SimpleButtonPlugin implements SciJavaP
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-               "/org/micromanager/icons/close_windows@2x.png"));
+            "/org/micromanager/icons/close_windows@2x.png"));
    }
 
    @Override

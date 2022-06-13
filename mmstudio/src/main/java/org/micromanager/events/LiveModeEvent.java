@@ -31,7 +31,7 @@ public interface LiveModeEvent {
     * Informs the caller if live mode is on or off.
     *
     * @return True if live mode has been turned on, false if it has been turned
-    *         off.
+    *     off.
     */
    boolean isOn();
 
@@ -39,7 +39,7 @@ public interface LiveModeEvent {
     * Deprecated.
     *
     * @return true if live mode has been turned on, false if it has been turned
-    *            off.
+    *     off.
     * @deprecated use {@link #isOn()} instead.
     */
    @Deprecated

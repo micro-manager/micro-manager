@@ -19,6 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // CVS:          
+
 package org.micromanager.internal.utils;
 
 import java.awt.geom.AffineTransform;
@@ -40,13 +41,14 @@ public final class MathFunctions {
       m.setEntry(row, 2, 1);
    }
 
-   /*
+   /**
     * Creates an AffineTransform object that maps a source planar coordinate system to
     * a destination planar coordinate system. At least three point pairs are needed.
-    * 
+    *
     * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
     */
-   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double, Point2D.Double> pointPairs) {
+   public static AffineTransform generateAffineTransformFromPointPairs(
+         Map<Point2D.Double, Point2D.Double> pointPairs) {
       RealMatrix u = new Array2DRowRealMatrix(pointPairs.size(), 3);
       RealMatrix v = new Array2DRowRealMatrix(pointPairs.size(), 3);
 
@@ -73,16 +75,16 @@ public final class MathFunctions {
       return new AffineTransform(m[0][0], m[1][0], m[0][1], m[1][1], m[0][2], m[1][2]);
    }
 
-   /*
+   /**
     * Creates an AffineTransform object that maps a source planar coordinate system to
     * a destination planar coordinate system. At least three point pairs are needed.
     *
-    * Throws an Exception if the mean square deviation of transformed
+    * <p>Throws an Exception if the mean square deviation of transformed
     * points exceeds the specified tolerances.
     *
     * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
     */
-   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double, 
+   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double,
          Point2D.Double> pointPairs, double srcTol, double destTol) throws Exception {
       AffineTransform transform = generateAffineTransformFromPointPairs(pointPairs);
       double srcDevSqSum = 0;
@@ -126,9 +128,13 @@ public final class MathFunctions {
       return Math.min(Math.max(min, val), max);
    }
 
+   /**
+    * This should probably moved to tests.
+    */
    public static void runAffineTest() {
 
-      Map<Point2D.Double, Point2D.Double> pointPairs = new HashMap<Point2D.Double, Point2D.Double>();
+      Map<Point2D.Double, Point2D.Double> pointPairs =
+            new HashMap<Point2D.Double, Point2D.Double>();
 
 
       // Create sample src and dest points:

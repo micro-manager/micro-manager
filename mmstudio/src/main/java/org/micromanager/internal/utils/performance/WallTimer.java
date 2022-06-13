@@ -16,8 +16,8 @@ package org.micromanager.internal.utils.performance;
 /**
  * Measure wall-clock time duration.
  *
- * @see CPUTimer
  * @author Mark A. Tsuchida
+ * @see CPUTimer
  */
 public class WallTimer {
    private final long startNs_;

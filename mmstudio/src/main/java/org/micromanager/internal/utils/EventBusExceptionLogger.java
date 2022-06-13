@@ -10,7 +10,6 @@ import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
 
 /**
- *
  * @author mark
  */
 public class EventBusExceptionLogger implements SubscriberExceptionHandler {

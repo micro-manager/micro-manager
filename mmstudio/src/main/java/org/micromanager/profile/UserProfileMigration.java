@@ -112,10 +112,10 @@ public interface UserProfileMigration {
     * Perform a migration from old settings storage.
     *
     * @param legacy a property map containing existing settings from which to
-    *        migrate, whose keys are the canonical names of the owner classes and
-    *        whose values are nested property maps containing the settings.
+    *               migrate, whose keys are the canonical names of the owner classes and
+    *               whose values are nested property maps containing the settings.
     * @param modern the user profile settings for the class under which this
-    *        migration was registered, to which the migrated settings should be saved
+    *               migration was registered, to which the migrated settings should be saved
     */
    void migrate(PropertyMap legacy, MutablePropertyMapView modern);
 }

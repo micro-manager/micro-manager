@@ -33,13 +33,13 @@ public final class MMMenuBar extends JMenuBar {
    public static MMMenuBar createMenuBar(MMStudio mmStudio) {
       MMMenuBar result = new MMMenuBar(mmStudio);
       result.createSubMenus();
-      return result;      
+      return result;
    }
-   
+
    private MMMenuBar(MMStudio mmStudio) {
       mmStudio_ = mmStudio;
    }
-   
+
    private void createSubMenus() {
       fileMenu_ = new FileMenu(mmStudio_, this);
       toolsMenu_ = new ToolsMenu(mmStudio_, this);
@@ -48,11 +48,11 @@ public final class MMMenuBar extends JMenuBar {
       new WindowMenu(mmStudio_, this);
       new HelpMenu(mmStudio_, this);
    }
-   
+
    public FileMenu getFileMenu() {
       return fileMenu_;
-   } 
-   
+   }
+
    public ToolsMenu getToolsMenu() {
       return toolsMenu_;
    }

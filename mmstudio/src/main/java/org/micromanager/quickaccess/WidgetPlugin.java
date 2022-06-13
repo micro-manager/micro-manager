@@ -35,8 +35,8 @@ public abstract class WidgetPlugin extends QuickAccessPlugin {
     * Create the GUI components for this control.
     *
     * @param config A PropertyMap as output by configureControl used to
-    *        configure this control. The PropertyMap may be empty or may be
-    *        preserved from a previous session.
+    *               configure this control. The PropertyMap may be empty or may be
+    *               preserved from a previous session.
     */
    public abstract JComponent createControl(PropertyMap config);
 

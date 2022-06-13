@@ -1,4 +1,3 @@
-
 package org.micromanager.data.internal;
 
 import com.google.common.base.Joiner;
@@ -23,7 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.micromanager.Album;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
@@ -39,25 +37,25 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Keys that appear in the JSON-formatted metadata (and a few other pieces of
  * data) in the Micro-Manager file format.
- * <p>
- * This is the single-source-of-truth for all JSON metadata keys. All knowledge
+ *
+ * <p>This is the single-source-of-truth for all JSON metadata keys. All knowledge
  * about what (structure of data) is stored under each key should live here.
  * The affiliation of each key to data structures is defined by the subclasses
  * of {@link NonPropertyMapJSONFormats}.
- * <p>
- * To each key is associated knowledge of how to read and (if still used) write
+ *
+ * <p>To each key is associated knowledge of how to read and (if still used) write
  * the key to the non-property-map JSON formats. The canonical key strings are
  * also used in modern property maps.
- * <p>
- * When adding new keys, the key string should be camel-cased, starting with
+ *
+ * <p>When adding new keys, the key string should be camel-cased, starting with
  * a capital letter. As an exception, physical units should be suffixed with
  * an underscore. An example of an existing key following this convention is
  * "ElapsedTime_ms".
@@ -66,21 +64,19 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public enum PropertyKey {
    // Please maintain alphabetical order
-/*
-             
-            
+   /*
             putDouble("AutoscaleIgnoredQuantile", extremaQuantile_).
             putPropertyMapList("ChannelSettings", channelSettings).
    */
 
    ALBUM_DISPLAY_SETTINGS("AlbumDisplaySettings", Album.class),
-   
+
    ACQUISITION_DISPLAY_SETTINGS("AcquisitionDisplaySettings", AcquisitionManager.class),
-   
+
    AUTOSCALE_IGNORED_QUANTILE("AutoscaleIgnoredQuantile", DisplaySettings.class),
-   
+
    AUTOSTRETCH("Autostretch", DisplaySettings.class),
-   
+
    AXIS_ORDER("AxisOrder", SummaryMetadata.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -108,16 +104,14 @@ public enum PropertyKey {
          if (flags.containsBoolean(TIME_FIRST.key())) {
             if (flags.getBoolean(TIME_FIRST.key(), false)) {
                Collections.addAll(axes, Coords.STAGE_POSITION, Coords.TIME_POINT);
-            }
-            else {
+            } else {
                Collections.addAll(axes, Coords.TIME_POINT, Coords.STAGE_POSITION);
             }
 
             if (flags.containsBoolean(SLICES_FIRST.key())) {
                if (flags.getBoolean(SLICES_FIRST.key(), false)) {
                   Collections.addAll(axes, Coords.CHANNEL, Coords.Z_SLICE);
-               }
-               else {
+               } else {
                   Collections.addAll(axes, Coords.Z_SLICE, Coords.CHANNEL);
                }
                dest.putStringList(key(), axes);
@@ -142,7 +136,7 @@ public enum PropertyKey {
                return true;
             }
          }
-      
+
          return false;
       }
 
@@ -242,12 +236,12 @@ public enum PropertyKey {
          // causing use of an empty string.  The Core-Camera property is sometimes
          // set correctly (but not when collecting images from two cameras
          // running sequences.
-         
+
          // TODO: investigate why the acquisition engine inserts an empty string 
          // fix it, then remove the second if below
-         
-         if (super.extractFromGsonObject(jo, dest) && 
-                 !dest.build().getString(key(), "").isEmpty()) {
+
+         if (super.extractFromGsonObject(jo, dest)
+               && !dest.build().getString(key(), "").isEmpty()) {
             return true;
          }
          if (jo.has("Core-Camera")) {
@@ -256,12 +250,12 @@ public enum PropertyKey {
                dest.putString(key(), je.getAsString());
                return true;
             } catch (UnsupportedOperationException uoe) {
-                // we get this with data saved in 2.0-beta
+               // we get this with data saved in 2.0-beta
             }
          }
          return false;
-      }      
-      
+      }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
          String string = pmap.getString(key(), null);
@@ -275,6 +269,7 @@ public enum PropertyKey {
    CAMERA_CHANNEL_INDEX("CameraChannelIndex"),
 
    CHANNELS("Channels", SummaryMetadata.class) { // See INTENDED_DIMENSIONS
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.CHANNEL, je.getAsInt());
@@ -282,8 +277,8 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         PropertyMap intendedDims = pmap.getPropertyMap(INTENDED_DIMENSIONS.
-               key(), PropertyMaps.emptyPropertyMap());
+         PropertyMap intendedDims = pmap.getPropertyMap(INTENDED_DIMENSIONS.key(),
+               PropertyMaps.emptyPropertyMap());
          if (intendedDims.containsKey(Coords.CHANNEL)) {
             return new JsonPrimitive(intendedDims.getInteger(Coords.CHANNEL, 0));
          }
@@ -292,7 +287,7 @@ public enum PropertyKey {
    },
 
    CHANNEL_SETTINGS("ChannelSettings", DisplaySettings.class),
-   
+
    CHANNEL_COLOR("ChColor"),
    CHANNEL_COLORS("ChColors"),
    CHANNEL_CONTRAST_MAX("ChContrastMax"),
@@ -350,11 +345,11 @@ public enum PropertyKey {
          return ja;
       }
    },
-   
+
    COLOR("Color", ChannelDisplaySettings.class),
 
    COLOR_MODE("ColorMode", DisplaySettings.class),
-   
+
    COMMENT("Comment", SummaryMetadata.class),
 
    COMPLETE_COORDS("completeCoords", Coords.class) {
@@ -393,7 +388,7 @@ public enum PropertyKey {
          return jo;
       }
    },
-   
+
    COMPONENT_SETTINGS("ComponentSettings", ChannelDisplaySettings.class),
 
    COMPUTER_NAME("ComputerName", SummaryMetadata.class) {
@@ -433,7 +428,7 @@ public enum PropertyKey {
          return ja;
       }
    },
-   
+
    DEVICE("Device", MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -462,13 +457,14 @@ public enum PropertyKey {
    },
 
    DISPLAY_SETTINGS("DisplaySettings", SummaryMetadata.class),
-   
+
    DISPLAY_SETTINGS_FILE_NAME("DisplaySettings.json", DisplaySettings.class),
 
    ELAPSED_TIME_MS("ElapsedTime-ms", Metadata.class) {
       @Override
       public String getDescription() {
-         return "The time elapsed since the start of acquisition (may use less accurate software timing)";
+         return "The time elapsed since the start of acquisition (may use less accurate "
+               + "software timing)";
       }
 
       @Override
@@ -536,6 +532,7 @@ public enum PropertyKey {
    },
 
    FRAMES("Frames") { // See INTENDED_DIMENSIONS
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.TIME_POINT, je.getAsInt());
@@ -543,8 +540,8 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         PropertyMap intendedDims = pmap.getPropertyMap(INTENDED_DIMENSIONS.
-               key(), PropertyMaps.emptyPropertyMap());
+         PropertyMap intendedDims = pmap.getPropertyMap(INTENDED_DIMENSIONS.key(),
+               PropertyMaps.emptyPropertyMap());
          if (intendedDims.containsKey(Coords.TIME_POINT)) {
             return new JsonPrimitive(intendedDims.getInteger(Coords.TIME_POINT, 0));
          }
@@ -553,9 +550,9 @@ public enum PropertyKey {
    },
 
    GAMMA("Gamma", ComponentDisplaySettings.class),
-   
+
    GRID_COLUMN("GridColumn", "gridColumn"),
-   
+
    GRID_ROW("GridRow", "gridRow"),
 
    HEIGHT("Height") {
@@ -563,14 +560,14 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
-      
+
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
          // Save zero even if missing
          return new JsonPrimitive(pmap.getInteger(key(), 0));
       }
    },
-   
+
    HISTOGRAM_BIT_DEPTH("HistogramBitDepth", ChannelDisplaySettings.class),
 
    IJ_TYPE("IJType", Image.class) {
@@ -594,7 +591,8 @@ public enum PropertyKey {
    IMAGE_NUMBER("ImageNumber", Metadata.class) {
       @Override
       public String getDescription() {
-         return "The sequence number of this image within a sequence (streaming) acquisition of the camera";
+         return "The sequence number of this image within a sequence (streaming) "
+               + "acquisition of the camera";
       }
 
       @Override
@@ -737,6 +735,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -752,6 +751,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -767,6 +767,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -782,6 +783,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -797,6 +799,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsKey(key())) {
@@ -814,21 +817,21 @@ public enum PropertyKey {
          // format. Try the better-defined PM2 first.
          try {
             dest.putPropertyMap(key(), PropertyMapJSONSerializer.fromGson(je));
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             dest.putPropertyMap(key(), MM1JSONSerializer.fromGson(je));
          }
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          // TODO: Figure out what this is supposed to do (I don't even know
          // if multistageposition properties are ever used by anything
          // It is utterly unclear how to perform this translation, but 
          // returning null bombs saving of stage positions...
-            return JsonNull.INSTANCE;
-         }
+         return JsonNull.INSTANCE;
+      }
    },
-   
+
    MULTI_STAGE_POSITION__DEVICE("Device", MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -848,12 +851,13 @@ public enum PropertyKey {
     * So, it seems this keyword catches the DevicePositions field within Multi_Stage_Positions
     * However, the code in here refers to NonPropertyMapJSONFormats.multiStagePosition()
     * which goes through all of the fields listed above
-    * So, handling of the DevicePositions field is a complete hack, as it 
+    * So, handling of the DevicePositions field is a complete hack, as it
     * is unclear from the original design what the intention was, and this whole
     * construction going back and forth between different encodings still gives me
     * headaches even after having stared at it for way too many days....
     */
-   MULTI_STAGE_POSITION__DEVICE_POSITIONS("DevicePositions", "DEVICES", "subpositions", "DeviceCoordinatesUm",
+   MULTI_STAGE_POSITION__DEVICE_POSITIONS("DevicePositions", "DEVICES", "subpositions",
+         "DeviceCoordinatesUm",
          MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -866,57 +870,51 @@ public enum PropertyKey {
             for (JsonElement e : je.getAsJsonArray()) {
                JsonObject jo = e.getAsJsonObject();
                PropertyMap msp =
-                     NonPropertyMapJSONFormats.multiStageDevicePosition().
-                     fromGson(jo);
-               
+                     NonPropertyMapJSONFormats.multiStageDevicePosition().fromGson(jo);
+
                if (msp.size() == 0) { // this may be an old format stage position
                   msp = NonPropertyMapJSONFormats.oldStagePosition().fromGson(jo);
                }
-               
-               if (!msp.containsInteger(STAGE_POSITION__NUMAXES.key())) 
-               {  // "modern" (or also "old"?  who knows...) format that has just the name
-                  // and coordinates for whatever axes the device has
+
+               if (!msp.containsInteger(STAGE_POSITION__NUMAXES
+                     .key())) {  // "modern" (or also "old"?  who knows...) format
+                  // that has just the name and coordinates for whatever axes the device has
                   devPositions.add(msp);
                } else { // old format with 3 values
                   int n = msp.getInteger(STAGE_POSITION__NUMAXES.key(), 0);
                   if (n < 1 || n > 3) {
                      throw new JsonParseException(
-                             "Unexpected number of stage axes in stage position record");
+                           "Unexpected number of stage axes in stage position record");
                   }
                   double[] coords = new double[n];
                   for (int i = 0; i < n; ++i) {
                      coords[i] = msp.getDouble(ImmutableList.of(
-                             STAGE_POSITION__COORD1_UM.key(),
-                             STAGE_POSITION__COORD2_UM.key(),
-                             STAGE_POSITION__COORD3_UM.key()).get(i), Double.NaN);
+                           STAGE_POSITION__COORD1_UM.key(),
+                           STAGE_POSITION__COORD2_UM.key(),
+                           STAGE_POSITION__COORD3_UM.key()).get(i), Double.NaN);
                   }
-                  devPositions.add(PropertyMaps.builder().
-                          putString(STAGE_POSITION__DEVICE.key(),
-                                  msp.getString(STAGE_POSITION__DEVICE.key(), null)).
-                          putDoubleList(STAGE_POSITION__POSITION_UM.key(), coords).
-                          build());
-               } 
+                  devPositions.add(PropertyMaps.builder().putString(STAGE_POSITION__DEVICE.key(),
+                              msp.getString(STAGE_POSITION__DEVICE.key(), null))
+                        .putDoubleList(STAGE_POSITION__POSITION_UM.key(), coords)
+                        .build());
+               }
             }
-         }
-         // MM 1.x stored JSON object with keys = stage names; values = arrays,
-         // under "DeviceCoordinatesUm".
-         else {
-            for (Map.Entry<String, JsonElement> e : je.getAsJsonObject().
-                  entrySet()) {
+         } else { // MM 1.x stored JSON object with keys = stage names; values = arrays,
+            // under "DeviceCoordinatesUm".
+            for (Map.Entry<String, JsonElement> e : je.getAsJsonObject().entrySet()) {
                JsonArray ja = e.getValue().getAsJsonArray();
                double[] coords = new double[ja.size()];
                for (int i = 0; i < ja.size(); ++i) {
                   coords[i] = ja.get(i).getAsDouble();
                }
-               devPositions.add(PropertyMaps.builder().
-                     putString(STAGE_POSITION__DEVICE.key(), e.getKey()).
-                     putDoubleList(STAGE_POSITION__POSITION_UM.key(), coords).
-                     build());
+               devPositions.add(PropertyMaps.builder().putString(STAGE_POSITION__DEVICE.key(),
+                     e.getKey()).putDoubleList(STAGE_POSITION__POSITION_UM.key(), coords)
+                     .build());
             }
          }
          dest.putPropertyMapList(MULTI_STAGE_POSITION__DEVICE_POSITIONS.key(), devPositions);
       }
-      
+
       @Override
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsPropertyMapList(key())) {
@@ -935,7 +933,8 @@ public enum PropertyKey {
    PIXEL_ASPECT("PixelAspect", "pixelAspect", Metadata.class) {
       @Override
       public String getDescription() {
-         return "The physical aspect ratio of the pixels; for example, if 2.0, the pixels are twice as tall as they are wide";
+         return "The physical aspect ratio of the pixels; for example, if 2.0, the pixels "
+               + "are twice as tall as they are wide";
       }
 
       @Override
@@ -955,7 +954,8 @@ public enum PropertyKey {
    PIXEL_SIZE_AFFINE("PixelSizeAffine", Metadata.class) {
       @Override
       public String getDescription() {
-         return "Affine transform describing the geometric relation between stage-space and camera-space";
+         return "Affine transform describing the geometric relation between stage-space "
+               + "and camera-space";
       }
 
       @Override
@@ -972,7 +972,7 @@ public enum PropertyKey {
             // regretfully, the Core and Java representations are permuations
             double[] flatMatrix = {atf[0], atf[3], atf[1], atf[4], atf[2], atf[5]};
             dest.putAffineTransform(key(), new AffineTransform(flatMatrix));
-         }         
+         }
       }
 
       @Override
@@ -989,7 +989,7 @@ public enum PropertyKey {
          return new JsonPrimitive(afString);
       }
    },
-   
+
    PIXEL_SIZE_UM("PixelSizeUm", "PixelSize_um", Metadata.class) {
       @Override
       public String getDescription() {
@@ -1046,8 +1046,9 @@ public enum PropertyKey {
    },
 
    PLAYBACK_FPS("PlaybackFPS", DisplaySettings.class),
-   
+
    POSITIONS("Positions", SummaryMetadata.class) { // See INTENDED_DIMENSIONS
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.STAGE_POSITION, je.getAsInt());
@@ -1055,8 +1056,8 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         PropertyMap intendedDims = pmap.getPropertyMap(INTENDED_DIMENSIONS.
-               key(), PropertyMaps.emptyPropertyMap());
+         PropertyMap intendedDims = pmap.getPropertyMap(INTENDED_DIMENSIONS.key(),
+               PropertyMaps.emptyPropertyMap());
          if (intendedDims.containsKey(Coords.STAGE_POSITION)) {
             return new JsonPrimitive(intendedDims.getInteger(Coords.STAGE_POSITION, 0));
          }
@@ -1096,7 +1097,7 @@ public enum PropertyKey {
          return new JsonPrimitive(pmap.getString(key(), null));
       }
    },
-   
+
    POSITION_UM("Position_um", MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -1154,7 +1155,9 @@ public enum PropertyKey {
    RECEIVED_TIME("ReceivedTime", "receivedTime", Metadata.class) {
       @Override
       public String getDescription() {
-         return "The approximate time at which this image was received by the MMStudio application (may be delayed to different degrees from when the exposure actually occurred)";
+         return "The approximate time at which this image was received by the MMStudio "
+               + "application (may be delayed to different degrees from when the "
+               + "exposure actually occurred)";
       }
 
       @Override
@@ -1176,7 +1179,8 @@ public enum PropertyKey {
    ROI("ROI", Metadata.class) {
       @Override
       public String getDescription() {
-         return "The region of interest on the camera sensor chip (in binned coordinates) used to acquire this image";
+         return "The region of interest on the camera sensor chip (in binned coordinates) "
+               + "used to acquire this image";
       }
 
       @Override
@@ -1194,11 +1198,10 @@ public enum PropertyKey {
          s = s.replaceAll("_", ",");
 
          String[] xywh = s.split(",");
-         int x, y, w, h;
-         x = Integer.parseInt(xywh[0]);
-         y = Integer.parseInt(xywh[1]);
-         w = Integer.parseInt(xywh[2]);
-         h = Integer.parseInt(xywh[3]);
+         int x = Integer.parseInt(xywh[0]);
+         int y = Integer.parseInt(xywh[1]);
+         int w = Integer.parseInt(xywh[2]);
+         int h = Integer.parseInt(xywh[3]);
          Rectangle roi = new Rectangle(x, y, w, h);
 
          dest.putRectangle(key(), roi);
@@ -1217,15 +1220,16 @@ public enum PropertyKey {
    },
 
    ROI_AUTOSCALE("ROIAutoscale", DisplaySettings.class),
-   
+
    SCALING_MIN("ScalingMin", ComponentDisplaySettings.class),
-   
+
    SCALING_MAX("ScalingMax", ComponentDisplaySettings.class),
-   
+
    SCOPE_DATA("ScopeData", "scopeData", Metadata.class) {
       @Override
       public String getDescription() {
-         return "The states of device properties when this image was acquired (some properties do not update for every image)";
+         return "The states of device properties when this image was acquired (some "
+               + "properties do not update for every image)";
       }
 
       // Device properties were stored mixed with all other metadata keys
@@ -1311,10 +1315,11 @@ public enum PropertyKey {
          return ja;
       }
    },
-   
+
    SNAP_LIVE_DISPLAY_SETTINGS("SnapLiveDisplaySettings", SnapLiveManager.class),
 
    SLICES("Slices", SummaryMetadata.class) { // See INTENDED_DIMENSIONS
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.Z_SLICE, je.getAsInt());
@@ -1322,8 +1327,8 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         PropertyMap intendedDims = pmap.getPropertyMap(INTENDED_DIMENSIONS.
-               key(), PropertyMaps.emptyPropertyMap());
+         PropertyMap intendedDims = pmap.getPropertyMap(INTENDED_DIMENSIONS.key(),
+               PropertyMaps.emptyPropertyMap());
          if (intendedDims.containsKey(Coords.Z_SLICE)) {
             return new JsonPrimitive(intendedDims.getInteger(Coords.Z_SLICE, 0));
          }
@@ -1332,6 +1337,7 @@ public enum PropertyKey {
    },
 
    SLICES_FIRST("SlicesFirst", SummaryMetadata.class) { // See AXIS_ORDER
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putBoolean(key(), je.getAsBoolean());
@@ -1342,9 +1348,8 @@ public enum PropertyKey {
          // Looping over slices first means Z axis later than channel axis
          List<String> axisOrder = pmap.getStringList(AXIS_ORDER.key());
          boolean slicesFirst =
-               axisOrder.indexOf(Coords.Z_SLICE) >
-               axisOrder.indexOf(Coords.CHANNEL) &&
-               axisOrder.contains(Coords.CHANNEL);
+               axisOrder.indexOf(Coords.Z_SLICE) > axisOrder.indexOf(Coords.CHANNEL)
+                     && axisOrder.contains(Coords.CHANNEL);
          return new JsonPrimitive(pmap.getBoolean(key(), slicesFirst));
       }
    },
@@ -1396,6 +1401,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
       @Override
       public JsonElement convertToGson(PropertyMap source) {
          if (!source.containsString(key())) {
@@ -1408,7 +1414,8 @@ public enum PropertyKey {
    STAGE_POSITION__NUMAXES("NumberOfAxes", "AXES", "numAxes", StagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
-         dest.putInteger(key(), je.getAsInt() * 3); // old style stage positions always had 3 axes...
+         dest.putInteger(key(),
+               je.getAsInt() * 3); // old style stage positions always had 3 axes...
       }
    },
 
@@ -1421,6 +1428,7 @@ public enum PropertyKey {
          }
          dest.putDoubleList(key(), coords);
       }
+
       @Override
       protected JsonElement convertToGson(PropertyMap source) {
          if (!source.containsDoubleList((key()))) {
@@ -1435,8 +1443,7 @@ public enum PropertyKey {
    },
 
    STAGE_POSITIONS("StagePositions", "InitialPositionList", "POSITIONS",
-         SummaryMetadata.class, PositionList.class)
-   {
+         SummaryMetadata.class, PositionList.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          List<PropertyMap> positions = Lists.newArrayList();
@@ -1460,6 +1467,7 @@ public enum PropertyKey {
    },
 
    START_TIME("StartTime", "Time", SummaryMetadata.class) { // See also TIME
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
@@ -1478,6 +1486,7 @@ public enum PropertyKey {
    TIME("Time", Metadata.class), // See also START_TIME
 
    TIME_FIRST("TimeFirst") { // See AXIS_ORDER
+
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putBoolean(key(), je.getAsBoolean());
@@ -1488,23 +1497,23 @@ public enum PropertyKey {
          // Looping over time first means time axis later than position axis
          List<String> axisOrder = pmap.getStringList(AXIS_ORDER.key());
          boolean timeFirst =
-               axisOrder.indexOf(Coords.TIME_POINT) >
-               axisOrder.indexOf(Coords.STAGE_POSITION) &&
-               axisOrder.contains(Coords.STAGE_POSITION);
+               axisOrder.indexOf(Coords.TIME_POINT) > axisOrder.indexOf(Coords.STAGE_POSITION)
+                     && axisOrder.contains(Coords.STAGE_POSITION);
          return new JsonPrimitive(pmap.getBoolean(key(), timeFirst));
       }
    },
-   
+
    UNIFORM_COMPONENT_SCALING("UniformComponentScaling", ChannelDisplaySettings.class),
 
    UNIFORM_CHANNEL_SCALING("UniformChannelScaling", DisplaySettings.class),
-   
+
    USE_CAMERA_BIT_DEPTH("UseCameraBitDepth", ChannelDisplaySettings.class),
-   
+
    USER_DATA("UserData", "userData", Metadata.class, SummaryMetadata.class) {
       @Override
       public String getDescription() {
-         return "User-assigned and other miscellaneous data attached to this image (in files saved by \u00B5Manager 1.x, this includes device properties)";
+         return "User-assigned and other miscellaneous data attached to this image (in files "
+               + "saved by \u00B5Manager 1.x, this includes device properties)"; // Micro-Manager
       }
 
       @Override
@@ -1513,8 +1522,7 @@ public enum PropertyKey {
          // format. Try the better-defined PM2 first.
          try {
             dest.putPropertyMap(key(), PropertyMapJSONSerializer.fromGson(je));
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             dest.putPropertyMap(key(), MM1JSONSerializer.fromGson(je));
          }
       }
@@ -1540,18 +1548,18 @@ public enum PropertyKey {
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (Map.Entry<String, JsonElement> e : jo.entrySet()) {
             try {
-            if (!isKnownKey(e.getKey()) && !e.getValue().isJsonNull() &&
-                  !scopeDataKeys.contains(e.getKey())) {
-               if (e.getValue().isJsonArray()) {
-                  JsonArray jsonArray = e.getValue().getAsJsonArray();
-                  for (int i = 0; i < jsonArray.size(); i++) {
-                     JsonElement je2 = jsonArray.get(i);
-                     builder.putString(e.getKey(), je2.getAsString());
+               if (!isKnownKey(e.getKey()) && !e.getValue().isJsonNull()
+                     && !scopeDataKeys.contains(e.getKey())) {
+                  if (e.getValue().isJsonArray()) {
+                     JsonArray jsonArray = e.getValue().getAsJsonArray();
+                     for (int i = 0; i < jsonArray.size(); i++) {
+                        JsonElement je2 = jsonArray.get(i);
+                        builder.putString(e.getKey(), je2.getAsString());
+                     }
+                  } else {
+                     builder.putString(e.getKey(), e.getValue().getAsString());
                   }
-               } else {
-                  builder.putString(e.getKey(), e.getValue().getAsString());
                }
-            }
             } catch (IllegalStateException ise) {
                ReportingUtils.logError(ise, "IllegalStateError reading value of " + e.getKey());
             }
@@ -1562,7 +1570,8 @@ public enum PropertyKey {
 
       @Override
       public JsonElement convertToGson(PropertyMap pmap) {
-         return PropertyMapJSONSerializer.toGson(pmap.getPropertyMap(key(), PropertyMaps.emptyPropertyMap()));
+         return PropertyMapJSONSerializer
+               .toGson(pmap.getPropertyMap(key(), PropertyMaps.emptyPropertyMap()));
       }
    },
 
@@ -1602,7 +1611,7 @@ public enum PropertyKey {
          return null;
       }
    },
-   
+
    VISIBLE("Visible", ChannelDisplaySettings.class),
 
    WIDTH("Width", Image.class) {
@@ -1610,7 +1619,7 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
-      
+
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
          // Save zero even if missing
@@ -1621,7 +1630,8 @@ public enum PropertyKey {
    X_POSITION_UM("XPositionUm", Metadata.class) {
       @Override
       public String getDescription() {
-         return "The last-known X position of the default XY stage at the time of acquisition (may not update for every image)";
+         return "The last-known X position of the default XY stage at the time of "
+               + "acquisition (may not update for every image)";
       }
 
       @Override
@@ -1641,7 +1651,8 @@ public enum PropertyKey {
    Y_POSITION_UM("YPositionUm", Metadata.class) {
       @Override
       public String getDescription() {
-         return "The last-known Y position of the default XY stage at the time of acquisition (may not update for every image)";
+         return "The last-known Y position of the default XY stage at the time of "
+               + "acquisition (may not update for every image)";
       }
 
       @Override
@@ -1661,7 +1672,8 @@ public enum PropertyKey {
    Z_POSITION_UM("ZPositionUm", Metadata.class) {
       @Override
       public String getDescription() {
-         return "The last-known position of the default focus drive or Z stage at the time of acquisition (may not update for every image)";
+         return "The last-known position of the default focus drive or Z stage at "
+               + "the time of acquisition (may not update for every image)";
       }
 
       @Override
@@ -1679,7 +1691,7 @@ public enum PropertyKey {
    },
 
    ZOOM_RATIO("ZoomRatio", DisplaySettings.class),
-   
+
    Z_STEP_UM("z-step_um", SummaryMetadata.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -1702,6 +1714,7 @@ public enum PropertyKey {
    private final Set<Class<?>> affiliations_;
 
    private static final Set<String> ALL_SPELLINGS;
+
    static {
       ImmutableSet.Builder<String> builder = ImmutableSet.builder();
       for (PropertyKey e : values()) {
@@ -1713,13 +1726,12 @@ public enum PropertyKey {
    }
 
    private static final Map<String, String> UNITS = ImmutableMap.of(
-         "um", "\u00B5m",
+         "um", "\u00B5m", // micro-m, i.e. micron
          "ms", "ms"
    );
 
    private PropertyKey(String canonical,
-         Object... historicalStringsAndAffiliations)
-   {
+                       Object... historicalStringsAndAffiliations) {
       Preconditions.checkNotNull(canonical);
       canonical_ = canonical;
       List<String> historical = Lists.newArrayList();
@@ -1727,8 +1739,7 @@ public enum PropertyKey {
       for (Object o : historicalStringsAndAffiliations) {
          if (o instanceof String) {
             historical.add((String) o);
-         }
-         else if (o instanceof Class) {
+         } else if (o instanceof Class) {
             affiliations.add((Class<?>) o);
          }
       }
@@ -1741,8 +1752,8 @@ public enum PropertyKey {
       name = name.substring(0, 1).toUpperCase() + name.substring(1);
       for (String unitSuffix : UNITS.keySet()) {
          if (name.endsWith(" " + unitSuffix)) {
-            name = name.substring(0, name.length() - unitSuffix.length()) +
-                  "(" + UNITS.get(unitSuffix) + ")";
+            name = name.substring(0, name.length() - unitSuffix.length())
+                  + "(" + UNITS.get(unitSuffix) + ")";
          }
       }
       return name;
@@ -1764,13 +1775,18 @@ public enum PropertyKey {
       return "(Description unavailable)";
    }
 
+   /**
+    * Generates a tooltip.
+    *
+    * @return Tooltip string
+    */
    public final String getToolTip() {
-      StringBuilder sb = new StringBuilder().
-            append("<html>").
-            append(HtmlEscapers.htmlEscaper().escape(getDescription())).
-            append("<br />Technical info: ").
-            append("canonical key = ").
-            append(key());
+      StringBuilder sb = new StringBuilder()
+            .append("<html>")
+            .append(HtmlEscapers.htmlEscaper().escape(getDescription()))
+            .append("<br />Technical info: ")
+            .append("canonical key = ")
+            .append(key());
       if (!getHistoricalKeys().isEmpty()) {
          sb.append("; historic key(s) = ");
          sb.append(Joiner.on(", ").join(getHistoricalKeys()));
@@ -1781,25 +1797,25 @@ public enum PropertyKey {
    /**
     * Parse the value for this key given as a JSON element and place it in a
     * property map builder.
-    * <p>
-    * Implementations should throw (sensible) unchecked exceptions if the value
+    *
+    * <p>Implementations should throw (sensible) unchecked exceptions if the value
     * is invalid.
-    * <p>
-    * The parsed value must be placed in {@code destination} under the key
+    *
+    * <p>The parsed value must be placed in {@code destination} under the key
     * returned by {@code getCanonicalKey}.
     *
-    * @param element the Gson element
+    * @param element     the Gson element
     * @param destination the property map builder into which the parsed value
-    * should be placed
+    *                    should be placed
     */
    protected void convertFromGson(JsonElement element,
-         PropertyMap.Builder destination)
-   {
+                                  PropertyMap.Builder destination) {
       throw new UnsupportedOperationException(name());
    }
 
    /**
     * Create the JSON element representing the value for this key.
+    *
     * @param source property map in which to find the value for this key
     * @return the JSON element representing the value for this key
     */
@@ -1813,20 +1829,20 @@ public enum PropertyKey {
 
    /**
     * Parse the value stored in the containing JSON object.
-    * <p>
-    * In most cases we just examine all keys (default implementation), but in
+    *
+    * <p>In most cases we just examine all keys (default implementation), but in
     * some cases this method can be overridden to add special behavior, such as
     * looking under different keys.
     *
-    * @param source non-property-map JSON object from which to extract the
-    * value for this key
+    * @param source      non-property-map JSON object from which to extract the
+    *                    value for this key
     * @param destination property map builder to which the value should be
-    * stored
+    *                    stored
     * @return true if value was found and placed in {@code destination}; false
-    * otherwise
+    *                    otherwise
     */
    public boolean extractFromGsonObject(JsonObject source,
-         PropertyMap.Builder destination) {
+                                        PropertyMap.Builder destination) {
       for (String key : getAllKeys()) {
          if (source.has(key) && !source.get(key).isJsonNull()) {
             convertFromGson(source.get(key), destination);
@@ -1839,14 +1855,14 @@ public enum PropertyKey {
    /**
     * Adds the key to a JSON object.
     *
-    * @param source property map in which to find the value for this key
+    * @param source      property map in which to find the value for this key
     * @param destination non-property-map JSON object to which the value should
-    * be added under this key
+    *                    be added under this key
     * @return true if the key was found in {@code source} and was added to
-    * {@code destination}; false otherwise
+    *                    {@code destination}; false otherwise
     */
    public boolean storeInGsonObject(PropertyMap source,
-         JsonObject destination) {
+                                    JsonObject destination) {
       JsonElement e = convertToGson(source);
       if (e != null) {
          destination.add(key(), e);

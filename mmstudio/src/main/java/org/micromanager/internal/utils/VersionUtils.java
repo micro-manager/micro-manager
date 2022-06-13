@@ -19,6 +19,7 @@
 //
 // CVS:          $Id$
 //
+
 package org.micromanager.internal.utils;
 
 /**

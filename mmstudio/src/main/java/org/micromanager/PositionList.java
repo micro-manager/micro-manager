@@ -107,10 +107,10 @@ public class PositionList implements Iterable<MultiStagePosition> {
       if (idx < 0 || idx >= positions_.size()) {
          return null;
       }
-      
+
       return positions_.get(idx);
    }
-   
+
    /**
     * Returns a copy of the multi-stage position associated with the position index.
     *
@@ -121,10 +121,10 @@ public class PositionList implements Iterable<MultiStagePosition> {
       if (idx < 0 || idx >= positions_.size()) {
          return null;
       }
-      
+
       return MultiStagePosition.newInstance(positions_.get(idx));
    }
-   
+
    /**
     * Returns position index associated with the position name.
     *
@@ -139,7 +139,7 @@ public class PositionList implements Iterable<MultiStagePosition> {
       }
       return -1;
    }
-   
+
    /**
     * Adds a new position to the list.
     *
@@ -168,12 +168,12 @@ public class PositionList implements Iterable<MultiStagePosition> {
       positions_.add(in0, pos);
       notifyChangeListeners();
    }
-   
+
    /**
     * Replaces position in the list with the new position.
     *
     * @param index index of the position to be replaced
-    * @param pos - multi-stage position
+    * @param pos   - multi-stage position
     */
    public void replacePosition(int index, MultiStagePosition pos) {
       if (index >= 0 && index < positions_.size()) {
@@ -181,7 +181,7 @@ public class PositionList implements Iterable<MultiStagePosition> {
          notifyChangeListeners();
       }
    }
-   
+
    /**
     * Returns the number of positions contained within the list.
     *
@@ -190,7 +190,7 @@ public class PositionList implements Iterable<MultiStagePosition> {
    public int getNumberOfPositions() {
       return positions_.size();
    }
-   
+
    /**
     * Empties the list.
     */
@@ -198,7 +198,7 @@ public class PositionList implements Iterable<MultiStagePosition> {
       positions_.clear();
       notifyChangeListeners();
    }
-   
+
    /**
     * Removes a specific position based on the index.
     *
@@ -210,7 +210,7 @@ public class PositionList implements Iterable<MultiStagePosition> {
       }
       notifyChangeListeners();
    }
-   
+
    /**
     * Initialize the entire array by passing an array of multi-stage positions.
     *
@@ -232,21 +232,21 @@ public class PositionList implements Iterable<MultiStagePosition> {
       for (int i = 0; i < positions_.size(); i++) {
          list[i] = positions_.get(i);
       }
-      
+
       return list;
    }
-   
+
    /**
     * Assigns a label to the position index.
     *
-    * @param idx - position index
+    * @param idx   - position index
     * @param label - new label (name)
     */
    public void setLabel(int idx, String label) {
       if (idx < 0 || idx >= positions_.size()) {
          return;
       }
-      
+
       positions_.get(idx).setLabel(label);
       notifyChangeListeners();
    }
@@ -303,27 +303,26 @@ public class PositionList implements Iterable<MultiStagePosition> {
    public String generateLabel() {
       return generateLabel("Pos");
    }
-   
+
    /**
     * Generates a label for a new Position.
     *
     * @param proposal user-supplied suggestion
-    * @return new, unique label that will be accepted by this list 
+    * @return new, unique label that will be accepted by this list
     */
    public String generateLabel(String proposal) {
       String label = proposal + positions_.size();
-      
+
       // verify the uniqueness
       int i = 1;
       while (!isLabelUnique(label)) {
          label = proposal + (positions_.size() + i++);
       }
-      
+
       return label;
    }
-           
-   
-   
+
+
    /**
     * Verify that the new label is unique.
     *
@@ -401,7 +400,7 @@ public class PositionList implements Iterable<MultiStagePosition> {
    public static class PosListIterator implements Iterator<MultiStagePosition> {
       private final PositionList list_;
       private int index_ = 0;
-      
+
       public PosListIterator(PositionList list) {
          list_ = list;
       }

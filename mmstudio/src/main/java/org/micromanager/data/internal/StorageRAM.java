@@ -41,7 +41,7 @@ import org.micromanager.data.SummaryMetadata;
  * TODO: coordsToImage_ can be set to null in the close function
  * if any of the member functions are called after "close", a null pointer exception
  * will follow.  We can either check for null whenever coordsToImage is used,
- * or make sure that no member is ever called after the close function 
+ * or make sure that no member is ever called after the close function
  * (which may be very difficult to guarantee).
  */
 public final class StorageRAM implements RewritableStorage {
@@ -139,15 +139,15 @@ public final class StorageRAM implements RewritableStorage {
     * the provided axes (i.e., remove those axes from our images, and
     * then check if the Coord is identical to the one given).
     *
-    * @param coords coord looking for matching images
+    * @param coords          coord looking for matching images
     * @param ignoreTheseAxes Axes to be ignored in the images collection when
     *                        looking for matches
     * @return List with Images that have the same coord as the one given
-    *         (except for the axes to be ignored).
+    *     (except for the axes to be ignored).
     * @throws IOException Not sure why this is here, should never be thrown.
     */
    public synchronized List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
-           throws IOException {
+         throws IOException {
       if (coordsToImage_ == null) {
          return null;
       }

@@ -99,8 +99,7 @@ public final class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
    private void reloadExposureTime(JTextField text) {
       try {
          text.setText(NumberUtils.doubleToDisplayString(studio_.core().getExposure()));
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio_.logs().logError(e, "Error getting core exposure time");
       }
    }
@@ -109,8 +108,7 @@ public final class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
       try {
          double time = NumberUtils.displayStringToDouble(text);
          studio_.app().setExposure(time);
-      }
-      catch (ParseException e) {
+      } catch (ParseException e) {
          // Ignore it.
       }
    }
@@ -130,7 +128,9 @@ public final class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
          super(numCols);
          getDocument().addDocumentListener(new DocumentListener() {
             @Override
-            public void changedUpdate(DocumentEvent e) {}
+            public void changedUpdate(DocumentEvent e) {
+            }
+
             @Override
             public void insertUpdate(DocumentEvent e) {
                amMutating_ = true;
@@ -139,6 +139,7 @@ public final class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
                // Changing the exposure time loses focus, so request it back.
                requestFocus();
             }
+
             @Override
             public void removeUpdate(DocumentEvent e) {
                amMutating_ = true;
@@ -168,5 +169,7 @@ public final class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
             super.setText(text);
          }
       }
-   };
+   }
+
+   ;
 }

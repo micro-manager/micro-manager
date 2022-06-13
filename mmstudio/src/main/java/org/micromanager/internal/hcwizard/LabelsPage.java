@@ -44,7 +44,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Wizard page to define labels for state devices.
- *
  */
 public final class LabelsPage extends PagePanel {
    private static final long serialVersionUID = 1L;
@@ -214,9 +213,10 @@ public final class LabelsPage extends PagePanel {
 
       JTextArea help = createHelpText(
             "Some devices, such as filter wheels and objective turrets, have discrete positions "
-            + "that can have names assigned to them. For example, position 1 of a filter wheel "
-            + "could be the DAPI channel, position 2 the FITC channel, etc. "
-            + "Assign names to positions here.");
+                  +
+                  "that can have names assigned to them. For example, position 1 of a filter wheel "
+                  + "could be the DAPI channel, position 2 the FITC channel, etc. "
+                  + "Assign names to positions here.");
       add(help, "spanx, growx, wrap");
       final JScrollPane devScrollPane = new JScrollPane();
       add(devScrollPane, "growy, width 200!");

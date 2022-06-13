@@ -17,7 +17,6 @@ import java.awt.Toolkit;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -61,7 +60,7 @@ public final class EDTHangLogger {
 
    private long heartbeatTimebaseNs_ = NEVER;
    private long lastHeartbeatNs_ = NEVER;
-   private long hangCheckStartNs_  = NEVER;
+   private long hangCheckStartNs_ = NEVER;
    private boolean missedHeartbeat_ = false;
    private WeakReference<AWTEvent> nextEventWeakRef_;
 
@@ -69,7 +68,7 @@ public final class EDTHangLogger {
    private static EDTHangLogger instance_;
 
    public static void startDefault(CMMCore core, long heartbeatTimeoutMs,
-         long hangCheckIntervalMs) {
+                                   long hangCheckIntervalMs) {
       if (instance_ != null) {
          stopDefault();
       }
@@ -104,7 +103,7 @@ public final class EDTHangLogger {
 
 
    public EDTHangLogger(CMMCore core, long heartbeatTimeoutMs,
-         long hangCheckIntervalMs) {
+                        long hangCheckIntervalMs) {
       core_ = core;
       timer_ = new Timer("EDTHangLogger timer", true);
       heartbeatTimeoutMs_ = Math.max(0, heartbeatTimeoutMs);
@@ -142,7 +141,8 @@ public final class EDTHangLogger {
       EventQueue.invokeLater(this::heartbeat);
 
       TimerTask checkTask = new TimerTask() {
-         @Override public void run() {
+         @Override
+         public void run() {
             checkForHeartbeat(true);
          }
       };
@@ -176,7 +176,8 @@ public final class EDTHangLogger {
 
       // Add a sentinel to the event queue so that peekEvent() does not
       // return empty.
-      EventQueue.invokeLater(() -> {});
+      EventQueue.invokeLater(() -> {
+      });
 
       // Get the next event in the event queue to use as reference point. (We
       // cannot get the _current_ event since there is no method to access it
@@ -207,7 +208,8 @@ public final class EDTHangLogger {
       logDebug(1, "Scheduling hang check");
       hangCheckStartNs_ = System.nanoTime();
       TimerTask recheckTask = new TimerTask() {
-         @Override public void run() {
+         @Override
+         public void run() {
             checkForHang(true);
          }
       };
@@ -247,7 +249,8 @@ public final class EDTHangLogger {
 
       logDebug(1, "Scheduling hang recheck");
       TimerTask recheckTask = new TimerTask() {
-         @Override public void run() {
+         @Override
+         public void run() {
             checkForHang(false);
          }
       };
@@ -275,7 +278,7 @@ public final class EDTHangLogger {
    }
 
    private void formatThreadStackTrace(StringBuilder sb, Thread thread,
-         StackTraceElement[] trace) {
+                                       StackTraceElement[] trace) {
       sb.append("\n");
       sb.append("Thread ").append(thread.getId()).append(" [")
             .append(thread.getName()).append("] ")

@@ -54,7 +54,7 @@ public final class HistogramView extends JPanel {
    /**
     * Listener for changes in histogram min, max and gamma.
     */
-   public  interface Listener {
+   public interface Listener {
       void histogramScalingMinChanged(int component, long newMin);
 
       void histogramScalingMaxChanged(int component, long newMax);
@@ -203,7 +203,7 @@ public final class HistogramView extends JPanel {
       state.graph_ = Arrays.copyOf(graph, graphLen);
       state.rangeMax_ = rangeMax;
 
-      if (component == selectedComponent_  && rangeMaxChanged) {
+      if (component == selectedComponent_ && rangeMaxChanged) {
          nullRectsAndMappingPath();
       }
       state.cachedInterpolatedLogScaledGraph_ = null;
@@ -259,7 +259,7 @@ public final class HistogramView extends JPanel {
       }
       repaint();
    }
-   
+
    private void nullRectsAndMappingPath() {
       scalingMinLabelRect_ = null;
       scalingMaxLabelRect_ = null;
@@ -379,7 +379,7 @@ public final class HistogramView extends JPanel {
          if (top) {
             scalingMaxHandleRect_ = new Rectangle(x, y - s, s, s);
          } else {
-            scalingMinHandleRect_ =  new Rectangle(x - s, y, s, s);
+            scalingMinHandleRect_ = new Rectangle(x - s, y, s, s);
          }
       }
       return top ? scalingMaxHandleRect_ : scalingMinHandleRect_;
@@ -601,7 +601,7 @@ public final class HistogramView extends JPanel {
       g2d.setStroke(new BasicStroke(
             1.0f, BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER, 10.0f,
-            new float[] { 5.0f, 5.0f }, offset));
+            new float[] {5.0f, 5.0f}, offset));
       g2d.draw(new Line2D.Float(loXPos, rect.y, loXPos, rect.y + rect.height));
       g2d.draw(new Line2D.Float(hiXPos, rect.y, hiXPos, rect.y + rect.height));
    }
@@ -625,7 +625,7 @@ public final class HistogramView extends JPanel {
       g2d.setStroke(new BasicStroke(
             1.5f, BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER, 10.0f,
-            new float[] { 5.0f, 5.0f }, offset));
+            new float[] {5.0f, 5.0f}, offset));
       g2d.draw(new Line2D.Float(xPos, rect.y, xPos, rect.y + rect.height));
    }
 
@@ -854,10 +854,10 @@ public final class HistogramView extends JPanel {
          // Apply log scaling if requested
          if (plotLogIntensity_) {
             for (int i = 0; i < state.cachedInterpolatedLogScaledGraph_.length; ++i) {
-               state.cachedInterpolatedLogScaledGraph_[i] = 
-                       state.cachedInterpolatedLogScaledGraph_[i] > 1.0f
-                             ?
-                     (float) Math.log(state.cachedInterpolatedLogScaledGraph_[i]) : 0.0f;
+               state.cachedInterpolatedLogScaledGraph_[i] =
+                     state.cachedInterpolatedLogScaledGraph_[i] > 1.0f
+                           ?
+                           (float) Math.log(state.cachedInterpolatedLogScaledGraph_[i]) : 0.0f;
             }
          }
       }
@@ -970,7 +970,7 @@ public final class HistogramView extends JPanel {
             default:
                throw new AssertionError(handleBeingDragged_.name());
          }
-      }  finally {
+      } finally {
          handleBeingDragged_ = Handle.NONE;
       }
    }
@@ -1043,7 +1043,7 @@ public final class HistogramView extends JPanel {
 
    private void jumpSetScaling(int mouseX, boolean top) {
       ComponentState state = componentStates_.get(selectedComponent_);
-      long intensity =  Math.round(
+      long intensity = Math.round(
             graphXPosToIntensityFraction(mouseX) * state.rangeMax_);
       intensity = Math.max(0, Math.min(state.rangeMax_, intensity));
       if (top) {

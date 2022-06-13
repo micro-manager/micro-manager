@@ -21,7 +21,7 @@
 
 package org.micromanager.internal;
 
-/*
+/**
  * A class with a single public string, containing the version of
  * Micro-Manager. Build scripts will temporarily alter this file.
  */

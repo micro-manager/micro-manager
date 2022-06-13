@@ -48,7 +48,8 @@ class LegacyPropertyMap1Deserializer {
    }
 
    static void constructPropertyMap1Property(PropertyMap.Builder builder,
-         String key, String typeName, JsonElement valueElement) {
+                                             String key, String typeName,
+                                             JsonElement valueElement) {
       if ("String".equals(typeName)) {
          builder.putString(key, valueElement.getAsString());
       } else if ("Integer".equals(typeName)) {

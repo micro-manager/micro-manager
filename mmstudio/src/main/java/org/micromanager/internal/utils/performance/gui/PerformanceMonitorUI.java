@@ -37,7 +37,7 @@ public class PerformanceMonitorUI {
    }
 
    public static PerformanceMonitorUI create(PerformanceMonitor monitor,
-         String title) {
+                                             String title) {
       return new PerformanceMonitorUI(monitor, title);
    }
 

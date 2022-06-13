@@ -17,11 +17,11 @@ public class DefaultXYStagePositionChangedEvent implements XYStagePositionChange
     * Event signalling that the position of 2D stage has changed.
     *
     * @param deviceName Name of the 2D stage device
-    * @param xPos New X position (in microns)
-    * @param yPos New Y position (in microns)
+    * @param xPos       New X position (in microns)
+    * @param yPos       New Y position (in microns)
     */
    public DefaultXYStagePositionChangedEvent(String deviceName,
-                                      double xPos, double yPos) {
+                                             double xPos, double yPos) {
       deviceName_ = deviceName;
       xPos_ = xPos;
       yPos_ = yPos;

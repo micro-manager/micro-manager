@@ -26,7 +26,7 @@ package org.micromanager.data;
  */
 public class DatastoreRewriteException extends UnsupportedOperationException {
    public static final String ERROR_MESSAGE =
-           "An attempt was made to overwrite data in a non-rewriteable Datastore";
+         "An attempt was made to overwrite data in a non-rewriteable Datastore";
 
    public DatastoreRewriteException() {
       super(ERROR_MESSAGE);

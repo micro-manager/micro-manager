@@ -55,7 +55,7 @@ public final class ConfigGroupPad extends JScrollPane {
    private StateTableData data_;
    private static final String COLUMN_WIDTH = "group_col_width";
 
-   
+
    public ConfigGroupPad(Studio studio) {
       super();
       studio_ = studio;
@@ -74,16 +74,16 @@ public final class ConfigGroupPad extends JScrollPane {
       table_.setAutoCreateColumnsFromModel(false);
       table_.setRowSelectionAllowed(true);
       setViewportView(table_);
-      
+
       data_ = new StateTableData(studio_.core());
       table_.setModel(data_);
 
 
-      table_.addColumn(new TableColumn(0, 200, 
-              new StateGroupCellRenderer(studio_), null));
-      table_.addColumn(new TableColumn(1, 200, 
-              new StatePresetCellRenderer(studio_), new StatePresetCellEditor()));
-      
+      table_.addColumn(new TableColumn(0, 200,
+            new StateGroupCellRenderer(studio_), null));
+      table_.addColumn(new TableColumn(1, 200,
+            new StatePresetCellRenderer(studio_), new StatePresetCellEditor()));
+
       int colWidth = studio_.profile().getSettings(this.getClass())
             .getInteger(COLUMN_WIDTH, 0);
       if (colWidth > 0) {
@@ -97,7 +97,7 @@ public final class ConfigGroupPad extends JScrollPane {
    public void saveSettings() {
       if (table_ != null) {
          studio_.profile().getSettings(this.getClass()).putInteger(
-                 COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
+               COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
       }
    }
 
@@ -118,7 +118,7 @@ public final class ConfigGroupPad extends JScrollPane {
    /**
     * Sets the display to the provided group and config.
     *
-    * @param groupName ConfigGroup
+    * @param groupName  ConfigGroup
     * @param configName ConfigName
     */
    public void refreshGroup(String groupName, String configName) {
@@ -176,14 +176,14 @@ public final class ConfigGroupPad extends JScrollPane {
    }
 
 
-
    ////////////////////////////////////////////////////////////////////////////
+
    /**
     * Property table data model, representing state devices.
     */
    public final class StateTableData extends AbstractTableModel {
       private static final long serialVersionUID = -6584881796860806078L;
-      final public String[] columnNames_ = {
+      public final String[] columnNames_ = {
             "Group",
             "Preset"
       };
@@ -222,7 +222,7 @@ public final class ConfigGroupPad extends JScrollPane {
          return null;
       }
 
-      
+
       @Override
       public void setValueAt(Object value, int row, int col) {
          StateItem item = groupList_.get(row);
@@ -249,14 +249,14 @@ public final class ConfigGroupPad extends JScrollPane {
                   // Associate exposure time with presets in current channel group
                   if (item.group.equals(core_.getChannelGroup())) {
                      core_.setExposure(
-                             studio_.app().getChannelExposureTime(
-                                     item.group, value.toString(), core_.getExposure()));
+                           studio_.app().getChannelExposureTime(
+                                 item.group, value.toString(), core_.getExposure()));
                   }
-                  
+
                   // By updating the system cache here we are able to use it in 
                   // `refreshStatus` and when updating the GUI rather than needing 
                   // repeatedly query the same properties in both operations.
-                  studio_.core().updateSystemStateCache(); 
+                  studio_.core().updateSystemStateCache();
                   refreshStatus();
                   table_.repaint();
                   // This is a little superfluous, but it is nice that we
@@ -390,7 +390,7 @@ public final class ConfigGroupPad extends JScrollPane {
       /**
        * TODO.
        *
-       * @param groupName Group name.
+       * @param groupName  Group name.
        * @param configName Configuration name.
        */
       public void refreshGroup(String groupName, String configName) {

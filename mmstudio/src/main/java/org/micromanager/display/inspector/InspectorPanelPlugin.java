@@ -21,7 +21,7 @@ import org.micromanager.display.DataViewer;
 /**
  * A plugin providing a panel in the Inspector window.
  *
- * To create an inspector plugin, annotate your class like this:
+ * <p>To create an inspector plugin, annotate your class like this:
  * <pre><code>
  * {@literal @}Plugin(type = InspectorPlugin.class,
  *       priority = Prioroty.NORMAL_PRIORITY,  // Suggests order in inspector

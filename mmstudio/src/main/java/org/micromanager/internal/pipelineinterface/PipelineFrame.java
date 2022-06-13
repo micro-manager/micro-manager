@@ -20,7 +20,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -80,7 +79,7 @@ public final class PipelineFrame extends JFrame
       //
       // First column of the layout
       //
-      final String downwardsArrow = "<html><b>\u2193</b></html>";
+      final String downwardsArrow = "<html><b>\u2193</b></html>"; // Downward arrow in unicode
       add(new JLabel("<html><b>Camera</b></html>"), "split 2");
       add(new JLabel(downwardsArrow));
 
@@ -135,9 +134,9 @@ public final class PipelineFrame extends JFrame
 
       JLabel explanationLabel = new JLabel(
             "<html><div width=\"125\" style=\"font-size: small\">"
-            + "Enabled processors in the pipeline are applied in order to "
-            + "images acquired by the camera."
-            + "</div></html>");
+                  + "Enabled processors in the pipeline are applied in order to "
+                  + "images acquired by the camera."
+                  + "</div></html>");
       add(explanationLabel);
 
       JButton replayButton = new JButton("Process Old Data");
@@ -171,7 +170,7 @@ public final class PipelineFrame extends JFrame
       setMinimumSize(minFrameSize);
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
@@ -260,8 +259,8 @@ public final class PipelineFrame extends JFrame
                String path = nameToPath.get(name);
                getTableModel().addConfigurator(
                      new ConfiguratorWrapper(plugins.get(path),
-                        plugins.get(path).createConfigurator(blankSettings),
-                        name));
+                           plugins.get(path).createConfigurator(blankSettings),
+                           name));
             }
          };
          addAction.putValue(Action.NAME, name);
@@ -305,9 +304,9 @@ public final class PipelineFrame extends JFrame
     * configured.
     */
    public void addConfiguredProcessor(ProcessorConfigurator config,
-         ProcessorPlugin plugin) {
+                                      ProcessorPlugin plugin) {
       getTableModel().addConfigurator(new ConfiguratorWrapper(plugin,
-               config, plugin.getName()));
+            config, plugin.getName()));
       setVisible(true);
       config.showGUI();
    }
@@ -327,22 +326,22 @@ public final class PipelineFrame extends JFrame
       return getTableModel().getPipelineFactories(true);
    }
 
-   private List<ProcessorConfigurator>
-         convertWrappersToConfigurators(List<ConfiguratorWrapper> configs) {
+   private List<ProcessorConfigurator> convertWrappersToConfigurators(
+         List<ConfiguratorWrapper> configs) {
       ArrayList<ProcessorConfigurator> result = new ArrayList<>();
       for (ConfiguratorWrapper config : configs) {
          result.add(config.getConfigurator());
       }
       return result;
    }
-   
+
    /**
     * Return a list of the configurators.
     */
    public List<ProcessorConfigurator> getPipelineConfigurators() {
       return convertWrappersToConfigurators(getTableModel().getPipelineConfigurators());
    }
-   
+
    /**
     * Return a list of the enabled configurators.
     */
@@ -350,7 +349,7 @@ public final class PipelineFrame extends JFrame
       List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(false);
       return convertWrappersToConfigurators(configs);
    }
-   
+
    /**
     * Return a list of the live-mode enabled configurators.
     */
@@ -358,7 +357,7 @@ public final class PipelineFrame extends JFrame
       List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(true);
       return convertWrappersToConfigurators(configs);
    }
-   
+
    /**
     * Set whether or not a configurator is enabled.
     */
@@ -366,7 +365,7 @@ public final class PipelineFrame extends JFrame
       int column = getTableModel().ENABLED_COLUMN;
       getTableModel().setValueAt(enabled, row, column);
    }
-   
+
    /**
     * Set whether or not a configurator is enabled for live mode.
     */
@@ -374,7 +373,7 @@ public final class PipelineFrame extends JFrame
       int column = getTableModel().ENABLED_LIVE_COLUMN;
       getTableModel().setValueAt(enabled, row, column);
    }
-   
+
    /**
     * Get whether or not a configurator is enabled.
     */
@@ -382,7 +381,7 @@ public final class PipelineFrame extends JFrame
       int column = getTableModel().ENABLED_COLUMN;
       return (boolean) getTableModel().getValueAt(row, column);
    }
-   
+
    /**
     * Get whether or not a configurator is enabled for live mode.
     */

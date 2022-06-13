@@ -43,9 +43,9 @@ public interface RewritableDatastore extends Datastore {
     * @param image Micro-Manager Image object
     * @throws DatastoreFrozenException if the freeze() method has been called.
     * @throws IllegalArgumentException if the image's axes do not match the
-    *         axes of images previously added to the Datastore. All images
-    *         in a Datastore are required to have the same set of axes in
-    *         their Coords objects.
+    *                                  axes of images previously added to the Datastore. All images
+    *                                  in a Datastore are required to have the same set of axes in
+    *                                  their Coords objects.
     */
    @Override
    void putImage(Image image) throws IOException;
@@ -68,7 +68,7 @@ public interface RewritableDatastore extends Datastore {
     * do not correspond to any image in the Datastore.
     *
     * @param coords Coordinates of the image to remove.
-    * @throws java.io.IOException if an IO error occurred.
+    * @throws java.io.IOException      if an IO error occurred.
     * @throws IllegalArgumentException if the coords do not match any image.
     */
    void deleteImage(Coords coords) throws IOException;
@@ -85,7 +85,7 @@ public interface RewritableDatastore extends Datastore {
     * This method may potentially remove no images.
     *
     * @param coords Potentially-underspecified coordinates of the image(s) to
-    *        remove.
+    *               remove.
     * @throws java.io.IOException if an IO error occurred.
     */
    void deleteImagesMatching(Coords coords) throws IOException;

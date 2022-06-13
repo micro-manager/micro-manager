@@ -40,13 +40,12 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
- *
  * @author Nico
  */
 @Plugin(type = DisplayGearMenuPlugin.class)
 public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlugin {
    private Studio studio_;
-   
+
    @Override
    public String getSubMenu() {
       return "";
@@ -57,11 +56,11 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
       final boolean copy = false;
       final boolean setProps = true;
       // TODO: UI to set copy, give option to only do partial data, and multiple positions
-      
+
       DataProvider dp = display.getDataProvider();
       Coords displayPosition = display.getDisplayPosition();
       int p = displayPosition.getP();
-      
+
       ImagePlus iPlus = null;
       Image image = null;
       if (dp.getNumImages() == 1) {
@@ -69,7 +68,7 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
             image = dp.getAnyImage();
             ImageProcessor iProc = DefaultImageJConverter.createProcessor(image, copy);
             iPlus = new ImagePlus(dp.getName() + "-ij", iProc);
-            
+
          } catch (IOException ex) {
             // TODO: report error
          }
@@ -85,8 +84,8 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
          }
       } else if (dp.getNumImages() > 1) {
          try {
-            ImageStack imgStack = new ImageStack(dp.getAnyImage().getWidth(), 
-                    dp.getAnyImage().getHeight());
+            ImageStack imgStack = new ImageStack(dp.getAnyImage().getWidth(),
+                  dp.getAnyImage().getHeight());
             Coords.Builder cb = Coordinates.builder().c(0).t(0).p(p).z(0);
             for (int t = 0; t < dp.getNextIndex(Coords.T); t++) {
                for (int z = 0; z < dp.getNextIndex(Coords.Z); z++) {
@@ -94,12 +93,12 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
                      image = dp.getImage(cb.c(c).t(t).z(z).build());
                      ImageProcessor iProc;
                      if (image != null) {
-                        iProc = DefaultImageJConverter.createProcessor(                            
-                             image, copy);
+                        iProc = DefaultImageJConverter.createProcessor(
+                              image, copy);
                      } else { // handle missing images - should be handled by MM
-                              // so remove this code once this is done nicely in MM
+                        // so remove this code once this is done nicely in MM
                         iProc = DefaultImageJConverter.createBlankProcessor(
-                                dp.getAnyImage());
+                              dp.getAnyImage());
                      }
                      imgStack.addSlice(iProc);
                   }
@@ -108,38 +107,50 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
             iPlus = new ImagePlus(dp.getName() + "-ij");
             iPlus.setOpenAsHyperStack(true);
             iPlus.setStack(imgStack, dp.getNextIndex(Coords.C),
-                    dp.getNextIndex(Coords.Z), dp.getNextIndex(Coords.T));
-            
+                  dp.getNextIndex(Coords.Z), dp.getNextIndex(Coords.T));
+
             int displayMode;
             switch (display.getDisplaySettings().getColorMode()) {
-               case COLOR: { displayMode = IJ.COLOR; break; }
-               case COMPOSITE: { displayMode = IJ.COMPOSITE; break; }
-               case GRAYSCALE: { displayMode = IJ.GRAYSCALE; break; }
-               default: { displayMode = IJ.GRAYSCALE; break; }
+               case COLOR: {
+                  displayMode = IJ.COLOR;
+                  break;
+               }
+               case COMPOSITE: {
+                  displayMode = IJ.COMPOSITE;
+                  break;
+               }
+               case GRAYSCALE: {
+                  displayMode = IJ.GRAYSCALE;
+                  break;
+               }
+               default: {
+                  displayMode = IJ.GRAYSCALE;
+                  break;
+               }
             }
-            iPlus.setDisplayMode(displayMode);  
+            iPlus.setDisplayMode(displayMode);
             CompositeImage ci = new CompositeImage(iPlus, displayMode);
             ci.setTitle(dp.getName() + "-ij");
             for (int c = 0; c < dp.getNextIndex(Coords.C); c++) {
                ci.setChannelLut(
-                       LUT.createLutFromColor(display.getDisplaySettings().getChannelColor(c)),
-                       c + 1);
+                     LUT.createLutFromColor(display.getDisplaySettings().getChannelColor(c)),
+                     c + 1);
             }
             if (setProps && image != null) {
                setCalibration(ci, dp, image);
             }
             ci.show();
             // would like to also copy the zoom....
-           
+
          } catch (IOException ex) {
             // TODO: report
          }
-         
+
       }
-      
-      
+
+
    }
-   
+
    private void setCalibration(ImagePlus iPlus, DataProvider dp, Image image) {
       Calibration cal = new Calibration(iPlus);
       Double pSize = image.getMetadata().getPixelSizeUm();
@@ -181,8 +192,8 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
 
    @Override
    public String getCopyright() {
-     return "Copyright (c) Regents of the University of California";
+      return "Copyright (c) Regents of the University of California";
    }
-   
-   
+
+
 }

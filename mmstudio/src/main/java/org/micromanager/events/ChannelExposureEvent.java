@@ -60,5 +60,5 @@ public interface ChannelExposureEvent extends MMEvent {
     * @deprecated use {@link #isMainExposureTime()} instead
     */
    @Deprecated
-    boolean getIsMainExposureTime();
+   boolean getIsMainExposureTime();
 }

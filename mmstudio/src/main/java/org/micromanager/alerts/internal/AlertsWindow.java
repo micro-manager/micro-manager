@@ -31,17 +31,27 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
-import javax.swing.*;
-
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.WindowPositioning;
 
 
+/**
+ * Shows the Alert Window that can be used to notify the user in a gentle way.
+ */
 public final class AlertsWindow extends JFrame {
    private static final String NO_ALERTS_MSG = "There are no messages at this time.";
-   private static final String SHOULD_SHOW_WINDOW = "Show the Messages window when a message is received";
+   private static final String SHOULD_SHOW_WINDOW =
+         "Show the Messages window when a message is received";
 
    private Studio studio_;
    private final ArrayList<DefaultAlert> allAlerts_ = new ArrayList<DefaultAlert>();
@@ -49,22 +59,27 @@ public final class AlertsWindow extends JFrame {
    private final JPanel alertsPanel_ = new JPanel(new MigLayout("insets 0, fill, flowy"));
    private boolean shouldShowOnMessage_ = true;
 
+   /**
+    * Constructor of the usually singleton instance of the AlertsWindow.
+    *
+    * @param studio The usually singleton instance of the always present Studio object.
+    */
    public AlertsWindow(Studio studio) {
       super("Messages");
       studio_ = studio;
       studio.events().registerForEvents(this);
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(300, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
-      
+
       super.setLayout(new MigLayout("fill, insets 2, gap 0"));
 
       Font defaultFont = new Font("Arial", Font.PLAIN, 10);
 
-      shouldShowOnMessage_ = studio_.profile().getSettings(AlertsWindow.class).
-              getBoolean(SHOULD_SHOW_WINDOW, true);
+      shouldShowOnMessage_ = studio_.profile().getSettings(AlertsWindow.class)
+            .getBoolean(SHOULD_SHOW_WINDOW, true);
       final JCheckBox showWindowCheckBox = new JCheckBox(
             "Open this window when messages arrive", shouldShowOnMessage_);
       showWindowCheckBox.setFont(defaultFont);
@@ -73,7 +88,7 @@ public final class AlertsWindow extends JFrame {
          public void actionPerformed(ActionEvent e) {
             shouldShowOnMessage_ = showWindowCheckBox.isSelected();
             studio_.profile().getSettings(AlertsWindow.class).putBoolean(
-                    SHOULD_SHOW_WINDOW, shouldShowOnMessage_);
+                  SHOULD_SHOW_WINDOW, shouldShowOnMessage_);
          }
       });
       super.add(showWindowCheckBox, "split, span");
@@ -92,7 +107,7 @@ public final class AlertsWindow extends JFrame {
          }
       });
       super.add(clearAllButton, "split 2, gapleft push");
-      
+
       // not great to put this next to the Clear button....
       JButton copyButton = new JButton("Copy All");
       copyButton.setFont(defaultFont);
@@ -115,8 +130,8 @@ public final class AlertsWindow extends JFrame {
             Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
             clpbrd.setContents(stringSelection, null);
          }
-      } );
-      
+      });
+
       super.add(copyButton, "wrap");
 
       JScrollPane scroller = new JScrollPane(alertsPanel_,
@@ -128,7 +143,7 @@ public final class AlertsWindow extends JFrame {
       super.pack();
    }
 
-      /**
+   /**
     * Display the AlertsWindow, creating it if necessary.
     */
    public void showWithoutFocus() {
@@ -144,7 +159,8 @@ public final class AlertsWindow extends JFrame {
 
    /**
     * Display the AlertsWindow, if the given alert is not muted.
-    * @param alert  Alert to be shown
+    *
+    * @param alert Alert to be shown
     */
    public void showWindowUnlessMuted(DefaultAlert alert) {
       if (isMuted(alert) || !shouldShowOnMessage_) {
@@ -155,9 +171,10 @@ public final class AlertsWindow extends JFrame {
 
    /**
     * Create a simple alert with a text message.
-    * @param title  Title of the alert
-    * @param text   Text of the alert
-    * @return       Alert
+    *
+    * @param title Title of the alert
+    * @param text  Text of the alert
+    * @return Alert
     */
    public DefaultAlert addUpdatableAlert(String title, String text) {
       DefaultAlert alert = new DefaultAlert(this, title, new JLabel(text));
@@ -167,10 +184,11 @@ public final class AlertsWindow extends JFrame {
    }
 
    /**
-    * Create a custom alert with any contents
-    * @param title  Title of the alert
+    * Create a custom alert with any contents.
+    *
+    * @param title    Title of the alert
     * @param contents Content to be added to the alert
-    * @return 
+    * @return A custom alert with caller defined content
     */
    public DefaultAlert addCustomAlert(String title, JComponent contents) {
       DefaultAlert alert = new DefaultAlert(this, title, contents);
@@ -181,8 +199,9 @@ public final class AlertsWindow extends JFrame {
 
    /**
     * Create an alert that can contain multiple categories of messages.
-    * @param title  Title of the alert
-    * @return   Categorized alert
+    *
+    * @param title Title of the alert
+    * @return Categorized alert
     */
    public CategorizedAlert addCategorizedAlert(String title) {
       CategorizedAlert alert = CategorizedAlert.createAlert(this, title);
@@ -190,7 +209,12 @@ public final class AlertsWindow extends JFrame {
       addAlert(alert);
       return alert;
    }
-   
+
+   /**
+    * Adds an alert to the alertsPanel.
+    *
+    * @param alert Alert to be added.
+    */
    public void addAlert(DefaultAlert alert) {
       if (allAlerts_.isEmpty()) {
          // Remove the "there are no alerts" label.
@@ -203,6 +227,11 @@ public final class AlertsWindow extends JFrame {
       packLater();
    }
 
+   /**
+    * Removes an alert from the alertsPanel.
+    *
+    * @param alert Alert to be removed.
+    */
    public void removeAlert(DefaultAlert alert) {
       if (allAlerts_.contains(alert)) {
          allAlerts_.remove(alert);
@@ -230,14 +259,14 @@ public final class AlertsWindow extends JFrame {
 
    /**
     * Muted alerts won't cause the window to be shown when they appear.
-    * @param alert  Alert to be muted or unmuted
-    * @param isMuted  Whether or not we want this alert to be muted
+    *
+    * @param alert   Alert to be muted or unmuted
+    * @param isMuted Whether or not we want this alert to be muted
     */
    public void setMuted(DefaultAlert alert, boolean isMuted) {
       if (isMuted) {
          mutedAlerts_.add(alert.getTitle());
-      }
-      else if (mutedAlerts_.contains(alert.getTitle())) {
+      } else if (mutedAlerts_.contains(alert.getTitle())) {
          mutedAlerts_.remove(alert.getTitle());
       }
    }
@@ -249,11 +278,16 @@ public final class AlertsWindow extends JFrame {
    public void textUpdated(DefaultAlert alert) {
       studio_.events().post(new AlertUpdatedEvent(alert));
    }
-   
+
+   /**
+    * Handles the event signalling that the application is shutting down.
+    *
+    * @param event Signals that the application started to shut down.
+    */
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.isCanceled()) {
-        dispose();
+         dispose();
       }
    }
 }

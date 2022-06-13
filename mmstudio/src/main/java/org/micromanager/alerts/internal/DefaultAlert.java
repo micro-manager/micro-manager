@@ -46,8 +46,8 @@ public class DefaultAlert extends JPanel implements UpdatableAlert {
    private boolean isUsable_ = true;
 
    /**
-    * @param parent Alerts Window that created this alert
-    * @param title  Title of the alert
+    * @param parent   Alerts Window that created this alert
+    * @param title    Title of the alert
     * @param contents contents to be added to the alert
     */
    protected DefaultAlert(AlertsWindow parent, String title, JComponent contents) {
@@ -77,7 +77,9 @@ public class DefaultAlert extends JPanel implements UpdatableAlert {
       // https://commons.wikimedia.org/wiki/File:Echo_bell.svg
       muteButton_ = new JToggleButton(
             IconLoader.getIcon("/org/micromanager/icons/bell_mute.png"));
-      muteButton_.setToolTipText("Mute this message source, so that it will no longer cause the Messages window to be shown if it recurs");
+      muteButton_.setToolTipText(
+            "Mute this message source, so that it will no longer cause the Messages "
+                  + "window to be shown if it recurs");
       muteButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -110,6 +112,7 @@ public class DefaultAlert extends JPanel implements UpdatableAlert {
 
    /**
     * Returns whether or not this alert can have more content added to it.
+    *
     * @return true if more content can be added
     */
    @Override

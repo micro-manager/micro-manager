@@ -32,7 +32,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.text.ParseException;
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JTextField;
+import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -43,15 +47,15 @@ public final class SliderPanel extends JPanel {
    private JTextField textField_;
    private double lowerLimit_ = 0.0;
    private double upperLimit_ = 10.0;
-   private final int STEPS = 1000;
+   private final int steps_ = 1000;
    private double factor_ = 1.0;
    private boolean integer_ = false;
    private ChangeListener sliderChangeListener_;
 
    private JScrollBar slider_;
-   
+
    /**
-    * Create the panel
+    * Create the panel.
     */
    public SliderPanel() {
       super();
@@ -95,9 +99,9 @@ public final class SliderPanel extends JPanel {
          // implicitly enforce limits
          setText(textField_.getText());
       } catch (ParseException ex) {
-            ReportingUtils.logError(
-                    "Asked to convert an empty variable into a number in SliderPanel.java.  " 
-                    + "This indicates a faulty Device Adapter.");
+         ReportingUtils.logError(
+               "Asked to convert an empty variable into a number in SliderPanel.java.  "
+                     + "This indicates a faulty Device Adapter.");
       }
       return textField_.getText();
    }
@@ -108,11 +112,11 @@ public final class SliderPanel extends JPanel {
 
    public void setLimits(double lowerLimit, double upperLimit) {
       integer_ = false;
-      factor_ = (upperLimit - lowerLimit) / (STEPS);
+      factor_ = (upperLimit - lowerLimit) / (steps_);
       upperLimit_ = upperLimit;
       lowerLimit_ = lowerLimit;
       slider_.setMinimum(0);
-      slider_.setMaximum(STEPS);
+      slider_.setMaximum(steps_);
       slider_.setVisibleAmount(0);
 
    }
@@ -124,9 +128,9 @@ public final class SliderPanel extends JPanel {
       slider_.setMinimum(0);
       factor_ = 1.0;
       int maximum = upperLimit - lowerLimit + 1;
-      if (upperLimit > STEPS) {
-           factor_ = ((double) upperLimit - (double) lowerLimit) / (double) (STEPS);
-           maximum = STEPS + 1;
+      if (upperLimit > steps_) {
+         factor_ = ((double) upperLimit - (double) lowerLimit) / (double) (steps_);
+         maximum = steps_ + 1;
       }
       slider_.setMaximum(maximum);
       slider_.setVisibleAmount(1);
@@ -134,17 +138,17 @@ public final class SliderPanel extends JPanel {
 
 
    private void setSliderValue(double val) {
-      slider_.setValue((int)Math.round((val - lowerLimit_) / factor_));
+      slider_.setValue((int) Math.round((val - lowerLimit_) / factor_));
    }
 
    private void onSliderMove() {
       double value = slider_.getValue() * factor_ + lowerLimit_;
 
       if (integer_) {
-         textField_.setText(NumberUtils.intToDisplayString((int)(value)));
-      } else { 
+         textField_.setText(NumberUtils.intToDisplayString((int) (value)));
+      } else {
          textField_.setText(NumberUtils.doubleToDisplayString(value));
-      }   
+      }
    }
 
 
@@ -156,7 +160,7 @@ public final class SliderPanel extends JPanel {
          setSliderValue(val);
          slider_.getModel().addChangeListener(sliderChangeListener_);
       } catch (ParseException p) {
-         handleException (p);
+         handleException(p);
       }
    }
 
@@ -178,19 +182,23 @@ public final class SliderPanel extends JPanel {
 
    private double enforceLimits(double value) {
       double val = value;
-      if (val < lowerLimit_)
+      if (val < lowerLimit_) {
          val = lowerLimit_;
-      if (val > upperLimit_)
+      }
+      if (val > upperLimit_) {
          val = upperLimit_;
+      }
       return val;
    }
 
    private int enforceLimits(int value) {
       int val = value;
-      if (val < lowerLimit_)
-         val = (int)(lowerLimit_);
-      if (val > upperLimit_)
-         val = (int)(upperLimit_);
+      if (val < lowerLimit_) {
+         val = (int) (lowerLimit_);
+      }
+      if (val > upperLimit_) {
+         val = (int) (upperLimit_);
+      }
       return val;
    }
 
@@ -244,7 +252,7 @@ public final class SliderPanel extends JPanel {
       slider_.setEnabled(enabled);
    }
 
-   private void handleException (Exception e) {
+   private void handleException(Exception e) {
       ReportingUtils.showError(e);
    }
 

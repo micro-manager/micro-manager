@@ -84,7 +84,7 @@ public final class MM1JSONSerializer {
          reader.setLenient(true);
          JsonParser parser = new JsonParser();
          return fromGson(parser.parse(reader));
-      }  catch (Exception e) {
+      } catch (Exception e) {
          throw new IOException("Invalid data", e);
       }
    }
@@ -106,13 +106,13 @@ public final class MM1JSONSerializer {
                if (jo.get("PropVal").isJsonObject()) {
                   LegacyPropertyMap1Deserializer
                         .constructPropertyMap1Property(builder, key,
-                           jo.get("PropType").getAsString(),
-                           jo.get("PropVal").getAsJsonObject());
+                              jo.get("PropType").getAsString(),
+                              jo.get("PropVal").getAsJsonObject());
                } else if (jo.get("PropVal").isJsonPrimitive()) {
                   LegacyPropertyMap1Deserializer
                         .constructPropertyMap1Property(builder, key,
-                           jo.get("PropType").getAsString(),
-                           jo.get("PropVal").getAsJsonPrimitive());
+                              jo.get("PropType").getAsString(),
+                              jo.get("PropVal").getAsJsonPrimitive());
                }
             } else {
                builder.putPropertyMap(key, fromGson(jo));
@@ -150,7 +150,7 @@ public final class MM1JSONSerializer {
                      try {
                         longs.add(n.longValueExact());
                         ok = true;
-                     }  catch (ArithmeticException e) {
+                     } catch (ArithmeticException e) {
                         longs = null;
                      }
                   }
@@ -201,7 +201,7 @@ public final class MM1JSONSerializer {
     * @param map PropertyMap to be translated.
     * @return String with JSON code represting the input PropertyMap.
     * @throws IllegalArgumentException if {@code map} contains value types not
-    *         supported by the legacy JSON format
+    *                                  supported by the legacy JSON format
     */
    public static String toJSON(PropertyMap map) {
       Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -223,7 +223,7 @@ public final class MM1JSONSerializer {
    }
 
    private static JsonElement arrayToGson(PropertyMap source,
-         String key, Class<?> elementClass) {
+                                          String key, Class<?> elementClass) {
       JsonArray ja = new JsonArray();
       if (elementClass == String.class) {
          for (String s : source.getStringList(key)) {
@@ -266,7 +266,7 @@ public final class MM1JSONSerializer {
    }
 
    private static JsonElement scalarToGson(PropertyMap source,
-         String key, Class<?> valueClass)  {
+                                           String key, Class<?> valueClass) {
       if (valueClass == String.class) {
          return new JsonPrimitive(source.getString(key, null));
       } else if (valueClass == boolean.class) {

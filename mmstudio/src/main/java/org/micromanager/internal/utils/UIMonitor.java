@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.utils;
 
 import java.awt.AWTEvent;
@@ -18,7 +17,6 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
 /**
- *
  * @author Arthur
  */
 public final class UIMonitor {
@@ -49,7 +47,7 @@ public final class UIMonitor {
       } else if (component instanceof JCheckBoxMenuItem) {
          return "toggled " + (((JCheckBoxMenuItem) component).isSelected() ? "on" : "off");
       } else if (component instanceof JList) {
-          return null;
+         return null;
       } else if (component instanceof JSlider) {
          return "set to \"" + ((JSlider) component).getValue() + "\"";
       } else if (component instanceof JTabbedPane) {
@@ -71,7 +69,7 @@ public final class UIMonitor {
       }
       return null;
    }
-   
+
 
    private static void handleAWTEvent(AWTEvent event) {
       final int eventID = event.getID();
@@ -102,9 +100,12 @@ public final class UIMonitor {
             }
             if (identifier != null && action != null) {
                try {
-                  String message = "[UI] " + identifier + action + " in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (Component) source)).getClass().getSimpleName() + ".";
+                  String message = "[UI] " + identifier + action + " in " + ((Window) SwingUtilities
+                        .getAncestorOfClass(Window.class, (Component) source)).getClass()
+                        .getSimpleName() + ".";
                   ReportingUtils.logDebugMessage(message);
-               } catch (NullPointerException npe) {}
+               } catch (NullPointerException npe) {
+               }
             }
          }
       }
@@ -123,22 +124,23 @@ public final class UIMonitor {
       Toolkit.getDefaultToolkit().addAWTEventListener(clickListener_, AWTEvent.MOUSE_EVENT_MASK);
    }
 
+   public static void enable(final boolean on) {
+      SwingUtilities.invokeLater(
+            new Runnable() {
+               @Override
+               public void run() {
+                  if (on) {
+                     enable();
+                  } else {
+                     disable();
+                  }
+               }
+            });
+   }
+
    private static void disable() {
       Toolkit.getDefaultToolkit().removeAWTEventListener(clickListener_);
       clickListener_ = null;
    }
 
-   public static void enable(final boolean on) {
-      SwingUtilities.invokeLater(
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    if (on) {
-                       enable();
-                    } else {
-                       disable();
-                    }
-                 }
-              });
-   }
 }

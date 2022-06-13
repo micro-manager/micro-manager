@@ -104,7 +104,6 @@ import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 
 
-
 /**
  * Implements Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
@@ -112,12 +111,12 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 public final class MMStudio implements Studio {
 
    private static final long serialVersionUID = 3556500289598574541L;
-   
+
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
 
    private final boolean wasStartedAsImageJPlugin_;
 
-   
+
    // Managers
    private AcquisitionManager acquisitionManager_;
    private final DataManager dataManager_;
@@ -137,14 +136,14 @@ public final class MMStudio implements Studio {
    private final DefaultApplication defaultApplication_;
    private final DefaultCompatibilityInterface compatibility_;
    private final PropertyManager propertyManager_;
-   
+
    // Local Classes
    private final MMSettings settings_ = new MMSettings();
    private MMCache cache_;
    private final MMUIManager ui_;
    private final MMROIManager roi_;
-   
-   
+
+
    // MMcore
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
@@ -164,8 +163,8 @@ public final class MMStudio implements Studio {
 
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
-   private IAcquisitionEngine2010 acquisitionEngine2010_ = null;   
-   
+   private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
+
    /**
     * Main procedure for stand alone operation.
     *
@@ -206,20 +205,21 @@ public final class MMStudio implements Studio {
     * MMStudio constructor.
     *
     * @param startAsImageJPlugin Indicates if we're running from "within"
-    *        ImageJ, which governs our behavior when we are closed.
+    *                            ImageJ, which governs our behavior when we are closed.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean startAsImageJPlugin) {
       this(startAsImageJPlugin, null);
    }
-   
+
    /**
     * MMStudio constructor.
     *
-    * @param startAsImageJPlugin Indicates if we're running from "within"
-    *        ImageJ, which governs our behavior when we are closed.
+    * @param startAsImageJPlugin  Indicates if we're running from "within"
+    *                             ImageJ, which governs our behavior when we are closed.
     * @param profileNameAutoStart The name of a user profile. This profile and
-    *        its most recently used hardware configuration will be to automatically loaded.
+    *                             its most recently used hardware configuration will
+    *                             be to automatically loaded.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean startAsImageJPlugin, String profileNameAutoStart) {
@@ -235,7 +235,7 @@ public final class MMStudio implements Studio {
       // preventing subsequent instantiation. This is not ideal but
       // intentional, because we do not currently have a way to cleanly exit a
       // partial initialization.
-      
+
       // TODO Management of the singleton instance has not been done in a clean
       // manner. In fact, there should be an API method to instantiate Studio,
       // rather than calling the constructor directly.
@@ -256,7 +256,7 @@ public final class MMStudio implements Studio {
       } catch (NoSuchMethodError ex) {
          ReportingUtils.showError(ex, "Incompatible version of MMCoreJ_wrap native library");
       }
-      
+
       // Start up multiple managers.  
       roi_ = new MMROIManager(this);
       ui_ = new MMUIManager(this);
@@ -266,7 +266,7 @@ public final class MMStudio implements Studio {
       // Essential GUI settings in preparation of the intro dialog
       ApplicationSkin daytimeNighttimeManager = DaytimeNighttime.create(studio_);
       defaultApplication_ = new DefaultApplication(studio_, daytimeNighttimeManager);
-      
+
       // Start loading plugins in the background
       // Note: plugin constructors should not expect a fully constructed Studio!
       pluginManager_ = new DefaultPluginManager(studio_);
@@ -277,7 +277,7 @@ public final class MMStudio implements Studio {
       // used by Snap/Live Manager and StageControlFrame
       uiMovesStageManager_ = new UiMovesStageManager(this);
       events().registerForEvents(uiMovesStageManager_);
-      
+
       snapLiveManager_ = new SnapLiveManager(this, core_);
       events().registerForEvents(snapLiveManager_);
 
@@ -302,7 +302,7 @@ public final class MMStudio implements Studio {
       ui_.createPipelineFrame();
 
       alertManager_ = new DefaultAlertManager(studio_);
-      
+
       afMgr_ = new DefaultAutofocusManager(studio_);
 
       posListManager_ = new DefaultPositionListManager(this);
@@ -319,7 +319,7 @@ public final class MMStudio implements Studio {
       prepAcquisitionEngine();
 
       RegistrationDlg.showIfNecessary(this);
-      
+
       // We wait for plugin loading to finish now, since IntroPlugins may be
       // needed to display the intro dialog. Fortunately, plugin loading is
       // fast in 2.0 (it used to be very slow in 1.4, so we loaded plugins in
@@ -407,8 +407,8 @@ public final class MMStudio implements Studio {
          core_.setCircularBufferMemoryFootprint(settings().getCircularBufferSize());
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
-      }    
-      
+      }
+
       // Arrange to log stack traces when the EDT hangs.
       // Use parameters that ensure a stack trace dump within 10 seconds of an
       // EDT hang (and _no_ dump on hangs under 5.5 seconds)
@@ -422,7 +422,7 @@ public final class MMStudio implements Studio {
             IJ.getInstance().setLocation(150, 150);
          }
       }
-      
+
       ui_.createScriptPanel();  // Load (but do no show) the scriptPanel
       ui_.createMainWindow(); // Now create and show the main window
 
@@ -433,9 +433,9 @@ public final class MMStudio implements Studio {
 
       // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);
-      
+
       events().registerForEvents(displayManager_);
-      
+
       // Tell the GUI to reflect the hardware configuration. (The config was
       // loaded before creating the GUI, so we need to reissue the event.)
       events().post(new DefaultSystemConfigurationLoadedEvent());
@@ -444,10 +444,10 @@ public final class MMStudio implements Studio {
 
       // Give plugins a chance to initialize their state
       events().post(new DefaultStartupCompleteEvent());
-      
+
       if (settings().getShouldRunZMQServer()) { // start zmq server if so desired
          runZMQServer();
-      }      
+      }
    }
 
    private void initializeLogging(CMMCore core) {
@@ -486,7 +486,7 @@ public final class MMStudio implements Studio {
          @Override
          public void run() {
             try {
-               acquisitionEngine2010Class_  = Class.forName(
+               acquisitionEngine2010Class_ = Class.forName(
                      "org.micromanager.internal.AcquisitionEngine2010");
             } catch (ClassNotFoundException ex) {
                ReportingUtils.logError(ex);
@@ -501,7 +501,7 @@ public final class MMStudio implements Studio {
    public boolean getHideMDADisplayOption() {
       return AcqControlDlg.getShouldHideMDADisplay();
    }
-   
+
    @Override
    public CMMCore core() {
       return core_;
@@ -519,7 +519,7 @@ public final class MMStudio implements Studio {
     * Returns singleton instance of MMStudio.
     *
     * @return singleton instance of MMStudio
-   */
+    */
    public static MMStudio getInstance() {
       return studio_;
    }
@@ -555,7 +555,7 @@ public final class MMStudio implements Studio {
             return;
          }
          if (core_.getProperty(cache().getCameraLabel(),
-                 MMCoreJ.getG_Keyword_Binning()).equals(mode)) {
+               MMCoreJ.getG_Keyword_Binning()).equals(mode)) {
             // No change in binning mode.
             live().setSuspended(false);
             return;
@@ -601,7 +601,7 @@ public final class MMStudio implements Studio {
 
             zmqServer_ = new ZMQServer(classLoaders,
                   instanceGrabberFunction,
-                  new String[]{"org.micromanager.internal"}, new Consumer<String>() {
+                  new String[] {"org.micromanager.internal"}, new Consumer<String>() {
                      @Override
                      public void accept(String s) {
                         studio_.getCMMCore().logMessage(s);
@@ -639,7 +639,7 @@ public final class MMStudio implements Studio {
       ui_.menubar().getToolsMenu().setMouseMovesStage(isEnabled);
       events().post(new MouseMovesStageStateChangeEvent(isEnabled));
    }
-   
+
 
    // //////////////////////////////////////////////////////////////////////////
    // public interface available for scripting access
@@ -669,7 +669,7 @@ public final class MMStudio implements Studio {
     *
     * @param quitInitiatedByImageJ True if closing command came from ImageJ.
     * @return Whether or not cleanup was successful. Shutdown should abort
-    *         on failure.
+    *     on failure.
     */
    private boolean cleanupOnClose(boolean quitInitiatedByImageJ) {
       // Save config presets if they were changed.
@@ -696,9 +696,9 @@ public final class MMStudio implements Studio {
             core_.logMessage("Failed to close some windows");
          }
       }
-  
+
       ui_.cleanupOnClose();
-      
+
       if (zmqServer_ != null) {
          zmqServer_.close();
       }
@@ -706,7 +706,7 @@ public final class MMStudio implements Studio {
       if (afMgr_ != null) {
          afMgr_.closeOptionsDialog();
       }
-      
+
       if (acqEngine_ != null) {
          acqEngine_.shutdown();
       }
@@ -760,7 +760,7 @@ public final class MMStudio implements Studio {
       }
 
       isProgramRunning_ = false;
-      
+
       //Save settings
       if (ui_.frame() != null) {
          ui_.frame().savePrefs();
@@ -780,13 +780,13 @@ public final class MMStudio implements Studio {
       ui_.close();
 
       boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
-      
+
       try {
          userProfileAdmin_.shutdown();
       } catch (InterruptedException notExpected) {
          Thread.currentThread().interrupt();
       }
-      
+
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
          if (wasStartedAsImageJPlugin_) {
             // Let ImageJ do the quitting
@@ -845,7 +845,7 @@ public final class MMStudio implements Studio {
       boolean result = true;
 
       final WaitDialog waitDlg = new WaitDialog(
-              "Loading system configuration, please wait...");
+            "Loading system configuration, please wait...");
 
       waitDlg.setAlwaysOnTop(true);
       waitDlg.showDialog();
@@ -909,7 +909,7 @@ public final class MMStudio implements Studio {
    // //////////////////////////////////////////////////////////////////////////
    // Script interface
    // //////////////////////////////////////////////////////////////////////////
-   
+
    /**
     * Inserts version info for various components in the Corelog.
     */
@@ -940,7 +940,7 @@ public final class MMStudio implements Studio {
    public boolean hasConfigChanged() {
       return configChanged_;
    }
-   
+
    public AcquisitionWrapperEngine getAcquisitionEngine() {
       return acqEngine_;
    }
@@ -954,18 +954,19 @@ public final class MMStudio implements Studio {
       try {
          acquisitionEngine2010LoadingThread_.join();
          if (acquisitionEngine2010_ == null) {
-            acquisitionEngine2010_ = 
-                    (IAcquisitionEngine2010) 
-                    acquisitionEngine2010Class_.getConstructor(Studio.class).newInstance(studio_);
+            acquisitionEngine2010_ =
+                  (IAcquisitionEngine2010)
+                        acquisitionEngine2010Class_.getConstructor(Studio.class)
+                              .newInstance(studio_);
          }
          return acquisitionEngine2010_;
       } catch (IllegalAccessException
             | IllegalArgumentException
-            |  InstantiationException
-            |  InterruptedException
-            |  NoSuchMethodException
-            |  SecurityException
-            |  InvocationTargetException e) {
+            | InstantiationException
+            | InterruptedException
+            | NoSuchMethodException
+            | SecurityException
+            | InvocationTargetException e) {
          ReportingUtils.logError(e);
          return null;
       }
@@ -1004,12 +1005,12 @@ public final class MMStudio implements Studio {
    public UserProfile profile() {
       return userProfileAdmin_.getProfile();
    }
-   
+
    @Override
    public UserProfile getUserProfile() {
       return profile();
    }
-   
+
    public UserProfileAdmin profileAdmin() {
       return userProfileAdmin_;
    }
@@ -1028,7 +1029,7 @@ public final class MMStudio implements Studio {
    public CompatibilityInterface compat() {
       return compatibility_;
    }
-   
+
    @Override
    public CompatibilityInterface getCompatibilityInterface() {
       return compat();
@@ -1163,7 +1164,7 @@ public final class MMStudio implements Studio {
    public MMCache cache() {
       return cache_;
    }
-   
+
    public MMSettings settings() {
       return settings_;
    }
@@ -1171,7 +1172,7 @@ public final class MMStudio implements Studio {
    public MMUIManager uiManager() {
       return ui_;
    }
-   
+
    public MMROIManager roiManager() {
       return roi_;
    }
@@ -1188,7 +1189,7 @@ public final class MMStudio implements Studio {
             = "how many days to keep MMCore log files, before they get deleted";
       private static final String CIRCULAR_BUFFER_SIZE
             = "size, in megabytes of the circular buffer used to temporarily store images"
-               + "before they are written to disk";
+            + "before they are written to disk";
 
       public boolean getShouldDeleteOldCoreLogs() {
          return profile().getSettings(MMStudio.class).getBoolean(
@@ -1202,12 +1203,12 @@ public final class MMStudio implements Studio {
 
       public boolean getShouldRunZMQServer() {
          return profile().getSettings(MMStudio.class).getBoolean(
-                 SHOULD_RUN_ZMQ_SERVER, false);
+               SHOULD_RUN_ZMQ_SERVER, false);
       }
 
       public void setShouldRunZMQServer(boolean shouldRun) {
          profile().getSettings(MMStudio.class).putBoolean(
-                 SHOULD_RUN_ZMQ_SERVER, shouldRun);
+               SHOULD_RUN_ZMQ_SERVER, shouldRun);
       }
 
       public int getCoreLogLifetimeDays() {

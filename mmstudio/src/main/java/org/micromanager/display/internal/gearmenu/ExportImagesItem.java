@@ -42,7 +42,8 @@ public final class ExportImagesItem implements DisplayGearMenuPlugin, SciJavaPlu
 
    @Override
    public String getHelpText() {
-      return "Generate a sequence of images showing the display as rendered, including histogram scaling and overlays";
+      return "Generate a sequence of images showing the display as rendered, "
+            + "including histogram scaling and overlays";
    }
 
    @Override

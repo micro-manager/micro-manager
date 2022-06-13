@@ -19,7 +19,6 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-
 package org.micromanager;
 
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -81,7 +80,7 @@ public interface UserProfile {
    /**
     * Deprecated.
     *
-    *  @deprecated use {@code getSettings(c).getStringList(key, fallback)} instead
+    * @deprecated use {@code getSettings(c).getStringList(key, fallback)} instead
     */
    @Deprecated
    String[] getStringArray(Class<?> c, String key, String[] fallback);
@@ -113,105 +112,120 @@ public interface UserProfile {
    /**
     * Deprecated.
     *
-    *  @deprecated use {@code getSettings(c).getIntegerList(key, fallback)} instead */
+    * @deprecated use {@code getSettings(c).getIntegerList(key, fallback)} instead
+    */
    @Deprecated
    Integer[] getIntArray(Class<?> c, String key, Integer[] fallback);
 
    /**
     * Deprecated.
     *
-    *  @deprecated use {@code getSettings(c).putInteger(key, value)} instead */
+    * @deprecated use {@code getSettings(c).putInteger(key, value)} instead
+    */
    @Deprecated
    void setInt(Class<?> c, String key, Integer value);
 
    /**
     * Deprecated.
     *
-    *  @deprecated use {@code getSettings(c).putIntegerList(key, value)} instead */
+    * @deprecated use {@code getSettings(c).putIntegerList(key, value)} instead
+    */
    @Deprecated
    void setIntArray(Class<?> c, String key, Integer[] value);
 
    /**
     * Deprecated.
     *
-    *  @deprecated use {@code getSettings(c).getLong(key, fallback)} instead */
+    * @deprecated use {@code getSettings(c).getLong(key, fallback)} instead
+    */
    @Deprecated
    Long getLong(Class<?> c, String key, Long fallback);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).getLongList(key, fallback)} instead */
+    * @deprecated use {@code getSettings(c).getLongList(key, fallback)} instead
+    */
    @Deprecated
    Long[] getLongArray(Class<?> c, String key, Long[] fallback);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).putLong(key, value)} instead */
+    * @deprecated use {@code getSettings(c).putLong(key, value)} instead
+    */
    @Deprecated
    void setLong(Class<?> c, String key, Long value);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).putLongList(key, value)} instead */
+    * @deprecated use {@code getSettings(c).putLongList(key, value)} instead
+    */
    @Deprecated
    void setLongArray(Class<?> c, String key, Long[] value);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).getDouble(key, fallback)} instead */
+    * @deprecated use {@code getSettings(c).getDouble(key, fallback)} instead
+    */
    @Deprecated
    Double getDouble(Class<?> c, String key, Double fallback);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).getDoubleList(key, fallback)} instead */
+    * @deprecated use {@code getSettings(c).getDoubleList(key, fallback)} instead
+    */
    @Deprecated
    Double[] getDoubleArray(Class<?> c, String key, Double[] fallback);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).putDouble(key, value)} instead */
+    * @deprecated use {@code getSettings(c).putDouble(key, value)} instead
+    */
    @Deprecated
    void setDouble(Class<?> c, String key, Double value);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).putDoubleList(key, value)} instead */
+    * @deprecated use {@code getSettings(c).putDoubleList(key, value)} instead
+    */
    @Deprecated
    void setDoubleArray(Class<?> c, String key, Double[] value);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).getBoolean(key, fallback)} instead */
+    * @deprecated use {@code getSettings(c).getBoolean(key, fallback)} instead
+    */
    @Deprecated
    Boolean getBoolean(Class<?> c, String key, Boolean fallback);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).getBooleanList(key, fallback)} instead */
+    * @deprecated use {@code getSettings(c).getBooleanList(key, fallback)} instead
+    */
    @Deprecated
    Boolean[] getBooleanArray(Class<?> c, String key, Boolean[] fallback);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).putBoolean(key, value)} instead */
+    * @deprecated use {@code getSettings(c).putBoolean(key, value)} instead
+    */
    @Deprecated
    void setBoolean(Class<?> c, String key, Boolean value);
 
    /**
     * Deprecated.
     *
-    * @deprecated use {@code getSettings(c).putBooleanList(key, value)} instead */
+    * @deprecated use {@code getSettings(c).putBooleanList(key, value)} instead
+    */
    @Deprecated
    void setBooleanArray(Class<?> c, String key, Boolean[] value);
 }

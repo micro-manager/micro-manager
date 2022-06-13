@@ -36,12 +36,12 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
-import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 
 /**
  * @author Mark A. Tsuchida, in part based on original by Chris Weisiger
@@ -70,9 +70,12 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
       @Override
       public String getColumnName(int columnIndex) {
          switch (columnIndex) {
-            case 0: return "Key";
-            case 1: return "Value";
-            default: throw new IndexOutOfBoundsException();
+            case 0:
+               return "Key";
+            case 1:
+               return "Value";
+            default:
+               throw new IndexOutOfBoundsException();
          }
       }
 
@@ -80,9 +83,12 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
       public Object getValueAt(int rowIndex, int columnIndex) {
          Map.Entry<String, String> entry = data_.get(rowIndex);
          switch (columnIndex) {
-            case 0: return entry.getKey();
-            case 1: return entry.getValue();
-            default: throw new IndexOutOfBoundsException();
+            case 0:
+               return entry.getKey();
+            case 1:
+               return entry.getValue();
+            default:
+               throw new IndexOutOfBoundsException();
          }
       }
    };
@@ -142,12 +148,12 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
    public boolean isVerticallyResizableByUser() {
       return true;
    }
-        
+
    @Override
    public void setExpanded(boolean state) {
       expanded_ = state;
    }
-   
+
    @Override
    public boolean initiallyExpand() {
       return expanded_;
@@ -159,8 +165,8 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
       }
       previousMetadataRef_ = new WeakReference<SummaryMetadata>(summaryMetadata);
 
-      PropertyMap metadataMap = summaryMetadata == null ?
-            PropertyMaps.emptyPropertyMap() :
+      PropertyMap metadataMap = summaryMetadata == null
+            ? PropertyMaps.emptyPropertyMap() :
             ((DefaultSummaryMetadata) summaryMetadata).toPropertyMap();
 
       final TreeMap<String, String> data = new TreeMap<String, String>();
@@ -170,12 +176,10 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
             for (String subkey : userData.keySet()) {
                data.put("user:" + subkey, userData.getValueAsString(subkey, ""));
             }
-         }
-         else if (PropertyKey.STAGE_POSITIONS.key().equals(key)) {
+         } else if (PropertyKey.STAGE_POSITIONS.key().equals(key)) {
             data.put(key, String.format("<%d positions>",
                   metadataMap.getPropertyMapList(PropertyKey.STAGE_POSITIONS.key()).size()));
-         }
-         else {
+         } else {
             data.put(key, metadataMap.getValueAsString(key, ""));
          }
       }

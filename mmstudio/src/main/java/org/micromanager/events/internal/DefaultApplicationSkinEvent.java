@@ -21,7 +21,7 @@ public final class DefaultApplicationSkinEvent implements ApplicationSkinEvent {
    public DefaultApplicationSkinEvent(ApplicationSkin.SkinMode mode) {
       mode_ = mode;
    }
-    
+
    @Override
    public ApplicationSkin.SkinMode getSkinMode() {
       return mode_;

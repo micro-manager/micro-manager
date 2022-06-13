@@ -10,7 +10,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
- * List with Axis data.  Currently, we use only a single global instance 
+ * List with Axis data.  Currently, we use only a single global instance
  * of this class
  */
 class AxisList {
@@ -28,13 +28,13 @@ class AxisList {
          StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
          for (int i = 0; i < stages.size(); i++) {
             axisList_.add(new AxisData(settings.getBoolean(stages.get(i), true),
-                    stages.get(i), AxisData.AxisType.oneD));
+                  stages.get(i), AxisData.AxisType.oneD));
          }
          // read 2-axis stages
          StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
          for (int i = 0; i < stages2D.size(); i++) {
             axisList_.add(new AxisData(settings.getBoolean(stages2D.get(i), true),
-                     stages2D.get(i), AxisData.AxisType.twoD));
+                  stages2D.get(i), AxisData.AxisType.twoD));
          }
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -61,5 +61,5 @@ class AxisList {
       // not in the list??  It might be time to refresh the list.  
       return true;
    }
-      
+
 }

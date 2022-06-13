@@ -27,7 +27,7 @@ class AxisData {
    private boolean use_;
    private final String axisName_;
    private final AxisType type_;
-   
+
    public AxisData(boolean use, String axisName, AxisType type) {
       use_ = use;
       axisName_ = axisName;
@@ -45,7 +45,7 @@ class AxisData {
    public AxisType getType() {
       return type_;
    }
-   
+
    public void setUse(boolean use) {
       use_ = use;
    }

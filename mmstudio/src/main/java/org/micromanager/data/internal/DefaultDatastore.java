@@ -79,7 +79,7 @@ public class DefaultDatastore implements Datastore {
    private static final FileFilter MULTIPAGEFILTER = new SaveFileFilter(
          MULTIPAGE_TIFF);
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
-   
+
    protected Storage storage_ = null;
    protected Datastore copiedFromStore_ = null;
    protected String name_ = "Untitled";
@@ -87,7 +87,7 @@ public class DefaultDatastore implements Datastore {
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
    protected final Studio studio_;
-   
+
    private String savePath_ = null;
    private boolean haveSetSummary_ = false;
 
@@ -101,9 +101,9 @@ public class DefaultDatastore implements Datastore {
     * optional ProgressMonitor can be used to keep callers appraised of our
     * progress.
     *
-    * @param alt Source Datastore
+    * @param alt     Source Datastore
     * @param monitor can be used to keep callers appraised of our progress.
-    * @throws java.io.IOException expected only for disk-backed Datastores
+    * @throws java.io.IOException    expected only for disk-backed Datastores
     * @throws UserCancelledException when the users cancels this action
     */
    public void copyFrom(Datastore alt, ProgressMonitor monitor)
@@ -132,7 +132,7 @@ public class DefaultDatastore implements Datastore {
          studio_.logs().logError("Inconsistent image coordinates in datastore");
       }
    }
-   
+
    @Override
    public void setName(String name) {
       name_ = name;
@@ -194,7 +194,7 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
-           throws IOException {
+         throws IOException {
       Coords testCoords = coords.copyRemovingAxes(ignoreTheseAxes);
       if (storage_ != null) {
          return storage_.getImagesIgnoringAxes(testCoords, ignoreTheseAxes);
@@ -300,8 +300,8 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public synchronized void setSummaryMetadata(SummaryMetadata metadata) 
-           throws DatastoreFrozenException, DatastoreRewriteException {
+   public synchronized void setSummaryMetadata(SummaryMetadata metadata)
+         throws DatastoreFrozenException, DatastoreRewriteException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
@@ -424,7 +424,7 @@ public class DefaultDatastore implements Datastore {
    public String getSavePath() {
       return savePath_;
    }
-   
+
    @Override
    @Deprecated
    public boolean save(Component parent) throws IOException {
@@ -458,21 +458,23 @@ public class DefaultDatastore implements Datastore {
       // Determine the mode the user selected.
       FileFilter filter = chooser.getFileFilter();
       Datastore.SaveMode mode;
-      if (filter == SINGLEPLANEFILTER) {
-         mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
-      } else if (filter == MULTIPAGEFILTER) {
-         mode = Datastore.SaveMode.MULTIPAGE_TIFF;
-      }  else {
-         studio_.logs().showError("Unrecognized file format filter "
-               + filter.getDescription());
-         return null;
+      if (filter != SINGLEPLANEFILTER) {
+         if (filter == MULTIPAGEFILTER) {
+            mode = SaveMode.MULTIPAGE_TIFF;
+         } else {
+            studio_.logs().showError("Unrecognized file format filter "
+                  + filter.getDescription());
+            return null;
+         }
+      } else {
+         mode = SaveMode.SINGLEPLANE_TIFF_SERIES;
       }
       setPreferredSaveMode(studio_, mode);
       // the DefaultDataSave constructor creates the directory
       // so that displaysettings can be saved there even before we finish
       // saving all the data
       DefaultDataSaver ds = new DefaultDataSaver(studio_, this, mode,
-              file.getAbsolutePath());
+            file.getAbsolutePath());
       if (!blocking) {
          final ProgressBar pb = new ProgressBar(parent, "Saving..", 0, 100);
          ds.addPropertyChangeListener((PropertyChangeEvent evt) -> {
@@ -509,7 +511,7 @@ public class DefaultDatastore implements Datastore {
          ds.execute();
       }
    }
-   
+
    protected Map<String, Annotation> getAnnotations() {
       return annotations_;
    }
@@ -531,7 +533,7 @@ public class DefaultDatastore implements Datastore {
    public static Datastore.SaveMode getPreferredSaveMode(Studio studio) {
       String modeStr = studio.profile().getSettings(
             DefaultDatastore.class).getString(
-                  PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
+            PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
       if (modeStr.equals(MULTIPAGE_TIFF)) {
          return Datastore.SaveMode.MULTIPAGE_TIFF;
       } else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES)) {
@@ -546,7 +548,7 @@ public class DefaultDatastore implements Datastore {
     * Saves the preferresed DataFormat in the User Profile.
     *
     * @param studio Studio object to get access to the User Profile.
-    * @param mode DateMode/Format
+    * @param mode   DateMode/Format
     */
    public static void setPreferredSaveMode(Studio studio, Datastore.SaveMode mode) {
       String modeStr = "";
@@ -566,6 +568,6 @@ public class DefaultDatastore implements Datastore {
          }
       }
       studio.profile().getSettings(DefaultDatastore.class)
-              .putString(PREFERRED_SAVE_FORMAT, modeStr);
+            .putString(PREFERRED_SAVE_FORMAT, modeStr);
    }
 }

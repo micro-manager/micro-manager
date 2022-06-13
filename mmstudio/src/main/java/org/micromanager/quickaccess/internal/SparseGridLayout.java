@@ -55,7 +55,8 @@ public final class SparseGridLayout implements LayoutManager2 {
    }
 
    @Override
-   public void addLayoutComponent(String name, Component comp) {}
+   public void addLayoutComponent(String name, Component comp) {
+   }
 
    @Override
    public void removeLayoutComponent(Component comp) {
@@ -116,5 +117,6 @@ public final class SparseGridLayout implements LayoutManager2 {
    }
 
    @Override
-   public void invalidateLayout(Container target) {}
+   public void invalidateLayout(Container target) {
+   }
 }

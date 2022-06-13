@@ -13,7 +13,7 @@ import mmcorej.StrVector;
 import org.micromanager.Studio;
 
 /**
- * Property table data model, representing MMCore data
+ * Property table data model, representing MMCore data.
  */
 public class PropertyTableData extends AbstractTableModel implements MMPropertyTableModel {
 
@@ -29,14 +29,14 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    private boolean showUnused_;
    protected boolean showReadOnly_;
    String[] columnNames_ = new String[3];
-   public List<PropertyItem> propList_ = new ArrayList<>(); 
-       // The table data is stored in here.
-   public List<PropertyItem> propListVisible_ = new ArrayList<>(); 
-      // The table data is stored in here.
+   public List<PropertyItem> propList_ = new ArrayList<>();
+   // The table data is stored in here.
+   public List<PropertyItem> propListVisible_ = new ArrayList<>();
+   // The table data is stored in here.
    protected Map<PropertyItem, Integer> propToRow_ = new HashMap<>();
    protected CMMCore core_ = null;
-   Configuration groupData_[];
-   PropertySetting groupSignature_[];
+   Configuration[] groupData_;
+   PropertySetting[] groupSignature_;
    private volatile boolean updating_;
    private final boolean groupOnly_;
    private final boolean allowChangingProperties_;
@@ -53,99 +53,99 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       private boolean allowChangingProperties_;
       private boolean allowChangesOnlyWhenUsed_;
       private boolean isPixelSizeConfig_;
-      
+
       public Builder(final Studio studio) {
          studio_ = studio;
       }
-      
+
       public Builder groupName(final String groupName) {
          groupName_ = groupName;
          return this;
       }
-      
+
       public Builder presetName(final String presetName) {
          presetName_ = presetName;
          return this;
       }
-      
+
       public Builder propertyValueColumn(final int propertyValueColumn) {
          propertyValueColumn_ = propertyValueColumn;
          return this;
       }
-      
+
       public Builder propertyUsedColumn(final int propertyUsedColumn) {
          propertyUsedColumn_ = propertyUsedColumn;
          return this;
       }
-      
+
       public Builder groupOnly(final boolean groupOnly) {
          groupOnly_ = groupOnly;
          return this;
       }
-      
+
       public Builder allowChangingProperties(final boolean allow) {
          allowChangingProperties_ = allow;
          return this;
       }
-      
+
       public Builder allowChangesOnlyWhenUsed(final boolean allow) {
          allowChangesOnlyWhenUsed_ = allow;
          return this;
       }
-      
+
       public Builder isPixelSizeConfig(final boolean is) {
          isPixelSizeConfig_ = is;
          return this;
       }
-      
+
       public PropertyTableData build() {
          return new PropertyTableData(this);
       }
    }
-   
+
    /**
     * PropertyTableData constructor
     *
-    * This Table model is used by the Device/Property Browser, the GroupEditor,
+    * <p>This Table model is used by the Device/Property Browser, the GroupEditor,
     * The PresetEditor, and the PixelSizeEditor.  Each of these has slightly
     * different requirements, contributing to a multitude of flags in the
     * constructor.  This code can likely be cleaned up with investment of time
     * to think everything through a bit better.
     *
-    * @param studio
-    * @param groupName - Name of group to be edited.  Irrelevant for PixelSize editor
-    * @param presetName
-    * @param PropertyValueColumn # (zero-based) of "Value" column
-    * @param PropertyUsedColumn  # (zero-based) of "Use" column
-    * @param groupOnly - indicates that only properties included in the group
-    *                    should be shown
-    * @param allowChangingProperties - when true, the PropertyValueColumn will
-    *                    be editable, and changes will propagate to the hardware.
-    *                    Otherwise, the column will be read-only.
+    * @param studio Usually singleton Studio instance
+    * @param groupName                - Name of group to be edited.  Irrelevant for PixelSize editor
+    * @param presetName               - Name of the Preset
+    * @param propertyValueColumn      # (zero-based) of "Value" column
+    * @param propertyUsedColumn       # (zero-based) of "Use" column
+    * @param groupOnly                - indicates that only properties included in the group
+    *                                 should be shown
+    * @param allowChangingProperties  - when true, the PropertyValueColumn will
+    *                                 be editable, and changes will propagate to the hardware.
+    *                                 Otherwise, the column will be read-only.
     * @param allowChangesOnlyWhenUsed - when allowChangingProperties is true
-    *              setting this flag will only allow changes to PropertyItems
-    *              that have the "confInclude" flag set to true
-    * @param isPixelSizeConfig - indicates this is a pixel size config rather than
-    *                a standard config.  Pixel config-specific calls to the core
-    *                will be used.
+    *                                 setting this flag will only allow changes to PropertyItems
+    *                                 that have the "confInclude" flag set to true
+    * @param isPixelSizeConfig        - indicates this is a pixel size config rather than
+    *                                 a standard config.  Pixel config-specific calls to the core
+    *                                 will be used.
     */
    protected PropertyTableData(Studio studio, String groupName, String presetName,
-           int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly,
-           boolean allowChangingProperties, boolean allowChangesOnlyWhenUsed,
-           boolean isPixelSizeConfig) {
+                               int propertyValueColumn, int propertyUsedColumn, boolean groupOnly,
+                               boolean allowChangingProperties, boolean allowChangesOnlyWhenUsed,
+                               boolean isPixelSizeConfig) {
       studio_ = studio;
       core_ = studio_.core();
       groupName_ = groupName;
       presetName_ = presetName;
       propertyNameColumn_ = 0;
-      propertyValueColumn_ = PropertyValueColumn;
-      propertyUsedColumn_ = PropertyUsedColumn;
+      propertyValueColumn_ = propertyValueColumn;
+      propertyUsedColumn_ = propertyUsedColumn;
       groupOnly_ = groupOnly;
       allowChangingProperties_ = allowChangingProperties;
       allowChangesOnlyWhenUsed_ = allowChangesOnlyWhenUsed;
       isPixelSizeConfig_ = isPixelSizeConfig;
    }
-   
+
    protected PropertyTableData(Builder b) {
       studio_ = b.studio_;
       core_ = studio_.core();
@@ -259,8 +259,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    @Override
    public boolean isCellEditable(int nRow, int nCol) {
       if (nCol == propertyValueColumn_) {
-         if (!allowChangingProperties_) // do not allow editing in the group editor view
-         {
+         if (!allowChangingProperties_) { // do not allow editing in the group editor view
             return false;
          } else {
             if (propListVisible_.get(nRow).readOnly) {
@@ -268,8 +267,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             }
             if (allowChangesOnlyWhenUsed_) {
                return propListVisible_.get(nRow).confInclude;
-            }
-            else {
+            } else {
                return true;
             }
          }
@@ -293,17 +291,17 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       }
    }
 
-   public void update(boolean fromCache) {
-      update(flags_, groupName_, presetName_, fromCache);
-   }
-
    public void setShowReadOnly(boolean showReadOnly) {
       showReadOnly_ = showReadOnly;
    }
 
+   public void update(boolean fromCache) {
+      update(flags_, groupName_, presetName_, fromCache);
+   }
+
    // note: public since it is overridden in internal.PropertyEditor
    public void update(ShowFlags flags, String groupName, String presetName,
-           boolean fromCache) {
+                      boolean fromCache) {
       // when updating, we do need to keep track which properties have their
       // "Use" checkbox checked.  Otherwise, this information get lost, which
       // is annoying and confusing for the user
@@ -344,21 +342,17 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          setUpdating(true);
 
          for (int i = 0; i < devices.size(); i++) {
-
             if (showDevice(flags, devices.get(i))) {
-
                StrVector properties = core_.getDevicePropertyNames(devices.get(i));
                for (int j = 0; j < properties.size(); j++) {
                   PropertyItem item = new PropertyItem();
                   if (!groupOnly_ || cfg.isPropertyIncluded(devices.get(i), properties.get(j))) {
                      item.readFromCore(core_, devices.get(i), properties.get(j), fromCache);
                      if ((!item.readOnly || showReadOnly_) && !item.preInit) {
-
                         item.confInclude = cfg.isPropertyIncluded(item.device, item.name);
-
                         for (PropertyItem usedItem : usedItems) {
                            if (item.device.equals(usedItem.device)
-                                   && item.name.equals(usedItem.name)) {
+                                 && item.name.equals(usedItem.name)) {
                               item.confInclude = true;
                            }
                         }
@@ -367,7 +361,6 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                      }
                   }
                }
-
             }
          }
 
@@ -414,7 +407,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       for (int row = 0; row < propListVisible_.size(); row++) {
          propToRow_.put(propListVisible_.get(row), row);
       }
-      
+
 
       this.fireTableStructureChanged();
       this.fireTableDataChanged();

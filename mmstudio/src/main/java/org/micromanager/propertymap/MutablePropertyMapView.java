@@ -76,7 +76,7 @@ public interface MutablePropertyMapView {
     *
     * @param key a property key
     * @return the class representing the type of the value stored for
-    *         {@code key}
+    *     {@code key}
     * @throws IllegalArgumentException if {@code key} is not found
     */
    Class<?> getValueTypeForKey(String key);

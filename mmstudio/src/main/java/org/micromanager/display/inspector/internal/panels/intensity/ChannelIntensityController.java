@@ -36,6 +36,8 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
+ * Controls brightness / contrast / gamma in the display of a single channel.
+ *
  * @author mark
  */
 public final class ChannelIntensityController implements HistogramView.Listener {
@@ -71,8 +73,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          });
       }
 
-      public ChannelDisplaySettings getBits(ChannelDisplaySettings settings, 
-              Integer cameraBits) {
+      public ChannelDisplaySettings getBits(ChannelDisplaySettings settings,
+                                            Integer cameraBits) {
          int index = getIndexOf(getSelectedItem());
          if (index == 13) {
             // in order to prevent null pointer exception when no cameraBits info is available
@@ -81,12 +83,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                cameraBits = 16;
             }
             return settings.copyBuilder().useCameraHistoRange(true)
-                    .histoRangeBits(cameraBits).build();
+                  .histoRangeBits(cameraBits).build();
          }
          return settings.copyBuilder().useCameraHistoRange(false)
-                    .histoRangeBits(index + 4).build();
+               .histoRangeBits(index + 4).build();
       }
-      
+
       public void setBits(ChannelDisplaySettings settings) {
          // TODO: evaluate handling of special case "Camera Bits"
          if (settings.useCameraRange()) {
@@ -98,7 +100,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             }
          }
       }
-      
+
    }
 
    // Panel showing min/max/avg/std.
@@ -138,12 +140,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          maxAvgStdWidth_ = valueFontMetrics_.stringWidth("9.99e+99") + 2;
 
          valueX1 = keyX1 + Math.max(keyFontMetrics.stringWidth("MAX"),
-                     keyFontMetrics.stringWidth("MIN"))
+               keyFontMetrics.stringWidth("MIN"))
                + keyFontMetrics.stringWidth(" ")
                + maxMinMaxWidth_;
          keyX2 = valueX1 + keyFontMetrics.stringWidth("  ");
          valueX2 = keyX2 + Math.max(keyFontMetrics.stringWidth("AVG"),
-                     keyFontMetrics.stringWidth("STD"))
+               keyFontMetrics.stringWidth("STD"))
                + keyFontMetrics.stringWidth(" ")
                + maxAvgStdWidth_;
 
@@ -215,12 +217,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    /**
     * Note: because we use a UIManager to set the Look and Feel,
     * the normal method to set the color of the button does not work.
-    * As a workaround, set a border that fills the complete button and 
+    * As a workaround, set a border that fills the complete button and
     * color it.  Works on Windows...
     */
    private static final class ColorSwatch extends JButton {
       private Color color_ = Color.WHITE;
-      
+
       ColorSwatch() {
          super.setPreferredSize(new Dimension(16, 16));
          super.setMinimumSize(new Dimension(16, 16));
@@ -230,7 +232,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
 
       void setColor(Color color) {
-         color_ = color;         
+         color_ = color;
          super.setBorder(BorderFactory.createLineBorder(color_, 8));
          super.setBackground(color_);
       }
@@ -241,17 +243,24 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    }
 
    private static final Icon[] RGB_ICONS_ACTIVE = new Icon[] {
-      IconLoader.getIcon("/org/micromanager/icons/rgb_red.png"),
-      IconLoader.getIcon("/org/micromanager/icons/rgb_green.png"),
-      IconLoader.getIcon("/org/micromanager/icons/rgb_blue.png")
+         IconLoader.getIcon("/org/micromanager/icons/rgb_red.png"),
+         IconLoader.getIcon("/org/micromanager/icons/rgb_green.png"),
+         IconLoader.getIcon("/org/micromanager/icons/rgb_blue.png")
    };
    private static final Icon[] RGB_ICONS_INACTIVE = new Icon[] {
-      IconLoader.getIcon("/org/micromanager/icons/rgb_red_blank.png"),
-      IconLoader.getIcon("/org/micromanager/icons/rgb_green_blank.png"),
-      IconLoader.getIcon("/org/micromanager/icons/rgb_blue_blank.png")
+         IconLoader.getIcon("/org/micromanager/icons/rgb_red_blank.png"),
+         IconLoader.getIcon("/org/micromanager/icons/rgb_green_blank.png"),
+         IconLoader.getIcon("/org/micromanager/icons/rgb_blue_blank.png")
    };
 
 
+   /**
+    * Create an instance of the ChannelIntensityController.
+    *
+    * @param viewer Display that will use this instance
+    * @param channelIndex Number of the channel (zero based) in this display
+    * @return Instance of the controller.
+    */
    public static ChannelIntensityController create(DataViewer viewer, int channelIndex) {
       ChannelIntensityController instance = new ChannelIntensityController(viewer, channelIndex);
       instance.histogram_.addListener(instance);
@@ -307,7 +316,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       channelNameLabel_.setFont(labelFont);
       channelNameLabel_.setText(viewer.getDataProvider().getSummaryMetadata()
             .getSafeChannelName(channelIndex));
-   
+
       channelVisibleButton_.setMargin(new Insets(0, 0, 0, 0));
       channelVisibleButton_.setPreferredSize(new Dimension(23, 23));
       channelVisibleButton_.setMaximumSize(new Dimension(23, 23));
@@ -371,7 +380,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       //updateHistoRangeButtonStates();
       // Needed to pick up the current DisplaySettings, 
       newDisplaySettings(viewer.getDisplaySettings());
-      
+
       updateHistoRangeButtonStates();
    }
 
@@ -419,7 +428,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          final DisplaySettings settings = viewer_.getDisplaySettings();
          cameraBits_ = anyImage.getMetadata().getBitDepth(); // can throw IOException
          ChannelDisplaySettings cSettings = histoRangeComboBoxModel_.getBits(
-                 viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);
+               viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);
 
          int rangeBits;
          if (cameraBits_ == null || !cSettings.useCameraRange()) {
@@ -433,7 +442,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
             histogram_.setROIIndicator(componentStats.isROIStats());
          }
-      
+
          updateScalingIndicators(settings, componentStats, component);
       } catch (IOException ioEx) {
          // TODO: log this exception
@@ -442,7 +451,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    @MustCallOnEDT
    private void updateScalingIndicators(DisplaySettings settings,
-         IntegerComponentStats componentStats, int component) {
+                                        IntegerComponentStats componentStats, int component) {
       long min;
       long max;
       if (settings.isAutostretchEnabled()) {
@@ -474,8 +483,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                oldDisplaySettings.getChannelSettings(channelIndex_);
          newDisplaySettings = oldDisplaySettings
                .copyBuilderWithChannelSettings(channelIndex_,
-                           histoRangeComboBoxModel_.getBits(channelSettings, 
-                                   cameraBits_)).build();
+                     histoRangeComboBoxModel_.getBits(channelSettings,
+                           cameraBits_)).build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
@@ -512,18 +521,18 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
    private void handleColor(Color color) {
       Color newColor = JColorChooser.showDialog(
-              histoPanel_.getTopLevelAncestor(), "Channel Color", color);
-      
+            histoPanel_.getTopLevelAncestor(), "Channel Color", color);
+
       if (newColor != null) {
          DisplaySettings oldDisplaySettings;
          DisplaySettings newDisplaySettings;
          do {
             oldDisplaySettings = viewer_.getDisplaySettings();
             ChannelDisplaySettings channelSettings
-                    = oldDisplaySettings.getChannelSettings(channelIndex_);
+                  = oldDisplaySettings.getChannelSettings(channelIndex_);
             newDisplaySettings = oldDisplaySettings
                   .copyBuilderWithChannelSettings(channelIndex_,
-                            channelSettings.copyBuilder().color(newColor).build()).build();
+                        channelSettings.copyBuilder().color(newColor).build()).build();
          } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       }
    }
@@ -545,8 +554,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                builder.component(i,
                      channelSettings.getComponentSettings(i).copyBuilder()
                            .scalingRange(0L,
-                                max >= 0 ? max : Long.MAX_VALUE)
-                        .build());
+                                 max >= 0 ? max : Long.MAX_VALUE)
+                           .build());
             } catch (IOException ioe) {
                // if we could not find an image, we have bigger problems
                ReportingUtils.logError(ioe);

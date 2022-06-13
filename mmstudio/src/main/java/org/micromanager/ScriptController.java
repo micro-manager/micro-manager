@@ -56,15 +56,15 @@ public interface ScriptController {
     *
     * @param text Text to be displayed in the scripting console output window.
     * @throws ScriptStoppedException if the script panel has been requested to
-    *         stop execution.
+    *                                stop execution.
     */
    void message(String text) throws ScriptStoppedException;
-   
+
    /**
     * Clears scripting console output window.
     *
     * @throws ScriptStoppedException if the script panel has been requested to
-    *         stop execution.
+    *                                stop execution.
     */
    void clearMessageWindow() throws ScriptStoppedException;
 
@@ -72,7 +72,7 @@ public interface ScriptController {
     * Clears all methods and variables defined in the script interpreter.
     *
     * @throws ScriptStoppedException if the script panel has been requested to
-    *         stop execution.
+    *                                stop execution.
     */
    void resetInterpreter() throws ScriptStoppedException;
 }

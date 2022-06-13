@@ -29,10 +29,10 @@ import org.micromanager.alerts.UpdatableAlert;
 
 public final class DefaultAlertManager implements AlertManager {
    private final Studio studio_;
-   private final HashMap<String, CategorizedAlert> titleToCategorizedAlert_ = 
-           new HashMap<String, CategorizedAlert>();
-   private final HashMap<String, DefaultAlert> titleToCustomAlert_ = 
-           new HashMap<String, DefaultAlert>();
+   private final HashMap<String, CategorizedAlert> titleToCategorizedAlert_ =
+         new HashMap<String, CategorizedAlert>();
+   private final HashMap<String, DefaultAlert> titleToCustomAlert_ =
+         new HashMap<String, DefaultAlert>();
    private AlertsWindow alertsWindow_;
 
    public DefaultAlertManager(Studio studio) {
@@ -48,11 +48,10 @@ public final class DefaultAlertManager implements AlertManager {
    @Override
    public Alert postAlert(String title, Class<?> category, String text) {
       CategorizedAlert alert;
-      if (titleToCategorizedAlert_.containsKey(title) &&
-            titleToCategorizedAlert_.get(title).isUsable()) {
+      if (titleToCategorizedAlert_.containsKey(title)
+            && titleToCategorizedAlert_.get(title).isUsable()) {
          alert = titleToCategorizedAlert_.get(title);
-      }
-      else {
+      } else {
          // Make a new Alert to hold messages.
          alert = alertsWindow_.addCategorizedAlert(title);
          titleToCategorizedAlert_.put(title, alert);
@@ -64,8 +63,8 @@ public final class DefaultAlertManager implements AlertManager {
 
    @Override
    public UpdatableAlert postCustomAlert(String title, JComponent contents) {
-      if (titleToCustomAlert_.containsKey(title) &&
-            titleToCustomAlert_.get(title).getContents() == contents) {
+      if (titleToCustomAlert_.containsKey(title)
+            && titleToCustomAlert_.get(title).getContents() == contents) {
          // Already have this alert.
          return titleToCustomAlert_.get(title);
       }
@@ -74,8 +73,8 @@ public final class DefaultAlertManager implements AlertManager {
       titleToCustomAlert_.put(title, alert);
       return alert;
    }
-   
+
    public AlertsWindow alertsWindow() {
-       return alertsWindow_;
+      return alertsWindow_;
    }
 }

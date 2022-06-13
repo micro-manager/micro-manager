@@ -67,7 +67,7 @@ public interface ImageExporter {
     * format is OUTPUT_JPG.
     *
     * @param quality An integer quality ranging from 1 through 100. The default
-    *        value is 90.
+    *                value is 90.
     */
    void setOutputQuality(int quality);
 
@@ -76,7 +76,7 @@ public interface ImageExporter {
     * saving images. These values are ignored if the output format is set to
     * OUTPUT_IMAGEJ.
     *
-    * @param path Directory in which images will be placed
+    * @param path   Directory in which images will be placed
     * @param prefix String to place at beginning of each output image's name.
     * @throws IllegalArgumentException if the directory does not exist.
     */
@@ -90,10 +90,10 @@ public interface ImageExporter {
     * frequently, and the Z axis to be the "outer loop", changing least
     * frequently.
     *
-    * @param axis Axis name, like Coords.CHANNEL, Coords.Z, etc.
+    * @param axis  Axis name, like Coords.CHANNEL, Coords.Z, etc.
     * @param start Axis index to start exporting from, inclusive.
-    * @param stop Axis index to stop exporting from, exclusive (i.e. one more
-    *        than the index of the last image you want to export).
+    * @param stop  Axis index to stop exporting from, exclusive (i.e. one more
+    *              than the index of the last image you want to export).
     * @return This instance, allowing calls to be chained together.
     */
    ImageExporter loop(String axis, int start, int stop);
@@ -115,21 +115,21 @@ public interface ImageExporter {
     * errors":
     * - Setting a save path when using the OUTPUT_IMAGEJ format
     * - Loops over axes that are not used by any images in the display's
-    *   datastore
+    * datastore
     * - Loops that have invalid start/end boundary conditions (starting or
-    *   ending index is greater than largest index in the datastore).
+    * ending index is greater than largest index in the datastore).
     * In the latter two cases, image coordinates that do not refer to a valid
     * image will be ignored (for example, trying to access a Z coordinate of 1
     * in a dataset that is two-dimensional). It is therefore possible that this
     * method will not actually do anything, if none of the loops encompass
     * valid image coordinates.</p>
     *
-    * @throws IOException if the export process would attempt to write to a
-    *         file that already exists
+    * @throws IOException              if the export process would attempt to write to a
+    *                                  file that already exists
     * @throws IllegalArgumentException if no output format has been set, or
-    *         OUTPUT_PNG or OUTPUT_JPG formats are used but no save information
-    *         has been set, or if no loops have been configured, or if no
-    *         display has been set.
+    *                                  OUTPUT_PNG or OUTPUT_JPG formats are used but no save
+    *                                  information has been set, or if no loops have been
+    *                                  configured, or if no display has been set.
     */
    void export() throws IOException, IllegalArgumentException;
 

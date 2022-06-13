@@ -2,6 +2,10 @@ package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
 
+/**
+ * Information about the order of various axes (z, c, t, etc..) during the acquisition
+ * are stored in this class.
+ */
 public final class AcqOrderMode {
    // HACK: This value chosen to make the text box in the MDA dialog look nice.
    private static final int MAX_LINE_LEN = 60;
@@ -16,6 +20,12 @@ public final class AcqOrderMode {
    private boolean sliceEnabled_;
    private boolean channelEnabled_;
 
+   /**
+    * Constructs an (immutable) instance.
+    *
+    * @param id one of the TIME_POS_, etc.. (currently 0-3) values that determine
+    *           acquisition order.
+    */
    public AcqOrderMode(int id) {
       id_ = id;
       timeEnabled_ = true;
@@ -36,7 +46,7 @@ public final class AcqOrderMode {
       }
       return name.toString();
    }
-   
+
    /**
     * Generates a string describing the ordering, e.g.
     * "T1,P1,Z1,C1; T1,P1,Z1,C2; ...; T1,P1,Z2,C1; T1,P1,Z2,C2; ...;
@@ -124,13 +134,21 @@ public final class AcqOrderMode {
       return result;
    }
 
+   /**
+    * Determines which axes are actually being used in this acquisition.
+    *
+    * @param time Time Axis
+    * @param position XY Stage position
+    * @param slice Z slice
+    * @param channel Channel (usually different wavenlength)
+    */
    public void setEnabled(boolean time, boolean position, boolean slice, boolean channel) {
       timeEnabled_ = time;
       posEnabled_ = position;
       sliceEnabled_ = slice;
       channelEnabled_ = channel;
    }
-   
+
    public int getID() {
       return id_;
    }

@@ -115,7 +115,7 @@ public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
             boolean isOn = event.isOn();
             result.setIcon(IconLoader.getIcon(
                   isOn ? "/org/micromanager/icons/cancel.png" :
-                  "/org/micromanager/icons/camera_go.png"));
+                        "/org/micromanager/icons/camera_go.png"));
             result.setText(isOn ? "Stop Live" : "Live");
          }
 
@@ -125,19 +125,17 @@ public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
                if (!result.isDisplayable()) {
                   try {
                      studio_.events().unregisterForEvents(this);
-                  }
-                  catch (IllegalArgumentException ex) {
+                  } catch (IllegalArgumentException ex) {
                      // We were already unsubscribed; ignore it.
                   }
-               }
-               else {
+               } else {
                   studio_.events().registerForEvents(this);
                }
             }
          }
       };
-      result.setIcon(studio_.live().isLiveModeOn() ?
-            IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
+      result.setIcon(studio_.live().isLiveModeOn()
+            ? IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
             IconLoader.getIcon("/org/micromanager/icons/camera_go.png"));
       result.addHierarchyListener(wrapper);
       studio_.events().registerForEvents(wrapper);

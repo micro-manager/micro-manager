@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.inspector.internal;
 
 import java.awt.Component;
@@ -13,14 +14,14 @@ import javax.swing.ListCellRenderer;
 /**
  * A {@code ListCellRenderer} allowing separators in a {@code JComboBox}.
  *
- * Simply set the JComboBox's renderer to an instance of this class, then add
+ * <p>Simply set the JComboBox's renderer to an instance of this class, then add
  * a {@code JSeparator} as an item in the JComboBox.
- * <p>
- * Note, however, that the separator is selectable (there is no easy way to
+ *
+ * <p>Note, however, that the separator is selectable (there is no easy way to
  * "disable" items in a JComboBox). In your action handler for the combo box,
  * you will need to ignore such selections and revert to the previous value.
- * <p>
- * TODO Move this to generic GUI utilities
+ *
+ * <p>TODO Move this to generic GUI utilities
  *
  * @author Mark A. Tsuchida
  */
@@ -37,8 +38,8 @@ class ComboBoxSeparatorRenderer implements ListCellRenderer {
 
    @Override
    public Component getListCellRendererComponent(JList list, Object value,
-         int index, boolean isSelected, boolean cellHasFocus)
-   {
+                                                 int index, boolean isSelected,
+                                                 boolean cellHasFocus) {
       if (value instanceof JSeparator) {
          return (JSeparator) value;
       }

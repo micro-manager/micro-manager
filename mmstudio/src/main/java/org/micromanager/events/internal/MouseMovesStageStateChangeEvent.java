@@ -6,7 +6,7 @@ package org.micromanager.events.internal;
  */
 public final class MouseMovesStageStateChangeEvent {
    private final boolean isEnabled_;
-   
+
    public MouseMovesStageStateChangeEvent(boolean isEnabled) {
       isEnabled_ = isEnabled;
    }

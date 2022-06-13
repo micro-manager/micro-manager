@@ -118,9 +118,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
 
    private final List<Overlay> overlays_ = new ArrayList<>();
-   
-   private final TreeMap<Integer, DataViewerListener> listeners_ = 
-           new TreeMap<>();
+
+   private final TreeMap<Integer, DataViewerListener> listeners_ =
+         new TreeMap<>();
 
    // A way to know from a non-EDT thread that the display has definitely
    // closed (may not be true for a short period after closing)
@@ -217,8 +217,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       DisplaySettings initialDisplaySettings = builder.displaySettings_;
       if (initialDisplaySettings == null) {
          initialDisplaySettings = RememberedDisplaySettings.loadDefaultDisplaySettings(
-                 studio,
-                 builder.dataProvider_.getSummaryMetadata());
+               studio,
+               builder.dataProvider_.getSummaryMetadata());
       }
       if (initialDisplaySettings == null) {
          initialDisplaySettings = DefaultDisplaySettings.builder().build();
@@ -249,10 +249,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    private DisplayController(Studio studio,
-         DataProvider dataProvider,
-         DisplaySettings initialDisplaySettings,
-         DisplayWindowControlsFactory controlsFactory,
-         LinkManager linkManager) {
+                             DataProvider dataProvider,
+                             DisplaySettings initialDisplaySettings,
+                             DisplayWindowControlsFactory controlsFactory,
+                             LinkManager linkManager) {
       super(initialDisplaySettings);
       studio_ = studio;
       dataProvider_ = dataProvider;
@@ -260,7 +260,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       linkManager_ = linkManager;
 
       computeQueue_.setPerformanceMonitor(perfMon_);
-      
+
       ReportingUtils.logMessage("Class: " + this.getClass());
       ReportingUtils.logMessage("Classloader: " + this.getClass().getClassLoader());
    }
@@ -556,13 +556,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       List<Image> images;
       try {
          images = dataProvider_.getImagesIgnoringAxes(
-                 position.copyRemovingAxes(Coords.CHANNEL),
-                 Coords.CHANNEL);
+               position.copyRemovingAxes(Coords.CHANNEL),
+               Coords.CHANNEL);
       } catch (IOException e) {
          // TODO Should display error
          images = Collections.emptyList();
       }
-
 
 
       // Handle missing images.
@@ -591,7 +590,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             for (int c = 0; c < dataProvider_.getNextIndex(Coords.CHANNEL); c++) {
                Coords.CoordsBuilder cb = position.copyBuilder();
                Coords targetCoord = cb.channel(c).build();
-               CHANNEL_SEARCH: if (!dataProvider_.hasImage(targetCoord)) {
+               CHANNEL_SEARCH:
+               if (!dataProvider_.hasImage(targetCoord)) {
                   // c is missing, first look in z
                   int zOffset = 1;
                   while (position.getZ() - zOffset > -1
@@ -634,7 +634,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
 
 
-
       BoundsRectAndMask selection = BoundsRectAndMask.unselected();
       if (getDisplaySettings().isROIAutoscaleEnabled()) {
          synchronized (selectionLock_) {
@@ -646,8 +645,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          perfMon_.sampleTimeInterval("Submitting compute request");
       }
       computeQueue_.submitRequest(ImageStatsRequest.create(position,
-              images,
-              selection));
+            images,
+            selection));
 
       return position;
    }
@@ -882,7 +881,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    /**
     * Sets the state of the animation lock icon.
     *
-    * @param axis Axes for which the animation lock icon should change.
+    * @param axis  Axes for which the animation lock icon should change.
     * @param state New state, either "U" (jump and stay), or "F" (Flash and Snap back),
     *              other options will result in Ignore state.
     */
@@ -903,7 +902,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       animationController_.setNewPositionHandlingMode(axis, newMode);
    }
 
-   
+
    //
    // Event handlers
    //
@@ -912,7 +911,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
     * A new image arrived in the Datastore.
     *
     * @param event Contains information about the newly arrived image.
-     */
+    */
    @Subscribe
    public void onNewImage(final DataProviderHasNewImageEvent event) {
       if (perfMon_ != null) {
@@ -931,7 +930,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // interface.
       animationController_.newDataPosition(event.getImage().getCoords());
    }
-
 
 
    /**
@@ -1012,7 +1010,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       //The UID ensures that each object has a unique name during runtime.
       return dataProvider_.getName() + "-" + uid;
    }
-   
 
 
    @Override
@@ -1080,13 +1077,13 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             return false;
          }
       }
-      
-      close(); 
+
+      close();
       return true;
    }
 
    @Override
-   public  void close() {
+   public void close() {
       // close is called from DisplayUIController.windowClosing and from
       // store.requestToClose, so we need to accomodate multiple calls
       // This is a workaround a bug...
@@ -1166,8 +1163,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          uiController_.expandDisplayedRangeToInclude(cb.build());
       }
    }
-   
-   @Subscribe 
+
+   @Subscribe
    public void onNewDataProviderName(DataProviderHasNewNameEvent dpnne) {
       uiController_.updateTitle();
    }
@@ -1250,6 +1247,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          ((Datastore) dataProvider_).setName(title);
       }
    }
-   
-   
+
+
 }

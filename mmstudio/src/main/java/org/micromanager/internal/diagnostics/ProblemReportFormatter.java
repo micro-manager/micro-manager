@@ -35,18 +35,18 @@ public final class ProblemReportFormatter {
       // sending the log. This was confusing.
       if (report.hasStartingConfig()) {
          sb.append(fileSection("Starting Config (" + report.getStartingConfigFileName() + ")",
-                  report.getStartingConfig()));
+               report.getStartingConfig()));
       }
       if (report.configChangedDuringLogCapture() && report.hasEndingConfig()) {
          sb.append(fileSection("Ending Config (" + report.getEndingConfigFileName() + ")",
-                  report.getEndingConfig()));
+               report.getEndingConfig()));
       }
 
       sb.append(fileSection("Captured Log", report.getCapturedLogContent()));
 
       if (report.hasHotSpotErrorLog()) {
          sb.append(fileSection("HotSpot Error Log (" + report.getHotSpotErrorLogFileName() + ")",
-                 report.getHotSpotErrorLogContent()));
+               report.getHotSpotErrorLogContent()));
       }
 
       sb.append("***** END OF PROBLEM REPORT *****");

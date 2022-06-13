@@ -45,10 +45,10 @@ public final class PresetEditor extends ConfigDialog {
    /**
     * Constructs the GUI editor for the given preset.
     *
-    * @param groupName Name of the group, for instance "Channels".
+    * @param groupName  Name of the group, for instance "Channels".
     * @param presetName Name of preset, for instance "GFP"
-    * @param studio The always present Studio object
-    * @param newItem True when the preset does not exist yet, false otherwise
+    * @param studio     The always present Studio object
+    * @param newItem    True when the preset does not exist yet, false otherwise
     */
    public PresetEditor(String groupName, String presetName, Studio studio, boolean newItem) {
       super(groupName, presetName, studio, newItem);
@@ -69,7 +69,7 @@ public final class PresetEditor extends ConfigDialog {
       data_.setShowReadOnly(true);
       initialize();
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 420, 300);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(400, 250));
@@ -87,7 +87,7 @@ public final class PresetEditor extends ConfigDialog {
     * "Writes the preset to the core.
     *
     * @param initName original name of the preset
-    * @param newName new name (can be same as original)
+    * @param newName  new name (can be same as original)
     * @return true on success, false otherwise
     */
    public boolean writePreset(String initName, String newName) {
@@ -115,7 +115,7 @@ public final class PresetEditor extends ConfigDialog {
          boolean same;
          for (int j = 0; j < cfgs.size(); j++) {
             same = true;
-            if (newItem_ || ! cfgs.get(j).contentEquals(initName)) {
+            if (newItem_ || !cfgs.get(j).contentEquals(initName)) {
                otherPreset = core_.getConfigData(groupName_, cfgs.get(j));
                for (PropertyItem item : data_.getProperties()) {
                   if (item.confInclude) {

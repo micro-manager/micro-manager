@@ -40,7 +40,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class MMROIManager {
    private final MMStudio studio_;
-   
+
    public MMROIManager(MMStudio studio) {
       studio_ = studio;
    }
@@ -60,7 +60,7 @@ public class MMROIManager {
          // Nothing to be done.
          studio_.logs().showError(
                "There is no selection in the image window.\n"
-               + "Use the ImageJ rectangle tool to draw the ROI.");
+                     + "Use the ImageJ rectangle tool to draw the ROI.");
          return;
       }
       if (roi.getType() == Roi.RECTANGLE) {
@@ -180,14 +180,14 @@ public class MMROIManager {
       }
       studio_.live().setSuspended(false);
    }
-   
+
    private void setMultiROI(List<Rectangle> rois) throws Exception {
       studio_.live().setSuspended(true);
       studio_.core().setMultiROI(rois);
       studio_.cache().refreshValues();
       studio_.live().setSuspended(false);
    }
-   
+
    private void handleError(String message) {
       studio_.live().setLiveModeOn(false);
       JOptionPane.showMessageDialog(studio_.uiManager().frame(), message);

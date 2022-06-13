@@ -80,7 +80,7 @@ public interface Storage {
     * Storage, in arbitrary order.
     *
     * @return Iterable that provides access to all image coordinates in the
-    *         Storage, in arbitrary order
+    *     Storage, in arbitrary order
     */
    Iterable<Coords> getUnorderedImageCoords();
 
@@ -102,7 +102,7 @@ public interface Storage {
     * For instance, given Coords {@code t=1,z=3>} and axes "c", the following
     * Coords would match: {@code <t=1, z=3>}, {@code <t=1, z=3, c=1>}, {@code <t=1, z=3, c=2>}.
     *
-    * @param coords coord looking for matching images
+    * @param coords          coord looking for matching images
     * @param ignoreTheseAxes Axes to be ignored in the images collection when
     *                        looking for matches
     * @return matching images
@@ -118,7 +118,7 @@ public interface Storage {
     *
     * @param axis axis of interest
     * @return Largest stored position along the specified axis or -1 when no images
-    *         are found on the given axis
+    *     are found on the given axis
     */
    int getMaxIndex(String axis);
 

@@ -87,7 +87,7 @@ public final class ConfigWizard extends JDialog {
    /**
     * Create the application.
     *
-    * @param studio Current Studio instance
+    * @param studio  Current Studio instance
     * @param defFile Configuration file to be used.
     */
    public ConfigWizard(Studio studio, String defFile) {
@@ -116,7 +116,7 @@ public final class ConfigWizard extends JDialog {
       setTitle("Hardware Configuration Wizard");
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(50, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
@@ -251,7 +251,7 @@ public final class ConfigWizard extends JDialog {
                   if (0 < ss.size()) {
                      String pa2 = ss.get(0);
                      if (null != pa2) {
-                        if (0 <  pa2.length()) {
+                        if (0 < pa2.length()) {
                            physicalAddress = pa2;
                         }
                      }

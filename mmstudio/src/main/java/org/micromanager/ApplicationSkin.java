@@ -42,7 +42,7 @@ public interface ApplicationSkin {
     * Available skins used by the application.
     */
    enum SkinMode {
-      DAY("Day"), 
+      DAY("Day"),
       NIGHT("Night");
       private final String desc_;
 
@@ -127,7 +127,7 @@ public interface ApplicationSkin {
     * @return current color for disabled text.
     */
    Color getDisabledTextColor();
-   
+
    /**
     * If the specified mode is not currently active, then we switch to that
     * mode without updating the UI. Useful if a component must be generated
@@ -136,7 +136,7 @@ public interface ApplicationSkin {
     * @param mode SkinMode to switch to (but without updating the UI)
     */
    void suspendToMode(SkinMode mode);
-   
+
    /**
     * Restores the mode that was active before suspendToMode was called.
     */

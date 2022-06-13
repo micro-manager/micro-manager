@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.link;
 
 import com.google.common.base.Preconditions;
@@ -13,17 +14,26 @@ import java.util.List;
 import java.util.Set;
 import org.micromanager.display.internal.link.internal.LinkEndpoint;
 
+/**
+ * Anchors are UI elements in the viewer that couple axes of one viewer to the axes of
+ * another viewer.
+ *
+ * @param <T>
+ */
 
 public abstract class AbstractLinkAnchor<T> implements LinkAnchor<T> {
    private LinkEndpoint endpoint_;
 
-   /** Used by the framework; user code should not call. */
+   /**
+    * Used by the framework; user code should not call.
+    */
    public void setInternalEndpoint(LinkEndpoint endpoint) {
       endpoint_ = endpoint;
    }
 
    /**
     * Notify the linked peers that the linked value has changed.
+    *
     * @param value
     */
    protected final synchronized void propagateValue(T value) {

@@ -25,7 +25,7 @@ class SendReportControlPanel extends ControlPanel {
    }
 
    SendReportControlPanel(ProblemReportController controller,
-         boolean allowRestart) {
+                          boolean allowRestart) {
       controller_ = controller;
 
       closeButton_ = new JButton("Close");
@@ -42,7 +42,7 @@ class SendReportControlPanel extends ControlPanel {
       viewButton.addActionListener(e -> controller_.displayReport());
 
       setLayout(new net.miginfocom.swing.MigLayout(
-               "fillx, insets 0", "", ""));
+            "fillx, insets 0", "", ""));
 
       if (startOverButton_ != null) {
          add(closeButton_, "span 2, split 3, sizegroup cancelbtns");

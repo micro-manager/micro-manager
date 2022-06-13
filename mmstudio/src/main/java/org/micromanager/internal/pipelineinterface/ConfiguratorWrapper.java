@@ -40,7 +40,7 @@ public final class ConfiguratorWrapper {
    private boolean isEnabledInLive_;
 
    public ConfiguratorWrapper(ProcessorPlugin plugin,
-         ProcessorConfigurator configurator, String name) {
+                              ProcessorConfigurator configurator, String name) {
       plugin_ = plugin;
       configurator_ = configurator;
       name_ = name;

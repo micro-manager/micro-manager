@@ -54,7 +54,7 @@ public final class DefaultShutterManager implements ShutterManager {
       shutters_ = new ArrayList<>();
       try {
          for (String shutter : studio_.core().getLoadedDevicesOfType(
-                  DeviceType.ShutterDevice)) {
+               DeviceType.ShutterDevice)) {
             shutters_.add(shutter);
          }
       } catch (Exception e) {

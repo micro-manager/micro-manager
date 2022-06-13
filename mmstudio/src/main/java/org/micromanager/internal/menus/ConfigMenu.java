@@ -72,7 +72,7 @@ public final class ConfigMenu {
       configMenu.add(switchConfigurationMenu_);
 
       GUIUtils.addMenuItem(configMenu, "Save Hardware Configuration As...",
-              "Save the current hardware configuration",
+            "Save the current hardware configuration",
             () -> {
                mmStudio_.uiManager().promptToSaveConfigPresets();
                mmStudio_.uiManager().updateChannelCombos();
@@ -88,7 +88,7 @@ public final class ConfigMenu {
    }
 
    private void loadConfiguration() {
-      File configFile = FileDialogs.openFile(mmStudio_.uiManager().frame(), 
+      File configFile = FileDialogs.openFile(mmStudio_.uiManager().frame(),
             "Load a Configuration File", FileDialogs.MM_CONFIG_FILE);
       if (configFile != null) {
          mmStudio_.setSysConfigFile(configFile.getAbsolutePath());
@@ -100,20 +100,20 @@ public final class ConfigMenu {
          new Thread(this::runHardwareWizard).start();
          return;
       }
-      
+
       if (mmStudio_.hasConfigChanged()) {
          Object[] options = {"Yes", "No"};
          int n = JOptionPane.showOptionDialog(null,
-                 "Save Hardware Configuration?", "Micro-Manager",
-                 JOptionPane.YES_NO_OPTION,
-                 JOptionPane.QUESTION_MESSAGE, null, options,
-                 options[0]);
+               "Save Hardware Configuration?", "Micro-Manager",
+               JOptionPane.YES_NO_OPTION,
+               JOptionPane.QUESTION_MESSAGE, null, options,
+               options[0]);
          if (n == JOptionPane.YES_OPTION) {
             mmStudio_.uiManager().promptToSaveConfigPresets();
          }
          mmStudio_.setConfigChanged(false);
       }
-      
+
       try {
          mmStudio_.live().setSuspended(true);
 
@@ -159,7 +159,7 @@ public final class ConfigMenu {
    /**
     * Handles event signalling that a configuration was loaded.
     *
-    * @param event  This event has nothing special to it
+    * @param event This event has nothing special to it
     */
    @Subscribe
    public void onSystemConfigurationLoaded(SystemConfigurationLoadedEvent event) {
@@ -177,7 +177,7 @@ public final class ConfigMenu {
             label = "(none)";
          }
          GUIUtils.addMenuItem(switchConfigurationMenu_,
-                 label, null,
+               label, null,
                () -> mmStudio_.setSysConfigFile(configFile));
          seenConfigs.add(configFile);
       }

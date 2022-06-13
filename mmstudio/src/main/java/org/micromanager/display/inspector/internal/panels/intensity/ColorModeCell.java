@@ -1,4 +1,3 @@
-
 package org.micromanager.display.inspector.internal.panels.intensity;
 
 import java.awt.Color;
@@ -77,7 +76,8 @@ final class ColorModeCell extends DefaultListCellRenderer {
 
    @Override
    public Component getListCellRendererComponent(JList list, Object value,
-         int index, boolean isSelected, boolean cellHasFocus) {
+                                                 int index, boolean isSelected,
+                                                 boolean cellHasFocus) {
       Component superComponent = super.getListCellRendererComponent(list,
             String.valueOf(value), index, isSelected, cellHasFocus);
       if (value == null) {
@@ -113,9 +113,9 @@ final class ColorModeCell extends DefaultListCellRenderer {
       for (int y = 0; y < ICON_HEIGHT; ++y) {
          for (int x = 0; x < ICON_WIDTH; ++x) {
             pixels[x + y * ICON_WIDTH] = 0xff << 24
-               | lut.getResampled(0, ICON_WIDTH, x) << 16
-               | lut.getResampled(1, ICON_WIDTH, x) << 8
-               | lut.getResampled(2, ICON_WIDTH, x);
+                  | lut.getResampled(0, ICON_WIDTH, x) << 16
+                  | lut.getResampled(1, ICON_WIDTH, x) << 8
+                  | lut.getResampled(2, ICON_WIDTH, x);
          }
       }
 

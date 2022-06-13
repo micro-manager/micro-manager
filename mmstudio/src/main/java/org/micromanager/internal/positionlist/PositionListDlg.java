@@ -28,8 +28,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -79,9 +77,9 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    protected static final String POS_COL0_WIDTH = "posCol0WIDTH";
    protected static final String AXIS_COL0_WIDTH = "axisCol0WIDTH";
    protected static final FileType POSITION_LIST_FILE =
-           new FileType("POSITION_LIST_FILE", "Position list file",
-                        System.getProperty("user.home") + "/PositionList.pos",
-                        true, POS);
+         new FileType("POSITION_LIST_FILE", "Position list file",
+               System.getProperty("user.home") + "/PositionList.pos",
+               true, POS);
 
    protected Font arialSmallFont_;
    protected JTable posTable_;
@@ -119,7 +117,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    /**
     * Create the dialog.
     *
-    * @param studio - Studio
+    * @param studio  - Studio
     * @param posList - Position list to be displayed in this dialog
     */
    @SuppressWarnings("LeakingThisInConstructor")
@@ -133,11 +131,11 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       bus_.register(this);
 
       setTitle("Stage Position List");
-      setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
-              "[top]"));
+      setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]",
+            "[top]"));
       setMinimumSize(new Dimension(275, 365));
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 362, 595);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
@@ -178,7 +176,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       posTable_.getColumnModel().getColumn(0).setWidth(posCol0Width);
       posTable_.getColumnModel().getColumn(0).setPreferredWidth(posCol0Width);
       posTable_.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-      
+
       axisTable_ = new DaytimeNighttime.Table();
       axisTable_.setFont(arialSmallFont_);
       axisList_ = new AxisList(core_);
@@ -196,37 +194,37 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       axisTable_.getColumnModel().getColumn(0).setPreferredWidth(axisCol0Width);
       axisTable_.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
-      
+
       // Create buttons on the right side of the window    
       Dimension buttonSize = new Dimension(88, 21);
-      
+
       // mark / replace button:
-      markButton_ =  posListButton(buttonSize, arialSmallFont_);
+      markButton_ = posListButton(buttonSize, arialSmallFont_);
       markButton_.addActionListener(arg0 -> {
          markPosition(true);
          posTable_.clearSelection();
          updateMarkButtonText();
       });
       markButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/flag_green.png")));
+            "/org/micromanager/icons/flag_green.png")));
       markButton_.setText("Mark");
       markButton_.setToolTipText("Adds point with coordinates of current stage position");
       // Separate the layout of the buttons from the layout of the panels to 
       // their left.
       add(markButton_, "split, spany, align left");
-      
-      posTable_.addFocusListener(
-         new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusLost(java.awt.event.FocusEvent evt) {
-               updateMarkButtonText();
-            }
 
-            @Override
-            public void focusGained(java.awt.event.FocusEvent evt) {
-               updateMarkButtonText();
+      posTable_.addFocusListener(
+            new java.awt.event.FocusAdapter() {
+               @Override
+               public void focusLost(java.awt.event.FocusEvent evt) {
+                  updateMarkButtonText();
+               }
+
+               @Override
+               public void focusGained(java.awt.event.FocusEvent evt) {
+                  updateMarkButtonText();
+               }
             }
-         }
       );
 
       // the re-ordering buttons:
@@ -238,22 +236,22 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       final JButton upButton = posListButton(arrowSize, arialSmallFont_);
       upButton.addActionListener(arg0 -> incrementOrderOfSelectedPosition(-1));
       upButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-                           "/org/micromanager/icons/arrow_up.png")));
+            "/org/micromanager/icons/arrow_up.png")));
       upButton.setText(""); // "Up"
       upButton.setToolTipText(
             "Move currently selected position up list (positions higher on list are "
-            + "acquired earlier)");
+                  + "acquired earlier)");
       arrowPanel.add(upButton, "dock west");
-  
+
       // move selected row down one row
       final JButton downButton = posListButton(arrowSize, arialSmallFont_);
       downButton.addActionListener(arg0 -> incrementOrderOfSelectedPosition(1));
       downButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/arrow_down.png")));
+            "/org/micromanager/icons/arrow_down.png")));
       downButton.setText(""); // "Down"
       downButton.setToolTipText(
             "Move currently selected position down list (lower positions on list "
-            + "are acquired later)");
+                  + "are acquired later)");
       arrowPanel.add(downButton, "dock east");
       add(arrowPanel, "growx");
 
@@ -268,18 +266,18 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          }
       });
       mergeButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/asterisk_orange.png")));
+            "/org/micromanager/icons/asterisk_orange.png")));
       mergeButton.setText("Merge");
       mergeButton.setToolTipText(
             "Select an axis, and set the selected positions' value along that axis to "
-            + "the current stage position.");
+                  + "the current stage position.");
       add(mergeButton);
-      
+
       // the Go To button:
       final JButton gotoButton = posListButton(buttonSize, arialSmallFont_);
       gotoButton.addActionListener(arg0 -> goToCurrentPosition());
       gotoButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/resultset_next.png")));
+            "/org/micromanager/icons/resultset_next.png")));
       gotoButton.setText("Go to");
       gotoButton.setToolTipText("Moves stage to currently selected position");
       add(gotoButton);
@@ -287,14 +285,14 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       final JButton refreshButton = posListButton(buttonSize, arialSmallFont_);
       refreshButton.addActionListener(arg0 -> refreshCurrentPosition());
       refreshButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/arrow_refresh.png")));
+            "/org/micromanager/icons/arrow_refresh.png")));
       refreshButton.setText("Refresh");
       add(refreshButton);
 
       final JButton removeButton = posListButton(buttonSize, arialSmallFont_);
       removeButton.addActionListener(arg0 -> removeSelectedPositions());
       removeButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/cross.png")));
+            "/org/micromanager/icons/cross.png")));
       removeButton.setText("Remove");
       removeButton.setToolTipText("Removes currently selected position from list");
       add(removeButton);
@@ -303,35 +301,35 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       setOriginButton.addActionListener(arg0 -> {
          calibrate(); //setOrigin();
       });
-       
+
       setOriginButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/empty.png")));
+            "/org/micromanager/icons/empty.png")));
       setOriginButton.setText("Set Origin");
       setOriginButton.setToolTipText(
             "Drives X and Y stages back to their original positions and zeros "
-            + "their position values");
+                  + "their position values");
       add(setOriginButton);
 
       final JButton offsetButton = posListButton(buttonSize, arialSmallFont_);
       offsetButton.addActionListener(arg0 -> offsetPositions());
-       
+
       offsetButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/empty.png")));
+            "/org/micromanager/icons/empty.png")));
       offsetButton.setText("Add Offset");
       offsetButton.setToolTipText("Add an offset to the selected positions.");
       add(offsetButton);
-      
+
       final JButton removeAllButton = posListButton(buttonSize, arialSmallFont_);
       removeAllButton.addActionListener(arg0 -> {
          int ret = JOptionPane.showConfirmDialog(PositionListDlg.this,
-                 "Are you sure you want to erase\nall positions from the position list?",
-                 "Clear all positions?", JOptionPane.YES_NO_OPTION);
+               "Are you sure you want to erase\nall positions from the position list?",
+               "Clear all positions?", JOptionPane.YES_NO_OPTION);
          if (ret == JOptionPane.YES_OPTION) {
             clearAllPositions();
          }
       });
       removeAllButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/delete.png")));
+            "/org/micromanager/icons/delete.png")));
       removeAllButton.setText("Clear All");
       removeAllButton.setToolTipText("Removes all positions from list");
       add(removeAllButton);
@@ -339,7 +337,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       final JButton loadButton = posListButton(buttonSize, arialSmallFont_);
       loadButton.addActionListener(arg0 -> loadPositionList());
       loadButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/empty.png")));
+            "/org/micromanager/icons/empty.png")));
       loadButton.setText("Load...");
       loadButton.setToolTipText("Load position list");
       add(loadButton, "gaptop 4:push");
@@ -347,7 +345,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       final JButton saveAsButton = posListButton(buttonSize, arialSmallFont_);
       saveAsButton.addActionListener(arg0 -> savePositionListAs());
       saveAsButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/empty.png")));
+            "/org/micromanager/icons/empty.png")));
       saveAsButton.setText("Save As...");
       saveAsButton.setToolTipText("Save position list as");
       add(saveAsButton);
@@ -355,7 +353,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       tileButton_ = posListButton(buttonSize, arialSmallFont_);
       tileButton_.addActionListener(arg0 -> showCreateTileDlg());
       tileButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/empty.png")));
+            "/org/micromanager/icons/empty.png")));
       tileButton_.setText("Create Grid");
       tileButton_.setToolTipText("Open new window to create grid of equally spaced positions");
       add(tileButton_);
@@ -364,7 +362,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       final JButton closeButton = posListButton(buttonSize, arialSmallFont_);
       closeButton.addActionListener(arg0 -> dispose());
       closeButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/empty.png")));
+            "/org/micromanager/icons/empty.png")));
       closeButton.setText("Close");
       add(closeButton, "wrap");
 
@@ -372,26 +370,26 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       studio_.events().registerForEvents(this);
       refreshCurrentPosition();
    }
-   
+
    private JButton posListButton(Dimension buttonSize, Font font) {
       JButton button = new JButton();
       button.setPreferredSize(buttonSize);
       button.setMinimumSize(buttonSize);
       button.setFont(font);
       button.setMargin(new Insets(0, 0, 0, 0));
-      
+
       return button;
    }
-   
-   public void addListeners() { 
+
+   public void addListeners() {
       // This method should be called after the constructor
       // finishes to fully register all needed listeners.
       axisTable_.addMouseListener(this);
-      posTable_.addMouseListener(this);      
-      getPositionList().addChangeListener(this);    
+      posTable_.addMouseListener(this);
+      getPositionList().addChangeListener(this);
    }
-   
-   
+
+
    @Override
    public void stateChanged(ChangeEvent e) {
       GUIUtils.invokeLater(() -> {
@@ -410,7 +408,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          }
       }
    }
-   
+
 
    public void addPosition(MultiStagePosition msp, String label) {
       msp.setLabel(label);
@@ -428,7 +426,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       File f = FileDialogs.save(this, "Save the position list", POSITION_LIST_FILE);
       if (f != null) {
          curFile_ = f;
-         
+
          String fileName = curFile_.getAbsolutePath();
          int i = fileName.lastIndexOf('.');
          int j = fileName.lastIndexOf(File.separatorChar);
@@ -447,7 +445,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          }
          return true;
       }
-      
+
       return false;
    }
 
@@ -461,7 +459,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          } catch (Exception e) {
             ReportingUtils.showError(e);
          } finally {
-            updatePositionData();            
+            updatePositionData();
          }
       }
    }
@@ -470,7 +468,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       positionModel_.fireTableDataChanged();
       updateMarkButtonText();
    }
-   
+
    public void rebuildAxisList() {
       axisList_ = new AxisList(core_);
       axisModel_.fireTableDataChanged();
@@ -480,7 +478,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       axisModel_.setEditable(state);
       axisTable_.setEnabled(state);
    }
-   
+
    public void setPositionList(PositionList pl) {
       positionModel_.setData(pl);
       updatePositionData();
@@ -505,7 +503,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       updatePositionData();
    }
 
-   
+
    protected void incrementOrderOfSelectedPosition(int direction) {
       int currentRow = posTable_.getSelectedRow() - 1;
       int newEdittingRow = -1;
@@ -513,25 +511,25 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       if (0 <= currentRow) {
          int destinationRow = currentRow + direction;
             {
-            if (0 <= destinationRow) {
-               if (destinationRow < posTable_.getRowCount()) {
-                  PositionList pl = getPositionList();
+               if (0 <= destinationRow) {
+                  if (destinationRow < posTable_.getRowCount()) {
+                     PositionList pl = getPositionList();
 
-                  MultiStagePosition[] mspos = pl.getPositions();
+                     MultiStagePosition[] mspos = pl.getPositions();
 
-                  MultiStagePosition tmp = mspos[currentRow];
-                  pl.replacePosition(currentRow, mspos[destinationRow]);
-                  pl.replacePosition(destinationRow, tmp);
-                  positionModel_.setData(pl);
-                  if (destinationRow + 1 < positionModel_.getRowCount()) {
-                     newEdittingRow = destinationRow + 1;
+                     MultiStagePosition tmp = mspos[currentRow];
+                     pl.replacePosition(currentRow, mspos[destinationRow]);
+                     pl.replacePosition(destinationRow, tmp);
+                     positionModel_.setData(pl);
+                     if (destinationRow + 1 < positionModel_.getRowCount()) {
+                        newEdittingRow = destinationRow + 1;
+                     }
+                  } else {
+                     newEdittingRow = posTable_.getRowCount() - 1;
                   }
                } else {
-                  newEdittingRow = posTable_.getRowCount() - 1;
+                  newEdittingRow = 1;
                }
-            } else {
-               newEdittingRow = 1;
-            }
             }
       }
       updatePositionData();
@@ -543,8 +541,8 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       updateMarkButtonText();
 
    }
-   
-   
+
+
    protected void removeSelectedPositions() {
       int[] selectedRows = posTable_.getSelectedRows();
       // Reverse the rows so that we delete from the end; if we delete from
@@ -577,17 +575,17 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          updatePositionData();
       } else { // replace instead of add
          msp.setLabel(getPositionList().getPosition(
-                 posTable_.getSelectedRow() - 1).getLabel());
+               posTable_.getSelectedRow() - 1).getLabel());
          int selectedRow = posTable_.getSelectedRow();
          getPositionList().replacePosition(
-                 posTable_.getSelectedRow() - 1, msp);
+               posTable_.getSelectedRow() - 1, msp);
          updatePositionData();
          // Not sure why this is here as we undo the selection after
          // this functions exits...
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
       }
    }
-   
+
    /**
     * Displays a popup menu to let the user select an axis, which will then
     * invoke mergePositionsAlongAxis, below.
@@ -604,7 +602,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
     * their positions for that device match the current stage position for
     * that device.
     *
-    * @param deviceName name of device name 
+    * @param deviceName name of device name
     */
    public void mergePositionsWithDevice(String deviceName) {
       int[] selectedRows = posTable_.getSelectedRows();
@@ -663,8 +661,12 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       }
       updatePositionData();
    }
- 
-   // The stage position changed; update curMsp_.
+
+   /**
+    * The stage position changed; update curMsp_.
+    *
+    * @param event Signals that the stafe position changed
+    */
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
       // Do the update on the EDT (1) to prevent data races.
@@ -683,7 +685,12 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       });
    }
 
-   // The stage position changed; update curMsp_.
+
+   /**
+    * The stage position changed; update curMsp_.
+    *
+    * @param event Signals that the XY Stage position has changed
+    */
    @Subscribe
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
       // Do the update on the EDT (1) to prevent data races.
@@ -718,7 +725,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          for (int i = 0; i < stages.size(); i++) {
             if (axisList_.use(stages.get(i))) {
                StagePosition sp = StagePosition.create1D(stages.get(i),
-                       core_.getPosition(stages.get(i)));
+                     core_.getPosition(stages.get(i)));
                msp.add(sp);
             }
          }
@@ -729,8 +736,8 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
             if (axisList_.use(stages2D.get(i))) {
                String stageName = stages2D.get(i);
                StagePosition sp = StagePosition.create2D(stageName,
-                       core_.getXPosition(stageName),
-                       core_.getYPosition(stageName));
+                     core_.getXPosition(stageName),
+                     core_.getYPosition(stageName));
                msp.add(sp);
             }
          }
@@ -756,12 +763,12 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    public boolean useDrive(String drive) {
       return axisList_.use(drive);
    }
-   
+
    /**
     * Returns the first selected drive of the specified type.
     *
-    * @param type
-    * @return 
+    * @param type Axis Type
+    * @return First selected drive or null if not found
     */
    private String getAxis(AxisData.AxisType type) {
       for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
@@ -772,20 +779,20 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       }
       return null;
    }
-   
+
    /**
     * Returns the first selected XYDrive or null when none is selected.
     *
-    * @return  name of the 2D stage
+    * @return name of the 2D stage
     */
    public String get2DAxis() {
       return getAxis(AxisData.AxisType.twoD);
    }
-   
+
    /**
-     * List with 1D drives.
-     *
-     * @return StrVector with 1D drives
+    * List with 1D drives.
+    *
+    * @return StrVector with 1D drives
     */
    public StrVector get1DAxes() {
       AxisData.AxisType axType = AxisData.AxisType.oneD;
@@ -813,10 +820,10 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
     */
    private void calibrate() {
 
-      JOptionPane.showMessageDialog(this, "ALERT! Please REMOVE objectives! It may damage lens!", 
+      JOptionPane.showMessageDialog(this, "ALERT! Please REMOVE objectives! It may damage lens!",
             "Calibrate the XY stage", JOptionPane.WARNING_MESSAGE);
 
-      Object[] options = { "Yes", "No"};
+      Object[] options = {"Yes", "No"};
       if (JOptionPane.YES_OPTION != JOptionPane.showOptionDialog(this,
             "Really calibrate your XY stage?", "Are you sure?",
             JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
@@ -830,12 +837,12 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
          for (int i = 0; i < stages2D.size(); i++) {
             String deviceName = stages2D.get(i);
-            double [] x1 = new double[1];
-            double [] y1 = new double[1];
+            double[] x1 = new double[1];
+            double[] y1 = new double[1];
 
             core_.getXYPosition(deviceName, x1, y1);
 
-            StopCalThread stopThread = new StopCalThread(); 
+            StopCalThread stopThread = new StopCalThread();
             CalThread calThread = new CalThread();
 
             stopThread.setPara(calThread, this, deviceName, x1, y1);
@@ -852,32 +859,33 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    }
 
    class StopCalThread extends Thread {
-      double [] x1;
-      double [] y1;
+      double[] x1;
+      double[] y1;
       String deviceName;
       JFrame d;
       Thread otherThread;
 
       public void setPara(Thread calThread, JFrame d, String deviceName,
-                          double [] x1, double [] y1) {
+                          double[] x1, double[] y1) {
          this.otherThread = calThread;
          this.d = d;
          this.deviceName = deviceName;
          this.x1 = x1;
          this.y1 = y1;
       }
+
       @Override
       public void run() {
 
          try {
 
             // popup a dialog that says stop the calibration
-            Object[] options = { "Stop" };
-            int option = JOptionPane.showOptionDialog(d, "Stop calibration?", "Calibration", 
+            Object[] options = {"Stop"};
+            int option = JOptionPane.showOptionDialog(d, "Stop calibration?", "Calibration",
                   JOptionPane.CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
                   null, options, options[0]);
 
-            if (option == 0) {//stop the calibration
+            if (option == 0) { //stop the calibration
                otherThread.interrupt();
                otherThread = null;
 
@@ -901,8 +909,8 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
                   busy = core_.deviceBusy(deviceName);
                }
 
-               Object[] options2 = { "Yes", "No" };
-               option = JOptionPane.showOptionDialog(d, "RESUME calibration?", "Calibration", 
+               Object[] options2 = {"Yes", "No"};
+               option = JOptionPane.showOptionDialog(d, "RESUME calibration?", "Calibration",
                      JOptionPane.OK_OPTION, JOptionPane.QUESTION_MESSAGE,
                      null, options2, options2[0]);
 
@@ -937,8 +945,8 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
                }
 
                sct.interrupt();
-               double [] x2 = new double[1];
-               double [] y2 = new double[1];
+               double[] x2 = new double[1];
+               double[] y2 = new double[1];
 
                // check if the device busy?
                busy = core_.deviceBusy(deviceName);
@@ -962,11 +970,11 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
                bt.start();
 
                core_.setXYPosition(deviceName, x1[0] - x2[0], y1[0] - y2[0]);
-               
+
                if (isInterrupted()) {
                   return;
                }
-               
+
                busy = core_.deviceBusy(deviceName);
                while (busy) {
                   if (isInterrupted()) {
@@ -981,7 +989,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
 
                bt.interrupt();
 
-            }           
+            }
          } catch (InterruptedException e) {
             ReportingUtils.logError(e);
          } catch (Exception e) {
@@ -992,14 +1000,14 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
 
    class CalThread extends Thread {
 
-      double [] x1;
-      double [] y1;
+      double[] x1;
+      double[] y1;
       String deviceName;
       JFrame d;
       Thread stopThread;
 
       public void setPara(Thread stopThread, JFrame d, String deviceName,
-                          double [] x1, double [] y1) {
+                          double[] x1, double[] y1) {
          this.stopThread = stopThread;
          this.d = d;
          this.deviceName = deviceName;
@@ -1074,7 +1082,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
 
       @Override
       public void run() {
-         JOptionPane.showMessageDialog(d, "Going back to the original position!");              
+         JOptionPane.showMessageDialog(d, "Going back to the original position!");
       }
    } // End BackThread class
 
@@ -1083,16 +1091,20 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
     * Sole purpose is to be able to unselect rows in the positionlist table
     */
    @Override
-   public void mousePressed(MouseEvent e) {}
+   public void mousePressed(MouseEvent e) {
+   }
 
    @Override
-   public void mouseReleased(MouseEvent e) {}
+   public void mouseReleased(MouseEvent e) {
+   }
 
    @Override
-   public void mouseEntered(MouseEvent e) {}
+   public void mouseEntered(MouseEvent e) {
+   }
 
    @Override
-   public void mouseExited(MouseEvent e) {}
+   public void mouseExited(MouseEvent e) {
+   }
 
    /**
     * This event is fired after the table sets its selection.
@@ -1115,7 +1127,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       updateMarkButtonText();
    }
 
-   /** 
+   /**
     * Generate a dialog that will call our offsetSelectedSites() function
     * with a set of X/Y/Z offsets to apply.
     */
@@ -1129,8 +1141,8 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
     * of floats, apply the given offsets to all selected positions for that
     * particular device.
     *
-    * @param deviceName
-    * @param offsets
+    * @param deviceName Name of the Stage or XYStage
+    * @param offsets offsets to be applied, array should be size 1 for a Stage, size 2 for XYStage
     */
    public void offsetSelectedSites(String deviceName, ArrayList<Float> offsets) {
       PositionList positions = getPositionList();
@@ -1141,11 +1153,11 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
             if (subPos.getStageDeviceLabel().equals(deviceName)) {
                if (subPos.is1DStagePosition()) {
                   subPos.set1DPosition(subPos.getStageDeviceLabel(),
-                          subPos.get1DPosition() + offsets.get(0));
+                        subPos.get1DPosition() + offsets.get(0));
                } else if (subPos.is2DStagePosition()) {
                   subPos.set2DPosition(subPos.getStageDeviceLabel(),
-                          subPos.get2DPositionX() + offsets.get(0),
-                          subPos.get2DPositionY() + offsets.get(1));
+                        subPos.get2DPositionX() + offsets.get(0),
+                        subPos.get2DPositionY() + offsets.get(1));
                }
             }
          }

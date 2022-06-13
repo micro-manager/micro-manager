@@ -29,4 +29,5 @@ import org.micromanager.MMEvent;
  * <p>The default implementation of this Event posts on the DataProvider
  * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.</p>
  */
-public interface DatastoreFrozenEvent extends MMEvent {}
+public interface DatastoreFrozenEvent extends MMEvent {
+}

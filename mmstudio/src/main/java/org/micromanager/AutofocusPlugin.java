@@ -43,7 +43,7 @@ public interface AutofocusPlugin extends MMPlugin {
     * Pushes setting to the hardware or software autofocus.
     */
    void applySettings();
-   
+
    /**
     * Stores settings.
     */
@@ -65,7 +65,7 @@ public interface AutofocusPlugin extends MMPlugin {
     * @throws java.lang.Exception Mainly exceptions coming from the hardware.
     */
    double incrementalFocus() throws Exception;
-   
+
    /**
     * Returns the number of images acquired.
     *
@@ -99,7 +99,7 @@ public interface AutofocusPlugin extends MMPlugin {
     *
     * @param key PropertyName for which we want the value
     * @return value for given property
-    * @throws java.lang.Exception thrown by MMCore when key is not found.  
+    * @throws java.lang.Exception thrown by MMCore when key is not found.
     */
    PropertyItem getProperty(String key) throws Exception;
 
@@ -123,7 +123,7 @@ public interface AutofocusPlugin extends MMPlugin {
    /**
     * Sets the value of a named property.
     *
-    * @param name PropertyName
+    * @param name  PropertyName
     * @param value PropertyValue
     * @throws java.lang.Exception by MMCore
     */
@@ -163,7 +163,7 @@ public interface AutofocusPlugin extends MMPlugin {
     * @throws java.lang.Exception thrown by MMCore
     */
    boolean isContinuousFocusLocked() throws Exception;
-   
+
    /**
     * Computes a focus score for the given image.
     *

@@ -1,4 +1,3 @@
-
 package org.micromanager.display.internal.link.internal;
 
 import com.google.common.base.Preconditions;

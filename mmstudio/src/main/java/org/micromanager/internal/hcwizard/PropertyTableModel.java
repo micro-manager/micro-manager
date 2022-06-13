@@ -32,7 +32,7 @@ import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * Table model for device property tables. 
+ * Table model for device property tables.
  */
 class PropertyTableModel extends AbstractTableModel implements MMPropertyTableModel {
    private static final long serialVersionUID = 1L;
@@ -67,7 +67,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
          devices_ = new Device[1];
          devices_[0] = dev;
       }
-      
+
       model_.dumpComPortsSetupProps();
 
       ArrayList<PropertyItem> props = new ArrayList<>();
@@ -85,7 +85,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
             }
          }
       }
-      
+
       props_ = new PropertyItem[props.size()];
       devNames_ = new String[dn.size()];
       for (int i = 0; i < props.size(); i++) {
@@ -93,7 +93,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
          devNames_[i] = dn.get(i);
       }
    }
-   
+
    public int getRowCount() {
       return props_.length;
    }
@@ -116,7 +116,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
          return props_[rowIndex].value;
       }
    }
-   
+
    public void setValueAt(Object value, int row, int col) {
       if (col == 2) {
          try {
@@ -136,23 +136,23 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
          }
       }
    }
-   
+
    public boolean isCellEditable(int nRow, int nCol) {
       return nCol == 2 && !props_[nRow].readOnly;
    }
-   
+
    public void refresh() {
       this.fireTableDataChanged();
    }
-   
+
    public PropertyItem getPropertyItem(int rowIndex) {
       return props_[rowIndex];
    }
-   
+
    public Setting getSetting(int rowIndex) {
       return new Setting(devNames_[rowIndex], props_[rowIndex].name, props_[rowIndex].value);
    }
-   
+
    public PropertyItem getProperty(Setting s) {
       for (Device device : devices_) {
          if (device.getName().compareTo(s.deviceName_) == 0) {

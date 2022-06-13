@@ -16,7 +16,8 @@ import org.micromanager.data.internal.DefaultCoords;
  * @author Mark A. Tsuchida
  */
 public final class Coordinates {
-   private Coordinates() { }
+   private Coordinates() {
+   }
 
    public static Coords.Builder builder() {
       return new DefaultCoords.Builder();

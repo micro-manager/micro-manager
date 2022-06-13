@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.inspector.internal;
 
 import com.google.common.eventbus.Subscribe;
@@ -13,7 +14,6 @@ import java.util.Set;
 import org.micromanager.display.internal.event.InspectorDidCloseEvent;
 
 /**
- *
  * @author mark
  */
 public class InspectorCollection {
@@ -44,7 +44,7 @@ public class InspectorCollection {
    public List<InspectorController> getAllInspectors() {
       return new ArrayList<InspectorController>(inspectors_);
    }
-   
+
    public boolean hasInspectorForFrontmostDataViewer() {
       for (InspectorController inspector : inspectors_) {
          if (inspector.isAttachedToFrontmostDataViewer()) {

@@ -30,4 +30,5 @@ import org.micromanager.MMEvent;
  * <p>The default implementation of this event is posted on the Studio event bus,
  * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
-public interface NewPipelineEvent extends MMEvent {}
+public interface NewPipelineEvent extends MMEvent {
+}

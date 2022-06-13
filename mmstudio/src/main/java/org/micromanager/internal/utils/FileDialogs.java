@@ -36,7 +36,7 @@ public final class FileDialogs {
       String defaultFileName;
 
       public FileType(String name, String description, String defaultFileName,
-              boolean suggestFileOnSave, String... suffixes) {
+                      boolean suggestFileOnSave, String... suffixes) {
          this.name = name;
          this.description = description;
          this.suffixes = suffixes;
@@ -51,24 +51,24 @@ public final class FileDialogs {
    public static final FileType MM_DATA_SET = new FileType("MM_DATA_SET",
          "Micro-Manager Image Location", System.getProperty("user.home") + "/Untitled",
          false, (String[]) null);
-   
+
    public static final FileType SCIFIO_DATA = new FileType("SciFIO_Data_Set",
-           "Image Location", System.getProperty("user.home") + "/Untitled.tif",
-            false, "tif", "jpg", "avi", "png", "jpg");
+         "Image Location", System.getProperty("user.home") + "/Untitled.tif",
+         false, "tif", "jpg", "avi", "png", "jpg");
 
    public static final FileType ACQ_SETTINGS_FILE = new FileType(
-            "ACQ_SETTINGS_FILE",
+         "ACQ_SETTINGS_FILE",
          "Acquisition settings",
          System.getProperty("user.home") + "/AcqSettings.txt",
          true, "txt");
 
    private static class GeneralFileFilter
-           extends javax.swing.filechooser.FileFilter
-           implements java.io.FilenameFilter {
+         extends javax.swing.filechooser.FileFilter
+         implements java.io.FilenameFilter {
       private final String fileDescription_;
       private final String[] fileSuffixes_;
 
-      public GeneralFileFilter(String fileDescription, final String [] fileSuffixes) {
+      public GeneralFileFilter(String fileDescription, final String[] fileSuffixes) {
          fileDescription_ = fileDescription;
          fileSuffixes_ = fileSuffixes;
       }
@@ -104,13 +104,13 @@ public final class FileDialogs {
    }
 
    public static File promptForFile(Window parent,
-                    String title,
-                    File startFile,
-                    boolean selectDirectories, boolean load,
-                    final String fileDescription,
-                    final String[] fileSuffixes,
-                    boolean suggestFileName,
-                    ApplicationSkin skin) {
+                                    String title,
+                                    File startFile,
+                                    boolean selectDirectories, boolean load,
+                                    final String fileDescription,
+                                    final String[] fileSuffixes,
+                                    boolean suggestFileName,
+                                    ApplicationSkin skin) {
       File selectedFile = null;
       GeneralFileFilter filter = new GeneralFileFilter(fileDescription, fileSuffixes);
 
@@ -148,14 +148,14 @@ public final class FileDialogs {
          if (fd.getFile() != null) {
             selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
             if (mode == FileDialog.SAVE) {
-               if (! filter.accept(selectedFile)) {
+               if (!filter.accept(selectedFile)) {
                   selectedFile = new File(selectedFile.getAbsolutePath()
-                                          + "." + fileSuffixes[0]);
+                        + "." + fileSuffixes[0]);
                }
             }
          }
          fd.dispose();
-         
+
       } else {
          // HACK: we have very limited control over how file choosers are
          // rendered (they're highly platform-specific). Unfortunately on
@@ -190,7 +190,8 @@ public final class FileDialogs {
    }
 
    private static File promptForFile(Window parent, String title,
-         FileType type, boolean selectDirectories, boolean load, ApplicationSkin skin) {
+                                     FileType type, boolean selectDirectories, boolean load,
+                                     ApplicationSkin skin) {
       String startFile = getSuggestedFile(type);
       File startDir = null;
       if (startFile != null) {
@@ -208,7 +209,7 @@ public final class FileDialogs {
       UserProfile profile = MMStudio.getInstance().profile();
       type.defaultFileName = path.getAbsolutePath();
       profile.getSettings(FileDialogs.class).putString(type.name,
-              type.defaultFileName);
+            type.defaultFileName);
    }
 
    public static File openFile(Window parent, String title, FileType type) {

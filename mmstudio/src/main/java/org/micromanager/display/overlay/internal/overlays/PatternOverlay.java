@@ -43,15 +43,15 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.text.NumberFormat;
 import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.JFormattedTextField;
-import java.text.NumberFormat;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
@@ -84,15 +84,13 @@ public class PatternOverlay extends AbstractOverlay {
 
          @Override
          String getSizeString(int patternSize, double umPerImagePixel,
-               float width, float height)
-         {
+                              float width, float height) {
             float sizeImgPx = (patternSize / 100.0f) * Math.min(width, height);
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Crosshair Size: %d px",
                      (int) Math.round(sizeImgPx));
-            }
-            else {
-               return String.format("Crosshair Size: %.1f \u00B5m",
+            } else {
+               return String.format("Crosshair Size: %.1f \u00B5m", // micro-m, i.e. micron
                      sizeImgPx * umPerImagePixel);
             }
          }
@@ -110,16 +108,14 @@ public class PatternOverlay extends AbstractOverlay {
 
          @Override
          String getSizeString(int patternSize, double umPerImagePixel,
-               float width, float height)
-         {
+                              float width, float height) {
             float hSizeImgPx = patternSize * width / 100.0f;
             float vSizeImgPx = patternSize * height / 100.0f;
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Crosshair Size: %d x %d px",
                      (int) Math.round(hSizeImgPx), (int) Math.round(vSizeImgPx));
-            }
-            else {
-               return String.format("Crosshair Size: %.1f x %.1f \u00B5m",
+            } else {
+               return String.format("Crosshair Size: %.1f x %.1f \u00B5m", // micro-m, i.e. micron
                      hSizeImgPx * umPerImagePixel, vSizeImgPx * umPerImagePixel);
             }
          }
@@ -141,17 +137,15 @@ public class PatternOverlay extends AbstractOverlay {
 
          @Override
          String getSizeString(int patternSize, double umPerImagePixel,
-               float width, float height)
-         {
+                              float width, float height) {
             int nDivs = 2 + 9 * patternSize / 101;
             float hPixPerDiv = (float) width / nDivs;
             float vPixPerDiv = (float) height / nDivs;
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Grid Cell Size: %d x %d px",
                      (int) Math.round(hPixPerDiv), (int) Math.round(vPixPerDiv));
-            }
-            else {
-               return String.format("Grid Cell Size: %.1f x %.1f \u00B5m",
+            } else {
+               return String.format("Grid Cell Size: %.1f x %.1f \u00B5m", // micro-m, i.e. micron
                      hPixPerDiv * umPerImagePixel, vPixPerDiv * umPerImagePixel);
             }
          }
@@ -178,16 +172,14 @@ public class PatternOverlay extends AbstractOverlay {
 
          @Override
          String getSizeString(int patternSize, double umPerImagePixel,
-               float width, float height)
-         {
+                              float width, float height) {
             int nominalDivs = 2 + 9 * patternSize / 101;
             float pixPerDiv = (float) Math.min(width, height) / nominalDivs;
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Grid Cell Size: %d px",
                      (int) Math.round(pixPerDiv));
-            }
-            else {
-               return String.format("Grid Cell Size: %.1f \u00B5m",
+            } else {
+               return String.format("Grid Cell Size: %.1f \u00B5m", // micro-m, i.e. micron
                      pixPerDiv * umPerImagePixel);
             }
          }
@@ -196,22 +188,20 @@ public class PatternOverlay extends AbstractOverlay {
       CIRCLE("Circle") {
          @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
-            float r = 0.5f * patternSize * Math.max(width, height) / 100.0f * (float)Math.sqrt(2);
+            float r = 0.5f * patternSize * Math.max(width, height) / 100.0f * (float) Math.sqrt(2);
             g.draw(new Ellipse2D.Float(0.5f * width - r, 0.5f * height - r,
                   2.0f * r, 2.0f * r));
          }
 
-         @Override   
+         @Override
          String getSizeString(int patternSize, double umPerImagePixel,
-               float width, float height)
-         {
-            float dImgPx = patternSize * Math.max(width, height) / 100.0f * (float)Math.sqrt(2);
+                              float width, float height) {
+            float dImgPx = patternSize * Math.max(width, height) / 100.0f * (float) Math.sqrt(2);
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Circle Diameter: %d px",
                      (int) Math.round(dImgPx));
-            }
-            else {
-               return String.format("Circle Diameter: %.1f \u00B5m",
+            } else {
+               return String.format("Circle Diameter: %.1f \u00B5m", // micro-m, i.e. micron
                      dImgPx * umPerImagePixel);
             }
          }
@@ -233,28 +223,25 @@ public class PatternOverlay extends AbstractOverlay {
 
          @Override
          String getSizeString(int patternSize, double umPerImagePixel,
-               float width, float height)
-         {
+                              float width, float height) {
             float d0ImgPx = patternSize * Math.min(width, height) / 100.0f;
             StringBuilder sb = new StringBuilder("Circle Diameters: ");
             for (int i = 1; i <= N; ++i) {
                float dImgPx = d0ImgPx * (i / (float) N);
                if (Double.isNaN(umPerImagePixel)) {
                   sb.append(String.format("%d", (int) Math.round(dImgPx)));
-               }
-               else {
+               } else {
                   sb.append(String.format("%.1f", dImgPx * umPerImagePixel));
                }
                if (i < N) {
                   sb.append(", ");
                }
             }
-               if (Double.isNaN(umPerImagePixel)) {
-                  sb.append(" px");
-               }
-               else {
-                  sb.append(" \u00B5m");
-               }
+            if (Double.isNaN(umPerImagePixel)) {
+               sb.append(" px");
+            } else {
+               sb.append(" \u00B5m"); // micro-m, i.e. micron
+            }
             return sb.toString();
          }
       },
@@ -271,9 +258,10 @@ public class PatternOverlay extends AbstractOverlay {
       }
 
       abstract void draw(Graphics2D g, int patternSize,
-            float width, float height);
+                         float width, float height);
+
       abstract String getSizeString(int patternSize, double umPerImagePixel,
-            float width, float height);
+                                    float width, float height);
 
       @Override
       public String toString() {
@@ -359,10 +347,9 @@ public class PatternOverlay extends AbstractOverlay {
 
    @Override
    public void paintOverlay(Graphics2D g, Rectangle screenRect,
-         DisplaySettings displaySettings,
-         List<Image> images, Image primaryImage,
-         Rectangle2D.Float imageViewPort)
-   {
+                            DisplaySettings displaySettings,
+                            List<Image> images, Image primaryImage,
+                            Rectangle2D.Float imageViewPort) {
       g.setColor(color_.getColor());
       Double pixelSize = primaryImage.getMetadata().getPixelSizeUm();
       double umPerImagePixel = pixelSize != null ? pixelSize : Double.NaN;
@@ -370,10 +357,10 @@ public class PatternOverlay extends AbstractOverlay {
 
       // Draw the pattern in image pixel coordinates by applying a transform
       Graphics2D gTfm = (Graphics2D) g.create();
-      gTfm.transform(AffineTransform.
-            getScaleInstance(1.0 / zoomRatio, 1.0 / zoomRatio));
-      gTfm.transform(AffineTransform.
-            getTranslateInstance(-imageViewPort.x, -imageViewPort.y));
+      gTfm.transform(AffineTransform
+            .getScaleInstance(1.0 / zoomRatio, 1.0 / zoomRatio));
+      gTfm.transform(AffineTransform
+            .getTranslateInstance(-imageViewPort.x, -imageViewPort.y));
       // Stroke width should be 1.0 in screen coordinates
       gTfm.setStroke(new BasicStroke((float) zoomRatio));
       patternType_.draw(gTfm, patternSize_,
@@ -397,11 +384,12 @@ public class PatternOverlay extends AbstractOverlay {
 
    @Override
    public PropertyMap getConfiguration() {
-      return PropertyMaps.builder().
-            putEnumAsString(Key.PATTERN_TYPE.name(), patternType_).putInteger(Key.PATTERN_SIZE.name(), patternSize_).
-            putEnumAsString(Key.COLOR.name(), color_).
-            putBoolean(Key.SHOW_SIZE.name(), showSize_).
-            build();
+      return PropertyMaps.builder()
+            .putEnumAsString(Key.PATTERN_TYPE.name(), patternType_)
+            .putInteger(Key.PATTERN_SIZE.name(), patternSize_)
+            .putEnumAsString(Key.COLOR.name(), color_)
+            .putBoolean(Key.SHOW_SIZE.name(), showSize_)
+            .build();
    }
 
    @Override
@@ -429,8 +417,7 @@ public class PatternOverlay extends AbstractOverlay {
          patternSizeTextBox_.setValue(patternSize_);
          colorComboBox_.setSelectedItem(color_);
          showSizeCheckBox_.setSelected(showSize_);
-      }
-      finally {
+      } finally {
          programmaticallySettingConfiguration_ = false;
       }
    }
@@ -462,7 +449,7 @@ public class PatternOverlay extends AbstractOverlay {
          patternSizeTextBox_.setValue(patternSize_);
          fireOverlayConfigurationChanged();
       });
-      
+
       NumberFormat patternSizeTextFormat = NumberFormat.getInstance();
       patternSizeTextBox_ = new JFormattedTextField(patternSizeTextFormat);
       patternSizeTextBox_.setColumns(2);

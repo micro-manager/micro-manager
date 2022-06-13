@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.event;
 
 import com.google.common.base.Joiner;
@@ -17,7 +18,6 @@ import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultCoords;
 
 /**
- *
  * @author mark
  */
 public class DataViewerMousePixelInfoChangedEvent {
@@ -28,16 +28,14 @@ public class DataViewerMousePixelInfoChangedEvent {
    private final List<long[]> values_ = new ArrayList<long[]>();
 
    public static DataViewerMousePixelInfoChangedEvent fromImage(int x, int y,
-         Image image)
-   {
+                                                                Image image) {
       Preconditions.checkNotNull(image);
       return fromAxesAndImages(x, y, new String[] {},
             Collections.singletonList(image));
    }
 
    public static DataViewerMousePixelInfoChangedEvent fromAxesAndImages(
-         int x, int y, String[] indexingAxes, List<Image> images)
-   {
+         int x, int y, String[] indexingAxes, List<Image> images) {
       Preconditions.checkNotNull(images);
       if (indexingAxes == null) {
          indexingAxes = new String[] {};
@@ -63,9 +61,9 @@ public class DataViewerMousePixelInfoChangedEvent {
    }
 
    public static DataViewerMousePixelInfoChangedEvent create(int x, int y,
-         String[] indexingAxes,
-         List<Coords> coords, List<long[]> componentValues)
-   {
+                                                             String[] indexingAxes,
+                                                             List<Coords> coords,
+                                                             List<long[]> componentValues) {
       Preconditions.checkNotNull(coords);
       Preconditions.checkNotNull(componentValues);
       Preconditions.checkArgument(coords.size() == componentValues.size());
@@ -86,9 +84,8 @@ public class DataViewerMousePixelInfoChangedEvent {
    }
 
    private DataViewerMousePixelInfoChangedEvent(int x, int y,
-         String[] indexingAxes,
-         List<Coords> coords, List<long[]> componentValues)
-   {
+                                                String[] indexingAxes,
+                                                List<Coords> coords, List<long[]> componentValues) {
       for (int i = 0; i < coords.size(); ++i) {
          Coords c1 = coords.get(i).copyRetainingAxes(indexingAxes);
          for (Coords c2 : coords.subList(i + 1, coords.size())) {

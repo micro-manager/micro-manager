@@ -43,7 +43,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
    // This method is called when a cell value is edited by the user.
    @Override
    public Component getTableCellEditorComponent(JTable table, Object value,
-           boolean isSelected, int rowIndex, int colIndex) {
+                                                boolean isSelected, int rowIndex, int colIndex) {
 
       ChannelTableModel model = (ChannelTableModel) table.getModel();
       ArrayList<ChannelSpec> channels = model.getChannels();
@@ -95,7 +95,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
             }
          }
          channelSelect_.setSelectedItem(channel_.config());
-         
+
          // end editing on selection change
          channelSelect_.addPropertyChangeListener(e -> {
             if (!Objects.equals(channelSelect_.getSelectedItem(), channel_.config())) {
@@ -111,7 +111,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
       }
    }
 
-   /** 
+   /**
     * This method is called when editing is completed.
     * It must return the new value to be stored in the cell.
     */

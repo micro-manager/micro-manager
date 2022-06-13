@@ -1,12 +1,5 @@
-
 package org.micromanager.display.internal;
 
-import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
-import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
-import org.micromanager.display.internal.event.DataViewerAddedEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.ArrayDeque;
@@ -17,17 +10,22 @@ import java.util.List;
 import java.util.Set;
 import org.micromanager.EventPublisher;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.internal.event.DataViewerAddedEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
 /**
  * The collection of data viewers.
  *
- * Manages all data viewers in the application, and keeps track of the
+ * <p>Manages all data viewers in the application, and keeps track of the
  * front-most viewer. Also publishes all viewer events.
- * 
- * <p>
- * This class handles generic {@code DataViewer}s and does not perform tasks
+ *
+ * <p>This class handles generic {@code DataViewer}s and does not perform tasks
  * that are specific to {@code DisplayWindow}s.
  *
  * @author Mark A. Tsuchida
@@ -42,8 +40,8 @@ public class DataViewerCollection implements EventPublisher {
    // Invariant: elements are unique
    // Invariant: elements are in viewers_
    // Access: only onEDT
-   private final Deque<DataViewer> showingViewers_ =  new ArrayDeque<>();
-   
+   private final Deque<DataViewer> showingViewers_ = new ArrayDeque<>();
+
    private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
    public static DataViewerCollection create() {
@@ -52,7 +50,7 @@ public class DataViewerCollection implements EventPublisher {
 
    private DataViewerCollection() {
    }
-   
+
 
    @MustCallOnEDT
    public boolean hasDataViewer(DataViewer viewer) {
@@ -88,7 +86,7 @@ public class DataViewerCollection implements EventPublisher {
       if (activeViewer != null) {
          eventBus_.post(DataViewerDidBecomeActiveEvent.create(activeViewer));
       }
-      
+
    }
 
    @MustCallOnEDT
@@ -150,5 +148,5 @@ public class DataViewerCollection implements EventPublisher {
    public void unregisterForEvents(Object recipient) {
       eventBus_.unregister(recipient);
    }
-   
+
 }

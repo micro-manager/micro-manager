@@ -53,10 +53,10 @@ public final class GroupEditor extends ConfigDialog {
    /**
     * Group editor constructor.
     *
-    * @param groupName Name of the group to be edited
+    * @param groupName  Name of the group to be edited
     * @param presetName Name of the preset that is edited (not sure why this is needed here).
-    * @param studio The omnipresent Studio object
-    * @param newItem Whether this is a new (true) or existing (false) item (? group or preset?)
+    * @param studio     The omnipresent Studio object
+    * @param newItem    Whether this is a new (true) or existing (false) item (? group or preset?)
     */
    public GroupEditor(String groupName, String presetName, Studio studio, boolean newItem) {
       super(groupName, presetName, studio, newItem);
@@ -136,7 +136,7 @@ public final class GroupEditor extends ConfigDialog {
                JOptionPane.WARNING_MESSAGE, 0, null,
                buttons, buttons[0]);
          studio_.profile().getSettings(GroupEditor.class).putBoolean(
-                 DISPLAY_SHUTTER_WARNING, !neverAgain.isSelected());
+               DISPLAY_SHUTTER_WARNING, !neverAgain.isSelected());
          if (selection == 2) {
             // User cancelled.
             return;
@@ -157,7 +157,7 @@ public final class GroupEditor extends ConfigDialog {
     * "Writes" the configuration to the core.
     *
     * @param initName Original name of the configuration
-    * @param newName New name for this configuration (can be same as initname)
+    * @param newName  New name for this configuration (can be same as initname)
     * @return True when successful,  false on failure
     */
    public boolean writeGroup(String initName, String newName) {
@@ -218,8 +218,8 @@ public final class GroupEditor extends ConfigDialog {
                   if (same) {
                      showMessageDialog(
                            "By removing properties, you would create duplicate presets.\n"
-                           + "To avoid duplicates when you remove properties, you should\n"
-                           + "first delete some of the presets in this group.");
+                                 + "To avoid duplicates when you remove properties, you should\n"
+                                 + "first delete some of the presets in this group.");
                      return false;
                   }
 

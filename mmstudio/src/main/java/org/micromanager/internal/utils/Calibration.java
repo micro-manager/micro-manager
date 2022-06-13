@@ -27,17 +27,20 @@ package org.micromanager.internal.utils;
 import java.text.DecimalFormat;
 import mmcorej.Configuration;
 
+/**
+ * Pixel Size Calibration.
+ */
 public final class Calibration {
    private Double pixelSize_;
    private String calibrationName_;
    private Configuration configuration_;
    private static final DecimalFormat fmt = new DecimalFormat("#0.000");
-   
+
    public Calibration() {
       calibrationName_ = "Undefined";
       pixelSize_ = 0.0;
    }
-   
+
    public String getVerbose() {
       return calibrationName_ + "(" + fmt.format(pixelSize_) + ")";
    }

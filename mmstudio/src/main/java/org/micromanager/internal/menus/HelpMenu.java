@@ -32,19 +32,20 @@ public final class HelpMenu {
       );
 
       GUIUtils.addMenuItem(helpMenu, "Configuration Guide", null,
-            GUIUtils.makeURLRunnable("http://micro-manager.org/wiki/Micro-Manager_Configuration_Guide")
+            GUIUtils.makeURLRunnable(
+                  "http://micro-manager.org/wiki/Micro-Manager_Configuration_Guide")
       );
 
       if (!RegistrationDlg.getHaveRegistered(studio_)) {
          GUIUtils.addMenuItem(helpMenu,
                "Register your copy of Micro-Manager...", null, () -> {
-               try {
-                  RegistrationDlg regDlg = new RegistrationDlg(studio_);
-                  regDlg.setVisible(true);
-               } catch (Exception e1) {
-                  ReportingUtils.showError(e1);
+                  try {
+                     RegistrationDlg regDlg = new RegistrationDlg(studio_);
+                     regDlg.setVisible(true);
+                  } catch (Exception e1) {
+                     ReportingUtils.showError(e1);
+                  }
                }
-            }
          );
       }
 
@@ -52,7 +53,7 @@ public final class HelpMenu {
             () -> org.micromanager.internal.diagnostics.gui.ProblemReportController.start(core_));
 
       GUIUtils.addMenuItem(helpMenu, "About Micromanager", null, () -> {
-         final  AboutDlg dlg = new AboutDlg();
+         final AboutDlg dlg = new AboutDlg();
          String versionInfo = "MM Studio version: " + MMVersion.VERSION_STRING
                + "\n" + core_.getVersionInfo()
                + "\n" + core_.getAPIVersionInfo()

@@ -79,7 +79,7 @@ public interface DisplaySettingsChangedEvent extends MMEvent {
     * Get the data viewer.
     *
     * @return the data viewer for which the new display settings is to be
-    *         applied
+    *     applied
     */
    DataViewer getDataViewer();
 
@@ -87,7 +87,7 @@ public interface DisplaySettingsChangedEvent extends MMEvent {
     * Old name for {@code getDataViewer}.
     *
     * @return the data viewer for which the new display settings is to be
-    *         applied
+    *     applied
     * @deprecated use {@code getDataViewer} instead
     */
    @Deprecated

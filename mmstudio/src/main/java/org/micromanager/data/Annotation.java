@@ -44,7 +44,7 @@ public interface Annotation {
     * specific to any one image.
     *
     * @return PropertyMap of data related to the entire dataset, or null if
-    *         none exists.
+    *     none exists.
     */
    PropertyMap getGeneralAnnotation();
 
@@ -52,9 +52,9 @@ public interface Annotation {
     * Replace the data this Annotation has for the specified Image with the
     * provided PropertyMap.
     *
-    * @param coords Coordinates of image whose data is to be updated.
+    * @param coords  Coordinates of image whose data is to be updated.
     * @param newData Updated PropertyMap of data to be stored in the Annotation
-    *        that pertains to the image
+    *                that pertains to the image
     */
    void setImageAnnotation(Coords coords, PropertyMap newData);
 
@@ -63,7 +63,7 @@ public interface Annotation {
     * provided PropertyMap.
     *
     * @param newData Updated PropertyMap of data to be stored in the Annotation
-    *        that is not specific to any one Image.
+    *                that is not specific to any one Image.
     */
    void setGeneralAnnotation(PropertyMap newData);
 

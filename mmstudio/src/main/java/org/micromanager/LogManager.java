@@ -44,11 +44,11 @@ public interface LogManager {
     * @param msg - message to be shown
     */
    void showMessage(String msg);
-   
+
    /**
     * Shows a message in the UI.
     *
-    * @param msg - message to be shown
+    * @param msg    - message to be shown
     * @param parent - parent component over which this message should be centered
     */
    void showMessage(String msg, Component parent);
@@ -56,7 +56,7 @@ public interface LogManager {
    /**
     * Writes the stacktrace and a message to the Micro-Manager log (Corelog.txt).
     *
-    * @param e - Java exception to be logged
+    * @param e   - Java exception to be logged
     * @param msg - message to be shown
     */
    void logError(Exception e, String msg);
@@ -78,7 +78,7 @@ public interface LogManager {
    /**
     * Shows an error in the UI and logs stacktrace to the Micro-Manager log.
     *
-    * @param e - Java exception to be shown and logged
+    * @param e   - Java exception to be shown and logged
     * @param msg - Error message to be shown and logged
     */
    void showError(Exception e, String msg);
@@ -100,8 +100,8 @@ public interface LogManager {
    /**
     * Shows an error in the UI and logs stacktrace to the Micro-Manager log.
     *
-    * @param e - Java exception to be shown and logged
-    * @param msg - Error message to be shown and logged
+    * @param e      - Java exception to be shown and logged
+    * @param msg    - Error message to be shown and logged
     * @param parent - frame in which to show dialog, or null for caller
     */
    void showError(Exception e, String msg, Component parent);
@@ -109,7 +109,7 @@ public interface LogManager {
    /**
     * Shows and logs a Java exception.
     *
-    * @param e - Java exception to be shown and logged
+    * @param e      - Java exception to be shown and logged
     * @param parent - frame in which to show dialog, or null for caller
     */
    void showError(Exception e, Component parent);
@@ -117,7 +117,7 @@ public interface LogManager {
    /**
     * Shows an error message in the UI and logs to the Micro-Manager log.
     *
-    * @param msg - error message to be shown and logged
+    * @param msg    - error message to be shown and logged
     * @param parent - frame in which to show dialog, or null for caller
     */
    void showError(String msg, Component parent);

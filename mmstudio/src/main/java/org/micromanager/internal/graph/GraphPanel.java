@@ -41,27 +41,27 @@ import javax.swing.JPanel;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * XY graph view. 
+ * XY graph view.
  */
 public final class GraphPanel extends JPanel {
    private static final long serialVersionUID = -1280955888510181945L;
    private GraphData data_;
    protected GraphData.Bounds bounds_;
-   
-   private float xMargin_   = 50;
-   private float yMargin_   = 50;
+
+   private float xMargin_ = 50;
+   private float yMargin_ = 50;
    boolean textVisible_ = true;
    boolean gridVisible_ = true;
    private String xLabel_ = null;
    private String yLabel_ = null;
-   
+
    float cursorLoPos_;
    float cursorHiPos_;
    double gamma_;
-   
+
    private boolean fillTrace_ = false;
    private Color traceColor_ = Color.black;
-   
+
    public GraphPanel() {
       data_ = new GraphData();
       setAutoBounds();
@@ -69,7 +69,7 @@ public final class GraphPanel extends JPanel {
       cursorHiPos_ = (float) bounds_.xMax;
       gamma_ = 1.0;
    }
-   
+
    public void setData(GraphData d) {
       data_ = d;
    }
@@ -87,23 +87,23 @@ public final class GraphPanel extends JPanel {
       fillTrace_ = fillTrace;
       traceColor_ = color;
    }
- 
+
    public final void setAutoBounds() {
       bounds_ = data_.getBounds();
       adjustCursors();
    }
-   
+
    public void setMargins(float x, float y) {
       xMargin_ = x;
       yMargin_ = y;
    }
-   
+
    public void setCursors(double low, double high, double gamma) {
       cursorLoPos_ = (float) low;
       cursorHiPos_ = (float) high;
       gamma_ = gamma;
    }
-   
+
    public void setTextVisible(boolean state) {
       textVisible_ = state;
    }
@@ -116,7 +116,7 @@ public final class GraphPanel extends JPanel {
       return bounds_;
    }
 
-   
+
    public void setBounds(double xMin, double xMax, double yMin, double yMax) {
       bounds_.xMin = xMin;
       bounds_.xMax = xMax;
@@ -124,19 +124,19 @@ public final class GraphPanel extends JPanel {
       bounds_.yMax = yMax;
       adjustCursors();
    }
-   
+
    public void setBounds(GraphData.Bounds b) {
       bounds_ = b;
       adjustCursors();
    }
-   
+
    private void adjustCursors() {
       cursorLoPos_ = Math.max(cursorLoPos_, (float) bounds_.xMin);
       //      cursorHiPos_ = Math.min(cursorHiPos_, (float) bounds_.xMax);
       //took this line out so contrast line can have an endpoint beyond
       //length of  histogram
    }
-   
+
    /**
     * Draw graph traces.
     *
@@ -164,11 +164,11 @@ public final class GraphPanel extends JPanel {
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
          return; // invalid range data
       }
-             
+
       // set scaling
       float xUnit = (float) (box.width / bounds_.getRangeX());
       float yUnit = (float) (box.height / bounds_.getRangeY());
-      
+
       GeneralPath trace = new GeneralPath(GeneralPath.WIND_EVEN_ODD, data_.getSize() + 1);
       // we need to start and end at y=0 to avoid strange display issues
       Point2D.Float pt0 = getDevicePoint(new Point2D.Float(0.0f, 0.0f), box, xUnit, yUnit);
@@ -197,7 +197,7 @@ public final class GraphPanel extends JPanel {
 
       g.setColor(oldColor);
    }
-   
+
    public void drawCursor(Graphics2D g, Rectangle box, float xPos) {
       // This should be implemented in a derived class
    }
@@ -215,7 +215,7 @@ public final class GraphPanel extends JPanel {
       ptDev.y = Math.max(Math.min(ptDev.y, (float) box.y + box.height), (float) box.y);
       return ptDev;
    }
-   
+
    public Point2D.Float getDevicePoint(Point2D.Float pt, Rectangle box, float xUnit, float yUnit) {
       Point2D.Float ptDev = new Point2D.Float((float) (pt.x - bounds_.xMin) * xUnit + box.x,
             box.height - (float) (pt.y - bounds_.yMin) * yUnit + box.y);
@@ -228,12 +228,12 @@ public final class GraphPanel extends JPanel {
    public Point2D.Float getPositionPoint(int x, int y) {
       Rectangle box = getBox();
       return new Point2D.Float(
-              (float) (((x - box.x) / (float) box.width) * (bounds_.xMax - bounds_.xMin)),
-              (float) ((((box.y + box.height) - y)
-                    / (float) box.height)
-                    * (bounds_.yMax - bounds_.yMin)));
+            (float) (((x - box.x) / (float) box.width) * (bounds_.xMax - bounds_.xMin)),
+            (float) ((((box.y + box.height) - y)
+                  / (float) box.height)
+                  * (bounds_.yMax - bounds_.yMin)));
    }
-   
+
    /**
     * Draw grid on the graph box with tick lines and numbers.
     *
@@ -254,24 +254,24 @@ public final class GraphPanel extends JPanel {
             bounds_.yMax = 0.0;
          }
       }
-      
+
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0) {
          return; // invalid range data
       }
-      
+
       int tickCountX = 5;
       int tickCountY = 5;
-      
+
       int tickSizeX = box.width / tickCountX;
       int tickSizeY = box.height / tickCountY;
-      
+
       final Color oldColor = g.getColor();
       final Stroke oldStroke = g.getStroke();
       g.setColor(Color.gray);
       g.setStroke(new BasicStroke(1));
       g.draw(box);
-      
-     
+
+
       if (gridVisible_) {
          for (int i = 1; i < tickCountX; i++) {
             int x = box.x + tickSizeX * i;
@@ -284,7 +284,7 @@ public final class GraphPanel extends JPanel {
       }
 
       g.setColor(Color.black);
-      
+
       if (textVisible_) {
          // create font
          int textSize = 10;
@@ -317,17 +317,17 @@ public final class GraphPanel extends JPanel {
 
    @Override
    public void paintComponent(Graphics g) {
-      
+
       super.paintComponent(g); // JPanel draws background
-      Graphics2D  g2d = (Graphics2D) g;
+      Graphics2D g2d = (Graphics2D) g;
 
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
+            RenderingHints.VALUE_ANTIALIAS_ON);
 
 
       // get drawing rectangle
       Rectangle box = getBox();
-       
+
       // save current settings
       final Color oldColor = g2d.getColor();
       final Paint oldPaint = g2d.getPaint();
@@ -335,7 +335,7 @@ public final class GraphPanel extends JPanel {
 
       g2d.setPaint(Color.black);
       g2d.setStroke(new BasicStroke((float) 2));
-      
+
       drawGraph(g2d, box);
       drawGrid(g2d, box);
       drawCursor(g2d, box, cursorLoPos_);
@@ -358,11 +358,11 @@ public final class GraphPanel extends JPanel {
          g2d.drawString(yLabel_, 0, 0);
          g2d.setTransform(orig);
       }
-           
+
       // restore settings
       g2d.setPaint(oldPaint);
       g2d.setStroke(oldStroke);
       g2d.setColor(oldColor);
    }
-   
+
 }

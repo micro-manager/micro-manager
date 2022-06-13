@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.inspector.internal.panels.comments;
 
 import com.google.common.base.Preconditions;
@@ -24,17 +25,15 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.inspector.AbstractInspectorPanelController;
 import org.micromanager.display.DisplayDidShowImageEvent;
+import org.micromanager.display.inspector.AbstractInspectorPanelController;
 
 /**
- *
  * @author mark
  */
 public final class CommentsInspectorPanelController
       extends AbstractInspectorPanelController
-      implements DocumentListener
-{
+      implements DocumentListener {
    private final JPanel panel_ = new JPanel();
    private DataViewer viewer_;
 
@@ -119,11 +118,9 @@ public final class CommentsInspectorPanelController
          planeTextArea_.setText(
                CommentsHelper.getImageComment(store, editingCoords_));
          planeCommentEdited_ = false;
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          // TODO Show error
-      }
-      finally {
+      } finally {
          programmaticallySettingText_ = false;
       }
    }
@@ -139,8 +136,7 @@ public final class CommentsInspectorPanelController
          try {
             summaryTextArea_.setText(null);
             planeTextArea_.setText(null);
-         }
-         finally {
+         } finally {
             programmaticallySettingText_ = false;
          }
          summaryTextArea_.setEnabled(false);
@@ -157,12 +153,12 @@ public final class CommentsInspectorPanelController
    public JPanel getPanel() {
       return panel_;
    }
-   
+
    @Override
    public void setExpanded(boolean status) {
       expanded_ = status;
    }
-   
+
    @Override
    public boolean initiallyExpand() {
       return expanded_;
@@ -177,8 +173,7 @@ public final class CommentsInspectorPanelController
       try {
          CommentsHelper.setSummaryComment(store, comment);
          summaryCommentEdited_ = false;
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          // TODO XXX Show error
       }
    }
@@ -192,8 +187,7 @@ public final class CommentsInspectorPanelController
       try {
          CommentsHelper.setImageComment(store, editingCoords_, comment);
          planeCommentEdited_ = false;
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          // TODO XXX Show error
       }
    }
@@ -207,11 +201,9 @@ public final class CommentsInspectorPanelController
       try {
          planeTextArea_.setText(
                CommentsHelper.getImageComment(store, editingCoords_));
-      }
-      catch (IOException ex) {
+      } catch (IOException ex) {
          // TODO Show error
-      }
-      finally {
+      } finally {
          programmaticallySettingText_ = false;
       }
       planeCommentEdited_ = false;
@@ -244,8 +236,7 @@ public final class CommentsInspectorPanelController
    private void markEdited(Document doc) {
       if (doc == summaryTextArea_.getDocument()) {
          summaryCommentEdited_ = true;
-      }
-      else {
+      } else {
          planeCommentEdited_ = true;
       }
    }

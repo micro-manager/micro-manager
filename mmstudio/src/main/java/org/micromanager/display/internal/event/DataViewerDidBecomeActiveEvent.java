@@ -3,14 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.event;
 
 import org.micromanager.display.DataViewer;
 
 /**
  * TODO: any external dataviewre that likes to be managed needs to be able
- * to create this event.  Therefore, should this be moved to 
+ * to create this event.  Therefore, should this be moved to
  * org.micromanager.display.event or org.micromanager.event?
+ *
  * @author mark
  */
 public class DataViewerDidBecomeActiveEvent {

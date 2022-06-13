@@ -22,7 +22,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  *
  * @author arthur, modified by Chris Weisiger
  */
-public final class DefaultTaggedImageSink  {
+public final class DefaultTaggedImageSink {
 
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
    private final Datastore store_;
@@ -31,10 +31,10 @@ public final class DefaultTaggedImageSink  {
    private final EventManager studioEvents_;
 
    public DefaultTaggedImageSink(BlockingQueue<TaggedImage> queue,
-         Pipeline pipeline, 
-         Datastore store, 
-         AcquisitionEngine engine, 
-         EventManager studioEvents) {
+                                 Pipeline pipeline,
+                                 Datastore store,
+                                 AcquisitionEngine engine,
+                                 EventManager studioEvents) {
       imageProducingQueue_ = queue;
       pipeline_ = pipeline;
       store_ = store;
@@ -68,8 +68,7 @@ public final class DefaultTaggedImageSink  {
                         DefaultImage image = new DefaultImage(tagged);
                         try {
                            pipeline_.insertImage(image);
-                        }
-                        catch (PipelineErrorException e) {
+                        } catch (PipelineErrorException e) {
                            // TODO: make showing the dialog optional.
                            // TODO: allow user to cancel acquisition from
                            // here.
@@ -77,8 +76,7 @@ public final class DefaultTaggedImageSink  {
                                  "There was an error in processing images.");
                            pipeline_.clearExceptions();
                         }
-                     }
-                     catch (OutOfMemoryError e) {
+                     } catch (OutOfMemoryError e) {
                         handleOutOfMemory(e, sinkFullCallback);
                         break;
                      }
@@ -100,8 +98,7 @@ public final class DefaultTaggedImageSink  {
 
    // Never called from EDT
    private void handleOutOfMemory(final OutOfMemoryError e,
-         Runnable sinkFullCallback)
-   {
+                                  Runnable sinkFullCallback) {
       ReportingUtils.logError(e);
       if (sinkFullCallback != null) {
          sinkFullCallback.run();

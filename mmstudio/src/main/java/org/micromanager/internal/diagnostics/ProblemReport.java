@@ -99,7 +99,7 @@ public final class ProblemReport {
     * If there are any errors writing to storageDirectory, they are silently
     * ignored (and the report will behave as if it were non-persistent).
     *
-    * @param core the Core.
+    * @param core             the Core.
     * @param storageDirectory where to save the report data.
     */
    public static ProblemReport newPersistentReport(CMMCore core,
@@ -200,7 +200,7 @@ public final class ProblemReport {
       }
       if (logFile == null || !logFile.canWrite()) {
          capturedLogContent_ =
-            "<<<Cannot write to temporary file for log capture>>>";
+               "<<<Cannot write to temporary file for log capture>>>";
          return;
       }
       String filename = logFile.getAbsolutePath();
@@ -439,7 +439,7 @@ public final class ProblemReport {
          if (!readmeFile.isFile()) {
             String readme =
                   "This directory contains an in-progress (or crashed) \n"
-                  + "Micro-Manager Problem Report. It is safe to delete.";
+                        + "Micro-Manager Problem Report. It is safe to delete.";
             writeTextFile(readmeFile, readme);
          }
       }
@@ -462,16 +462,18 @@ public final class ProblemReport {
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
       class MyDateSerializer implements JsonSerializer<Date> {
-         @Override public JsonElement serialize(Date src,
-               Type srcType,
-               JsonSerializationContext context) {
+         @Override
+         public JsonElement serialize(Date src,
+                                      Type srcType,
+                                      JsonSerializationContext context) {
             return new JsonPrimitive(format.format(src));
          }
       }
 
       class MyDateDeserializer implements JsonDeserializer<Date> {
-         @Override public Date deserialize(JsonElement json, Type dstType,
-               JsonDeserializationContext context) throws JsonParseException {
+         @Override
+         public Date deserialize(JsonElement json, Type dstType,
+                                 JsonDeserializationContext context) throws JsonParseException {
             try {
                return format.parse(json.getAsJsonPrimitive().getAsString());
             } catch (java.text.ParseException e) {
@@ -493,7 +495,8 @@ public final class ProblemReport {
 
       if (deferredSyncTimer_ == null) {
          TimerTask task = new TimerTask() {
-            @Override public void run() {
+            @Override
+            public void run() {
                syncMetadata();
             }
          };
@@ -631,7 +634,7 @@ public final class ProblemReport {
          this(filename, new File(filename));
       }
 
-      public NamedTextFile(File file) throws IOException  {
+      public NamedTextFile(File file) throws IOException {
          this(file.getAbsolutePath(), file);
       }
 

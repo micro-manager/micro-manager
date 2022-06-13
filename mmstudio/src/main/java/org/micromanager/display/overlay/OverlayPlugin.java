@@ -25,7 +25,7 @@ import org.micromanager.MMGenericPlugin;
 /**
  * A plugin providing overlays.
  *
- * To create an overlay plugin, annotate your class like this:
+ * <p>To create an overlay plugin, annotate your class like this:
  * <pre><code>
  * {@literal @}Plugin(type = OverlayPlugin.class,
  *       priority = Prioroty.NORMAL_PRIORITY,      // Suggests order in menu

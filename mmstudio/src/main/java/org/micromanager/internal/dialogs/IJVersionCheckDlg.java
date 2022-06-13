@@ -46,13 +46,15 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Micro-Manager.
  */
 public final class IJVersionCheckDlg extends JDialog {
-   private static final String HAS_OPTED_OUT = 
-           "user has opted out of receiving warnings about compatibility with the version of ImageJ they are using";
+   private static final String HAS_OPTED_OUT =
+         "user has opted out of receiving warnings about compatibility "
+               + "with the version of ImageJ they are using";
    private static final ArrayList<String> ALLOWED_VERSIONS = new ArrayList<String>(
          Arrays.asList(new String[] {"1.51s"}));
 
    /**
     * Show the warning dialog, if applicable and user has not opted out.
+    *
     * @param studio
     */
    public static void execute(Studio studio) {
@@ -60,8 +62,8 @@ public final class IJVersionCheckDlg extends JDialog {
          // This version is okay.
          return;
       }
-      ReportingUtils.logError("ImageJ version " + ImageJ.VERSION +
-            " not guaranteed compatible with this version of Micro-Manager ");
+      ReportingUtils.logError("ImageJ version " + ImageJ.VERSION
+            + " not guaranteed compatible with this version of Micro-Manager ");
       if (getHasOptedOut(studio)) {
          // User doesn't care.
          return;
@@ -75,48 +77,49 @@ public final class IJVersionCheckDlg extends JDialog {
     * future.
     */
    private static boolean getHasOptedOut(Studio studio) {
-      return studio.profile().getSettings(IJVersionCheckDlg.class).
-              getBoolean(HAS_OPTED_OUT, false);
+      return studio.profile().getSettings(IJVersionCheckDlg.class)
+            .getBoolean(HAS_OPTED_OUT, false);
    }
 
    /**
     * Set whether or not the user wants to see these errors in future.
     */
    private static void setHasOptedOut(Studio studio, boolean hasOptedOut) {
-      studio.profile().getSettings(IJVersionCheckDlg.class).
-              putBoolean(HAS_OPTED_OUT, hasOptedOut);
+      studio.profile().getSettings(IJVersionCheckDlg.class)
+            .putBoolean(HAS_OPTED_OUT, hasOptedOut);
    }
 
    /**
     * Show the dialog.
+    *
     * @param studio
-    * @param badVersion - User's version.  
+    * @param badVersion - User's version.
     */
    public IJVersionCheckDlg(Studio studio, String badVersion) {
       super();
       setName("ImageJ Version Check");
       setModal(true);
 
-      JPanel contents = new JPanel(new MigLayout("flowy"));
+      final JPanel contents = new JPanel(new MigLayout("flowy"));
       boolean hasOneGoodVersion = ALLOWED_VERSIONS.size() == 1;
       // Build a comma-delimited string of good versions.
       String goodVersions = "";
       for (String version : ALLOWED_VERSIONS) {
-         if (!version.equals(ALLOWED_VERSIONS.get(ALLOWED_VERSIONS.size() -1))) {
+         if (!version.equals(ALLOWED_VERSIONS.get(ALLOWED_VERSIONS.size() - 1))) {
             goodVersions += ", ";
          }
          goodVersions += version;
       }
       if (hasOneGoodVersion) {
          goodVersions = "is only known to work with ImageJ " + goodVersions;
-      }
-      else {
+      } else {
          goodVersions = "is only known to work with these ImageJ versions: " + goodVersions;
       }
       JLabel warning = new JLabel(
-            "<html><body>The version of ImageJ you are running may not be compatible with<br>this version of Micro-Manager.<br>" +
-                  "You are running ImageJ " + badVersion + ";<br>this version of Micro-Manager " + goodVersions +
-            ".</body></html>");
+            "<html><body>The version of ImageJ you are running may not be compatible "
+                  + "with<br>this version of Micro-Manager.<br>"
+                  + "You are running ImageJ " + badVersion + ";<br>this version of Micro-Manager "
+                  + goodVersions + ".</body></html>");
 
       warning.setIcon(UIManager.getIcon("OptionPane.warningIcon"));
       contents.add(warning);

@@ -21,28 +21,25 @@ import org.micromanager.display.DataViewer;
 /**
  * A panel containing a section of the inspector window.
  *
- * In addition to implementing this abstract class, inspector panels must
+ * <p>In addition to implementing this abstract class, inspector panels must
  * call the appropriate methods of {@code Inspector} to notify the latter of
  * certain changes.
  */
 public abstract class AbstractInspectorPanelController
-      implements InspectorPanelController
-{
+      implements InspectorPanelController {
    private final EventListenerSupport<InspectorPanelListener> listeners_ =
          new EventListenerSupport<InspectorPanelListener>(
                InspectorPanelListener.class, InspectorPanelListener.class.getClassLoader());
 
    @Override
    public final void addInspectorPanelListener(
-         InspectorPanelListener listener)
-   {
+         InspectorPanelListener listener) {
       listeners_.addListener(listener, true);
    }
 
    @Override
    public final void removeInspectorPanelListener(
-         InspectorPanelListener listener)
-   {
+         InspectorPanelListener listener) {
       listeners_.removeListener(listener);
    }
 
@@ -50,8 +47,7 @@ public abstract class AbstractInspectorPanelController
       listeners_.fire().inspectorPanelWillChangeHeight(this);
    }
 
-   protected void fireInspectorPanelDidChangeHeight()
-   {
+   protected void fireInspectorPanelDidChangeHeight() {
       listeners_.fire().inspectorPanelDidChangeHeight(this);
    }
 
@@ -71,15 +67,15 @@ public abstract class AbstractInspectorPanelController
     * button is clicked, the method is called again, in case you need to
     * re-generate your menu based on context (e.g. changes in display
     * settings).
-    * <p>
-    * It is permissible to always return the same JPopupMenu instance, as long
+    *
+    * <p>It is permissible to always return the same JPopupMenu instance, as long
     * as you ensure that it is updated each time this method is called.
-    * <p>
-    * This method is guaranteed to be called on the Swing/AWT event dispatch
+    *
+    * <p>This method is guaranteed to be called on the Swing/AWT event dispatch
     * thread.
     *
     * @return the gear popup menu, or null if the panel does not use a gear
-    * menu
+    *     menu
     */
    @Override
    public JPopupMenu getGearMenu() {
@@ -95,7 +91,8 @@ public abstract class AbstractInspectorPanelController
    public abstract void attachDataViewer(DataViewer viewer);
 
    /**
-    * Detach from any currently attached data viewer. This method should not throw an exception if a viewer is not yet attached.
+    * Detach from any currently attached data viewer. This method should not throw an
+    * exception if a viewer is not yet attached.
     */
    @Override
    public abstract void detachDataViewer();
@@ -103,11 +100,11 @@ public abstract class AbstractInspectorPanelController
    /**
     * Indicate whether the panel can be resized vertically by the user.
     *
-    * Note that this is independent of whether the panel resizes itself
+    * <p>Note that this is independent of whether the panel resizes itself
     * depending on its content.
     *
     * @return true if the panel can be resized vertically; false if the panel
-    * has a fixed height
+    *     has a fixed height
     */
    @Override
    public abstract boolean isVerticallyResizableByUser();

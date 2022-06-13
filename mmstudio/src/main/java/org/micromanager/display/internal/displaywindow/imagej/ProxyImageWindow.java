@@ -28,7 +28,7 @@ import ij.gui.StackWindow;
  * A proxy object providing an interface between our image display system
  * and ImageJ's system.
  *
- * ImageJ expects its images to be displayed in {@code ij.gui.ImageWindow} (and
+ * <p>ImageJ expects its images to be displayed in {@code ij.gui.ImageWindow} (and
  * its subclass {@code ij.gui.StackWindow}), which descend from
  * {@code java.awt.Frame}. Since MMStudio's image display windows are
  * {@code JFrame}s, it is not practical to get ImageJ to directly interact
@@ -63,16 +63,14 @@ final class ProxyImageWindow extends StackWindow {
     * Create a proxy window to satisfy ImageJ's window management.
     *
     * @param parent the parent {@code ImageJBridge} object, which must be
-    * ready to provide a valid {@code ImagePlus} and {@code ImageCanvas}.
-    *
+    *               ready to provide a valid {@code ImagePlus} and {@code ImageCanvas}.
     * @return the new proxy window
     */
    static synchronized ProxyImageWindow create(ImageJBridge parent) {
       parentDuringConstruction_ = parent;
       try {
          return new ProxyImageWindow(parent);
-      }
-      finally {
+      } finally {
          parentDuringConstruction_ = null;
       }
    }

@@ -34,7 +34,17 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.LayoutStyle;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
@@ -61,11 +71,11 @@ public final class HotKeysDialog extends JDialog {
    private JButton removeButton_;
 
    public static FileType MM_HOTKEYS
-           = new FileType("MM_HOTKEYS",
-                 "Micro-Manager HotKeys",
-                 System.getProperty("user.home") + "/MMHotKeys",
-                 false, (String[]) null);
- 
+         = new FileType("MM_HOTKEYS",
+         "Micro-Manager HotKeys",
+         System.getProperty("user.home") + "/MMHotKeys",
+         false, (String[]) null);
+
    public final class ShortCutTableModel extends AbstractTableModel {
 
       private static final int COLUMNCOUNT = 2;
@@ -145,13 +155,13 @@ public final class HotKeysDialog extends JDialog {
 
 
    /**
-     * Creates a new HotKeys Dialog.
+    * Creates a new HotKeys Dialog.
     */
-   public  HotKeysDialog() {
+   public HotKeysDialog() {
       initComponents();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-             getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 377, 378);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
@@ -181,7 +191,7 @@ public final class HotKeysDialog extends JDialog {
 
       hotKeyTable_.getColumnModel().getColumn(0).setCellRenderer(new ActionCollRenderer());
       hotKeyTable_.getColumnModel().getColumn(1).setCellRenderer(new HotKeyCol1Renderer());
-        
+
       keh_ = new KeyEvtHandler();
       hotKeyTable_.addKeyListener(keh_);
 
@@ -190,15 +200,15 @@ public final class HotKeysDialog extends JDialog {
    }
 
    /**
-     * copy KEYS and actions_ back to HotKeys.KEYS.
-     */
+    * copy KEYS and actions_ back to HotKeys.KEYS.
+    */
    private void generateKeys() {
       HotKeys.KEYS.clear();
       for (int i = 0; i < keys_.size(); i++) {
          HotKeys.KEYS.put(keys_.get(i), actions_.get(i));
       }
    }
-    
+
    /**
     * Copy the map with hotkeys and action temporarily into two ArrayLists.
     * Those will be used by our table model and written back to HotKeys.KEYS
@@ -258,6 +268,7 @@ public final class HotKeysDialog extends JDialog {
       public void setHotKeyValue(Object value) {
          setText(KeyEvent.getKeyText((Integer) value));
       }
+
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
                                                      boolean isSelected, boolean hasFocus,
@@ -305,7 +316,7 @@ public final class HotKeysDialog extends JDialog {
       // This method is called when a cell value is edited by the user.
       @Override
       public Component getTableCellEditorComponent(javax.swing.JTable table, Object value,
-              boolean isSelected, int rowIndex, int colIndex) {
+                                                   boolean isSelected, int rowIndex, int colIndex) {
          // 'value' is value contained in the cell located at (rowIndex, colIndex)
 
          if (value != null) {
@@ -330,10 +341,10 @@ public final class HotKeysDialog extends JDialog {
       }
    }
 
-   
+
    /**
-     * This method is called from within the constructor to initialize the form.
-     */
+    * This method is called from within the constructor to initialize the form.
+    */
    private void initComponents() {
       jScrollPane1_ = new javax.swing.JScrollPane();
       hotKeyTable_ = new javax.swing.JTable();
@@ -366,27 +377,30 @@ public final class HotKeysDialog extends JDialog {
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-            .addComponent(addButton_, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
-                  GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(removeButton_, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
-                  GroupLayout.PREFERRED_SIZE)
-            .addGap(0, 225, Short.MAX_VALUE))
-            .addComponent(jScrollPane1_, GroupLayout.DEFAULT_SIZE, 377, Short.MAX_VALUE)
+                  .addGroup(layout.createSequentialGroup()
+                        .addComponent(addButton_, GroupLayout.PREFERRED_SIZE,
+                              GroupLayout.DEFAULT_SIZE,
+                              GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(removeButton_, GroupLayout.PREFERRED_SIZE,
+                              GroupLayout.DEFAULT_SIZE,
+                              GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 225, Short.MAX_VALUE))
+                  .addComponent(jScrollPane1_, GroupLayout.DEFAULT_SIZE, 377, Short.MAX_VALUE)
       );
       layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-               .addComponent(addButton_, GroupLayout.PREFERRED_SIZE, 20,
-                     GroupLayout.PREFERRED_SIZE)
-               .addComponent(removeButton_, GroupLayout.PREFERRED_SIZE, 20,
-                     GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jScrollPane1_, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE,
-                  Short.MAX_VALUE)
-            .addGap(0, 0, Short.MAX_VALUE))
+                  .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                              .addComponent(addButton_, GroupLayout.PREFERRED_SIZE, 20,
+                                    GroupLayout.PREFERRED_SIZE)
+                              .addComponent(removeButton_, GroupLayout.PREFERRED_SIZE, 20,
+                                    GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1_, GroupLayout.DEFAULT_SIZE,
+                              GroupLayout.DEFAULT_SIZE,
+                              Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE))
       );
 
       pack();

@@ -48,7 +48,7 @@ public final class LogFileManager {
       FilenameFilter coreLogFilter = new CoreLogFilenameFilter();
 
       File[] legacyLogFiles =
-         getLegacyLogFileDirectory().listFiles(coreLogFilter);
+            getLegacyLogFileDirectory().listFiles(coreLogFilter);
       for (File file : Arrays.asList(legacyLogFiles)) {
          Calendar fileDate = getLegacyLogFileDate(file.getName());
          if (fileDate != null && fileDate.before(cutoffDate)) {
@@ -59,7 +59,7 @@ public final class LogFileManager {
       }
 
       File[] modernLogFiles =
-         getLogFileDirectory().listFiles(coreLogFilter);
+            getLogFileDirectory().listFiles(coreLogFilter);
       if (modernLogFiles != null) {
          for (File file : Arrays.asList(modernLogFiles)) {
             Calendar fileDate = getLogFileDate(file.getName());
@@ -149,7 +149,7 @@ public final class LogFileManager {
    }
 
    private static boolean fileShouldBeExcluded(File file,
-         File canonicalExcludedFile) {
+                                               File canonicalExcludedFile) {
       try {
          if (file.getCanonicalFile().equals(canonicalExcludedFile)) {
             return true;

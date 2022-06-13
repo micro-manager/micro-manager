@@ -34,7 +34,7 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
  * <p><b>Warning</b>: Support for custom data viewers is experimental.
  * Future updates may require you to update such code for compatibility.</p>
  *
-* @author Mark A. Tsuchida
+ * @author Mark A. Tsuchida
  */
 public abstract class AbstractDataViewer implements DataViewer {
    private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
@@ -123,7 +123,7 @@ public abstract class AbstractDataViewer implements DataViewer {
          displaySettings_ = handleDisplaySettings(settings);
          asyncEventPoster_.submit(() -> {
             postEvent(DefaultDisplaySettingsChangedEvent.create(
-                    AbstractDataViewer.this, oldSettings, displaySettings_));
+                  AbstractDataViewer.this, oldSettings, displaySettings_));
          });
       }
    }
@@ -172,7 +172,7 @@ public abstract class AbstractDataViewer implements DataViewer {
          displaySettings_ = handleDisplaySettings(newSettings);
          asyncEventPoster_.submit(() -> {
             postEvent(DefaultDisplaySettingsChangedEvent.create(
-                    AbstractDataViewer.this, oldSettings, displaySettings_));
+                  AbstractDataViewer.this, oldSettings, displaySettings_));
          });
          return true;
       }
@@ -216,7 +216,7 @@ public abstract class AbstractDataViewer implements DataViewer {
     */
    @Override
    public final void setDisplayPosition(final Coords position,
-         boolean forceRedisplay) {
+                                        boolean forceRedisplay) {
       if (position == null) {
          throw new NullPointerException("Position must not be null");
       }
@@ -231,7 +231,7 @@ public abstract class AbstractDataViewer implements DataViewer {
          if (!position.equals(oldPosition)) {
             asyncEventPoster_.submit(() -> {
                postEvent(DefaultDisplayPositionChangedEvent.create(
-                       AbstractDataViewer.this, oldPosition, displayPosition_));
+                     AbstractDataViewer.this, oldPosition, displayPosition_));
             });
          }
       }
@@ -245,7 +245,7 @@ public abstract class AbstractDataViewer implements DataViewer {
    /**
     * Implements {@code getDisplayPosition}.
     *
-    * {@inheritDoc}
+    * <p>{@inheritDoc}
     */
    @Override
    public final Coords getDisplayPosition() {
@@ -257,11 +257,12 @@ public abstract class AbstractDataViewer implements DataViewer {
    /**
     * Implements {@code compareAndSetDisplayPosition}.
     *
-    * {@inheritDoc}
+    * <p>{@inheritDoc}
     */
    @Override
    public final boolean compareAndSetDisplayPosition(final Coords oldPosition,
-         final Coords newPosition, boolean forceRedisplay) {
+                                                     final Coords newPosition,
+                                                     boolean forceRedisplay) {
       if (newPosition == null) {
          throw new NullPointerException("Position must not be null");
       }
@@ -278,7 +279,7 @@ public abstract class AbstractDataViewer implements DataViewer {
          if (!newPosition.equals(oldPosition)) {
             asyncEventPoster_.submit(() -> {
                postEvent(DefaultDisplayPositionChangedEvent.create(
-                       AbstractDataViewer.this, oldPosition, displayPosition_));
+                     AbstractDataViewer.this, oldPosition, displayPosition_));
             });
          }
          return true;
@@ -287,7 +288,7 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    @Override
    public final boolean compareAndSetDisplayPosition(Coords oldPosition,
-         Coords newPosition) {
+                                                     Coords newPosition) {
       return compareAndSetDisplayPosition(oldPosition, newPosition, false);
    }
 

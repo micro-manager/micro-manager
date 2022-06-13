@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.link.internal;
 
 import com.google.common.base.Preconditions;
@@ -18,7 +19,6 @@ import java.util.concurrent.Future;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 
 /**
- *
  * @author Mark A. Tsuchida
  * @author based on original link framework by Chris Weisiger
  */
@@ -114,18 +114,16 @@ public final class Linkage {
    Collection<LinkEndpoint> getEndpoints() {
       Future<Collection<LinkEndpoint>> f =
             executor_.submit(new Callable<Collection<LinkEndpoint>>() {
-         @Override
-         public Collection<LinkEndpoint> call() {
-            return new HashSet<LinkEndpoint>(endpoints_);
-         }
-      });
+               @Override
+               public Collection<LinkEndpoint> call() {
+                  return new HashSet<LinkEndpoint>(endpoints_);
+               }
+            });
       try {
          return f.get();
-      }
-      catch (InterruptedException unexpected) {
+      } catch (InterruptedException unexpected) {
          throw new RuntimeException(unexpected);
-      }
-      catch (ExecutionException e) {
+      } catch (ExecutionException e) {
          throw new RuntimeException(e);
       }
    }

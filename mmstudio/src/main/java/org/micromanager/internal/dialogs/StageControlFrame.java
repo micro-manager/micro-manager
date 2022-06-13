@@ -83,7 +83,7 @@ public final class StageControlFrame extends JFrame {
    private static final int FRAME_Y_DEFAULT_POS = 100;
 
    public static final String[] X_MOVEMENTS = new String[] {
-      "SMALLMOVEMENT", "MEDIUMMOVEMENT", "LARGEMOVEMENT"
+         "SMALLMOVEMENT", "MEDIUMMOVEMENT", "LARGEMOVEMENT"
    };
    public static final String[] Y_MOVEMENTS = new String[] {
          "SMALLMOVEMENT_Y", "MEDIUMMOVEMENT_Y", "LARGEMOVEMENT_Y"
@@ -122,14 +122,14 @@ public final class StageControlFrame extends JFrame {
    private Timer timer_ = null;
    // Ordered small, medium, large.
    private final JFormattedTextField[] xStepTexts_ = new JFormattedTextField[] {
-      new JFormattedTextField(NumberFormat.getNumberInstance()),
-      new JFormattedTextField(NumberFormat.getNumberInstance()),
-      new JFormattedTextField(NumberFormat.getNumberInstance())
+         new JFormattedTextField(NumberFormat.getNumberInstance()),
+         new JFormattedTextField(NumberFormat.getNumberInstance()),
+         new JFormattedTextField(NumberFormat.getNumberInstance())
    };
    private final JFormattedTextField[] yStepTexts_ = new JFormattedTextField[] {
-      new JFormattedTextField(NumberFormat.getNumberInstance()),
-      new JFormattedTextField(NumberFormat.getNumberInstance()),
-      new JFormattedTextField(NumberFormat.getNumberInstance())
+         new JFormattedTextField(NumberFormat.getNumberInstance()),
+         new JFormattedTextField(NumberFormat.getNumberInstance()),
+         new JFormattedTextField(NumberFormat.getNumberInstance())
    };
    private final JFormattedTextField[] zStepTextsSmall_ =
          new JFormattedTextField[MAX_NUM_Z_PANELS];
@@ -167,7 +167,7 @@ public final class StageControlFrame extends JFrame {
       initComponents();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(FRAME_X_DEFAULT_POS, FRAME_Y_DEFAULT_POS);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
@@ -194,7 +194,7 @@ public final class StageControlFrame extends JFrame {
          final int j = i;
          xStepSizes[i] = settings_.getDouble(X_MOVEMENTS[i], xStepSizes[i]);
          xStepTexts_[i].setText(
-                 NumberUtils.doubleToDisplayString(xStepSizes[i]));
+               NumberUtils.doubleToDisplayString(xStepSizes[i]));
          xStepTexts_[i].addPropertyChangeListener("value", new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -208,8 +208,8 @@ public final class StageControlFrame extends JFrame {
                               // not removing listener shows the dialog multiple times
                               xStepTexts_[j].removePropertyChangeListener(this);
                               xStepTexts_[j].setText(NumberUtils.doubleToDisplayString(Math.min(
-                                      settings_.getDouble(X_MOVEMENTS[j], xStepSizes[j]),
-                                      pixelSize * nrPixelsX)));
+                                    settings_.getDouble(X_MOVEMENTS[j], xStepSizes[j]),
+                                    pixelSize * nrPixelsX)));
                               xStepTexts_[j].addPropertyChangeListener(this);
                               return;
                            }
@@ -224,7 +224,7 @@ public final class StageControlFrame extends JFrame {
          });
          yStepSizes[i] = settings_.getDouble(Y_MOVEMENTS[i], yStepSizes[i]);
          yStepTexts_[i].setText(
-                 NumberUtils.doubleToDisplayString(yStepSizes[i]));
+               NumberUtils.doubleToDisplayString(yStepSizes[i]));
          yStepTexts_[i].addPropertyChangeListener("value", new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -238,8 +238,8 @@ public final class StageControlFrame extends JFrame {
                               // not removing listener shows the dialog multiple times
                               yStepTexts_[j].removePropertyChangeListener(this);
                               yStepTexts_[j].setText(NumberUtils.doubleToDisplayString(Math.min(
-                                      settings_.getDouble(Y_MOVEMENTS[j], yStepSizes[j]),
-                                      pixelSize * nrPixelsY)));
+                                    settings_.getDouble(Y_MOVEMENTS[j], yStepSizes[j]),
+                                    pixelSize * nrPixelsY)));
                               yStepTexts_[j].addPropertyChangeListener(this);
                               return;
                            }
@@ -283,7 +283,7 @@ public final class StageControlFrame extends JFrame {
       } else {
          add(settingsPanel_, "cell 1 2, center");
       }
-      
+
       // handle Z panels
       if (haveZ) {
          // go backwards so that the first Z Panel will become the selected one
@@ -333,20 +333,20 @@ public final class StageControlFrame extends JFrame {
 
             zDriveSelect_[idx].setSelectedIndex(cbIndex);
             if (Objects.equals(zDriveSelect_[idx].getSelectedItem(),
-                    settings_.getString(SELECTED_Z_DRIVE, " "))) {
+                  settings_.getString(SELECTED_Z_DRIVE, " "))) {
                zDriveActiveButtons_[idx].setSelected(true);
             }
-            
+
             plusButtons_[idx].setVisible(false);
             minusButtons_[idx].setVisible(false);
          }
-         
+
          // make plus/minus buttons on last ZPanel visible
          if (nrZDrives > 1) {
             plusButtons_[nrZPanels - 1].setVisible(true);
             minusButtons_[nrZPanels - 1].setVisible(true);
          }
-         
+
          // make sure not to underflow/overflow with plus/minus buttons
          minusButtons_[0].setEnabled(false);
          plusButtons_[MAX_NUM_Z_PANELS - 1].setEnabled(false);
@@ -358,16 +358,16 @@ public final class StageControlFrame extends JFrame {
             for (int i = 0; i < X_MOVEMENTS.length && i < Y_MOVEMENTS.length; i++) {
                try {
                   settings_.putDouble(X_MOVEMENTS[i],
-                          NumberUtils.displayStringToDouble(xStepTexts_[i].getText()));
+                        NumberUtils.displayStringToDouble(xStepTexts_[i].getText()));
                   settings_.putDouble(Y_MOVEMENTS[i],
-                          NumberUtils.displayStringToDouble(yStepTexts_[i].getText()));
+                        NumberUtils.displayStringToDouble(yStepTexts_[i].getText()));
                } catch (ParseException pex) {
                   studio_.logs().logError("Error parsing number in Stage Control Form");
                }
             }
          }
       });
-      
+
       updateStagePositions();  // make sure that positions are correct
       refreshTimer(); // start polling if enabled
       pack();  // re-layout the frame depending on what is visible now
@@ -375,7 +375,7 @@ public final class StageControlFrame extends JFrame {
 
    /**
     * Called during constructor and never again.  Creates GUI components and adds
-    *    them to JPanel, but they may be turned visible/invisible during operation.
+    * them to JPanel, but they may be turned visible/invisible during operation.
     */
    private void initComponents() {
       setTitle("Stage Control");
@@ -385,9 +385,9 @@ public final class StageControlFrame extends JFrame {
 
       xyPanel_ = createXYPanel();
       add(xyPanel_, "hidemode 3");
-      
+
       settingsPanel_ = createSettingsPanel();
-      
+
       // create the Z panels
       // Vertically align Z panel with XY panel. createZPanel() also makes
       // several assumptions about the layout of the XY panel so that its
@@ -399,7 +399,7 @@ public final class StageControlFrame extends JFrame {
 
       errorPanel_ = createErrorPanel();
       add(errorPanel_, "grow, hidemode 3");
-      
+
       pack();
    }
 
@@ -464,10 +464,10 @@ public final class StageControlFrame extends JFrame {
             }
             try {
                double increment =
-                       NumberUtils.displayStringToDouble(xStepTexts_[stepIndex].getText());
+                     NumberUtils.displayStringToDouble(xStepTexts_[stepIndex].getText());
                if (dx == 0) {
                   increment =
-                          NumberUtils.displayStringToDouble((yStepTexts_[stepIndex].getText()));
+                        NumberUtils.displayStringToDouble((yStepTexts_[stepIndex].getText()));
                }
                setRelativeXYStagePosition(dx * increment, dy * increment);
             } catch (ParseException ex) {
@@ -496,7 +496,7 @@ public final class StageControlFrame extends JFrame {
       xyPositionLabel_ = new JLabel("", JLabel.LEFT);
       result.add(xyPositionLabel_,
             "pos 5 20, width 120!, alignx left");
-      
+
       // Gap between the chevrons and the step size controls.
       result.add(new JLabel(), "height 20!, wrap");
 
@@ -507,8 +507,8 @@ public final class StageControlFrame extends JFrame {
       String[] labels = new String[] {"1 pixel", "0.1 field", "1 field"};
       for (int i = 0; i < 3; ++i) {
          JLabel indicator = new JLabel(IconLoader.getIcon(
-                  "/org/micromanager/icons/stagecontrol/arrowhead-"
-                        + stepSizes[i] + "r.png"));
+               "/org/micromanager/icons/stagecontrol/arrowhead-"
+                     + stepSizes[i] + "r.png"));
          // HACK: make it smaller so the gap between rows is smaller.
          result.add(indicator, "height 20!, split, span");
          // This copy can be referred to in the action listener.
@@ -518,7 +518,7 @@ public final class StageControlFrame extends JFrame {
          result.add(xStepTexts_[i], "height 20!, width 40");
          result.add(yStepTexts_[i], "height 20!, width 40");
 
-         result.add(new JLabel("\u00b5m"));
+         result.add(new JLabel("\u00b5m")); //micro-m, i.e. micron
 
          JButton presetButton = new JButton(labels[i]);
          presetButton.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -533,7 +533,7 @@ public final class StageControlFrame extends JFrame {
          });
          result.add(presetButton, "width 80!, height 20!, wrap");
       } // End creating set-step-size text fields/buttons.
-      
+
       return result;
    }
 
@@ -555,13 +555,13 @@ public final class StageControlFrame extends JFrame {
             // push to profile
             settings_.putString(SELECTED_Z_DRIVE, activeZDrive);
             settings_.putDouble(SMALL_MOVEMENT_Z, settings_.getDouble(
-                    SMALL_MOVEMENT_Z + idx, 1.1));
+                  SMALL_MOVEMENT_Z + idx, 1.1));
             settings_.putDouble(MEDIUM_MOVEMENT_Z, settings_.getDouble(
-                    MEDIUM_MOVEMENT_Z + idx, 11.1));
+                  MEDIUM_MOVEMENT_Z + idx, 11.1));
          }
       });
       zDriveActiveGroup_.add(zDriveActiveButtons_[idx]);
-      
+
       // use ItemListener here instead of ActionListener so initialize() only has to worry about
       //   one type of listener on the combo-box (there are also ItemListeners for step size fields)
       zDriveSelect_[idx].addItemListener((ItemEvent e) -> {
@@ -575,7 +575,7 @@ public final class StageControlFrame extends JFrame {
             }
          }
       });
-      
+
       // HACK: this defined height for the buttons matches the height of one
       // of the chevron buttons, and helps to align components between the XY
       // and Z panels.
@@ -633,21 +633,21 @@ public final class StageControlFrame extends JFrame {
       // These heights again must match those of the corresponding stepsize
       // controls in the XY panel.
       zStepTextsSmall_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(
-              settings_, zDriveSelect_[idx], SMALL_MOVEMENT_Z, 1.1);
+            settings_, zDriveSelect_[idx], SMALL_MOVEMENT_Z, 1.1);
       result.add(new JLabel(IconLoader.getIcon(
             "/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
             "height 20!, span, split 3, flowx");
       result.add(zStepTextsSmall_[idx], "height 20!, width 50");
-      result.add(new JLabel("\u00b5m"), "height 20!");
+      result.add(new JLabel("\u00b5m"), "height 20!"); //micro-m, i.e. micron
 
       zStepTextsMedium_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(
-              settings_, zDriveSelect_[idx], MEDIUM_MOVEMENT_Z, 11.1);
+            settings_, zDriveSelect_[idx], MEDIUM_MOVEMENT_Z, 11.1);
       result.add(new JLabel(IconLoader.getIcon(
             "/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
       result.add(zStepTextsMedium_[idx], "height 20!, width 50");
-      result.add(new JLabel("\u00b5m"), "height 20!");
-      
+      result.add(new JLabel("\u00b5m"), "height 20!"); // micro-m, i.e micron
+
       minusButtons_[idx] = new JButton("-");
       minusButtons_[idx].addActionListener((ActionEvent arg0) -> {
          String sysConfigFile = ((MMStudio) studio_).getSysConfigFile();  // TODO add method to API
@@ -657,7 +657,7 @@ public final class StageControlFrame extends JFrame {
             initialize();
          }
       });
-      
+
       plusButtons_[idx] = new JButton("+");
       plusButtons_[idx].addActionListener((ActionEvent arg0) -> {
          String sysConfigFile = ((MMStudio) studio_).getSysConfigFile();  // TODO add method to API
@@ -667,7 +667,7 @@ public final class StageControlFrame extends JFrame {
             initialize();
          }
       });
-      
+
       result.add(minusButtons_[idx], "center, split 2, flowx");
       result.add(plusButtons_[idx]);
 
@@ -684,7 +684,7 @@ public final class StageControlFrame extends JFrame {
          stopTimer();
       }
    }
-   
+
    /**
     * Unconditionally starts the timer.
     */
@@ -704,7 +704,7 @@ public final class StageControlFrame extends JFrame {
          }
       }, 0, 1000);  // 1 sec interval
    }
-   
+
    /**
     * Unconditionally stops the timer.
     */
@@ -713,7 +713,7 @@ public final class StageControlFrame extends JFrame {
          timer_.cancel();
       }
    }
-   
+
    private void updateStagePositions() {
       try {
          if (xyPanel_.isVisible()) {
@@ -728,12 +728,12 @@ public final class StageControlFrame extends JFrame {
          studio_.logs().logError(ex);
       }
    }
-   
+
    private JPanel createSettingsPanel() {
       final JPanel result = new JPanel(new MigLayout("insets 0, gap 0"));
 
       // checkbox to enable Snap after Move
-      snapAfterMoveCB_  = new JCheckBox("Snap after Move");
+      snapAfterMoveCB_ = new JCheckBox("Snap after Move");
       snapAfterMoveCB_.addItemListener((ItemEvent e) ->
             settings_.putBoolean(SNAP, snapAfterMoveCB_.isSelected()));
       snapAfterMoveCB_.setSelected(settings_.getBoolean(SNAP, true));
@@ -749,11 +749,11 @@ public final class StageControlFrame extends JFrame {
       result.add(enableRefreshCB_, "left, wrap");
       return result;
    }
-   
+
    private JPanel createErrorPanel() {
       // Provide a friendly message when there are no drives in the device list
       JLabel noDriveLabel = new javax.swing.JLabel(
-              "No XY or Z drive found.  Nothing to control.");
+            "No XY or Z drive found.  Nothing to control.");
       noDriveLabel.setOpaque(true);
 
       JPanel panel = new JPanel(new MigLayout("fill"));
@@ -763,7 +763,7 @@ public final class StageControlFrame extends JFrame {
 
       return panel;
    }
-   
+
    private void setRelativeXYStagePosition(double x, double y) {
       uiMovesStageManager_.getXYNavigator().moveSampleOnDisplayUm(x, y);
       if (settings_.getBoolean(SNAP, false)) {
@@ -800,9 +800,9 @@ public final class StageControlFrame extends JFrame {
 
    private void setXYPosLabel(double x, double y) {
       xyPositionLabel_.setText(String.format(
-              "<html>X: %s \u00b5m<br>Y: %s \u00b5m</html>",
-              TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(x)),
-              TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(y))));
+            "<html>X: %s \u00b5m<br>Y: %s \u00b5m</html>", // micro-m, i.e. micron
+            TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(x)),
+            TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(y))));
    }
 
    private void getZPosLabelFromCore(int idx) throws Exception {
@@ -812,17 +812,17 @@ public final class StageControlFrame extends JFrame {
 
    private void setZPosLabel(double z, int idx) {
       zPositionLabel_[idx].setText(
-              TextUtils.removeNegativeZero(
-                      NumberUtils.doubleToDisplayString(z))
-                    + " \u00B5m");
+            TextUtils.removeNegativeZero(
+                  NumberUtils.doubleToDisplayString(z))
+                  + " \u00B5m");
    }
-   
+
    private static JFormattedTextField createDoubleEntryFieldFromCombo(
          final MutablePropertyMapView settings,
          final JComboBox<String> cb,
          final String prefix,
          final double aDefault) {
-      
+
       class FieldListener implements PropertyChangeListener, ItemListener {
          private final JFormattedTextField tf_;
          private final JComboBox<String> cb_;
@@ -843,7 +843,7 @@ public final class StageControlFrame extends JFrame {
          public String toString() {
             return (prefix_ + cb_.getSelectedItem());
          }
-         
+
          @Override
          public void propertyChange(PropertyChangeEvent evt) {
             settings_.putDouble(toString(), ((Number) tf_.getValue()).doubleValue());
@@ -856,7 +856,7 @@ public final class StageControlFrame extends JFrame {
             }
          }
       }
-      
+
       JFormattedTextField tf = new JFormattedTextField(NumberFormat.getNumberInstance());
       FieldListener listener = new FieldListener(tf, settings, cb, prefix);
       tf.setValue(settings.getDouble(listener.toString(), aDefault));
@@ -867,10 +867,10 @@ public final class StageControlFrame extends JFrame {
 
    private boolean confirmLargeMovementSetting(double movementUm) {
       int response = JOptionPane.showConfirmDialog(this,
-              String.format(NumberUtils.doubleToDisplayString(movementUm, 0)
-                       + " microns could be dangerously large.  Are you sure you want to set this?",
-              "Large movement requested",
-              JOptionPane.YES_NO_OPTION));
+            String.format(NumberUtils.doubleToDisplayString(movementUm, 0)
+                     + " microns could be dangerously large.  Are you sure you want to set this?",
+                  "Large movement requested",
+                  JOptionPane.YES_NO_OPTION));
 
       return response == JOptionPane.YES_OPTION;
    }
@@ -918,7 +918,7 @@ public final class StageControlFrame extends JFrame {
          this.dispose();
       }
    }
-   
+
    @Override
    public void dispose() {
       for (int i = 0; i < 3; i++) {

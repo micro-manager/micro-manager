@@ -26,7 +26,6 @@ package org.micromanager.internal.utils;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import javax.swing.BorderFactory;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -48,16 +47,16 @@ public final class ProgressBar extends JPanel {
    /**
     * Constructor.
     *
-    * @param parent Component to place the progressbar on top of
+    * @param parent     Component to place the progressbar on top of
     * @param windowName Name of the progressbar window
-    * @param start Start value
-    * @param end Last value
+    * @param start      Start value
+    * @param end        Last value
     */
    @MustCallOnEDT
    public ProgressBar(Component parent, String windowName, int start, int end) {
 
       super(new BorderLayout());
-      
+
       frame = new JFrame(windowName);
       frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       frame.setBounds(0, 0, 250 + 12 * windowName.length(), 100);

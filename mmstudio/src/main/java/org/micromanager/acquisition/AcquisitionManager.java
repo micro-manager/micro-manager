@@ -38,13 +38,11 @@ public interface AcquisitionManager {
 
    /**
     * Provides an empty Sequence Settings Builder.
-    *
     */
    SequenceSettings.Builder sequenceSettingsBuilder();
 
    /**
     * Provides and empty ChannelSpec Builder.
-    *
     */
    ChannelSpec.Builder channelSpecBuilder();
 
@@ -90,16 +88,16 @@ public interface AcquisitionManager {
     * Execute an acquisition using the provided SequenceSettings. This function
     * should not be called on the EDT.
     *
-    * @param settings SequenceSettings to use for the acquisition, or null
-    *        to use the settings in the MDA dialog.
+    * @param settings    SequenceSettings to use for the acquisition, or null
+    *                    to use the settings in the MDA dialog.
     * @param shouldBlock if true, the method will block until the acquisition
-    *        is completed.
+    *                    is completed.
     * @return The Datastore containing the images from the acquisition.
     * @throws IllegalThreadStateException if the acquisition is started on the
     *                                     EDT.
     */
    Datastore runAcquisitionWithSettings(SequenceSettings settings,
-         boolean shouldBlock) throws IllegalThreadStateException;
+                                        boolean shouldBlock) throws IllegalThreadStateException;
 
    /**
     * Halt any ongoing acquisition as soon as possible.
@@ -129,7 +127,7 @@ public interface AcquisitionManager {
     * Save the provided SequenceSettings object to disk at the specified path.
     *
     * @param settings SequenceSettings object to save.
-    * @param path Path to save the SequenceSettings to.
+    * @param path     Path to save the SequenceSettings to.
     * @throws IOException if there was an error writing the file to disk.
     */
    void saveSequenceSettings(SequenceSettings settings, String path) throws IOException;
@@ -163,14 +161,14 @@ public interface AcquisitionManager {
     * at all values of that index. For example, if the first argument is -1,
     * then the runnable should execute at every frame.
     *
-    * @param frame 0-based frame number
+    * @param frame    0-based frame number
     * @param position 0-based position number
-    * @param channel 0-based channel number
-    * @param slice 0-based (z) slice number
+    * @param channel  0-based channel number
+    * @param slice    0-based (z) slice number
     * @param runnable code to be run
     */
    void attachRunnable(int frame, int position, int channel, int slice,
-           Runnable runnable);
+                       Runnable runnable);
 
    /**
     * Remove runnables from the acquisition engine.
@@ -231,9 +229,9 @@ public interface AcquisitionManager {
     * necessarily reflect reality; they are just the last-known values in the
     * cache.</p>
     *
-    * @param image Image whose metadata should be populated.
+    * @param image                Image whose metadata should be populated.
     * @param includeHardwareState if true, then the scopeData field will be
-    *        populated in the result Metadata.
+    *                             populated in the result Metadata.
     * @return A pre-populated Metadata.
     * @throws Exception If there were any errors communicating with the Core to
     *                   get required values.
@@ -248,10 +246,10 @@ public interface AcquisitionManager {
     * from Micro-Manager.
     *
     * @param source Result of calling getSource() on an AcquisitionStartedEvent
-    *        or AcquisitionEndedEvent.
+    *               or AcquisitionEndedEvent.
     * @return true if acquisition was started by Micro-Manager, false if it
-    *         was started elsewhere (e.g. by a plugin or other third-party
-    *         code).
+    *     was started elsewhere (e.g. by a plugin or other third-party
+    *     code).
     */
    boolean isOurAcquisition(Object source);
 }

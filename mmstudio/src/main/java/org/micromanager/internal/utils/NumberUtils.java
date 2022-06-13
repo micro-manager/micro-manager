@@ -19,6 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 //
+
 package org.micromanager.internal.utils;
 
 import java.math.RoundingMode;
@@ -27,46 +28,51 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
 
+/**
+ * Collection of functions helping to convert between core and display formats of numbers.
+ */
 public final class NumberUtils {
-	private static final NumberFormat FORMAT;
-	private static final DecimalFormat COREDOUBLEFORMAT;
-	private static final DecimalFormat COREINTEGERFORMAT;
+   private static final NumberFormat FORMAT;
+   private static final DecimalFormat COREDOUBLEFORMAT;
+   private static final DecimalFormat COREINTEGERFORMAT;
    private static final int MAXDIGITS;
 
-	static {
+   static {
       MAXDIGITS = 4;
-		// The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
-		FORMAT = NumberFormat.getInstance();
-		FORMAT.setRoundingMode(RoundingMode.HALF_UP);
+      // The display is supposed to use local formating (e.g., switch commas
+      // with periods in Locale.GERMANY).
+      FORMAT = NumberFormat.getInstance();
+      FORMAT.setRoundingMode(RoundingMode.HALF_UP);
       FORMAT.setMaximumFractionDigits(MAXDIGITS);
 
-		// The core always uses four decimal places in its double strings, and a dot for the decimal separator.
-		// This is equivalent to the US locale settings.
-		COREDOUBLEFORMAT = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
-		COREDOUBLEFORMAT.setRoundingMode(RoundingMode.HALF_UP);
-		COREDOUBLEFORMAT.applyPattern("0.0000"); 
-		
-		COREINTEGERFORMAT = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
-		COREINTEGERFORMAT.applyPattern("0");
-	}
+      // The core always uses four decimal places in its double strings, and a dot for
+      // the decimal separator. This is equivalent to the US locale settings.
+      COREDOUBLEFORMAT = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+      COREDOUBLEFORMAT.setRoundingMode(RoundingMode.HALF_UP);
+      COREDOUBLEFORMAT.applyPattern("0.0000");
 
-	// Display string methods
-	
-	public static String intToDisplayString(int number) {
-		return FORMAT.format(number);
-	}
-   
+      COREINTEGERFORMAT = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+      COREINTEGERFORMAT.applyPattern("0");
+   }
+
+   // Display string methods
+
+   public static String intToDisplayString(int number) {
+      return FORMAT.format(number);
+   }
+
    public static String longToDisplayString(long number) {
-		return FORMAT.format(number);
-	}
+      return FORMAT.format(number);
+   }
 
-	public static String doubleToDisplayString(double number) {
-		return FORMAT.format(number);
-	}
-   
+   public static String doubleToDisplayString(double number) {
+      return FORMAT.format(number);
+   }
+
    /**
-    * TODO: Check if this is thread safe
-    * @param number Number to converted to a String
+    * TODO: Check if this is thread safe.
+    *
+    * @param number       Number to converted to a String
     * @param maxPrecision - Maximum number of digits in the resulting String
     * @return String representation of the number in given Locale
     */
@@ -74,67 +80,66 @@ public final class NumberUtils {
       FORMAT.setMaximumFractionDigits(maxPrecision);
       String result = FORMAT.format(number);
       FORMAT.setMaximumFractionDigits(MAXDIGITS);
-		return result;
-	}
+      return result;
+   }
 
-	public static int displayStringToInt(Object numberString) throws ParseException {
-		return FORMAT.parse((String) numberString).intValue();
-	}
+   public static int displayStringToInt(Object numberString) throws ParseException {
+      return FORMAT.parse((String) numberString).intValue();
+   }
 
    public static long displayStringToLong(Object numberString) throws ParseException {
-		return FORMAT.parse((String) numberString).longValue();
-	}
-   
-	public static double displayStringToDouble(Object numberString) throws ParseException {
-		return FORMAT.parse((String) numberString).doubleValue();
-	}
+      return FORMAT.parse((String) numberString).longValue();
+   }
 
-	
-    // Core string methods
-	
-	public static String intToCoreString(long number) {
-		return COREINTEGERFORMAT.format(number);
-	}
+   public static double displayStringToDouble(Object numberString) throws ParseException {
+      return FORMAT.parse((String) numberString).doubleValue();
+   }
+
+
+   // Core string methods
+
+   public static String intToCoreString(long number) {
+      return COREINTEGERFORMAT.format(number);
+   }
 
    public static String longToCoreString(long number) {
       return COREINTEGERFORMAT.format(number);
    }
 
-	public static String doubleToCoreString(double number) {
-		return COREDOUBLEFORMAT.format(number);
-	}
+   public static String doubleToCoreString(double number) {
+      return COREDOUBLEFORMAT.format(number);
+   }
 
-	public static int coreStringToInt(Object numberString) throws ParseException {
-		return COREINTEGERFORMAT.parse((String) numberString).intValue();
-	}
+   public static int coreStringToInt(Object numberString) throws ParseException {
+      return COREINTEGERFORMAT.parse((String) numberString).intValue();
+   }
 
    public static long coreStringToLong(Object numberString) throws ParseException {
-		return COREINTEGERFORMAT.parse((String) numberString).longValue();
-	}
+      return COREINTEGERFORMAT.parse((String) numberString).longValue();
+   }
 
-	public static double coreStringToDouble(Object numberString) throws ParseException {
-		return COREDOUBLEFORMAT.parse((String) numberString).doubleValue();
-	}
+   public static double coreStringToDouble(Object numberString) throws ParseException {
+      return COREDOUBLEFORMAT.parse((String) numberString).doubleValue();
+   }
 
-	
-	// Conversion between display and core strings.
-	
-	public static String doubleStringDisplayToCore(Object numberDouble) throws ParseException {
-		return doubleToCoreString(displayStringToDouble(numberDouble));
-	}
 
-	public static String doubleStringCoreToDisplay(Object numberDouble) throws ParseException {
-		return doubleToDisplayString(coreStringToDouble(numberDouble));
-	}
+   // Conversion between display and core strings.
 
-	public static String intStringDisplayToCore(Object numberInt) throws ParseException {
-		return intToCoreString(displayStringToInt(numberInt));
-	}
+   public static String doubleStringDisplayToCore(Object numberDouble) throws ParseException {
+      return doubleToCoreString(displayStringToDouble(numberDouble));
+   }
 
-	public static String intStringCoreToDisplay(Object numberInt) throws ParseException {
-		return intToDisplayString(coreStringToInt(numberInt));
-	}
+   public static String doubleStringCoreToDisplay(Object numberDouble) throws ParseException {
+      return doubleToDisplayString(coreStringToDouble(numberDouble));
+   }
 
+   public static String intStringDisplayToCore(Object numberInt) throws ParseException {
+      return intToCoreString(displayStringToInt(numberInt));
+   }
+
+   public static String intStringCoreToDisplay(Object numberInt) throws ParseException {
+      return intToDisplayString(coreStringToInt(numberInt));
+   }
 
 
 }

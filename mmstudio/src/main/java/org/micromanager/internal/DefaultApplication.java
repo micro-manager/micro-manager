@@ -52,24 +52,24 @@ public class DefaultApplication implements Application {
    private final Studio studio_;
    private static final String EXPOSURE_KEY = "Exposure_";
    private final ApplicationSkin daytimeNighttimeManager_;
-   
-   
+
+
    public DefaultApplication(Studio studio, ApplicationSkin daynight) {
       studio_ = studio;
       daytimeNighttimeManager_ = daynight;
    }
-   
+
 
    @Override
    public void refreshGUI() {
       ((MMStudio) studio_).uiManager().updateGUI(true, false);
    }
-   
+
    @Override
    public void refreshGUIFromCache() {
       ((MMStudio) studio_).uiManager().updateGUI(true, true);
    }
-   
+
    @Override
    public void setExposure(final double exposureTime) {
       // Avoid redundantly setting the exposure time.
@@ -127,13 +127,13 @@ public class DefaultApplication implements Application {
     * Will also update current exposure if it the given channel and channelgroup
     * are the current one
     *
-    * @param channelGroup - 
-    * @param channel - preset for which to change exposure time
-    * @param exposure - desired exposure time
+    * @param channelGroup -
+    * @param channel      - preset for which to change exposure time
+    * @param exposure     - desired exposure time
     */
    @Override
    public void setChannelExposureTime(String channelGroup, String channel,
-           double exposure) {
+                                      double exposure) {
       try {
          storeChannelExposureTime(channelGroup, channel, exposure);
          if (channelGroup != null && channelGroup.equals(studio_.core().getChannelGroup())) {
@@ -144,7 +144,7 @@ public class DefaultApplication implements Application {
          }
       } catch (Exception ex) {
          ReportingUtils.logError("Failed to set exposure using Channelgroup: "
-                 + channelGroup + ", channel: " + channel + ", exposure: " + exposure);
+               + channelGroup + ", channel: " + channel + ", exposure: " + exposure);
       }
    }
 
@@ -154,23 +154,23 @@ public class DefaultApplication implements Application {
     * Same thing is used in MDA window, but this class keeps its own copy.
     *
     * @param channelGroup Core-channelgroup
-    * @param channel - specific channel of interest
-    * @param defaultExp - default exposure
+    * @param channel      - specific channel of interest
+    * @param defaultExp   - default exposure
     * @return exposure time
     */
    @Override
    public double getChannelExposureTime(String channelGroup, String channel,
-           double defaultExp) {
+                                        double defaultExp) {
       return studio_.profile().getSettings(Application.class).getDouble(
-              EXPOSURE_KEY + channelGroup + "_" + channel, defaultExp);
+            EXPOSURE_KEY + channelGroup + "_" + channel, defaultExp);
    }
 
    public void storeChannelExposureTime(String channelGroup, String channel,
-                                      double exposure) {
+                                        double exposure) {
       studio_.profile().getSettings(Application.class).putDouble(
-              EXPOSURE_KEY + channelGroup + "_" + channel, exposure);
+            EXPOSURE_KEY + channelGroup + "_" + channel, exposure);
    }
-   
+
    @Override
    public void saveConfigPresets(String path, boolean allowOverwrite) throws IOException {
       if (!allowOverwrite && new File(path).exists()) {
@@ -189,7 +189,7 @@ public class DefaultApplication implements Application {
          ReportingUtils.showError(e);
       }
    }
-   
+
    @Override
    public void showAutofocusDialog() {
       ((DefaultAutofocusManager) studio_.getAutofocusManager()).showOptionsDialog();
@@ -220,7 +220,7 @@ public class DefaultApplication implements Application {
    public JFrame getMainWindow() {
       return ((MMStudio) studio_).uiManager().frame();
    }
-   
+
    @Override
    public ApplicationSkin skin() {
       return daytimeNighttimeManager_;

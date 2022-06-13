@@ -49,7 +49,7 @@ public final class DefaultAnnotation implements Annotation {
     * Annotations are user-provided comments that either pertain to the complete dataset
     * (Summary comments), or per image.
     *
-    * @param store Datastore to which this annotation belongs.
+    * @param store    Datastore to which this annotation belongs.
     * @param filename not sure what this filename refers to.
     * @throws IOException can happen
     */
@@ -144,7 +144,7 @@ public final class DefaultAnnotation implements Annotation {
     * Return true if there's an existing annotation for this datastore, on
     * disk where the datastore's own data is stored.
     *
-    * @param store Datastore to interrogate
+    * @param store    Datastore to interrogate
     * @param filename Name of the annotation file
     * @return True if the annotation file exists, false otherwise
     */

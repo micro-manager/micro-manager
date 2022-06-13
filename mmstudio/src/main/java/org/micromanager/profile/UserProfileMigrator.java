@@ -20,7 +20,7 @@ import org.micromanager.profile.internal.UserProfileMigratorImpl;
  */
 public class UserProfileMigrator {
    public static void registerMigrations(Class<?> newOwner,
-         UserProfileMigration... migrations) {
+                                         UserProfileMigration... migrations) {
       UserProfileMigratorImpl.registerMigrations(newOwner, migrations);
    }
 }

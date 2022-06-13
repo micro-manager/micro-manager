@@ -44,7 +44,7 @@ public final class LargeMessageDlg extends JDialog {
    private JScrollPane scrollPane_;
 
    /**
-    * Create the dialog
+    * Create the dialog.
     */
    public LargeMessageDlg(String title, String message) {
       super();
@@ -63,7 +63,8 @@ public final class LargeMessageDlg extends JDialog {
 
       Dimension winSize = getSize();
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
+      setLocation(screenSize.width / 2 - (winSize.width / 2),
+            screenSize.height / 2 - (winSize.height / 2));
 
       final JButton okButton = new JButton();
       okButton.addActionListener(new ActionListener() {
@@ -74,17 +75,25 @@ public final class LargeMessageDlg extends JDialog {
       });
       okButton.setText("OK");
       getContentPane().add(okButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, okButton, 288, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, okButton, -30, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, okButton, 291, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, okButton, 208, SpringLayout.WEST, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.SOUTH, okButton, 288, SpringLayout.NORTH, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.NORTH, okButton, -30, SpringLayout.SOUTH, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.EAST, okButton, 291, SpringLayout.WEST, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.WEST, okButton, 208, SpringLayout.WEST, getContentPane());
 
       scrollPane_ = new JScrollPane();
       getContentPane().add(scrollPane_);
-      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane_, -35, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, scrollPane_, 5, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, scrollPane_, -5, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, scrollPane_, 5, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane_, -35, SpringLayout.SOUTH,
+            getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, scrollPane_, 5, SpringLayout.NORTH,
+            getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.EAST, scrollPane_, -5, SpringLayout.EAST, getContentPane());
+      springLayout
+            .putConstraint(SpringLayout.WEST, scrollPane_, 5, SpringLayout.WEST, getContentPane());
 
       final JTextArea textPane = new JTextArea();
       textPane.setFont(new Font("Arial", Font.PLAIN, 12));

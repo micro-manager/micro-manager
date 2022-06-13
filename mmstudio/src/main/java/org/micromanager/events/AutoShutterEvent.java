@@ -25,8 +25,8 @@ import org.micromanager.MMEvent;
 /**
  * This event is posted when autoshutter is enabled or disabled.
  *
- *  <p>The default implementation of this event is posted on the Studio event bus,
- *  so subscribe using {@link org.micromanager.events.EventManager}.</p>
+ * <p>The default implementation of this event is posted on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.</p>
  */
 public interface AutoShutterEvent extends MMEvent {
    /**

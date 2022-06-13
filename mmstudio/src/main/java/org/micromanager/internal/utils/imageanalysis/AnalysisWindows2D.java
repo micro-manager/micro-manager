@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.utils.imageanalysis;
 
 /**
@@ -9,6 +8,12 @@ package org.micromanager.internal.utils.imageanalysis;
  */
 public class AnalysisWindows2D {
 
+   /**
+    * Generates values for the hanWindow.
+    *
+    * @param size size of the window
+    * @return Window as 2D float array
+    */
    public static float[][] hanWindow(int size) {
       float[] hanArray = new float[size];
 
@@ -25,12 +30,12 @@ public class AnalysisWindows2D {
       }
       return han2DArray;
    }
-   
+
    /**
     * returns a hanWindow as a single array.
     *
-    * @param edgeSize
-    * @return 
+    * @param edgeSize Size of the edge
+    * @return hanWindow as a single array
     */
    public static float[] hanWindow1DA(int edgeSize) {
       float[] han1DArray = new float[edgeSize];
@@ -47,7 +52,7 @@ public class AnalysisWindows2D {
          }
       }
       return han2DArray;
-      
+
    }
 
 }

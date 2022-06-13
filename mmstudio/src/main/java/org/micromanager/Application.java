@@ -65,35 +65,35 @@ public interface Application {
     * then the displayed exposure time will also be updated.
     *
     * @param channelGroup Name of the config group used to control the channel.
-    * @param channel Name of the preset in the config group that refers to the
-    *        channel that should be updated.
-    * @param exposure New exposure time to set.
+    * @param channel      Name of the preset in the config group that refers to the
+    *                     channel that should be updated.
+    * @param exposure     New exposure time to set.
     */
    void setChannelExposureTime(String channelGroup, String channel,
-           double exposure);
+                               double exposure);
 
    /**
     * Retrieve the exposure time that has been set for the specified channel.
     *
     * @param channelGroup Name of the config group used to control the channel.
-    * @param channel Name of the preset in the config group that refers to the
-    *        channel whose exposure time is desired.
-    * @param defaultExp Default value to return if no exposure time is found.
+    * @param channel      Name of the preset in the config group that refers to the
+    *                     channel whose exposure time is desired.
+    * @param defaultExp   Default value to return if no exposure time is found.
     * @return Exposure time for the channel, or the provided default value.
     */
    double getChannelExposureTime(String channelGroup, String channel,
-           double defaultExp);
+                                 double defaultExp);
 
    /**
     * Save the current state of the config file to the specified path. If you
     * have generated new config groups and/or presets, they will be included
     * in the new file.
     *
-    * @param path Path to save the file to.
+    * @param path           Path to save the file to.
     * @param allowOverwrite If true, any existing file at the specified path
-    *        will be overwritten.
+    *                       will be overwritten.
     * @throws IOException If shouldOverwrite is false and there is already a
-    *         file at the chosen path.
+    *                     file at the chosen path.
     */
    void saveConfigPresets(String path, boolean allowOverwrite) throws IOException;
 

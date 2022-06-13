@@ -68,7 +68,7 @@ public interface Image {
     * <p>Because Image objects are immutable, the "copy" can safely share the
     * pixel data with the original. So this is an efficient operation.
     *
-    * @param coords Coordinates at which to place the new image.
+    * @param coords   Coordinates at which to place the new image.
     * @param metadata The new metadata to use for the copy
     * @return The copied image
     * @see #copyAtCoords
@@ -98,12 +98,12 @@ public interface Image {
    /**
     * Get the intensity of a component of the pixel at the specified position.
     *
-    * @param x X coordinate at which to retrieve image data
-    * @param y Y coordinate at which to retrieve image data
+    * @param x         X coordinate at which to retrieve image data
+    * @param y         Y coordinate at which to retrieve image data
     * @param component The component number to retrieve intensity for, starting
     *                  from 0.
     * @return intensity of the image at the specified coordinates, for the
-    *         given component
+    *     given component
     * @throws IndexOutOfBoundsException when the index is out of bounds
     * @see #getComponentIntensitiesAt
     */
@@ -145,7 +145,7 @@ public interface Image {
     * @param x X coordinate at which to retrieve image data
     * @param y Y coordinate at which to retrieve image data
     * @return A string describing the pixel intensity/intensities at the given
-    *         coordinates.
+    *     coordinates.
     */
    String getIntensityStringAt(int x, int y);
 
@@ -230,7 +230,7 @@ public interface Image {
     * returned. It may change in the future.</p>
     *
     * @return An array of pixel values for the image data, copied from the
-    *         original data.
+    *     original data.
     */
    Object getRawPixelsCopy();
 

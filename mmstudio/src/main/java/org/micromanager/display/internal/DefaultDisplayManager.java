@@ -20,12 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import org.micromanager.display.internal.gearmenu.DefaultImageExporter;
-import org.micromanager.display.internal.displaywindow.DisplayController;
-import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.io.File;
@@ -40,6 +34,7 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreClosingEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
@@ -49,17 +44,22 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.display.inspector.internal.InspectorCollection;
 import org.micromanager.display.inspector.internal.InspectorController;
-import org.micromanager.data.DatastoreClosingEvent;
+import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.display.internal.event.DataViewerAddedEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.display.internal.gearmenu.DefaultImageExporter;
+import org.micromanager.display.internal.link.LinkManager;
+import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.internal.event.DataViewerAddedEvent;
-import org.micromanager.display.internal.link.LinkManager;
-import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 
 
 // TODO Methods must implement correct threading semantics!
@@ -95,15 +95,14 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       providerToDisplays_ = new HashMap<>();
       viewers_.registerForEvents(this);
    }
-   
+
    @Override
    public Datastore show(Image image) {
       Datastore result = studio_.data().createRAMDatastore();
       createDisplay(result);
       try {
          result.putImage(image);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          ReportingUtils.logError(e, "Failed to display image");
       }
       return result;
@@ -137,7 +136,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    /**
     * When a Datastore is closed, we need to remove all references to it so
     * it can be garbage-collected.
-    * @param event
+    *
+    * @param event Signals that the Datastore is closing
     */
    @Subscribe
    public void onDatastoreClosed(DatastoreClosingEvent event) {
@@ -152,7 +152,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    /**
     * At shutdown, we give the user the opportunity to save data, and to cancel
     * shutdown if they don't want to decide yet.
-    * @param event
+    *
+    * @param event Signals that the application is shutting down
     */
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
@@ -172,17 +173,17 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder() {
       return new DefaultDisplaySettings.LegacyBuilder();
    }
-   
+
    @Override
    public DisplaySettings.Builder displaySettingsBuilder() {
       return DefaultDisplaySettings.builder();
    }
-   
+
    @Override
    public ChannelDisplaySettings.Builder channelDisplaySettingsBuilder() {
       return DefaultChannelDisplaySettings.builder();
    }
-   
+
    @Override
    public ComponentDisplaySettings.Builder componentDisplaySettingsBuilder() {
       return DefaultComponentDisplaySettings.builder();
@@ -251,8 +252,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    @Override
    public DisplayWindow createDisplay(DataProvider provider) {
-      DisplayWindow ret = new DisplayController.Builder(provider).
-            linkManager(linkManager_).build(studio_);
+      DisplayWindow ret = new DisplayController.Builder(provider)
+            .linkManager(linkManager_).build(studio_);
       addViewer(ret);
       ret.show();
       return ret;
@@ -260,10 +261,9 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    @Override
    public DisplayWindow createDisplay(DataProvider provider,
-         DisplayWindowControlsFactory factory)
-   {
-      DisplayWindow ret = new DisplayController.Builder(provider).
-            linkManager(linkManager_).controlsFactory(factory).build(studio_);
+                                      DisplayWindowControlsFactory factory) {
+      DisplayWindow ret = new DisplayController.Builder(provider)
+            .linkManager(linkManager_).controlsFactory(factory).build(studio_);
       addViewer(ret);
       ret.show();
       return ret;
@@ -329,9 +329,10 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
     * of DisplaySettings to a datastore location. I can not think of an easy, quick,
     * reliable way to store the displaysettings for multiple viewers.  Moreover,
     * this seems a bit esoteric and currently not worth the effort to implement.
+    *
     * @param store Datastore to open displays for
     * @return List with opened DisplayWindows
-    * @throws IOException 
+    * @throws IOException Can happen with disk based Datastores
     */
    @Override
    public List<DisplayWindow> loadDisplays(Datastore store) throws IOException {
@@ -339,23 +340,24 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       ArrayList<DisplayWindow> result = new ArrayList<>();
       if (path != null) {
          // try to restore display settings
-         File displaySettingsFile = new File(store.getSavePath() + File.separator + 
-              PropertyKey.DISPLAY_SETTINGS_FILE_NAME.key());
-         DisplaySettings displaySettings = DefaultDisplaySettings.
-                 getSavedDisplaySettings(displaySettingsFile);
+         File displaySettingsFile = new File(store.getSavePath() + File.separator
+               + PropertyKey.DISPLAY_SETTINGS_FILE_NAME.key());
+         DisplaySettings displaySettings = DefaultDisplaySettings
+               .getSavedDisplaySettings(displaySettingsFile);
          if (displaySettings == null) {
             displaySettings = RememberedDisplaySettings.loadDefaultDisplaySettings(
-                 studio_,
-                 store.getSummaryMetadata());
+                  studio_,
+                  store.getSummaryMetadata());
          } else {
             displaySettings = RememberedDisplaySettings.fixMissingInfo(displaySettings,
-                    store.getSummaryMetadata());
+                  store.getSummaryMetadata());
          }
          // instead of using the createDisplay function, set the correct 
          // displaySettings right away
-         DisplayWindow tmp = new DisplayController.Builder(store).
-            linkManager(linkManager_).
-                 initialDisplaySettings(displaySettings).build(studio_);
+         DisplayWindow tmp = new DisplayController.Builder(store)
+               .linkManager(linkManager_)
+               .initialDisplaySettings(displaySettings)
+               .build(studio_);
          addViewer(tmp);
          result.add(tmp);
          tmp.show();
@@ -379,7 +381,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    public synchronized List<DisplayWindow> getDisplays(DataProvider provider) {
       return new ArrayList<>(providerToDisplays_.get(provider));
    }
-   
+
 
    @Override
    public DataViewer getActiveDataViewer() {
@@ -430,16 +432,16 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       return true;
    }
 
-   
+
    /**
     * Asks user whether or not to save this data set.
     * Either saves the data (when so requested), or not.
     * Return value indicates whether or not the datastore can be closed
-    * 
+    *
     * @param store   Datastore that can be saved
     * @param display Display over which to orient the prompt (can be null)
     * @return true if Datastore can be closed, false otherwise
-    * @throws IOException 
+    * @throws IOException Can happen with disk based Datastores
     */
    @Override
    public boolean promptToSave(Datastore store, DisplayWindow display) throws IOException {
@@ -453,7 +455,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          return false;
       }
       if (result == 0) { // i.e. not the "discard" option
-         if ( store.save(display.getWindow(), true ) == null) {
+         if (store.save(display.getWindow(), true) == null) {
             // Don't close the window, as saving failed.
             return false;
          }
@@ -480,16 +482,16 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       }
       if (complicatedPromptNeeded) {
          int result = JOptionPane.showOptionDialog(null,
-                 "Close all open image windows?", "Micro-Manager",
-                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-                 CLOSE_OPTIONS, CLOSE_OPTIONS[0]);
+               "Close all open image windows?", "Micro-Manager",
+               JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+               CLOSE_OPTIONS, CLOSE_OPTIONS[0]);
          if (result <= 0) { // cancel
             return;
          }
          // this prompt feels like nagging, but may prevent disastrous data loss
          if (result == 2 && JOptionPane.showConfirmDialog(null,
-                 "Are you sure you want to close all image windows without prompting to save?",
-                 "Micro-Manager", JOptionPane.YES_NO_OPTION) == 1) {
+               "Are you sure you want to close all image windows without prompting to save?",
+               "Micro-Manager", JOptionPane.YES_NO_OPTION) == 1) {
             // Close without prompting, but user backed out.
             return;
          }
@@ -497,8 +499,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       } else {
          // simple prompt:
          if (JOptionPane.showConfirmDialog(null,
-                 "Are you sure you want to close all image windows?",
-                 "Micro-Manager", JOptionPane.YES_NO_OPTION) == 1) {
+               "Are you sure you want to close all image windows?",
+               "Micro-Manager", JOptionPane.YES_NO_OPTION) == 1) {
             // User backed out.
             return;
          }
@@ -512,8 +514,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          if (shouldPromptToSave && !display.requestToClose()) {
             // User cancelled closing.
             return false;
-         }
-         else if (!shouldPromptToSave) {
+         } else if (!shouldPromptToSave) {
             // Forcefully close display.
             display.close();
          }
@@ -547,7 +548,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    public void onEvent(DataViewerAddedEvent e) {
       eventBus_.post(e);
    }
-   
+
    @Subscribe
    public void onEvent(DataViewerDidBecomeInvisibleEvent e) {
       eventBus_.post(e);
@@ -575,7 +576,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    /**
     * Checks if this is the last display for a managed Datastore, and
-    * if so, whether that datastore can be closed without prompting
+    * if so, whether that datastore can be closed without prompting.
     * Informational only, no actions are taken, so no side effects
     * (unlike canCLoseViewer)    *
     *
@@ -587,7 +588,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       synchronized (this) {
          if (!providerToDisplays_.containsKey(provider)) {
             ReportingUtils.logError(
-                    "Received request to close a display that is not associated with a managed datastore.");
+                  "Received request to close a display that is not associated "
+                        + "with a managed datastore.");
             return true;
          }
          displays = getDisplays(provider);
@@ -597,7 +599,9 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
             if (!displays.contains(window)) {
                // This should also never happen.
                ReportingUtils.logError(
-                       "Was notified of a request to close a display that we didn't know was associated with datastore " + provider);
+                     "Was notified of a request to close a display that we didn't know "
+                           + "was associated with datastore "
+                           + provider);
             }
             if (displays.size() > 1) {
                // Not last display, so OK to close
@@ -617,7 +621,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
     * Check if this is the last display for a Datastore that we are managing,
     * and verify closing without saving (if appropriate).
     *
-    * @return
+    * @return True of the Viewer can be closed, false otherwise
     */
    @Override
    public boolean canCloseViewer(DataViewer viewer) {
@@ -626,7 +630,9 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       synchronized (this) {
          if (!providerToDisplays_.containsKey(provider)) {
             // This should never happen.
-            ReportingUtils.logError("Received request to close a display that is not associated with a managed datastore.");
+            ReportingUtils.logError(
+                  "Received request to close a display that is not associated with "
+                        + "a managed datastore.");
             return true;
          }
          displays = getDisplays(provider);
@@ -635,7 +641,10 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
             DisplayWindow window = (DisplayWindow) viewer;
             if (!displays.contains(window)) {
                // This should also never happen.
-               ReportingUtils.logError("Was notified of a request to close a display that we didn't know was associated with datastore " + provider);
+               ReportingUtils.logError(
+                     "Was notified of a request to close a display that we didn't know "
+                           + "was associated with datastore "
+                           + provider);
             }
 
             if (displays.size() > 1) {
@@ -670,7 +679,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
                   ReportingUtils.logError(ioe, "Failed to save:");
                }
             }
-            
+
          }
          return false;
       }

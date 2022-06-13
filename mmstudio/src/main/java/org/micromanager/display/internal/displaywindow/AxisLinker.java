@@ -15,6 +15,8 @@ import org.micromanager.display.internal.link.LinkAnchor;
 import org.micromanager.display.internal.link.LinkManager;
 
 /**
+ * Handles the axis linker Anchor, a UI element in the display that lets users synchronize
+ * axes of multiple viewers with each other.
  *
  * @author mark
  */
@@ -66,14 +68,14 @@ class AxisLinker {
    }
 
    public static AxisLinker create(LinkManager linkManager,
-         DisplayController viewer, String axis) {
+                                   DisplayController viewer, String axis) {
       AxisLinker instance = new AxisLinker(linkManager, viewer, axis);
       viewer.registerForEvents(instance);
       return instance;
    }
 
    private AxisLinker(LinkManager linkManager, DisplayController viewer,
-         String axis) {
+                      String axis) {
       linkManager_ = linkManager;
       viewer_ = viewer;
       axis_ = axis;
@@ -123,7 +125,7 @@ class AxisLinker {
          anchor_.propagate(newPos.getIndex(axis_));
       }
    }
-   
+
    @Subscribe
    public void onEvent(DataViewerWillCloseEvent e) {
       // this should always be the case, but better safe than sorry

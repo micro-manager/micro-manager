@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.utils;
 
 import java.io.DataOutputStream;
@@ -9,13 +8,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- *
  * @author karlhoover
  */
 public final class HttpUtils {
 
    public void upload(URL url, File f) throws Exception {
-      final String boundary = HttpBoundaryString();
+      final String boundary = httpBoundaryString();
       // TOD: handle redirects, so that we have more freedom to move things around
       // on the server side
       HttpURLConnection anURLConnection = (HttpURLConnection) url.openConnection();
@@ -73,7 +71,7 @@ public final class HttpUtils {
       System.out.println(response);
    }
 
-   private String HttpBoundaryString() {
+   private String httpBoundaryString() {
       String possibleCharacters =
             "+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
       int length = 36;

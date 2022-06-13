@@ -25,4 +25,5 @@ package org.micromanager.alerts.internal;
  * This event is posted on the application event bus whenever all alerts have
  * been dismissed by the user.
  */
-public final class NoAlertsAvailableEvent {}
+public final class NoAlertsAvailableEvent {
+}

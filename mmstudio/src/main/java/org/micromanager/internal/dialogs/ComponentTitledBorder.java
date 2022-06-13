@@ -1,4 +1,3 @@
-
 package org.micromanager.internal.dialogs;
 
 import java.awt.Component;

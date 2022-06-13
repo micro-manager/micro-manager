@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.profile.internal;
 
 import com.google.common.base.CharMatcher;
@@ -62,15 +63,15 @@ public final class UserProfileAdmin {
    private static final String DEFAULT_PROFILE_NAME = "Default User";
    private static final UUID DEFAULT_PROFILE_UUID =
          UUID.fromString("00000000-0000-0000-0000-000000000000");
-   
+
    public static final String READ_ONLY = "ReadOnly";
 
    private final ProfileWriteLock writeLock_;
 
    private final ScheduledExecutorService saverExecutor_ =
          Executors.newSingleThreadScheduledExecutor(
-                     ThreadFactoryFactory.createThreadFactory(
-                           "User Profile Saver"));
+               ThreadFactoryFactory.createThreadFactory(
+                     "User Profile Saver"));
 
    private boolean didMigrateLegacy_ = false;
 
@@ -109,10 +110,10 @@ public final class UserProfileAdmin {
             ReportingUtils.logMessage(
                   "Failed to acquire User Profile write lock; profiles will be read-only");
          }
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          ReportingUtils.logError(e,
-               "Failed to acquire User Profile write lock due to IO error; profiles will be read-only");
+               "Failed to acquire User Profile write lock due to IO error; profiles will "
+                     + "be read-only");
       }
       return lock;
    }
@@ -136,27 +137,30 @@ public final class UserProfileAdmin {
    public boolean isReadOnlyMode() {
       return writeLock_ == null;
    }
-   
+
    public boolean isProfileReadOnly() {
       return currentProfile_.getSettings(UserProfileAdmin.class).getBoolean(READ_ONLY, false);
    }
-   
+
    public void setProfileReadOnly(boolean readOnly) throws IOException {
-     currentProfile_.getSettings(UserProfileAdmin.class).putBoolean(READ_ONLY, readOnly);
-     Profile profile = Profile.fromSettings(currentProfile_.toPropertyMap()); //This is confusing. `DefaultUserProfile` is the class that actually handles the profile in the code. `Profile` is just a file format.
-     for (IndexEntry entry : getIndex().getEntries()) {
+      currentProfile_.getSettings(UserProfileAdmin.class).putBoolean(READ_ONLY, readOnly);
+      Profile profile = Profile.fromSettings(currentProfile_
+            .toPropertyMap()); // This is confusing. `DefaultUserProfile` is the class that
+      // actually handles the profile in the code. `Profile` is just a file format.
+      for (IndexEntry entry : getIndex().getEntries()) {
          if (entry.getUUID().equals(currentProfileUUID_)) {
             final String filename = entry.getFilename();
-            writeFile(filename, profile, true); //Force write the file even though the profile may be set to readonly.
+            writeFile(filename, profile,
+                  true); //Force write the file even though the profile may be set to readonly.
             return;
          }
-      }     
+      }
    }
 
    /**
     * Migrate from the legacy profile format.
-    * <p>
-    * It is not necessary to call this method unless you want to learn whether
+    *
+    * <p>It is not necessary to call this method unless you want to learn whether
     * migration took place. If you access the profiles first, migration will
     * happen automatically.
     *
@@ -173,8 +177,8 @@ public final class UserProfileAdmin {
 
    /**
     * Shut down the scheduled executor used to autosave profiles.
-    * <p>
-    * Make sure to call {@code syncToDisk} on each autosaving profile before
+    *
+    * <p>Make sure to call {@code syncToDisk} on each autosaving profile before
     * calling this method.
     */
    public void shutdown() throws InterruptedException {
@@ -208,7 +212,7 @@ public final class UserProfileAdmin {
     *
     * @return a map containing the UUIDs and user-visible names of profiles
     * @throws IOException if there was an error reading the profiles, or
-    * migrating legacy profiles
+    *                     migrating legacy profiles
     */
    public Map<UUID, String> getProfileUUIDsAndNames() throws IOException {
       Map<UUID, String> ret = new LinkedHashMap<>();
@@ -250,8 +254,7 @@ public final class UserProfileAdmin {
          if (currentProfile_ != null) {
             try {
                currentProfile_.close();
-            }
-            catch (InterruptedException ex) {
+            } catch (InterruptedException ex) {
                Thread.currentThread().interrupt();
             }
          }
@@ -284,35 +287,36 @@ public final class UserProfileAdmin {
       }
       throw new IllegalArgumentException("No user profile matching UUID " + uuid);
    }
-   
+
    public UserProfile getProfile() {
       return currentProfile_;
    }
 
    /**
-    * 
     * @param uuid The unique ID number associated with the profile you want to get.
     * @return A `User Profile` instance that will not save back to file at all.
-    * @throws IOException 
+    * @throws IOException
     */
    public UserProfile getNonSavingProfile(UUID uuid) throws IOException {
       return getProfileImpl(uuid, false, null);
    }
 
    /**
-    * 
-    * @param uuid The unique ID number associated with the profile you want to get.
-    * @param errorHandler If an exception occurs during the autosave process the exception will be passed to this object's `exceptionThrown` method.
-    * @return A `User Profile` instance that will routinely save to file in case the program crashes.
-    * @throws IOException 
+    * @param uuid         The unique ID number associated with the profile you want to get.
+    * @param errorHandler If an exception occurs during the autosave process the exception
+    *                     will be passed to this object's `exceptionThrown` method.
+    * @return A `User Profile` instance that will routinely save to file in case
+    *         the program crashes.
+    * @throws IOException
     */
    public UserProfile getAutosavingProfile(UUID uuid,
-         final ExceptionListener errorHandler) throws IOException {
+                                           final ExceptionListener errorHandler)
+         throws IOException {
       return getProfileImpl(uuid, true, errorHandler);
    }
 
    private UserProfile getProfileImpl(UUID uuid, boolean autosaving,
-         final ExceptionListener errorHandler) throws IOException {
+                                      final ExceptionListener errorHandler) throws IOException {
       for (IndexEntry entry : getIndex().getEntries()) {
          if (entry.getUUID().equals(uuid)) {
             final String filename = entry.getFilename();
@@ -326,20 +330,20 @@ public final class UserProfileAdmin {
             uProfile.setFallbackProfile(getNonSavingGlobalProfile());
             if (autosaving) {
                uProfile.setSaver(
-                  ProfileSaver.create(
-                     uProfile, 
-                     () -> {
-                        Profile profile1;
-                        profile1 = Profile.fromSettings(uProfile.toPropertyMap());
-                        try {
-                           writeFile(filename, profile1, false);
-                        } catch (IOException e) {
-                           if (errorHandler != null) {
-                              errorHandler.exceptionThrown(e);
-                           }
-                        }
-                     }, 
-                     saverExecutor_));
+                     ProfileSaver.create(
+                           uProfile,
+                           () -> {
+                              Profile profile1;
+                              profile1 = Profile.fromSettings(uProfile.toPropertyMap());
+                              try {
+                                 writeFile(filename, profile1, false);
+                              } catch (IOException e) {
+                                 if (errorHandler != null) {
+                                    errorHandler.exceptionThrown(e);
+                                 }
+                              }
+                           },
+                           saverExecutor_));
             }
             return uProfile;
          }
@@ -354,14 +358,13 @@ public final class UserProfileAdmin {
    }
 
    public boolean hasGlobalSettings() throws IOException {
-      return new File(GLOBAL_PROFILE_FILE).isFile() ||
-            new File(OLD_GLOBAL_PROFILE_FILE).isFile();
+      return new File(GLOBAL_PROFILE_FILE).isFile() || new File(OLD_GLOBAL_PROFILE_FILE).isFile();
    }
 
    /**
     * Create a profile with the given name.
-    * <p>
-    * This does not check for duplicate names. If duplicate names should be
+    *
+    * <p>This does not check for duplicate names. If duplicate names should be
     * avoided, the caller is responsible for that.
     *
     * @param name the user-visible name of the profile to create
@@ -427,8 +430,7 @@ public final class UserProfileAdmin {
       if (updated != null) {
          writeIndex(new Index(entries));
          indexListeners_.fire().stateChanged(new ChangeEvent(this));
-      }
-      else {
+      } else {
          throw new IllegalArgumentException("No user profile matching UUID " + uuid);
       }
    }
@@ -454,8 +456,7 @@ public final class UserProfileAdmin {
          writeIndex(new Index(entries));
          deleteFile(filename);
          indexListeners_.fire().stateChanged(new ChangeEvent(this));
-      }
-      else {
+      } else {
          throw new IllegalArgumentException("No user profile matching UUID " + uuid);
       }
    }
@@ -481,18 +482,15 @@ public final class UserProfileAdmin {
          PropertyMap pmap = PropertyMaps.loadJSON(global);
          try {
             return Profile.fromFilePmap(pmap).getSettings();
-         }
-         catch (IOException ioe) {
+         } catch (IOException ioe) {
             // Tolerate old-style saved under new filename
             return migrateProfile(pmap);
          }
-      }
-      catch (FileNotFoundException e) {
+      } catch (FileNotFoundException e) {
          File oldGlobal = new File(OLD_GLOBAL_PROFILE_FILE);
          try {
             return migrateProfile(PropertyMaps.loadJSON(oldGlobal));
-         }
-         catch (FileNotFoundException e2) {
+         } catch (FileNotFoundException e2) {
             return PropertyMaps.emptyPropertyMap();
          }
       }
@@ -513,10 +511,8 @@ public final class UserProfileAdmin {
       // Combine virtual and actual, virtual first
       List<IndexEntry> entries = virtualIndex_.getEntries();
       try {
-         entries.addAll(new Index(PropertyMaps.loadJSON(getModernIndexFile())).
-               getEntries());
-      }
-      catch (FileNotFoundException e) {
+         entries.addAll(new Index(PropertyMaps.loadJSON(getModernIndexFile())).getEntries());
+      } catch (FileNotFoundException e) {
          // Use virtual only
       }
       return new Index(entries);
@@ -540,16 +536,13 @@ public final class UserProfileAdmin {
       }
       try {
          return Profile.fromFilePmap(PropertyMaps.loadJSON(getModernFile(filename)));
-      }
-      catch (FileNotFoundException e) { // Not present is equivalent to empty
+      } catch (FileNotFoundException e) { // Not present is equivalent to empty
          return new Profile();
-      }
-      catch (IOException e) { // Present but in a bad state.  Try to restore from backup
+      } catch (IOException e) { // Present but in a bad state.  Try to restore from backup
          String backup = filename + "~";
          try {
             return Profile.fromFilePmap(PropertyMaps.loadJSON(getModernFile(backup)));
-         }
-         catch (IOException ex) { // Not present is equivalent to empty
+         } catch (IOException ex) { // Not present is equivalent to empty
             return new Profile();
          }
       }
@@ -557,17 +550,20 @@ public final class UserProfileAdmin {
 
    /**
     * Saves a profile to a json file.
-    * @param filename The name of the file to save to.
-    * @param profile The profile to be saved.
-    * @param ignoreProfileReadOnly If the `READ_ONLY` setting of the profile is `true` then this method will do not save unless this argument is `true`.
-    * @throws IOException 
+    *
+    * @param filename              The name of the file to save to.
+    * @param profile               The profile to be saved.
+    * @param ignoreProfileReadOnly If the `READ_ONLY` setting of the profile is `true`
+    *                              then this method will do not save unless this argument is `true`.
+    * @throws IOException
     */
-   private void writeFile(String filename, Profile profile, boolean ignoreProfileReadOnly) throws IOException {
+   private void writeFile(String filename, Profile profile, boolean ignoreProfileReadOnly)
+         throws IOException {
       boolean readOnly;
       if (ignoreProfileReadOnly) {
-        readOnly = false;
+         readOnly = false;
       } else {
-        readOnly = isProfileReadOnly();
+         readOnly = isProfileReadOnly();
       }
       if (isReadOnlyMode() || readOnly) {
          virtualProfiles_.put(filename, profile);
@@ -591,8 +587,7 @@ public final class UserProfileAdmin {
     * Creates modern index and profiles from legacy index and profiles.
     *
     * @return true if migration occurred; false if the profile index files
-    * was not found or could not be read.
-    * 
+    *         was not found or could not be read.
     * @throws IOException when new profiles could not be written.
     */
    private boolean migrateProfiles() throws IOException {
@@ -603,8 +598,7 @@ public final class UserProfileAdmin {
       try {
          legacyIndex = MM1JSONSerializer.fromJSON(
                Files.toString(getLegacyIndexFile(), Charsets.UTF_8));
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          return false;
       }
 
@@ -615,8 +609,7 @@ public final class UserProfileAdmin {
          if (OLD_DEFAULT_PROFILE_NAME.equals(legacyName)) {
             uuid = DEFAULT_PROFILE_UUID;
             newName = DEFAULT_PROFILE_NAME;
-         }
-         else {
+         } else {
             uuid = UUID.randomUUID();
          }
          String filename = makeFilename(uuid, newName);
@@ -656,6 +649,7 @@ public final class UserProfileAdmin {
 
    /**
     * Convert a legacy user profile into the modern pmap format.
+    *
     * @param legacy the legacy profile pmap
     * @return the modern profile pmap
     */
@@ -692,8 +686,8 @@ public final class UserProfileAdmin {
 
    /**
     * Generate a filename for a profile.
-    * <p>
-    * This is used once when creating the profile. After that, the filename
+    *
+    * <p>This is used once when creating the profile. After that, the filename
     * remains constant even if the profile is renamed.
     *
     * @param uuid the profile UUID
@@ -702,8 +696,8 @@ public final class UserProfileAdmin {
     */
    private static String makeFilename(UUID uuid, String name) {
       CharMatcher notAllowed = CharMatcher.JAVA_LETTER_OR_DIGIT.negate();
-      return notAllowed.trimFrom(notAllowed.collapseFrom(name, '_')) + "-" +
-            uuid.toString() + ".json";
+      return notAllowed.trimFrom(notAllowed.collapseFrom(name, '_')) + "-"
+            + uuid.toString() + ".json";
    }
 
    private static File getModernIndexFile() {
@@ -750,8 +744,7 @@ public final class UserProfileAdmin {
          ((DefaultUserProfile) profile).close();
 
          admin.shutdown();
-      }
-      catch (IOException | InterruptedException e) {
+      } catch (IOException | InterruptedException e) {
          System.err.println(e.getMessage());
       }
    }

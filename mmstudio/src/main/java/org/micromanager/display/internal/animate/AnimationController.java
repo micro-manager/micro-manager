@@ -61,13 +61,14 @@ public final class AnimationController<P> {
     *
     * @param <P> For now only Coords, but parameterized to support future
     *            extensions
-   */
+    */
    public interface Listener<P> {
-      void animationShouldDisplayDataPosition(P position);     
+      void animationShouldDisplayDataPosition(P position);
+
       /**
        * Update range but don't display.
        *
-       * @param position Coord 
+       * @param position Coord
        */
 
       void animationAcknowledgeDataPosition(P position);
@@ -92,7 +93,7 @@ public final class AnimationController<P> {
    private int tickIntervalMs_ = 100;
    private double animationRateFPS_ = 10.0;
    private final Map<String, NewPositionHandlingMode> newPositionModes_ =
-           new HashMap<>();
+         new HashMap<>();
    private int newPositionFlashDurationMs_ = 500;
 
    private final AtomicBoolean animationEnabled_ = new AtomicBoolean(false);
@@ -222,6 +223,11 @@ public final class AnimationController<P> {
       return newPositionModes_.get(axis);
    }
 
+   /**
+    * Sets the Flash Duration for the new position in ms.
+    *
+    * @param durationMs Duration in milli-seconds
+    */
    public synchronized void setNewPositionFlashDurationMs(int durationMs) {
       if (durationMs <= 0) {
          throw new IllegalArgumentException("duration must be positive");
@@ -281,6 +287,11 @@ public final class AnimationController<P> {
       }, 0, TimeUnit.MILLISECONDS);
    }
 
+   /**
+    * Sets the new position of the display.
+    *
+    * @param newPosition The new position to be displayed.
+    */
    public synchronized void newDataPosition(final Coords newPosition) {
       // Mode may have switched since scheduling a snap-back, so cancel it here
       if (snapBackFuture_ != null) {
@@ -306,7 +317,7 @@ public final class AnimationController<P> {
       }
 
       final Coords oldPosition = (Coords) sequencer_.getAnimationPosition();
-           
+
       Coords.CoordsBuilder newDisplayPositionBuilder = newPosition.copyBuilder();
       Coords.CoordsBuilder snapBackPositionBuilder = newPosition.copyBuilder();
       boolean foundAxisToBeIgnored = false;
@@ -315,12 +326,12 @@ public final class AnimationController<P> {
          for (String axis : newPositionModes_.keySet()) {
             if (oldPosition.getIndex(axis) != newPosition.getIndex(axis)) {
                if (newPositionModes_.get(axis).equals(
-                               NewPositionHandlingMode.IGNORE)) {
+                     NewPositionHandlingMode.IGNORE)) {
                   newDisplayPositionBuilder.index(axis, oldPosition.getIndex(axis));
                   snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
                   foundAxisToBeIgnored = true;
                } else if (newPositionModes_.get(axis).equals(
-                              NewPositionHandlingMode.FLASH_AND_SNAP_BACK)) {
+                     NewPositionHandlingMode.FLASH_AND_SNAP_BACK)) {
                   snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
                   foundFlashBackAxis = true;
                }
@@ -329,7 +340,7 @@ public final class AnimationController<P> {
       }
       final Coords newDisplayPosition = newDisplayPositionBuilder.build();
       final Coords snapBackPosition = snapBackPositionBuilder.build();
-      
+
       if (foundFlashBackAxis) {
          stopTicks();
          if (newDataPositionExpiredFuture_ != null) {
@@ -431,6 +442,7 @@ public final class AnimationController<P> {
       try {
          scheduledTickFuture_.get();
       } catch (ExecutionException | CancellationException e) {
+         ReportingUtils.logError(e);
       } catch (InterruptedException notUsedByUs) {
          Thread.currentThread().interrupt();
       }

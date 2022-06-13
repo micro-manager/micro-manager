@@ -66,7 +66,7 @@ public final class RegistrationDlg extends JDialog {
     * Display the registration dialog, if the user has not registered and not
     * opted out of registering.
     *
-    * @param studio Uses studio.app().skin() and studio.profile(), so make sure 
+    * @param studio Uses studio.app().skin() and studio.profile(), so make sure
     *               those are initialized before calling this function
     */
    public static void showIfNecessary(Studio studio) {
@@ -75,16 +75,16 @@ public final class RegistrationDlg extends JDialog {
       }
       new RegistrationDlg(studio).setVisible(true);
    }
-   
+
    /**
     * Displays the registration dialog.
     * For debugging purposes only.
     *
-    * @param studio Uses studio.app().skin() and studio.profile(), so make sure 
+    * @param studio Uses studio.app().skin() and studio.profile(), so make sure
     *               those are initialized before calling this function
     */
    public static void showRegistration(Studio studio) {
-      
+
       new RegistrationDlg(studio).setVisible(true);
    }
 
@@ -97,7 +97,7 @@ public final class RegistrationDlg extends JDialog {
    /**
     * Dialog to collect registration data from the user.
     *
-    * @param studio Uses studio.app().skin() and studio.profile(), so make sure 
+    * @param studio Uses studio.app().skin() and studio.profile(), so make sure
     *               those are initialized before instantiating this class
     */
    public RegistrationDlg(Studio studio) {
@@ -117,7 +117,7 @@ public final class RegistrationDlg extends JDialog {
       welcomeTextArea.setMargin(new Insets(10, 10, 10, 10));
       welcomeTextArea.setLineWrap(true);
       welcomeTextArea.setBackground(new Color(
-               studio_.app().skin().getDisabledBackgroundColor().getRGB()));
+            studio_.app().skin().getDisabledBackgroundColor().getRGB()));
       welcomeTextArea.setFocusable(false);
       welcomeTextArea.setEditable(false);
       welcomeTextArea.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -173,7 +173,9 @@ public final class RegistrationDlg extends JDialog {
                inst = inst.replaceAll("[&]", "%20and%20");
                String email = email_.getText().replaceAll("[ \t]", "%20");
                email = email.replaceAll("[&]", "%20and%20");
-               String regText = "http://valelab.ucsf.edu/micro-manager-registration.php?Name=" + name1 + "&Institute=" + inst + "&email=" + email;
+               String regText =
+                     "http://valelab.ucsf.edu/micro-manager-registration.php?Name=" + name1
+                           + "&Institute=" + inst + "&email=" + email;
                url = new URL(regText);
                is = url.openStream();
                br = new BufferedReader(new InputStreamReader(is));
@@ -187,18 +189,18 @@ public final class RegistrationDlg extends JDialog {
             } catch (java.net.UnknownHostException e) {
                ReportingUtils.showError(e,
                      "Registration did not succeed. "
-                          + "You are probably not connected to the Internet.\n"
-                          + "You will be prompted again next time you start.");
+                           + "You are probably not connected to the Internet.\n"
+                           + "You will be prompted again next time you start.");
             } catch (MalformedURLException e) {
                ReportingUtils.showError(e);
             } catch (IOException e) {
                ReportingUtils.showError(e);
             } catch (SecurityException e) {
                ReportingUtils.showError(e,
-                       "\nThe program failed to save registration status.\n"
-                             + "Most likely you are not logged in with administrator privileges.\n"
-                             + "Please try registering again using the administrator's account.");
-               
+                     "\nThe program failed to save registration status.\n"
+                           + "Most likely you are not logged in with administrator privileges.\n"
+                           + "Please try registering again using the administrator's account.");
+
             } catch (HeadlessException e) {
                ReportingUtils.logError(e);
             } finally {

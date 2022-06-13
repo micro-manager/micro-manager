@@ -42,10 +42,10 @@ public interface ImageJConverter {
     * single component of the provided Image. Use this to e.g. extract out
     * just the red component of an RGB image.
     *
-    * @param image Micro-Manager Image object
+    * @param image     Micro-Manager Image object
     * @param component Component number of the image to produce a processor for
     * @return ImageJ ImageProcessor whose pixels are based on a single
-    *         component of the input Image.
+    *     component of the input Image.
     */
    ImageProcessor createProcessorFromComponent(Image image,
                                                int component);
@@ -54,11 +54,11 @@ public interface ImageJConverter {
     * Create a new Image based on the provided ImageProcessor and metadata.
     *
     * @param processor ImageProcessor whose pixel data will form the data of
-    *        the result image.
-    * @param coords Coordinates for the new image.
-    * @param metadata Metadata to use to create the new Image.
+    *                  the result image.
+    * @param coords    Coordinates for the new image.
+    * @param metadata  Metadata to use to create the new Image.
     * @return an Image based on the pixel data in the processor and the given
-    *         coordinates and metadata.
+    *     coordinates and metadata.
     */
    Image createImage(ImageProcessor processor, Coords coords,
                      Metadata metadata);

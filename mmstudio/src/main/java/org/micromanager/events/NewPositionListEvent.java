@@ -35,7 +35,7 @@ public interface NewPositionListEvent {
     * Returns the new stage position list.
     *
     * @return PositionList that is modified, usually the application's Stage
-    *         Position List.
+    *     Position List.
     */
    PositionList getPositionList();
 }

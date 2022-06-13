@@ -1,13 +1,13 @@
 package org.micromanager.internal.utils;
 
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
-
-import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 /**
  * The PrioritizedEventBus allows registrants to provide a priority value; when
@@ -31,7 +31,7 @@ public final class PrioritizedEventBus {
 
       if (async) {
          executorService_ = newSingleThreadExecutor(
-                 ThreadFactoryFactory.createThreadFactory("PrioritizedEventBus"));
+               ThreadFactoryFactory.createThreadFactory("PrioritizedEventBus"));
       }
 
    }
@@ -52,8 +52,7 @@ public final class PrioritizedEventBus {
             subBus = new EventBus(EventBusExceptionLogger.getInstance());
          }
          prioritizedBuses_.put(priority, subBus);
-      }
-      else {
+      } else {
          subBus = prioritizedBuses_.get(priority);
       }
       subBus.register(o);
@@ -73,8 +72,7 @@ public final class PrioritizedEventBus {
          // SubscriberRegistries lying around after unregister is called.
          try {
             subBus.unregister(o);
-         }
-         catch (IllegalArgumentException ignored) {
+         } catch (IllegalArgumentException ignored) {
          }
       }
    }
@@ -93,5 +91,5 @@ public final class PrioritizedEventBus {
       if (executorService_ != null) {
          executorService_.shutdown();
       }
-    }
+   }
 }

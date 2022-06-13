@@ -29,7 +29,6 @@ import com.google.gson.JsonParser;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
-
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
@@ -40,15 +39,15 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
 /**
  * This class represents a single image from a single camera. It contains
  * the image pixel data, metadata (in the form of a Metadata instance), and
  * the image's index as part of a larger dataset (in the form of a Coords instance).
  *
- * We store the image data in a ByteBuffer or ShortBuffer. However, ImageJ
+ * <p>We store the image data in a ByteBuffer or ShortBuffer. However, ImageJ
  * wants to work with image data in the form of byte[], short[], or
  * int[] arrays (depending on pixel type).
  * getRawPixels(), the method exposed in the Image interface to access pixel
@@ -75,7 +74,8 @@ public final class DefaultImage implements Image {
     * manually reconstruct the Metadata for the TaggedImage and use the
     * constructor that this method calls.
     *
-    * PixelData from the TaggedImage will be used directly, i.e., they are not copied.
+    * <p>PixelData from the TaggedImage will be used directly, i.e., they are not copied.
+    *
     * @param tagged A TaggedImage to base the Image on.
     */
    public DefaultImage(TaggedImage tagged) throws IllegalArgumentException {
@@ -86,11 +86,11 @@ public final class DefaultImage implements Image {
     * Generate a DefaultImage from a TaggedImage using the
     * supplied coords and metadata.
     *
-    * PixelData from the TaggedImage will be used directly, i.e., they are not copied.
+    * <p>PixelData from the TaggedImage will be used directly, i.e., they are not copied.
     *
-    * @param tagged A TaggedImage to base the Image on. Pixels are not copied.
-    * @param coords Coords to be used for this new Image. When null, tags in input image
-    *               are interpreted to best guess the desired Coord.
+    * @param tagged   A TaggedImage to base the Image on. Pixels are not copied.
+    * @param coords   Coords to be used for this new Image. When null, tags in input image
+    *                 are interpreted to best guess the desired Coord.
     * @param metadata Metadata to be used for this new Image. When null, tags from input image
     *                 are used to construct metadata.
     */
@@ -100,17 +100,16 @@ public final class DefaultImage implements Image {
       JsonElement je;
       try {
          je = new JsonParser().parse(json);
-      }
-      catch (Exception unlikely) {
-         throw new IllegalArgumentException("Failed to parse JSON created from TaggedImage tags", unlikely);
+      } catch (Exception unlikely) {
+         throw new IllegalArgumentException("Failed to parse JSON created from TaggedImage tags",
+               unlikely);
       }
 
       if (metadata == null) {
          try {
             metadata = DefaultMetadata.fromPropertyMap(
-                    NonPropertyMapJSONFormats.metadata().fromGson(je));
-         }
-         catch (Exception e) {
+                  NonPropertyMapJSONFormats.metadata().fromGson(je));
+         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to convert TaggedImage tags to metadata", e);
          }
       }
@@ -119,8 +118,7 @@ public final class DefaultImage implements Image {
          try {
             PropertyMap pmap = NonPropertyMapJSONFormats.coords().fromGson(je);
             coords = Coordinates.fromPropertyMap(pmap);
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to convert TaggedImage tags to coords", e);
          }
       }
@@ -128,9 +126,9 @@ public final class DefaultImage implements Image {
       PropertyMap formatPmap;
       try {
          formatPmap = NonPropertyMapJSONFormats.imageFormat().fromGson(je);
-      }
-      catch (Exception e) {
-         throw new IllegalArgumentException("Failed to convert TaggedImage tags to image size and pixel format");
+      } catch (Exception e) {
+         throw new IllegalArgumentException(
+               "Failed to convert TaggedImage tags to image size and pixel format");
       }
 
       metadata_ = (DefaultMetadata) metadata;
@@ -158,53 +156,57 @@ public final class DefaultImage implements Image {
     * Generates a DefaultImage from pixels, image info in a PropertyMap and the
     * supplied coords and metadata.
     *
-    * Input pixels will be used directly (i.e., they are not copied).
+    * <p>Input pixels will be used directly (i.e., they are not copied).
     *
-    * @param pixels Image pixels.  Should be a Java array of bytes or shorts (not null).
-    * @param format PropertyMap specifying image width, height, and pixelType (not null).
-    * @param coords Coords to be used for this new image (can be null).
+    * @param pixels   Image pixels.  Should be a Java array of bytes or shorts (not null).
+    * @param format   PropertyMap specifying image width, height, and pixelType (not null).
+    * @param coords   Coords to be used for this new image (can be null).
     * @param metadata Metadata to be used this new image (can be null).
     * @throws IllegalArgumentException
     */
    public DefaultImage(Object pixels, PropertyMap format, Coords coords,
-         Metadata metadata) throws IllegalArgumentException {
+                       Metadata metadata) throws IllegalArgumentException {
       this(pixels,
-              format.getInteger(PropertyKey.WIDTH.key(), 0),
-              format.getInteger(PropertyKey.HEIGHT.key(), 0),
-              format.getStringAsEnum(PropertyKey.PIXEL_TYPE.key(),
-                      PixelType.class, null).getBytesPerPixel(),
-              format.getStringAsEnum(PropertyKey.PIXEL_TYPE.key(),
-                      PixelType.class, null).getNumberOfComponents(),
-              coords,
-              metadata);
+            format.getInteger(PropertyKey.WIDTH.key(), 0),
+            format.getInteger(PropertyKey.HEIGHT.key(), 0),
+            format.getStringAsEnum(PropertyKey.PIXEL_TYPE.key(),
+                  PixelType.class, null).getBytesPerPixel(),
+            format.getStringAsEnum(PropertyKey.PIXEL_TYPE.key(),
+                  PixelType.class, null).getNumberOfComponents(),
+            coords,
+            metadata);
    }
 
    /**
     * Generates a DefaultImage from pixels, minimal image info, and the
     * supplied coords and metadata.
     *
-    * Input pixels will be used directly (i.e., they are not copied).
+    * <p>Input pixels will be used directly (i.e., they are not copied).
     *
-    * @param pixels Image pixels.  Should be a Java array of bytes or shorts (not null).
-    * @param coords Coords to be used for this new image (can be null).
+    * @param pixels   Image pixels.  Should be a Java array of bytes or shorts (not null).
+    * @param coords   Coords to be used for this new image (can be null).
     * @param metadata Metadata to be used this new image (can be null).
     * @throws IllegalArgumentException
     */
    public DefaultImage(Object pixels, int width, int height, int bytesPerPixel,
-         int numComponents, Coords coords, Metadata metadata) 
+                       int numComponents, Coords coords, Metadata metadata)
          throws IllegalArgumentException {
       Preconditions.checkNotNull(pixels);
       metadata_ = metadata == null ? new DefaultMetadata.Builder().build() :
-              (DefaultMetadata) metadata;
+            (DefaultMetadata) metadata;
       coords_ = coords == null ? Coordinates.builder().build() : coords;
 
       int bpc;
-      if (pixels instanceof byte[]) bpc = 1;
-      else if (pixels instanceof short[]) bpc = 2;
-      else if (pixels instanceof int[] &&  bytesPerPixel == 4 &&
-              numComponents == 3) {
+      if (pixels instanceof byte[]) {
          bpc = 1;
-      } else throw new UnsupportedOperationException("Unsupported pixel data type");
+      } else if (pixels instanceof short[]) {
+         bpc = 2;
+      } else if (pixels instanceof int[] && bytesPerPixel == 4
+            && numComponents == 3) {
+         bpc = 1;
+      } else {
+         throw new UnsupportedOperationException("Unsupported pixel data type");
+      }
 
       rawPixels_ = BufferTools.wrapArray(pixels, bpc);
 
@@ -218,9 +220,10 @@ public final class DefaultImage implements Image {
 
    /**
     * Creates a new image object that shares the pixels of the source image
-    * Attaches the provided coords and metadata
-    * @param source Image to be copied
-    * @param coords will be used for this image
+    * Attaches the provided coords and metadata.
+    *
+    * @param source   Image to be copied
+    * @param coords   will be used for this image
     * @param metadata Metadat for this new image
     */
    public DefaultImage(Image source, Coords coords, Metadata metadata) {
@@ -228,8 +231,11 @@ public final class DefaultImage implements Image {
       coords_ = coords;
 
       int bytesPerComponent = 0;
-      if (source.getRawPixels() instanceof byte[]) { bytesPerComponent = 1; }
-      else if (source.getRawPixels() instanceof short[]) { bytesPerComponent = 2; }
+      if (source.getRawPixels() instanceof byte[]) {
+         bytesPerComponent = 1;
+      } else if (source.getRawPixels() instanceof short[]) {
+         bytesPerComponent = 2;
+      }
       rawPixels_ = BufferTools.wrapArray(source.getRawPixels(), bytesPerComponent);
 
       if (rawPixels_.capacity() == 0) {
@@ -239,11 +245,15 @@ public final class DefaultImage implements Image {
       pixelHeight_ = source.getHeight();
 
       int bpc;
-      if (rawPixels_ instanceof ByteBuffer) bpc = 1;
-      else if (rawPixels_ instanceof ShortBuffer) bpc = 2;
-      else throw new UnsupportedOperationException("Unsupported pixel data type");
+      if (rawPixels_ instanceof ByteBuffer) {
+         bpc = 1;
+      } else if (rawPixels_ instanceof ShortBuffer) {
+         bpc = 2;
+      } else {
+         throw new UnsupportedOperationException("Unsupported pixel data type");
+      }
       pixelType_ = PixelType.valueFor(source.getBytesPerPixel(), bpc,
-              source.getNumComponents());
+            source.getNumComponents());
 
 
    }
@@ -280,7 +290,7 @@ public final class DefaultImage implements Image {
    @Override
    public Object getRawPixels() {
       if (rawPixels_.hasArray()) {
-          return rawPixels_.array();
+         return rawPixels_.array();
       }
       return BufferTools.arrayFromBuffer(rawPixels_);
    }
@@ -299,18 +309,15 @@ public final class DefaultImage implements Image {
          byte[] tmp = (byte[]) original;
          length = tmp.length;
          copy = new byte[length];
-      }
-      else if (original instanceof short[]) {
+      } else if (original instanceof short[]) {
          short[] tmp = (short[]) original;
          length = tmp.length;
          copy = new short[length];
-      }
-      else if (original instanceof int[]) {
+      } else if (original instanceof int[]) {
          int[] tmp = (int[]) original;
          length = tmp.length;
          copy = new int[length];
-      }
-      else {
+      } else {
          throw new RuntimeException("Unrecognized pixel type " + original.getClass());
       }
       System.arraycopy(original, 0, copy, 0, length);
@@ -330,11 +337,9 @@ public final class DefaultImage implements Image {
       Object result;
       if (rawPixels_ instanceof ByteBuffer) {
          result = (Object) new byte[length];
-      }
-      else if (rawPixels_ instanceof ShortBuffer) {
+      } else if (rawPixels_ instanceof ShortBuffer) {
          result = (Object) new short[length];
-      }
-      else {
+      } else {
          ReportingUtils.logError("Unrecognized pixel buffer type.");
          return null;
       }
@@ -342,8 +347,7 @@ public final class DefaultImage implements Image {
          int sourceIndex = i * samplesPerPixel + offset;
          if (rawPixels_ instanceof ByteBuffer) {
             ((byte[]) result)[i] = ((ByteBuffer) rawPixels_).get(sourceIndex);
-         }
-         else if (rawPixels_ instanceof ShortBuffer) {
+         } else if (rawPixels_ instanceof ShortBuffer) {
             ((short[]) result)[i] = ((ShortBuffer) rawPixels_).get(sourceIndex);
          }
       }
@@ -390,8 +394,7 @@ public final class DefaultImage implements Image {
    public String getIntensityStringAt(int x, int y) {
       if (getNumComponents() == 1) {
          return String.format("%d", getIntensityAt(x, y));
-      }
-      else {
+      } else {
          String result = "(";
          for (int i = 0; i < getNumComponents(); ++i) {
             result += String.format("%d", getComponentIntensityAt(x, y, i));
@@ -404,11 +407,11 @@ public final class DefaultImage implements Image {
    }
 
    public PropertyMap formatToPropertyMap() {
-      return PropertyMaps.builder().
-            putInteger(PropertyKey.WIDTH.key(), getWidth()).
-            putInteger(PropertyKey.HEIGHT.key(), getHeight()).
-            putEnumAsString(PropertyKey.PIXEL_TYPE.key(), pixelType_).
-            build();
+      return PropertyMaps.builder()
+            .putInteger(PropertyKey.WIDTH.key(), getWidth())
+            .putInteger(PropertyKey.HEIGHT.key(), getHeight())
+            .putEnumAsString(PropertyKey.PIXEL_TYPE.key(), pixelType_)
+            .build();
    }
 
    /*
@@ -429,8 +432,7 @@ public final class DefaultImage implements Image {
       JSONObject tags;
       try {
          tags = new JSONObject(json);
-      }
-      catch (JSONException e) {
+      } catch (JSONException e) {
          throw new AssertionError("Json.org failed to parse Gson-generated JSON");
       }
       return new TaggedImage(getRawPixels(), tags);

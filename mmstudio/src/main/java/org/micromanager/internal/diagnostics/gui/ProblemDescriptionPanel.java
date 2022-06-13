@@ -19,17 +19,17 @@ class ProblemDescriptionPanel extends javax.swing.JPanel {
 
    ProblemDescriptionPanel(ProblemReportController controller) {
       super(new net.miginfocom.swing.MigLayout(
-              "fillx, filly, insets 0",
-              "[grow, fill]",
-              "[]related[grow, fill]"));
+            "fillx, filly, insets 0",
+            "[grow, fill]",
+            "[]related[grow, fill]"));
 
       controller_ = controller;
 
       final JTextArea descriptionTextArea = makeDescriptionTextArea();
 
       final JScrollPane scrollPane = new JScrollPane(descriptionTextArea,
-               JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-               JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       controller_.setDescriptionTextArea(descriptionTextArea);
 
       add(new javax.swing.JLabel("Problem Description:"), "gapafter push, wrap");
@@ -39,9 +39,9 @@ class ProblemDescriptionPanel extends javax.swing.JPanel {
    private JTextArea makeDescriptionTextArea() {
       final JTextArea textArea = new JTextArea();
       textArea.setFont(new java.awt.Font(
-               java.awt.Font.MONOSPACED,
-               java.awt.Font.PLAIN,
-               12));
+            java.awt.Font.MONOSPACED,
+            java.awt.Font.PLAIN,
+            12));
       textArea.setLineWrap(true);
       textArea.setWrapStyleWord(true);
 

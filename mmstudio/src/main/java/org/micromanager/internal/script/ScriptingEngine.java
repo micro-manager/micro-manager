@@ -9,7 +9,7 @@ public interface ScriptingEngine {
 
    void joinEvalThread() throws InterruptedException;
 
-   void evaluateAsync(String script)throws MMScriptException;
+   void evaluateAsync(String script) throws MMScriptException;
 
    void insertGlobalObject(String name, Object obj) throws MMScriptException;
 

@@ -31,7 +31,7 @@ public final class AsynchronousContext extends BaseContext {
    private LinkedBlockingQueue<ImageWrapper> inputQueue_ = null;
 
    public AsynchronousContext(Processor processor,
-         Datastore store, DefaultPipeline parent) {
+                              Datastore store, DefaultPipeline parent) {
       super(processor, store, parent);
       inputQueue_ = new LinkedBlockingQueue<ImageWrapper>(1);
       // Create a new thread to do processing in.
@@ -54,8 +54,7 @@ public final class AsynchronousContext extends BaseContext {
          ImageWrapper wrapper = null;
          try {
             wrapper = inputQueue_.poll(1000, TimeUnit.MILLISECONDS);
-         }
-         catch (InterruptedException e) {
+         } catch (InterruptedException e) {
             // Ignore it.
             Thread.currentThread().interrupt();
          }
@@ -64,8 +63,7 @@ public final class AsynchronousContext extends BaseContext {
             if (isFlushed_) {
                // All done.
                return;
-            }
-            else {
+            } else {
                // Go back to polling.
                continue;
             }
@@ -81,14 +79,12 @@ public final class AsynchronousContext extends BaseContext {
             if (flushLatch_ != null) {
                flushLatch_.countDown();
             }
-         }
-         else {
+         } else {
             // Non-null image: process it.
             isFlushed_ = false;
             try {
                processor_.processImage(wrapper.getImage(), this);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                ReportingUtils.logError(e, "Processor failed to process image");
                // Pass the exception to our parent.
                parent_.exceptionOccurred(e);
@@ -104,8 +100,7 @@ public final class AsynchronousContext extends BaseContext {
    public void insertImage(ImageWrapper wrapper) {
       try {
          inputQueue_.put(wrapper);
-      }
-      catch (InterruptedException e) {
+      } catch (InterruptedException e) {
          ReportingUtils.logError(e, "Interrupted while passing image along pipeline");
       }
    }

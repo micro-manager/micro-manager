@@ -39,14 +39,14 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Definition of a position in space in terms of available stages/drives.
  *
  * <p>The current implementation uses the concept of "DefaultXYStage", and
- * "DefaultZStage".  This is problematic.  The concept of "default" stages 
- * originates in the Micro-Manager core, that always has only 1 stage that is 
+ * "DefaultZStage".  This is problematic.  The concept of "default" stages
+ * originates in the Micro-Manager core, that always has only 1 stage that is
  * the "active" one.  However, MultiStagePosition devices can record the position
- * of multiple stages, sometimes even lacking those of the "default" stages, 
+ * of multiple stages, sometimes even lacking those of the "default" stages,
  * so it can not rely on the Micro-manager "Default" stages being in the list.</p>
  *
  * <p>It would be nice to be able to rely on the getX, getY, and getZ functions,
- * but these will return bogus values if the system's default stages are not 
+ * but these will return bogus values if the system's default stages are not
  * included.  To avoid surprises, you may need to parse the MultiStagePosition
  * yourself.</p>
  */
@@ -69,30 +69,30 @@ public final class MultiStagePosition {
       defaultXYStage_ = "";
       properties_ = new HashMap<>();
    }
-   
+
    /**
     * Convenient constructor where the motion system consists of one XY stage and one focus stage.
     *
     * @param xyStage name
-    * @param x - coordinate in microns
-    * @param y - coordinate in microns
-    * @param zStage name
-    * @param z - focus position in microns
+    * @param x       - coordinate in microns
+    * @param y       - coordinate in microns
+    * @param zStage  name
+    * @param z       - focus position in microns
     */
    public MultiStagePosition(String xyStage, double x, double y, String zStage, double z) {
       this();
-      
+
       // create and add xy position
       StagePosition xyPos = StagePosition.create2D(xyStage, x, y);
-      defaultXYStage_ = xyStage; 
+      defaultXYStage_ = xyStage;
       add(xyPos);
-      
+
       // create and add z position
       StagePosition zPos = StagePosition.create1D(zStage, z);
       defaultZStage_ = zStage;
       add(zPos);
    }
-   
+
    /**
     * Copy constructor.
     *
@@ -119,7 +119,7 @@ public final class MultiStagePosition {
    public void add(StagePosition sp) {
       stagePosList_.add(sp);
    }
-   
+
    /**
     * Removed one stage position point.
     *
@@ -128,7 +128,7 @@ public final class MultiStagePosition {
    public void remove(StagePosition sp) {
       stagePosList_.remove(sp);
    }
-   
+
    /**
     * Number of stages.
     *
@@ -137,7 +137,7 @@ public final class MultiStagePosition {
    public int size() {
       return stagePosList_.size();
    }
-   
+
    /**
     * Return stage position based on index.
     *
@@ -162,11 +162,11 @@ public final class MultiStagePosition {
       }
       return null;
    }
-   
+
    /**
     * Add a generalized property-value par to the position.
     *
-    * @param key Key of the property
+    * @param key   Key of the property
     * @param value Value of the property
     */
    public void setProperty(String key, String value) {
@@ -181,7 +181,7 @@ public final class MultiStagePosition {
    public String[] getPropertyNames() {
       return new ArrayList<>(properties_.keySet()).toArray(new String[properties_.size()]);
    }
-   
+
    /**
     * Checks if the position has a particular property.
     *
@@ -191,7 +191,7 @@ public final class MultiStagePosition {
    public boolean hasProperty(String key) {
       return properties_.containsKey(key);
    }
-   
+
    /**
     * Returns property value for a given key (name).
     *
@@ -204,7 +204,7 @@ public final class MultiStagePosition {
       }
       return null;
    }
-   
+
    /**
     * Returns position label.
     *
@@ -222,7 +222,7 @@ public final class MultiStagePosition {
    public void setLabel(String lab) {
       label_ = lab;
    }
-   
+
    /**
     * Defines which stage serves as focus control.
     *
@@ -231,7 +231,7 @@ public final class MultiStagePosition {
    public void setDefaultZStage(String stage) {
       defaultZStage_ = stage;
    }
-   
+
    /**
     * Returns the Default Z stage, i.e. the one that will be used if not named explicitly.
     *
@@ -240,7 +240,7 @@ public final class MultiStagePosition {
    public String getDefaultZStage() {
       return defaultZStage_;
    }
-   
+
    /**
     * Return the default XY stage, i,e, the one used if no stage is named explicitly.
     *
@@ -249,7 +249,7 @@ public final class MultiStagePosition {
    public String getDefaultXYStage() {
       return defaultXYStage_;
    }
-   
+
    /**
     * Defines which stage serves as the default XY motion control device.
     *
@@ -262,7 +262,7 @@ public final class MultiStagePosition {
    /**
     * Moves all stages to the specified positions.
     *
-    * @param msp position to move to
+    * @param msp  position to move to
     * @param core - microscope API
     * @throws Exception If there is an error moving the stage.
     */
@@ -273,14 +273,14 @@ public final class MultiStagePosition {
             core.setPosition(sp.getStageDeviceLabel(), sp.get2DPositionX());
          } else if (sp.getNumberOfStageAxes() == 2) {
             core.setXYPosition(sp.getStageDeviceLabel(),
-                    sp.get2DPositionX(), sp.get2DPositionY());
+                  sp.get2DPositionX(), sp.get2DPositionY());
          }
-         
+
          // wait for one device at the time
          // TODO: this should not be here
          core.waitForDevice(sp.getStageDeviceLabel());
       }
-      
+
    }
 
    /**
@@ -298,7 +298,7 @@ public final class MultiStagePosition {
       }
       return 0.0;
    }
-   
+
    /**
     * Returns "Y" coordinate of the position.
     *
@@ -313,7 +313,7 @@ public final class MultiStagePosition {
       }
       return 0.0;
    }
-   
+
    /**
     * Returns "Z" - focus coordinate of the position.
     *
@@ -328,7 +328,7 @@ public final class MultiStagePosition {
       }
       return 0.0;
    }
-   
+
    /**
     * Sets grid parameters for the rectangular grid.
     *
@@ -339,7 +339,7 @@ public final class MultiStagePosition {
       gridRow_ = row;
       gridCol_ = col;
    }
-   
+
    /**
     * Returns rectangular grid row.
     *
@@ -348,7 +348,7 @@ public final class MultiStagePosition {
    public int getGridRow() {
       return gridRow_;
    }
-   
+
    /**
     * Returns rectangular grid column.
     *
@@ -364,7 +364,7 @@ public final class MultiStagePosition {
     *
     * @param alt The MultiStagePosition to compare against.
     * @return true if every field of this MultiStagePosition matches every
-    *         field of the provided MultiStagePosition, false otherwise.
+    *     field of the provided MultiStagePosition, false otherwise.
     */
    @Override
    public boolean equals(Object alt) {
@@ -393,7 +393,7 @@ public final class MultiStagePosition {
       // And ensure they don't have any keys we don't.
       for (String key : multiAlt.getPropertyNames()) {
          String property = multiAlt.getProperty(key);
-         if (property != null  && property.equals(getProperty(key))) {
+         if (property != null && property.equals(getProperty(key))) {
             return false;
          }
       }
@@ -466,7 +466,7 @@ public final class MultiStagePosition {
    /**
     * Generates a multistagePosition from the given PropertyMap.
     *
-    * @param pmap PropertyMap 
+    * @param pmap PropertyMap
     * @return MultiStagePosition
     */
    public static MultiStagePosition fromPropertyMap(PropertyMap pmap) {

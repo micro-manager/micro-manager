@@ -1,4 +1,3 @@
-
 package org.micromanager.display.internal;
 
 import com.google.common.base.Preconditions;
@@ -13,12 +12,10 @@ import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.internal.utils.ColorPalettes;
 
 /**
- *
  * @author mark
  */
 public final class DefaultChannelDisplaySettings
-      implements ChannelDisplaySettings
-{
+      implements ChannelDisplaySettings {
    private final Color color_;
    private final String name_;
    private final String groupName_;
@@ -28,16 +25,15 @@ public final class DefaultChannelDisplaySettings
    private final boolean useCameraRange_;
    private final List<ComponentDisplaySettings> componentSettings_;
 
-  
+
    private static final class Builder
-         implements ChannelDisplaySettings.Builder
-   {
+         implements ChannelDisplaySettings.Builder {
       private Color color_ = Color.WHITE;
       private String name_ = "";
       private String groupName_ = "";
       private boolean useUniformComponentScaling_ = false;
       private boolean visible_ = true;
-      private int histoRangeBits_ = 8; 
+      private int histoRangeBits_ = 8;
       private boolean useCameraRange_ = true;
       private final List<ComponentDisplaySettings> componentSettings_ =
             new ArrayList<>();
@@ -52,7 +48,7 @@ public final class DefaultChannelDisplaySettings
          color_ = color;
          return this;
       }
-      
+
       @Override
       public Builder name(String name) {
          name_ = name;
@@ -74,7 +70,7 @@ public final class DefaultChannelDisplaySettings
       public Builder colorColorBlindFriendly(int number) {
          return color(ColorPalettes.getFromColorblindFriendlyPalette(number));
       }
-    
+
       @Override
       public Builder colorRed() {
          return color(Color.RED);
@@ -110,13 +106,13 @@ public final class DefaultChannelDisplaySettings
          useUniformComponentScaling_ = enable;
          return this;
       }
-      
+
       @Override
       public Builder histoRangeBits(int bits) {
          histoRangeBits_ = bits;
          return this;
       }
-      
+
       @Override
       public Builder useCameraHistoRange(boolean use) {
          useCameraRange_ = use;
@@ -194,7 +190,7 @@ public final class DefaultChannelDisplaySettings
    public Color getColor() {
       return color_;
    }
-   
+
    @Override
    public String getName() {
       return name_;
@@ -209,12 +205,12 @@ public final class DefaultChannelDisplaySettings
    public boolean isUniformComponentScalingEnabled() {
       return useUniformComponentScaling_;
    }
-   
+
    @Override
    public int getHistoRangeBits() {
       return histoRangeBits_;
    }
-   
+
    @Override
    public boolean useCameraRange() {
       return useCameraRange_;
@@ -251,7 +247,7 @@ public final class DefaultChannelDisplaySettings
       builder.visible_ = visible_;
       builder.name_ = name_;
       builder.groupName_ = groupName_;
-      builder.histoRangeBits_= histoRangeBits_;
+      builder.histoRangeBits_ = histoRangeBits_;
       builder.useCameraRange_ = useCameraRange_;
       builder.componentSettings_.clear();
       builder.componentSettings_.addAll(componentSettings_);
@@ -260,13 +256,13 @@ public final class DefaultChannelDisplaySettings
 
    @Override
    public ChannelDisplaySettings.Builder copyBuilderWithComponentSettings(
-         int component, ComponentDisplaySettings settings)
-   {
+         int component, ComponentDisplaySettings settings) {
       return copyBuilder().component(component, settings);
    }
 
    /**
-    * Encodes these ChannelDisplaySettings into a PropertyMap
+    * Encodes these ChannelDisplaySettings into a PropertyMap.
+    *
     * @return PropertyMap encoding the current ChannelDisplaySettings
     */
    public PropertyMap toPropertyMap() {
@@ -275,25 +271,26 @@ public final class DefaultChannelDisplaySettings
          componentSettings.add(((DefaultComponentDisplaySettings) cs).toPropertyMap());
       }
 
-      return PropertyMaps.builder().
-            putColor(PropertyKey.COLOR.key(), color_).
-            putString(PropertyKey.CHANNEL_NAME.key(), name_).
-            putString(PropertyKey.CHANNEL_GROUP.key(), groupName_).
-            putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_).
-            putBoolean(PropertyKey.VISIBLE.key(), visible_).
-            putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_).
-            putBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), useCameraRange_).
-            putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings).
-            build();
+      return PropertyMaps.builder()
+            .putColor(PropertyKey.COLOR.key(), color_)
+            .putString(PropertyKey.CHANNEL_NAME.key(), name_)
+            .putString(PropertyKey.CHANNEL_GROUP.key(), groupName_)
+            .putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_)
+            .putBoolean(PropertyKey.VISIBLE.key(), visible_)
+            .putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_)
+            .putBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), useCameraRange_)
+            .putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings)
+            .build();
    }
 
    /**
-    * Helper function for overloaded versions of fromPropertyMap
+    * Helper function for overloaded versions of fromPropertyMap.
     * Restores everything form the propertymap except for Channelgroup and
     * ChannelName
-    * @param pMap
+    *
+    * @param pMap PropertyMap to use.
     * @return Builder with everything useful in the propertymap except for channelGroup
-    * and channelName
+    *     and channelName
     */
    private static ChannelDisplaySettings.Builder partialBuilderFromPropertyMap(PropertyMap pMap) {
       Builder b = new Builder();
@@ -304,27 +301,27 @@ public final class DefaultChannelDisplaySettings
 
       if (pMap.containsBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key())) {
          b.uniformComponentScaling(pMap.getBoolean(
-                 PropertyKey.UNIFORM_COMPONENT_SCALING.key(), b.useUniformComponentScaling_));
+               PropertyKey.UNIFORM_COMPONENT_SCALING.key(), b.useUniformComponentScaling_));
       }
       if (pMap.containsBoolean(PropertyKey.VISIBLE.key())) {
          b.visible(pMap.getBoolean(PropertyKey.VISIBLE.key(), b.visible_));
       }
       if (pMap.containsPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key())) {
          List<PropertyMap> componentMapList = pMap.getPropertyMapList(
-                 PropertyKey.COMPONENT_SETTINGS.key(), new ArrayList<>());
+               PropertyKey.COMPONENT_SETTINGS.key(), new ArrayList<>());
          for (int i = 0; i < componentMapList.size(); i++) {
             ComponentDisplaySettings cds = DefaultComponentDisplaySettings.fromPropertyMap(
-                    componentMapList.get(i));
+                  componentMapList.get(i));
             b.component(i, cds);
          }
       }
       if (pMap.containsInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key())) {
          b.histoRangeBits(pMap.getInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(),
-                 b.histoRangeBits_));
+               b.histoRangeBits_));
       }
       if (pMap.containsBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key())) {
          b.useCameraHistoRange(pMap.getBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(),
-                 b.useCameraRange_));
+               b.useCameraRange_));
       }
 
       return b;
@@ -332,27 +329,27 @@ public final class DefaultChannelDisplaySettings
 
    /**
     * Restores ChannelDisplaySettings from a PropertyMap, but uses the input
-    * channelGroup and channelName rather than the ones in the PropertyMap
+    * channelGroup and channelName rather than the ones in the PropertyMap.
     * Needed to gracefully update propertymaps that did not yet store the
     * channelGroup
     *
     * @param pMap PropertyMap from which to restore the ChannelDisplaySettings
     * @return ChannelDisplaySettings.  Missing values are replaced by defaults.
     */
-   public static ChannelDisplaySettings fromPropertyMap (PropertyMap pMap,
-                                                         String channelGroup, String channelName) {
+   public static ChannelDisplaySettings fromPropertyMap(PropertyMap pMap,
+                                                        String channelGroup, String channelName) {
       ChannelDisplaySettings.Builder b = partialBuilderFromPropertyMap(pMap);
 
       return b.name(channelName).groupName(channelGroup).build();
    }
-   
+
    /**
-    * Restores ChannelDisplaySettings from a PropertyMap
-    * 
+    * Restores ChannelDisplaySettings from a PropertyMap.
+    *
     * @param pMap PropertyMap from which to restore the ChannelDisplaySettings
     * @return ChannelDisplaySettings.  Missing values are replaced by defaults.
     */
-   public static ChannelDisplaySettings fromPropertyMap (PropertyMap pMap) {
+   public static ChannelDisplaySettings fromPropertyMap(PropertyMap pMap) {
       ChannelDisplaySettings.Builder b = partialBuilderFromPropertyMap(pMap);
 
       if (pMap.containsString(PropertyKey.CHANNEL_NAME.key())) {

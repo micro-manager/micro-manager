@@ -39,9 +39,9 @@ import net.miginfocom.swing.MigLayout;
  * broken out into subcategories and using a scrollpane if necessary.
  */
 public final class CategorizedAlert extends DefaultAlert {
-   
+
    private String historyText_ = "";
-   
+
    /**
     * This class represents one row in the display, one category of alert type.
     */
@@ -66,7 +66,7 @@ public final class CategorizedAlert extends DefaultAlert {
                boolean isSelected = showAllButton_.isSelected();
                setBorder(isSelected ? BorderFactory.createLineBorder(Color.GRAY, 1) : null);
                showAllButton_.setText(
-                  isSelected ? "Hide" : "Show All " + numMessages_);
+                     isSelected ? "Hide" : "Show All " + numMessages_);
                historyPanel_.setVisible(isSelected);
             }
          });
@@ -99,9 +99,8 @@ public final class CategorizedAlert extends DefaultAlert {
          historyText_ += text + System.getProperty("line.separator");
          numMessages_++;
          if (numMessages_ > 2) {
-            showAllButton_.setText((showAllButton_.isSelected() ?
-                     "Hide" :
-                     "Show All " + numMessages_));
+            showAllButton_.setText((showAllButton_.isSelected()
+                  ?  "Hide" : "Show All " + numMessages_));
             if (!showAllButton_.isVisible()) {
                showAllButton_.setVisible(true);
             }
@@ -111,11 +110,11 @@ public final class CategorizedAlert extends DefaultAlert {
 
    // This tracks all of our different categories and the message history for
    // each.
-   private final HashMap<Class<?>, CategoryDisplay> categories_ = 
-           new HashMap<Class<?>, CategoryDisplay>();
+   private final HashMap<Class<?>, CategoryDisplay> categories_ =
+         new HashMap<Class<?>, CategoryDisplay>();
    // CategoryDisplays that have a null category.
-   private final ArrayList<CategoryDisplay> nullCategories_ = 
-           new ArrayList<CategoryDisplay>();
+   private final ArrayList<CategoryDisplay> nullCategories_ =
+         new ArrayList<CategoryDisplay>();
 
    /**
     * Sets up the contents of the alert before passing them to the constructor,
@@ -140,12 +139,10 @@ public final class CategorizedAlert extends DefaultAlert {
          // Always create a new display for null categories.
          display = new CategoryDisplay();
          nullCategories_.add(display);
-      }
-      else if (!categories_.containsKey(category)) {
+      } else if (!categories_.containsKey(category)) {
          display = new CategoryDisplay();
          categories_.put(category, display);
-      }
-      else {
+      } else {
          display = categories_.get(category);
          contents_.remove(display);
       }
@@ -165,9 +162,9 @@ public final class CategorizedAlert extends DefaultAlert {
       });
       parent_.textUpdated(this);
    }
-   
+
    public String getAllText() {
       return historyText_;
    }
-   
+
 }

@@ -75,7 +75,7 @@ import org.micromanager.internal.utils.TextUtils;
 public final class StorageSinglePlaneTiffSeries implements Storage {
    private static final HashSet<String> ALLOWED_AXES = new HashSet<>(
          Arrays.asList(Coords.CHANNEL, Coords.T, Coords.Z,
-            Coords.STAGE_POSITION));
+               Coords.STAGE_POSITION));
    private final DefaultDatastore store_;
    private final String dir_;
    private boolean firstElement_;
@@ -93,13 +93,13 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    /**
     * Implements storing single plane TIff series.
     *
-    * @param store Datastore using this storage implementation.
-    * @param directory Path on disk used to store data.
+    * @param store      Datastore using this storage implementation.
+    * @param directory  Path on disk used to store data.
     * @param newDataSet Whether this is a new (true) or existing (false) dataset.
     * @throws IOException As can be expected with disk-based storage.
     */
    public StorageSinglePlaneTiffSeries(DefaultDatastore store,
-         String directory, boolean newDataSet) throws IOException {
+                                       String directory, boolean newDataSet) throws IOException {
       store_ = store;
       dir_ = directory;
       store_.setSavePath(dir_);
@@ -197,7 +197,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          NonPropertyMapJSONFormats.coords().addToGson(jo,
                ((DefaultCoords) image.getCoords()).toPropertyMap());
          Metadata imgMetadata = image.getMetadata().copyBuilderPreservingUUID()
-                 .fileName(fileName).build();
+               .fileName(fileName).build();
          NonPropertyMapJSONFormats.metadata().addToGson(jo,
                ((DefaultMetadata) imgMetadata).toPropertyMap());
 
@@ -219,7 +219,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       for (String axis : coords.getAxes()) {
          if (coords.getIndex(axis) > maxIndices_.getIndex(axis)) {
             maxIndices_ = maxIndices_.copyBuilder().index(
-                    axis, coords.getIndex(axis)).build();
+                  axis, coords.getIndex(axis)).build();
          }
       }
    }
@@ -435,13 +435,13 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    private void writeFrameMetadata(final Image image, final String metadataJSON,
-           final String fileName) {
+                                   final String fileName) {
       try {
          String coordsKey = "Coords-" + fileName;
-         
+
          // Use 0 for situations where there's no index information.
          int pos = Math.max(0, image.getCoords().getStagePosition());
-         JsonObject jo = new JsonObject();         
+         JsonObject jo = new JsonObject();
          NonPropertyMapJSONFormats.coords().addToGson(jo,
                ((DefaultCoords) image.getCoords()).toPropertyMap());
          Gson gson = new GsonBuilder().disableHtmlEscaping()
@@ -476,7 +476,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
 
    private void saveImageFile(Image image, String path, String tiffFileName,
-         String metadataJSON) {
+                              String metadataJSON) {
       if (firstImage_ == null) {
          firstImage_ = image;
       } else {
@@ -522,7 +522,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
 
    private void saveImageProcessor(ImageProcessor ip, Image image,
-         String path, String tiffFileName, String metadataJSON) {
+                                   String path, String tiffFileName, String metadataJSON) {
       // TODO: why is this check here?
       if (ip == null) {
          return;
@@ -533,7 +533,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    private void applyPixelSizeCalibration(final ImagePlus ip,
-         Metadata metadata) {
+                                          Metadata metadata) {
       Double pixSizeUm = metadata.getPixelSizeUm();
       if (pixSizeUm != null && pixSizeUm > 0) {
          ij.measure.Calibration cal = new ij.measure.Calibration();
@@ -554,14 +554,14 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    /**
     * Saves an ImageJ ImagePlus object.
     *
-    * @param imp The ImagePlus to be saved.
-    * @param image Not used
-    * @param path Location on disk to save to.
+    * @param imp          The ImagePlus to be saved.
+    * @param image        Not used
+    * @param path         Location on disk to save to.
     * @param tiffFileName Temporary name to be sued.
     * @param metadataJSON Metadata in JSON format
     */
    public void saveImagePlus(ImagePlus imp, Image image,
-         String path, String tiffFileName, String metadataJSON) {
+                             String path, String tiffFileName, String metadataJSON) {
       imp.setProperty("Info", metadataJSON);
 
       FileSaver fs = new FileSaver(imp);
@@ -578,8 +578,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       }
 
       if (positionIndexToName_.containsKey(pos)
-              && positionIndexToName_.get(pos) != null
-              && !positionIndexToName_.get(pos).contentEquals(posName)) {
+            && positionIndexToName_.get(pos) != null
+            && !positionIndexToName_.get(pos).contentEquals(posName)) {
          throw new IOException("Position name changed during acquisition.");
       }
 
@@ -650,8 +650,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          throw new IOException("Unable to find dataset at " + dir_);
       }
 
-      for (int positionIndex = 0; positionIndex < positions.size();
-            ++positionIndex) {
+      for (int positionIndex = 0; positionIndex < positions.size(); ++positionIndex) {
          String position = positions.get(positionIndex);
          JsonObject data = readJSONMetadata(position);
          if (data == null) {
@@ -688,7 +687,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                   File f = new File(key);
                   fileName = f.getName();
                   coords = DefaultCoords.fromPropertyMap(
-                     NonPropertyMapJSONFormats.coords().fromGson(entry.getValue()));
+                        NonPropertyMapJSONFormats.coords().fromGson(entry.getValue()));
                } else if (key.startsWith("FrameKey-")) {
                   // 1.4 method. SummaryMetadata must be reconstructed.
                   JsonObject jo = entry.getValue().getAsJsonObject();

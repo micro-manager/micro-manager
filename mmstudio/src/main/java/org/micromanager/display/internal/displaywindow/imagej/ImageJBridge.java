@@ -55,10 +55,10 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 /**
  * Bridge to ImageJ1 image viewer window.
  *
- * This class manages our customized ImageJ objects, which we use to plug into
+ * <p>This class manages our customized ImageJ objects, which we use to plug into
  * ImageJ's concept of an image viewer window.
  *
- * The {@code ImageJBridge} facade object manages an {@code ImagePlus} (ImageJ's
+ * <p>The {@code ImageJBridge} facade object manages an {@code ImagePlus} (ImageJ's
  * wrapper for an image data set), an {@code MMVirtualStack} (our customized
  * proxy for ImageJ's data provider object), a {@code ProxyImageWindow} (our
  * proxy subclass of ImageJ's {@code ImageWindow} (actually
@@ -118,10 +118,11 @@ public final class ImageJBridge {
 
    // Get a copy of ImageCanvas's zoom levels
    private static final List<Double> IJ_ZOOM_LEVELS = new ArrayList<>();
+
    static {
       double factor = 1.0;
       IJ_ZOOM_LEVELS.add(factor);
-      for (;;) {
+      for (; ; ) {
          factor = ImageCanvas.getLowerZoomLevel(factor);
          if (factor == IJ_ZOOM_LEVELS.get(0)) {
             break;
@@ -129,7 +130,7 @@ public final class ImageJBridge {
          IJ_ZOOM_LEVELS.add(0, factor);
       }
       factor = IJ_ZOOM_LEVELS.get(IJ_ZOOM_LEVELS.size() - 1);
-      for (;;) {
+      for (; ; ) {
          factor = ImageCanvas.getHigherZoomLevel(factor);
          if (factor == IJ_ZOOM_LEVELS.get(IJ_ZOOM_LEVELS.size() - 1)) {
             break;
@@ -140,8 +141,8 @@ public final class ImageJBridge {
 
 
    @MustCallOnEDT
-   public static ImageJBridge create(final DisplayUIController parent, 
-           final ImagesAndStats images) {
+   public static ImageJBridge create(final DisplayUIController parent,
+                                     final ImagesAndStats images) {
       ImageJBridge instance = new ImageJBridge(parent, images);
       instance.initialize();
       return instance;
@@ -149,11 +150,10 @@ public final class ImageJBridge {
 
    private ImageJBridge(DisplayUIController parent, ImagesAndStats images) {
       uiController_ = parent;
-      if (images != null && images.getRequest().getImages().size() > 0 && 
-              images.getRequest().getImage(0).getNumComponents() > 1) {
+      if (images != null && images.getRequest().getImages().size() > 0
+            && images.getRequest().getImage(0).getNumComponents() > 1) {
          colorModeStrategy_ = RGBColorModeStrategy.create();
-      }
-      else {
+      } else {
          colorModeStrategy_ = GrayscaleColorModeStrategy.create();
       }
    }
@@ -198,7 +198,7 @@ public final class ImageJBridge {
 
       // Undo the temporary pretence
       proxyStack_.setSingleImageMode(false);
-      
+
       mm2ijSetMetadata();
    }
 
@@ -224,7 +224,6 @@ public final class ImageJBridge {
       uiController_.canvasNeedsSwap();
    }
 
-   
 
    @MustCallOnEDT
    public void mm2ijWindowClosed() {
@@ -284,8 +283,7 @@ public final class ImageJBridge {
 
    @MustCallOnEDT
    private void mm2ijSetDisplayAxisExtents(
-         int nChannels, int nZSlices, int nTimePoints)
-   {
+         int nChannels, int nZSlices, int nTimePoints) {
       int oldNChannels =
             ((IMMImagePlus) imagePlus_).getNChannelsWithoutSideEffect();
 
@@ -317,10 +315,9 @@ public final class ImageJBridge {
       int oldNFrames =
             ((IMMImagePlus) imagePlus_).getNFramesWithoutSideEffect();
 
-      if (newNChannels > oldNChannels ||
-            newNSlices > oldNSlices ||
-            newNFrames > oldNFrames)
-      {
+      if (newNChannels > oldNChannels
+            || newNSlices > oldNSlices
+            || newNFrames > oldNFrames) {
          mm2ijSetDisplayAxisExtents(Math.max(newNChannels, oldNChannels),
                Math.max(newNSlices, oldNSlices),
                Math.max(newNFrames, oldNFrames));
@@ -362,8 +359,7 @@ public final class ImageJBridge {
       // stack). Whew!
       if (proxyStack_.getSize() == 1) {
          imagePlus_.setStack(proxyStack_);
-      }
-      else {
+      } else {
          imagePlus_.setProcessor(proxyStack_.getProcessor(ijFlatIndex));
 
          if (imagePlus_ instanceof CompositeImage) {
@@ -477,8 +473,7 @@ public final class ImageJBridge {
    }
 
    void paintMMOverlays(Graphics2D g, int canvasWidth, int canvasHeight,
-         Rectangle sourceRect)
-   {
+                        Rectangle sourceRect) {
       Rectangle canvasBounds = new Rectangle(0, 0, canvasWidth, canvasHeight);
       Rectangle2D.Float viewPort = new Rectangle2D.Float(
             sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height);
@@ -520,10 +515,7 @@ public final class ImageJBridge {
       int nChannels = getMMNumberOfChannels();
       int nZSlices = getMMNumberOfZSlices();
       int nTimePoints = getMMNumberOfTimePoints();
-      return timePoint * nZSlices * nChannels +
-            zSlice * nChannels +
-            channel +
-            1;
+      return timePoint * nZSlices * nChannels + zSlice * nChannels + channel + 1;
    }
 
    int getMMNumberOfTimePoints() {
@@ -551,7 +543,7 @@ public final class ImageJBridge {
       // Normally, return the currently displayed images cached by the UI
       // controller.
       List<Image> images = uiController_.getDisplayedImages();
-      for (Image image: images) {
+      for (Image image : images) {
          if (coords.equals(image.getCoords())) {
             return image;
          }
@@ -566,10 +558,8 @@ public final class ImageJBridge {
       // in org.micromanager.data.
       Image template;
       try {
-         template = uiController_.getDisplayController().getDataProvider().
-               getAnyImage();
-      }
-      catch (IOException e) {
+         template = uiController_.getDisplayController().getDataProvider().getAnyImage();
+      } catch (IOException e) {
          throw new RuntimeException(e);
       }
       if (template == null) {
@@ -579,17 +569,13 @@ public final class ImageJBridge {
       Object blankPixels;
       if (templatePixels instanceof byte[]) {
          blankPixels = new byte[((byte[]) templatePixels).length];
-      }
-      else if (templatePixels instanceof short[]) {
+      } else if (templatePixels instanceof short[]) {
          blankPixels = new short[((short[]) templatePixels).length];
-      }
-      else if (templatePixels instanceof int[]) {
+      } else if (templatePixels instanceof int[]) {
          blankPixels = new int[((int[]) templatePixels).length];
-      }
-      else if (templatePixels instanceof long[]) {
+      } else if (templatePixels instanceof long[]) {
          blankPixels = new long[((long[]) templatePixels).length];
-      }
-      else {
+      } else {
          throw new UnsupportedOperationException("Pixel buffer of unknown type");
       }
       return new DefaultImage(blankPixels,
@@ -597,7 +583,7 @@ public final class ImageJBridge {
             template.getBytesPerPixel(), template.getNumComponents(), coords,
             new DefaultMetadata.Builder().build());
    }
-   
+
    /**
     * Tell the ImagePlus about certain properties of our data that it doesn't
     * otherwise know how to access.
@@ -613,7 +599,8 @@ public final class ImageJBridge {
          Image sample = dataProvider.getAnyImage();
          if (sample == null) {
             // TODO: log error
-            // studio_.logs().logError("Unable to get an image for setting ImageJ metadata properties");
+            // studio_.logs().logError(
+            // "Unable to get an image for setting ImageJ metadata properties");
             return;
          }
          SummaryMetadata summaryMetadata = dataProvider.getSummaryMetadata();
@@ -631,25 +618,28 @@ public final class ImageJBridge {
             if (summaryMetadata.getZStepUm() != null) {
                zStepSize = summaryMetadata.getZStepUm();
             }
-            if (summaryMetadata.getWaitInterval() != null) { 
+            if (summaryMetadata.getWaitInterval() != null) {
                timeInterval = summaryMetadata.getWaitInterval();
             }
             if (summaryMetadata.getDirectory() != null) {
                dir = summaryMetadata.getDirectory();
-            } if (summaryMetadata.getPrefix() != null) {
+            }
+            if (summaryMetadata.getPrefix() != null) {
                prefix = summaryMetadata.getPrefix();
             }
             if (prefix.equals("")) {
                prefix = uiController_.getDisplayController().getName();
             }
             mm2ijSetMetadata(pixelSize,
-                    pixelSize,  // TODO: add asepct ratio here, however, that currently throws a null pointer exception
-                    zStepSize,
-                    timeInterval,
-                    sample.getWidth(),
-                    sample.getHeight(),
-                    dir,
-                    prefix);
+                  pixelSize,
+                  // TODO: add aspect ratio here, however, that currently throws
+                  //  a null pointer exception
+                  zStepSize,
+                  timeInterval,
+                  sample.getWidth(),
+                  sample.getHeight(),
+                  dir,
+                  prefix);
          }
       } catch (IOException ioe) {
          // TODO: report
@@ -659,17 +649,15 @@ public final class ImageJBridge {
 
    @MustCallOnEDT
    public void mm2ijSetMetadata(double pixelWidthUm, double pixelHeightUm,
-         double pixelDepthUm, double frameIntervalMs,
-         int width, int height,
-         String directory, String fileName)
-   {
+                                double pixelDepthUm, double frameIntervalMs,
+                                int width, int height,
+                                String directory, String fileName) {
       Calibration cal = new Calibration(imagePlus_);
       if (pixelWidthUm * pixelHeightUm == 0.0) {
          cal.setUnit("px");
          cal.pixelWidth = 1.0;
          cal.pixelHeight = 1.0;
-      }
-      else {
+      } else {
          cal.setUnit("um");
          cal.pixelWidth = pixelWidthUm;
          cal.pixelHeight = pixelHeightUm;
@@ -682,7 +670,7 @@ public final class ImageJBridge {
       finfo.directory = directory;
       finfo.fileName = fileName;
       imagePlus_.setFileInfo(finfo);
-      
+
       // ensure that ImageJ saves files using our name, not "NewImageJBridge"...
       imagePlus_.setTitle(fileName);
    }
@@ -694,8 +682,8 @@ public final class ImageJBridge {
 
    @MustCallOnEDT
    public boolean isIJZoomedAllTheWayIn() {
-      return canvas_.getMagnification() >=
-            IJ_ZOOM_LEVELS.get(IJ_ZOOM_LEVELS.size() - 1) - 0.001;
+      return canvas_.getMagnification()
+            >= IJ_ZOOM_LEVELS.get(IJ_ZOOM_LEVELS.size() - 1) - 0.001;
    }
 
    @MustCallOnEDT
@@ -736,16 +724,16 @@ public final class ImageJBridge {
       canvas_.setSizeToCurrent();
       canvas_.repaint();
    }
-   
+
    /**
-    * Sets the new zoomed view, centered around the user-desired position
-    *   
-    * @param factor New zoom factor
+    * Sets the new zoomed view, centered around the user-desired position.
+    *
+    * @param factor        New zoom factor
     * @param centerScreenX Desired x coordinate on the current canvas
     * @param centerScreenY Desired y coordinate on the current canvas
     */
    @MustCallOnEDT
-   
+
    public void mm2ijSetZoom(double factor, int centerScreenX, int centerScreenY) {
       double originalFactor = getIJZoom();
       Rectangle originalSrcRect = this.canvas_.getSrcRect();
@@ -768,11 +756,11 @@ public final class ImageJBridge {
       // Center the new source rect where requested, to the
       // extent it fits in the image
       Rectangle newSourceRect = computeSourceRect(factor,
-              (centerScreenX / originalFactor) + originalSrcRect.x, 
-              (centerScreenY / originalFactor) + originalSrcRect.y,
+            (centerScreenX / originalFactor) + originalSrcRect.x,
+            (centerScreenY / originalFactor) + originalSrcRect.y,
             getMMWidth(), getMMHeight(),
-            (int) Math.min(canvas_.getPreferredSize().getWidth(), newIdealCanvasSize.width), 
-            (int) Math.min(canvas_.getPreferredSize().getHeight(), newIdealCanvasSize.height) );
+            (int) Math.min(canvas_.getPreferredSize().getWidth(), newIdealCanvasSize.width),
+            (int) Math.min(canvas_.getPreferredSize().getHeight(), newIdealCanvasSize.height));
 
       // Make sure to update zoom and source rect before setting size, since
       // setSize necessarily must "fix" the source rect.
@@ -786,7 +774,7 @@ public final class ImageJBridge {
    public void mm2ijZoomIn() {
       mm2ijSetZoom(ImageCanvas.getHigherZoomLevel(getIJZoom()));
    }
-   
+
    @MustCallOnEDT
    public void mm2ijZoomIn(int centerX, int centerY) {
       mm2ijSetZoom(ImageCanvas.getHigherZoomLevel(getIJZoom()), centerX, centerY);
@@ -812,8 +800,7 @@ public final class ImageJBridge {
    }
 
    Rectangle computeSourceRectForCanvasSize(double zoomRatio,
-         int width, int height, Rectangle oldSourceRect)
-   {
+                                            int width, int height, Rectangle oldSourceRect) {
       return computeSourceRect(zoomRatio, getMMWidth(), getMMHeight(),
             width, height, oldSourceRect);
    }
@@ -821,8 +808,7 @@ public final class ImageJBridge {
    private static Dimension computeIdealCanvasSizeAfterZoom(
          double newZoomRatio, double oldZoomRatio,
          int imageWidth, int imageHeight,
-         int oldCanvasWidth, int oldCanvasHeight)
-   {
+         int oldCanvasWidth, int oldCanvasHeight) {
       Dimension ret = new Dimension(
             (int) Math.floor(imageWidth * newZoomRatio),
             (int) Math.floor(imageHeight * newZoomRatio));
@@ -837,25 +823,23 @@ public final class ImageJBridge {
       }
       return ret;
    }
-   
+
    // dst width and height must not be larger than image
    private static Rectangle computeSourceRect(double zoomRatio,
-         int imageWidth, int imageHeight,
-         int dstWidth, int dstHeight,
-         Rectangle oldSourceRect)
-   {
+                                              int imageWidth, int imageHeight,
+                                              int dstWidth, int dstHeight,
+                                              Rectangle oldSourceRect) {
       double centerX = oldSourceRect.x + 0.5 * oldSourceRect.width;
       double centerY = oldSourceRect.y + 0.5 * oldSourceRect.height;
-      return computeSourceRect(zoomRatio, centerX, centerY, 
-               imageWidth, imageHeight, dstWidth, dstHeight);
+      return computeSourceRect(zoomRatio, centerX, centerY,
+            imageWidth, imageHeight, dstWidth, dstHeight);
    }
 
    // dst width and height must not be larger than image
    private static Rectangle computeSourceRect(double zoomRatio,
-         double centerX, double centerY,
-         int imageWidth, int imageHeight,
-         int dstWidth, int dstHeight)
-   {
+                                              double centerX, double centerY,
+                                              int imageWidth, int imageHeight,
+                                              int dstWidth, int dstHeight) {
       Rectangle ret = new Rectangle();
 
       // First, compute a rect without regard to the image bounds.
@@ -892,16 +876,14 @@ public final class ImageJBridge {
          if (lastSeenRoi_ == null) {
             return;
          }
-      }
-      else {
+      } else {
          if (roi.getType() == Roi.RECTANGLE && roi.getCornerDiameter() == 0) {
             Rectangle bounds = roi.getBounds();
             if (bounds.equals(lastSeenRoiRect_)) {
                return;
             }
             lastSeenRoiRect_ = new Rectangle(bounds);
-         }
-         else {
+         } else {
             lastSeenRoiRect_ = null;
          }
          lastSeenRoi_ = roi;
@@ -913,20 +895,20 @@ public final class ImageJBridge {
    boolean ij2mmKeyPressConsumed(KeyEvent e) {
       return uiController_.keyPressOnImageConsumed(e);
    }
-   
+
    void ij2mmMouseClicked(MouseEvent e) {
-      uiController_.mouseEventOnImage(e, 
+      uiController_.mouseEventOnImage(e,
             computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
    }
-   
+
    void ij2mmMousePressed(MouseEvent e) {
-      uiController_.mouseEventOnImage(e, 
+      uiController_.mouseEventOnImage(e,
             computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
-      
+
    }
-   
+
    void ij2mmMouseReleased(MouseEvent e) {
-      uiController_.mouseEventOnImage(e, 
+      uiController_.mouseEventOnImage(e,
             computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
    }
 
@@ -945,10 +927,10 @@ public final class ImageJBridge {
    }
 
    void ij2mmMouseMovedOnCanvas(MouseEvent e) {
-      uiController_.mouseEventOnImage(e, 
+      uiController_.mouseEventOnImage(e,
             computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
    }
-   
+
    void ij2mmMouseWheelMoved(MouseWheelEvent e) {
       uiController_.mouseWheelMoved(e);
    }
@@ -978,10 +960,9 @@ public final class ImageJBridge {
       ByteProcessor maskProc = (ByteProcessor) ijRoi.getMask();
 
       // Sanity check, just in case.
-      if (maskProc != null &&
-            (maskProc.getWidth() != bounds.width ||
-            maskProc.getHeight() != bounds.height))
-      {
+      if (maskProc != null
+            && (maskProc.getWidth() != bounds.width
+            || maskProc.getHeight() != bounds.height)) {
          return BoundsRectAndMask.unselected();
       }
 

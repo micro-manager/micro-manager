@@ -34,6 +34,11 @@ import org.apache.commons.math.util.MathUtils;
  */
 public class AffineUtils {
 
+   /**
+    * No op affine transform.
+    *
+    * @return Returns the No op affine transform as a DoubleVector (for consumption by the core).
+    */
    public static DoubleVector noTransform() {
       DoubleVector affineTransform = new DoubleVector(6);
       for (int i = 1; i < 6; i++) {
@@ -43,17 +48,30 @@ public class AffineUtils {
       affineTransform.set(4, 1.0);
       return affineTransform;
    }
-   
+
+   /**
+    * Converts the affine transform from a DoubleVector (as supplied by the Core) to a
+    * Java AffineTransform.
+    *
+    * @param atf Affine Transform as a DoubleVector
+    * @return Affine Transform as a Java Affine Transform
+    */
    public static AffineTransform doubleToAffine(DoubleVector atf) {
       if (atf.size() != 6) {
          double[] flatMatrix = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
          return new AffineTransform(flatMatrix);
       }
       double[] flatMatrix = {atf.get(0), atf.get(3), atf.get(1),
-         atf.get(4), atf.get(2), atf.get(5)};
+            atf.get(4), atf.get(2), atf.get(5)};
       return new AffineTransform(flatMatrix);
    }
-   
+
+   /**
+    * Converts Affine TRansform from a Java Affine Transform to a DoubleVector.
+    *
+    * @param atf Java Affine Transform
+    * @return Corresponding Affine Transform as a DoubleVector
+    */
    public static DoubleVector affineToDouble(AffineTransform atf) {
       DoubleVector out = new DoubleVector(6);
       out.set(0, atf.getScaleX());
@@ -64,7 +82,7 @@ public class AffineUtils {
       out.set(5, atf.getTranslateY());
       return out;
    }
-   
+
    /**
     * Convert affine transform to human-interpretable measurements of rotation, scale, and shear.
     *
@@ -109,14 +127,14 @@ public class AffineUtils {
          //should now be left with shear transform;
          double shear = at2.getShearX();
          double rotationDeg = angle / Math.PI * 180.0;
-         return new double[]{xScale, yScale, rotationDeg, shear};
+         return new double[] {xScale, yScale, rotationDeg, shear};
       } catch (NoninvertibleTransformException ex) {
-         return new double[]{0, 0, 0, 0};
+         return new double[] {0, 0, 0, 0};
       }
    }
-   
+
    public static double deducePixelSize(AffineTransform atf) {
       return MathUtils.round(Math.sqrt(Math.abs(atf.getDeterminant())), 4);
    }
-   
+
 }

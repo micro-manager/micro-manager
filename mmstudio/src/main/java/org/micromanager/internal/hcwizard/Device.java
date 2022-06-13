@@ -37,7 +37,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Data structure describing a general MM device.
  * Part of the MicroscopeModel.
- *
  */
 public final class Device {
    // This class behaves simultaneously as any device type, so it has the
@@ -59,8 +58,8 @@ public final class Device {
    private String[] childDevices_;
    private boolean initialized_;
 
-   public Device(String name, String lib, String adapterName, String descr, 
-           boolean discoverable, String main, Vector<String> followers) {
+   public Device(String name, String lib, String adapterName, String descr,
+                 boolean discoverable, String main, Vector<String> followers) {
       name_ = name;
       library_ = lib;
       adapterName_ = adapterName;
@@ -92,18 +91,18 @@ public final class Device {
    public Device(String name, String lib, String adapterName) {
       this(name, lib, adapterName, "");
    }
-   
+
    public void setTypeByInt(int typeNum) {
       type_ = DeviceType.swigToEnum(typeNum);
    }
-   
+
    public int getTypeAsInt() {
       return type_.swigValue();
    }
-   
+
    public String getTypeAsString() {
       String devType = "Unknown";
-      
+
       if (type_ == DeviceType.CameraDevice) {
          devType = "Camera";
       } else if (type_ == DeviceType.SerialDevice) {
@@ -119,17 +118,17 @@ public final class Device {
       } else if (type_ == DeviceType.GenericDevice) {
          devType = "Generic Device";
       } else if (type_ == DeviceType.AnyType) {
-         devType = "Misc.";    
+         devType = "Misc.";
       } else if (type_ == DeviceType.ImageProcessorDevice) {
-         devType = "Image Processor";    
+         devType = "Image Processor";
       } else if (type_ == DeviceType.SignalIODevice) {
-         devType = "Signal I/O Device";    
+         devType = "Signal I/O Device";
       } else if (type_ == DeviceType.SLMDevice) {
-         devType = "SLM";    
+         devType = "SLM";
       } else if (type_ == DeviceType.StageDevice) {
-         devType = "Single Axis Stage";    
+         devType = "Single Axis Stage";
       } else if (type_ == DeviceType.XYStageDevice) {
-         devType = "XY Stage";    
+         devType = "XY Stage";
       } else if (type_ == DeviceType.StateDevice) {
          devType = "Discrete State Device";
       } else if (type_ == DeviceType.MagnifierDevice) {
@@ -139,7 +138,7 @@ public final class Device {
       } else {
          ReportingUtils.logError("Unercongized device type: " + this.adapterName_);
       }
-      
+
       return devType;
    }
 
@@ -147,18 +146,18 @@ public final class Device {
     * Obtain all properties and their current values.
     *
     * @param core The Micro-Manager core.
-    * @throws Exception
+    * @throws Exception thrown by Core
     */
    public void loadDataFromHardware(CMMCore core) throws Exception {
       StrVector propNames = core.getDevicePropertyNames(name_);
       properties_ = new PropertyItem[(int) propNames.size()];
-      
+
       // delayMs_ = core.getDeviceDelayMs(name_);
       // NOTE: do not load the delay value from the hardware
       // we will always use settings defined in the config file
       type_ = core.getDeviceType(name_);
       usesDelay_ = core.usesDeviceDelay(name_);
-      
+
       for (int j = 0; j < propNames.size(); j++) {
          properties_[j] = new PropertyItem();
          properties_[j].name = propNames.get(j);
@@ -178,19 +177,19 @@ public final class Device {
          }
          properties_[j].sort();
       }
-      
+
       if (type_ == DeviceType.StateDevice) {
          numPos_ = core.getNumberOfStates(name_);
       } else {
          numPos_ = 0;
       }
    }
-   
+
    public static Device[] getLibraryContents(String libName, CMMCore core) throws Exception {
       StrVector adapterNames = core.getAvailableDevices(libName);
       StrVector devDescrs = core.getAvailableDeviceDescriptions(libName);
       LongVector devTypes = core.getAvailableDeviceTypes(libName);
-      
+
       Device[] devList = new Device[(int) adapterNames.size()];
       for (int i = 0; i < adapterNames.size(); i++) {
 
@@ -198,22 +197,22 @@ public final class Device {
          devList[i] = new Device("Undefined", libName, adapterNames.get(i), devDescrs.get(i));
          devList[i].setTypeByInt(devTypes.get(i));
       }
-      
+
       return devList;
    }
-   
+
    public void discoverPeripherals(CMMCore core) throws Exception {
       // check if there are any child devices installed
       if (isHub() && !getName().equals("Core") && childDevices_.length == 0) {
-         
+
          // device "discovery" happens here
          StrVector installed = core.getInstalledDevices(getName());
          // end of discovery
-         
+
          childDevices_ = installed.toArray();
       }
    }
-   
+
    public String[] getPreInitProperties() {
       Vector<String> piProps = new Vector<>();
       for (PropertyItem p : properties_) {
@@ -223,7 +222,7 @@ public final class Device {
       }
       return piProps.toArray(new String[piProps.size()]);
    }
-   
+
    public String[] getPeripherals() {
       return childDevices_;
    }
@@ -245,11 +244,11 @@ public final class Device {
    public String getDescription() {
       return description_;
    }
-   
+
    public void addSetupProperty(PropertyItem prop) {
       setupProperties_.add(prop);
    }
-   
+
    public void addSetupLabel(Label lab) {
       setupLabels_.put(lab.state_, lab);
    }
@@ -262,7 +261,7 @@ public final class Device {
 
    public void getSetupLabelsFromHardware(CMMCore core) throws Exception {
       // we can only add the state labels after initialization of the device!!
-      if (type_ == DeviceType.StateDevice)  {
+      if (type_ == DeviceType.StateDevice) {
          StrVector stateLabels = core.getStateLabels(name_);
          numPos_ = (int) stateLabels.size();
          setupLabels_.clear();
@@ -275,15 +274,15 @@ public final class Device {
    public String getLibrary() {
       return library_;
    }
-   
+
    public int getNumberOfProperties() {
       return properties_.length;
    }
-   
+
    public PropertyItem getProperty(int idx) {
       return properties_[idx];
    }
-   
+
    public String getPropertyValue(String propName) throws MMConfigFileException {
 
       PropertyItem p = findProperty(propName);
@@ -292,7 +291,7 @@ public final class Device {
       }
       return p.value;
    }
-   
+
    public void setPropertyValue(String name, String value) throws MMConfigFileException {
       PropertyItem p = findProperty(name);
       if (p == null) {
@@ -301,22 +300,24 @@ public final class Device {
       p.value = value;
    }
 
-   public void setPropertyValueInHardware(CMMCore core, String propName, String value)  {
+   public void setPropertyValueInHardware(CMMCore core, String propName, String value) {
       try {
          core.setProperty(name_, propName, value);
       } catch (Exception ex) {
-         core.logMessage("HCW Device " + name_ + " failed to set property " + propName + " to value " + value);
+         core.logMessage(
+               "HCW Device " + name_ + " failed to set property " + propName + " to value "
+                     + value);
       }
    }
-   
+
    public int getNumberOfSetupProperties() {
       return setupProperties_.size();
    }
-   
+
    public PropertyItem getSetupProperty(int idx) {
       return setupProperties_.get(idx);
    }
-   
+
    public String getSetupPropertyValue(String propName) throws MMConfigFileException {
       PropertyItem p = findSetupProperty(propName);
       if (p == null) {
@@ -324,7 +325,7 @@ public final class Device {
       }
       return p.value;
    }
-   
+
    public void setSetupPropertyValue(String name, String value) throws MMConfigFileException {
       PropertyItem p = findSetupProperty(name);
       if (p == null) {
@@ -341,14 +342,14 @@ public final class Device {
       return type_ == DeviceType.StageDevice;
    }
 
-   public boolean isSerialPort() {      
+   public boolean isSerialPort() {
       return type_ == DeviceType.SerialDevice;
    }
-   
+
    public boolean isCamera() {
       return type_ == DeviceType.CameraDevice;
    }
-   
+
    public boolean isHub() {
       return type_ == DeviceType.HubDevice;
    }
@@ -358,11 +359,11 @@ public final class Device {
 
       return setupLabels_.size();
    }
-   
+
    public Label getSetupLabelByState(int j) {
       return setupLabels_.get(j);
    }
-   
+
    public void setSetupLabel(int pos, String label) {
       Label l = setupLabels_.get(pos);
       if (l == null) {
@@ -372,7 +373,7 @@ public final class Device {
          l.label_ = label;
       }
    }
-   
+
    public boolean isCore() {
       return name_.contentEquals(new StringBuffer().append(MMCoreJ.getG_Keyword_CoreDevice()));
    }
@@ -380,7 +381,7 @@ public final class Device {
    public void setName(String newName) {
       name_ = newName;
    }
-   
+
    public PropertyItem findProperty(String name) {
       for (PropertyItem p : properties_) {
          if (p.name.contentEquals(new StringBuffer().append(name))) {
@@ -389,7 +390,7 @@ public final class Device {
       }
       return null;
    }
-   
+
    public PropertyItem findSetupProperty(String name) {
       for (PropertyItem p : setupProperties_) {
          if (p.name.contentEquals(new StringBuffer().append(name))) {
@@ -402,11 +403,11 @@ public final class Device {
    public double getDelay() {
       return delayMs_;
    }
-   
+
    public void setDelay(double delayMs) {
       delayMs_ = delayMs;
    }
-   
+
    public boolean usesDelay() {
       return usesDelay_;
    }
@@ -432,19 +433,19 @@ public final class Device {
    public void setParentHub(String hub) {
       parentHub_ = hub;
    }
-   
+
    public String getParentHub() {
       return parentHub_;
    }
-   
+
    public boolean isInitialized() {
       return initialized_;
    }
-   
+
    public void setInitialized(boolean state) {
       initialized_ = state;
    }
-   
+
    public void updateSetupProperties() {
       setupProperties_.clear();
       for (PropertyItem propertyItem : properties_) {
@@ -452,7 +453,7 @@ public final class Device {
                .add(new PropertyItem(propertyItem.name, propertyItem.value, propertyItem.preInit));
       }
    }
-      
+
    public String getPort() {
       for (int i = 0; i < getNumberOfProperties(); i++) {
          PropertyItem p = getProperty(i);
@@ -467,5 +468,5 @@ public final class Device {
       Label[] lblArray = new Label[setupLabels_.size()];
       return setupLabels_.values().toArray(lblArray);
    }
-   
+
 }

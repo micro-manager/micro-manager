@@ -19,8 +19,6 @@
 
 package org.micromanager.internal.pluginmanagement;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -112,12 +110,12 @@ public final class DefaultPluginManager implements PluginManager {
    private void loadPlugins() {
       final long startTime = System.currentTimeMillis();
       String dir = System.getProperty("org.micromanager.plugin.path",
-               System.getProperty("user.dir") + "/mmplugins");
+            System.getProperty("user.dir") + "/mmplugins");
       ReportingUtils.logMessage("Searching for plugins in " + dir);
       loadPlugins(PluginFinder.findPlugins(dir));
 
       dir = System.getProperty("org.micromanager.autofocus.path",
-               System.getProperty("user.dir") + "/mmautofocus");
+            System.getProperty("user.dir") + "/mmautofocus");
       ReportingUtils.logMessage("Searching for plugins in " + dir);
       loadPlugins(PluginFinder.findPlugins(dir));
 
@@ -179,7 +177,7 @@ public final class DefaultPluginManager implements PluginManager {
     * Create a new item in the specified submenu of the Plugins menu.
     */
    private void addSubMenuItem(JMenu rootMenu, HashMap<String, JMenu> subMenus,
-         String subMenu, String title, final Runnable selectAction) {
+                               String subMenu, String title, final Runnable selectAction) {
       JMenuItem item = new JMenuItem(title);
       item.addActionListener(e -> selectAction.run());
       if (subMenu.equals("")) {
@@ -211,7 +209,8 @@ public final class DefaultPluginManager implements PluginManager {
     * to the current pipeline.
     */
    private void addProcessorPluginToMenu(JMenu menu,
-         HashMap<String, JMenu> subMenus, final ProcessorPlugin plugin) {
+                                         HashMap<String, JMenu> subMenus,
+                                         final ProcessorPlugin plugin) {
       addSubMenuItem(menu, subMenus, PROCESSOR_MENU, plugin.getName(),
             () -> studio_.data().addAndConfigureProcessor(plugin)
       );

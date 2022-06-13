@@ -76,7 +76,7 @@ public final class AutofocusButtons extends WidgetPlugin implements SciJavaPlugi
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-               "/org/micromanager/icons/binoculars@2x.png"));
+            "/org/micromanager/icons/binoculars@2x.png"));
    }
 
    // We are not actually configurable.

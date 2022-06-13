@@ -50,83 +50,83 @@ public final class ToolsMenu {
       JMenu toolsMenu = GUIUtils.createMenuInMenuBar(menuBar, "Tools");
 
       GUIUtils.addMenuItem(toolsMenu, "Refresh GUI",
-              "Refresh all GUI controls directly from the hardware", () -> {
-                 core_.updateSystemStateCache();
-                 mmStudio_.uiManager().updateGUI(true);
-              },
-              "arrow_refresh.png");
+            "Refresh all GUI controls directly from the hardware", () -> {
+               core_.updateSystemStateCache();
+               mmStudio_.uiManager().updateGUI(true);
+            },
+            "arrow_refresh.png");
 
       toolsMenu.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu, "Script Panel...",
-              "Open Micro-Manager script editor window",
-              mmStudio_.uiManager()::showScriptPanel);
+            "Open Micro-Manager script editor window",
+            mmStudio_.uiManager()::showScriptPanel);
 
       populateQuickAccessMenu();
       toolsMenu.add(quickAccessMenu_);
 
       GUIUtils.addMenuItem(toolsMenu, "Shortcuts...",
-              "Create keyboard shortcuts to activate image acquisition, "
-               + "mark positions, or run custom scripts",
-              HotKeysDialog::new);
+            "Create keyboard shortcuts to activate image acquisition, "
+                  + "mark positions, or run custom scripts",
+            HotKeysDialog::new);
 
       GUIUtils.addMenuItem(toolsMenu, "Messages...",
-              "Show the Messages window", () -> ((DefaultAlertManager)
-                      mmStudio_.alerts()).alertsWindow().showWithoutFocus(),
-              "bell.png");
+            "Show the Messages window", () -> ((DefaultAlertManager)
+                  mmStudio_.alerts()).alertsWindow().showWithoutFocus(),
+            "bell.png");
 
       toolsMenu.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu, "Stage Control...",
-              "Control the stage position with a virtual joystick",
-               () -> StageControlFrame.showStageControl(mmStudio_),
-              "move.png");
+            "Control the stage position with a virtual joystick",
+            () -> StageControlFrame.showStageControl(mmStudio_),
+            "move.png");
 
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu,
-              "Mouse Moves Stage (Use Hand Tool)",
-              "When enabled, double clicking or dragging in the snap/live\n"
-              + "window moves the XY-stage. Requires the hand tool.", () -> {
-                 boolean state = centerAndDragMenuItem_.isSelected();
-                 mmStudio_.updateCenterAndDragListener(state);
-                 String icon = state ? "move_hand_on.png" : "move_hand.png";
-                 centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
-                         "/org/micromanager/icons/" + icon));
-              },
-              getMouseMovesStage());
+            "Mouse Moves Stage (Use Hand Tool)",
+            "When enabled, double clicking or dragging in the snap/live\n"
+                  + "window moves the XY-stage. Requires the hand tool.", () -> {
+               boolean state = centerAndDragMenuItem_.isSelected();
+               mmStudio_.updateCenterAndDragListener(state);
+               String icon = state ? "move_hand_on.png" : "move_hand.png";
+               centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
+                     "/org/micromanager/icons/" + icon));
+            },
+            getMouseMovesStage());
       String icon = getMouseMovesStage() ? "move_hand_on.png" : "move_hand.png";
       centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
-              "/org/micromanager/icons/" + icon));
+            "/org/micromanager/icons/" + icon));
 
       GUIUtils.addMenuItem(toolsMenu, "Stage Position List...",
-              "Open the stage position list window",
-              () -> mmStudio_.app().showPositionList(),
-              "application_view_list.png");
+            "Open the stage position list window",
+            () -> mmStudio_.app().showPositionList(),
+            "application_view_list.png");
 
       toolsMenu.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu, "Multi-Dimensional Acquisition...",
-              "Open multi-dimensional acquisition setup window",
-              mmStudio_.uiManager()::openAcqControlDialog,
-              "film.png");
+            "Open multi-dimensional acquisition setup window",
+            mmStudio_.uiManager()::openAcqControlDialog,
+            "film.png");
 
       toolsMenu.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu, "Options...",
-              "Set a variety of Micro-Manager configuration options", () -> {
-                 final int oldBufsize = mmStudio_.settings().getCircularBufferSize();
+            "Set a variety of Micro-Manager configuration options", () -> {
+               final int oldBufsize = mmStudio_.settings().getCircularBufferSize();
 
-                 OptionsDlg dlg = new OptionsDlg(core_, mmStudio_);
-                 dlg.setVisible(true);
-                 // adjust memory footprint if necessary
-                 if (oldBufsize != mmStudio_.settings().getCircularBufferSize()) {
-                    try {
-                       core_.setCircularBufferMemoryFootprint(
-                               mmStudio_.settings().getCircularBufferSize());
-                    } catch (Exception exc) {
-                       ReportingUtils.showError(exc);
-                    }
-                 }
-              });
+               OptionsDlg dlg = new OptionsDlg(core_, mmStudio_);
+               dlg.setVisible(true);
+               // adjust memory footprint if necessary
+               if (oldBufsize != mmStudio_.settings().getCircularBufferSize()) {
+                  try {
+                     core_.setCircularBufferMemoryFootprint(
+                           mmStudio_.settings().getCircularBufferSize());
+                  } catch (Exception exc) {
+                     ReportingUtils.showError(exc);
+                  }
+               }
+            });
 
       mmStudio_.events().registerForEvents(this);
    }
@@ -134,8 +134,8 @@ public final class ToolsMenu {
    private void populateQuickAccessMenu() {
       quickAccessMenu_.removeAll();
       GUIUtils.addMenuItem(quickAccessMenu_, "Create New Panel",
-              "Create a new Quick Access Panel, for easy access to commonly-used controls.",
-              () -> ((DefaultQuickAccessManager) mmStudio_.quickAccess()).createNewPanel());
+            "Create a new Quick Access Panel, for easy access to commonly-used controls.",
+            () -> ((DefaultQuickAccessManager) mmStudio_.quickAccess()).createNewPanel());
 
       final Map<String, JFrame> titleToFrame = mmStudio_.quickAccess().getPanels();
       ArrayList<String> titles = new ArrayList<>(titleToFrame.keySet());
@@ -145,41 +145,41 @@ public final class ToolsMenu {
       deleteMenu.setEnabled(titles.size() > 0);
       for (final String title : titles) {
          GUIUtils.addMenuItem(deleteMenu, title, "Delete this panel",
-                 () -> ((DefaultQuickAccessManager)
-                         mmStudio_.quickAccess()).promptToDelete(titleToFrame.get(title)));
+               () -> ((DefaultQuickAccessManager)
+                     mmStudio_.quickAccess()).promptToDelete(titleToFrame.get(title)));
       }
       quickAccessMenu_.add(deleteMenu);
       quickAccessMenu_.addSeparator();
       JMenuItem show = GUIUtils.addMenuItem(quickAccessMenu_, "Show all",
-              "Show all Quick Access Panels; create a new one if necessary",
-              () -> mmStudio_.quickAccess().showPanels());
+            "Show all Quick Access Panels; create a new one if necessary",
+            () -> mmStudio_.quickAccess().showPanels());
       show.setEnabled(titles.size() > 0);
 
       for (final String title : titles) {
          GUIUtils.addMenuItem(quickAccessMenu_, title, "",
-                 () -> titleToFrame.get(title).setVisible(true));
+               () -> titleToFrame.get(title).setVisible(true));
       }
 
       quickAccessMenu_.addSeparator();
 
       GUIUtils.addMenuItem(quickAccessMenu_, "Save Settings...",
-              "Save the Quick Access Panel settings to a file for use elsewhere", () -> {
-                 JFileChooser chooser = new JFileChooser();
-                 chooser.showSaveDialog(null);
-                 File file = chooser.getSelectedFile();
-                 if (file != null) {
-                    mmStudio_.quickAccess().saveSettingsToFile(file);
-                 }
-              });
+            "Save the Quick Access Panel settings to a file for use elsewhere", () -> {
+               JFileChooser chooser = new JFileChooser();
+               chooser.showSaveDialog(null);
+               File file = chooser.getSelectedFile();
+               if (file != null) {
+                  mmStudio_.quickAccess().saveSettingsToFile(file);
+               }
+            });
       GUIUtils.addMenuItem(quickAccessMenu_, "Load Settings...",
-              "Load saved settings from a file", () -> {
-                 JFileChooser chooser = new JFileChooser();
-                 chooser.showOpenDialog(null);
-                 File file = chooser.getSelectedFile();
-                 if (file != null) {
-                    mmStudio_.quickAccess().loadSettingsFromFile(file);
-                 }
-              });
+            "Load saved settings from a file", () -> {
+               JFileChooser chooser = new JFileChooser();
+               chooser.showOpenDialog(null);
+               File file = chooser.getSelectedFile();
+               if (file != null) {
+                  mmStudio_.quickAccess().loadSettingsFromFile(file);
+               }
+            });
    }
 
    @Subscribe
@@ -197,7 +197,7 @@ public final class ToolsMenu {
    public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
       String icon = event.isEnabled() ? "move_hand_on.png" : "move_hand.png";
       centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
-              "/org/micromanager/icons/" + icon));
+            "/org/micromanager/icons/" + icon));
       centerAndDragMenuItem_.setSelected(event.isEnabled());
    }
 

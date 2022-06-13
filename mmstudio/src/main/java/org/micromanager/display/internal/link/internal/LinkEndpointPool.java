@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.link.internal;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
@@ -34,6 +34,7 @@ public final class LinkEndpointPool {
 
    /**
     * Make an endpoint available for linking.
+    *
     * @param endpoint the endpoint
     */
    synchronized void registerEndpoint(LinkEndpoint endpoint) {
@@ -45,7 +46,8 @@ public final class LinkEndpointPool {
 
    /**
     * Remove an endpoint.
-    * @param endpoint  the endpoint
+    *
+    * @param endpoint the endpoint
     */
    synchronized void unregisterEndpoint(LinkEndpoint endpoint) {
       bus_.post(LinkablePeerWillBecomeUnavailableEvent.create(endpoint));
@@ -60,6 +62,7 @@ public final class LinkEndpointPool {
 
    /**
     * Return all peer endpoints in this pool, including the caller.
+    *
     * @param caller the calling endpoint
     * @return an immutable set containing the peers
     */

@@ -142,7 +142,7 @@ public final class MicroscopeModel {
    public boolean isModified() {
       return modified_;
    }
-   
+
    public void setModified(boolean mod) {
       modified_ = mod;
    }
@@ -155,6 +155,12 @@ public final class MicroscopeModel {
       fileName_ = fname;
    }
 
+   /**
+    * Devices currently known to the core will be loaded int our model.
+    *
+    * @param core Usually singleton instance of the Micro-Manager core
+    * @throws Exception Core throws unspecified exceptions
+    */
    public void loadDeviceDataFromHardware(CMMCore core) throws Exception {
       for (Device dev : devices_) {
          dev.loadDataFromHardware(core);
@@ -166,6 +172,12 @@ public final class MicroscopeModel {
       }
    }
 
+   /**
+    * Loads labels from state devices from the core.
+    *
+    * @param core Usually singleton instance of the Micro-Manager Core
+    * @throws Exception Core throws unspecfied Exceptions
+    */
    public void loadStateLabelsFromHardware(CMMCore core) throws Exception {
       for (Device dev : devices_) {
          // do not override existing device labels:
@@ -204,7 +216,7 @@ public final class MicroscopeModel {
             if (!isLibraryAvailable(libs.get(i))) {
                // log each loaded device name
                ReportingUtils.logMessage(libs.get(i));
-               
+
                Device[] devs = new Device[0];
                try {
                   devs = Device.getLibraryContents(libs.get(i), core);
@@ -281,7 +293,7 @@ public final class MicroscopeModel {
    public Device[] getAvailableSerialPorts() {
       return availableComPorts_;
    }
-   
+
    public String[] getBadLibraries() {
       return badLibraries_.toArray(new String[badLibraries_.size()]);
    }
@@ -311,24 +323,35 @@ public final class MicroscopeModel {
       }
    }
 
+   /**
+    * Adds a (setup) property to the device in our model.
+    *
+    * @param deviceName device to which the property belongs
+    * @param prop property to be added
+    * @throws MMConfigFileException thrown if device is not found
+    */
    public void addSetupProperty(String deviceName, PropertyItem prop)
          throws MMConfigFileException {
       Device dev = findDevice(deviceName);
       if (dev == null) {
          throw new MMConfigFileException("Device " + deviceName
                + " not defined.");
-
       }
       PropertyItem p = dev.findSetupProperty(prop.name);
       if (p == null) {
          dev.addSetupProperty(prop);
-
       } else {
          p.value = prop.value;
-
       }
    }
 
+   /**
+    * Adds a Label to a device in our model.
+    *
+    * @param deviceName Device to which the label will be added
+    * @param lab Label to be added.
+    * @throws MMConfigFileException thrown when device is not found in the model.
+    */
    public void addSetupLabel(String deviceName, Label lab)
          throws MMConfigFileException {
       // find the device
@@ -345,15 +368,16 @@ public final class MicroscopeModel {
     * Transfer to hardware all labels defined in the setup.
     *
     * @param core The Micro-Manager core hardware interface.
-    * @throws Exception
+    * @throws Exception Core throws unspecified exceptions
     */
    public void applySetupLabelsToHardware(CMMCore core) throws Exception {
       for (Device dev : devices_) {
          Label[] setupLabels = dev.getAllSetupLabels();
          for (int j = 0; j < setupLabels.length; j++) {
-            String defaultName =  "State-" + setupLabels[j].state_;
-            if (!setupLabels[j].label_.equals(defaultName))
+            String defaultName = "State-" + setupLabels[j].state_;
+            if (!setupLabels[j].label_.equals(defaultName)) {
                core.defineStateLabel(dev.getName(), setupLabels[j].state_, setupLabels[j].label_);
+            }
          }
       }
    }
@@ -362,7 +386,7 @@ public final class MicroscopeModel {
     * Transfer to hardware all configuration settings defined in the setup.
     *
     * @param core The Micro-Manager core hardware interface
-    * @throws Exception
+    * @throws Exception Core throws unspecified exceptions
     */
    public void applySetupConfigsToHardware(CMMCore core) throws Exception {
       // first clear any existing configurations
@@ -393,8 +417,8 @@ public final class MicroscopeModel {
    /**
     * Copy the configuration presets from the hardware and override the current
     * setup data.
-    * 
-    * @throws MMConfigFileException
+    *
+    * @throws MMConfigFileException thrown when an exception occurs.
     */
    public void createSetupConfigsFromHardware(CMMCore core)
          throws MMConfigFileException {
@@ -429,14 +453,14 @@ public final class MicroscopeModel {
 
    /**
     * Updates labels in configs in memory in the model.
-    * 
+    *
     * @param deviceName Name of the device
-    * @param oldLabel old label
-    * @param newLabel new label
+    * @param oldLabel   old label
+    * @param newLabel   new label
     */
    public void updateLabelsInPreset(String deviceName, String oldLabel, String newLabel) {
-      for (Enumeration<ConfigGroup> e = configGroups_.elements(); 
-              e.hasMoreElements(); ) {
+      for (Enumeration<ConfigGroup> e = configGroups_.elements();
+            e.hasMoreElements(); ) {
          ConfigGroup grp = e.nextElement();
          ConfigPreset[] cps = grp.getConfigPresets();
          for (ConfigPreset cp : cps) {
@@ -451,12 +475,12 @@ public final class MicroscopeModel {
          }
       }
    }
-      
+
    /**
     * Copy the configuration presets from the hardware and override the current
     * setup data.
-    * 
-    * @throws MMConfigFileException
+    *
+    * @throws MMConfigFileException thrown when any exception occurs
     */
    public void createResolutionsFromHardware(CMMCore core)
          throws MMConfigFileException {
@@ -557,7 +581,7 @@ public final class MicroscopeModel {
                devices_.add(dev);
             } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_Property()))) {
-                  
+
                // -------------------------------------------------------------
                // "PropertyItem" command
                // -------------------------------------------------------------
@@ -654,10 +678,10 @@ public final class MicroscopeModel {
 
                }
                pixelSizeGroup_.addConfigSetting(tokens[1], tokens[2],
-                       tokens[3], tokens[4]);
+                     tokens[3], tokens[4]);
 
             } else if (tokens[0].contentEquals(new StringBuffer()
-                    .append(MMCoreJ.getG_CFGCommand_PixelSize_um()))) {
+                  .append(MMCoreJ.getG_CFGCommand_PixelSize_um()))) {
                // -------------------------------------------------------------
                // "PixelSize" commands
                // -------------------------------------------------------------
@@ -666,9 +690,9 @@ public final class MicroscopeModel {
                   if (cp != null) {
                      cp.setPixelSizeUm(Double.parseDouble(tokens[2]));
                   }
-               } 
-            }  else if (tokens[0].contentEquals(new StringBuffer()
-                    .append(MMCoreJ.getG_CFGCommand_PixelSizeAffine()))) {
+               }
+            } else if (tokens[0].contentEquals(new StringBuffer()
+                  .append(MMCoreJ.getG_CFGCommand_PixelSizeAffine()))) {
                if (tokens.length == 8) {
                   ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
                   if (cp != null) {
@@ -680,7 +704,7 @@ public final class MicroscopeModel {
                   } else {
 
                      throw new MMConfigFileException(
-                             "Invalid number of parameters (3 or 8 required):\n" + line);
+                           "Invalid number of parameters (3 or 8 required):\n" + line);
                   }
                }
             } else if (tokens[0].contentEquals(new StringBuffer()
@@ -906,7 +930,7 @@ public final class MicroscopeModel {
          }
          out.newLine();
 
-         
+
          // initialize
          out.write("# Initialize");
          out.newLine();
@@ -1073,7 +1097,6 @@ public final class MicroscopeModel {
 
    /**
     * Display report for the current configuration.
-    * 
     */
    public void dumpSetupConf() {
       ReportingUtils.logMessage("\nStep 1: load devices");
@@ -1189,7 +1212,7 @@ public final class MicroscopeModel {
       Device[] devs = new Device[len];
       return devs;
    }
-   
+
    public Device[] getChildDevices(Device hub) {
       ArrayList<Device> children = new ArrayList<>();
       for (Device device : devices_) {
@@ -1197,7 +1220,7 @@ public final class MicroscopeModel {
             children.add(device);
          }
       }
-      
+
       return children.toArray(new Device[children.size()]);
    }
 
@@ -1230,15 +1253,15 @@ public final class MicroscopeModel {
    public void removeDevice(String devName) {
       Device dev = findDevice(devName);
       if (dev != null) {
-         
+
          // find port associated with this device
          String port = dev.getPort();
-         
+
          // remove device
          devices_.remove(dev);
-         
+
          // if there is a port, check if it is in use by other devices
-         if (! (port.length() == 0)) {
+         if (!(port.length() == 0)) {
             boolean inUse = false;
             for (Device device : devices_) {
                String port2 = device.getPort();
@@ -1250,7 +1273,7 @@ public final class MicroscopeModel {
                comPortInUse_.remove(port);
             }
          }
-         
+
          modified_ = true;
       }
    }
@@ -1274,7 +1297,7 @@ public final class MicroscopeModel {
       }
       return false;
    }
-   
+
    boolean hasAdapterName(String library, String hubName, String adapterName) {
       for (Device dev : devices_) {
          if (dev.getAdapterName().contentEquals(adapterName)
@@ -1285,7 +1308,7 @@ public final class MicroscopeModel {
       }
       return false;
    }
-   
+
    Device findSerialPort(String name) {
       for (Device device : availableComPorts_) {
          if (device.getName().contentEquals(
@@ -1368,7 +1391,7 @@ public final class MicroscopeModel {
    }
 
    public void setDeviceSetupProperty(String devName, String propName,
-         String value) throws MMConfigFileException {
+                                      String value) throws MMConfigFileException {
       Device c = findDevice(devName);
       if (c == null) {
          throw new MMConfigFileException("Device " + devName
@@ -1442,8 +1465,8 @@ public final class MicroscopeModel {
       sendConfiguration_ = value;
    }
 
-   public void AddSelectedPeripherals(CMMCore c, Vector<Device> pd,
-         Vector<String> hubs, Vector<Boolean> sel) {
+   public void addSelectedPeripherals(CMMCore c, Vector<Device> pd,
+                                      Vector<String> hubs, Vector<Boolean> sel) {
       for (int idit = 0; idit < pd.size(); ++idit) {
          if (sel.get(idit)) {
             Device newDev = new Device(pd.get(idit).getName(), pd.get(idit)
@@ -1490,7 +1513,7 @@ public final class MicroscopeModel {
             c.setParentLabel(device.getName(), device.getParentHub());
          }
       }
-      
+
       // find if any of the ports are being used
       for (Device device : devs) {
          for (int j = 0; j < device.getNumberOfProperties(); j++) {
@@ -1517,10 +1540,10 @@ public final class MicroscopeModel {
     * This method attempts to initialize all devices in a model, simulating what
     * MMCore does upon loading configuration file.
     *
-    * @param core The Micro-Manager hardware abstraction core.
+    * @param core      The Micro-Manager hardware abstraction core.
     * @param amLoading Flag used to synchoinize with Loading Devices GUI elemnt
-    *                   Since we may display a dialog in this function, we need
-    *                   a way to get rid of the Loading Devices message
+    *                  Since we may display a dialog in this function, we need
+    *                  a way to get rid of the Loading Devices message
     */
    public void initializeModel(CMMCore core, AtomicBoolean amLoading) {
 
@@ -1534,7 +1557,7 @@ public final class MicroscopeModel {
                   core.setProperty(portDev.getName(), pi.name, pi.value);
                }
             }
-           
+
             core.initializeDevice(portDev.getName());
             portDev.loadDataFromHardware(core);
          } catch (Exception e) {
@@ -1555,7 +1578,7 @@ public final class MicroscopeModel {
             }
          }
       }
-      
+
       // initialize hubs first
       for (Device d : new ArrayList<>(devices_)) {
          if (d.isHub() && !d.isInitialized()) {
@@ -1582,20 +1605,20 @@ public final class MicroscopeModel {
             }
          }
       }
-      
+
       // then remaining devices
       for (Device d : new ArrayList<>(devices_)) {
          if (!d.isInitialized() && !d.isCore()) {
-            try { 
+            try {
                String parentHub = d.getParentHub();
                if (!(parentHub.length() == 0)) {
                   core.setParentLabel(d.getName(), parentHub);
                }
-               
+
                core.initializeDevice(d.getName());
                d.loadDataFromHardware(core);
                d.setInitialized(true);
-            } catch (Exception e) {               
+            } catch (Exception e) {
                amLoading.set(false);
                int sel = JOptionPane.showConfirmDialog(null,
                      e.getMessage() + "\nRemove device " + d.getName() + " from the list?",

@@ -28,8 +28,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.ImageIcon;
@@ -50,14 +48,14 @@ import org.micromanager.internal.utils.GUIUtils;
 public final class AboutDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private final JTextArea versionInfo_;
-   
-   public static String COPYRIGHT_TEXT = 
+
+   public static String COPYRIGHT_TEXT =
          "Copyright University of California San Francisco, 2010-2021. All rights reserved.\n\n"
-         + "Additional copyright on portions of this software by the following institutions, "
-         + "projects or individuals: Wayne Rasband, NIH, Joachim Walter, BeanShell, JSON, "
-         + "logix4u, libserial, boost.org, Todd Klark, Ramon de Klein, "
-         + "MIT, University of Dundee, Board of Regents of the University of Wisconsin-Madison, "
-         + "Glencoe Software, and  SLF4J";
+               + "Additional copyright on portions of this software by the following institutions, "
+               + "projects or individuals: Wayne Rasband, NIH, Joachim Walter, BeanShell, JSON, "
+               + "logix4u, libserial, boost.org, Todd Klark, Ramon de Klein, MIT, "
+               + "University of Dundee, Board of Regents of the University of Wisconsin-Madison, "
+               + "Glencoe Software, and  SLF4J";
 
    /**
     * Creates the About Micro-Manager dialog.
@@ -72,7 +70,7 @@ public final class AboutDlg extends JDialog {
       setModal(true);
       getContentPane().setLayout(null);
       setTitle("About Micro-Manager");
-      
+
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       setLocation(screenSize.width / 2 - (winSize.width / 2),
             screenSize.height / 2 - (winSize.height / 2));
@@ -92,14 +90,17 @@ public final class AboutDlg extends JDialog {
       final JLabel citeUs = new JLabel();
       citeUs.setFont(new Font("Arial", Font.PLAIN, 10));
       citeUs.setBorder(new LineBorder(Color.black, 1, false));
-      citeUs.setText("<html>If you've found this software useful, please <a href=\"https://micro-manager.org/wiki/Citing_Micro-Manager\">cite Micro-Manager</a> in your publications.");
+      citeUs.setText(
+            "<html>If you've found this software useful, please <a href=\"https://micro-manager.org/wiki/Citing_Micro-Manager\">cite Micro-Manager</a> in your publications.");
       citeUs.setBounds(5, 277, 368, 40);
       // When users click on the citation plea, we spawn a new thread to send
       // their browser to the MM wiki.
       citeUs.addMouseListener(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
-            new Thread(GUIUtils.makeURLRunnable("https://micro-manager.org/wiki/Citing_Micro-Manager")).start();
+            new Thread(
+                  GUIUtils.makeURLRunnable("https://micro-manager.org/wiki/Citing_Micro-Manager"))
+                  .start();
          }
       });
       getContentPane().add(citeUs);
@@ -123,7 +124,8 @@ public final class AboutDlg extends JDialog {
       contactInfoTextArea.setEditable(false);
       contactInfoTextArea.setBorder(new LineBorder(Color.black, 1, false));
       contactInfoTextArea.setFont(new Font("Courier New", Font.PLAIN, 12));
-      contactInfoTextArea.setText(" Website & Docs: https://micro-manager.org\n Support:        https://forum.image.sc\n                 (tag micro-manager)");
+      contactInfoTextArea.setText(
+            " Website & Docs: https://micro-manager.org\n Support:        https://forum.image.sc\n                 (tag micro-manager)");
       contactInfoTextArea.setBounds(5, 219, 368, 47);
       getContentPane().add(contactInfoTextArea);
 
@@ -145,7 +147,7 @@ public final class AboutDlg extends JDialog {
       welcomeTextArea.setBounds(5, 126, 368, 87);
       getContentPane().add(welcomeTextArea);
    }
-   
+
    public void setVersionInfo(String verText) {
       versionInfo_.setText(verText);
    }

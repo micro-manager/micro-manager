@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.profile.internal;
 
 import com.google.common.collect.Lists;
@@ -17,8 +18,8 @@ import org.micromanager.PropertyMaps;
 
 /**
  * The profile and profile index container file formats.
- * <p>
- * This defines the property map representation for profiles and the profile
+ *
+ * <p>This defines the property map representation for profiles and the profile
  * index.
  * It does not deal with the actual contents (settings/preferences) of a
  * profile.
@@ -60,10 +61,10 @@ final class UserProfileFileFormat {
          for (IndexEntry entry : entries_) {
             entries.add(entry.toPropertyMap());
          }
-         return PropertyMaps.builder().
-               putString(KEY_FORMAT, PROFILE_INDEX_FORMAT).
-               putPropertyMapList(KEY_PROFILES, entries).
-               build();
+         return PropertyMaps.builder()
+               .putString(KEY_FORMAT, PROFILE_INDEX_FORMAT)
+               .putPropertyMapList(KEY_PROFILES, entries)
+               .build();
       }
 
       List<IndexEntry> getEntries() {
@@ -89,11 +90,11 @@ final class UserProfileFileFormat {
       }
 
       PropertyMap toPropertyMap() {
-         return PropertyMaps.builder().
-               putUUID(KEY_UUID, uuid_).
-               putString(KEY_NAME, name_).
-               putString(KEY_FILE, filename_).
-               build();
+         return PropertyMaps.builder()
+               .putUUID(KEY_UUID, uuid_)
+               .putString(KEY_NAME, name_)
+               .putString(KEY_FILE, filename_)
+               .build();
       }
 
       UUID getUUID() {
@@ -133,13 +134,13 @@ final class UserProfileFileFormat {
       }
 
       PropertyMap toPropertyMap() {
-         return PropertyMaps.builder().
-               putString(KEY_FORMAT, PROFILE_FORMAT).
-               putString(KEY_LAST_SAVED,
+         return PropertyMaps.builder()
+               .putString(KEY_FORMAT, PROFILE_FORMAT)
+               .putString(KEY_LAST_SAVED,
                      new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").
-                           format(new Date())).
-               putPropertyMap(KEY_PREFS, settings_).
-               build();
+                           format(new Date()))
+               .putPropertyMap(KEY_PREFS, settings_)
+               .build();
       }
 
       PropertyMap getSettings() {

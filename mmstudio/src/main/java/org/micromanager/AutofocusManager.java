@@ -71,7 +71,6 @@ public interface AutofocusManager {
 
    /**
     * Initializes all known autofocus plugins.
-    *
     */
    void initialize();
 }

@@ -27,7 +27,8 @@ public final class ChannelCellRenderer extends JLabel implements TableCellRender
 
    @Override
    public Component getTableCellRendererComponent(JTable table, Object value,
-           boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
+                                                  boolean isSelected, boolean hasFocus,
+                                                  int rowIndex, int colIndex) {
 
       ChannelTableModel model = (ChannelTableModel) table.getModel();
       ArrayList<ChannelSpec> channels = model.getChannels();

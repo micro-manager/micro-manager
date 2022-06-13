@@ -28,18 +28,28 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 
-
+/**
+ * List of Pixel Size Calibrations.
+ */
 public final class CalibrationList {
    private final ArrayList<Calibration> calibrationList_;
    private String label_;
    private final CMMCore core_;
-   
+
+   /**
+    * Constructs Pixel Size Calibration list based on data provided by the Core.
+    *
+    * @param core MM Core instance
+    */
    public CalibrationList(final CMMCore core) {
       calibrationList_ = new ArrayList<>();
       label_ = "Undefined";
       core_ = core;
    }
 
+   /**
+    * Asks the Core for the Pixel Size Calibrations it knows about.
+    */
    public void getCalibrationsFromCore() {
       calibrationList_.clear();
       StrVector calibrations = core_.getAvailablePixelSizeConfigs();
@@ -56,10 +66,12 @@ public final class CalibrationList {
          }
       }
    }
-   
+
    /**
+    * Finds a Calibration that matches the current system state, or null if none was found.
+    *
     * @return index of active calibration in the list or null if not found
-    *         or an error occurred
+    *     or an error occurred
     */
    public Integer getActiveCalibration() {
       try {
@@ -72,10 +84,10 @@ public final class CalibrationList {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-      
+
       return null;
    }
-   
+
    /**
     * Add one Calibration to the list.
     *
@@ -84,7 +96,7 @@ public final class CalibrationList {
    public void add(Calibration cl) {
       calibrationList_.add(cl);
    }
-   
+
    /**
     * Number of calibrations.
     *
@@ -93,7 +105,7 @@ public final class CalibrationList {
    public int size() {
       return calibrationList_.size();
    }
-   
+
    /**
     * Returns calibration  based on index.
     *

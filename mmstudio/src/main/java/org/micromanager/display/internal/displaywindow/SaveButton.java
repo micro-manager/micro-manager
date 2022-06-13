@@ -57,7 +57,8 @@ public final class SaveButton extends JButton {
                   // TODO: save button should never have been shown
                   // For now, just log
                   ReportingUtils.logError(
-                        "Programming error! Save button pressed, but non-writeable DataProvider found.");
+                        "Programming error! Save button pressed, but non-writeable "
+                              + "DataProvider found.");
                }
             } catch (IOException ex) {
                studio.logs().showError(ex, "Failed to save data to " + savePath);

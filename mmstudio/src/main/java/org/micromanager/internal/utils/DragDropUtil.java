@@ -39,11 +39,10 @@ import org.micromanager.internal.menus.FileMenu;
 
 /**
  * Handler for drop events in Micro-Manager.
- * Checks if files or folders are dropped onto Micro-Manager, and 
+ * Checks if files or folders are dropped onto Micro-Manager, and
  * tries to open them.
  *
  * @author Nico Stuurman
- * 
  */
 public final class DragDropUtil implements DropTargetListener {
    private final Studio studio_;
@@ -104,8 +103,8 @@ public final class DragDropUtil implements DropTargetListener {
                return;
             }
          }
-      } catch (UnsupportedFlavorException ex) {
-      } catch (IOException ex) {
+      } catch (UnsupportedFlavorException | IOException ex) {
+         studio_.logs().logError(ex);
       }
    }
 

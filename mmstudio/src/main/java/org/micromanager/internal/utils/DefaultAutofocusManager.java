@@ -56,7 +56,7 @@ public final class DefaultAutofocusManager implements AutofocusManager {
       studio_ = studio;
       settings_ = studio.profile().getSettings(this.getClass());
    }
-   
+
    @Override
    public void setAutofocusMethod(AutofocusPlugin plugin) {
       currentAfDevice_ = plugin;
@@ -130,7 +130,7 @@ public final class DefaultAutofocusManager implements AutofocusManager {
       if (!found && afs_.size() > 0) {
          currentAfDevice_ = afs_.get(0);
       }
-  
+
       // Show new list in Options Dialog
       if (afDlg_ != null) {
          afDlg_.rebuild();

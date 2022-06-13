@@ -55,7 +55,6 @@ public interface DataViewer extends EventPublisher {
     * </ul>
     *
     * @param recipient the object to register
-    *
     * @see #unregisterForEvents(Object)
     */
    @Override
@@ -121,7 +120,7 @@ public interface DataViewer extends EventPublisher {
     *
     * @param originalSettings apply the new settings only if the current
     *                         settings match this
-    * @param newSettings the new settings
+    * @param newSettings      the new settings
     * @return whether the new settings were applied
     */
    boolean compareAndSetDisplaySettings(
@@ -144,7 +143,7 @@ public interface DataViewer extends EventPublisher {
     * Retrieve the datastore backing this viewer.
     *
     * @return the datastore backing this viewer, or {@code null} if this viewer
-    *          is backed by a data provider that is not a datastore
+    *     is backed by a data provider that is not a datastore
     * @deprecated use {@link #getDataProvider()} instead
     */
    @Deprecated
@@ -169,11 +168,10 @@ public interface DataViewer extends EventPublisher {
     * position, even if it has not been applied to the UI.
     * </p>
     *
-    * @param position the coordinates of the images to display
+    * @param position       the coordinates of the images to display
     * @param forceRedisplay if true, assume the image(s) at the position may
     *                       have changed even if the position does not differ
     *                       from the current one
-    *
     * @see #compareAndSetDisplaySettings(DisplaySettings, DisplaySettings)
     */
    void setDisplayPosition(Coords position, boolean forceRedisplay);
@@ -222,14 +220,14 @@ public interface DataViewer extends EventPublisher {
     *
     * @param originalPosition apply the new position only if the current
     *                         position matches this one
-    * @param newPosition the new display position
-    * @param forceRedisplay if true, assume the image(s) at the position may
-    *                       have changed even if the position does not differ
-    *                       from the current one
+    * @param newPosition      the new display position
+    * @param forceRedisplay   if true, assume the image(s) at the position may
+    *                         have changed even if the position does not differ
+    *                         from the current one
     * @return whether the new position was applied
     */
    boolean compareAndSetDisplayPosition(Coords originalPosition,
-         Coords newPosition, boolean forceRedisplay);
+                                        Coords newPosition, boolean forceRedisplay);
 
    /**
     * Set the display position only if the current position is the expected one.
@@ -241,11 +239,11 @@ public interface DataViewer extends EventPublisher {
     * as the current display position.
     *
     * @param originalPosition Original display position
-    * @param newPosition New display position
+    * @param newPosition      New display position
     * @return ??
     */
    boolean compareAndSetDisplayPosition(Coords originalPosition,
-         Coords newPosition);
+                                        Coords newPosition);
 
    /**
     * Obsolete equivalent of {@link #setDisplayPosition(Coords)}.
@@ -304,23 +302,23 @@ public interface DataViewer extends EventPublisher {
     * @return a string labeling this display
     */
    String getName();
-   
+
    /**
     * Listeners will be notified of important events of the DataViewer.
     *
     * @param listener - that will be notified
     * @param priority - determines the order in which listeners will be called.
-    *       the lower the number, the earlier the listener will be called.  If the
-    *       priority matches a previously added listener, the previously added listener
-    *       will be called first
+    *                 the lower the number, the earlier the listener will be called.  If the
+    *                 priority matches a previously added listener, the previously added listener
+    *                 will be called first
     */
    void addListener(DataViewerListener listener, int priority);
-   
+
    /**
     * No longer notify this listener.
     *
     * @param listener - that will no longer be notified
     */
    void removeListener(DataViewerListener listener);
-   
+
 }

@@ -125,7 +125,7 @@ import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
  * @author Mark A. Tsuchida
  */
 public final class DisplayUIController implements Closeable, WindowListener,
-        MDScrollBarPanel.Listener {
+      MDScrollBarPanel.Listener {
    private final Studio studio_;
    private DisplayController displayController_;
    private AnimationController<Coords> animationController_;
@@ -166,25 +166,25 @@ public final class DisplayUIController implements Closeable, WindowListener,
    // We need to look up in both directions, and don't need the efficiency of
    // a map for the small number of elements, so use lists of pairs.
    private final List<Map.Entry<String, JToggleButton>> axisAnimationButtons_ =
-           new ArrayList<>();
+         new ArrayList<>();
    private final List<Map.Entry<String, PopupButton>> axisPositionButtons_ =
-           new ArrayList<>();
+         new ArrayList<>();
    private List<Map.Entry<String, PopupButton>> axisLinkButtons_ =
-           new ArrayList<>();
+         new ArrayList<>();
    private final List<Map.Entry<String, JButton>> axisLockButtons_ =
-           new ArrayList<>();
+         new ArrayList<>();
 
    private static final Icon PLAY_ICON = IconLoader.getIcon(
-           "/org/micromanager/icons/play.png");
+         "/org/micromanager/icons/play.png");
    private static final Icon PAUSE_ICON = IconLoader.getIcon(
-           "/org/micromanager/icons/pause.png");
+         "/org/micromanager/icons/pause.png");
    private static final Icon UNLOCKED_ICON = IconLoader.getIcon(
-           "/org/micromanager/icons/lock_open.png");
+         "/org/micromanager/icons/lock_open.png");
    // TODO: Make Icons same size so that they are not moving around when changing
    private static final Icon BLACK_LOCKED_ICON = IconLoader.getIcon(
-           "/org/micromanager/icons/lock_locked.png");
+         "/org/micromanager/icons/lock_locked.png");
    private static final Icon RED_LOCKED_ICON = IconLoader.getIcon(
-           "/org/micromanager/icons/lock_super.png");
+         "/org/micromanager/icons/lock_super.png");
 
    private final Insets buttonInsets_ = new Insets(0, 5, 0, 5);
 
@@ -206,20 +206,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private long lastAnimationIntervalAdjustmentNs_;
 
    private final ScheduledExecutorService scheduledExecutor_ =
-           Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory
-                 .createThreadFactory("DisplayUIController"));
+         Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory
+               .createThreadFactory("DisplayUIController"));
 
    // Display rate estimation
    private static final int DISPLAY_INTERVAL_SMOOTH_N_SAMPLES = 50;
    private final AtomicBoolean repaintScheduledForNewImages_ =
-           new AtomicBoolean(false);
+         new AtomicBoolean(false);
    private final AtomicReference<TimeIntervalRunningQuantile>
-           displayIntervalEstimator_ =
-           new AtomicReference<>(TimeIntervalRunningQuantile.create(
-                   DISPLAY_INTERVAL_SMOOTH_N_SAMPLES));
+         displayIntervalEstimator_ =
+         new AtomicReference<>(TimeIntervalRunningQuantile.create(
+               DISPLAY_INTERVAL_SMOOTH_N_SAMPLES));
 
    private CoalescentEDTRunnablePool runnablePool_ =
-           CoalescentEDTRunnablePool.create();
+         CoalescentEDTRunnablePool.create();
 
    private PerformanceMonitor perfMon_;
 
@@ -239,7 +239,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                                      DisplayWindowControlsFactory controlsFactory,
                                      AnimationController<Coords> animationController) {
       DisplayUIController instance = new DisplayUIController(studio, parent,
-              controlsFactory, animationController);
+            controlsFactory, animationController);
       parent.registerForEvents(instance);
       studio.events().registerForEvents(instance);
       instance.frame_.addWindowListener(instance);
@@ -271,7 +271,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (!fullScreen) {
          frame = new JFrame("image display window");
          frame.setIconImage(Toolkit.getDefaultToolkit().getImage(
-                 getClass().getResource("/org/micromanager/icons/microscope.gif")));
+               getClass().getResource("/org/micromanager/icons/microscope.gif")));
          frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
          frame.setBounds(320, 320, 480, 320);
          WindowPositioning.setUpBoundsMemory(frame, frame.getClass(), null);
@@ -305,7 +305,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          frame.setUndecorated(true);
          frame.setResizable(false);
          frame.setBounds(
-                 GUIUtils.getFullScreenBounds(frame_.getGraphicsConfiguration()));
+               GUIUtils.getFullScreenBounds(frame_.getGraphicsConfiguration()));
          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
       }
       setTitle(frame);
@@ -383,8 +383,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private JPanel buildInitialUI() {
       JPanel contentPanel = new JPanel();
       contentPanel.setLayout(new MigLayout("insets 1, gap 1 1, fill",
-              "[grow, fill]",
-              "[] 0 [grow, fill] related []"));
+            "[grow, fill]",
+            "[] 0 [grow, fill] related []"));
 
       canvasPanel_ = new JPanel(new MigLayout("insets 0, fill"));
       noImagesMessageLabel_ = new JLabel("Waiting for Image...");
@@ -400,7 +400,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       // Prevent controls from getting obscured by shrinking the frame
       int minWidth = Math.max(topControlPanel_.getMinimumSize().width,
-              bottomControlPanel_.getMinimumSize().width);
+            bottomControlPanel_.getMinimumSize().width);
       int minHeight = topControlPanel_.getMinimumSize().height
             + MIN_CANVAS_HEIGHT
             + bottomControlPanel_.getMinimumSize().height;
@@ -430,7 +430,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       canvasBorderPanel_ = new JPanel(new MigLayout("insets 0, fill"));
       canvasBorderPanel_.setBorder(BorderFactory.createLineBorder(
-              Color.BLACK, BORDER_THICKNESS));
+            Color.BLACK, BORDER_THICKNESS));
       canvasBorderPanel_.add(ijBridge_.getIJImageCanvas());
       canvasPanel_.add(canvasBorderPanel_, "align center");
 
@@ -460,7 +460,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @MustCallOnEDT
    private JComponent buildTopControls() {
       final JPanel panel = makeValidationRootJPanel(
-              new MigLayout("insets 0, gap 1 1, fillx"));
+            new MigLayout("insets 0, gap 1 1, fillx"));
       final JPanel buttonPanel = new JPanel(new MigLayout("insets 0, gap 1 1"));
 
       fullScreenButton_ = new JButton();
@@ -472,7 +472,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       buttonPanel.add(fullScreenButton_);
 
       zoomInButton_ = new JButton(
-              IconLoader.getIcon("/org/micromanager/icons/zoom_in.png"));
+            IconLoader.getIcon("/org/micromanager/icons/zoom_in.png"));
       zoomInButton_.setToolTipText("Zoom in");
       zoomInButton_.addActionListener((ActionEvent e) -> {
          zoomIn();
@@ -481,7 +481,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       buttonPanel.add(zoomInButton_);
 
       zoomOutButton_ = new JButton(
-              IconLoader.getIcon("/org/micromanager/icons/zoom_out.png"));
+            IconLoader.getIcon("/org/micromanager/icons/zoom_out.png"));
       zoomOutButton_.setToolTipText("Zoom out");
       zoomOutButton_.addActionListener((ActionEvent e) -> {
          zoomOut();
@@ -501,7 +501,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @MustCallOnEDT
    private JComponent buildBottomControls() {
       final JPanel panel = makeValidationRootJPanel(
-              new MigLayout(new LC().insets("1").gridGap("0", "0").fillX()));
+            new MigLayout(new LC().insets("1").gridGap("0", "0").fillX()));
 
 
       pixelInfoLabel_ = new JLabel(" ");
@@ -518,9 +518,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       playbackFpsButton_ = PopupButton.create("", playbackFpsSpinner_);
       playbackFpsButton_.setFont(playbackFpsButton_.getFont().deriveFont(10.0f));
       int width = 24 + playbackFpsButton_.getFontMetrics(
-              playbackFpsButton_.getFont()).stringWidth("Playback: 9999.0 fps");
+            playbackFpsButton_.getFont()).stringWidth("Playback: 9999.0 fps");
       Dimension fpsButtonSize = new Dimension(width,
-              pixelInfoLabel_.getPreferredSize().height + 12);
+            pixelInfoLabel_.getPreferredSize().height + 12);
       playbackFpsButton_.setMinimumSize(fpsButtonSize);
       playbackFpsButton_.setMaximumSize(fpsButtonSize);
       playbackFpsButton_.setPreferredSize(fpsButtonSize);
@@ -533,16 +533,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
       panel.add(playbackFpsButton_, new CC().hideMode(2).wrap());
 
       MDScrollBarPanel.ControlsFactory leftFactory =
-              this::makeScrollBarLeftControls;
+            this::makeScrollBarLeftControls;
       MDScrollBarPanel.ControlsFactory rightFactory =
-              this::makeScrollBarRightControls;
+            this::makeScrollBarRightControls;
       scrollBarPanel_ = MDScrollBarPanel.create(leftFactory, rightFactory);
       scrollBarPanel_.addListener(this);
       panel.add(scrollBarPanel_, new CC().growX().pushX().split(2).wrap());
 
 
       JPanel customControlsPanel =
-              new JPanel(new MigLayout(new LC().insets("0").gridGap("1", "0")));
+            new JPanel(new MigLayout(new LC().insets("0").gridGap("1", "0")));
       if (controlsFactory_ != null) {
          for (Component c : controlsFactory_.makeControls(displayController_)) {
             customControlsPanel.add(c);
@@ -581,7 +581,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @MustCallOnEDT
    private JComponent makeScrollBarLeftControls(final String axis, final int height) {
       JPanel ret = new JPanel(new MigLayout(
-              new LC().insets("0").gridGap("0", "0").fillX()));
+            new LC().insets("0").gridGap("0", "0").fillX()));
 
       JToggleButton animateButton = null;
       for (Map.Entry<String, JToggleButton> e : axisAnimationButtons_) {
@@ -612,7 +612,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.setMargin(buttonInsets_);
          animateButton.addActionListener(this::handleAxisAnimateButton);
          axisAnimationButtons_.add(new AbstractMap.SimpleEntry<>(
-                 axis, animateButton));
+               axis, animateButton));
       }
       ret.add(animateButton, new CC());
 
@@ -648,7 +648,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          positionButton.setPreferredSize(size);
          positionButton.setMargin(buttonInsets_);
          axisPositionButtons_.add(new AbstractMap.SimpleEntry<>(
-                 axis, positionButton));
+               axis, positionButton));
       }
       ret.add(positionButton, new CC());
 
@@ -658,7 +658,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @MustCallOnEDT
    private JComponent makeScrollBarRightControls(final String axis, int height) {
       JPanel ret = new JPanel(new MigLayout(
-              new LC().insets("0").gridGap("0", "0").fillX()));
+            new LC().insets("0").gridGap("0", "0").fillX()));
 
       PopupButton linkButton = null;
       for (Map.Entry<String, PopupButton> e : axisLinkButtons_) {
@@ -669,11 +669,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       if (linkButton == null) {
          final AxisLinker linker = AxisLinker.create(
-                 displayController_.getLinkManager(),
-                 displayController_, axis);
+               displayController_.getLinkManager(),
+               displayController_, axis);
          final JPopupMenu linkPopup = new JPopupMenu();
          linkButton = PopupButton.create(IconLoader.getIcon(
-                 "/org/micromanager/icons/linkflat.png"), linkPopup);
+               "/org/micromanager/icons/linkflat.png"), linkPopup);
          linkButton.addPopupButtonListener((PopupButton button) -> {
             linker.updatePopupMenu(linkPopup);
          });
@@ -707,7 +707,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          // TODO: Right-click menu
          // lockButton.setComponentPopupMenu(new JPopupMenu());
          axisLockButtons_.add(new AbstractMap.SimpleEntry<>(
-                 axis, lockButton));
+               axis, lockButton));
       }
 
       ret.add(lockButton, new CC());
@@ -768,9 +768,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       for (int i = 0; i < scrollableAxes.size(); ++i) {
          final String currentAxis = scrollableAxes.get(i);
          scrollBarPanel_.setAxisLength(currentAxis,
-                 scrollableLengths.get(currentAxis));
+               scrollableLengths.get(currentAxis));
          updateAxisPositionIndicator(currentAxis, -1,
-                 scrollableLengths.get(currentAxis));
+               scrollableLengths.get(currentAxis));
       }
 
       playbackFpsButton_.setVisible(!scrollableAxes.isEmpty());
@@ -896,18 +896,18 @@ public final class DisplayUIController implements Closeable, WindowListener,
                      sb.append(NumberUtils.doubleToDisplayString(hrs, 0))
                            .append(":")
                            .append(NumberUtils.doubleToDisplayString(
-                                     (elapsedTimeMs % (hrs * 3600000)) / 60000.0, 0))
+                                 (elapsedTimeMs % (hrs * 3600000)) / 60000.0, 0))
                            .append("hr ");
                   } else if (elapsedTimeMs > 60000) {
                      int mins = (int) (elapsedTimeMs / 60000);
                      sb.append(NumberUtils.doubleToDisplayString(mins, 0))
                            .append(":")
                            .append(NumberUtils.doubleToDisplayString(
-                                     (elapsedTimeMs % (mins * 60000)) / 1000.0, 0))
+                                 (elapsedTimeMs % (mins * 60000)) / 1000.0, 0))
                            .append("min ");
                   } else if (elapsedTimeMs > 10000) {
                      sb.append(NumberUtils.doubleToDisplayString(
-                             (elapsedTimeMs / 1000), 1)).append("s ");
+                           (elapsedTimeMs / 1000), 1)).append("s ");
                   } else {
                      sb.append(elapsedTimeMs).append("ms ");
                   }
@@ -947,7 +947,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       int nChannels = ijBridge_.getIJNumberOfChannels();
       boolean autostretch = settings.isAutostretchEnabled()
-              && displayedImages_ != null;
+            && displayedImages_ != null;
 
       // NS 2018-02-05: RGB display is quite broken, and it is unclear to me
       // what the intentions are.  For now, at least get images to display, and
@@ -993,14 +993,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
          for (int i = 0; i < nChannels; ++i) {
             ChannelDisplaySettings channelSettings
-                    = settings.getChannelSettings(i);
+                  = settings.getChannelSettings(i);
             // Update RememberedSettings for this channel.
             // We update color only, but unfortunately, we get called here
             // also when other things change
             // TODO: should all channeldisplaysetting changes be remembered?
             ChannelDisplaySettings rememberedSettings =
-                    RememberedDisplaySettings.loadChannel(studio_,
-                            channelSettings.getGroupName(), channelSettings.getName(), null);
+                  RememberedDisplaySettings.loadChannel(studio_,
+                        channelSettings.getGroupName(), channelSettings.getName(), null);
             if (!rememberedSettings.getColor().equals(channelSettings.getColor())) {
                // To ensure that we do not respond to the event posted by us
                // (which will result in a continuous loop), remember our event
@@ -1012,9 +1012,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
                // In other words, this is a bit of a feeble construction, and it
                // is not so clear the current behavior is desirable.
                channelColorEvent_ = new ChannelColorEvent(
-                       channelSettings.getGroupName(),
-                       channelSettings.getName(),
-                       channelSettings.getColor());
+                     channelSettings.getGroupName(),
+                     channelSettings.getName(),
+                     channelSettings.getColor());
                studio_.events().post(channelColorEvent_);
             }
             RememberedDisplaySettings.storeChannel(studio_,
@@ -1023,14 +1023,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   rememberedSettings.copyBuilder().color(channelSettings.getColor()).build());
 
             ComponentDisplaySettings componentSettings =
-                    channelSettings.getComponentSettings(0);
+                  channelSettings.getComponentSettings(0);
             // TODO: Remember changes in component display settings?
             ijBridge_.mm2ijSetChannelColor(i, channelSettings.getColor());
             if (!autostretch) {
                int max = Math.max(1, (int) Math.min(Integer.MAX_VALUE,
-                       componentSettings.getScalingMaximum()));
+                     componentSettings.getScalingMaximum()));
                int min = (int) Math.min(max - 1,
-                       componentSettings.getScalingMinimum());
+                     componentSettings.getScalingMinimum());
                ijBridge_.mm2ijSetIntensityScaling(i, min, max);
             }
             double gamma = componentSettings.getScalingGamma();
@@ -1053,11 +1053,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // for (int i = 0; i < nComponents; ++i) {
             int i = 0;
             ComponentDisplaySettings componentSettings
-                    = settings.getChannelSettings(0).getComponentSettings(i);
+                  = settings.getChannelSettings(0).getComponentSettings(i);
             int max = Math.min(Integer.MAX_VALUE,
-                    (int) componentSettings.getScalingMaximum());
+                  (int) componentSettings.getScalingMaximum());
             int min = Math.max(1, (Math.min(max - 1,
-                    (int) componentSettings.getScalingMinimum())));
+                  (int) componentSettings.getScalingMinimum())));
             max = Math.max(min + 1, max);
             ijBridge_.mm2ijSetIntensityScaling(i, min, max);
             //}
@@ -1096,7 +1096,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             ImageStats stats = images.getResult().get(statsIndex);
             long min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
             long max = Math.min(Integer.MAX_VALUE,
-                    stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
+                  stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
             // NS 2019-05-29: This should not be done here, but in IntegerComponentsStats
             // however, I do not understand that code enough to touch it....
             // This at least fixes the display somewhat (showing black for
@@ -1119,7 +1119,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // more than a little bit excessive to do that on every autostrech update
             // so we take the shortcut here
             DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings)
-                    settings.getChannelSettings(i).getComponentSettings(0);
+                  settings.getChannelSettings(i).getComponentSettings(0);
             dcds.setScalingMinimum(min);
             dcds.setScalingMaximum(max);
             ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
@@ -1187,7 +1187,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       for (Map.Entry<String, PopupButton> e : axisPositionButtons_) {
          if (axis.equals(e.getKey())) {
             e.getValue().setText(String.format("% 5d/% 5d",
-                    checkedPosition + 1, checkedLength));
+                  checkedPosition + 1, checkedLength));
             if (!animationController_.isAnimating()) {
                JComponent popup = e.getValue().getPopupComponent();
                if (popup instanceof JSpinner) {
@@ -1239,7 +1239,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
          fullScreenButton_.setText("Exit Full Screen");
          fullScreenButton_.setIcon(IconLoader.getIcon(
-                 "/org/micromanager/icons/windowed.png"));
+               "/org/micromanager/icons/windowed.png"));
          fullScreenButton_.setToolTipText("Exit full screen mode");
       } else {
          if (isFullScreenMode()) {
@@ -1255,7 +1255,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
          fullScreenButton_.setText(null);
          fullScreenButton_.setIcon(IconLoader.getIcon(
-                 "/org/micromanager/icons/fullscreen.png"));
+               "/org/micromanager/icons/fullscreen.png"));
          fullScreenButton_.setToolTipText("View in full screen mode");
       }
       if (reactivateWindow) {
@@ -1359,14 +1359,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
          Insets frameInsets = fullScreenFrame_.getInsets();
          final int MARGIN = 16;
          int newCanvasWidth = Math.min(canvasMaxSize.width,
-                 fullScreenFrame_.getWidth()
-                       - frameInsets.left
-                       - frameInsets.right
-                       - MARGIN);
+               fullScreenFrame_.getWidth()
+                     - frameInsets.left
+                     - frameInsets.right
+                     - MARGIN);
          int newCanvasHeight = Math.min(canvasMaxSize.height,
-                 canvasPanel_.getHeight() - MARGIN);
+               canvasPanel_.getHeight() - MARGIN);
          ijBridge_.getIJImageCanvas().setPreferredSize(
-                 new Dimension(newCanvasWidth, newCanvasHeight));
+               new Dimension(newCanvasWidth, newCanvasHeight));
          ijBridge_.getIJImageCanvas().invalidate();
          // Although we don't want to pack, it is essential to call validate
          // here, despite the call to invalidate; otherwise the AWT component
@@ -1375,21 +1375,21 @@ public final class DisplayUIController implements Closeable, WindowListener,
       } else {
          GraphicsConfiguration gConfig = frame_.getGraphicsConfiguration();
          Rectangle screenBounds = Geometry.insettedRectangle(
-                 gConfig.getBounds(),
-                 Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
+               gConfig.getBounds(),
+               Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
 
          Insets frameInsets = frame_.getInsets();
          int newCanvasWidth = Math.min(canvasMaxSize.width,
-                 screenBounds.x + screenBounds.width - frameInsets.left - frameInsets.right
-                       - 2 * BORDER_THICKNESS - frame_.getX());
+               screenBounds.x + screenBounds.width - frameInsets.left - frameInsets.right
+                     - 2 * BORDER_THICKNESS - frame_.getX());
          int newCanvasHeight = Math.min(canvasMaxSize.height,
-                 screenBounds.y + screenBounds.height - frameInsets.top - frameInsets.bottom
-                       - 2 * BORDER_THICKNESS
-                       - topControlPanel_.getSize().height
-                       - bottomControlPanel_.getSize().height
-                       - frame_.getY());
+               screenBounds.y + screenBounds.height - frameInsets.top - frameInsets.bottom
+                     - 2 * BORDER_THICKNESS
+                     - topControlPanel_.getSize().height
+                     - bottomControlPanel_.getSize().height
+                     - frame_.getY());
          ijBridge_.getIJImageCanvas().setPreferredSize(
-                 new Dimension(newCanvasWidth, newCanvasHeight));
+               new Dimension(newCanvasWidth, newCanvasHeight));
          ijBridge_.getIJImageCanvas().invalidate();
 
          frame_.pack(); // Includes validation
@@ -1476,13 +1476,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
    public void mouseEventOnImage(final MouseEvent e, final Rectangle imageLocation,
                                  final int ijToolId) {
       displayController_.postDisplayEvent(new DisplayMouseEvent(
-              e, imageLocation, ijToolId));
+            e, imageLocation, ijToolId));
       switch (e.getID()) {
          case MouseEvent.MOUSE_MOVED:
          case MouseEvent.MOUSE_ENTERED:
          case MouseEvent.MOUSE_EXITED:
             if (imageLocation == null
-                    || imageLocation.width == 0 || imageLocation.height == 0) {
+                  || imageLocation.width == 0 || imageLocation.height == 0) {
                if (mouseLocationOnImage_ == null) {
                   return;
                }
@@ -1495,6 +1495,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
                mouseLocationOnImage_ = new Rectangle(imageLocation);
                updatePixelInformation();
             }
+            break;
+         default:
+            break;
       }
    }
 
@@ -1505,37 +1508,37 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private void updatePixelInformation() {
       if (displayedImages_ == null || mouseLocationOnImage_ == null) {
          displayController_.postDisplayEvent(
-                 DataViewerMousePixelInfoChangedEvent.createUnavailable());
+               DataViewerMousePixelInfoChangedEvent.createUnavailable());
          return;
       }
 
       List<Image> images = new ArrayList<>(
-              displayedImages_.getRequest().getImages());
+            displayedImages_.getRequest().getImages());
       if (images.isEmpty()) {
          displayController_.postDisplayEvent(
-                 DataViewerMousePixelInfoChangedEvent.createUnavailable());
+               DataViewerMousePixelInfoChangedEvent.createUnavailable());
          return;
       }
 
       // Perhaps we could compute the mean or median pixel info for the rect.
       // But for now we just use the center point.
       final Point center = new Point(
-              mouseLocationOnImage_.x + mouseLocationOnImage_.width / 2,
-              mouseLocationOnImage_.y + mouseLocationOnImage_.height / 2);
+            mouseLocationOnImage_.x + mouseLocationOnImage_.width / 2,
+            mouseLocationOnImage_.y + mouseLocationOnImage_.height / 2);
 
       if (center.y >= images.get(0).getHeight()
             || center.x >= images.get(0).getWidth()) {
          displayController_.postDisplayEvent(
-                 DataViewerMousePixelInfoChangedEvent.createUnavailable());
+               DataViewerMousePixelInfoChangedEvent.createUnavailable());
          return;
       }
 
       if (images.get(0).getCoords().hasAxis(Coords.CHANNEL)) {
          try {
             displayController_.postDisplayEvent(
-                    DataViewerMousePixelInfoChangedEvent
-                          .fromAxesAndImages(center.x, center.y,
-                                    new String[]{Coords.CHANNEL}, images));
+                  DataViewerMousePixelInfoChangedEvent
+                        .fromAxesAndImages(center.x, center.y,
+                              new String[] {Coords.CHANNEL}, images));
          } catch (IllegalArgumentException iea) {
             StringBuilder coordString = new StringBuilder();
             for (Image img : images) {
@@ -1544,12 +1547,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
             ReportingUtils.logError("Request to display mousePixel Info failed for these images : "
                   + coordString);
             displayController_.postDisplayEvent(
-                    DataViewerMousePixelInfoChangedEvent.createUnavailable());
+                  DataViewerMousePixelInfoChangedEvent.createUnavailable());
          }
       } else {
          displayController_.postDisplayEvent(
-                 DataViewerMousePixelInfoChangedEvent.fromImage(
-                         center.x, center.y, images.get(0)));
+               DataViewerMousePixelInfoChangedEvent.fromImage(
+                     center.x, center.y, images.get(0)));
       }
    }
 
@@ -1576,7 +1579,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       for (Overlay overlay : overlays) {
          if (overlay.isVisible()) {
             overlay.paintOverlay(g, destRect, displaySettings,
-                    images, primaryImage, viewPort);
+                  images, primaryImage, viewPort);
          }
       }
    }
@@ -1590,7 +1593,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       // for other reasons. To compute the display rate, we want to count only
       // the former case.
       boolean countAsNewDisplayedImage =
-              repaintScheduledForNewImages_.compareAndSet(true, false);
+            repaintScheduledForNewImages_.compareAndSet(true, false);
       if (countAsNewDisplayedImage) {
          if (perfMon_ != null) {
             perfMon_.sampleTimeInterval("Repaint counted as new display");
@@ -1599,7 +1602,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          displayIntervalEstimator_.get().sample();
          if (displayController_.isAnimating()) {
             adjustAnimationTickIntervalMs(
-                    displayIntervalEstimator_.get().getQuantile(0.5));
+                  displayIntervalEstimator_.get().getQuantile(0.5));
          }
          if (perfMon_ != null) {
             perfMon_.sample("Display interval 25th percentile",
@@ -1639,7 +1642,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       // Limit slew rate (25% per 500 ms)
       int currentSettingMs = animationController_.getTickIntervalMs();
       targetMs = (int) Math.max(0.75 * currentSettingMs,
-              Math.min(1.25 * currentSettingMs, targetMs));
+            Math.min(1.25 * currentSettingMs, targetMs));
 
       animationController_.setTickIntervalMs(targetMs);
       lastAnimationIntervalAdjustmentNs_ = System.nanoTime();
@@ -1715,10 +1718,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
                fps_ = ((nrLiveFramesReceived_ - 1) * 1000.0) / durationMs_;
                if (fps_ < 2.0) {
                   cameraFpsLabel_.setText(String.format(
-                          "Camera: %.3g fps", fps_));
+                        "Camera: %.3g fps", fps_));
                } else {
                   cameraFpsLabel_.setText(String.format(
-                          "Camera: %d fps", (int) fps_));
+                        "Camera: %d fps", (int) fps_));
                }
             }
 
@@ -1778,7 +1781,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    public void resetDisplayIntervalEstimate() {
       displayIntervalEstimator_.set(TimeIntervalRunningQuantile.create(
-              DISPLAY_INTERVAL_SMOOTH_N_SAMPLES));
+            DISPLAY_INTERVAL_SMOOTH_N_SAMPLES));
    }
 
 
@@ -1873,6 +1876,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             }
          }
       } catch (IOException e) {
+         studio_.logs().logError(e);
       }
       return "Unknown pixelType";
    }
@@ -1888,7 +1892,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * <p>This function is only called when the viewer is created or when the pixel
     * size changes
     *
-    * @param images
+    * @param images Images from which to generate info string
     * @return info string in top right of the viewer.
     */
    public String getInfoString(ImagesAndStats images) {
@@ -1902,8 +1906,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          // TODO: is 0 always the right choice?
          pixelSize = images.getRequest().getImage(0).getMetadata().getPixelSizeUm();
          nrBytes = getImageWidth() * getImageHeight()
-                 * images.getRequest().getImage(0).getBytesPerPixel()
-                 * images.getRequest().getImage(0).getNumComponents();
+               * images.getRequest().getImage(0).getBytesPerPixel()
+               * images.getRequest().getImage(0).getNumComponents();
 
       } catch (IOException io) {
          return "Failed to find image";
@@ -1914,7 +1918,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          double heightUm = getImageHeight() * pixelSize;
          infoStringB.append(NumberUtils.doubleToDisplayString(widthUm)).append("x")
                .append(NumberUtils.doubleToDisplayString(heightUm))
-               .append("\u00B5").append("m  ");
+               .append("\u00B5").append("m  "); // Micro-Meter, i.e. micron
       }
 
       infoStringB.append(getImageWidth()).append("x").append(getImageHeight());
@@ -1951,14 +1955,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
       displayController_.setPlaybackAnimationAxes(
-              animatedAxes.toArray(new String[]{}));
+            animatedAxes.toArray(new String[] {}));
    }
 
    private void handleAxisSpinner(String axis, JSpinner spinner, ChangeEvent event) {
       int newPosition = (Integer) spinner.getValue() - 1;
       displayController_.setDisplayPosition(
-              displayController_.getDisplayPosition().copyBuilder()
-                    .index(axis, newPosition).build()
+            displayController_.getDisplayPosition().copyBuilder()
+                  .index(axis, newPosition).build()
       );
    }
 
@@ -2047,7 +2051,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       } else {
          // Adjust window height
          frame_.setSize(frame_.getWidth(),
-                 frame_.getHeight() - oldHeight + newHeight);
+               frame_.getHeight() - oldHeight + newHeight);
          panel.setVisible(true);
          frame_.validate();
          // TODO Move frame up if bottom beyond screen bottom (which means we
@@ -2107,10 +2111,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
 
       pixelInfoLabel_.setText(String.format("%s = %s",
-              e.getXYString(), valuesString));
+            e.getXYString(), valuesString));
       if (pixelInfoLabel_.getSize().width > pixelInfoLabel_.getMinimumSize().width) {
          pixelInfoLabel_.setMinimumSize(new Dimension(
-                 pixelInfoLabel_.getSize().width, 10));
+               pixelInfoLabel_.getSize().width, 10));
       }
    }
 
@@ -2151,11 +2155,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   return;
                }
                ChannelDisplaySettings channelSettings
-                       = oldDisplaySettings.getChannelSettings(index);
+                     = oldDisplaySettings.getChannelSettings(index);
                newDisplaySettings = oldDisplaySettings
                      .copyBuilderWithChannelSettings(index,
-                               channelSettings.copyBuilder().color(
-                                       channelColorEvent.getColor()).build())
+                           channelSettings.copyBuilder().color(
+                                 channelColorEvent.getColor()).build())
                      .build();
             } while (!displayController_.compareAndSetDisplaySettings(
                   oldDisplaySettings, newDisplaySettings));

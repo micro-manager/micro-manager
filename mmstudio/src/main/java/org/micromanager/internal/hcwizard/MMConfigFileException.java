@@ -24,13 +24,12 @@
 package org.micromanager.internal.hcwizard;
 
 /**
- * Configuration file I/O errors. 
- *
+ * Configuration file I/O errors.
  */
 public final class MMConfigFileException extends Exception {
    private static final long serialVersionUID = 1L;
    private Throwable cause;
-   
+
    public MMConfigFileException(final String message) {
       super(message);
    }

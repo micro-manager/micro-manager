@@ -18,6 +18,7 @@ import java.util.Arrays;
 
 /**
  * Statistics of a single color component of an image; immutable.
+ *
  * @author Mark A. Tsuchida
  */
 public final class IntegerComponentStats {
@@ -29,7 +30,7 @@ public final class IntegerComponentStats {
    private final long maximum_;
    private final long sum_;
    private final long sumOfSquares_;
-   private transient final long[] cumulativeDistrib_;
+   private final transient long[] cumulativeDistrib_;
 
    public static class Builder {
       private long[] histogram_;
@@ -91,8 +92,8 @@ public final class IntegerComponentStats {
    }
 
    private IntegerComponentStats(Builder b) {
-      histogram_ = b.histogram_ != null ?
-            Arrays.copyOf(b.histogram_, b.histogram_.length) :
+      histogram_ = b.histogram_ != null
+            ? Arrays.copyOf(b.histogram_, b.histogram_.length) :
             null;
       binWidthPowerOf2_ = b.binWidthPowerOf2_;
       pixelCount_ = b.pixelCount_;
@@ -218,8 +219,7 @@ public final class IntegerComponentStats {
       // need to find the exact edge of the non-zero part of the histogram.
       if (countBelowQuantile == 0) {
          return minimum_;
-      }
-      else if (countBelowQuantile == pixelCount_) {
+      } else if (countBelowQuantile == pixelCount_) {
          return maximum_ + 1;
       }
 
@@ -229,8 +229,8 @@ public final class IntegerComponentStats {
       int binWidth = getHistogramBinWidth();
       long leftEdge = (binIndex - 1) * binWidth;
       double binFraction =
-            (countBelowQuantile - cumDistrib[binIndex - 1]) /
-            (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
+            (countBelowQuantile - cumDistrib[binIndex - 1])
+                  / (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
       return leftEdge + binFraction * binWidth;
    }
 
@@ -251,16 +251,14 @@ public final class IntegerComponentStats {
    }
 
    private int binarySearch(long[] sorted, int startIndex, int endIndex,
-         long value)
-   {
+                            long value) {
       if (endIndex - startIndex <= 1) {
          return startIndex;
       }
       int middleIndex = (startIndex + endIndex) / 2;
       if (value >= sorted[middleIndex - 1]) {
          return binarySearch(sorted, middleIndex, endIndex, value);
-      }
-      else {
+      } else {
          return binarySearch(sorted, startIndex, middleIndex, value);
       }
    }

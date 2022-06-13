@@ -40,13 +40,13 @@ public interface SnapLiveManager {
     * snap.
     *
     * @param shouldDisplay If true, then the snapped images will be added to
-    *        the Snap/Live display's Datastore and displayed. Note that the
-    *        displayed images will be run through the current application data
-    *        processing pipeline (if any) prior to display. Consequently, there
-    *        is no guarantee that a Snap/Live display window will be open after
-    *        calling snap(), even if shouldDisplay is set to true. If you want
-    *        to know when the display is visible, call
-    *        getDislay().waitUntilVisible() after calling snap().
+    *                      the Snap/Live display's Datastore and displayed. Note that the
+    *                      displayed images will be run through the current application data
+    *                      processing pipeline (if any) prior to display. Consequently, there
+    *                      is no guarantee that a Snap/Live display window will be open after
+    *                      calling snap(), even if shouldDisplay is set to true. If you want
+    *                      to know when the display is visible, call
+    *                      getDislay().waitUntilVisible() after calling snap().
     * @return A list of acquired Images from the snap.
     */
    List<Image> snap(boolean shouldDisplay);
@@ -71,7 +71,7 @@ public interface SnapLiveManager {
     * bus.
     *
     * @param on If true, then live mode will be activated; otherwise it will
-    *        be halted.
+    *           be halted.
     */
    void setLiveModeOn(boolean on);
 
@@ -95,8 +95,8 @@ public interface SnapLiveManager {
     * expectation is that live mode is only suspended for very brief periods.
     *
     * @param shouldSuspend If true, then live mode will be halted if it is
-    *        running. If false, and live mode was running when
-    *        setSuspended(true) was called, then live mode will be restarted.
+    *                      running. If false, and live mode was running when
+    *                      setSuspended(true) was called, then live mode will be restarted.
     */
    void setSuspended(boolean shouldSuspend);
 

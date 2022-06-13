@@ -54,14 +54,13 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
    private final PixelCalibratorDialog dialog_;
    private DialogFrame dialogFrame_;
    private DisplayController dc_;
-   
+
    private final JLabel explanationLabel_;
    private Point2D.Double initialStagePosition_;
    private final Point2D[] points_;
 
    private int counter_;
 
-   
 
    ManualSimpleCalibrationThread(Studio studio, PixelCalibratorDialog dialog) {
       studio_ = studio;
@@ -80,7 +79,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       final ManualSimpleCalibrationThread instance = this;
       result_ = null;
       counter_ = 0;
-      
+
       try {
          initialStagePosition_ = core_.getXYStagePosition();
       } catch (Exception ex) {
@@ -90,7 +89,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          return;
       }
 
-      SwingUtilities.invokeLater(() -> dialogFrame_  = new DialogFrame(instance));
+      SwingUtilities.invokeLater(() -> dialogFrame_ = new DialogFrame(instance));
 
       //running_.set(true);
       DisplayWindow display = studio_.live().getDisplay();
@@ -134,7 +133,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       if (dme.getEvent().getClickCount() == 1
             && dme.getEvent().getButton() == 1) {
          int modifiersEx = dme.getEvent().getModifiersEx();
-         boolean pressed  =
+         boolean pressed =
                InputEvent.BUTTON1_DOWN_MASK == (modifiersEx & InputEvent.BUTTON1_DOWN_MASK);
          if (pressed) {
             points_[counter_] = dme.getCenterLocation();
@@ -142,20 +141,20 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
             String label1Text = "";
             try {
                int minSize = (int) Math.min(
-                       core_.getImageWidth(), core_.getImageHeight());
+                     core_.getImageWidth(), core_.getImageHeight());
                int nrPixels = minSize / 4;
                switch (counter_) {
                   case 0:
                      points_[counter_] = dme.getCenterLocation();
                      core_.setRelativeXYPosition(d * nrPixels, 0.0);
                      label1Text = "<html>Perfect!  <br><br>The stage was moved " + d * nrPixels
-                             + " microns along the x axis.<br><br>" + " Click on the same object";
+                           + " microns along the x axis.<br><br>" + " Click on the same object";
                      break;
                   case 1:
                      points_[counter_] = dme.getCenterLocation();
                      core_.setRelativeXYPosition(-d * nrPixels, d * nrPixels);
                      label1Text = "<html>Nice!  <br><br>The stage was moved " + d * nrPixels
-                             + " microns along the y axis.<br><br>" + " Click on the same object";
+                           + " microns along the y axis.<br><br>" + " Click on the same object";
                      break;
                   case 2:
                      points_[counter_] = dme.getCenterLocation();
@@ -163,10 +162,10 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
                      // Done!  now calculate affine transform, and ask the user
                      // if OK.
                      counter_ = 0;
-                     super.result_ = calculateAffineTransform(d,  points_);
+                     super.result_ = calculateAffineTransform(d, points_);
                      if (result_ == null) {
                         label1Text = "<html>Could not figure out orientation. <br><br>"
-                             + "Try again?<br><br>";
+                              + "Try again?<br><br>";
                         if (dialogFrame_ != null) {
                            dialogFrame_.setLabelText(label1Text);
                            dialogFrame_.setOKButtonVisible(true);
@@ -196,13 +195,13 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       }
    }
 
-   
+
    private AffineTransform calculateAffineTransform(double pixelSize, Point2D[] points) {
       AffineTransform at = AffineUtils.doubleToAffine(AffineUtils.noTransform());
       boolean rotate = Math.abs(points[1].getX() - points[0].getX())
             < Math.abs(points[1].getY() - points[0].getY());
       // sanity check for rotate
-      if (! (rotate == Math.abs(points[2].getY() - points[0].getY())
+      if (!(rotate == Math.abs(points[2].getY() - points[0].getY())
             < Math.abs(points[2].getX() - points[0].getX()))) {
          return null;
       }
@@ -225,12 +224,12 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
             yDirection = 1;
          }
       }
-      
+
       at.scale(xDirection * pixelSize, yDirection * pixelSize);
       if (rotate) {
          at.rotate(-Math.PI * 0.5);
       }
-            
+
       return at;
    }
 
@@ -239,7 +238,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       private static final long serialVersionUID = -7944616693940334489L;
       private final Object caller_;
       private final JButton okButton_;
-      
+
       public DialogFrame(Object caller) {
          caller_ = caller;
          super.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -251,15 +250,15 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          });
          super.setLayout(new MigLayout());
          final String label1Text = "<html>This method creates an affine transform based on"
-                 + " a <br>pixelSize of "
-                 + NumberUtils.doubleToDisplayString(dialog_.getCalibratedPixelSize() * 1000.0)
-                 + " nm per pixel.  If this is not "
-                 + "correct, <br>please cancel and first set the correct pixelSize.<br><br>"
-                 + "Focus the image in the Preview window and use the <br>mouse pointer to click "
-                 + "on an object somewhere <br>near the center of the image.";
+               + " a <br>pixelSize of "
+               + NumberUtils.doubleToDisplayString(dialog_.getCalibratedPixelSize() * 1000.0)
+               + " nm per pixel.  If this is not "
+               + "correct, <br>please cancel and first set the correct pixelSize.<br><br>"
+               + "Focus the image in the Preview window and use the <br>mouse pointer to click "
+               + "on an object somewhere <br>near the center of the image.";
          explanationLabel_.setText(label1Text);
          super.add(explanationLabel_, "span 2, wrap");
-         
+
          okButton_ = new JButton("OK");
          okButton_.addActionListener(ae -> {
             counter_ = 0;
@@ -268,18 +267,18 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          });
          okButton_.setVisible(false);
          super.add(okButton_, "tag ok");
-         
+
          JButton cancelButton = new JButton("Cancel");
          cancelButton.addActionListener(e -> dispose());
          super.add(cancelButton, "tag cancel, wrap");
          super.pack();
          super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-                 getClass().getResource("/org/micromanager/icons/microscope.gif")));
+               getClass().getResource("/org/micromanager/icons/microscope.gif")));
          super.setLocation(200, 200);
          WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
          super.setVisible(true);
       }
-      
+
       public void setLabelText(String newText) {
          if (!SwingUtilities.isEventDispatchThread()) {
             SwingUtilities.invokeLater(() -> setLabelText(newText));
@@ -299,7 +298,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          //running_.set(false);
          dialog_.calibrationFailed(true);
       }
-      
+
       public void setOKButtonVisible(boolean visible) {
          okButton_.setVisible(visible);
       }
@@ -314,7 +313,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
    synchronized void setProgress(int value) {
       progress_ = value;
    }
-   
+
    private class CalibrationFailedException extends Exception {
 
       private static final long serialVersionUID = 4749723616733251885L;

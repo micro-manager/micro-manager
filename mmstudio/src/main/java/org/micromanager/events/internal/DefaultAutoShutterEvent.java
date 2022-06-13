@@ -24,8 +24,8 @@ import org.micromanager.events.AutoShutterEvent;
 
 
 /**
- *  This event is posted on the Studio event bus, so subscribe it using
- *  {@link org.micromanager.events.EventManager}.
+ * This event is posted on the Studio event bus, so subscribe it using
+ * {@link org.micromanager.events.EventManager}.
  */
 public final class DefaultAutoShutterEvent implements AutoShutterEvent {
    private final boolean isAutoOn_;

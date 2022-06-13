@@ -6,17 +6,17 @@ public final class MMScriptException extends Exception {
    private static final String MSG_PREFIX = "MMScript error: ";
 
    public MMScriptException(String message) {
-       super(MSG_PREFIX + message);
+      super(MSG_PREFIX + message);
    }
 
    public MMScriptException(Throwable t) {
-       super(MSG_PREFIX + t.getMessage());
-       this.cause = t;
+      super(MSG_PREFIX + t.getMessage());
+      this.cause = t;
    }
 
    @Override
    public Throwable getCause() {
-       return this.cause;
+      return this.cause;
    }
 
 }

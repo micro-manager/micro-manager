@@ -67,12 +67,12 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
    /**
     * Constructor only sets essential member values.
     *
-    * @param studio Implementation of Studio
-    * @param engine Implementation of the acquisition engine.
+    * @param studio    Implementation of Studio
+    * @param engine    Implementation of the acquisition engine.
     * @param mdaDialog The MDA dialog.
     */
    public DefaultAcquisitionManager(Studio studio,
-         AcquisitionWrapperEngine engine, AcqControlDlg mdaDialog) {
+                                    AcquisitionWrapperEngine engine, AcqControlDlg mdaDialog) {
       studio_ = studio;
       engine_ = engine;
       mdaDialog_ = mdaDialog;
@@ -95,7 +95,8 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
 
    @Override
    public Datastore runAcquisitionWithSettings(SequenceSettings settings,
-         boolean shouldBlock) throws IllegalThreadStateException {
+                                               boolean shouldBlock)
+         throws IllegalThreadStateException {
       return executeAcquisition(settings, shouldBlock);
    }
 
@@ -280,10 +281,10 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          studio_.logs().logError(e);
       }
       return new DefaultSummaryMetadata.Builder()
-         .userName(System.getProperty("user.name"))
-         .profileName(studio_.profile().getProfileName())
-         .computerName(computerName)
-         .build();
+            .userName(System.getProperty("user.name"))
+            .profileName(studio_.profile().getProfileName())
+            .computerName(computerName)
+            .build();
    }
 
    @Override

@@ -39,9 +39,9 @@ public interface ShutterManager {
     * AutoShutterEvent when it is disabled.
     *
     * @param isOpen if true, the shutter will be opened, otherwise it will be
-    *        closed.
+    *               closed.
     * @return true if autoshutter was disabled as a side-effect of calling
-    *         this method; false if autoshutter was already off.
+    *     this method; false if autoshutter was already off.
     * @throws Exception if there was a problem setting the shutter state.
     */
    boolean setShutter(boolean isOpen) throws Exception;
@@ -81,9 +81,9 @@ public interface ShutterManager {
     * This method will post an AutoShutterEvent on the application event bus.
     *
     * @param isAuto if true, then autoshutter is enabled, otherwise it will be
-    *        disabled.
+    *               disabled.
     * @throws Exception if there was an error setting autoshutter or closing
-    *         the shutter.
+    *                   the shutter.
     */
    void setAutoShutter(boolean isAuto) throws Exception;
 

@@ -49,11 +49,13 @@ public final class ColorEditor extends AbstractCellEditor implements TableCellEd
    private final int column_;
    AbstractTableModel model_;
 
+   /**
+    * Set up the editor (from the table's point of view),
+    * which is a button.
+    * This button brings up the color chooser dialog,
+    * which is the editor from the user's point of view.
+    */
    public ColorEditor(AbstractTableModel model, int column) {
-      //Set up the editor (from the table's point of view),
-      //which is a button.
-      //This button brings up the color chooser dialog,
-      //which is the editor from the user's point of view.
       button = new JButton();
       button.setActionCommand(EDIT);
       button.addActionListener(this);
@@ -103,10 +105,10 @@ public final class ColorEditor extends AbstractCellEditor implements TableCellEd
    //Implement the one method defined by TableCellEditor.
    @Override
    public Component getTableCellEditorComponent(JTable table,
-         Object value,
-         boolean isSelected,
-         int row,
-         int column) {
+                                                Object value,
+                                                boolean isSelected,
+                                                int row,
+                                                int column) {
       row_ = row;
       currentColor = (Color) value;
       button.setBackground(currentColor);

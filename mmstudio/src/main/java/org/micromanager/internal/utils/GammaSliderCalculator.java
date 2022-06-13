@@ -36,7 +36,7 @@ public final class GammaSliderCalculator {
    int high_ = 100;
 
    Hashtable<Integer, Double> gammas_;
-   Hashtable<Double, Integer>  values_;
+   Hashtable<Double, Integer> values_;
 
    public GammaSliderCalculator(int low, int high) {
       gammas_ = new Hashtable<>(high - low + 1, 1.0f);
@@ -102,7 +102,7 @@ public final class GammaSliderCalculator {
    }
 
    private double calculateGamma10(double x) {
-      return  c0_ + (c1_ * x) + (c2_ * x * x) + (c3_ * x * x * x);
+      return c0_ + (c1_ * x) + (c2_ * x * x) + (c3_ * x * x * x);
    }
 
    /*
@@ -114,8 +114,8 @@ public final class GammaSliderCalculator {
       while (Math.abs(calculateGamma10(estimate) - gamma) > 0.002 && i < 5) {
          double denominator = (3 * c3_ * estimate * estimate) + (2 * c2_ * estimate) + c1_;
          estimate -= (calculateGamma10(estimate) - gamma) / denominator;
-         i++;                                                                
-      }                                                                      
-      return (int) (10 * estimate);                                          
+         i++;
+      }
+      return (int) (10 * estimate);
    }
 }

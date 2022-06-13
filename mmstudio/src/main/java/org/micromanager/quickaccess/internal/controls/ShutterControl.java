@@ -79,7 +79,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-               "/org/micromanager/icons/shutter_open.png"));
+            "/org/micromanager/icons/shutter_open.png"));
    }
 
    // We are not actually configurable; config is ignored.
@@ -105,10 +105,12 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
          public void onShutter(ShutterEvent event) {
             updateIcon(icon, studio);
          }
+
          @Subscribe
          public void onAutoShutter(AutoShutterEvent event) {
             updateIcon(icon, studio);
          }
+
          @Subscribe
          public void onGUIRefresh(GUIRefreshEvent event) {
             updateIcon(icon, studio);
@@ -123,8 +125,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
                   studio.shutter().setAutoShutter(false);
                }
                studio.shutter().setShutter(!studio.shutter().getShutter());
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                studio.logs().logError(ex, "Error toggling shutter icon");
             }
          }
@@ -155,8 +156,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
          tooltip += ". Click to open or close the shutter.";
          icon.setIcon(IconLoader.getIcon(path));
          icon.setToolTipText(tooltip);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio.logs().logError(e, "Unable to update shutter state display");
       }
    }
@@ -169,11 +169,12 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
       // Must create a separate object to register for events, because
       // otherwise the Java compiler complains when we modify "toggle" that
       // it might not have been initialized.
-      Object registrant = new Object() {
+      final Object registrant = new Object() {
          @Subscribe
          public void onAutoShutter(AutoShutterEvent event) {
             toggle.setSelected(event.getAutoShutter());
          }
+
          @Subscribe
          public void onGUIRefresh(GUIRefreshEvent event) {
             toggle.setSelected(studio.shutter().getAutoShutter());
@@ -186,8 +187,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
          public void actionPerformed(ActionEvent e) {
             try {
                studio.shutter().setAutoShutter(toggle.isSelected());
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                studio.logs().showError(ex, "Error setting auto shutter");
             }
          }
@@ -209,7 +209,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
       // Must create a separate object to register for events, because
       // otherwise the Java compiler complains when we modify "button" that
       // it might not have been initialized.
-      Object registrant = new Object() {
+      final Object registrant = new Object() {
          @Subscribe
          public void onShutter(ShutterEvent event) {
             button.setText(event.getShutter() ? "Close" : "Open");
@@ -224,8 +224,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
          public void onGUIRefresh(GUIRefreshEvent event) {
             try {
                button.setText(studio.shutter().getShutter() ? "Close" : "Open");
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                studio.logs().logError(e, "Error getting shutter state");
             }
             button.setEnabled(!studio.shutter().getAutoShutter());
@@ -234,8 +233,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
       button.setEnabled(!studio.shutter().getAutoShutter());
       try {
          button.setText(studio.shutter().getShutter() ? "Close" : "Open");
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio.logs().logError(e, "Unable to get shutter state");
       }
       button.setFont(GUIUtils.buttonFont);
@@ -244,8 +242,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
          public void actionPerformed(ActionEvent e) {
             try {
                studio.shutter().setShutter(!studio.shutter().getShutter());
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                studio.logs().logError(ex, "Unable to toggle shutter");
             }
          }

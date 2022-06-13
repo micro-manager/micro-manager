@@ -62,7 +62,7 @@ public final class RefreshButton extends SimpleButtonPlugin implements SciJavaPl
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-               "/org/micromanager/icons/arrow_refresh.png"));
+            "/org/micromanager/icons/arrow_refresh.png"));
    }
 
    @Override

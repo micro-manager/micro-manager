@@ -10,14 +10,12 @@ import org.micromanager.Studio;
 /**
  * Makes C++ autofocus devices appear similarly to autofocus devices implemented
  * in Java.
- * 
- * 
  */
 public final class CoreAutofocus implements AutofocusPlugin {
 
    private CMMCore core_;
    private String devName_;
-   
+
    public CoreAutofocus() {
    }
 
@@ -78,7 +76,7 @@ public final class CoreAutofocus implements AutofocusPlugin {
          for (int i = 0; i < propNamesVect.size(); i++) {
             if (!core_.isPropertyReadOnly(devName_, propNamesVect.get(i))
                   && !core_.isPropertyPreInit(devName_,
-                        propNamesVect.get(i))) {
+                  propNamesVect.get(i))) {
                propNames.add(propNamesVect.get(i));
             }
          }
@@ -234,12 +232,12 @@ public final class CoreAutofocus implements AutofocusPlugin {
    @Override
    public void setContext(Studio app) {
       core_ = app.getCMMCore();
-      devName_ = core_.getAutoFocusDevice();      
+      devName_ = core_.getAutoFocusDevice();
    }
 
    @Override
    public double computeScore(ImageProcessor impro) {
-      throw new UnsupportedOperationException("Not supported yet."); 
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override

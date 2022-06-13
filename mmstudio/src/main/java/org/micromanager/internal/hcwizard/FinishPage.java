@@ -26,8 +26,6 @@ package org.micromanager.internal.hcwizard;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -42,7 +40,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * The last wizard page.
- *
  */
 public final class FinishPage extends PagePanel {
 
@@ -81,7 +78,8 @@ public final class FinishPage extends PagePanel {
       add(sendCheck_, "wrap");
 
       final JLabel sendConfigExplain = new JLabel(
-            "Sending us your configuration file will help us study how \u00b5Manager is used.");
+            "Sending us your configuration file will help us study how"
+                  + " \u00b5Manager is used."); // Micro-Manager
       sendConfigExplain.setAutoscrolls(true);
       sendConfigExplain.setFont(sendCheck_.getFont());
       add(sendConfigExplain, "wrap");

@@ -111,8 +111,8 @@ public abstract class ConfigDialog extends JDialog {
 
    protected int scrollPaneTop_;
 
-   public ConfigDialog(String groupName, String presetName, Studio studio, 
-           boolean newItem) {
+   public ConfigDialog(String groupName, String presetName, Studio studio,
+                       boolean newItem) {
       super();
       groupName_ = groupName;
       presetName_ = presetName;
@@ -121,7 +121,7 @@ public abstract class ConfigDialog extends JDialog {
       core_ = studio.core();
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowy"));
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       // call loadAndRestorePosition and setMinimumSize from concrete subclasses
    }
 
@@ -193,7 +193,7 @@ public abstract class ConfigDialog extends JDialog {
    }
 
    protected void initializeWidgets() {
-      
+
       if (showFlagsPanelVisible_) {
          flags_.load(ConfigDialog.class);
          Configuration cfg;
@@ -294,16 +294,16 @@ public abstract class ConfigDialog extends JDialog {
 
       if (numColumns_ == 3) {
          table_.addColumn(new TableColumn(0, 200,
-                 new PropertyNameCellRenderer(studio_), null));
+               new PropertyNameCellRenderer(studio_), null));
          table_.addColumn(new TableColumn(1, 75,
-                 new PropertyUsageCellRenderer(studio_), new PropertyUsageCellEditor()));
+               new PropertyUsageCellRenderer(studio_), new PropertyUsageCellEditor()));
          table_.addColumn(new TableColumn(2, 200,
-                 new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(true)));
+               new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(true)));
       } else if (numColumns_ == 2) {
          table_.addColumn(new TableColumn(0, 200,
-                 new PropertyNameCellRenderer(studio_), null));
+               new PropertyNameCellRenderer(studio_), null));
          table_.addColumn(new TableColumn(1, 200,
-                 new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(false)));
+               new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(false)));
       }
    }
 
@@ -315,8 +315,8 @@ public abstract class ConfigDialog extends JDialog {
       super.dispose();
       studio_.app().refreshGUI();
    }
-   
-      
+
+
    /**
     * @param event indicating that shutdown is happening
     */
@@ -326,7 +326,7 @@ public abstract class ConfigDialog extends JDialog {
          dispose();
       }
    }
-   
+
 
    public void update() {
       data_.update(false);
@@ -336,8 +336,8 @@ public abstract class ConfigDialog extends JDialog {
    public void showMessageDialog(String message) {
       JOptionPane.showMessageDialog(this, message);
    }
-   
-   
+
+
    @Subscribe
    public void onPropertiesChanged(PropertiesChangedEvent event) {
       // avoid re-executing a refresh because of callbacks while we are

@@ -26,21 +26,21 @@ package org.micromanager.internal.hcwizard;
 import java.util.Hashtable;
 
 /**
- * Configuration group encapsulation for use in Configuration Wizard. 
+ * Configuration group encapsulation for use in Configuration Wizard.
  */
 public final class ConfigGroup {
    String name_;
    Hashtable<String, ConfigPreset> configs_;
-   
+
    public ConfigGroup(String name) {
       name_ = name;
       configs_ = new Hashtable<>();
    }
-   
+
    public void addConfigPreset(ConfigPreset p) {
       configs_.put(p.getName(), p);
    }
-   
+
    public String getName() {
       return name_;
    }
@@ -49,9 +49,9 @@ public final class ConfigGroup {
     * Adds a property to a configuration preset.  Will create the preset if not already defined.
     *
     * @param presetName Name of the preset
-    * @param device Name of the device whose property will be added
-    * @param property Property name
-    * @param value Value of the property
+    * @param device     Name of the device whose property will be added
+    * @param property   Property name
+    * @param value      Value of the property
     */
    public void addConfigSetting(String presetName, String device, String property, String value) {
       ConfigPreset cp = configs_.get(presetName);
@@ -59,7 +59,7 @@ public final class ConfigGroup {
          cp = new ConfigPreset(presetName);
          configs_.put(presetName, cp);
       }
-      
+
       cp.addSetting(new Setting(device, property, value));
    }
 
@@ -76,7 +76,7 @@ public final class ConfigGroup {
       }
       return cps;
    }
-   
+
    public String toString() {
       return "Group: " + name_;
    }
@@ -96,7 +96,7 @@ public final class ConfigGroup {
    /**
     * Changes the name of a configuration preset.
     *
-    * @param prs Preset to be renamed.
+    * @param prs  Preset to be renamed.
     * @param name New name of the Preset.
     */
    public void renamePreset(ConfigPreset prs, String name) {
@@ -104,9 +104,9 @@ public final class ConfigGroup {
       prs.setName(name);
       configs_.put(name, prs);
    }
-   
+
    public void clear() {
       configs_.clear();
    }
-   
+
 }

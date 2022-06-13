@@ -36,11 +36,11 @@ import org.micromanager.PropertyMaps;
 
 
 /**
- *
  * @author mark
  */
 public final class PropertyMapJSONSerializer {
-   private PropertyMapJSONSerializer() { }
+   private PropertyMapJSONSerializer() {
+   }
 
    // Gson-serializable
    private static class VersionedMap {
@@ -752,12 +752,12 @@ public final class PropertyMapJSONSerializer {
          implements JsonSerializer<TypeAndValue>, JsonDeserializer<TypeAndValue> {
       @Override
       public JsonElement serialize(TypeAndValue t, Type type,
-            JsonSerializationContext context) {
+                                   JsonSerializationContext context) {
          JsonObject ret = new JsonObject();
          ret.addProperty(Keys.TYPE, t.type.name());
          if (t.array != null) {
             JsonArray ja = new JsonArray();
-            for (Object value :  t.array) {
+            for (Object value : t.array) {
                ja.add(t.type.serialize(value, context));
             }
             ret.add(Keys.ARRAY, ja);
@@ -769,7 +769,8 @@ public final class PropertyMapJSONSerializer {
 
       @Override
       public TypeAndValue deserialize(JsonElement je, Type type,
-            JsonDeserializationContext context) throws JsonParseException {
+                                      JsonDeserializationContext context)
+            throws JsonParseException {
          TypeAndValue tv = new TypeAndValue();
          try {
             JsonObject jo = je.getAsJsonObject();
@@ -796,7 +797,7 @@ public final class PropertyMapJSONSerializer {
          implements JsonSerializer<PropertyMap>, JsonDeserializer<PropertyMap> {
       @Override
       public JsonElement serialize(PropertyMap t, Type type,
-            JsonSerializationContext context) {
+                                   JsonSerializationContext context) {
          JsonObject jo = new JsonObject();
          for (Map.Entry<String, TypeAndValue> e : extractValuesAndTypes(t)) {
             jo.add(e.getKey(), context.serialize(e.getValue()));
@@ -806,7 +807,7 @@ public final class PropertyMapJSONSerializer {
 
       @Override
       public PropertyMap deserialize(JsonElement json, Type typeOfT,
-            JsonDeserializationContext context) throws JsonParseException {
+                                     JsonDeserializationContext context) throws JsonParseException {
          Builder builder = PropertyMaps.builder();
          JsonObject jo = json.getAsJsonObject();
          for (Map.Entry<String, JsonElement> e : jo.entrySet()) {

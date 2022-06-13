@@ -24,9 +24,9 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import net.miginfocom.swing.MigLayout;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
@@ -51,7 +51,7 @@ public final class ControlCell {
    private DraggableIcon icon_;
 
    public ControlCell(Studio studio, QuickAccessFrame frame,
-         QuickAccessPlugin plugin, PropertyMap config, Rectangle rect) {
+                      QuickAccessPlugin plugin, PropertyMap config, Rectangle rect) {
       studio_ = studio;
       plugin_ = plugin;
       config_ = config;
@@ -66,8 +66,7 @@ public final class ControlCell {
          rect_.width = widget.getSize().width;
          rect_.height = widget.getSize().height;
          control = widget.createControl(config);
-      }
-      else {
+      } else {
          control = QuickAccessFactory.makeGUI(plugin);
       }
       panel.add(control, "align center, grow");
@@ -118,7 +117,7 @@ public final class ControlCell {
    }
 
    public static ControlCell fromJSON(JSONObject json, Studio studio,
-         QuickAccessFrame frame) {
+                                      QuickAccessFrame frame) {
       String pluginName = "";
       try {
          pluginName = json.getString("pluginName");
@@ -128,21 +127,19 @@ public final class ControlCell {
             try {
                // Compatibility hack - serialize to JSON string and parse as pmap JSON
                config = PropertyMaps.fromJSON(json.getJSONObject("config").toString());
-            }
-            catch (IOException unexpected) {
-               throw new RuntimeException("Failed to parse pmap JSON created by JSON.org", unexpected);
+            } catch (IOException unexpected) {
+               throw new RuntimeException("Failed to parse pmap JSON created by JSON.org",
+                     unexpected);
             }
          }
          Rectangle rect = new Rectangle(
                json.getInt("rectX"), json.getInt("rectY"),
                json.getInt("rectWidth"), json.getInt("rectHeight"));
          return new ControlCell(studio, frame, plugin, config, rect);
-      }
-      catch (JSONException e) {
+      } catch (JSONException e) {
          studio.logs().logError(e,
                "Unable to deserialize ControlCell from " + json);
-      }
-      catch (NullPointerException e) {
+      } catch (NullPointerException e) {
          studio.logs().logError(e, "Unable to reload plugin " + pluginName);
       }
       return null;

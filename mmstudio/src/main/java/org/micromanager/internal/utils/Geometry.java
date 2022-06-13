@@ -18,11 +18,11 @@ import java.awt.Point;
 import java.awt.Rectangle;
 
 /**
- *
  * @author mark
  */
 public final class Geometry {
-   private Geometry() {} // Noninstantiable
+   private Geometry() {
+   } // Noninstantiable
 
    public static void insetRectangle(Rectangle rect, Insets insets) {
       rect.x += insets.left;

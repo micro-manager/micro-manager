@@ -65,7 +65,7 @@ public abstract class AutofocusBase implements AutofocusPlugin {
       return propName;
 
       //return properties_.keySet().toArray(new String[0]);
-      
+
    }
 
    /**
@@ -101,7 +101,7 @@ public abstract class AutofocusBase implements AutofocusPlugin {
          if (p.name.equals(properties_.get(i).name)) {
             properties_.set(i, p);
             return;
-         } 
+         }
       }
       properties_.add(p);
    }
@@ -135,7 +135,7 @@ public abstract class AutofocusBase implements AutofocusPlugin {
       for (PropertyItem propertyItem : properties_) {
          profile.getSettings(this.getClass()).putString(
                propertyItem.name, propertyItem.value);
-      }      
+      }
    }
 
    /**
@@ -146,7 +146,7 @@ public abstract class AutofocusBase implements AutofocusPlugin {
       for (PropertyItem propertyItem : properties_) {
          propertyItem.value = profile.getSettings(this.getClass())
                .getString(propertyItem.name, propertyItem.value);
-      }      
+      }
    }
 
    /**

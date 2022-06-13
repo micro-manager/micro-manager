@@ -29,11 +29,11 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 /**
- *
  * @author mark
  */
 public final class ColorPalettes {
-   private ColorPalettes() { }
+   private ColorPalettes() {
+   }
 
    public static Color getFromDefaultPalette(int i) {
       return getFromColorblindFriendlyPalette(i);
@@ -74,13 +74,13 @@ public final class ColorPalettes {
    // Selection of the first three colors based on recommendations from
    // Ankur Jain at the Vale lab.
    private static final Color[] COLORBLIND_FRIENDLY_COLORS = new Color[] {
-      new Color(0, 114, 178), // Blue
-      new Color(213,  94,   0), // Vermillion
-      new Color(0, 158, 115), // Bluish Green
-      new Color(230, 159,   0), // Orange
-      new Color(86, 180, 233), // Sky Blue
-      new Color(240, 228,  66), // Yellow
-      new Color(204, 121, 167), // Reddish Purple
+         new Color(0, 114, 178), // Blue
+         new Color(213, 94, 0), // Vermillion
+         new Color(0, 158, 115), // Bluish Green
+         new Color(230, 159, 0), // Orange
+         new Color(86, 180, 233), // Sky Blue
+         new Color(240, 228, 66), // Yellow
+         new Color(204, 121, 167), // Reddish Purple
    };
 
    private static final Color[] PRIMARY_COLORS = new Color[] {
@@ -198,7 +198,7 @@ public final class ColorPalettes {
       float n = 0.45f / (x + y + z);
 
       Color xyzColor = new Color(ColorSpace.getInstance(ColorSpace.CS_CIEXYZ),
-            new float[] { n * x, n * y, n * z }, 1.0f);
+            new float[] {n * x, n * y, n * z}, 1.0f);
       float[] rgb = xyzColor.getColorComponents(
             ColorSpace.getInstance(ColorSpace.CS_sRGB), new float[3]);
       // Scale rgb uniformly so highest sample is 255

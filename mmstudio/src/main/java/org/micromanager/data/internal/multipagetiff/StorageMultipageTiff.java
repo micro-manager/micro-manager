@@ -71,16 +71,15 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
  * Adapted from the TaggedImageStorageMultipageTiff module.
  * TODO: The org.micromanager.data package should not depend on internal code
  * (or any code outside of the package) so that it can be re-used elsewhere.
- *
  */
 public final class StorageMultipageTiff implements Storage {
-   private static final String SHOULD_GENERATE_METADATA_FILE = 
-           "generate a metadata file when saving datasets as multipage TIFF files";
-   private static final String SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS = 
-           "generate a separate multipage TIFF file for each stage position";
+   private static final String SHOULD_GENERATE_METADATA_FILE =
+         "generate a metadata file when saving datasets as multipage TIFF files";
+   private static final String SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS =
+         "generate a separate multipage TIFF file for each stage position";
    private static final HashSet<String> ALLOWED_AXES = new HashSet<>(
          Arrays.asList(Coords.CHANNEL, Coords.T, Coords.Z,
-            Coords.STAGE_POSITION));
+               Coords.STAGE_POSITION));
 
    private final DefaultDatastore store_;
    private final Component parent_;
@@ -104,11 +103,11 @@ public final class StorageMultipageTiff implements Storage {
    // complete data rather than risking a call to
    // MultipageTiffReader.readImage().
    private final ConcurrentHashMap<Coords, Image> coordsToPendingImage_ =
-            new ConcurrentHashMap<>();
+         new ConcurrentHashMap<>();
 
    //map of position indices to objects associated with each
    private HashMap<Integer, FileSet> positionToFileSet_;
-   
+
    //Map of image labels to file 
    private Map<Coords, MultipageTiffReader> coordsToReader_;
    // Cache the axes that are in use
@@ -116,30 +115,31 @@ public final class StorageMultipageTiff implements Storage {
    // Keeps track of our maximum extent along each axis.
    private Coords maxIndices_;
 
-  
-   public StorageMultipageTiff(Component parent, Datastore store, String dir, 
-           Boolean amInWriteMode)
+
+   public StorageMultipageTiff(Component parent, Datastore store, String dir,
+                               Boolean amInWriteMode)
          throws IOException {
       this(parent, store, dir, amInWriteMode, getShouldGenerateMetadataFile(),
             getShouldSplitPositions());
    }
-   
+
    /**
     * Constructor that doesn't make reference to MMStudio so it can be used
     * independently of MM GUI.
     *
-    * @param parent  GUI element on top of which a ProgressBar (or other things) can be displayed
-    * @param store   Datastore to be saved
-    * @param dir     Directory in which to store the data
-    * @param amInWriteMode whether or not we are also writing data
-    * @param separateMDFile   Whether or not to write a separate file with the MM metadata
+    * @param parent                    GUI element on top of which a ProgressBar
+    *                                  (or other things) can be displayed
+    * @param store                     Datastore to be saved
+    * @param dir                       Directory in which to store the data
+    * @param amInWriteMode             whether or not we are also writing data
+    * @param separateMDFile            Whether or not to write a separate file with the MM metadata
     * @param separateFilesForPositions If true, will store positions in separate files,
-    *             otherwise all data will go into a single file
+    *                                  otherwise all data will go into a single file
     * @throws java.io.IOException can happen
     */
    public StorageMultipageTiff(Component parent, Datastore store, String dir,
-         boolean amInWriteMode, boolean separateMDFile,
-         boolean separateFilesForPositions) throws IOException {
+                               boolean amInWriteMode, boolean separateMDFile,
+                               boolean separateFilesForPositions) throws IOException {
       store_ = (DefaultDatastore) store;
       parent_ = parent;
       // We must be notified of changes in the Datastore before everyone else,
@@ -187,7 +187,7 @@ public final class StorageMultipageTiff implements Storage {
          ReportingUtils.logError(e, "Error setting new summary metadata");
       }
    }
-   
+
    public ThreadPoolExecutor getWritingExecutor() {
       return writingExecutor_;
    }
@@ -195,7 +195,7 @@ public final class StorageMultipageTiff implements Storage {
    /**
     * Indicator of Acquisition order.  This function is difficult to name.
     * "First" means that the axis comes before another axis in the ordered axes
-    * list.  Note, however, that the list of ordered axes is exactly the inverse 
+    * list.  Note, however, that the list of ordered axes is exactly the inverse
     * of the Acquisition Order as presented to the user.
     *
     * @return true if slices come before channels in the list of ordered axis
@@ -214,7 +214,7 @@ public final class StorageMultipageTiff implements Storage {
    /**
     * Indicator of Acquisition order.  This function is difficult to name.
     * "First" means that the axis comes before another axis in the ordered axes
-    * list.  Note, however, that the list of ordered axes is exactly the inverse 
+    * list.  Note, however, that the list of ordered axes is exactly the inverse
     * of the Acquisition Order as presented to the user.
     *
     * @return true if time comes before positions in the list of ordered axis
@@ -239,8 +239,8 @@ public final class StorageMultipageTiff implements Storage {
       // Allow operation in headless mode.
       File[] listFiles = dir.listFiles();
       if (!GraphicsEnvironment.isHeadless() && listFiles != null) {
-         progressBar = new ProgressBar(parent_, "Reading " + directory_, 0, 
-                 listFiles.length);
+         progressBar = new ProgressBar(parent_, "Reading " + directory_, 0,
+               listFiles.length);
       }
       int numRead = 0;
       if (progressBar != null) {
@@ -351,8 +351,8 @@ public final class StorageMultipageTiff implements Storage {
       finished();
    }
 
-   private void writeImage(DefaultImage image, boolean waitForWritingToFinish) 
-           throws MMException, InterruptedException, ExecutionException, IOException {
+   private void writeImage(DefaultImage image, boolean waitForWritingToFinish)
+         throws MMException, InterruptedException, ExecutionException, IOException {
       writeImage(image);
       if (waitForWritingToFinish) {
          Future f = writingExecutor_.submit(new Runnable() {
@@ -415,9 +415,9 @@ public final class StorageMultipageTiff implements Storage {
       // initialize writing executor
       if (writingExecutor_ == null) {
          writingExecutor_ = new ThreadPoolExecutor(1, 1, 0,
-                 TimeUnit.NANOSECONDS,
-                 new LinkedBlockingQueue<>(),
-                 ThreadFactoryFactory.createThreadFactory("StorageMultiPageTiff"));
+               TimeUnit.NANOSECONDS,
+               new LinkedBlockingQueue<>(),
+               ThreadFactoryFactory.createThreadFactory("StorageMultiPageTiff"));
       }
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
@@ -435,7 +435,7 @@ public final class StorageMultipageTiff implements Storage {
       if (!positionToFileSet_.containsKey(fileSetIndex)) {
          positionToFileSet_.put(fileSetIndex,
                new FileSet(image, this, omeMetadata_,
-                  splitByXYPosition_, separateMetadataFile_));
+                     splitByXYPosition_, separateMetadataFile_));
       }
       FileSet set = positionToFileSet_.get(fileSetIndex);
 
@@ -587,7 +587,7 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    private void setSummaryMetadata(DefaultSummaryMetadata summary,
-         boolean showProgress) {
+                                   boolean showProgress) {
       summaryMetadata_ = summary;
       summaryMetadataString_ = NonPropertyMapJSONFormats.summaryMetadata()
             .toJSON(summary.toPropertyMap());
@@ -596,8 +596,8 @@ public final class StorageMultipageTiff implements Storage {
       Map<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
       coordsToReader_ = new HashMap<>();
       if (showProgress && !GraphicsEnvironment.isHeadless()) {
-         ProgressBar progressBar = new ProgressBar(parent_, 
-                 "Building image location map", 0, oldImageMap.keySet().size());
+         ProgressBar progressBar = new ProgressBar(parent_,
+               "Building image location map", 0, oldImageMap.keySet().size());
          progressBar.setProgress(0);
          progressBar.setVisible(true);
          int i = 1;
@@ -611,7 +611,7 @@ public final class StorageMultipageTiff implements Storage {
          coordsToReader_.putAll(oldImageMap);
       }
    }
-   
+
    /**
     * This function provides the ImageJ "Properties" information when opening
     * in ImageJ/Fiji.
@@ -662,7 +662,7 @@ public final class StorageMultipageTiff implements Storage {
       // so come up with reasonable defaults
       // DisplaySettings settings = DefaultDisplaySettings.builder().build();
       DisplaySettings settings = getDisplaySettings();
-      
+
       if (numChannels == 1) {
          sb.append("mode=gray\n");
          if (settings != null) {
@@ -697,23 +697,23 @@ public final class StorageMultipageTiff implements Storage {
       sb.append((char) 0);
       return new String(sb);
    }
-   
+
    /**
     * Since we do no longer want to pass through DisplaySettings to the saving code,
     * but still need access to the, to enable saving metadata used by 3rdparty
-    * applications (such as ImageJ/Fiji) to display the data the same way we 
-    * did in MM, we need some ugly heuristics to figure out what DisplaySettings 
+    * applications (such as ImageJ/Fiji) to display the data the same way we
+    * did in MM, we need some ugly heuristics to figure out what DisplaySettings
     * were used.
     *
     * @return DisplaySettings of a DataViewer that used this store for data.
-    *          Will be null when no such DataViewer was found.
+    * Will be null when no such DataViewer was found.
     */
    DisplaySettings getDisplaySettings() {
       MMStudio studio = MMStudio.getInstance();
       DataViewer activeDataViewer = studio.displays().getActiveDataViewer();
       try {
          if (activeDataViewer != null && isViewingOurStore(activeDataViewer)) {
-            
+
             return activeDataViewer.getDisplaySettings();
          } else {
             List<DataViewer> allDataViewers = studio.displays().getAllDataViewers();
@@ -729,8 +729,8 @@ public final class StorageMultipageTiff implements Storage {
       return null;
    }
 
-   /** 
-    * We can not simply test if the viewer's store is the same as ours, 
+   /**
+    * We can not simply test if the viewer's store is the same as ours,
     * since we may be saving a "copy" (i.e., saving a RAMM data set on disk)
     * This is bad, but seems to work alright for now.
     */
@@ -756,7 +756,7 @@ public final class StorageMultipageTiff implements Storage {
             }
          }
          return true;
-         
+
       }
       return false;
    }

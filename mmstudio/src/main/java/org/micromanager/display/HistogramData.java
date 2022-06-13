@@ -46,37 +46,36 @@ public class HistogramData {
    /**
     * Deprecated Histogram constructor.
     *
-    * @param histogram An array of integers indicating how many pixels had
-    *        intensities falling into the "bin" at the given index. The first
-    *        bin always starts from an intensity of 0; the last bin ends with
-    *        an intensity depending on the bitDepth parameter.
-    * @param numSamples The number of pixels used to generate the histogram;
-    *        should be equal to the sum of all values in the histogram.
-    * @param minVal The lowest intensity found when generating the histogram.
-    * @param maxVal The brightest intensity found when generating the
-    *        histogram.
+    * @param histogram           An array of integers indicating how many pixels had
+    *                            intensities falling into the "bin" at the given index. The first
+    *                            bin always starts from an intensity of 0; the last bin ends with
+    *                            an intensity depending on the bitDepth parameter.
+    * @param numSamples          The number of pixels used to generate the histogram;
+    *                            should be equal to the sum of all values in the histogram.
+    * @param minVal              The lowest intensity found when generating the histogram.
+    * @param maxVal              The brightest intensity found when generating the
+    *                            histogram.
     * @param minIgnoringOutliers The lowest intensity when a fraction of the
-    *        lowest samples are ignored. See the extremaPercentage parameter
-    *        of DisplayManager.calculateHistogram().
+    *                            lowest samples are ignored. See the extremaPercentage parameter
+    *                            of DisplayManager.calculateHistogram().
     * @param maxIgnoringOutliers The highest intensity when a fraction of the
-    *        lowest samples are ignored. See the extremaPercentage parameter
-    *        of DisplayManager.calculateHistogram().
-    * @param mean The average intensity of all samples.
-    * @param stdDev The standard deviation of all samples, or -1 if this value
-    *        was not calculated.
-    * @param bitDepth The dynamic range of the histogram. The histogram will
-    *        cover values from 0 to (2^bitDepth - 1), inclusive.
-    * @param binSize How many distinct intensities are combined into a single
-    *        bin in the histogram. For example, if the bit depth is 10 and
-    *        there are 2^8 bins, then there are (2^10 / 2^8 = 4) intensities
-    *        per bin.
-    *
+    *                            lowest samples are ignored. See the extremaPercentage parameter
+    *                            of DisplayManager.calculateHistogram().
+    * @param mean                The average intensity of all samples.
+    * @param stdDev              The standard deviation of all samples, or -1 if this value
+    *                            was not calculated.
+    * @param bitDepth            The dynamic range of the histogram. The histogram will
+    *                            cover values from 0 to (2^bitDepth - 1), inclusive.
+    * @param binSize             How many distinct intensities are combined into a single
+    *                            bin in the histogram. For example, if the bit depth is 10 and
+    *                            there are 2^8 bins, then there are (2^10 / 2^8 = 4) intensities
+    *                            per bin.
     * @throws ArrayIndexOutOfBoundsException if histogram is shorter than correct size
-    * @throws NullPointerException if histogram is null
+    * @throws NullPointerException           if histogram is null
     */
    public HistogramData(int[] histogram, int numSamples, int minVal,
-         int maxVal, int minIgnoringOutliers, int maxIgnoringOutliers,
-         int mean, double stdDev, int bitDepth, int binSize) {
+                        int maxVal, int minIgnoringOutliers, int maxIgnoringOutliers,
+                        int mean, double stdDev, int bitDepth, int binSize) {
       int range = (int) Math.pow(2, bitDepth);
       int numBins = Math.max(1, range / binSize);
       histogram_ = Arrays.copyOfRange(histogram, 0, numBins);
@@ -138,7 +137,7 @@ public class HistogramData {
     * parameter to DisplayManager.calculateHistogram() for more information.
     *
     * @return lowest intensity value in the dataset ignoring given fraction of
-    *         outliers
+    *     outliers
     */
    public int getMinIgnoringOutliers() {
       return minIgnoringOutliers_;
@@ -150,7 +149,7 @@ public class HistogramData {
     * parameter to DisplayManager.calculateHistogram() for more information.
     *
     * @return highest intensity value in the dataset ignoring given fraction of
-    *         outliers
+    *     outliers
     */
    public int getMaxIgnoringOutliers() {
       return maxIgnoringOutliers_;
@@ -177,7 +176,7 @@ public class HistogramData {
    }
 
    /**
-    * Retrieve the bit depth of the dataset. The highest pixel intensity in the 
+    * Retrieve the bit depth of the dataset. The highest pixel intensity in the
     * dataset can not be higher than 2^bitDepth.
     *
     * @return bitdepth of the dataset
@@ -192,7 +191,7 @@ public class HistogramData {
     * hold the number of samples whose intensities were 0, 1, 2, or 3.
     *
     * @return Range of pixel intensities that fit into a single bin in the
-    *         histogram.
+    *     histogram.
     */
    public int getBinSize() {
       return binSize_;

@@ -1,4 +1,3 @@
-
 package org.micromanager.display.inspector.internal.panels.intensity;
 
 import com.google.common.base.Preconditions;
@@ -67,7 +66,7 @@ public class IntensityInspectorPanelController
 
    private final Studio studio_;
    private final JPanel panel_ = new JPanel();
-   
+
    private static boolean expanded_ = true;
 
    private final JPopupMenu gearMenu_ = new JPopupMenu();
@@ -80,7 +79,7 @@ public class IntensityInspectorPanelController
 
       public ColorMenuItem(JCheckBoxMenuItem checkBox, List<Color> colorPalette) {
          checkBox_ = checkBox;
-         colorPalette_ = colorPalette;        
+         colorPalette_ = colorPalette;
       }
 
       public JCheckBoxMenuItem getCheckBox() {
@@ -93,11 +92,11 @@ public class IntensityInspectorPanelController
    }
 
    private final Map<String, ColorMenuItem> colorMenuMap_ =
-           new LinkedHashMap<>(3);
+         new LinkedHashMap<>(3);
    private final JMenu gearMenuUpdateRateSubMenu_ =
          new JMenu("Histogram Update Rate");
-   private final Map<String, Double> histogramMenuMap_ = 
-           new LinkedHashMap<>(6);
+   private final Map<String, Double> histogramMenuMap_ =
+         new LinkedHashMap<>(6);
    private final JCheckBoxMenuItem gearMenuLogYAxisItem_ =
          new JCheckBoxMenuItem("Logarithmic Y Axis");
    private final JCheckBoxMenuItem gearMenuUseROIItem_ =
@@ -115,7 +114,7 @@ public class IntensityInspectorPanelController
          new ArrayList<>();
 
    private DataViewer viewer_;
-   
+
    private List<Color> customPalette_;
 
    private final CoalescentEDTRunnablePool runnablePool_ =
@@ -139,16 +138,16 @@ public class IntensityInspectorPanelController
 
    private void setUpGearMenu() {
       gearMenu_.add(gearMenuLogYAxisItem_);
-      
+
       gearMenu_.add(gearMenuPaletteSubMenu_);
-      colorMenuMap_.put(COLOR_BLIND_FRIENDLY, 
-              new ColorMenuItem(new JCheckBoxMenuItem(COLOR_BLIND_FRIENDLY),
+      colorMenuMap_.put(COLOR_BLIND_FRIENDLY,
+            new ColorMenuItem(new JCheckBoxMenuItem(COLOR_BLIND_FRIENDLY),
                   ColorPalettes.getColorblindFriendlyPalette()));
-      colorMenuMap_.put(RGBCMYW, 
-              new ColorMenuItem(new JCheckBoxMenuItem(RGBCMYW),
+      colorMenuMap_.put(RGBCMYW,
+            new ColorMenuItem(new JCheckBoxMenuItem(RGBCMYW),
                   ColorPalettes.getPrimaryColorPalette()));
       colorMenuMap_.put(CUSTOM, new ColorMenuItem(
-              new JCheckBoxMenuItem(CUSTOM), customPalette_));
+            new JCheckBoxMenuItem(CUSTOM), customPalette_));
       // we do not have a custom palette yet, so disable the menu entry
       colorMenuMap_.get(CUSTOM).getCheckBox().setEnabled(false);
       // TODO: the viewer defaults to the colorblind friendly palette
@@ -164,13 +163,13 @@ public class IntensityInspectorPanelController
                colorMenuMap_.get(key).getCheckBox().setSelected(true);
                // record in profile - even though we do not (yet) use this value
                studio_.profile().getSettings(
-                       IntensityInspectorPanelController.class).putString(
-                               COLOR_PALETTE, key);
+                     IntensityInspectorPanelController.class).putString(
+                     COLOR_PALETTE, key);
             }
          });
          gearMenuPaletteSubMenu_.add(colorMenuMap_.get(key).getCheckBox());
       }
-      
+
       gearMenu_.add(gearMenuUpdateRateSubMenu_);
       // Add/remove items to the histogramSubMenu here
       histogramMenuMap_.put(RATE_EVERY, Double.POSITIVE_INFINITY);
@@ -180,8 +179,8 @@ public class IntensityInspectorPanelController
       histogramMenuMap_.put(RATE_05HZ, 0.5);
       histogramMenuMap_.put(RATE_NEVER, 0.0);
       final String defaultUpdateFrequency = studio_.profile().getSettings(
-              IntensityInspectorPanelController.class).getString(
-                    HISTOGRAM_UPDATE_FREQUENCY, RATE_EVERY);
+            IntensityInspectorPanelController.class).getString(
+            HISTOGRAM_UPDATE_FREQUENCY, RATE_EVERY);
       final List<JCheckBoxMenuItem> histogramMenuItems = new LinkedList<>();
       for (final String hKey : histogramMenuMap_.keySet()) {
          final JCheckBoxMenuItem jcmi = new JCheckBoxMenuItem(hKey);
@@ -200,8 +199,8 @@ public class IntensityInspectorPanelController
             handleHistogramUpdateRate(histogramMenuMap_.get(jbmi.getText()));
             jbmi.setSelected(true);
             studio_.profile().getSettings(
-                    IntensityInspectorPanelController.class).putString(
-                            HISTOGRAM_UPDATE_FREQUENCY, jbmi.getText());
+                  IntensityInspectorPanelController.class).putString(
+                  HISTOGRAM_UPDATE_FREQUENCY, jbmi.getText());
          });
          gearMenuUpdateRateSubMenu_.add(jbmi);
       }
@@ -209,9 +208,9 @@ public class IntensityInspectorPanelController
       gearMenu_.add(gearMenuUseROIItem_);
 
       gearMenuLogYAxisItem_.addActionListener((ActionEvent e) ->
-              handleHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected()));
+            handleHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected()));
       gearMenuUseROIItem_.addActionListener((ActionEvent e) ->
-              handleHistogramUseROI(gearMenuUseROIItem_.isSelected()));
+            handleHistogramUseROI(gearMenuUseROIItem_.isSelected()));
    }
 
    private void setUpGeneralControlPanel() {
@@ -281,12 +280,12 @@ public class IntensityInspectorPanelController
 
          if (viewer_ != null) {
             ChannelIntensityController chanController
-                    = ChannelIntensityController.create(viewer_, i);
+                  = ChannelIntensityController.create(viewer_, i);
             channelControllers_.add(chanController);
             channelHistogramsPanel_.add(chanController.getChannelPanel(),
-                    new CC().growY());
+                  new CC().growY());
             channelHistogramsPanel_.add(chanController.getHistogramPanel(),
-                    new CC().grow().wrap());
+                  new CC().grow().wrap());
          } else {
             ReportingUtils.logError(
                   "IntensityInspectorPanelController: Viewer is unexpectedly null");
@@ -435,10 +434,10 @@ public class IntensityInspectorPanelController
                   int channel = -1;
                   // avoid index out of bounds exception
                   if (stats.getRequest().getNumberOfImages()
-                          > channelStats.getIndex()) {
+                        > channelStats.getIndex()) {
                      channel = stats.getRequest()
-                             .getImage(channelStats.getIndex())
-                             .getCoords().getChannel();
+                           .getImage(channelStats.getIndex())
+                           .getCoords().getChannel();
                   }
                   if (channel == i) {
                      channelControllers_.get(i).setStats(channelStats);
@@ -481,12 +480,12 @@ public class IntensityInspectorPanelController
             return;
          }
          setUpChannelHistogramsPanel(
-                 viewer_.getDataProvider().getNextIndex(Coords.CHANNEL));
+               viewer_.getDataProvider().getNextIndex(Coords.CHANNEL));
          newDisplaySettings(viewer_.getDisplaySettings());
          updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
          String updateRate = studio_.profile()
-                 .getSettings(IntensityInspectorPanelController.class)
-                 .getString(HISTOGRAM_UPDATE_FREQUENCY, RATE_EVERY);
+               .getSettings(IntensityInspectorPanelController.class)
+               .getString(HISTOGRAM_UPDATE_FREQUENCY, RATE_EVERY);
          if (histogramMenuMap_.get(updateRate) != null) {
             handleHistogramUpdateRate(histogramMenuMap_.get(updateRate));
          }
@@ -509,13 +508,13 @@ public class IntensityInspectorPanelController
    public boolean isVerticallyResizableByUser() {
       return true;
    }
-   
-   
+
+
    @Override
    public void setExpanded(boolean status) {
       expanded_ = status;
    }
-       
+
    @Override
    public boolean initiallyExpand() {
       return expanded_;
@@ -580,10 +579,10 @@ public class IntensityInspectorPanelController
       ((ColorModeCell) colorModeComboBox_.getRenderer())
             .setChannelColors(settings.getAllChannelColors());
       colorModeComboBox_.repaint();
-     
+
 
       List<Color> allChannelColors = settings.getAllChannelColors();
-      if (! (ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors)
+      if (!(ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors)
             || ColorPalettes.getPrimaryColorPalette().containsAll(allChannelColors))) {
          customPalette_ = allChannelColors;
          colorMenuMap_.get(CUSTOM).getCheckBox().setEnabled(true);

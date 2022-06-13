@@ -62,7 +62,7 @@ public final class DeviceSetupDlg extends JDialog {
       super();
       setModal(true);
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       model_ = mod;
@@ -224,7 +224,7 @@ public final class DeviceSetupDlg extends JDialog {
          return;
       }
       int response = JOptionPane.showConfirmDialog(DeviceSetupDlg.this,
-            "\u00b5Manager will attempt to automatically detect the "
+            "\u00b5Manager will attempt to automatically detect the " // Micro-Manager
                   + "serial port and port settings\nrequired to communicate with "
                   + "this device.\n\nWARNING: this will send messages through all "
                   + "connected serial ports, potentially\ninterfering with other "
@@ -241,7 +241,7 @@ public final class DeviceSetupDlg extends JDialog {
       scanStatus_.setText("Scanning ports...");
       pack();
       progressDialog_ = new DetectorJDialog(DeviceSetupDlg.this, false);
-      progressDialog_.setTitle("\u00B5" + "Manager device detection");
+      progressDialog_.setTitle("\u00B5" + "Manager device detection"); // Micro-Manager
       progressDialog_.setLocationRelativeTo(DeviceSetupDlg.this);
       progressDialog_.setSize(483, 288);
       progressDialog_.setVisible(true);
@@ -624,7 +624,7 @@ public final class DeviceSetupDlg extends JDialog {
                scanStatus_.setText("Scan completed successfully");
             }
             rebuildPropTable();
-            if (! (selectedPort.length() == 0)) {
+            if (!(selectedPort.length() == 0)) {
                Device pd = model_.findSerialPort(selectedPort);
                if (pd != null) {
                   try {

@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.event;
 
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.overlay.Overlay;
 
 /**
- *
  * @author mark
  */
 public class DisplayWindowDidRemoveOverlayEvent {
@@ -17,14 +17,12 @@ public class DisplayWindowDidRemoveOverlayEvent {
    private final Overlay overlay_;
 
    public static DisplayWindowDidRemoveOverlayEvent create(DisplayWindow display,
-         Overlay overlay)
-   {
+                                                           Overlay overlay) {
       return new DisplayWindowDidRemoveOverlayEvent(display, overlay);
    }
 
    private DisplayWindowDidRemoveOverlayEvent(DisplayWindow display,
-         Overlay overlay)
-   {
+                                              Overlay overlay) {
       display_ = display;
       overlay_ = overlay;
    }

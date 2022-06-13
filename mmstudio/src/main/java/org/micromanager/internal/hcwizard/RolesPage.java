@@ -23,9 +23,6 @@
 
 package org.micromanager.internal.hcwizard;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Arrays;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -134,7 +131,7 @@ public final class RolesPage extends PagePanel {
          ReportingUtils.showError(e);
          return false;
       }
-      
+
       if (cameras != null) {
          String[] items = new String[(int) cameras.size() + 1];
          items[0] = "";
@@ -151,7 +148,7 @@ public final class RolesPage extends PagePanel {
          }
          GUIUtils.replaceComboContents(cameraComboBox_, items);
       }
-       
+
       if (shutters != null) {
          String[] items = new String[(int) shutters.size() + 1];
          items[0] = "";
@@ -167,7 +164,7 @@ public final class RolesPage extends PagePanel {
          }
          GUIUtils.replaceComboContents(shutterComboBox_, items);
       }
-      
+
       if (stages != null) {
          String[] items = new String[(int) stages.size() + 1];
          items[0] = "";
@@ -183,11 +180,11 @@ public final class RolesPage extends PagePanel {
 
             }
          }
-         
+
          GUIUtils.replaceComboContents(focusComboBox_, items);
 
       }
-   
+
       try {
          String camera = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
                MMCoreJ.getG_Keyword_CoreCamera());
@@ -196,7 +193,7 @@ public final class RolesPage extends PagePanel {
          } else {
             cameraComboBox_.setSelectedItem("");
          }
-         
+
          String shutter = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
                MMCoreJ.getG_Keyword_CoreShutter());
          if (model_.findDevice(shutter) != null) {
@@ -204,7 +201,7 @@ public final class RolesPage extends PagePanel {
          } else {
             shutterComboBox_.setSelectedItem("");
          }
-         
+
          String focus = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
                MMCoreJ.getG_Keyword_CoreFocus());
          if (model_.findDevice(focus) != null) {
@@ -212,7 +209,7 @@ public final class RolesPage extends PagePanel {
          } else {
             focusComboBox_.setSelectedItem("");
          }
-         
+
          String as = model_.getDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
                MMCoreJ.getG_Keyword_CoreAutoShutter());
          autoshutterCheckBox_.setSelected(as.compareTo("1") == 0);
@@ -265,17 +262,17 @@ public final class RolesPage extends PagePanel {
       // TODO Auto-generated method stub
       return true;
    }
-   
+
    public void refresh() {
    }
 
    public void loadSettings() {
       // TODO Auto-generated method stub
-      
+
    }
 
    public void saveSettings() {
       // TODO Auto-generated method stub
-      
+
    }
 }

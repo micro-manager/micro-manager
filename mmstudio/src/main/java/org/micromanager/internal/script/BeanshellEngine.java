@@ -17,6 +17,9 @@ public final class BeanshellEngine implements ScriptingEngine {
    private final ScriptPanel panel_;
    private Interpreter interpOld_;
 
+   /**
+    * Thread interpreting a script.
+    */
    public final class EvalThread extends Thread {
       String script_;
       String errorText_;
@@ -58,18 +61,23 @@ public final class BeanshellEngine implements ScriptingEngine {
       }
    }
 
-   
+
    @Override
    public void setInterpreter(Interpreter interp) {
       interpOld_ = interp_;
       interp_ = interp;
    }
-   
+
    @Override
    public void resetInterpreter() {
       interp_ = interpOld_;
    }
-   
+
+   /**
+    * Creates a BeanshellEngine for the given ScriptPanel.
+    *
+    * @param panel ScriptPanel to attach this engine to.
+    */
    public BeanshellEngine(ScriptPanel panel) {
       //interp_ = new Interpreter();
       running_ = false;
@@ -81,7 +89,7 @@ public final class BeanshellEngine implements ScriptingEngine {
    public void evaluate(String script) throws MMScriptException {
       try {
          interp_.eval(script);
-    	 // interp_.set("micro_manager_script",script);
+         // interp_.set("micro_manager_script",script);
       } catch (EvalError e) {
          throw new MMScriptException(formatBeanshellError(e, e.getErrorLineNumber()));
       }
@@ -93,7 +101,7 @@ public final class BeanshellEngine implements ScriptingEngine {
          evalThd_.join();
       }
    }
-   
+
    @Override
    public void evaluateAsync(String script) throws MMScriptException {
       if (evalThd_.isAlive()) {
@@ -135,19 +143,19 @@ public final class BeanshellEngine implements ScriptingEngine {
       stop_ = false;
       return stop_;
    }
-   
+
    private String formatBeanshellError(EvalError e, int line) {
       if (e instanceof TargetError) {
          Throwable t = ((TargetError) e).getTarget();
          if (t instanceof NullPointerException) {
             // Null Pointer Exceptions do not seem to have much more information
             // However, do make clear to the user that this is a npe
-            return "Line " + line + ": Null Pointer Exception"; 
+            return "Line " + line + ": Null Pointer Exception";
          }
          return "Line " + line + ": run-time error : " + (t != null ? t.getMessage()
                : e.getErrorText());
       } else if (e instanceof ParseException) {
-         return "Line " + line + ": syntax error : " + e.getErrorText();  
+         return "Line " + line + ": syntax error : " + e.getErrorText();
       } else if (e != null) {
          return "Line " + line + ": evaluation error : " + e.getMessage();
       } else {
@@ -156,5 +164,5 @@ public final class BeanshellEngine implements ScriptingEngine {
                + (t != null ? t.getMessage() : e.getErrorText());
       }
    }
-   
+
 }

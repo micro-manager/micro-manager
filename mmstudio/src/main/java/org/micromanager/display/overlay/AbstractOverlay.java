@@ -14,7 +14,7 @@ import org.micromanager.display.DisplaySettings;
 /**
  * Abstract implementation of {@link Overlay}.
  *
- * Custom overlays should extend this class.
+ * <p>Custom overlays should extend this class.
  *
  * @author Mark A. Tsuchida
  */
@@ -26,23 +26,22 @@ public abstract class AbstractOverlay implements Overlay {
 
    /**
     * {@inheritDoc}
-    * <p>
-    * This default implementation draws nothing. Override to draw the overlay
+    *
+    * <p>This default implementation draws nothing. Override to draw the overlay
     * graphics.
     */
    @Override
    public void paintOverlay(Graphics2D graphicsContext, Rectangle screenRect,
-         DisplaySettings displaySettings,
-         List<Image> images, Image primaryImage,
-         Rectangle2D.Float imageViewPort)
-   {
+                            DisplaySettings displaySettings,
+                            List<Image> images, Image primaryImage,
+                            Rectangle2D.Float imageViewPort) {
       // Draw nothing
    }
 
    /**
     * {@inheritDoc}
-    * <p>
-    * This default implementation returns null. Override to provide a user
+    *
+    * <p>This default implementation returns null. Override to provide a user
     * interface.
     */
    @Override
@@ -52,8 +51,8 @@ public abstract class AbstractOverlay implements Overlay {
 
    /**
     * {@inheritDoc}
-    * <p>
-    * This default implementation returns an empty property map. Override to
+    *
+    * <p>This default implementation returns an empty property map. Override to
     * implement custom settings.
     */
    @Override
@@ -63,8 +62,8 @@ public abstract class AbstractOverlay implements Overlay {
 
    /**
     * {@inheritDoc}
-    * <p>
-    * This default implementation does nothing. Override to implement custom
+    *
+    * <p>This default implementation does nothing. Override to implement custom
     * settings.
     */
    @Override
@@ -74,8 +73,8 @@ public abstract class AbstractOverlay implements Overlay {
 
    /**
     * {@inheritDoc}
-    * <p>
-    * This implementation takes care of visibility management.
+    *
+    * <p>This implementation takes care of visibility management.
     */
    @Override
    public final boolean isVisible() {
@@ -84,8 +83,8 @@ public abstract class AbstractOverlay implements Overlay {
 
    /**
     * {@inheritDoc}
-    * <p>
-    * This implementation takes care of visibility management.
+    *
+    * <p>This implementation takes care of visibility management.
     */
    @Override
    public final void setVisible(boolean visible) {
@@ -98,8 +97,9 @@ public abstract class AbstractOverlay implements Overlay {
 
    /**
     * {@inheritDoc}
-    * <p>
-    * This implementation takes care of managing listeners.
+    *
+    * <p>This implementation takes care of managing listeners.
+    *
     * @see #fireOverlayConfigurationChanged
     */
    @Override
@@ -109,8 +109,9 @@ public abstract class AbstractOverlay implements Overlay {
 
    /**
     * {@inheritDoc}
-    * <p>
-    * This implementation takes care of managing listeners.
+    *
+    * <p>This implementation takes care of managing listeners.
+    *
     * @see #fireOverlayConfigurationChanged
     */
    @Override
@@ -120,8 +121,8 @@ public abstract class AbstractOverlay implements Overlay {
 
    /**
     * Call this method to notify the system that the overlay title has changed.
-    * <p>
-    * If the overlay has a fixed title, this method need not ever be called.
+    *
+    * <p>If the overlay has a fixed title, this method need not ever be called.
     *
     * @see OverlayListener#overlayTitleChanged
     */
@@ -131,8 +132,8 @@ public abstract class AbstractOverlay implements Overlay {
 
    /**
     * Call this method to notify the system that the overlay has changed.
-    * <p>
-    * This only needs to be called when the overlay needs a repaint due to its
+    *
+    * <p>This only needs to be called when the overlay needs a repaint due to its
     * configuration changing. The case when the displayed image has changed is
     * automatically handled by the system.
     *

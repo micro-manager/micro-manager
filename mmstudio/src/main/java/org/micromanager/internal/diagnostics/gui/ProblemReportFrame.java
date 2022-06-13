@@ -38,15 +38,15 @@ class ProblemReportFrame extends javax.swing.JFrame {
 
       controlPanelPanel_ = new javax.swing.JPanel();
       controlPanelPanel_.setLayout(new net.miginfocom.swing.MigLayout(
-               "fill, insets 0",
-               "[grow, fill]",
-               "[grow, fill]"));
+            "fill, insets 0",
+            "[grow, fill]",
+            "[grow, fill]"));
       controlPanelPanel_.add(controlPanel_);
 
       setLayout(new net.miginfocom.swing.MigLayout(
-               "fill, insets dialog",
-               "[grow, fill]",
-               "[grow, fill]unrelated[]"));
+            "fill, insets dialog",
+            "[grow, fill]",
+            "[grow, fill]unrelated[]"));
       add(descriptionPanel_, "wrap");
       add(controlPanelPanel_);
       pack();

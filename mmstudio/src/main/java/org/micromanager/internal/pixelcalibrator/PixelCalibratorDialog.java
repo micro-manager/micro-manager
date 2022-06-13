@@ -51,11 +51,11 @@ import org.micromanager.internal.utils.WindowPositioning;
 public class PixelCalibratorDialog extends JFrame {
 
    private static final long serialVersionUID = 8504268289532100411L;
-   
+
    private static final String METHOD_AUTO = "Automatic";
    private static final String METHOD_MANUAL_SIMPLE = "Manual-Simple";
    private static final String METHOD_MANUAL_PRECISE = "Manual-Precise";
-   
+
    private final Studio studio_;
    private final PixelSizeProvider pixelSizeProvider_;
    private CalibrationThread calibrationThread_;
@@ -68,24 +68,24 @@ public class PixelCalibratorDialog extends JFrame {
    private JCheckBox debug_;
 
    /**
-     * The  PixelCalibratorDialog executes an automated calibration of 
-     * pixel size and the relation between stage movement and camera resulting
-     * in an affine transform.  Data are returned to the PixelSizeProvider
-     *
-     * @param studio - Current studio instance
-     * @param psp - PixelSizeProvider that is requesting our services
-     */
+    * The  PixelCalibratorDialog executes an automated calibration of
+    * pixel size and the relation between stage movement and camera resulting
+    * in an affine transform.  Data are returned to the PixelSizeProvider
+    *
+    * @param studio - Current studio instance
+    * @param psp    - PixelSizeProvider that is requesting our services
+    */
    @SuppressWarnings("LeakingThisInConstructor")
    public PixelCalibratorDialog(Studio studio, PixelSizeProvider psp) {
       studio_ = studio;
       pixelSizeProvider_ = psp;
       initComponents();
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setVisible(true);
-      
+
       studio_.events().registerForEvents(this);
    }
 
@@ -119,18 +119,18 @@ public class PixelCalibratorDialog extends JFrame {
 
       final JLabel methodLabel = new JLabel("Select method:");
       methodComboBox_.setModel(new DefaultComboBoxModel<>(
-              new String[] {METHOD_AUTO, METHOD_MANUAL_SIMPLE}));
+            new String[] {METHOD_AUTO, METHOD_MANUAL_SIMPLE}));
       final String mKey = "methodComboxSelection";
       final Class ourClass = this.getClass();
       methodComboBox_.setSelectedItem(studio_.profile().getSettings(ourClass)
             .getString(mKey, METHOD_MANUAL_SIMPLE));
       methodComboBox_.addActionListener(
             e -> studio_.profile().getSettings(ourClass).putString(mKey,
-              (String) methodComboBox_.getSelectedItem()));
-      
+                  (String) methodComboBox_.getSelectedItem()));
+
       final JLabel safeTravelLabel = new JLabel("Safe travel radius, um:");
       safeTravelRadiusComboBox_.setModel(new DefaultComboBoxModel<>(
-              new String[] { "1000", "10000", "100000" }));
+            new String[] {"1000", "10000", "100000"}));
 
       calibrationProgressBar_.setForeground(new java.awt.Color(255, 0, 51));
 
@@ -140,7 +140,7 @@ public class PixelCalibratorDialog extends JFrame {
       stopButton_.setText("Stop");
       stopButton_.setEnabled(false);
       stopButton_.addActionListener(evt -> stopCalibration());
-      
+
       debug_ = new JCheckBox("debug");
       debug_.setSelected(false);
 
@@ -154,7 +154,7 @@ public class PixelCalibratorDialog extends JFrame {
       super.add(startButton_, "split 2");
       super.add(stopButton_);
       super.add(calibrationProgressBar_, "wrap");
-      
+
       super.pack();
 
    }
@@ -163,7 +163,7 @@ public class PixelCalibratorDialog extends JFrame {
    /**
     * Updates the GUI based on current progress.
     *
-    * @param running Whether or not the calibration is still running.
+    * @param running  Whether or not the calibration is still running.
     * @param progress Progress.
     */
    public void updateStatus(final boolean running, final double progress) {
@@ -194,7 +194,7 @@ public class PixelCalibratorDialog extends JFrame {
       }
       super.dispose();
    }
-   
+
    /**
     * Signals that application shutdown is starting.
     *
@@ -207,11 +207,11 @@ public class PixelCalibratorDialog extends JFrame {
       }
    }
 
-   
+
    private void startCalibration() {
       if (METHOD_AUTO.equals(methodComboBox_.getSelectedItem())) {
          calibrationThread_ = new AutomaticCalibrationThread(studio_, this);
-         
+
       } else if (METHOD_MANUAL_SIMPLE.equals(methodComboBox_.getSelectedItem())) {
          calibrationThread_ = new ManualSimpleCalibrationThread(studio_, this);
       } else if (METHOD_MANUAL_PRECISE.equals(methodComboBox_.getSelectedItem())) {
@@ -221,10 +221,10 @@ public class PixelCalibratorDialog extends JFrame {
          calibrationThread_.start();
       }
       updateStatus(true, 0);
-      
+
    }
 
-   
+
    private void stopCalibration() {
       if (calibrationThread_ != null && calibrationThread_.isAlive()) {
          synchronized (CalibrationThread.class) {
@@ -239,7 +239,7 @@ public class PixelCalibratorDialog extends JFrame {
       }
       updateStatus(false, 0);
    }
-   
+
    private void promptToSaveResult() {
       AffineTransform result = calibrationThread_.getResult();
       if (result == null) {
@@ -260,9 +260,9 @@ public class PixelCalibratorDialog extends JFrame {
       // xScale, yScale, rotationDeg, shear
       int response = JOptionPane.showConfirmDialog(this,
             String.format("Affine transform parameters: XScale=%.4f YScale=%.4f Rotation "
-                  + "(degrees)=%.2f Shear=%.4f\n",
-                    measurements[0], measurements[1], 
-                    measurements[2], measurements[3])
+                        + "(degrees)=%.2f Shear=%.4f\n",
+                  measurements[0], measurements[1],
+                  measurements[2], measurements[3])
                   + "<html>If this is a correct result, Xscale and YScale should have absolute "
                   + "value of roughly the number of &#956;m/pixel,</html>\n"
                   + "rotation should give the angle between the coordinate system of the camera "
@@ -278,10 +278,10 @@ public class PixelCalibratorDialog extends JFrame {
             pixelSizeProvider_.setPixelSize(pixelSize);
             pixelSizeProvider_.setAffineTransform(result);
          }
-      } 
+      }
       dispose();
    }
-   
+
    private void showFailureMessage() {
       ReportingUtils.showMessage("Calibration failed. Please improve the contrast by "
             + "adjusting the\n"
@@ -289,16 +289,16 @@ public class PixelCalibratorDialog extends JFrame {
             + "securely immobilized on the stage. When you are ready, press\n"
             + "Start to try again.");
    }
-   
- 
+
+
    // The following functions are used by the spawned threads to communicate
    // back to this dialog
-    
+
 
    public Double getCalibratedPixelSize() {
       return pixelSizeProvider_.getPixelSize();
    }
-   
+
    public void calibrationDone() {
       updateStatus(false, 1.);
       promptToSaveResult();
@@ -315,10 +315,10 @@ public class PixelCalibratorDialog extends JFrame {
          showFailureMessage();
       }
    }
-   
+
    public double safeTravelRadius() {
       return Double.parseDouble(
-                    safeTravelRadiusComboBox_.getSelectedItem().toString());
+            safeTravelRadiusComboBox_.getSelectedItem().toString());
    }
 
    public boolean debugMode() {

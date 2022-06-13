@@ -44,7 +44,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Wizard page to set device delays.
- *
  */
 public final class DelayPage extends PagePanel {
    private static final long serialVersionUID = 1L;
@@ -145,10 +144,10 @@ public final class DelayPage extends PagePanel {
       setLayout(new MigLayout("fill"));
 
       JTextArea help = createHelpText(
-            "Set how long to wait for the device to act before \u00b5Manager "
-            + "will move on (for example, waiting for a shutter to open before an "
-            + "image is snapped). Many devices will determine this automatically; refer "
-            + "to the help for more information.");
+            "Set how long to wait for the device to act before \u00b5Manager " // Micro-Manager
+                  + "will move on (for example, waiting for a shutter to open before an "
+                  + "image is snapped). Many devices will determine this automatically; refer "
+                  + "to the help for more information.");
       add(help, "spanx, growx, wrap");
       final JScrollPane scrollPane = new JScrollPane();
       add(scrollPane, "grow");

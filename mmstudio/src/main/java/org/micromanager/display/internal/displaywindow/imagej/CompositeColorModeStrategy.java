@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.display.internal.displaywindow.imagej;
 
 import ij.CompositeImage;
@@ -12,7 +13,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
  * @author mark
  */
 final class CompositeColorModeStrategy extends ColorColorModeStrategy {

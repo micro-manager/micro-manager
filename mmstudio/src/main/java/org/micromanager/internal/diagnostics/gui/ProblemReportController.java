@@ -38,13 +38,13 @@ public final class ProblemReportController {
 
       String[] options;
       if (userInitiated) {
-         options = new String[]{ "Reopen", "Discard", "Cancel" };
+         options = new String[] {"Reopen", "Discard", "Cancel"};
       } else {
-         options = new String[]{ "Reopen", "Discard", "Not Now" };
+         options = new String[] {"Reopen", "Discard", "Not Now"};
       }
       int answer = JOptionPane.showOptionDialog(null,
             "A Problem Report was in progress when Micro-Manager "
-            + "exited. Would you like to reopen the interrupted report?",
+                  + "exited. Would you like to reopen the interrupted report?",
             "Continue Problem Report",
             JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
             null, options, options[0]);

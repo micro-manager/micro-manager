@@ -54,7 +54,7 @@ public final class PluginFinder {
    }
 
    private static void recursiveFindPaths(File root, String extension,
-         ArrayList<String> result) {
+                                          ArrayList<String> result) {
       File[] items = root.listFiles();
       for (File item : items) {
          if (item.getAbsolutePath().endsWith(extension)) {
@@ -92,7 +92,7 @@ public final class PluginFinder {
          // cause the entire process of loading plugins to fail.
          try {
             PluginClassLoader loader = new PluginClassLoader(jarURL,
-                   MMStudio.getInstance().getClass().getClassLoader());
+                  MMStudio.getInstance().getClass().getClassLoader());
             loader.setBlockInheritedResources(true);
             result.addAll(findPluginsWithLoader(loader));
             loader.setBlockInheritedResources(false);

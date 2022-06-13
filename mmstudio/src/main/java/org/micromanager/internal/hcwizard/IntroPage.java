@@ -56,8 +56,8 @@ public final class IntroPage extends PagePanel {
       setLayout(new MigLayout("fillx, flowy"));
 
       JTextArea help = createHelpText(
-               "This wizard will walk you through setting up \u00b5Manager to control "
-               + "the hardware in your system.");
+            "This wizard will walk you through setting up \u00b5Manager to control " //Micro-Manager
+                  + "the hardware in your system.");
       add(help, "growx");
 
       JRadioButton createNewRadioButton = new JRadioButton("Create new configuration");
@@ -98,14 +98,14 @@ public final class IntroPage extends PagePanel {
       filePathField_.setEnabled(false);
       browseButton_.setEnabled(false);
    }
-   
+
    @Override
    public void loadSettings() {
       // load settings
       if (model_ != null) {
          filePathField_.setText(model_.getFileName());
       }
-      
+
       if (filePathField_.getText().length() > 0) {
          modifyRadioButton_.setSelected(true);
          filePathField_.setEnabled(true);
@@ -117,7 +117,7 @@ public final class IntroPage extends PagePanel {
    public void saveSettings() {
       // save settings
    }
-   
+
    @Override
    public boolean enterPage(boolean fromNextPage) {
       if (fromNextPage) {
@@ -153,15 +153,15 @@ public final class IntroPage extends PagePanel {
       }
       return true;
    }
-   
+
 
    @Override
    public void refresh() {
    }
-   
+
    private void loadConfiguration() {
       File f = FileDialogs.openFile(parent_, "Choose a config file",
-              FileDialogs.MM_CONFIG_FILE);
+            FileDialogs.MM_CONFIG_FILE);
       if (f == null) {
          return;
       }
