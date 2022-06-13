@@ -12,38 +12,38 @@ import java.util.TreeMap;
  */
 public class GlobalConfigurationWrapper {
 
-    private String defaultConfigurationName;
-    private TreeMap<String, String> globalSettings;
-    private ArrayList<PluginConfiguration> pluginConfigurations;
+   private String defaultConfigurationName;
+   private TreeMap<String, String> globalSettings;
+   private ArrayList<PluginConfiguration> pluginConfigurations;
 
-    public GlobalConfigurationWrapper() {
-        // do nothing
-    }
+   public GlobalConfigurationWrapper() {
+      // do nothing
+   }
 
-    public ArrayList<PluginConfiguration> getPluginConfigurations() {
-        Collections.sort(this.pluginConfigurations); // alphabetical sorting
-        return pluginConfigurations;
-    }
+   public ArrayList<PluginConfiguration> getPluginConfigurations() {
+      Collections.sort(this.pluginConfigurations); // alphabetical sorting
+      return pluginConfigurations;
+   }
 
-    public void setPluginConfigurations(ArrayList<PluginConfiguration> pluginConfigurations) {
-        this.pluginConfigurations = pluginConfigurations;
-        Collections.sort(this.pluginConfigurations); // alphabetical sorting
-    }
+   public void setPluginConfigurations(ArrayList<PluginConfiguration> pluginConfigurations) {
+      this.pluginConfigurations = pluginConfigurations;
+      Collections.sort(this.pluginConfigurations); // alphabetical sorting
+   }
 
-    public String getDefaultConfigurationName() {
-        return defaultConfigurationName;
-    }
+   public String getDefaultConfigurationName() {
+      return defaultConfigurationName;
+   }
 
-    public void setDefaultConfigurationName(String defaultConfigurationName) {
-        this.defaultConfigurationName = defaultConfigurationName;
-    }
+   public void setDefaultConfigurationName(String defaultConfigurationName) {
+      this.defaultConfigurationName = defaultConfigurationName;
+   }
 
-    public TreeMap<String, String> getGlobalSettings() {
-        return globalSettings;
-    }
+   public TreeMap<String, String> getGlobalSettings() {
+      return globalSettings;
+   }
 
-    public void setGlobalSettings(TreeMap<String, String> globalSettings) {
-        this.globalSettings = globalSettings;
-    }
+   public void setGlobalSettings(TreeMap<String, String> globalSettings) {
+      this.globalSettings = globalSettings;
+   }
 
 }

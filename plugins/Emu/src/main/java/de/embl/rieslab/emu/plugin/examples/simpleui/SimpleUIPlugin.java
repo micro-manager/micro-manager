@@ -9,13 +9,14 @@ import java.util.TreeMap;
 
 public class SimpleUIPlugin implements UIPlugin {
 
-    @Override
-    public ConfigurableMainFrame getMainFrame(SystemController controller, TreeMap<String, String> pluginSettings) {
-        return new SimpleUIFrame("Simple UI", controller, pluginSettings);
-    }
+   @Override
+   public ConfigurableMainFrame getMainFrame(SystemController controller,
+                                             TreeMap<String, String> pluginSettings) {
+      return new SimpleUIFrame("Simple UI", controller, pluginSettings);
+   }
 
-    @Override
-    public String getName() {
-        return "Simple UI";
-    }
+   @Override
+   public String getName() {
+      return "Simple UI";
+   }
 }
