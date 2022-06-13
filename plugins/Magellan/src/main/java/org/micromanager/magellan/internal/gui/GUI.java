@@ -368,8 +368,8 @@ public class GUI extends javax.swing.JFrame {
       //space  
       settings.xyFootprint_ = manager_.getSurfaceOrGrid(xyFootprintComboBox_.getSelectedIndex());
       if (button2D_.isSelected()) { //2D pane
+         settings.collectionPlane_ = manager_.getSurface(collectionPlaneCombo_.getSelectedIndex());
          if (useCollectionPlaneButton_.isSelected()) {
-            settings.collectionPlane_ = manager_.getSurface(collectionPlaneCombo_.getSelectedIndex());
             settings.spaceMode_ = MagellanGUIAcquisitionSettings.REGION_2D_SURFACE_GUIDED;
          } else {
             settings.collectionPlane_ = null;
@@ -451,6 +451,7 @@ public class GUI extends javax.swing.JFrame {
       bottomSurfaceCombo_.setSelectedItem(settings.bottomSurface_);
       fixedDistanceSurfaceComboBox_.setSelectedItem(settings.fixedSurface_);
       xyFootprintComboBox_.setSelectedItem(settings.xyFootprint_);
+      collectionPlaneCombo_.setSelectedItem(settings.collectionPlane_);
 
       //channels
       ChannelGroupCombo_.setSelectedItem(settings.getChannelGroup());
