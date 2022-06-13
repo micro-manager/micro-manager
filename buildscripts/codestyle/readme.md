@@ -1,11 +1,24 @@
-Super-Linter is hardcoded to look for a `sun_checks.xml` file in this directory for it's Java linting rules. These rules are actually
-a copy of the Google Java style guide rules that  have been modified from the 
-original Google rules to match the rules specfied at https://micro-manager.org/wiki/Micro-Manager_Coding_Style_and_Conventions
+The `sun_checks.xml` file is renamed from `google_checks.xml`, because at the
+time it was added here, GitHub's Super-Linter apparently hard-coded the former
+name. (This is no longer the case, and Super-Linter is probably not the right
+tool for us, but we should rename the file it when other disrupting changes are
+made.)
 
-The following changes have been made to the original https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml :
- - All properties under the "Indentation" module have been changed to be multiples of 3 rather than multiples of 2.
- - Member variable names are permitted to end with an underscore
- - Parameter names, member names, and many other name types are allowed to have only a single lowercase letter at the beginning, i.e. `xLabel`
- - All-caps abbreviations are allowed. For example, `refreshGUI` is fine and doesn't need to be changed to `refreshGui`
- 
- Information about these properties can be found here: https://checkstyle.sourceforge.io/config_misc.html
+The style settings are modified from the Google style at
+https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml
+
+The following changes have been made, in part to match
+https://micro-manager.org/Micro-Manager_Coding_Style_and_Conventions
+
+- `severity` changed from `warning` to `error`
+- `WhitespaceAfter` token list has been changed
+- `format` regex for `MemberName` changed to allow trailing `'_'`
+- `format` regex for all identifiers changed to allow single lowercase letter
+  at the beginning, so that, e.g., `xLabel` is allowed
+- `format` regex for all identifiers changed to allow all-caps abbreviations,
+  so that, e.g., `refreshGUI` is allowed (instead of requiring `refreshGui`)
+- `Indentation` values have been changed to multiples of 3, rather than 2
+- `NoWhitespaceBeforeCaseDefaultColon` has been removed (this might be a change
+  in the upstream since we imported it)
+
+Documentation is here: https://checkstyle.org/checks.html
