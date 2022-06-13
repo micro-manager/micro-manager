@@ -55,7 +55,8 @@ public class PropertiesTable extends JPanel {
     * Constructor called when no configuration exists. Creates a table with non-allocated fields.
     *
     * @param uipropertySet Map of the UI properties of the user interface indexed by their name.
-    * @param mmproperties  Object containing the device properties from the current Micro-manager session.
+    * @param mmproperties  Object containing the device properties from the current Micro-manager
+    *                      session.
     * @param help          Help window.
     */
    public PropertiesTable(Map<String, UIProperty> uipropertySet, MMPropertiesRegistry mmproperties,
@@ -98,7 +99,8 @@ public class PropertiesTable extends JPanel {
                   ConfigurationWizardUI.KEY_ENTERVALUE});
 
          } else if (uipropertySet.get(uipropkeys_[i]) instanceof SingleStateUIProperty) {
-            // if property is a single value property, adds a line for the value the property must take
+            // if property is a single value property, adds a line for the value the property
+            // must take
             model.addRow(new Object[] {uipropkeys_[i] + SingleStateUIProperty.getStateLabel(), "",
                   ConfigurationWizardUI.KEY_ENTERVALUE});
 
@@ -132,8 +134,8 @@ public class PropertiesTable extends JPanel {
    }
 
    /**
-    * Constructor called when modifying an existing configuration. Produces a table filled with preset fields.
-    * If the fields are not found, then creates non-allocated ones.
+    * Constructor called when modifying an existing configuration. Produces a table filled with
+    * preset fields. If the fields are not found, then creates non-allocated ones.
     *
     * @param uipropertySet   UI properties map of the current UI.
     * @param mmproperties    MM properties found in the current Micro-manager configuration.
@@ -166,21 +168,27 @@ public class PropertiesTable extends JPanel {
       DefaultTableModel model = getDefaultModel();
 
       // Defines string for extraction of the values set for each property in the configuration
-      String mmprop, uion, uioff, uisingle, uitemp;
+      String mmprop;
+      String uion;
+      String uioff;
+      String uisingle;
+      String  uitemp;
 
       // For each property of the UI
       for (int i = 0; i < uipropkeys_.length; i++) {
          // gets the MM property corresponding to the UI property in the configuration
          mmprop = propertymapping.get(uipropkeys_[i]);
 
-         // if the configuration indeed contains the property and is mapped in the configuration with an existing MM property
+         // if the configuration indeed contains the property and is mapped in the configuration
+         // with an existing MM property
          if (propertymapping.containsKey(uipropkeys_[i]) && mmproperties.isProperty(mmprop)) {
             // adds the UI property, its corresponding device and device property friendly name
             model.addRow(
                   new Object[] {uipropkeys_[i], mmproperties.getProperty(mmprop).getDeviceLabel(),
                         mmproperties.getProperty(mmprop).getMMPropertyLabel()});
 
-            // if the property is an instance of SingleState, TwoState or MultiState property, then looks for the assigned values
+            // if the property is an instance of SingleState, TwoState or MultiState property,
+            // then looks for the assigned values
             if (uipropertySet.get(uipropkeys_[i]) instanceof TwoStateUIProperty) { // if two state
                // gets values corresponding to the on and off states
                uion = propertymapping.get(uipropkeys_[i] + TwoStateUIProperty.getOnStateLabel());
@@ -213,7 +221,8 @@ public class PropertiesTable extends JPanel {
                            uisingle});
             } else if (uipropertySet.get(
                   uipropkeys_[i]) instanceof MultiStateUIProperty) { // if multiple values property
-               // gets the number of positions and extracts all position values. If null then sets to default. Finally creates the corresponding row.
+               // gets the number of positions and extracts all position values. If null then
+               // sets to default. Finally creates the corresponding row.
                int numpos =
                      ((MultiStateUIProperty) uipropertySet.get(uipropkeys_[i])).getNumberOfStates();
                for (int j = 0; j < numpos; j++) {
@@ -254,7 +263,8 @@ public class PropertiesTable extends JPanel {
             model.addRow(new Object[] {uipropkeys_[i], GlobalConfiguration.KEY_UNALLOCATED,
                   GlobalConfiguration.KEY_UNALLOCATED});
 
-            // if the property is an instance of SingleState, TwoState or MultiState property, creates rows for the states value
+            // if the property is an instance of SingleState, TwoState or MultiState property,
+            // creates rows for the states value
             if (uipropertySet.get(uipropkeys_[i]) instanceof TwoStateUIProperty) {
                model.addRow(new Object[] {uipropkeys_[i] + TwoStateUIProperty.getOnStateLabel(), "",
                      ConfigurationWizardUI.KEY_ENTERVALUE});
@@ -309,9 +319,11 @@ public class PropertiesTable extends JPanel {
                case 0:
                   return new BoldTableCellRenderer(); // first column is written in bold font
                case 1:
-                  return new ColoredUneditedTableRenderer(); // column 1 takes a colored default renderer (previously just default)
+                  return new ColoredUneditedTableRenderer(); // column 1 takes a colored default
+                  // renderer (previously just default)
                case 2:
-                  return new ColoredUneditedTableRenderer(); // column 2 takes a colored default renderer
+                  return new ColoredUneditedTableRenderer(); // column 2 takes a colored
+                  // default renderer
                default:
                   return super.getCellRenderer(row, column);
             }
@@ -321,16 +333,19 @@ public class PropertiesTable extends JPanel {
          public TableCellEditor getCellEditor(int row, int column) {
             String s = (String) table.getValueAt(row, 0);
             if (column == 2 && isStateValue(s)) {
-               // if in the last column and corresponds to a field value, returns a JTextfield cell editor
+               // if in the last column and corresponds to a field value, returns a JTextfield
+               // cell editor
                return new DefaultCellEditor(new JTextField(ConfigurationWizardUI.KEY_ENTERVALUE));
             } else {
                // if not a field value or not in third column
                switch (column) {
                   case 0:    // in the first column return default cell editor
                      return super.getCellEditor(row, column);
-                  case 1: // in the second column return a JComboBox cell editor with the devices name
+                  case 1: // in the second column return a JComboBox cell editor with the
+                     // devices name
                      return new DefaultCellEditor(devices);
-                  case 2: // in the last column return a JComboBox cell editor with the properties name corresponding to the selected device
+                  case 2: // in the last column return a JComboBox cell editor with the
+                     // properties name corresponding to the selected device
                      return new DefaultCellEditor(
                            getDevicePropertiesComboBox((String) getValueAt(row, 1),
                                  (String) getValueAt(row, 0)));
@@ -342,11 +357,14 @@ public class PropertiesTable extends JPanel {
 
          @Override
          public boolean isCellEditable(int row,
-                                       int col) { // first column is non-editable and second as well if it is a field value row
+                                       int col) { // first column is non-editable and second
+            // as well if it is a field value row
             String s = (String) table.getValueAt(row, 0);
             if (col < 1) {
                return false;
-            } else return col != 1 || !isStateValue(s);
+            } else {
+               return col != 1 || !isStateValue(s);
+            }
          }
       };
 
@@ -389,7 +407,8 @@ public class PropertiesTable extends JPanel {
    }
 
 
-   // Creates a JComboBox containing all the Micro-manager device properties corresponding to the device.
+   // Creates a JComboBox containing all the Micro-manager device properties corresponding
+   // to the device.
    private JComboBox<String> getDevicePropertiesComboBox(String device, String uipropName) {
       JComboBox<String> cb = new JComboBox<String>();
       cb.addItem(GlobalConfiguration.KEY_UNALLOCATED);
@@ -397,8 +416,8 @@ public class PropertiesTable extends JPanel {
       if (!device.equals(GlobalConfiguration.KEY_UNALLOCATED)) {
          // RescaledUIProperty are only compatible with Integer- and FloatMMProperty, so
          // we filter them here
-         boolean rescaledUIProp = uipropertySet_.containsKey(uipropName) &&
-               uipropertySet_.get(uipropName) instanceof RescaledUIProperty;
+         boolean rescaledUIProp = uipropertySet_.containsKey(uipropName)
+               && uipropertySet_.get(uipropName) instanceof RescaledUIProperty;
 
          String[] props = mmproperties_.getDevice(device)
                .getPropertyLabels(); // fill with the name of the property itself
@@ -439,7 +458,8 @@ public class PropertiesTable extends JPanel {
       updateHelper(table.getSelectedRow());
    }
 
-   // Updates the helper window text with the description of the UI property represented by the selected row in the table.
+   // Updates the helper window text with the description of the UI property represented by
+   // the selected row in the table.
    private void updateHelper(int row) {
       String s = (String) table.getValueAt(row, 0);
 
@@ -454,24 +474,32 @@ public class PropertiesTable extends JPanel {
          }
          int diff = row - nmb - 1;
          s = (String) table.getValueAt(nmb, 0);
-         help_.update(s, "Set the device property value corresponding to the state number " + diff +
-               ". The allowed values can be read out from the device property browser. State values cannot be left unconfigured if the property is allocated.");
+         help_.update(s, "Set the device property value corresponding to the state number "
+               + diff
+               + ". The allowed values can be read out from the device property browser. State "
+               + "values cannot be left unconfigured if the property is allocated.");
       } else if (s.contains(TwoStateUIProperty.getOnStateLabel())) {
          s = (String) table.getValueAt(row - 1, 0);
          help_.update(s,
-               "Enter the device property value corresponding to the ON state. The allowed values can be read out from the device property browser. State values cannot be left unconfigured if the property is allocated.");
+               "Enter the device property value corresponding to the ON state. "
+                     + "The allowed values can be read out from the device property browser. "
+                     + "State values cannot be left unconfigured if the property is allocated.");
       } else if (s.contains(TwoStateUIProperty.getOffStateLabel())) {
          s = (String) table.getValueAt(row - 2, 0);
          help_.update(s,
-               "Enter the device property value corresponding to the OFF state. The allowed values can be read out from the device property browser. State values cannot be left unconfigured if the property is allocated.");
+               "Enter the device property value corresponding to the OFF state. "
+                     + "The allowed values can be read out from the device property browser. "
+                     + "State values cannot be left unconfigured if the property is allocated.");
       } else if (s.contains(RescaledUIProperty.getSlopeLabel())) {
          s = (String) table.getValueAt(row - 1, 0);
          help_.update(s,
-               "The values set in the UI will be rescaled to slope*value+offset before setting the device property state. Enter here a value for the slope.");
+               "The values set in the UI will be rescaled to slope*value+offset before "
+                     + "setting the device property state. Enter here a value for the slope.");
       } else if (s.contains(RescaledUIProperty.getOffsetLabel())) {
          s = (String) table.getValueAt(row - 2, 0);
          help_.update(s,
-               "The values set in the UI will be rescaled to slope*value+offset before setting the device property state. Enter here a value for the offset.");
+               "The values set in the UI will be rescaled to slope*value+offset before "
+                     + "setting the device property state. Enter here a value for the offset.");
       } else if (s.contains(SingleStateUIProperty.getStateLabel())) {
          s = (String) table.getValueAt(row - 1, 0);
          help_.update(s, "Enter the device property value corresponding to the single state.");
@@ -492,9 +520,10 @@ public class PropertiesTable extends JPanel {
       int nrow = model.getRowCount();
 
       for (int i = 0; i < nrow; i++) {
-         // if device column is not empty (from state property, e.g. single state value or multistates) and is not unallocated
-         if (!isStateValue((String) model.getValueAt(i, 0)) &&
-               !model.getValueAt(i, 1).equals(GlobalConfiguration.KEY_UNALLOCATED)) {
+         // if device column is not empty (from state property, e.g. single state value or
+         // multistates) and is not unallocated
+         if (!isStateValue((String) model.getValueAt(i, 0))
+               && !model.getValueAt(i, 1).equals(GlobalConfiguration.KEY_UNALLOCATED)) {
             String propertyname = (String) model.getValueAt(i, 2);
             if (mmproperties_.getDevice((String) model.getValueAt(i, 1))
                   .hasLabelProperty(propertyname)) {
@@ -516,7 +545,8 @@ public class PropertiesTable extends JPanel {
 
 
    /**
-    * Tests if the string has been generated by a SingelStateUIProperty, a TwoStateUIProperty, a MultiStateUIProperty or a RescaledUIProperty.
+    * Tests if the string has been generated by a SingelStateUIProperty, a TwoStateUIProperty,
+    * a MultiStateUIProperty or a RescaledUIProperty.
     *
     * @param s String to test, value in the first column of the table
     * @return True if corresponds to a field value.
@@ -545,8 +575,8 @@ public class PropertiesTable extends JPanel {
          if (column > 0) {
             String versionVal = (String) value;
 
-            if (versionVal.equals(ConfigurationWizardUI.KEY_ENTERVALUE) ||
-                  versionVal.equals(GlobalConfiguration.KEY_UNALLOCATED)) {
+            if (versionVal.equals(ConfigurationWizardUI.KEY_ENTERVALUE)
+                  || versionVal.equals(GlobalConfiguration.KEY_UNALLOCATED)) {
                c.setForeground(Color.RED);
             } else {
                c.setForeground(Color.BLACK);

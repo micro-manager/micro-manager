@@ -16,8 +16,8 @@ public class GlobalConfiguration {
    /**
     * Value given to unallocated UIProperty.
     */
-   public final static String KEY_UNALLOCATED = "Unallocated";
-   private final static String KEY_NONE = "None";
+   public static final String KEY_UNALLOCATED = "Unallocated";
+   private static final String KEY_NONE = "None";
 
    private String currentConfiguration;
    private TreeMap<String, String> globalSettings;
@@ -35,7 +35,8 @@ public class GlobalConfiguration {
    }
 
    /**
-    * Constructor for configurations read from a file. Builds a GlobalConfiguration from a {@link GlobalConfigurationWrapper}.
+    * Constructor for configurations read from a file. Builds a GlobalConfiguration from a
+    * {@link GlobalConfigurationWrapper}.
     *
     * @param configuration {@link GlobalConfigurationWrapper} read out from a file.
     */
@@ -75,8 +76,8 @@ public class GlobalConfiguration {
    }
 
    /**
-    * Generates a {@link GlobalConfigurationWrapper} from this GlobalConfiguration in order to write the
-    * GlobalConfiguration to a file.
+    * Generates a {@link GlobalConfigurationWrapper} from this GlobalConfiguration in order to
+    * write the GlobalConfiguration to a file.
     *
     * @return Wrapper.
     * @see GlobalConfigurationWrapper
@@ -102,18 +103,18 @@ public class GlobalConfiguration {
    }
 
    /**
-    * Sets the current configuration to {@code new_default}. If {@code new_default} is unknown, the methods
-    * returns false, and true if it had successfully changed the configuration.
+    * Sets the current configuration to {@code new_default}. If {@code new_default} is unknown,
+    * the methods returns false, and true if it had successfully changed the configuration.
     *
-    * @param new_default New current configuration.
+    * @param newDefault New current configuration.
     * @return True if the change was successful, false if {@code new_default} is unknown.
     */
-   public boolean setCurrentConfiguration(String new_default) {
+   public boolean setCurrentConfiguration(String newDefault) {
       Iterator<PluginConfiguration> it = pluginconfigs.iterator();
       while (it.hasNext()) {
          PluginConfiguration plugin = it.next();
 
-         if (plugin.getConfigurationName().equals(new_default)) {
+         if (plugin.getConfigurationName().equals(newDefault)) {
             currentConfiguration = plugin.getConfigurationName();
             return true;
          }
@@ -183,7 +184,8 @@ public class GlobalConfiguration {
     */
    public void substituteConfiguration(PluginConfiguration pluginConfiguration) {
       for (int i = 0; i < pluginconfigs.size(); i++) {
-         // PluginConfiguration implements the Comparable interface and are compared solely on their name
+         // PluginConfiguration implements the Comparable interface and are compared solely on
+         // their name
          if (pluginconfigs.get(i).compareTo(pluginConfiguration) == 0) {
             pluginconfigs.remove(i);
             pluginconfigs.add(pluginConfiguration);
@@ -192,8 +194,8 @@ public class GlobalConfiguration {
    }
 
    /**
-    * Attempts to add {@code pluginConfiguration} to the plugin configuration list. If a PluginConfiguration
-    * with the same name exists, then it returns {@code false}.
+    * Attempts to add {@code pluginConfiguration} to the plugin configuration list. If a
+    * PluginConfiguration with the same name exists, then it returns {@code false}.
     *
     * @param pluginConfiguration PluginConfiguration to be added.
     * @return True if the configuration was added, false otherwise.
@@ -202,8 +204,8 @@ public class GlobalConfiguration {
 
       boolean exists = false;
       for (int i = 0; i < pluginconfigs.size(); i++) {
-         if (pluginconfigs.get(i).compareTo(pluginConfiguration) ==
-               0) { // compare the names (Comparable interface)
+         if (pluginconfigs.get(i).compareTo(pluginConfiguration) == 0) {
+            // compare the names (Comparable interface)
             exists = true;
          }
       }

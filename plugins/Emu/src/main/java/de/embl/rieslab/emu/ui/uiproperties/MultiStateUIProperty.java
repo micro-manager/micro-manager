@@ -7,14 +7,15 @@ import de.embl.rieslab.emu.ui.uiproperties.flag.PropertyFlag;
 import de.embl.rieslab.emu.utils.EmuUtils;
 
 /**
- * A UIProperty with multiple allowed states, whose values are unknown at compilation time. Upon instantiation
- * the number of states is set, while the user can change the values of each state in the configuration wizard.
+ * A UIProperty with multiple allowed states, whose values are unknown at compilation time.
+ * Upon instantiation the number of states is set, while the user can change the values of
+ * each state in the configuration wizard.
  *
  * @author Joran Deschamps
  */
 public class MultiStateUIProperty extends UIProperty {
 
-   public final static String STATE = " state ";
+   public static final String STATE = " state ";
 
    private String[] states_;
    private String[] stateNames_;
@@ -85,8 +86,9 @@ public class MultiStateUIProperty extends UIProperty {
    }
 
    /**
-    * Sets values for the states of the UI property. If the array of values is too long, then the supernumerary values are ignored.
-    * If the array is too short, then the corresponding states are modified while the other ones are left unchanged.
+    * Sets values for the states of the UI property. If the array of values is too long, then
+    * the supernumerary values are ignored. If the array is too short, then the corresponding
+    * states are modified while the other ones are left unchanged.
     *
     * @param vals Array of values.
     * @return True if some values were set, false otherwise.
@@ -117,10 +119,10 @@ public class MultiStateUIProperty extends UIProperty {
    }
 
    /**
-    * Gives names to the states. If stateNames has less entries than the number of states, then only
-    * the corresponding states will be updated. If it has more entries, then supernumerary entries
-    * will be ignored. The method does not check for duplicated names, in such a case, only the first
-    * occurrence will be set.
+    * Gives names to the states. If stateNames has less entries than the number of states,
+    * then only the corresponding states will be updated. If it has more entries, then
+    * supernumerary entries will be ignored. The method does not check for duplicated names,
+    * in such a case, only the first occurrence will be set.
     *
     * @param stateNames State names
     * @return True if some names were set, false otherwise.
@@ -319,13 +321,13 @@ public class MultiStateUIProperty extends UIProperty {
 
    private boolean isEqual(String stateval, String valToCompare) {
       if (valToCompare != null && isAssigned()) {
-         if (EmuUtils.isNumeric(valToCompare) &&
-               getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT) {
+         if (EmuUtils.isNumeric(valToCompare)
+               && getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT) {
             Float state = Float.parseFloat(stateval);
             Float val = Float.parseFloat(valToCompare);
             return Math.abs(state - val) < GlobalSettings.EPSILON;
-         } else if (EmuUtils.isNumeric(valToCompare) &&
-               getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER) {
+         } else if (EmuUtils.isNumeric(valToCompare)
+               && getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER) {
             double state = Double.parseDouble(valToCompare);
             Integer val = Integer.parseInt(stateval);
             return val.equals((int) state); // round

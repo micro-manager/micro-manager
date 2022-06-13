@@ -11,7 +11,7 @@ import de.embl.rieslab.emu.ui.uiproperties.flag.PropertyFlag;
  */
 public class SingleStateUIProperty extends UIProperty {
 
-   private final static String STATE = "state";
+   private static final String STATE = "state";
 
    private String state_ = "";
 

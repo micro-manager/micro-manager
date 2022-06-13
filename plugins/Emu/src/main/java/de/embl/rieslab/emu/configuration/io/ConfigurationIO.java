@@ -19,8 +19,8 @@ import java.nio.file.Files;
 public class ConfigurationIO {
 
    /**
-    * Reads a {@link GlobalConfigurationWrapper} object from the file {@code fileToReadFrom}. It then
-    * instantiates and returns a @link GlobalConfiguration}.
+    * Reads a {@link GlobalConfigurationWrapper} object from the file {@code fileToReadFrom}.
+    * It then instantiates and returns a @link GlobalConfiguration}.
     *
     * @param fileToReadFrom File to read the GlobalConfiguration from.
     * @return GlobalConfiguration from the file. null if no GlobalConfiguration could be read.

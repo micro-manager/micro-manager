@@ -28,16 +28,17 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
- * This class holds static standard methods to link Swing components with UIProperties or actions. The methods trigger a UIProperty change or an action when
- * the user interacts with the JComponents.
+ * This class holds static standard methods to link Swing components with UIProperties or actions.
+ * The methods trigger a UIProperty change or an action when the user interacts with the
+ * JComponents.
  *
  * @author Joran Deschamps
  */
 public class SwingUIListeners {
 
    /**
-    * Adds a Swing action listener to a JComboBox, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the JCombobox current value.
+    * Adds a Swing action listener to a JComboBox, causing the UIProperty {@code propertyKey}
+    * from {@code cp} to be updated with the JCombobox current value.
     *
     * @param cp          ConfigurablePanel that owns the property.
     * @param propertyKey UIProperty to modify when the JComboBox changes.
@@ -65,8 +66,9 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JTextField value, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the JTextField value upon pressing the enter key.
+    * Adds a Swing action listener to a JTextField value, causing the UIProperty
+    * {@code propertyKey} from {@code cp} to be updated with the JTextField value upon pressing
+    * the enter key.
     *
     * @param cp          ConfigurablePanel that owns the property.
     * @param propertyKey UIProperty to modify when the JTextField changes.
@@ -93,8 +95,8 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JComboBox, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the JCombobox currently selected index.
+    * Adds a Swing action listener to a JComboBox, causing the UIProperty {@code propertyKey}
+    * from {@code cp} to be updated with the JCombobox currently selected index.
     *
     * @param cp          ConfigurablePanel that owns the property.
     * @param propertyKey UIProperty to modify when the JComboBox changes.
@@ -122,8 +124,8 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a ButtonGroup, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the ButtonGroup currently selected button index.
+    * Adds a Swing action listener to a ButtonGroup, causing the UIProperty {@code propertyKey}
+    * from {@code cp} to be updated with the ButtonGroup currently selected button index.
     *
     * @param cp          ConfigurablePanel that owns the property.
     * @param propertyKey UIProperty to modify when the ButtonGroup selected button changes.
@@ -159,8 +161,9 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a ButtonGroup, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the entry of {@code values} whose index equals the ButtonGroup currently selected button index.
+    * Adds a Swing action listener to a ButtonGroup, causing the UIProperty {@code propertyKey}
+    * from {@code cp} to be updated with the entry of {@code values} whose index equals the
+    * ButtonGroup currently selected button index.
     *
     * @param cp          ConfigurablePanel that owns the property.
     * @param propertyKey UIProperty to modify when the ButtonGroup selected button changes.
@@ -205,8 +208,9 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JCombobox, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the entry of {@code values} whose index equals the JCombobox currently selected index.
+    * Adds a Swing action listener to a JCombobox, causing the UIProperty {@code propertyKey}
+    * from {@code cp} to be updated with the entry of {@code values} whose index equals the
+    * JCombobox currently selected index.
     *
     * @param cp          ConfigurablePanel that owns the property.
     * @param propertyKey UIProperty to modify when the JComboBox changes.
@@ -246,8 +250,9 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JTextField value, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the JTextField (integer) value within an allowed range defined by {@code min} and {@code max}. Non-integer values are ignored.
+    * Adds a Swing action listener to a JTextField value, causing the UIProperty
+    * {@code propertyKey} from {@code cp} to be updated with the JTextField (integer) value within
+    * an allowed range defined by {@code min} and {@code max}. Non-integer values are ignored.
     *
     * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
     * @param propertyKey Label of the UIProperty to update.
@@ -299,62 +304,9 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JTextField value, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the JTextField (double) value within an allowed range defined by {@code min} and {@code max}. Non-double values are ignored.
-    *
-    * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
-    * @param propertyKey Label of the UIProperty to update.
-    * @param txtf        JTextField.
-    * @param min         Minimum accepted value.
-    * @param max         Maximum accepted value.
-    */
-   public static void addActionListenerOnDoubleValue(final ConfigurablePanel cp,
-                                                     final String propertyKey,
-                                                     final JTextField txtf, double min,
-                                                     double max) {
-      if (cp == null) {
-         throw new NullPointerException("The ConfigurablePanel cannot be null.");
-      }
-      if (propertyKey == null) {
-         throw new NullPointerException("The UIProperty's label cannot be null.");
-      }
-      if (txtf == null) {
-         throw new NullPointerException("The JTextField cannot be null.");
-      }
-
-      txtf.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            String s = txtf.getText().replaceAll(",", ".");
-            if (EmuUtils.isNumeric(s)) {
-               double val = Double.parseDouble(s);
-               if (Double.compare(val, min) >= 0 && Double.compare(val, max) <= 0) {
-                  cp.setUIPropertyValue(propertyKey, s);
-               }
-            }
-         }
-      });
-
-      txtf.addFocusListener(new FocusListener() {
-         @Override
-         public void focusGained(FocusEvent ex) {
-         }
-
-         @Override
-         public void focusLost(FocusEvent ex) {
-            String s = txtf.getText().replaceAll(",", ".");
-            if (EmuUtils.isNumeric(s)) {
-               double val = Double.parseDouble(s);
-               if (Double.compare(val, min) >= 0 && Double.compare(val, max) <= 0) {
-                  cp.setUIPropertyValue(propertyKey, s);
-               }
-            }
-         }
-      });
-   }
-
-   /**
-    * Adds a Swing action listener to a JTextField value, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the JTextField (integer) value. Non-integer values are ignored.
+    * Adds a Swing action listener to a JTextField value, causing the UIProperty
+    * {@code propertyKey} from {@code cp} to be updated with the JTextField (integer) value.
+    * Non-integer values are ignored.
     *
     * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
     * @param propertyKey Label of the UIProperty to update.
@@ -398,218 +350,8 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JTextField value, causing the UIProperty
-    * {@code propertyKey} from {@code cp} to be updated with the JTextField
-    * (double) value. Non-double values are ignored.
-    *
-    * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
-    * @param propertyKey Label of the UIProperty to update.
-    * @param txtf        JTextField.
-    */
-   public static void addActionListenerOnDoubleValue(final ConfigurablePanel cp,
-                                                     final String propertyKey,
-                                                     final JTextField txtf) {
-      if (cp == null) {
-         throw new NullPointerException("The ConfigurablePanel cannot be null.");
-      }
-      if (propertyKey == null) {
-         throw new NullPointerException("The UIProperty's label cannot be null.");
-      }
-      if (txtf == null) {
-         throw new NullPointerException("The JTextField cannot be null.");
-      }
-
-      txtf.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            String s = txtf.getText().replaceAll(",", ".");
-            if (EmuUtils.isNumeric(s)) {
-               cp.setUIPropertyValue(propertyKey, s);
-            }
-         }
-      });
-
-      txtf.addFocusListener(new FocusListener() {
-         @Override
-         public void focusGained(FocusEvent ex) {
-         }
-
-         @Override
-         public void focusLost(FocusEvent ex) {
-            String s = txtf.getText().replaceAll(",", ".");
-            if (EmuUtils.isNumeric(s)) {
-               cp.setUIPropertyValue(propertyKey, s);
-            }
-         }
-      });
-   }
-
-   /**
-    * Adds a Swing action listener to a JTextField with an input of type Double, triggering an Action (lambda expression) when the enter key is pressed.
-    * Non-double expressions will be ignored.
-    *
-    * @param action Action taking a Double parameter.
-    * @param txtf   JTextField triggering the Action.
-    */
-   public static void addActionListenerToDoubleAction(final Action<Double> action,
-                                                      final JTextField txtf) {
-
-      if (action == null) {
-         throw new NullPointerException("The Action cannot be null.");
-      }
-      if (txtf == null) {
-         throw new NullPointerException("The JTextField cannot be null.");
-      }
-
-      txtf.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            String s = txtf.getText().replaceAll(",", ".");
-            if (EmuUtils.isNumeric(s)) {
-               action.performAction(Double.valueOf(s));
-            }
-         }
-      });
-
-      txtf.addFocusListener(new FocusListener() {
-         @Override
-         public void focusGained(FocusEvent ex) {
-         }
-
-         @Override
-         public void focusLost(FocusEvent ex) {
-            String s = txtf.getText().replaceAll(",", ".");
-            if (EmuUtils.isNumeric(s)) {
-               action.performAction(Double.valueOf(s));
-            }
-         }
-      });
-   }
-
-   /**
-    * Adds a Swing action listener to a JTextField with an input of type Double between {@code min} and {@code max},
-    * triggering an Action (lambda expression) when the enter key is pressed. Non-double expressions will be ignored.
-    *
-    * @param action Action taking a Double parameter.
-    * @param txtf   JTextField triggering the Action.
-    * @param min    Minimum value of the Double input.
-    * @param max    Maximum value of the Double input.
-    */
-   public static void addActionListenerToDoubleAction(final Action<Double> action,
-                                                      final JTextField txtf, double min,
-                                                      double max) {
-      if (action == null) {
-         throw new NullPointerException("The Action cannot be null.");
-      }
-      if (txtf == null) {
-         throw new NullPointerException("The JTextField cannot be null.");
-      }
-
-      txtf.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            String s = txtf.getText().replaceAll(",", ".");
-            if (EmuUtils.isNumeric(s)) {
-               double val = Double.valueOf(s);
-               if (Double.compare(val, min) >= 0 && Double.compare(val, max) <= 0) {
-                  action.performAction(Double.valueOf(s));
-               }
-            }
-         }
-      });
-
-      txtf.addFocusListener(new FocusListener() {
-         @Override
-         public void focusGained(FocusEvent ex) {
-         }
-
-         @Override
-         public void focusLost(FocusEvent ex) {
-            String s = txtf.getText().replaceAll(",", ".");
-            if (EmuUtils.isNumeric(s)) {
-               double val = Double.valueOf(s);
-               if (Double.compare(val, min) >= 0 && Double.compare(val, max) <= 0) {
-                  action.performAction(Double.valueOf(s));
-               }
-            }
-         }
-      });
-   }
-
-   /**
-    * Adds a Swing action listener to a JTextField, triggering an Action (lambda expression) when the enter
-    * key is pressed.
-    *
-    * @param action Action taking a String parameter.
-    * @param txtf   JTextField triggering the Action.
-    */
-   public static void addActionListenerToStringAction(final Action<String> action,
-                                                      final JTextField txtf) {
-      if (action == null) {
-         throw new NullPointerException("The Action cannot be null.");
-      }
-      if (txtf == null) {
-         throw new NullPointerException("The JTextField cannot be null.");
-      }
-
-      txtf.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            action.performAction(txtf.getText());
-         }
-      });
-
-      txtf.addFocusListener(new FocusListener() {
-         @Override
-         public void focusGained(FocusEvent ex) {
-         }
-
-         @Override
-         public void focusLost(FocusEvent ex) {
-            action.performAction(txtf.getText());
-         }
-      });
-   }
-
-   /**
-    * Adds a Swing action listener to a JTextField with an input of type Integer, triggering an Action (lambda expression)
-    * when the enter key is pressed. Non-integer expressions will be ignored.
-    *
-    * @param action Action taking an Integer parameter.
-    * @param txtf   JTextField triggering the Action.
-    */
-   public static void addActionListenerToIntegerAction(final Action<Integer> action,
-                                                       final JTextField txtf) {
-      if (action == null) {
-         throw new NullPointerException("The Action cannot be null.");
-      }
-      if (txtf == null) {
-         throw new NullPointerException("The JTextField cannot be null.");
-      }
-
-      txtf.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            String s = txtf.getText();
-            if (EmuUtils.isInteger(s)) {
-               action.performAction(Integer.valueOf(s));
-            }
-         }
-      });
-
-      txtf.addFocusListener(new FocusListener() {
-         @Override
-         public void focusGained(FocusEvent ex) {
-         }
-
-         @Override
-         public void focusLost(FocusEvent ex) {
-            String s = txtf.getText();
-            if (EmuUtils.isInteger(s)) {
-               action.performAction(Integer.valueOf(s));
-            }
-         }
-      });
-   }
-
-   /**
-    * Adds a Swing action listener to a JSlider, causing the UIProperty {@code propertyKey} from {@code cp} to be updated
-    * with the JSlider (integer) value.
+    * Adds a Swing action listener to a JSlider, causing the UIProperty {@code propertyKey}
+    * from {@code cp} to be updated with the JSlider (integer) value.
     *
     * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
     * @param propertyKey Label of the UIProperty to update.
@@ -636,8 +378,9 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JTextField, causing the UIProperty {@code propertyKey} from {@code cp} and the JSlider {@code sld}
-    * to be updated with the JTextField (integer) value. Non-integer values will be ignored.
+    * Adds a Swing action listener to a JTextField, causing the UIProperty {@code propertyKey}
+    * from {@code cp} and the JSlider {@code sld} to be updated with the JTextField (integer)
+    * value. Non-integer values will be ignored.
     *
     * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
     * @param propertyKey Label of the UIProperty to update.
@@ -693,8 +436,9 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JSlider, causing the UIProperty {@code propertyKey} from {@code cp} and the JTextField {@code txtf}
-    * to be updated with the JSlider (integer) value.
+    * Adds a Swing action listener to a JSlider, causing the UIProperty {@code propertyKey}
+    * from {@code cp} and the JTextField {@code txtf} to be updated with the JSlider (integer)
+    * value.
     *
     * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
     * @param propertyKey Label of the UIProperty to update.
@@ -727,8 +471,8 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JSlider, causing the UIProperty {@code propertyKey} from {@code cp} and the JLabel {@code lbl}
-    * to be updated with the JSlider (integer) value.
+    * Adds a Swing action listener to a JSlider, causing the UIProperty {@code propertyKey}
+    * from {@code cp} and the JLabel {@code lbl} to be updated with the JSlider (integer) value.
     *
     * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
     * @param propertyKey Label of the UIProperty to update.
@@ -761,8 +505,8 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JSlider, causing the UIProperty {@code propertyKey} from {@code cp} and the JLabel {@code lbl}
-    * to be updated with the JSlider (integer) value.
+    * Adds a Swing action listener to a JSlider, causing the UIProperty {@code propertyKey}
+    * from {@code cp} and the JLabel {@code lbl} to be updated with the JSlider (integer) value.
     *
     * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
     * @param propertyKey Label of the UIProperty to update.
@@ -804,13 +548,307 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JToggleButton causing the TwoStateUIProperty {@code propertyKey} from {@code cp}
-    * to be switched to its on or off state depending on {@code tglb} state.
+    * Adds a Swing action listener to a JTextField value, causing the UIProperty
+    * {@code propertyKey} from {@code cp} to be updated with the JTextField (double) value within
+    * an allowed range defined by {@code min} and {@code max}. Non-double values are ignored.
+    *
+    * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
+    * @param propertyKey Label of the UIProperty to update.
+    * @param txtf        JTextField.
+    * @param min         Minimum accepted value.
+    * @param max         Maximum accepted value.
+    */
+   public static void addActionListenerOnDoubleValue(final ConfigurablePanel cp,
+                                                     final String propertyKey,
+                                                     final JTextField txtf, double min,
+                                                     double max) {
+      if (cp == null) {
+         throw new NullPointerException("The ConfigurablePanel cannot be null.");
+      }
+      if (propertyKey == null) {
+         throw new NullPointerException("The UIProperty's label cannot be null.");
+      }
+      if (txtf == null) {
+         throw new NullPointerException("The JTextField cannot be null.");
+      }
+
+      txtf.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            String s = txtf.getText().replaceAll(",", ".");
+            if (EmuUtils.isNumeric(s)) {
+               double val = Double.parseDouble(s);
+               if (Double.compare(val, min) >= 0 && Double.compare(val, max) <= 0) {
+                  cp.setUIPropertyValue(propertyKey, s);
+               }
+            }
+         }
+      });
+
+      txtf.addFocusListener(new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent ex) {
+         }
+
+         @Override
+         public void focusLost(FocusEvent ex) {
+            String s = txtf.getText().replaceAll(",", ".");
+            if (EmuUtils.isNumeric(s)) {
+               double val = Double.parseDouble(s);
+               if (Double.compare(val, min) >= 0 && Double.compare(val, max) <= 0) {
+                  cp.setUIPropertyValue(propertyKey, s);
+               }
+            }
+         }
+      });
+   }
+
+
+   /**
+    * Adds a Swing action listener to a JTextField value, causing the UIProperty
+    * {@code propertyKey} from {@code cp} to be updated with the JTextField
+    * (double) value. Non-double values are ignored.
+    *
+    * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
+    * @param propertyKey Label of the UIProperty to update.
+    * @param txtf        JTextField.
+    */
+   public static void addActionListenerOnDoubleValue(final ConfigurablePanel cp,
+                                                     final String propertyKey,
+                                                     final JTextField txtf) {
+      if (cp == null) {
+         throw new NullPointerException("The ConfigurablePanel cannot be null.");
+      }
+      if (propertyKey == null) {
+         throw new NullPointerException("The UIProperty's label cannot be null.");
+      }
+      if (txtf == null) {
+         throw new NullPointerException("The JTextField cannot be null.");
+      }
+
+      txtf.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            String s = txtf.getText().replaceAll(",", ".");
+            if (EmuUtils.isNumeric(s)) {
+               cp.setUIPropertyValue(propertyKey, s);
+            }
+         }
+      });
+
+      txtf.addFocusListener(new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent ex) {
+         }
+
+         @Override
+         public void focusLost(FocusEvent ex) {
+            String s = txtf.getText().replaceAll(",", ".");
+            if (EmuUtils.isNumeric(s)) {
+               cp.setUIPropertyValue(propertyKey, s);
+            }
+         }
+      });
+   }
+
+   /**
+    * Adds a Swing action listener to a JTextField with an input of type Double, triggering
+    * an Action (lambda expression) when the enter key is pressed.
+    * Non-double expressions will be ignored.
+    *
+    * @param action Action taking a Double parameter.
+    * @param txtf   JTextField triggering the Action.
+    */
+   public static void addActionListenerToDoubleAction(final Action<Double> action,
+                                                      final JTextField txtf) {
+
+      if (action == null) {
+         throw new NullPointerException("The Action cannot be null.");
+      }
+      if (txtf == null) {
+         throw new NullPointerException("The JTextField cannot be null.");
+      }
+
+      txtf.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            String s = txtf.getText().replaceAll(",", ".");
+            if (EmuUtils.isNumeric(s)) {
+               action.performAction(Double.valueOf(s));
+            }
+         }
+      });
+
+      txtf.addFocusListener(new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent ex) {
+         }
+
+         @Override
+         public void focusLost(FocusEvent ex) {
+            String s = txtf.getText().replaceAll(",", ".");
+            if (EmuUtils.isNumeric(s)) {
+               action.performAction(Double.valueOf(s));
+            }
+         }
+      });
+   }
+
+   /**
+    * Adds a Swing action listener to a JTextField with an input of type Double between
+    * {@code min} and {@code max}, triggering an Action (lambda expression) when the enter
+    * key is pressed. Non-double expressions will be ignored.
+    *
+    * @param action Action taking a Double parameter.
+    * @param txtf   JTextField triggering the Action.
+    * @param min    Minimum value of the Double input.
+    * @param max    Maximum value of the Double input.
+    */
+   public static void addActionListenerToDoubleAction(final Action<Double> action,
+                                                      final JTextField txtf, double min,
+                                                      double max) {
+      if (action == null) {
+         throw new NullPointerException("The Action cannot be null.");
+      }
+      if (txtf == null) {
+         throw new NullPointerException("The JTextField cannot be null.");
+      }
+
+      txtf.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            String s = txtf.getText().replaceAll(",", ".");
+            if (EmuUtils.isNumeric(s)) {
+               double val = Double.valueOf(s);
+               if (Double.compare(val, min) >= 0 && Double.compare(val, max) <= 0) {
+                  action.performAction(Double.valueOf(s));
+               }
+            }
+         }
+      });
+
+      txtf.addFocusListener(new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent ex) {
+         }
+
+         @Override
+         public void focusLost(FocusEvent ex) {
+            String s = txtf.getText().replaceAll(",", ".");
+            if (EmuUtils.isNumeric(s)) {
+               double val = Double.valueOf(s);
+               if (Double.compare(val, min) >= 0 && Double.compare(val, max) <= 0) {
+                  action.performAction(Double.valueOf(s));
+               }
+            }
+         }
+      });
+   }
+
+   /**
+    * Adds a Swing action listener to a JTextField, triggering an Action (lambda expression)
+    * when the enter key is pressed.
+    *
+    * @param action Action taking a String parameter.
+    * @param txtf   JTextField triggering the Action.
+    */
+   public static void addActionListenerToStringAction(final Action<String> action,
+                                                      final JTextField txtf) {
+      if (action == null) {
+         throw new NullPointerException("The Action cannot be null.");
+      }
+      if (txtf == null) {
+         throw new NullPointerException("The JTextField cannot be null.");
+      }
+
+      txtf.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            action.performAction(txtf.getText());
+         }
+      });
+
+      txtf.addFocusListener(new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent ex) {
+         }
+
+         @Override
+         public void focusLost(FocusEvent ex) {
+            action.performAction(txtf.getText());
+         }
+      });
+   }
+
+   /**
+    * Adds a Swing action listener to a JTextField with an input of type Integer, triggering an
+    * Action (lambda expression) when the enter key is pressed. Non-integer expressions will
+    * be ignored.
+    *
+    * @param action Action taking an Integer parameter.
+    * @param txtf   JTextField triggering the Action.
+    */
+   public static void addActionListenerToIntegerAction(final Action<Integer> action,
+                                                       final JTextField txtf) {
+      if (action == null) {
+         throw new NullPointerException("The Action cannot be null.");
+      }
+      if (txtf == null) {
+         throw new NullPointerException("The JTextField cannot be null.");
+      }
+
+      txtf.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            String s = txtf.getText();
+            if (EmuUtils.isInteger(s)) {
+               action.performAction(Integer.valueOf(s));
+            }
+         }
+      });
+
+      txtf.addFocusListener(new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent ex) {
+         }
+
+         @Override
+         public void focusLost(FocusEvent ex) {
+            String s = txtf.getText();
+            if (EmuUtils.isInteger(s)) {
+               action.performAction(Integer.valueOf(s));
+            }
+         }
+      });
+   }
+
+   /**
+    * Adds a Swing mouse listener to a JSlider causing the (Integer) Action to be triggered
+    * upon value change.
+    *
+    * @param action Action triggered by a change of {@code sldr}.
+    * @param sldr   Jslider triggering the Action.
+    */
+   public static void addActionListenerToIntegerAction(final Action<Integer> action,
+                                                       final JSlider sldr) {
+      if (action == null) {
+         throw new NullPointerException("The Action cannot be null.");
+      }
+      if (sldr == null) {
+         throw new NullPointerException("The JSlider cannot be null.");
+      }
+
+      sldr.addMouseListener(new MouseAdapter() {
+         public void mouseReleased(MouseEvent e) {
+            action.performAction(sldr.getValue());
+         }
+      });
+   }
+
+   /**
+    * Adds a Swing action listener to a JToggleButton causing the TwoStateUIProperty
+    * {@code propertyKey} from {@code cp} to be switched to its on or off state depending
+    * on {@code tglb} state.
     *
     * @param cp          ConfigurablePanel that owns the TwoStateUIProperty {@code propertyKey}.
     * @param propertyKey Label of the TwoStateUIProperty.
     * @param tglb        JToggleButton triggering the TwoStateUIProperty change.
-    * @throws IncorrectUIPropertyTypeException Exception thrown if {@code propertyKey} does not correspond to a TwoStateUIProperty.
+    * @throws IncorrectUIPropertyTypeException Exception thrown if {@code propertyKey} does
+    *     not correspond to a TwoStateUIProperty.
     */
    public static void addActionListenerToTwoState(final ConfigurablePanel cp,
                                                   final String propertyKey,
@@ -844,7 +882,8 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to a JToggleButton causing the (boolean) Action to be triggered upon {@code tglb} change.
+    * Adds a Swing action listener to a JToggleButton causing the (boolean) Action to be
+    * triggered upon {@code tglb} change.
     *
     * @param action Action triggered by a change in {@code tglb} state.
     * @param tglb   JToggleButton triggering the Action.
@@ -867,30 +906,10 @@ public class SwingUIListeners {
       });
    }
 
-   /**
-    * Adds a Swing mouse listener to a JSlider causing the (Integer) Action to be triggered upon value change.
-    *
-    * @param action Action triggered by a change of {@code sldr}.
-    * @param sldr   Jslider triggering the Action.
-    */
-   public static void addActionListenerToIntegerAction(final Action<Integer> action,
-                                                       final JSlider sldr) {
-      if (action == null) {
-         throw new NullPointerException("The Action cannot be null.");
-      }
-      if (sldr == null) {
-         throw new NullPointerException("The JSlider cannot be null.");
-      }
-
-      sldr.addMouseListener(new MouseAdapter() {
-         public void mouseReleased(MouseEvent e) {
-            action.performAction(sldr.getValue());
-         }
-      });
-   }
 
    /**
-    * Adds a Swing action listener to an AbstractButton causing the UnparametrizedAction to be triggered upon clicking on the button.
+    * Adds a Swing action listener to an AbstractButton causing the UnparametrizedAction to
+    * be triggered upon clicking on the button.
     *
     * @param action Action triggered by {@code btn} being pressed.
     * @param btn    Button triggering the action.
@@ -912,12 +931,14 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing action listener to an AbstractButton causing the SingleStateUIProperty to be set to its single-state upon pressing the button.
+    * Adds a Swing action listener to an AbstractButton causing the SingleStateUIProperty to be
+    * set to its single-state upon pressing the button.
     *
     * @param cp          ConfigurablePanel that owns the SingleStateUIProperty {@code propertyKey}.
     * @param propertyKey Label of the SingleStateUIProperty.
     * @param btn         AbstractButton triggering the call.
-    * @throws IncorrectUIPropertyTypeException Thrown if {@code propertyKey} does not correspond to a SingleStateUIProperty.
+    * @throws IncorrectUIPropertyTypeException Thrown if {@code propertyKey} does not
+    *     correspond to a SingleStateUIProperty.
     */
    public static void addActionListenerToSingleState(final ConfigurablePanel cp,
                                                      final String propertyKey,
@@ -945,7 +966,8 @@ public class SwingUIListeners {
    }
 
    /**
-    * Adds a Swing change listener to a JSpinner, causing the UIProperty {@code propertyKey} to be updated upon {@code spnr} state change.
+    * Adds a Swing change listener to a JSpinner, causing the UIProperty {@code propertyKey} to
+    * be updated upon {@code spnr} state change.
     *
     * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}.
     * @param propertyKey Label of the UIProperty.

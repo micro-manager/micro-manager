@@ -31,7 +31,7 @@ public class SystemDialogs {
     */
    public static String showPluginsChoiceWindow(String[] plugins) {
       JFrame frame = new JFrame("Select a plugin");
-      String selected_plugin = (String) JOptionPane.showInputDialog(frame,
+      String selectedPlugin = (String) JOptionPane.showInputDialog(frame,
             "Select a plugin",
             "Select a plugin:",
             JOptionPane.QUESTION_MESSAGE,
@@ -39,20 +39,20 @@ public class SystemDialogs {
             plugins,
             plugins[0]);
 
-      return selected_plugin;
+      return selectedPlugin;
    }
 
    /**
     * This dialog pops up when the {@link de.embl.rieslab.emu.controller.SystemController} does not
-    * know which {@link de.embl.rieslab.emu.configuration.data.PluginConfiguration} to instantiate. It lets the user decide
-    * from an array of known configuration names.
+    * know which {@link de.embl.rieslab.emu.configuration.data.PluginConfiguration} to
+    * instantiate. It lets the user decide from an array of known configuration names.
     *
     * @param configs Array of configuration names.
     * @return Name of the selected configuration.
     */
    public static String showPluginConfigurationsChoiceWindow(String[] configs) {
       JFrame frame = new JFrame("Select a configuration");
-      String selected_conf = (String) JOptionPane.showInputDialog(frame,
+      String selectedConf = (String) JOptionPane.showInputDialog(frame,
             "Select a configuration",
             "Select a configuration:",
             JOptionPane.QUESTION_MESSAGE,
@@ -60,11 +60,12 @@ public class SystemDialogs {
             configs,
             configs[0]);
 
-      return selected_conf;
+      return selectedConf;
    }
 
    /**
-    * Dialog displayed when the {@link de.embl.rieslab.emu.controller.SystemController} does not find any {@link de.embl.rieslab.emu.plugin.UIPlugin}.
+    * Dialog displayed when the {@link de.embl.rieslab.emu.controller.SystemController}
+    * does not find any {@link de.embl.rieslab.emu.plugin.UIPlugin}.
     */
    public static void showNoPluginFound() {
       String title = "No plugin";
@@ -76,8 +77,8 @@ public class SystemDialogs {
 
 
    /**
-    * Used by the {@link de.embl.rieslab.emu.controller.SystemController} to signify the user of missing UIParameters or UIProperties
-    * in the configuration.
+    * Used by the {@link de.embl.rieslab.emu.controller.SystemController} to signify the user
+    * of missing UIParameters or UIProperties in the configuration.
     */
    public static void showConfigurationDidNotPassSanityCheck() {
       String title = "Failed sanity check";
@@ -108,9 +109,9 @@ public class SystemDialogs {
     * @param wrongvals List of wrong parameters.
     */
    public static void showWrongParameterMessage(ArrayList<String> wrongvals) {
-      String title = "Unallocated properties";
-
+      final String title = "Unallocated properties";
       String message = "The following parameters have been set to a wrong value: \n\n";
+
       Iterator<String> it = wrongvals.iterator();
       message = message + it.next();
       int count = 1;
@@ -135,7 +136,7 @@ public class SystemDialogs {
     * @param unallocated List of unallocated properties.
     */
    public static void showUnallocatedMessage(ArrayList<String> unallocated) {
-      String title = "Unallocated properties";
+      final String title = "Unallocated properties";
 
       String message = "The following UI properties have not been allocated: \n\n";
       Iterator<String> it = unallocated.iterator();
@@ -151,8 +152,9 @@ public class SystemDialogs {
       }
       message = message + ". \n\n";
 
-      message = message +
-            "The corresponding UI components will not function until these properties are allocated. \nUse the Settings Wizard to allocate them.";
+      message = message
+            + "The corresponding UI components will not function until these properties are "
+            + "allocated. \nUse the Settings Wizard to allocate them.";
 
       JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
    }
@@ -163,7 +165,7 @@ public class SystemDialogs {
     * @param wrongvals List of wrongly set settings.
     */
    public static void showWrongPluginSettings(ArrayList<String> wrongvals) {
-      String title = "Wrong plugin setting values";
+      final String title = "Wrong plugin setting values";
 
       String message =
             "The values of the following plugin settings were ignored due to type mismatch: \n\n";
@@ -191,7 +193,7 @@ public class SystemDialogs {
     * @param wrongvals List of wrongly set settings.
     */
    public static void showWrongGlobalSettings(ArrayList<String> wrongvals) {
-      String title = "Wrong global setting values";
+      final String title = "Wrong global setting values";
 
       String message =
             "The values of the following global settings were ignored due to type mismatch: \n\n";
@@ -214,12 +216,13 @@ public class SystemDialogs {
    }
 
    /**
-    * Displays the list of UIProperties states set to a forbidden value (mismatch with MM property limits).
+    * Displays the list of UIProperties states set to a forbidden value (mismatch with MM
+    * property limits).
     *
     * @param forbiddenvalProps List of UIProperties set to forbidden values.
     */
    public static void showForbiddenValuesMessage(ArrayList<String> forbiddenvalProps) {
-      String title = "Forbidden values";
+      final String title = "Forbidden values";
 
       String message = "The state values of the following UIProperties are forbidden: \n\n";
       Iterator<String> it = forbiddenvalProps.iterator();
@@ -235,8 +238,9 @@ public class SystemDialogs {
       }
       message = message + ". \n\n";
 
-      message = message +
-            "Please check the device property browser of Micro-Manager \nto infer allowed values and correct the state values in the Settings Wizard.\n";
+      message = message
+            + "Please check the device property browser of Micro-Manager \nto infer allowed "
+            + "values and correct the state values in the Settings Wizard.\n";
 
       JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
    }
@@ -247,7 +251,7 @@ public class SystemDialogs {
     * @param incompatibleProps List of incompatible UIProperties.
     */
    public static void showIncompatiblePropertiesMessage(ArrayList<String> incompatibleProps) {
-      String title = "Incompatible properties";
+      final String title = "Incompatible properties";
 
       String message =
             "The following UIProperties were paired with incompatible MMProperties: \n\n";
@@ -299,7 +303,8 @@ public class SystemDialogs {
     */
    public static void showWillCreateNewconfiguration() {
       JOptionPane.showMessageDialog(null,
-            "Modifying the name of the configuration will create a new configuration (use the configuration manager to delete configurations).",
+            "Modifying the name of the configuration will create a new configuration "
+                  + "(use the configuration manager to delete configurations).",
             "Information", JOptionPane.INFORMATION_MESSAGE);
    }
 
@@ -314,21 +319,18 @@ public class SystemDialogs {
       String message = "Easier Micro-manager User interfaces (EMU).<br />"
             + "<i>version " + SystemController.EMU_VERSION + "</i> <br /><br />"
             +
-            "EMU is a Micro-Manager plugin that provides an easy and intuitive way to link a user interface<br />"
-            +
-            "(UI) with the device properties of Micro-manager. Build you own UI using drag and drop<br />"
-            +
-            "softwares and EMU classes. Finally, load your UI in EMU and configure it using the configuration<br />"
-            + "wizard. Your plugin is ready to be used!<br /><br />"
-            +
-            "&bull <a href=\"https://jdeschamps.github.io/EMU-guide/\">The EMU guide</a> is available online.<br />"
-            +
-            "&bull Find <a href=\"https://github.com/jdeschamps/EMU\">the source code</a> on Github.<br />"
-            +
-            "&bull Report bugs <a href=\"https://github.com/jdeschamps/EMU/issues\">as Github issues</a>.<br /><br />"
-            +
-            "Contribute your UI to Micro-Manager by doing a Github pull request or by getting in touch with us.<br /><br />"
-            + "<i>EMU was developed by Joran Deschamps, EMBL (2016-2020).</i>";
+            "EMU is a Micro-Manager plugin that provides an easy and intuitive way to link a i"
+            + "user interface<br />(UI) with the device properties of Micro-manager. Build "
+            + "you own UI using drag and drop<br />"
+            + "softwares and EMU classes. Finally, load your UI in EMU and configure it using "
+            + "the configuration<br /> wizard. Your plugin is ready to be used!<br /><br />"
+            + "&bull <a href=\"https://jdeschamps.github.io/EMU-guide/\">The EMU guide</a> is "
+            + "available online.<br />&bull Find <a href=\"https://github.com/jdeschamps/EMU\">the "
+            + "source code</a> on Github.<br />&bull Report bugs "
+            + "<a href=\"https://github.com/jdeschamps/EMU/issues\">as Github issues</a>.<br />"
+            + "<br />Contribute your UI to Micro-Manager by doing a Github pull request or by "
+            + "getting in touch with us.<br /><br /><i>EMU was developed by Joran Deschamps, "
+            + "EMBL (2016-2020).</i>";
 
       showEMUOptionPane(contextObject, title, message);
    }
@@ -343,16 +345,13 @@ public class SystemDialogs {
 
       String message = "Welcome to EMU.<br />"
             + "<i>version " + SystemController.EMU_VERSION + "</i> <br /><br />"
-            +
-            "EMU is a Micro-Manager plugin that provides an easy and intuitive way to link a user interface<br />"
-            +
-            "(UI) with the device properties of Micro-manager. Implement your own UI or test the examples<br />"
-            + "included in EMU. <br /><br />"
+            + "EMU is a Micro-Manager plugin that provides an easy and intuitive way to link a "
+            + "user interface<br />(UI) with the device properties of Micro-manager. Implement "
+            + "your own UI or test the examples<br />included in EMU. <br /><br />"
             + "After this message:<br />"
             + "&bull Choose a UI from the list of available UIs.<br />"
-            +
-            "&bull Configure the chosen UI using the configuration wizard. In particular, map your device<br />"
-            + "properties to the UI properties. <br />"
+            + "&bull Configure the chosen UI using the configuration wizard. In particular, map "
+            + "your device<br />properties to the UI properties. <br />"
             + "&bull Use the UI to control your devices.";
 
       showEMUOptionPane(contextObject, title, message);

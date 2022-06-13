@@ -5,7 +5,7 @@ public class IncompatibleMMProperty extends Exception {
    private static final long serialVersionUID = 1L;
 
    public IncompatibleMMProperty(String mmproperty, String uiproperty) {
-      super("The Micro-manager property \"" + mmproperty +
-            "\" is not compatible with the UI property \"" + uiproperty + "\".");
+      super("The Micro-manager property \"" + mmproperty
+            + "\" is not compatible with the UI property \"" + uiproperty + "\".");
    }
 }

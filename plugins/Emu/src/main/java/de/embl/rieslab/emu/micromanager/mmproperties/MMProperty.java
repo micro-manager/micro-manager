@@ -7,9 +7,10 @@ import mmcorej.CMMCore;
 
 /**
  * Abstract wrapper for a Micro-manager device property. This class allows retrieving and modifying
- * the value of a device property, within its limits, or allowed values, as defined by Micro-manager.
- * Each MMProperty is identified by a hash "deviceLabel-propertyLabel" where deviceLabel is the label
- * of the device holding the property and propertyLabel is the label of the property.
+ * the value of a device property, within its limits, or allowed values, as defined by
+ * Micro-manager. Each MMProperty is identified by a hash "deviceLabel-propertyLabel" where
+ * deviceLabel is the label of the device holding the property and propertyLabel is the label
+ * of the property.
  *
  * @param <T> Type of the Micro-manager property.
  * @author Joran Deschamps
@@ -27,7 +28,8 @@ public abstract class MMProperty<T> {
    private final boolean hasLimits;
    private final boolean hasAllowedValues;
    private T[] allowedValues;
-   private T maxValue, minValue;
+   private T maxValue;
+   private T minValue;
    private final ArrayList<UIProperty> listeners_;
 
    /**
@@ -155,7 +157,8 @@ public abstract class MMProperty<T> {
    }
 
    /**
-    * Returns the current value of the device property as a String. This method calls Micro-Manager CMMCore.
+    * Returns the current value of the device property as a String. This method calls
+    * Micro-Manager CMMCore.
     *
     * @return Current String value.
     */
@@ -175,8 +178,9 @@ public abstract class MMProperty<T> {
    }
 
    /**
-    * Sets the value of the device property and updates all parent UIProperties. This method is called by a parent UIProperty, and the source
-    * is excluded from the notification (using {@link #notifyListeners(UIProperty, String)}). The method calls Micro-Manager CMMCore.
+    * Sets the value of the device property and updates all parent UIProperties. This method is
+    * called by a parent UIProperty, and the source is excluded from the notification (using
+    * {@link #notifyListeners(UIProperty, String)}). The method calls Micro-Manager CMMCore.
     *
     * @param stringval New value.
     * @param source    UIProperty at the origin of the update.
@@ -207,8 +211,8 @@ public abstract class MMProperty<T> {
             }
          } else {
             logger_.logDebugMessage(
-                  "MMProperty [" + hash_ + "] value cannot be set to [" + stringval +
-                        "], forbidden value.");
+                  "MMProperty [" + hash_ + "] value cannot be set to [" + stringval
+                        + "], forbidden value.");
          }
       }
       return false;
@@ -243,7 +247,8 @@ public abstract class MMProperty<T> {
 
 
    /**
-    * Returns the array of allowed values. This array can be null if the MMProperty has no allowed value.
+    * Returns the array of allowed values. This array can be null if the MMProperty has
+    * no allowed value.
     *
     * @return Allowed values, null if it has none.
     */
@@ -255,7 +260,8 @@ public abstract class MMProperty<T> {
    }
 
    /**
-    * Returns the array of allowed values as Strings. In particular, the array is of size 0 if it has no allowed value.
+    * Returns the array of allowed values as Strings. In particular, the array is of size 0 if
+    * it has no allowed value.
     *
     * @return Allowed values as Strings, array of size 0 if it has none.
     */
@@ -363,7 +369,8 @@ public abstract class MMProperty<T> {
    }
 
    /**
-    * Clear all listeners from the property. Used upon reloading the UI or changing the configuration.
+    * Clear all listeners from the property. Used upon reloading the UI or changing
+    * the configuration.
     */
    public void clearAllListeners() {
       listeners_.clear();

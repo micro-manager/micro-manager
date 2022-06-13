@@ -22,10 +22,10 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
 /**
- * A JPanel containing a JTable tailored for Settings. The first column contains the names of the settings,
- * is non editable and displayed in bold text. The second column contains the values. The latter's cells are rendered
- * with a JCheckbox in case of a BoolSetting and normal text if the setting is a String- or IntSetting.
- * This class is used in the settings menu of EMU.
+ * A JPanel containing a JTable tailored for Settings. The first column contains the names of
+ * the settings, is non editable and displayed in bold text. The second column contains the values.
+ * The latter's cells are rendered with a JCheckbox in case of a BoolSetting and normal text if
+ * the setting is a String- or IntSetting. This class is used in the settings menu of EMU.
  *
  * @author Joran Deschamps
  */
@@ -39,7 +39,7 @@ public class SettingsTable extends JPanel {
    private final String[] namesettings_;
    private final HelpWindow help_;
    private boolean valuesChanged_;
-         // used to signal a necessary update of property and parameter tabs
+   // used to signal a necessary update of property and parameter tabs
 
    @SuppressWarnings("rawtypes")
    public SettingsTable(HashMap<String, Setting> hashMap, HelpWindow help) {
@@ -171,7 +171,8 @@ public class SettingsTable extends JPanel {
 
 
    /**
-    * Shows the help window and updates its content with the description of the parameter currently selected.
+    * Shows the help window and updates its content with the description of the parameter
+    * currently selected.
     *
     * @param b True if the window is to be displayed, false if it needs to be hidden.
     */

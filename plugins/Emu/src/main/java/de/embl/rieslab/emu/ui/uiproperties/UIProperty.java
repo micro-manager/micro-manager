@@ -18,17 +18,16 @@ import de.embl.rieslab.emu.utils.exceptions.IncompatibleMMProperty;
  * Micro-Manager device property to the UIProperty. While several UIProperties
  * can be allocated to a single MMProperty, each UIPropoerty can only be
  * assigned to a single MMproperty.
- * <p>
- * A user interaction with a JComponent should trigger a corresponding
+ *
+ * <p>A user interaction with a JComponent should trigger a corresponding
  * UIProperty. The ConfigurablePanel calls {@link #setPropertyValue(String)}. In
  * turns, this will change the value of the MMProperty. All other UIProperty
  * allocated to the MMProperty will be updated. Finally, updated UIProperty will
  * call the owner ConfigurablePanel (triggerPropertyHasChanged()) to change the
  * relevant JComponents.
- * <p>
- * UIProperties can be labeled with a PropertyFlag to allow categorizing them.
+ *
+ * <p>UIProperties can be labeled with a PropertyFlag to allow categorizing them.
  * This mechanism is not used within EMU, but can be exploited in the plugins.
- * <p>
  *
  * @author Joran Deschamps
  * @see SingleStateUIProperty
@@ -104,7 +103,7 @@ public class UIProperty {
    }
 
    /**
-    * Returns the UIProperty's label
+    * Returns the UIProperty's label.
     *
     * @return Label of the UIProperty
     */
@@ -129,8 +128,10 @@ public class UIProperty {
     *
     * @param prop MMproperty to assign the UIProperty to.
     * @return True if the property was allocated successfully, false otherwise.
-    * @throws AlreadyAssignedUIPropertyException Exception thrown when the UIProperty has already been assigned
-    * @throws IncompatibleMMProperty             exception thrown when the MMProperty is not compatible with the UIProperty.
+    * @throws AlreadyAssignedUIPropertyException Exception thrown when the UIProperty has
+    *     already been assigned
+    * @throws IncompatibleMMProperty             exception thrown when the MMProperty is
+    *     not compatible with the UIProperty.
     */
    public boolean assignProperty(MMProperty prop)
          throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
@@ -180,7 +181,8 @@ public class UIProperty {
    /**
     * Returns the value of the MMProperty it is assigned to.
     *
-    * @return Value of the MMProperty or an empty String if the UIProperty has not been assigned to a MMProperty
+    * @return Value of the MMProperty or an empty String if the UIProperty has not been
+    *      assigned to a MMProperty
     */
    public String getPropertyValue() {
       if (assigned_) {
@@ -203,8 +205,9 @@ public class UIProperty {
    }
 
    /**
-    * Sets the value of the assigned MMProperty to {@code newState}. For a pure UIProperty, this method is equivalent
-    * to setPropertyValue (subclasses might have a different implementation).
+    * Sets the value of the assigned MMProperty to {@code newState}. For a pure UIProperty,
+    * this method is equivalent to setPropertyValue (subclasses might have a different
+    * implementation).
     *
     * @param newState New state
     * @return True if the value was set, false otherwise.
@@ -214,8 +217,9 @@ public class UIProperty {
    }
 
    /**
-    * Sets the value of the assigned MMProperty to {@code newState}. For a pure UIProperty, this method is equivalent
-    * to setPropertyValue (subclasses might have a different implementation).
+    * Sets the value of the assigned MMProperty to {@code newState}. For a pure UIProperty,
+    * this method is equivalent to setPropertyValue (subclasses might have a different
+    * implementation).
     *
     * @param stateIndex New state
     * @return True if the value was set, false otherwise.
@@ -271,7 +275,7 @@ public class UIProperty {
     * Checks if the MMProperty assigned to this UIProperty is read-only.
     *
     * @return True if the MMProperty is read-only, false otherwise. If the UIProperty
-    * is not assigned, returns true.
+    *     is not assigned, returns true.
     */
    public boolean isMMPropertyReadOnly() {
       if (assigned_) {
@@ -283,7 +287,8 @@ public class UIProperty {
    /**
     * Checks if the MMProperty assigned to this UIProperty has allowed values.
     *
-    * @return True if it does, false otherwise. If the UIProperty is not assigned, then returns false.
+    * @return True if it does, false otherwise. If the UIProperty is not assigned, then returns
+    *     false.
     */
    public boolean hasMMPropertyAllowedValues() {
       if (assigned_) {
@@ -295,7 +300,8 @@ public class UIProperty {
    /**
     * Checks if the MMProperty assigned to this UIProperty has limits.
     *
-    * @return True if it does, false otherwise. If the UIProperty is not assigned, then returns false.
+    * @return True if it does, false otherwise. If the UIProperty is not assigned,
+    *     then returns false.
     */
    public boolean hasMMPropertyLimits() {
       if (assigned_) {
@@ -307,7 +313,8 @@ public class UIProperty {
    /**
     * Returns the allowed values of the assigned MMProperty.
     *
-    * @return Allowed values or null if the MMProperty does not have any or if the UIProperty is not assigned.
+    * @return Allowed values or null if the MMProperty does not have any or if the UIProperty
+    *     is not assigned.
     */
    public String[] getAllowedValues() {
       if (hasMMPropertyAllowedValues()) {
@@ -319,7 +326,8 @@ public class UIProperty {
    /**
     * Returns the limits of the assigned MMProperty.
     *
-    * @return Limits or null if the MMProperty does not have any or if the UIProperty is not assigned.
+    * @return Limits or null if the MMProperty does not have any or if the UIProperty
+    *     is not assigned.
     */
    public String[] getLimits() {
       if (hasMMPropertyLimits()) {
@@ -342,7 +350,8 @@ public class UIProperty {
     * Checks if the String {@code val} is an allowed value for the MMProperty.
     *
     * @param val Value to test
-    * @return True if the value is allowed, false otherwise. If the UIProperty is not assigned, returns true
+    * @return True if the value is allowed, false otherwise. If the UIProperty is not
+    *     assigned, returns true
     */
    public boolean isValueAllowed(String val) {
       if (assigned_) {

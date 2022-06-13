@@ -10,9 +10,10 @@ import org.micromanager.Application;
 
 /**
  * Instantiates a MMProperty that wraps a preset group from Mico-manager. This is useful to
- * map a UIProperty to multiple MMProperties as defined in Micro-Manager by the user (e.g. channels).
- * All preset groups are assigned to the same fictitious device. The groups are then considered
- * as a property with allowed values being the channels.
+ * map a UIProperty to multiple MMProperties as defined in Micro-Manager by the user
+ * (e.g. channels). All preset groups are assigned to the same fictitious device. The groups
+ * are then considered as a property with allowed values being the channels.
+ *
  *
  * @author Joran Deschamps
  */
@@ -21,15 +22,15 @@ public class PresetGroupAsMMProperty extends MMProperty<String> {
    /**
     * Fictitious device label all preset groups are assigned to.
     */
-   public final static String KEY_MMCONFDEVICE = "Preset groups";
+   public static final String KEY_MMCONFDEVICE = "Preset groups";
 
    @SuppressWarnings("rawtypes")
    private final ArrayList<MMProperty> affectedmmprops_;
    private final Application app_;
 
    /**
-    * Constructor. Instantiate the MMProperty has a property belonging to the device {@code KEY_MMCONFDEVICE}, with
-    * allowed values being the different channel names.
+    * Constructor. Instantiate the MMProperty has a property belonging to the device
+    * {@code KEY_MMCONFDEVICE}, with allowed values being the different channel names.
     *
     * @param app               Micro-Manager application instance
     * @param core              Micro-Manager CMMCore
@@ -96,15 +97,16 @@ public class PresetGroupAsMMProperty extends MMProperty<String> {
             }
          } else {
             logger_.logDebugMessage(
-                  "PresetGroupAsMMProperty [" + getHash() + "] cannot be set to [" + stringval +
-                        "], forbidden value.");
+                  "PresetGroupAsMMProperty [" + getHash() + "] cannot be set to [" + stringval
+                        + "], forbidden value.");
          }
       }
       return false;
    }
 
    /**
-    * Notify all the affected properties of a value change, should trickle down to all the listeners UI properties.
+    * Notify all the affected properties of a value change, should trickle down to all the
+    * listeners UI properties.
     */
    private void notifyMMProperties() {
       for (int i = 0; i < affectedmmprops_.size(); i++) {

@@ -24,20 +24,23 @@ import java.util.TreeMap;
 
 
 /**
- * Controller class for the configuration of the current UI. This class bridges the {@link de.embl.rieslab.emu.controller.SystemController}
- * with the {@link ConfigurationWizardUI}, the {@link GlobalConfiguration}. The ConfigurationController starts the configuration wizard to allow
- * the user to modify the current configuration. It also contains inform the SystemController on the different configurations. Finally, it
- * calls the {@link ConfigurationIO} to read and write the configurations from/to files.
+ * Controller class for the configuration of the current UI. This class bridges the
+ * {@link de.embl.rieslab.emu.controller.SystemController} with the {@link ConfigurationWizardUI},
+ * the {@link GlobalConfiguration}. The ConfigurationController starts the configuration wizard
+ * to allow the user to modify the current configuration. It also contains inform the
+ * SystemController on the different configurations. Finally, it calls the {@link ConfigurationIO}
+ * to read and write the configurations from/to files.
  *
  * @author Joran Deschamps
  */
 public class ConfigurationController {
 
    private final SystemController controller_; // overall controller
-   private ConfigurationWizardUI wizard_;
-         // graphical interface to create/edit the current configuration
+   private ConfigurationWizardUI wizard_; // graphical interface to create/edit the
+   // current configuration
    private ConfigurationManagerUI manager_; // graphical interface to delete configurations
    private GlobalConfiguration globalConfiguration_; // configurations of the UI
+
    @SuppressWarnings("rawtypes")
    private final HashMap<String, Setting> globalSettings_; // global settings
 
@@ -52,7 +55,8 @@ public class ConfigurationController {
    }
 
    /**
-    * Returns the default path to the configuration file as defined in {@link de.embl.rieslab.emu.controller.utils.GlobalSettings}.
+    * Returns the default path to the configuration file as defined in
+    * {@link de.embl.rieslab.emu.controller.utils.GlobalSettings}.
     *
     * @return Default configuration file.
     */
@@ -152,23 +156,26 @@ public class ConfigurationController {
    }
 
    /**
-    * Checks if the configuration contains all the properties and parameters as defined in the {@link de.embl.rieslab.emu.ui.ConfigurableFrame}.
+    * Checks if the configuration contains all the properties and parameters as defined in
+    * the {@link de.embl.rieslab.emu.ui.ConfigurableFrame}.
     *
     * @param maininterface Current plugin' ConfigurableFrame.
-    * @return True if the current configuration contains all the properties and parameters defined in the plugin's ConfigurableFrame.
+    * @return True if the current configuration contains all the properties and parameters
+    *     defined in the plugin's ConfigurableFrame.
     */
    public boolean configurationSanityCheck(ConfigurableFrame maininterface) {
       if (globalConfiguration_ == null) {
          return false;
       } else {
          // just checks if some UIProperties or UIParameters are missing from the configuration.
-         // When editing the settings, the PropertiesTable only displays the ConfigurableFrame properties, therefore properties
-         // present in the configuration but not in the ConfigurableFrame will be ignored. The same mechanism applies when
-         // the controller pairs the UI and MM properties. As a result the sanity check only makes sense with respect to the
-         // actual UIProperties and UIParameters of the ConfigurableFrame.
+         // When editing the settings, the PropertiesTable only displays the ConfigurableFrame
+         // properties, therefore properties present in the configuration but not in the
+         // ConfigurableFrame will be ignored. The same mechanism applies when the
+         // controller pairs the UI and MM properties. As a result the sanity check only makes
+         // sense with respect to the actual UIProperties and UIParameters of the ConfigurableFrame.
 
          // check if the plugin configuration contains all the UIProperties
-         Set<String> uipropkeys = new HashSet<String>(maininterface.getUIProperties().keySet());
+         Set<String> uipropkeys = new HashSet<>(maininterface.getUIProperties().keySet());
          uipropkeys.removeAll(
                globalConfiguration_.getCurrentPluginConfiguration().getProperties().keySet());
          if (uipropkeys.size() > 0) {
@@ -214,8 +221,8 @@ public class ConfigurationController {
    /**
     * Returns the properties configuration. Null if there is none.
     *
-    * @return Pairs of UIProperty names (keys) and MMProperty names (values), as well as UIProperty state names (keys)
-    * and UIProperty state values (values)
+    * @return Pairs of UIProperty names (keys) and MMProperty names (values), as well as
+    *     UIProperty state names (keys) and UIProperty state values (values)
     */
    public TreeMap<String, String> getPropertiesConfiguration() {
       if (globalConfiguration_ == null) {
@@ -299,7 +306,8 @@ public class ConfigurationController {
 
 
    /**
-    * Closes the ConfigurationWizard window (if running). This method is called upon closing the plugin.
+    * Closes the ConfigurationWizard window (if running). This method is called upon closing
+    * the plugin.
     */
    public void shutDown() {
       if (wizard_ != null) {
@@ -310,13 +318,14 @@ public class ConfigurationController {
       }
    }
 
-   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   ///////////////////////////////////////////////////////////////////////////////////////////////
    ///////////////////////////// Wizard
-   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   //////////////////////////////////////////////////////////////////////////////////////////////
 
 
    /**
-    * Starts a new configuration wizard. If a wizard is already running, then does nothing and returns {@code false}.
+    * Starts a new configuration wizard. If a wizard is already running, then does nothing and
+    * returns {@code false}.
     *
     * @param pluginName    Current plugin's name.
     * @param maininterface plugin's ConfigurableFrame.
@@ -354,15 +363,18 @@ public class ConfigurationController {
    }
 
    /**
-    * Retrieves the pairs of UIProperty name and MMProperty names (and UIProperty state values), as well as the pairs of UIParameter names and values,
-    * and writes them to the configuration file. It then calls the {@link de.embl.rieslab.emu.controller.SystemController} to update the system.
-    * This method is called by the {@link ConfigurationWizardUI} upon saving of the configuration by the user.
+    * Retrieves the pairs of UIProperty name and MMProperty names (and UIProperty state values),
+    * as well as the pairs of UIParameter names and values, and writes them to the configuration
+    * file. It then calls the {@link de.embl.rieslab.emu.controller.SystemController} to update
+    * the system. This method is called by the {@link ConfigurationWizardUI} upon saving of the
+    * configuration by the user.
     *
     * @param configName   Name of the configuration.
     * @param pluginName   Name of the current plugin.
     * @param uiproperties Mapping of the UIProperties with MMProperties and their states.
     * @param uiparameters Mapping of the UIParameters' states.
-    * @param plugsettings Mapping of the Settings' states used to configure the ConfigurableMainFrame.
+    * @param plugsettings Mapping of the Settings' states used to configure the
+    *                     ConfigurableMainFrame.
     * @param globset      Mapping of the GlobalSettings' states.
     */
    public void applyWizardSettings(String configName, String pluginName,
@@ -399,7 +411,8 @@ public class ConfigurationController {
    }
 
    /**
-    * Returns the current plugin's ConfigurableFrame configured with {@code plugsettings} as plugin settings.
+    * Returns the current plugin's ConfigurableFrame configured with {@code plugsettings}
+    * as plugin settings.
     *
     * @param plugsettings Plugin settings to configure the ConfigurableFrame
     * @return Configured ConfigurableFrame
@@ -409,10 +422,15 @@ public class ConfigurationController {
    }
 
 
-   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   ///////////////////////////////////////////////////////////////////////////////////////////////
    ///////////////////////////// Manager
-   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   //////////////////////////////////////////////////////////////////////////////////////////////
 
+   /**
+    * Launches the Wizard.
+    *
+    * @return True if wizard was started, false if wizard was already running
+    */
    public boolean startManager() {
       // launch wizard
       if (!isWizardRunning()) {

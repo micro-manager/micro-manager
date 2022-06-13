@@ -96,7 +96,8 @@ public abstract class UIParameter<T> {
    }
 
    /**
-    * Returns the type of the UIParameter. This method is used to check the compatibility of UIParameters.
+    * Returns the type of the UIParameter. This method is used to check the
+    * compatibility of UIParameters.
     *
     * @return The UIParameter's type
     */

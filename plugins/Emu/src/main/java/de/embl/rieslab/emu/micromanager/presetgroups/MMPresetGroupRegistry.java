@@ -47,8 +47,8 @@ public class MMPresetGroupRegistry {
                conf = core_.getConfigGroupState(groups.get(i));
                for (int j = 0; j < conf.size(); j++) {
                   affectedmmprops.add(mmproperties.getProperties()
-                        .get(conf.getSetting(j).getDeviceLabel() + "-" +
-                              conf.getSetting(j).getPropertyName()));
+                        .get(conf.getSetting(j).getDeviceLabel() + "-"
+                              + conf.getSetting(j).getPropertyName()));
                }
                groups_.put(groups.get(i),
                      new MMPresetGroup(groups.get(i), core_.getAvailableConfigs(groups.get(i)),
@@ -74,7 +74,8 @@ public class MMPresetGroupRegistry {
     * Returns a HashMap mapping the preset group names (keys) and an array of
     * string representing the names of the different presets within each group.
     *
-    * @return HashMap of the channels of each {@link MMPresetGroup} indexed by the name of the group.
+    * @return HashMap of the channels of each {@link MMPresetGroup} indexed by the name of
+    *     the group.
     */
    public HashMap<String, String[]> getMMPresetGroupChannels() {
       HashMap<String, String[]> map = new HashMap<String, String[]>();

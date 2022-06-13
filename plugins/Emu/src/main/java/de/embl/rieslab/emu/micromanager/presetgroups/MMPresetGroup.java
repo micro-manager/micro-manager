@@ -16,7 +16,7 @@ public class MMPresetGroup {
    private final String name_;
 
    /**
-    * Constructor
+    * Constructor.
     *
     * @param name            Name of the preset group.
     * @param config          StrVector of the preset group entries returned by Micro-manager.

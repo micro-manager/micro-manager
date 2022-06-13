@@ -49,7 +49,8 @@ public class ParametersTable extends JPanel {
    private final HelpWindow help_;
 
    /**
-    * Constructor called when no configuration exists. All the parameter values are set to default values.
+    * Constructor called when no configuration exists. All the parameter values are set to
+    * default values.
     *
     * @param uiparameterSet Map of the UIParameters, indexed by their name
     * @param uipropertySet  Map of the UIProperties, indexed by their name
@@ -103,7 +104,8 @@ public class ParametersTable extends JPanel {
     * Constructor called when a configuration exists.
     *
     * @param uiparameterSet Map of the UI parameters, indexed by their name.
-    * @param paramValues    Map of the UIParameter names (keys) and their value (values) from the configuration.
+    * @param paramValues    Map of the UIParameter names (keys) and their value (values) from
+    *                       the configuration.
     * @param uipropertySet  Map of the UIProperties, indexed by their name.
     * @param help           Help window
     */
@@ -134,7 +136,8 @@ public class ParametersTable extends JPanel {
       DefaultTableModel model = new DefaultTableModel(new Object[] {"UI parameter", "Value"}, 0);
       for (int i = 0; i < uiparamkeys_.length; i++) {
          if (paramValues.containsKey(
-               uiparamkeys_[i])) { // if the parameter is found in the configuration, then put its value
+               uiparamkeys_[i])) { // if the parameter is found in the configuration,
+            // then put its value
             if (uiparameterSet_.get(uiparamkeys_[i]) instanceof BoolUIParameter) {
                model.addRow(new Object[] {uiparamkeys_[i],
                      EmuUtils.convertStringToBool(paramValues.get(uiparamkeys_[i]))});
@@ -256,7 +259,8 @@ public class ParametersTable extends JPanel {
 
 
    /**
-    * Shows the help window and updates its content with the description of the parameter currently selected.
+    * Shows the help window and updates its content with the description of the parameter
+    * currently selected.
     *
     * @param b True if the window is to be displayed, false otherwise.
     */

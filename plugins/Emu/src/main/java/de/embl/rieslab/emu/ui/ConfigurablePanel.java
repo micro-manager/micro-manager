@@ -25,42 +25,59 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 /**
- * Building block of EMU, this abstract class extends a Swing JPanel. It holds a map of {@link de.embl.rieslab.emu.ui.uiproperties.UIProperty UIProperty},
- * {@link de.embl.rieslab.emu.ui.uiparameters.UIParameter UIParameter} and {@link de.embl.rieslab.emu.ui.internalproperties.InternalProperty InternalProperty}.
+ * Building block of EMU, this abstract class extends a Swing JPanel. It holds a map of
+ * {@link de.embl.rieslab.emu.ui.uiproperties.UIProperty UIProperty},
+ * {@link de.embl.rieslab.emu.ui.uiparameters.UIParameter UIParameter} and
+ * {@link de.embl.rieslab.emu.ui.internalproperties.InternalProperty InternalProperty}.
  * ConfigurablePanel subclasses should be instantiated and added to a {@link ConfigurableMainFrame}.
- * <p>
- * Subclasses of ConfigurablePanel must implements few methods called in order to instantiate the
- * UIProperties ({@link #initializeProperties()}), UIParameters ({@link #initializeParameters()}) and InternalProperties ({@link #initializeInternalProperties()}).
- * All JComponent instantiations should happen in the constructor. Action listeners can be added to the JComponents in {@link #addComponentListeners()}, in case the
- * states or values of the UIProperty are necessary.
- * <p>
- * UIProperties are aimed at linking the state of a MMProperty with the state of one or multiple JComponenents. InternalProperties are made to allow
- * shared values between ConfigurablePanels, such that a modification to one panel can trigger a change in the other panel. Finally, UIProperties
- * should only be used for user settings, such as changing the colors of JLabels or JButtons (to describe a filter or a laser) or the text of a header.
+ *
+ * <p>Subclasses of ConfigurablePanel must implements few methods called in order to instantiate the
+ * UIProperties ({@link #initializeProperties()}), UIParameters ({@link #initializeParameters()})
+ * and InternalProperties ({@link #initializeInternalProperties()}). All JComponent
+ * instantiations should happen in the constructor. Action listeners can be added to the
+ * JComponents in {@link #addComponentListeners()}, in case the states or values of the
+ * UIProperty are necessary.
+ *
+ * <p>UIProperties are aimed at linking the state of a MMProperty with the state of one or
+ * multiple JComponenents. InternalProperties are made to allow shared values between
+ * ConfigurablePanels, such that a modification to one panel can trigger a change in the other
+ * panel. Finally, UIProperties should only be used for user settings, such as changing the
+ * colors of JLabels or JButtons (to describe a filter or a laser) or the text of a header.
  * All UIProperties and UIParameters appear in the configuration wizard. The user can then map the
  * UIProperties with a MMProperty and change the value of a UIParameter.
- * <p>
- * In order to be added to the internal HashMap representation, UIproperties, UIParameters and InternalProperties need to be added using the following methods
- * respectively: {@link #addUIProperty(UIProperty)}, {@link #addUIParameter(UIParameter)} and {@link #addInternalProperty(InternalProperty)}.
- * <p>
- * Modifications to the state of UIProperties and InternalProperties should not be done explicitly in the subclasses, but should be done through the
- * abstraction methods: {@link #setUIPropertyValue(String, String)} and setInternalPropertyValue(String, ?). UIParameters should not be modified within the subclasses.
- * Modifications of the JComponents based on UIProperties, UIParameters and InternalProperties changes take place in the subclasses
- * implementation of {@link #propertyhasChanged(String, String)}, {@link #parameterhasChanged(String)} and {@link #internalpropertyhasChanged(String)} respectively.
- * To query the value of a UIParameter or an InternalProperty, use the methods {@code getUIParamterValue()} and
- * {@code getInternalPropertyValue()}.
- * <p>
- * For instance, a JToggleButton can be designed to turn on and off a laser. After declaration of the JToggleButton and addition to the panel in the constructor,
- * an eventListener can be added to the JToggleButton. The eventListener should then call {@link #setUIPropertyValue(String, String)} to modify the corresponding
- * UIProperty with a new value being on when the JToggleButton is selected, and an off value when the JToggleButton is unselected. More details can be found in
+ *
+ * <p>In order to be added to the internal HashMap representation, UIproperties, UIParameters
+ * and InternalProperties need to be added using the following methods respectively:
+ * {@link #addUIProperty(UIProperty)}, {@link #addUIParameter(UIParameter)} and
+ * {@link #addInternalProperty(InternalProperty)}.
+ *
+ * <p>Modifications to the state of UIProperties and InternalProperties should not be done
+ * explicitly in the subclasses, but should be done through the abstraction methods:
+ * {@link #setUIPropertyValue(String, String)} and setInternalPropertyValue(String, ?).
+ * UIParameters should not be modified within the subclasses. Modifications of the JComponents
+ * based on UIProperties, UIParameters and InternalProperties changes take place in the subclasses
+ * implementation of {@link #propertyhasChanged(String, String)},
+ * {@link #parameterhasChanged(String)} and {@link #internalpropertyhasChanged(String)}
+ * respectively. To query the value of a UIParameter or an InternalProperty, use the methods
+ * {@code getUIParamterValue()} and {@code getInternalPropertyValue()}.
+ *
+ * <p>For instance, a JToggleButton can be designed to turn on and off a laser. After
+ * declaration of the JToggleButton and addition to the panel in the constructor,
+ * an eventListener can be added to the JToggleButton. The eventListener should then call
+ * {@link #setUIPropertyValue(String, String)} to modify the corresponding
+ * UIProperty with a new value being on when the JToggleButton is selected, and an off value
+ * when the JToggleButton is unselected. More details can be found in
  * tutorials and the javadocs of the different UIProperties implementations.
- * <p>
- * Upon start up of the {@link de.embl.rieslab.emu.plugin.UIPlugin}, the {@link de.embl.rieslab.emu.controller.SystemController} will
- * pair up the UIProperties with {@link de.embl.rieslab.emu.micromanager.mmproperties.MMProperty} and the latter's values will be propagated
- * to the ConfigurablePanel via {@link #propertyhasChanged(String, String)}. Later on, changes to a MMProperty (for instance by another ConfigurablePanel)
- * will trigger the same method. The same mechanism is at play for the InternalProperties and the UIParameters. Note that the UIParameters are only changed
- * upon start up and when the user modifies the configuration through the {@link de.embl.rieslab.emu.configuration.ui.ConfigurationWizardUI}.
- * <p>
+ *
+ * <p>Upon start up of the {@link de.embl.rieslab.emu.plugin.UIPlugin}, the
+ * {@link de.embl.rieslab.emu.controller.SystemController} will pair up the UIProperties with
+ * {@link de.embl.rieslab.emu.micromanager.mmproperties.MMProperty} and the latter's values
+ * will be propagated to the ConfigurablePanel via {@link #propertyhasChanged(String, String)}.
+ * Later on, changes to a MMProperty (for instance by another ConfigurablePanel)
+ * will trigger the same method. The same mechanism is at play for the InternalProperties and
+ * the UIParameters. Note that the UIParameters are only changed upon start up and when the user
+ * modifies the configuration through the
+ * {@link de.embl.rieslab.emu.configuration.ui.ConfigurationWizardUI}.
  *
  * @author Joran Deschamps
  * @see de.embl.rieslab.emu.ui.uiproperties.UIProperty
@@ -82,8 +99,8 @@ public abstract class ConfigurablePanel extends JPanel {
    private boolean componentTriggering_ = true;
 
    /**
-    * Constructor, calls the abstract methods {@link #initializeProperties()} and {@link #initializeParameters()},
-    * {@link #initializeInternalProperties()}.
+    * Constructor, calls the abstract methods {@link #initializeProperties()} and
+    * {@link #initializeParameters()}, {@link #initializeInternalProperties()}.
     *
     * @param label Label of the panel.
     */
@@ -124,7 +141,9 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Returns a hash map of the panel's {@link de.embl.rieslab.emu.ui.uiparameters.UIParameter UIParameters} indexed by their hash (({panel's name}-{parameter's name})).
+    * Returns a hash map of the panel's
+    * {@link de.embl.rieslab.emu.ui.uiparameters.UIParameter UIParameters} indexed by their hash
+    * (({panel's name}-{parameter's name})).
     *
     * @return HashMap with the UIParameter indexed by their hash.
     * @see de.embl.rieslab.emu.ui.uiparameters.UIParameter
@@ -139,7 +158,8 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param parameterName Name of the UIParameter
     * @return Corresponding UIParameter, null if it doesn't exist.
-    * @throws UnknownUIParameterException Thrown if parameterName does not correspond to a known UIParameter.
+    * @throws UnknownUIParameterException Thrown if parameterName does not correspond
+    *     to a known UIParameter.
     */
    protected UIParameter getUIParameter(String parameterName) throws UnknownUIParameterException {
       if (parameterName == null) {
@@ -159,7 +179,8 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param propertyName Name of the UIProperty
     * @return Corresponding UIProperty, null if it doesn't exist.
-    * @throws UnknownUIPropertyException Thrown if propertyName does not correspond to a known UIProperty.
+    * @throws UnknownUIPropertyException Thrown if propertyName does not correspond
+    *     to a known UIProperty.
     */
    protected UIProperty getUIProperty(String propertyName) throws UnknownUIPropertyException {
       if (propertyName == null) {
@@ -173,12 +194,14 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Returns the {@link de.embl.rieslab.emu.ui.internalproperties.InternalProperty InternalProperty}
+    * Returns the
+    * {@link de.embl.rieslab.emu.ui.internalproperties.InternalProperty InternalProperty}
     * named {@code propertyName}.
     *
     * @param propertyName Name of the InternalProperty
     * @return Corresponding InternalProperty.
-    * @throws UnknownInternalPropertyException Thrown if propertyName does not correspond to a known InternalProperty.
+    * @throws UnknownInternalPropertyException Thrown if propertyName does not correspond
+    *     to a known InternalProperty.
     */
    protected InternalProperty getInternalProperty(String propertyName)
          throws UnknownInternalPropertyException {
@@ -213,7 +236,8 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param propertyName Name of the property
     * @return String value of the property, null if the property doesn't exist.
-    * @throws UnknownUIPropertyException Thrown if propertyName does not correspond to a known UIProperty.
+    * @throws UnknownUIPropertyException Thrown if propertyName does not correspond
+    *     to a known UIProperty.
     */
    protected String getUIPropertyValue(String propertyName) throws UnknownUIPropertyException {
       if (propertyName == null) {
@@ -231,15 +255,16 @@ public abstract class ConfigurablePanel extends JPanel {
     * Sets the UIProperty {@code propertyName}'s value to {@code newValue}. This method calls the
     * UIProperty's method to set the value, which will in turn call the corresponding MMProperty's
     * method. Since the change will be notified to all the UIProperties listening to the MMProperty
-    * (through {@link #triggerPropertyHasChanged(String, String)}), this method runs on an independent
-    * thread (that is, not on the EDT).
+    * (through {@link #triggerPropertyHasChanged(String, String)}), this method runs on an
+    * independent thread (that is, not on the EDT).
     *
     * @param propertyName UIProperty's name
     * @param newValue     New value
     */
    public void setUIPropertyValue(String propertyName, String newValue) {
 
-      // this should be a protected method, but in order to call it in SwingUIListeners it was set to public...
+      // this should be a protected method, but in order to call it in SwingUIListeners
+      // it was set to public...
       // passing it as lambdas could be a solution
 
       if (propertyName == null) {
@@ -260,18 +285,19 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Sets the UIProperty {@code propertyName}'s value to value of the {@code stateIndex}th state. This method calls the
-    * UIProperty's method to set the value, which will in turn call the corresponding MMProperty's
-    * method. Since the change will be notified to all the UIProperties listening to the MMProperty
-    * (through {@link #triggerPropertyHasChanged(String, String)}), this method runs on an independent
-    * thread (that is, not on the EDT).
+    * Sets the UIProperty {@code propertyName}'s value to value of the {@code stateIndex}th state.
+    * This method calls the UIProperty's method to set the value, which will in turn call the
+    * corresponding MMProperty's method. Since the change will be notified to all the UIProperties
+    * listening to the MMProperty (through {@link #triggerPropertyHasChanged(String, String)}),
+    * this method runs on an independent thread (that is, not on the EDT).
     *
     * @param propertyName UIProperty's name
     * @param stateIndex   New state's index
     */
    public void setUIPropertyValueByStateIndex(String propertyName, int stateIndex) {
 
-      // this should be a protected method, but in order to call it in SwingUIListeners it was set to public...
+      // this should be a protected method, but in order to call it in SwingUIListeners
+      // it was set to public...
       // passing it as lambdas could be a solution
 
       if (propertyName == null) {
@@ -292,18 +318,20 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Sets the UIProperty {@code propertyName}'s value to value of the state labeled {@code stateIndex}. This method calls the
+    * Sets the UIProperty {@code propertyName}'s value to value of the state
+    * labeled {@code stateIndex}. This method calls the
     * UIProperty's method to set the value, which will in turn call the corresponding MMProperty's
     * method. Since the change will be notified to all the UIProperties listening to the MMProperty
-    * (through {@link #triggerPropertyHasChanged(String, String)}), this method runs on an independent
-    * thread (that is, not on the EDT).
+    * (through {@link #triggerPropertyHasChanged(String, String)}), this method runs on an
+    * independent thread (that is, not on the EDT).
     *
     * @param propertyName UIProperty's name
     * @param stateName    New state's name
     */
    public void setUIPropertyValueByState(String propertyName, String stateName) {
 
-      // this should be a protected method, but in order to call it in SwingUIListeners it was set to public...
+      // this should be a protected method, but in order to call it in SwingUIListeners it
+      // was set to public...
       // passing it as lambdas could be a solution
 
       if (propertyName == null) {
@@ -329,8 +357,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param propertyName Name of the InternalProperty
     * @param newValue     New value
-    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not correspond to an IntegerInternalProperty.
-    * @throws UnknownInternalPropertyException       Thrown if propertyName does not correspond to a known InternalProperty.
+    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not correspond
+    *     to an IntegerInternalProperty.
+    * @throws UnknownInternalPropertyException       Thrown if propertyName does not correspond
+    *     to a known InternalProperty.
     */
    protected void setInternalPropertyValue(String propertyName, int newValue)
          throws IncorrectInternalPropertyTypeException, UnknownInternalPropertyException {
@@ -359,8 +389,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param propertyName Name of the InternalProperty
     * @param newValue     New value
-    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not correspond to an BoolInternalProperty.
-    * @throws UnknownInternalPropertyException       Thrown if propertyName does not correspond to a known InternalProperty.
+    * @throws IncorrectInternalPropertyTypeException  Thrown if propertyName does not
+    *     correspond to an BoolInternalProperty.
+    * @throws UnknownInternalPropertyException        Thrown if propertyName does not
+    *     correspond to a known InternalProperty.
     */
    protected void setInternalPropertyValue(String propertyName, boolean newValue)
          throws IncorrectInternalPropertyTypeException, UnknownInternalPropertyException {
@@ -389,8 +421,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param propertyName name of the InternalProperty
     * @param newValue     New value
-    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not correspond to an DoubleInternalProperty.
-    * @throws UnknownInternalPropertyException       Thrown if propertyName does not correspond to a known InternalProperty.
+    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not
+    *     correspond to an DoubleInternalProperty.
+    * @throws UnknownInternalPropertyException       Thrown if propertyName does not
+    *     correspond to a known InternalProperty.
     */
    protected void setInternalPropertyValue(String propertyName, double newValue)
          throws IncorrectInternalPropertyTypeException, UnknownInternalPropertyException {
@@ -418,8 +452,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param propertyName Name of the property
     * @return Value of the InternalProperty.
-    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not correspond to an IntegerInternalProperty.
-    * @throws UnknownInternalPropertyException       Thrown if propertyName does not correspond to a known InternalProperty
+    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not
+    *     correspond to an IntegerInternalProperty.
+    * @throws UnknownInternalPropertyException       Thrown if propertyName does not
+    *     correspond to a known InternalProperty
     */
    protected int getIntegerInternalPropertyValue(String propertyName)
          throws IncorrectInternalPropertyTypeException, UnknownInternalPropertyException {
@@ -446,8 +482,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param propertyName Name of the property.
     * @return InternalPropery value.
-    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not correspond to an BoolInternalProperty.
-    * @throws UnknownInternalPropertyException       Thrown if propertyName does not correspond to a known InternalProperty.
+    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not
+    *     correspond to an BoolInternalProperty.
+    * @throws UnknownInternalPropertyException       Thrown if propertyName does not
+    *     correspond to a known InternalProperty.
     */
    protected boolean getBoolInternalPropertyValue(String propertyName)
          throws IncorrectInternalPropertyTypeException, UnknownInternalPropertyException {
@@ -473,8 +511,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param propertyName Name of the property
     * @return Value of the InternalProperty.
-    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not correspond to an DoubleInternalProperty.
-    * @throws UnknownInternalPropertyException       Thrown if propertyName does not correspond to a known InternalProperty.
+    * @throws IncorrectInternalPropertyTypeException Thrown if propertyName does not
+    *     correspond to an DoubleInternalProperty.
+    * @throws UnknownInternalPropertyException       Thrown if propertyName does not
+    *     correspond to a known InternalProperty.
     */
    protected double getDoubleInternalPropertyValue(String propertyName)
          throws IncorrectInternalPropertyTypeException, UnknownInternalPropertyException {
@@ -500,8 +540,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param parameterName Name of the parameter
     * @return Value of the UIParameter.
-    * @throws IncorrectUIParameterTypeException Thrown if parameterName does not correspond to a DoubleUIParameter.
-    * @throws UnknownUIParameterException       Thrown if parameterName does not correspond to a known UIParameter.
+    * @throws IncorrectUIParameterTypeException Thrown if parameterName does not correspond
+    *     to a DoubleUIParameter.
+    * @throws UnknownUIParameterException       Thrown if parameterName does not correspond
+    *     to a known UIParameter.
     */
    protected double getDoubleUIParameterValue(String parameterName)
          throws IncorrectUIParameterTypeException, UnknownUIParameterException {
@@ -530,8 +572,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param parameterName Name of the parameter
     * @return Value of the UIParameter.
-    * @throws IncorrectUIParameterTypeException Thrown if parameterName does not correspond to a BoolUIParameter.
-    * @throws UnknownUIParameterException       Thrown if parameterName does not correspond to a known UIParameter.
+    * @throws IncorrectUIParameterTypeException Thrown if parameterName does not correspond
+    *     to a BoolUIParameter.
+    * @throws UnknownUIParameterException       Thrown if parameterName does not correspond
+    *     to a known UIParameter.
     */
    protected boolean getBoolUIParameterValue(String parameterName)
          throws IncorrectUIParameterTypeException, UnknownUIParameterException {
@@ -559,8 +603,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param parameterName Name of the parameter
     * @return Value of the UIParameter.
-    * @throws IncorrectUIParameterTypeException Thrown if parameterName does not correspond to a ColorUIParameter.
-    * @throws UnknownUIParameterException       Thrown if parameterName does not correspond to a known UIParameter.
+    * @throws IncorrectUIParameterTypeException Thrown if parameterName does not correspond
+    *     to a ColorUIParameter.
+    * @throws UnknownUIParameterException       Thrown if parameterName does not correspond
+    *     to a known UIParameter.
     */
    protected Color getColorUIParameterValue(String parameterName)
          throws IncorrectUIParameterTypeException, UnknownUIParameterException {
@@ -589,8 +635,10 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param parameterName Name of the parameter
     * @return Value of the UIParameter.
-    * @throws IncorrectUIParameterTypeException Thrown if parameterName does not correspond to a IntegerUIParameter.
-    * @throws UnknownUIParameterException       Thrown if parameterName does not correspond to a known UIParameter.
+    * @throws IncorrectUIParameterTypeException Thrown if parameterName does not correspond
+    *     to a IntegerUIParameter.
+    * @throws UnknownUIParameterException       Thrown if parameterName does not correspond
+    *     to a known UIParameter.
     */
    protected int getIntegerUIParameterValue(String parameterName)
          throws IncorrectUIParameterTypeException, UnknownUIParameterException {
@@ -618,7 +666,8 @@ public abstract class ConfigurablePanel extends JPanel {
     *
     * @param parameterName Name of the parameter
     * @return Value of the UIParameter.
-    * @throws UnknownUIParameterException Thrown if parameterName does not correspond to a known UIParameter.
+    * @throws UnknownUIParameterException Thrown if parameterName does not correspond
+    *     to a known UIParameter.
     */
    protected String getStringUIParameterValue(String parameterName)
          throws UnknownUIParameterException {
@@ -661,8 +710,8 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Adds a {@link de.embl.rieslab.emu.ui.internalproperties.InternalProperty} to the internal HashMap
-    * using the InternalProperty name.
+    * Adds a {@link de.embl.rieslab.emu.ui.internalproperties.InternalProperty} to the internal
+    * HashMap using the InternalProperty name.
     *
     * @param internalproperty InternalProperty to add
     */
@@ -674,8 +723,8 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Updates the ConfigurablePanel for all UI properties by calling {@link #triggerPropertyHasChanged(String, String)}
-    * for each UIProperty.
+    * Updates the ConfigurablePanel for all UI properties by calling
+    * {@link #triggerPropertyHasChanged(String, String)} for each UIProperty.
     */
    protected void updateAllProperties() {
       Iterator<String> it = properties_.keySet().iterator();
@@ -687,8 +736,8 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Updates the ConfigurablePanel for all UI parameters by calling {@link #triggerParameterHasChanged(String)}
-    * for each UIParameter.
+    * Updates the ConfigurablePanel for all UI parameters by calling
+    * {@link #triggerParameterHasChanged(String)} for each UIParameter.
     */
    protected void updateAllParameters() {
       Iterator<String> it = parameters_.keySet().iterator();
@@ -707,22 +756,23 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Substitute the parameter indexed by {@code paramHash} with {@code uiParameter}. This is used to resolve collisions
-    * between two parameters with same hash: their respective ConfigurablePanel owners then share the same UIParameter.
+    * Substitute the parameter indexed by {@code paramHash} with {@code uiParameter}. This is
+    * used to resolve collisions between two parameters with same hash: their respective
+    * ConfigurablePanel owners then share the same UIParameter.
     *
     * @param uiParameter UIParameter to substitute.
     */
    public void substituteParameter(UIParameter uiParameter) {
       final String hash = uiParameter.getHash();
-      if (parameters_.containsKey(hash) &&
-            parameters_.get(hash).getType() == uiParameter.getType()) {
+      if (parameters_.containsKey(hash)
+            && parameters_.get(hash).getType() == uiParameter.getType()) {
          parameters_.put(hash, uiParameter);
       }
    }
 
    /**
-    * Substitutes the InternalProperty with same name and type than {@code internalProperty} with it. If no such
-    * InternalProperty exists, then this method does nothing.
+    * Substitutes the InternalProperty with same name and type than {@code internalProperty}
+    * with it. If no such InternalProperty exists, then this method does nothing.
     *
     * @param internalProperty InternalProperty to substitute with an existing one.
     */
@@ -736,11 +786,12 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Returns the InternalPropertyType of the InternalProperty called {@code propertyName}. If there is no such
-    * InternalProperty, returns InternalPropertyType.NONE.
+    * Returns the InternalPropertyType of the InternalProperty called {@code propertyName}.
+    * If there is no such InternalProperty, returns InternalPropertyType.NONE.
     *
     * @param propertyName Name of the InternalProperty
-    * @return The corresponding InternalPropertyType, InternalPropertyType.NONE if there is no such InternalProperty.
+    * @return The corresponding InternalPropertyType, InternalPropertyType.NONE if there is
+    *     no such InternalProperty.
     */
    public InternalPropertyType getInternalPropertyType(String propertyName) {
       if (propertyName == null) {
@@ -771,11 +822,12 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Returns the UIParameterType of the UIParameter called {@code parameterName}. If there is no such
-    * UIParameter, returns UIParameterType.NONE.
+    * Returns the UIParameterType of the UIParameter called {@code parameterName}. If there
+    * is no such UIParameter, returns UIParameterType.NONE.
     *
     * @param parameterName Name of the UIParameter
-    * @return The corresponding UIParameterType, UIParameterType.NONE if there is no such UIParameter.
+    * @return The corresponding UIParameterType, UIParameterType.NONE if there is no such
+    *     UIParameter.
     */
    public UIParameterType getUIParameterType(String parameterName) {
       if (parameterName == null) {
@@ -788,8 +840,8 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Checks if the component triggering is enabled. The change in permission is done through {@link #turnOffComponentTriggering()}
-    * and {@link #turnOnComponentTriggering()}.
+    * Checks if the component triggering is enabled. The change in permission is done
+    * through {@link #turnOffComponentTriggering()} and {@link #turnOnComponentTriggering()}.
     *
     * @return true if the component triggering is on, false if it is off.
     */
@@ -812,10 +864,11 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * Calls {@link #propertyhasChanged(String, String)} on the EDT. This allows the extension classes of
-    * ConfigurablePanel to change the state of a JComponent depending on the value {@code newValue} of
-    * the UIProperty {@code propertyName} (itself linked to a MMProperty). Since a UIProperty does not hold the value of the corresponding
-    * MMProperty, it is passed as a parameter.
+    * Calls {@link #propertyhasChanged(String, String)} on the EDT. This allows the extension
+    * classes of ConfigurablePanel to change the state of a JComponent depending on the value
+    * {@code newValue} of the UIProperty {@code propertyName} (itself linked to a MMProperty).
+    * Since a UIProperty does not hold the value of the corresponding MMProperty, it is passed
+    * as a parameter.
     *
     * @param propertyName Name of the property
     * @param newValue     New value of the property
@@ -839,7 +892,8 @@ public abstract class ConfigurablePanel extends JPanel {
 
    /**
     * Calls {@link #parameterhasChanged(String)} on the EDT. This allows the subclasses of
-    * ConfigurablePanel to adjust its components based on the value of the UIParameter {@code parameterName}.
+    * ConfigurablePanel to adjust its components based on the value of the UIParameter
+    * {@code parameterName}.
     *
     * @param parameterName Name of the parameter
     */
@@ -857,15 +911,16 @@ public abstract class ConfigurablePanel extends JPanel {
    }
 
    /**
-    * In this method, the subclasses must create their UIproperty and add them to the map of properties using
-    * {@link #addUIProperty(UIProperty)}. The method is called in the constructor of a ConfigurablePanel.
+    * In this method, the subclasses must create their UIproperty and add them to the map
+    * of properties using {@link #addUIProperty(UIProperty)}. The method is called in the
+    * constructor of a ConfigurablePanel.
     */
    protected abstract void initializeProperties();
 
    /**
-    * Notifies the ConfigurablePanel subclass that the MMProperty linked to its UIProperty {@code propertyName}
-    * has changed in value. This function is called on the EDT and allows the subclass to change the states of
-    * its JComponents based on the new value of the UIProperty.
+    * Notifies the ConfigurablePanel subclass that the MMProperty linked to its UIProperty
+    * {@code propertyName} has changed in value. This function is called on the EDT and allows
+    * the subclass to change the states of its JComponents based on the new value of the UIProperty.
     *
     * @param propertyName Name of the Property whose value has changed.
     * @param newvalue     New value of the UIProperty
@@ -873,35 +928,39 @@ public abstract class ConfigurablePanel extends JPanel {
    protected abstract void propertyhasChanged(String propertyName, String newvalue);
 
    /**
-    * In this method, the subclasses can add Swing action listeners to its JComponents. Since the method is called after loading
-    * a configuration, the values of the UIProperty and UIParameters are known and can be used with the static methods of
+    * In this method, the subclasses can add Swing action listeners to its JComponents. Since
+    * the method is called after loading a configuration, the values of the UIProperty and
+    * UIParameters are known and can be used with the static methods of
     * {@link de.embl.rieslab.emu.ui.swinglisteners.SwingUIListeners}.
     */
    protected abstract void addComponentListeners();
 
    /**
-    * In this method, the subclasses must create their InternalProperties and add them to the map of internal properties
-    * using {@link #addInternalProperty(InternalProperty)}. The method is called in the constructor of a ConfigurablePanel.
+    * In this method, the subclasses must create their InternalProperties and add them to the
+    * map of internal properties using {@link #addInternalProperty(InternalProperty)}.
+    * The method is called in the constructor of a ConfigurablePanel.
     */
    protected abstract void initializeInternalProperties();
 
    /**
-    * Method called when an internal property's value has been changed. This allows the ConfigurablePanel
-    * subclasses to react to the change of vale.
+    * Method called when an internal property's value has been changed. This allows the
+    * ConfigurablePanel subclasses to react to the change of vale.
     *
     * @param propertyName Name of the internal property
     */
    public abstract void internalpropertyhasChanged(String propertyName);
 
    /**
-    * In this method, the subclasses must create their UIparameter and add them to the map of properties using
-    * {@link #addUIParameter(UIParameter)}. The method is called in the constructor of a ConfigurablePanel.
+    * In this method, the subclasses must create their UIparameter and add them to the map of
+    * properties using {@link #addUIParameter(UIParameter)}. The method is called in the
+    * constructor of a ConfigurablePanel.
     */
    protected abstract void initializeParameters();
 
    /**
-    * Notifies the ConfigurablePanel subclass that the UIParameter {@code parameterName} value has changed.
-    * This method is called upon loading of the UI and whenever the user changes the configuration.
+    * Notifies the ConfigurablePanel subclass that the UIParameter {@code parameterName} value
+    * has changed. This method is called upon loading of the UI and whenever the user changes
+    * the configuration.
     *
     * @param parameterName Name of the UIParameter
     */
@@ -915,8 +974,8 @@ public abstract class ConfigurablePanel extends JPanel {
    public abstract String getDescription();
 
    /**
-    * Allows the ConfigurablePanel subclass to shut down all processes, e.g. SwingWorkers. This method is called
-    * when EMU is closing.
+    * Allows the ConfigurablePanel subclass to shut down all processes, e.g. SwingWorkers.
+    * This method is called when EMU is closing.
     */
    public abstract void shutDown();
 }

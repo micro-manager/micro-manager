@@ -22,7 +22,8 @@ public class MMPropertiesRegistry {
    private final HashMap<String, MMProperty> properties_;
 
    /**
-    * Constructor. Calls a private initialization method to extract the devices and their properties. It ignores "COM" devices.
+    * Constructor. Calls a private initialization method to extract the devices and their
+    * properties. It ignores "COM" devices.
     *
     * @param studio MM studio instance
     * @param logger EMU logger
@@ -61,7 +62,8 @@ public class MMPropertiesRegistry {
    }
 
    /**
-    * Returns the property with hash {@code propertyHash} (see {@link MMProperty} for the definition of the hash).
+    * Returns the property with hash {@code propertyHash} (see {@link MMProperty} for the
+    * definition of the hash).
     *
     * @param propertyHash Hash of the requested property.
     * @return Micro-manager property.
@@ -133,7 +135,8 @@ public class MMPropertiesRegistry {
 
    /**
     * Clears all Micro-manager device property listeners (which are of the class UIProperty).
-    * Called during reloading of the system by the {@link de.embl.rieslab.emu.controller.SystemController}.
+    * Called during reloading of the system by the
+    * {@link de.embl.rieslab.emu.controller.SystemController}.
     */
    public void clearAllListeners() {
       Iterator<String> it = properties_.keySet().iterator();

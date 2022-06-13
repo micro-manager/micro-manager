@@ -35,19 +35,19 @@ public class IBeamSmartPanel extends ConfigurablePanel {
 
    private static final long serialVersionUID = 1L;
    //////// Properties
-   public final String LASER_OPERATION = "operation";
-   public final String LASER_ENABLEFINE = "enable fine";
-   public final String LASER_POWER = "laser power";
-   public final String LASER_PERCFINEA = "fine a (%)";
-   public final String LASER_PERCFINEB = "fine b (%)";
-   public final String LASER_MAXPOWER = "max power";
-   public final String LASER_EXTERNALTRIGGER = "ext. trigger";
+   public final String laserOperation = "operation";
+   public final String laserEnablefine = "enable fine";
+   public final String laserPower = "laser power";
+   public final String laserPercfinea = "fine a (%)";
+   public final String laserPercfineb = "fine b (%)";
+   public final String laserMaxpower = "max power";
+   public final String laserExternaltrigger = "ext. trigger";
    //////// Parameters
-   public final String PARAM_ENABLE_FINE = "fine available";
-   public final String PARAM_ENABLE_EXT_TRIGGER = "ext. trigger available";
-   public final String PARAM_TITLE = "laser name";
-   private final String ENABLED = "enabled";
-   private final String DISABLED = "disabled";
+   public final String paramEnableFine = "fine available";
+   public final String paramEnableExtTrigger = "ext. trigger available";
+   public final String paramTitle = "laser name";
+   private final String enabled_ = "enabled";
+   private final String disabled_ = "disabled";
    //////// Components
    private JTextField textfieldUserPower_;
    private JSlider sliderPower_;
@@ -60,8 +60,9 @@ public class IBeamSmartPanel extends ConfigurablePanel {
    private JLabel finebperc_;
    private TitledBorder border_;
    /////// Misc variables
-   private int max_power;
-   private JPanel cardTrigger, cardFine;
+   private int maxPower_;
+   private JPanel cardTrigger;
+   private JPanel cardFine;
    private String title_;
 
    public IBeamSmartPanel(String label) {
@@ -77,13 +78,13 @@ public class IBeamSmartPanel extends ConfigurablePanel {
       this.setBorder(border_);
       border_.setTitleFont(border_.getTitleFont().deriveFont(Font.BOLD, 12));
 
-      ///////////////////////////////////////////////////////////////////////////// set-up components
+      ////////////////////////////////////////////////////////////////////////// set-up components
       // Power text field
-      textfieldUserPower_ = new JTextField(String.valueOf(max_power));
+      textfieldUserPower_ = new JTextField(String.valueOf(maxPower_));
       textfieldUserPower_.setPreferredSize(new Dimension(35, 20));
 
       // slider channel 1
-      sliderPower_ = new JSlider(JSlider.HORIZONTAL, 0, max_power, 0);
+      sliderPower_ = new JSlider(JSlider.HORIZONTAL, 0, maxPower_, 0);
 
       // slider fine a
       sliderFinea_ = new JSlider(JSlider.HORIZONTAL, 0, 100, 0);
@@ -103,9 +104,9 @@ public class IBeamSmartPanel extends ConfigurablePanel {
       finebperc_ = new JLabel("100 %");
 
       // others
-      JLabel fineAperc = new JLabel("a");
-      JLabel finebperc = new JLabel("b");
-      JLabel power = new JLabel("Power (mW):");
+      final JLabel fineAperc = new JLabel("a");
+      final JLabel finebperc = new JLabel("b");
+      final JLabel power = new JLabel("Power (mW):");
 
       ///////////////////////////////////////////////////////////////////////////// Channel 1
 
@@ -156,8 +157,8 @@ public class IBeamSmartPanel extends ConfigurablePanel {
       cTrig.gridx = 0;
       cTrig.gridy = 0;
       panelTrigger.add(togglebuttonExternalTrigger_, cTrig);
-      cardTrigger.add(panelTrigger, ENABLED);
-      cardTrigger.add(new JPanel(), DISABLED);
+      cardTrigger.add(panelTrigger, enabled_);
+      cardTrigger.add(new JPanel(), disabled_);
 
       ///////////////////////////////////////////////////////////////////////////// fine
       cardFine = new JPanel(new CardLayout());
@@ -206,8 +207,8 @@ public class IBeamSmartPanel extends ConfigurablePanel {
       cfine.insets = new Insets(2, 35, 2, 2);
       panelFine.add(finebperc_, cfine);
 
-      cardFine.add(panelFine, ENABLED);
-      cardFine.add(new JPanel(), DISABLED);
+      cardFine.add(panelFine, enabled_);
+      cardFine.add(new JPanel(), disabled_);
 
 
       //////////////////////////////////////////////////////////////////////////// Main panel
@@ -240,37 +241,37 @@ public class IBeamSmartPanel extends ConfigurablePanel {
 
    @Override
    protected void initializeProperties() {
-      max_power = 200;
+      maxPower_ = 200;
 
       addUIProperty(
-            new UIProperty(this, getPropertyName(LASER_POWER), "Power (mW).", new NoFlag()));
-      addUIProperty(new UIProperty(this, getPropertyName(LASER_PERCFINEA), "Fine a percentage.",
+            new UIProperty(this, getPropertyName(laserPower), "Power (mW).", new NoFlag()));
+      addUIProperty(new UIProperty(this, getPropertyName(laserPercfinea), "Fine a percentage.",
             new NoFlag()));
-      addUIProperty(new UIProperty(this, getPropertyName(LASER_PERCFINEB), "Fine b percentage.",
+      addUIProperty(new UIProperty(this, getPropertyName(laserPercfineb), "Fine b percentage.",
             new NoFlag()));
-      addUIProperty(new UIProperty(this, getPropertyName(LASER_MAXPOWER), "Maximum power (mW).",
+      addUIProperty(new UIProperty(this, getPropertyName(laserMaxpower), "Maximum power (mW).",
             new NoFlag()));
 
-      addUIProperty(new TwoStateUIProperty(this, getPropertyName(LASER_OPERATION),
+      addUIProperty(new TwoStateUIProperty(this, getPropertyName(laserOperation),
             "On/off operation property.", new NoFlag()));
       addUIProperty(
-            new TwoStateUIProperty(this, getPropertyName(LASER_ENABLEFINE), "Enable/disable fine.",
+            new TwoStateUIProperty(this, getPropertyName(laserEnablefine), "Enable/disable fine.",
                   new NoFlag()));
-      addUIProperty(new TwoStateUIProperty(this, getPropertyName(LASER_EXTERNALTRIGGER),
+      addUIProperty(new TwoStateUIProperty(this, getPropertyName(laserExternaltrigger),
             "Enable/disable digital trigger.", new NoFlag()));
    }
 
    @Override
    public void propertyhasChanged(String name, String newvalue) {
-      if (getPropertyName(LASER_POWER).equals(name)) {
+      if (getPropertyName(laserPower).equals(name)) {
          if (EmuUtils.isNumeric(newvalue)) {
             double val = Double.parseDouble(newvalue);
-            if (val >= 0 && val <= max_power) {
+            if (val >= 0 && val <= maxPower_) {
                textfieldUserPower_.setText(String.valueOf(val));
                sliderPower_.setValue((int) val);
             }
          }
-      } else if (getPropertyName(LASER_PERCFINEA).equals(name)) {
+      } else if (getPropertyName(laserPercfinea).equals(name)) {
          if (EmuUtils.isNumeric(newvalue)) {
             double val = Double.parseDouble(newvalue);
             if (val >= 0 && val <= 100) {
@@ -282,7 +283,7 @@ public class IBeamSmartPanel extends ConfigurablePanel {
                sliderFinea_.setValue((int) val);
             }
          }
-      } else if (getPropertyName(LASER_PERCFINEB).equals(name)) {
+      } else if (getPropertyName(laserPercfineb).equals(name)) {
          if (EmuUtils.isNumeric(newvalue)) {
             double val = Double.parseDouble(newvalue);
             if (val >= 0 && val <= 100) {
@@ -294,37 +295,37 @@ public class IBeamSmartPanel extends ConfigurablePanel {
                sliderFineb_.setValue((int) val);
             }
          }
-      } else if (getPropertyName(LASER_OPERATION).equals(name)) {
+      } else if (getPropertyName(laserOperation).equals(name)) {
          try {
             togglebuttonLaserOnOff_.setSelected(
-                  ((TwoStateUIProperty) getUIProperty(getPropertyName(LASER_OPERATION))).isOnState(
+                  ((TwoStateUIProperty) getUIProperty(getPropertyName(laserOperation))).isOnState(
                         newvalue));
          } catch (UnknownUIPropertyException e) {
             e.printStackTrace();
          }
 
-      } else if (getPropertyName(LASER_EXTERNALTRIGGER).equals(name)) {
+      } else if (getPropertyName(laserExternaltrigger).equals(name)) {
          try {
             togglebuttonExternalTrigger_.setSelected(((TwoStateUIProperty) getUIProperty(
-                  getPropertyName(LASER_EXTERNALTRIGGER))).isOnState(newvalue));
+                  getPropertyName(laserExternaltrigger))).isOnState(newvalue));
          } catch (UnknownUIPropertyException e) {
             e.printStackTrace();
          }
 
-      } else if (getPropertyName(LASER_ENABLEFINE).equals(name)) {
+      } else if (getPropertyName(laserEnablefine).equals(name)) {
          try {
             togglesliderenableFine_.setSelected(
-                  ((TwoStateUIProperty) getUIProperty(getPropertyName(LASER_ENABLEFINE))).isOnState(
+                  ((TwoStateUIProperty) getUIProperty(getPropertyName(laserEnablefine))).isOnState(
                         newvalue));
          } catch (UnknownUIPropertyException e) {
             e.printStackTrace();
          }
-      } else if (getPropertyName(LASER_MAXPOWER).equals(name)) {
+      } else if (getPropertyName(laserMaxpower).equals(name)) {
          if (EmuUtils.isNumeric(newvalue)) {
             double val = Double.parseDouble(newvalue);
-            max_power = (int) val;
+            maxPower_ = (int) val;
             if (sliderPower_ != null) {
-               sliderPower_.setMaximum(max_power);
+               sliderPower_.setMaximum(maxPower_);
             }
          }
       }
@@ -357,42 +358,43 @@ public class IBeamSmartPanel extends ConfigurablePanel {
 
    @Override
    protected void initializeParameters() {
-      addUIParameter(new BoolUIParameter(this, PARAM_ENABLE_FINE,
+      addUIParameter(new BoolUIParameter(this, paramEnableFine,
             "Show/hide the fine feature panel. Check if the feature is available for your device.",
             true));
-      addUIParameter(new BoolUIParameter(this, PARAM_ENABLE_EXT_TRIGGER,
-            "Show/hide the external trigger panel. Check if the feature is available for your device.",
+      addUIParameter(new BoolUIParameter(this, paramEnableExtTrigger,
+            "Show/hide the external trigger panel. Check if the feature is available "
+                  + "for your device.",
             true));
 
       title_ = "Laser";
-      addUIParameter(new StringUIParameter(this, PARAM_TITLE, "Panel title.", title_));
+      addUIParameter(new StringUIParameter(this, paramTitle, "Panel title.", title_));
    }
 
    @Override
    public void parameterhasChanged(String label) {
-      if (PARAM_ENABLE_FINE.equals(label)) {
+      if (paramEnableFine.equals(label)) {
          try {
-            if (getBoolUIParameterValue(PARAM_ENABLE_FINE)) {
-               ((CardLayout) cardFine.getLayout()).show(cardFine, ENABLED);
+            if (getBoolUIParameterValue(paramEnableFine)) {
+               ((CardLayout) cardFine.getLayout()).show(cardFine, enabled_);
             } else {
-               ((CardLayout) cardFine.getLayout()).show(cardFine, DISABLED);
+               ((CardLayout) cardFine.getLayout()).show(cardFine, disabled_);
             }
          } catch (IncorrectUIParameterTypeException | UnknownUIParameterException e) {
             e.printStackTrace();
          }
-      } else if (PARAM_ENABLE_EXT_TRIGGER.equals(label)) {
+      } else if (paramEnableExtTrigger.equals(label)) {
          try {
-            if (getBoolUIParameterValue(PARAM_ENABLE_EXT_TRIGGER)) {
-               ((CardLayout) cardTrigger.getLayout()).show(cardTrigger, ENABLED);
+            if (getBoolUIParameterValue(paramEnableExtTrigger)) {
+               ((CardLayout) cardTrigger.getLayout()).show(cardTrigger, enabled_);
             } else {
-               ((CardLayout) cardTrigger.getLayout()).show(cardTrigger, DISABLED);
+               ((CardLayout) cardTrigger.getLayout()).show(cardTrigger, disabled_);
             }
          } catch (IncorrectUIParameterTypeException | UnknownUIParameterException e) {
             e.printStackTrace();
          }
-      } else if (PARAM_TITLE.equals(label)) {
+      } else if (paramTitle.equals(label)) {
          try {
-            title_ = getStringUIParameterValue(PARAM_TITLE);
+            title_ = getStringUIParameterValue(paramTitle);
             border_.setTitle(title_);
             this.repaint();
          } catch (UnknownUIParameterException e) {
@@ -404,24 +406,24 @@ public class IBeamSmartPanel extends ConfigurablePanel {
    @Override
    protected void addComponentListeners() {
       // power textfield
-      SwingUIListeners.addActionListenerOnIntegerValue(this, getPropertyName(LASER_POWER),
+      SwingUIListeners.addActionListenerOnIntegerValue(this, getPropertyName(laserPower),
             textfieldUserPower_, sliderPower_);
 
       // slider power
-      SwingUIListeners.addActionListenerOnIntegerValue(this, getPropertyName(LASER_POWER),
+      SwingUIListeners.addActionListenerOnIntegerValue(this, getPropertyName(laserPower),
             sliderPower_, textfieldUserPower_);
 
       // slider fine a
-      SwingUIListeners.addActionListenerOnIntegerValue(this, getPropertyName(LASER_PERCFINEA),
+      SwingUIListeners.addActionListenerOnIntegerValue(this, getPropertyName(laserPercfinea),
             sliderFinea_, fineaperc_, "", " %");
 
       // slider fine b
-      SwingUIListeners.addActionListenerOnIntegerValue(this, getPropertyName(LASER_PERCFINEA),
+      SwingUIListeners.addActionListenerOnIntegerValue(this, getPropertyName(laserPercfinea),
             sliderFineb_, finebperc_, "", " %");
 
       // laser on/off
       try {
-         SwingUIListeners.addActionListenerToTwoState(this, getPropertyName(LASER_OPERATION),
+         SwingUIListeners.addActionListenerToTwoState(this, getPropertyName(laserOperation),
                togglebuttonLaserOnOff_);
       } catch (IncorrectUIPropertyTypeException e1) {
          e1.printStackTrace();
@@ -429,7 +431,7 @@ public class IBeamSmartPanel extends ConfigurablePanel {
 
       // ext trigger
       try {
-         SwingUIListeners.addActionListenerToTwoState(this, getPropertyName(LASER_EXTERNALTRIGGER),
+         SwingUIListeners.addActionListenerToTwoState(this, getPropertyName(laserExternaltrigger),
                togglebuttonExternalTrigger_);
       } catch (IncorrectUIPropertyTypeException e1) {
          e1.printStackTrace();
@@ -437,7 +439,7 @@ public class IBeamSmartPanel extends ConfigurablePanel {
 
       // Fine enable
       try {
-         SwingUIListeners.addActionListenerToTwoState(this, getPropertyName(LASER_ENABLEFINE),
+         SwingUIListeners.addActionListenerToTwoState(this, getPropertyName(laserEnablefine),
                togglesliderenableFine_);
       } catch (IncorrectUIPropertyTypeException e1) {
          e1.printStackTrace();

@@ -12,18 +12,17 @@ public class GlobalSettings {
    /**
     * Default configuration folder relative path.
     */
-   public final static String HOME = "EMU/"; // home of the default configuration file
+   public static final String HOME = "EMU/"; // home of the default configuration file
 
    /**
     * Configuration file's extension.
     */
-   public final static String CONFIG_EXT = "uicfg"; // extension of the configuration file
+   public static final String CONFIG_EXT = "uicfg"; // extension of the configuration file
 
    /**
     * Path to the default configuration file.
     */
-   public final static String CONFIG_NAME = HOME + "config." + CONFIG_EXT;
-         // path to the configuration file
+   public static final String CONFIG_NAME = HOME + "config." + CONFIG_EXT;
 
    /////////////////////////////////
    //// Numerical
@@ -31,12 +30,13 @@ public class GlobalSettings {
    /**
     * Used to compare floats.
     */
-   public final static double EPSILON = 0.00001;
+   public static final double EPSILON = 0.00001;
+
 
 
    /////////////////////////////////
    //// Global settings
-   public final static String GLOBALSETTING_ENABLEUNALLOCATEDWARNINGS =
+   public static final String GLOBALSETTING_ENABLEUNALLOCATEDWARNINGS =
          "Enable unallocated warnings";
 
    @SuppressWarnings("rawtypes")
@@ -45,7 +45,8 @@ public class GlobalSettings {
 
       // enable unallocated warnings
       Setting enableUnalloc = new BoolSetting(GLOBALSETTING_ENABLEUNALLOCATEDWARNINGS,
-            "When enabled, a message will be prompted to the user if some UI properties are note allocated.",
+            "When enabled, a message will be prompted to the user if some UI "
+                  + "properties are note allocated.",
             true);
       settings.put(GLOBALSETTING_ENABLEUNALLOCATEDWARNINGS, enableUnalloc);
 

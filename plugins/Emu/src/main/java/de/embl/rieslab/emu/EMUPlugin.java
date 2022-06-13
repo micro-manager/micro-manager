@@ -16,7 +16,8 @@ public class EMUPlugin implements MenuPlugin, SciJavaPlugin {
    private static Studio studio_;
    private static final String name = "EMU";
    private static final String description =
-         "Easier Micro-manager User interface: loads its own UI plugins and interfaces them with Micro-manager device properties.";
+         "Easier Micro-manager User interface: loads its own UI plugins and interfaces them "
+               + "with Micro-manager device properties.";
    private static final String copyright = "Joran Deschamps, EMBL, 2016-2020.";
    private static final String version = "v1.1";
    private SystemController controller_;

@@ -7,6 +7,7 @@ import de.embl.rieslab.emu.utils.settings.Setting;
 import java.util.HashMap;
 import java.util.TreeMap;
 import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
 
 
 public class IBeamSmartFrame extends ConfigurableMainFrame {
@@ -31,9 +32,9 @@ public class IBeamSmartFrame extends ConfigurableMainFrame {
    protected void initComponents() {
 
       try {
-         for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+         for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
             if ("Windows".equals(info.getName())) {
-               javax.swing.UIManager.setLookAndFeel(info.getClassName());
+               UIManager.setLookAndFeel(info.getClassName());
                break;
             }
          }
@@ -52,8 +53,8 @@ public class IBeamSmartFrame extends ConfigurableMainFrame {
       }
 
       JTabbedPane pane = new JTabbedPane();
-      int N = ((IntSetting) this.getCurrentPluginSettings().get(SETTING_NLASERS)).getValue();
-      for (int i = 0; i < N; i++) {
+      int nrLasers = ((IntSetting) this.getCurrentPluginSettings().get(SETTING_NLASERS)).getValue();
+      for (int i = 0; i < nrLasers; i++) {
          pane.add("Laser #" + i, new IBeamSmartPanel("Laser #" + i));
       }
       this.add(pane);
@@ -65,7 +66,8 @@ public class IBeamSmartFrame extends ConfigurableMainFrame {
    @Override
    protected String getPluginInfo() {
       return
-            "The iBeamSmart user interface was written by Joran Deschamps, EMBL (2019). It controls several iBeamSmart lasers from Toptica,"
+            "The iBeamSmart user interface was written by Joran Deschamps, EMBL (2019). "
+                  + "It controls several iBeamSmart lasers from Toptica,"
                   + " and allows hiding/showing the fine or external trigger panels.";
    }
 

@@ -6,8 +6,8 @@ import de.embl.rieslab.emu.ui.ConfigurablePanel;
  * UIParameter represented by a String value that can only take a finite number of values.
  * The possible values are passed to the constructor and only values contained in the array
  * will be accepted, otherwise the first value will be chosen.
- * <p>
- * This UIParameter can be used to define a set of possible values.
+ *
+ * <p>This UIParameter can be used to define a set of possible values.
  *
  * @author Joran Deschamps
  */
@@ -16,7 +16,7 @@ public class ComboUIParameter extends UIParameter<String> {
    private final String[] comboValues_;
 
    /**
-    * Constructor, a String array of allowed values must be passed as well as the index of the default
+    * A String array of allowed values must be passed as well as the index of the default
     * value in the array. If the index is not valid, then the first entry of the array is used as
     * default.
     *
@@ -44,8 +44,8 @@ public class ComboUIParameter extends UIParameter<String> {
          setValue(comboValues_[ind]);
       } else {
          throw new IllegalArgumentException(
-               "[" + ind + "] is not a valid index, it should obey: 0 <= ind < " +
-                     comboValues_.length + ".");
+               "[" + ind + "] is not a valid index, it should obey: 0 <= ind < "
+                     + comboValues_.length + ".");
       }
    }
 

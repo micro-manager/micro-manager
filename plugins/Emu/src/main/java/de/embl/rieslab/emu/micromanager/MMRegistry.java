@@ -12,22 +12,23 @@ import org.micromanager.Studio;
 
 
 /**
- * Class instantiating the {@link MMPropertiesRegistry} and {@link MMPresetGroupRegistry}. In addition, it
- * registers the configuration groups as MMProperties and add them to the MMPropertiesRegistry.
+ * Class instantiating the {@link MMPropertiesRegistry} and {@link MMPresetGroupRegistry}.
+ * In addition, it registers the configuration groups as MMProperties and add them to the
+ * MMPropertiesRegistry.
  *
  * @author Joran Deschamps
  */
 public class MMRegistry {
 
    private final MMPropertiesRegistry mmPropRegistry_; // holds the Micro-Manager device properties
-   private final MMPresetGroupRegistry mmPresetGroupsRegistry_;
-         // holds the configuration groups from Micro-manager
+   private final MMPresetGroupRegistry mmPresetGroupsRegistry_; // holds the configuration groups
+   // from Micro-manager
    private final Studio studio_;
    private final Logger logger_;
 
    /**
-    * Constructor. Instantiate the {@link MMPropertiesRegistry} and {@link MMPresetGroupRegistry} and register
-    * the configuration groups as MMProperties.
+    * Constructor. Instantiate the {@link MMPropertiesRegistry} and {@link MMPresetGroupRegistry}
+    * and register the configuration groups as MMProperties.
     *
     * @param studio Micro-Manager studio.
     * @param logger EMU logger.

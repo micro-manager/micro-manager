@@ -8,15 +8,19 @@ import de.embl.rieslab.emu.ui.uiproperties.flag.PropertyFlag;
 import de.embl.rieslab.emu.utils.EmuUtils;
 
 /**
- * A RescaledUIProperty is only compatible with IntegerMMProperty and FloatMMProperty. Once the scaling factors have been set, any value
- * set using {@link #setPropertyValue(String)} will be scaled to {@code slope*value+offset}. Inversely, any update from the MMProperty will
- * be scaled to {@code (value-offset)/slope}.
+ * A RescaledUIProperty is only compatible with IntegerMMProperty and FloatMMProperty. Once
+ * the scaling factors have been set, any value set using {@link #setPropertyValue(String)}
+ * will be scaled to {@code slope*value+offset}. Inversely, any update from the MMProperty
+ * will be scaled to {@code (value-offset)/slope}.
  *
  * @author Joran Deschamps
  */
 public class RescaledUIProperty extends UIProperty {
 
-   private double slope_ = 1., offset_ = 0., rescaledMin_, rescaledMax_;
+   private double slope_ = 1.;
+   private double offset_ = 0.;
+   private double rescaledMin_;
+   private double rescaledMax_;
    private boolean limitsSet_ = false;
 
    public RescaledUIProperty(ConfigurablePanel owner, String label, String description) {
@@ -59,21 +63,23 @@ public class RescaledUIProperty extends UIProperty {
    }
 
    /**
-    * Sets the scaling factors applied to scale the values submitted to the UIProperty to the limits of the MMProperty.
-    * If the slope or the offset are not finite, the values will be refused. The slope cannot be zero.
+    * Sets the scaling factors applied to scale the values submitted to the UIProperty to the
+    * limits of the MMProperty. If the slope or the offset are not finite, the values will
+    * be refused. The slope cannot be zero.
     *
     * @param slope  Slope
     * @param offset Offset
     * @return True if the slope and offset were set, false otherwise.
     */
    public boolean setScalingFactors(double slope, double offset) {
-      if (isAssigned() && Double.isFinite(slope) && Double.isFinite(offset) &&
-            Double.compare(slope, 0) != 0) {
+      if (isAssigned() && Double.isFinite(slope) && Double.isFinite(offset)
+            && Double.compare(slope, 0) != 0) {
          if (getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT) {
             slope_ = slope;
             offset_ = offset;
 
-            Float min, max;
+            Float min;
+            Float max;
             if (hasMMPropertyLimits()) {
                max = ((FloatMMProperty) getMMProperty()).getMax();
                min = ((FloatMMProperty) getMMProperty()).getMin();
@@ -98,7 +104,8 @@ public class RescaledUIProperty extends UIProperty {
             slope_ = slope;
             offset_ = offset;
 
-            Integer max, min;
+            Integer max;
+            Integer min;
             if (hasMMPropertyLimits()) {
                max = ((IntegerMMProperty) getMMProperty()).getMax();
                min = ((IntegerMMProperty) getMMProperty()).getMin();
@@ -129,17 +136,17 @@ public class RescaledUIProperty extends UIProperty {
       if (isAssigned()) {
          if (!limitsSet_) {
             return getMMProperty().setValue(newValue, this);
-         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT &&
-               EmuUtils.isFloat(newValue)) {
+         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT
+               && EmuUtils.isFloat(newValue)) {
             Float val = new Float(newValue);
-            if (val.compareTo((float) rescaledMin_) >= 0 &&
-                  val.compareTo((float) rescaledMax_) <= 0) {
+            if (val.compareTo((float) rescaledMin_) >= 0
+                  && val.compareTo((float) rescaledMax_) <= 0) {
                Float rescaledValue = new Float(val * slope_ + offset_);
 
                return getMMProperty().setValue(rescaledValue.toString(), this);
             }
-         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER &&
-               EmuUtils.isInteger(newValue)) {
+         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER
+               && EmuUtils.isInteger(newValue)) {
             Integer val = new Integer(newValue);
 
             if (val.compareTo((int) rescaledMin_) >= 0 && val.compareTo((int) rescaledMax_) <= 0) {
@@ -158,11 +165,11 @@ public class RescaledUIProperty extends UIProperty {
 
          if (!limitsSet_) {
             return value;
-         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT &&
-               EmuUtils.isFloat(value)) {
+         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT
+               && EmuUtils.isFloat(value)) {
             return getScaledDownValue(new Float(value));
-         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER &&
-               EmuUtils.isInteger(value)) {
+         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER
+               && EmuUtils.isInteger(value)) {
             return getScaledDownValue(new Integer(value));
          }
       }
@@ -172,12 +179,12 @@ public class RescaledUIProperty extends UIProperty {
    @Override
    public void mmPropertyHasChanged(String value) {
       if (limitsSet_) {
-         if (getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT &&
-               EmuUtils.isFloat(value)) {
+         if (getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT
+               && EmuUtils.isFloat(value)) {
             Float val = new Float(value);
             getOwner().triggerPropertyHasChanged(getPropertyLabel(), getScaledDownValue(val));
-         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER &&
-               EmuUtils.isInteger(value)) {
+         } else if (getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER
+               && EmuUtils.isInteger(value)) {
             Integer val = new Integer(value);
             getOwner().triggerPropertyHasChanged(getPropertyLabel(), getScaledDownValue(val));
          }

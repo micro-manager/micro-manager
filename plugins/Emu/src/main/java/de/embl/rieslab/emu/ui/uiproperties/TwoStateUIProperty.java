@@ -7,15 +7,15 @@ import de.embl.rieslab.emu.ui.uiproperties.flag.PropertyFlag;
 import de.embl.rieslab.emu.utils.EmuUtils;
 
 /**
- * UIProperty that only accepts two states: ON or OFF. The value of these states are not known at compilation time and can be changed in
- * the configuration wizard.
+ * UIProperty that only accepts two states: ON or OFF. The value of these states are not known
+ * at compilation time and can be changed in the configuration wizard.
  *
  * @author Joran Deschamps
  */
 public class TwoStateUIProperty extends UIProperty {
 
-   private final static String ON = " - On value";
-   private final static String OFF = " - Off value";
+   private static final String ON = " - On value";
+   private static final String OFF = " - Off value";
    private String onstate_;
    private String offstate_;
 
@@ -65,7 +65,8 @@ public class TwoStateUIProperty extends UIProperty {
     * Sets the value of the ON state.
     *
     * @param newOnValue New value of the ON state
-    * @return True if the value was correctly set, false otherwise (for instance if the value is not allowed)
+    * @return True if the value was correctly set, false otherwise (for instance if the value
+    *     is not allowed)
     */
    public boolean setOnStateValue(String newOnValue) {
       if (isValueAllowed(newOnValue)) {
@@ -80,7 +81,8 @@ public class TwoStateUIProperty extends UIProperty {
     * Sets the value of the OFF state.
     *
     * @param newOffvalue New value of the OFF state
-    * @return True if the value was correctly set, false otherwise (for instance if the value is not allowed)
+    * @return True if the value was correctly set, false otherwise (for instance if the value
+    *     is not allowed)
     */
    public boolean setOffStateValue(String newOffvalue) {
       if (isValueAllowed(newOffvalue)) {
@@ -155,7 +157,8 @@ public class TwoStateUIProperty extends UIProperty {
    }
 
    /**
-    * Sets the value of the assigned MMProperty to the On/Off state if stateIndex equals to 1/0 respectively.
+    * Sets the value of the assigned MMProperty to the On/Off state if stateIndex equals
+    * to 1/0 respectively.
     *
     * @param stateIndex New state's index
     * @return True if the value was set, false otherwise.
@@ -188,8 +191,9 @@ public class TwoStateUIProperty extends UIProperty {
     */
    public boolean isOnState(String value) {
       if (value != null && isAssigned()) {
-         if (getMMProperty().getType() ==
-               MMProperty.MMPropertyType.FLOAT) { // if float, then "0" decimals might be added and need to be compared.
+         if (getMMProperty().getType()
+               == MMProperty.MMPropertyType.FLOAT) { // if float, then "0" decimals might
+            // be added and need to be compared.
             if (EmuUtils.isNumeric(value)) {
                Float f = Float.parseFloat(value);
                Float onstate = Float.parseFloat(onstate_);
@@ -217,8 +221,9 @@ public class TwoStateUIProperty extends UIProperty {
     */
    public boolean isOffState(String value) {
       if (value != null && isAssigned()) {
-         if (getMMProperty().getType() ==
-               MMProperty.MMPropertyType.FLOAT) { // if float, then "0" decimals might be added and need to be compared.
+         if (getMMProperty().getType()
+               == MMProperty.MMPropertyType.FLOAT) { // if float, then "0" decimals might be
+            // added and need to be compared.
             if (EmuUtils.isNumeric(value)) {
                Float f = Float.parseFloat(value);
                Float offstate = Float.parseFloat(offstate_);

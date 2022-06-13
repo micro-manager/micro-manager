@@ -36,14 +36,15 @@ import org.micromanager.internal.utils.DaytimeNighttime;
 
 
 /**
- * EMU controller class, bridging Micro-manager and the EMU UIPlugins using a configuration controller.
- * Upon starting, it extracts the Micro-Manager device properties and configuration groups using an
- * instance of {@link de.embl.rieslab.emu.micromanager.MMRegistry}. It then checks the available
- * {@link de.embl.rieslab.emu.plugin.UIPlugin} through an {@link de.embl.rieslab.emu.plugin.UIPluginLoader}. It also makes use of a
- * {@link de.embl.rieslab.emu.configuration.ConfigurationController} to read the plugin configurations.
- * Finally, it extracts the UIProperties and UIParameters from the loaded plugin and pair them to the corresponding
- * MMProperties or state values. During running time, it can update the properties and change the current plugin or
- * configuration.
+ * EMU controller class, bridging Micro-manager and the EMU UIPlugins using a configuration
+ * controller. Upon starting, it extracts the Micro-Manager device properties and configuration
+ * groups using an instance of {@link de.embl.rieslab.emu.micromanager.MMRegistry}. It then
+ * checks the available {@link de.embl.rieslab.emu.plugin.UIPlugin} through an
+ * {@link de.embl.rieslab.emu.plugin.UIPluginLoader}. It also makes use of a
+ * {@link de.embl.rieslab.emu.configuration.ConfigurationController} to read the plugin
+ * configurations. Finally, it extracts the UIProperties and UIParameters from the loaded plugin
+ * and pair them to the corresponding MMProperties or state values. During running time,
+ * it can update the properties and change the current plugin or configuration.
  *
  * @author Joran Deschamps
  */
@@ -53,10 +54,10 @@ public class SystemController {
 
    private static Studio studio_; // MM studio
    private final Logger logger_;
-   private MMRegistry mmregistry_;
-         // holds the properties and configuration groups from Micro-manager
-   private ConfigurationController configurationController_;
-         // Configuration controller, with all known plugin configurations
+   private MMRegistry mmregistry_; // holds the properties and configuration groups
+   // from Micro-manager
+   private ConfigurationController configurationController_; // Configuration controller, with
+   // all known plugin configurations
    private ConfigurableMainFrame mainframe_; // Main frame of the current plugin
    private UIPluginLoader pluginloader_; // loader for EMU plugins
    private String currentPlugin; // reference to the current loaded plugin
@@ -73,11 +74,12 @@ public class SystemController {
    }
 
    /**
-    * Collects Micro-manager device properties and configuration groups, instantiates the default user interface
-    * plugin and loads the configurations.
+    * Collects Micro-manager device properties and configuration groups, instantiates the
+    * default user interface plugin and loads the configurations.
     */
    public void start() {
-      // extracts MM properties, configuration groups and register configurations groups as properties
+      // extracts MM properties, configuration groups and register configurations groups
+      // as properties
       mmregistry_ = new MMRegistry(studio_, logger_);
 
       // loads plugin list
@@ -214,7 +216,8 @@ public class SystemController {
    }
 
    /**
-    * Returns the current plugin's ConfigurableFrame configured with {@code plugsettings} as plugin settings.
+    * Returns the current plugin's ConfigurableFrame configured with {@code plugsettings} as
+    * plugin settings.
     *
     * @param plugsettings Plugin settings to configure the ConfigurableFrame
     * @return Configured ConfigurableFrame
@@ -282,8 +285,8 @@ public class SystemController {
    private void reloadSystem(String pluginName, String configName)
          throws IncompatiblePluginConfigurationException {
       // if the plugin is not available or the configuration unknown
-      if (!pluginloader_.isPluginAvailable(pluginName) ||
-            !configurationController_.doesConfigurationExist(configName)) {
+      if (!pluginloader_.isPluginAvailable(pluginName)
+            || !configurationController_.doesConfigurationExist(configName)) {
          throw new IllegalArgumentException("Unavailable plugin or unknown configuration.");
       }
 
@@ -303,7 +306,8 @@ public class SystemController {
          configurationController_.setDefaultConfiguration(configName);
       }
 
-      configurationController_.writeConfiguration(); // to set the default configuration in the configuration file.
+      configurationController_.writeConfiguration(); // to set the default configuration in
+      // the configuration file.
 
       // closes mainframe
       mainframe_.shutDown();
@@ -346,7 +350,8 @@ public class SystemController {
                unallocatedprop.add(uiprop);
 
             } else if (mmregistry_.getMMPropertiesRegistry().isProperty(configprop.get(
-                  uiprop))) { // if it is allocated to an existing Micro-manager property, link them together
+                  uiprop))) { // if it is allocated to an existing Micro-manager property, link
+               // them together
 
                if (uiproperties.get(uiprop).isCompatibleMMProperty(
                      mmregistry_.getMMPropertiesRegistry()
@@ -362,7 +367,8 @@ public class SystemController {
                   }
 
                   if (paired) {
-                     // tests if the property has finite number of states or parameters (in order to set their values)
+                     // tests if the property has finite number of states or parameters (in
+                     // order to set their values)
                      if (uiproperties.get(
                            uiprop) instanceof TwoStateUIProperty) { // if it is a two-state property
                         // extracts the on/off values
@@ -407,7 +413,8 @@ public class SystemController {
                         }
 
                      } else if (uiproperties.get(
-                           uiprop) instanceof MultiStateUIProperty) {// if it is a multistate property
+                           uiprop) instanceof MultiStateUIProperty) { // if it is a
+                        // multistate property
                         MultiStateUIProperty t = (MultiStateUIProperty) uiproperties.get(uiprop);
                         int numpos = t.getNumberOfStates();
                         String[] val = new String[numpos];
@@ -440,8 +447,8 @@ public class SystemController {
       }
 
       if (((BoolSetting) configurationController_.getGlobalSettings()
-            .get(GlobalSettings.GLOBALSETTING_ENABLEUNALLOCATEDWARNINGS)).getValue() &&
-            !unallocatedprop.isEmpty()) {
+            .get(GlobalSettings.GLOBALSETTING_ENABLEUNALLOCATEDWARNINGS)).getValue()
+            && !unallocatedprop.isEmpty()) {
          SystemDialogs.showUnallocatedMessage(unallocatedprop);
       }
    }
@@ -494,7 +501,8 @@ public class SystemController {
       readParameters(configurationController_.getParametersConfiguration());
 
       // updates all properties and parameters
-      mainframe_.updateAllConfigurablePanels(); // this is slow as it calls CMMCore for every UIProperty
+      mainframe_.updateAllConfigurablePanels(); // this is slow as it calls CMMCore for
+      // every UIProperty
 
       // adds all action listeners
       mainframe_.addAllListeners();
@@ -601,7 +609,8 @@ public class SystemController {
    }
 
    /**
-    * Returns a HashMap containing the name of the UIProperties (keys) and the corresponding UIProperties.
+    * Returns a HashMap containing the name of the UIProperties (keys) and the
+    * corresponding UIProperties.
     *
     * @return HashMap of the UIProperties
     */
@@ -610,7 +619,8 @@ public class SystemController {
    }
 
    /**
-    * Updates all properties by calling {@link de.embl.rieslab.emu.ui.ConfigurableMainFrame#updateAllProperties()}
+    * Updates all properties by calling
+    * {@link de.embl.rieslab.emu.ui.ConfigurableMainFrame#updateAllProperties()}.
     */
    public void forceUpdate() {
       if (mainframe_ != null) {

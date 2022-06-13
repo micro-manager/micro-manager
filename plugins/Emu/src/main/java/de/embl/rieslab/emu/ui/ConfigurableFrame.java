@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Interface giving access to a list of {@link ConfigurablePanel}s and maps of UIProperties and UIparameters.
+ * Interface giving access to a list of {@link ConfigurablePanel}s and maps of
+ * UIProperties and UIparameters.
  *
  * @author Joran Deschamps
  */

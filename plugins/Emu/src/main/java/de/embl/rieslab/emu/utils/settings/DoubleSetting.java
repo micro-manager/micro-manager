@@ -14,10 +14,10 @@ public class DoubleSetting extends Setting<Double> {
     *
     * @param name        Short name of the setting.
     * @param description Description as it will appear in the help.
-    * @param default_val Default value for the setting.
+    * @param defaultVal Default value for the setting.
     */
-   public DoubleSetting(String name, String description, Double default_val) {
-      super(name, description, Setting.SettingType.DOUBLE, default_val);
+   public DoubleSetting(String name, String description, Double defaultVal) {
+      super(name, description, Setting.SettingType.DOUBLE, defaultVal);
    }
 
    /**

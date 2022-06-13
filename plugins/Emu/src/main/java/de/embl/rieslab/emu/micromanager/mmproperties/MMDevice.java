@@ -29,8 +29,8 @@ public class MMDevice {
    }
 
    /**
-    * Adds the property {@code p} to the properties map. If a property with the same hash already exists,
-    * then nothing happens.
+    * Adds the property {@code p} to the properties map. If a property with the same hash
+    * already exists, then nothing happens.
     *
     * @param p MMproperty to register
     */
@@ -68,8 +68,8 @@ public class MMDevice {
    }
 
    /**
-    * Returns the hash of the property with label {@code propertyLabel}. If the property is not found,
-    * the method returns null.
+    * Returns the hash of the property with label {@code propertyLabel}. If the property is not
+    * found, the method returns null.
     *
     * @param propertyLabel Label of the property.
     * @return Hash of the corresponding property, null if the property is unknown.

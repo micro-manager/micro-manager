@@ -12,10 +12,10 @@ public class StringSetting extends Setting<String> {
     *
     * @param name        Short name of the setting.
     * @param description Description as it will appear in the help.
-    * @param default_val Default value for the setting.
+    * @param defaultVal Default value for the setting.
     */
-   public StringSetting(String name, String description, String default_val) {
-      super(name, description, Setting.SettingType.STRING, default_val);
+   public StringSetting(String name, String description, String defaultVal) {
+      super(name, description, Setting.SettingType.STRING, defaultVal);
    }
 
    /**

@@ -73,9 +73,10 @@ public class PluginConfiguration implements Comparable<PluginConfiguration> {
    }
 
    @Override
-   public int compareTo(PluginConfiguration OtherUIPlugin) {
-      // TODO should also check if they are related to the same plugin otherwise we might have inconsistencies
-      return configurationName.compareTo(OtherUIPlugin.getConfigurationName());
+   public int compareTo(PluginConfiguration otherUIPlugin) {
+      // TODO should also check if they are related to the same plugin otherwise we might
+      //  have inconsistencies
+      return configurationName.compareTo(otherUIPlugin.getConfigurationName());
    }
 
 }

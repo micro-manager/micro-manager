@@ -12,8 +12,8 @@ import de.embl.rieslab.emu.ui.uiproperties.flag.PropertyFlag;
  * particular when the UIProperty is to be used in a SwingWorker or a another Thread
  * without explicit interactions between the ConfigurablePanel's JComponents and the
  * UIProperty.
- * <p>
- * A PropertyFlag can be given to select the relevant UIProperties from the list
+ *
+ * <p>A PropertyFlag can be given to select the relevant UIProperties from the list
  * of possible values in the configuration wizard.
  *
  * @author Joran Deschamps

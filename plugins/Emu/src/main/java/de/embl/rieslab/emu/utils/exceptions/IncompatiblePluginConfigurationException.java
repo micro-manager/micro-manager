@@ -10,8 +10,8 @@ public class IncompatiblePluginConfigurationException extends Exception {
 
    private static final long serialVersionUID = 1L;
 
-   public IncompatiblePluginConfigurationException(String plugin_name, String configuration_name) {
-      super("The configuration \"" + configuration_name + "\" is incompatible with the " +
-            plugin_name + " plugin.");
+   public IncompatiblePluginConfigurationException(String pluginName, String configurationName) {
+      super("The configuration \"" + configurationName + "\" is incompatible with the "
+            + pluginName + " plugin.");
    }
 }

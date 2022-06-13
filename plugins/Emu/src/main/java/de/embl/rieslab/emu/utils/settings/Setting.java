@@ -19,17 +19,18 @@ public abstract class Setting<T> {
     * @param name        Short name of the setting.
     * @param description Description as it will appear in the help.
     * @param type        Type of the Setting.
-    * @param default_val Default value for the setting.
+    * @param defaultVal Default value for the setting.
     */
-   public Setting(String name, String description, SettingType type, T default_val) {
+   public Setting(String name, String description, SettingType type, T defaultVal) {
       name_ = name;
       description_ = description;
       type_ = type;
-      value_ = default_val;
+      value_ = defaultVal;
    }
 
    /**
-    * Returns the setting value as a String. Used to display the setting in the {@link de.embl.rieslab.emu.configuration.ui.tables.SettingsTable SettingsTable}.
+    * Returns the setting value as a String. Used to display the setting in the
+    * {@link de.embl.rieslab.emu.configuration.ui.tables.SettingsTable SettingsTable}.
     *
     * @return Setting's string value.
     * @see de.embl.rieslab.emu.configuration.ui.tables.SettingsTable
@@ -39,7 +40,16 @@ public abstract class Setting<T> {
    }
 
    /**
-    * Sets the value of the setting to {@code val}. If the value is not compatible, then nothing happens.
+    * Converts the setting's value to a String. Used in {@link #getStringValue() getStringValue}
+    *
+    * @param val Setting's value.
+    * @return Setting's value as a String.
+    */
+   protected abstract String getStringValue(T val);
+
+   /**
+    * Sets the value of the setting to {@code val}. If the value is not compatible,
+    * then nothing happens.
     *
     * @param val Value
     */
@@ -75,14 +85,6 @@ public abstract class Setting<T> {
    public String getDescription() {
       return description_;
    }
-
-   /**
-    * Converts the setting's value to a String. Used in {@link #getStringValue() getStringValue}
-    *
-    * @param val Setting's value.
-    * @return Setting's value as a String.
-    */
-   protected abstract String getStringValue(T val);
 
    /**
     * Converts a string to the setting's type.

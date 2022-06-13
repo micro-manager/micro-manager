@@ -14,10 +14,10 @@ public class IntSetting extends Setting<Integer> {
     *
     * @param name        Short name of the setting.
     * @param description Description as it will appear in the help.
-    * @param default_val Default value for the setting.
+    * @param defaultVal Default value for the setting.
     */
-   public IntSetting(String name, String description, Integer default_val) {
-      super(name, description, Setting.SettingType.INTEGER, default_val);
+   public IntSetting(String name, String description, Integer defaultVal) {
+      super(name, description, Setting.SettingType.INTEGER, defaultVal);
    }
 
    /**

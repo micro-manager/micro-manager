@@ -41,22 +41,26 @@ import javax.swing.border.TitledBorder;
 import mmcorej.CMMCore;
 
 /**
- * Class representing the main JFrame of a {@link de.embl.rieslab.emu.plugin.UIPlugin}. Subclasses must
- * implement the {@link #initComponents()} method, in which the {@link ConfigurablePanel}s must be instantiated
- * and added the same way a JPanel is added to a JFrame.
- * <p>
- * The ConfigurableMainFrame aggregates the UIParameters and the UIProperties, as well as linking together the
- * InternalProperties. If two UIProperties have the same name, then the last added UIproperty will replace the
- * first ones. The order is the order of discovery while going through the components of the JFrame.
- * <p>
- * For UIParameters, on the other hand, two UIParameters are allowed to have the same hash ({ConfigurablePanel name}-{UIParameter name})
- * only if they have the same type. Should such case arise, all UIParameters but the first one to appear (in order
- * of registration of the ConfigurablePanel that owns it) are replaced in their owner ConfigurablePanel by the
- * first UIParameter. There, UIParameters with same hash and type are made replaced by a single reference and are
- * shared by all the corresponding ConfigurationPanel. Note that if two UIParameters have same name but different
- * types, the second one to appear is ignored altogether.
- * <p>
- * The same idea applies to InternalProperties.
+ * Class representing the main JFrame of a {@link de.embl.rieslab.emu.plugin.UIPlugin}.
+ * Subclasses must implement the {@link #initComponents()} method, in which the
+ * {@link ConfigurablePanel}s must be instantiated and added the same way a JPanel is
+ * added to a JFrame.
+ *
+ * <p>The ConfigurableMainFrame aggregates the UIParameters and the UIProperties, as well as
+ * linking together the InternalProperties. If two UIProperties have the same name, then the
+ * last added UIproperty will replace the first ones. The order is the order of discovery while
+ * going through the components of the JFrame.
+ *
+ * <p>For UIParameters, on the other hand, two UIParameters are allowed to have the same
+ * hash ({ConfigurablePanel name}-{UIParameter name}) only if they have the same type.
+ * Should such case arise, all UIParameters but the first one to appear (in order of
+ * registration of the ConfigurablePanel that owns it) are replaced in their owner
+ * ConfigurablePanel by the first UIParameter. There, UIParameters with same hash and
+ * type are made replaced by a single reference and are shared by all the corresponding
+ * ConfigurationPanel. Note that if two UIParameters have same name but different types,
+ * the second one to appear is ignored altogether.
+ *
+ * <p>The same idea applies to InternalProperties.
  *
  * @author Joran Deschamps
  */
@@ -66,8 +70,9 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
    private static final long serialVersionUID = 1L;
    private final ArrayList<ConfigurablePanel> panels_;
    private final SystemController controller_;
-   private JMenu switch_plugin, switch_configuration;
-   private JMenuItem plugin_description;
+   private JMenu switchPlugin;
+   private JMenu switchConfiguration;
+   private JMenuItem pluginDescription;
    private HashMap<String, UIProperty> properties_;
    @SuppressWarnings("rawtypes")
    private HashMap<String, UIParameter> parameters_;
@@ -77,8 +82,9 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 
 
    /**
-    * Constructor, it sets up the JMenu, calls {@link #initComponents()} from the subclass, then links InternaProperties and
-    * gather UIPropertiers and UIParameters. The plugin settings will override the default settings.
+    * Constructor, it sets up the JMenu, calls {@link #initComponents()} from the subclass,
+    * then links InternaProperties and gather UIPropertiers and UIParameters. The plugin
+    * settings will override the default settings.
     *
     * @param title          Title of the frame
     * @param controller     EMU system controller
@@ -184,11 +190,11 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
     * Sets up the menu bar.
     */
    private void setUpMenu() {
-      JMenuBar mb = new JMenuBar();
+      final JMenuBar mb = new JMenuBar();
 
-      JMenu confMenu = new JMenu("Configuration");
-      JMenu pluginMenu = new JMenu("Plugin");
-      JMenu aboutMenu = new JMenu("About");
+      final JMenu confMenu = new JMenu("Configuration");
+      final JMenu pluginMenu = new JMenu("Plugin");
+      final JMenu aboutMenu = new JMenu("About");
 
       // to refresh the UI state
       JMenuItem refresh = new JMenuItem(new AbstractAction("Refresh UI") {
@@ -215,7 +221,8 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
          }
       });
       wiz.setToolTipText(
-            "Start the configuration wizard, allowing configurating the UI or creating a new configuration.");
+            "Start the configuration wizard, allowing configurating the UI or creating "
+                  + "a new configuration.");
       iconURL = getClass().getResource("/images/gear16.png");
       icon = new ImageIcon(iconURL);
       wiz.setIcon(icon);
@@ -237,18 +244,18 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
       manageconfig.setIcon(icon);
 
       // switch plugin and configuration
-      switch_plugin = new JMenu("Switch plugin");
+      switchPlugin = new JMenu("Switch plugin");
       iconURL = getClass().getResource("/images/switchplugin16.png");
       icon = new ImageIcon(iconURL);
-      switch_plugin.setIcon(icon);
+      switchPlugin.setIcon(icon);
 
-      switch_configuration = new JMenu("Switch configuration");
+      switchConfiguration = new JMenu("Switch configuration");
       iconURL = getClass().getResource("/images/switchconf16.png");
       icon = new ImageIcon(iconURL);
-      switch_configuration.setIcon(icon);
+      switchConfiguration.setIcon(icon);
 
       // description of the plugin
-      plugin_description = new JMenuItem(new AbstractAction("Description") {
+      pluginDescription = new JMenuItem(new AbstractAction("Description") {
          private static final long serialVersionUID = 1L;
 
          public void actionPerformed(ActionEvent e) {
@@ -257,7 +264,7 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
       });
       iconURL = getClass().getResource("/images/info16.png");
       icon = new ImageIcon(iconURL);
-      plugin_description.setIcon(icon);
+      pluginDescription.setIcon(icon);
 
       // guide and about
       JMenuItem guide = new JMenuItem(new AbstractAction("EMU guide") {
@@ -292,11 +299,11 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
       // add all to menu
       confMenu.add(wiz);
       confMenu.add(manageconfig);
-      confMenu.add(switch_plugin);
-      confMenu.add(switch_configuration);
+      confMenu.add(switchPlugin);
+      confMenu.add(switchConfiguration);
 
       pluginMenu.add(refresh);
-      pluginMenu.add(plugin_description);
+      pluginMenu.add(pluginDescription);
 
       aboutMenu.add(guide);
       aboutMenu.add(aboutemu);
@@ -320,15 +327,15 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
       while (it.hasNext()) { // loops over the PropertyPanel contained in the MainFrame
          pan = it.next();
 
-         // adds all the UIProperties, if there is collision the last one is kept. Thus, when writing
-         // a plugin, one needs to be aware of this.
+         // adds all the UIProperties, if there is collision the last one is kept. Thus,
+         // when writing a plugin, one needs to be aware of this.
          properties_.putAll(pan.getUIProperties());
 
 
          // adds all the UIParameters, in case of collision the first UIParameter has priority
-         // and substituted to the second UIParameter in its owner PropertyPanel: "same name" = "same parameter"
-         // Because UIParameters do not update their ConfigurablePanel owner by themselves, then by doing so
-         // we obtain a shared Parameter.
+         // and substituted to the second UIParameter in its owner PropertyPanel:
+         // "same name" = "same parameter". Because UIParameters do not update their
+         // ConfigurablePanel owner by themselves, then by doing so we obtain a shared Parameter.
          HashMap<String, UIParameter> panparam = pan.getUIParameters();
          Iterator<String> paramit = panparam.keySet().iterator();
          ArrayList<String> subst = new ArrayList<String>();
@@ -355,9 +362,9 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 
    @SuppressWarnings("rawtypes")
    private void linkInternalProperties() {
-      HashMap<String, InternalProperty> allinternalprops, panelinternalprops, tempinternalprops;
-      allinternalprops = new HashMap<String, InternalProperty>();
-      tempinternalprops = new HashMap<String, InternalProperty>();
+      HashMap<String, InternalProperty> allinternalprops = new HashMap<>();
+      HashMap<String, InternalProperty> tempinternalprops = new HashMap<>();
+      HashMap<String, InternalProperty> panelinternalprops;
       Iterator<ConfigurablePanel> panelsIt = panels_.iterator();
 
       while (panelsIt.hasNext()) { // iterate over panels
@@ -369,8 +376,9 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
          while (propsit.hasNext()) { // iterate over one panel's internal props
             String internalprop = propsit.next();
             if (allinternalprops.containsKey(
-                  internalprop)) { // if the internal property already exists
-               // add to a temporary HashMap, and will take care of them later to avoid a concurrent modifications of panelinternalprops
+                  internalprop)) { // if the internal property already exists add to a temporary
+               // HashMap, and will take care of them later to avoid a concurrent modifications of
+               // panelinternalprops
                tempinternalprops.put(internalprop, panelinternalprops.get(internalprop));
             } else {
                allinternalprops.put(internalprop, panelinternalprops.get(internalprop));
@@ -379,9 +387,9 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 
          // Now substitute all the internal properties from the temporary HashMap with the internal
          // property already in allinternalprops. So far they have the same name, but could have
-         // different type. In the following calls, if the properties have different types, then nothing
-         // will happen. In this case, we just ignore it. Doing it here at the end avoids concurrent
-         // modification of the ConfigurablePanel hashmap.
+         // different type. In the following calls, if the properties have different types, then
+         // nothing will happen. In this case, we just ignore it. Doing it here at the end avoids
+         // concurrent modification of the ConfigurablePanel hashmap.
          propsit = tempinternalprops.keySet().iterator();
          while (propsit.hasNext()) {
             allinternalprops.get(propsit.next()).registerListener(pane);
@@ -398,8 +406,8 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 
    /**
     * Updates all properties and parameters from each known ConfigurablePanel by calling
-    * {@link ConfigurablePanel#updateAllProperties()} and {@link ConfigurablePanel#updateAllParameters()}
-    * on each panel.
+    * {@link ConfigurablePanel#updateAllProperties()} and
+    * {@link ConfigurablePanel#updateAllParameters()} on each panel.
     */
    public void updateAllConfigurablePanels() {
       // this is called on the EDT
@@ -409,13 +417,15 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
       while (it.hasNext()) {
          pan = it.next();
 
-         pan.updateAllParameters(); // so that parameters values can be used for UIProperties (RescaledUIProperty)
+         pan.updateAllParameters();
+         // so that parameters values can be used for UIProperties (RescaledUIProperty)
          pan.updateAllProperties();
       }
    }
 
    /**
-    * Updates all properties from each known ConfiguablePanel. The method calls {@link ConfigurablePanel#updateAllProperties()}.
+    * Updates all properties from each known ConfiguablePanel. The method calls
+    * {@link ConfigurablePanel#updateAllProperties()}.
     */
    public void updateAllProperties() {
       Iterator<ConfigurablePanel> it = panels_.iterator();
@@ -478,7 +488,7 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
     * Updates the JMenu, called when loading a new Plugin or a new Configuration.
     */
    public void updateMenu() {
-      switch_plugin.removeAll();
+      switchPlugin.removeAll();
       final String[] plugins = controller_.getOtherPluginsList();
       for (int i = 0; i < plugins.length; i++) {
          final int index = i;
@@ -490,10 +500,10 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
                controller_.loadPlugin(plugins[index]);
             }
          });
-         switch_plugin.add(item);
+         switchPlugin.add(item);
       }
 
-      switch_configuration.removeAll();
+      switchConfiguration.removeAll();
       final String[] confs = controller_.getOtherCompatibleConfigurationsList();
       for (int i = 0; i < confs.length; i++) {
          final int index = i;
@@ -505,7 +515,7 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
                controller_.loadConfiguration(confs[index]);
             }
          });
-         switch_configuration.add(item);
+         switchConfiguration.add(item);
       }
    }
 
@@ -607,7 +617,7 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
                } else {
                   title = knownClasses.get(s).get(0).getPanelLabel();
                }
-               ConfigurablePanel p = knownClasses.get(s).get(0);
+               final ConfigurablePanel p = knownClasses.get(s).get(0);
 
                c.gridy = i++;
 
@@ -669,14 +679,14 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
    }
 
    /**
-    * Sets-up the frame, in this method the subclasses should instantiate the ConfigurablePanels and add them
-    * to the ConfigurableMainFrame.
+    * Sets-up the frame, in this method the subclasses should instantiate the ConfigurablePanels
+    * and add them to the ConfigurableMainFrame.
     */
    protected abstract void initComponents();
 
    /**
-    * Returns the plugin information (description and author information). This is used in the plugin
-    * description window prompted from the menu bar.
+    * Returns the plugin information (description and author information). This is used in
+    * the plugin description window prompted from the menu bar.
     *
     * @return Plugin information.
     */

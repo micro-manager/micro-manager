@@ -23,7 +23,8 @@ public interface UIPlugin {
 
 
    /**
-    * Returns a PropertyMainFrame. If {@code pluginSettings} is empty, then the default settings are used.
+    * Returns a PropertyMainFrame. If {@code pluginSettings} is empty, then the default
+    * settings are used.
     *
     * @param controller     EMU system controller.
     * @param pluginSettings Plugin settings.

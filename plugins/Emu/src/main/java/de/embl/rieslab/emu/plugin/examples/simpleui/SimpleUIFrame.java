@@ -14,7 +14,7 @@ public class SimpleUIFrame extends ConfigurableMainFrame {
    private static final long serialVersionUID = 1L;
 
    // Plugin setting for an optional filterwheel panel
-   public final String SETTING_USE_FW = "Use FW";
+   public final String settingUseFw = "Use FW";
 
    public SimpleUIFrame(String arg0, SystemController arg1, TreeMap<String, String> arg2) {
       super(arg0, arg1, arg2);
@@ -36,19 +36,19 @@ public class SimpleUIFrame extends ConfigurableMainFrame {
       LaserPanel laserPanel = new LaserPanel("Laser0");
       panel.add(laserPanel);
 
-      LaserPanel laserPanel_1 = new LaserPanel("Laser1");
-      panel.add(laserPanel_1);
+      LaserPanel laserPanel1 = new LaserPanel("Laser1");
+      panel.add(laserPanel1);
 
-      LaserPanel laserPanel_2 = new LaserPanel("Laser2");
-      panel.add(laserPanel_2);
+      LaserPanel laserPanel2 = new LaserPanel("Laser2");
+      panel.add(laserPanel2);
 
-      LaserPanel laserPanel_3 = new LaserPanel("Laser3");
-      panel.add(laserPanel_3);
+      LaserPanel laserPanel3 = new LaserPanel("Laser3");
+      panel.add(laserPanel3);
 
       /*
        * Checks the plugin setting for the optional filter wheel.
        */
-      if (((BoolSetting) this.getCurrentPluginSettings().get(SETTING_USE_FW)).getValue()) {
+      if (((BoolSetting) this.getCurrentPluginSettings().get(settingUseFw)).getValue()) {
          // adds the filter wheel panel
          FilterWheelPanel filtersPanel = new FilterWheelPanel("Filters");
          filtersPanel.setBounds(10, 297, 474, 54);
@@ -67,15 +67,15 @@ public class SimpleUIFrame extends ConfigurableMainFrame {
       HashMap<String, Setting> settgs = new HashMap<String, Setting>();
 
       // Here, we create an enable/disable option for the filterwheel panel.
-      settgs.put(SETTING_USE_FW,
-            new BoolSetting(SETTING_USE_FW, "Enable/disable the filter wheel.", true));
+      settgs.put(settingUseFw,
+            new BoolSetting(settingUseFw, "Enable/disable the filter wheel.", true));
       return settgs;
    }
 
    @Override
    protected String getPluginInfo() {
       return
-            "The SimpleUI was developed by Joran Deschamps, EMBL (2019), as an example for EMU. It controls four lasers and"
-                  + " an optional filterwheel.";
+            "The SimpleUI was developed by Joran Deschamps, EMBL (2019), as an example for EMU. "
+                  + "It controls four lasers and an optional filterwheel.";
    }
 }

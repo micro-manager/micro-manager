@@ -10,7 +10,9 @@ public class EmuUtils {
       if (s != null) {
          if (s.matches("[-+]?\\d*\\.?\\d+")) {
             return true;
-         } else return s.matches("[-+]?\\d*\\,?\\d+");
+         } else {
+            return s.matches("[-+]?\\d*\\,?\\d+");
+         }
       }
       return false;
    }
@@ -53,10 +55,10 @@ public class EmuUtils {
       // signed decimal integer.
       final String Exp = "[eE][+-]?" + Digits;
       final String fpRegex =
-            ("[\\x00-\\x20]*" + // Optional leading "whitespace"
-                  "[+-]?(" +         // Optional sign character
-                  "NaN|" +           // "NaN" string
-                  "Infinity|" +      // "Infinity" string
+            ("[\\x00-\\x20]*"         // Optional leading "whitespace"
+                  + "[+-]?("          // Optional sign character
+                  + "NaN|"            // "NaN" string
+                  + "Infinity|"       // "Infinity" string
 
                   // A decimal floating-point string representing a finite positive
                   // number without a leading sign has at most five basic pieces:
@@ -69,22 +71,22 @@ public class EmuUtils {
                   // edition, section 3.10.2.
 
                   // Digits ._opt Digits_opt ExponentPart_opt FloatTypeSuffix_opt
-                  "(((" + Digits + "(\\.)?(" + Digits + "?)(" + Exp + ")?)|" +
+                  + "(((" + Digits + "(\\.)?(" + Digits + "?)(" + Exp + ")?)|"
 
                   // . Digits ExponentPart_opt FloatTypeSuffix_opt
-                  "(\\.(" + Digits + ")(" + Exp + ")?)|" +
+                  + "(\\.(" + Digits + ")(" + Exp + ")?)|"
 
                   // Hexadecimal strings
-                  "((" +
+                  + "(("
                   // 0[xX] HexDigits ._opt BinaryExponent FloatTypeSuffix_opt
-                  "(0[xX]" + HexDigits + "(\\.)?)|" +
+                  + "(0[xX]" + HexDigits + "(\\.)?)|"
 
                   // 0[xX] HexDigits_opt . HexDigits BinaryExponent FloatTypeSuffix_opt
-                  "(0[xX]" + HexDigits + "?(\\.)" + HexDigits + ")" +
+                  + "(0[xX]" + HexDigits + "?(\\.)" + HexDigits + ")"
 
-                  ")[pP][+-]?" + Digits + "))" +
-                  "[fFdD]?))" +
-                  "[\\x00-\\x20]*");// Optional trailing "whitespace"
+                  + ")[pP][+-]?" + Digits + "))"
+                  + "[fFdD]?))"
+                  + "[\\x00-\\x20]*"); // Optional trailing "whitespace"
 
       return Pattern.matches(fpRegex, val);
    }

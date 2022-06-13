@@ -24,7 +24,7 @@ import javax.swing.border.EmptyBorder;
 
 public class ConfigurationManagerUI {
 
-   private final ConfigurationController config_; // configuration class
+   private ConfigurationController config_; // configuration class
    private ConfigurationTable configtable_;
    private JFrame frame_;
    private boolean running_;
@@ -34,13 +34,13 @@ public class ConfigurationManagerUI {
       running_ = false;
    }
 
-   public void start(final GlobalConfiguration configuration_) {
+   public void start(final GlobalConfiguration configuration) {
       javax.swing.SwingUtilities.invokeLater(new Runnable() {
          public void run() {
             running_ = true;
 
             // Table defining the properties using the configuration
-            configtable_ = new ConfigurationTable(configuration_);
+            configtable_ = new ConfigurationTable(configuration);
             configtable_.setOpaque(true);
 
             frame_ = createFrame(configtable_);
@@ -137,7 +137,7 @@ public class ConfigurationManagerUI {
    }
 
    /**
-    * Closes open windows (wizard frame and help)
+    * Closes open windows (wizard frame and help).
     */
    public void shutDown() {
       if (frame_ != null) {
