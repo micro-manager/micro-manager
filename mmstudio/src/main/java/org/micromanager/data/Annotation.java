@@ -44,7 +44,7 @@ public interface Annotation {
     * specific to any one image.
     *
     * @return PropertyMap of data related to the entire dataset, or null if
-    * none exists.
+    *     none exists.
     */
    PropertyMap getGeneralAnnotation();
 

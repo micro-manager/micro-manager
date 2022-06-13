@@ -137,7 +137,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
     * When a Datastore is closed, we need to remove all references to it so
     * it can be garbage-collected.
     *
-    * @param event
+    * @param event Signals that the Datastore is closing
     */
    @Subscribe
    public void onDatastoreClosed(DatastoreClosingEvent event) {
@@ -153,7 +153,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
     * At shutdown, we give the user the opportunity to save data, and to cancel
     * shutdown if they don't want to decide yet.
     *
-    * @param event
+    * @param event Signals that the application is shutting down
     */
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
@@ -252,8 +252,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    @Override
    public DisplayWindow createDisplay(DataProvider provider) {
-      DisplayWindow ret = new DisplayController.Builder(provider).
-            linkManager(linkManager_).build(studio_);
+      DisplayWindow ret = new DisplayController.Builder(provider)
+            .linkManager(linkManager_).build(studio_);
       addViewer(ret);
       ret.show();
       return ret;
@@ -262,8 +262,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Override
    public DisplayWindow createDisplay(DataProvider provider,
                                       DisplayWindowControlsFactory factory) {
-      DisplayWindow ret = new DisplayController.Builder(provider).
-            linkManager(linkManager_).controlsFactory(factory).build(studio_);
+      DisplayWindow ret = new DisplayController.Builder(provider)
+            .linkManager(linkManager_).controlsFactory(factory).build(studio_);
       addViewer(ret);
       ret.show();
       return ret;
@@ -332,7 +332,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
     *
     * @param store Datastore to open displays for
     * @return List with opened DisplayWindows
-    * @throws IOException
+    * @throws IOException Can happen with disk based Datastores
     */
    @Override
    public List<DisplayWindow> loadDisplays(Datastore store) throws IOException {
@@ -340,24 +340,24 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       ArrayList<DisplayWindow> result = new ArrayList<>();
       if (path != null) {
          // try to restore display settings
-         File displaySettingsFile = new File(store.getSavePath() + File.separator +
-               PropertyKey.DISPLAY_SETTINGS_FILE_NAME.key());
-         DisplaySettings displaySettings = DefaultDisplaySettings.
-               getSavedDisplaySettings(displaySettingsFile);
+         File displaySettingsFile = new File(store.getSavePath() + File.separator
+               + PropertyKey.DISPLAY_SETTINGS_FILE_NAME.key());
+         DisplaySettings displaySettings = DefaultDisplaySettings
+               .getSavedDisplaySettings(displaySettingsFile);
          if (displaySettings == null) {
             displaySettings = RememberedDisplaySettings.loadDefaultDisplaySettings(
                   studio_,
                   store.getSummaryMetadata());
-         }
-         else {
+         } else {
             displaySettings = RememberedDisplaySettings.fixMissingInfo(displaySettings,
                   store.getSummaryMetadata());
          }
          // instead of using the createDisplay function, set the correct 
          // displaySettings right away
-         DisplayWindow tmp = new DisplayController.Builder(store).
-               linkManager(linkManager_).
-               initialDisplaySettings(displaySettings).build(studio_);
+         DisplayWindow tmp = new DisplayController.Builder(store)
+               .linkManager(linkManager_)
+               .initialDisplaySettings(displaySettings)
+               .build(studio_);
          addViewer(tmp);
          result.add(tmp);
          tmp.show();
@@ -441,7 +441,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
     * @param store   Datastore that can be saved
     * @param display Display over which to orient the prompt (can be null)
     * @return true if Datastore can be closed, false otherwise
-    * @throws IOException
+    * @throws IOException Can happen with disk based Datastores
     */
    @Override
    public boolean promptToSave(Datastore store, DisplayWindow display) throws IOException {
@@ -496,8 +496,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
             return;
          }
          studio_.displays().closeAllDisplayWindows(result == 1);
-      }
-      else {
+      } else {
          // simple prompt:
          if (JOptionPane.showConfirmDialog(null,
                "Are you sure you want to close all image windows?",
@@ -515,8 +514,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          if (shouldPromptToSave && !display.requestToClose()) {
             // User cancelled closing.
             return false;
-         }
-         else if (!shouldPromptToSave) {
+         } else if (!shouldPromptToSave) {
             // Forcefully close display.
             display.close();
          }
@@ -578,7 +576,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    /**
     * Checks if this is the last display for a managed Datastore, and
-    * if so, whether that datastore can be closed without prompting
+    * if so, whether that datastore can be closed without prompting.
     * Informational only, no actions are taken, so no side effects
     * (unlike canCLoseViewer)    *
     *
@@ -590,7 +588,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       synchronized (this) {
          if (!providerToDisplays_.containsKey(provider)) {
             ReportingUtils.logError(
-                  "Received request to close a display that is not associated with a managed datastore.");
+                  "Received request to close a display that is not associated "
+                        + "with a managed datastore.");
             return true;
          }
          displays = getDisplays(provider);
@@ -600,8 +599,9 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
             if (!displays.contains(window)) {
                // This should also never happen.
                ReportingUtils.logError(
-                     "Was notified of a request to close a display that we didn't know was associated with datastore " +
-                           provider);
+                     "Was notified of a request to close a display that we didn't know "
+                           + "was associated with datastore "
+                           + provider);
             }
             if (displays.size() > 1) {
                // Not last display, so OK to close
@@ -621,7 +621,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
     * Check if this is the last display for a Datastore that we are managing,
     * and verify closing without saving (if appropriate).
     *
-    * @return
+    * @return True of the Viewer can be closed, false otherwise
     */
    @Override
    public boolean canCloseViewer(DataViewer viewer) {
@@ -631,7 +631,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          if (!providerToDisplays_.containsKey(provider)) {
             // This should never happen.
             ReportingUtils.logError(
-                  "Received request to close a display that is not associated with a managed datastore.");
+                  "Received request to close a display that is not associated with "
+                        + "a managed datastore.");
             return true;
          }
          displays = getDisplays(provider);
@@ -641,8 +642,9 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
             if (!displays.contains(window)) {
                // This should also never happen.
                ReportingUtils.logError(
-                     "Was notified of a request to close a display that we didn't know was associated with datastore " +
-                           provider);
+                     "Was notified of a request to close a display that we didn't know "
+                           + "was associated with datastore "
+                           + provider);
             }
 
             if (displays.size() > 1) {

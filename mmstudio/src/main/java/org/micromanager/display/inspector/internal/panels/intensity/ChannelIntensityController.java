@@ -36,6 +36,8 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
+ * Controls brightness / contrast / gamma in the display of a single channel.
+ *
  * @author mark
  */
 public final class ChannelIntensityController implements HistogramView.Listener {
@@ -91,8 +93,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          // TODO: evaluate handling of special case "Camera Bits"
          if (settings.useCameraRange()) {
             this.setSelectedItem("Camera Depth");
-         }
-         else {
+         } else {
             int bits = settings.getHistoRangeBits();
             if (bits > 3 && (bits - 4) < this.getSize()) {
                this.setSelectedItem(this.getElementAt(bits - 4));
@@ -253,6 +254,13 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    };
 
 
+   /**
+    * Create an instance of the ChannelIntensityController.
+    *
+    * @param viewer Display that will use this instance
+    * @param channelIndex Number of the channel (zero based) in this display
+    * @return Instance of the controller.
+    */
    public static ChannelIntensityController create(DataViewer viewer, int channelIndex) {
       ChannelIntensityController instance = new ChannelIntensityController(viewer, channelIndex);
       instance.histogram_.addListener(instance);
@@ -425,8 +433,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          int rangeBits;
          if (cameraBits_ == null || !cSettings.useCameraRange()) {
             rangeBits = cSettings.getHistoRangeBits();
-         }
-         else {
+         } else {
             rangeBits = cameraBits_;
          }
          long[] data = componentStats.getInRangeHistogram();
@@ -451,8 +458,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          double q = settings.getAutoscaleIgnoredQuantile();
          min = componentStats.getAutoscaleMinForQuantile(q);
          max = componentStats.getAutoscaleMaxForQuantile(q);
-      }
-      else {
+      } else {
          ComponentDisplaySettings componentSettings =
                settings.getChannelSettings(channelIndex_)
                      .getComponentSettings(component);

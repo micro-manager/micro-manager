@@ -39,6 +39,13 @@ public final class BoofCVImageConverter {
       return mmToBoofCV(image, true);
    }
 
+   /**
+    * Converts MM Image to a BoofCV ImageGray.
+    *
+    * @param image MM Image to be converted
+    * @param copy Copy pixel data if true, otherwise hand BoofCV the same pixel data.
+    * @return BoofCV ImageGray version of the MM Image
+    */
    public static ImageGray<? extends ImageGray<?>> mmToBoofCV(Image image, boolean copy) {
       ImageGray<? extends ImageGray<?>> outImage;
       switch (image.getBytesPerPixel()) {
@@ -46,8 +53,7 @@ public final class BoofCVImageConverter {
             GrayU8 tmp8Image = new GrayU8();
             if (copy) {
                tmp8Image.setData((byte[]) image.getRawPixelsCopy());
-            }
-            else {
+            } else {
                tmp8Image.setData((byte[]) image.getRawPixels());
             }
             outImage = tmp8Image;
@@ -56,8 +62,7 @@ public final class BoofCVImageConverter {
             GrayU16 tmp16Image = new GrayU16();
             if (copy) {
                tmp16Image.setData((short[]) image.getRawPixelsCopy());
-            }
-            else {
+            } else {
                tmp16Image.setData((short[]) image.getRawPixels());
             }
             outImage = tmp16Image;
@@ -67,8 +72,7 @@ public final class BoofCVImageConverter {
             GrayU8 tmpImage = new GrayU8();
             if (copy) {
                tmpImage.setData((byte[]) image.getRawPixelsCopy());
-            }
-            else {
+            } else {
                tmpImage.setData((byte[]) image.getRawPixels());
             }
             outImage = tmpImage;
@@ -111,13 +115,11 @@ public final class BoofCVImageConverter {
          GrayU8 in8 = (GrayU8) input;
          Object pixels = copy ? in8.getData().clone() : in8.getData();
          output = new DefaultImage(pixels, input.getWidth(), input.getHeight(), 1, 1, c, md);
-      }
-      else if (input.getDataType().equals(ImageDataType.U16)) {
+      } else if (input.getDataType().equals(ImageDataType.U16)) {
          GrayU16 in16 = (GrayU16) input;
          Object pixels = copy ? in16.getData().clone() : in16.getData();
          output = new DefaultImage(pixels, input.getWidth(), input.getHeight(), 2, 1, c, md);
-      }
-      else {
+      } else {
          // Todo: throw exception?  return null for now
          return null;
       }
@@ -142,29 +144,23 @@ public final class BoofCVImageConverter {
          if (copy) {
             ip = new ByteProcessor(imgG.width, imgG.height,
                   ((GrayU8) imgG).getData().clone());
-         }
-         else {
+         } else {
             ip = new ByteProcessor(imgG.width, imgG.height,
                   ((GrayU8) imgG).getData());
          }
-      }
-      else if (imgG instanceof GrayU16) {
-
+      } else if (imgG instanceof GrayU16) {
          if (copy) {
             ip = new ShortProcessor(imgG.width, imgG.height,
                   ((GrayU16) imgG).getData().clone(), null);
-         }
-         else {
+         } else {
             ip = new ShortProcessor(imgG.width, imgG.height,
                   ((GrayU16) imgG).getData(), null);
          }
-      }
-      else if (imgG instanceof GrayF32) {
+      } else if (imgG instanceof GrayF32) {
          if (copy) {
             ip = new FloatProcessor(imgG.width, imgG.height,
                   ((GrayF32) imgG).getData().clone());
-         }
-         else {
+         } else {
             ip = new FloatProcessor(imgG.width, imgG.height,
                   ((GrayF32) imgG).getData());
          }
@@ -175,9 +171,9 @@ public final class BoofCVImageConverter {
    /**
     * Converts an ImageJ ImageProcessor to a BoofCV image.
     *
-    * @param ip
-    * @param copy
-    * @return
+    * @param ip ImageJ IMageProcessor
+    * @param copy Whether or not to copy the pixel data (or use a reference).
+    * @return BoofCV version of the ImageJ Processor
     */
 
    public static ImageGray<? extends ImageGray<?>> convert(ImageProcessor ip, boolean copy) {
@@ -186,28 +182,23 @@ public final class BoofCVImageConverter {
          GrayU8 tmp8Image = new GrayU8(); //ip.getWidth(), ip.getHeight());
          if (copy) {
             tmp8Image.setData(((byte[]) ip.getPixels()).clone());
-         }
-         else {
+         } else {
             tmp8Image.setData((byte[]) ip.getPixels());
          }
          ig = tmp8Image;
-      }
-      else if (ip instanceof ShortProcessor) {
+      } else if (ip instanceof ShortProcessor) {
          GrayU16 tmp16Image = new GrayU16();
          if (copy) {
             tmp16Image.setData(((short[]) ip.getPixels()).clone());
-         }
-         else {
+         } else {
             tmp16Image.setData((short[]) ip.getPixels());
          }
          ig = tmp16Image;
-      }
-      else if (ip instanceof FloatProcessor) {
+      } else if (ip instanceof FloatProcessor) {
          GrayF32 tmpF32Image = new GrayF32();
          if (copy) {
             tmpF32Image.setData(((float[]) ip.getPixels()).clone());
-         }
-         else {
+         } else {
             tmpF32Image.setData((float[]) ip.getPixels());
          }
          ig = tmpF32Image;
@@ -231,7 +222,7 @@ public final class BoofCVImageConverter {
     * @param p           point around which to build the ROI
     * @param halfBoxSize Half the width and length of the ROI
     * @return ImageGray Note that the pixels are not copied.
-    * @throws IOException
+    * @throws IOException Can happen with disk based data.
     */
    public static ImageGray<? extends ImageGray<?>> subImage(
          final DataProvider dp,
@@ -274,8 +265,8 @@ public final class BoofCVImageConverter {
    /**
     * Converts a Java affine transform into a Georegression Affine transform.
     *
-    * @param in
-    * @return
+    * @param in Java Affine Transform to be translated
+    * @return Georegression Affine Transform
     */
    public static Affine2D_F64 convertAff(AffineTransform in) {
       return new Affine2D_F64(in.getScaleX(), in.getShearX(), in.getShearY(),

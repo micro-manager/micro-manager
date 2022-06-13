@@ -37,8 +37,8 @@ public interface ProcessorPlugin extends MMPlugin {
     *
     * @param settings Default values to use to set up the configurator.
     * @return a PluginConfigurator object used to set parameters for the
-    * plugin. This should be a new object each time this method is
-    * called.
+    *     plugin. This should be a new object each time this method is
+    *     called.
     */
    ProcessorConfigurator createConfigurator(PropertyMap settings);
 

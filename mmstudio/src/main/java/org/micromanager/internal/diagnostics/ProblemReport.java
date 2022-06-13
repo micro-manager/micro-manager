@@ -191,8 +191,7 @@ public final class ProblemReport {
                ReportingUtils.logError(dealWithLater);
             }
          }
-      }
-      else {
+      } else {
          try {
             logFile = File.createTempFile("MMCoreLogCapture", ".txt");
          } catch (IOException dealWithLater) {
@@ -538,8 +537,7 @@ public final class ProblemReport {
          syncMetadata();
          writeTextFile(new File(reportDir_, START_CFG_FILENAME),
                startCfg_.getContent());
-      }
-      else if (metadata_.startCfgFilename != null) {
+      } else if (metadata_.startCfgFilename != null) {
          new File(reportDir_, START_CFG_FILENAME).delete();
          metadata_.startCfgFilename = null;
       }
@@ -556,8 +554,7 @@ public final class ProblemReport {
          syncMetadata();
          writeTextFile(new File(reportDir_, END_CFG_FILENAME),
                endCfg_.getContent());
-      }
-      else if (metadata_.endCfgFilename != null) {
+      } else if (metadata_.endCfgFilename != null) {
          new File(reportDir_, END_CFG_FILENAME).delete();
          metadata_.endCfgFilename = null;
       }
@@ -605,8 +602,7 @@ public final class ProblemReport {
       File logDir;
       if (metadata_.currentDir != null) {
          logDir = new File(metadata_.currentDir);
-      }
-      else {
+      } else {
          // Try the current current directory, in case we get lucky.
          logDir = new File(System.getProperty("user.dir"));
       }

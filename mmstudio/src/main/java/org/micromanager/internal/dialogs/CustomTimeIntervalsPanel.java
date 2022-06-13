@@ -48,12 +48,14 @@ public final class CustomTimeIntervalsPanel extends JPanel {
    private LinearTimeDialog linearTimeDialog_;
    private LogTimeDialog logTimeDialog_;
    private JCheckBox useIntervalsCheckBox_;
+   private Studio gui_;
    private final Window parent_;
 
    @SuppressWarnings("LeakingThisInConstructor")
    public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, Studio gui,
                                    Window parent) {
       super();
+      gui_ = gui;
       parent_ = parent;
       acqEng_ = acqEng;
       createTable();
@@ -116,11 +118,9 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          int[] selectedRows = timeIntervalTable_.getSelectedRows();
          if (selectedRows.length == 0) {
             JOptionPane.showMessageDialog(buttonsPanel_, "Must select row(s) to be removed");
-         }
-         else if (selectedRows.length == 1) {
+         } else if (selectedRows.length == 1) {
             intervalTableModel_.removeRow(selectedRows[0]);
-         }
-         else {
+         } else {
             Arrays.sort(selectedRows);
             for (int k = selectedRows.length - 1; k >= 0; k--) {
                intervalTableModel_.removeRow(selectedRows[k]);
@@ -139,8 +139,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          int selectedRow = timeIntervalTable_.getSelectedRow();
          if (selectedRow == -1) {
             intervalTableModel_.addRow(0);
-         }
-         else {
+         } else {
             intervalTableModel_.insertRow(0, selectedRow);
             timeIntervalTable_.addRowSelectionInterval(selectedRow + 1, selectedRow + 1);
          }
@@ -246,8 +245,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          int units = unitCombo.getSelectedIndex();
          if (units == 1) {
             result *= 1000;
-         }
-         else if (units == 2) {
+         } else if (units == 2) {
             result *= 60000;
          }
          return result;
@@ -260,6 +258,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
             aValue_.commitEdit();
             tValue_.commitEdit();
          } catch (ParseException ex) {
+            gui_.logs().logError(ex);
          }
 
          if (!aCheck_.isSelected()) {
@@ -267,20 +266,17 @@ public final class CustomTimeIntervalsPanel extends JPanel {
             t_ = convertToMS(((Number) tValue_.getValue()).doubleValue(), tCombo_);
             n_ = (Integer) nValue_.getValue();
             a_ = t_ / Math.pow(r_, n_ - 2);
-         }
-         else if (!rCheck_.isSelected()) {
+         } else if (!rCheck_.isSelected()) {
             a_ = convertToMS(((Number) aValue_.getValue()).doubleValue(), aCombo_);
             t_ = convertToMS(((Number) tValue_.getValue()).doubleValue(), tCombo_);
             n_ = (Integer) nValue_.getValue();
             r_ = Math.pow(t_ / a_, 1.0 / (n_ - 2));
-         }
-         else if (!tCheck_.isSelected()) {
+         } else if (!tCheck_.isSelected()) {
             a_ = convertToMS(((Number) aValue_.getValue()).doubleValue(), aCombo_);
             n_ = (Integer) nValue_.getValue();
             r_ = ((Number) rValue_.getValue()).doubleValue();
             t_ = a_ * Math.pow(r_, n_ - 2);
-         }
-         else {
+         } else {
             a_ = convertToMS(((Number) aValue_.getValue()).doubleValue(), aCombo_);
             r_ = ((Number) rValue_.getValue()).doubleValue();
             t_ = convertToMS(((Number) tValue_.getValue()).doubleValue(), tCombo_);
@@ -315,26 +311,21 @@ public final class CustomTimeIntervalsPanel extends JPanel {
             double dispVal = a_;
             if (aCombo_.getSelectedIndex() == 1) {
                dispVal /= 1000.0;
-            }
-            else if (aCombo_.getSelectedIndex() == 2) {
+            } else if (aCombo_.getSelectedIndex() == 2) {
                dispVal /= 60000.0;
             }
             aValue_.setValue(dispVal);
-         }
-         else if (!rCheck_.isSelected()) {
+         } else if (!rCheck_.isSelected()) {
             rValue_.setValue(r_);
-         }
-         else if (!tCheck_.isSelected()) {
+         } else if (!tCheck_.isSelected()) {
             double dispVal = t_;
             if (tCombo_.getSelectedIndex() == 1) {
                dispVal /= 1000.0;
-            }
-            else if (aCombo_.getSelectedIndex() == 2) {
+            } else if (aCombo_.getSelectedIndex() == 2) {
                dispVal /= 60000.0;
             }
             tValue_.setValue(dispVal);
-         }
-         else if (!nCheck_.isSelected()) {
+         } else if (!nCheck_.isSelected()) {
             nValue_.setValue(n_);
          }
       }
@@ -384,24 +375,20 @@ public final class CustomTimeIntervalsPanel extends JPanel {
                   for (Component c : row1.getComponents()) {
                      c.setEnabled(false);
                   }
-               }
-               else if (!rCheck_.isSelected()) {
+               } else if (!rCheck_.isSelected()) {
                   for (Component c : row2.getComponents()) {
                      c.setEnabled(false);
                   }
-               }
-               else if (!tCheck_.isSelected()) {
+               } else if (!tCheck_.isSelected()) {
                   for (Component c : row3.getComponents()) {
                      c.setEnabled(false);
                   }
-               }
-               else if (!nCheck_.isSelected()) {
+               } else if (!nCheck_.isSelected()) {
                   for (Component c : row4.getComponents()) {
                      c.setEnabled(false);
                   }
                }
-            }
-            else if (checkCount == 2) {
+            } else if (checkCount == 2) {
                for (Component c : row1.getComponents()) {
                   c.setEnabled(true);
                }
@@ -500,21 +487,18 @@ public final class CustomTimeIntervalsPanel extends JPanel {
                JOptionPane.showMessageDialog(this, "Ratio parameter must be > 1");
                return false;
             }
-         }
-         else if (!rCheck_.isSelected()) {
+         } else if (!rCheck_.isSelected()) {
             if (t_ <= a_) {
                JOptionPane.showMessageDialog(this,
                      "Total time must be greater than interval between first two frames");
                return false;
             }
-         }
-         else if (!tCheck_.isSelected()) {
+         } else if (!tCheck_.isSelected()) {
             if (r_ <= 1) {
                JOptionPane.showMessageDialog(this, "Ratio parameter must be > 1");
                return false;
             }
-         }
-         else if (!nCheck_.isSelected()) {
+         } else if (!nCheck_.isSelected()) {
             if (t_ <= a_) {
                JOptionPane.showMessageDialog(this,
                      "Total time must be greater than interval between first two frames");
@@ -548,17 +532,13 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          int creationType = creationTypeCombo_.getSelectedIndex();
          if (creationType == 0) {
             intervalTableModel_.replaceList(newIntervals);
-         }
-         else if (creationType == 1) {
+         } else if (creationType == 1) {
             intervalTableModel_.addListToStart(newIntervals);
-         }
-         else if (creationType == 2) {
+         } else if (creationType == 2) {
             intervalTableModel_.addListToEnd(newIntervals);
-         }
-         else if (timeIntervalTable_.getSelectedRow() == -1) {
+         } else if (timeIntervalTable_.getSelectedRow() == -1) {
             intervalTableModel_.addListToEnd(newIntervals);
-         }
-         else {
+         } else {
             intervalTableModel_.addList(timeIntervalTable_.getSelectedRow(), newIntervals);
          }
          closeLogDialog();
@@ -642,8 +622,8 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          intervalLabel.setText("Time interval between points");
          intervalLabel.setToolTipText(
                "Interval between successive time points.  Setting an interval"
-                     +
-                     "of 0 will cause micromanager to acquire 'burts' of images as fast as possible");
+                     + "of 0 will cause micromanager to acquire 'burts' of images as fast "
+                     + "as possible");
          row2.add(intervalLabel);
 
          interval_ = new JFormattedTextField(NumberFormat.getNumberInstance());
@@ -690,8 +670,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
             if (numFrames >= 1 && interval >= 0) {
                if (units == 1) { // seconds
                   interval *= 1000;
-               }
-               else if (units == 2) { // min
+               } else if (units == 2) { // min
                   interval *= 60000;
                }
                ArrayList<Double> newIntervals = new ArrayList<>();
@@ -701,26 +680,21 @@ public final class CustomTimeIntervalsPanel extends JPanel {
                }
                if (creationType == 0) {
                   intervalTableModel_.replaceList(newIntervals);
-               }
-               else if (creationType == 1) {
+               } else if (creationType == 1) {
                   intervalTableModel_.addListToStart(newIntervals);
-               }
-               else if (creationType == 2) {
+               } else if (creationType == 2) {
                   intervalTableModel_.addListToEnd(newIntervals);
-               }
-               else {
+               } else {
                   int selected = timeIntervalTable_.getSelectedRow();
                   if (selected == -1) {
                      intervalTableModel_.addListToEnd(newIntervals);
-                  }
-                  else {
+                  } else {
                      intervalTableModel_.addList(selected, newIntervals);
                   }
                }
                closeLinearDialog();
 
-            }
-            else {
+            } else {
                JOptionPane.showMessageDialog(selfPointer,
                      "Invalid number of frames or time interval");
             }
@@ -761,8 +735,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
          if (timeIntervals_ == null || timeIntervals_.isEmpty()) {
             acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder()
                   .customIntervalsMs(null).build());
-         }
-         else {
+         } else {
             ArrayList<Double> intervals = new ArrayList<>(timeIntervals_.size());
             for (Double aDouble : timeIntervals_) {
                intervals.add(aDouble);
@@ -844,11 +817,9 @@ public final class CustomTimeIntervalsPanel extends JPanel {
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (columnIndex == 0) {
             return rowIndex;
-         }
-         else if (columnIndex == 1) {
+         } else if (columnIndex == 1) {
             return timeIntervals_.get(rowIndex);
-         }
-         else if (columnIndex == 2) {
+         } else if (columnIndex == 2) {
             return (calcElapsedTime(rowIndex));
          }
          return null;
@@ -860,8 +831,7 @@ public final class CustomTimeIntervalsPanel extends JPanel {
             String str = (String) value;
             if (str.equals("")) {
                timeIntervals_.set(rowIndex, 0.0);
-            }
-            else {
+            } else {
                Double number = Double.parseDouble(str);
                timeIntervals_.set(rowIndex, number);
             }

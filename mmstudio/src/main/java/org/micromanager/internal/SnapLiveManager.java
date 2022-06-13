@@ -196,8 +196,7 @@ public final class SnapLiveManager extends DataViewerListener
          // suspended.
          if (isLiveOn_ && suspendCount_ == 0) {
             startLiveMode();
-         }
-         else {
+         } else {
             stopLiveMode();
          }
       }
@@ -316,8 +315,7 @@ public final class SnapLiveManager extends DataViewerListener
                   displayIntervalLowQuantileMs =
                         display_.getDisplayIntervalQuantile(
                               DISPLAY_INTERVAL_ESTIMATE_Q);
-               }
-               else {
+               } else {
                   displayIntervalLowQuantileMs = 0.0;
                }
 
@@ -557,8 +555,7 @@ public final class SnapLiveManager extends DataViewerListener
       if (display_ != null) {
          if (e.isEnabled()) {
             uiMovesStageManager_.activate(display_);
-         }
-         else {
+         } else {
             uiMovesStageManager_.deActivate(display_);
          }
       }
@@ -652,8 +649,7 @@ public final class SnapLiveManager extends DataViewerListener
             String name = makeChannelName(curChannel, core_.getCameraChannelName(camCh));
             if (channelNames == null || camCh >= channelNames.size()) {
                shouldReset = true;
-            }
-            else if (!name.equals(channelNames.get(camCh))) {
+            } else if (!name.equals(channelNames.get(camCh))) {
                // Channel name changed.
                if (display_ != null && !display_.isClosed()) {
                   RememberedDisplaySettings.storeChannel(mmStudio_,
@@ -690,8 +686,7 @@ public final class SnapLiveManager extends DataViewerListener
             // Format changing, channel changing, and/or we have no display;
             // we need to recreate everything.
             shouldReset = true;
-         }
-         else if (displayInfo_ != null) {
+         } else if (displayInfo_ != null) {
             Long prevSeqNr = displayInfo_.getImageNr(newImageChannel);
             Long newSeqNr = newImage.getMetadata().getImageNumber();
             // NS, 05-20-2019: This code rejected images when their seqNr is lower than the 
@@ -713,8 +708,7 @@ public final class SnapLiveManager extends DataViewerListener
 
          if (shouldReset) {
             createOrResetDatastoreAndDisplay();
-         }
-         else if (display_ == null || display_.isClosed()) {
+         } else if (display_ == null || display_.isClosed()) {
             // Check for display having been closed on us by the user.
             createDisplay();
             int numComponents = image.getNumComponents();
@@ -740,8 +734,7 @@ public final class SnapLiveManager extends DataViewerListener
             synchronized (lastImageForEachChannel_) {
                if (lastImageForEachChannel_.size() > newImageChannel) {
                   lastImageForEachChannel_.set(newImageChannel, newImage);
-               }
-               else {
+               } else {
                   lastImageForEachChannel_.add(newImageChannel, newImage);
                }
             }
@@ -827,12 +820,10 @@ public final class SnapLiveManager extends DataViewerListener
       if (numCameraChannels_ > 1) {
          if (channel.isEmpty()) {
             result = cameraChannelName;
-         }
-         else {
+         } else {
             result = channel + "-" + cameraChannelName;
          }
-      }
-      else {
+      } else {
          result = channel;
          if (result.isEmpty()) {
             result = "Default";

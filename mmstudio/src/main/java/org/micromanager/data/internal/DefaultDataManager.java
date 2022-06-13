@@ -209,8 +209,7 @@ public final class DefaultDataManager implements DataManager {
       boolean isMultipageTiff = MultipageTiffReader.isMMMultipageTiff(directory);
       if (isMultipageTiff) {
          result.setStorage(new StorageMultipageTiff(parent, result, directory, false));
-      }
-      else {
+      } else {
          result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
                false));
       }
@@ -222,21 +221,23 @@ public final class DefaultDataManager implements DataManager {
          // Must cast a value to long in the arithmetic or else we end up with
          // an overflow situation before converting to (signed) long in the
          // assignment.
-         long bytes = ((long) result.getNumImages()) * image.getWidth() *
-               image.getHeight() * image.getBytesPerPixel();
+         long bytes = ((long) result.getNumImages())
+               * image.getWidth()
+               * image.getHeight()
+               * image.getBytesPerPixel();
          if (bytes > JavaUtils.getAvailableUnusedMemory() * 0.9) {
             // Allow the user to back out of loading to RAM.
             String[] options = new String[] {CONTINUE_OPTION, CANCEL_OPTION,
                   VIRTUAL_OPTION};
             int selection = JOptionPane.showOptionDialog(null,
-                  "There may not be enough memory to load this data into RAM. Continue anyway, or open as a virtual dataset?",
+                  "There may not be enough memory to load this data into RAM. "
+                        + "Continue anyway, or open as a virtual dataset?",
                   "Insufficient Memory Warning", 0,
                   JOptionPane.WARNING_MESSAGE, null, options, VIRTUAL_OPTION);
             if (options[selection].equals(CANCEL_OPTION)) {
                // Give up.
                return null;
-            }
-            else if (options[selection].equals(VIRTUAL_OPTION)) {
+            } else if (options[selection].equals(VIRTUAL_OPTION)) {
                // We already have the virtual dataset ready.
                return result;
             }
@@ -279,14 +280,11 @@ public final class DefaultDataManager implements DataManager {
       Object pixelClone;
       if (pixels instanceof byte[]) {
          pixelClone = ((byte[]) pixels).clone();
-      }
-      else if (pixels instanceof short[]) {
+      } else if (pixels instanceof short[]) {
          pixelClone = ((short[]) pixels).clone();
-      }
-      else if (pixels instanceof int[]) {
+      } else if (pixels instanceof int[]) {
          pixelClone = ((int[]) pixels).clone();
-      }
-      else {
+      } else {
          throw new IllegalArgumentException("Pixel type is not supported.  It could not be cloned");
       }
       return new DefaultImage(pixelClone, width, height, bytesPerPixel,
@@ -372,8 +370,7 @@ public final class DefaultDataManager implements DataManager {
    public List<ProcessorConfigurator> getApplicationPipelineConfigurators(boolean includeDisabled) {
       if (includeDisabled) {
          return studio_.uiManager().getPipelineFrame().getPipelineConfigurators();
-      }
-      else {
+      } else {
          return studio_.uiManager().getPipelineFrame().getEnabledPipelineConfigurators();
       }
    }
@@ -382,8 +379,7 @@ public final class DefaultDataManager implements DataManager {
    public List<ProcessorConfigurator> getLivePipelineConfigurators(boolean includeDisabled) {
       if (includeDisabled) {
          return studio_.uiManager().getPipelineFrame().getPipelineConfigurators();
-      }
-      else {
+      } else {
          return studio_.uiManager().getPipelineFrame().getEnabledLivePipelineConfigurators();
       }
    }

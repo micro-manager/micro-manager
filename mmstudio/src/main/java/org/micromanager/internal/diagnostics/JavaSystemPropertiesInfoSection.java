@@ -39,8 +39,7 @@ class JavaSystemPropertiesInfoSection implements SystemInfo.SystemInfoSection {
             for (String path : paths) {
                sb.append("    ").append(path).append('\n');
             }
-         }
-         else {
+         } else {
             sb.append("  ").append(k).append(" = ").append(sysProps.getProperty(k)).append('\n');
          }
       }

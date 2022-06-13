@@ -236,8 +236,7 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
       if (outOfSync_ && inSync) {
          outOfSync_ = false;
          bus_.post(new DefaultAnchorDidBecomeInSyncEvent(anchor_));
-      }
-      else if (!outOfSync_ && !inSync) {
+      } else if (!outOfSync_ && !inSync) {
          outOfSync_ = true;
          bus_.post(new DefaultAnchorDidBecomeOutOfSyncEvent(anchor_));
       }

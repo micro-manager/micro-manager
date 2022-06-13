@@ -36,7 +36,7 @@ public interface PixelSizeAffineChangedEvent extends MMEvent {
     * New affine transform.
     *
     * @return New affine transform describing relation between stage movement and
-    * camera coordinates.
+    *     camera coordinates.
     */
    AffineTransform getNewPixelSizeAffine();
 

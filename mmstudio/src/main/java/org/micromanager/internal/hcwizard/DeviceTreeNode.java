@@ -22,14 +22,12 @@ class DeviceTreeNode extends DefaultMutableTreeNode {
                if (showLib_) {
                   ret = ((Boolean) userData[3] ? "*" : "") + userData[1].toString() + ": "
                         + userData[2].toString();
-               }
-               else {
+               } else {
                   ret = ((Boolean) userData[3] ? "*" : "") + userData[0].toString() + ": "
                         + userData[2].toString();
                }
             }
-         }
-         else {
+         } else {
             ret = uo.toString();
          }
       }

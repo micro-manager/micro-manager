@@ -34,8 +34,7 @@ class SendReportControlPanel extends ControlPanel {
       if (allowRestart) {
          startOverButton_ = new JButton("Start Over");
          startOverButton_.addActionListener(e -> controller_.startLogCapture());
-      }
-      else {
+      } else {
          startOverButton_ = null;
       }
 
@@ -48,8 +47,7 @@ class SendReportControlPanel extends ControlPanel {
       if (startOverButton_ != null) {
          add(closeButton_, "span 2, split 3, sizegroup cancelbtns");
          add(startOverButton_, "gapright push, sizegroup cancelbtns");
-      }
-      else {
+      } else {
          add(closeButton_, "span 2, split 2, gapright push, sizegroup cancelbtns");
       }
       add(viewButton, "");

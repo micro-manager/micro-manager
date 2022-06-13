@@ -59,7 +59,8 @@ public final class OMEMetadata {
    private final StorageMultipageTiff mptStorage_;
    private final TreeMap<Integer, Indices> seriesIndices_ = new TreeMap<Integer, Indices>();
    private final TreeMap<String, Integer> tiffDataIndexMap_;
-   private int numSlices_, numChannels_;
+   private int numSlices_;
+   private int numChannels_;
 
    private class Indices {
       //specific to each series independent of file
@@ -127,8 +128,7 @@ public final class OMEMetadata {
          List<String> order = mptStorage_.getSummaryMetadata().getOrderedAxes();
          axisOrder += (order.indexOf(Coords.Z) < order.indexOf(Coords.CHANNEL))
                ? "ZCT" : "CZT";
-      }
-      else {
+      } else {
          // Make something up to have a valid string.
          axisOrder += "CZT";
       }
@@ -190,15 +190,15 @@ public final class OMEMetadata {
       // TODO Also save channel colors (need display settings...)
       List<String> names = mptStorage_.getSummaryMetadata().getChannelNameList();
       for (int channel = 0; channel < mptStorage_.getIntendedSize(Coords.CHANNEL);
-           channel++) {
+            channel++) {
          if (names != null && names.size() > channel) {
             metadata_.setChannelName(names.get(channel), seriesIndex, channel);
          }
       }
    }
 
-   /*
-    * Method called when numC*numZ*numT != total number of planes
+   /**
+    * Method called when numC*numZ*numT != total number of planes.
     */
    public void fillInMissingTiffDatas(int frame, int position) {
       try {
@@ -212,7 +212,8 @@ public final class OMEMetadata {
                   // this plane was never added, so link to another IFD
                   // find substitute channel, frame, slice
                   int s = slice;
-                  int backIndex = slice - 1, forwardIndex = slice + 1;
+                  int backIndex = slice - 1;
+                  int forwardIndex = slice + 1;
                   int frameSearchIndex = frame;
                   // If some but not all channels have z stacks, find the closest
                   // slice for the given channel that has an image.  Also if time
@@ -283,7 +284,8 @@ public final class OMEMetadata {
       if (!seriesIndices_.containsKey(position)) {
          startSeriesMetadata(position, baseFileName);
          try {
-            //Add these tags in only once, but need to get them from image rather than summary metadata
+            // Add these tags in only once, but need to get them from image rather
+            // than summary metadata
             setOMEDetectorMetadata(metadata);
 
             String imageTime = metadata.getReceivedTime();
@@ -355,8 +357,8 @@ public final class OMEMetadata {
          final Length xPosition =
                new Length(xPositionUm, UNITS.MICROM);
          metadata_.setPlanePositionX(xPosition, position, indices.planeIndex_);
-         if (indices.planeIndex_ ==
-               0) { //should be set at start, but dont have position coordinates then
+         if (indices.planeIndex_
+               == 0) { //should be set at start, but don't have position coordinates then
             metadata_.setStageLabelX(xPosition, position);
          }
       }
@@ -404,8 +406,7 @@ public final class OMEMetadata {
                continue;
             }
             cameras.add(physCam);
-         }
-         else {
+         } else {
             break;
          }
       }

@@ -114,8 +114,7 @@ public class XYNavigator {
          // not sure why, but for the stage movement to be correct, we need
          // to invert both axes"
          dest.setLocation(-dest.getX(), -dest.getY());
-      }
-      else {
+      } else {
          // if camera does not toStageSpace image orientation, we'll toStageSpace for it here:
          dest.setLocation(-x * pixSizeUm, -y * pixSizeUm);
          if (!correction_) {

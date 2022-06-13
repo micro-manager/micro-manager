@@ -78,7 +78,8 @@ public final class FinishPage extends PagePanel {
       add(sendCheck_, "wrap");
 
       final JLabel sendConfigExplain = new JLabel(
-            "Sending us your configuration file will help us study how \u00b5Manager is used.");
+            "Sending us your configuration file will help us study how"
+                  + " \u00b5Manager is used."); // Micro-Manager
       sendConfigExplain.setAutoscrolls(true);
       sendConfigExplain.setFont(sendCheck_.getFont());
       add(sendConfigExplain, "wrap");
@@ -89,8 +90,7 @@ public final class FinishPage extends PagePanel {
       sendCheck_.setSelected(model_.getSendConfiguration());
       if (model_.creatingNew_) {
          fileNameField_.setText("");
-      }
-      else {
+      } else {
          fileNameField_.setText(model_.getFileName());
       }
       return true;

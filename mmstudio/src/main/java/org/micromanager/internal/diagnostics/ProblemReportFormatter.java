@@ -83,8 +83,7 @@ public final class ProblemReportFormatter {
       if (report.configChangedDuringLogCapture()) {
          sb.append(preambleKeyValue("Config Changed", "yes"));
          sb.append(preambleKeyValue("Ending Configuration File", report.getEndingConfigFileName()));
-      }
-      else {
+      } else {
          sb.append(preambleKeyValue("Config Changed", "no"));
       }
 

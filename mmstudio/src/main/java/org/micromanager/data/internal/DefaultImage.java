@@ -46,8 +46,8 @@ import org.micromanager.internal.utils.imageanalysis.ImageUtils;
  * This class represents a single image from a single camera. It contains
  * the image pixel data, metadata (in the form of a Metadata instance), and
  * the image's index as part of a larger dataset (in the form of a Coords instance).
- * <p>
- * We store the image data in a ByteBuffer or ShortBuffer. However, ImageJ
+ *
+ * <p>We store the image data in a ByteBuffer or ShortBuffer. However, ImageJ
  * wants to work with image data in the form of byte[], short[], or
  * int[] arrays (depending on pixel type).
  * getRawPixels(), the method exposed in the Image interface to access pixel
@@ -73,8 +73,8 @@ public final class DefaultImage implements Image {
     * for loading saved images). If you want to avoid that, then you need to
     * manually reconstruct the Metadata for the TaggedImage and use the
     * constructor that this method calls.
-    * <p>
-    * PixelData from the TaggedImage will be used directly, i.e., they are not copied.
+    *
+    * <p>PixelData from the TaggedImage will be used directly, i.e., they are not copied.
     *
     * @param tagged A TaggedImage to base the Image on.
     */
@@ -85,8 +85,8 @@ public final class DefaultImage implements Image {
    /**
     * Generate a DefaultImage from a TaggedImage using the
     * supplied coords and metadata.
-    * <p>
-    * PixelData from the TaggedImage will be used directly, i.e., they are not copied.
+    *
+    * <p>PixelData from the TaggedImage will be used directly, i.e., they are not copied.
     *
     * @param tagged   A TaggedImage to base the Image on. Pixels are not copied.
     * @param coords   Coords to be used for this new Image. When null, tags in input image
@@ -155,8 +155,8 @@ public final class DefaultImage implements Image {
    /**
     * Generates a DefaultImage from pixels, image info in a PropertyMap and the
     * supplied coords and metadata.
-    * <p>
-    * Input pixels will be used directly (i.e., they are not copied).
+    *
+    * <p>Input pixels will be used directly (i.e., they are not copied).
     *
     * @param pixels   Image pixels.  Should be a Java array of bytes or shorts (not null).
     * @param format   PropertyMap specifying image width, height, and pixelType (not null).
@@ -180,8 +180,8 @@ public final class DefaultImage implements Image {
    /**
     * Generates a DefaultImage from pixels, minimal image info, and the
     * supplied coords and metadata.
-    * <p>
-    * Input pixels will be used directly (i.e., they are not copied).
+    *
+    * <p>Input pixels will be used directly (i.e., they are not copied).
     *
     * @param pixels   Image pixels.  Should be a Java array of bytes or shorts (not null).
     * @param coords   Coords to be used for this new image (can be null).
@@ -199,15 +199,12 @@ public final class DefaultImage implements Image {
       int bpc;
       if (pixels instanceof byte[]) {
          bpc = 1;
-      }
-      else if (pixels instanceof short[]) {
+      } else if (pixels instanceof short[]) {
          bpc = 2;
-      }
-      else if (pixels instanceof int[] && bytesPerPixel == 4 &&
-            numComponents == 3) {
+      } else if (pixels instanceof int[] && bytesPerPixel == 4
+            && numComponents == 3) {
          bpc = 1;
-      }
-      else {
+      } else {
          throw new UnsupportedOperationException("Unsupported pixel data type");
       }
 
@@ -223,7 +220,7 @@ public final class DefaultImage implements Image {
 
    /**
     * Creates a new image object that shares the pixels of the source image
-    * Attaches the provided coords and metadata
+    * Attaches the provided coords and metadata.
     *
     * @param source   Image to be copied
     * @param coords   will be used for this image
@@ -236,8 +233,7 @@ public final class DefaultImage implements Image {
       int bytesPerComponent = 0;
       if (source.getRawPixels() instanceof byte[]) {
          bytesPerComponent = 1;
-      }
-      else if (source.getRawPixels() instanceof short[]) {
+      } else if (source.getRawPixels() instanceof short[]) {
          bytesPerComponent = 2;
       }
       rawPixels_ = BufferTools.wrapArray(source.getRawPixels(), bytesPerComponent);
@@ -251,11 +247,9 @@ public final class DefaultImage implements Image {
       int bpc;
       if (rawPixels_ instanceof ByteBuffer) {
          bpc = 1;
-      }
-      else if (rawPixels_ instanceof ShortBuffer) {
+      } else if (rawPixels_ instanceof ShortBuffer) {
          bpc = 2;
-      }
-      else {
+      } else {
          throw new UnsupportedOperationException("Unsupported pixel data type");
       }
       pixelType_ = PixelType.valueFor(source.getBytesPerPixel(), bpc,
@@ -315,18 +309,15 @@ public final class DefaultImage implements Image {
          byte[] tmp = (byte[]) original;
          length = tmp.length;
          copy = new byte[length];
-      }
-      else if (original instanceof short[]) {
+      } else if (original instanceof short[]) {
          short[] tmp = (short[]) original;
          length = tmp.length;
          copy = new short[length];
-      }
-      else if (original instanceof int[]) {
+      } else if (original instanceof int[]) {
          int[] tmp = (int[]) original;
          length = tmp.length;
          copy = new int[length];
-      }
-      else {
+      } else {
          throw new RuntimeException("Unrecognized pixel type " + original.getClass());
       }
       System.arraycopy(original, 0, copy, 0, length);
@@ -346,11 +337,9 @@ public final class DefaultImage implements Image {
       Object result;
       if (rawPixels_ instanceof ByteBuffer) {
          result = (Object) new byte[length];
-      }
-      else if (rawPixels_ instanceof ShortBuffer) {
+      } else if (rawPixels_ instanceof ShortBuffer) {
          result = (Object) new short[length];
-      }
-      else {
+      } else {
          ReportingUtils.logError("Unrecognized pixel buffer type.");
          return null;
       }
@@ -358,8 +347,7 @@ public final class DefaultImage implements Image {
          int sourceIndex = i * samplesPerPixel + offset;
          if (rawPixels_ instanceof ByteBuffer) {
             ((byte[]) result)[i] = ((ByteBuffer) rawPixels_).get(sourceIndex);
-         }
-         else if (rawPixels_ instanceof ShortBuffer) {
+         } else if (rawPixels_ instanceof ShortBuffer) {
             ((short[]) result)[i] = ((ShortBuffer) rawPixels_).get(sourceIndex);
          }
       }
@@ -406,8 +394,7 @@ public final class DefaultImage implements Image {
    public String getIntensityStringAt(int x, int y) {
       if (getNumComponents() == 1) {
          return String.format("%d", getIntensityAt(x, y));
-      }
-      else {
+      } else {
          String result = "(";
          for (int i = 0; i < getNumComponents(); ++i) {
             result += String.format("%d", getComponentIntensityAt(x, y, i));
@@ -420,11 +407,11 @@ public final class DefaultImage implements Image {
    }
 
    public PropertyMap formatToPropertyMap() {
-      return PropertyMaps.builder().
-            putInteger(PropertyKey.WIDTH.key(), getWidth()).
-            putInteger(PropertyKey.HEIGHT.key(), getHeight()).
-            putEnumAsString(PropertyKey.PIXEL_TYPE.key(), pixelType_).
-            build();
+      return PropertyMaps.builder()
+            .putInteger(PropertyKey.WIDTH.key(), getWidth())
+            .putInteger(PropertyKey.HEIGHT.key(), getHeight())
+            .putEnumAsString(PropertyKey.PIXEL_TYPE.key(), pixelType_)
+            .build();
    }
 
    /*

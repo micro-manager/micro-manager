@@ -59,8 +59,7 @@ public final class HotKeys {
                      HotKeyAction.SNAP);
                HotKeyAction action = new HotKeyAction(guiCommand);
                KEYS.put(key, action);
-            }
-            else {
+            } else {
                file = new File(settings.getString(FILENAME + i, ""));
                HotKeyAction action = new HotKeyAction(file);
                KEYS.put(key, action);
@@ -86,8 +85,7 @@ public final class HotKeys {
          settings.putInteger(TYPE + i, action.type_);
          if (action.type_ == HotKeyAction.GUICOMMAND) {
             settings.putInteger(GUICOMMAND + i, action.guiCommand_);
-         }
-         else {
+         } else {
             settings.putString(FILENAME + i,
                   action.beanShellScript_.getAbsolutePath());
          }
@@ -122,8 +120,7 @@ public final class HotKeys {
                int guiCommand = in.readInt();
                HotKeyAction action = new HotKeyAction(guiCommand);
                KEYS.put(key, action);
-            }
-            else {
+            } else {
                int strLength = in.readInt();
                for (int i = 0; i < strLength; i++) {
                   filePath += in.readChar();
@@ -159,8 +156,7 @@ public final class HotKeys {
             out.writeInt(action.type_);
             if (action.type_ == HotKeyAction.GUICOMMAND) {
                out.writeInt(action.guiCommand_);
-            }
-            else {
+            } else {
                out.writeInt(action.beanShellScript_.getAbsolutePath().length());
                out.writeChars(action.beanShellScript_.getAbsolutePath());
             }

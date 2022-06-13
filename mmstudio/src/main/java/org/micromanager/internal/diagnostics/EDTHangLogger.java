@@ -189,8 +189,7 @@ public final class EDTHangLogger {
       if (nextEvent == null) {
          if (lastHeartbeatNs_ != NEVER) {
             logDebug(1, "Appears to have unstuck, heartbeat detected after all");
-         }
-         else {
+         } else {
             logDebug(1, "UNEXPECTED: Found no next event despite missing heartbeat");
          }
          setupHeartbeat();
@@ -201,8 +200,7 @@ public final class EDTHangLogger {
 
       if (firstCheck) {
          logMessage("Missed heartbeat; waiting to see if we are stuck on a single event");
-      }
-      else {
+      } else {
          // TODO If missing HB for long time, dump stacktraces even if we can't
          // detect a hang on a single event
       }

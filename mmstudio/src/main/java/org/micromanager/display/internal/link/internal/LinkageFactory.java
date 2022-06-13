@@ -48,8 +48,7 @@ public final class LinkageFactory {
                   }
                   if (initiatorLinkage == null) {
                      targetLinkage.addEndpoint(initiator);
-                  }
-                  else {
+                  } else {
                      initiatorLinkage.merge(targetLinkage);
                   }
                }

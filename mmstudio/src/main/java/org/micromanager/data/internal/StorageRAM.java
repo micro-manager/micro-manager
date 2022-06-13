@@ -143,7 +143,7 @@ public final class StorageRAM implements RewritableStorage {
     * @param ignoreTheseAxes Axes to be ignored in the images collection when
     *                        looking for matches
     * @return List with Images that have the same coord as the one given
-    * (except for the axes to be ignored).
+    *     (except for the axes to be ignored).
     * @throws IOException Not sure why this is here, should never be thrown.
     */
    public synchronized List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
@@ -166,8 +166,7 @@ public final class StorageRAM implements RewritableStorage {
       }
       if (!haveIgnoredAxes) {
          result.add(coordsToImage_.get(coords));
-      }
-      else {  // could not optimize, traverse our HashMap
+      } else {  // could not optimize, traverse our HashMap
          for (Image image : coordsToImage_.values()) {
             Coords imCoord = image.getCoords().copyRemovingAxes(ignoreTheseAxes);
             if (imCoord.equals(coords)) {

@@ -96,11 +96,9 @@ public final class DelayPage extends PagePanel {
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (columnIndex == 0) {
             return devices_.get(rowIndex).getName();
-         }
-         else if (columnIndex == 1) {
+         } else if (columnIndex == 1) {
             return devices_.get(rowIndex).getAdapterName();
-         }
-         else {
+         } else {
             return devices_.get(rowIndex).getDelay();
          }
       }
@@ -211,8 +209,7 @@ public final class DelayPage extends PagePanel {
       if (tm instanceof DeviceTableTableModel) {
          tmd = (DelayTableModel) deviceTable_.getModel();
          tmd.refresh();
-      }
-      else {
+      } else {
          tmd = new DelayTableModel(model_);
          deviceTable_.setModel(tmd);
       }

@@ -63,8 +63,7 @@ public final class AsynchronousContext extends BaseContext {
             if (isFlushed_) {
                // All done.
                return;
-            }
-            else {
+            } else {
                // Go back to polling.
                continue;
             }
@@ -80,8 +79,7 @@ public final class AsynchronousContext extends BaseContext {
             if (flushLatch_ != null) {
                flushLatch_.countDown();
             }
-         }
-         else {
+         } else {
             // Non-null image: process it.
             isFlushed_ = false;
             try {

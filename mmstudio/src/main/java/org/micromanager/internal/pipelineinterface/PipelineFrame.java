@@ -79,7 +79,7 @@ public final class PipelineFrame extends JFrame
       //
       // First column of the layout
       //
-      final String downwardsArrow = "<html><b>\u2193</b></html>";
+      final String downwardsArrow = "<html><b>\u2193</b></html>"; // Downward arrow in unicode
       add(new JLabel("<html><b>Camera</b></html>"), "split 2");
       add(new JLabel(downwardsArrow));
 
@@ -326,8 +326,8 @@ public final class PipelineFrame extends JFrame
       return getTableModel().getPipelineFactories(true);
    }
 
-   private List<ProcessorConfigurator>
-   convertWrappersToConfigurators(List<ConfiguratorWrapper> configs) {
+   private List<ProcessorConfigurator> convertWrappersToConfigurators(
+         List<ConfiguratorWrapper> configs) {
       ArrayList<ProcessorConfigurator> result = new ArrayList<>();
       for (ConfiguratorWrapper config : configs) {
          result.add(config.getConfigurator());

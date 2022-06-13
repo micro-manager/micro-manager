@@ -156,8 +156,7 @@ public final class RegistrationDlg extends JDialog {
          if (name_.getText().length() == 0 || email_.getText().length() == 0) {
             JOptionPane.showMessageDialog(RegistrationDlg.this,
                   "Name and email fields can't be empty.");
-         }
-         else {
+         } else {
             try {
                final URL url;
                final InputStream is;
@@ -175,8 +174,8 @@ public final class RegistrationDlg extends JDialog {
                String email = email_.getText().replaceAll("[ \t]", "%20");
                email = email.replaceAll("[&]", "%20and%20");
                String regText =
-                     "http://valelab.ucsf.edu/micro-manager-registration.php?Name=" + name1 +
-                           "&Institute=" + inst + "&email=" + email;
+                     "http://valelab.ucsf.edu/micro-manager-registration.php?Name=" + name1
+                           + "&Institute=" + inst + "&email=" + email;
                url = new URL(regText);
                is = url.openStream();
                br = new BufferedReader(new InputStreamReader(is));
@@ -267,8 +266,7 @@ public final class RegistrationDlg extends JDialog {
          if (user.getBoolean("registered", false)) {
             setHaveRegistered(studio, true);
             return true;
-         }
-         else if (user.getBoolean("reg_never", false)) {
+         } else if (user.getBoolean("reg_never", false)) {
             setShouldNeverRegister(studio, true);
             return true;
          }
@@ -277,8 +275,7 @@ public final class RegistrationDlg extends JDialog {
          if (system.getBoolean("registered", false)) {
             setHaveRegistered(studio, true);
             return true;
-         }
-         else if (system.getBoolean("reg_never", false)) {
+         } else if (system.getBoolean("reg_never", false)) {
             setShouldNeverRegister(studio, true);
             return true;
          }

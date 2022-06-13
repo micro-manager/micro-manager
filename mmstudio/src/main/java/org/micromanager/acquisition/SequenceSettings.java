@@ -565,7 +565,7 @@ public final class SequenceSettings {
     *
     * @return Copy of this SequenceSettings.
     * @deprecated When used correctly, SequenceSettings are immutable.
-    * If you really need a copy, use copyBuilder().build();
+    *     If you really need a copy, use copyBuilder().build();
     */
    @Deprecated
    public SequenceSettings copy() {
@@ -754,7 +754,7 @@ public final class SequenceSettings {
     * Whether to acquire at multiple positions (defined in the positionList).
     *
     * @return True if positions in the list should all be visited,
-    * when false, only acquired at current position
+    *     when false, only acquired at current position
     */
    public boolean usePositionList() {
       return usePositionList;

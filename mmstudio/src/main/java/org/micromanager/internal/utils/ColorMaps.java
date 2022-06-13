@@ -25,6 +25,9 @@ import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
+/**
+ * Micro-Manager LUTS.
+ */
 public final class ColorMaps {
    private ColorMaps() {
    }

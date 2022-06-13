@@ -73,18 +73,14 @@ public final class PeripheralSetupDlg extends JDialog {
 
          if (columnIndex == NAMECOLUMN) {
             return peripherals_.get(rowIndex).getName();
-         }
-         else if (columnIndex == ADAPTERCOLUMN) {
+         } else if (columnIndex == ADAPTERCOLUMN) {
             return peripherals_.get(rowIndex).getAdapterName() + "/"
                   + peripherals_.get(rowIndex).getLibrary();
-         }
-         else if (columnIndex == DESCRIPTIONCOLUMN) {
+         } else if (columnIndex == DESCRIPTIONCOLUMN) {
             return peripherals_.get(rowIndex).getDescription();
-         }
-         else if (SELECTIONCOLUMN == columnIndex) {
+         } else if (SELECTIONCOLUMN == columnIndex) {
             return selected_.get(rowIndex);
-         }
-         else {
+         } else {
             return null;
          }
       }
@@ -184,24 +180,24 @@ public final class PeripheralSetupDlg extends JDialog {
       lblParentDev.setBounds(131, 11, 332, 14);
       contentPanel.add(lblParentDev);
 
-      {
+         {
          JPanel buttonPane = new JPanel();
          buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
          getContentPane().add(buttonPane, BorderLayout.SOUTH);
-         {
-            JButton okButton = new JButton("OK");
-            okButton.addActionListener(e -> onOK());
-            okButton.setActionCommand("OK");
-            buttonPane.add(okButton);
-            getRootPane().setDefaultButton(okButton);
+            {
+               JButton okButton = new JButton("OK");
+               okButton.addActionListener(e -> onOK());
+               okButton.setActionCommand("OK");
+               buttonPane.add(okButton);
+               getRootPane().setDefaultButton(okButton);
+            }
+            {
+               JButton cancelButton = new JButton("Cancel");
+               cancelButton.addActionListener(e -> onCancel());
+               cancelButton.setActionCommand("Cancel");
+               buttonPane.add(cancelButton);
+            }
          }
-         {
-            JButton cancelButton = new JButton("Cancel");
-            cancelButton.addActionListener(e -> onCancel());
-            cancelButton.setActionCommand("Cancel");
-            buttonPane.add(cancelButton);
-         }
-      }
 
       rebuildTable();
    }

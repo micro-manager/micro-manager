@@ -63,8 +63,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
       model_ = model;
       if (dev == null) {
          devices_ = model.getDevices();
-      }
-      else {
+      } else {
          devices_ = new Device[1];
          devices_[0] = dev;
       }
@@ -111,11 +110,9 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    public Object getValueAt(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
          return devNames_[rowIndex];
-      }
-      else if (columnIndex == 1) {
+      } else if (columnIndex == 1) {
          return props_[rowIndex].name;
-      }
-      else {
+      } else {
          return props_[rowIndex].value;
       }
    }

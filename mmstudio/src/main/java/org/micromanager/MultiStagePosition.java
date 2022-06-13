@@ -271,8 +271,7 @@ public final class MultiStagePosition {
          StagePosition sp = msp.get(i);
          if (sp.getNumberOfStageAxes() == 1) {
             core.setPosition(sp.getStageDeviceLabel(), sp.get2DPositionX());
-         }
-         else if (sp.getNumberOfStageAxes() == 2) {
+         } else if (sp.getNumberOfStageAxes() == 2) {
             core.setXYPosition(sp.getStageDeviceLabel(),
                   sp.get2DPositionX(), sp.get2DPositionY());
          }
@@ -365,7 +364,7 @@ public final class MultiStagePosition {
     *
     * @param alt The MultiStagePosition to compare against.
     * @return true if every field of this MultiStagePosition matches every
-    * field of the provided MultiStagePosition, false otherwise.
+    *     field of the provided MultiStagePosition, false otherwise.
     */
    @Override
    public boolean equals(Object alt) {

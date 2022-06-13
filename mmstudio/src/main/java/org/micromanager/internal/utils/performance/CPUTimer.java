@@ -41,6 +41,11 @@ public final class CPUTimer {
       startNs_ = getCPUTimeNs();
    }
 
+   /**
+    * Calculates time since start in nanoseconds.
+    *
+    * @return CPU time since start in nanoseconds
+    */
    public long getNs() {
       if (Thread.currentThread().getId() != threadId_) {
          return -1;

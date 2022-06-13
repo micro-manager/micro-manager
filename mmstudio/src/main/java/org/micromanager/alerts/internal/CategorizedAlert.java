@@ -99,9 +99,8 @@ public final class CategorizedAlert extends DefaultAlert {
          historyText_ += text + System.getProperty("line.separator");
          numMessages_++;
          if (numMessages_ > 2) {
-            showAllButton_.setText((showAllButton_.isSelected() ?
-                  "Hide" :
-                  "Show All " + numMessages_));
+            showAllButton_.setText((showAllButton_.isSelected()
+                  ?  "Hide" : "Show All " + numMessages_));
             if (!showAllButton_.isVisible()) {
                showAllButton_.setVisible(true);
             }
@@ -140,12 +139,10 @@ public final class CategorizedAlert extends DefaultAlert {
          // Always create a new display for null categories.
          display = new CategoryDisplay();
          nullCategories_.add(display);
-      }
-      else if (!categories_.containsKey(category)) {
+      } else if (!categories_.containsKey(category)) {
          display = new CategoryDisplay();
          categories_.put(category, display);
-      }
-      else {
+      } else {
          display = categories_.get(category);
          contents_.remove(display);
       }

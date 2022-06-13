@@ -49,7 +49,7 @@ public interface DisplayManager extends EventPublisher {
     * default values.
     *
     * @return The DisplaySettings as of the last time the user clicked the
-    * "Set as default" button in the Settings tab of a DisplayWindow.
+    *     "Set as default" button in the Settings tab of a DisplayWindow.
     */
    DisplaySettings getStandardDisplaySettings();
 
@@ -97,7 +97,7 @@ public interface DisplayManager extends EventPublisher {
     * @param isVisible   Whether or not this channel is visible in the display
     *                    when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object, whose properties are
-    * all length-1 arrays with the provided values.
+    *     all length-1 arrays with the provided values.
     * @deprecated Use {@link DisplaySettings#getAllChannelSettings()} instead.
     */
    @Deprecated
@@ -267,7 +267,7 @@ public interface DisplayManager extends EventPublisher {
     *
     * @param store Datastore of interest to the caller
     * @return A list of all DisplayWindows Micro-Manager knows are associated
-    * with the specified Datastore, or null.
+    *     with the specified Datastore, or null.
     * @deprecated replaced by {@link #getDisplays(DataProvider)}
     */
    @Deprecated
@@ -279,7 +279,7 @@ public interface DisplayManager extends EventPublisher {
     *
     * @param dataProvider DataProvider of interest to the caller
     * @return A list of all DisplayWindows Micro-Manager knows are associated
-    * with the specified Datastore, or null.
+    *     with the specified Datastore, or null.
     */
    List<DisplayWindow> getDisplays(DataProvider dataProvider);
 
@@ -333,7 +333,7 @@ public interface DisplayManager extends EventPublisher {
     * @param store   The Datastore to save.
     * @param display The DisplayWindow over which to show the prompt.
     * @return true if saving was successful or the user explicitly declined
-    * to save; false if the user cancelled or if saving failed.
+    *     to save; false if the user cancelled or if saving failed.
     * @throws java.io.IOException Can be thrown when file IO causes an exception.
     */
    boolean promptToSave(Datastore store, DisplayWindow display) throws IOException;
@@ -352,7 +352,7 @@ public interface DisplayManager extends EventPublisher {
     *
     * @param provider DataProvider for which displays should be closed
     * @return True if all windows were closed; false otherwise (e.g. because
-    * the user canceled saving).
+    *     the user canceled saving).
     */
    boolean closeDisplaysFor(DataProvider provider);
 

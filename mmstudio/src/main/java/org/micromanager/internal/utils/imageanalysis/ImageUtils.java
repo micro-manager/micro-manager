@@ -80,8 +80,7 @@ public final class ImageUtils {
    public static ImageProcessor makeProcessor(int type, int w, int h, Object imgArray) {
       if (imgArray == null) {
          return makeProcessor(type, w, h);
-      }
-      else {
+      } else {
          switch (type) {
             case ImagePlus.GRAY8:
                return new ByteProcessor(w, h, (byte[]) imgArray, null);
@@ -116,17 +115,13 @@ public final class ImageUtils {
    public static ImageProcessor makeProcessor(int type, int w, int h) {
       if (type == ImagePlus.GRAY8) {
          return new ByteProcessor(w, h);
-      }
-      else if (type == ImagePlus.GRAY16) {
+      } else if (type == ImagePlus.GRAY16) {
          return new ShortProcessor(w, h);
-      }
-      else if (type == ImagePlus.GRAY32) {
+      } else if (type == ImagePlus.GRAY32) {
          return new FloatProcessor(w, h);
-      }
-      else if (type == ImagePlus.COLOR_RGB) {
+      } else if (type == ImagePlus.COLOR_RGB) {
          return new ColorProcessor(w, h);
-      }
-      else {
+      } else {
          return null;
       }
    }
@@ -140,8 +135,7 @@ public final class ImageUtils {
                   MDUtils.getHeight(taggedImage.tags),
                   convertRGB32UBytesToInt((byte[]) taggedImage.pix));
             processor = colorProcessor.convertToByteProcessor();
-         }
-         else {
+         } else {
             processor = makeProcessor(taggedImage);
          }
          return processor;
@@ -161,26 +155,19 @@ public final class ImageUtils {
       try {
          if (proc1 instanceof ByteProcessor && proc2 instanceof ByteProcessor) {
             return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
-         }
-         else if (proc1 instanceof ShortProcessor && proc2 instanceof ShortProcessor) {
+         } else if (proc1 instanceof ShortProcessor && proc2 instanceof ShortProcessor) {
             return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
-         }
-         else if (proc1 instanceof ShortProcessor && proc2 instanceof ByteProcessor) {
+         } else if (proc1 instanceof ShortProcessor && proc2 instanceof ByteProcessor) {
             return subtractShortByteProcessors((ShortProcessor) proc1, (ByteProcessor) proc2);
-         }
-         else if (proc1 instanceof ShortProcessor && proc2 instanceof FloatProcessor) {
+         } else if (proc1 instanceof ShortProcessor && proc2 instanceof FloatProcessor) {
             return subtractShortFloatProcessors((ShortProcessor) proc1, (FloatProcessor) proc2);
-         }
-         else if (proc1 instanceof FloatProcessor && proc2 instanceof ByteProcessor) {
+         } else if (proc1 instanceof FloatProcessor && proc2 instanceof ByteProcessor) {
             return subtractFloatProcessors((FloatProcessor) proc1, (ByteProcessor) proc2);
-         }
-         else if (proc1 instanceof FloatProcessor && proc2 instanceof ShortProcessor) {
+         } else if (proc1 instanceof FloatProcessor && proc2 instanceof ShortProcessor) {
             return subtractFloatProcessors((FloatProcessor) proc1, (ShortProcessor) proc2);
-         }
-         else if (proc1 instanceof FloatProcessor) {
+         } else if (proc1 instanceof FloatProcessor) {
             return subtractFloatProcessors((FloatProcessor) proc1, (FloatProcessor) proc2);
-         }
-         else {
+         } else {
             throw new MMException("Types of images to be subtracted were not compatible");
          }
       } catch (ClassCastException ex) {
@@ -357,8 +344,7 @@ public final class ImageUtils {
       }
       if (pix instanceof float[]) {
          return findArrayMax((float[]) pix);
-      }
-      else {
+      } else {
          return -1;
       }
    }

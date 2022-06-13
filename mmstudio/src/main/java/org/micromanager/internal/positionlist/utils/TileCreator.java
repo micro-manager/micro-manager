@@ -39,9 +39,9 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class TileCreator {
    private final CMMCore core_;
 
-   static public enum OverlapUnitEnum {UM, PX, PERCENT}
+   public enum OverlapUnitEnum { UM, PX, PERCENT
+   }
 
-   ;
    private static final DecimalFormat FMT_POS = new DecimalFormat("000");
 
    public TileCreator(CMMCore core) {
@@ -107,7 +107,8 @@ public final class TileCreator {
       double overlapXUm = imageSizeXUm - tileSizeXUm;
       double overlapYUm = imageSizeYUm - tileSizeYUm;
 
-      // bounding box size accounting for the fact that the edges of the image extend past the max/min values set.
+      // bounding box size accounting for the fact that the edges of the image extend
+      // past the max/min values set.
       double boundingXUm = maxX - minX + imageSizeXUm;
       double boundingYUm = maxY - minY + imageSizeYUm;
 
@@ -116,20 +117,22 @@ public final class TileCreator {
       int nrImagesY = (int) Math.ceil((boundingYUm - overlapYUm) / tileSizeYUm);
 
       if (nrImagesX < 1 || nrImagesY < 1) {
-         ReportingUtils.showError("Zero or negative number of images requested. " +
-               "Is the overlap larger than the Image Width or Height?");
+         ReportingUtils.showError("Zero or negative number of images requested. "
+               + "Is the overlap larger than the Image Width or Height?");
          return null;
       }
 
       double totalSizeXUm = nrImagesX * tileSizeXUm + overlapXUm;
       double totalSizeYUm = nrImagesY * tileSizeYUm + overlapYUm;
 
-      //Since an evenly spaced grid will likely not perfectly fit the bounding box
-      //that was specified we use this offset so that our grid is still centered properly.
-      //This slightly widens the field that is scanned. Sometime this can result in setting
-      //a position that is outside of the stage's range of motion. This causes issues when it comes time to stitch.
-      //This approach could also result in damage if the user specified a region that is near something delicate and then
-      //this code expands that range. It may be good to try a different approach.
+      // Since an evenly spaced grid will likely not perfectly fit the bounding box
+      // that was specified we use this offset so that our grid is still centered properly.
+      // This slightly widens the field that is scanned. Sometime this can result in setting
+      // a position that is outside of the stage's range of motion. This causes issues when
+      // it comes time to stitch.
+      // This approach could also result in damage if the user specified a region that is
+      // near something delicate and then this code expands that range. It may be good to
+      // try a different approach.
       double offsetXUm = (totalSizeXUm - boundingXUm) / 2;
       double offsetYUm = (totalSizeYUm - boundingYUm) / 2;
 
@@ -147,9 +150,9 @@ public final class TileCreator {
             // Add XY position
             // xyStage is not null; we've checked above.
             msp.setDefaultXYStage(xyStage);
-            double X = minX - offsetXUm + (tmpX * tileSizeXUm);
-            double Y = minY - offsetYUm + (y * tileSizeYUm);
-            StagePosition spXY = StagePosition.create2D(xyStage, X, Y);
+            double dx = minX - offsetXUm + (tmpX * tileSizeXUm);
+            double dy = minY - offsetYUm + (y * tileSizeYUm);
+            StagePosition spXY = StagePosition.create2D(xyStage, dx, dy);
             msp.add(spXY);
 
             // Add Z position
@@ -158,7 +161,7 @@ public final class TileCreator {
                //loop over Z coordinates and add the correct positions for any we are using
                for (int a = 0; a < zStages.size(); a++) {
                   StagePosition newSP = StagePosition.create1D(zStages.get(a),
-                        zGen.getZ(X, Y, zStages.get(a)));
+                        zGen.getZ(dx, dy, zStages.get(a)));
                   msp.add(newSP);
                }
             }
@@ -173,8 +176,7 @@ public final class TileCreator {
                int overlapPix = (int) Math.floor(overlapXUm / pixelSizeUm);
 
                msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
-            }
-            else { // overlapUnit_ == OverlapUnit.PERCENT
+            } else { // overlapUnit_ == OverlapUnit.PERCENT
                // overlapUmX != overlapUmY; store both
                msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
                msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
@@ -190,8 +192,10 @@ public final class TileCreator {
    }
 
    private boolean isSwappedXY() {
-      //Returns true if the the camera device adapter indicates that it's x and y axis should be swapped.
-      boolean correction, transposeXY;
+      // Returns true if the the camera device adapter indicates that it's x and y axis
+      // should be swapped.
+      boolean correction;
+      boolean transposeXY;
       String camera = core_.getCameraDevice();
       if (camera == null) {
          JOptionPane.showMessageDialog(null, "This function does not work without a camera");
@@ -216,12 +220,10 @@ public final class TileCreator {
 
       if (overlapUnit == OverlapUnitEnum.UM) {
          overlapUmX = overlapUmY = overlap;
-      }
-      else if (overlapUnit == OverlapUnitEnum.PERCENT) {
+      } else if (overlapUnit == OverlapUnitEnum.PERCENT) {
          overlapUmX = pixSizeUm * (overlap / 100) * core_.getImageWidth();
          overlapUmY = pixSizeUm * (overlap / 100) * core_.getImageHeight();
-      }
-      else { // overlapUnit_ == OverlapUnit.PX
+      } else { // overlapUnit_ == OverlapUnit.PX
          overlapUmX = overlap * pixSizeUm;
          overlapUmY = overlap * pixSizeUm;
       }
@@ -229,12 +231,12 @@ public final class TileCreator {
       // if camera does not correct image orientation, we'll correct for it here:
       boolean swapXY = isSwappedXY();
 
-      double tileSizeXUm = swapXY ?
-            pixSizeUm * core_.getImageHeight() - overlapUmY :
+      double tileSizeXUm = swapXY
+            ? pixSizeUm * core_.getImageHeight() - overlapUmY :
             pixSizeUm * core_.getImageWidth() - overlapUmX;
 
-      double tileSizeYUm = swapXY ?
-            pixSizeUm * core_.getImageWidth() - overlapUmX :
+      double tileSizeYUm = swapXY
+            ? pixSizeUm * core_.getImageWidth() - overlapUmX :
             pixSizeUm * core_.getImageHeight() - overlapUmY;
 
       return new double[] {tileSizeXUm, tileSizeYUm};

@@ -53,9 +53,8 @@ public final class AboutDlg extends JDialog {
          "Copyright University of California San Francisco, 2010-2021. All rights reserved.\n\n"
                + "Additional copyright on portions of this software by the following institutions, "
                + "projects or individuals: Wayne Rasband, NIH, Joachim Walter, BeanShell, JSON, "
-               + "logix4u, libserial, boost.org, Todd Klark, Ramon de Klein, "
-               +
-               "MIT, University of Dundee, Board of Regents of the University of Wisconsin-Madison, "
+               + "logix4u, libserial, boost.org, Todd Klark, Ramon de Klein, MIT, "
+               + "University of Dundee, Board of Regents of the University of Wisconsin-Madison, "
                + "Glencoe Software, and  SLF4J";
 
    /**

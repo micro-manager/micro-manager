@@ -153,8 +153,7 @@ class OffsetPositionsDialog extends JDialog {
       if (type == DeviceType.StageDevice) {
          // Dealing with a Z device; only one label.
          axes.add("Z offset:");
-      }
-      else if (type == DeviceType.XYStageDevice) {
+      } else if (type == DeviceType.XYStageDevice) {
          // Two axes.
          axes.add("X offset:");
          axes.add("Y offset:");

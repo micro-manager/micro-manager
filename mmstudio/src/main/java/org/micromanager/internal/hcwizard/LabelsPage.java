@@ -70,8 +70,7 @@ public final class LabelsPage extends PagePanel {
 
          if (lsm.isSelectionEmpty()) {
             ltm.setData(model_, null);
-         }
-         else {
+         } else {
             // first make sure that active edits are stored
             if (ltm.getColumnCount() > 0) {
                if (labelTable_.isEditing()) {
@@ -139,8 +138,7 @@ public final class LabelsPage extends PagePanel {
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (columnIndex == 0) {
             return Integer.toString(rowIndex);
-         }
-         else {
+         } else {
             return labels_[rowIndex];
          }
       }
@@ -297,8 +295,7 @@ public final class LabelsPage extends PagePanel {
                Label lab = dev.getSetupLabelByState(i);
                if (lab != null) {
                   labels[i] = lab.label_;
-               }
-               else {
+               } else {
                   labels[i] = "State-" + i;
                }
             }

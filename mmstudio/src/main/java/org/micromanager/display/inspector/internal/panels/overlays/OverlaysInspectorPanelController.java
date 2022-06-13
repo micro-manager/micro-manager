@@ -97,9 +97,9 @@ public final class OverlaysInspectorPanelController
             new LC().insets("0").gridGap("0", "0").fill()));
       panel_.add(configsPanel_, new CC().growX().pushX().wrap());
       panel_.add(addOverlayButton_,
-            new CC().gapBefore("push").gapAfter("rel").
-                  gapY("rel", "rel").
-                  height("pref:pref:pref"));
+            new CC().gapBefore("push").gapAfter("rel")
+                  .gapY("rel", "rel")
+                  .height("pref:pref:pref"));
    }
 
    private void loadSettings(DisplayWindow viewer) {
@@ -111,15 +111,18 @@ public final class OverlaysInspectorPanelController
          return;
       }
       for (PropertyMap pMap : settings) {
-         for (OverlayPlugin p : plugins_) { // We must loop through overlay plugins to determine if they are a match for this setting.
+         for (OverlayPlugin p : plugins_) { // We must loop through overlay plugins to
+            // determine if they are a match for this setting.
             Overlay o = p.createOverlay();
             if (pMap.getString(TITLEPMAPKEY, "loadFailed").equals(
-                  o.getTitle())) {  // Checking against Overlay 'Title; is the best way we have to link settings with an overlay.
+                  o.getTitle())) {  // Checking against Overlay 'Title; is the best
+               // way we have to link settings with an overlay.
                PropertyMap config = pMap.getPropertyMap(CONFIGPMAPKEY, null);
                o.setConfiguration(config);
                o.setVisible(pMap.getBoolean(VISIBLEPMAPKEY, false));
                viewer_.addOverlay(
-                     o); // The viewer will fire an event that will trigger adding the UI components to the inspector
+                     o); // The viewer will fire an event that will trigger adding the
+               // UI components to the inspector
                break;
             }
          }
@@ -177,8 +180,8 @@ public final class OverlaysInspectorPanelController
       OverlayConfigPanelController cc = configPanelControllers_.get(i);
       configPanelControllers_.remove(cc);
 
-      int index = Arrays.asList(configsPanel_.getComponents()).
-            indexOf(cc.getConfigPanel());
+      int index = Arrays.asList(configsPanel_.getComponents())
+            .indexOf(cc.getConfigPanel());
       JSeparator separator = (JSeparator) configsPanel_.getComponent(index + 1);
 
       fireInspectorPanelWillChangeHeight();
@@ -206,10 +209,13 @@ public final class OverlaysInspectorPanelController
       if (viewer_ != null) {
          saveSettings(viewer_);
          List<Overlay> overlays = new ArrayList<>(
-               overlays_);  // We iterate over a copy of the overlays_ list to avoid causing a ConcurrentModificationException by removing items from the list while iterating.
-         for (Overlay o : overlays) { //We can't manually remove the overlays from `overlays_` we need to allow the `viewer_` to fire off the relevant events so that everything is properly handled.
-            this.handleRemoveOverlay(
-                  o);  // The viewer will fire an event that will also remove the UI components from the inspector.
+               overlays_);  // We iterate over a copy of the overlays_ list to avoid causing
+         // a ConcurrentModificationException by removing items from the list while iterating.
+         for (Overlay o : overlays) { // We can't manually remove the overlays from `overlays_`
+            // we need to allow the `viewer_` to fire off the relevant events so that everything
+            // is properly handled.
+            this.handleRemoveOverlay(o);  // The viewer will fire an event that will also
+            // remove the UI components from the inspector.
          }
          viewer_.unregisterForEvents(this);
          viewer_ = null;

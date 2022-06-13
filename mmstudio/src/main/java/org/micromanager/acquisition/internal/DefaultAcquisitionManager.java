@@ -110,15 +110,13 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          // Use the MDA dialog's runAcquisition logic.
          if (mdaDialog_ != null) {
             store = mdaDialog_.runAcquisition();
-         }
-         else {
+         } else {
             // I'm not sure how this could ever happen, but we have null
             // checks for mdaDialog_ everywhere in this code, with no
             // explanation.
             studio_.logs().showError("Unable to run acquisition as MDA dialog is null");
          }
-      }
-      else {
+      } else {
          // Use the provided settings.
          engine_.setSequenceSettings(settings);
          try {
@@ -165,8 +163,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             studio_.logs().showError(e);
          }
          return store;
-      }
-      else {
+      } else {
          throw new IllegalThreadStateException(
                "Acquisition setup window must be open for this command to work.");
       }
@@ -319,8 +316,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             } catch (NumberFormatException e) {
                studio_.logs().logError("Unable to determine binning from " + binning);
             }
-         }
-         else {
+         } else {
             try {
                result.binning(Integer.parseInt(binning));
             } catch (NumberFormatException e) {

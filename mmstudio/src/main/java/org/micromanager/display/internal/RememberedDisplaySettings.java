@@ -33,8 +33,8 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 /**
  * Stores and restores Display and ChannelDisplaysetting that were last
  * used (in the case of channelDisplaySettings for a given channel)
- * <p>
- * Contains code to stay backwards compatible with RememberedChannelSettins
+ *
+ * <p>Contains code to stay backwards compatible with RememberedChannelSettins
  * mechanism to store settings.  Remove this code after 9/2020
  *
  * @author nico
@@ -42,7 +42,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public class RememberedDisplaySettings {
 
    /**
-    * Stores given ChannelDisplaySettings for given channel in the user profile
+    * Stores given ChannelDisplaySettings for given channel in the user profile.
     *
     * @param studio       Object used to get access to profile
     * @param channelGroup Group to which the channel belongs
@@ -65,10 +65,10 @@ public class RememberedDisplaySettings {
          }
          PropertyMap pMap = dcds.toPropertyMap();
          settings.putPropertyMap(key, pMap);
-      }
-      else {
+      } else {
          studio.logs().logError(
-               "Encountered ChannelDisplaySettings that could not be cast to DefaultChannelDisplaySettings");
+               "Encountered ChannelDisplaySettings that could not be cast to "
+                     + "DefaultChannelDisplaySettings");
       }
    }
 
@@ -95,8 +95,8 @@ public class RememberedDisplaySettings {
                settings.getPropertyMap(key, null), channelGroup, channelName);
       }
       ChannelDisplaySettings.Builder cdsBuilder =
-            DefaultChannelDisplaySettings.builder().groupName(channelGroup).
-                  name(channelName).component(1);
+            DefaultChannelDisplaySettings.builder().groupName(channelGroup)
+                  .name(channelName).component(1);
       if (defaultColor != null) {
          cdsBuilder.color(defaultColor);
       }
@@ -140,7 +140,7 @@ public class RememberedDisplaySettings {
     * @param displaySettings Settings as read from disk
     * @param summary         Metadata of the datastore, will be used to fill in missing info
     * @return Copy of the input with Channelgroup and Channelnames from the summary
-    * metadata if they were empty in the input.
+    *     metadata if they were empty in the input.
     */
    public static DisplaySettings fixMissingInfo(
          DisplaySettings displaySettings, SummaryMetadata summary) {

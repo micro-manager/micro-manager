@@ -43,16 +43,16 @@ public final class StatsComputeQueue {
    private final ImageStatsProcessor processor_ = ImageStatsProcessor.create();
 
    private final ExecutorService computeExecutor_ =
-         Executors.newSingleThreadExecutor(ThreadFactoryFactory.
-               createThreadFactory("Stats Compute Queue Compute"));
+         Executors.newSingleThreadExecutor(ThreadFactoryFactory
+               .createThreadFactory("Stats Compute Queue Compute"));
 
    private final ExecutorService bypassExecutor_ =
-         Executors.newSingleThreadExecutor(ThreadFactoryFactory.
-               createThreadFactory("Stats Compute Queue Bypass"));
+         Executors.newSingleThreadExecutor(ThreadFactoryFactory
+               .createThreadFactory("Stats Compute Queue Bypass"));
 
    private final ExecutorService resultExecutor_ =
-         Executors.newSingleThreadExecutor(ThreadFactoryFactory.
-               createThreadFactory("Stats Compute Queue Result"));
+         Executors.newSingleThreadExecutor(ThreadFactoryFactory
+               .createThreadFactory("Stats Compute Queue Result"));
 
    // Outstanding compute tasks by priority
    // Guarded by monitor on this
@@ -124,9 +124,9 @@ public final class StatsComputeQueue {
       int priority = request.getNumberOfImages();
 
       if (updateIntervalNs_ < Long.MAX_VALUE) {
-         final long waitTargetNs = updateIntervalNs_ == Long.MAX_VALUE ?
-               Long.MAX_VALUE :
-               nowNs + updateIntervalNs_ - nowNs % Math.max(1, updateIntervalNs_);
+         final long waitTargetNs = updateIntervalNs_ == Long.MAX_VALUE
+               ? Long.MAX_VALUE :
+                     nowNs + updateIntervalNs_ - nowNs % Math.max(1, updateIntervalNs_);
 
          submitCompute(sequenceNumber, priority, request, waitTargetNs);
          if (perfMon_ != null) {
@@ -224,8 +224,7 @@ public final class StatsComputeQueue {
             final ImagesAndStats result;
             if (storedStats == null) {
                result = ImagesAndStats.create(-1, request);
-            }
-            else {
+            } else {
                result = storedStats.copyForRequest(request);
             }
 
@@ -239,8 +238,7 @@ public final class StatsComputeQueue {
 
    private synchronized void submitResult(long sequenceNumber,
                                           final int priority, final ImagesAndStats result) {
-      if (sequenceNumber < lastResultSequenceNumber_ &&
-            result.isRealStats()) {
+      if (sequenceNumber < lastResultSequenceNumber_ && result.isRealStats()) {
          // Prevent late-arriving stats from causing animation to retrogress.
          // If this result contains new stats, it will still be applied to the
          // stored stats to be applied to subsequent bypassed requests.
@@ -248,17 +246,14 @@ public final class StatsComputeQueue {
             perfMon_.sampleTimeInterval("Compute result discarded (retro seq nr)");
          }
          return;
-      }
-      else if (sequenceNumber <= lastResultSequenceNumber_ &&
-            !result.isRealStats()) {
+      } else if (sequenceNumber <= lastResultSequenceNumber_ && !result.isRealStats()) {
          // In the event that the bypasses images arrive after
          // the computed stats for the same request, discard.
          if (perfMon_ != null) {
             perfMon_.sampleTimeInterval("Compute bypass discarded (retro seq nr)");
          }
          return;
-      }
-      else {
+      } else {
          lastResultSequenceNumber_ = sequenceNumber;
       }
 

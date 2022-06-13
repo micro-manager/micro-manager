@@ -54,11 +54,11 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 
 /**
  * Bridge to ImageJ1 image viewer window.
- * <p>
- * This class manages our customized ImageJ objects, which we use to plug into
+ *
+ * <p>This class manages our customized ImageJ objects, which we use to plug into
  * ImageJ's concept of an image viewer window.
- * <p>
- * The {@code ImageJBridge} facade object manages an {@code ImagePlus} (ImageJ's
+ *
+ * <p>The {@code ImageJBridge} facade object manages an {@code ImagePlus} (ImageJ's
  * wrapper for an image data set), an {@code MMVirtualStack} (our customized
  * proxy for ImageJ's data provider object), a {@code ProxyImageWindow} (our
  * proxy subclass of ImageJ's {@code ImageWindow} (actually
@@ -150,11 +150,10 @@ public final class ImageJBridge {
 
    private ImageJBridge(DisplayUIController parent, ImagesAndStats images) {
       uiController_ = parent;
-      if (images != null && images.getRequest().getImages().size() > 0 &&
-            images.getRequest().getImage(0).getNumComponents() > 1) {
+      if (images != null && images.getRequest().getImages().size() > 0
+            && images.getRequest().getImage(0).getNumComponents() > 1) {
          colorModeStrategy_ = RGBColorModeStrategy.create();
-      }
-      else {
+      } else {
          colorModeStrategy_ = GrayscaleColorModeStrategy.create();
       }
    }
@@ -316,9 +315,9 @@ public final class ImageJBridge {
       int oldNFrames =
             ((IMMImagePlus) imagePlus_).getNFramesWithoutSideEffect();
 
-      if (newNChannels > oldNChannels ||
-            newNSlices > oldNSlices ||
-            newNFrames > oldNFrames) {
+      if (newNChannels > oldNChannels
+            || newNSlices > oldNSlices
+            || newNFrames > oldNFrames) {
          mm2ijSetDisplayAxisExtents(Math.max(newNChannels, oldNChannels),
                Math.max(newNSlices, oldNSlices),
                Math.max(newNFrames, oldNFrames));
@@ -360,8 +359,7 @@ public final class ImageJBridge {
       // stack). Whew!
       if (proxyStack_.getSize() == 1) {
          imagePlus_.setStack(proxyStack_);
-      }
-      else {
+      } else {
          imagePlus_.setProcessor(proxyStack_.getProcessor(ijFlatIndex));
 
          if (imagePlus_ instanceof CompositeImage) {
@@ -517,10 +515,7 @@ public final class ImageJBridge {
       int nChannels = getMMNumberOfChannels();
       int nZSlices = getMMNumberOfZSlices();
       int nTimePoints = getMMNumberOfTimePoints();
-      return timePoint * nZSlices * nChannels +
-            zSlice * nChannels +
-            channel +
-            1;
+      return timePoint * nZSlices * nChannels + zSlice * nChannels + channel + 1;
    }
 
    int getMMNumberOfTimePoints() {
@@ -563,8 +558,7 @@ public final class ImageJBridge {
       // in org.micromanager.data.
       Image template;
       try {
-         template = uiController_.getDisplayController().getDataProvider().
-               getAnyImage();
+         template = uiController_.getDisplayController().getDataProvider().getAnyImage();
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
@@ -575,17 +569,13 @@ public final class ImageJBridge {
       Object blankPixels;
       if (templatePixels instanceof byte[]) {
          blankPixels = new byte[((byte[]) templatePixels).length];
-      }
-      else if (templatePixels instanceof short[]) {
+      } else if (templatePixels instanceof short[]) {
          blankPixels = new short[((short[]) templatePixels).length];
-      }
-      else if (templatePixels instanceof int[]) {
+      } else if (templatePixels instanceof int[]) {
          blankPixels = new int[((int[]) templatePixels).length];
-      }
-      else if (templatePixels instanceof long[]) {
+      } else if (templatePixels instanceof long[]) {
          blankPixels = new long[((long[]) templatePixels).length];
-      }
-      else {
+      } else {
          throw new UnsupportedOperationException("Pixel buffer of unknown type");
       }
       return new DefaultImage(blankPixels,
@@ -609,7 +599,8 @@ public final class ImageJBridge {
          Image sample = dataProvider.getAnyImage();
          if (sample == null) {
             // TODO: log error
-            // studio_.logs().logError("Unable to get an image for setting ImageJ metadata properties");
+            // studio_.logs().logError(
+            // "Unable to get an image for setting ImageJ metadata properties");
             return;
          }
          SummaryMetadata summaryMetadata = dataProvider.getSummaryMetadata();
@@ -641,7 +632,8 @@ public final class ImageJBridge {
             }
             mm2ijSetMetadata(pixelSize,
                   pixelSize,
-                  // TODO: add asepct ratio here, however, that currently throws a null pointer exception
+                  // TODO: add aspect ratio here, however, that currently throws
+                  //  a null pointer exception
                   zStepSize,
                   timeInterval,
                   sample.getWidth(),
@@ -665,8 +657,7 @@ public final class ImageJBridge {
          cal.setUnit("px");
          cal.pixelWidth = 1.0;
          cal.pixelHeight = 1.0;
-      }
-      else {
+      } else {
          cal.setUnit("um");
          cal.pixelWidth = pixelWidthUm;
          cal.pixelHeight = pixelHeightUm;
@@ -691,8 +682,8 @@ public final class ImageJBridge {
 
    @MustCallOnEDT
    public boolean isIJZoomedAllTheWayIn() {
-      return canvas_.getMagnification() >=
-            IJ_ZOOM_LEVELS.get(IJ_ZOOM_LEVELS.size() - 1) - 0.001;
+      return canvas_.getMagnification()
+            >= IJ_ZOOM_LEVELS.get(IJ_ZOOM_LEVELS.size() - 1) - 0.001;
    }
 
    @MustCallOnEDT
@@ -735,7 +726,7 @@ public final class ImageJBridge {
    }
 
    /**
-    * Sets the new zoomed view, centered around the user-desired position
+    * Sets the new zoomed view, centered around the user-desired position.
     *
     * @param factor        New zoom factor
     * @param centerScreenX Desired x coordinate on the current canvas
@@ -885,16 +876,14 @@ public final class ImageJBridge {
          if (lastSeenRoi_ == null) {
             return;
          }
-      }
-      else {
+      } else {
          if (roi.getType() == Roi.RECTANGLE && roi.getCornerDiameter() == 0) {
             Rectangle bounds = roi.getBounds();
             if (bounds.equals(lastSeenRoiRect_)) {
                return;
             }
             lastSeenRoiRect_ = new Rectangle(bounds);
-         }
-         else {
+         } else {
             lastSeenRoiRect_ = null;
          }
          lastSeenRoi_ = roi;
@@ -971,9 +960,9 @@ public final class ImageJBridge {
       ByteProcessor maskProc = (ByteProcessor) ijRoi.getMask();
 
       // Sanity check, just in case.
-      if (maskProc != null &&
-            (maskProc.getWidth() != bounds.width ||
-                  maskProc.getHeight() != bounds.height)) {
+      if (maskProc != null
+            && (maskProc.getWidth() != bounds.width
+            || maskProc.getHeight() != bounds.height)) {
          return BoundsRectAndMask.unselected();
       }
 

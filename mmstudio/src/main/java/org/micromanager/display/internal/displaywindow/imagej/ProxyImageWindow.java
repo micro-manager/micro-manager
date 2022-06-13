@@ -27,8 +27,8 @@ import ij.gui.StackWindow;
 /**
  * A proxy object providing an interface between our image display system
  * and ImageJ's system.
- * <p>
- * ImageJ expects its images to be displayed in {@code ij.gui.ImageWindow} (and
+ *
+ * <p>ImageJ expects its images to be displayed in {@code ij.gui.ImageWindow} (and
  * its subclass {@code ij.gui.StackWindow}), which descend from
  * {@code java.awt.Frame}. Since MMStudio's image display windows are
  * {@code JFrame}s, it is not practical to get ImageJ to directly interact

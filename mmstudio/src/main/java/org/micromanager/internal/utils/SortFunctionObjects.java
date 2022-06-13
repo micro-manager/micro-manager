@@ -42,7 +42,7 @@ public final class SortFunctionObjects {
    }
 
    public static class NumericPrefixStringComp implements Comparator<String> {
-      private int NumericPrefix(String str0) {
+      private int numericPrefix(String str0) {
          int ret = 0;
          int ii;
          for (ii = 0; ii < str0.length(); ++ii) {
@@ -59,7 +59,7 @@ public final class SortFunctionObjects {
 
       @Override
       public int compare(String strA, String strB) {
-         return NumericPrefix(strA) - NumericPrefix(strB);
+         return numericPrefix(strA) - numericPrefix(strB);
       }
    }
 

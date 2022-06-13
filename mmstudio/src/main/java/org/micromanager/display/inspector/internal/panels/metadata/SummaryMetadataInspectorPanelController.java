@@ -165,8 +165,8 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
       }
       previousMetadataRef_ = new WeakReference<SummaryMetadata>(summaryMetadata);
 
-      PropertyMap metadataMap = summaryMetadata == null ?
-            PropertyMaps.emptyPropertyMap() :
+      PropertyMap metadataMap = summaryMetadata == null
+            ? PropertyMaps.emptyPropertyMap() :
             ((DefaultSummaryMetadata) summaryMetadata).toPropertyMap();
 
       final TreeMap<String, String> data = new TreeMap<String, String>();
@@ -176,12 +176,10 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
             for (String subkey : userData.keySet()) {
                data.put("user:" + subkey, userData.getValueAsString(subkey, ""));
             }
-         }
-         else if (PropertyKey.STAGE_POSITIONS.key().equals(key)) {
+         } else if (PropertyKey.STAGE_POSITIONS.key().equals(key)) {
             data.put(key, String.format("<%d positions>",
                   metadataMap.getPropertyMapList(PropertyKey.STAGE_POSITIONS.key()).size()));
-         }
-         else {
+         } else {
             data.put(key, metadataMap.getValueAsString(key, ""));
          }
       }

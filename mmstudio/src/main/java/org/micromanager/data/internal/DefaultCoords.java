@@ -65,8 +65,7 @@ public final class DefaultCoords implements Coords {
          if (i < 0) {
             axes_.add(axis);
             indices_.add(index);
-         }
-         else {
+         } else {
             indices_.set(i, index);
          }
          return this;
@@ -93,8 +92,8 @@ public final class DefaultCoords implements Coords {
          int newIndex = oldIndex + offset;
          if (newIndex < 0) {
             throw new IndexOutOfBoundsException(
-                  "Offset would make Coords have negative index for axis \"" +
-                        axis + "\"");
+                  "Offset would make Coords have negative index for axis \""
+                        + axis + "\"");
          }
          index(axis, newIndex);
          return this;

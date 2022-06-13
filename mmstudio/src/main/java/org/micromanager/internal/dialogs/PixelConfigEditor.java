@@ -52,8 +52,8 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
     * @param pixelSizeConfigName Name for the pixel size configurator
     * @param parent              GUI element that is the "parent" for this one
     * @param pixelSize           Pixel size to start with
-    * @param newItem             Whether or not this is a new pixel size config (i.e. false will edit
-    *                            and existing config)
+    * @param newItem             Whether or not this is a new pixel size config
+    *                            (i.e. false will edit an existing config)
     */
    public PixelConfigEditor(String pixelSizeConfigName, CalibrationListDlg parent,
                             String pixelSize, boolean newItem) {

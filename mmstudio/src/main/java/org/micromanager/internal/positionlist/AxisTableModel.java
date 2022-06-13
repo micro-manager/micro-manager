@@ -71,8 +71,7 @@ class AxisTableModel extends AbstractTableModel {
       if (aD != null) {
          if (columnIndex == 0) {
             return aD.getUse();
-         }
-         else if (columnIndex == 1) {
+         } else if (columnIndex == 1) {
             return aD.getAxisName();
          }
       }

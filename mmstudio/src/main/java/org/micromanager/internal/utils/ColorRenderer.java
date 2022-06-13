@@ -53,8 +53,7 @@ public final class ColorRenderer extends JLabel implements TableCellRenderer {
       Color newColor = (Color) color;
       if (table.isEnabled()) {
          setBackground(newColor);
-      }
-      else {
+      } else {
          Color dimColor = mixColors(newColor, table.getBackground(), 0.5);
          setBackground(dimColor);
       }
@@ -65,8 +64,7 @@ public final class ColorRenderer extends JLabel implements TableCellRenderer {
                      table.getSelectionBackground());
             }
             setBorder(selectedBorder);
-         }
-         else {
+         } else {
             if (unselectedBorder == null) {
                unselectedBorder = BorderFactory.createMatteBorder(2, 5, 2, 5,
                      table.getBackground());

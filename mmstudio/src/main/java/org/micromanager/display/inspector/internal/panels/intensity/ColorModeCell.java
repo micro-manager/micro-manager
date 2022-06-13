@@ -69,8 +69,7 @@ final class ColorModeCell extends DefaultListCellRenderer {
       channelColors_.clear();
       if (colors == null || colors.isEmpty()) {
          channelColors_.add(Color.WHITE);
-      }
-      else {
+      } else {
          channelColors_.addAll(colors);
       }
    }

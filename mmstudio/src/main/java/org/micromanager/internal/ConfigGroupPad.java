@@ -138,8 +138,7 @@ public final class ConfigGroupPad extends JScrollPane {
       int idx = table_.getSelectedRow();
       if (idx < 0 || data_.getRowCount() <= 0) {
          return "";
-      }
-      else {
+      } else {
          return (String) data_.getValueAt(idx, 0);
       }
    }
@@ -166,8 +165,7 @@ public final class ConfigGroupPad extends JScrollPane {
       int idx = table_.getSelectedRow();
       if (idx < 0 || data_.getRowCount() <= 0) {
          return "";
-      }
-      else {
+      } else {
          try {
             return data_.core_.getCurrentConfig((String) data_.getValueAt(idx, 0));
          } catch (Exception e) {
@@ -185,7 +183,7 @@ public final class ConfigGroupPad extends JScrollPane {
     */
    public final class StateTableData extends AbstractTableModel {
       private static final long serialVersionUID = -6584881796860806078L;
-      final public String[] columnNames_ = {
+      public final String[] columnNames_ = {
             "Group",
             "Preset"
       };
@@ -217,8 +215,7 @@ public final class ConfigGroupPad extends JScrollPane {
             StateItem item = groupList_.get(row);
             if (col == 0) {
                return item.group;
-            }
-            else if (col == 1) {
+            } else if (col == 1) {
                return item.config;
             }
          }
@@ -237,17 +234,14 @@ public final class ConfigGroupPad extends JScrollPane {
                      if (item.hasLimits && item.isInteger()) {
                         core_.setProperty(item.device, item.name,
                               NumberUtils.intStringDisplayToCore(value));
-                     }
-                     else if (item.hasLimits && !item.isInteger()) {
+                     } else if (item.hasLimits && !item.isInteger()) {
                         core_.setProperty(item.device, item.name,
                               NumberUtils.doubleStringDisplayToCore(value));
-                     }
-                     else {
+                     } else {
                         core_.setProperty(item.device, item.name, value.toString());
                      }
                      core_.waitForDevice(item.device);
-                  }
-                  else {
+                  } else {
                      core_.setConfig(item.group, value.toString());
                      core_.waitForConfig(item.group, value.toString());
                   }
@@ -274,8 +268,7 @@ public final class ConfigGroupPad extends JScrollPane {
                      // MMStudio.refreshGUI().
                      MMStudio parentGUI = (MMStudio) studio_;
                      parentGUI.uiManager().updateGUI(false, true);
-                  }
-                  else {
+                  } else {
                      studio_.app().refreshGUIFromCache();
                   }
 
@@ -318,8 +311,7 @@ public final class ConfigGroupPad extends JScrollPane {
                item.group = group;
                if (fromCache) {
                   item.config = core_.getCurrentConfigFromCache(item.group);
-               }
-               else {
+               } else {
                   item.config = core_.getCurrentConfig(item.group);
                }
                item.allowed = core_.getAvailableConfigs(item.group).toArray();
@@ -328,8 +320,7 @@ public final class ConfigGroupPad extends JScrollPane {
                if (item.config.length() > 0) {
                   Configuration curCfg = core_.getConfigData(item.group, item.config);
                   item.descr = curCfg.getVerbose();
-               }
-               else {
+               } else {
                   item.descr = "";
                }
 
@@ -347,8 +338,7 @@ public final class ConfigGroupPad extends JScrollPane {
                         if (fromCache) {
                            item.setValueFromCoreString(
                                  core_.getPropertyFromCache(item.device, item.name));
-                        }
-                        else {
+                        } else {
                            item.setValueFromCoreString(
                                  core_.getProperty(item.device, item.name));
                         }
@@ -380,15 +370,13 @@ public final class ConfigGroupPad extends JScrollPane {
             for (StateItem item : groupList_) {
                if (item.singleProp) {
                   item.config = core_.getProperty(item.device, item.name);
-               }
-               else {
+               } else {
                   item.config = core_.getCurrentConfigFromCache(item.group);
                   // set descr to current situation so that Tooltips get updated
                   if (item.config.length() > 0) {
                      Configuration curCfg = core_.getConfigData(item.group, item.config);
                      item.descr = curCfg.getVerbose();
-                  }
-                  else {
+                  } else {
                      item.descr = "";
                   }
                }

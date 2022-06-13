@@ -127,9 +127,9 @@ public interface ImageExporter {
     * @throws IOException              if the export process would attempt to write to a
     *                                  file that already exists
     * @throws IllegalArgumentException if no output format has been set, or
-    *                                  OUTPUT_PNG or OUTPUT_JPG formats are used but no save information
-    *                                  has been set, or if no loops have been configured, or if no
-    *                                  display has been set.
+    *                                  OUTPUT_PNG or OUTPUT_JPG formats are used but no save
+    *                                  information has been set, or if no loops have been
+    *                                  configured, or if no display has been set.
     */
    void export() throws IOException, IllegalArgumentException;
 

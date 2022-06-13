@@ -202,8 +202,7 @@ public final class DeviceSetupDlg extends JDialog {
             model_.useSerialPort(portDev_, true);
          }
          model_.setModified(true);
-      }
-      else {
+      } else {
          // initialization failed
          device_.setInitialized(false);
          return;
@@ -225,7 +224,7 @@ public final class DeviceSetupDlg extends JDialog {
          return;
       }
       int response = JOptionPane.showConfirmDialog(DeviceSetupDlg.this,
-            "\u00b5Manager will attempt to automatically detect the "
+            "\u00b5Manager will attempt to automatically detect the " // Micro-Manager
                   + "serial port and port settings\nrequired to communicate with "
                   + "this device.\n\nWARNING: this will send messages through all "
                   + "connected serial ports, potentially\ninterfering with other "
@@ -242,7 +241,7 @@ public final class DeviceSetupDlg extends JDialog {
       scanStatus_.setText("Scanning ports...");
       pack();
       progressDialog_ = new DetectorJDialog(DeviceSetupDlg.this, false);
-      progressDialog_.setTitle("\u00B5" + "Manager device detection");
+      progressDialog_.setTitle("\u00B5" + "Manager device detection"); // Micro-Manager
       progressDialog_.setLocationRelativeTo(DeviceSetupDlg.this);
       progressDialog_.setSize(483, 288);
       progressDialog_.setVisible(true);
@@ -312,8 +311,7 @@ public final class DeviceSetupDlg extends JDialog {
          propTable_.addColumn(column);
          column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
          propTable_.addColumn(column);
-      }
-      else {
+      } else {
          propTable_.getColumnModel().getColumn(2).setCellRenderer(propValueRenderer);
          propTable_.getColumnModel().getColumn(2).setCellEditor(propValueEditor);
       }
@@ -457,8 +455,7 @@ public final class DeviceSetupDlg extends JDialog {
                   core_.setProperty(portDev_.getName(), prop.name, prop.value);
                   if (portDev_.findSetupProperty(prop.name) == null) {
                      portDev_.addSetupProperty(new PropertyItem(prop.name, prop.value, true));
-                  }
-                  else {
+                  } else {
                      portDev_.setSetupPropertyValue(prop.name, prop.value);
                   }
                }
@@ -605,8 +602,7 @@ public final class DeviceSetupDlg extends JDialog {
                            foundPorts, foundPorts[0]);
                      // select the last found port
                      p.value = selectedValue;
-                  }
-                  else {
+                  } else {
                      p.value = foundPorts[0];
                   }
                   selectedPort = p.value;
@@ -624,8 +620,7 @@ public final class DeviceSetupDlg extends JDialog {
                   "Finished port scanning; spurious error messages no longer expected");
             if (resultPorts.contentEquals("")) {
                scanStatus_.setText("No valid ports found");
-            }
-            else {
+            } else {
                scanStatus_.setText("Scan completed successfully");
             }
             rebuildPropTable();

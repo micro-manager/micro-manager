@@ -285,8 +285,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
                   } catch (IOException | MMScriptException ee) {
                      ReportingUtils.logError(ee);
                   }
-               }
-               else if (EXT_ACQ.equals(getExtension(file))) {
+               } else if (EXT_ACQ.equals(getExtension(file))) {
                   scriptArea_.setText("mm.loadAcquisition(\"" + file.getAbsolutePath()
                         + "\");\ngui.startAcquisition();");
                   scriptPaneSaved_ = true;
@@ -325,8 +324,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
                }
             }
             tmpFile.deleteOnExit();
-         }
-         else {
+         } else {
             ReportingUtils.logError("Failed to find Script Panel Beanshell startup script");
          }
       } catch (IOException e) {
@@ -515,8 +513,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_KP_UP || e.getKeyCode() == KeyEvent.VK_UP) {
                doImmediatePaneHistoryUp();
-            }
-            else if (e.getKeyCode() == KeyEvent.VK_KP_DOWN
+            } else if (e.getKeyCode() == KeyEvent.VK_KP_DOWN
                   || e.getKeyCode() == KeyEvent.VK_DOWN) {
                doImmediatePaneHistoryDown();
             }
@@ -813,8 +810,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       String message;
       if (scriptFile_ != null) {
          message = "Save changes to " + scriptFile_.getName() + "?";
-      }
-      else {
+      } else {
          message = "Save script?";
       }
       int result = JOptionPane.showConfirmDialog(this,
@@ -824,8 +820,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       if (result == JOptionPane.NO_OPTION) {
          // avoid prompting again:
          scriptPaneSaved_ = true;
-      }
-      else {
+      } else {
          saveScript(row);
       }
 
@@ -838,14 +833,12 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
    private void addScript() {
       if (scriptFile_ != null && !model_.hasScriptAlready(scriptFile_)) {
          addScriptToModel(scriptFile_);
-      }
-      else if (scriptFile_ == null && !scriptPaneSaved_) {
+      } else if (scriptFile_ == null && !scriptPaneSaved_) {
          if (!promptToSave(-1)) {
             return;
          }
          addScriptToModel(scriptFile_);
-      }
-      else {
+      } else {
          // check for changes and offer to save if needed
          if (!promptToSave(-1)) {
             return;
@@ -1151,8 +1144,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       if (immediatePaneHistoryIndex_ < immediatePaneHistory_.size()) {
          immediatePane_.setText(
                immediatePaneHistory_.get(immediatePaneHistoryIndex_));
-      }
-      else {
+      } else {
          immediatePane_.setText("");
       }
    }
@@ -1368,8 +1360,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       public void run() {
          if (error_) {
             messageException(msg_, lineNumber_);
-         }
-         else {
+         } else {
             message(msg_);
          }
       }

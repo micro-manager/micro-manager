@@ -67,6 +67,7 @@ public final class DefaultMDAPlugin implements AcquisitionDialogPlugin, SciJavaP
 
    @Override
    public String getCopyright() {
-      return "Copyright (c) 2016 Open Imaging, Inc. and the Regents of the University of California";
+      return "Copyright (c) 2016 Open Imaging, Inc. and "
+            + "the Regents of the University of California";
    }
 }

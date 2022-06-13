@@ -216,8 +216,8 @@ public final class InspectorController
          sectionsPane_.setComponentAtIndex(i,
                sectionController.getSectionPanel());
          sectionsPane_.setComponentResizeEnabled(i,
-               sectionController.isVerticallyResizableByUser() &&
-                     sectionController.isExpanded());
+               sectionController.isVerticallyResizableByUser()
+                     &&  sectionController.isExpanded());
       }
       scrollPane_.setViewportView(sectionsPane_);
 
@@ -283,7 +283,7 @@ public final class InspectorController
          return;
       }
 
-      Object saveSelection = viewerComboBox_.getModel().getSelectedItem();
+      final Object saveSelection = viewerComboBox_.getModel().getSelectedItem();
 
       // Disable the combo box while we modify it; otherwise it fires action
       // events for the "changes"
@@ -359,8 +359,7 @@ public final class InspectorController
       if (selectedItem == FRONTMOST_VIEWER_ITEM) {
          attachToFrontmostDataViewer();
          viewerToFrontButton_.setEnabled(false);
-      }
-      else if (selectedItem instanceof ViewerItem) {
+      } else if (selectedItem instanceof ViewerItem) {
          DataViewer viewer = ((ViewerItem) selectedItem).getDataViewer();
          attachToFixedDataViewer(viewer);
          viewerToFrontButton_.setEnabled(true);
@@ -376,8 +375,7 @@ public final class InspectorController
          if (vi.getDataViewer() instanceof DisplayController) {
             ((DisplayController) vi.getDataViewer()).getWindow().toFront();
          }
-      }
-      else if (selectedItem instanceof String) {
+      } else if (selectedItem instanceof String) {
          List<DataViewer> viewers = viewerCollection_.getAllDataViewers();
          for (DataViewer viewer : viewers) {
             if (viewer.getName().equals(selectedItem)) {
@@ -442,8 +440,7 @@ public final class InspectorController
             if (secInfo.plugin_.isApplicableToDataViewer(viewer)) {
                secInfo.inspectorSectionController_.setEnabled(true);
                secInfo.inspectorPanelController_.attachDataViewer(viewer);
-            }
-            else {
+            } else {
                secInfo.inspectorSectionController_.setEnabled(false);
             }
          }
@@ -524,8 +521,7 @@ public final class InspectorController
       public void attachmentStrategySelected() {
          if (viewer_ != null) {
             attachToDataViewer(viewer_);
-         }
-         else {
+         } else {
             detachFromDataViewer();
          }
          // TODO Coordinate with explicit show/hide of the inspector
@@ -573,8 +569,7 @@ public final class InspectorController
          viewer_ = viewerCollection_.getActiveDataViewer();
          if (viewer_ != null) {
             attachToDataViewer(viewer_);
-         }
-         else {
+         } else {
             detachFromDataViewer();
          }
       }

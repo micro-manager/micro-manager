@@ -13,7 +13,7 @@ import mmcorej.StrVector;
 import org.micromanager.Studio;
 
 /**
- * Property table data model, representing MMCore data
+ * Property table data model, representing MMCore data.
  */
 public class PropertyTableData extends AbstractTableModel implements MMPropertyTableModel {
 
@@ -35,8 +35,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    // The table data is stored in here.
    protected Map<PropertyItem, Integer> propToRow_ = new HashMap<>();
    protected CMMCore core_ = null;
-   Configuration groupData_[];
-   PropertySetting groupSignature_[];
+   Configuration[] groupData_;
+   PropertySetting[] groupSignature_;
    private volatile boolean updating_;
    private final boolean groupOnly_;
    private final boolean allowChangingProperties_;
@@ -105,18 +105,18 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
    /**
     * PropertyTableData constructor
-    * <p>
-    * This Table model is used by the Device/Property Browser, the GroupEditor,
+    *
+    * <p>This Table model is used by the Device/Property Browser, the GroupEditor,
     * The PresetEditor, and the PixelSizeEditor.  Each of these has slightly
     * different requirements, contributing to a multitude of flags in the
     * constructor.  This code can likely be cleaned up with investment of time
     * to think everything through a bit better.
     *
-    * @param studio
+    * @param studio Usually singleton Studio instance
     * @param groupName                - Name of group to be edited.  Irrelevant for PixelSize editor
-    * @param presetName
-    * @param PropertyValueColumn      # (zero-based) of "Value" column
-    * @param PropertyUsedColumn       # (zero-based) of "Use" column
+    * @param presetName               - Name of the Preset
+    * @param propertyValueColumn      # (zero-based) of "Value" column
+    * @param propertyUsedColumn       # (zero-based) of "Use" column
     * @param groupOnly                - indicates that only properties included in the group
     *                                 should be shown
     * @param allowChangingProperties  - when true, the PropertyValueColumn will
@@ -130,7 +130,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
     *                                 will be used.
     */
    protected PropertyTableData(Studio studio, String groupName, String presetName,
-                               int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly,
+                               int propertyValueColumn, int propertyUsedColumn, boolean groupOnly,
                                boolean allowChangingProperties, boolean allowChangesOnlyWhenUsed,
                                boolean isPixelSizeConfig) {
       studio_ = studio;
@@ -138,8 +138,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       groupName_ = groupName;
       presetName_ = presetName;
       propertyNameColumn_ = 0;
-      propertyValueColumn_ = PropertyValueColumn;
-      propertyUsedColumn_ = PropertyUsedColumn;
+      propertyValueColumn_ = propertyValueColumn;
+      propertyUsedColumn_ = propertyUsedColumn;
       groupOnly_ = groupOnly;
       allowChangingProperties_ = allowChangingProperties;
       allowChangesOnlyWhenUsed_ = allowChangesOnlyWhenUsed;
@@ -205,11 +205,9 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       PropertyItem item = propListVisible_.get(row);
       if (col == propertyNameColumn_) {
          return item.device + "-" + item.name;
-      }
-      else if (col == propertyValueColumn_) {
+      } else if (col == propertyValueColumn_) {
          return item.value;
-      }
-      else if (col == propertyUsedColumn_) {
+      } else if (col == propertyUsedColumn_) {
          return item.confInclude;
       }
 
@@ -221,11 +219,9 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       try {
          if (item.isInteger()) {
             core_.setProperty(item.device, item.name, NumberUtils.intStringDisplayToCore(value));
-         }
-         else if (item.isFloat()) {
+         } else if (item.isFloat()) {
             core_.setProperty(item.device, item.name, NumberUtils.doubleStringDisplayToCore(value));
-         }
-         else {
+         } else {
             core_.setProperty(item.device, item.name, value.toString());
          }
          item.value = value.toString();
@@ -249,8 +245,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             studio_.app().refreshGUIFromCache();
             setUpdating(false);
          }
-      }
-      else if (col == propertyUsedColumn_) {
+      } else if (col == propertyUsedColumn_) {
          item.confInclude = ((Boolean) value);
       }
       fireTableCellUpdated(row, col);
@@ -264,26 +259,21 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    @Override
    public boolean isCellEditable(int nRow, int nCol) {
       if (nCol == propertyValueColumn_) {
-         if (!allowChangingProperties_) // do not allow editing in the group editor view
-         {
+         if (!allowChangingProperties_) { // do not allow editing in the group editor view
             return false;
-         }
-         else {
+         } else {
             if (propListVisible_.get(nRow).readOnly) {
                return false;
             }
             if (allowChangesOnlyWhenUsed_) {
                return propListVisible_.get(nRow).confInclude;
-            }
-            else {
+            } else {
                return true;
             }
          }
-      }
-      else if (nCol == propertyUsedColumn_) {
+      } else if (nCol == propertyUsedColumn_) {
          return !groupOnly_;
-      }
-      else {
+      } else {
          return false;
       }
    }
@@ -301,12 +291,12 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       }
    }
 
-   public void update(boolean fromCache) {
-      update(flags_, groupName_, presetName_, fromCache);
-   }
-
    public void setShowReadOnly(boolean showReadOnly) {
       showReadOnly_ = showReadOnly;
+   }
+
+   public void update(boolean fromCache) {
+      update(flags_, groupName_, presetName_, fromCache);
    }
 
    // note: public since it is overridden in internal.PropertyEditor
@@ -332,43 +322,34 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          if (isPixelSizeConfig_) {
             if (core_.isPixelSizeConfigDefined(presetName)) {
                cfg = core_.getPixelSizeConfigData(presetName);
-            }
-            else {
+            } else {
                // We need a config, preferably any pixel size config so:
                StrVector availablePixelSizeConfigs = core_.getAvailablePixelSizeConfigs();
                if (availablePixelSizeConfigs.size() > 0) {
                   cfg = core_.getPixelSizeConfigData(availablePixelSizeConfigs.get(0));
-               }
-               else if (fromCache) {
+               } else if (fromCache) {
                   cfg = core_.getConfigGroupStateFromCache(groupName);
-               }
-               else {
+               } else {
                   cfg = core_.getConfigGroupState(groupName);
                }
             }
-         }
-         else if (fromCache) {
+         } else if (fromCache) {
             cfg = core_.getConfigGroupStateFromCache(groupName);
-         }
-         else {
+         } else {
             cfg = core_.getConfigGroupState(groupName);
          }
 
          setUpdating(true);
 
          for (int i = 0; i < devices.size(); i++) {
-
             if (showDevice(flags, devices.get(i))) {
-
                StrVector properties = core_.getDevicePropertyNames(devices.get(i));
                for (int j = 0; j < properties.size(); j++) {
                   PropertyItem item = new PropertyItem();
                   if (!groupOnly_ || cfg.isPropertyIncluded(devices.get(i), properties.get(j))) {
                      item.readFromCore(core_, devices.get(i), properties.get(j), fromCache);
                      if ((!item.readOnly || showReadOnly_) && !item.preInit) {
-
                         item.confInclude = cfg.isPropertyIncluded(item.device, item.name);
-
                         for (PropertyItem usedItem : usedItems) {
                            if (item.device.equals(usedItem.device)
                                  && item.name.equals(usedItem.name)) {
@@ -380,7 +361,6 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                      }
                   }
                }
-
             }
          }
 
@@ -444,23 +424,17 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       Boolean showDevice;
       if (dType == DeviceType.SerialDevice) {
          showDevice = false;
-      }
-      else if (dType == DeviceType.CameraDevice) {
+      } else if (dType == DeviceType.CameraDevice) {
          showDevice = flags.cameras_;
-      }
-      else if (dType == DeviceType.ShutterDevice) {
+      } else if (dType == DeviceType.ShutterDevice) {
          showDevice = flags.shutters_;
-      }
-      else if (dType == DeviceType.StageDevice) {
+      } else if (dType == DeviceType.StageDevice) {
          showDevice = flags.stages_;
-      }
-      else if (dType == DeviceType.XYStageDevice) {
+      } else if (dType == DeviceType.XYStageDevice) {
          showDevice = flags.stages_;
-      }
-      else if (dType == DeviceType.StateDevice) {
+      } else if (dType == DeviceType.StateDevice) {
          showDevice = flags.state_;
-      }
-      else {
+      } else {
          showDevice = flags.other_;
       }
 

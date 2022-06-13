@@ -28,17 +28,17 @@ public enum PixelType {
    },
    /**
     * RGB 888 format.
-    * <p>
-    * Misleadingly, when saved to TIFF this is RGB24 with no extra byte per
+    *
+    * <p>Misleadingly, when saved to TIFF this is RGB24 with no extra byte per
     * pixel.
-    * <p>
-    * TODO Make sure the following statement is correct.
-    * <p>
-    * As a Java array, this is an {@code int[]} with the samples stored in
+    *
+    * <p>TODO Make sure the following statement is correct.
+    *
+    * <p>As a Java array, this is an {@code int[]} with the samples stored in
     * _-R-G-B order (MSB to LSB), or a {@code byte[]} with the samples stored
     * in _-R-G-B order.
-    * <p>
-    * As a native (C) array, this is a {@code uint8_t[]} with the samples
+    *
+    * <p>As a native (C) array, this is a {@code uint8_t[]} with the samples
     * stored in B-G-R-_ order -- at least on little-endian systems.
     * NS 2018/02/05: This seems to be the order RGB images are stored in our
     * ByteBuffers.  Since we use RGB in our UI, order the components this way
@@ -98,7 +98,7 @@ public enum PixelType {
     *
     * @param component the component
     * @return offset of component within pixel, in number of samples (not
-    * bytes)
+    *     bytes)
     */
    public final int getComponentSampleOffset(int component) {
       return offsets_[component];

@@ -59,24 +59,20 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          checkBox_.setSelected(checkBoxValue_);
          checkBox_.addChangeListener(checkBoxChangeListener_);
          return checkBox_;
-      }
-      else if (colIndex == 2 || colIndex == 3) {
+      } else if (colIndex == 2 || colIndex == 3) {
          // exposure and z offset
          text_.setText(NumberUtils.doubleToDisplayString((Double) value));
          return text_;
-      }
-      else if (colIndex == 4) {
+      } else if (colIndex == 4) {
          checkBox_.removeChangeListener(checkBoxChangeListener_);
          checkBox_.addChangeListener(checkBoxChangeListener_);
          checkBox_.setSelected((Boolean) value);
          return checkBox_;
-      }
-      else if (colIndex == 5) {
+      } else if (colIndex == 5) {
          // skip
          text_.setText(NumberUtils.intToDisplayString((Integer) value));
          return text_;
-      }
-      else if (colIndex == 1) {
+      } else if (colIndex == 1) {
          // remove old listeners
          ActionListener[] listeners = channelSelect_.getActionListeners();
          for (ActionListener listener : listeners) {
@@ -109,8 +105,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
 
          // Return the configured component
          return channelSelect_;
-      }
-      else {
+      } else {
          // ColorEditor takes care of this
          return colorLabel_;
       }
@@ -126,23 +121,17 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
       try {
          if (editCol_ == 0) {
             return checkBox_.isSelected();
-         }
-         else if (editCol_ == 1) {
+         } else if (editCol_ == 1) {
             return channelSelect_.getSelectedItem();
-         }
-         else if (editCol_ == 2 || editCol_ == 3) {
+         } else if (editCol_ == 2 || editCol_ == 3) {
             return NumberUtils.displayStringToDouble(text_.getText());
-         }
-         else if (editCol_ == 4) {
+         } else if (editCol_ == 4) {
             return checkBox_.isSelected();
-         }
-         else if (editCol_ == 5) {
+         } else if (editCol_ == 5) {
             return NumberUtils.displayStringToInt(text_.getText());
-         }
-         else if (editCol_ == 6) {
+         } else if (editCol_ == 6) {
             return colorLabel_.getBackground();
-         }
-         else {
+         } else {
             return "Internal error: unknown column";
          }
       } catch (ParseException p) {

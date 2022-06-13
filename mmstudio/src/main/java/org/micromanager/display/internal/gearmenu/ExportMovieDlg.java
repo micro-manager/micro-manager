@@ -146,8 +146,7 @@ public final class ExportMovieDlg extends JDialog {
                   addButton_.setText("Delete inner loop");
                   addButton_.setIcon(DELETE_ICON);
                   parent.pack();
-               }
-               else {
+               } else {
                   remove(child_);
                   parent.deleteFollowing(localThis);
                   child_ = null;
@@ -187,8 +186,7 @@ public final class ExportMovieDlg extends JDialog {
             maxModel_ = new SpinnerNumberModel(axisLen, 1, axisLen, 1);
             minSpinner_.setModel(minModel_);
             maxSpinner_.setModel(maxModel_);
-         }
-         else {
+         } else {
             // Update their maxima according to the new axis.
             minModel_.setMaximum(axisLen - 1);
             maxModel_.setMaximum(axisLen);
@@ -207,7 +205,7 @@ public final class ExportMovieDlg extends JDialog {
        * Apply our configuration to the provided ImageExporter, and recurse
        * if appropriate to any contained AxisPanel.
        *
-       * @param exporter
+       * @param exporter Exporter to be configured
        */
       public void configureExporter(ImageExporter exporter) {
          // Correct for the 1-indexed GUI values, since coords are 0-indexed.
@@ -240,8 +238,8 @@ public final class ExportMovieDlg extends JDialog {
    /**
     * Show the dialog.
     *
-    * @param studio
-    * @param display display showing the data to be exported
+    * @param studio Usually singleton instance of Studio
+    * @param display displayWindow showing the data to be exported
     */
    public ExportMovieDlg(Studio studio, DisplayWindow display) {
       super();
@@ -250,8 +248,8 @@ public final class ExportMovieDlg extends JDialog {
 
       // position the export dialog over the center of the display:
       Window dw = display.getWindow();
-      int centerX = dw.getX() + dw.getWidth() / 2;
-      int centerY = dw.getY() + dw.getHeight() / 2;
+      final int centerX = dw.getX() + dw.getWidth() / 2;
+      final int centerY = dw.getY() + dw.getHeight() / 2;
 
       display_ = display;
       provider_ = display.getDataProvider();
@@ -264,12 +262,16 @@ public final class ExportMovieDlg extends JDialog {
       contentsPanel_ = new JPanel(new MigLayout("flowy"));
 
       JLabel help = new JLabel(
-            "<html><body>Export a series of images from your dataset. The images will be exactly as currently<br>drawn on your display, including histogram scaling, zoom, overlays, etc. Note that<br>this does not preserve the raw data, nor any metadata.</body></html>");
+            "<html><body>Export a series of images from your dataset. The images will be "
+                  + "exactly as currently<br>drawn on your display, including histogram scaling, "
+                  + "zoom, overlays, etc. Note that<br>this does not preserve the raw data, "
+                  + "nor any metadata.</body></html>");
       contentsPanel_.add(help, "align center");
 
       if (isComposite()) {
          contentsPanel_.add(new JLabel(
-                     "<html><body>The \"channel\" axis is unavailable as the display is in composite mode.</body></html>"),
+                     "<html><body>The \"channel\" axis is unavailable as the display "
+                           + "is in composite mode.</body></html>"),
                "align center");
       }
 
@@ -289,8 +291,7 @@ public final class ExportMovieDlg extends JDialog {
             if (selection.equals(FORMAT_JPEG)) {
                jpegPanel_.add(new JLabel("JPEG quality(%): "));
                jpegPanel_.add(jpegQualitySpinner_);
-            }
-            else {
+            } else {
                jpegPanel_.removeAll();
             }
             prefixLabel_.setEnabled(!selection.equals(FORMAT_IMAGEJ));
@@ -316,8 +317,7 @@ public final class ExportMovieDlg extends JDialog {
          contentsPanel_.add(
                new JLabel("There is only one image available to export."),
                "align center");
-      }
-      else {
+      } else {
          contentsPanel_.add(createAxisPanel());
       }
       // Dropdown menu with all axes (except channel when in composite mode)
@@ -363,8 +363,7 @@ public final class ExportMovieDlg extends JDialog {
       if (mode.contentEquals(FORMAT_JPEG)) {
          format = ImageExporter.OutputFormat.OUTPUT_JPG;
          suffix = "jpg";
-      }
-      else if (mode.contentEquals(FORMAT_IMAGEJ)) {
+      } else if (mode.contentEquals(FORMAT_IMAGEJ)) {
          format = ImageExporter.OutputFormat.OUTPUT_IMAGEJ;
       }
       String[] fss = {suffix};
@@ -408,8 +407,7 @@ public final class ExportMovieDlg extends JDialog {
       exporter.setDisplay(display_);
       if (axisPanels_.size() > 0) {
          axisPanels_.get(0).configureExporter(exporter);
-      }
-      else {
+      } else {
          exporter.loop(provider_.getAxes().get(0), 0, 0);
       }
 
@@ -422,7 +420,8 @@ public final class ExportMovieDlg extends JDialog {
          exporter.export();
       } catch (IOException e) {
          ReportingUtils.showError(
-               "Can't export to the selected directory as it would overwrite an existing file. Please choose a different directory.");
+               "Can't export to the selected directory as it would overwrite an i"
+                     + "existing file. Please choose a different directory.");
          return;
       }
       dispose();
@@ -432,7 +431,7 @@ public final class ExportMovieDlg extends JDialog {
     * Create a row of controls for iterating over an axis. Pick an axis from
     * those not yet being used.
     *
-    * @return
+    * @return AxisPanel
     */
    public AxisPanel createAxisPanel() {
       HashSet<String> axes = new HashSet<>(getNonZeroAxes());
@@ -496,8 +495,8 @@ public final class ExportMovieDlg extends JDialog {
     * Returns true if the display mode is composite.
     */
    private boolean isComposite() {
-      return display_.getDisplaySettings().getColorMode() ==
-            DisplaySettings.ColorMode.COMPOSITE;
+      return display_.getDisplaySettings().getColorMode()
+            == DisplaySettings.ColorMode.COMPOSITE;
    }
 
    /**
@@ -510,8 +509,8 @@ public final class ExportMovieDlg extends JDialog {
       ArrayList<String> result = new ArrayList<>();
       for (String axis : provider_.getAxes()) {
          // Channel axis is only available when in non-composite display modes.
-         if (provider_.getNextIndex(axis) > 0 &&
-               (!axis.equals(Coords.CHANNEL) || !isComposite())) {
+         if (provider_.getNextIndex(axis) > 0
+               && (!axis.equals(Coords.CHANNEL) || !isComposite())) {
             result.add(axis);
          }
       }
@@ -532,43 +531,43 @@ public final class ExportMovieDlg extends JDialog {
     * Get the default mode the user wants to use for exporting movies.
     */
    private String getDefaultExportFormat() {
-      return studio_.profile().
-            getSettings(ExportMovieDlg.class).
-            getString(DEFAULT_EXPORT_FORMAT, FORMAT_PNG);
+      return studio_.profile()
+            .getSettings(ExportMovieDlg.class)
+            .getString(DEFAULT_EXPORT_FORMAT, FORMAT_PNG);
    }
 
    /**
     * Set the default mode to use for exporting movies.
     */
    private void setDefaultExportFormat(String format) {
-      studio_.profile().getSettings(ExportMovieDlg.class).
-            putString(DEFAULT_EXPORT_FORMAT, format);
+      studio_.profile().getSettings(ExportMovieDlg.class)
+            .putString(DEFAULT_EXPORT_FORMAT, format);
    }
 
    /**
     * Get the default filename prefix.
     */
    private String getDefaultPrefix() {
-      return studio_.profile().getSettings(ExportMovieDlg.class).
-            getString(DEFAULT_FILENAME_PREFIX, "exported");
+      return studio_.profile().getSettings(ExportMovieDlg.class)
+            .getString(DEFAULT_FILENAME_PREFIX, "exported");
    }
 
    /**
     * Set a new default filename prefix.
     */
    private void setDefaultPrefix(String prefix) {
-      studio_.profile().getSettings(ExportMovieDlg.class).
-            putString(DEFAULT_FILENAME_PREFIX, prefix);
+      studio_.profile().getSettings(ExportMovieDlg.class)
+            .putString(DEFAULT_FILENAME_PREFIX, prefix);
    }
 
    private int getJPEGQuality() {
-      return studio_.profile().getSettings(ExportMovieDlg.class).
-            getInteger(JPEG_QUALITY, 90);
+      return studio_.profile().getSettings(ExportMovieDlg.class)
+            .getInteger(JPEG_QUALITY, 90);
    }
 
    private void setJPEGQuality(int quality) {
-      studio_.profile().getSettings(ExportMovieDlg.class).
-            putInteger(JPEG_QUALITY, quality);
+      studio_.profile().getSettings(ExportMovieDlg.class)
+            .putInteger(JPEG_QUALITY, quality);
    }
 }
 

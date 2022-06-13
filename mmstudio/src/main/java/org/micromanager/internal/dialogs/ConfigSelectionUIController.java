@@ -51,8 +51,7 @@ public class ConfigSelectionUIController {
          if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
             if (ret.panel_.isShowing()) {
                ret.uiWasShown();
-            }
-            else {
+            } else {
                ret.uiWasHidden();
             }
          }

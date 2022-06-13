@@ -155,6 +155,12 @@ public final class MicroscopeModel {
       fileName_ = fname;
    }
 
+   /**
+    * Devices currently known to the core will be loaded int our model.
+    *
+    * @param core Usually singleton instance of the Micro-Manager core
+    * @throws Exception Core throws unspecified exceptions
+    */
    public void loadDeviceDataFromHardware(CMMCore core) throws Exception {
       for (Device dev : devices_) {
          dev.loadDataFromHardware(core);
@@ -166,6 +172,12 @@ public final class MicroscopeModel {
       }
    }
 
+   /**
+    * Loads labels from state devices from the core.
+    *
+    * @param core Usually singleton instance of the Micro-Manager Core
+    * @throws Exception Core throws unspecfied Exceptions
+    */
    public void loadStateLabelsFromHardware(CMMCore core) throws Exception {
       for (Device dev : devices_) {
          // do not override existing device labels:
@@ -214,8 +226,7 @@ public final class MicroscopeModel {
                      if (!dev.isSerialPort()) {
                         // regular device
                         devsTotal.add(dev);
-                     }
-                     else {
+                     } else {
                         // com port
                         dev.setName(dev.getAdapterName());
                         if (!ports.contains(dev)) {
@@ -299,8 +310,7 @@ public final class MicroscopeModel {
       if (use) {
          comPortInUse_.put(availableComPorts_[portIndex].getName(),
                availableComPorts_[portIndex]);
-      }
-      else {
+      } else {
          comPortInUse_.remove(availableComPorts_[portIndex].getName());
       }
    }
@@ -308,31 +318,40 @@ public final class MicroscopeModel {
    void useSerialPort(Device dev, boolean use) {
       if (use) {
          comPortInUse_.put(dev.getName(), dev);
-      }
-      else {
+      } else {
          comPortInUse_.remove(dev.getName());
       }
    }
 
+   /**
+    * Adds a (setup) property to the device in our model.
+    *
+    * @param deviceName device to which the property belongs
+    * @param prop property to be added
+    * @throws MMConfigFileException thrown if device is not found
+    */
    public void addSetupProperty(String deviceName, PropertyItem prop)
          throws MMConfigFileException {
       Device dev = findDevice(deviceName);
       if (dev == null) {
          throw new MMConfigFileException("Device " + deviceName
                + " not defined.");
-
       }
       PropertyItem p = dev.findSetupProperty(prop.name);
       if (p == null) {
          dev.addSetupProperty(prop);
-
-      }
-      else {
+      } else {
          p.value = prop.value;
-
       }
    }
 
+   /**
+    * Adds a Label to a device in our model.
+    *
+    * @param deviceName Device to which the label will be added
+    * @param lab Label to be added.
+    * @throws MMConfigFileException thrown when device is not found in the model.
+    */
    public void addSetupLabel(String deviceName, Label lab)
          throws MMConfigFileException {
       // find the device
@@ -349,7 +368,7 @@ public final class MicroscopeModel {
     * Transfer to hardware all labels defined in the setup.
     *
     * @param core The Micro-Manager core hardware interface.
-    * @throws Exception
+    * @throws Exception Core throws unspecified exceptions
     */
    public void applySetupLabelsToHardware(CMMCore core) throws Exception {
       for (Device dev : devices_) {
@@ -367,7 +386,7 @@ public final class MicroscopeModel {
     * Transfer to hardware all configuration settings defined in the setup.
     *
     * @param core The Micro-Manager core hardware interface
-    * @throws Exception
+    * @throws Exception Core throws unspecified exceptions
     */
    public void applySetupConfigsToHardware(CMMCore core) throws Exception {
       // first clear any existing configurations
@@ -399,7 +418,7 @@ public final class MicroscopeModel {
     * Copy the configuration presets from the hardware and override the current
     * setup data.
     *
-    * @throws MMConfigFileException
+    * @throws MMConfigFileException thrown when an exception occurs.
     */
    public void createSetupConfigsFromHardware(CMMCore core)
          throws MMConfigFileException {
@@ -441,7 +460,7 @@ public final class MicroscopeModel {
     */
    public void updateLabelsInPreset(String deviceName, String oldLabel, String newLabel) {
       for (Enumeration<ConfigGroup> e = configGroups_.elements();
-           e.hasMoreElements(); ) {
+            e.hasMoreElements(); ) {
          ConfigGroup grp = e.nextElement();
          ConfigPreset[] cps = grp.getConfigPresets();
          for (ConfigPreset cp : cps) {
@@ -461,7 +480,7 @@ public final class MicroscopeModel {
     * Copy the configuration presets from the hardware and override the current
     * setup data.
     *
-    * @throws MMConfigFileException
+    * @throws MMConfigFileException thrown when any exception occurs
     */
    public void createResolutionsFromHardware(CMMCore core)
          throws MMConfigFileException {
@@ -516,8 +535,7 @@ public final class MicroscopeModel {
          configGroups_.put(cg.getName(), cg);
          modified_ = true;
          return true;
-      }
-      else {
+      } else {
          return false;
       }
    }
@@ -561,8 +579,7 @@ public final class MicroscopeModel {
                // tokens[2] + "," + tokens[3]);
                // get description
                devices_.add(dev);
-            }
-            else if (tokens[0].contentEquals(new StringBuffer()
+            } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_Property()))) {
 
                // -------------------------------------------------------------
@@ -593,24 +610,21 @@ public final class MicroscopeModel {
                         .getG_Keyword_CoreInitialize()))) {
                      initialized = !tokens[3]
                            .contentEquals(new StringBuffer().append("0"));
-                  }
-                  else {
+                  } else {
                      PropertyItem prop = new PropertyItem();
                      prop.name = tokens[2];
                      prop.value = tokens[3];
                      addSetupProperty(tokens[1], prop);
                   }
 
-               }
-               else {
+               } else {
                   PropertyItem prop = new PropertyItem();
                   prop.preInit = !initialized;
                   prop.name = tokens[2];
                   prop.value = tokens[3];
                   addSetupProperty(tokens[1], prop);
                }
-            }
-            else if (tokens[0].contentEquals(new StringBuffer()
+            } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_Label()))) {
                // -------------------------------------------------------------
                // "Label" command
@@ -622,8 +636,7 @@ public final class MicroscopeModel {
                }
                Label lab = new Label(tokens[3], Integer.parseInt(tokens[2]));
                addSetupLabel(tokens[1], lab);
-            }
-            else if (tokens[0].contentEquals(new StringBuffer()
+            } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_ImageSynchro()))) {
                // -------------------------------------------------------------
                // "ImageSynchro" commands
@@ -634,8 +647,7 @@ public final class MicroscopeModel {
 
                }
                synchroDevices_.add(tokens[1]);
-            }
-            else if (tokens[0].contentEquals(new StringBuffer()
+            } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_ConfigGroup()))) {
                // -------------------------------------------------------------
                // "ConfigGroup" commands
@@ -651,13 +663,11 @@ public final class MicroscopeModel {
                   cg.addConfigSetting(tokens[2], tokens[3], tokens[4],
                         tokens[5]);
 
-               }
-               else {
+               } else {
                   cg.addConfigSetting(tokens[2], tokens[3], tokens[4], "");
 
                }
-            }
-            else if (tokens[0].contentEquals(new StringBuffer()
+            } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_ConfigPixelSize()))) {
                // -------------------------------------------------------------
                // "ConfigPixelSize" commands
@@ -670,8 +680,7 @@ public final class MicroscopeModel {
                pixelSizeGroup_.addConfigSetting(tokens[1], tokens[2],
                      tokens[3], tokens[4]);
 
-            }
-            else if (tokens[0].contentEquals(new StringBuffer()
+            } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_PixelSize_um()))) {
                // -------------------------------------------------------------
                // "PixelSize" commands
@@ -682,8 +691,7 @@ public final class MicroscopeModel {
                      cp.setPixelSizeUm(Double.parseDouble(tokens[2]));
                   }
                }
-            }
-            else if (tokens[0].contentEquals(new StringBuffer()
+            } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_PixelSizeAffine()))) {
                if (tokens.length == 8) {
                   ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
@@ -693,15 +701,13 @@ public final class MicroscopeModel {
                         aft.set(i, Double.parseDouble(tokens[i + 2]));
                      }
                      cp.setAffineTransform(aft);
-                  }
-                  else {
+                  } else {
 
                      throw new MMConfigFileException(
                            "Invalid number of parameters (3 or 8 required):\n" + line);
                   }
                }
-            }
-            else if (tokens[0].contentEquals(new StringBuffer()
+            } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_Delay()))) {
                // -------------------------------------------------------------
                // "Delay" commands
@@ -716,8 +722,7 @@ public final class MicroscopeModel {
                   dev.setDelay(Double.parseDouble(tokens[2]));
 
                }
-            }
-            else if (tokens[0].equals(MMCoreJ.getG_CFGCommand_FocusDirection())) {
+            } else if (tokens[0].equals(MMCoreJ.getG_CFGCommand_FocusDirection())) {
                if (tokens.length != 3) {
                   throw new MMConfigFileException(
                         "Invalid number of parameters (3 required):\n" + line);
@@ -728,8 +733,7 @@ public final class MicroscopeModel {
                   //Set type manually or else focus direction wont get resaved
                   dev.setTypeByInt(DeviceType.StageDevice.swigValue());
                }
-            }
-            else if (tokens[0].contentEquals(
+            } else if (tokens[0].contentEquals(
                   new StringBuffer().append(MMCoreJ.getG_CFGCommand_ParentID()))) {
                if (tokens.length != 3) {
                   throw new MMConfigFileException(
@@ -1461,7 +1465,7 @@ public final class MicroscopeModel {
       sendConfiguration_ = value;
    }
 
-   public void AddSelectedPeripherals(CMMCore c, Vector<Device> pd,
+   public void addSelectedPeripherals(CMMCore c, Vector<Device> pd,
                                       Vector<String> hubs, Vector<Boolean> sel) {
       for (int idit = 0; idit < pd.size(); ++idit) {
          if (sel.get(idit)) {
@@ -1481,8 +1485,7 @@ public final class MicroscopeModel {
             } catch (Exception e) {
                ReportingUtils.showError(e);
             }
-         }
-         else {
+         } else {
             try {
                c.unloadDevice(pd.get(idit).getName());
             } catch (Exception e) {

@@ -15,8 +15,8 @@ import org.micromanager.display.DisplayDidShowImageEvent;
 /**
  * This event posts when a DataViewer displays an image(s). It only posts once the
  * image is actually showing.
- * <p>
- * This event posts on the DataViewer event bus.
+ *
+ * <p>This event posts on the DataViewer event bus.
  * Register using {@link DataViewer#registerForEvents(Object)}.
  */
 public class DefaultDisplayDidShowImageEvent implements DisplayDidShowImageEvent {

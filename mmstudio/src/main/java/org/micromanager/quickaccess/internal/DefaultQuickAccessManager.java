@@ -85,8 +85,8 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    @Subscribe
    public void onStartupComplete(StartupCompleteEvent event) {
       try {
-         String configStr = studio_.profile().
-               getSettings(QuickAccessManager.class).getString(SAVED_CONFIG, null);
+         String configStr = studio_.profile()
+               .getSettings(QuickAccessManager.class).getString(SAVED_CONFIG, null);
          if (configStr == null) {
             // Nothing saved.
             return;
@@ -119,8 +119,8 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       String config = getConfig(false);
-      studio_.profile().getSettings(QuickAccessManager.class).
-            putString(SAVED_CONFIG, config);
+      studio_.profile().getSettings(QuickAccessManager.class)
+            .putString(SAVED_CONFIG, config);
    }
 
    /**
@@ -182,18 +182,15 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
             } catch (IOException e) {
                studio_.logs().showError(e, "Unable to find image at " + iconPath);
             }
-         }
-         else if (iconType.equals(COLOR_SWATCH)) {
+         } else if (iconType.equals(COLOR_SWATCH)) {
             // Create a square icon by rendering a JLabel.
             Color color = new Color(json.getInt(ICON_COLOR));
             return createSwatch(color, QuickAccessPlugin.CELL_HEIGHT - 16);
-         }
-         else if (iconType.equals(JAR_ICON)) {
+         } else if (iconType.equals(JAR_ICON)) {
             // Load the icon from our jar.
-            return IconLoader.getIcon("/org/micromanager/icons/" +
-                  json.getString(ICON_PATH) + ".png");
-         }
-         else {
+            return IconLoader.getIcon("/org/micromanager/icons/"
+                  + json.getString(ICON_PATH) + ".png");
+         } else {
             studio_.logs().logError("Unsupported icon type " + iconType);
          }
       } catch (JSONException e) {

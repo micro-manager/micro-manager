@@ -425,8 +425,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             column = new TableColumn(model_.getColumnCount() - 1, 200, cr, ce);
             column.setPreferredWidth(columnWidth_[model_.getColumnCount() - 1]);
 
-         }
-         else {
+         } else {
             column = new TableColumn(colIndex, 200, cellRenderer, channelCellEditor_);
             column.setPreferredWidth(columnWidth_[colIndex]);
             // HACK: the "Configuration" tab should be wider than the others.
@@ -566,7 +565,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       // Simplify inserting unit labels slightly.
       final Runnable addUnits = () -> {
-         JLabel label = new JLabel("\u00b5m");
+         JLabel label = new JLabel("\u00b5m"); // Micro Sign
          label.setFont(DEFAULT_FONT);
          slicesPanel_.add(label, "gapleft 0, gapright 4");
       };
@@ -735,8 +734,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             if (mmStudio_.getAutofocusManager() != null) {
                mmStudio_.getAutofocusManager().refresh();
             }
-         }
-         else {
+         } else {
             updateGroupsCombo(); // NS 2021-05-6: not sure what this is needed for.
          }
       });
@@ -925,11 +923,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       Datastore.SaveMode mode = mmStudio_.data().getPreferredSaveMode();
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          singleButton_.setSelected(true);
-      }
-      else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
+      } else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
          multiButton_.setSelected(true);
-      }
-      else {
+      } else {
          ReportingUtils.logError("Unrecognized save mode " + mode);
       }
 
@@ -1190,8 +1186,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private void updateGUIFromSequenceSettings(final SequenceSettings sequenceSettings) {
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(() -> updateGUIFromSequenceSettings(sequenceSettings));
-      }
-      else {
+      } else {
          if (disableGUItoSettings_) {
             return;
          }
@@ -1256,28 +1251,23 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             acqOrderBox_.addItem(acqOrderModes_[1]);
             acqOrderBox_.addItem(acqOrderModes_[2]);
             acqOrderBox_.addItem(acqOrderModes_[3]);
-         }
-         else if (framesPanel_.isSelected() && positionsPanel_.isSelected()) {
+         } else if (framesPanel_.isSelected() && positionsPanel_.isSelected()) {
             if (selectedIndex == 0 || selectedIndex == 2) {
                acqOrderBox_.addItem(acqOrderModes_[0]);
                acqOrderBox_.addItem(acqOrderModes_[2]);
-            }
-            else {
+            } else {
                acqOrderBox_.addItem(acqOrderModes_[1]);
                acqOrderBox_.addItem(acqOrderModes_[3]);
             }
-         }
-         else if (channelsPanel_.isSelected() && slicesPanel_.isSelected()) {
+         } else if (channelsPanel_.isSelected() && slicesPanel_.isSelected()) {
             if (selectedIndex == 0 || selectedIndex == 1) {
                acqOrderBox_.addItem(acqOrderModes_[0]);
                acqOrderBox_.addItem(acqOrderModes_[1]);
-            }
-            else {
+            } else {
                acqOrderBox_.addItem(acqOrderModes_[2]);
                acqOrderBox_.addItem(acqOrderModes_[3]);
             }
-         }
-         else {
+         } else {
             acqOrderBox_.addItem(acqOrderModes_[selectedIndex]);
          }
          acqOrderBox_.setSelectedItem(acqOrderModes_[sequenceSettings.acqOrderMode()]);
@@ -1293,8 +1283,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          DefaultDatastore.setPreferredSaveMode(mmStudio_, sequenceSettings.saveMode());
          if (sequenceSettings.saveMode() == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
             singleButton_.setSelected(true);
-         }
-         else if (sequenceSettings.saveMode() == Datastore.SaveMode.MULTIPAGE_TIFF) {
+         } else if (sequenceSettings.saveMode() == Datastore.SaveMode.MULTIPAGE_TIFF) {
             multiButton_.setSelected(true);
          }
 
@@ -1321,8 +1310,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    public void onNewPositionList(NewPositionListEvent newPositionListEvent) {
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(() -> onNewPositionList(newPositionListEvent));
-      }
-      else {
+      } else {
          acqEng_.setPositionList(newPositionListEvent.getPositionList());
          // update summary
          summaryTextArea_.setText(acqEng_.getVerboseSummary());
@@ -1431,8 +1419,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          } catch (InvocationTargetException e) {
             ReportingUtils.logError(e, "Error updating GUI");
          }
-      }
-      else {
+      } else {
          throw new IOException("Can not read file: " + path);
       }
    }
@@ -1712,12 +1699,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (singleButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
                Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
-      }
-      else if (multiButton_.isSelected()) {
+      } else if (multiButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
                Datastore.SaveMode.MULTIPAGE_TIFF);
-      }
-      else {
+      } else {
          ReportingUtils.logError(
                "Unknown save mode button or no save mode buttons selected");
       }
@@ -1799,8 +1784,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          // convert from absolute to relative
          newTop = zTopUm - curZ;
          newBottom = zBottomUm - curZ;
-      }
-      else {
+      } else {
          // convert from relative to absolute
          newTop = zTopUm + curZ;
          newBottom = zBottomUm + curZ;
@@ -1834,8 +1818,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       public void setBorder(Border border) {
          if (compTitledBorder != null && borderSet_) {
             compTitledBorder.setBorder(border);
-         }
-         else {
+         } else {
             super.setBorder(border);
          }
       }
@@ -1931,8 +1914,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                for (Component subComp1 : subComp) {
                   subComp1.setEnabled(enabled);
                }
-            }
-            else {
+            } else {
                comp1.setEnabled(enabled);
             }
          }

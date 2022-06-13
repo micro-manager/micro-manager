@@ -27,8 +27,8 @@ import org.micromanager.data.Datastore;
 /**
  * This event posts when the DataStore gets a new name, i.e. when
  * {@link Datastore#setName(String)} is called
- * <p>
- * This Event posts on the Datastore bus.
+ *
+ * <p>This Event posts on the Datastore bus.
  * Subscribe using {@link DataProvider#registerForEvents(Object)}.
  */
 public class DefaultHasNewNameEvent implements DataProviderHasNewNameEvent {

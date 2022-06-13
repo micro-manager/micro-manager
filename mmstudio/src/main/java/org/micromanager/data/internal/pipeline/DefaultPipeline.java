@@ -54,8 +54,7 @@ public final class DefaultPipeline implements Pipeline {
       for (Processor processor : processors_) {
          if (isSynchronous) {
             contexts_.add(new SynchronousContext(processor, store_, this));
-         }
-         else {
+         } else {
             contexts_.add(new AsynchronousContext(processor, store_, this));
          }
       }
@@ -73,16 +72,15 @@ public final class DefaultPipeline implements Pipeline {
       if (amHalting_) {
          throw new PipelineErrorException(
                "Attempted to pass summary metadata through pipeline after it has been halted.");
-      }
-      else if (haveInsertedImages_) {
+      } else if (haveInsertedImages_) {
          throw new PipelineErrorException(
-               "Attempted to pass summary metadata through pipeline after it has started image processing.");
+               "Attempted to pass summary metadata through pipeline after it has "
+                     + "started image processing.");
       }
       if (contexts_.isEmpty()) {
          // Insert directly.
          store_.setSummaryMetadata(summary);
-      }
-      else {
+      } else {
          contexts_.get(0).insertSummaryMetadata(summary);
       }
    }
@@ -109,8 +107,7 @@ public final class DefaultPipeline implements Pipeline {
       }
       if (contexts_.size() > 0) {
          contexts_.get(0).insertImage(new ImageWrapper(image));
-      }
-      else {
+      } else {
          // Empty "pipeline".
          store_.putImage(image);
       }

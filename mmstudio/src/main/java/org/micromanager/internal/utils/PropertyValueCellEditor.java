@@ -84,8 +84,7 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
             if (item_.hasRange) {
                if (item_.isInteger()) {
                   slider_.setLimits((int) item_.lowerLimit, (int) item_.upperLimit);
-               }
-               else {
+               } else {
                   slider_.setLimits(item_.lowerLimit, item_.upperLimit);
                }
                try {
@@ -94,13 +93,11 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
                   ReportingUtils.logError(ex);
                }
                return slider_;
-            }
-            else {
+            } else {
                text_.setText((String) value);
                return text_;
             }
-         }
-         else {
+         } else {
             ActionListener[] l = combo_.getActionListeners();
             for (ActionListener actionListener : l) {
                combo_.removeActionListener(actionListener);
@@ -116,8 +113,7 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
 
             return combo_;
          }
-      }
-      else {
+      } else {
          return null;
       }
 
@@ -130,12 +126,10 @@ public final class PropertyValueCellEditor extends AbstractCellEditor implements
       if (item_.allowed.length == 0) {
          if (item_.hasRange) {
             return slider_.getText();
-         }
-         else {
+         } else {
             return text_.getText();
          }
-      }
-      else {
+      } else {
          return combo_.getSelectedItem();
       }
    }

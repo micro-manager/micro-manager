@@ -178,7 +178,8 @@ public final class ScaleBarOverlay extends AbstractOverlay {
                             DisplaySettings displaySettings,
                             List<Image> images, Image primaryImage,
                             Rectangle2D.Float imageViewPort) {
-      boolean atBottom, atRight;
+      boolean atBottom;
+      boolean atRight;
       switch (position_) {
          case NORTHWEST:
             atBottom = atRight = false;
@@ -223,15 +224,12 @@ public final class ScaleBarOverlay extends AbstractOverlay {
          double minLengthUm = Math.pow(10.0, minLog);
          if (5.0 * minLengthUm <= maxWidthUm) {
             lengthUm = 5.0 * minLengthUm;
-         }
-         else if (2.0 * minLengthUm <= maxWidthUm) {
+         } else if (2.0 * minLengthUm <= maxWidthUm) {
             lengthUm = 2.0 * minLengthUm;
-         }
-         else {
+         } else {
             lengthUm = minLengthUm;
          }
-      }
-      else {
+      } else {
          lengthUm = lengthUm_;
       }
 
@@ -242,9 +240,8 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       if (drawLabel_) {
          final String labelText;
          if (lengthUm >= 0.9995) {
-            labelText = String.format("%d \u00B5m", (int) Math.round(lengthUm));
-         }
-         else {
+            labelText = String.format("%d \u00B5m", (int) Math.round(lengthUm)); // micro-m, micron
+         } else {
             labelText = String.format("%d nm", (int) Math.round(lengthUm * 1000.0));
          }
          final int labelX = x + (lengthPx - metrics.stringWidth(labelText)) / 2;
@@ -254,8 +251,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       }
       if (fillBar_) {
          g.fillRect(x, y, lengthPx, thickness_);
-      }
-      else {
+      } else {
          g.drawRect(x, y, lengthPx, thickness_);
       }
    }
@@ -269,17 +265,17 @@ public final class ScaleBarOverlay extends AbstractOverlay {
 
    @Override
    public PropertyMap getConfiguration() {
-      return PropertyMaps.builder().
-            putBoolean(Key.DRAW_LABEL.name(), drawLabel_).
-            putBoolean(Key.FILL_BAR.name(), fillBar_).
-            putEnumAsString(Key.COLOR.name(), color_).
-            putFloat(Key.FONT_SIZE.name(), fontSize_).putInteger(Key.X_OFFSET.name(), xOffset_)
-            .putInteger(Key.Y_OFFSET.name(), yOffset_).
-                  putBoolean(Key.AUTO_LENGTH.name(), autoLength_).
-                  putDouble(Key.LENGTH_UM.name(), lengthUm_)
-            .putInteger(Key.THICKNESS.name(), thickness_).
-                  putEnumAsString(Key.POSITION.name(), position_).
-                  build();
+      return PropertyMaps.builder()
+            .putBoolean(Key.DRAW_LABEL.name(), drawLabel_)
+            .putBoolean(Key.FILL_BAR.name(), fillBar_)
+            .putEnumAsString(Key.COLOR.name(), color_)
+            .putFloat(Key.FONT_SIZE.name(), fontSize_).putInteger(Key.X_OFFSET.name(), xOffset_)
+            .putInteger(Key.Y_OFFSET.name(), yOffset_)
+            .putBoolean(Key.AUTO_LENGTH.name(), autoLength_)
+            .putDouble(Key.LENGTH_UM.name(), lengthUm_)
+            .putInteger(Key.THICKNESS.name(), thickness_)
+            .putEnumAsString(Key.POSITION.name(), position_)
+            .build();
    }
 
    @Override
@@ -426,7 +422,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
       configUI_.add(autoLengthRadio_, new CC().gapAfter("rel"));
       configUI_.add(manualLengthRadio_, new CC().gapAfter("0"));
       configUI_.add(lengthUmField_, new CC().gapAfter("0"));
-      configUI_.add(new JLabel("\u00B5m"), new CC().gapAfter("48"));
+      configUI_.add(new JLabel("\u00B5m"), new CC().gapAfter("48")); // micro-m, i.e. micron
       configUI_.add(new JLabel("Thickness:"), new CC().gapAfter("rel"));
       configUI_.add(thicknessField_, new CC().gapAfter("0"));
       configUI_.add(new JLabel("px"), new CC().wrap());
@@ -505,16 +501,14 @@ public final class ScaleBarOverlay extends AbstractOverlay {
          int offset = Integer.parseInt(offsetField.getText());
          if (orientation == SwingConstants.HORIZONTAL) {
             xOffset_ = offset;
-         }
-         else {
+         } else {
             yOffset_ = offset;
          }
          fireOverlayConfigurationChanged();
       } catch (NumberFormatException e) {
          if (forceValidation) {
             offsetField.setText(String.valueOf(
-                  orientation == SwingConstants.HORIZONTAL ?
-                        xOffset_ : yOffset_));
+                  orientation == SwingConstants.HORIZONTAL ? xOffset_ : yOffset_));
          }
       }
    }

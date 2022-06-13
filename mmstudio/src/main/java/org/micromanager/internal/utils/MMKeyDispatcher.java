@@ -22,7 +22,7 @@ import java.awt.KeyEventDispatcher;
 import java.awt.event.KeyEvent;
 
 /**
- * Application-wide key dispatcher
+ * Application-wide key dispatcher.
  * It is necessary to use this approach since otherwise ImageJ will steal the
  * shortcuts before we get them
  * Downside is that all keyevents in the application will go through here
@@ -33,6 +33,10 @@ public final class MMKeyDispatcher implements KeyEventDispatcher {
    Class textCanvasClass = null;
    final Class[] forbiddenClasses_;
 
+   /**
+    * Application-wide Key Dispatcher constructor. Sets UI classes where KeyEvents should not
+    * be processed.
+    */
    public MMKeyDispatcher() {
       try {
          textCanvasClass = ClassLoader.getSystemClassLoader().loadClass("ij.text.TextCanvas");

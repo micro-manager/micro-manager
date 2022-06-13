@@ -54,8 +54,7 @@ public final class PropertyNameCellRenderer implements TableCellRenderer {
       if (item_.readOnly) {
          lab.setBackground(studio_.app().skin().getDisabledBackgroundColor());
          lab.setForeground(studio_.app().skin().getDisabledTextColor());
-      }
-      else {
+      } else {
          lab.setBackground(studio_.app().skin().getBackgroundColor());
          lab.setForeground(studio_.app().skin().getEnabledTextColor());
       }

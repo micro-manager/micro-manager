@@ -128,8 +128,7 @@ public final class IntroDlg extends JDialog {
       if (plugin == null || plugin.getSplashImage() == null) {
          introImage.setIcon(new ImageIcon(getClass().getResource(
                "/org/micromanager/icons/splash.gif")));
-      }
-      else {
+      } else {
          introImage.setIcon(plugin.getSplashImage());
       }
       introImage.setBorder(new LineBorder(Color.black, 1, false));

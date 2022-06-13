@@ -173,8 +173,7 @@ public class PixelCalibratorDialog extends JFrame {
             stopButton_.setEnabled(false);
             calibrationProgressBar_.setEnabled(false);
             safeTravelRadiusComboBox_.setEnabled(true);
-         }
-         else {
+         } else {
             toFront();
             startButton_.setEnabled(false);
             stopButton_.setEnabled(true);
@@ -213,11 +212,9 @@ public class PixelCalibratorDialog extends JFrame {
       if (METHOD_AUTO.equals(methodComboBox_.getSelectedItem())) {
          calibrationThread_ = new AutomaticCalibrationThread(studio_, this);
 
-      }
-      else if (METHOD_MANUAL_SIMPLE.equals(methodComboBox_.getSelectedItem())) {
+      } else if (METHOD_MANUAL_SIMPLE.equals(methodComboBox_.getSelectedItem())) {
          calibrationThread_ = new ManualSimpleCalibrationThread(studio_, this);
-      }
-      else if (METHOD_MANUAL_PRECISE.equals(methodComboBox_.getSelectedItem())) {
+      } else if (METHOD_MANUAL_PRECISE.equals(methodComboBox_.getSelectedItem())) {
          calibrationThread_ = new ManualPreciseCalibrationThread(studio_, this);
       }
       if (calibrationThread_ != null && !calibrationThread_.isAlive()) {

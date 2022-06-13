@@ -27,6 +27,9 @@ package org.micromanager.internal.utils;
 import java.text.DecimalFormat;
 import mmcorej.Configuration;
 
+/**
+ * Pixel Size Calibration.
+ */
 public final class Calibration {
    private Double pixelSize_;
    private String calibrationName_;

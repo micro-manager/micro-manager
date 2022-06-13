@@ -136,8 +136,7 @@ public final class DevicesPage extends PagePanel implements
             default:
                if (devices_[rowIndex].isCore()) {
                   return "Default";
-               }
-               else {
+               } else {
                   return devices_[rowIndex].isInitialized() ? "OK" : "Failed";
                }
          }
@@ -216,8 +215,7 @@ public final class DevicesPage extends PagePanel implements
       public void actionPerformed(ActionEvent ae) {
          if (ae.getActionCommand().equals("help")) {
             dp_.displayDocumentation();
-         }
-         else if (ae.getActionCommand().equals("add")) {
+         } else if (ae.getActionCommand().equals("add")) {
             if (dp_.addDevice()) {
                dp_.rebuildDevicesTable();
             }
@@ -358,8 +356,7 @@ public final class DevicesPage extends PagePanel implements
                      core_.unloadDevice(device.getName());
                      model_.removeDevice(device.getName());
                   }
-               }
-               else {
+               } else {
                   core_.initializeDevice(device.getName());
                   device.setInitialized(true);
                }
@@ -368,8 +365,7 @@ public final class DevicesPage extends PagePanel implements
             }
          }
          rebuildDevicesTable();
-      }
-      else {
+      } else {
          handleError("There are no available peripheral devices.");
       }
    }
@@ -436,8 +432,7 @@ public final class DevicesPage extends PagePanel implements
       if (tm instanceof DeviceTableTableModel) {
          tmd = (DeviceTableTableModel) deviceTable_.getModel();
          tmd.refresh();
-      }
-      else {
+      } else {
          tmd = new DeviceTableTableModel(model_);
          deviceTable_.setModel(tmd);
       }
@@ -612,8 +607,7 @@ public final class DevicesPage extends PagePanel implements
                if (uo != null) {
                   if (uo.getClass().isArray()) {
                      libraryDocumentationName_ = ((Object[]) uo)[0].toString();
-                  }
-                  else {
+                  } else {
                      libraryDocumentationName_ = uo.toString();
                   }
                }
@@ -718,8 +712,7 @@ public final class DevicesPage extends PagePanel implements
                               core_.unloadDevice(device.getName());
                               model_.removeDevice(device.getName());
                            }
-                        }
-                        else {
+                        } else {
                            core_.initializeDevice(device.getName());
                            device.setInitialized(true);
                         }
@@ -741,8 +734,7 @@ public final class DevicesPage extends PagePanel implements
    private void buildTree() {
       if (listByLib_) {
          buildTreeByLib(model_);
-      }
-      else {
+      } else {
          buildTreeByType(model_);
       }
       availableScrollPane_.setViewportView(theTree_);
@@ -756,8 +748,7 @@ public final class DevicesPage extends PagePanel implements
       for (Device device : devices) {
          if (nodes.containsKey(device.getTypeAsString())) {
             nodes.get(device.getTypeAsString()).add(device);
-         }
-         else {
+         } else {
             Vector<Device> v = new Vector<>();
             v.add(device);
             nodes.put(device.getTypeAsString(), v);
@@ -765,7 +756,7 @@ public final class DevicesPage extends PagePanel implements
       }
 
       DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by "
-            + "\u00B5" + "Manager");
+            + "\u00B5" + "Manager"); // Micro-Manager
 
       DeviceTreeNode node;
       Object[] nodeNames = nodes.keySet().toArray();
@@ -812,8 +803,10 @@ public final class DevicesPage extends PagePanel implements
             // we are processing
          }
          Object[] userObject =
-               {device.getLibrary(), device.getAdapterName(), device.getDescription(),
-                     device.isHub()};
+                  {device.getLibrary(),
+                        device.getAdapterName(),
+                        device.getDescription(),
+                        device.isHub() };
          DeviceTreeNode aLeaf = new DeviceTreeNode("", true);
          aLeaf.setUserObject(userObject);
          node.add(aLeaf);

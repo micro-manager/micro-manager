@@ -14,8 +14,8 @@ public interface OverlayListener {
 
    /**
     * Called by the overlay when a repaint is required.
-    * <p>
-    * This method should be called to notify that the overlay needs a repaint
+    *
+    * <p>This method should be called to notify that the overlay needs a repaint
     * due to its configuration changing.
     *
     * @param overlay the caller

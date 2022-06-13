@@ -82,7 +82,8 @@ public final class MMImageCanvas extends ImageCanvas
       super(parent.getIJImagePlus());
       parent_ = parent;
 
-      // Remove existing key listeners.  Ours will send unprocessed keyEvents through to ImageJ (which handles keyEvents)
+      // Remove existing key listeners.  Ours will send unprocessed keyEvents
+      // through to ImageJ (which handles keyEvents)
       for (KeyListener kl : super.getKeyListeners()) {
          super.removeKeyListener(kl);
       }
@@ -129,18 +130,18 @@ public final class MMImageCanvas extends ImageCanvas
       return preferredSize_ != null;
    }
 
+   /**
+    * The ImageJ canvas knows best what its current size is,
+    * adjust our display to the current size.
+    */
+   public void setSizeToCurrent() {
+      setSize(super.dstWidth, super.dstHeight);
+   }
+
    @Override
    public void setSize(Dimension newSize) {
       // ImageJ forgets to override this overloaded version
       setSize(newSize.width, newSize.height);
-   }
-
-   /**
-    * The ImageJ canvas knows best what its current size is,
-    * Adjust our display to the current size
-    */
-   public void setSizeToCurrent() {
-      setSize(super.dstWidth, super.dstHeight);
    }
 
    @Override

@@ -22,7 +22,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.scijava.util.Bytes;
 
 /**
- * Wrap the SciFIO library in a Micro-Manager dataProvider
+ * Wrap the SciFIO library in a Micro-Manager dataProvider.
  * So far, only uint8 and uint16 type datasources are supported
  *
  * @author nico
@@ -34,7 +34,7 @@ public class SciFIODataProvider implements DataProvider {
    private final SummaryMetadata sm_;
    private final EventBus bus_ = new EventBus();
    private double pixelSize_;
-   private final static int IMAGEINDEX = 0; // ScioFIO image index.  It is unclear what this
+   private static final int IMAGEINDEX = 0; // ScioFIO image index.  It is unclear what this
    // is.  However, most datasets appear to have only a single imageindex (0)
    // Use it as a variable to be ready to use it if need be
    private int xAxisIndex_ = 0;
@@ -161,8 +161,7 @@ public class SciFIODataProvider implements DataProvider {
                tmpP[i] = ((byte[]) pixels)[3 * i + coords.getC()];
             }
             pixels = tmpP;
-         }
-         else if (bytesPerPixel == 2) {
+         } else if (bytesPerPixel == 2) {
             short[] tmpP = new short[((short[]) pixels).length / 3];
             for (int i = 0; i < tmpP.length; i++) {
                tmpP[i] = ((short[]) pixels)[3 * i + coords.getC()];
@@ -212,8 +211,7 @@ public class SciFIODataProvider implements DataProvider {
          if (reader_.getFormatName().equals("Audio Video Interleave")) {
             cb.t((int) rasterPosition[0]);
             return cb.build();
-         }
-         else {
+         } else {
             axes = im.getAxesNonPlanar();
          }
       }
@@ -221,14 +219,11 @@ public class SciFIODataProvider implements DataProvider {
          CalibratedAxis axis = axes.get(index);
          if (axis.type().getLabel().equals(Axes.CHANNEL.getLabel())) {
             cb.c((int) rasterPosition[index]);
-         }
-         else if (axis.type().getLabel().equals(Axes.TIME.getLabel())) {
+         } else if (axis.type().getLabel().equals(Axes.TIME.getLabel())) {
             cb.t((int) rasterPosition[index]);
-         }
-         else if (axis.type().getLabel().equals(Axes.Z.getLabel())) {
+         } else if (axis.type().getLabel().equals(Axes.Z.getLabel())) {
             cb.z((int) rasterPosition[index]);
-         }
-         else {
+         } else {
             String label = axis.type().getLabel();
             if (!label.equals("X") && !label.equals("Y")) {
                cb.index(axis.type().getLabel(), (int) rasterPosition[index]);
@@ -251,14 +246,11 @@ public class SciFIODataProvider implements DataProvider {
          CalibratedAxis axis = axes.get(index);
          if (axis.type().getLabel().equals(Axes.CHANNEL.getLabel())) {
             planeIndices[index] = coords.getC();
-         }
-         else if (axis.type().getLabel().equals(Axes.TIME.getLabel())) {
+         } else if (axis.type().getLabel().equals(Axes.TIME.getLabel())) {
             planeIndices[index] = coords.getT();
-         }
-         else if (axis.type().getLabel().equals(Axes.Z.getLabel())) {
+         } else if (axis.type().getLabel().equals(Axes.Z.getLabel())) {
             planeIndices[index] = coords.getZ();
-         }
-         else {
+         } else {
             String label = axis.type().getLabel();
             if (!label.equals("X") && !label.equals("Y")) {
                planeIndices[index] = coords.getIndex(label);
@@ -298,14 +290,11 @@ public class SciFIODataProvider implements DataProvider {
       for (CalibratedAxis axis : axes) {
          if (axis.type().getLabel().equals(Axes.CHANNEL.getLabel())) {
             mmAxes.add(Coords.C);
-         }
-         else if (axis.type().getLabel().equals(Axes.TIME.getLabel())) {
+         } else if (axis.type().getLabel().equals(Axes.TIME.getLabel())) {
             mmAxes.add(Coords.T);
-         }
-         else if (axis.type().getLabel().equals(Axes.Z.getLabel())) {
+         } else if (axis.type().getLabel().equals(Axes.Z.getLabel())) {
             mmAxes.add(Coords.Z);
-         }
-         else {
+         } else {
             String label = axis.type().getLabel();
             if (!label.equals("X") && !label.equals("Y")) {
                mmAxes.add(label);
@@ -377,8 +366,7 @@ public class SciFIODataProvider implements DataProvider {
                   result.add(planeToImage(plane,
                         coords.copyBuilder().c(c).build()));
                }
-            }
-            else {
+            } else {
                result.add(planeToImage(plane, coords));
             }
          }
@@ -401,8 +389,7 @@ public class SciFIODataProvider implements DataProvider {
                   result.add(planeToImage(plane,
                         coords.copyBuilder().c(c).build()));
                }
-            }
-            else {
+            } else {
                result.add(planeToImage(plane, coords));
             }
          }

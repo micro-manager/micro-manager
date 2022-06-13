@@ -183,8 +183,7 @@ public final class DefaultPluginManager implements PluginManager {
       if (subMenu.equals("")) {
          // Add it to the root menu.
          rootMenu.add(item);
-      }
-      else {
+      } else {
          if (!subMenus.containsKey(subMenu)) {
             // Create a new menu.
             SortedMenu menu = new SortedMenu(subMenu);

@@ -111,8 +111,7 @@ public final class HotKeysDialog extends JDialog {
             if (action != null) {
                if (action.type_ == HotKeyAction.GUICOMMAND) {
                   return HotKeyAction.GUIITEMS[action.guiCommand_];
-               }
-               else {
+               } else {
                   return action.beanShellScript_.getName();
                }
             }
@@ -322,8 +321,7 @@ public final class HotKeysDialog extends JDialog {
 
          if (value != null) {
             keyLabel.setText((String) value);
-         }
-         else {
+         } else {
             keyLabel.setText("m");
          }
          keyLabel.setForeground(Color.red);

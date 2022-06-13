@@ -13,8 +13,8 @@ import org.micromanager.display.DisplayPositionChangedEvent;
 /**
  * This event posts when the position (i.e., Channel, Time, Position, Slice,
  * possibly other Axes) in the display changed.
- * <p>
- * This event posts on the DataViewer event bus.
+ *
+ * <p>This event posts on the DataViewer event bus.
  * Register using {@link DataViewer#registerForEvents(Object)}.
  */
 public class DefaultDisplayPositionChangedEvent
@@ -52,8 +52,10 @@ public class DefaultDisplayPositionChangedEvent
    }
 
    /**
+    * Returns the DataViewer.
+    *
     * @return The DataViewer posting this event.  Useful when handling multiple
-    * DataViewers.
+    *     DataViewers.
     */
    @Override
    public DataViewer getDataViewer() {

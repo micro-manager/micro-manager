@@ -44,23 +44,23 @@ import net.miginfocom.swing.MigLayout;
 
 /**
  * Like a JSplitPane, but contains multiple components, not just 2.
- * <p>
- * This is more than just nested {@code JSplitPane}s: it ensures that each
+ *
+ * <p>This is more than just nested {@code JSplitPane}s: it ensures that each
  * component can be resized without affecting the size of the other components.
  * An extra draggable divider is added below the last (bottom) component to
  * allow resizing the latter.
- * <p>
- * Caveat: The vertical scroll bar of a containing scroll panel will change
+ *
+ * <p>Caveat: The vertical scroll bar of a containing scroll panel will change
  * length when the mouse enters the split pane dividers. This is due to a hack
  * used to get the desired behavior from a set of nested {@code JSplitPane}s.
  * Also, using the scroll wheel when the cursor is positioned on a divider will
  * cause odd effects. Both of these issues could be mitigated by notifying the
  * scroll pane and disabling the scroll bar and mouse wheel.
- * <p>
- * If used without a scroll pane, a {@code ComponentListener} should be added
+ *
+ * <p>If used without a scroll pane, a {@code ComponentListener} should be added
  * so that the container can appropriately resize.
- * <p>
- * This class could be generalized to also work for horizontal splits.
+ *
+ * <p>This class could be generalized to also work for horizontal splits.
  *
  * @author Mark A. Tsuchida
  */
@@ -92,8 +92,7 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
          splitPane.setResizeWeight(0.0);
          if (i == 0) {
             super.add(splitPane, new CC().grow().push());
-         }
-         else {
+         } else {
             splitPanes_.get(i - 1).setBottomComponent(splitPane);
          }
          splitPanes_.add(splitPane);
@@ -107,8 +106,8 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
          // BasicSplitPanelUI. It is the case on OS X and Windows with our
          // usual look and feel.
          if (splitPanelUI instanceof BasicSplitPaneUI) {
-            ((BasicSplitPaneUI) splitPanelUI).getDivider().
-                  addMouseListener(new MouseAdapter() {
+            ((BasicSplitPaneUI) splitPanelUI).getDivider()
+                  .addMouseListener(new MouseAdapter() {
                      @Override
                      public void mouseEntered(MouseEvent e) {
                         if (debug) {
@@ -127,8 +126,7 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
                         }
                         if (!isTrackingDividerDrag_) {
                            unprepareForDividerDrag();
-                        }
-                        else {
+                        } else {
                            isUnprepareForDragPending_ = true;
                         }
                      }
@@ -171,8 +169,8 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
       int prefHeight = 0;
       for (JSplitPane splitPane : splitPanes_) {
          Component component = splitPane.getTopComponent();
-         Dimension componentPrefSize = component.isValid() ?
-               component.getSize() : component.getPreferredSize();
+         Dimension componentPrefSize = component.isValid()
+               ? component.getSize() : component.getPreferredSize();
          prefHeight += componentPrefSize.height;
          prefHeight += splitPane.getDividerSize();
       }
@@ -196,8 +194,8 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
    /**
     * Resize this multi-split pane so that every component is at its preferred
     * height.
-    * <p>
-    * Call this after changing the preferred size of any of the components.
+    *
+    * <p>Call this after changing the preferred size of any of the components.
     */
    public void resizeToFitPreferredSizes() {
       // Note that what we are doing is _not_ analogous to JSplitPane's
@@ -329,19 +327,17 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
             if (visibleRect.y < splitPanePos) {
                return splitPanePos - visibleRect.y;
             }
-            splitPanePos += splitPane.getTopComponent().getHeight() +
-                  splitPane.getDividerSize();
+            splitPanePos += splitPane.getTopComponent().getHeight()
+                  + splitPane.getDividerSize();
          }
          return getHeight() - visibleRect.height - visibleRect.y;
-      }
-      else {
+      } else {
          int splitPanePos = splitPanes_.get(0).getHeight();
          List<JSplitPane> reversedSplitPanes =
                new ArrayList<JSplitPane>(splitPanes_);
          Collections.reverse(reversedSplitPanes);
          for (JSplitPane splitPane : reversedSplitPanes) {
-            splitPanePos -= splitPane.getDividerSize() +
-                  splitPane.getTopComponent().getHeight();
+            splitPanePos -= splitPane.getDividerSize() + splitPane.getTopComponent().getHeight();
             if (visibleRect.y > splitPanePos) {
                return visibleRect.y - splitPanePos;
             }

@@ -47,7 +47,7 @@ public final class SliderPanel extends JPanel {
    private JTextField textField_;
    private double lowerLimit_ = 0.0;
    private double upperLimit_ = 10.0;
-   private final int STEPS = 1000;
+   private final int steps_ = 1000;
    private double factor_ = 1.0;
    private boolean integer_ = false;
    private ChangeListener sliderChangeListener_;
@@ -55,7 +55,7 @@ public final class SliderPanel extends JPanel {
    private JScrollBar slider_;
 
    /**
-    * Create the panel
+    * Create the panel.
     */
    public SliderPanel() {
       super();
@@ -112,11 +112,11 @@ public final class SliderPanel extends JPanel {
 
    public void setLimits(double lowerLimit, double upperLimit) {
       integer_ = false;
-      factor_ = (upperLimit - lowerLimit) / (STEPS);
+      factor_ = (upperLimit - lowerLimit) / (steps_);
       upperLimit_ = upperLimit;
       lowerLimit_ = lowerLimit;
       slider_.setMinimum(0);
-      slider_.setMaximum(STEPS);
+      slider_.setMaximum(steps_);
       slider_.setVisibleAmount(0);
 
    }
@@ -128,9 +128,9 @@ public final class SliderPanel extends JPanel {
       slider_.setMinimum(0);
       factor_ = 1.0;
       int maximum = upperLimit - lowerLimit + 1;
-      if (upperLimit > STEPS) {
-         factor_ = ((double) upperLimit - (double) lowerLimit) / (double) (STEPS);
-         maximum = STEPS + 1;
+      if (upperLimit > steps_) {
+         factor_ = ((double) upperLimit - (double) lowerLimit) / (double) (steps_);
+         maximum = steps_ + 1;
       }
       slider_.setMaximum(maximum);
       slider_.setVisibleAmount(1);
@@ -146,8 +146,7 @@ public final class SliderPanel extends JPanel {
 
       if (integer_) {
          textField_.setText(NumberUtils.intToDisplayString((int) (value)));
-      }
-      else {
+      } else {
          textField_.setText(NumberUtils.doubleToDisplayString(value));
       }
    }
@@ -170,8 +169,7 @@ public final class SliderPanel extends JPanel {
       if (integer_) {
          val = enforceLimits(NumberUtils.displayStringToInt(txt));
          textField_.setText(NumberUtils.intToDisplayString((int) val));
-      }
-      else {
+      } else {
          val = enforceLimits(NumberUtils.displayStringToDouble(txt));
          textField_.setText(NumberUtils.doubleToDisplayString(val));
       }

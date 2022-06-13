@@ -274,8 +274,7 @@ public final class GUIUtils {
          throws InterruptedException, InvocationTargetException {
       if (SwingUtilities.isEventDispatchThread()) {
          r.run();
-      }
-      else {
+      } else {
          SwingUtilities.invokeAndWait(r);
       }
    }
@@ -287,8 +286,7 @@ public final class GUIUtils {
    public static void invokeLater(Runnable r) {
       if (SwingUtilities.isEventDispatchThread()) {
          r.run();
-      }
-      else {
+      } else {
          SwingUtilities.invokeLater(r);
       }
    }
@@ -302,8 +300,7 @@ public final class GUIUtils {
                                      String toolTipText) {
       if (JavaUtils.isMac()) { // running on a mac
          component.setToolTipText(toolTipText);
-      }
-      else {
+      } else {
          component.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(toolTipText));
       }
    }
@@ -437,8 +434,7 @@ public final class GUIUtils {
                      JOptionPane.OK_CANCEL_OPTION);
                if (response == JOptionPane.OK_OPTION) {
                   return false;
-               }
-               else if (response == JOptionPane.CANCEL_OPTION) {
+               } else if (response == JOptionPane.CANCEL_OPTION) {
                   field.setText(lastGoodValue);
                   return true;
                }
@@ -556,8 +552,7 @@ public final class GUIUtils {
                if (column == (table.getColumnCount() - 1)) {
                   column = 0;
                   row = row + 1 % table.getRowCount();
-               }
-               else {
+               } else {
                   ++column;
                }
                startEditingAtCell(table, row, column);

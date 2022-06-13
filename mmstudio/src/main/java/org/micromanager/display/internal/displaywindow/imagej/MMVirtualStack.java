@@ -25,8 +25,8 @@ import org.micromanager.data.internal.DefaultImageJConverter;
 
 /**
  * Proxy for ImageJ's {@code VirtualStack}.
- * <p>
- * Backs an ImageJ stack with Micro-Manager images provided by the "parent"
+ *
+ * <p>Backs an ImageJ stack with Micro-Manager images provided by the "parent"
  * (ImageJBridge in this case).
  * Main logic concerns itself with translating bewteen ImageJ coordinates
  * (i.e. flatIndex into the ImageJ stack, ImageJ c,z,t coordinates) and
@@ -152,9 +152,9 @@ public final class MMVirtualStack extends VirtualStack {
       if (pretendToHaveOnlyOneImage_) {
          return 1;
       }
-      return parent_.getMMNumberOfTimePoints() *
-            parent_.getMMNumberOfZSlices() *
-            parent_.getMMNumberOfChannels();
+      return parent_.getMMNumberOfTimePoints()
+            * parent_.getMMNumberOfZSlices()
+            * parent_.getMMNumberOfChannels();
    }
 
    @Override
@@ -285,8 +285,8 @@ public final class MMVirtualStack extends VirtualStack {
 
    @Override
    public ImageStack crop(int x, int y, int z, int w, int h, int d) {
-      if (x < 0 || y < 0 || z < 0 ||
-            w > getWidth() || h > getWidth() || d > getSize()) {
+      if (x < 0 || y < 0 || z < 0
+            || w > getWidth() || h > getWidth() || d > getSize()) {
          throw new IllegalArgumentException("Crop region is out of range");
       }
 

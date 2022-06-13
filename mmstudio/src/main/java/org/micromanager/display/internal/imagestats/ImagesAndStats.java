@@ -70,7 +70,7 @@ public final class ImagesAndStats {
     * in this object (as opposed to adopted or recycled from another request).
     *
     * @return true if the stats were computed from the request returned by
-    * {@code getRequest}
+    *     {@code getRequest}
     */
    public boolean isRealStats() {
       return request_ == originalRequest_;

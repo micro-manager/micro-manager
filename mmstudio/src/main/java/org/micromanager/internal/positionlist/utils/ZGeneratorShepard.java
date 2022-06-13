@@ -30,7 +30,7 @@ import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 
 /**
- * Allows construction of Z positions by interpolation using Shepard Interpolation
+ * Allows construction of Z positions by interpolation using Shepard Interpolation.
  */
 class ZGeneratorShepard implements ZGenerator {
    Map<String, ShepardInterpolator> interpolators_;
@@ -49,7 +49,9 @@ class ZGeneratorShepard implements ZGenerator {
 
    private void createInterpolator(PositionList positionList, double exp) {
       int nPositions;
-      double x[], y[], z[]; //positions to be passed to interpolator
+      double[] x;
+      double[] y;
+      double[] z; //positions to be passed to interpolator
       MultiStagePosition msp;
       StagePosition sp;
 
@@ -82,16 +84,16 @@ class ZGeneratorShepard implements ZGenerator {
    }
 
    /**
-    * @param X
-    * @param Y
+    * @param x
+    * @param y
     * @param axis
     * @return
     */
    @Override
-   public double getZ(double X, double Y, String zDevice) {
+   public double getZ(double x, double y, String zDevice) {
       ShepardInterpolator interpolator;
       interpolator = interpolators_.get(zDevice);
-      return interpolator.interpolate(X, Y);
+      return interpolator.interpolate(x, y);
    }
 
    @Override
@@ -101,10 +103,12 @@ class ZGeneratorShepard implements ZGenerator {
 }
 
 class ShepardInterpolator {
-   private double[] x_, y_, z_;
+   private double[] x_;
+   private double[] y_;
+   private double[] z_;
    public double exponent_;
 
-   /**
+   /*
     * @param xin x position list
     * @param yin y position list
     * @param zin z position list

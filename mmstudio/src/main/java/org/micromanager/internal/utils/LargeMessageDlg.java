@@ -44,7 +44,7 @@ public final class LargeMessageDlg extends JDialog {
    private JScrollPane scrollPane_;
 
    /**
-    * Create the dialog
+    * Create the dialog.
     */
    public LargeMessageDlg(String title, String message) {
       super();

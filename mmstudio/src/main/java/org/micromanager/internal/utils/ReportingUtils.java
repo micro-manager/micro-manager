@@ -37,6 +37,9 @@ import org.micromanager.LogManager;
 import org.micromanager.internal.MMStudio;
 
 /**
+ * Collection of static methods with a non-static wrapper to log application output.
+ * Do not use the static methods, rather use the Studio.logs() LogManager instance.
+ *
  * @author arthur
  */
 public final class ReportingUtils {
@@ -127,7 +130,7 @@ public final class ReportingUtils {
    private static boolean show_ = true;
 
    // Intended for setting to the main frame.
-   public static void SetContainingFrame(JFrame f) {
+   public static void setContainingFrame(JFrame f) {
       owningFrame_ = f;
    }
 
@@ -139,20 +142,28 @@ public final class ReportingUtils {
       show_ = show;
    }
 
+   /**
+    * Logs a String.
+    *
+    * @param msg Message to be logged
+    */
    public static void logMessage(String msg) {
       if (core_ == null) {
          System.out.println(msg);
-      }
-      else {
+      } else {
          core_.logMessage(msg);
       }
    }
 
+   /**
+    * Logs a debug message.
+    *
+    * @param msg Message to be logged
+    */
    public static void logDebugMessage(String msg) {
       if (core_ == null) {
          System.out.println(msg);
-      }
-      else {
+      } else {
          core_.logMessage(msg, true);
       }
    }
@@ -160,13 +171,12 @@ public final class ReportingUtils {
    public static void logDebugMessage(Throwable e, String msg) {
       if (e != null) {
          String stackTrace = getStackTraceAsString(e);
-         msg = (msg + "\n" + e.toString() + " in " +
-               Thread.currentThread().toString() + "\n" + stackTrace + "\n");
+         msg = (msg + "\n" + e.toString() + " in " + Thread.currentThread().toString()
+               + "\n" + stackTrace + "\n");
       }
       if (core_ == null) {
          System.out.println(msg);
-      }
-      else {
+      } else {
          core_.logMessage(msg, true);
       }
    }
@@ -184,8 +194,7 @@ public final class ReportingUtils {
          String stackTrace = getStackTraceAsString(e);
          logMessage(msg + "\n" + e.toString() + " in "
                + Thread.currentThread().toString() + "\n" + stackTrace + "\n");
-      }
-      else {
+      } else {
          logMessage("Error: " + msg);
       }
    }
@@ -198,6 +207,30 @@ public final class ReportingUtils {
       logError(null, msg);
    }
 
+   public static void showError(Throwable e) {
+      showError(e, "", MMStudio.getInstance().app().getMainWindow());
+   }
+
+   public static void showError(String msg) {
+      showError(null, msg, MMStudio.getInstance().app().getMainWindow());
+   }
+
+   public static void showError(Throwable e, String msg) {
+      showError(e, msg, MMStudio.getInstance().app().getMainWindow());
+   }
+
+   public static void showError(Throwable e, Component parent) {
+      showError(e, "", parent);
+   }
+
+   public static void showError(String msg, Component parent) {
+      showError(null, msg, parent);
+   }
+
+   public static void showError(ActionEvent e) {
+      throw new UnsupportedOperationException("Not yet implemented");
+   }
+
    public static void showError(Throwable e, String msg, Component parent) {
       logError(e, msg);
 
@@ -208,17 +241,13 @@ public final class ReportingUtils {
       String fullMsg;
       if (e != null && e.getMessage() != null && msg.length() > 0) {
          fullMsg = "Error: " + msg + "\n" + e.getMessage();
-      }
-      else if (e != null && e.getMessage() != null) {
+      } else if (e != null && e.getMessage() != null) {
          fullMsg = e.getMessage();
-      }
-      else if (msg.length() > 0) {
+      } else if (msg.length() > 0) {
          fullMsg = "Error: " + msg;
-      }
-      else if (e != null) {
+      } else if (e != null) {
          fullMsg = "Error: " + e.getStackTrace()[0];
-      }
-      else {
+      } else {
          fullMsg = "Unknown error (please check CoreLog.txt file for more information)";
       }
 
@@ -242,7 +271,7 @@ public final class ReportingUtils {
    private static void showErrorMessage(final String fullMsg,
                                         final Component parent) {
       int maxNrLines = 10;
-      String lines[] = fullMsg.split("\n");
+      String[] lines = fullMsg.split("\n");
       if (lines.length < maxNrLines) {
          final String wrappedMsg = formatAlertMessage(lines);
          GUIUtils.invokeLater(new Runnable() {
@@ -252,8 +281,7 @@ public final class ReportingUtils {
                      "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
             }
          });
-      }
-      else {
+      } else {
          JTextArea area = new JTextArea(fullMsg);
          area.setRows(maxNrLines);
          area.setColumns(50);
@@ -269,25 +297,6 @@ public final class ReportingUtils {
       }
    }
 
-   public static void showError(Throwable e) {
-      showError(e, "", MMStudio.getInstance().app().getMainWindow());
-   }
-
-   public static void showError(String msg) {
-      showError(null, msg, MMStudio.getInstance().app().getMainWindow());
-   }
-
-   public static void showError(Throwable e, String msg) {
-      showError(e, msg, MMStudio.getInstance().app().getMainWindow());
-   }
-
-   public static void showError(Throwable e, Component parent) {
-      showError(e, "", parent);
-   }
-
-   public static void showError(String msg, Component parent) {
-      showError(null, msg, parent);
-   }
 
    private static String getStackTraceAsString(Throwable aThrowable) {
       String result = "";
@@ -297,8 +306,7 @@ public final class ReportingUtils {
       Throwable cause = aThrowable.getCause();
       if (cause != null) {
          return result + "Caused by: " + cause.toString() + "\n" + getStackTraceAsString(cause);
-      }
-      else {
+      } else {
          return result;
       }
    }
@@ -334,10 +342,6 @@ public final class ReportingUtils {
       return java.lang.Thread.currentThread().getStackTrace()[3].toString();
    }
 
-   public static void showError(ActionEvent e) {
-      throw new UnsupportedOperationException("Not yet implemented");
-   }
-
    public static void displayNonBlockingMessage(final String message) {
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(new Runnable() {
@@ -362,8 +366,8 @@ public final class ReportingUtils {
                   @Override
                   public void propertyChange(PropertyChangeEvent e) {
                      String prop = e.getPropertyName();
-                     if (dialog.isVisible() && (e.getSource() == optionPane) &&
-                           (prop.equals(JOptionPane.VALUE_PROPERTY))) {
+                     if (dialog.isVisible() && (e.getSource() == optionPane)
+                           && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
                         dialog.setVisible(false);
                      }
                   }

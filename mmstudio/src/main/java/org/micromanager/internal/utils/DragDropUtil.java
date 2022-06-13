@@ -103,8 +103,8 @@ public final class DragDropUtil implements DropTargetListener {
                return;
             }
          }
-      } catch (UnsupportedFlavorException ex) {
-      } catch (IOException ex) {
+      } catch (UnsupportedFlavorException | IOException ex) {
+         studio_.logs().logError(ex);
       }
    }
 

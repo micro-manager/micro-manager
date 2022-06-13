@@ -66,8 +66,7 @@ public final class ControlCell {
          rect_.width = widget.getSize().width;
          rect_.height = widget.getSize().height;
          control = widget.createControl(config);
-      }
-      else {
+      } else {
          control = QuickAccessFactory.makeGUI(plugin);
       }
       panel.add(control, "align center, grow");

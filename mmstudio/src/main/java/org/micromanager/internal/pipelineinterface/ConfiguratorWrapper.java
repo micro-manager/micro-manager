@@ -115,8 +115,7 @@ public final class ConfiguratorWrapper {
          // This flag was added later.
          if (json.has("isEnabledInLive")) {
             result.setEnabledInLive(json.getBoolean("isEnabledInLive"));
-         }
-         else {
+         } else {
             result.setEnabledInLive(result.isEnabled());
          }
          return result;

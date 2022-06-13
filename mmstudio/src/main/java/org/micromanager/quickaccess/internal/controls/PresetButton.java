@@ -119,8 +119,8 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
                studio_.core().waitForConfig(group, preset);
                studio_.app().refreshGUIFromCache();
             } catch (Exception e) {
-               studio_.logs().showError(e, "Error setting config group " +
-                     group + " to mode " + preset);
+               studio_.logs().showError(e, "Error setting config group "
+                     + group + " to mode " + preset);
             }
          }
       });
@@ -142,7 +142,8 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
       final String[] groups = studio_.core().getAvailableConfigGroups().toArray();
       if (groups.length == 0) {
          JOptionPane.showMessageDialog(parent,
-               "There are no configuration groups available. Please create at least one configuration group before using this control.",
+               "There are no configuration groups available. Please create at least "
+                     + "one configuration group before using this control.",
                "No configuration groups found",
                JOptionPane.ERROR_MESSAGE);
          return null;

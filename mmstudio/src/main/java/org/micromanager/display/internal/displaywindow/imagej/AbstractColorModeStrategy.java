@@ -158,8 +158,7 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
    protected final void apply() {
       if (imagePlus_ instanceof CompositeImage) {
          applyToCompositeImage();
-      }
-      else {
+      } else {
          applyToMonochromeImagePlus();
       }
    }

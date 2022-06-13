@@ -24,10 +24,9 @@ public final class MMUUEncoder {
          if (value1 < 0) {
             break;
          }
-         int value2 = in.read(), value3 = in.read();
-         int packed = ((value1 & 0xff) << 16) |
-               ((value2 & 0xff) << 8) |
-               (value3 & 0xff);
+         int value2 = in.read();
+         int value3 = in.read();
+         int packed = ((value1 & 0xff) << 16) | ((value2 & 0xff) << 8) | (value3 & 0xff);
          buffer[counter++] = encode((packed >> 18) & 0x3f);
          buffer[counter++] = encode((packed >> 12) & 0x3f);
          if (value2 < 0) {

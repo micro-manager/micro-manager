@@ -415,8 +415,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                   || getDisplaySettings().getColorMode()
                   != DisplaySettings.ColorMode.COMPOSITE) {
                uiController_.displayImages(images);
-            }
-            else if (getDisplaySettings().getColorMode()
+            } else if (getDisplaySettings().getColorMode()
                   == DisplaySettings.ColorMode.COMPOSITE) {
                // in composite mode, keep the channel name in sync with the 
                // channel set by the slider.  It would be even better to 
@@ -812,11 +811,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       long intervalNs;
       if (hz == 0.0) {
          intervalNs = Long.MAX_VALUE;
-      }
-      else if (Double.isInfinite(hz)) {
+      } else if (Double.isInfinite(hz)) {
          intervalNs = 0;
-      }
-      else {
+      } else {
          intervalNs = Math.round(1e9 / hz);
       }
       computeQueue_.setProcessIntervalNs(intervalNs);
@@ -854,8 +851,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                (int) Math.round(1000.0 / getPlaybackSpeedFps())));
          animationController_.setTickIntervalMs(initialTickIntervalMs);
          animationController_.startAnimation();
-      }
-      else {
+      } else {
          animationController_.stopAnimation();
       }
    }
@@ -1128,8 +1124,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          if (uiController_ == null) {
             ReportingUtils.logError(
                   "DisplayController's reference to UIController is null where it shouldn't be");
-         }
-         else {
+         } else {
             uiController_.close();
             uiController_ = null;
          }
@@ -1181,8 +1176,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(() -> setFullScreen(enable));
-      }
-      else {
+      } else {
          uiController_.setFullScreenMode(enable);
       }
    }

@@ -9,6 +9,8 @@ package org.micromanager.display.internal.link.internal;
 import org.micromanager.display.internal.link.LinkAnchor;
 
 /**
+ * Anchors are UI elements in the viewer to couple axes in one viewer to another.
+ *
  * @author mark
  */
 public class AbstractAnchorEvent<T> implements LinkAnchorEvent<T> {

@@ -127,7 +127,8 @@ public final class StorageMultipageTiff implements Storage {
     * Constructor that doesn't make reference to MMStudio so it can be used
     * independently of MM GUI.
     *
-    * @param parent                    GUI element on top of which a ProgressBar (or other things) can be displayed
+    * @param parent                    GUI element on top of which a ProgressBar
+    *                                  (or other things) can be displayed
     * @param store                     Datastore to be saved
     * @param dir                       Directory in which to store the data
     * @param amInWriteMode             whether or not we are also writing data
@@ -168,8 +169,7 @@ public final class StorageMultipageTiff implements Storage {
          if (!dirFile.canWrite()) {
             throw new IOException("Insufficient permission to write to " + dirFile);
          }
-      }
-      else {
+      } else {
          openExistingDataSet();
       }
    }
@@ -335,8 +335,7 @@ public final class StorageMultipageTiff implements Storage {
       }
       if (firstImage_ == null) {
          firstImage_ = image;
-      }
-      else {
+      } else {
          ImageSizeChecker.checkImageSizes(firstImage_, image);
       }
 
@@ -404,8 +403,7 @@ public final class StorageMultipageTiff implements Storage {
       // Update maxIndices_
       if (maxIndices_ == null) {
          maxIndices_ = image.getCoords().copyBuilder().build();
-      }
-      else {
+      } else {
          for (String axis : image.getCoords().getAxes()) {
             int pos = image.getCoords().getIndex(axis);
             if (pos > maxIndices_.getIndex(axis)) {
@@ -609,8 +607,7 @@ public final class StorageMultipageTiff implements Storage {
             i++;
          }
          progressBar.setVisible(false);
-      }
-      else {
+      } else {
          coordsToReader_.putAll(oldImageMap);
       }
    }
@@ -672,8 +669,7 @@ public final class StorageMultipageTiff implements Storage {
             sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
             sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
          }
-      }
-      else {
+      } else {
          // multiple channels?  go for composite display
          if (settings != null) {
             DisplaySettings.ColorMode mode = settings.getChannelColorMode();
@@ -692,8 +688,7 @@ public final class StorageMultipageTiff implements Storage {
                      break;
                }
             }
-         }
-         else {
+         } else {
             sb.append("mode=composite\n");
          }
       }
@@ -720,8 +715,7 @@ public final class StorageMultipageTiff implements Storage {
          if (activeDataViewer != null && isViewingOurStore(activeDataViewer)) {
 
             return activeDataViewer.getDisplaySettings();
-         }
-         else {
+         } else {
             List<DataViewer> allDataViewers = studio.displays().getAllDataViewers();
             for (DataViewer dv : allDataViewers) {
                if (dv != null && isViewingOurStore(dv)) {
@@ -792,8 +786,7 @@ public final class StorageMultipageTiff implements Storage {
    public int lastAcquiredFrame() {
       if (amInWriteMode_) {
          return lastFrame_;
-      }
-      else {
+      } else {
          return lastFrameOpenedDataSet_;
       }
    }
@@ -819,8 +812,7 @@ public final class StorageMultipageTiff implements Storage {
             for (File fi : f.listFiles()) {
                list.add(f);
             }
-         }
-         else {
+         } else {
             list.add(f);
          }
       }
@@ -955,8 +947,7 @@ public final class StorageMultipageTiff implements Storage {
       }
       if (!haveIgnoredAxes) {
          result.add(coordsToReader_.get(coords).readImage(coords));
-      }
-      else {
+      } else {
          for (Coords imageCoords : coordsToReader_.keySet()) {
             if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
                try {

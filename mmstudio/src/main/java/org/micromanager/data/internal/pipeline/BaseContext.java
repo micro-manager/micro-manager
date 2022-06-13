@@ -57,8 +57,7 @@ public abstract class BaseContext implements ProcessorContext {
             // TODO Report to user!
             ReportingUtils.logError(e, "Unable to store processed image");
          }
-      }
-      else {
+      } else {
          // Send the image to the next context in the chain.
          sink_.insertImage(new ImageWrapper(image));
       }
@@ -90,8 +89,7 @@ public abstract class BaseContext implements ProcessorContext {
          } catch (IOException e) {
             throw new RuntimeException("Failed to set summary metadata", e);
          }
-      }
-      else {
+      } else {
          sink_.insertSummaryMetadata(summary);
       }
    }
@@ -99,7 +97,7 @@ public abstract class BaseContext implements ProcessorContext {
    /**
     * Receive a new image for processing.
     */
-   abstract public void insertImage(ImageWrapper wrapper);
+   public abstract void insertImage(ImageWrapper wrapper);
 
    @Override
    public SummaryMetadata getSummaryMetadata() {

@@ -403,8 +403,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       if (markButton_ != null) {
          if (msp == null) {
             markButton_.setText("Mark");
-         }
-         else {
+         } else {
             markButton_.setText("Replace");
          }
       }
@@ -511,29 +510,27 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
 
       if (0 <= currentRow) {
          int destinationRow = currentRow + direction;
-         {
-            if (0 <= destinationRow) {
-               if (destinationRow < posTable_.getRowCount()) {
-                  PositionList pl = getPositionList();
+            {
+               if (0 <= destinationRow) {
+                  if (destinationRow < posTable_.getRowCount()) {
+                     PositionList pl = getPositionList();
 
-                  MultiStagePosition[] mspos = pl.getPositions();
+                     MultiStagePosition[] mspos = pl.getPositions();
 
-                  MultiStagePosition tmp = mspos[currentRow];
-                  pl.replacePosition(currentRow, mspos[destinationRow]);
-                  pl.replacePosition(destinationRow, tmp);
-                  positionModel_.setData(pl);
-                  if (destinationRow + 1 < positionModel_.getRowCount()) {
-                     newEdittingRow = destinationRow + 1;
+                     MultiStagePosition tmp = mspos[currentRow];
+                     pl.replacePosition(currentRow, mspos[destinationRow]);
+                     pl.replacePosition(destinationRow, tmp);
+                     positionModel_.setData(pl);
+                     if (destinationRow + 1 < positionModel_.getRowCount()) {
+                        newEdittingRow = destinationRow + 1;
+                     }
+                  } else {
+                     newEdittingRow = posTable_.getRowCount() - 1;
                   }
-               }
-               else {
-                  newEdittingRow = posTable_.getRowCount() - 1;
+               } else {
+                  newEdittingRow = 1;
                }
             }
-            else {
-               newEdittingRow = 1;
-            }
-         }
       }
       updatePositionData();
 
@@ -576,8 +573,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          msp.setLabel(getPositionList().generateLabel());
          getPositionList().addPosition(msp);
          updatePositionData();
-      }
-      else { // replace instead of add
+      } else { // replace instead of add
          msp.setLabel(getPositionList().getPosition(
                posTable_.getSelectedRow() - 1).getLabel());
          int selectedRow = posTable_.getSelectedRow();
@@ -619,8 +615,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          if (subPos.getStageDeviceLabel().equals(deviceName)) {
             if (subPos.is1DStagePosition()) {
                z = subPos.get1DPosition();
-            }
-            else if (subPos.is2DStagePosition()) {
+            } else if (subPos.is2DStagePosition()) {
                x = subPos.get2DPositionX();
                y = subPos.get2DPositionY();
             }
@@ -636,8 +631,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
             if (subPos.getStageDeviceLabel().equals(deviceName)) {
                if (subPos.is1DStagePosition()) {
                   subPos.set1DPosition(subPos.getStageDeviceLabel(), z);
-               }
-               else if (subPos.is2DStagePosition()) {
+               } else if (subPos.is2DStagePosition()) {
                   subPos.set2DPosition(subPos.getStageDeviceLabel(), x, y);
                }
                foundPos = true;
@@ -656,11 +650,9 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
             }
             if (type == DeviceType.StageDevice) {
                subPos = StagePosition.create1D(deviceName, z);
-            }
-            else if (type == DeviceType.XYStageDevice) {
+            } else if (type == DeviceType.XYStageDevice) {
                subPos = StagePosition.create2D(deviceName, x, y);
-            }
-            else {
+            } else {
                throw new IllegalArgumentException(
                      "Unrecognized stage device type " + type + " for stage " + deviceName);
             }
@@ -670,7 +662,11 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       updatePositionData();
    }
 
-   // The stage position changed; update curMsp_.
+   /**
+    * The stage position changed; update curMsp_.
+    *
+    * @param event Signals that the stafe position changed
+    */
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
       // Do the update on the EDT (1) to prevent data races.
@@ -689,7 +685,12 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       });
    }
 
-   // The stage position changed; update curMsp_.
+
+   /**
+    * The stage position changed; update curMsp_.
+    *
+    * @param event Signals that the XY Stage position has changed
+    */
    @Subscribe
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
       // Do the update on the EDT (1) to prevent data races.
@@ -766,8 +767,8 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    /**
     * Returns the first selected drive of the specified type.
     *
-    * @param type
-    * @return
+    * @param type Axis Type
+    * @return First selected drive or null if not found
     */
    private String getAxis(AxisData.AxisType type) {
       for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
@@ -884,7 +885,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
                   JOptionPane.CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
                   null, options, options[0]);
 
-            if (option == 0) {//stop the calibration
+            if (option == 0) { //stop the calibration
                otherThread.interrupt();
                otherThread = null;
 
@@ -1119,8 +1120,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          if (rowIndex == posTable_.getSelectedRow() && rowIndex == lastRowClicked_) {
             posTable_.clearSelection();
             lastRowClicked_ = -1;
-         }
-         else {
+         } else {
             lastRowClicked_ = rowIndex;
          }
       }
@@ -1141,8 +1141,8 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
     * of floats, apply the given offsets to all selected positions for that
     * particular device.
     *
-    * @param deviceName
-    * @param offsets
+    * @param deviceName Name of the Stage or XYStage
+    * @param offsets offsets to be applied, array should be size 1 for a Stage, size 2 for XYStage
     */
    public void offsetSelectedSites(String deviceName, ArrayList<Float> offsets) {
       PositionList positions = getPositionList();
@@ -1154,8 +1154,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
                if (subPos.is1DStagePosition()) {
                   subPos.set1DPosition(subPos.getStageDeviceLabel(),
                         subPos.get1DPosition() + offsets.get(0));
-               }
-               else if (subPos.is2DStagePosition()) {
+               } else if (subPos.is2DStagePosition()) {
                   subPos.set2DPosition(subPos.getStageDeviceLabel(),
                         subPos.get2DPositionX() + offsets.get(0),
                         subPos.get2DPositionY() + offsets.get(1));

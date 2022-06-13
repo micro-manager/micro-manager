@@ -228,9 +228,9 @@ public interface Metadata {
     * Deprecated.
     *
     * @deprecated Use the appropriate of the following:
-    * {@link #copyBuilderPreservingUUID}, {@link #copyBuilderWithNewUUID},
-    * {@link #copyBuilderRemovingUUID}. This method is equivalent to
-    * {@code copyBuilderPreservingUUID}.
+    *     {@link #copyBuilderPreservingUUID}, {@link #copyBuilderWithNewUUID},
+    *     {@link #copyBuilderRemovingUUID}. This method is equivalent to
+    *     {@code copyBuilderPreservingUUID}.
     */
    @Deprecated
    MetadataBuilder copy();
@@ -249,7 +249,7 @@ public interface Metadata {
     * should not be assumed to be accurate to better than 20ms or so.
     *
     * @return Milliseconds since the start of the acquisition up to the moment
-    * this image was received by Micro-Manager
+    *     this image was received by Micro-Manager
     * @deprecated - use Double {@link #getElapsedTimeMs(double) } instead
     */
    @Deprecated
@@ -264,7 +264,7 @@ public interface Metadata {
     * @param defaultValue - value returned of the image metadata did not contain
     *                     information about the elapsed time
     * @return Milliseconds since the start of the acquisition up to the moment
-    * this image was received by Micro-Manager
+    *     this image was received by Micro-Manager
     */
    double getElapsedTimeMs(double defaultValue);
 
@@ -295,7 +295,7 @@ public interface Metadata {
     * Geometric relation between stage movement (in microns) and pixels.
     *
     * @return Affine transform describing geometric relation between stage
-    * movement (in microns) and camera (in pixels)
+    *     movement (in microns) and camera (in pixels)
     */
    AffineTransform getPixelSizeAffine();
 

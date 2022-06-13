@@ -132,8 +132,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
             if (existingIndex >= 0) {
                newPanels.add(rowPanels_.get(existingIndex));
                newScrollBarPositions.add(scrollBarPositions_.get(existingIndex));
-            }
-            else {
+            } else {
                newPanels.add(makeRowPanel(axis, 0));
                newScrollBarPositions.add(0);
             }

@@ -198,8 +198,7 @@ public final class DefaultPropertyMap implements PropertyMap {
                for (double d : doubles) {
                   strb.append(d).append(", ");
                }
-            }
-            else if (containsStringList(key)) {
+            } else if (containsStringList(key)) {
                List<String> strList = getStringList(key);
                for (String str : strList) {
                   strb.append(str).append(", ");
@@ -226,6 +225,21 @@ public final class DefaultPropertyMap implements PropertyMap {
    @Override
    public boolean containsBoolean(String key) {
       return containsPrimitiveScalar(key, Primitive.BOOLEAN);
+   }
+
+   @Override
+   @Deprecated
+   public Boolean getBoolean(String key) {
+      return getBoolean(key, null);
+   }
+
+   @Override
+   @Deprecated
+   public Boolean getBoolean(String key, Boolean defaultValue) {
+      if (!containsBoolean(key)) {
+         return defaultValue;
+      }
+      return getBoolean(key, false);
    }
 
    @Override
@@ -329,6 +343,21 @@ public final class DefaultPropertyMap implements PropertyMap {
    }
 
    @Override
+   @Deprecated
+   public Long getLong(String key) {
+      return getLong(key, null);
+   }
+
+   @Override
+   @Deprecated
+   public Long getLong(String key, Long defaultValue) {
+      if (!containsLong(key)) {
+         return defaultValue;
+      }
+      return getLong(key, 0);
+   }
+
+   @Override
    public long getLong(String key, long aDefault) {
       return getPrimitiveScalar(key, Primitive.LONG, aDefault);
    }
@@ -376,6 +405,21 @@ public final class DefaultPropertyMap implements PropertyMap {
    @Override
    public boolean containsDouble(String key) {
       return containsPrimitiveScalar(key, Primitive.DOUBLE);
+   }
+
+   @Override
+   @Deprecated
+   public Double getDouble(String key) {
+      return getDouble(key, null);
+   }
+
+   @Override
+   @Deprecated
+   public Double getDouble(String key, Double defaultValue) {
+      if (!containsDouble(key)) {
+         return defaultValue;
+      }
+      return getDouble(key, 0);
    }
 
    @Override
@@ -448,6 +492,12 @@ public final class DefaultPropertyMap implements PropertyMap {
    @Override
    public boolean containsString(String key) {
       return containsNonPrimitiveScalar(key, String.class);
+   }
+
+   @Override
+   @Deprecated
+   public String getString(String key) {
+      return getString(key, null);
    }
 
    @Override
@@ -550,6 +600,12 @@ public final class DefaultPropertyMap implements PropertyMap {
    @Override
    public boolean containsPropertyMap(String key) {
       return containsNonPrimitiveScalar(key, PropertyMap.class);
+   }
+
+   @Override
+   @Deprecated
+   public PropertyMap getPropertyMap(String key) {
+      return getPropertyMap(key, null);
    }
 
    @Override
@@ -1423,8 +1479,7 @@ public final class DefaultPropertyMap implements PropertyMap {
                Preconditions.checkNotNull(value, "Null not allowed in property map values");
                valueList.add(cloner.clone(value));
             }
-         }
-         else {
+         } else {
             for (T value : values) {
                Preconditions.checkNotNull(value, "Null not allowed in property map values");
                valueList.add(value);
@@ -1551,12 +1606,6 @@ public final class DefaultPropertyMap implements PropertyMap {
 
    @Override
    @Deprecated
-   public String getString(String key) {
-      return getString(key, null);
-   }
-
-   @Override
-   @Deprecated
    public String[] getStringArray(String key) {
       return getStringArray(key, null);
    }
@@ -1603,21 +1652,6 @@ public final class DefaultPropertyMap implements PropertyMap {
 
    @Override
    @Deprecated
-   public Long getLong(String key) {
-      return getLong(key, null);
-   }
-
-   @Override
-   @Deprecated
-   public Long getLong(String key, Long defaultValue) {
-      if (!containsLong(key)) {
-         return defaultValue;
-      }
-      return getLong(key, 0);
-   }
-
-   @Override
-   @Deprecated
    public Long[] getLongArray(String key) {
       return getLongArray(key, null);
    }
@@ -1629,21 +1663,6 @@ public final class DefaultPropertyMap implements PropertyMap {
          return defaultValue;
       }
       return ArrayUtils.toObject(getLongList(key, new long[] {}));
-   }
-
-   @Override
-   @Deprecated
-   public Double getDouble(String key) {
-      return getDouble(key, null);
-   }
-
-   @Override
-   @Deprecated
-   public Double getDouble(String key, Double defaultValue) {
-      if (!containsDouble(key)) {
-         return defaultValue;
-      }
-      return getDouble(key, 0);
    }
 
    @Override
@@ -1663,21 +1682,6 @@ public final class DefaultPropertyMap implements PropertyMap {
 
    @Override
    @Deprecated
-   public Boolean getBoolean(String key) {
-      return getBoolean(key, null);
-   }
-
-   @Override
-   @Deprecated
-   public Boolean getBoolean(String key, Boolean defaultValue) {
-      if (!containsBoolean(key)) {
-         return defaultValue;
-      }
-      return getBoolean(key, false);
-   }
-
-   @Override
-   @Deprecated
    public Boolean[] getBooleanArray(String key) {
       return getBooleanArray(key, null);
    }
@@ -1689,12 +1693,6 @@ public final class DefaultPropertyMap implements PropertyMap {
          return defaultValue;
       }
       return ArrayUtils.toObject(getBooleanList(key, new boolean[] {}));
-   }
-
-   @Override
-   @Deprecated
-   public PropertyMap getPropertyMap(String key) {
-      return getPropertyMap(key, null);
    }
 
    @Override

@@ -27,8 +27,8 @@ import org.micromanager.data.ImageDeletedEvent;
 
 /**
  * This class signifies that an image has been deleted from a Datastore.
- * <p>
- * This Event posts on the DataProvider bus.
+ *
+ * <p>This Event posts on the DataProvider bus.
  * Subscribe using {@link DataProvider#registerForEvents(Object)}.
  */
 public final class DefaultImageDeletedEvent implements ImageDeletedEvent {

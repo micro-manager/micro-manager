@@ -137,7 +137,7 @@ public class HistogramData {
     * parameter to DisplayManager.calculateHistogram() for more information.
     *
     * @return lowest intensity value in the dataset ignoring given fraction of
-    * outliers
+    *     outliers
     */
    public int getMinIgnoringOutliers() {
       return minIgnoringOutliers_;
@@ -149,7 +149,7 @@ public class HistogramData {
     * parameter to DisplayManager.calculateHistogram() for more information.
     *
     * @return highest intensity value in the dataset ignoring given fraction of
-    * outliers
+    *     outliers
     */
    public int getMaxIgnoringOutliers() {
       return maxIgnoringOutliers_;
@@ -191,7 +191,7 @@ public class HistogramData {
     * hold the number of samples whose intensities were 0, 1, 2, or 3.
     *
     * @return Range of pixel intensities that fit into a single bin in the
-    * histogram.
+    *     histogram.
     */
    public int getBinSize() {
       return binSize_;

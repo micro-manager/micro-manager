@@ -9,12 +9,9 @@ import org.micromanager.Studio;
 import org.micromanager.internal.ConfigGroupPad;
 
 /**
- * @author arthur
- */
-
-/**
  * Rendering element for the property table.
  *
+ * @author arthur
  */
 public final class StateGroupCellRenderer extends PropertyValueCellRenderer {
 
@@ -38,8 +35,7 @@ public final class StateGroupCellRenderer extends PropertyValueCellRenderer {
 
       stateItem_ = data.getPropertyItem(rowIndex);
 
-      Component comp;
-
+      final Component comp;
 
       JLabel label = new JLabel();
       label.setOpaque(true);
@@ -53,8 +49,7 @@ public final class StateGroupCellRenderer extends PropertyValueCellRenderer {
       if (isSelected) {
          comp.setBackground(Color.LIGHT_GRAY);
          comp.setForeground(Color.BLACK);
-      }
-      else {
+      } else {
          // HACK: manually set the colors.
          comp.setBackground(studio_.app().skin().getBackgroundColor());
          comp.setForeground(studio_.app().skin().getEnabledTextColor());

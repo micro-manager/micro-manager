@@ -39,8 +39,8 @@ import org.apache.commons.lang3.event.EventListenerSupport;
 
 /**
  * A button that shows a popup menu or view.
- * <p>
- * This one actually behaves correctly!
+ *
+ * <p>This one actually behaves correctly!
  *
  * @author Mark A. Tsuchida
  */
@@ -113,8 +113,7 @@ public class PopupButton extends JToggleButton
                if (popup_ == null) {
                   setSelected(false);
                }
-            }
-            else {
+            } else {
                hidePopup();
             }
          }
@@ -123,8 +122,7 @@ public class PopupButton extends JToggleButton
          @Override
          public void mousePressed(MouseEvent e) {
             long timeSincePopupMenuWasBecomingInvisibleMs =
-                  System.currentTimeMillis() -
-                        timeWhenPopupWasBecomingInvisibleMs_;
+                  System.currentTimeMillis() - timeWhenPopupWasBecomingInvisibleMs_;
             if (timeSincePopupMenuWasBecomingInvisibleMs < 50) {
                currentMousePressOnButtonIsToCancelPopup_ = true;
             }
@@ -154,8 +152,7 @@ public class PopupButton extends JToggleButton
       component_ = popup;
       if (component_ instanceof JPopupMenu) {
          popup_ = (JPopupMenu) component_;
-      }
-      else if (component_ != null) {
+      } else if (component_ != null) {
          popup_ = new JPopupMenu();
          popup_.add(component_);
          popup_.validate();
@@ -224,8 +221,7 @@ public class PopupButton extends JToggleButton
    @Override
    public void windowLostFocus(WindowEvent e) {
       Window windowGainingFocus = e.getOppositeWindow();
-      if (windowGainingFocus != null &&
-            windowGainingFocus.isAncestorOf(popup_)) {
+      if (windowGainingFocus != null && windowGainingFocus.isAncestorOf(popup_)) {
          return;
       }
 

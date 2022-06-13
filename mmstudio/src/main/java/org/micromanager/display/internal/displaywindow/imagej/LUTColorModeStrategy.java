@@ -16,7 +16,9 @@ import net.imglib2.display.ColorTable8;
  * @author mark
  */
 class LUTColorModeStrategy extends AbstractColorModeStrategy {
-   private final byte[] rLUT_, gLUT_, bLUT_;
+   private final byte[] rLUT_;
+   private final byte[] gLUT_;
+   private final byte[] bLUT_;
 
    public static ColorModeStrategy create(ColorTable8 lut) {
       return new LUTColorModeStrategy(1, lut);

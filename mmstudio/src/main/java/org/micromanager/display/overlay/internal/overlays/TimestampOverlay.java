@@ -273,8 +273,7 @@ public final class TimestampOverlay extends AbstractOverlay {
             widths.add(metrics.stringWidth(text));
             foregrounds.add(color_.getForeground(image, displaySettings));
          }
-      }
-      else {
+      } else {
          StringBuilder sb = new StringBuilder();
          sb.append(format_.formatTime(primaryImage, formatString_)).append(keyString_);
          String text = sb.toString();
@@ -283,7 +282,8 @@ public final class TimestampOverlay extends AbstractOverlay {
          foregrounds.add(color_.getForeground(primaryImage, displaySettings));
       }
 
-      boolean atBottom, atRight;
+      boolean atBottom;
+      boolean atRight;
       switch (position_) {
          case NORTHWEST:
             atBottom = atRight = false;
@@ -304,13 +304,13 @@ public final class TimestampOverlay extends AbstractOverlay {
       }
 
       final int backgroundWidth = Collections.max(widths) + 2;
-      final int backgroundHeight = metrics.getAscent() + metrics.getDescent() +
-            (texts.size() - 1) * metrics.getHeight() + 2;
-      final int backgroundX = atRight ?
-            screenRect.width - xOffset_ - backgroundWidth :
+      final int backgroundHeight = metrics.getAscent() + metrics.getDescent()
+            + (texts.size() - 1) * metrics.getHeight() + 2;
+      final int backgroundX = atRight
+            ? screenRect.width - xOffset_ - backgroundWidth :
             xOffset_;
-      final int backgroundY = atBottom ?
-            screenRect.height - yOffset_ - backgroundHeight :
+      final int backgroundY = atBottom
+            ? screenRect.height - yOffset_ - backgroundHeight :
             yOffset_;
 
       if (addBackground_) {
@@ -337,18 +337,18 @@ public final class TimestampOverlay extends AbstractOverlay {
 
    @Override
    public PropertyMap getConfiguration() {
-      return PropertyMaps.builder().
-            putEnumAsString(Key.FORMAT.name(), format_).
-            putBoolean(Key.PER_CHANNEL.name(), perChannel_).
-            putString(Key.FORMATSTRING.name(), formatString_).
-            putString(Key.KEYSTRING.name(), keyString_).
-            putEnumAsString(Key.COLOR.name(), color_).
-            putFloat(Key.FONTSIZE.name(), fontSize_).
-            putBoolean(Key.ADD_BACKGROUND.name(), addBackground_).
-            putEnumAsString(Key.POSITION.name(), position_).
-            putInteger(Key.X_OFFSET.name(), xOffset_).
-            putInteger(Key.Y_OFFSET.name(), yOffset_).
-            build();
+      return PropertyMaps.builder()
+            .putEnumAsString(Key.FORMAT.name(), format_)
+            .putBoolean(Key.PER_CHANNEL.name(), perChannel_)
+            .putString(Key.FORMATSTRING.name(), formatString_)
+            .putString(Key.KEYSTRING.name(), keyString_)
+            .putEnumAsString(Key.COLOR.name(), color_)
+            .putFloat(Key.FONTSIZE.name(), fontSize_)
+            .putBoolean(Key.ADD_BACKGROUND.name(), addBackground_)
+            .putEnumAsString(Key.POSITION.name(), position_)
+            .putInteger(Key.X_OFFSET.name(), xOffset_)
+            .putInteger(Key.Y_OFFSET.name(), yOffset_)
+            .build();
    }
 
    @Override
@@ -390,8 +390,8 @@ public final class TimestampOverlay extends AbstractOverlay {
       boolean error = false;
       for (int i = 0; i < input.length(); i++) {
          char c = input.charAt(i);
-         if (c == 'h' || c == 'H' || c == 'm' || c == 's' || c == 'S' ||
-               c == ':' || c == '-' || c == '.' || c == ' ') {
+         if (c == 'h' || c == 'H' || c == 'm' || c == 's' || c == 'S'
+               || c == ':' || c == '-' || c == '.' || c == ' ') {
             sb.append(c);
          }
       }

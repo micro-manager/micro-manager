@@ -143,7 +143,7 @@ public interface DataViewer extends EventPublisher {
     * Retrieve the datastore backing this viewer.
     *
     * @return the datastore backing this viewer, or {@code null} if this viewer
-    * is backed by a data provider that is not a datastore
+    *     is backed by a data provider that is not a datastore
     * @deprecated use {@link #getDataProvider()} instead
     */
    @Deprecated

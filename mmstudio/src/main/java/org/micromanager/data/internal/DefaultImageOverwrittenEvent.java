@@ -28,8 +28,8 @@ import org.micromanager.data.ImageOverwrittenEvent;
 /**
  * This class signifies that an image in a Datastore has been overwritten by a
  * new image.
- * <p>
- * This Event posts on the DataProvider bus.
+ *
+ * <p>This Event posts on the DataProvider bus.
  * Subscribe using {@link DataProvider#registerForEvents(Object)}.
  */
 public final class DefaultImageOverwrittenEvent implements ImageOverwrittenEvent {

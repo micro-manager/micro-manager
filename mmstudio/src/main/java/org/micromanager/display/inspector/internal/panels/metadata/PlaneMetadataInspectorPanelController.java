@@ -191,8 +191,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
             unchangingValuesInitialized_ = false;
             if (images.isEmpty()) {
                updateMetadata(null, true);
-            }
-            else {
+            } else {
                updateMetadata(images.get(0).getMetadata(), true);
             }
          }
@@ -235,9 +234,8 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       }
       metadata_ = metadata;
 
-      PropertyMap metadataMap = metadata == null ?
-            PropertyMaps.emptyPropertyMap() :
-            ((DefaultMetadata) metadata).toPropertyMap();
+      PropertyMap metadataMap = metadata == null
+            ? PropertyMaps.emptyPropertyMap() : ((DefaultMetadata) metadata).toPropertyMap();
 
       final TreeMap<String, String> data = new TreeMap<String, String>();
       for (String key : metadataMap.keySet()) {
@@ -246,14 +244,12 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
             for (String subkey : scopeData.keySet()) {
                data.put("device:" + subkey, scopeData.getValueAsString(subkey, ""));
             }
-         }
-         else if ("UserData".equals(key)) {
+         } else if ("UserData".equals(key)) {
             PropertyMap userData = metadataMap.getPropertyMap(key, null);
             for (String subkey : userData.keySet()) {
                data.put("user:" + subkey, userData.getValueAsString(subkey, ""));
             }
-         }
-         else {
+         } else {
             data.put(key, metadataMap.getValueAsString(key, ""));
          }
       }
@@ -270,8 +266,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
                unchangingValuesInitialized_ = true;
             }
             displayData = new ArrayList<Map.Entry<String, String>>(data.entrySet());
-         }
-         else {
+         } else {
             displayData = new ArrayList<Map.Entry<String, String>>();
             unchangingValues_.entrySet().retainAll(data.entrySet());
             for (Map.Entry<String, String> entry : data.entrySet()) {
@@ -280,8 +275,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
                }
             }
          }
-      }
-      else {
+      } else {
          displayData = new ArrayList<Map.Entry<String, String>>(data.entrySet());
       }
 

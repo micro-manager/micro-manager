@@ -131,8 +131,7 @@ public final class MMAcquisition extends DataViewerListener {
                eng_.stop(true);
                return;
             }
-         }
-         else {
+         } else {
             store_.setStorage(new StorageRAM(store_));
          }
       } catch (JSONException e) {
@@ -208,8 +207,7 @@ public final class MMAcquisition extends DataViewerListener {
                do {
                   if (nrChannels == 1) {
                      displaySettingsBuilder.colorModeGrayscale();
-                  }
-                  else {
+                  } else {
                      displaySettingsBuilder.colorModeComposite();
                   }
                   for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
@@ -239,8 +237,7 @@ public final class MMAcquisition extends DataViewerListener {
                   }
                } while (!display_.compareAndSetDisplaySettings(
                      display_.getDisplaySettings(), displaySettingsBuilder.build()));
-            }
-            else {
+            } else {
                display_.compareAndSetDisplaySettings(
                      display_.getDisplaySettings(), dsTmp);
             }
@@ -407,8 +404,7 @@ public final class MMAcquisition extends DataViewerListener {
             Icon icon = pauseButton.getIcon();
             if (icon == pauseIcon) {
                pauseButton.setIcon(playIcon);
-            }
-            else {
+            } else {
                pauseButton.setIcon(pauseIcon);
             }
          });
@@ -498,8 +494,7 @@ public final class MMAcquisition extends DataViewerListener {
                "Received %d of %d images",
                imagesReceived_, imagesExpected_));
 
-      }
-      else {
+      } else {
          alert_.setText("No images expected.");
       }
    }
@@ -510,8 +505,7 @@ public final class MMAcquisition extends DataViewerListener {
          String text = "Next frame in " + s + " sec";
          if (nextImageAlert_ == null) {
             nextImageAlert_ = studio_.alerts().postUpdatableAlert("Acquisition", text);
-         }
-         else {
+         } else {
             nextImageAlert_.setText(text);
          }
       }

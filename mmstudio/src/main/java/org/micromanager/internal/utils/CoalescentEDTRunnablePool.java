@@ -58,8 +58,7 @@ public class CoalescentEDTRunnablePool {
                coalescedRunnables_.get(coalescenceClass);
          if (coalesced != null) {
             coalesced = coalesced.coalesceWith(runnable);
-         }
-         else {
+         } else {
             coalesced = runnable;
          }
          coalescedRunnables_.put(coalescenceClass, coalesced);
@@ -100,8 +99,7 @@ public class CoalescentEDTRunnablePool {
             Long oldSkipCount = skipCounts_.get(coalescenceClass);
             skipCounts_.put(coalescenceClass,
                   (oldSkipCount == null ? 0 : oldSkipCount) + 1);
-         }
-         else {
+         } else {
             coalesced = runnable;
          }
          coalescedRunnables_.put(coalescenceClass, coalesced);

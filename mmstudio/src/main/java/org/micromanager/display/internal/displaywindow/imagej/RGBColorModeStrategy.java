@@ -73,8 +73,7 @@ class RGBColorModeStrategy implements ColorModeStrategy {
       if (stack.size() <= 1) {
          imagePlus_.setStack(stack);
       }
-      ((ColorProcessor) imagePlus_.getProcessor()).
-            applyTable(getRGBLUTs());
+      ((ColorProcessor) imagePlus_.getProcessor()).applyTable(getRGBLUTs());
    }
 
    @Override

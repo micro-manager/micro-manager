@@ -128,15 +128,14 @@ public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
                   } catch (IllegalArgumentException ex) {
                      // We were already unsubscribed; ignore it.
                   }
-               }
-               else {
+               } else {
                   studio_.events().registerForEvents(this);
                }
             }
          }
       };
-      result.setIcon(studio_.live().isLiveModeOn() ?
-            IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
+      result.setIcon(studio_.live().isLiveModeOn()
+            ? IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
             IconLoader.getIcon("/org/micromanager/icons/camera_go.png"));
       result.addHierarchyListener(wrapper);
       studio_.events().registerForEvents(wrapper);

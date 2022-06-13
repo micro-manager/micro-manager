@@ -41,7 +41,7 @@ public interface ShutterManager {
     * @param isOpen if true, the shutter will be opened, otherwise it will be
     *               closed.
     * @return true if autoshutter was disabled as a side-effect of calling
-    * this method; false if autoshutter was already off.
+    *     this method; false if autoshutter was already off.
     * @throws Exception if there was a problem setting the shutter state.
     */
    boolean setShutter(boolean isOpen) throws Exception;

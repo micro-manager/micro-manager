@@ -14,6 +14,12 @@ import java.util.List;
 import java.util.Set;
 import org.micromanager.display.internal.link.internal.LinkEndpoint;
 
+/**
+ * Anchors are UI elements in the viewer that couple axes of one viewer to the axes of
+ * another viewer.
+ *
+ * @param <T>
+ */
 
 public abstract class AbstractLinkAnchor<T> implements LinkAnchor<T> {
    private LinkEndpoint endpoint_;

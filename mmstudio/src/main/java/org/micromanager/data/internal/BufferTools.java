@@ -10,6 +10,8 @@ import java.util.Arrays;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
+ * Tools to work with Direct Byte Byffers.
+ *
  * @author Arthur
  */
 public final class BufferTools {
@@ -29,6 +31,12 @@ public final class BufferTools {
       return ByteBuffer.allocateDirect(4 * ints.length).order(NATIVE_ORDER).asIntBuffer().put(ints);
    }
 
+   /**
+    * Copy data from Direct Byte Buffer into a Java array.
+    *
+    * @param buffer Direct Buffer to be copied.
+    * @return Copy of the ByteBuffer as a Java byte[]
+    */
    public static byte[] bytesFromBuffer(ByteBuffer buffer) {
       synchronized (buffer) {
          byte[] bytes = new byte[buffer.capacity()];
@@ -38,6 +46,12 @@ public final class BufferTools {
       }
    }
 
+   /**
+    * Copy data from Direct Buffer into a Java array.
+    *
+    * @param buffer Direct Buffer to be copied.
+    * @return Copy of the Short Buffer as a Java short[]
+    */
    public static short[] shortsFromBuffer(ShortBuffer buffer) {
       synchronized (buffer) {
          short[] shorts = new short[buffer.capacity()];
@@ -47,6 +61,12 @@ public final class BufferTools {
       }
    }
 
+   /**
+    * Copy data from Direct Buffer into a Java array.
+    *
+    * @param buffer Direct Buffer to be copied.
+    * @return Copy of the IntBuffer as a Java int[]
+    */
    public static int[] intsFromBuffer(IntBuffer buffer) {
       synchronized (buffer) {
          int[] ints = new int[buffer.capacity()];
@@ -56,15 +76,19 @@ public final class BufferTools {
       }
    }
 
+   /**
+    * Copy data from Direct Buffer into a Java array.
+    *
+    * @param buffer Direct Buffer to be copied.
+    * @return Copy of the Buffer as a Java array
+    */
    public static Object arrayFromBuffer(Buffer buffer) {
       synchronized (buffer) {
          if (buffer instanceof ByteBuffer) {
             return bytesFromBuffer((ByteBuffer) buffer);
-         }
-         else if (buffer instanceof ShortBuffer) {
+         } else if (buffer instanceof ShortBuffer) {
             return shortsFromBuffer((ShortBuffer) buffer);
-         }
-         else if (buffer instanceof IntBuffer) {
+         } else if (buffer instanceof IntBuffer) {
             return intsFromBuffer((IntBuffer) buffer);
          }
       }
@@ -90,8 +114,7 @@ public final class BufferTools {
          buf.rewind();
          byte[] arr = bb.array();
          return Arrays.copyOf(arr, arr.length);
-      }
-      else if (rawPixels instanceof ShortBuffer) {
+      } else if (rawPixels instanceof ShortBuffer) {
          ShortBuffer buf = (ShortBuffer) rawPixels;
          ByteBuffer bb = ByteBuffer.allocate(rawPixels.remaining() * 2);
          while (buf.hasRemaining()) {
@@ -100,29 +123,37 @@ public final class BufferTools {
          buf.rewind();
          byte[] arr = bb.array();
          return Arrays.copyOf(arr, arr.length);
-      }
-      else if (rawPixels instanceof ByteBuffer) {
+      } else if (rawPixels instanceof ByteBuffer) {
          byte[] arr = ((ByteBuffer) rawPixels).array();
          return Arrays.copyOf(arr, arr.length);
-      }
-      else {
+      } else {
          throw new RuntimeException(("Unhandled Case."));
       }
    }
 
+   /**
+    * Copies a Java primitive Array to a Direct Buffer.
+    *
+    * @param primitiveArray Primitive Array to be copied
+    * @return Direct Buffer copy of the primitive array.
+    */
    public static Buffer directBufferFromArray(Object primitiveArray) {
       if (primitiveArray instanceof byte[]) {
          return directBufferFromBytes((byte[]) primitiveArray);
-      }
-      else if (primitiveArray instanceof short[]) {
+      } else if (primitiveArray instanceof short[]) {
          return directBufferFromShorts((short[]) primitiveArray);
-      }
-      else if (primitiveArray instanceof int[]) {
+      } else if (primitiveArray instanceof int[]) {
          return directBufferFromInts((int[]) primitiveArray);
       }
       return null;
    }
 
+   /**
+    * Copies a Java String to a Direct Buffer.
+    *
+    * @param string Java String to be copied
+    * @return Copy of the String in a Byte Buffer
+    */
    public static ByteBuffer directBufferFromString(String string) {
       try {
          return directBufferFromBytes(string.getBytes("UTF-8"));
@@ -132,6 +163,12 @@ public final class BufferTools {
       }
    }
 
+   /**
+    * Copies a ByteBuffer into a String.
+    *
+    * @param byteBuffer Buffer to be copied to a String.
+    * @return String representation of the Byte Buffer
+    */
    public static String stringFromBuffer(ByteBuffer byteBuffer) {
       try {
          return new String(bytesFromBuffer(byteBuffer), "UTF-8");
@@ -141,6 +178,13 @@ public final class BufferTools {
       }
    }
 
+   /**
+    * Wraps a primitive array of either byte[] or short[] into a ByteBuffer.
+    *
+    * @param pixels byte[] or short[] array
+    * @param bytesPerPixel 1 for byte[], 2 for short[]
+    * @return Buffer (either ByteBuffer or ShortBuffer).
+    */
    public static Buffer wrapArray(Object pixels, int bytesPerPixel) {
       Buffer buffer;
       switch (bytesPerPixel) {

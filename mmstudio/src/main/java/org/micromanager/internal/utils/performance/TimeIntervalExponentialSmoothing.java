@@ -36,8 +36,7 @@ public final class TimeIntervalExponentialSmoothing
       double deltaTMs = markTimeAndGetDeltaTMs();
       if (!isStatsInitialized()) {
          initializeStats(deltaTMs);
-      }
-      else {
+      } else {
          updateStats(deltaTMs, deltaTMs);
       }
    }

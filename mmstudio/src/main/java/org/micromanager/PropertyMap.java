@@ -393,6 +393,12 @@ public interface PropertyMap {
 
    boolean containsBoolean(String key);
 
+   @Deprecated
+   Boolean getBoolean(String key);
+
+   @Deprecated
+   Boolean getBoolean(String key, Boolean aDefault);
+
    boolean getBoolean(String key, boolean aDefault);
 
    boolean containsBooleanList(String key);
@@ -433,6 +439,12 @@ public interface PropertyMap {
 
    boolean containsLong(String key);
 
+   @Deprecated
+   Long getLong(String key);
+
+   @Deprecated
+   Long getLong(String key, Long aDefault);
+
    long getLong(String key, long aDefault);
 
    boolean containsLongList(String key);
@@ -452,6 +464,12 @@ public interface PropertyMap {
    List<Float> getFloatList(String key, Iterable<Float> defaults);
 
    boolean containsDouble(String key);
+
+   @Deprecated
+   Double getDouble(String key);
+
+   @Deprecated
+   Double getDouble(String key, Double aDefault);
 
    double getDouble(String key, double aDefault);
 
@@ -499,6 +517,9 @@ public interface PropertyMap {
 
    boolean containsString(String key);
 
+   @Deprecated
+   String getString(String key);
+
    String getString(String key, String aDefault);
 
    boolean containsStringList(String key);
@@ -538,6 +559,9 @@ public interface PropertyMap {
    List<AffineTransform> getAffineTransformList(String key, Iterable<AffineTransform> defaults);
 
    boolean containsPropertyMap(String key);
+
+   @Deprecated
+   PropertyMap getPropertyMap(String key);
 
    PropertyMap getPropertyMap(String key, PropertyMap aDefault);
 
@@ -665,9 +689,6 @@ public interface PropertyMap {
    PropertyMapBuilder copy();
 
    @Deprecated
-   String getString(String key);
-
-   @Deprecated
    String[] getStringArray(String key);
 
    @Deprecated
@@ -686,22 +707,10 @@ public interface PropertyMap {
    Integer[] getIntArray(String key, Integer[] aDefault);
 
    @Deprecated
-   Long getLong(String key);
-
-   @Deprecated
-   Long getLong(String key, Long aDefault);
-
-   @Deprecated
    Long[] getLongArray(String key);
 
    @Deprecated
    Long[] getLongArray(String key, Long[] aDefault);
-
-   @Deprecated
-   Double getDouble(String key);
-
-   @Deprecated
-   Double getDouble(String key, Double aDefault);
 
    @Deprecated
    Double[] getDoubleArray(String key);
@@ -710,19 +719,10 @@ public interface PropertyMap {
    Double[] getDoubleArray(String key, Double[] aDefault);
 
    @Deprecated
-   Boolean getBoolean(String key);
-
-   @Deprecated
-   Boolean getBoolean(String key, Boolean aDefault);
-
-   @Deprecated
    Boolean[] getBooleanArray(String key);
 
    @Deprecated
    Boolean[] getBooleanArray(String key, Boolean[] aDefault);
-
-   @Deprecated
-   PropertyMap getPropertyMap(String key);
 
    @Deprecated
    PropertyMap merge(PropertyMap alt);

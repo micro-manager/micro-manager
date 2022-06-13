@@ -52,11 +52,9 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
                duplicate_,
                path_, true, true,
                StorageMultipageTiff.getShouldSplitPositions());
-      }
-      else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+      } else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          saver_ = new StorageSinglePlaneTiffSeries(duplicate_, path_, true);
-      }
-      else {
+      } else {
          throw new IllegalArgumentException("Unrecognized mode parameter "
                + mode);
       }

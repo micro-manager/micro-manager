@@ -139,8 +139,7 @@ public final class ConfigWizard extends JDialog {
             // call the last page's exit
             pages_[curPage_].exitPage(true);
             onCloseWindow();
-         }
-         else {
+         } else {
             setPage(curPage_ + 1);
          }
       });
@@ -216,8 +215,7 @@ public final class ConfigWizard extends JDialog {
 
       if (curPage_ == pages_.length - 1) {
          nextButton_.setText("Finish");
-      }
-      else {
+      } else {
          nextButton_.setText("Next >");
       }
 

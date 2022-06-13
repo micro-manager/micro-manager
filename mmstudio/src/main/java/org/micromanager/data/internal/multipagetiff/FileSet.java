@@ -170,8 +170,7 @@ class FileSet {
       if (expectedImageOrder_) {
          if (splitByXYPosition_) {
             checkForExpectedImageOrder(img.getCoords());
-         }
-         else {
+         } else {
             expectedImageOrder_ = false;
          }
       }
@@ -255,8 +254,7 @@ class FileSet {
       }
       if (prefix.length() == 0) {
          baseFilename = "MMStack";
-      }
-      else {
+      } else {
          baseFilename = prefix + "_MMStack";
       }
 
@@ -272,8 +270,7 @@ class FileSet {
          // At least handle the case where the default name is used.
          if (posName != null && !posName.isEmpty() && !posName.equals("Default")) {
             baseFilename += "_" + posName;
-         }
-         else {
+         } else {
             baseFilename += "_" + "Pos" + posIndex;
          }
       }
@@ -369,8 +366,7 @@ class FileSet {
                nextExpectedFrame_ = frame + 1;
             }
          }
-      }
-      else {
+      } else {
          nextExpectedChannel_ = channel + 1;
          if (nextExpectedChannel_ == masterStorage_.getIntendedSize(Coords.CHANNEL)) {
             nextExpectedChannel_ = 0;

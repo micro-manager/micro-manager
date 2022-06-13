@@ -76,11 +76,9 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
    public Object getValueAt(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
          return dev_.getName();
-      }
-      else if (columnIndex == 1) {
+      } else if (columnIndex == 1) {
          return props_[rowIndex].name;
-      }
-      else {
+      } else {
          return props_[rowIndex].value;
       }
    }

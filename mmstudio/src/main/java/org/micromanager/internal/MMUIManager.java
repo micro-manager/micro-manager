@@ -226,7 +226,7 @@ public class MMUIManager {
       frame_ = new MainFrame(studio_, studio_.core());
       frame_.toFront();
       frame_.setVisible(true);
-      ReportingUtils.SetContainingFrame(frame_);
+      ReportingUtils.setContainingFrame(frame_);
       frame_.initializeConfigPad();
    }
 
@@ -392,7 +392,7 @@ public class MMUIManager {
     *
     * @return current PositionList.  Handle with care as dangerous things can happen
     * @deprecated Direct access to the PositionList should not be allowed, but
-    * currently is the only way to modify the StagePositions in the current PositionList
+    *     currently is the only way to modify the StagePositions in the current PositionList
     */
    @Deprecated
    public PositionList getPositionList() {

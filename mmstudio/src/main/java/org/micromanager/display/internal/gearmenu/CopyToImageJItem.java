@@ -82,8 +82,7 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
             iPlus.getWindow().pack();
             */
          }
-      }
-      else if (dp.getNumImages() > 1) {
+      } else if (dp.getNumImages() > 1) {
          try {
             ImageStack imgStack = new ImageStack(dp.getAnyImage().getWidth(),
                   dp.getAnyImage().getHeight());
@@ -96,8 +95,7 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
                      if (image != null) {
                         iProc = DefaultImageJConverter.createProcessor(
                               image, copy);
-                     }
-                     else { // handle missing images - should be handled by MM
+                     } else { // handle missing images - should be handled by MM
                         // so remove this code once this is done nicely in MM
                         iProc = DefaultImageJConverter.createBlankProcessor(
                               dp.getAnyImage());

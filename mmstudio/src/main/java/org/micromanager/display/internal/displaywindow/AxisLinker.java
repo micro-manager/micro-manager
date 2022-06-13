@@ -15,6 +15,9 @@ import org.micromanager.display.internal.link.LinkAnchor;
 import org.micromanager.display.internal.link.LinkManager;
 
 /**
+ * Handles the axis linker Anchor, a UI element in the display that lets users synchronize
+ * axes of multiple viewers with each other.
+ *
  * @author mark
  */
 class AxisLinker {

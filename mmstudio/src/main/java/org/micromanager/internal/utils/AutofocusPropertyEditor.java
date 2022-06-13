@@ -265,8 +265,7 @@ public final class AutofocusPropertyEditor extends JDialog {
             (String) methodCombo_.getSelectedItem()));
       if (afDevice != null) {
          methodCombo_.setSelectedItem(afDevice);
-      }
-      else {
+      } else {
          if (afMgr_.getAutofocusMethod() != null) {
             methodCombo_.setSelectedItem(afMgr_.getAutofocusMethod().getName());
          }
@@ -344,8 +343,7 @@ public final class AutofocusPropertyEditor extends JDialog {
          PropertyItem item = propList_.get(row);
          if (col == 0) {
             return item.device + "-" + item.name;
-         }
-         else if (col == 1) {
+         } else if (col == 1) {
             return item.value;
          }
 
@@ -360,12 +358,10 @@ public final class AutofocusPropertyEditor extends JDialog {
                if (item.isInteger()) {
                   afMgr_.getAutofocusMethod()
                         .setPropertyValue(item.name, NumberUtils.intStringDisplayToCore(value));
-               }
-               else if (item.isFloat()) {
+               } else if (item.isFloat()) {
                   afMgr_.getAutofocusMethod()
                         .setPropertyValue(item.name, NumberUtils.doubleStringDisplayToCore(value));
-               }
-               else {
+               } else {
                   afMgr_.getAutofocusMethod().setPropertyValue(item.name, value.toString());
                }
 
@@ -387,8 +383,7 @@ public final class AutofocusPropertyEditor extends JDialog {
       public boolean isCellEditable(int nRow, int nCol) {
          if (nCol == 1) {
             return !propList_.get(nRow).readOnly;
-         }
-         else {
+         } else {
             return false;
          }
       }
@@ -479,8 +474,7 @@ public final class AutofocusPropertyEditor extends JDialog {
                if (item_.hasRange) {
                   if (item_.isInteger()) {
                      slider_.setLimits((int) item_.lowerLimit, (int) item_.upperLimit);
-                  }
-                  else {
+                  }  else {
                      slider_.setLimits(item_.lowerLimit, item_.upperLimit);
                   }
                   try {
@@ -489,8 +483,7 @@ public final class AutofocusPropertyEditor extends JDialog {
                      ReportingUtils.logError(ex);
                   }
                   return slider_;
-               }
-               else {
+               } else {
                   text_.setText((String) value);
                   return text_;
                }
@@ -510,8 +503,7 @@ public final class AutofocusPropertyEditor extends JDialog {
             combo_.addActionListener(e -> fireEditingStopped());
 
             return combo_;
-         }
-         else if (colIndex == 2) {
+         } else if (colIndex == 2) {
             return check_;
          }
          return null;
@@ -525,16 +517,13 @@ public final class AutofocusPropertyEditor extends JDialog {
             if (item_.allowed.length == 0) {
                if (item_.hasRange) {
                   return slider_.getText();
-               }
-               else {
+               } else {
                   return text_.getText();
                }
-            }
-            else {
+            } else {
                return combo_.getSelectedItem();
             }
-         }
-         else {
+         } else {
             if (editingCol_ == 2) {
                return check_;
             }
@@ -574,8 +563,7 @@ public final class AutofocusPropertyEditor extends JDialog {
             lab.setOpaque(true);
             lab.setHorizontalAlignment(JLabel.LEFT);
             comp = lab;
-         }
-         else if (colIndex == 1) {
+         } else if (colIndex == 1) {
             if (item_.hasRange) {
                SliderPanel slider = new SliderPanel();
                slider.setLimits(item_.lowerLimit, item_.upperLimit);
@@ -586,24 +574,21 @@ public final class AutofocusPropertyEditor extends JDialog {
                }
                slider.setToolTipText((String) value);
                comp = slider;
-            }
-            else {
+            } else {
                JLabel lab = new JLabel();
                lab.setOpaque(true);
                lab.setText(item_.value);
                lab.setHorizontalAlignment(JLabel.LEFT);
                comp = lab;
             }
-         }
-         else {
+         } else {
             comp = new JLabel("Undefinded");
          }
 
          if (item_.readOnly) {
             comp.setBackground(studio_.app().skin().getDisabledBackgroundColor());
             comp.setForeground(studio_.app().skin().getDisabledTextColor());
-         }
-         else {
+         } else {
             comp.setBackground(studio_.app().skin().getBackgroundColor());
             comp.setForeground(studio_.app().skin().getEnabledTextColor());
          }

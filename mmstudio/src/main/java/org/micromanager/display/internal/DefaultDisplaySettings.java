@@ -998,7 +998,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     *
     * @param pMap PropertyMap to be restored to DisplaySettings
     * @return restored DisplaySettings.  Any missing component will be replaced
-    * with the (Builder's) default.
+    *     with the (Builder's) default.
     */
    public static DisplaySettings fromPropertyMap(PropertyMap pMap) {
       DefaultDisplaySettings.Builder ddsb = new DefaultDisplaySettings.Builder();
@@ -1056,8 +1056,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          } catch (IOException ioe) {
             ReportingUtils.logError(ioe, "Error reading: " + sourceFile.getPath());
          }
-      }
-      else {
+      } else {
          ReportingUtils.logError("No display settings file found at: " + sourceFile.getPath());
       }
       return null;

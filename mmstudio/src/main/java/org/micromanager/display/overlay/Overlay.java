@@ -32,11 +32,11 @@ import org.micromanager.display.DisplaySettings;
 
 /**
  * A graphic object displayed over images.
- * <p>
- * To implement a new overlay, you should extend {@link AbstractOverlay} rather
+ *
+ * <p>To implement a new overlay, you should extend {@link AbstractOverlay} rather
  * than directly implementing this interface.
- * <p>
- * Overlays are not thread safe. In a GUI, all methods must be called on the
+ *
+ * <p>Overlays are not thread safe. In a GUI, all methods must be called on the
  * Swing/AWT event dispatch thread. (This means that Overlay implementations do
  * not need to worry about threading.)
  *
@@ -71,18 +71,18 @@ public interface Overlay {
 
    /**
     * Return the configuration UI component for this overlay.
-    * <p>
-    * The component should work well when laid out with a fixed width and
+    *
+    * <p>The component should work well when laid out with a fixed width and
     * height, determined based on its minimum and maximum sizes. The width of
     * the component may be changed in response to layout changes, but the
     * component must not actively resize itself. It is recommended that the
     * preferred width be no more than 480 pixels.
-    * <p>
-    * This method should return the same object every time it is called,
+    *
+    * <p>This method should return the same object every time it is called,
     * throughout the lifetime of this Overlay instance. If the overlay does not
     * require any user configuration, {@code null} may be returned.
-    * <p>
-    * <strong>Important</strong>: The Overlay must not create any UI objects
+    *
+    * <p><strong>Important</strong>: The Overlay must not create any UI objects
     * unless this method is called, and still support all other methods. This
     * is to support headless use of overlays.
     *
@@ -92,8 +92,8 @@ public interface Overlay {
 
    /**
     * Return the user-customizable settings for this overlay.
-    * <p>
-    * The configuration should contain all parameters needed to reproduce the
+    *
+    * <p>The configuration should contain all parameters needed to reproduce the
     * same overlay on another display window.
     *
     * @return a property map containing current parameters of the overlay
@@ -110,8 +110,8 @@ public interface Overlay {
 
    /**
     * Return whether this overlay is shown.
-    * <p>
-    * Note: {@link AbstractOverlay} implements this method.
+    *
+    * <p>Note: {@link AbstractOverlay} implements this method.
     *
     * @return true if overlay is visible
     */
@@ -119,8 +119,8 @@ public interface Overlay {
 
    /**
     * Show or hide this overlay.
-    * <p>
-    * Note: {@link AbstractOverlay} implements this method.
+    *
+    * <p>Note: {@link AbstractOverlay} implements this method.
     *
     * @param visible whether to show the overlay
     */
@@ -128,8 +128,8 @@ public interface Overlay {
 
    /**
     * Add a listener.
-    * <p>
-    * Note: {@link AbstractOverlay} implements this method.
+    *
+    * <p>Note: {@link AbstractOverlay} implements this method.
     *
     * @param listener the listener to add
     */
@@ -137,8 +137,8 @@ public interface Overlay {
 
    /**
     * Remove a listener.
-    * <p>
-    * Note: {@link AbstractOverlay} implements this method.
+    *
+    * <p>Note: {@link AbstractOverlay} implements this method.
     *
     * @param listener the listener to remove
     */

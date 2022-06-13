@@ -58,8 +58,7 @@ public final class PipelineTable extends JTable {
                                                      int row, int column) {
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
-         }
-         else {
+         } else {
             panel_.setBackground(table.getBackground());
          }
          return panel_;
@@ -101,8 +100,7 @@ public final class PipelineTable extends JTable {
 
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
-         }
-         else {
+         } else {
             panel_.setBackground(table.getBackground());
          }
          return panel_;

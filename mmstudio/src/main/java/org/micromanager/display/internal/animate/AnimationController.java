@@ -223,6 +223,11 @@ public final class AnimationController<P> {
       return newPositionModes_.get(axis);
    }
 
+   /**
+    * Sets the Flash Duration for the new position in ms.
+    *
+    * @param durationMs Duration in milli-seconds
+    */
    public synchronized void setNewPositionFlashDurationMs(int durationMs) {
       if (durationMs <= 0) {
          throw new IllegalArgumentException("duration must be positive");
@@ -282,6 +287,11 @@ public final class AnimationController<P> {
       }, 0, TimeUnit.MILLISECONDS);
    }
 
+   /**
+    * Sets the new position of the display.
+    *
+    * @param newPosition The new position to be displayed.
+    */
    public synchronized void newDataPosition(final Coords newPosition) {
       // Mode may have switched since scheduling a snap-back, so cancel it here
       if (snapBackFuture_ != null) {
@@ -320,8 +330,7 @@ public final class AnimationController<P> {
                   newDisplayPositionBuilder.index(axis, oldPosition.getIndex(axis));
                   snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
                   foundAxisToBeIgnored = true;
-               }
-               else if (newPositionModes_.get(axis).equals(
+               } else if (newPositionModes_.get(axis).equals(
                      NewPositionHandlingMode.FLASH_AND_SNAP_BACK)) {
                   snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
                   foundFlashBackAxis = true;
@@ -379,8 +388,7 @@ public final class AnimationController<P> {
             }
          }, newPositionFlashDurationMs_, TimeUnit.MILLISECONDS);
 
-      }
-      else if (foundAxisToBeIgnored) {
+      } else if (foundAxisToBeIgnored) {
          scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
@@ -392,15 +400,13 @@ public final class AnimationController<P> {
                      listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                      didJumpToNewPosition_ = true;
                      listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
-                  }
-                  else {
+                  } else {
                      listeners_.fire().animationNewDataPositionExpired();
                   }
                }
             }
          }, 0, TimeUnit.MILLISECONDS);
-      }
-      else { // no axis locked
+      } else { // no axis locked
          scheduler_.schedule(new Runnable() {
             @Override
             public void run() {
@@ -436,6 +442,7 @@ public final class AnimationController<P> {
       try {
          scheduledTickFuture_.get();
       } catch (ExecutionException | CancellationException e) {
+         ReportingUtils.logError(e);
       } catch (InterruptedException notUsedByUs) {
          Thread.currentThread().interrupt();
       }

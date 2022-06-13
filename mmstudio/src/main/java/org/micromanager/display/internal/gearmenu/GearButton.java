@@ -64,8 +64,7 @@ public final class GearButton extends JButton {
          if (subMenu.contentEquals("")) {
             // Add directly to the base menu.
             menu_.add(item);
-         }
-         else {
+         } else {
             // Add it to a submenu, creating it if necessary.
             if (!subMenus.containsKey(subMenu)) {
                SortedMenu menu = new SortedMenu(subMenu);

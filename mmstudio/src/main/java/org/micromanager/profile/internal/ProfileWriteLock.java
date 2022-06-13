@@ -16,8 +16,8 @@ import java.nio.channels.OverlappingFileLockException;
 /**
  * A file-based lock to prevent profiles from being written by multiple
  * instances of the program.
- * <p>
- * Limitation: if the lock file is deleted by an external means, a second
+ *
+ * <p>Limitation: if the lock file is deleted by an external means, a second
  * acquisition will be possible (at least on Unix). (We don't make any attempt
  * to guard against intentional hacks.)
  *
@@ -60,8 +60,7 @@ final class ProfileWriteLock {
             if (raf_ != null) {
                raf_.close();
             }
-         }
-         else { // Only delete if we acquired the lock
+         } else { // Only delete if we acquired the lock
             file_.deleteOnExit();
          }
       }
@@ -82,6 +81,7 @@ final class ProfileWriteLock {
       } catch (IOException e) {
          System.err.println(e.getMessage());
       } catch (InterruptedException e) {
+         System.err.println(e.getMessage());
       }
    }
 }

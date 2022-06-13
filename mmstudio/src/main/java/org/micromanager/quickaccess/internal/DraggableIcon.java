@@ -132,18 +132,19 @@ public final class DraggableIcon extends JLabel {
          @Override
          public void mousePressed(MouseEvent e) {
             frame_.updateMouse(e);
-            if (SwingUtilities.isLeftMouseButton(e) &&
-                  !e.isControlDown()) {
+            if (SwingUtilities.isLeftMouseButton(e)
+                  && !e.isControlDown()) {
                // Start dragging.
                frame_.startDragging(DraggableIcon.this, e);
-            }
+
             // Right-click, or control click (for OSX support), for a
             // customizable-icon plugin.
-            else if ((SwingUtilities.isRightMouseButton(e) ||
-                  e.isControlDown()) &&
-                  isReified_ && parentCell_ != null &&
-                  plugin_ instanceof WidgetPlugin &&
-                  ((WidgetPlugin) plugin_).getCanCustomizeIcon()) {
+            } else if ((SwingUtilities.isRightMouseButton(e)
+                  || e.isControlDown())
+                  && isReified_
+                  && parentCell_ != null
+                  && plugin_ instanceof WidgetPlugin
+                  && ((WidgetPlugin) plugin_).getCanCustomizeIcon()) {
                // Start customizing the icon.
                JPopupMenu menu = new JPopupMenu();
                menu.add(new IconGrid(menu));
@@ -167,19 +168,16 @@ public final class DraggableIcon extends JLabel {
                if (p == null) {
                   // Dragged out of the grid; remove it.
                   frame_.removeControl(parentCell_, true);
-               }
-               else if (frame_.canFitRect(
+               } else if (frame_.canFitRect(
                      new Rectangle(p.x, p.y, getSize().width,
                            getSize().height), parentCell_)) {
                   // Move it to a new location.
                   frame_.moveControl(parentCell_, p);
                }
-            }
-            else if (plugin_ != null) {
+            } else if (plugin_ != null) {
                // Add a new control to the grid.
                frame_.dropPlugin(plugin_);
-            }
-            else {
+            } else {
                // This should be impossible.
                studio_.logs().logError("DraggableIcon with both null plugin and null ControlCell");
             }
@@ -275,8 +273,7 @@ public final class DraggableIcon extends JLabel {
          if (name != null) {
             label = new JLabel(name, icon, SwingConstants.LEADING);
             label.setFont(GUIUtils.buttonFont);
-         }
-         else {
+         } else {
             label = new JLabel(icon);
          }
          // Mostly for the benefit of the "empty" icon.

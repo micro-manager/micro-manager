@@ -123,11 +123,9 @@ public final class ProcessExistingDataDialog extends JDialog {
                showDisplay_.setSelected(true);
                settings_.putBoolean(SHOW, true);
                settings_.putString(OUTPUT_OPTION, OPTION_RAM);
-            }
-            else if (outputSingleplane_.isSelected()) {
+            } else if (outputSingleplane_.isSelected()) {
                settings_.putString(OUTPUT_OPTION, OPTION_SINGLE_TIFF);
-            }
-            else if (outputMultipage_.isSelected()) {
+            } else if (outputMultipage_.isSelected()) {
                settings_.putString(OUTPUT_OPTION, OPTION_MULTI_TIFF);
             }
             outputPath_.setEnabled(!outputRam_.isSelected());
@@ -179,8 +177,7 @@ public final class ProcessExistingDataDialog extends JDialog {
       if (JavaUtils.isMac()) {
          contents.add(cancelButton, "split 2, align right, flowx");
          contents.add(okButton);
-      }
-      else {
+      } else {
          contents.add(okButton, "split 2, align right, flowx");
          contents.add(cancelButton);
       }
@@ -264,8 +261,7 @@ public final class ProcessExistingDataDialog extends JDialog {
       Datastore destination;
       if (outputRam_.isSelected()) {
          destination = studio_.data().createRAMDatastore();
-      }
-      else {
+      } else {
          String path = outputPath_.getText();
          if (path.contentEquals("")) {
             studio_.logs().showError("Please choose a location to save data to.");
@@ -275,8 +271,7 @@ public final class ProcessExistingDataDialog extends JDialog {
          try {
             if (outputSingleplane_.isSelected()) {
                destination = studio_.data().createSinglePlaneTIFFSeriesDatastore(path);
-            }
-            else {
+            } else {
                // TODO: we should imitate the source dataset when possible for
                // deciding whether to generate metadata.txt and whether to
                // split positions.
@@ -298,8 +293,7 @@ public final class ProcessExistingDataDialog extends JDialog {
             studio_.logs().showError(e, "Error loading data");
             return;
          }
-      }
-      else {
+      } else {
          // Find the display with matching name.
          for (DisplayWindow display : studio_.displays().getAllImageWindows()) {
             if (display.getName().contentEquals(input)) {

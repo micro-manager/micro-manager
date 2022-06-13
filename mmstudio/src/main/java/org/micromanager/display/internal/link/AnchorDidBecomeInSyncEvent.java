@@ -10,6 +10,9 @@ import org.micromanager.display.internal.link.internal.LinkAnchorEvent;
 
 
 /**
+ * Event that signal that an Anchor (used in the display to synchronize axes) become
+ * synchronized.
+ *
  * @author mark
  */
 public interface AnchorDidBecomeInSyncEvent<T> extends LinkAnchorEvent<T> {

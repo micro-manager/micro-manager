@@ -33,7 +33,7 @@ import java.text.DecimalFormat;
 
 public final class TextUtils {
 
-   static public String readTextFile(String path) throws IOException {
+   public static  String readTextFile(String path) throws IOException {
       String newLine = System.getProperty("line.separator");
       StringBuffer sb = new StringBuffer();
       BufferedReader input = new BufferedReader(new FileReader(path));
@@ -48,7 +48,7 @@ public final class TextUtils {
       return sb.toString();
    }
 
-   static public void writeTextFile(String path, String content) throws IOException {
+   public static void writeTextFile(String path, String content) throws IOException {
       BufferedWriter output = new BufferedWriter(new FileWriter(path));
       output.append(content);
       output.close();
@@ -71,8 +71,8 @@ public final class TextUtils {
          name = Files.getNameWithoutExtension(name);
          if (name.length() > maxLen) {
             int len = name.length();
-            name = name.substring(0, maxLen / 2 - 3) + "..." +
-                  name.substring(len - maxLen / 2, len);
+            name = name.substring(0, maxLen / 2 - 3) + "..."
+                  + name.substring(len - maxLen / 2, len);
          }
       }
       return name;

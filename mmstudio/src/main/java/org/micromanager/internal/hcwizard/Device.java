@@ -105,53 +105,37 @@ public final class Device {
 
       if (type_ == DeviceType.CameraDevice) {
          devType = "Camera";
-      }
-      else if (type_ == DeviceType.SerialDevice) {
+      } else if (type_ == DeviceType.SerialDevice) {
          devType = "Serial Port";
-      }
-      else if (type_ == DeviceType.ShutterDevice) {
+      } else if (type_ == DeviceType.ShutterDevice) {
          devType = "Shutter";
-      }
-      else if (type_ == DeviceType.CoreDevice) {
+      } else if (type_ == DeviceType.CoreDevice) {
          devType = "Micro-manager Core";
-      }
-      else if (type_ == DeviceType.AutoFocusDevice) {
+      } else if (type_ == DeviceType.AutoFocusDevice) {
          devType = "Autofocus";
-      }
-      else if (type_ == DeviceType.HubDevice) {
+      } else if (type_ == DeviceType.HubDevice) {
          devType = "Motorized Microscope or Hub";
-      }
-      else if (type_ == DeviceType.GenericDevice) {
+      } else if (type_ == DeviceType.GenericDevice) {
          devType = "Generic Device";
-      }
-      else if (type_ == DeviceType.AnyType) {
+      } else if (type_ == DeviceType.AnyType) {
          devType = "Misc.";
-      }
-      else if (type_ == DeviceType.ImageProcessorDevice) {
+      } else if (type_ == DeviceType.ImageProcessorDevice) {
          devType = "Image Processor";
-      }
-      else if (type_ == DeviceType.SignalIODevice) {
+      } else if (type_ == DeviceType.SignalIODevice) {
          devType = "Signal I/O Device";
-      }
-      else if (type_ == DeviceType.SLMDevice) {
+      } else if (type_ == DeviceType.SLMDevice) {
          devType = "SLM";
-      }
-      else if (type_ == DeviceType.StageDevice) {
+      } else if (type_ == DeviceType.StageDevice) {
          devType = "Single Axis Stage";
-      }
-      else if (type_ == DeviceType.XYStageDevice) {
+      } else if (type_ == DeviceType.XYStageDevice) {
          devType = "XY Stage";
-      }
-      else if (type_ == DeviceType.StateDevice) {
+      } else if (type_ == DeviceType.StateDevice) {
          devType = "Discrete State Device";
-      }
-      else if (type_ == DeviceType.MagnifierDevice) {
+      } else if (type_ == DeviceType.MagnifierDevice) {
          devType = "Magnifier";
-      }
-      else if (type_ == DeviceType.GalvoDevice) {
+      } else if (type_ == DeviceType.GalvoDevice) {
          devType = "Galvo";
-      }
-      else {
+      } else {
          ReportingUtils.logError("Unercongized device type: " + this.adapterName_);
       }
 
@@ -162,7 +146,7 @@ public final class Device {
     * Obtain all properties and their current values.
     *
     * @param core The Micro-Manager core.
-    * @throws Exception
+    * @throws Exception thrown by Core
     */
    public void loadDataFromHardware(CMMCore core) throws Exception {
       StrVector propNames = core.getDevicePropertyNames(name_);
@@ -196,8 +180,7 @@ public final class Device {
 
       if (type_ == DeviceType.StateDevice) {
          numPos_ = core.getNumberOfStates(name_);
-      }
-      else {
+      } else {
          numPos_ = 0;
       }
    }
@@ -322,8 +305,8 @@ public final class Device {
          core.setProperty(name_, propName, value);
       } catch (Exception ex) {
          core.logMessage(
-               "HCW Device " + name_ + " failed to set property " + propName + " to value " +
-                     value);
+               "HCW Device " + name_ + " failed to set property " + propName + " to value "
+                     + value);
       }
    }
 
@@ -386,8 +369,7 @@ public final class Device {
       if (l == null) {
          // label does not exist so we must create one
          setupLabels_.put(pos, new Label(label, pos));
-      }
-      else {
+      } else {
          l.label_ = label;
       }
    }
@@ -433,11 +415,9 @@ public final class Device {
    public void setFocusDirection(int direction) {
       if (direction > 0) {
          focusDirection_ = 1;
-      }
-      else if (direction < 0) {
+      } else if (direction < 0) {
          focusDirection_ = -1;
-      }
-      else {
+      } else {
          focusDirection_ = 0;
       }
    }

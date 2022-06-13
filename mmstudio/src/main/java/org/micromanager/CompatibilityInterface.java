@@ -46,7 +46,7 @@ public interface CompatibilityInterface {
     *
     * @param version - minimum version needen to run this code
     * @return true if the run-time Micro-Manager version is less than the
-    * one specified
+    *     one specified
     * @throws NumberFormatException if the version number is not in the format
     *                               expected.
     */
@@ -81,7 +81,7 @@ public interface CompatibilityInterface {
     * @param config    The configuration (per core.getCurrentPixelSizeConfig())
     *                  to set the affine transform for.
     * @deprecated - Use core.setPixelSizeAffine(config, DoubleVector transform)
-    * instead
+    *     instead
     */
    @Deprecated
    void setCameraTransform(AffineTransform transform, String config);

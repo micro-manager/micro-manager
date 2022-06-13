@@ -46,9 +46,11 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class DefaultCompatibilityInterface implements CompatibilityInterface {
    private final Studio studio_;
    private static final String AFFINE_TRANSFORM_LEGACY =
-         "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
+         "affine transform for mapping camera coordinates to stage coordinates for "
+               + "a specific pixel size config: ";
    private static final String AFFINE_TRANSFORM =
-         "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
+         "affine transform parameters for mapping camera coordinates to stage coordinates "
+               + "for a specific pixel size config: ";
 
 
    public DefaultCompatibilityInterface(Studio studio) {

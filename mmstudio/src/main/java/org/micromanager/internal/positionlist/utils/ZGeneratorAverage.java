@@ -33,7 +33,7 @@ class ZGeneratorAverage implements ZGenerator {
    Map<String, Double> averageZPositions_;
 
    /**
-    * Constructor
+    * Constructor.
     *
     * @param positionList initial position list
     */
@@ -61,7 +61,7 @@ class ZGeneratorAverage implements ZGenerator {
    }
 
    @Override
-   public double getZ(double X, double Y, String axis) {
+   public double getZ(double x, double y, String axis) {
       return averageZPositions_.get(axis);
    }
 

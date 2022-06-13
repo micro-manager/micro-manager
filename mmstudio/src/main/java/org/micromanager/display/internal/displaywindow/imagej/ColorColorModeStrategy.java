@@ -17,8 +17,8 @@ import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
 /**
  * The color mode strategy for single-color mode.
- * <p>
- * (No, it's not a typo.)
+ *
+ * <p>(No, it's not a typo.)
  *
  * @author mark
  */

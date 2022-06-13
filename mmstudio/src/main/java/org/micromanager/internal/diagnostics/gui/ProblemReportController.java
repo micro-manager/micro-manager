@@ -39,8 +39,7 @@ public final class ProblemReportController {
       String[] options;
       if (userInitiated) {
          options = new String[] {"Reopen", "Discard", "Cancel"};
-      }
-      else {
+      } else {
          options = new String[] {"Reopen", "Discard", "Not Now"};
       }
       int answer = JOptionPane.showOptionDialog(null,
@@ -52,12 +51,10 @@ public final class ProblemReportController {
 
       if (answer == JOptionPane.YES_OPTION) {
          return JOptionPane.YES_OPTION;
-      }
-      else if (answer == JOptionPane.NO_OPTION) {
+      } else if (answer == JOptionPane.NO_OPTION) {
          report.deleteStorage();
          return JOptionPane.NO_OPTION;
-      }
-      else {
+      } else {
          return JOptionPane.CANCEL_OPTION;
       }
    }

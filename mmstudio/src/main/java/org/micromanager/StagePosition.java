@@ -65,7 +65,7 @@ public class StagePosition {
     * The stage device label.
     *
     * @deprecated Use {@link #set1DPosition} or {@link #set2DPosition} to set;
-    * use {@link #getStageDeviceLabel} to access.
+    *     use {@link #getStageDeviceLabel} to access.
     */
    @Deprecated
    public String stageName;
@@ -74,8 +74,8 @@ public class StagePosition {
     * The number of stage axes. Must be 1 or 2.
     *
     * @deprecated Use {@link #set1DPosition} or {@link #set2DPosition} to set;
-    * use {@link #getNumberOfStageAxes}, {@link #is1DStagePosition}, or
-    * {@link #is2DStagePosition} to access.
+    *     use {@link #getNumberOfStageAxes}, {@link #is1DStagePosition}, or
+    *     {@link #is2DStagePosition} to access.
     */
    @Deprecated
    public int numAxes;
@@ -202,12 +202,10 @@ public class StagePosition {
    public String getVerbose() {
       if (numAxes == 1) {
          return stageName + "(" + NumberUtils.doubleToDisplayString(x) + ")";
-      }
-      else if (numAxes == 2) {
+      } else if (numAxes == 2) {
          return stageName + "(" + NumberUtils.doubleToDisplayString(x)
                + "," + NumberUtils.doubleToDisplayString(y) + ")";
-      }
-      else {
+      } else {
          return stageName + "(" + NumberUtils.doubleToDisplayString(x)
                + "," + NumberUtils.doubleToDisplayString(y)
                + "," + NumberUtils.doubleToDisplayString(z) + ")";

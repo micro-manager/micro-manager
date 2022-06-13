@@ -181,13 +181,11 @@ public final class MMStudio implements Studio {
             if (i < args.length - 1) {
                i++;
                profileNameAutoStart = args[i];
-            }
-            else {
+            } else {
                ReportingUtils.showError(
                      "Micro-Manager received no value for the `-profile` startup argument.");
             }
-         }
-         else {
+         } else {
             ReportingUtils.showError("Micro-Manager received unknown startup argument: " + args[i]);
          }
       }
@@ -220,7 +218,8 @@ public final class MMStudio implements Studio {
     * @param startAsImageJPlugin  Indicates if we're running from "within"
     *                             ImageJ, which governs our behavior when we are closed.
     * @param profileNameAutoStart The name of a user profile. This profile and
-    *                             its most recently used hardware configuration will be to automatically loaded.
+    *                             its most recently used hardware configuration will
+    *                             be to automatically loaded.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean startAsImageJPlugin, String profileNameAutoStart) {
@@ -337,8 +336,7 @@ public final class MMStudio implements Studio {
       if (!pluginManager_.isInitializationComplete()) {
          ReportingUtils.logMessage(
                "Warning: Plugin loading did not finish within 15 seconds; continuing anyway");
-      }
-      else {
+      } else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
 
@@ -362,15 +360,13 @@ public final class MMStudio implements Studio {
                      "A hardware configuration for a profile matching name: "
                            + profileNameAutoStart + " could not be found");
             }
-         }
-         else if (StartupSettings.create(userProfileAdmin_
+         } else if (StartupSettings.create(userProfileAdmin_
                .getNonSavingProfile(profileUUID))
                .shouldSkipUserInteractionWithSplashScreen()) {
             List<String> recentConfigs = HardwareConfigurationManager
                   .getRecentlyUsedConfigFilesFromProfile(profile());
             sysConfigFile_ = recentConfigs.isEmpty() ? null : recentConfigs.get(0);
-         }
-         else {
+         } else {
             IntroDlg introDlg = new IntroDlg(this, MMVersion.VERSION_STRING);
             if (!introDlg.okChosen()) {
                closeSequence(false);
@@ -585,8 +581,7 @@ public final class MMStudio implements Studio {
                //return instances of existing objects
                if (baseClass.equals(Studio.class)) {
                   return studio_;
-               }
-               else if (baseClass.equals(CMMCore.class)) {
+               } else if (baseClass.equals(CMMCore.class)) {
                   return studio_.getCMMCore();
                }
                return null;
@@ -607,11 +602,11 @@ public final class MMStudio implements Studio {
             zmqServer_ = new ZMQServer(classLoaders,
                   instanceGrabberFunction,
                   new String[] {"org.micromanager.internal"}, new Consumer<String>() {
-               @Override
-               public void accept(String s) {
-                  studio_.getCMMCore().logMessage(s);
-               }
-            });
+                     @Override
+                     public void accept(String s) {
+                        studio_.getCMMCore().logMessage(s);
+                     }
+                  });
             logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.STARTING_PORT_NUMBER);
          } catch (URISyntaxException | UnsupportedEncodingException e) {
             studio_.logs().logError("Failed to initialize ZMQ Server");
@@ -674,7 +669,7 @@ public final class MMStudio implements Studio {
     *
     * @param quitInitiatedByImageJ True if closing command came from ImageJ.
     * @return Whether or not cleanup was successful. Shutdown should abort
-    * on failure.
+    *     on failure.
     */
    private boolean cleanupOnClose(boolean quitInitiatedByImageJ) {
       // Save config presets if they were changed.
@@ -799,8 +794,7 @@ public final class MMStudio implements Studio {
             if (ij != null) {
                ij.quit();
             }
-         }
-         else {
+         } else {
             // We are on our own to actually exit
             System.exit(0);
          }
@@ -907,8 +901,7 @@ public final class MMStudio implements Studio {
             }
             live().setSuspended(false);
          }).start();
-      }
-      else {
+      } else {
          ReportingUtils.showError("No autofocus device is selected.");
       }
    }

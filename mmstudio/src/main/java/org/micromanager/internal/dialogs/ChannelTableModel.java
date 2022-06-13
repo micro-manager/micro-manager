@@ -43,8 +43,8 @@ public final class ChannelTableModel extends AbstractTableModel {
          "Set exposure time in ms",
          TooltipTextMaker.addHTMLBreaksForTooltip(
                "Set a Z offset specific to this channel/group (the main object in one of "
-                     +
-                     "the channels/groups is in a different focal plane from the other channels/groups"),
+                     + "the channels/groups is in a different focal plane from the "
+                     + "other channels/groups"),
          "Collect images in multiple Z planes?",
          TooltipTextMaker.addHTMLBreaksForTooltip("Setting 'Skip Frame' to a number other than "
                + "0 will cause the acquisition to 'skip' taking images in "
@@ -74,8 +74,7 @@ public final class ChannelTableModel extends AbstractTableModel {
    public int getRowCount() {
       if (channels_ == null) {
          return 0;
-      }
-      else {
+      } else {
          return channels_.size();
       }
    }
@@ -95,23 +94,17 @@ public final class ChannelTableModel extends AbstractTableModel {
       if (channels_ != null && rowIndex < channels_.size()) {
          if (columnIndex == 0) {
             return channels_.get(rowIndex).useChannel();
-         }
-         else if (columnIndex == 1) {
+         } else if (columnIndex == 1) {
             return channels_.get(rowIndex).config();
-         }
-         else if (columnIndex == 2) {
+         } else if (columnIndex == 2) {
             return channels_.get(rowIndex).exposure();
-         }
-         else if (columnIndex == 3) {
+         } else if (columnIndex == 3) {
             return channels_.get(rowIndex).zOffset();
-         }
-         else if (columnIndex == 4) {
+         } else if (columnIndex == 4) {
             return channels_.get(rowIndex).doZStack();
-         }
-         else if (columnIndex == 5) {
+         } else if (columnIndex == 5) {
             return channels_.get(rowIndex).skipFactorFrame();
-         }
-         else if (columnIndex == 6) {
+         } else if (columnIndex == 6) {
             return channels_.get(rowIndex).color();
          }
       }
@@ -133,8 +126,7 @@ public final class ChannelTableModel extends AbstractTableModel {
       ChannelSpec.Builder cb = channel.copyBuilder();
       if (col == 0) {
          cb.useChannel((Boolean) value);
-      }
-      else if (col == 1) {
+      } else if (col == 1) {
          cb.config(value.toString());
          ChannelSpec cs = ChannelSpec.fromJSONStream(
                settings_.getString(channelProfileKey(acqEng_.getSequenceSettings().channelGroup(),
@@ -149,36 +141,29 @@ public final class ChannelTableModel extends AbstractTableModel {
                               ColorPalettes.getFromDefaultPalette(row).getRGB()));
             cb.color(cds.getColor());
             cb.exposure(10.0);
-         }
-         else {
+         } else {
             cb.color(cs.color());
             cb.exposure(cs.exposure());
          }
          channels_.set(row, cb.build());
          this.fireTableCellUpdated(row, 2);
          this.fireTableCellUpdated(row, 6);
-      }
-      else if (col == 2) {
+      } else if (col == 2) {
          cb.exposure(((Double) value));
          if (AcqControlDlg.getShouldSyncExposure()) {
             studio_.app().setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
                   channel.config(), (Double) value);
-         }
-         else {
+         } else {
             this.setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
                   channel.config(), (Double) value);
          }
-      }
-      else if (col == 3) {
+      } else if (col == 3) {
          cb.zOffset((Double) value);
-      }
-      else if (col == 4) {
+      } else if (col == 4) {
          cb.doZStack((Boolean) value);
-      }
-      else if (col == 5) {
+      } else if (col == 5) {
          cb.skipFactorFrame((Integer) value);
-      }
-      else if (col == 6) {
+      } else if (col == 6) {
          if (!channel.color().equals(value)) {
             studio_.events().post(new ChannelColorEvent(
                   channel.channelGroup(), channel.config(), (Color) value));
@@ -252,8 +237,7 @@ public final class ChannelTableModel extends AbstractTableModel {
          String config = cb.build().config();
          if (config.length() == 0) {
             ReportingUtils.showMessage("No more channels are available\nin this channel group.");
-         }
-         else {
+         } else {
             // Pick a non-white default color if possible.
             Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
             cb.channelGroup(acqEng_.getSequenceSettings().channelGroup());

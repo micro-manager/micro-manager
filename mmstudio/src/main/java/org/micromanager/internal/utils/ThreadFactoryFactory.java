@@ -18,8 +18,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A {@code ThreadFactory} that names the threads for debugging.
- * <p>
- * The threads created by the factory are set to be daemon threads. This is
+ *
+ * <p>The threads created by the factory are set to be daemon threads. This is
  * preferable in MMStudio because we do not submit any tasks that need to
  * complete after the main program has decided to exit.
  *

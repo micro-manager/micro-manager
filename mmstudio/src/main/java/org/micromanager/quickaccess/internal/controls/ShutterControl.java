@@ -169,7 +169,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
       // Must create a separate object to register for events, because
       // otherwise the Java compiler complains when we modify "toggle" that
       // it might not have been initialized.
-      Object registrant = new Object() {
+      final Object registrant = new Object() {
          @Subscribe
          public void onAutoShutter(AutoShutterEvent event) {
             toggle.setSelected(event.getAutoShutter());
@@ -209,7 +209,7 @@ public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin 
       // Must create a separate object to register for events, because
       // otherwise the Java compiler complains when we modify "button" that
       // it might not have been initialized.
-      Object registrant = new Object() {
+      final Object registrant = new Object() {
          @Subscribe
          public void onShutter(ShutterEvent event) {
             button.setText(event.getShutter() ? "Close" : "Open");

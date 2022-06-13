@@ -88,8 +88,7 @@ public final class GammaSliderCalculator {
          lastGuess = guess;
          if (gamma > gammas_.get(guess)) {
             guess += diff / 2;
-         }
-         else {
+         } else {
             guess -= diff / 2;
          }
          i++;

@@ -17,6 +17,9 @@ public final class BeanshellEngine implements ScriptingEngine {
    private final ScriptPanel panel_;
    private Interpreter interpOld_;
 
+   /**
+    * Thread interpreting a script.
+    */
    public final class EvalThread extends Thread {
       String script_;
       String errorText_;
@@ -70,6 +73,11 @@ public final class BeanshellEngine implements ScriptingEngine {
       interp_ = interpOld_;
    }
 
+   /**
+    * Creates a BeanshellEngine for the given ScriptPanel.
+    *
+    * @param panel ScriptPanel to attach this engine to.
+    */
    public BeanshellEngine(ScriptPanel panel) {
       //interp_ = new Interpreter();
       running_ = false;
@@ -119,8 +127,7 @@ public final class BeanshellEngine implements ScriptingEngine {
       if (evalThd_.isAlive()) {
          if (shouldInterrupt) {
             evalThd_.interrupt();
-         }
-         else {
+         } else {
             // HACK: kill the thread.
             evalThd_.stop();
             stop_ = true;
@@ -147,14 +154,11 @@ public final class BeanshellEngine implements ScriptingEngine {
          }
          return "Line " + line + ": run-time error : " + (t != null ? t.getMessage()
                : e.getErrorText());
-      }
-      else if (e instanceof ParseException) {
+      } else if (e instanceof ParseException) {
          return "Line " + line + ": syntax error : " + e.getErrorText();
-      }
-      else if (e != null) {
+      } else if (e != null) {
          return "Line " + line + ": evaluation error : " + e.getMessage();
-      }
-      else {
+      } else {
          Throwable t = e.getCause();
          return "Line " + line + ": general error : "
                + (t != null ? t.getMessage() : e.getErrorText());

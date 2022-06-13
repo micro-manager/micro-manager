@@ -56,8 +56,8 @@ public final class DefaultDisplaySettingsChangedEvent
 
    /**
     * Get the display settings before the change being handled.
-    * <p>
-    * Comparing this with the return value of {@code getDisplaySettings} can
+    *
+    * <p>Comparing this with the return value of {@code getDisplaySettings} can
     * reveal what exactly is to be changed.
     *
     * @return the previous display settings
@@ -71,7 +71,7 @@ public final class DefaultDisplaySettingsChangedEvent
     * Get the data viewer.
     *
     * @return the data viewer for which the new display settings is to be
-    * applied
+    *     applied
     */
    @Override
    public DataViewer getDataViewer() {
@@ -82,7 +82,7 @@ public final class DefaultDisplaySettingsChangedEvent
     * Old name for {@code getDataViewer}.
     *
     * @return the data viewer for which the new display settings is to be
-    * applied
+    *     applied
     * @deprecated use {@code getDataViewer} instead
     */
    @Override

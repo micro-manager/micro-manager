@@ -89,9 +89,8 @@ public class PatternOverlay extends AbstractOverlay {
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Crosshair Size: %d px",
                      (int) Math.round(sizeImgPx));
-            }
-            else {
-               return String.format("Crosshair Size: %.1f \u00B5m",
+            } else {
+               return String.format("Crosshair Size: %.1f \u00B5m", // micro-m, i.e. micron
                      sizeImgPx * umPerImagePixel);
             }
          }
@@ -115,9 +114,8 @@ public class PatternOverlay extends AbstractOverlay {
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Crosshair Size: %d x %d px",
                      (int) Math.round(hSizeImgPx), (int) Math.round(vSizeImgPx));
-            }
-            else {
-               return String.format("Crosshair Size: %.1f x %.1f \u00B5m",
+            } else {
+               return String.format("Crosshair Size: %.1f x %.1f \u00B5m", // micro-m, i.e. micron
                      hSizeImgPx * umPerImagePixel, vSizeImgPx * umPerImagePixel);
             }
          }
@@ -146,9 +144,8 @@ public class PatternOverlay extends AbstractOverlay {
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Grid Cell Size: %d x %d px",
                      (int) Math.round(hPixPerDiv), (int) Math.round(vPixPerDiv));
-            }
-            else {
-               return String.format("Grid Cell Size: %.1f x %.1f \u00B5m",
+            } else {
+               return String.format("Grid Cell Size: %.1f x %.1f \u00B5m", // micro-m, i.e. micron
                      hPixPerDiv * umPerImagePixel, vPixPerDiv * umPerImagePixel);
             }
          }
@@ -181,9 +178,8 @@ public class PatternOverlay extends AbstractOverlay {
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Grid Cell Size: %d px",
                      (int) Math.round(pixPerDiv));
-            }
-            else {
-               return String.format("Grid Cell Size: %.1f \u00B5m",
+            } else {
+               return String.format("Grid Cell Size: %.1f \u00B5m", // micro-m, i.e. micron
                      pixPerDiv * umPerImagePixel);
             }
          }
@@ -204,9 +200,8 @@ public class PatternOverlay extends AbstractOverlay {
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Circle Diameter: %d px",
                      (int) Math.round(dImgPx));
-            }
-            else {
-               return String.format("Circle Diameter: %.1f \u00B5m",
+            } else {
+               return String.format("Circle Diameter: %.1f \u00B5m", // micro-m, i.e. micron
                      dImgPx * umPerImagePixel);
             }
          }
@@ -235,8 +230,7 @@ public class PatternOverlay extends AbstractOverlay {
                float dImgPx = d0ImgPx * (i / (float) N);
                if (Double.isNaN(umPerImagePixel)) {
                   sb.append(String.format("%d", (int) Math.round(dImgPx)));
-               }
-               else {
+               } else {
                   sb.append(String.format("%.1f", dImgPx * umPerImagePixel));
                }
                if (i < N) {
@@ -245,9 +239,8 @@ public class PatternOverlay extends AbstractOverlay {
             }
             if (Double.isNaN(umPerImagePixel)) {
                sb.append(" px");
-            }
-            else {
-               sb.append(" \u00B5m");
+            } else {
+               sb.append(" \u00B5m"); // micro-m, i.e. micron
             }
             return sb.toString();
          }
@@ -364,10 +357,10 @@ public class PatternOverlay extends AbstractOverlay {
 
       // Draw the pattern in image pixel coordinates by applying a transform
       Graphics2D gTfm = (Graphics2D) g.create();
-      gTfm.transform(AffineTransform.
-            getScaleInstance(1.0 / zoomRatio, 1.0 / zoomRatio));
-      gTfm.transform(AffineTransform.
-            getTranslateInstance(-imageViewPort.x, -imageViewPort.y));
+      gTfm.transform(AffineTransform
+            .getScaleInstance(1.0 / zoomRatio, 1.0 / zoomRatio));
+      gTfm.transform(AffineTransform
+            .getTranslateInstance(-imageViewPort.x, -imageViewPort.y));
       // Stroke width should be 1.0 in screen coordinates
       gTfm.setStroke(new BasicStroke((float) zoomRatio));
       patternType_.draw(gTfm, patternSize_,
@@ -391,12 +384,12 @@ public class PatternOverlay extends AbstractOverlay {
 
    @Override
    public PropertyMap getConfiguration() {
-      return PropertyMaps.builder().
-            putEnumAsString(Key.PATTERN_TYPE.name(), patternType_)
-            .putInteger(Key.PATTERN_SIZE.name(), patternSize_).
-                  putEnumAsString(Key.COLOR.name(), color_).
-                  putBoolean(Key.SHOW_SIZE.name(), showSize_).
-                  build();
+      return PropertyMaps.builder()
+            .putEnumAsString(Key.PATTERN_TYPE.name(), patternType_)
+            .putInteger(Key.PATTERN_SIZE.name(), patternSize_)
+            .putEnumAsString(Key.COLOR.name(), color_)
+            .putBoolean(Key.SHOW_SIZE.name(), showSize_)
+            .build();
    }
 
    @Override

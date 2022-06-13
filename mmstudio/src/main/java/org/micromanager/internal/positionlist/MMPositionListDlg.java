@@ -35,6 +35,12 @@ import org.micromanager.events.internal.InternalShutdownCommencingEvent;
  */
 public final class MMPositionListDlg extends PositionListDlg {
 
+   /**
+    * PositionList Dialog constructor.
+    *
+    * @param studio The always present Studio object
+    * @param posList Position List to be displayed
+    */
    public MMPositionListDlg(Studio studio, PositionList posList) {
       super(studio, posList);
 
@@ -61,6 +67,11 @@ public final class MMPositionListDlg extends PositionListDlg {
             axisCol0Width);
    }
 
+   /**
+    * Handles event signalling that the application starts shut down.
+    *
+    * @param event The event that signals shut down is starting
+    */
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.isCanceled()) {

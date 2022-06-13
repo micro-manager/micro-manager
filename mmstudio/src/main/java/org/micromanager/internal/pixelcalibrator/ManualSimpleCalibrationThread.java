@@ -109,8 +109,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       if (display == null) {
          ReportingUtils.showError("Preview window did not open. Is the exposure time very long?");
          dialogFrame_.dispose();
-      }
-      else if (display instanceof DisplayController) {
+      } else if (display instanceof DisplayController) {
          dc_ = (DisplayController) display;
          dc_.registerForEvents(this);
          synchronized (CalibrationThread.class) {
@@ -171,8 +170,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
                            dialogFrame_.setLabelText(label1Text);
                            dialogFrame_.setOKButtonVisible(true);
                         }
-                     }
-                     else {
+                     } else {
                         dialogFrame_.dispose();
                         dialog_.calibrationDone();
                         return;
@@ -217,8 +215,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          if (points[2].getY() < points[0].getY()) {
             yDirection = 1;
          }
-      }
-      else {
+      } else {
          xDirection = 1;
          if (points[1].getY() > points[0].getY()) {
             xDirection = -1;

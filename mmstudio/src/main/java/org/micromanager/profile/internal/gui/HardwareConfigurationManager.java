@@ -106,8 +106,7 @@ public class HardwareConfigurationManager {
       if (settings.containsKey(ProfileKey.RECENTLY_USED.name())) {
          files = settings.getStringList(ProfileKey.RECENTLY_USED.name(),
                DEFAULT_RECENTLY_USED);
-      }
-      else {
+      } else {
          files = getMM1RecentlyUsedConfigFiles();
       }
       ListIterator<String> it = files.listIterator();

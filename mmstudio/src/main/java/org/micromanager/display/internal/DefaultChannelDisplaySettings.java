@@ -261,7 +261,7 @@ public final class DefaultChannelDisplaySettings
    }
 
    /**
-    * Encodes these ChannelDisplaySettings into a PropertyMap
+    * Encodes these ChannelDisplaySettings into a PropertyMap.
     *
     * @return PropertyMap encoding the current ChannelDisplaySettings
     */
@@ -271,26 +271,26 @@ public final class DefaultChannelDisplaySettings
          componentSettings.add(((DefaultComponentDisplaySettings) cs).toPropertyMap());
       }
 
-      return PropertyMaps.builder().
-            putColor(PropertyKey.COLOR.key(), color_).
-            putString(PropertyKey.CHANNEL_NAME.key(), name_).
-            putString(PropertyKey.CHANNEL_GROUP.key(), groupName_).
-            putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_).
-            putBoolean(PropertyKey.VISIBLE.key(), visible_).
-            putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_).
-            putBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), useCameraRange_).
-            putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings).
-            build();
+      return PropertyMaps.builder()
+            .putColor(PropertyKey.COLOR.key(), color_)
+            .putString(PropertyKey.CHANNEL_NAME.key(), name_)
+            .putString(PropertyKey.CHANNEL_GROUP.key(), groupName_)
+            .putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_)
+            .putBoolean(PropertyKey.VISIBLE.key(), visible_)
+            .putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_)
+            .putBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), useCameraRange_)
+            .putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings)
+            .build();
    }
 
    /**
-    * Helper function for overloaded versions of fromPropertyMap
+    * Helper function for overloaded versions of fromPropertyMap.
     * Restores everything form the propertymap except for Channelgroup and
     * ChannelName
     *
-    * @param pMap
+    * @param pMap PropertyMap to use.
     * @return Builder with everything useful in the propertymap except for channelGroup
-    * and channelName
+    *     and channelName
     */
    private static ChannelDisplaySettings.Builder partialBuilderFromPropertyMap(PropertyMap pMap) {
       Builder b = new Builder();
@@ -329,7 +329,7 @@ public final class DefaultChannelDisplaySettings
 
    /**
     * Restores ChannelDisplaySettings from a PropertyMap, but uses the input
-    * channelGroup and channelName rather than the ones in the PropertyMap
+    * channelGroup and channelName rather than the ones in the PropertyMap.
     * Needed to gracefully update propertymaps that did not yet store the
     * channelGroup
     *
@@ -344,7 +344,7 @@ public final class DefaultChannelDisplaySettings
    }
 
    /**
-    * Restores ChannelDisplaySettings from a PropertyMap
+    * Restores ChannelDisplaySettings from a PropertyMap.
     *
     * @param pMap PropertyMap from which to restore the ChannelDisplaySettings
     * @return ChannelDisplaySettings.  Missing values are replaced by defaults.

@@ -1067,7 +1067,7 @@ public final class ProfilePropertyMapView implements MutablePropertyMapView {
 
    @Override
    public <E extends Enum<E>> MutablePropertyMapView putEnumListAsStringList(final String key,
-                                                                             final Iterable<E> values) {
+                 final Iterable<E> values) {
       write(new DefaultUserProfile.Editor() {
          @Override
          public PropertyMap edit(PropertyMap input) {

@@ -50,7 +50,7 @@ public abstract class WidgetPlugin extends QuickAccessPlugin {
     *
     * @param parent The Quick-Access Window
     * @return A PropertyMap containing the information needed to generate the
-    * control, or null if the control should not be created.
+    *         control, or null if the control should not be created.
     */
    public abstract PropertyMap configureControl(Frame parent);
 

@@ -15,8 +15,8 @@ public final class TooltipTextMaker {
          while (text.charAt(actualBreakIndex) != ' ') {
             actualBreakIndex--;
          }
-         result.append(text.substring(i * numCharsPerLine, actualBreakIndex) +
-               "<br>" + text.substring(actualBreakIndex, estimatedBreakIndex + 1).trim());
+         result.append(text.substring(i * numCharsPerLine, actualBreakIndex)
+               + "<br>" + text.substring(actualBreakIndex, estimatedBreakIndex + 1).trim());
       }
       result.append(text.substring(numLines * numCharsPerLine));
       result.append("</html>");

@@ -27,8 +27,9 @@ import org.micromanager.data.Image;
 
 /**
  * This class signifies that an image has been added to a Datastore.
- * <p>
- * This Event posts on the DataProvider bus.
+ *
+ *
+ * <p>This Event posts on the DataProvider bus.
  * Subscribe using {@link DataProvider#registerForEvents(Object)}.
  */
 public final class DefaultNewImageEvent implements DataProviderHasNewImageEvent {

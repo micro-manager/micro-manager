@@ -158,8 +158,7 @@ public final class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
                      }
                   }
                }).start();
-            }
-            else {
+            } else {
                studio_.acquisitions().haltAcquisition();
             }
          }

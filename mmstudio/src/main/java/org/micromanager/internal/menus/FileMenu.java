@@ -168,8 +168,7 @@ public final class FileMenu {
                if (store != null && store.getAnyImage() != null) {
                   studio_.displays().manage(store);
                   studio_.displays().loadDisplays(store);
-               }
-               else {
+               } else {
                   studio_.logs().showError(
                         "Unable to load any images; file may be invalid or missing.");
                }

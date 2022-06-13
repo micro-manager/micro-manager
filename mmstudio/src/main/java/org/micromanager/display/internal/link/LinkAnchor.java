@@ -13,8 +13,8 @@ import java.util.List;
 /**
  * An object that serves as a port for bidirectional linking of arbitrary
  * attributes to other anchors.
- * <p>
- * To create a concrete anchor, you must extend {@link AbstractLinkAnchor}.
+ *
+ * <p>To create a concrete anchor, you must extend {@link AbstractLinkAnchor}.
  *
  * @param <T> the type of the value to be linked
  * @author Mark A. Tsuchida
@@ -22,11 +22,11 @@ import java.util.List;
 public interface LinkAnchor<T> {
    /**
     * Return a tag object designating the linkage group of this anchor.
-    * <p>
-    * The linkage group determines the set of mutually compatible (linkable)
+    *
+    * <p>The linkage group determines the set of mutually compatible (linkable)
     * anchors.
-    * <p>
-    * The tag object must be immutable and its {@code equals} and
+    *
+    * <p>The tag object must be immutable and its {@code equals} and
     * {@code hashCode} methods (if overridden) must behave correctly.
     *
     * @return the linkage group tag object for this anchor
@@ -42,13 +42,13 @@ public interface LinkAnchor<T> {
 
    /**
     * Called when a linked peer has notified that the linked value has changed.
-    * <p>
-    * To prevent thread deadlock, this method must not (directly or indirectly)
+    *
+    * <p>To prevent thread deadlock, this method must not (directly or indirectly)
     * call {@link #linkToPeer} or {@link #unlink} on this or any other anchor.
     *
-    * @param value
+    * @param value Changed linked value
     * @return true if the new value was applicable; false if it could not be
-    * matched (e.g. because it is our of range)
+    *     matched (e.g. because it is our of range)
     */
    boolean receivePropagatedValue(T value);
 
@@ -64,7 +64,7 @@ public interface LinkAnchor<T> {
    /**
     * Get all linkable peer anchors.
     *
-    * @return
+    * @return list of linkable peer Anchors
     */
    List<LinkAnchor<T>> getLinkablePeers();
 

@@ -59,8 +59,7 @@ public final class PluginFinder {
       for (File item : items) {
          if (item.getAbsolutePath().endsWith(extension)) {
             result.add(item.getAbsolutePath());
-         }
-         else if (item.isDirectory()) {
+         } else if (item.isDirectory()) {
             recursiveFindPaths(item, extension, result);
          }
       }
@@ -143,8 +142,7 @@ public final class PluginFinder {
             // will return null if the resource is not found in our specific
             // jar.
             return findResource(name);
-         }
-         else {
+         } else {
             return super.getResource(name);
          }
       }
@@ -153,8 +151,7 @@ public final class PluginFinder {
       public Enumeration<URL> getResources(String name) throws IOException {
          if (blockInheritedResources_) {
             return findResources(name);
-         }
-         else {
+         } else {
             return super.getResources(name);
          }
       }

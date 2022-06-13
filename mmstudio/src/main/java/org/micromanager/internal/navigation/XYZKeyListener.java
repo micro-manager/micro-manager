@@ -105,8 +105,7 @@ public final class XYZKeyListener {
             if (e.isControlDown()) {
                xMicron = xMovesMicron_[0];
                yMicron = yMovesMicron_[0];
-            }
-            else if (e.isShiftDown()) {
+            } else if (e.isShiftDown()) {
                xMicron = xMovesMicron_[2];
                yMicron = yMovesMicron_[2];
             }

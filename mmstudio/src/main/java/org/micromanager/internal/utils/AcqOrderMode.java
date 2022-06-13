@@ -2,6 +2,10 @@ package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
 
+/**
+ * Information about the order of various axes (z, c, t, etc..) during the acquisition
+ * are stored in this class.
+ */
 public final class AcqOrderMode {
    // HACK: This value chosen to make the text box in the MDA dialog look nice.
    private static final int MAX_LINE_LEN = 60;
@@ -16,6 +20,12 @@ public final class AcqOrderMode {
    private boolean sliceEnabled_;
    private boolean channelEnabled_;
 
+   /**
+    * Constructs an (immutable) instance.
+    *
+    * @param id one of the TIME_POS_, etc.. (currently 0-3) values that determine
+    *           acquisition order.
+    */
    public AcqOrderMode(int id) {
       id_ = id;
       timeEnabled_ = true;
@@ -50,8 +60,7 @@ public final class AcqOrderMode {
       for (String axis : ordering) {
          if (axis.contentEquals("Slice")) {
             tmp.add("Z");
-         }
-         else {
+         } else {
             tmp.add(axis.substring(0, 1));
          }
       }
@@ -98,16 +107,13 @@ public final class AcqOrderMode {
          if (id_ == TIME_POS_CHANNEL_SLICE || id_ == TIME_POS_SLICE_CHANNEL) {
             result.add("Time");
             result.add("Position");
-         }
-         else {
+         } else {
             result.add("Position");
             result.add("Time");
          }
-      }
-      else if (timeEnabled_) {
+      } else if (timeEnabled_) {
          result.add("Time");
-      }
-      else if (posEnabled_) {
+      } else if (posEnabled_) {
          result.add("Position");
       }
 
@@ -115,22 +121,27 @@ public final class AcqOrderMode {
          if (id_ == TIME_POS_CHANNEL_SLICE || id_ == POS_TIME_CHANNEL_SLICE) {
             result.add("Channel");
             result.add("Slice");
-         }
-         else {
+         } else {
             result.add("Slice");
             result.add("Channel");
          }
-      }
-      else if (channelEnabled_) {
+      } else if (channelEnabled_) {
          result.add("Channel");
-      }
-      else if (sliceEnabled_) {
+      } else if (sliceEnabled_) {
          result.add("Slice");
       }
 
       return result;
    }
 
+   /**
+    * Determines which axes are actually being used in this acquisition.
+    *
+    * @param time Time Axis
+    * @param position XY Stage position
+    * @param slice Z slice
+    * @param channel Channel (usually different wavenlength)
+    */
    public void setEnabled(boolean time, boolean position, boolean slice, boolean channel) {
       timeEnabled_ = time;
       posEnabled_ = position;

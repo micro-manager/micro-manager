@@ -286,8 +286,7 @@ public class IntensityInspectorPanelController
                   new CC().growY());
             channelHistogramsPanel_.add(chanController.getHistogramPanel(),
                   new CC().grow().wrap());
-         }
-         else {
+         } else {
             ReportingUtils.logError(
                   "IntensityInspectorPanelController: Viewer is unexpectedly null");
          }

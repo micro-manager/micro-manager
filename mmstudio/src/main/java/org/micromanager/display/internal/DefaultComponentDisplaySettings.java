@@ -95,14 +95,25 @@ public final class DefaultComponentDisplaySettings
       return builder;
    }
 
+   /**
+    * Builds the PropertyMap based on what the Builder knows.
+    *
+    * @return Immutable PropertyMap
+    */
    public PropertyMap toPropertyMap() {
-      return PropertyMaps.builder().
-            putLong(PropertyKey.SCALING_MIN.key(), scalingMin_).
-            putLong(PropertyKey.SCALING_MAX.key(), scalingMax_).
-            putDouble(PropertyKey.GAMMA.key(), gamma_).
-            build();
+      return PropertyMaps.builder()
+            .putLong(PropertyKey.SCALING_MIN.key(), scalingMin_)
+            .putLong(PropertyKey.SCALING_MAX.key(), scalingMax_)
+            .putDouble(PropertyKey.GAMMA.key(), gamma_)
+            .build();
    }
 
+   /**
+    * Extracts ComponentDisplaySettings from the given PropertyMap.
+    *
+    * @param pMap Input PropertyMap to be used.
+    * @return ComponentDisplaySettings based on keys in input
+    */
    public static ComponentDisplaySettings fromPropertyMap(PropertyMap pMap) {
       Builder b = new Builder();
 

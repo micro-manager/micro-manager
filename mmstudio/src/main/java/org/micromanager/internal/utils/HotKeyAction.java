@@ -71,8 +71,7 @@ public final class HotKeyAction {
             default:
                return false;
          }
-      }
-      else {
+      } else {
          // Assume it's a script to run.
          studio_.scripter().runFile(beanShellScript_);
          return true;

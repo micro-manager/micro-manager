@@ -6,7 +6,7 @@ import mmcorej.PropertyType;
 import mmcorej.StrVector;
 
 /**
- * Property descriptor, representing MMCore data
+ * Property descriptor, representing MMCore data.
  */
 public class PropertyItem {
    public String device;  // device name (label)
@@ -26,17 +26,17 @@ public class PropertyItem {
       allowed = new String[0];
    }
 
-   public PropertyItem(String _name, String _value) {
-      name = _name;
-      value = _value;
+   public PropertyItem(String name, String value) {
+      this.name = name;
+      this.value = value;
       allowed = new String[0];
    }
 
-   public PropertyItem(String _name, String _value, boolean _preInit) {
-      name = _name;
-      value = _value;
+   public PropertyItem(String name, String value, boolean preInit) {
+      this.name = name;
+      this.value = value;
       allowed = new String[0];
-      preInit = _preInit;
+      this.preInit = preInit;
    }
 
 
@@ -55,11 +55,9 @@ public class PropertyItem {
       try {
          if (isInteger()) {
             value = NumberUtils.intStringCoreToDisplay(coreValue);
-         }
-         else if (isFloat()) {
+         } else if (isFloat()) {
             value = NumberUtils.doubleStringCoreToDisplay(coreValue);
-         }
-         else {
+         } else {
             value = coreValue;
          }
       } catch (Exception e) {
@@ -72,11 +70,9 @@ public class PropertyItem {
       try {
          if (isInteger()) {
             return NumberUtils.intStringDisplayToCore(value);
-         }
-         else if (isFloat()) {
+         } else if (isFloat()) {
             return NumberUtils.doubleStringDisplayToCore(value);
-         }
-         else {
+         } else {
             return value;
          }
       } catch (Exception e) {
@@ -107,8 +103,7 @@ public class PropertyItem {
          String coreVal;
          if (cached) {
             coreVal = core.getPropertyFromCache(deviceName, propertyName);
-         }
-         else {
+         } else {
             coreVal = core.getProperty(deviceName, propertyName);
          }
          setValueFromCoreString(coreVal);
@@ -122,11 +117,9 @@ public class PropertyItem {
          if (allowed.length > 0) {
             if (PropertyType.Float == type) {
                Arrays.sort(allowed, new SortFunctionObjects.DoubleStringComp());
-            }
-            else if (PropertyType.Integer == type) {
+            } else if (PropertyType.Integer == type) {
                Arrays.sort(allowed, new SortFunctionObjects.IntStringComp());
-            }
-            else if (PropertyType.String == type) {
+            } else if (PropertyType.String == type) {
                boolean allNumeric = true;
                // test that first character of every possible value is a numeral
                // if so, show user the list sorted by the numeric prefix
@@ -137,13 +130,11 @@ public class PropertyItem {
                            allNumeric = false;
                            break;
                         }
-                     }
-                     else {
+                     } else {
                         allNumeric = false;
                         break;
                      }
-                  }
-                  else {
+                  } else {
                      allNumeric = false;
                      break;
                   }

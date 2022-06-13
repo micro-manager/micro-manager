@@ -148,8 +148,7 @@ public final class CoreAutofocus implements AutofocusPlugin {
                p.allowed[j] = vals.get(j);
             }
             return p;
-         }
-         else {
+         } else {
             throw new MMException("Unknown property: " + name);
          }
       } catch (Exception e) {

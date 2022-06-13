@@ -92,7 +92,7 @@ public final class PerformanceMonitor {
    }
 
    public List<Map.Entry<String, ? extends AbstractExponentialSmoothing>>
-   getEntries() {
+            getEntries() {
       // Combine stats into a single sorted list
       List<Map.Entry<String, ? extends AbstractExponentialSmoothing>> entries =
             new ArrayList<>();

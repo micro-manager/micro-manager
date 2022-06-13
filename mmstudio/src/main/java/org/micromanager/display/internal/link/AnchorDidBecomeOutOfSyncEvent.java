@@ -10,6 +10,9 @@ import org.micromanager.display.internal.link.internal.LinkAnchorEvent;
 
 
 /**
+ * Event signalling that an Anchor (viewer element linking axes between different viewers)
+ * went out of sync.
+ *
  * @author mark
  */
 public interface AnchorDidBecomeOutOfSyncEvent<T> extends LinkAnchorEvent<T> {

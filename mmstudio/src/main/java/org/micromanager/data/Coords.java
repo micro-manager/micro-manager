@@ -56,7 +56,7 @@ public interface Coords {
     * Same as {@code TIME_POINT} or {@code T}.
     *
     * @deprecated Use discouraged because it reads like a physical time rather
-    * than the time point index that it is.
+    *     than the time point index that it is.
     */
    @Deprecated
    String TIME = TIME_POINT;
@@ -254,7 +254,7 @@ public interface Coords {
     *
     * @param axis coordinate axis such as {@code Coords.CHANNEL}
     * @return index along {@code axis}, or {@code 0} if {@code axis} does not
-    * exist
+    *     exist
     */
    int getIndex(String axis);
 
@@ -264,7 +264,7 @@ public interface Coords {
     * <p>Equivalent to {@code getIndex(Coords.CHANNEL)}.</p>
     *
     * @return channel index, or {@code 0} if this {@code Coords} doesn't
-    * contain a channel index.
+    *     contain a channel index.
     */
    int getChannel();
 
@@ -272,7 +272,7 @@ public interface Coords {
     * Shorthand for {@link #getChannel() getChannel}.
     *
     * @return channel index, or {@code 0} if this {@code Coords} doesn't
-    * contain a channel index.
+    *     contain a channel index.
     */
    int getC();
 
@@ -282,7 +282,7 @@ public interface Coords {
     * <p>Equivalent to {@code getIndex(Coords.TIME_POINT)}.</p>
     *
     * @return time point index, or {@code 0} if this {@code Coords} doesn't
-    * contain a time point index.
+    *     contain a time point index.
     */
    int getTimePoint();
 
@@ -291,7 +291,7 @@ public interface Coords {
     *
     * @return time index (0-based)
     * @deprecated Due to looking like the physical time rather than an index.
-    * Use {@link #getTimePoint() getTmePoint}
+    *     Use {@link #getTimePoint() getTmePoint}
     */
    @Deprecated
    int getTime();
@@ -300,7 +300,7 @@ public interface Coords {
     * Shorthand for {@link #getTimePoint() getTimePoint}.
     *
     * @return time point index, or {@code 0} if this {@code Coords} doesn't
-    * contain a time point index.
+    *     contain a time point index.
     */
    int getT();
 
@@ -310,7 +310,7 @@ public interface Coords {
     * <p>Equivalent to {@code getIndex(Coords.Z_SLICE)}.</p>
     *
     * @return Z slice index, or {@code 0} if this {@code Coords} doesn't
-    * contain a Z slice index.
+    *     contain a Z slice index.
     */
    int getZSlice();
 
@@ -318,7 +318,7 @@ public interface Coords {
     * Shorthand for {@link #getZSlice() getZSlice}.
     *
     * @return Z slice index, or {@code 0} if this {@code Coords} doesn't
-    * contain a Z slice index.
+    *     contain a Z slice index.
     */
    int getZ();
 
@@ -328,7 +328,7 @@ public interface Coords {
     * <p>Equivalent to {@code getIndex(Coords.STAGE_POSITION)}.</p>
     *
     * @return stage position index, or {@code 0} if this {@code Coords}
-    * doesn't contain a stage position index.
+    *     doesn't contain a stage position index.
     */
    int getStagePosition();
 
@@ -336,7 +336,7 @@ public interface Coords {
     * Shorthand for {@link #getStagePosition() getStagePosition}.
     *
     * @return stage position index, or {@code 0} if this {@code Coords}
-    * doesn't contain a stage position index.
+    *     doesn't contain a stage position index.
     */
    int getP();
 
@@ -414,7 +414,7 @@ public interface Coords {
     *
     * @param axes Names of axes to be represented in the output
     * @return Copy of this Coords, but only with the subset of axes provided in
-    * the axes param
+    *     the axes param
     */
    Coords copyRetainingAxes(String... axes);
 }

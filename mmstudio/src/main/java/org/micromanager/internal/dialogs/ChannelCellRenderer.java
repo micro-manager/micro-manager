@@ -45,39 +45,31 @@ public final class ChannelCellRenderer extends JLabel implements TableCellRender
          if (isSelected) {
             check.setBackground(table.getSelectionBackground());
             check.setOpaque(true);
-         }
-         else {
+         } else {
             check.setOpaque(false);
             check.setBackground(table.getBackground());
          }
          return check;
-      }
-      else if (colIndex == 1) {
+      } else if (colIndex == 1) {
          setText(channel.config());
-      }
-      else if (colIndex == 2) {
+      } else if (colIndex == 2) {
          setText(NumberUtils.doubleToDisplayString(channel.exposure()));
-      }
-      else if (colIndex == 3) {
+      } else if (colIndex == 3) {
          setText(NumberUtils.doubleToDisplayString(channel.zOffset()));
-      }
-      else if (colIndex == 4) {
+      } else if (colIndex == 4) {
          JCheckBox check = new JCheckBox("", channel.doZStack());
          check.setEnabled(acqEng_.isZSliceSettingEnabled() && table.isEnabled());
          if (isSelected) {
             check.setBackground(table.getSelectionBackground());
             check.setOpaque(true);
-         }
-         else {
+         } else {
             check.setOpaque(false);
             check.setBackground(table.getBackground());
          }
          return check;
-      }
-      else if (colIndex == 5) {
+      } else if (colIndex == 5) {
          setText(Integer.toString(channel.skipFactorFrame()));
-      }
-      else if (colIndex == 6) {
+      } else if (colIndex == 6) {
          setText("");
          setBackground(channel.color());
          setOpaque(true);
@@ -86,8 +78,7 @@ public final class ChannelCellRenderer extends JLabel implements TableCellRender
       if (isSelected) {
          setBackground(table.getSelectionBackground());
          setOpaque(true);
-      }
-      else {
+      } else {
          setOpaque(false);
          setBackground(table.getBackground());
       }

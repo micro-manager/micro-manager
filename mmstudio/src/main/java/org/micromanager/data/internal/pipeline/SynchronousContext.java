@@ -45,8 +45,7 @@ public final class SynchronousContext extends BaseContext {
          if (flushLatch_ != null) {
             flushLatch_.countDown();
          }
-      }
-      else {
+      } else {
          try {
             processor_.processImage(wrapper.getImage(), this);
          } catch (Exception e) {

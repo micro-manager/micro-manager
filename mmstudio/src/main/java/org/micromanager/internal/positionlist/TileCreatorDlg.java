@@ -402,8 +402,7 @@ public final class TileCreatorDlg extends JDialog {
          double[] centeredSize = getCenteredSize();
          if (centeredSize[0] == 0.0) {
             labelWidthUmPx_.setText("");
-         }
-         else {
+         } else {
             labelWidthUmPx_.setText((int) centeredSize[0] + "x" + (int) centeredSize[1] + "um");
          }
       } catch (TileCreatorException tex) {

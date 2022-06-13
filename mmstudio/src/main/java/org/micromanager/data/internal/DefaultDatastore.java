@@ -442,8 +442,7 @@ public class DefaultDatastore implements Datastore {
       chooser.addChoosableFileFilter(MULTIPAGEFILTER);
       if (Objects.equals(getPreferredSaveMode(studio_), SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(MULTIPAGEFILTER);
-      }
-      else {
+      } else {
          chooser.setFileFilter(SINGLEPLANEFILTER);
       }
       chooser.setSelectedFile(
@@ -459,16 +458,16 @@ public class DefaultDatastore implements Datastore {
       // Determine the mode the user selected.
       FileFilter filter = chooser.getFileFilter();
       Datastore.SaveMode mode;
-      if (filter == SINGLEPLANEFILTER) {
-         mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
-      }
-      else if (filter == MULTIPAGEFILTER) {
-         mode = Datastore.SaveMode.MULTIPAGE_TIFF;
-      }
-      else {
-         studio_.logs().showError("Unrecognized file format filter "
-               + filter.getDescription());
-         return null;
+      if (filter != SINGLEPLANEFILTER) {
+         if (filter == MULTIPAGEFILTER) {
+            mode = SaveMode.MULTIPAGE_TIFF;
+         } else {
+            studio_.logs().showError("Unrecognized file format filter "
+                  + filter.getDescription());
+            return null;
+         }
+      } else {
+         mode = SaveMode.SINGLEPLANE_TIFF_SERIES;
       }
       setPreferredSaveMode(studio_, mode);
       // the DefaultDataSave constructor creates the directory
@@ -487,8 +486,7 @@ public class DefaultDatastore implements Datastore {
             }
          });
          ds.execute();
-      }
-      else {
+      } else {
          // blocking.  No way to give feedback since we are blocking the EDT
          ds.doInBackground();
       }
@@ -509,8 +507,7 @@ public class DefaultDatastore implements Datastore {
       DefaultDataSaver ds = new DefaultDataSaver(studio_, this, mode, path);
       if (blocking) {
          ds.doInBackground();
-      }
-      else {
+      } else {
          ds.execute();
       }
    }
@@ -539,11 +536,9 @@ public class DefaultDatastore implements Datastore {
             PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
       if (modeStr.equals(MULTIPAGE_TIFF)) {
          return Datastore.SaveMode.MULTIPAGE_TIFF;
-      }
-      else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES)) {
+      } else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES)) {
          return Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
-      }
-      else {
+      } else {
          ReportingUtils.logError("Unrecognized save mode " + modeStr);
          return null;
       }
@@ -559,8 +554,7 @@ public class DefaultDatastore implements Datastore {
       String modeStr = "";
       if (null == mode) {
          ReportingUtils.logError("Unrecognized save mode " + mode);
-      }
-      else {
+      } else {
          switch (mode) {
             case MULTIPAGE_TIFF:
                modeStr = MULTIPAGE_TIFF;

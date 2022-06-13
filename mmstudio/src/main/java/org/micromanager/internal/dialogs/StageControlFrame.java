@@ -280,8 +280,7 @@ public final class StageControlFrame extends JFrame {
       if (xyPanel_.isVisible()) {
          // put the polling checkbox in XY panel if possible, below 1st Z panel if not
          xyPanel_.add(settingsPanel_, "pos 140 20");
-      }
-      else {
+      } else {
          add(settingsPanel_, "cell 1 2, center");
       }
 
@@ -480,17 +479,14 @@ public final class StageControlFrame extends JFrame {
          if (i < 3 || i > 8) {
             // Up or down button.
             constraint = "span, alignx center, wrap";
-         }
-         else if (i == 3) {
+         } else if (i == 3) {
             // First horizontal button
             constraint = "split, span";
-         }
-         else if (i == 6) {
+         } else if (i == 6) {
             // Fourth horizontal button (start of the "right" buttons); add
             // a gap to the left.
             constraint = "gapleft 30";
-         }
-         else if (i == 8) {
+         } else if (i == 8) {
             // Last horizontal button.
             constraint = "wrap";
          }
@@ -522,7 +518,7 @@ public final class StageControlFrame extends JFrame {
          result.add(xStepTexts_[i], "height 20!, width 40");
          result.add(yStepTexts_[i], "height 20!, width 40");
 
-         result.add(new JLabel("\u00b5m"));
+         result.add(new JLabel("\u00b5m")); //micro-m, i.e. micron
 
          JButton presetButton = new JButton(labels[i]);
          presetButton.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -642,7 +638,7 @@ public final class StageControlFrame extends JFrame {
             "/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
             "height 20!, span, split 3, flowx");
       result.add(zStepTextsSmall_[idx], "height 20!, width 50");
-      result.add(new JLabel("\u00b5m"), "height 20!");
+      result.add(new JLabel("\u00b5m"), "height 20!"); //micro-m, i.e. micron
 
       zStepTextsMedium_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(
             settings_, zDriveSelect_[idx], MEDIUM_MOVEMENT_Z, 11.1);
@@ -650,7 +646,7 @@ public final class StageControlFrame extends JFrame {
             "/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
       result.add(zStepTextsMedium_[idx], "height 20!, width 50");
-      result.add(new JLabel("\u00b5m"), "height 20!");
+      result.add(new JLabel("\u00b5m"), "height 20!"); // micro-m, i.e micron
 
       minusButtons_[idx] = new JButton("-");
       minusButtons_[idx].addActionListener((ActionEvent arg0) -> {
@@ -684,8 +680,7 @@ public final class StageControlFrame extends JFrame {
    private void refreshTimer() {
       if (enableRefreshCB_.isSelected()) {
          startTimer();
-      }
-      else {
+      } else {
          stopTimer();
       }
    }
@@ -805,7 +800,7 @@ public final class StageControlFrame extends JFrame {
 
    private void setXYPosLabel(double x, double y) {
       xyPositionLabel_.setText(String.format(
-            "<html>X: %s \u00b5m<br>Y: %s \u00b5m</html>",
+            "<html>X: %s \u00b5m<br>Y: %s \u00b5m</html>", // micro-m, i.e. micron
             TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(x)),
             TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(y))));
    }
@@ -873,7 +868,7 @@ public final class StageControlFrame extends JFrame {
    private boolean confirmLargeMovementSetting(double movementUm) {
       int response = JOptionPane.showConfirmDialog(this,
             String.format(NumberUtils.doubleToDisplayString(movementUm, 0)
-                        + " microns could be dangerously large.  Are you sure you want to set this?",
+                     + " microns could be dangerously large.  Are you sure you want to set this?",
                   "Large movement requested",
                   JOptionPane.YES_NO_OPTION));
 

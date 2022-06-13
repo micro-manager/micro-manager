@@ -223,8 +223,7 @@ public final class WindowPositioning {
                      Math.max(0,
                            (bounds.y + bounds.height) - (screenBounds.y + screenBounds.height))));
          window.setLocation(bounds.getLocation());
-      }
-      else {
+      } else {
          // When we are cascading, we "reset" the cascade by moving to the top
          // of the screen, preserving the horizontal position. If we are
          // getting significantly beyond the right edge of the screen, we also

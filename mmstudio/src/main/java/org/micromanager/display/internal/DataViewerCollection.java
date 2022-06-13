@@ -21,12 +21,11 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 
 /**
  * The collection of data viewers.
- * <p>
- * Manages all data viewers in the application, and keeps track of the
+ *
+ * <p>Manages all data viewers in the application, and keeps track of the
  * front-most viewer. Also publishes all viewer events.
  *
- * <p>
- * This class handles generic {@code DataViewer}s and does not perform tasks
+ * <p>This class handles generic {@code DataViewer}s and does not perform tasks
  * that are specific to {@code DisplayWindow}s.
  *
  * @author Mark A. Tsuchida

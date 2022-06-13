@@ -244,8 +244,8 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Implements {@code getDisplayPosition}.
-    * <p>
-    * {@inheritDoc}
+    *
+    * <p>{@inheritDoc}
     */
    @Override
    public final Coords getDisplayPosition() {
@@ -256,8 +256,8 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Implements {@code compareAndSetDisplayPosition}.
-    * <p>
-    * {@inheritDoc}
+    *
+    * <p>{@inheritDoc}
     */
    @Override
    public final boolean compareAndSetDisplayPosition(final Coords oldPosition,

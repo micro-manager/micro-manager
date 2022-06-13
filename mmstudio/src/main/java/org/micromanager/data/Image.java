@@ -103,7 +103,7 @@ public interface Image {
     * @param component The component number to retrieve intensity for, starting
     *                  from 0.
     * @return intensity of the image at the specified coordinates, for the
-    * given component
+    *     given component
     * @throws IndexOutOfBoundsException when the index is out of bounds
     * @see #getComponentIntensitiesAt
     */
@@ -145,7 +145,7 @@ public interface Image {
     * @param x X coordinate at which to retrieve image data
     * @param y Y coordinate at which to retrieve image data
     * @return A string describing the pixel intensity/intensities at the given
-    * coordinates.
+    *     coordinates.
     */
    String getIntensityStringAt(int x, int y);
 
@@ -230,7 +230,7 @@ public interface Image {
     * returned. It may change in the future.</p>
     *
     * @return An array of pixel values for the image data, copied from the
-    * original data.
+    *     original data.
     */
    Object getRawPixelsCopy();
 

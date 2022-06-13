@@ -485,8 +485,7 @@ public final class QuickAccessFrame extends JFrame {
                   if (divider != null) {
                      if (dividers_.contains(divider)) {
                         dividers_.remove(divider);
-                     }
-                     else {
+                     } else {
                         dividers_.add(divider);
                      }
                      GridPanel.this.repaint();
@@ -527,8 +526,7 @@ public final class QuickAccessFrame extends JFrame {
             // Horizontal divider.
             return new Divider(new Point(column, row),
                   new Point(column, row + 1));
-         }
-         else {
+         } else {
             // Vertical divider.
             return new Divider(new Point(column, row),
                   new Point(column + 1, row));
@@ -665,8 +663,8 @@ public final class QuickAccessFrame extends JFrame {
 
          subPanel.add(new JLabel(
                      "<html>Drag controls into the grid above to add them to the panel.<br>"
-                           + "Click on grid lines to add or remove dividers. Right-click<br> "
-                           + " on a control in the grid to customize its icon (when possible).</html>"),
+                     + "Click on grid lines to add or remove dividers. Right-click<br> "
+                     + " on a control in the grid to customize its icon (when possible).</html>"),
                "span, wrap, gaptop 10");
 
          add(subPanel, "span, wrap");

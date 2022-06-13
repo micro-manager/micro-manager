@@ -236,8 +236,7 @@ public final class CommentsInspectorPanelController
    private void markEdited(Document doc) {
       if (doc == summaryTextArea_.getDocument()) {
          summaryCommentEdited_ = true;
-      }
-      else {
+      } else {
          planeCommentEdited_ = true;
       }
    }

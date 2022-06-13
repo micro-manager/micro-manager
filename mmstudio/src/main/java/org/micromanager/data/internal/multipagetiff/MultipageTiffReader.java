@@ -186,8 +186,7 @@ public final class MultipageTiffReader {
                   break;
                }
             }
-         }
-         else if ((!child.getName().startsWith("._"))
+         } else if ((!child.getName().startsWith("._"))
                && child.getName().endsWith(".tif") || child.getName().endsWith(".TIF")) {
             testFile = child;
             break;
@@ -211,11 +210,9 @@ public final class MultipageTiffReader {
       char zeroOne = tiffHeader.getChar(0);
       if (zeroOne == 0x4949) {
          bo = ByteOrder.LITTLE_ENDIAN;
-      }
-      else if (zeroOne == 0x4d4d) {
+      } else if (zeroOne == 0x4d4d) {
          bo = ByteOrder.BIG_ENDIAN;
-      }
-      else {
+      } else {
          throw new IOException("Error reading TIFF header");
       }
       tiffHeader.order(bo);
@@ -374,11 +371,9 @@ public final class MultipageTiffReader {
          if (entry.tag == MM_METADATA) {
             data.mdOffset = entry.value;
             data.mdLength = entry.count;
-         }
-         else if (entry.tag == STRIP_OFFSETS) {
+         } else if (entry.tag == STRIP_OFFSETS) {
             data.pixelOffset = entry.value;
-         }
-         else if (entry.tag == STRIP_BYTE_COUNTS) {
+         } else if (entry.tag == STRIP_BYTE_COUNTS) {
             data.bytesPerImage = entry.value;
          }
       }
@@ -496,11 +491,9 @@ public final class MultipageTiffReader {
                   // need to swap byte 0 and 2: saved order is RGBA, but we want BGRA
                   if (i % 4 == 0) {
                      pixelsARGB[i + 2] = b;
-                  }
-                  else if (i % 2 == 0) {
+                  } else if (i % 2 == 0) {
                      pixelsARGB[i - 2] = b;
-                  }
-                  else {
+                  } else {
                      pixelsARGB[i] = b;
                   }
                   i++;
@@ -527,8 +520,7 @@ public final class MultipageTiffReader {
       long value;
       if (type == 3 && count == 1) {
          value = buffer.getChar(offset + 8);
-      }
-      else {
+      } else {
          value = unsignInt(buffer.getInt(offset + 8));
       }
       return (new IFDEntry(tag, type, count, value));
@@ -541,11 +533,9 @@ public final class MultipageTiffReader {
       char zeroOne = tiffHeader.getChar(0);
       if (zeroOne == 0x4949) {
          byteOrder_ = ByteOrder.LITTLE_ENDIAN;
-      }
-      else if (zeroOne == 0x4d4d) {
+      } else if (zeroOne == 0x4d4d) {
          byteOrder_ = ByteOrder.BIG_ENDIAN;
-      }
-      else {
+      } else {
          throw new IOException("Error reading Tiff header");
       }
       tiffHeader.order(byteOrder_);

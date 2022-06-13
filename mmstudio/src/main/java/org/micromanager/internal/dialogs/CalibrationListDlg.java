@@ -458,8 +458,7 @@ public final class CalibrationListDlg extends JDialog {
          if (calibrationList_.size() == 0) {
             configDialog_ = new PixelConfigEditor(calibrationName,
                   this, pixelSize, true);
-         }
-         else {
+         } else {
             configDialog_ = new PixelPresetEditor(calibrationName,
                   this, pixelSize, newConfig);
          }

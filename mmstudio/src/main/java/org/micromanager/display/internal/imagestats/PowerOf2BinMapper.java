@@ -18,8 +18,8 @@ import net.imglib2.type.numeric.IntegerType;
 
 /**
  * A {@code BinMapper1d} for use with {@code net.imglib2.histogram.Histogram1d}.
- * <p>
- * Unlike the default {@code Integer1dBinMapper} provided by ImgLib2, which
+ *
+ * <p>Unlike the default {@code Integer1dBinMapper} provided by ImgLib2, which
  * only allows size-1 bins, this allows histograms to have size 1, 2, 4, 8, ...
  * bins. For example, a 256-bin histogram can be created for a 16-bit image.
  *
@@ -33,8 +33,8 @@ public class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<
 
    /**
     * Create a bin mapper covering full range of unsigned integer type.
-    * <p>
-    * Not tested for signed integer types.
+    *
+    * <p>Not tested for signed integer types.
     *
     * @param <T>
     * @param sampleDepthPowerOf2
@@ -42,15 +42,14 @@ public class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<
     * @return
     */
    public static <T extends IntegerType<T>> PowerOf2BinMapper<T>
-   create(int sampleDepthPowerOf2, int binCountPowerOf2) {
+         create(int sampleDepthPowerOf2, int binCountPowerOf2) {
       return new PowerOf2BinMapper<T>(sampleDepthPowerOf2, binCountPowerOf2);
    }
 
    private PowerOf2BinMapper(int sampleDepthPowerOf2, int binCountPowerOf2) {
       if (sampleDepthPowerOf2 > binCountPowerOf2) {
          sampleShift_ = sampleDepthPowerOf2 - binCountPowerOf2;
-      }
-      else {
+      } else {
          sampleShift_ = 0;
       }
       endOfRange_ = (1L << sampleDepthPowerOf2) - 1;
@@ -117,14 +116,11 @@ public class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<
    public void getLowerBound(long index, T value) {
       if (index <= 0) {
          value.setReal(value.getMinValue());
-      }
-      else if (index == bins_.length - 1) {
+      } else if (index == bins_.length - 1) {
          value.setInteger(endOfRange_);
-      }
-      else if (index >= bins_.length - 1) {
+      } else if (index >= bins_.length - 1) {
          value.setReal(value.getMaxValue());
-      }
-      else {
+      } else {
          value.setInteger((index - 1) << sampleShift_);
       }
    }
@@ -133,14 +129,11 @@ public class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<
    public void getUpperBound(long index, T value) {
       if (index >= bins_.length - 1) {
          value.setReal(value.getMaxValue());
-      }
-      else if (index == bins_.length - 2) {
+      } else if (index == bins_.length - 2) {
          value.setReal(value.getMaxValue());
-      }
-      else if (index <= 0) {
+      } else if (index <= 0) {
          value.setReal(value.getMinValue());
-      }
-      else {
+      } else {
          getLowerBound(index + 1, value);
          value.dec();
       }

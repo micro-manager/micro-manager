@@ -59,8 +59,7 @@ class JVMDeadlockedThreadInfoSection implements SystemInfo.SystemInfoSection {
                      .append(sync.getIdentityHashCode()).append('\n');
             }
          }
-      }
-      else {
+      } else {
          sb.append("Deadlocked Java threads: none detected");
       }
 

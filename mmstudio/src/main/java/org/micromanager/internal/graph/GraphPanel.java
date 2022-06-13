@@ -155,8 +155,7 @@ public final class GraphPanel extends JPanel {
       if (bounds_.getRangeY() == 0.0) {
          if (bounds_.yMax > 0.0) {
             bounds_.yMin = 0.0;
-         }
-         else if (bounds_.yMax < 0.0) {
+         } else if (bounds_.yMax < 0.0) {
             bounds_.yMax = 0.0;
          }
       }
@@ -192,8 +191,7 @@ public final class GraphPanel extends JPanel {
 
       if (fillTrace_) {
          g.fill(trace);
-      }
-      else {
+      } else {
          g.draw(trace);
       }
 
@@ -252,8 +250,7 @@ public final class GraphPanel extends JPanel {
       if (bounds_.getRangeY() == 0.0) {
          if (bounds_.yMax > 0.0) {
             bounds_.yMin = 0.0;
-         }
-         else if (bounds_.yMax < 0.0) {
+         } else if (bounds_.yMax < 0.0) {
             bounds_.yMax = 0.0;
          }
       }

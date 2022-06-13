@@ -57,7 +57,8 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
     * @param pixelSizeConfigName Pixel Size configuration name
     * @param parent              GUI element that this one should be shown in front of.
     * @param pixelSize           Starting pixel size
-    * @param newItem             True when this is a new pixel configuration, false when it already exists.
+    * @param newItem             True when this is a new pixel configuration, false when it
+    *                            already exists.
     */
    public PixelPresetEditor(String pixelSizeConfigName,
                             CalibrationListDlg parent, String pixelSize, boolean newItem) {

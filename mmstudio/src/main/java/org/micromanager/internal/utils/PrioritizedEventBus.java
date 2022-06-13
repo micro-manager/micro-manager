@@ -48,13 +48,11 @@ public final class PrioritizedEventBus {
       if (!prioritizedBuses_.containsKey(priority)) {
          if (async_) {
             subBus = new AsyncEventBus(executorService_, EventBusExceptionLogger.getInstance());
-         }
-         else {
+         } else {
             subBus = new EventBus(EventBusExceptionLogger.getInstance());
          }
          prioritizedBuses_.put(priority, subBus);
-      }
-      else {
+      } else {
          subBus = prioritizedBuses_.get(priority);
       }
       subBus.register(o);

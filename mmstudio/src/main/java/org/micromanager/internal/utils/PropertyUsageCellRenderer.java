@@ -31,8 +31,7 @@ public final class PropertyUsageCellRenderer implements TableCellRenderer {
       cb_.setBackground(studio_.app().skin().getBackgroundColor());
       if (item_.readOnly) {
          cb_.setEnabled(false);
-      }
-      else {
+      } else {
          cb_.setEnabled(true);
       }
       return (Component) cb_;

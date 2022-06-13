@@ -202,8 +202,7 @@ public final class DefaultAlbum implements Album {
       // timepoint.
       if (curTime_ == null) {
          curTime_ = 0;
-      }
-      else {
+      } else {
          // Try to find images at this timepoint and channel, which would mean
          // we need to move to the next timepoint.
          Coords matcher = Coordinates.builder()

@@ -110,8 +110,7 @@ public final class GraphData {
       double y;
       if (index < yVals_.length) {
          y = yVals_[index];
-      }
-      else {
+      } else {
          y = 0.0;
       }
       return new Point2D.Double(x, y);

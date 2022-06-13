@@ -21,8 +21,8 @@ import mmcorej.org.json.JSONObject;
  * effect on program flow would only be accessed by way of this module; the
  * eventual goal being to promote those tags to being proper member fields and
  * deprecate the corresponding bits of JSON.
- * <p>
- * By using this module, type safety is enforced, redundant tags can be
+ *
+ * <p>By using this module, type safety is enforced, redundant tags can be
  * identified (e.g. "Frame" vs. "FrameIndex"), and it becomes much easier to
  * track which bits of code are relying on which tags.
  *
@@ -30,7 +30,7 @@ import mmcorej.org.json.JSONObject;
  */
 @Deprecated
 public final class MDUtils {
-   private final static SimpleDateFormat IMAGEDATEFORMAT =
+   private static final SimpleDateFormat IMAGEDATEFORMAT =
          new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 
    /**
@@ -118,8 +118,7 @@ public final class MDUtils {
             // we only throw JSONExceptions:
             throw new JSONException("Failed to deduce binning");
          }
-      }
-      else {
+      } else {
          throw new JSONException("Unrecognized binning String");
       }
 
@@ -144,8 +143,7 @@ public final class MDUtils {
    public static int getSliceIndex(JSONObject map) throws JSONException {
       if (map.has("SliceIndex")) {
          return map.getInt("SliceIndex");
-      }
-      else {
+      } else {
          return map.getInt("Slice");
       }
    }
@@ -174,8 +172,7 @@ public final class MDUtils {
    public static int getFrameIndex(JSONObject map) throws JSONException {
       if (map.has("Frame")) {
          return map.getInt("Frame");
-      }
-      else {
+      } else {
          return map.getInt("FrameIndex");
       }
    }
@@ -203,8 +200,7 @@ public final class MDUtils {
    public static String getPositionName(JSONObject map) throws JSONException {
       if (isValid(map, "PositionName")) {
          return map.getString("PositionName");
-      }
-      else {
+      } else {
          return null;
       }
    }
@@ -216,8 +212,7 @@ public final class MDUtils {
    public static String getChannelName(JSONObject map) throws JSONException {
       if (isValid(map, "Channel")) {
          return map.getString("Channel");
-      }
-      else {
+      } else {
          return "";
       }
    }
@@ -233,8 +228,7 @@ public final class MDUtils {
    public static int getChannelColor(JSONObject map) throws JSONException {
       if (isValid(map, "ChColor")) {
          return map.getInt("ChColor");
-      }
-      else {
+      } else {
          return -1;
       }
    }
@@ -246,8 +240,7 @@ public final class MDUtils {
    public static String getFileName(JSONObject map) throws JSONException {
       if (map.has("FileName")) {
          return map.getString("FileName");
-      }
-      else {
+      } else {
          return null;
       }
    }
@@ -264,17 +257,13 @@ public final class MDUtils {
             String pixelType = map.getString("PixelType");
             if (pixelType.contentEquals("GRAY8")) {
                return ImagePlus.GRAY8;
-            }
-            else if (pixelType.contentEquals("GRAY16")) {
+            } else if (pixelType.contentEquals("GRAY16")) {
                return ImagePlus.GRAY16;
-            }
-            else if (pixelType.contentEquals("GRAY32")) {
+            } else if (pixelType.contentEquals("GRAY32")) {
                return ImagePlus.GRAY32;
-            }
-            else if (pixelType.contentEquals("RGB32")) {
+            } else if (pixelType.contentEquals("RGB32")) {
                return ImagePlus.COLOR_RGB;
-            }
-            else {
+            } else {
                throw new IllegalArgumentException("Can't figure out IJ type.");
             }
          } catch (JSONException e2) {
@@ -298,17 +287,13 @@ public final class MDUtils {
             int ijType = map.getInt("IJType");
             if (ijType == ImagePlus.GRAY8) {
                return "GRAY8";
-            }
-            else if (ijType == ImagePlus.GRAY16) {
+            } else if (ijType == ImagePlus.GRAY16) {
                return "GRAY16";
-            }
-            else if (ijType == ImagePlus.GRAY32) {
+            } else if (ijType == ImagePlus.GRAY32) {
                return "GRAY32";
-            }
-            else if (ijType == ImagePlus.COLOR_RGB) {
+            } else if (ijType == ImagePlus.COLOR_RGB) {
                return "RGB32";
-            }
-            else {
+            } else {
                throw new IllegalArgumentException("Can't figure out pixel type");
             }
             // There is no IJType for RGB64.
@@ -327,8 +312,7 @@ public final class MDUtils {
    public static UUID getUUID(JSONObject map) throws JSONException {
       if (map.has("UUID")) {
          return UUID.fromString(map.getString("UUID"));
-      }
-      else {
+      } else {
          return null;
       }
    }
@@ -401,20 +385,15 @@ public final class MDUtils {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8")) {
          return ImagePlus.GRAY8;
-      }
-      else if (pixelType.contentEquals("GRAY16")) {
+      } else if (pixelType.contentEquals("GRAY16")) {
          return ImagePlus.GRAY16;
-      }
-      else if (pixelType.contentEquals("GRAY32")) {
+      } else if (pixelType.contentEquals("GRAY32")) {
          return ImagePlus.GRAY32;
-      }
-      else if (pixelType.contentEquals("RGB32")) {
+      } else if (pixelType.contentEquals("RGB32")) {
          return ImagePlus.GRAY8;
-      }
-      else if (pixelType.contentEquals("RGB64")) {
+      } else if (pixelType.contentEquals("RGB64")) {
          return ImagePlus.GRAY16;
-      }
-      else {
+      } else {
          throw new IllegalArgumentException("Can't figure out channel type.");
       }
    }
@@ -424,26 +403,29 @@ public final class MDUtils {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8")) {
          return 1;
-      }
-      else if (pixelType.contentEquals("GRAY16")) {
+      } else if (pixelType.contentEquals("GRAY16")) {
          return 1;
-      }
-      else if (pixelType.contentEquals("GRAY32")) {
+      } else if (pixelType.contentEquals("GRAY32")) {
          return 1;
-      }
-      else if (pixelType.contentEquals("RGB32")) {
+      } else if (pixelType.contentEquals("RGB32")) {
          return 3;
-      }
-      else if (pixelType.contentEquals("RGB64")) {
+      } else if (pixelType.contentEquals("RGB64")) {
          return 3;
-      }
-      else {
+      } else {
          throw new IllegalArgumentException("Pixel type \"" + pixelType + "\"not recognized!");
       }
    }
 
+   public static boolean isGRAY8(TaggedImage img) throws JSONException, IllegalArgumentException {
+      return isGRAY8(img.tags);
+   }
+
    public static boolean isGRAY8(JSONObject map) throws JSONException, IllegalArgumentException {
       return getPixelType(map).contentEquals("GRAY8");
+   }
+
+   public static boolean isGRAY16(TaggedImage img) throws JSONException, IllegalArgumentException {
+      return isGRAY16(img.tags);
    }
 
    public static boolean isGRAY16(JSONObject map) throws JSONException, IllegalArgumentException {
@@ -454,6 +436,10 @@ public final class MDUtils {
       return getPixelType(map).contentEquals("GRAY32");
    }
 
+   public static boolean isRGB32(TaggedImage img) throws JSONException, IllegalArgumentException {
+      return isRGB32(img.tags);
+   }
+
    public static boolean isRGB32(JSONObject map) throws JSONException, IllegalArgumentException {
       return getPixelType(map).contentEquals("RGB32");
    }
@@ -462,20 +448,12 @@ public final class MDUtils {
       return getPixelType(map).contentEquals("RGB64");
    }
 
-   public static boolean isGRAY8(TaggedImage img) throws JSONException, IllegalArgumentException {
-      return isGRAY8(img.tags);
-   }
-
-   public static boolean isGRAY16(TaggedImage img) throws JSONException, IllegalArgumentException {
-      return isGRAY16(img.tags);
-   }
-
-   public static boolean isRGB32(TaggedImage img) throws JSONException, IllegalArgumentException {
-      return isRGB32(img.tags);
-   }
-
    public static boolean isRGB64(TaggedImage img) throws JSONException, IllegalArgumentException {
       return isRGB64(img.tags);
+   }
+
+   public static boolean isGRAY(TaggedImage img) throws JSONException, IllegalArgumentException {
+      return isGRAY(img.tags);
    }
 
    public static boolean isGRAY(JSONObject map) throws JSONException, IllegalArgumentException {
@@ -484,10 +462,6 @@ public final class MDUtils {
 
    public static boolean isRGB(JSONObject map) throws JSONException, IllegalArgumentException {
       return (isRGB32(map) || isRGB64(map));
-   }
-
-   public static boolean isGRAY(TaggedImage img) throws JSONException, IllegalArgumentException {
-      return isGRAY(img.tags);
    }
 
    public static boolean isRGB(TaggedImage img) throws JSONException, IllegalArgumentException {
@@ -610,11 +584,10 @@ public final class MDUtils {
       if (xywh.length != 4) {
          throw new IllegalArgumentException("Invalid ROI tag");
       }
-      int x, y, w, h;
-      x = Integer.parseInt(xywh[0]);
-      y = Integer.parseInt(xywh[1]);
-      w = Integer.parseInt(xywh[2]);
-      h = Integer.parseInt(xywh[3]);
+      int x = Integer.parseInt(xywh[0]);
+      int y = Integer.parseInt(xywh[1]);
+      int w = Integer.parseInt(xywh[2]);
+      int h = Integer.parseInt(xywh[3]);
       return new Rectangle(x, y, w, h);
    }
 

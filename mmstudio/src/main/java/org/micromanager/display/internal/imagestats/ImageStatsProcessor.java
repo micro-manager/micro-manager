@@ -126,8 +126,8 @@ public final class ImageStatsProcessor {
       int nComponents = image.getNumComponents();
       Integer boxedBitDepth = image.getMetadata().getBitDepth();
       int bytesPerSample = image.getBytesPerPixel() / nComponents;
-      int bitDepth = boxedBitDepth == null ?
-            8 * bytesPerSample : boxedBitDepth;
+      int bitDepth = boxedBitDepth == null
+            ? 8 * bytesPerSample : boxedBitDepth;
       int binCountPowerOf2 =
             Math.min(bitDepth, request.getMaxBinCountPowerOf2());
 
@@ -142,8 +142,7 @@ public final class ImageStatsProcessor {
       if (request.getROIBounds() != null) {
          maskBounds = new Rectangle(request.getROIBounds());
          useROI = true;
-      }
-      else {
+      } else {
          useROI = false;
       }
       if (maskBounds == null || maskBounds.width == 0 || maskBounds.height == 0) {
@@ -185,8 +184,7 @@ public final class ImageStatsProcessor {
                mask,
                nComponents, bitDepth, binCountPowerOf2,
                useROI, index);
-      }
-      else if (bytesPerSample == 2) {
+      } else if (bytesPerSample == 2) {
          Img<UnsignedShortType> img =
                ArrayImgs.unsignedShorts((short[]) image.getRawPixels(),
                      nComponents, image.getWidth(), image.getHeight());
@@ -271,16 +269,16 @@ public final class ImageStatsProcessor {
       IntegerComponentStats[] componentStats =
             new IntegerComponentStats[nComponents];
       for (int component = 0; component < nComponents; ++component) {
-         componentStats[component] = IntegerComponentStats.builder().
-               histogram(histograms.get(component).toLongArray(),
-                     Math.max(0, sampleBitDepth - binCountPowerOf2)).
-               pixelCount(counts[component]).
-               usedROI(isROI).
-               minimum(minima[component]).
-               maximum(maxima[component]).
-               sum(sums[component]).
-               sumOfSquares(sumsOfSquares[component]).
-               build();
+         componentStats[component] = IntegerComponentStats.builder()
+               .histogram(histograms.get(component).toLongArray(),
+                     Math.max(0, sampleBitDepth - binCountPowerOf2))
+               .pixelCount(counts[component])
+               .usedROI(isROI)
+               .minimum(minima[component])
+               .maximum(maxima[component])
+               .sum(sums[component])
+               .sumOfSquares(sumsOfSquares[component])
+               .build();
       }
 
       return ImageStats.create(index, componentStats);

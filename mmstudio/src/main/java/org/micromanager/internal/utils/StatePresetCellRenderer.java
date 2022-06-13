@@ -11,12 +11,9 @@ import org.micromanager.Studio;
 import org.micromanager.internal.ConfigGroupPad;
 
 /**
- * @author arthur
- */
-
-/**
  * Rendering element for the property table.
  *
+ * @author arthur
  */
 public final class StatePresetCellRenderer implements TableCellRenderer {
 
@@ -47,8 +44,7 @@ public final class StatePresetCellRenderer implements TableCellRenderer {
          SliderPanel slider = new SliderPanel();
          if (stateItem_.isInteger()) {
             slider.setLimits((int) stateItem_.lowerLimit, (int) stateItem_.upperLimit);
-         }
-         else {
+         } else {
             slider.setLimits(stateItem_.lowerLimit, stateItem_.upperLimit);
          }
          try {
@@ -59,8 +55,7 @@ public final class StatePresetCellRenderer implements TableCellRenderer {
          slider.setToolTipText((String) value);
          comp = slider;
 
-      }
-      else {
+      } else {
          JLabel label = new JLabel();
          label.setOpaque(true);
          label.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -74,8 +69,7 @@ public final class StatePresetCellRenderer implements TableCellRenderer {
       if (isSelected) {
          comp.setBackground(Color.LIGHT_GRAY);
          comp.setForeground(Color.BLACK);
-      }
-      else {
+      } else {
          // HACK: manually set day/night colors.
          comp.setBackground(studio_.app().skin().getBackgroundColor());
          comp.setForeground(studio_.app().skin().getEnabledTextColor());

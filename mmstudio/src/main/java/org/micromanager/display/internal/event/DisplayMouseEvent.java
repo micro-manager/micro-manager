@@ -21,20 +21,20 @@ import java.awt.geom.Point2D;
 
 /**
  * Provides a MouseEvent and the location (in image pixel coordinates) where
- * the event happened
+ * the event happened.
  *
  * @author Nico
  */
 public class DisplayMouseEvent {
    private final MouseEvent event_;
    private final Rectangle location_;
-   private final int IJToolId_;
+   private final int ijToolId_;
 
    public DisplayMouseEvent(final MouseEvent e, final Rectangle imageLocation,
-                            final int IJToolId) {
+                            final int ijToolId) {
       event_ = e;
       location_ = imageLocation;
-      IJToolId_ = IJToolId;
+      ijToolId_ = ijToolId;
    }
 
    /**
@@ -59,7 +59,7 @@ public class DisplayMouseEvent {
    }
 
    /**
-    * Provides center location in image coordinates
+    * Provides center location in image coordinates.
     * Calculates the center of the Rectangle returned in getLocation
     *
     * @return Center location in image coordinates
@@ -79,7 +79,7 @@ public class DisplayMouseEvent {
     * @return ID of the tool selected in the ImageJ Tool-bar
     */
    public int getToolId() {
-      return IJToolId_;
+      return ijToolId_;
    }
 
 }

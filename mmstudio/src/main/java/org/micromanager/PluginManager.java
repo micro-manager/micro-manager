@@ -65,7 +65,7 @@ public interface PluginManager {
     * instances. AutofocusPlugins are used to perform autofocus operations.
     *
     * @return HashMap that maps plugin class names to AutofocusPlugin
-    * instances
+    *     instances
     */
    HashMap<String, AutofocusPlugin> getAutofocusPlugins();
 
@@ -85,7 +85,7 @@ public interface PluginManager {
     * the Quick-Access Window.
     *
     * @return HashMap that maps plugin class names to QuickAccessPlugin
-    * instances
+    *     instances
     */
    HashMap<String, QuickAccessPlugin> getQuickAccessPlugins();
 
@@ -94,7 +94,7 @@ public interface PluginManager {
     * instances. InspectorPlugins create the panels in the Inspector windows.
     *
     * @return HashMap that maps plugin class names to InspectorPlugin
-    * instances
+    *     instances
     */
    HashMap<String, InspectorPanelPlugin> getInspectorPlugins();
 
@@ -104,7 +104,7 @@ public interface PluginManager {
     * DisplayWindows.
     *
     * @return HashMap that maps plugin class names to DisplayGearMenuPlugin
-    * instances
+    *     instances
     */
    HashMap<String, DisplayGearMenuPlugin> getDisplayGearMenuPlugins();
 }

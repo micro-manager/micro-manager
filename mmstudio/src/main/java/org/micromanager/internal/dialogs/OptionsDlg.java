@@ -128,8 +128,7 @@ public final class OptionsDlg extends JDialog {
          if (checked) {
             startupSettings.setSkipConfigSelectionAtStartup(
                   askForConfigFileCheckBox.isSelected());
-         }
-         else {
+         } else {
             startupSettings.setSkipConfigSelectionAtStartup(false);
          }
       });
@@ -167,8 +166,7 @@ public final class OptionsDlg extends JDialog {
          String dirs;
          if (dir1.equals(dir2)) {
             dirs = dir1;
-         }
-         else {
+         } else {
             dirs = dir1 + " and " + dir2;
          }
 
@@ -269,8 +267,7 @@ public final class OptionsDlg extends JDialog {
       runServer.addActionListener((ActionEvent arg0) -> {
          if (runServer.isSelected()) {
             mmStudio_.runZMQServer();
-         }
-         else {
+         } else {
             mmStudio_.stopZMQServer();
          }
          mmStudio_.settings().setShouldRunZMQServer(runServer.isSelected());

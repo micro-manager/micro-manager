@@ -201,8 +201,7 @@ public final class MainFrame extends JFrame {
             if (mmStudio_.closeSequence(false)) {
                if (exitOnClose_) {
                   System.exit(0);
-               }
-               else {
+               } else {
                   dispose();
                }
             }
@@ -670,8 +669,7 @@ public final class MainFrame extends JFrame {
       }
       if (activeShutter != null) {
          shutterComboBox_.setSelectedItem(activeShutter);
-      }
-      else {
+      } else {
          shutterComboBox_.setSelectedItem("");
       }
    }

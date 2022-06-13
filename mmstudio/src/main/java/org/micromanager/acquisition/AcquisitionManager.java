@@ -248,8 +248,8 @@ public interface AcquisitionManager {
     * @param source Result of calling getSource() on an AcquisitionStartedEvent
     *               or AcquisitionEndedEvent.
     * @return true if acquisition was started by Micro-Manager, false if it
-    * was started elsewhere (e.g. by a plugin or other third-party
-    * code).
+    *     was started elsewhere (e.g. by a plugin or other third-party
+    *     code).
     */
    boolean isOurAcquisition(Object source);
 }

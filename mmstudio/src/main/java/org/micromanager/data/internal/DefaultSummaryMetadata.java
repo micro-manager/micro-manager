@@ -60,8 +60,8 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    /**
     * This is the version string for all metadata as saved in Micro-Manager
     * data files.
-    * <p>
-    * Because the files are read-only once written, this number does not need
+    *
+    * <p>Because the files are read-only once written, this number does not need
     * to be frequently incremented. For example, new fields can be added
     * without changing the version number as long as care is taken to ensure
     * that keys used in the past are avoided.
@@ -72,9 +72,9 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    public static SummaryMetadata getStandardSummaryMetadata() {
       UserProfile profile = MMStudio.getInstance().profile();
 
-      Builder b = new Builder().
-            userName(System.getProperty("user.name")).
-            profileName(profile.getProfileName());
+      Builder b = new Builder()
+            .userName(System.getProperty("user.name"))
+            .profileName(profile.getProfileName());
 
       try {
          b.computerName(InetAddress.getLocalHost().getHostName());
@@ -98,12 +98,12 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          if (MMStudio.getInstance() != null) {
             version = MMStudio.getInstance().compat().getVersion();
          }
-         b_ = PropertyMaps.builder().
-               putString(MICRO_MANAGER_VERSION.key(), version).
-               putString(METADATA_VERSION.key(), CURRENT_METADATA_VERSION).
+         b_ = PropertyMaps.builder()
+               .putString(MICRO_MANAGER_VERSION.key(), version)
+               .putString(METADATA_VERSION.key(), CURRENT_METADATA_VERSION)
                // TODO: we should not depend on the defaults provided here
                // Many bugs manifest themselves if this field is not set
-                     putStringList(AXIS_ORDER.key(), Coords.C, Coords.T, Coords.Z, Coords.P);
+               .putStringList(AXIS_ORDER.key(), Coords.C, Coords.T, Coords.Z, Coords.P);
       }
 
       private Builder(PropertyMap toCopy) {
@@ -336,8 +336,8 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    @Deprecated
    public String[] getChannelNames() {
-      return pmap_.containsKey(CHANNEL_NAMES.key()) ?
-            getChannelNameList().toArray(new String[0]) : null;
+      return pmap_.containsKey(CHANNEL_NAMES.key())
+            ? getChannelNameList().toArray(new String[0]) : null;
    }
 
    @Override
@@ -351,14 +351,14 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public Double getZStepUm() {
-      return pmap_.containsKey(Z_STEP_UM.key()) ?
-            pmap_.getDouble(Z_STEP_UM.key(), Double.NaN) : null;
+      return pmap_.containsKey(Z_STEP_UM.key())
+            ? pmap_.getDouble(Z_STEP_UM.key(), Double.NaN) : null;
    }
 
    @Override
    public Double getWaitInterval() {
-      return pmap_.containsKey(INTERVAL_MS.key()) ?
-            pmap_.getDouble(INTERVAL_MS.key(), Double.NaN) : null;
+      return pmap_.containsKey(INTERVAL_MS.key())
+            ? pmap_.getDouble(INTERVAL_MS.key(), Double.NaN) : null;
    }
 
    @Override
@@ -422,14 +422,14 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public Boolean getKeepShutterOpenSlices() {
-      return pmap_.containsKey(KEEP_SHUTTER_OPEN_SLICES.key()) ?
-            pmap_.getBoolean(KEEP_SHUTTER_OPEN_SLICES.key(), false) : null;
+      return pmap_.containsKey(KEEP_SHUTTER_OPEN_SLICES.key())
+            ? pmap_.getBoolean(KEEP_SHUTTER_OPEN_SLICES.key(), false) : null;
    }
 
    @Override
    public Boolean getKeepShutterOpenChannels() {
-      return pmap_.containsKey(KEEP_SHUTTER_OPEN_CHANNELS.key()) ?
-            pmap_.getBoolean(KEEP_SHUTTER_OPEN_CHANNELS.key(), false) : null;
+      return pmap_.containsKey(KEEP_SHUTTER_OPEN_CHANNELS.key())
+            ? pmap_.getBoolean(KEEP_SHUTTER_OPEN_CHANNELS.key(), false) : null;
    }
 
    @Override

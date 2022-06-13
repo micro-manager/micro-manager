@@ -56,7 +56,7 @@ public final class IntroPage extends PagePanel {
       setLayout(new MigLayout("fillx, flowy"));
 
       JTextArea help = createHelpText(
-            "This wizard will walk you through setting up \u00b5Manager to control "
+            "This wizard will walk you through setting up \u00b5Manager to control " //Micro-Manager
                   + "the hardware in your system.");
       add(help, "growx");
 

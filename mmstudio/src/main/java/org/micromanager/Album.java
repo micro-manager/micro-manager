@@ -56,7 +56,7 @@ public interface Album {
     *
     * @param image The Image to add to the album
     * @return True if a new Datastore and DisplayWindow were created as a
-    * side-effect of adding the image.
+    *     side-effect of adding the image.
     * @throws java.io.IOException these happen with disk-based stores
     */
    boolean addImage(Image image) throws IOException;
@@ -67,7 +67,7 @@ public interface Album {
     *
     * @param images The Images to add to the album
     * @return True if a new Datastore and DisplayWindow were created as a
-    * side-effect of adding the images.
+    *     side-effect of adding the images.
     * @throws java.io.IOException these happen with disk-based stores
     */
    boolean addImages(Collection<Image> images) throws IOException;

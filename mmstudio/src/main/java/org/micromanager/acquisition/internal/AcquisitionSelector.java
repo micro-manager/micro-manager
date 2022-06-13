@@ -44,6 +44,13 @@ import org.micromanager.internal.utils.GUIUtils;
  */
 public final class AcquisitionSelector {
 
+   /**
+    * Makes the Button that returns the acquisition dialog.
+    *
+    * @param studio The always present Studio instance.
+    * @return Button that will open the Acquisition Dialog, or a popup menu with available
+    *     Acquisition Dialogs if there are multiple instances (rare, or never).
+    */
    public static JComponent makeSelector(Studio studio) {
       // This requires access to non-API methods.
       DefaultPluginManager pluginMan = (DefaultPluginManager) studio.plugins();
@@ -63,8 +70,7 @@ public final class AcquisitionSelector {
             plugin.showAcquisitionDialog();
          });
          return button;
-      }
-      else {
+      } else {
          // Button to show a popup menu selecting from the available plugins
          button.setText("Acquire data");
          button.setToolTipText("Show various data acquisition dialogs");

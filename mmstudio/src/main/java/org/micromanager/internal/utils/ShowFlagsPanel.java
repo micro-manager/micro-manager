@@ -44,7 +44,7 @@ public final class ShowFlagsPanel extends JPanel {
    //   the desired behavior using setSelected() programatically
 
    private static final long serialVersionUID = 2414705031299832388L;
-         // need to change? added new field
+   // need to change? added new field
    private JCheckBox showCamerasCheckBox_;
    private JCheckBox showShuttersCheckBox_;
    private JCheckBox showStagesCheckBox_;
@@ -72,7 +72,7 @@ public final class ShowFlagsPanel extends JPanel {
 
    public void createComponents() {
       Font font = new Font("", Font.PLAIN, 10);
-      Font entryFont = new Font("", Font.PLAIN, 12);
+      final Font entryFont = new Font("", Font.PLAIN, 12);
 
       JPanel deviceTypePanel = new JPanel(new MigLayout("fill, insets 0, gap -3"));
       deviceTypePanel.setBorder(BorderFactory.createTitledBorder("Device type:"));
@@ -224,20 +224,16 @@ public final class ShowFlagsPanel extends JPanel {
             if (dtype == DeviceType.CameraDevice) {
                flags_.cameras_ = true;
                showCamerasCheckBox_.setSelected(true);
-            }
-            else if (dtype == DeviceType.ShutterDevice) {
+            } else if (dtype == DeviceType.ShutterDevice) {
                flags_.shutters_ = true;
                showShuttersCheckBox_.setSelected(true);
-            }
-            else if (dtype == DeviceType.StageDevice) {
+            } else if (dtype == DeviceType.StageDevice) {
                flags_.stages_ = true;
                showStagesCheckBox_.setSelected(true);
-            }
-            else if (dtype == DeviceType.StateDevice) {
+            } else if (dtype == DeviceType.StateDevice) {
                flags_.state_ = true;
                showStateDevicesCheckBox_.setSelected(true);
-            }
-            else {
+            } else {
                showOtherCheckBox_.setSelected(true);
                flags_.other_ = true;
             }

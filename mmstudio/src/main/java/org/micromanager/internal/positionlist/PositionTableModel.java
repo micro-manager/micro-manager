@@ -62,14 +62,12 @@ class PositionTableModel extends AbstractTableModel {
       MultiStagePosition msp;
       if (rowIndex == 0) {
          msp = curMsp_;
-      }
-      else {
+      } else {
          msp = posList_.getPosition(rowIndex - 1);
       }
       if (columnIndex == 0) {
          return msp.getLabel();
-      }
-      else if (columnIndex == 1) {
+      } else if (columnIndex == 1) {
          StringBuilder sb = new StringBuilder();
          for (int i = 0; i < msp.size(); i++) {
             StagePosition sp = msp.get(i);
@@ -79,8 +77,7 @@ class PositionTableModel extends AbstractTableModel {
             sb.append(sp.getVerbose());
          }
          return sb.toString();
-      }
-      else {
+      } else {
          return null;
       }
    }

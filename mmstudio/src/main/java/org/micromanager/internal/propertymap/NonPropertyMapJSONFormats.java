@@ -138,6 +138,13 @@ public abstract class NonPropertyMapJSONFormats {
       return IMAGE_FORMAT_INSTANCE;
    }
 
+   /**
+    * Constructs a PropertyMap from a JSON String.
+    *
+    * @param json Input String containing a PropertyMap in JSON format
+    * @return PropertyMap
+    * @throws IOException thrown when there is an exception parsing the data
+    */
    @SuppressWarnings("UseSpecificCatch")
    public final PropertyMap fromJSON(String json) throws IOException {
       try {
@@ -150,6 +157,12 @@ public abstract class NonPropertyMapJSONFormats {
       }
    }
 
+   /**
+    * Converts a PropertyMap to a String with the map encoded in JSON.
+    *
+    * @param canonical Map to be converted
+    * @return Map as String in JSON format
+    */
    public final String toJSON(PropertyMap canonical) {
       Gson gson = new GsonBuilder()
             .disableHtmlEscaping()

@@ -63,14 +63,11 @@ public final class DefaultImageJConverter implements ImageJConverter {
             pixels = ImageUtils.convertRGB32UBytesToInt((byte[]) pixels);
          }
          return new ColorProcessor(width, height, (int[]) pixels);
-      }
-      else if (bytesPerPixel == 1 && numComponents == 1) {
+      } else if (bytesPerPixel == 1 && numComponents == 1) {
          return new ByteProcessor(width, height, (byte[]) pixels, null);
-      }
-      else if (bytesPerPixel == 2 && numComponents == 1) {
+      } else if (bytesPerPixel == 2 && numComponents == 1) {
          return new ShortProcessor(width, height, (short[]) pixels, null);
-      }
-      else if (bytesPerPixel == 4 && numComponents == 1) {
+      } else if (bytesPerPixel == 4 && numComponents == 1) {
          return new FloatProcessor(width, height, (float[]) pixels, null);
       }
       return null;
@@ -78,7 +75,7 @@ public final class DefaultImageJConverter implements ImageJConverter {
 
    /**
     * Creates an Image ImageProcessor with the pixel type and dimensions
-    * of the input Image, but all pixel values set to 0
+    * of the input Image, but all pixel values set to 0.
     *
     * @param image Input Image that serves as the template for the output ImageProcessor
     * @return imageProcessor with the type and dimensions of the input Image
@@ -91,14 +88,11 @@ public final class DefaultImageJConverter implements ImageJConverter {
 
       if (bytesPerPixel == 4 && numComponents == 3) {
          return new ColorProcessor(width, height);
-      }
-      else if (bytesPerPixel == 1 && numComponents == 1) {
+      } else if (bytesPerPixel == 1 && numComponents == 1) {
          return new ByteProcessor(width, height);
-      }
-      else if (bytesPerPixel == 2 && numComponents == 1) {
+      } else if (bytesPerPixel == 2 && numComponents == 1) {
          return new ShortProcessor(width, height);
-      }
-      else if (bytesPerPixel == 4 && numComponents == 1) {
+      } else if (bytesPerPixel == 4 && numComponents == 1) {
          return new FloatProcessor(width, height);
       }
       return null;
@@ -116,14 +110,13 @@ public final class DefaultImageJConverter implements ImageJConverter {
       Object pixels = image.getRawPixels();
       // This is the only multi-component image type we know how to support
       // currently.
-      if (bytesPerPixel == 4 && numComponents == 3 &&
-            pixels instanceof byte[]) {
+      if (bytesPerPixel == 4 && numComponents == 3
+            && pixels instanceof byte[]) {
          byte[] subPixels = ImageUtils.singleChannelFromRGB32(
                (byte[]) pixels, component);
          return new ByteProcessor(image.getWidth(), image.getHeight(),
                subPixels);
-      }
-      else {
+      } else {
          ReportingUtils.logError(String.format(
                "Unknown image format with %d bytes per pixel, %d components, and pixel type %s",
                bytesPerPixel, numComponents, pixels.getClass().getName()));
@@ -140,22 +133,18 @@ public final class DefaultImageJConverter implements ImageJConverter {
       if (processor instanceof ByteProcessor) {
          bytesPerPixel = 1;
          numComponents = 1;
-      }
-      else if (processor instanceof ShortProcessor) {
+      } else if (processor instanceof ShortProcessor) {
          bytesPerPixel = 2;
          numComponents = 1;
-      }
-      else if (processor instanceof FloatProcessor) {
+      } else if (processor instanceof FloatProcessor) {
          bytesPerPixel = 4;
          numComponents = 1;
-      }
-      else if (processor instanceof ColorProcessor) {
+      } else if (processor instanceof ColorProcessor) {
          bytesPerPixel = 4;
          numComponents = 3;
 
          pixels = ImageUtils.convertRGB32IntToBytes((int[]) processor.getPixels());
-      }
-      else {
+      } else {
          ReportingUtils.logError("Unrecognized processor type " + processor.getClass().getName());
       }
       return studio_.data().createImage(pixels,

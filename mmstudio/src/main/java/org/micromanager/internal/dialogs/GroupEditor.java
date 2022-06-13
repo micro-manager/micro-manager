@@ -140,8 +140,7 @@ public final class GroupEditor extends ConfigDialog {
          if (selection == 2) {
             // User cancelled.
             return;
-         }
-         else if (selection == 1) {
+         } else if (selection == 1) {
             for (PropertyItem shutter : shutters) {
                shutter.confInclude = false;
             }
@@ -250,11 +249,9 @@ public final class GroupEditor extends ConfigDialog {
                      /* ensure sorting of the property value list: */
                      if (PropertyType.Float == item.type) {
                         Arrays.sort(item.allowed, new SortFunctionObjects.DoubleStringComp());
-                     }
-                     else if (PropertyType.Integer == item.type) {
+                     } else if (PropertyType.Integer == item.type) {
                         Arrays.sort(item.allowed, new SortFunctionObjects.IntStringComp());
-                     }
-                     else if (PropertyType.String == item.type) {
+                     } else if (PropertyType.String == item.type) {
                         boolean allNumeric = true;
                         // test that first character of every possible value is a numeral
                         // if so, show user the list sorted by the numeric prefix
@@ -267,8 +264,7 @@ public final class GroupEditor extends ConfigDialog {
                         if (allNumeric) {
                            Arrays.sort(item.allowed,
                                  new SortFunctionObjects.NumericPrefixStringComp());
-                        }
-                        else {
+                        } else {
                            Arrays.sort(item.allowed);
                         }
                      }
@@ -281,8 +277,7 @@ public final class GroupEditor extends ConfigDialog {
                                  item.device, item.name, allowedValue);
                         }
                      }
-                  }
-                  else {
+                  } else {
                      core_.defineConfig(newName, "NewPreset",
                            item.device, item.name, item.getValueInCoreFormat());
                   }
@@ -296,8 +291,7 @@ public final class GroupEditor extends ConfigDialog {
          if (itemsIncludedCount > 1) {
             new PresetEditor(newName, "NewPreset", studio_, false);
          }
-      }
-      else { // An existing configuration group is being modified.
+      } else { // An existing configuration group is being modified.
          // Apply configuration settings to all properties in the group.
          String cfg;
          Configuration unionCfg;
@@ -315,8 +309,7 @@ public final class GroupEditor extends ConfigDialog {
                         core_.deleteConfig(newName, cfg, item.device, item.name);
                      }
                   }
-               }
-               else if (item.confInclude
+               } else if (item.confInclude
                      && !unionCfg.isPropertyIncluded(item.device, item.name)) {
                   // If some presets don't have this property when they should,
                   // add it with current values.

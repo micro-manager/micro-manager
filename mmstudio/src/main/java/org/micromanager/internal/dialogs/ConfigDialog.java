@@ -200,8 +200,7 @@ public abstract class ConfigDialog extends JDialog {
          try {
             if (presetName_.length() == 0) {
                cfg = new Configuration();
-            }
-            else {
+            } else {
                cfg = core_.getConfigState(groupName_, presetName_);
             }
             showFlagsPanel_ = new ShowFlagsPanel(data_, flags_, core_, cfg);
@@ -300,8 +299,7 @@ public abstract class ConfigDialog extends JDialog {
                new PropertyUsageCellRenderer(studio_), new PropertyUsageCellEditor()));
          table_.addColumn(new TableColumn(2, 200,
                new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(true)));
-      }
-      else if (numColumns_ == 2) {
+      } else if (numColumns_ == 2) {
          table_.addColumn(new TableColumn(0, 200,
                new PropertyNameCellRenderer(studio_), null));
          table_.addColumn(new TableColumn(1, 200,

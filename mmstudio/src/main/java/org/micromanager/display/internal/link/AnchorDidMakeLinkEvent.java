@@ -10,6 +10,9 @@ import org.micromanager.display.internal.link.internal.LinkAnchorEvent;
 
 
 /**
+ * Event signalling that an Anchor (viewer element linking axes between different viewers)
+ * made a link.
+ *
  * @author mark
  */
 public interface AnchorDidMakeLinkEvent<T> extends LinkAnchorEvent<T> {

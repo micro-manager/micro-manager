@@ -8,6 +8,9 @@ package org.micromanager.internal.utils;
 
 import ij.plugin.Memory;
 
+/**
+ * Memory related utility functions.
+ */
 public final class MemoryUtils {
    /**
     * Returns the currently allocated memory.
@@ -20,6 +23,11 @@ public final class MemoryUtils {
       return totMem - freeMem;
    }
 
+   /**
+    * Estimates the free memory available to this JVM.
+    *
+    * @return Estimate of free memory in bytes
+    */
    public static long freeMemory() {
       long maxMemory = Runtime.getRuntime().maxMemory();
       long totalMemory = Runtime.getRuntime().totalMemory();

@@ -18,8 +18,8 @@ import org.micromanager.profile.UserProfileMigration;
 
 /**
  * Automatically migrate user profile settings.
- * <p>
- * Migrations are run when registered (on currently loaded profiles) and when
+ *
+ * <p>Migrations are run when registered (on currently loaded profiles) and when
  * a profile is loaded.
  *
  * @author Mark A. Tsuchida
@@ -46,7 +46,7 @@ public final class UserProfileMigratorImpl {
       private final List<UserProfileMigration> migrations_;
 
       public static UserProfileMigrationsRegisteredEvent create(Class<?> owner,
-                                                                List<UserProfileMigration> migrations) {
+                                              List<UserProfileMigration> migrations) {
          return new RegisteredEvent(
                owner, migrations);
       }
@@ -97,8 +97,8 @@ public final class UserProfileMigratorImpl {
 
    private static void runMigration(UserProfile profile, Class<?> newOwner,
                                     UserProfileMigration migration) {
-      if (((DefaultUserProfile) profile).getSettingsWithoutFallback(newOwner).
-            containsKey(migration.name())) {
+      if (((DefaultUserProfile) profile).getSettingsWithoutFallback(newOwner)
+            .containsKey(migration.name())) {
          return;
       }
       migration.migrate(((DefaultUserProfile) profile).toPropertyMap(),

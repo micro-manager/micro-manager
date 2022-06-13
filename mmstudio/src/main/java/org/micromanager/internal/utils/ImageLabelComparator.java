@@ -62,8 +62,7 @@ public final class ImageLabelComparator implements Comparator<String> {
          if (frame1 != frame2) {
             return frame1 - frame2;
          }
-      }
-      else {
+      } else {
          int frame1 = Integer.parseInt(indices1[2]);
          int frame2 = Integer.parseInt(indices2[2]);
          if (frame1 != frame2) {
@@ -82,8 +81,7 @@ public final class ImageLabelComparator implements Comparator<String> {
             return channel1 - channel2;
          }
          return Integer.parseInt(indices1[1]) - Integer.parseInt(indices2[1]);
-      }
-      else {
+      } else {
          int slice1 = Integer.parseInt(indices1[1]);
          int slice2 = Integer.parseInt(indices2[1]);
          if (slice1 != slice2) {

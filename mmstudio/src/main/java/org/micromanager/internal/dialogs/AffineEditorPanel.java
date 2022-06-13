@@ -94,8 +94,7 @@ public class AffineEditorPanel extends JPanel {
          if (pcd_ == null) {
             pcd_ = new PixelCalibratorDialog(studio_, pixelSizeProvider_);
             studio_.events().registerForEvents(pcd_);
-         }
-         else {
+         } else {
             pcd_.setVisible(true);
             pcd_.toFront();
          }
@@ -185,8 +184,7 @@ public class AffineEditorPanel extends JPanel {
             comp.setEnabled(false);
             comp.setBackground(studio_.app().skin().getDisabledBackgroundColor());
             comp.setForeground(studio_.app().skin().getEnabledTextColor());
-         }
-         else {
+         } else {
             comp.setBackground(studio_.app().skin().getBackgroundColor());
             comp.setForeground(studio_.app().skin().getEnabledTextColor());
             comp.setEnabled(true);
@@ -236,11 +234,9 @@ public class AffineEditorPanel extends JPanel {
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (rowIndex < 2) {
             return affineTransform_.get(rowIndex * 3 + columnIndex);
-         }
-         else if (columnIndex == 0 || columnIndex == 1) {
+         } else if (columnIndex == 0 || columnIndex == 1) {
             return 0.0;
-         }
-         else {
+         } else {
             return 1.0;
          }
       }

@@ -16,6 +16,8 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 /**
+ * Helps to work with Direct Buffers in ClearCL.
+ *
  * @author nico
  */
 public class ClearCLNioConverters {
@@ -38,11 +40,9 @@ public class ClearCLNioConverters {
       NativeTypeEnum type = null;
       if (source instanceof ByteBuffer) {
          type = NativeTypeEnum.UnsignedByte;
-      }
-      else if (source instanceof ShortBuffer) {
+      } else if (source instanceof ShortBuffer) {
          type = NativeTypeEnum.UnsignedShort;
-      }
-      else if (source instanceof FloatBuffer) {
+      } else if (source instanceof FloatBuffer) {
          type = NativeTypeEnum.Float;
       } // Todo: other types, exception when type not found
       target = context.createBuffer(MemAllocMode.Best,
@@ -56,6 +56,14 @@ public class ClearCLNioConverters {
       return target;
    }
 
+   /**
+    * Converts a Direct Buffer into a ClearCLImage.
+    *
+    * @param context the ClearCL Context to use
+    * @param source Direct BUffer source
+    * @param dimensions Image dimensions
+    * @return ClearCLImage
+    */
    public static ClearCLImage convertNioTiClearCLImage(ClearCLContext context,
                                                        Buffer source,
                                                        long[] dimensions) {
@@ -63,11 +71,9 @@ public class ClearCLNioConverters {
       ImageChannelDataType type = null;
       if (source instanceof ByteBuffer) {
          type = ImageChannelDataType.UnsignedInt8;
-      }
-      else if (source instanceof ShortBuffer) {
+      } else if (source instanceof ShortBuffer) {
          type = ImageChannelDataType.UnsignedInt16;
-      }
-      else if (source instanceof FloatBuffer) {
+      } else if (source instanceof FloatBuffer) {
          type = ImageChannelDataType.Float;
       } // Todo: other types, exception when type not found
       target = context.createImage(HostAccessType.ReadWrite,

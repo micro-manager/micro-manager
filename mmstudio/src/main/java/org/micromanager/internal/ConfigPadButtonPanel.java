@@ -193,8 +193,7 @@ public final class ConfigPadButtonPanel extends JPanel {
                handleException(e);
             }
          }
-      }
-      else {
+      } else {
          JOptionPane.showMessageDialog(this,
                "To remove a group, select it on the Configurations panel first.");
       }
@@ -208,8 +207,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       if (groupName.length() == 0) {
          JOptionPane.showMessageDialog(this,
                "To edit a group, please select it first, then press the edit button.");
-      }
-      else {
+      } else {
          new GroupEditor(groupName, configPad_.getPresetForSelectedGroup(), studio_, false);
       }
    }
@@ -224,8 +222,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          JOptionPane.showMessageDialog(this,
                "To add a preset to a group, please select the group first, "
                      + "then press the edit button.");
-      }
-      else {
+      } else {
          new PresetEditor(groupName, "", studio_, true);
       }
    }
@@ -261,8 +258,7 @@ public final class ConfigPadButtonPanel extends JPanel {
                handleException(e);
             }
          }
-      }
-      else {
+      } else {
          result = JOptionPane.showConfirmDialog(this,
                "Are you sure you want to remove preset "
                      + presetName
@@ -313,8 +309,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       if (groupName.length() == 0) {
          JOptionPane.showMessageDialog(this,
                "To edit a preset, please select the preset first, then press the edit button.");
-      }
-      else if (presetName == null || presetName.length() == 0) {
+      } else if (presetName == null || presetName.length() == 0) {
          final String newPresetName = choosePreset(groupName, "for editing");
          if (newPresetName != null) {
             try {
@@ -325,8 +320,7 @@ public final class ConfigPadButtonPanel extends JPanel {
             new PresetEditor(groupName, newPresetName, studio_, false);
 
          }
-      }
-      else {
+      } else {
          new PresetEditor(groupName, presetName, studio_, false);
       }
    }

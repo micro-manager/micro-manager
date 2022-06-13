@@ -47,7 +47,7 @@ public interface AlertManager {
     *              May be null; null-group alerts are always displayed.
     * @param text  Text of the alert.
     * @return Either a newly-created Alert, or the Alert that already existed,
-    * to which this new alert text was added.
+    *     to which this new alert text was added.
     */
    Alert postAlert(String title, Class<?> group, String text);
 

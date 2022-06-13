@@ -34,6 +34,11 @@ import org.apache.commons.math.util.MathUtils;
  */
 public class AffineUtils {
 
+   /**
+    * No op affine transform.
+    *
+    * @return Returns the No op affine transform as a DoubleVector (for consumption by the core).
+    */
    public static DoubleVector noTransform() {
       DoubleVector affineTransform = new DoubleVector(6);
       for (int i = 1; i < 6; i++) {
@@ -44,6 +49,13 @@ public class AffineUtils {
       return affineTransform;
    }
 
+   /**
+    * Converts the affine transform from a DoubleVector (as supplied by the Core) to a
+    * Java AffineTransform.
+    *
+    * @param atf Affine Transform as a DoubleVector
+    * @return Affine Transform as a Java Affine Transform
+    */
    public static AffineTransform doubleToAffine(DoubleVector atf) {
       if (atf.size() != 6) {
          double[] flatMatrix = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -54,6 +66,12 @@ public class AffineUtils {
       return new AffineTransform(flatMatrix);
    }
 
+   /**
+    * Converts Affine TRansform from a Java Affine Transform to a DoubleVector.
+    *
+    * @param atf Java Affine Transform
+    * @return Corresponding Affine Transform as a DoubleVector
+    */
    public static DoubleVector affineToDouble(AffineTransform atf) {
       DoubleVector out = new DoubleVector(6);
       out.set(0, atf.getScaleX());
@@ -83,15 +101,12 @@ public class AffineUtils {
          if (matrix[1] > 0 && matrix[0] >= 0) {
             //first quadrant, make sure angle is positive (in case ts exactly 90 degrees
             angle = Math.abs(angle);
-         }
-         else if (matrix[1] > 0 && matrix[0] < 0) {
+         } else if (matrix[1] > 0 && matrix[0] < 0) {
             //second quadrant
             angle = Math.abs(angle - 2 * (Math.PI / 2 + angle));
-         }
-         else if (matrix[1] <= 0 && matrix[0] >= 0) {
+         } else if (matrix[1] <= 0 && matrix[0] >= 0) {
             //fourth quadrant, do nothing
-         }
-         else {
+         } else {
             //third quadrant, subtract 90 degrees
             angle += 2 * (Math.PI / 2 - angle);
             angle *= -1; //make sure angle is negative

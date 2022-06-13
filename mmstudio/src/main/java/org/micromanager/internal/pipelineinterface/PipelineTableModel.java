@@ -194,8 +194,7 @@ public final class PipelineTableModel extends AbstractTableModel {
       if (column == ENABLED_COLUMN) {
          pipelineConfigs_.get(row).setEnabled((Boolean) value);
          fireTableDataChanged();
-      }
-      else if (column == ENABLED_LIVE_COLUMN) {
+      } else if (column == ENABLED_LIVE_COLUMN) {
          pipelineConfigs_.get(row).setEnabledInLive((Boolean) value);
          fireTableDataChanged();
       }

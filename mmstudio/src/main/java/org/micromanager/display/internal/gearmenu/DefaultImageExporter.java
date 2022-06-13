@@ -80,8 +80,7 @@ public final class DefaultImageExporter implements ImageExporter {
       public void setInnermostLoop(ExporterLoop child) {
          if (child_ == null) {
             child_ = child;
-         }
-         else {
+         } else {
             child_.setInnermostLoop(child);
          }
       }
@@ -117,8 +116,7 @@ public final class DefaultImageExporter implements ImageExporter {
                if (store_.hasImage(newCoords)) {
                   result.add(newCoords);
                }
-            }
-            else {
+            } else {
                // Recurse.
                child_.selectImageCoords(newCoords, result);
             }
@@ -181,8 +179,7 @@ public final class DefaultImageExporter implements ImageExporter {
       ExporterLoop exporter = new ExporterLoop(axis, startIndex, stopIndex);
       if (outerLoop_ == null) {
          outerLoop_ = exporter;
-      }
-      else {
+      } else {
          outerLoop_.setInnermostLoop(exporter);
       }
       // Ensure loops have displays set.
@@ -212,8 +209,8 @@ public final class DefaultImageExporter implements ImageExporter {
                // gets drawn twice, resulting in duplication of some images
                // Keep the Coords of the last drawn image, and make sure that  
                // the current image is differnt.
-               if (lastDrawnCoords_ != null &&
-                     lastDrawnCoords_.equals(event.getPrimaryImage().getCoords())) {
+               if (lastDrawnCoords_ != null
+                     && lastDrawnCoords_.equals(event.getPrimaryImage().getCoords())) {
                   return;
                }
                lastDrawnCoords_ = event.getPrimaryImage().getCoords();
@@ -240,8 +237,7 @@ public final class DefaultImageExporter implements ImageExporter {
                            currentImage_.getHeight());
                   }
                   addToStack(stack_, currentImage_);
-               }
-               else {
+               } else {
                   // Save the image to disk in appropriate format.
                   exportImage(currentImage_, sequenceNum_++);
                }
@@ -344,8 +340,7 @@ public final class DefaultImageExporter implements ImageExporter {
          // Check for potential file overwrites.
          if (coords.size() == 1) {
             checkForOverwrite(-1);
-         }
-         else {
+         } else {
             for (int i = 0; i < coords.size(); ++i) {
                checkForOverwrite(i);
             }
@@ -420,8 +415,7 @@ public final class DefaultImageExporter implements ImageExporter {
                display_.setDisplayPosition(coords.get(0), true);
             }
          }, "Image export thread");
-      }
-      else {
+      } else {
          isSingleShot_ = false;
          loopThread = new Thread(new Runnable() {
             @Override

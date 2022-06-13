@@ -102,8 +102,7 @@ public final class RolesPage extends PagePanel {
             String as;
             if (autoshutterCheckBox_.isSelected()) {
                as = "1";
-            }
-            else {
+            } else {
                as = "0";
             }
             model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
@@ -191,8 +190,7 @@ public final class RolesPage extends PagePanel {
                MMCoreJ.getG_Keyword_CoreCamera());
          if (model_.findDevice(camera) != null) {
             cameraComboBox_.setSelectedItem(camera);
-         }
-         else {
+         } else {
             cameraComboBox_.setSelectedItem("");
          }
 
@@ -200,8 +198,7 @@ public final class RolesPage extends PagePanel {
                MMCoreJ.getG_Keyword_CoreShutter());
          if (model_.findDevice(shutter) != null) {
             shutterComboBox_.setSelectedItem(shutter);
-         }
-         else {
+         } else {
             shutterComboBox_.setSelectedItem("");
          }
 
@@ -209,8 +206,7 @@ public final class RolesPage extends PagePanel {
                MMCoreJ.getG_Keyword_CoreFocus());
          if (model_.findDevice(focus) != null) {
             focusComboBox_.setSelectedItem(focus);
-         }
-         else {
+         } else {
             focusComboBox_.setSelectedItem("");
          }
 

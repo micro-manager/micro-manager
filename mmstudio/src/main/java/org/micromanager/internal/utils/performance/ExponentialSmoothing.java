@@ -33,8 +33,7 @@ public final class ExponentialSmoothing extends AbstractExponentialSmoothing {
       if (!isTimingStarted()) {
          markTime();
          initializeStats(x);
-      }
-      else {
+      } else {
          updateStats(markTimeAndGetDeltaTMs(), x);
       }
    }

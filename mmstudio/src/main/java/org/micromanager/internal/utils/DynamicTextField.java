@@ -33,7 +33,8 @@ public class DynamicTextField extends JTextField {
        *
        * @param source                the text field
        * @param shouldForceValidation true if Enter key was pressed or text
-       *                              field lost focus (listener should validate value and revert if invalid)
+       *                              field lost focus (listener should validate value
+       *                              and revert if invalid)
        */
       void textFieldValueChanged(DynamicTextField source,
                                  boolean shouldForceValidation);

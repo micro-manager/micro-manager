@@ -183,7 +183,7 @@ public interface DisplaySettings {
     * of pixels with higher intensities.
     *
     * @return Number used in Autostretch mode to determine where to set the
-    * white and black points.  Expressed as fraction.
+    *     white and black points.  Expressed as fraction.
     */
    double getAutoscaleIgnoredQuantile();
 
@@ -193,7 +193,7 @@ public interface DisplaySettings {
     * of pixels with higher intensities.
     *
     * @return Number used in Autostretch mode to determine where to set the
-    * white and black points.  Expressed as percentage.
+    *     white and black points.  Expressed as percentage.
     */
    double getAutoscaleIgnoredPercentile();
 
@@ -249,8 +249,8 @@ public interface DisplaySettings {
        * Return the array of minimum contrast settings for all components.
        *
        * @return array of minimum contrast settings (i.e. the intensity value
-       * in the image that results in black display) for all components. May
-       * be null.
+       *     in the image that results in black display) for all components. May
+       *     be null.
        */
       @Deprecated
       Integer[] getContrastMins();
@@ -275,8 +275,8 @@ public interface DisplaySettings {
        * Return the array of maximum contrast settings for all components.
        *
        * @return array of maximum contrast settings (i.e. the intensity value
-       * in the image that results in the brightest display value) for all
-       * components. May be null.
+       *     in the image that results in the brightest display value) for all
+       *     components. May be null.
        */
       @Deprecated
       Integer[] getContrastMaxes();
@@ -318,7 +318,7 @@ public interface DisplaySettings {
        * @param defaultVal Value to return if there is no value available for
        *                   the specified component number.
        * @return The gamma setting controlling how linear the contrast mapping
-       * is.
+       *     is.
        */
       @Deprecated
       Double getSafeContrastGamma(int component, Double defaultVal);
@@ -453,7 +453,7 @@ public interface DisplaySettings {
     * The object containing contrast information for each channel.
     *
     * @return An array of ContrastSettings objects, one per channel. May
-    * potentially be null or of inadequate length.
+    *     potentially be null or of inadequate length.
     */
    @Deprecated
    ContrastSettings[] getChannelContrastSettings();

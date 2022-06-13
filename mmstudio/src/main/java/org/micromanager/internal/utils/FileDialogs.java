@@ -123,18 +123,15 @@ public final class FileDialogs {
          FileDialog fd;
          if (parent instanceof Dialog) {
             fd = new FileDialog((Dialog) parent, title, mode);
-         }
-         else if (parent instanceof Frame) {
+         } else if (parent instanceof Frame) {
             fd = new FileDialog((Frame) parent, title, mode);
-         }
-         else {
+         } else {
             fd = new FileDialog((Dialog) null, title, mode);
          }
          if (startFile != null) {
             if (startFile.isDirectory()) {
                fd.setDirectory(startFile.getAbsolutePath());
-            }
-            else {
+            } else {
                fd.setDirectory(startFile.getParent());
             }
             if (!load && suggestFileName) {
@@ -159,8 +156,7 @@ public final class FileDialogs {
          }
          fd.dispose();
 
-      }
-      else {
+      } else {
          // HACK: we have very limited control over how file choosers are
          // rendered (they're highly platform-specific). Unfortunately on
          // Windows our look-and-feel overrides make choosers look awful in
@@ -183,8 +179,7 @@ public final class FileDialogs {
          int returnVal;
          if (load) {
             returnVal = fc.showOpenDialog(parent);
-         }
-         else {
+         } else {
             returnVal = fc.showSaveDialog(parent);
          }
          if (returnVal == JFileChooser.APPROVE_OPTION) {

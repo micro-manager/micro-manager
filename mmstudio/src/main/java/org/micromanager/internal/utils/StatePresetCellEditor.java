@@ -15,19 +15,13 @@ import javax.swing.table.TableCellEditor;
 import org.micromanager.internal.ConfigGroupPad.StateTableData;
 
 /**
- * @author arthur
- */
-////////////////////////////////////////////////////////////////////////////
-
-/**
  * Cell editing using either JTextField or JComboBox depending on whether the
  * property enforces a set of allowed values.
+ *
+ * @author arthur
  */
 public final class StatePresetCellEditor extends AbstractCellEditor implements TableCellEditor {
 
-   /**
-    *
-    */
    private static final long serialVersionUID = 1L;
    // This is the component that will handle the editing of the cell value
    JTextField text_ = new JTextField();
@@ -78,8 +72,7 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
                // slider editing
                if (item_.isInteger()) {
                   slider_.setLimits((int) item_.lowerLimit, (int) item_.upperLimit);
-               }
-               else {
+               } else {
                   slider_.setLimits(item_.lowerLimit, item_.upperLimit);
                }
                try {
@@ -89,12 +82,10 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
                }
                return slider_;
 
-            }
-            else if (item_.singlePropAllowed != null && item_.singlePropAllowed.length > 0) {
+            } else if (item_.singlePropAllowed != null && item_.singlePropAllowed.length > 0) {
                setComboBox(item_.allowed);
                return combo_;
-            }
-            else {
+            } else {
                text_.setText((String) value);
                return text_;
             }
@@ -114,8 +105,7 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
          }
          if (allNumeric2) {
             Arrays.sort(item_.allowed, new SortFunctionObjects.NumericPrefixStringComp());
-         }
-         else {
+         } else {
             Arrays.sort(item_.allowed);
          }
       }
@@ -164,15 +154,12 @@ public final class StatePresetCellEditor extends AbstractCellEditor implements T
       if (item_.allowed.length == 1) {
          if (item_.singleProp && item_.hasLimits) {
             return slider_.getText();
-         }
-         else if (item_.singlePropAllowed != null && item_.singlePropAllowed.length == 0) {
+         } else if (item_.singlePropAllowed != null && item_.singlePropAllowed.length == 0) {
             return text_.getText();
-         }
-         else {
+         } else {
             return combo_.getSelectedItem();
          }
-      }
-      else {
+      } else {
          return combo_.getSelectedItem();
       }
    }

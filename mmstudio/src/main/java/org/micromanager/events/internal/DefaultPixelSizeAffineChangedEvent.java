@@ -21,7 +21,7 @@ public class DefaultPixelSizeAffineChangedEvent implements PixelSizeAffineChange
     * New affine transform.
     *
     * @return New affine transform describing relation between stage movement and
-    * camera coordinates.
+    *     camera coordinates.
     */
    public AffineTransform getNewPixelSizeAffine() {
       return affine_;

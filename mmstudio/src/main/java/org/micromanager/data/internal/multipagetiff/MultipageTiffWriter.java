@@ -176,8 +176,7 @@ public final class MultipageTiffWriter {
       if (log >= 0) {
          resDenomenator_ = (long) cmPerPixel;
          resNumerator_ = 1;
-      }
-      else {
+      } else {
          resNumerator_ = (long) (1 / cmPerPixel);
          resDenomenator_ = 1;
       }
@@ -292,8 +291,7 @@ public final class MultipageTiffWriter {
    static {
       if (BUFFER_POOL_SIZE > 0) {
          pooledBuffers_ = new ArrayDeque<>(BUFFER_POOL_SIZE);
-      }
-      else {
+      } else {
          pooledBuffers_ = null;
       }
    }
@@ -386,8 +384,7 @@ public final class MultipageTiffWriter {
       // 8 bytes for file header
       if (BYTE_ORDER.equals(ByteOrder.BIG_ENDIAN)) {
          headerBuffer.asCharBuffer().put(0, (char) 0x4d4d);
-      }
-      else {
+      } else {
          headerBuffer.asCharBuffer().put(0, (char) 0x4949);
       }
       headerBuffer.asCharBuffer().put(1, (char) 42);
@@ -511,8 +508,7 @@ public final class MultipageTiffWriter {
          axis1Size = numSlices_;
          axis1ImagesLeft = slicesLeft;
          axis2ImagesLeft = channelsLeft;
-      }
-      else {
+      } else {
          // Defaults to channels-first order in the event AxisOrder is not set
          axis1Size = numChannels_;
          axis1ImagesLeft = channelsLeft;
@@ -538,8 +534,7 @@ public final class MultipageTiffWriter {
                + extraPadding + filePosition_;
          size += omeMDLength;
          // Otherwise, default back to the original behavior
-      }
-      else {
+      } else {
          size = singleImageBytes + SPACE_FOR_COMMENTS
                + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL
                + extraPadding + filePosition_;
@@ -721,8 +716,7 @@ public final class MultipageTiffWriter {
       if (type == 3 && count == 1) {  //Left justify in 4 byte value field
          cBuffer.put(bufferPosition_ / 2 + 4, (char) value);
          cBuffer.put(bufferPosition_ / 2 + 5, (char) 0);
-      }
-      else {
+      } else {
          buffer.putInt(bufferPosition_ + 8, (int) value);
       }
       bufferPosition_ += 12;
@@ -766,8 +760,7 @@ public final class MultipageTiffWriter {
                }
             }
             return ByteBuffer.wrap(rgbaPix);
-         }
-         else {
+         } else {
             short[] originalPix = (short[]) pixels;
             short[] rgbaPix = new short[originalPix.length * 3 / 4];
             int count = 0;
@@ -792,12 +785,10 @@ public final class MultipageTiffWriter {
             buffer.asShortBuffer().put(rgbaPix);
             return buffer;
          }
-      }
-      else {
+      } else {
          if (byteDepth_ == 1) {
             return ByteBuffer.wrap((byte[]) pixels);
-         }
-         else {
+         } else {
             short[] pix = (short[]) pixels;
             ByteBuffer buffer = getLargeBuffer(pix.length * 2);
             buffer.asShortBuffer().put(pix);
@@ -916,8 +907,7 @@ public final class MultipageTiffWriter {
                   cds.getComponentSettings(0).getScalingMinimum());
             bufferPosition += 8;
          }
-      }
-      else {
+      } else {
          for (int ch = 0; ch < numChannels; ch++) {
             ChannelDisplaySettings cs = ds.getChannelSettings(ch);
             // Display Ranges: For each channel, write min then max
@@ -936,8 +926,7 @@ public final class MultipageTiffWriter {
             String name = summary.getSafeChannelName(ch);
             color = RememberedDisplaySettings.loadChannel(
                   MMStudio.getInstance(), channelGroup, name, null).getColor();
-         }
-         else {
+         } else {
             color = ds.getChannelColor(ch);
          }
          // Defaulting to a gamma range of 1.0, as display settings
@@ -1087,8 +1076,7 @@ public final class MultipageTiffWriter {
          writeIFDEntry(ifdBuffer, charView, STRIP_OFFSETS, (char) 4, 1, tagDataOffset);
          blankPixelsOffset_ = tagDataOffset;
          tagDataOffset += bytesPerImagePixels_;
-      }
-      else {
+      } else {
          writeIFDEntry(ifdBuffer, charView, STRIP_OFFSETS, (char) 4, 1, blankPixelsOffset_);
       }
 

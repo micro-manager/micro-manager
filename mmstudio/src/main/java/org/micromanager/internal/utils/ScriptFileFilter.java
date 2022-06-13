@@ -27,16 +27,16 @@ import java.io.File;
 import javax.swing.filechooser.FileFilter;
 
 /**
- * File filter class for Open/Save file choosers
+ * File filter class for Open/Save file choosers.
  */
 public final class ScriptFileFilter extends FileFilter {
-   final private String EXT_BSH;
-   final private String DESCRIPTION;
+   private final String extBsh;
+   private final String description;
 
    public ScriptFileFilter() {
       super();
-      EXT_BSH = new String("bsh");
-      DESCRIPTION = new String("BeanShell files (*.bsh)");
+      extBsh = new String("bsh");
+      description = new String("BeanShell files (*.bsh)");
    }
 
    @Override
@@ -45,14 +45,14 @@ public final class ScriptFileFilter extends FileFilter {
          return true;
       }
 
-      if (EXT_BSH.equals(getExtension(f))) {
+      if (extBsh.equals(getExtension(f))) {
          return true;
       }
       return false;
    }
 
    public String getDescription() {
-      return DESCRIPTION;
+      return description;
    }
 
    private String getExtension(File f) {

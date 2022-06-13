@@ -28,6 +28,9 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
 
+/**
+ * Collection of functions helping to convert between core and display formats of numbers.
+ */
 public final class NumberUtils {
    private static final NumberFormat FORMAT;
    private static final DecimalFormat COREDOUBLEFORMAT;
@@ -36,13 +39,14 @@ public final class NumberUtils {
 
    static {
       MAXDIGITS = 4;
-      // The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
+      // The display is supposed to use local formating (e.g., switch commas
+      // with periods in Locale.GERMANY).
       FORMAT = NumberFormat.getInstance();
       FORMAT.setRoundingMode(RoundingMode.HALF_UP);
       FORMAT.setMaximumFractionDigits(MAXDIGITS);
 
-      // The core always uses four decimal places in its double strings, and a dot for the decimal separator.
-      // This is equivalent to the US locale settings.
+      // The core always uses four decimal places in its double strings, and a dot for
+      // the decimal separator. This is equivalent to the US locale settings.
       COREDOUBLEFORMAT = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
       COREDOUBLEFORMAT.setRoundingMode(RoundingMode.HALF_UP);
       COREDOUBLEFORMAT.applyPattern("0.0000");
@@ -66,7 +70,7 @@ public final class NumberUtils {
    }
 
    /**
-    * TODO: Check if this is thread safe
+    * TODO: Check if this is thread safe.
     *
     * @param number       Number to converted to a String
     * @param maxPrecision - Maximum number of digits in the resulting String

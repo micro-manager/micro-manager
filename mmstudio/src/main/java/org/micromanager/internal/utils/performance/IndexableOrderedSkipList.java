@@ -121,7 +121,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
    private final Random random_ = new Random();
 
    public static <K extends Comparable<K>, V>
-   IndexableOrderedSkipList<K, V> create(int levels) {
+            IndexableOrderedSkipList<K, V> create(int levels) {
       if (levels < 1) {
          throw new IllegalArgumentException();
       }
@@ -164,8 +164,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
                left.setNext(0, newCell, 1);
                newCell.setNext(0, right, 1);
                return distanceFromUpperLeftToLeft + 1;
-            }
-            else {
+            } else {
                int lowerLevelResult =
                      insertIntoLevel(level - 1, newCell, left, right);
                boolean skipping = lowerLevelResult < 0;
@@ -177,8 +176,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
                   int distanceFromNewToRight = distanceFromLeftToRight - distanceFromLeftToNew + 1;
                   newCell.setNext(level, right, distanceFromNewToRight);
                   left.setNext(level, newCell, distanceFromLeftToNew);
-               }
-               else {
+               } else {
                   skip = true;
                   left.incrementDistance(level);
                }
@@ -218,8 +216,7 @@ final class IndexableOrderedSkipList<K extends Comparable<K>, V> {
             if (cmp == 0) {
                left.setNext(level, oldCell.getNext(level),
                      left.getDistance(level) + oldCell.getDistance(level) - 1);
-            }
-            else {
+            } else {
                left.decrementDistance(level);
             }
             return;

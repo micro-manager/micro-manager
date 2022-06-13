@@ -113,10 +113,10 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
    synchronized PropertyMap getProperties(Class<?> owner) {
       // Chain the per-owner maps at the time of read access, to obtain an
       // up-to-date chained map.
-      return fallbackProfile_ == null ?
-            getSettingsWithoutFallback(owner) :
-            ((DefaultPropertyMap) getSettingsWithoutFallback(owner)).
-                  createChainedView(
+      return fallbackProfile_ == null
+            ? getSettingsWithoutFallback(owner) :
+            ((DefaultPropertyMap) getSettingsWithoutFallback(owner))
+                  .createChainedView(
                         fallbackProfile_.getSettingsWithoutFallback(owner));
    }
 
@@ -124,11 +124,11 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
    // Note we do NOT include the fallback items!
    synchronized void editProperty(Class<?> owner, Editor editor) {
       String ownerKey = owner.getCanonicalName();
-      ownersAndProperties_ = ownersAndProperties_.copyBuilder().
-            putPropertyMap(ownerKey,
+      ownersAndProperties_ = ownersAndProperties_.copyBuilder()
+            .putPropertyMap(ownerKey,
                   editor.edit(ownersAndProperties_.getPropertyMap(ownerKey,
-                        emptyPropertyMap()))).
-            build();
+                        emptyPropertyMap())))
+            .build();
       bus_.post(UserProfileChangedEvent.create());
    }
 
@@ -347,7 +347,7 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
 
    @Deprecated
    public <T> T getLegacySerializedObject(Class<?> c, String key, T fallback) {
-      return ((DefaultPropertyMap) getProperties(c)).
-            getLegacySerializedObject(key, fallback);
+      return ((DefaultPropertyMap) getProperties(c))
+            .getLegacySerializedObject(key, fallback);
    }
 }

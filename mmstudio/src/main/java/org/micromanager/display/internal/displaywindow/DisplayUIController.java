@@ -300,8 +300,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          //   area.
          // - In any case, the screen to use is the screen in which a viewer window
          //   was last found (not created).
-      }
-      else {
+      } else {
          frame = new JFrame();
          frame.setUndecorated(true);
          frame.setResizable(false);
@@ -734,8 +733,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             if (axisIndex == -1) {
                displayedAxes_.add(axis);
                displayedAxisLengths_.add(index + 1);
-            }
-            else {
+            } else {
                int oldLength = displayedAxisLengths_.get(axisIndex);
                int newLength = Math.max(oldLength, index + 1);
                displayedAxisLengths_.set(axisIndex, newLength);
@@ -876,8 +874,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                metadata = image.getMetadata();
             }
          }
-      }
-      else {
+      } else {
          metadata = images.getRequest().getImages().get(0).getMetadata();
       }
       if (metadata == null) {
@@ -894,28 +891,24 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   double elapsedTimeMs = metadata.getElapsedTimeMs(-1.0);
                   if (elapsedTimeMs < 0) {
                      sb.append(" t=").append(nominalCoords.getT()).append(" ");
-                  }
-                  else if (elapsedTimeMs > 3600000) {
+                  } else if (elapsedTimeMs > 3600000) {
                      int hrs = (int) (elapsedTimeMs / 3600000);
                      sb.append(NumberUtils.doubleToDisplayString(hrs, 0))
                            .append(":")
                            .append(NumberUtils.doubleToDisplayString(
                                  (elapsedTimeMs % (hrs * 3600000)) / 60000.0, 0))
                            .append("hr ");
-                  }
-                  else if (elapsedTimeMs > 60000) {
+                  } else if (elapsedTimeMs > 60000) {
                      int mins = (int) (elapsedTimeMs / 60000);
                      sb.append(NumberUtils.doubleToDisplayString(mins, 0))
                            .append(":")
                            .append(NumberUtils.doubleToDisplayString(
                                  (elapsedTimeMs % (mins * 60000)) / 1000.0, 0))
                            .append("min ");
-                  }
-                  else if (elapsedTimeMs > 10000) {
+                  } else if (elapsedTimeMs > 10000) {
                      sb.append(NumberUtils.doubleToDisplayString(
                            (elapsedTimeMs / 1000), 1)).append("s ");
-                  }
-                  else {
+                  } else {
                      sb.append(elapsedTimeMs).append("ms ");
                   }
                   break;
@@ -1049,8 +1042,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          if (autostretch) {
             applyAutostretch(displayedImages_, settings);
          }
-      }
-      else {
+      } else {
          for (int chNr = 0; chNr < nChannels; chNr++) {
             // Note: Since the UI currently manipulates all components
             // identically, and setting a component results in many calculations
@@ -1112,8 +1104,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             if (min == max) {
                if (max == 0) {
                   max++;
-               }
-               else {
+               } else {
                   min--;
                }
             }
@@ -1132,8 +1123,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             dcds.setScalingMinimum(min);
             dcds.setScalingMaximum(max);
             ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
-         }
-         else {
+         } else {
             ReportingUtils.logMessage("DisplayUICOntroller: Received request to "
                   + "autostretch image for which no statistics are available");
          }
@@ -1251,8 +1241,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          fullScreenButton_.setIcon(IconLoader.getIcon(
                "/org/micromanager/icons/windowed.png"));
          fullScreenButton_.setToolTipText("Exit full screen mode");
-      }
-      else {
+      } else {
          if (isFullScreenMode()) {
             reactivateWindow = !fullScreenFrame_.isActive();
             fullScreenFrame_.removeWindowListener(this);
@@ -1314,8 +1303,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          sb.append(" (")
                .append(NumberUtils.doubleToDisplayString(ijBridge_.getIJZoom() * 100))
                .append("%)");
-      }
-      else {
+      } else {
          sb.append(" (100%)");
       }
       // TODO: add save status, and listen for changes
@@ -1339,8 +1327,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       canvasBorderPanel_.add(ijBridge_.getIJImageCanvas());
       if (isFullScreenMode()) {
          fullScreenFrame_.validate();
-      }
-      else {
+      } else {
          frame_.validate();
       }
    }
@@ -1385,8 +1372,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          // here, despite the call to invalidate; otherwise the AWT component
          // (canvas) is sporadically drawn incorrectly
          fullScreenFrame_.validate();
-      }
-      else {
+      } else {
          GraphicsConfiguration gConfig = frame_.getGraphicsConfiguration();
          Rectangle screenBounds = Geometry.insettedRectangle(
                gConfig.getBounds(),
@@ -1502,14 +1488,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
                }
                mouseLocationOnImage_ = null;
                updatePixelInformation();
-            }
-            else {
+            } else {
                if (imageLocation.equals(mouseLocationOnImage_)) {
                   return;
                }
                mouseLocationOnImage_ = new Rectangle(imageLocation);
                updatePixelInformation();
             }
+            break;
+         default:
+            break;
       }
    }
 
@@ -1561,8 +1549,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             displayController_.postDisplayEvent(
                   DataViewerMousePixelInfoChangedEvent.createUnavailable());
          }
-      }
-      else {
+      } else {
          displayController_.postDisplayEvent(
                DataViewerMousePixelInfoChangedEvent.fromImage(
                      center.x, center.y, images.get(0)));
@@ -1647,8 +1634,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       int targetMs;
       if (achievedMedianMs < 1.1 * 1000.0 / animationFPS) {
          targetMs = idealIntervalMs;
-      }
-      else {
+      } else {
          // Aim for a little faster, to allow for adaptive speed-up
          targetMs = (int) Math.max(idealIntervalMs, 0.9 * achievedMedianMs);
       }
@@ -1722,8 +1708,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                if (elapsedMs < lastElapsedTimeMs_ && fps_ > 0.0) {
                   durationMs_ += missingImages * (1000.0 / fps_);
                }
-            }
-            else {
+            } else {
                nrLiveFramesReceived_ += nr - lastImageNumber_;
                durationMs_ += elapsedMs - lastElapsedTimeMs_;
             }
@@ -1734,8 +1719,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                if (fps_ < 2.0) {
                   cameraFpsLabel_.setText(String.format(
                         "Camera: %.3g fps", fps_));
-               }
-               else {
+               } else {
                   cameraFpsLabel_.setText(String.format(
                         "Camera: %d fps", (int) fps_));
                }
@@ -1883,8 +1867,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                default:
                   break;
             }
-         }
-         else if (numComponents == 3) {
+         } else if (numComponents == 3) {
             switch (bytesPerPixel) {
                case 4:
                   return "RGB32";
@@ -1893,6 +1876,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             }
          }
       } catch (IOException e) {
+         studio_.logs().logError(e);
       }
       return "Unknown pixelType";
    }
@@ -1908,7 +1892,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * <p>This function is only called when the viewer is created or when the pixel
     * size changes
     *
-    * @param images
+    * @param images Images from which to generate info string
     * @return info string in top right of the viewer.
     */
    public String getInfoString(ImagesAndStats images) {
@@ -1934,7 +1918,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          double heightUm = getImageHeight() * pixelSize;
          infoStringB.append(NumberUtils.doubleToDisplayString(widthUm)).append("x")
                .append(NumberUtils.doubleToDisplayString(heightUm))
-               .append("\u00B5").append("m  ");
+               .append("\u00B5").append("m  "); // Micro-Meter, i.e. micron
       }
 
       infoStringB.append(getImageWidth()).append("x").append(getImageHeight());
@@ -1944,8 +1928,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       if (nrBytes / 1000 < 1000) {
          infoStringB.append((int) nrBytes / 1024).append("KB");
-      }
-      else {
+      } else {
          infoStringB.append((int) nrBytes / 1048576).append("MB");
       }
 
@@ -1996,12 +1979,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (button.getIcon() == UNLOCKED_ICON) {
          displayController_.setAxisAnimationLock(axis, "F");
          button.setIcon(BLACK_LOCKED_ICON);
-      }
-      else if (button.getIcon() == BLACK_LOCKED_ICON) {
+      } else if (button.getIcon() == BLACK_LOCKED_ICON) {
          displayController_.setAxisAnimationLock(axis, "S");
          button.setIcon(RED_LOCKED_ICON);
-      }
-      else {
+      } else {
          displayController_.setAxisAnimationLock(axis, "U");
          button.setIcon(UNLOCKED_ICON);
       }
@@ -2031,8 +2012,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    public void windowClosing(WindowEvent e) {
       if (e.getWindow() == frame_) {
          displayController_.requestToClose();
-      }
-      else if (e.getWindow() == fullScreenFrame_) {
+      } else if (e.getWindow() == fullScreenFrame_) {
          setFullScreenMode(false);
       }
    }
@@ -2068,8 +2048,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          // Canvas height will auto-adjust
          panel.setVisible(true);
          fullScreenFrame_.validate();
-      }
-      else {
+      } else {
          // Adjust window height
          frame_.setSize(frame_.getWidth(),
                frame_.getHeight() - oldHeight + newHeight);
@@ -2107,11 +2086,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       List<Coords> coords = e.getAllCoordsSorted();
       if (coords.isEmpty()) {
          chStrings.add("NA"); // Shouldn't normally happen
-      }
-      else if (coords.size() == 1) {
+      } else if (coords.size() == 1) {
          chStrings.add(e.getComponentValuesStringForCoords(coords.get(0)));
-      }
-      else {
+      } else {
          int lastChannel = 0;
          for (Coords c : coords) {
             if (c.getChannel() > lastChannel) {
@@ -2119,8 +2096,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   chStrings.add("-");
                   lastChannel++;
                }
-            }
-            else {
+            } else {
                lastChannel++;
             }
             chStrings.add(e.getComponentValuesStringForCoords(c));
@@ -2130,8 +2106,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       String valuesString;
       if (chStrings.size() == 1) {
          valuesString = chStrings.get(0);
-      }
-      else {
+      } else {
          valuesString = "[" + Joiner.on(", ").join(chStrings) + "]";
       }
 
@@ -2172,8 +2147,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   if (channelSettings.getGroupName().equals(channelColorEvent.getChannelGroup())
                         && channelSettings.getName().equals(channelColorEvent.getChannel())) {
                      found = true;
-                  }
-                  else {
+                  } else {
                      index++;
                   }
                }

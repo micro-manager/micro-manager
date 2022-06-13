@@ -221,8 +221,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       if (simulate) {
          return simulateAcquire(theSlide, (int) (x + (3 * Math.random() - 1.5)),
                (int) (y + (3 * Math.random() - 1.5)));
-      }
-      else {
+      } else {
          try {
             Point2D.Double p0 = core_.getXYStagePosition();
             if (p0.distance(x, y) > (dialog_.safeTravelRadius() / 2)) {
@@ -342,8 +341,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       if (simulate) {
          x = 0.;
          y = 0.;
-      }
-      else {
+      } else {
          Point2D.Double p;
          try {
             p = core_.getXYStagePosition();

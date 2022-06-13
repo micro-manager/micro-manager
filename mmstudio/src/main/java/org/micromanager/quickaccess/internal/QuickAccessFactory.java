@@ -44,11 +44,9 @@ public final class QuickAccessFactory {
    public static JComponent makeGUI(QuickAccessPlugin plugin) {
       if (plugin instanceof SimpleButtonPlugin) {
          return makeButton((SimpleButtonPlugin) plugin);
-      }
-      else if (plugin instanceof ToggleButtonPlugin) {
+      } else if (plugin instanceof ToggleButtonPlugin) {
          return makeToggleButton((ToggleButtonPlugin) plugin);
-      }
-      else if (plugin instanceof WidgetPlugin) {
+      } else if (plugin instanceof WidgetPlugin) {
          return makeWidget((WidgetPlugin) plugin);
       }
       ReportingUtils.logError("Unrecognized plugin type " + plugin);
