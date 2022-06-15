@@ -39,6 +39,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.border.TitledBorder;
 import mmcorej.CMMCore;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * Class representing the main JFrame of a {@link de.embl.rieslab.emu.plugin.UIPlugin}.
@@ -167,6 +168,8 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
          e1.printStackTrace();
       }
       this.setIconImages(lst);
+
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
    }
 
    private ArrayList<ConfigurablePanel> listConfigurablePanels(Component[] c,
