@@ -1,0 +1,34 @@
+// This documents code dependencies
+// Solid arrows are build-time dependencies
+// Dashed arrows are non-optional run-time dependencies
+
+strict digraph {
+    node [shape=box, fontname="Helvetica"]
+
+    { rank=same MMCoreJ pymmcore }
+    { rank=same mmdev_DemoCamera mmdev_A mmdev_B }
+    { rank=same plugin_X plugin_Y }
+
+    MMCore -> MMDevice
+    MMCoreJ -> MMCore
+    pymmcore -> MMCore
+    mmstudio -> ImageJ
+    mmstudio -> MMCoreJ
+    mmstudio -> acqEngine [style=dashed]
+    mmstudio -> PycroManagerJava
+    acqEngine -> MMCoreJ
+    acqEngine -> mmstudio
+    PycroManagerJava -> MMCoreJ
+
+    mmdev_DemoCamera [shape=component]
+    mmdev_DemoCamera -> MMDevice
+    mmdev_A [shape=component]
+    mmdev_A -> MMDevice
+    mmdev_B [shape=component]
+    mmdev_B -> MMDevice
+    plugin_X [shape=component]
+    plugin_X -> mmstudio
+    plugin_X -> MMCoreJ
+    plugin_Y [shape=component]
+    plugin_Y -> mmstudio
+}
