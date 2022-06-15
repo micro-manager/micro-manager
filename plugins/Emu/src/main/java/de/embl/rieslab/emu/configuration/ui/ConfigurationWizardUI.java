@@ -32,6 +32,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * UI used to configure the system by allocating UI properties to existing device properties
@@ -287,6 +288,7 @@ public class ConfigurationWizardUI {
       // Display the window.
       frame.pack();
       frame.setLocationRelativeTo(null);
+      WindowPositioning.setUpBoundsMemory(frame, this.getClass(), pluginName);
       frame.setVisible(true);
 
       return frame;
