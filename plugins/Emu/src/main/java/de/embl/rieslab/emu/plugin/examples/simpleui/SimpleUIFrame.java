@@ -54,6 +54,7 @@ public class SimpleUIFrame extends ConfigurableMainFrame {
          filtersPanel.setBounds(10, 297, 474, 54);
          getContentPane().add(filtersPanel);
       }
+
    }
 
    @Override
