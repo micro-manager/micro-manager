@@ -1707,6 +1707,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                "Unknown save mode button or no save mode buttons selected");
       }
       ssb.saveMode(DefaultDatastore.getPreferredSaveMode(mmStudio_));
+      ssb.cameraTimeout(acqEng_.getSequenceSettings().cameraTimeout());
 
       try {
          acqEng_.setSequenceSettings(ssb.build());
