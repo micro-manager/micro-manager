@@ -176,7 +176,7 @@ public interface Metadata {
 
       MetadataBuilder receivedTime(String receivedTime);
 
-      MetadataBuilder ROI(Rectangle ROI);
+      MetadataBuilder ROI(Rectangle roi);
 
       MetadataBuilder scopeData(PropertyMap scopeData);
 
