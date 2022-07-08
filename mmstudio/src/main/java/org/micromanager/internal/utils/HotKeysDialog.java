@@ -406,13 +406,16 @@ public final class HotKeysDialog extends JDialog {
       pack();
    }
 
+   // CHECKSTYLE:OFF (MethodName)
    private void addButton_ActionPerformed(ActionEvent evt) {
       keys_.add(32);
       actions_.add(new HotKeyAction(0));
       sctModel_.fireTableRowsInserted(keys_.size() - 1, keys_.size());
       sctModel_.fireTableDataChanged();
    }
+   // CHECKSTYLE:ON
 
+   // CHECKSTYLE:OFF (MethodName)
    private void removeButton_ActionPerformed(ActionEvent evt) {
       hotKeyTable_.getColumnModel().getColumn(0).getCellEditor().stopCellEditing();
       hotKeyTable_.getColumnModel().getColumn(1).getCellEditor().stopCellEditing();
@@ -424,5 +427,5 @@ public final class HotKeysDialog extends JDialog {
       sctModel_.fireTableRowsDeleted(rows[0], rows[rows.length - 1]);
       sctModel_.fireTableDataChanged();
    }
-
+   // CHECKSTYLE:ON
 }
