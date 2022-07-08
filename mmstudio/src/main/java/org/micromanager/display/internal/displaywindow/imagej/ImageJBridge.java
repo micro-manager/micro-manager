@@ -966,27 +966,27 @@ public final class ImageJBridge {
          return BoundsRectAndMask.unselected();
       }
 
-      switch (ijRoi.getType()) {
-         case Roi.RECTANGLE:
-            if (ijRoi.getCornerDiameter() == 0) {
-               return BoundsRectAndMask.create(bounds, null);
-            }
-            // Fall through for rounded rect
-         case Roi.OVAL:
-         case Roi.POLYGON:
-         case Roi.FREEROI:
-         case Roi.TRACED_ROI:
-         case Roi.COMPOSITE:
-            if (maskProc == null) {
-               return BoundsRectAndMask.unselected();
-            }
-            byte[] mask = ((byte[]) maskProc.getPixels()).clone();
-            return BoundsRectAndMask.create(bounds, mask);
+      if (ijRoi.getType() == Roi.RECTANGLE && ijRoi.getCornerDiameter() == 0) {
+         return BoundsRectAndMask.create(bounds, null);
+      } else {
+         switch (ijRoi.getType()) {
+            case Roi.RECTANGLE: // Round rectangle not handled above
+            case Roi.OVAL:
+            case Roi.POLYGON:
+            case Roi.FREEROI:
+            case Roi.TRACED_ROI:
+            case Roi.COMPOSITE:
+               if (maskProc == null) {
+                  return BoundsRectAndMask.unselected();
+               }
+               byte[] mask = ((byte[]) maskProc.getPixels()).clone();
+               return BoundsRectAndMask.create(bounds, mask);
 
-         default:
-            // We do not use lines, points, angles, etc., for histograms.
-            // Any unsupported types should behave as if no Roi is selected.
-            return BoundsRectAndMask.unselected();
+            default:
+               // We do not use lines, points, angles, etc., for histograms.
+               // Any unsupported types should behave as if no Roi is selected.
+               return BoundsRectAndMask.unselected();
+         }
       }
    }
 }
