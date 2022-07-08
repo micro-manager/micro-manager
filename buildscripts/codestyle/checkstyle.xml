@@ -4,6 +4,32 @@
           "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <!--
+  This file is a modified version of the google_checks.xml file from the
+  Checkstyle project.
+
+  Copyright 2022 Checkstyle copyright holders and Micro-Manager contributors
+  SPDX-License-Identifier: LGPL-2.1+
+
+  Documentation is here: https://checkstyle.org/checks.html
+
+  Here are the major changes from google_checks.xml:
+  - Default 'severity' changed from 'warning' to 'error'.
+  - The 'format' for various names has been changed to allow names like xLabel
+    or yPosition.
+  - The 'format' for 'MemberName' has been changed to allow a trailing
+    underscore.
+  - 'Indentation' properties have been changed to multiples of 3.
+  - Severity for 'AbbreviationAsWordInName' is set to 'ignore', allowing names
+    like 'refreshGUI'.
+  - The following checks have their severity set to 'ignore' for now, since we
+    have too many violations in MMStudio:
+      - 'NonEmptyAtclauseDescription'
+      - 'SummaryJavadoc'
+      - 'MissingJavadocMethod'
+      - 'MissingJavadocType'
+
+  Original header comment follows.
+
     Checkstyle configuration that checks the Google coding conventions from Google Java Style
     that can be found at https://google.github.io/styleguide/javaguide.html
 
