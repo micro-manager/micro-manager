@@ -488,9 +488,9 @@ public class MagellanOverlayer implements OverlayerPlugin {
    private void drawSurfaceInterpScaleBar(Overlay overlay, Point2D.Double displayImageSize, int zIndex,
            Graphics g) {
       double zStep = manager_.getZStep();
-      String label1 = fmt(zIndex - zStep / 2) + " μm";
-      String label2 = fmt(zIndex) + " μm";
-      String label3 = fmt(zIndex + zStep / 2) + " μm";
+      String label1 = fmt(zIndex - zStep / 2) + " \u00B5m"; // U+00B5 MICRO SIGN
+      String label2 = fmt(zIndex) + " \u00B5m"; // U+00B5 MICRO SIGN
+      String label3 = fmt(zIndex + zStep / 2) + " \u00B5m"; // U+00B5 MICRO SIGN
 
       int fontSize = 12; 
       Font font = new Font("Arial", Font.BOLD, fontSize);

@@ -374,7 +374,8 @@ public final class ReportingUtils {
                new JOptionPane(c.getTime().toString() + " " + message, JOptionPane.WARNING_MESSAGE,
                      JOptionPane.OK_CANCEL_OPTION);
          /* the false parameter is for not modal */
-         final JDialog dialog = new JDialog(owningFrame_, "μManager Warning: ", false);
+         final JDialog dialog = new JDialog(owningFrame_,
+               "\u00B5Manager Warning: ", false); // U+00B5 MICRO SIGN
          optionPane.addPropertyChangeListener(
                new PropertyChangeListener() {
 
