@@ -298,9 +298,9 @@ public final class ReportingUtils {
    }
 
    /**
-    * Introduced to catch null pointer exception when mmstudio.app does not exit yet
-    * Will return null if null pointer exception is thrown.
-    * @return MainWindow or null
+    * Get the MMStudio main window if it exists.
+    *
+    * @return the main window JFrame, or null if it does not currently exist.
     */
    public static JFrame getMainWindow() {
       JFrame mainWindow = null;
