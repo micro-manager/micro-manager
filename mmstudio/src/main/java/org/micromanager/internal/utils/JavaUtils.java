@@ -271,10 +271,7 @@ public final class JavaUtils {
          } else if (resource.getProtocol().equals("zip")) {
             String path = resource.getPath();
             File jarFileOnDisk = new File(path.substring(0, path.indexOf("!")));
-            //long jfodLastModifiedLong = jarFileOnDisk.lastModified ();
-            //Date jfodLasModifiedDate = new Date(jfodLastModifiedLong);
-            try {
-               JarFile jf = new JarFile(jarFileOnDisk);
+            try (JarFile jf = new JarFile(jarFileOnDisk)) {
                ZipEntry ze =
                      jf.getEntry(path.substring(path.indexOf("!") + 2)); //Skip the ! and the /
                long zeTimeLong = ze.getTime();
