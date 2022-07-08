@@ -182,6 +182,7 @@ public final class ColorPalettes {
                return colorForMonochromaticWavelenth(nanometers);
             }
          } catch (NumberFormatException e) {
+            // If not a number, fall back to default below.
          }
       }
       return Color.WHITE;

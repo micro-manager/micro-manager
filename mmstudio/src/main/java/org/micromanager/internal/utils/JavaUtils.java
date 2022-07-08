@@ -264,6 +264,7 @@ public final class JavaUtils {
             try {
                d = new Date(new File(resource.toURI()).lastModified());
             } catch (URISyntaxException ignored) {
+               // Continue with d == null
             }
          } else if (resource.getProtocol().equals("jar")) {
             String path = resource.getPath();
@@ -277,8 +278,8 @@ public final class JavaUtils {
                long zeTimeLong = ze.getTime();
                Date zeTimeDate = new Date(zeTimeLong);
                d = zeTimeDate;
-            } catch (IOException ignored) {
-            } catch (RuntimeException ignored) {
+            } catch (IOException | RuntimeException ignored) {
+               // Continue with d == null
             }
          }
       }

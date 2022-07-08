@@ -1742,6 +1742,7 @@ public final class DefaultPropertyMap implements PropertyMap {
                try {
                   ois.close();
                } catch (IOException cantActuallyHappenWithByteArray) {
+                  throw new AssertionError("Programming error");
                }
             }
          }
