@@ -50,7 +50,7 @@ public final class JavaUtils {
     * @param theClass
     * @param methodName
     * @param paramsAndTypes
-    * @return
+    *
     * @throws java.lang.NoSuchMethodException
     * @throws java.lang.IllegalAccessException
     * @throws java.lang.reflect.InvocationTargetException
