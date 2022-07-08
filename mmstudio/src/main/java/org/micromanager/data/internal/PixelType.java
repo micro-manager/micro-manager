@@ -106,29 +106,22 @@ public enum PixelType {
 
    public static PixelType valueFor(int bytesPerPixel, int bytesPerComponent,
                                     int numberOfComponents) {
-      // TODO: this code looks very suspicious, but it may use these nasty fall throughs on purpose
-      switch (numberOfComponents) {
-         case 1:
-            switch (bytesPerComponent) {
-               case 1:
-                  switch (bytesPerPixel) {
-                     case 1:
-                        return GRAY8;
-                  }
-               case 2:
-                  switch (bytesPerPixel) {
-                     case 2:
-                        return GRAY16;
-                  }
+      if (numberOfComponents == 1) {
+         if (bytesPerComponent == 1) {
+            if (bytesPerPixel == 1) {
+               return GRAY8;
             }
-         case 3:
-            switch (bytesPerComponent) {
-               case 1:
-                  switch (bytesPerPixel) {
-                     case 4:
-                        return RGB32;
-                  }
+         } else if (bytesPerComponent == 2) {
+            if (bytesPerPixel == 2) {
+               return GRAY16;
             }
+         }
+      } else if (numberOfComponents == 3) {
+         if (bytesPerComponent == 1) {
+            if (bytesPerPixel == 4) {
+               return RGB32;
+            }
+         }
       }
       throw new UnsupportedOperationException(String.format(
             "Unsupported pixel type: %d bytes per pixel, %d bytes per component, %d components",
