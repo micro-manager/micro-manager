@@ -46,13 +46,13 @@ public final class PropertyMapJSONSerializer {
    private static class VersionedMap {
       // These field names are non-standard but should not be changed since
       // they are used as keys in the JSON/GSON serialization.
-      // CHECKSTYLE:OFF
       String encoding; // Always 'UTF-8'; included only to aid posterity
       String format; // Always 'Micro-Manager Property Map'
+      @SuppressWarnings("checkstyle:MemberName")
       int major_version;
+      @SuppressWarnings("checkstyle:MemberName")
       int minor_version;
       PropertyMap map;
-      // CHECKSTYLE:ON
 
       VersionedMap() {
       }
