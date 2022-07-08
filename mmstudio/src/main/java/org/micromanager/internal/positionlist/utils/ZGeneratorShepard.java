@@ -125,7 +125,9 @@ class ShepardInterpolator {
    }
 
    public double interpolate(double xi, double yi) {
-      double weight, numerator, denominator;
+      double weight;
+      double numerator;
+      double denominator;
       double epsilon = 0.001;
       double d;
       int i;
