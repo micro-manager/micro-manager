@@ -137,8 +137,8 @@ final class UserProfileFileFormat {
          return PropertyMaps.builder()
                .putString(KEY_FORMAT, PROFILE_FORMAT)
                .putString(KEY_LAST_SAVED,
-                     new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").
-                           format(new Date()))
+                     new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z")
+                           .format(new Date()))
                .putPropertyMap(KEY_PREFS, settings_)
                .build();
       }
