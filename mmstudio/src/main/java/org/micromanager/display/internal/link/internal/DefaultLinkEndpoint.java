@@ -228,7 +228,7 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
    }
 
    @Subscribe
-   public synchronized void onEvent(LinkageValuePropagatedEvent e) {
+   public synchronized void onPropagated(LinkageValuePropagatedEvent e) {
       if (e.getSource() == this) {
          return;
       }
