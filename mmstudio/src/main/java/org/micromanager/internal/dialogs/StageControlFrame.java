@@ -814,7 +814,7 @@ public final class StageControlFrame extends JFrame {
       zPositionLabel_[idx].setText(
             TextUtils.removeNegativeZero(
                   NumberUtils.doubleToDisplayString(z))
-                  + " \u00B5m");
+                  + " \u00B5m"); // U+00B5 MICRO SIGN
    }
 
    private static JFormattedTextField createDoubleEntryFieldFromCombo(
