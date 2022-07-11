@@ -53,7 +53,7 @@ cd micro-manager
 git submodule update --init --recursive
 
 mamba create -n micro-manager -c conda-forge swig=3 openjdk=8
-mamba activate micro-manager
+conda activate micro-manager
 
 ./autogen.sh
 ./configure
