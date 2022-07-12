@@ -1,10 +1,14 @@
-name: Build and publish API docs
+name: apidoc
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   mmdevice-doxygen:
-    name: Build and publish MMDevice Doxygen docs
+    name: MMDevice Doxygen
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -42,7 +46,7 @@ jobs:
           ./publish_pages_as_bot.sh MMDevice/latest
 
   mmcore-doxygen:
-    name: Build and publish MMCore Doxygen docs
+    name: MMCore Doxygen
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -80,7 +84,7 @@ jobs:
           ./publish_pages_as_bot.sh MMCore/latest
 
   mmcorej-javadoc:
-    name: Build and publish mmcorej Javadoc
+    name: mmcorej Javadoc
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -149,7 +153,7 @@ jobs:
           ./publish_pages_as_bot.sh mmcorej/latest
 
   mmstudio-javadoc:
-    name: Build and publish mmstudio Javadoc
+    name: mmstudio Javadoc
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
