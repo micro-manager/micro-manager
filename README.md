@@ -1,35 +1,45 @@
-## Micro-Manager 
+# Micro-Manager
 
-Micro-Manager is an application to control microscope hardware, such as cameras, xy-stages, filter wheels, etc..  It includes a hardware abstraction layer written in C++ and a user interface written in Java (Swing).  User and developer documentation can be found at https://micro-manager.org.
+Micro-Manager is an application to control microscope hardware, such as cameras,
+xy-stages, filter wheels, etc. It includes a hardware abstraction layer written
+in C++ and a user interface written in Java (Swing).
 
-#### Branches 
-The "master" branch of the [micro-manager](https://github.com/micro-manager/micro-manager) respository is used to build version 2.0-gamma (binaries can be download from [micro-manager.org](https://micro-manager.org/wiki/Download%20Micro-Manager_Latest%20Release)). The branch "svn-mirror" tracks the subversion repository at https://valelab4.ucsf.edu/svn/micromanager2/trunk/ that contains the source code for Micro-Manager 1.4.  
+**Go to [micro-manager.org](https://micro-manager.org) for documentation and
+binary downloads.**
 
-This repository uses submodules.  MMCore, MMDevice, and DeviceAdapters are now part of the [mmCoreAndDevices](https://github.com/micro-manager/mmCoreAndDevices) submodule.  
+**For support, see [Micro-Manager
+Community](https://micro-manager.org/Micro-Manager_Community).**
 
-#### Getting the source code
-To get the complete source code follow these instructions:
+## Source code
 
-1. Clone the repository: `git clone https://github.com/micro-manager/micro-manager.git`
-2. Move Git bash into the repository: `cd micro-manager`
-3. Make sure any submodules are also cloned: `git submodule update --init --recursive`  
-For more information about working with Git submodules click [here](https://git-scm.com/book/en/v2/Git-Tools-Submodules).  
-(Previously we recommended using the `--remote` flag when updating the submodule(s). This is no longer necessary and should be avoided.)
+This repository contains the Java projects that make up the Micro-Manager
+"MMStudio" GUI application. The device control layer is written in C++ and found
+in a separate repository,
+[mmCoreAndDevices](https://github.com/micro-manager/mmCoreAndDevices),
+which is currently a git submodule of this repository.
 
-**Maintainers only**: Some vendors do not allow us to make public device adapters written for their equipment.  If you are part of the micro-manager group, you can get access to these "secret" device adapters by:
+To checkout both repositories together:
 
-1. Move Git bash into the `mmCoreAndDevices` submodule: `cd mmCoreAndDevices`
-2. Change to the "privateMain" branch: `git checkout privateMain`
-3. "privateMain" has a submodule that main does not. Make sure that any new submodules are in a consistent state: `git submodule update --init --recursive --remote`  
-For more information about working with Git submodules click [here](https://git-scm.com/book/en/v2/Git-Tools-Submodules). 
+```sh
+git clone --recurse-submodules https://github.com/micro-manager/micro-manager.git
+```
 
+### Branches
 
-For licensing information, please see [**doc/copyright.txt**](doc/copyright.txt).
+- `main` - the main branch of development (Micro-Manager 2.x)
+- `svn-mirror` - git-svn mirror of the Micro-Manager 1.4 Subversion repository
 
-For build instructions, please see the [**doc/how-to-build.md**](doc/how-to-build.md).
+Other branches are not official.
+
+## Developer information
+
+For license information, please see [doc/copyright.txt](doc/copyright.txt).
+
+For build instructions, please see the [doc/how-to-build.md](doc/how-to-build.md).
 
 Additional information is available on the Micro-Manager website at
 https://micro-manager.org
 
-### Contributing  
-Start here: https://micro-manager.org/How_to_debug_and_develop_MM2.0
+## Contributing
+
+Start here: https://micro-manager.org/Building_and_debugging_Micro-Manager_source_code
