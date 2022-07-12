@@ -6,6 +6,7 @@ repos:
         args:
           - --jdk=temurin-jre:17
           - --tool-version=10.3.1
+          - --jvm-arg=-Dcheckstyle.javadoc.severity=ignore
           - --
           - -c
           - buildscripts/codestyle/checkstyle.xml
