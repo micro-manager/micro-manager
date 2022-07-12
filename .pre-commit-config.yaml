@@ -1,0 +1,12 @@
+repos:
+  - repo: https://github.com/cachedjdk/cjdk-pre-commit
+    rev: v0.1.0
+    hooks:
+      - id: checkstyle
+        args:
+          - --jdk=temurin-jre:17
+          - --tool-version=10.3.1
+          - --
+          - -c
+          - buildscripts/codestyle/checkstyle.xml
+        files: '^mmstudio/src/main/java/'
