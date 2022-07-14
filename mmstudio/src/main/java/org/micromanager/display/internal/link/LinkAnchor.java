@@ -84,7 +84,6 @@ public interface LinkAnchor<T> {
    /**
     * Return whether this anchor is linked to others.
     *
-    * @return
     * @see AnchorDidMakeLinkEvent
     * @see AnchorWillBreakLinkEvent
     */

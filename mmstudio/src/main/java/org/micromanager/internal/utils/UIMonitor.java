@@ -105,6 +105,7 @@ public final class UIMonitor {
                         .getSimpleName() + ".";
                   ReportingUtils.logDebugMessage(message);
                } catch (NullPointerException npe) {
+                  // Skip logging on failure.
                }
             }
          }

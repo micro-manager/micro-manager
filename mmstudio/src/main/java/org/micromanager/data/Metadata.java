@@ -176,7 +176,8 @@ public interface Metadata {
 
       MetadataBuilder receivedTime(String receivedTime);
 
-      MetadataBuilder ROI(Rectangle ROI);
+      @SuppressWarnings("checkstyle:MethodName")
+      MetadataBuilder ROI(Rectangle roi);
 
       MetadataBuilder scopeData(PropertyMap scopeData);
 

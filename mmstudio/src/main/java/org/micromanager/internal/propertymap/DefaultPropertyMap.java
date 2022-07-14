@@ -997,10 +997,10 @@ public final class DefaultPropertyMap implements PropertyMap {
       return getRaw(key, boxedClass, aDefault);
    }
 
-   private <PA> PA getPrimitiveArray(String key, Primitive p, PA defaults) {
+   private <A> A getPrimitiveArray(String key, Primitive p, A defaults) {
       Preconditions.checkNotNull(key);
-      Class<PA> arrayClass = (Class<PA>) p.getPrimitiveArrayClass();
-      return (PA) p.clonePrimitiveArray(getRaw(key, arrayClass, defaults));
+      Class<A> arrayClass = (Class<A>) p.getPrimitiveArrayClass();
+      return (A) p.clonePrimitiveArray(getRaw(key, arrayClass, defaults));
    }
 
    private <B> List<B> getBoxedList(String key, Primitive p, Iterable<B> defaults) {
@@ -1742,6 +1742,7 @@ public final class DefaultPropertyMap implements PropertyMap {
                try {
                   ois.close();
                } catch (IOException cantActuallyHappenWithByteArray) {
+                  throw new AssertionError("Programming error");
                }
             }
          }

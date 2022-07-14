@@ -144,6 +144,7 @@ public final class RolesPage extends PagePanel {
                model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
                      MMCoreJ.getG_Keyword_CoreCamera(), cameras.get(0));
             } catch (Exception e) {
+               // Shouldn't happen
             }
          }
          GUIUtils.replaceComboContents(cameraComboBox_, items);
@@ -160,6 +161,7 @@ public final class RolesPage extends PagePanel {
                model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
                      MMCoreJ.getG_Keyword_CoreShutter(), shutters.get(0));
             } catch (Exception e) {
+               // Shouldn't happen
             }
          }
          GUIUtils.replaceComboContents(shutterComboBox_, items);
@@ -177,7 +179,7 @@ public final class RolesPage extends PagePanel {
                model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(),
                      MMCoreJ.getG_Keyword_CoreFocus(), stages.get(0));
             } catch (Exception e) {
-
+               // Shouldn't happen
             }
          }
 

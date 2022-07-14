@@ -4,6 +4,32 @@
           "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <!--
+  This file is a modified version of the google_checks.xml file from the
+  Checkstyle project.
+
+  Copyright 2022 Checkstyle copyright holders and Micro-Manager contributors
+  SPDX-License-Identifier: LGPL-2.1+
+
+  Documentation is here: https://checkstyle.org/checks.html
+
+  Here are the major changes from google_checks.xml:
+  - Default 'severity' changed from 'warning' to 'error'.
+  - The 'format' for various names has been changed to allow names like xLabel
+    or yPosition.
+  - The 'format' for 'MemberName' has been changed to allow a trailing
+    underscore.
+  - 'Indentation' properties have been changed to multiples of 3.
+  - Severity for 'AbbreviationAsWordInName' is set to 'ignore', allowing names
+    like 'refreshGUI'.
+  - The following checks have their severity set to 'warning' by default, but
+    can be overridden with the property checkstyle.javadoc.severity:
+      - 'NonEmptyAtclauseDescription'
+      - 'SummaryJavadoc'
+      - 'MissingJavadocMethod'
+      - 'MissingJavadocType'
+
+  Original header comment follows.
+
     Checkstyle configuration that checks the Google coding conventions from Google Java Style
     that can be found at https://google.github.io/styleguide/javaguide.html
 
@@ -16,7 +42,9 @@
     Authors: Max Vetrenko, Ruslan Diachenko, Roman Ivanov.
  -->
 
-<module name = "Checker">
+<module name="Checker">
+  <module name="SuppressWarningsFilter"/>
+
   <property name="charset" value="UTF-8"/>
 
   <property name="severity" value="error"/>
@@ -33,7 +61,6 @@
            default="checkstyle-suppressions.xml" />
     <property name="optional" value="true"/>
   </module>
-	
 
   <!-- Checks for whitespace                               -->
   <!-- See http://checkstyle.org/config_whitespace.html -->
@@ -105,8 +132,10 @@
     </module>
     <module name="WhitespaceAfter">
       <property name="tokens"
-               value="COMMA, SEMI, TYPECAST, LITERAL_IF, LITERAL_ELSE,
-                    LITERAL_WHILE, LITERAL_DO, LITERAL_FOR, DO_WHILE"/>
+               value="COMMA, SEMI, TYPECAST, LITERAL_IF, LITERAL_ELSE, LITERAL_RETURN,
+                    LITERAL_WHILE, LITERAL_DO, LITERAL_FOR, LITERAL_FINALLY, DO_WHILE, ELLIPSIS,
+                    LITERAL_SWITCH, LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_CATCH, LAMBDA,
+                    LITERAL_YIELD, LITERAL_CASE"/>
     </module>
     <module name="WhitespaceAround">
       <property name="allowEmptyConstructors" value="true"/>
@@ -124,7 +153,8 @@
                     NOT_EQUAL, PLUS, PLUS_ASSIGN, QUESTION, RCURLY, SL, SLIST, SL_ASSIGN, SR,
                     SR_ASSIGN, STAR, STAR_ASSIGN, LITERAL_ASSERT, TYPE_EXTENSION_AND"/>
       <message key="ws.notFollowed"
-              value="WhitespaceAround: ''{0}'' is not followed by whitespace. Empty blocks may only be represented as '{}' when not part of a multi-block statement (4.1.3)"/>
+              value="WhitespaceAround: ''{0}'' is not followed by whitespace. Empty blocks
+               may only be represented as '{}' when not part of a multi-block statement (4.1.3)"/>
       <message key="ws.notPreceded"
               value="WhitespaceAround: ''{0}'' is not preceded with whitespace."/>
     </module>
@@ -263,6 +293,7 @@
                     PARAMETER_DEF, VARIABLE_DEF, METHOD_DEF, PATTERN_VARIABLE_DEF, RECORD_DEF,
                     RECORD_COMPONENT_DEF"/>
     </module>
+    <module name="NoWhitespaceBeforeCaseDefaultColon"/>
     <module name="OverloadMethodsDeclarationOrder"/>
     <module name="VariableDeclarationUsageDistance"/>
     <module name="CustomImportOrder">
@@ -308,10 +339,17 @@
       <property name="tokens" value="VARIABLE_DEF"/>
       <property name="allowSamelineMultipleAnnotations" value="true"/>
     </module>
-    <module name="NonEmptyAtclauseDescription"/>
+    <module name="NonEmptyAtclauseDescription">
+      <property name="severity"
+        value="${checkstyle.javadoc.severity}"
+        default="warning"/>
+    </module>
     <module name="InvalidJavadocPosition"/>
     <module name="JavadocTagContinuationIndentation"/>
     <module name="SummaryJavadoc">
+      <property name="severity"
+        value="${checkstyle.javadoc.severity}"
+        default="warning"/>
       <property name="forbiddenSummaryFragments"
                value="^@return the *|^This method returns |^A [{]@code [a-zA-Z0-9]+[}]( is a )"/>
     </module>
@@ -330,6 +368,9 @@
       <property name="tokens" value="METHOD_DEF, CTOR_DEF, ANNOTATION_FIELD_DEF, COMPACT_CTOR_DEF"/>
     </module>
     <module name="MissingJavadocMethod">
+      <property name="severity"
+        value="${checkstyle.javadoc.severity}"
+        default="warning"/>
       <property name="scope" value="public"/>
       <property name="minLineCount" value="2"/>
       <property name="allowedAnnotations" value="Override, Test"/>
@@ -337,6 +378,9 @@
                                    COMPACT_CTOR_DEF"/>
     </module>
     <module name="MissingJavadocType">
+      <property name="severity"
+        value="${checkstyle.javadoc.severity}"
+        default="warning"/>
       <property name="scope" value="protected"/>
       <property name="tokens"
                 value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF,
@@ -344,7 +388,7 @@
       <property name="excludeScope" value="nothing"/>
     </module>
     <module name="MethodName">
-      <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9_]*$"/>
+      <property name="format" value="^[a-z]([a-zA-Z0-9]*)?$"/>
       <message key="name.invalidPattern"
              value="Method name ''{0}'' must match pattern ''{1}''."/>
     </module>
@@ -360,6 +404,19 @@
       <property name="file" value="${org.checkstyle.google.suppressionxpathfilter.config}"
              default="checkstyle-xpath-suppressions.xml" />
       <property name="optional" value="true"/>
+    </module>
+    <module name="SuppressWarningsHolder" />
+    <module name="SuppressionCommentFilter">
+      <property name="offCommentFormat" value="CHECKSTYLE.OFF\: ([\w\|]+)" />
+      <property name="onCommentFormat" value="CHECKSTYLE.ON\: ([\w\|]+)" />
+      <property name="checkFormat" value="$1" />
+    </module>
+    <module name="SuppressWithNearbyCommentFilter">
+      <property name="commentFormat" value="CHECKSTYLE.SUPPRESS\: ([\w\|]+)"/>
+      <!-- $1 refers to the first match group in the regex defined in commentFormat -->
+      <property name="checkFormat" value="$1"/>
+      <!-- The check is suppressed in the next line of code after the comment -->
+      <property name="influenceFormat" value="1"/>
     </module>
   </module>
 </module>

@@ -790,7 +790,7 @@ public final class DevicesPage extends PagePanel implements
 
       String thisLibrary = "";
       DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by "
-            + "\u00B5" + "Manager");
+            + "\u00B5" + "Manager"); // U+00B5 MICRO SIGN
       DeviceTreeNode node = null;
       for (Device device : devices) {
          // assume that the first library doesn't have an empty name! (of

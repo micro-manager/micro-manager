@@ -330,8 +330,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       // tolerance.
       //
       // 1.0e-9 is a reasonable relative tolerance to use here, since it
-      // translates to 1 nm when the stage position is 1 m (1e6 µm). Thinking
-      // of piezo stages, a generous position of 1000 µm would give relative
+      // translates to 1 nm when the stage position is 1 m (1e6 um). Thinking
+      // of piezo stages, a generous position of 1000 um would give relative
       // tolerance of 1 pm, again small enough to be negligible.
       //
       // The machine epsilon for double is 2e-53, so we could use a much

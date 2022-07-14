@@ -89,10 +89,10 @@ public final class DetectorJDialog extends JDialog {
       pack();
    }
 
+   @SuppressWarnings("checkstyle:MethodName")
    private void cancelButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       System.out.print("cancelButton_ActionPerformed");
       cancelRequest_ = true;
-
    }
 
    private void formComponentShown(java.awt.event.ComponentEvent evt) {

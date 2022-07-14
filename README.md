@@ -24,6 +24,9 @@ To checkout both repositories together:
 git clone --recurse-submodules https://github.com/micro-manager/micro-manager.git
 ```
 
+If you will be making changes to the code, make sure to **enable pre-commit
+hooks** as described in [doc/pre-commit.md](doc/pre-commit.md).
+
 ### Branches
 
 - `main` - the main branch of development (Micro-Manager 2.x)
