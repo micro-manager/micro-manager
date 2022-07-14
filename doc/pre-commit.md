@@ -63,16 +63,18 @@ Bash:
 
 ```sh
 cd path/to/micro-manager
-python -m venv venv
+python -m venv venv              # Run the 'venv' module to create 'venv'
 echo '*' > venv/.gitignore       # Tell Git to ignore 'venv/'
 source venv/Scripts/activate     # Activate the venv
 python -m pip install pre-commit
 ```
 
-Make sure that you activate the virtual environment every time you work with
-`git` in a new terminal window.
+Make sure you activate the virtual environment (`. venv/Scripts/activate`)
+every time you work with a new Git Bash window. In Bash, the abbreviation `.`
+(period) is equivalent to `source`.
 
-You can also use a Conda virtual environment.
+If you use `venv` on macOS or Linux, the activation script is
+`venv/bin/activate`. You can also use a Conda virtual environment.
 
 ### Enabling pre-commit
 
