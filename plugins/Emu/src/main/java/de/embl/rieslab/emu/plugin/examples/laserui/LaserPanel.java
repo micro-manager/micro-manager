@@ -132,7 +132,7 @@ public class LaserPanel extends ConfigurablePanel {
        * JComponents or call the methods from SwingUIListeners.
        */
 
-      // The JSlider will update the UIProperty (percentage) and the JLabel (with a "%" suffix)
+      // The JSlider and the JTextField will update the UIProperty, as well as each other
       UIProperty powerProperty = null;
       try {
          powerProperty = getUIProperty(getUIPropertyLabel(POWER_MW));
@@ -178,8 +178,8 @@ public class LaserPanel extends ConfigurablePanel {
        * Here we can modify the UI to reflect this change.
        */
 
-      if (getUIPropertyLabel(POWER_MW).equals(getUIPropertyLabel(POWER_MW))) {
-         // if the change concerns the laser percentage
+      if (getUIPropertyLabel(POWER_MW).equals(propertyName)) {
+         // if the change concerns the laser power
          // Let's test if the value is a number
          if (EmuUtils.isNumeric(newValue)) {
             textField.setText(newValue);
@@ -202,7 +202,7 @@ public class LaserPanel extends ConfigurablePanel {
    @Override
    protected void parameterhasChanged(String parameterName) {
       /*
-       * This method is called when a UIProperty has changed.
+       * This method is called when a UIParameter has changed.
        * Here we can modify the UI to reflect this change. It
        * is only called when the plugin is loaded or the configuration
        * changed.
@@ -254,16 +254,13 @@ public class LaserPanel extends ConfigurablePanel {
        * panel works.
        */
       return
-            "Laser panels control each a single laser and allow for rapid on/off and power "
-                  + "percentage changes. If the laser does not have a power percentage property, "
-                  + "the UI property parameters SLOPE and OFFSET can be used to rescale the "
-                  + "power property to a percentage. The name and color of the laser can also "
-                  + "be modified using the corresponding parameters.";
+            // TODO expand once the linearizer utility device is finished/
+            "Laser panels each control the power of a single laser. ";
    }
 
 
    /**
-    * Adds a Swing action listener to a JSlider.i
+    * Adds a Swing action listener to a JSlider.
     * Updates the given TextField with the value.
     *
     * @param cp          ConfigurablePanel that owns the UIProperty {@code propertyKey}
