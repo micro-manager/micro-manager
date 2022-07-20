@@ -115,7 +115,7 @@ public class AcquisitionTableFrame extends JFrame {
         // used to save and load settings
         fileBrowser_ = new JFileChooser();
         fileBrowser_.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileBrowser_.setFileFilter(new FileNameExtensionFilter("JSON Files (.txt, .text)", "txt", "text"));
+        fileBrowser_.setFileFilter(new FileNameExtensionFilter("JSON Files (.txt, .text, .json)", "txt", "text", "json"));
         
         directoryBrowser_ = new JFileChooser();
         directoryBrowser_.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
