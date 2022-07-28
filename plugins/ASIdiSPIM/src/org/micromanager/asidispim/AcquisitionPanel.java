@@ -3836,21 +3836,27 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      
                      final MultiStagePosition nextPosition = positionList.getPosition(positionNum);
                      
-                     if (!raiseSPIMHead) {
+                     // move to the next position
+                     if (raiseSPIMHead && positionNum == 0) {
+                    	 // move to the XY position first
+                         StagePosition posXY = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE)); 
+                         if (posXY != null) {
+	                         core_.setXYPosition(posXY.stageName, posXY.x, posXY.y);
+	                         core_.waitForDevice(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                         }
+                     	 // lower SPIM head after we move into position
+                         StagePosition posZ = nextPosition.get(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
+                         if (posZ != null) {
+	                         core_.setPosition(posZ.stageName, posZ.x);
+	                         core_.waitForDevice(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
+                         }
+                         // handle all remaining stage motion
+                         MultiStagePosition.goToPosition(nextPosition, core_);
+                     } else {
                          // blocking call; will wait for stages to move
                          // NB: assume planar correction is handled by marked Z position; this seems better
                          //   than making it impossible for user to select different Z positions e.g. for YZ grid
                          MultiStagePosition.goToPosition(nextPosition, core_);
-                     } else {
-                         // get device labels
-                         final String xyStage = devices_.getMMDevice(Devices.Keys.XYSTAGE);
-                         final String upperZDrive = devices_.getMMDevice(Devices.Keys.UPPERZDRIVE);
-                         // move XY and wait for device
-                         core_.setXYPosition(xyStage, nextPosition.getX(), nextPosition.getY());
-                         core_.waitForDevice(xyStage);
-                         // move Z and wait for device
-                         core_.setPosition(upperZDrive, nextPosition.getZ());
-                         core_.waitForDevice(upperZDrive);
                      }
 
                      // update local stage positions after move (xPositionUm_, yPositionUm_, zPositionUm_)
@@ -4659,6 +4665,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // if we did stage scanning restore its position and speed
       if (acqSettings.isStageScanning) {
+         // check if we are raising the SPIM head to the load position between every acquisition
+         final boolean returnToOriginalPosition = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), 
+                    Properties.Keys.PLUGIN_RETURN_TO_ORIGINAL_POSITION_AFTER_STAGESCAN, false);
+
          try {
             // make sure stage scanning state machine is stopped, otherwise setting speed/position won't take
             props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
@@ -4667,10 +4677,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   Properties.Keys.STAGESCAN_MOTOR_SPEED_X, origXSpeed);
             props_.setPropValue(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, origXAccel);
-            core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
-                  xyPosUm.x, xyPosUm.y);
          } catch (Exception ex) {
-            MyDialogUtils.showError("Could not restore XY stage position after acquisition", hideErrors);
+            MyDialogUtils.showError("Could not restore XY stage settings after acquisition", hideErrors);
+         }
+         
+         if (returnToOriginalPosition) {
+            try {
+                core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), xyPosUm.x, xyPosUm.y);  
+            } catch (Exception ex) {
+                MyDialogUtils.showError("Could not restore XY stage position after acquisition", hideErrors);
+            }
          }
       }
       

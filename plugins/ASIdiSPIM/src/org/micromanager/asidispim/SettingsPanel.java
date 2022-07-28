@@ -81,7 +81,7 @@ public class SettingsPanel extends ListeningJPanel {
    private final JCheckBox raiseSPIMHead_;
    private final JCheckBox usePathGroupAcquisition_;
    private final JCheckBox acqBothCamerasSimult_;
-   
+
    /**
     * 
     * @param gui Micro-Manager api
@@ -309,23 +309,30 @@ public class SettingsPanel extends ListeningJPanel {
                   Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED, 67.0);
             stageScanPanel.add(scanRetraceSpeed, "wrap");
          }
-         final JCheckBox scanFromStart = pu.makeCheckBox("Scan from current position instead of center",
-               Properties.Keys.PLUGIN_SCAN_FROM_START_POSITION, panelName_, false);
-         stageScanPanel.add(scanFromStart, "span 2, wrap, alignx left");
-         final JCheckBox scanNegativeDirection = pu.makeCheckBox("Scan negative direction",
-               Properties.Keys.PLUGIN_SCAN_NEGATIVE_DIRECTION, panelName_, false);
-         stageScanPanel.add(scanNegativeDirection, "span 2, wrap, alignx left");
          stageScanPanel.add(new JLabel("Path A stage/objective angle [\u00B0]:"));
          final JSpinner stageAnglePathA = pu.makeSpinnerFloat(1, 89, 1,
                Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA,
                ASIdiSPIM.oSPIM ? 60 : 45);
          stageAnglePathA.setToolTipText("for Path A, e.g. 60 for oSPIM and 45 for symmetric diSPIM");
          stageScanPanel.add(stageAnglePathA, "wrap");
+         
+         final JCheckBox scanFromStart = pu.makeCheckBox("Scan from current position instead of center",
+               Properties.Keys.PLUGIN_SCAN_FROM_START_POSITION, panelName_, false);
+         stageScanPanel.add(scanFromStart, "span 2, wrap, alignx left");
+         final JCheckBox scanNegativeDirection = pu.makeCheckBox("Scan negative direction",
+               Properties.Keys.PLUGIN_SCAN_NEGATIVE_DIRECTION, panelName_, false);
+         stageScanPanel.add(scanNegativeDirection, "span 2, wrap, alignx left");
+         
+         final JCheckBox restoreOriginalPosition = restoreOriginalPosition_ = pu.makeCheckBox("Return to original position after scan",
+               Properties.Keys.PLUGIN_RETURN_TO_ORIGINAL_POSITION_AFTER_STAGESCAN, panelName_, false);
+         stageScanPanel.add(restoreOriginalPosition_, "wrap");
+         
       } else {
          stageScanPanel.add(new JLabel("Stage scanning not supported by your"), "left, wrap");
          stageScanPanel.add(new JLabel("Tiger firmware.  See http://dispim.org"), "left, wrap");
          stageScanPanel.add(new JLabel("for further information."), "left, wrap");
       }
+	  
       
       // end stage scan panel
       

@@ -210,6 +210,7 @@ public class Properties {
       PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT("AcquireBothCamerasSimult"),
       PLUGIN_ACQUIRE_FAIL_QUIETLY("AcquireFailQuietly"),
       PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS("RaiseSPIMHeadBetweenAcquisitions"),
+      PLUGIN_RETURN_TO_ORIGINAL_POSITION_AFTER_STAGESCAN("ReturnToOriginalPositionAfterStageScan"),
       PLUGIN_USE_TOOLSET("UseImageJToolset"),
       PREFS_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
       PREFS_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),
