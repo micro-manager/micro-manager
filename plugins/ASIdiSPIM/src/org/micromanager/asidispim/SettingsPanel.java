@@ -323,9 +323,9 @@ public class SettingsPanel extends ListeningJPanel {
                Properties.Keys.PLUGIN_SCAN_NEGATIVE_DIRECTION, panelName_, false);
          stageScanPanel.add(scanNegativeDirection, "span 2, wrap, alignx left");
          
-         final JCheckBox restoreOriginalPosition = restoreOriginalPosition_ = pu.makeCheckBox("Return to original position after scan",
+         final JCheckBox restoreOriginalPosition = pu.makeCheckBox("Return to original position after scan",
                Properties.Keys.PLUGIN_RETURN_TO_ORIGINAL_POSITION_AFTER_STAGESCAN, panelName_, false);
-         stageScanPanel.add(restoreOriginalPosition_, "wrap");
+         stageScanPanel.add(restoreOriginalPosition, "wrap");
          
       } else {
          stageScanPanel.add(new JLabel("Stage scanning not supported by your"), "left, wrap");
