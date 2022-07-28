@@ -23,6 +23,7 @@ import org.micromanager.Studio;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.data.internal.DefaultNewPipelineEvent;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
 
 // TODO: currently we redraw the entire table any time it changes, rather than
 // only redrawing the row(s) that are modified.
@@ -90,8 +91,12 @@ public final class PipelineTableModel extends AbstractTableModel {
       List<ConfiguratorWrapper> configs = getEnabledConfigurators(isLiveMode);
       ArrayList<ProcessorFactory> result = new ArrayList<>();
       for (ConfiguratorWrapper config : configs) {
-         PropertyMap settings = config.getConfigurator().getSettings();
-         result.add(config.getPlugin().createFactory(settings));
+         try {
+            PropertyMap settings = config.getConfigurator().getSettings();
+            result.add(config.getPlugin().createFactory(settings));
+         } catch (Exception e) {
+           ReportingUtils.showError(e, "Failed to construct all parts of this pipeline.");
+         }
       }
       return result;
    }
