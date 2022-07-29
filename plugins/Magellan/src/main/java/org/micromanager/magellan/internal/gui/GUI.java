@@ -736,7 +736,7 @@ public class GUI extends javax.swing.JFrame {
       });
 
       surfacesAndGridsTable_.setModel(new SurfaceGridTableModel());
-      surfacesAndGridsTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+      surfacesAndGridsTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
       jScrollPane2.setViewportView(surfacesAndGridsTable_);
 
       jButton2.setText("Export selected to micro-manager");
@@ -2123,9 +2123,11 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_syncExposuresButton_ActionPerformed
 
    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-      int index = surfacesAndGridsTable_.getSelectedRow();
-      if (index != -1) {
-         SurfaceGridManager.getInstance().getSurfaceOrGrid(index).exportToMicroManager();
+      int[] rows = surfacesAndGridsTable_.getSelectedRows();
+      if (rows.length > 0) {
+         for (int index: rows) {
+            SurfaceGridManager.getInstance().getSurfaceOrGrid(index).exportToMicroManager();
+         }
       }
    }//GEN-LAST:event_jButton2ActionPerformed
 
