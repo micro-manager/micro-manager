@@ -3,9 +3,18 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// AUTHOR:        Zhang Ren, zhangren@tucsen.com, 27/03/2017
+// DESCRIPTION:   The example implementation of the demo camera.
+//                Simulates generic digital camera and associated automated
+//                microscope devices and enables testing of the rest of the
+//                system without the need to connect to the actual hardware. 
+//                
+// AUTHOR:        fandayu, fandayu@tucsen.com 2022
+//                
+//                Karl Hoover (stuff such as programmable CCD size  & the various image processors)
+//                Arther Edelstein ( equipment error simulation)
 //
-// COPYRIGHT:     Tucsen Photonics Co., Ltd.  2018
+// COPYRIGHT:     Tucsen Photonics Co., Ltd., 2022
+//               
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -22,9 +31,9 @@
 #define _MMTUCAM_H_
 
 #include "TUCamApi.h"
-#include "../../MMDevice/DeviceBase.h"
-#include "../../MMDevice/ImgBuffer.h"
-#include "../../MMDevice/DeviceThreads.h"
+#include "DeviceBase.h"
+#include "ImgBuffer.h"
+#include "DeviceThreads.h"
 #include <string>
 #include <map>
 #include <algorithm>
@@ -77,6 +86,11 @@ const int SEVEN_SEGMENT_Y_OFFSET[] = {0, 0, 0, 1, 1, 1, 2};
 #define PID_FL_20BW         0xE40D
 #define DHYANA_D95_V2       0xE40F
 #define DHYANA_401D         0xE005
+#define DHYANA_201D         0xE007
+#define DHYANA_4040V2       0xE412    
+#define DHYANA_4040BSI      0xE413    
+#define DHYANA_400BSIV3     0xE419
+#define DHYANA_XF4040BSI    0xE41B  
 
 ///////////////////////
 // ImgMode
@@ -85,6 +99,14 @@ const int SEVEN_SEGMENT_Y_OFFSET[] = {0, 0, 0, 1, 1, 1, 2};
 #define MODE_CMS      0x01
 #define MODE_11BIT    0x02
 #define MODE_GLRESET  0x03
+
+typedef enum
+{
+	TU_USB2_DRIVER       = 0x00,     // USB2.0 driver
+	TU_USB3_DRIVER       = 0x01,     // USB3.0 driver
+	TU_PHXCAMERALINK     = 0x02,     // Fire Bird CameraLink
+	TU_EURESYSCAMERALINK = 0x03,     // Euresys CameraLink
+} TUDRVER_TYPE;
 
 class DemoHub : public HubBase<DemoHub>
 {
@@ -122,6 +144,20 @@ private:
 class CTUCamThread;
 
 // outputtrigger mode
+// typedef enum the output trigger port mode
+/*typedef enum 
+{
+	TUPORT_ONE                  = 0x00,            // use port1
+	TUPORT_TWO                  = 0x01,            // use port2
+	TUPORT_THREE                = 0x02,            // use port3
+}TUCAM_OUTPUTTRG_PORT;*/
+
+typedef enum
+{
+	TRITYPE_SMA = 0x00,            
+	TRITYPE_HR  = 0x01,
+	TRITYPE_END = 0x02,
+}TRIGGER_TYPE;
 
 // the camera triggerout attribute
 typedef struct _tagTUCAM_PATAM_TRGOUTPUT
@@ -139,6 +175,21 @@ typedef struct _tagTUCAM_TRGOUTPUT
     TUCAM_PATAM_TRGOUTPUT TgrPort2;
 	TUCAM_PATAM_TRGOUTPUT TgrPort3;
 }TUCAM_TRGOUTPUT;
+
+// the camera rolling scan para
+typedef struct _tagTUCAM_RSPARA
+{
+	INT32  nMode;         // Mode
+	INT32  nLTDelay;      // Line time delay
+	INT32  nLTDelayMax;   // Line time delay Max
+	INT32  nLTDelayMin;   // Line time delay Min
+	INT32  nLTDelayStep;  // Line time delay Step
+	INT32  nSlitHeight;   // Slit height
+	INT32  nSlitHeightMax;// Slit height Max
+	INT32  nSlitHeightMin;// Slit height Min
+	INT32  nSlitHeightStep;// Slit height Step
+	DOUBLE dbLineInvalTm; // Line interval time
+}TUCAM_RSPARA;
 
 class CMMTUCam : public CCameraBase<CMMTUCam>  
 {
@@ -189,6 +240,9 @@ public:
     int AddToExposureSequence(double exposureTime_ms);
     int SendExposureSequence() const;
 
+	double LineIntervalTime(int nLineDelayTm);
+	int LineIntervalCal(int nVal, bool bExpChange = true);
+
     unsigned  GetNumberOfComponents() const { return nComponents_;};
 
     // action interface
@@ -200,9 +254,24 @@ public:
     int OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnGlobalGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSensorReset(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnCMSMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLEDMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPIMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTECMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriOutEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+	int OnRollingScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnRollingScanLtd(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnRollinScanSlit(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnRollinScanLITm(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnRollingScanDir(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnRollingScanReset(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTestImageMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+
 	int OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnModeSelect(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnImageMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -212,12 +281,14 @@ public:
     int OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnClrTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnRedGain(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnGreenGain(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnBlueGain(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnATExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnFan(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnFanState(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnLeftLevels(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnRightLevels(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnImageFormat(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -225,6 +296,7 @@ public:
 	int OnTriggerExpMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTriggerEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriggerFrames(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTriggerDoSoftware(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnSharpness(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnDPCLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -236,6 +308,7 @@ public:
 	int OnTrgOutEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTrgOutDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTrgOutWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
+
     int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
@@ -257,7 +330,14 @@ private:
     int SetAllowedBinning();
     int SetAllowedPixelClock();
     int SetAllowedFanGear();
+
+	int SetAllowedGainMode();
     int SetAllowedImageMode();
+	int SetAllowedRSMode();
+	int SetAllowedRSDir();
+	int SetAllowedRSReset();
+	int SetAllowedTestImg();
+	int SetAllowedClrTemp();
 
     void TestResourceLocking(const bool);
     void GenerateEmptyImage(ImgBuffer& img);
@@ -330,14 +410,22 @@ private:
     int WaitForFrame(ImgBuffer& img);
 
     bool SaveRaw(char *pfileName, unsigned char *pData, unsigned long ulSize);
+	bool isSupportFanWaterCool();
+	bool isSupportFanCool();
+
+	void UpdateSlitHeightRange();
+	void UpdateExpRange();
 
 	static int   	s_nNumCam;				// The number of cameras
 	static int		s_nCntCam;				// The count of camera
 
+	int             m_nDriverType;          // The Driver Type
 	int             m_nPID;                 // The PID 
 	int             m_nBCD;                 // The BCD
     int             m_nIdxGain;             // The gain mode
     int             m_nMaxHeight;           // The max height size
+	int             m_nTriType;             // The trigger type   
+
     char            m_szImgPath[MAX_PATH];  // The save image path
     float           m_fCurTemp;             // The current temperature
     float           m_fValTemp;             // The temperature value
@@ -346,6 +434,12 @@ private:
     bool            m_bSaving;              // The tag of save image            
     bool            m_bTemping;             // The get temperature state
     bool            m_bLiving;              // The capturing state
+	bool            m_bAcquisition;         // The Acquisition
+	bool            m_bCC1Support;          // The support cc1
+	bool            m_bTriEn;
+	bool            m_bOffsetEn;
+	bool            m_bTempEn;              // The support temperature
+
 	HANDLE          m_hThdWaitEvt;          // The waiting frame thread event handle
     HANDLE          m_hThdTempEvt;          // To get the value of temperature event handle
 
@@ -355,6 +449,7 @@ private:
 	TUCAM_TRIGGER_ATTR m_tgrAttr;			// The trigger parameters
 	TUCAM_TRGOUT_ATTR  m_tgrOutAttr;        // The output trigger parameters
 	TUCAM_TRGOUTPUT    m_tgrOutPara;        // The output trigger parameter port
+	TUCAM_RSPARA       m_rsPara;            // The rolling scan parameter
 };
 
 class CTUCamThread : public MMDeviceThreadBase
