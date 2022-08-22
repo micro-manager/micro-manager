@@ -2409,6 +2409,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   if (usingDemoCam) {
                      Thread.sleep(1000);
                   }
+                  
+                  // wait 3 seconds or until core reports acquisition finished
+                  // this is work-around to apparent bug where images are finished but Core doesn't realize it
+                  startTime = System.currentTimeMillis();
+                  done = false;
+                  while (gui_.getMMCore().isSequenceRunning(camera)) {
+                     Thread.sleep(1);
+                     done = (System.currentTimeMillis() - startTime) > 3000;
+                  }
 
                   // clean up shutter
                   gui_.getMMCore().setShutterOpen(shutterOpen);
