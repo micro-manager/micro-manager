@@ -1,42 +1,38 @@
 /**
  * ExampleFrame.java
- *
+ * <p>
  * This module shows an example of creating a GUI (Graphical User Interface).
  * There are many ways to do this in Java; this particular example uses the
  * MigLayout layout manager, which has extensive documentation online.
- *
- *
+ * <p>
+ * <p>
  * Nico Stuurman, copyright UCSF, 2012, 2015
- *
+ * <p>
  * LICENSE: This file is distributed under the BSD license. License text is
  * included with the source distribution.
- *
+ * <p>
  * This file is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- *
+ * <p>
  * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
 package org.micromanager.plugins.micromanager;
-
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.stream.Collectors;
-
-import javax.swing.*;
-
 
 import graphics.scenery.Settings;
 import kotlin.Unit;
 import microscenery.ControlledVolumeStreamServer;
 import microscenery.network.ServerSignal;
 import net.miginfocom.swing.MigLayout;
-
 import org.joml.Vector3i;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionListener;
+import java.util.stream.Collectors;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
@@ -46,118 +42,129 @@ import org.micromanager.internal.utils.WindowPositioning;
 
 public class MicrosceneryStreamFrame extends JFrame {
 
-   private final JLabel statusLabel_;
-   private final JLabel portLabel_;
-   private final JLabel connectionsLabel_;
+    private final JLabel statusLabel_;
+    private final JLabel portLabel_;
+    private final JLabel connectionsLabel_;
 
-   private final JTextField minZText_;
-   private final JTextField maxZText_;
-   private final JTextField stepsText_;
-   private final JLabel stepSizeLabel_;
-   private final JLabel dimensionsLabel_;
-   private final JLabel timesLabel;
+    private final JTextField minZText_;
+    private final JTextField maxZText_;
+    private final JTextField stepsText_;
+    private final JTextField refreshTimeText_;
+    private final JLabel stepSizeLabel_;
+    private final JLabel dimensionsLabel_;
+    private final JLabel timesLabel;
 
-   //   private final JLabel imageInfoLabel_;
+    //   private final JLabel imageInfoLabel_;
 //   private final JLabel exposureTimeLabel_;
-   private final ControlledVolumeStreamServer msServer;
-   private final Settings msSettings;
+    private final ControlledVolumeStreamServer cvss;
+    private final Settings msSettings;
 
 
-   public MicrosceneryStreamFrame(Studio studio) {
-      super("Microscenery Stream Plugin");
-      msServer = new ControlledVolumeStreamServer(studio.core());
-      msSettings = msServer.getSettings();
+    public MicrosceneryStreamFrame(Studio studio) {
+        super("Microscenery Stream Plugin");
+        cvss = new ControlledVolumeStreamServer(studio.core());
+        msSettings = cvss.getSettings();
 
-      super.setLayout(new MigLayout());//"fill, insets 2, gap 2, flowx"));
+        //studio.acquisitions().runAcquisition().getImage()
 
-      super.add(new JLabel("Ports: "));
-      portLabel_ = new JLabel(msServer.getBasePort() +""
-              + msServer.getVolumeSender().usedPorts().stream().map(p -> " ,"+p).collect(Collectors.joining()));
-      super.add(portLabel_);
+        super.setLayout(new MigLayout());//"fill, insets 2, gap 2, flowx"));
 
-      super.add(new JLabel("Clients: "));
-      connectionsLabel_ = new JLabel("0");
-      super.add(connectionsLabel_,"wrap");
+        super.add(new JLabel("Ports: "));
+        portLabel_ = new JLabel(cvss.getBasePort() + "" + cvss.getVolumeSender().usedPorts().stream().map(p -> " ," + p).collect(Collectors.joining()));
+        super.add(portLabel_);
 
-
-      super.add(new JLabel("Min Z: "));
-      minZText_ = new JTextField(10);
-      minZText_.setText("0");
-      super.add(minZText_,"");
-
-      super.add(new JLabel("Max Z: "));
-      maxZText_ = new JTextField(10);
-      maxZText_.setText("100");
-      super.add(maxZText_,"wrap");
+        super.add(new JLabel("Clients: "));
+        connectionsLabel_ = new JLabel("0");
+        super.add(connectionsLabel_, "wrap");
 
 
-      super.add(new JLabel("Steps: "));
-      stepsText_ = new JTextField(10);
-      stepsText_.setText("100");
-      super.add(stepsText_,"");
+        super.add(new JLabel("Min Z (μm): "));
+        minZText_ = new JTextField(10);
+        minZText_.setText("0");
+        super.add(minZText_, "");
 
-      super.add(new JLabel("Step size: "));
-      stepSizeLabel_ = new JLabel("0");
-      super.add(stepSizeLabel_,"wrap");
-
-      { // Z settings
-         Double minZ = msSettings.get("MMConnection.minZ", 0.0f).doubleValue();
-         Double maxZ = msSettings.get("MMConnection.maxZ", 10.0f).doubleValue();
-         Integer steps = msSettings.get("MMConnection.slices", 10);
-         minZText_.setText(minZ.toString());
-         maxZText_.setText(maxZ.toString());
-         stepsText_.setText(steps.toString());
-         stepSizeLabel_.setText(((maxZ - minZ) / steps) + "");
-      }
-
-      super.add(new JLabel("Status: "));
-      statusLabel_ = new JLabel("uninitalized");
-      super.add(statusLabel_, "");
-
-      super.add(new JLabel("Stack dimensions: "));
-      dimensionsLabel_ = new JLabel("uninitalized");
-      super.add(dimensionsLabel_, "");
-
-      super.add(new JLabel("Acq time: "));
-      timesLabel = new JLabel("uninitalized");
-      super.add(timesLabel, "wrap");
-      final Timer timer = new Timer(500, null);
-      ActionListener listener = e -> timesLabel.setText("c:"+msServer.getMmConnection().getMeancopyTime()
-              +" s:"+msServer.getMmConnection().getMeanSnapTime() );
-      timer.addActionListener(listener);
-      timer.start();
+        super.add(new JLabel("Max Z (μm): "));
+        maxZText_ = new JTextField(10);
+        maxZText_.setText("100");
+        super.add(maxZText_, "wrap");
 
 
-      JButton applyButton = new JButton("Apply Params");
-      applyButton.addActionListener(e -> {
+        super.add(new JLabel("Steps: "));
+        stepsText_ = new JTextField(10);
+        stepsText_.setText("100");
+        super.add(stepsText_, "");
 
-         try {
-            Double minZ = Double.parseDouble(minZText_.getText());
-            Double maxZ = Double.parseDouble(maxZText_.getText());
-            int steps = Integer.parseInt(stepsText_.getText());
-            double stepSize = (maxZ - minZ) / steps;
-            if (stepSize <= 0){
-               JOptionPane.showMessageDialog(null, "Max Z has to be lager than Min Z");
-               return;
+        super.add(new JLabel("Step size (μm): "));
+        stepSizeLabel_ = new JLabel("0");
+        super.add(stepSizeLabel_, "wrap");
+
+        { // Z settings
+            Double minZ = msSettings.get("MMConnection.minZ", 0.0f).doubleValue();
+            Double maxZ = msSettings.get("MMConnection.maxZ", 10.0f).doubleValue();
+            Integer steps = msSettings.get("MMConnection.slices", 10);
+            minZText_.setText(minZ.toString());
+            maxZText_.setText(maxZ.toString());
+            stepsText_.setText(steps.toString());
+            stepSizeLabel_.setText(((maxZ - minZ) / steps) + "");
+        }
+
+
+        super.add(new JLabel("Refresh Time (ms): "));
+        refreshTimeText_ = new JTextField(String.valueOf(cvss.getTimeBetweenUpdates()),10);
+        super.add(refreshTimeText_, "wrap");
+
+
+        super.add(new JLabel("Status: "));
+        statusLabel_ = new JLabel("uninitalized");
+        super.add(statusLabel_, "");
+
+        super.add(new JLabel("Stack dimensions: "));
+        dimensionsLabel_ = new JLabel("uninitalized");
+        super.add(dimensionsLabel_, "");
+
+        super.add(new JLabel("Acq time: "));
+        timesLabel = new JLabel("uninitalized");
+        super.add(timesLabel, "wrap");
+        final Timer timer = new Timer(500, null);
+        ActionListener listener = e -> timesLabel.setText("c:" + cvss.getMmConnection().getMeanCopyTime() + " s:" + cvss.getMmConnection().getMeanSnapTime());
+        timer.addActionListener(listener);
+        timer.start();
+
+        JButton applyButton = new JButton("Apply Params");
+        applyButton.addActionListener(e -> updateParams());
+        super.add(applyButton);
+
+        JButton copyFromAcqEngButton = new JButton("Copy from AcqEng");
+        copyFromAcqEngButton.addActionListener(e -> {
+            double min = studio.acquisitions().getAcquisitionSettings().sliceZBottomUm();
+            double max = studio.acquisitions().getAcquisitionSettings().sliceZTopUm();
+            double stepsSize = studio.acquisitions().getAcquisitionSettings().sliceZStepUm();
+
+            if (min > max) {
+                // swat min and max (academic version)
+                min = min + max;
+                max = min - max;
+                min = min - max;
             }
-            stepSizeLabel_.setText(stepSize + "");
 
-            msSettings.set("MMConnection.minZ", minZ.floatValue());
-            msSettings.set("MMConnection.maxZ", maxZ.floatValue());
-            msSettings.set("MMConnection.slices", steps);
-         } catch (NumberFormatException exc){
-            JOptionPane.showMessageDialog(null, "Values could not be parsed. Max and Min Z need to be a floating point number and steps an integer. ");
-         }
-      });
-      super.add(applyButton);
+            minZText_.setText(Double.toString(min));
+            maxZText_.setText(Double.toString(max));
+            double steps = (max - min) / stepsSize +1;
+            stepsText_.setText(((Integer) (int) steps).toString());
 
-      JButton sendButton = new JButton("Start Imaging");
-      sendButton.addActionListener(e -> msServer.start());
-      super.add(sendButton);
+            updateParams();
+        });
+        super.add(copyFromAcqEngButton);
 
-      JButton stopButton = new JButton("Stop Imaging");
-      stopButton.addActionListener(e -> msServer.pause());
-      super.add(stopButton, "wrap");
+        JButton sendButton = new JButton("Start Imaging");
+        sendButton.addActionListener(e -> cvss.start());
+        super.add(sendButton);
+
+        JButton stopButton = new JButton("Stop Imaging");
+        stopButton.addActionListener(e -> cvss.pause());
+        super.add(stopButton, "wrap");
+
+        super.add(new JLabel("vAcquEngine"));
 
 //      // Snap an image, show the image in the Snap/Live view, and show some
 //      // stats on the image in our frame.
@@ -198,29 +205,52 @@ public class MicrosceneryStreamFrame extends JFrame {
 //      });
 //      super.add(acquireButton, "wrap");
 
-      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
-      super.setLocation(100, 100);
-      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
+        super.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
+        super.setLocation(100, 100);
+        WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
-      super.pack();
+        super.pack();
 
 
-      updateLabels(msServer.getStatus());
-      msServer.getStatusChange().add(status -> {
-         updateLabels(status);
-         return Unit.INSTANCE;
-      });
+        updateLabels(cvss.getStatus());
+        cvss.getStatusChange().add(status -> {
+            updateLabels(status);
+            return Unit.INSTANCE;
+        });
 
-      // Registering this class for events means that its event handlers
-      // (that is, methods with the @Subscribe annotation) will be invoked when
-      // an event occurs. You need to call the right registerForEvents() method
-      // to get events; this one is for the application-wide event bus, but
-      // there's also Datastore.registerForEvents() for events specific to one
-      // Datastore, and DisplayWindow.registerForEvents() for events specific
-      // to one image display window.
-      studio.events().registerForEvents(this);
-   }
+        // Registering this class for events means that its event handlers
+        // (that is, methods with the @Subscribe annotation) will be invoked when
+        // an event occurs. You need to call the right registerForEvents() method
+        // to get events; this one is for the application-wide event bus, but
+        // there's also Datastore.registerForEvents() for events specific to one
+        // Datastore, and DisplayWindow.registerForEvents() for events specific
+        // to one image display window.
+        studio.events().registerForEvents(this);
+    }
+
+    private void updateParams() {
+        try {
+            Double minZ = Double.parseDouble(minZText_.getText());
+            Double maxZ = Double.parseDouble(maxZText_.getText());
+            int steps = Integer.parseInt(stepsText_.getText());
+            double stepSize = (maxZ - minZ) / steps;
+            if (stepSize <= 0) {
+                JOptionPane.showMessageDialog(null, "Max Z has to be lager than Min Z");
+                return;
+            }
+            stepSizeLabel_.setText(stepSize + "");
+
+            int updateTime = Integer.parseInt(refreshTimeText_.getText());
+
+            msSettings.set("MMConnection.minZ", minZ.floatValue());
+            msSettings.set("MMConnection.maxZ", maxZ.floatValue());
+            msSettings.set("MMConnection.slices", steps);
+            msSettings.set("MMConnection.TimeBetweenStackAcquisition", updateTime);
+            cvss.setTimeBetweenUpdates(updateTime);
+        } catch (NumberFormatException exc) {
+            JOptionPane.showMessageDialog(null, "Values could not be parsed. Max and Min Z need to be a floating point number and steps an integer. ");
+        }
+    }
 
 //   /**
 //    * To be invoked, this method must be public and take a single parameter
@@ -246,30 +276,29 @@ public class MicrosceneryStreamFrame extends JFrame {
 //            //data.getMaxVal(), data.getMean(), data.getStdDev()));
 //   }
 
-   private void updateLabels(ServerSignal.Status status){
+    private void updateLabels(ServerSignal.Status status) {
 
-      // ports label
-      portLabel_.setText(msServer.getBasePort() +""
-              + status.getDataPorts().stream().map(p -> " ,"+p).collect(Collectors.joining()));
+        // ports label
+        portLabel_.setText(cvss.getBasePort() + "" + status.getDataPorts().stream().map(p -> " ," + p).collect(Collectors.joining()));
 
-      // connections label
-      connectionsLabel_.setText(status.getConnectedClients() +"");
+        // connections label
+        connectionsLabel_.setText(status.getConnectedClients() + "");
 
-      // status label
-      switch (status.getState()){
-         case Paused:
-            statusLabel_.setText("Paused");
-            break;
-         case Imaging:
-            statusLabel_.setText("Imaging");
-            break;
-         case ShuttingDown:
-            statusLabel_.setText("ShuttingDown");
-            break;
-      }
+        // status label
+        switch (status.getState()) {
+            case Paused:
+                statusLabel_.setText("Paused");
+                break;
+            case Imaging:
+                statusLabel_.setText("Imaging");
+                break;
+            case ShuttingDown:
+                statusLabel_.setText("ShuttingDown");
+                break;
+        }
 
-      // dimensions label
-      Vector3i d = status.getImageSize();
-      dimensionsLabel_.setText(d.x + "x" + d.y + "x" +d.z);
-   }
+        // dimensions label
+        Vector3i d = status.getImageSize();
+        dimensionsLabel_.setText(d.x + "x" + d.y + "x" + d.z);
+    }
 }
