@@ -57,6 +57,7 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.ndtiff.NDTiffAdapter;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
@@ -522,6 +523,8 @@ public final class MMAcquisition extends DataViewerListener {
                return new StorageSinglePlaneTiffSeries(store, path, isNew);
             case MULTIPAGE_TIFF:
                return new StorageMultipageTiff(studio.app().getMainWindow(), store, path, isNew);
+            case ND_TIFF:
+               return new NDTiffAdapter(store, path, isNew);
             default:
                break;
          }

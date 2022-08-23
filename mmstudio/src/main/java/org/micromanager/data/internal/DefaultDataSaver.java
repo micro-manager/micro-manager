@@ -13,6 +13,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.ndtiff.NDTiffAdapter;
 
 /**
  * TODO: Not sure if Swingworker is the best implementation.
@@ -52,6 +53,8 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
                duplicate_,
                path_, true, true,
                StorageMultipageTiff.getShouldSplitPositions());
+      } else if (mode == Datastore.SaveMode.ND_TIFF) {
+         saver_ = new NDTiffAdapter(duplicate_, path_, true);
       } else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          saver_ = new StorageSinglePlaneTiffSeries(duplicate_, path_, true);
       } else {

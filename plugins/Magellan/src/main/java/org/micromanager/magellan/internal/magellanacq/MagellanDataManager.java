@@ -53,8 +53,8 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
-import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
-import org.micromanager.multiresstorage.MultiresStorageAPI;
+import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
+import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.DataSourceInterface;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.overlay.Overlay;
@@ -70,7 +70,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
 
    private static final int SAVING_QUEUE_SIZE = 30;
 
-   private MultiresStorageAPI storage_;
+   private MultiresNDTiffAPI storage_;
    private ExecutorService displayCommunicationExecutor_;
    private final boolean loadedData_;
    private String dir_;
@@ -101,7 +101,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    public MagellanDataManager(String dir) throws IOException {
       displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
               -> new Thread(r, "Magellan viewer communication thread"));
-      storage_ = new MultiResMultipageTiffStorage(dir);
+      storage_ = new NDTiffStorage(dir);
       dir_ = dir;
       loadedData_ = true;
       showDisplay_ = true;
@@ -117,12 +117,12 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       AcqEngMetadata.setHeight(summaryMetadata, (int) Magellan.getCore().getImageHeight());
       AcqEngMetadata.setWidth(summaryMetadata, (int) Magellan.getCore().getImageWidth());
 
-      storage_ = new MultiResMultipageTiffStorage(dir_, name_,
+      storage_ = new NDTiffStorage(dir_, name_,
                  summaryMetadata,
                  AcqEngMetadata.getPixelOverlapX(summaryMetadata),
                  AcqEngMetadata.getPixelOverlapY(summaryMetadata),
                  true, null, SAVING_QUEUE_SIZE,
-                Engine.getCore().debugLogEnabled() ? (Consumer<String>) s -> Engine.getCore().logMessage(s) : null);
+                Engine.getCore().debugLogEnabled() ? (Consumer<String>) s -> Engine.getCore().logMessage(s) : null, true);
 
       if (showDisplay_) {
          createDisplay();
@@ -131,7 +131,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       name_ = this.getUniqueAcqName();
    }
 
-   public MultiresStorageAPI getStorage() {
+   public MultiresNDTiffAPI getStorage() {
       return storage_;
    }
 
@@ -182,7 +182,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       HashMap<String, Integer> axes = MagellanMD.getAxes(taggedImg.tags);
       axes.put(MagellanMD.CHANNEL_AXIS, channelNames_.indexOf(channelName));
 
-      Future added = storage_.putImageMultiRes(taggedImg, axes,
+      Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
               AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getHeight(taggedImg.tags),
               AcqEngMetadata.getWidth(taggedImg.tags));
 
@@ -345,8 +345,8 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
          public HashMap<String, Integer> apply(HashMap<String, Integer> axes) {
             HashMap<String, Integer> copy = new HashMap<String, Integer>(axes);
             //delete row and column so viewer doesn't use them
-            copy.remove(MultiResMultipageTiffStorage.ROW_AXIS);
-            copy.remove(MultiResMultipageTiffStorage.COL_AXIS);
+            copy.remove(NDTiffStorage.ROW_AXIS);
+            copy.remove(NDTiffStorage.COL_AXIS);
             return copy;
          }
       }).collect(Collectors.toSet());

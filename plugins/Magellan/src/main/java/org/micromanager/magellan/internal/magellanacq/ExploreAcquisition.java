@@ -48,8 +48,7 @@ import org.micromanager.acqj.internal.Engine;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.SingleChannelSetting;
 import org.micromanager.magellan.internal.gui.GUI;
-import org.micromanager.multiresstorage.StorageAPI;
-import org.micromanager.remote.RemoteViewerStorageAdapter;
+import org.micromanager.ndtiffstorage.NDTiffAPI;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -143,7 +142,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    }
 
    //Called by pycromanager
-   public StorageAPI getStorage() {
+   public NDTiffAPI getStorage() {
       return dataSink_ == null ? null : ((MagellanDataManager) dataSink_).getStorage();
    }
 
@@ -413,3 +412,4 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
 
    }
 }
+

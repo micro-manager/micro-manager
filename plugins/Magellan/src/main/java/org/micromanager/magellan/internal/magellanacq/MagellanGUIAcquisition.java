@@ -39,7 +39,7 @@ import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;
-import org.micromanager.multiresstorage.StorageAPI;
+import org.micromanager.ndtiffstorage.NDTiffAPI;
 
 /**
  *
@@ -112,7 +112,7 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
    }
 
    //Called by pycromanager
-   public StorageAPI getStorage() {
+   public NDTiffAPI getStorage() {
       return dataSink_ == null ? null : ((MagellanDataManager) dataSink_).getStorage();
    }
 
