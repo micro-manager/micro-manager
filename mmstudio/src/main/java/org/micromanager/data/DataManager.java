@@ -105,6 +105,28 @@ public interface DataManager {
    RewritableDatastore createRewritableRAMDatastore(Datastore storeToCopy);
 
    /**
+    * Generate a new, "blank" Datastore with  NDTIFF-based Storage and
+    * return it. This format stores multiple 2D image planes in the same file,
+    * up to 4GB per file. This Datastore will not be managed by Micro-Manager
+    * by default (see the org.micromanager.api.display.DisplayManager.manage()
+    * method for more information). Be certain to call the freeze() method of
+    * the Datastore when you have finished adding data to it, as the Storage
+    * must finalize the dataset before it is properly saved to disk.
+    *
+    * <p>More information on the NDTiff format can be found at: https://github.com/micro-manager/NDTiffStorage
+    *
+    * @param directory                      Location on disk to store the file(s).
+    * @return an empty Datastore backed by disk in the form of one or more
+    *     TIFF files each containing multiple image planes.
+    * @throws IOException if any errors occur while opening files for writing.
+    */
+   Datastore createNDTIFFDatastore(String directory)
+           throws IOException;
+
+   Datastore createNDTIFFDatastore(Datastore storeToCopy,
+                                          String directory) throws IOException;
+
+   /**
     * Generate a new, "blank" Datastore with multipage TIFF-based Storage and
     * return it. This format stores multiple 2D image planes in the same file,
     * up to 4GB per file. This Datastore will not be managed by Micro-Manager
