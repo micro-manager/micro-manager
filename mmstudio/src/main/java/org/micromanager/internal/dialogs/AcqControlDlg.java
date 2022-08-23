@@ -937,7 +937,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          singleButton_.setSelected(true);
       } else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
          multiButton_.setSelected(true);
-      } else if (mode == Datastore.SaveMode.ND_TIFF){
+      } else if (mode == Datastore.SaveMode.ND_TIFF) {
          ndtiffButton_.setSelected(true);
       } else {
          ReportingUtils.logError("Unrecognized save mode " + mode);

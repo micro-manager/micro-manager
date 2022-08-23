@@ -77,8 +77,8 @@ public class NDTiffAdapter implements Storage {
 
 
    public static boolean isNDTiffDataSet(String dir) {
-      return new File(dir + (dir.endsWith(File.separator) ?
-              "" : File.separator) + "NDTiff.index").exists();
+      return new File(dir + (dir.endsWith(File.separator)
+              ? "" : File.separator) + "NDTiff.index").exists();
    }
 
    @Override
@@ -306,30 +306,6 @@ public class NDTiffAdapter implements Storage {
       return DefaultMetadata.fromPropertyMap(
               NonPropertyMapJSONFormats.metadata().fromGson(je));
    }
-
-
-//    private static JSONObject convertMetadata(Metadata md) {
-//        PropertyKey.UUID,
-//                CAMERA,
-//                BINNING,
-//                ROI,
-//                BIT_DEPTH,
-//                EXPOSURE_MS,
-//                ELAPSED_TIME_MS,
-//                IMAGE_NUMBER,
-//                RECEIVED_TIME,
-//                PIXEL_SIZE_UM,
-//                PIXEL_SIZE_AFFINE,
-//                PIXEL_ASPECT,
-//                POSITION_NAME,
-//                X_POSITION_UM,
-//                Y_POSITION_UM,
-//                Z_POSITION_UM,
-//                SCOPE_DATA,
-//                SCOPE_DATA_KEYS,
-//                USER_DATA,
-//                FILE_NAME)) {
-//    }
 }
 
 
