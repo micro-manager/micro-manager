@@ -752,42 +752,13 @@ public class PanelUtils {
             positions_ = positions;
          }
       }
-      
-      // this is an attempt to allow enter presses to register as "changes" too
-      // useful when the desired value is already in the field but the position is elsewhere
-      // now enter works but only if the field has been edited, for instance if 0 is there you
-      // can delete the 0 and then retype it and enter will register as an action and set the position
-      class setPositionListener2 implements ActionListener {
-         private final Devices.Keys key_;
-         private final Joystick.Directions dir_;
-         private final Positions positions_;
-         private final JFormattedTextField tf_;
-
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            try {
-               positions_.setPosition(key_, dir_, ((Number)tf_.getValue()).doubleValue());
-            } catch (Exception e) {
-               MyDialogUtils.showError(e);
-            }
-         }
-         
-         setPositionListener2(Devices.Keys key, Joystick.Directions dir, Positions positions, JFormattedTextField tf) {
-            key_ = key;
-            dir_ = dir;
-            positions_ = positions;
-            tf_ = tf;
-         }
-      }
 
       JFormattedTextField tf = new JFormattedTextField();
       
       tf.setValue(0.0);
       tf.setColumns(4);
       PropertyChangeListener pc = new setPositionListener(key, dir, positions);
-      ActionListener al = new setPositionListener2(key, dir, positions, tf);
       tf.addPropertyChangeListener("value", pc);
-      tf.addActionListener(al);
       return tf;
    }
   
