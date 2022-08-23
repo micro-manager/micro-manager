@@ -115,6 +115,20 @@ public final class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public Datastore createNDTIFFDatastore(String directory)
+           throws IOException {
+      DefaultDatastore result = new DefaultDatastore(studio_);
+      result.setStorage(new NDTiffAdapter(result, directory, true));
+      return result;
+   }
+
+   @Override
+   public Datastore createNDTIFFDatastore(Datastore storeToCopy,
+                                                 String directory) throws IOException {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public Datastore createMultipageTIFFDatastore(String directory,
                                                  boolean shouldGenerateSeparateMetadata,
                                                  boolean shouldSplitPositions)
