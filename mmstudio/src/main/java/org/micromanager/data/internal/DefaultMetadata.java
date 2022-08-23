@@ -315,7 +315,6 @@ public final class DefaultMetadata implements Metadata {
    }
 
    /**
-    * @return
     * @deprecated use {@link #getPositionName(java.lang.String) } instead
     */
    @Override

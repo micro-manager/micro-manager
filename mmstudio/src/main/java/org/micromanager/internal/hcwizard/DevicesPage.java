@@ -68,7 +68,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class DevicesPage extends PagePanel implements
       ListSelectionListener, MouseListener, TreeSelectionListener {
    private static final long serialVersionUID = 1L;
-   public static final String WEBSITE_ROOT = "https://micro-manager.org/wiki/";
+   public static final String WEBSITE_ROOT = "https://micro-manager.org/";
+   private static final String UNAVAILABLE = " (unavailable)";
 
    private final JTable deviceTable_;
    private final JButton editButton;
@@ -790,7 +791,7 @@ public final class DevicesPage extends PagePanel implements
 
       String thisLibrary = "";
       DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by "
-            + "\u00B5" + "Manager");
+            + "\u00B5" + "Manager"); // U+00B5 MICRO SIGN
       DeviceTreeNode node = null;
       for (Device device : devices) {
          // assume that the first library doesn't have an empty name! (of
@@ -813,7 +814,7 @@ public final class DevicesPage extends PagePanel implements
       }
       String[] badLibs = model.getBadLibraries();
       for (String lib : badLibs) {
-         DeviceTreeNode nd = new DeviceTreeNode(lib + " (unavailable)", true);
+         DeviceTreeNode nd = new DeviceTreeNode(lib + UNAVAILABLE, true);
          root.add(nd);
       }
 
@@ -830,8 +831,12 @@ public final class DevicesPage extends PagePanel implements
    }
 
    private void displayDocumentation() {
+      String libName = libraryDocumentationName_;
+      if (libName.endsWith(UNAVAILABLE)) {
+         libName = libName.replace(UNAVAILABLE, "");
+      }
       try {
-         ij.plugin.BrowserLauncher.openURL(WEBSITE_ROOT + libraryDocumentationName_);
+         ij.plugin.BrowserLauncher.openURL(WEBSITE_ROOT + libName);
       } catch (IOException e1) {
          ReportingUtils.showError(e1);
       }

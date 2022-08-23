@@ -335,6 +335,9 @@ public final class MDUtils {
          case 64:
             map.put("PixelType", "RGB64");
             break;
+         default:
+            // Unknown pixel type; no way to record.
+            break;
       }
    }
 
@@ -355,6 +358,9 @@ public final class MDUtils {
             break;
          case 8:
             map.put("PixelType", "RGB64");
+            break;
+         default:
+            // Unknown pixel type; no way to record.
             break;
       }
    }

@@ -71,6 +71,18 @@ public final class DeviceSetupDlg extends JDialog {
       portDev_ = null;
       device_ = d;
 
+      // can not change pre-initialization properties on a device that was initialized
+      if (d.isInitialized()) {
+         try {
+            core_.unloadDevice(d.getName());
+            core_.loadDevice(d.getName(), d.getLibrary(), d.getAdapterName());
+            d.setInitialized(false);
+         } catch (Exception e) {
+            studio_.logs().showError(e, "Failed to load device " + d.getName());
+            ReportingUtils.logError(e);
+         }
+      }
+
       setTitle("Device: " + device_.getAdapterName() + "; Library: "
             + device_.getLibrary());
 

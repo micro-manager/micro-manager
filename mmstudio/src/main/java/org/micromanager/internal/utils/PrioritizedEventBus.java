@@ -73,6 +73,7 @@ public final class PrioritizedEventBus {
          try {
             subBus.unregister(o);
          } catch (IllegalArgumentException ignored) {
+            // Wasn't registered to begin with.
          }
       }
    }

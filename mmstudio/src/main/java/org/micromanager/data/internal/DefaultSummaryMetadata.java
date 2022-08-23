@@ -78,10 +78,10 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
       try {
          b.computerName(InetAddress.getLocalHost().getHostName());
-      } catch (UnknownHostException e) {
       } catch (Exception e) {
-         // Apple Java 6 might throw other exceptions when there is no network
-         // interface.
+         // Apple Java 6 might throw exceptions other than UnknownHostException
+         // when there is no network interface. We don't care about the reason
+         // for failure here.
       }
 
       return b.build();

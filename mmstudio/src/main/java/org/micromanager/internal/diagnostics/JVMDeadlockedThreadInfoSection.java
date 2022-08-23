@@ -80,6 +80,7 @@ class JVMDeadlockedThreadInfoSection implements SystemInfo.SystemInfoSection {
                   }
                }
             } catch (InterruptedException e) {
+               // Not expected to be interrupted
             }
          }
       };
@@ -93,6 +94,7 @@ class JVMDeadlockedThreadInfoSection implements SystemInfo.SystemInfoSection {
                   }
                }
             } catch (InterruptedException e) {
+               // Not expected to be interrupted
             }
          }
       };
@@ -102,6 +104,7 @@ class JVMDeadlockedThreadInfoSection implements SystemInfo.SystemInfoSection {
       try {
          Thread.sleep(200);
       } catch (InterruptedException exc) {
+         // Not expected to be interrupted
       }
    }
 }

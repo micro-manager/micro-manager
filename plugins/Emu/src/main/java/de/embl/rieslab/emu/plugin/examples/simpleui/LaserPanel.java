@@ -242,11 +242,12 @@ public class LaserPanel extends ConfigurablePanel {
             boolean enable = getBoolUIParameterValue(paramUseonoff);
 
             // enable/disable the power button
-            powerToggleButton.setEnabled(enable);
+            powerToggleButton.setVisible(enable);
          } catch (IncorrectUIParameterTypeException | UnknownUIParameterException e) {
             e.printStackTrace();
          }
       }
+
    }
 
    @Override

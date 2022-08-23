@@ -84,10 +84,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private static final  String PLATE_FORMAT_ID = "plate_format_id";
    private static final String SITE_SPACING_X  = "site_spacing"; //keep string for bac
    private static final String SITE_SPACING_Y  = "site_spacing_y";
-   private static final String SITE_OVERLAP    = "site_overlap"; //in µm
+   private static final String SITE_OVERLAP    = "site_overlap"; //in um
    private static final String SITE_ROWS       = "site_rows";
    private static final String SITE_COLS       = "site_cols";
-   private static final String SITE_OFFSET     = "site_offset"; // in µm
+   private static final String SITE_OFFSET     = "site_offset"; // in um
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;

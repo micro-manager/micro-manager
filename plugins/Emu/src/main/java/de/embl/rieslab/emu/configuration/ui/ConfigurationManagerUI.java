@@ -21,6 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import org.micromanager.internal.utils.WindowPositioning;
 
 public class ConfigurationManagerUI {
 
@@ -131,6 +132,8 @@ public class ConfigurationManagerUI {
       // Displays the window.
       frame.pack();
       frame.setLocationRelativeTo(null);
+
+      WindowPositioning.setUpBoundsMemory(frame, this.getClass(), null);
       frame.setVisible(true);
 
       return frame;

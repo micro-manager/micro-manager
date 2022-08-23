@@ -705,8 +705,8 @@ public final class StorageMultipageTiff implements Storage {
     * did in MM, we need some ugly heuristics to figure out what DisplaySettings
     * were used.
     *
-    * @return DisplaySettings of a DataViewer that used this store for data.
-    * Will be null when no such DataViewer was found.
+    * @return DisplaySettings of a DataViewer that used this store for data, or
+    *         null when no such DataViewer was found.
     */
    DisplaySettings getDisplaySettings() {
       MMStudio studio = MMStudio.getInstance();

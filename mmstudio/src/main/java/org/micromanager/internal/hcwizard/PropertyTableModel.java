@@ -129,6 +129,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
             dev.setPropertyValueInHardware(core_, props_[row].name, props_[row].value);
             // reload the device to update possibly changed pre-init properties
             dev.loadDataFromHardware(core_);
+            dev.updateSetupProperties();
             // the listener will rebuild the table to reflect possibly changed pre-init properties
             fireTableCellUpdated(row, col);
          } catch (Exception e) {

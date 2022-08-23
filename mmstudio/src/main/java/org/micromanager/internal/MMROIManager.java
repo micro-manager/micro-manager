@@ -32,6 +32,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -49,7 +50,7 @@ public class MMROIManager {
     * Enquires with the UI what ROI(s) are set, and send these to the camera.
     */
    public void setROI() {
-      ImagePlus curImage = WindowManager.getCurrentImage();
+      ImagePlus curImage = getCurrentImagePlus();
       if (curImage == null) {
          studio_.logs().showError("There is no open image window.");
          return;
@@ -145,7 +146,7 @@ public class MMROIManager {
     * Set the ROI to the center quadrant of the current ROI.
     */
    public void setCenterQuad() {
-      ImagePlus curImage = WindowManager.getCurrentImage();
+      ImagePlus curImage = getCurrentImagePlus();
       if (curImage == null) {
          return;
       }
@@ -193,4 +194,18 @@ public class MMROIManager {
       JOptionPane.showMessageDialog(studio_.uiManager().frame(), message);
       studio_.core().logMessage(message);
    }
+
+   private ImagePlus getCurrentImagePlus() {
+      DataViewer dv = studio_.displays().getActiveDataViewer();
+      DisplayWindow dw = null;
+      if (dv instanceof DisplayWindow) {
+         dw = (DisplayWindow) dv;
+      }
+      ImagePlus curImage = null;
+      if (dw != null) {
+         curImage = dw.getImagePlus();
+      }
+      return curImage;
+   }
+
 }

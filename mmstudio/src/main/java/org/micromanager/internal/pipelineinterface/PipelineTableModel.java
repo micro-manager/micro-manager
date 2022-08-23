@@ -23,9 +23,15 @@ import org.micromanager.Studio;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.data.internal.DefaultNewPipelineEvent;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
 
-// TODO: currently we redraw the entire table any time it changes, rather than
-// only redrawing the row(s) that are modified.
+
+/**
+ * Model for the Pipeline Table shown in the UI, whenever On-the-fly-processors are active.
+ *
+ * <p>TODO: currently we redraw the entire table any time it changes, rather than
+ * only redrawing the row(s) that are modified.
+ */
 public final class PipelineTableModel extends AbstractTableModel {
    static final int ENABLED_COLUMN = 0;
    static final int ENABLED_LIVE_COLUMN = 1;
@@ -45,12 +51,20 @@ public final class PipelineTableModel extends AbstractTableModel {
       fireTableDataChanged();
    }
 
+   /**
+    * Removes a configurator from the model.
+    *
+    * @param configurator this one will be removed from the pipeline.
+    */
    public void removeConfigurator(ConfiguratorWrapper configurator) {
       pipelineConfigs_.remove(configurator);
       configurator.getConfigurator().cleanup();
       fireTableDataChanged();
    }
 
+   /**
+    * Clears (i.e. removes all configurators) the complete pipeline.
+    */
    public void clearPipeline() {
       // Create a copy of the list as we'll be removing from it as we iterate
       // over it.
@@ -59,6 +73,13 @@ public final class PipelineTableModel extends AbstractTableModel {
       }
    }
 
+   /**
+    * PLaces a configurator at another position in the list.
+    *
+    * @param configurator The one to move
+    * @param offset How far up or down in the list it should be moved.  Code will check for
+    *               bounds and set to 0 or max if out of bounds.
+    */
    public void moveConfigurator(ConfiguratorWrapper configurator,
                                 int offset) {
       int oldIndex = pipelineConfigs_.indexOf(configurator);
@@ -90,8 +111,12 @@ public final class PipelineTableModel extends AbstractTableModel {
       List<ConfiguratorWrapper> configs = getEnabledConfigurators(isLiveMode);
       ArrayList<ProcessorFactory> result = new ArrayList<>();
       for (ConfiguratorWrapper config : configs) {
-         PropertyMap settings = config.getConfigurator().getSettings();
-         result.add(config.getPlugin().createFactory(settings));
+         try {
+            PropertyMap settings = config.getConfigurator().getSettings();
+            result.add(config.getPlugin().createFactory(settings));
+         } catch (Exception e) {
+            ReportingUtils.showError(e, "Failed to construct all parts of this pipeline.");
+         }
       }
       return result;
    }

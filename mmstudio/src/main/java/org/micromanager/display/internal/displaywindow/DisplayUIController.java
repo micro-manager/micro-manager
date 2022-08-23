@@ -1853,30 +1853,36 @@ public final class DisplayUIController implements Closeable, WindowListener,
     */
 
    public String getPixelType() {
+      int bytesPerPixel;
+      int numComponents;
       try {
-         int bytesPerPixel = displayController_.getDataProvider().getAnyImage().getBytesPerPixel();
-         int numComponents = displayController_.getDataProvider().getAnyImage().getNumComponents();
-         if (numComponents == 1) {
-            switch (bytesPerPixel) {
-               case 1:
-                  return "8-bit";
-               case 2:
-                  return "16-bit";
-               case 4:
-                  return "32-bit";
-               default:
-                  break;
-            }
-         } else if (numComponents == 3) {
-            switch (bytesPerPixel) {
-               case 4:
-                  return "RGB32";
-               case 8:
-                  return "RGB64;";
-            }
-         }
+         bytesPerPixel = displayController_.getDataProvider().getAnyImage().getBytesPerPixel();
+         numComponents = displayController_.getDataProvider().getAnyImage().getNumComponents();
       } catch (IOException e) {
          studio_.logs().logError(e);
+         return "Unknown pixelType";
+      }
+
+      if (numComponents == 1) {
+         switch (bytesPerPixel) {
+            case 1:
+               return "8-bit";
+            case 2:
+               return "16-bit";
+            case 4:
+               return "32-bit";
+            default:
+               break;
+         }
+      } else if (numComponents == 3) {
+         switch (bytesPerPixel) {
+            case 4:
+               return "RGB32";
+            case 8:
+               return "RGB64;";
+            default:
+               break;
+         }
       }
       return "Unknown pixelType";
    }
