@@ -6,13 +6,25 @@ import com.google.gson.JsonParser;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.data.*;
-import org.micromanager.data.internal.*;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.Storage;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.internal.DefaultMetadata;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -48,6 +60,27 @@ public class NDTiffAdapter implements Storage {
       }
    }
 
+   public static boolean isNDTiffDataSet(String dir) {
+      return new File(dir + (dir.endsWith(File.separator)
+              ? "" : File.separator) + "NDTiff.index").exists();
+   }
+
+   private static HashMap<String, Integer> coordsToHashMap(Coords coords) {
+      HashMap<String, Integer> axes = new HashMap<String, Integer>();
+      for (String s : coords.getAxes()) {
+         axes.put(s, coords.getIndex(s));
+      }
+      return axes;
+   }
+
+   private static Coords hashMapToCoords(HashMap<String, Integer> axes) {
+      Coords.Builder builder = Coordinates.builder();
+      for (String s : axes.keySet()) {
+         builder.index(s, axes.get(s));
+      }
+      return builder.build();
+   }
+
    @Subscribe
    public void onNewSummaryMetadata(DataProviderHasNewSummaryMetadataEvent event) {
       try {
@@ -73,12 +106,6 @@ public class NDTiffAdapter implements Storage {
       } catch (Exception e) {
          ReportingUtils.logError(e, "Error setting new summary metadata");
       }
-   }
-
-
-   public static boolean isNDTiffDataSet(String dir) {
-      return new File(dir + (dir.endsWith(File.separator)
-              ? "" : File.separator) + "NDTiff.index").exists();
    }
 
    @Override
@@ -247,23 +274,6 @@ public class NDTiffAdapter implements Storage {
    @Override
    public void close() throws IOException {
       storage_.close();
-   }
-
-
-   private static HashMap<String, Integer> coordsToHashMap(Coords coords) {
-      HashMap<String, Integer> axes = new HashMap<String, Integer>();
-      for (String s : coords.getAxes()) {
-         axes.put(s, coords.getIndex(s));
-      }
-      return axes;
-   }
-
-   private static Coords hashMapToCoords(HashMap<String, Integer> axes) {
-      Coords.Builder builder = Coordinates.builder();
-      for (String s : axes.keySet()) {
-         builder.index(s, axes.get(s));
-      }
-      return builder.build();
    }
 
    /**
