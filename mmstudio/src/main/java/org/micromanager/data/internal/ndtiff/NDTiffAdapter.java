@@ -13,7 +13,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -78,7 +77,8 @@ public class NDTiffAdapter implements Storage {
 
 
    public static boolean isNDTiffDataSet(String dir) {
-      return new File(dir + (dir.endsWith(File.separator) ? "" : File.separator) + "NDTiff.index").exists();
+      return new File(dir + (dir.endsWith(File.separator) ?
+              "" : File.separator) + "NDTiff.index").exists();
    }
 
    @Override
@@ -116,7 +116,8 @@ public class NDTiffAdapter implements Storage {
       }
       TaggedImage ti = storage_.getImage(coordsToHashMap(coords));
       addEssentialImageMetadata(ti, coordsToHashMap(coords));
-      return new DefaultImage(ti, hashMapToCoords(coordsToHashMap(coords)), studioMetadataFromJSON(ti.tags));
+      return new DefaultImage(ti, hashMapToCoords(coordsToHashMap(coords)),
+              studioMetadataFromJSON(ti.tags));
    }
 
    @Override
@@ -167,13 +168,15 @@ public class NDTiffAdapter implements Storage {
          @Override
          public Image apply(HashMap<String, Integer> axes) {
             TaggedImage ti = addEssentialImageMetadata(storage_.getImage(axes), axes);
-            return new DefaultImage(ti, hashMapToCoords(axes), studioMetadataFromJSON(ti.tags));
+            return new DefaultImage(ti, hashMapToCoords(axes),
+                    studioMetadataFromJSON(ti.tags));
          }
       }).collect(Collectors.toList());
    }
 
    @Override
-   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException {
+   public List<Image> getImagesIgnoringAxes(
+           Coords coords, String... ignoreTheseAxes) throws IOException {
       // I don't see how this should do anything different than the above one...
 
       return getImagesMatching(coords);
@@ -209,14 +212,11 @@ public class NDTiffAdapter implements Storage {
       Coords.Builder builder = Coordinates.builder();
       for (String axis : getAxes()) {
          builder.index(axis,
-                 storage_.getAxesSet().stream().map(new Function<HashMap<String, Integer>, Integer>() {
-                    @Override
-                    public Integer apply(HashMap<String, Integer> stringIntegerHashMap) {
-                       if (stringIntegerHashMap.containsKey(axis)) {
-                          return stringIntegerHashMap.get(axis);
-                       }
-                       return -1;
+                 storage_.getAxesSet().stream().map(stringIntegerHashMap -> {
+                    if (stringIntegerHashMap.containsKey(axis)) {
+                       return stringIntegerHashMap.get(axis);
                     }
+                    return -1;
                  }).reduce(Math::max).get());
       }
       return builder.build();
@@ -229,7 +229,8 @@ public class NDTiffAdapter implements Storage {
       }
       try {
          return DefaultSummaryMetadata.fromPropertyMap(
-                 NonPropertyMapJSONFormats.summaryMetadata().fromJSON(storage_.getSummaryMetadata().toString()));
+                 NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
+                         storage_.getSummaryMetadata().toString()));
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
@@ -306,11 +307,7 @@ public class NDTiffAdapter implements Storage {
               NonPropertyMapJSONFormats.metadata().fromGson(je));
    }
 
-   /**
-    *
-    * @param md
-    * @return
-    */
+
 //    private static JSONObject convertMetadata(Metadata md) {
 //        PropertyKey.UUID,
 //                CAMERA,
