@@ -11,7 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-python@v4
         with:
           python-version: "3.x"
+
       - uses: pre-commit/action@v3.0.0
+
+      - name: check for incorrect newlines
+        run: |
+          # See if anything changes when we let Git enforce .gitattributes
+          git add --renormalize .
+          if [ -z "$(git status --porcelain=v1 2>/dev/null)" ]; then
+              echo "No files changed by renormalization"
+          else
+              echo "Files changed by renormalization (probably have CRLF):"
+              git status --porcelain=v1
+              exit 1
+          fi
