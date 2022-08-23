@@ -47,6 +47,7 @@ import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.ndtiff.NDTiffAdapter;
 import org.micromanager.data.internal.pipeline.DefaultPipeline;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.UserCancelledException;
@@ -207,12 +208,20 @@ public final class DefaultDataManager implements DataManager {
       // For now we just choose between StorageMultipageTiff and
       // StorageSinglePlaneTiffSeries.
       boolean isMultipageTiff = MultipageTiffReader.isMMMultipageTiff(directory);
-      if (isMultipageTiff) {
+      boolean isNDTiff = NDTiffAdapter.isNDTiffDataSet(directory); // TODO: add check
+      if (isNDTiff && isMultipageTiff) {
+         throw new RuntimeException("Cannot be both NDTiff and MultipageTiff");
+      }
+      if (isNDTiff) {
+         result.setStorage(new NDTiffAdapter(result, directory, false));
+      } else if (isMultipageTiff) {
          result.setStorage(new StorageMultipageTiff(parent, result, directory, false));
       } else {
          result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
                false));
       }
+
+
       if (!isVirtual) {
          // Check for available RAM. I'm fairly certain that we should only
          // need to consider the RAM that will be used as direct memory, i.e.

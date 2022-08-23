@@ -161,6 +161,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private final NumberFormat numberFormat_;
    private JRadioButton singleButton_;
    private JRadioButton multiButton_;
+   private JRadioButton ndtiffButton_;
    private JCheckBox stackKeepShutterOpenCheckBox_;
    private JCheckBox chanKeepShutterOpenCheckBox_;
    private AcqOrderMode[] acqOrderModes_;
@@ -914,17 +915,30 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                Datastore.SaveMode.MULTIPAGE_TIFF);
          applySettingsFromGUI();
       });
-      savePanel_.add(multiButton_, "gapafter push");
+      savePanel_.add(multiButton_, "spanx, split");
+
+
+      ndtiffButton_ = new JRadioButton("NDTiff stack");
+      ndtiffButton_.setFont(DEFAULT_FONT);
+      ndtiffButton_.addActionListener(e -> {
+         DefaultDatastore.setPreferredSaveMode(mmStudio_,
+                 Datastore.SaveMode.ND_TIFF);
+         applySettingsFromGUI();
+      });
+      savePanel_.add(ndtiffButton_, "gapafter push");
 
       ButtonGroup buttonGroup = new ButtonGroup();
       buttonGroup.add(singleButton_);
       buttonGroup.add(multiButton_);
+      buttonGroup.add(ndtiffButton_);
 
       Datastore.SaveMode mode = mmStudio_.data().getPreferredSaveMode();
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          singleButton_.setSelected(true);
       } else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
          multiButton_.setSelected(true);
+      } else if (mode == Datastore.SaveMode.ND_TIFF){
+         ndtiffButton_.setSelected(true);
       } else {
          ReportingUtils.logError("Unrecognized save mode " + mode);
       }
@@ -1285,6 +1299,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             singleButton_.setSelected(true);
          } else if (sequenceSettings.saveMode() == Datastore.SaveMode.MULTIPAGE_TIFF) {
             multiButton_.setSelected(true);
+         } else if (sequenceSettings.saveMode() == Datastore.SaveMode.ND_TIFF) {
+            ndtiffButton_.setSelected(true);
          }
 
          // update summary
@@ -1701,7 +1717,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
       } else if (multiButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
-               Datastore.SaveMode.MULTIPAGE_TIFF);
+                 Datastore.SaveMode.MULTIPAGE_TIFF);
+      } else if (ndtiffButton_.isSelected()) {
+         DefaultDatastore.setPreferredSaveMode(mmStudio_, Datastore.SaveMode.ND_TIFF);
       } else {
          ReportingUtils.logError(
                "Unknown save mode button or no save mode buttons selected");

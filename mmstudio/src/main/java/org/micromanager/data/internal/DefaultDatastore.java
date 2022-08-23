@@ -73,11 +73,15 @@ public class DefaultDatastore implements Datastore {
 
    private static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
    private static final String MULTIPAGE_TIFF = "Image Stack File";
+   private static final String ND_TIFF = "NDTiff stack";
+
    // FileFilters for saving.
    private static final FileFilter SINGLEPLANEFILTER = new SaveFileFilter(
          SINGLEPLANE_TIFF_SERIES);
    private static final FileFilter MULTIPAGEFILTER = new SaveFileFilter(
          MULTIPAGE_TIFF);
+   private static final FileFilter NDTIFFFILTER = new SaveFileFilter(
+           ND_TIFF);
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
 
    protected Storage storage_ = null;
@@ -440,8 +444,11 @@ public class DefaultDatastore implements Datastore {
       chooser.setAcceptAllFileFilterUsed(false);
       chooser.addChoosableFileFilter(SINGLEPLANEFILTER);
       chooser.addChoosableFileFilter(MULTIPAGEFILTER);
+      chooser.addChoosableFileFilter(NDTIFFFILTER);
       if (Objects.equals(getPreferredSaveMode(studio_), SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(MULTIPAGEFILTER);
+      } else if  (Objects.equals(getPreferredSaveMode(studio_), SaveMode.ND_TIFF)) {
+         chooser.setFileFilter(NDTIFFFILTER);
       } else {
          chooser.setFileFilter(SINGLEPLANEFILTER);
       }
@@ -534,7 +541,9 @@ public class DefaultDatastore implements Datastore {
       String modeStr = studio.profile().getSettings(
             DefaultDatastore.class).getString(
             PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
-      if (modeStr.equals(MULTIPAGE_TIFF)) {
+      if (modeStr.equals(ND_TIFF)) {
+         return Datastore.SaveMode.ND_TIFF;
+      } else if (modeStr.equals(MULTIPAGE_TIFF)) {
          return Datastore.SaveMode.MULTIPAGE_TIFF;
       } else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES)) {
          return Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
@@ -556,6 +565,9 @@ public class DefaultDatastore implements Datastore {
          ReportingUtils.logError("Unrecognized save mode " + mode);
       } else {
          switch (mode) {
+            case ND_TIFF:
+               modeStr = ND_TIFF;
+               break;
             case MULTIPAGE_TIFF:
                modeStr = MULTIPAGE_TIFF;
                break;
