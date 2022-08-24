@@ -33,6 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -43,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -918,14 +920,43 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       savePanel_.add(multiButton_, "spanx, split");
 
 
-      ndtiffButton_ = new JRadioButton("NDTiff stack");
+      ndtiffButton_ = new JRadioButton("NDTiff");
       ndtiffButton_.setFont(DEFAULT_FONT);
       ndtiffButton_.addActionListener(e -> {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
                  Datastore.SaveMode.ND_TIFF);
          applySettingsFromGUI();
       });
-      savePanel_.add(ndtiffButton_, "gapafter push");
+      savePanel_.add(ndtiffButton_, "spanx, split");
+
+      JButton helpButton = new JButton();
+      helpButton.setText("<HTML><font color=\"#70A3CC\" size = \"3\">Which to use?</font></HTML>");
+      helpButton.setBorderPainted(false);
+      helpButton.setOpaque(false);
+//      helpButton.setBackground(Color.WHITE);
+      helpButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               Desktop.getDesktop().browse(new URL(
+                       "https://micro-manager.org/Micro-Manager_File_Formats").toURI());
+            } catch (IOException | URISyntaxException ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+      });
+      helpButton.addMouseListener(new MouseAdapter() {
+         @Override
+         public void mouseEntered(MouseEvent e) {
+            helpButton.setText("<HTML><font color=\"#70A3CC\" size = \"3\"><u>Which to use?</u></font></HTML>");
+         }
+
+         @Override
+         public void mouseExited(MouseEvent e) {
+            helpButton.setText("<HTML><font color=\"#70A3CC\" size = \"3\">Which to use?</font></HTML>");
+         }
+      });
+      savePanel_.add(helpButton, "gapafter push");
 
       ButtonGroup buttonGroup = new ButtonGroup();
       buttonGroup.add(singleButton_);
