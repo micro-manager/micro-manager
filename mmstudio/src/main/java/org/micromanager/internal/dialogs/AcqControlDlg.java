@@ -933,7 +933,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       helpButton.setText("<HTML><font color=\"#70A3CC\" size = \"3\">Which to use?</font></HTML>");
       helpButton.setBorderPainted(false);
       helpButton.setOpaque(false);
-//      helpButton.setBackground(Color.WHITE);
       helpButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -948,12 +947,14 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       helpButton.addMouseListener(new MouseAdapter() {
          @Override
          public void mouseEntered(MouseEvent e) {
-            helpButton.setText("<HTML><font color=\"#70A3CC\" size = \"3\"><u>Which to use?</u></font></HTML>");
+            helpButton.setText("<HTML><font color=\"#70A3CC\" size =" +
+                    " \"3\"><u>Which to use?</u></font></HTML>");
          }
 
          @Override
          public void mouseExited(MouseEvent e) {
-            helpButton.setText("<HTML><font color=\"#70A3CC\" size = \"3\">Which to use?</font></HTML>");
+            helpButton.setText("<HTML><font color=\"#70A3CC\" size = " +
+                    "\"3\">Which to use?</font></HTML>");
          }
       });
       savePanel_.add(helpButton, "gapafter push");
