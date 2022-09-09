@@ -65,11 +65,18 @@ public class NDTiffAdapter implements Storage {
               ? "" : File.separator) + "NDTiff.index").exists();
    }
 
-   private static HashMap<String, Integer> coordsToHashMap(Coords coords) {
+   private HashMap<String, Integer> coordsToHashMap(Coords coords) {
       HashMap<String, Integer> axes = new HashMap<String, Integer>();
       for (String s : coords.getAxes()) {
          axes.put(s, coords.getIndex(s));
       }
+      //Axes with a value of 0 aren't explicitly encoded
+      for (String s : getSummaryMetadata().getOrderedAxes()) {
+         if (!axes.containsKey(s)) {
+            axes.put(s, 0);
+         }
+      }
+
       return axes;
    }
 
@@ -224,11 +231,12 @@ public class NDTiffAdapter implements Storage {
 
    @Override
    public List<String> getAxes() {
-      if (storage_ == null) {
-         return new LinkedList<String>();
-      }
-      return storage_.getAxesSet().stream().flatMap(hashmap ->
-              hashmap.keySet().stream()).collect(Collectors.toList());
+      return getSummaryMetadata().getOrderedAxes();
+//      if (storage_ == null) {
+//         return new LinkedList<String>();
+//      }
+//      return new LinkedList<String>(storage_.getAxesSet().stream().flatMap(hashmap ->
+//              hashmap.keySet().stream()).collect(Collectors.toSet()));
    }
 
    @Override
