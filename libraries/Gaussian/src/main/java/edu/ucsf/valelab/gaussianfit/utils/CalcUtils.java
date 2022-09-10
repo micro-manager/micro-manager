@@ -76,20 +76,6 @@ public class CalcUtils {
    }
 
    /**
-    * Utility function that calculates the mean from a array of doubles
-    *
-    * @param data - input array of doubles
-    * @return - mean
-    */
-   public static double mean(double[] data) {
-      double sum = 0.0;
-      for (double d : data) {
-         sum += d;
-      }
-      return sum / data.length;
-   }
-
-   /**
     * Utility function that calculates the standard deviation of an array of doubles
     *
     * @param data - input array of doubles
@@ -102,6 +88,20 @@ public class CalcUtils {
          ersq += (d - mean) * (d - mean);
       }
       return Math.sqrt(ersq / (data.length - 1));
+   }
+
+   /**
+    * Utility function that calculates the mean from a array of doubles
+    *
+    * @param data - input array of doubles
+    * @return - mean
+    */
+   public static double mean(double[] data) {
+      double sum = 0.0;
+      for (double d : data) {
+         sum += d;
+      }
+      return sum / data.length;
    }
 
    /**

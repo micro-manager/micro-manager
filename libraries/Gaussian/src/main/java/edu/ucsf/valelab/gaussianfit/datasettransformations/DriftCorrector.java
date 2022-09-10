@@ -130,7 +130,8 @@ public class DriftCorrector {
                   frameRange_ = frameRange;
                }
             }
-            ArrayList<StageMovementData> stagePos = new ArrayList<StageMovementData>();
+
+            ArrayList<StageMovementData> stagePos = new ArrayList<>();
 
             try {
                // make imageprocessors for all the images that we will generate
@@ -312,11 +313,11 @@ public class DriftCorrector {
                }
 
                RowData.Builder builder = rowData.copy();
-               builder.setName(rowData.getName() + "-Jitter").
-                     setNrFrames(stageMovementData.size()).
-                     setMaxNrSpots(stageMovementData.size()).
-                     setSpotList(stageMovementData).setTimePoints(timePoints).
-                     setIsTrack(true).setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
+               builder.setName(rowData.getName() + "-Jitter")
+                           .setNrFrames(stageMovementData.size())
+                                 .setMaxNrSpots(stageMovementData.size())
+                                       .setSpotList(stageMovementData).setTimePoints(timePoints)
+                           .setIsTrack(true).setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
                DataCollectionForm.getInstance().addSpotData(builder);
 
                ij.IJ.showStatus("Assembling jitter corrected dataset...");
@@ -368,8 +369,8 @@ public class DriftCorrector {
 
                // Add transformed data to data overview window
                builder = rowData.copy();
-               builder.setName(rowData.getName() + "-Jitter-Correct").
-                     setSpotList(correctedData);
+               builder.setName(rowData.getName() + "-Jitter-Correct")
+                           .setSpotList(correctedData);
                DataCollectionForm.getInstance().addSpotData(builder);
 
                ij.IJ.showStatus("Finished jitter correction");
@@ -467,7 +468,8 @@ public class DriftCorrector {
       Point2D.Double fp = new Point2D.Double(0.0, 0.0);
       jd.getJitter(ipRef, fp);
 
-      // Assemble images for all subsequent frames and calculate cross-correlation with the first image
+      // Assemble images for all subsequent frames and calculate cross-correlation with
+      // the first image
       Point2D.Double com = new Point2D.Double(0.0, 0.0);
       ImageProcessor ipTest = new ByteProcessor(width, height);
       byte[] pixelsTest = new byte[width * height];
@@ -539,11 +541,11 @@ public class DriftCorrector {
          // Add stage movement data to overview window
 
          RowData.Builder builder = rowData.copy();
-         builder.setName(rowData.getName() + "-Jitter").
-               setNrFrames(stageMovementData.size()).
-               setMaxNrSpots(stageMovementData.size()).
-               setSpotList(stageMovementData).
-               setIsTrack(true).setHasZ(false).setMinZ(0).setMaxZ(0);
+         builder.setName(rowData.getName() + "-Jitter")
+                     .setNrFrames(stageMovementData.size())
+                           .setMaxNrSpots(stageMovementData.size())
+                                 .setSpotList(stageMovementData)
+                                       .setIsTrack(true).setHasZ(false).setMinZ(0).setMaxZ(0);
 
          DataCollectionForm.getInstance().addSpotData(builder);
 

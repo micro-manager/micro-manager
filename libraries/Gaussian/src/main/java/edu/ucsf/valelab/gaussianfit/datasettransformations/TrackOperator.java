@@ -81,8 +81,8 @@ public class TrackOperator {
 
       // Add transformed data to data overview window
       RowData.Builder builder = rowData.copy();
-      builder.setName(rowData.getName() + " Centered").
-            setSpotList(transformedResultList);
+      builder.setName(rowData.getName() + " Centered")
+                  .setSpotList(transformedResultList);
       DataCollectionForm.getInstance().addSpotData(builder);
 
    }
@@ -120,8 +120,8 @@ public class TrackOperator {
 
       // Add transformed data to data overview window
       RowData.Builder builder = rowData.copy();
-      builder.setName(rowData.getName() + "Straightened").
-            setSpotList(transformedResultList);
+      builder.setName(rowData.getName() + "Straightened")
+                  .setSpotList(transformedResultList);
       DataCollectionForm.getInstance().addSpotData(builder);
 
    }
