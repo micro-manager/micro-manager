@@ -168,7 +168,7 @@ public class CalibrationFrame extends JFrame {
                       + "is consistent between sessions."
                       + "</html>");
       contents.add(methodPanel, "span 2");
-      methodCombo.setSelectedItem(settings.getString(CALIBRATIONMETHOD, CALIBRATIONLEGACY));
+      methodCombo.setSelectedItem(settings.getString(CALIBRATIONMETHOD, CALIBRATIONRECOMMENDED));
       
       JButton cancelButton = new JButton ("Cancel");
       cancelButton.addActionListener(new ActionListener() {
