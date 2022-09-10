@@ -18,10 +18,6 @@
 package org.micromanager.magellan.internal.surfacesandregions;
 
 import java.awt.geom.Point2D;
-
-import org.micromanager.PositionList;
-import org.micromanager.acqj.util.xytiling.XYStagePosition;
-
 import java.util.List;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
@@ -29,7 +25,9 @@ import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
 import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
+import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.magellan.internal.main.Magellan;
 
 /**
@@ -62,16 +60,16 @@ public abstract class XYFootprint {
       Magellan.getStudio().positions().setPositionList(posList);
    }
 
-    public abstract List<XYStagePosition> getXYPositions();
+   public abstract List<XYStagePosition> getXYPositions();
     
-    /**
-     * @return true if there is any intersection between footprint and position
-     */
-    public abstract boolean isDefinedAtPosition(Point2D.Double[] posCorners); 
+   /**
+    * @return true if there is any intersection between footprint and position
+    */
+   public abstract boolean isDefinedAtPosition(Point2D.Double[] posCorners);
     
-    public String getXYDevice() {
-       return xyString_;
-    }
+   public String getXYDevice() {
+      return xyString_;
+   }
     
    public String toString() {
       return name_;
@@ -81,12 +79,12 @@ public abstract class XYFootprint {
       return name_;
    }
 
-    void rename(String newName) {
+   void rename(String newName) {
       name_ = newName;
       manager_.surfaceOrGridRenamed(this);
    }
    
-      /**
+   /**
     * Create a 2D square region corresponding to the the stage position + any
     * extra padding
     *

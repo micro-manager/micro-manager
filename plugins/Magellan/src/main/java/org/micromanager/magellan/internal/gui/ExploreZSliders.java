@@ -14,6 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.gui;
 
 import java.awt.BorderLayout;
@@ -43,13 +44,16 @@ import org.micromanager.magellan.internal.misc.Log;
  */
 class ExploreZSliders extends JPanel {
 
-   private final static int DEFAULT_FPS = 7;
+   private static final int DEFAULT_FPS = 7;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
    private MagellanDataManager manager_;
    private JPanel sliderPanel_;
-   private JScrollBar zTopScrollbar_, zBottomScrollbar_;
-   private JTextField zTopTextField_, zBottomTextField_;
-   private double zStep_, zOrigin_;
+   private JScrollBar zTopScrollbar_;
+   private JScrollBar zBottomScrollbar_;
+   private JTextField zTopTextField_;
+   private JTextField zBottomTextField_;
+   private double zStep_;
+   private double zOrigin_;
    private int displayHeight_ = -1;
    //thread safe fields for currently displaye dimage
    private int minZExplored_ = Integer.MAX_VALUE, maxZExplored_ = Integer.MIN_VALUE;
@@ -109,8 +113,10 @@ class ExploreZSliders extends JPanel {
       //convert slice index to explore scrollbar index       
       minZExplored_ = Math.min(minZExplored_, currentZ);
       maxZExplored_ = Math.max(maxZExplored_, currentZ);
-      ((ColorableScrollbarUI) zTopScrollbar_.getUI()).setHighlightedIndices(currentZ, minZExplored_, maxZExplored_);
-      ((ColorableScrollbarUI) zBottomScrollbar_.getUI()).setHighlightedIndices(currentZ, minZExplored_, maxZExplored_);
+      ((ColorableScrollbarUI) zTopScrollbar_.getUI()).setHighlightedIndices(currentZ,
+            minZExplored_, maxZExplored_);
+      ((ColorableScrollbarUI) zBottomScrollbar_.getUI()).setHighlightedIndices(currentZ,
+            minZExplored_, maxZExplored_);
       expandZLimitSliders(currentZ);
       this.repaint();
    }
@@ -129,9 +135,6 @@ class ExploreZSliders extends JPanel {
       if (zBottomScrollbar_.getMinimum() > sliceIndex - 1) {
          zBottomScrollbar_.setMinimum(sliceIndex - 1);
       }
-//       now set sliders to current position 
-//      zBottomScrollbar_.setValue(sliceIndex);
-//      zTopScrollbar_.setValue(sliceIndex);
       this.repaint();
 
    }

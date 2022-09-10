@@ -14,12 +14,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.magellanacq;
 
 import java.awt.geom.Point2D;
-
-import org.micromanager.acqj.api.*;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -33,21 +31,21 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-
+import mmcorej.org.json.JSONObject;
+import org.micromanager.acqj.api.DataSink;
+import org.micromanager.acqj.internal.AcquisitionEventIterator;
+import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.AcquisitionEvent;
-import org.micromanager.magellan.internal.main.Magellan;
-import org.micromanager.magellan.internal.misc.Log;
-import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.internal.AcquisitionEventIterator;
 import org.micromanager.acqj.util.AcqEventModules;
 import org.micromanager.acqj.util.ChannelSetting;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
-import org.micromanager.acqj.internal.Engine;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.SingleChannelSetting;
 import org.micromanager.magellan.internal.gui.GUI;
+import org.micromanager.magellan.internal.main.Magellan;
+import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 
 /**
@@ -57,19 +55,24 @@ import org.micromanager.ndtiffstorage.NDTiffAPI;
  */
 public class ExploreAcquisition extends Acquisition implements MagellanAcquisition {
 
-   private volatile double zTop_, zBottom_;
+   private volatile double zTop_;
+   private volatile double zBottom_;
    private List<XYStagePosition> positions_;
    private ExploreAcqSettings settings_;
 
    //Map with slice index as keys used to get rid of duplicate events
-   private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
+   private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>
+         queuedTileEvents_ = new ConcurrentHashMap<>();
 
-   private ExecutorService submittedSequenceMonitorExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> {
-      return new Thread(r, "Submitted sequence monitor");
-   });
+   private ExecutorService submittedSequenceMonitorExecutor_ =
+         Executors.newSingleThreadExecutor((Runnable r) -> {
+            return new Thread(r, "Submitted sequence monitor");
+         });
 
-   private final double zOrigin_, zStep_;
-   private int minSliceIndex_, maxSliceIndex_;
+   private final double zOrigin_;
+   private final double zStep_;
+   private int minSliceIndex_;
+   private int maxSliceIndex_;
 
    public ExploreAcquisition(ExploreAcqSettings settings, DataSink sink) {
       super(sink);
@@ -124,7 +127,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
     *
     * @param iter an iterator of acquisition events
     * @param callback an ExceptionCallback for asynchronously handling
-    * exceptions
+    *       exceptions
     *
     */
    public void submitEventIterator(Iterator<AcquisitionEvent> iter, ExceptionCallback callback) {
@@ -166,12 +169,15 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
     * @param sliceIndex 0 based slice index
     * @return
     */
-   public LinkedBlockingQueue<ExploreTileWaitingToAcquire> getTilesWaitingToAcquireAtSlice(int sliceIndex) {
+   public LinkedBlockingQueue<ExploreTileWaitingToAcquire>
+            getTilesWaitingToAcquireAtSlice(int sliceIndex) {
       return queuedTileEvents_.get(sliceIndex);
    }
 
    public void acquireTileAtCurrentLocation() {
-      double xPos, yPos, zPos;
+      double xPos;
+      double yPos;
+      double zPos;
 
       try {
          //get current XY and Z Positions
@@ -184,11 +190,13 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       }
 
       int sliceIndex = (int) Math.round((zPos - zOrigin_) / zStep_);
-      int posIndex = ((MagellanDataManager) dataSink_).getFullResPositionIndexFromStageCoords(xPos, yPos);
-//      controls.setZLimitSliderValues(sliceIndex);
+      int posIndex = ((MagellanDataManager) dataSink_)
+            .getFullResPositionIndexFromStageCoords(xPos, yPos);
 
-      submitEvents(new int[]{(int) ((MagellanDataManager) dataSink_).getXYPosition(posIndex).getGridRow()},
-              new int[]{(int) ((MagellanDataManager) dataSink_).getXYPosition(posIndex).getGridCol()}, sliceIndex, sliceIndex);
+      submitEvents(new int[]{(int) ((MagellanDataManager) dataSink_)
+                  .getXYPosition(posIndex).getGridRow()},
+              new int[]{(int) ((MagellanDataManager) dataSink_).getXYPosition(posIndex)
+                    .getGridCol()}, sliceIndex, sliceIndex);
    }
 
    public void acquireTiles(final int r1, final int c1, final int r2, final int c2) {
@@ -211,8 +219,8 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
                int relativeRow = (r - row1);
                int relativeCol = (c - col1);
                int numRows = (1 + row2 - row1);
-               int i = ((relativeCol % 2 == 0) ? relativeRow : (numRows - relativeRow - 1)) + numRows * relativeCol;
-//               int i = (r - row1) + (1 + row2 - row1) * (c - col1);
+               int i = ((relativeCol % 2 == 0) ? relativeRow : (numRows - relativeRow - 1))
+                     + numRows * relativeCol;
                newPositionRows[i] = r;
                newPositionCols[i] = c;
             }
@@ -223,8 +231,10 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
 
    }
 
-   private void submitEvents(int[] newPositionRows, int[] newPositionCols, int minZIndex, int maxZIndex) {
-      int[] posIndices = ((MagellanDataManager) dataSink_).getPositionIndices(newPositionRows, newPositionCols);
+   private void submitEvents(int[] newPositionRows, int[] newPositionCols, int minZIndex,
+                             int maxZIndex) {
+      int[] posIndices = ((MagellanDataManager) dataSink_).getPositionIndices(
+            newPositionRows, newPositionCols);
       List<XYStagePosition> allPositions = ((MagellanDataManager) dataSink_).getPositionList();
       List<XYStagePosition> selectedXYPositions = new ArrayList<XYStagePosition>();
       for (int i : posIndices) {
@@ -273,15 +283,17 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       };
       list.add(fn);
 
-      submitEventIterator(new AcquisitionEventIterator(null, list, removeTileToAcquireFn), new ExceptionCallback() {
-         @Override
-         public void run(Exception e) {
-            Log.log(e, true);
-         }
-      });
+      submitEventIterator(new AcquisitionEventIterator(null, list,
+            removeTileToAcquireFn), new ExceptionCallback() {
+               @Override
+               public void run(Exception e) {
+                  Log.log(e, true);
+               }
+            });
    }
 
-   private Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions(List<XYStagePosition> positions) {
+   private Function<AcquisitionEvent, Iterator<AcquisitionEvent>>
+            positions(List<XYStagePosition> positions) {
       return (AcquisitionEvent event) -> {
          Stream.Builder<AcquisitionEvent> builder = Stream.builder();
          if (positions == null) {
@@ -293,11 +305,12 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
                posEvent.setGridCol(positions.get(index).getGridCol());
                posEvent.setGridRow(positions.get(index).getGridRow());
                //These tell how to store it
-               posEvent.setAxisPosition(MagellanMD.AXES_GRID_ROW, positions.get(index).getGridRow());
-               posEvent.setAxisPosition(MagellanMD.AXES_GRID_COL, positions.get(index).getGridCol());
+               posEvent.setAxisPosition(MagellanMD.AXES_GRID_ROW, positions.get(index)
+                     .getGridRow());
+               posEvent.setAxisPosition(MagellanMD.AXES_GRID_COL, positions.get(index)
+                     .getGridCol());
                posEvent.setX(positions.get(index).getCenter().x);
                posEvent.setY(positions.get(index).getCenter().y);
-//               posEvent.setAxisPosition(MagellanMD.POSITION_AXIS, posIndices[index]);
                builder.accept(posEvent);
             }
          }
@@ -310,7 +323,8 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
          try {
             //add tile tile to list waiting to acquire for drawing purposes
             if (!queuedTileEvents_.containsKey(event.getZIndex())) {
-               queuedTileEvents_.put(event.getZIndex(), new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
+               queuedTileEvents_.put(event.getZIndex(),
+                     new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
             }
 
             ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(event.getGridRow(),
@@ -387,7 +401,9 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {
 
-      public long row, col, sliceIndex;
+      public long row;
+      public long col;
+      public long sliceIndex;
       public String channelName = null;
 
       public ExploreTileWaitingToAcquire(long r, long c, int z, String ch) {
@@ -400,7 +416,8 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       @Override
       public boolean equals(Object other) {
          String otherChannel = ((ExploreTileWaitingToAcquire) other).channelName;
-         if (((ExploreTileWaitingToAcquire) other).col == col && ((ExploreTileWaitingToAcquire) other).row == row
+         if (((ExploreTileWaitingToAcquire) other).col
+               == col && ((ExploreTileWaitingToAcquire) other).row == row
                  && ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex) {
             if (otherChannel == null && channelName == null) {
                return true;

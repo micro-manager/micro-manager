@@ -3,12 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.magellan.internal.gui;
 
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
@@ -18,13 +22,13 @@ import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.magellan.internal.magellanacq.ExploreAcquisition;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.magellanacq.MagellanMD;
-import org.micromanager.ndviewer.main.NDViewer;
-import org.micromanager.ndviewer.api.ViewerInterface;
 import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
 import org.micromanager.ndviewer.api.ControlsPanelInterface;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
-import org.micromanager.ndviewer.overlay.Overlay;
 import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
+import org.micromanager.ndviewer.api.ViewerInterface;
+import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer.overlay.Overlay;
 
 /**
  * Extends the ND viewer with the information that the image is made up of a
@@ -37,8 +41,10 @@ public class MagellanViewer implements ViewerInterface {
    private ViewerInterface viewer_;
    private MagellanDataManager manager_;
 
-   public MagellanViewer(MagellanDataManager cache, ViewerAcquisitionInterface acq, JSONObject summmaryMD) {
-      viewer_ = new NDViewer(cache, acq, summmaryMD, MagellanMD.getPixelSizeUm(summmaryMD), MagellanMD.isRGB(summmaryMD)) {
+   public MagellanViewer(MagellanDataManager cache, ViewerAcquisitionInterface acq,
+                         JSONObject summmaryMD) {
+      viewer_ = new NDViewer(cache, acq, summmaryMD, MagellanMD.getPixelSizeUm(summmaryMD),
+            MagellanMD.isRGB(summmaryMD)) {
             public void setImageEvent(HashMap<String, Integer> axes, boolean fromHuman) {
                super.setImageEvent(axes, fromHuman);
                if (axes.containsKey(AcqEngMetadata.Z_AXIS) && acq instanceof ExploreAcquisition) {
@@ -52,11 +58,12 @@ public class MagellanViewer implements ViewerInterface {
 
    private void moveViewToVisibleArea() {
       //check for valid tiles (at lowest res) at this slice        
-      Set<Point> tiles = manager_.getTileIndicesWithDataAt(viewer_.getAxisPosition(AcqEngMetadata.Z_AXIS));
+      Set<Point> tiles = manager_.getTileIndicesWithDataAt(
+            viewer_.getAxisPosition(AcqEngMetadata.Z_AXIS));
       if (tiles.size() == 0) {
          return;
       }
-//      center of one tile must be within corners of current view 
+      // center of one tile must be within corners of current view
       double minDistance = Integer.MAX_VALUE;
       //do all calculations at full resolution
       long currentX = (long) viewer_.getViewOffset().x;
@@ -69,8 +76,6 @@ public class MagellanViewer implements ViewerInterface {
          long tileX2 = (long) ((0.9 + p.x) * manager_.getDisplayTileWidth());
          long tileY1 = (long) ((0.1 + p.y) * manager_.getDisplayTileHeight());
          long tileY2 = (long) ((0.9 + p.y) * manager_.getDisplayTileHeight());
-//         long visibleWidth = (long) (0.8 * imageCache_.getTileWidth());
-//         long visibleHeight = (long) (0.8 * imageCache_.getTileHeight());
          //get bounds of viewing area
          long fovX1 = (long) viewer_.getViewOffset().x;
          long fovY1 = (long) viewer_.getViewOffset().y;
@@ -99,8 +104,6 @@ public class MagellanViewer implements ViewerInterface {
          long tileX2 = (long) ((0.9 + p.x) * manager_.getDisplayTileWidth());
          long tileY1 = (long) ((0.1 + p.y) * manager_.getDisplayTileHeight());
          long tileY2 = (long) ((0.9 + p.y) * manager_.getDisplayTileHeight());
-//         long visibleWidth = (long) (0.8 * imageCache_.getTileWidth());
-//         long visibleHeight = (long) (0.8 * imageCache_.getTileHeight());
          //get bounds of viewing area
          long fovX1 = (long) viewer_.getViewOffset().x;
          long fovY1 = (long) viewer_.getViewOffset().y;
@@ -111,17 +114,21 @@ public class MagellanViewer implements ViewerInterface {
          boolean xInView = fovX1 < tileX2 && fovX2 > tileX1;
          boolean yInView = fovY1 < tileY2 && fovY2 > tileY1;
 
-//         System.out.println(fovY1 + " " + fovY2 + " " + fovX1 + " " + fovX2);
          //tile to fov corner to corner distances
-         double tl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY1 - fovY2) * (tileY1 - fovY2)); //top left tile, botom right fov
-         double tr = ((tileX2 - fovX1) * (tileX2 - fovX1) + (tileY1 - fovY2) * (tileY1 - fovY2)); // top right tile, bottom left fov
-         double bl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY2 - fovY1) * (tileY2 - fovY1)); // bottom left tile, top right fov
-         double br = ((tileX1 - fovX1) * (tileX1 - fovX1) + (tileY2 - fovY1) * (tileY2 - fovY1)); //bottom right tile, top left fov
+         double tl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY1 - fovY2)
+               * (tileY1 - fovY2)); //top left tile, botom right fov
+         double tr = ((tileX2 - fovX1) * (tileX2 - fovX1) + (tileY1 - fovY2)
+               * (tileY1 - fovY2)); // top right tile, bottom left fov
+         double bl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY2 - fovY1)
+               * (tileY2 - fovY1)); // bottom left tile, top right fov
+         double br = ((tileX1 - fovX1) * (tileX1 - fovX1) + (tileY2 - fovY1)
+               * (tileY2 - fovY1)); //bottom right tile, top left fov
 
          double closestCornerDistance = Math.min(Math.min(tl, tr), Math.min(bl, br));
          if (closestCornerDistance < minDistance) {
             minDistance = closestCornerDistance;
-            long newX, newY;
+            long newX;
+            long newY;
             if (tl <= tr && tl <= bl && tl <= br) { //top left tile, botom right fov
                newX = (long) (xInView ? currentX : tileX1 - viewer_.getFullResSourceDataSize().x);
                newY = (long) (yInView ? currentY : tileY1 - viewer_.getFullResSourceDataSize().y);
@@ -147,7 +154,8 @@ public class MagellanViewer implements ViewerInterface {
       double minDist = dists.min().getAsDouble();
       Point2D.Double newPoint =  newPos.stream().filter(
               value -> (Math.pow(value.x - finalCurrentX, 2)
-              + Math.pow(value.y - finalCurrentY, 2)) == minDist).collect(Collectors.toList()).get(0);
+              + Math.pow(value.y - finalCurrentY, 2))
+                    == minDist).collect(Collectors.toList()).get(0);
 
       viewer_.setViewOffset(newPoint.x, newPoint.y);
    }
@@ -299,7 +307,8 @@ public class MagellanViewer implements ViewerInterface {
 
    @Override
    public void initializeViewerToLoaded(List<String> channelNames, JSONObject dispSettings,
-           HashMap<String, Integer> axisMins, HashMap<String, Integer> axisMaxs) {
+                                        HashMap<String, Integer> axisMins,
+                                        HashMap<String, Integer> axisMaxs) {
       viewer_.initializeViewerToLoaded(channelNames, dispSettings, axisMins, axisMaxs);
    }
 }
