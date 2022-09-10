@@ -53,7 +53,7 @@ public final class SequenceSettings {
       private ArrayList<Double> customIntervalsMs;
       private ArrayList<ChannelSpec> channels = new ArrayList<>();
       private ArrayList<Double> slices = new ArrayList<>();
-      private boolean relativeZSlice = false;
+      private boolean relativeZSlice = true;
       private boolean slicesFirst = false;
       private boolean timeFirst = false;
       private boolean keepShutterOpenSlices = false;
