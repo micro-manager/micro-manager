@@ -53,7 +53,7 @@ public class BoofCVUtils {
       double maxValue = GImageStatistics.max(img);
 
       int range = (int) (1 + maxValue - minValue);
-      int histogram[] = new int[range];
+      int[] histogram = new int[range];
       GImageStatistics.histogram(img, minValue, histogram);
       final int factor = range / histogramRange;
       int[] compressedHistogram = histogram;

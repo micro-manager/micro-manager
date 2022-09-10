@@ -27,6 +27,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
+
 package org.micromanager.imageprocessing;
 
 import ij.process.ByteProcessor;
