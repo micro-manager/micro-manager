@@ -14,13 +14,15 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.magellanacq;
 
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.misc.GlobalSettings;
 
 /**
- * Container for settings specific to explore acquisition
+ * Container for settings specific to explore acquisition.
+ *
  * @author Henry
  */
 public class ExploreAcqSettings  extends MagellanGenericAcquisitionSettings {
@@ -31,8 +33,10 @@ public class ExploreAcqSettings  extends MagellanGenericAcquisitionSettings {
    private static final String EXPLORE_TILE_OVERLAP = "Explore tile overlap";
 
    
-   public ExploreAcqSettings(String dir, String name, String cGroup,  double zStep, double tileOverlap) {
-      super(dir, name, cGroup, cGroup.equals("") ? null : new ChannelGroupSettings(cGroup), zStep, tileOverlap, false);
+   public ExploreAcqSettings(String dir, String name, String cGroup,  double zStep,
+                             double tileOverlap) {
+      super(dir, name, cGroup, cGroup.equals("")
+            ? null : new ChannelGroupSettings(cGroup), zStep, tileOverlap, false);
 
       //now that explore acquisition is being run, store values
       GlobalSettings.getInstance().storeStringInPrefs(EXPLORE_DIR_PREF, dir);
@@ -42,7 +46,8 @@ public class ExploreAcqSettings  extends MagellanGenericAcquisitionSettings {
    }
    
    public static String getNameFromPrefs() {
-      return GlobalSettings.getInstance().getStringInPrefs(EXPLORE_NAME_PREF, "Untitled Explore Acquisition" );
+      return GlobalSettings.getInstance().getStringInPrefs(EXPLORE_NAME_PREF,
+            "Untitled Explore Acquisition");
    } 
    
    public static double getZStepFromPrefs() {

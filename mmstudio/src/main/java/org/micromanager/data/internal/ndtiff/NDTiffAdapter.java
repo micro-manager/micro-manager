@@ -35,6 +35,12 @@ import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 
 
+/**
+ * Implements the NDTiff format (Micro-Magellan / PycroManager) to a Micro-Manager Storage
+ * so that it can be used with the MM 2.0 storage API.
+ *
+ * @author Henry Pinkard
+ */
 public class NDTiffAdapter implements Storage {
 
    private static final int SAVING_QUEUE_SIZE = 40;
@@ -42,6 +48,14 @@ public class NDTiffAdapter implements Storage {
    private NDTiffAPI storage_;
    private DefaultDatastore store_;
 
+   /**
+    * Constructor of NDTiffAdapter.
+    *
+    * @param store Micro-Manager data store that will be used
+    * @param dir Where to write the data
+    * @param amInWriteMode Whether or not we are writing
+    * @throws IOException Close to inevitable with data storage
+    */
    public NDTiffAdapter(Datastore store, String dir, Boolean amInWriteMode)
            throws IOException {
       // We must be notified of changes in the Datastore before everyone else,
@@ -88,6 +102,11 @@ public class NDTiffAdapter implements Storage {
       return builder.build();
    }
 
+   /**
+    * Will be called when the event bus signals that there are new Summary Metadata.
+    *
+    * @param event The event gives access to the new SummaryMetadata.
+    */
    @Subscribe
    public void onNewSummaryMetadata(DataProviderHasNewSummaryMetadataEvent event) {
       try {
@@ -232,11 +251,6 @@ public class NDTiffAdapter implements Storage {
    @Override
    public List<String> getAxes() {
       return getSummaryMetadata().getOrderedAxes();
-//      if (storage_ == null) {
-//         return new LinkedList<String>();
-//      }
-//      return new LinkedList<String>(storage_.getAxesSet().stream().flatMap(hashmap ->
-//              hashmap.keySet().stream()).collect(Collectors.toSet()));
    }
 
    @Override
@@ -286,11 +300,12 @@ public class NDTiffAdapter implements Storage {
 
    /**
     * The DefaultImage converter expects to find width and height keys,
-    * though the images fed in don't have them in metadata. This function explicitly adds them in
+    * though the images fed in don't have them in metadata.
+    * This function explicitly adds width and height keys.
     *
-    * @param ti
-    * @param axes
-    * @return
+    * @param ti TaggedImage to which the width and height keys will be added.
+    * @param axes List with axes.  What are these for?
+    * @return TaggedImage with width and height metadata added.
     */
    private TaggedImage addEssentialImageMetadata(TaggedImage ti, HashMap<String, Integer> axes) {
       EssentialImageMetadata essMD = storage_.getEssentialImageMetadata(axes);

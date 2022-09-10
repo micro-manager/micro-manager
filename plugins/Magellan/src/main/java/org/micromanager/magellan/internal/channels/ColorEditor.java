@@ -20,6 +20,7 @@
 //INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 //CVS:          $Id: ColorEditor.java 12224 2013-11-27 07:20:28Z nico $
+
 package org.micromanager.magellan.internal.channels;
 
 
@@ -27,7 +28,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
@@ -40,7 +40,7 @@ import javax.swing.table.TableCellEditor;
  * Color chooser for channel data.
  */
 public class ColorEditor extends AbstractCellEditor implements TableCellEditor,
-ActionListener {
+      ActionListener {
    private static final long serialVersionUID = -5497293610937812813L;
    Color currentColor;
    JButton button;
@@ -89,7 +89,7 @@ ActionListener {
          fireEditingStopped();
          // Fire an event to enable saving the new color in the colorprefs
          // Don't know how to fire just for this row:
-         for (int row=0; row < model_.getRowCount(); row++) {
+         for (int row = 0; row < model_.getRowCount(); row++) {
             model_.fireTableCellUpdated(row, column_);
          }
 
@@ -117,7 +117,7 @@ ActionListener {
          return null;
       }
 
-      currentColor = (Color)value;
+      currentColor = (Color) value;
       return button;
    }
 }

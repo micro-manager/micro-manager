@@ -16,6 +16,7 @@
  * 
  * 
  */
+
 package edu.ucsf.valelab.gaussianfit.utils;
 
 import java.awt.Dialog;
@@ -74,8 +75,8 @@ public class FileDialogs {
             return true;
          }
          for (int i = 0; i < fileSuffixes_.length; ++i) {
-            if (fileSuffixes_[i] != null &&
-                  fileSuffixes_[i].toLowerCase().contentEquals(suffix)) {
+            if (fileSuffixes_[i] != null
+                  && fileSuffixes_[i].toLowerCase().contentEquals(suffix)) {
                return true;
             }
          }

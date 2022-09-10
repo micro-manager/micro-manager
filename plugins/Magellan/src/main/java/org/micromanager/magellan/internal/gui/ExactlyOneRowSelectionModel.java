@@ -26,18 +26,18 @@ import javax.swing.ListSelectionModel;
  */
 public class ExactlyOneRowSelectionModel extends DefaultListSelectionModel {
 
-    public ExactlyOneRowSelectionModel () {
-       super();
-       setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-       this.setSelectionInterval(0, 0);
-    }
+   public ExactlyOneRowSelectionModel() {
+      super();
+      setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      this.setSelectionInterval(0, 0);
+   }
 
-    @Override
-    public void clearSelection() {
-    }
+   @Override
+   public void clearSelection() {
+   }
 
-    @Override
-    public void removeSelectionInterval(int index0, int index1) {
-    }
+   @Override
+   public void removeSelectionInterval(int index0, int index1) {
+   }
 
 }

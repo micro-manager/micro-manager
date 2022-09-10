@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.magellan.internal.gui;
 
-import com.google.common.eventbus.Subscribe;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import javax.swing.table.AbstractTableModel;
@@ -20,11 +20,12 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
  *
  * @author henrypinkard
  */
- class DisplayWindowSurfaceGridTableModel extends AbstractTableModel implements SurfaceGridListener {
+class DisplayWindowSurfaceGridTableModel extends AbstractTableModel
+       implements SurfaceGridListener {
 
-   private final String[] COLUMNS = {"Show", "Type", "Name"};
+   private static final String[] COLUMNS = {"Show", "Type", "Name"};
    //maybe, "Z Device"
-   private volatile HashMap<XYFootprint, Boolean> showSurfaceOrGridMap = new HashMap<XYFootprint, Boolean>();
+   private volatile HashMap<XYFootprint, Boolean> showSurfaceOrGridMap = new HashMap<>();
 
    private SurfaceGridManager manager_ = SurfaceGridManager.getInstance();
    private MagellanViewer display_;
@@ -61,7 +62,8 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
    public boolean isCellEditable(int rowIndex, int colIndex) {
       if (colIndex == 0 || colIndex == 2) {
          return true;
-      } else if (colIndex == 3 && manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator) {
+      } else if (colIndex == 3
+            && manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator) {
          return true; // only surfaces have XY padding
       }
       return false;
@@ -70,7 +72,8 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
    @Override
    public void setValueAt(Object value, int row, int col) {
       if (col == 0) {
-         showSurfaceOrGridMap.put(manager_.getSurfaceOrGrid(row), !showSurfaceOrGridMap.get(manager_.getSurfaceOrGrid(row)));
+         showSurfaceOrGridMap.put(manager_.getSurfaceOrGrid(row),
+               !showSurfaceOrGridMap.get(manager_.getSurfaceOrGrid(row)));
          //redraw to refelect change in visibility
          display_.redrawOverlay();
       } else if (col == 2) {
@@ -89,7 +92,8 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
       if (columnIndex == 0) {
          return showSurfaceOrGridMap.get(surfaceOrGird);
       } else if (columnIndex == 1) {
-         return manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator ? "Surface" : "Grid";
+         return manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator
+               ? "Surface" : "Grid";
       } else {
          return manager_.getSurfaceOrGrid(rowIndex).getName();
       }

@@ -23,7 +23,7 @@ public class Besseli {
    public static final double ACC = 4.0;
    public static final double BIGNO = 1.0e10;
    public static final double BIGNI = 1.0e-10;
-   private final static Exp EXP = new Exp();
+   private static final Exp EXP = new Exp();
 
    public static final double bessi0(double x) {
       double answer;

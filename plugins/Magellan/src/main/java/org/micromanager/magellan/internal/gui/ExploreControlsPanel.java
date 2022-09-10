@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.magellan.internal.gui;
 
 import javax.swing.DefaultCellEditor;
@@ -104,7 +105,7 @@ public class ExploreControlsPanel extends javax.swing.JPanel implements Controls
       acquireAtCurrentButton_.setText("Acquire at current position");
       acquireAtCurrentButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            acquireAtCurrentButton_ActionPerformed(evt);
+            acquireAtCurrentButtonActionPerformed(evt);
          }
       });
       jPanel1.add(acquireAtCurrentButton_);
@@ -112,7 +113,7 @@ public class ExploreControlsPanel extends javax.swing.JPanel implements Controls
       selectUseAllButton_.setText("Select all");
       selectUseAllButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            selectUseAllButton_ActionPerformed(evt);
+            selectUseAllButtonActionPerformed(evt);
          }
       });
       jPanel1.add(selectUseAllButton_);
@@ -120,61 +121,68 @@ public class ExploreControlsPanel extends javax.swing.JPanel implements Controls
       syncExposuresButton_.setText("Sync exposures");
       syncExposuresButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            syncExposuresButton_ActionPerformed(evt);
+            syncExposuresButtonActionPerformed(evt);
          }
       });
       jPanel1.add(syncExposuresButton_);
 
-      channelsTable_.setModel(new SimpleChannelTableModel(channels_,false));
+      channelsTable_.setModel(new SimpleChannelTableModel(channels_, false));
       jScrollPane2.setViewportView(channelsTable_);
 
       javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
       jPanel2.setLayout(jPanel2Layout);
       jPanel2Layout.setHorizontalGroup(
-         jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(jPanel2Layout.createSequentialGroup()
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE,
+                  javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-         .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)
       );
       jPanel2Layout.setVerticalGroup(
-         jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(jPanel2Layout.createSequentialGroup()
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE,
+                  javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 298, Short.MAX_VALUE))
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE,
+                  298, Short.MAX_VALUE))
       );
 
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
       this.setLayout(layout);
       layout.setHorizontalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(zPanelPanel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-         .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(zPanelPanel_, javax.swing.GroupLayout.DEFAULT_SIZE,
+                  javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE,
+                  javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
       );
       layout.setVerticalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addComponent(zPanelPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+            .addComponent(zPanelPanel_, javax.swing.GroupLayout.PREFERRED_SIZE,
+                  javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE,
+                  javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
-   }// </editor-fold>//GEN-END:initComponents
+   } // </editor-fold>//GEN-END:initComponents
 
-   private void syncExposuresButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_syncExposuresButton_ActionPerformed
+   private void syncExposuresButtonActionPerformed(java.awt.event.ActionEvent evt) {
       ((SimpleChannelTableModel) channelsTable_.getModel()).synchronizeExposures();
       ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
-   }//GEN-LAST:event_syncExposuresButton_ActionPerformed
+   } //GEN-LAST:event_syncExposuresButton_ActionPerformed
 
-   private void selectUseAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectUseAllButton_ActionPerformed
+   private void selectUseAllButtonActionPerformed(java.awt.event.ActionEvent evt) {
       ((SimpleChannelTableModel) channelsTable_.getModel()).selectAllChannels();
       ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
-   }//GEN-LAST:event_selectUseAllButton_ActionPerformed
+   } //GEN-LAST:event_selectUseAllButton_ActionPerformed
 
-   private void acquireAtCurrentButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acquireAtCurrentButton_ActionPerformed
+   private void acquireAtCurrentButtonActionPerformed(java.awt.event.ActionEvent evt) {
       manager_.acquireTileAtCurrentPosition();
-   }//GEN-LAST:event_acquireAtCurrentButton_ActionPerformed
+   } //GEN-LAST:event_acquireAtCurrentButton_ActionPerformed
 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -14,6 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.demo;
 
 import ij.ImagePlus;
@@ -65,12 +66,6 @@ public class DemoModeImageData {
 
       IntStream yStream = IntStream.range(y, y + height).map(pixelIndToGaussProcess(true));
 
-//      for (int yPix = y; yPix < y + height; yPix++) {
-//         randY.setSeed(y);
-//      }
-//      for (int xPix = x; xPix < x + width; xPix++) {
-//         randY.setSeed(x);
-//      }
       int fullWidth = img_.getWidth();
       int fullHeight = img_.getHeight();
       while (x < 0) {
@@ -85,18 +80,21 @@ public class DemoModeImageData {
       x = x % fullWidth;
       y = y % fullHeight;
       int sliceIndex = (z % imageSizeZ_) / pixelSizeZ_;
-//      int sliceIndex = (z) / pixelSizeZ_;
 
-      byte[] fullSlice = (byte[]) img_.getStack().getPixels(numChannels_ * sliceIndex + channel + 1);
+      byte[] fullSlice = (byte[]) img_.getStack().getPixels(
+            numChannels_ * sliceIndex + channel + 1);
       byte[] pixels = new byte[width * height];
       for (int line = 0; line < height; line++) {
          try {
             if (y + line >= fullHeight) {
                y -= fullHeight; //reset to top if go over
             }
-            System.arraycopy(fullSlice, (y + line) * fullWidth + x, pixels, line * width, Math.min(width, fullWidth - x));
+            System.arraycopy(fullSlice, (y + line) * fullWidth + x, pixels,
+                  line * width, Math.min(width, fullWidth - x));
             //Copy rest of line if spill over in x
-            System.arraycopy(fullSlice, (y + line) * fullWidth, pixels, line * width + Math.min(width, fullWidth - x), width - Math.min(width, fullWidth - x));
+            System.arraycopy(fullSlice, (y + line) * fullWidth, pixels,
+                  line * width + Math.min(width, fullWidth - x),
+                  width - Math.min(width, fullWidth - x));
          } catch (ArrayIndexOutOfBoundsException e) {
             e.printStackTrace();
          }

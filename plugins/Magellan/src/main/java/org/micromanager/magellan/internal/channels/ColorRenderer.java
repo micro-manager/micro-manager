@@ -21,11 +21,11 @@
 //
 // CVS:          $Id: ColorRenderer.java 12224 2013-11-27 07:20:28Z nico $
 //
+
 package org.micromanager.magellan.internal.channels;
 
 import java.awt.Color;
 import java.awt.Component;
-
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JTable;
@@ -38,58 +38,59 @@ import javax.swing.table.TableCellRenderer;
 public class ColorRenderer extends JLabel implements TableCellRenderer {
    private static final long serialVersionUID = -2539377758420096159L;
    Border unselectedBorder = null;
-    Border selectedBorder = null;
-    boolean isBordered = true;
+   Border selectedBorder = null;
+   boolean isBordered = true;
 
-    public ColorRenderer(boolean isBordered) {
-        this.isBordered = isBordered;
-        setOpaque(true); //MUST do this for background to show up.
-    }
+   public ColorRenderer(boolean isBordered) {
+      this.isBordered = isBordered;
+      setOpaque(true); //MUST do this for background to show up.
+   }
 
    @Override
-    public Component getTableCellRendererComponent(
+   public Component getTableCellRendererComponent(
                             JTable table, Object color,
                             boolean isSelected, boolean hasFocus,
                             int row, int column) {
 
-        // https://stackoverflow.com/a/3055930
-        if (color == null) {
-           return null;
-        }
+      // https://stackoverflow.com/a/3055930
+      if (color == null) {
+         return null;
+      }
 
-        Color newColor = (Color)color;
-        if (table.isEnabled()) {
-            setBackground(newColor);
-        } else {
-            Color dimColor = mixColors(newColor,table.getBackground(),0.5);
-            setBackground(dimColor);
-        }
-        if (isBordered) {
-            if (isSelected) {
-                if (selectedBorder == null) {
-                    selectedBorder = BorderFactory.createMatteBorder(2,5,2,5,
+      Color newColor = (Color) color;
+      if (table.isEnabled()) {
+         setBackground(newColor);
+      } else {
+         Color dimColor = mixColors(newColor, table.getBackground(), 0.5);
+         setBackground(dimColor);
+      }
+      if (isBordered) {
+         if (isSelected) {
+            if (selectedBorder == null) {
+               selectedBorder = BorderFactory.createMatteBorder(2, 5, 2, 5,
                                               table.getSelectionBackground());
-                }
-                setBorder(selectedBorder);
-            } else {
-                if (unselectedBorder == null) {
-                    unselectedBorder = BorderFactory.createMatteBorder(2,5,2,5,
-                                              table.getBackground());
-                }
-                setBorder(unselectedBorder);
             }
-        }
-        
-        setToolTipText("RGB value: " + newColor.getRed() + ", "
+            setBorder(selectedBorder);
+         } else {
+            if (unselectedBorder == null) {
+               unselectedBorder = BorderFactory.createMatteBorder(2, 5, 2, 5,
+                                              table.getBackground());
+            }
+            setBorder(unselectedBorder);
+         }
+      }
+
+      setToolTipText("RGB value: " + newColor.getRed() + ", "
                                      + newColor.getGreen() + ", "
                                      + newColor.getBlue());
-        return this;
-    }
+      return this;
+   }
 
-    private Color mixColors(Color fgColor, Color bgColor, double transparency) {
-        return new Color( (int) (fgColor.getRed() * transparency + bgColor.getRed() * (1-transparency)),
-                          (int) (fgColor.getGreen() * transparency + bgColor.getGreen() * (1-transparency)),
-                          (int) (fgColor.getBlue() * transparency + bgColor.getBlue() * (1-transparency))
-                          );
-    }
+   private Color mixColors(Color fgColor, Color bgColor, double transparency) {
+      return new Color((int) (fgColor.getRed() * transparency + bgColor.getRed()
+            * (1 - transparency)),
+              (int) (fgColor.getGreen() * transparency + bgColor.getGreen() * (1 - transparency)),
+              (int) (fgColor.getBlue() * transparency + bgColor.getBlue() * (1 - transparency))
+           );
+   }
 }

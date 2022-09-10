@@ -56,19 +56,19 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public class CoordinateMapper {
 
-   final private ExponentPairs exponentPairs_;
-   final private ControlPoints controlPoints_;
-   final private EnhancedKDTree kdTree_;
-   final private int order_;
-   final private PointMap pointMap_;
+   private final ExponentPairs exponentPairs_;
+   private final ControlPoints controlPoints_;
+   private final EnhancedKDTree kdTree_;
+   private final int order_;
+   private final PointMap pointMap_;
    private boolean log_;
    private PointMap cleanedPointMap_ = null;
    private AffineTransform af_;
-   final private AffineTransform rbAf_;
-   final public static int LWM = 1;
-   final public static int AFFINE = 2;
-   final public static int NONRFEFLECTIVESIMILARITY = 3;
-   final public static int PIECEWISEAFFINE = 4;
+   private final AffineTransform rbAf_;
+   public static final int LWM = 1;
+   public static final int AFFINE = 2;
+   public static final int NONRFEFLECTIVESIMILARITY = 3;
+   public static final int PIECEWISEAFFINE = 4;
 
    private int method_ = LWM;
    private int pieceWiseAffineMaxControlPoints_ = 100;
@@ -227,9 +227,9 @@ public class CoordinateMapper {
     */
    public static class ControlPoint {
 
-      final public Point2D.Double point;
-      final public double Rnormalized;
-      final public PolynomialCoefficients polynomialCoefficients;
+      public final Point2D.Double point;
+      public final double rnormalized;
+      public final PolynomialCoefficients polynomialCoefficients;
 
       /**
        * Generates a Controlpoint for the given srcPoint. First finds n (order!) control points
@@ -247,7 +247,7 @@ public class CoordinateMapper {
          ExponentPairs exponentPairs = polynomialExponents(order);
          List<Point2D.Double> neighbors = kdTree.nearestNeighbor(srcPoint,
                exponentPairs.size(), true);
-         Rnormalized = neighbors.get(0).distance(srcPoint);
+         rnormalized = neighbors.get(0).distance(srcPoint);
          polynomialCoefficients = fitPolynomial(exponentPairs, selectPoints(pointMap, neighbors));
       }
    }
@@ -345,7 +345,7 @@ public class CoordinateMapper {
       int count = 0;
       for (Point2D.Double srcPoint : neighbors) {
          final ControlPoint controlPoint = controlPoints.get(srcPoint);
-         final double r = testPoint.distance(controlPoint.point) / controlPoint.Rnormalized;
+         final double r = testPoint.distance(controlPoint.point) / controlPoint.rnormalized;
          final double weight = weightFunction(r);
          if (weight > 0) {
             count++;
@@ -361,15 +361,12 @@ public class CoordinateMapper {
             sumWeightedPolyY / sumWeights);
    }
 
-   /***  Affine Transform (from Micro-Manager Math utils) ***/
-
-
    /**
-    * Helper function for generateAffineTransformFromPointPairs
+    * Helper function for generateAffineTransformFromPointPairs.
     *
-    * @param m
-    * @param pt
-    * @param row
+    * @param m Matrix to which the point should be added
+    * @param pt Point to add to the matrix
+    * @param row row at which the point will be added
     */
    private static void insertPoint2DInMatrix(RealMatrix m, Point2D.Double pt, int row) {
       // Set row to [x,y,1]:
@@ -386,8 +383,8 @@ public class CoordinateMapper {
     *                   (srcPt-&gt;destPt)
     * @return
     */
-   public static AffineTransform generateAffineTransformFromPointPairs
-   (Map<Point2D.Double, Point2D.Double> pointPairs) {
+   public static AffineTransform generateAffineTransformFromPointPairs(
+         Map<Point2D.Double, Point2D.Double> pointPairs) {
       RealMatrix u = new Array2DRowRealMatrix(pointPairs.size(), 3);
       RealMatrix v = new Array2DRowRealMatrix(pointPairs.size(), 3);
 
@@ -434,8 +431,8 @@ public class CoordinateMapper {
     *                   (srcPt-&gt;destPt)
     * @return Affine transform object
     */
-   public static AffineTransform generateRigidBodyTransform
-   (Map<Point2D.Double, Point2D.Double> pointPairs) {
+   public static AffineTransform generateRigidBodyTransform(
+         Map<Point2D.Double, Point2D.Double> pointPairs) {
       int number = pointPairs.size();
 
       RealMatrix X = new Array2DRowRealMatrix(2 * number, 4);
@@ -501,8 +498,8 @@ public class CoordinateMapper {
                if (log_) {
                   logAffineTransform(af_);
                }
-               ij.IJ.log("Used " + cleanedPointMap_.size() +
-                     " spot pairs to calculate 2C reference");
+               ij.IJ.log("Used " + cleanedPointMap_.size()
+                     + " spot pairs to calculate 2C reference");
             }
             return (Point2D.Double) af_.transform(srcTestPoint, null);
          } catch (Exception ex) {

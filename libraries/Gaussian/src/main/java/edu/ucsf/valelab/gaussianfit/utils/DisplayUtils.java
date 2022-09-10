@@ -48,7 +48,7 @@ public class DisplayUtils {
    /*
     * More or less verbatim copy of the ImageJ code
     */
-   public static void AutoStretch(ImagePlus sp) {
+   public static void autoStretch(ImagePlus sp) {
       Calibration cal = sp.getCalibration();
       sp.setCalibration(null);
       ImageStatistics stats = sp.getStatistics(); // get uncalibrated stats
@@ -91,7 +91,7 @@ public class DisplayUtils {
       }
    }
 
-   public static void SetCalibration(ImagePlus sp, float pixelSize) {
+   public static void setCalibration(ImagePlus sp, float pixelSize) {
       Calibration cal = new Calibration();
       cal.pixelWidth = pixelSize;
       cal.pixelHeight = pixelSize;

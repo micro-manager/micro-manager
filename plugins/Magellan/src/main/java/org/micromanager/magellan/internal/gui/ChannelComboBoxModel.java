@@ -3,15 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package org.micromanager.magellan.internal.gui;
 
 import java.util.ArrayList;
 import javax.swing.DefaultComboBoxModel;
-import org.micromanager.magellan.internal.main.Magellan;
-import org.micromanager.magellan.internal.misc.Log;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
+import org.micromanager.magellan.internal.main.Magellan;
+import org.micromanager.magellan.internal.misc.Log;
 
 /**
  *
@@ -62,11 +63,11 @@ public class ChannelComboBoxModel  extends DefaultComboBoxModel {
       return true;
    }
 
-    @Override
+   @Override
    public void setSelectedItem(Object anItem) {
       String[] groups = getChannelGroups();
-      for (int i = 0; i < groups.length; i++ ) {
-         if (groups[i].equals((String)anItem)) {
+      for (int i = 0; i < groups.length; i++) {
+         if (groups[i].equals((String) anItem)) {
             selected_ = i;
          }         
       }   

@@ -25,7 +25,9 @@ public class ChannelGroupSettings {
    private static final String PREF_COLOR = "COLOR";
    private static final String PREF_USE = "USE";
    private static final String PREF_OFFSET = "OFFSET";
-   private static final Color[] DEFAULT_COLORS = {new Color(160, 32, 240), Color.blue, Color.green, Color.yellow, Color.red, Color.pink};
+   private static final Color[] DEFAULT_COLORS = {
+         new Color(160, 32, 240), Color.blue, Color.green, Color.yellow, Color.red,
+         Color.pink};
 
    protected ArrayList<SingleChannelSetting> channels_;
    private static CMMCore core_;
@@ -60,7 +62,8 @@ public class ChannelGroupSettings {
 
    public void updateChannelGroup(String channelGroup) {
       group_ = channelGroup;
-      if (channels_ != null && !channels_.isEmpty() && channels_.get(0).group_.equals(channelGroup)) {
+      if (channels_ != null && !channels_.isEmpty()
+            && channels_.get(0).group_.equals(channelGroup)) {
          //nothing to update
          return;
       }
@@ -143,14 +146,16 @@ public class ChannelGroupSettings {
       String prefix = MagellanGUIAcquisitionSettings.PREF_PREFIX + "CHANNELGROUP"
               + group_ + "CHANNELNAME" + channelName;
       return new Color(GlobalSettings.getInstance().getIntInPrefs(
-              prefix + PREF_COLOR, DEFAULT_COLORS[new Random().nextInt(DEFAULT_COLORS.length)].getRGB()));
+              prefix + PREF_COLOR, DEFAULT_COLORS[
+                    new Random().nextInt(DEFAULT_COLORS.length)].getRGB()));
    }
 
    private void setValuesFromPrefs(SingleChannelSetting setting) {
       String prefix = MagellanGUIAcquisitionSettings.PREF_PREFIX + "CHANNELGROUP"
               + setting.group_ + "CHANNELNAME" + setting.config_;
       setting.color_ = new Color(GlobalSettings.getInstance().getIntInPrefs(
-              prefix + PREF_COLOR, DEFAULT_COLORS[new Random().nextInt(DEFAULT_COLORS.length)].getRGB()));
+              prefix + PREF_COLOR, DEFAULT_COLORS[
+                    new Random().nextInt(DEFAULT_COLORS.length)].getRGB()));
 
       try {
          setting.exposure_ = GlobalSettings.getInstance().getDoubleInPrefs(
