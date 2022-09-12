@@ -1158,56 +1158,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          return SequenceSettings.fromJSONStream(seqString);
       }
       return (new SequenceSettings.Builder()).build();
-
-      // the following is for backward compatibility (i.e. restoring old format settings)
-      // Change introduced July 10, 2020, delete after July 2021?
-      /*
-      SequenceSettings.Builder ssb = new SequenceSettings.Builder();
-
-      // load acquisition engine preferences
-      ssb.numFrames(settings_.getInteger(ACQ_NUMFRAMES, 1));
-      ssb.intervalMs(settings_.getDouble(ACQ_INTERVAL, 0.0));
-      ssb.useFrames(settings_.getBoolean(ACQ_ENABLE_MULTI_FRAME, false));
-
-      ssb.sliceZBottomUm(settings_.getDouble(ACQ_ZBOTTOM, 0.0));
-      ssb.sliceZTopUm(settings_.getDouble(ACQ_ZTOP, 0.0));
-      ssb.sliceZStepUm(settings_.getDouble(ACQ_ZSTEP, 1.0));
-      ssb.relativeZSlice(settings_.getInteger(ACQ_Z_VALUES, 0) == 0);
-      ssb.useSlices(settings_.getBoolean(ACQ_ENABLE_SLICE_SETTINGS, false));
-
-      ssb.usePositionList(settings_.getBoolean(ACQ_ENABLE_MULTI_POSITION, false));
-
-      ssb.channelGroup(settings_.getString(ACQ_CHANNEL_GROUP, ""));
-      ssb.useChannels(settings_.getBoolean(ACQ_ENABLE_MULTI_CHANNEL, false));
-
-      ssb.save(settings_.getBoolean(ACQ_SAVE_FILES, false));
-      ssb.prefix(settings_.getString(ACQ_DIR_NAME, "Untitled"));
-      ssb.root(settings_.getString(ACQ_ROOT_NAME,
-              System.getProperty("user.home") + "/AcquisitionData"));
-      ssb.acqOrderMode(settings_.getInteger(ACQ_ORDER_MODE, 0));
-      ssb.useAutofocus(settings_.getBoolean(ACQ_AF_ENABLE, false));
-      ssb.skipAutofocusCount(settings_.getInteger(ACQ_AF_SKIP_INTERVAL, 0));
-
-      ssb.keepShutterOpenChannels(settings_.getBoolean(
-              ACQ_CHANNELS_KEEP_SHUTTER_OPEN, false));
-      ssb.keepShutterOpenSlices(settings_.getBoolean(
-              ACQ_STACK_KEEP_SHUTTER_OPEN, false));
-
-      ArrayList<Double> customIntervals = new ArrayList<>();
-      int h = 0;
-      while (settings_.getDouble(CUSTOM_INTERVAL_PREFIX + h, -1.0) >= 0.0) {
-         customIntervals.add(settings_.getDouble(CUSTOM_INTERVAL_PREFIX + h, -1.0));
-         h++;
-      }
-      ssb.customIntervalsMs(customIntervals);
-      ssb.useCustomIntervals(settings_.getBoolean(
-              ACQ_ENABLE_CUSTOM_INTERVALS, false));
-      // acqEng_.getChannels().clear();
-      ssb.shouldDisplayImages(settings_.getBoolean(SHOULD_HIDE_DISPLAY, false));
-
-      return ssb.build();
-
- */
    }
 
    /**
