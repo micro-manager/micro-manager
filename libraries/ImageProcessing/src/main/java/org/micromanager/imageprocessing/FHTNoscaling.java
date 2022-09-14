@@ -235,7 +235,7 @@ public class FHTNoscaling extends FloatProcessor {
          numBfs = 2;
          numGps = numGps / 2;
          for (stage = 2; stage < nlog2; stage++) {
-            for (gpNum = 0; gpNum < numGps; gpNum++) {
+            for (int gpNum = 0; gpNum < numGps; gpNum++) {
                ad0 = gpNum * gpSize * 2;
                ad1 = ad0;     // 1st butterfly is different from others - no mults needed
                ad2 = ad1 + gpSize;

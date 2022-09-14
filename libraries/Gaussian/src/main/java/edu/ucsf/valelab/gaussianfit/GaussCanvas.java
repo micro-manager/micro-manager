@@ -134,8 +134,6 @@ public class GaussCanvas extends ImageCanvas {
       }
 
       repaint();
-      //if (srcRect.width<imageWidth || srcRect.height<imageHeight)
-      //	resetMaxBounds();
    }
 
    Rectangle getRect(double newMag, int x, int y) {
