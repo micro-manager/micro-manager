@@ -32,7 +32,7 @@ package edu.ucsf.valelab.gaussianfit.fitting;
  */
 public class FittingException extends Exception {
 
-   final private String msg_;
+   private final String msg_;
 
    public FittingException(String msg) {
       msg_ = msg;

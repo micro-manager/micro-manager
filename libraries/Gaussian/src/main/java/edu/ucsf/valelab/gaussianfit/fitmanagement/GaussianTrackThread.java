@@ -2,24 +2,24 @@
  * GaussianTrackThread contains two main functions: trackGaussians and trackFiducials for tracking
  * of spots.  The only difference is in the output: trackGaussians will calculate on-axis and
  * off-axis travel and plot these separately, whereas trackFiducials will plot all x-y positions
- * found
- * <p>
- * These functions can be run on a separate thread by setting the mode_ parameter to either TRACK or
- * FIDUCIAL.  GaussianTrackForm has the UI element that invokes these functions.
- * <p>
- * Author: Nico Stuurman
- * <p>
- * Copyright (c) 2010-2017, Regents of the University of California All rights reserved.
- * <p>
- * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * found.
+ *
+ * <p>These functions can be run on a separate thread by setting the mode_ parameter to either TRACK
+ * or FIDUCIAL.  GaussianTrackForm has the UI element that invokes these functions.
+ *
+ * <p>Author: Nico Stuurman
+ *
+ * <p>Copyright (c) 2010-2017, Regents of the University of California All rights reserved.
+ *
+ * <p>Redistribution and use in source and binary forms, with or without modification, are permitted
  * provided that the following conditions are met:
- * <p>
- * 1. Redistributions of source code must retain the above copyright notice, this list of conditions
- * and the following disclaimer. 2. Redistributions in binary form must reproduce the above
- * copyright notice, this list of conditions and the following disclaimer in the documentation
+ *
+ * <p>1. Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the
+ * above copyright notice, this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * <p>
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ *
+ * <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
  * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -27,8 +27,8 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * <p>
- * The views and conclusions contained in the software and documentation are those of the authors
+ *
+ * <p>The views and conclusions contained in the software and documentation are those of the authors
  * and should not be interpreted as representing official policies, either expressed or implied, of
  * the FreeBSD Project.
  */
@@ -45,7 +45,7 @@ import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.*;
+import ij.gui.Roi;
 import ij.process.ImageProcessor;
 import java.awt.Polygon;
 import java.awt.geom.Point2D;
@@ -59,8 +59,8 @@ import java.util.List;
  */
 public class GaussianTrackThread extends GaussianInfo implements Runnable {
 
-   public final static int TRACK = 1;
-   public final static int FIDUCIAL = 2;
+   public static final int TRACK = 1;
+   public static final int FIDUCIAL = 2;
 
    public static boolean windowOpen_ = false;
    double[] params0_ = {16000.0, 5.0, 5.0, 1.0, 850.0};
@@ -135,7 +135,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable {
          return false;
       }
 
-      Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 * super.getHalfBoxSize(),
+      Polygon pol = FindLocalMaxima.findMax(siPlus, 2 * super.getHalfBoxSize(),
             super.getNoiseTolerance(), preFilterType_);
       if (pol.npoints == 0) {
          if (!silent_) {
@@ -179,8 +179,6 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable {
       int size = 2 * super.getHalfBoxSize();
 
       for (int i = n; i <= nMax && !stop; i++) {
-         SpotData spot;
-
          // Give user feedback
          ij.IJ.showStatus("Tracking...");
          ij.IJ.showProgress(i, nMax);
@@ -195,7 +193,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable {
          siPlus.setRoi(searchRoi, false);
 
          // Find maximum in Roi, might not be needed....
-         pol = FindLocalMaxima.FindMax(siPlus, size, noiseTolerance_, preFilterType_);
+         pol = FindLocalMaxima.findMax(siPlus, size, noiseTolerance_, preFilterType_);
 
          // do not stray more than 2 pixels in x or y.  
          // This velocity maximum parameter should be tunable by the user
@@ -220,7 +218,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable {
          try {
             if (siPlus.getRoi() != spotRoi) {
                ReportingUtils.logError(
-                     "There seems to be a thread synchronization issue going on that causes this weirdness");
+                     "There seems to be a thread synchronization issue going on that causes "
+                     + "this weirdness");
             }
             ip = siPlus.getProcessor().crop();
          } catch (ArrayIndexOutOfBoundsException aex) {
@@ -230,7 +229,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable {
             ip = siPlus.getProcessor().crop();
          }
 
-         spot = new SpotData(ip, ch, 1, i, 1, i, xc, yc);
+         SpotData spot = new SpotData(ip, ch, 1, i, 1, i, xc, yc);
          GaussianFit.Data fitResult = gs.dogaussianfit(ip, maxIterations_);
          spot = SpotDataConverter.convert(spot, fitResult, this, null);
 
@@ -279,16 +278,16 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable {
          ArrayList<Double> timePoints) {
       // Add data to data overview window
       RowData.Builder builder = new RowData.Builder();
-      builder.setName(name).setTitle(siPlus.getTitle()).
-            setWidth(siPlus.getWidth()).setHeight(siPlus.getHeight()).
-            setPixelSizeNm(pixelSize_).setZStackStepSizeNm(0.0f).
-            setShape(super.getShape()).setHalfSize(super.getHalfBoxSize()).
-            setNrChannels(siPlus.getNChannels()).setNrFrames(siPlus.getNFrames()).
-            setNrSlices(siPlus.getNSlices()).setNrPositions(1).
-            setMaxNrSpots(resultList.size()).setSpotList(resultList).
-            setTimePoints(timePoints).setIsTrack(true).
-            setCoordinate(DataCollectionForm.Coordinates.NM).
-            setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
+      builder.setName(name).setTitle(siPlus.getTitle())
+                      .setWidth(siPlus.getWidth()).setHeight(siPlus.getHeight())
+                      .setPixelSizeNm(pixelSize_).setZStackStepSizeNm(0.0f)
+                      .setShape(super.getShape()).setHalfSize(super.getHalfBoxSize())
+                      .setNrChannels(siPlus.getNChannels()).setNrFrames(siPlus.getNFrames())
+                      .setNrSlices(siPlus.getNSlices()).setNrPositions(1)
+                      .setMaxNrSpots(resultList.size()).setSpotList(resultList)
+                      .setTimePoints(timePoints).setIsTrack(true)
+                      .setCoordinate(DataCollectionForm.Coordinates.NM)
+                      .setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
       DataCollectionForm.getInstance().addSpotData(builder);
 
       DataCollectionForm.getInstance().setVisible(true);

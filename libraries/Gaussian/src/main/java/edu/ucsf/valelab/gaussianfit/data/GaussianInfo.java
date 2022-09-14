@@ -89,7 +89,8 @@ public class GaussianInfo {
    protected boolean skipChannels_ = false;  // whether or not to skip channels
    protected int[] channelsToSkip_;   // the channels that we should not analyze
 
-   protected boolean fixWidth_ = false; // when true, do not fit the width of the peak but use given number
+   protected boolean fixWidth_ = false; // when true, do not fit the width of the peak
+   // but use given number
    protected double widthNm_ = 250.0;   // Width of Gaussian to use in fit
 
    protected boolean stop_ = false;

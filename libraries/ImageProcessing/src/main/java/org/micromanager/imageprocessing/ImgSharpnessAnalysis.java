@@ -298,9 +298,9 @@ public class ImgSharpnessAnalysis {
    public static double computeFFTBandpass(ImageProcessor proc, double fftLowerCutoff,
          double fftUpperCutoff) {
       // gets power spectrum (FFT) without scaling result
-      FHT_NoScaling myFHT = new FHT_NoScaling(proc);
+      FHTNoscaling myFHT = new FHTNoscaling(proc);
       myFHT.transform();
-      ImageProcessor ps = myFHT.getPowerSpectrum_noScaling();
+      ImageProcessor ps = myFHT.getpowerspectrumNoscaling();
       int midpoint = ps.getHeight() / 2;
       final int scaled_lower = (int) Math.round(fftLowerCutoff / 100 * midpoint);
       final int start_lower = Math.round(midpoint - scaled_lower);

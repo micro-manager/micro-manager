@@ -49,12 +49,12 @@ import ij.process.ImageStatistics;
  *
  * @author Jon
  */
-public class FHT_NoScaling extends FloatProcessor {
+public class FHTNoscaling extends FloatProcessor {
 
    private boolean isFrequencyDomain_;
    private int maxN_;
-   private float[] C_;
-   private float[] S_;
+   private float[] c_;
+   private float[] s_;
    private int[] bitrev_;
    private float[] tempArr_;
 
@@ -62,11 +62,11 @@ public class FHT_NoScaling extends FloatProcessor {
     * Constructs a FHT object from an ImageProcessor. Byte, short and RGB images are converted to
     * float. Float images are duplicated.
     */
-   public FHT_NoScaling(ImageProcessor ip) {
+   public FHTNoscaling(ImageProcessor ip) {
       this(padImage(ip), false);
    }
 
-   private FHT_NoScaling(ImageProcessor ip, boolean isFrequencyDomain) {
+   private FHTNoscaling(ImageProcessor ip, boolean isFrequencyDomain) {
       super(ip.getWidth(), ip.getHeight(),
             (float[]) ((ip instanceof FloatProcessor) ? ip.duplicate().getPixels()
                   : ip.convertToFloat().getPixels()), null);
@@ -100,7 +100,7 @@ public class FHT_NoScaling extends FloatProcessor {
                "Image not power of 2 size or not square: " + width + "x" + height);
       }
       maxN_ = width;
-      if (S_ == null) {
+      if (s_ == null) {
          initializeTables(maxN_);
       }
       float[] fht = (float[]) getPixels();
@@ -119,13 +119,13 @@ public class FHT_NoScaling extends FloatProcessor {
 
    private void makeSinCosTables(int maxN) {
       int n = maxN / 4;
-      C_ = new float[n];
-      S_ = new float[n];
+      c_ = new float[n];
+      s_ = new float[n];
       double theta = 0.0;
       double dTheta = 2.0 * Math.PI / maxN;
       for (int i = 0; i < n; i++) {
-         C_[i] = (float) Math.cos(theta);
-         S_[i] = (float) Math.sin(theta);
+         c_[i] = (float) Math.cos(theta);
+         s_[i] = (float) Math.sin(theta);
          theta += dTheta;
       }
    }
@@ -142,7 +142,7 @@ public class FHT_NoScaling extends FloatProcessor {
     * Performs a 2D FHT (Fast Hartley Transform).
     */
    private void rc2DFHT(float[] x, boolean inverse, int maxN) {
-      if (S_ == null) {
+      if (s_ == null) {
          initializeTables(maxN);
       }
       for (int row = 0; row < maxN; row++) {
@@ -154,22 +154,27 @@ public class FHT_NoScaling extends FloatProcessor {
       }
       transposeR(x, maxN);
 
-      int mRow, mCol;
-      float A, B, C, D, E;
+      int mRow;
+      int mCol;
+      float a;
+      float b;
+      float c;
+      float d;
+      float e;
       for (int row = 0; row <= maxN / 2; row++) { // Now calculate actual Hartley transform
          for (int col = 0; col <= maxN / 2; col++) {
             mRow = (maxN - row) % maxN;
             mCol = (maxN - col) % maxN;
-            A = x[row * maxN
+            a = x[row * maxN
                   + col];    //  see Bracewell, 'Fast 2D Hartley Transf.' IEEE Procs. 9/86
-            B = x[mRow * maxN + col];
-            C = x[row * maxN + mCol];
-            D = x[mRow * maxN + mCol];
-            E = ((A + D) - (B + C)) / 2;
-            x[row * maxN + col] = A - E;
-            x[mRow * maxN + col] = B + E;
-            x[row * maxN + mCol] = C + E;
-            x[mRow * maxN + mCol] = D - E;
+            b = x[mRow * maxN + col];
+            c = x[row * maxN + mCol];
+            d = x[mRow * maxN + mCol];
+            e = ((a + d) - (b + c)) / 2;
+            x[row * maxN + col] = a - e;
+            x[mRow * maxN + col] = b + e;
+            x[row * maxN + mCol] = c + e;
+            x[mRow * maxN + mCol] = d - e;
          }
       }
    }
@@ -186,66 +191,77 @@ public class FHT_NoScaling extends FloatProcessor {
     *                maxN.
     */
    private void dfht3(float[] x, int base, boolean inverse, int maxN) {
-      int i, stage, gpNum, gpSize, numGps, Nlog2;
-      int bfNum, numBfs;
-      int Ad0, Ad1, Ad2, Ad3, Ad4, CSAd;
-      float rt1, rt2, rt3, rt4;
+      int i;
+      int stage;
+      int nlog2;
+      int bfNum;
+      int numBfs;
+      int ad0;
+      int ad1;
+      int ad2;
+      int ad3;
+      int ad4;
+      int csad;
+      float rt1;
+      float rt2;
+      float rt3;
+      float rt4;
 
-      if (S_ == null) {
+      if (s_ == null) {
          initializeTables(maxN);
       }
-      Nlog2 = log2(maxN);
-      BitRevRArr(x, base, Nlog2, maxN);   //bitReverse the input array
-      gpSize = 2;     //first & second stages - do radix 4 butterflies once thru
-      numGps = maxN / 4;
-      for (gpNum = 0; gpNum < numGps; gpNum++) {
-         Ad1 = gpNum * 4;
-         Ad2 = Ad1 + 1;
-         Ad3 = Ad1 + gpSize;
-         Ad4 = Ad2 + gpSize;
-         rt1 = x[base + Ad1] + x[base + Ad2];   // a + b
-         rt2 = x[base + Ad1] - x[base + Ad2];   // a - b
-         rt3 = x[base + Ad3] + x[base + Ad4];   // c + d
-         rt4 = x[base + Ad3] - x[base + Ad4];   // c - d
-         x[base + Ad1] = rt1 + rt3;      // a + b + (c + d)
-         x[base + Ad2] = rt2 + rt4;      // a - b + (c - d)
-         x[base + Ad3] = rt1 - rt3;      // a + b - (c + d)
-         x[base + Ad4] = rt2 - rt4;      // a - b - (c - d)
+      nlog2 = log2(maxN);
+      bitRevRArr(x, base, nlog2, maxN);   //bitReverse the input array
+      int gpSize = 2;     //first & second stages - do radix 4 butterflies once thru
+      int numGps = maxN / 4;
+      for (int gpNum = 0; gpNum < numGps; gpNum++) {
+         ad1 = gpNum * 4;
+         ad2 = ad1 + 1;
+         ad3 = ad1 + gpSize;
+         ad4 = ad2 + gpSize;
+         rt1 = x[base + ad1] + x[base + ad2];   // a + b
+         rt2 = x[base + ad1] - x[base + ad2];   // a - b
+         rt3 = x[base + ad3] + x[base + ad4];   // c + d
+         rt4 = x[base + ad3] - x[base + ad4];   // c - d
+         x[base + ad1] = rt1 + rt3;      // a + b + (c + d)
+         x[base + ad2] = rt2 + rt4;      // a - b + (c - d)
+         x[base + ad3] = rt1 - rt3;      // a + b - (c + d)
+         x[base + ad4] = rt2 - rt4;      // a - b - (c - d)
       }
 
-      if (Nlog2 > 2) {
+      if (nlog2 > 2) {
          // third + stages computed here
          gpSize = 4;
          numBfs = 2;
          numGps = numGps / 2;
-         for (stage = 2; stage < Nlog2; stage++) {
+         for (stage = 2; stage < nlog2; stage++) {
             for (gpNum = 0; gpNum < numGps; gpNum++) {
-               Ad0 = gpNum * gpSize * 2;
-               Ad1 = Ad0;     // 1st butterfly is different from others - no mults needed
-               Ad2 = Ad1 + gpSize;
-               Ad3 = Ad1 + gpSize / 2;
-               Ad4 = Ad3 + gpSize;
-               rt1 = x[base + Ad1];
-               x[base + Ad1] = x[base + Ad1] + x[base + Ad2];
-               x[base + Ad2] = rt1 - x[base + Ad2];
-               rt1 = x[base + Ad3];
-               x[base + Ad3] = x[base + Ad3] + x[base + Ad4];
-               x[base + Ad4] = rt1 - x[base + Ad4];
+               ad0 = gpNum * gpSize * 2;
+               ad1 = ad0;     // 1st butterfly is different from others - no mults needed
+               ad2 = ad1 + gpSize;
+               ad3 = ad1 + gpSize / 2;
+               ad4 = ad3 + gpSize;
+               rt1 = x[base + ad1];
+               x[base + ad1] = x[base + ad1] + x[base + ad2];
+               x[base + ad2] = rt1 - x[base + ad2];
+               rt1 = x[base + ad3];
+               x[base + ad3] = x[base + ad3] + x[base + ad4];
+               x[base + ad4] = rt1 - x[base + ad4];
                for (bfNum = 1; bfNum < numBfs; bfNum++) {
                   // subsequent BF's dealt with together
-                  Ad1 = bfNum + Ad0;
-                  Ad2 = Ad1 + gpSize;
-                  Ad3 = gpSize - bfNum + Ad0;
-                  Ad4 = Ad3 + gpSize;
+                  ad1 = bfNum + ad0;
+                  ad2 = ad1 + gpSize;
+                  ad3 = gpSize - bfNum + ad0;
+                  ad4 = ad3 + gpSize;
 
-                  CSAd = bfNum * numGps;
-                  rt1 = x[base + Ad2] * C_[CSAd] + x[base + Ad4] * S_[CSAd];
-                  rt2 = x[base + Ad4] * C_[CSAd] - x[base + Ad2] * S_[CSAd];
+                  csad = bfNum * numGps;
+                  rt1 = x[base + ad2] * c_[csad] + x[base + ad4] * s_[csad];
+                  rt2 = x[base + ad4] * c_[csad] - x[base + ad2] * s_[csad];
 
-                  x[base + Ad2] = x[base + Ad1] - rt1;
-                  x[base + Ad1] = x[base + Ad1] + rt1;
-                  x[base + Ad4] = x[base + Ad3] + rt2;
-                  x[base + Ad3] = x[base + Ad3] - rt2;
+                  x[base + ad2] = x[base + ad1] - rt1;
+                  x[base + ad1] = x[base + ad1] + rt1;
+                  x[base + ad4] = x[base + ad3] + rt2;
+                  x[base + ad3] = x[base + ad3] - rt2;
 
                } /* end bfNum loop */
             } /* end gpNum loop */
@@ -253,7 +269,7 @@ public class FHT_NoScaling extends FloatProcessor {
             numBfs *= 2;
             numGps = numGps / 2;
          } /* end for all stages */
-      } /* end if Nlog2 > 2 */
+      } /* end if nlog2 > 2 */
 
       if (inverse) {
          for (i = 0; i < maxN; i++) {
@@ -263,7 +279,8 @@ public class FHT_NoScaling extends FloatProcessor {
    }
 
    void transposeR(float[] x, int maxN) {
-      int r, c;
+      int r;
+      int c;
       float rTemp;
 
       for (r = 0; r < maxN; r++) {
@@ -290,7 +307,7 @@ public class FHT_NoScaling extends FloatProcessor {
       return ((x & (1 << bit)) != 0);
    }
 
-   private void BitRevRArr(float[] x, int base, int bitlen, int maxN) {
+   private void bitRevRArr(float[] x, int base, int bitlen, int maxN) {
       for (int i = 0; i < maxN; i++) {
          tempArr_[i] = x[base + bitrev_[i]];
       }
@@ -311,7 +328,7 @@ public class FHT_NoScaling extends FloatProcessor {
     * Returns an 8-bit power spectrum, log-scaled to 1-254. The image in this FHT is assumed to be
     * in the frequency domain. Modified to remove scaling per William Mohler's tweaks.
     */
-   public ImageProcessor getPowerSpectrum_noScaling() throws IllegalArgumentException {
+   public ImageProcessor getpowerspectrumNoscaling() throws IllegalArgumentException {
       if (!isFrequencyDomain_) {
          throw new IllegalArgumentException("Frequency domain image required");
       }
@@ -322,7 +339,7 @@ public class FHT_NoScaling extends FloatProcessor {
       float[] fht = (float[]) getPixels();
 
       for (int row = 0; row < maxN_; row++) {
-         FHTps(row, maxN_, fht, fps);
+         fhtps(row, maxN_, fht, fps);
       }
 
       // no longer use min (=0), max, or scale (=1)
@@ -331,8 +348,7 @@ public class FHT_NoScaling extends FloatProcessor {
          base = row * maxN_;
          for (int col = 0; col < maxN_; col++) {
             r = fps[base + col];
-            if (Float.isNaN(r) || r < 1f)  // modified for no scaling
-            {
+            if (Float.isNaN(r) || r < 1f) {  // modified for no scaling
                r = 0f;
             } else {
                r = (float) Math.log(r);  // modified for no scaling
@@ -348,7 +364,7 @@ public class FHT_NoScaling extends FloatProcessor {
    /**
     * Power Spectrum of one row from 2D Hartley Transform.
     */
-   private void FHTps(int row, int maxN, float[] fht, float[] ps) {
+   private void fhtps(int row, int maxN, float[] fht, float[] ps) {
       int base = row * maxN;
       int l;
       for (int c = 0; c < maxN; c++) {
@@ -395,12 +411,11 @@ public class FHT_NoScaling extends FloatProcessor {
     * </pre>
     */
    private void swapQuadrants(ImageProcessor ip) {
-      ImageProcessor t1, t2;
       int size = ip.getWidth() / 2;
       ip.setRoi(size, 0, size, size);
-      t1 = ip.crop();
+      ImageProcessor t1 = ip.crop();
       ip.setRoi(0, size, size, size);
-      t2 = ip.crop();
+      ImageProcessor t2 = ip.crop();
       ip.insert(t1, 0, size);
       ip.insert(t2, size, 0);
       ip.setRoi(0, 0, size, size);

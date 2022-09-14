@@ -81,7 +81,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
 
    @Override
    public void run() {
-      GaussianFit gs_ = new GaussianFit(super.getShape(), super.getFitMode(),
+      GaussianFit gs = new GaussianFit(super.getShape(), super.getFitMode(),
             super.getUseFixedWidth(), super.getFixedWidthNm() / super.getPixelSize() / 2);
       ZCalibrator zc = DataCollectionForm.zc_;
 
@@ -104,27 +104,27 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
          try {
             // Note: the implementation will try to return a cached version of the ImageProcessor
             ImageProcessor ip = spot.getSpotProcessor(siPlus_, super.getHalfBoxSize());
-            GaussianFit.Data fitResult = gs_.dogaussianfit(ip, maxIterations_);
+            GaussianFit.Data fitResult = gs.dogaussianfit(ip, maxIterations_);
             // Note that the copy constructor will not copy pixel data, so we loose 
             // those when spot goes out of scope
             SpotData spotData = SpotDataConverter.convert(spot, fitResult, this, zc);
 
-            if (fitResult.getParms().length > 1 &&
-                  (!useWidthFilter_ ||
-                        (spotData.getWidth() > widthMin_ && spotData.getWidth() < widthMax_))
-                  && (!useNrPhotonsFilter_ ||
-                  (spotData.getIntensity() > nrPhotonsMin_
-                        && spotData.getIntensity() < nrPhotonsMax_))) {
+            if (fitResult.getParms().length > 1
+                    && (!useWidthFilter_
+                    || (spotData.getWidth() > widthMin_ && spotData.getWidth() < widthMax_))
+                  && (!useNrPhotonsFilter_
+                    || (spotData.getIntensity() > nrPhotonsMin_
+                    && spotData.getIntensity() < nrPhotonsMax_))) {
                resultList_.add(spotData);
             }
 
 
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
-            ReportingUtils.logError("Thread run out of memory  " +
-                  Thread.currentThread().getName());
-            ReportingUtils.showError("Fitter out of memory.\n" +
-                  "Out of memory error");
+            ReportingUtils.logError("Thread run out of memory  "
+                    + Thread.currentThread().getName());
+            ReportingUtils.showError("Fitter out of memory.\n"
+                    + "Out of memory error");
             return;
          }
       }

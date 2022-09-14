@@ -1,21 +1,21 @@
 /**
  * Find local maxima in an Image (or ROI) using the algorithm described in Neubeck and Van Gool.
  * Efficient non-maximum suppression. Pattern Recognition (2006) vol. 3 pp. 850-855
- * <p>
- * Jonas Ries brought this to my attention and send me C code implementing one of the described
+ *
+ * <p>Jonas Ries brought this to my attention and send me C code implementing one of the described
  * algorithms
- * <p>
- * Copyright (c) 2012-2017, Regents of the University of California All rights reserved.
- * <p>
- * Redistribution and use in source and binary forms, with or without modification, are permitted
+ *
+ * <p>Copyright (c) 2012-2017, Regents of the University of California All rights reserved.
+ *
+ * <p>Redistribution and use in source and binary forms, with or without modification, are permitted
  * provided that the following conditions are met:
- * <p>
- * 1. Redistributions of source code must retain the above copyright notice, this list of conditions
- * and the following disclaimer. 2. Redistributions in binary form must reproduce the above
- * copyright notice, this list of conditions and the following disclaimer in the documentation
+ *
+ * <p>1. Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the
+ * above copyright notice, this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * <p>
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ *
+ * <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
  * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -23,8 +23,8 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * <p>
- * The views and conclusions contained in the software and documentation are those of the authors
+ *
+ * <p>The views and conclusions contained in the software and documentation are those of the authors
  * and should not be interpreted as representing official policies, either expressed or implied, of
  * the FreeBSD Project.
  */
@@ -38,6 +38,8 @@ import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+
+import static edu.ucsf.valelab.gaussianfit.algorithm.FindLocalMaxima.FilterType.GAUSSIAN1_5;
 
 
 /**
@@ -62,7 +64,7 @@ public class FindLocalMaxima {
     * @param filterType - Prefilter the image.  Either none or Gaussian1_5
     * @return Polygon with maxima
     */
-   public static Polygon FindMax(ImagePlus iPlus, int n, int threshold, FilterType filterType) {
+   public static Polygon findMax(ImagePlus iPlus, int n, int threshold, FilterType filterType) {
       Polygon maxima = new Polygon();
 
       ImageProcessor iProc = iPlus.getProcessor();
@@ -76,19 +78,16 @@ public class FindLocalMaxima {
       }
 
       // Prefilter if needed
-      switch (filterType) {
-         case GAUSSIAN1_5:
-            // TODO: if there is an ROI, we only need to filter_ in the ROI
-            ImageProcessor iProcG1 = iProc.duplicate();
-            ImageProcessor iProcG5 = iProc.duplicate();
-            FILTER.blurGaussian(iProcG1, 0.4, 0.4, 0.01);
-            FILTER.blurGaussian(iProcG5, 2.0, 2.0, 0.01);
-            ImagePlus p1 = new ImagePlus("G1", iProcG1);
-            ImagePlus p5 = new ImagePlus("G5", iProcG5);
-            IMAGECALCULATOR.run("subtract", p1, p5);
-            iProc = p1.getProcessor();
-
-            break;
+      if  (filterType == GAUSSIAN1_5) {
+         // TODO: if there is an ROI, we only need to filter_ in the ROI
+         ImageProcessor iProcG1 = iProc.duplicate();
+         ImageProcessor iProcG5 = iProc.duplicate();
+         FILTER.blurGaussian(iProcG1, 0.4, 0.4, 0.01);
+         FILTER.blurGaussian(iProcG5, 2.0, 2.0, 0.01);
+         ImagePlus p1 = new ImagePlus("G1", iProcG1);
+         ImagePlus p5 = new ImagePlus("G5", iProcG5);
+         IMAGECALCULATOR.run("subtract", p1, p5);
+         iProc = p1.getProcessor();
       }
 
       for (int x = roi.x + n; x < roi.width + roi.x - n - 1; x++) {
@@ -110,89 +109,16 @@ public class FindLocalMaxima {
                }
             }
             if (!failed) {
-               int cornerAverage = (iProc.get(x - n, y - n) + iProc.get(x - n, y + n) +
-                     iProc.get(x + n, y - n) + iProc.get(x + n, y + n)) / 4;
+               int cornerAverage = (iProc.get(x - n, y - n) + iProc.get(x - n, y + n)
+                       + iProc.get(x + n, y - n) + iProc.get(x + n, y + n)) / 4;
                if (iProc.get(x, y) - threshold > cornerAverage) {
                   maxima.addPoint(x, y);
                }
             }
          }
       }
-      
-      
-            
- /*      
-     
-      // divide the image up in blocks of size n and find local maxima
-      int n2 = 2*n + 1;
-      // calculate borders once
-      int xRealEnd = roi.x + roi.width;
-      int xEnd = xRealEnd - n;
-      int yRealEnd = roi.y + roi.height;
-      int yEnd = yRealEnd - n;
-      for (int i=roi.x; i <= xEnd - n - 1; i+=n2) {
-         for (int j=roi.y; j <= yEnd - n - 1; j+=n2) {
-            int mi = i;
-            int mj = j;
-            for (int i2=i; i2 < i + n2 && i2 < xRealEnd; i2++) {
-               for (int j2=j; j2 < j + n2 && j2 < yRealEnd; j2++) {
-                  // revert getPixel to get after debugging
-                  if (iProc.getPixel(i2, j2) > iProc.getPixel(mi, mj)) {
-                     mi = i2;
-                     mj = j2;
-                  }
-               }
-            }
-            // is the candidate really a local maximum?
-            // check surroundings (except for the pixels that we already checked)
-            boolean stop = false;
-            // columns in block to the left
-            if (mi - n < i && i>0) {
-               for (int i2=mi-n; i2<i; i2++) {
-                  for (int j2=mj-n; j2<=mj+n; j2++) {
-                     if (iProc.getPixel(i2, j2) > iProc.getPixel(mi, mj)) {
-                        stop = true;
-                     }
-                  }
-               }
-            }
-            // columns in block to the right
-            if (!stop && mi + n >= i + n2 ) {
-               for (int i2=i+n2; i2<=mi+n; i2++) {
-                   for (int j2=mj-n; j2<=mj+n; j2++) {
-                     if (iProc.getPixel(i2, j2) > iProc.getPixel(mi, mj)) {
-                        stop = true;
-                     }
-                  }
-               }
-            }
-            // rows on top of the block
-            if (!stop && mj - n < j && j > 0) {
-               for (int j2 = mj - n; j2 < j; j2++) {
-                  for (int i2 = mi - n; i2 <= mi + n; i2++) {
-                     if (iProc.getPixel(i2, j2) > iProc.getPixel(mi, mj))
-                        stop = true;
-                  }
-               }
-            }
-            // rows below the block
-            if (!stop && mj + n >= j + n2) {
-               for (int j2 = j + n2; j2 <= mj + n; j2++) {
-                  for (int i2 = mi - n; i2 <= mi + n; i2++) {
-                     if (iProc.getPixel(i2, j2) > iProc.getPixel(mi, mj))
-                        stop = true;
-                  }
-               }
-            }
-            if (!stop && (threshold == 0 || 
-                    (iProc.getPixel(mi, mj) - 
-                      ( (iProc.getPixel(mi - n , mj - n) + iProc.getPixel(mi -n, mj + n) +
-                       iProc.getPixel(mi + n, mj  - n) + iProc.getPixel(mi + n, mj + n)) / 4) ) 
-                    > threshold))
-               maxima.addPoint(mi, mj);
-         }
-      }
-*/
+
+      // note, there is code to divide in blocks in the git repository
 
       return maxima;
    }
