@@ -63,7 +63,7 @@ public class JitterDetector {
 
       // return the position of the brightest pixel
       Point brightPix = new Point(0, 0);
-      BrightestPixel(m, brightPix, 32);
+      brightestPixel(m, brightPix, 32);
 
       try {
          // Gaussian fit using Nelder Mead and 3D fitting
@@ -94,8 +94,8 @@ public class JitterDetector {
     * @param brightPix  point use to return coordinates of pixel found
     * @param searchSize size of edge of center square in which to look for brightest pixel
     */
-   private void BrightestPixel(FHT m, Point brightPix, int searchSize) {
-      float pixels[] = (float[]) m.getPixels();
+   private void brightestPixel(FHT m, Point brightPix, int searchSize) {
+      float[] pixels = (float[]) m.getPixels();
 
       int height = m.getHeight();
       int width = m.getWidth();

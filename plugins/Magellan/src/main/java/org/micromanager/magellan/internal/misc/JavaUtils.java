@@ -14,6 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.misc;
 
 import java.awt.Dimension;
@@ -44,8 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 public class JavaUtils {
 
@@ -55,23 +56,23 @@ public class JavaUtils {
     * Add directories and JARs to the classpath, and return the classes found
     * in the process.
     *
-    * This method does two things that are really completely separate tasks.
+    * <p>This method does two things that are really completely separate tasks.
     *
-    * First, it adds the given directory and all JARs directly in directory to
+    * <p>First, it adds the given directory and all JARs directly in directory to
     * the search path of the system class loader. If recursionLevel is greater
     * than 0, it does the same with subdirectories, up to that level of
     * nesting.
     *
-    * Second, it finds all classes in the directories and JARs that were added
+    * <p>Second, it finds all classes in the directories and JARs that were added
     * to the class path in the first step, and returns them. Classes are found
     * anywhere within the JARs, or as .class files directly within directories.
     *
-    * There is no support for .class files contained in a hierarchy of
+    * <p>There is no support for .class files contained in a hierarchy of
     * directories representing the package names (they will be loadable because
     * the directory is in the search path, but they will not be included in the
     * returned list unless they are within the recursionLevel).
     *
-    * On most errors, an empty list is returned and the error is logged.
+    * <p>On most errors, an empty list is returned and the error is logged.
     *
     * @param directory The directory to search for classes
     * @param recursionLevel Nesting level for searching subdirectories
@@ -86,16 +87,14 @@ public class JavaUtils {
       final URL directoryURL;
       try {
          directoryURL = directory.toURI().toURL();
-      }
-      catch (MalformedURLException e) {
+      } catch (MalformedURLException e) {
          Log.log(e);
          return classes;
       }
 
       try {
          addURL(directoryURL);
-      }
-      catch (IOException ignore) {
+      } catch (IOException ignore) {
          // Logged by addURL()
       }
 
@@ -108,10 +107,9 @@ public class JavaUtils {
             final String className = stripFilenameExtension(fileName);
             try {
                classes.add(Class.forName(className));
-            }
-            catch (ClassNotFoundException e) {
-               Log.log("Failed to load class: " +
-                     className + " (expected in " + fileName + ")");
+            } catch (ClassNotFoundException e) {
+               Log.log("Failed to load class: "
+                     + className + " (expected in " + fileName + ")");
             }
          } else if (file.getName().endsWith(".jar")) {
             try {
@@ -126,9 +124,9 @@ public class JavaUtils {
                      try {
                         classes.add(Class.forName(className));
                      } catch (ClassNotFoundException e) {
-                        Log.log("Failed to load class: " +
-                              className + " (expected in " +
-                              file.getAbsolutePath() + " based on JAR entry");
+                        Log.log("Failed to load class: "
+                              + className + " (expected in "
+                              + file.getAbsolutePath() + " based on JAR entry");
                      }
                   }
                }
@@ -166,22 +164,28 @@ public class JavaUtils {
       } catch (Throwable t) {
          Log.log("Failed to add URL to system class loader: " + u);
          throw new IOException("Failed to add URL to system class loader: " + u);
-      }//end try catch
+      } //end try catch
 
-   }//end method
+   } //end method
 
    /**
     * Call a private method without arguments.
     */
-   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName)
+         throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+         InvocationTargetException {
       return invokeRestrictedMethod(obj, theClass, methodName, (Object) null);
    }
 
    /**
     * Call a private method using reflection. Use looks like
-    * invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object param1, Class paramType1, Object param2, Class paramType2, ...)
+    * invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object param1,
+    * Class paramType1, Object param2, Class paramType2, ...)
     */
-   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object... paramsAndTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName,
+                                               Object... paramsAndTypes)
+         throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+         InvocationTargetException {
       Object[] params;
       Class[] paramTypes;
       int l;
@@ -206,7 +210,10 @@ public class JavaUtils {
     * Invoked a method of a private or protected field.
     * Pass a null first argument for static methods.
     */
-   public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName, Object[] params, Class[] paramTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+   public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName,
+                                               Object[] params, Class[] paramTypes)
+         throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException,
+         InvocationTargetException {
       Method method = theClass.getDeclaredMethod(methodName, paramTypes);
       Object result;
 
@@ -225,7 +232,8 @@ public class JavaUtils {
     * Returns a value of a private or protected field. Method of last resort!
     * Pass a null first argument for static fields.
     */
-   public static Object getRestrictedFieldValue(Object obj, Class theClass, String fieldName) throws NoSuchFieldException {
+   public static Object getRestrictedFieldValue(Object obj, Class theClass, String fieldName)
+         throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
       try {
@@ -241,7 +249,8 @@ public class JavaUtils {
     * last resort!
     * Pass a null first argument for static fields.
     */
-   public static void setRestrictedFieldValue(Object obj, Class theClass, String fieldName, Object value) throws NoSuchFieldException {
+   public static void setRestrictedFieldValue(Object obj, Class theClass, String fieldName,
+                                              Object value) throws NoSuchFieldException {
       Field field = theClass.getDeclaredField(fieldName);
       field.setAccessible(true);
       try {
@@ -300,9 +309,9 @@ public class JavaUtils {
       return (os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0);
    }
 
-   public static void sleep(int time_ms) {
+   public static void sleep(int timeMs) {
       try {
-         Thread.sleep(time_ms);
+         Thread.sleep(timeMs);
       } catch (InterruptedException ex) {
          Log.log(ex);
       }
@@ -326,7 +335,7 @@ public class JavaUtils {
       }
    }
 
-   static public String readTextFile(String filepath) {
+   public static String readTextFile(String filepath) {
       File f = new File(filepath);
       if (!f.exists()) {
          return null;
@@ -340,7 +349,7 @@ public class JavaUtils {
          BufferedReader input = new BufferedReader(new FileReader(filepath));
          try {
             String line; //not declared within while loop
-             /*
+            /*
              * readLine is a bit quirky :
              * it returns the content of a line MINUS the newline.
              * it returns null only for the END of the stream.
@@ -375,7 +384,7 @@ public class JavaUtils {
    /**
     * Borrowed from Java 1.6 java.utils.Arrays
     *
-    * Copies elements in original array to a new array, from index
+    * <p>Copies elements in original array to a new array, from index
     * start(inclusive) to end(exclusive). The first element (if any) in the new
     * array is original[from], and other elements in the new array are in the
     * original order. The padding value whose index is bigger than or equal to
@@ -416,7 +425,7 @@ public class JavaUtils {
 
    public static String getApplicationDataPath() {
       if (isMac()) {
-         return System.getenv("HOME")+"/Library/Application Support/Micro-Manager/";
+         return System.getenv("HOME") + "/Library/Application Support/Micro-Manager/";
       }
       if (isWindows()) {
          String os = System.getProperty("os.name").toLowerCase();
@@ -445,18 +454,17 @@ public class JavaUtils {
       System.err.println("End all stack traces. =============");
    }
    
-    public static Runnable makeURLRunnable(final String url) {
-       return new Runnable() {
-          @Override
-          public void run() {
-             try {
-                ij.plugin.BrowserLauncher.openURL(url);
-             } catch (IOException e1) {
-                Log.log(e1);
-             }
-          }
-       };
-    }
-
+   public static Runnable makeURLRunnable(final String url) {
+      return new Runnable() {
+         @Override
+         public void run() {
+            try {
+               ij.plugin.BrowserLauncher.openURL(url);
+            } catch (IOException e1) {
+               Log.log(e1);
+            }
+         }
+      };
+   }
 
 }

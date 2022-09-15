@@ -197,11 +197,10 @@ public class GaussianUtils {
       // JFreeChart code
       XYSeriesCollection dataset = new XYSeriesCollection();
       // calculate min and max to scale the graph
-      double minX, minY, maxX, maxY;
-      minX = data[0].getMinX();
-      minY = data[0].getMinY();
-      maxX = data[0].getMaxX();
-      maxY = data[0].getMaxY();
+      double minX = data[0].getMinX();
+      double minY = data[0].getMinY();
+      double maxX = data[0].getMaxX();
+      double maxY = data[0].getMaxY();
       for (XYSeries d : data) {
          dataset.addSeries(d);
          if (d.getMinX() < minX) {
@@ -370,8 +369,8 @@ public class GaussianUtils {
          plot.mapDatasetToRangeAxis(1, 1);
          double xAnPos = xAtMaxY + 0.5 * fitResult[1];
          XYPointerAnnotation xypa = new XYPointerAnnotation(
-               "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0], 2) +
-                     " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1], 2),
+               "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0], 2)
+                     + " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1 ], 2),
                xAnPos, p1.getValue(xAnPos), 15 * Math.PI / 8);
          xypa.setLabelOffset(4.0);
          xypa.setTextAnchor(TextAnchor.HALF_ASCENT_LEFT);
@@ -455,8 +454,8 @@ public class GaussianUtils {
          plot.mapDatasetToRangeAxis(1, 1);
          double xAnPos = xAtMaxY + 0.5 * fitResult[1];
          XYPointerAnnotation xypa = new XYPointerAnnotation(
-               "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0], 2) +
-                     " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1], 2),
+               "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0], 2)
+                     + " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1], 2),
                xAnPos, p1.getValue(xAnPos), 15 * Math.PI / 8);
          xypa.setLabelOffset(4.0);
          xypa.setTextAnchor(TextAnchor.HALF_ASCENT_LEFT);
@@ -556,12 +555,6 @@ public class GaussianUtils {
       }
       double exponent = (sqr(x - params[XC]) + sqr(y - params[YC])) / (2 * sqr(params[S]));
       double res = params[INT] * Math.exp(-exponent) + params[BGR];
-      /*
-      // alt. weigh intensity with 1/ s^2
-      double exponent = (sqr( (x + 0.5) - params[XC])  + sqr( (y + 0.5) - params[YC])) / (2 * sqr(params[S]));
-      double res = params[INT] * ONEOVER2PI * ( 1/ ( params[S] * params[S])) * 
-              Math.exp(-exponent) + params[BGR];
-      */
       return res;
    }
 
@@ -630,17 +623,17 @@ public class GaussianUtils {
          //e.message = "Params for Gaussian function has too few values"; //throw (e);
       }
 
-      double exponent = ((sqr(x - params[XC])) / (2 * sqr(params[S1]))) +
-            (sqr(y - params[YC]) / (2 * sqr(params[S2])));
+      double exponent = ((sqr(x - params[XC])) / (2 * sqr(params[S1])))
+            + (sqr(y - params[YC]) / (2 * sqr(params[S2])));
       double res = params[INT] * Math.exp(-exponent) + params[BGR];
       return res;
    }
 
    /**
-    * Derivative (Jacobian) of the above function
-    * <p>
-    * <p>
-    * p = A,b,xc,yc,sigma_x,sigma_y f = A * e^(-((x-xc)^2/sigma_x^2 + (y-yc)^2/sigma_y^2)/2) + b J =
+    * Derivative (Jacobian) of the above function.
+    *
+    * <p>p = A,b,xc,yc,sigma_x,sigma_y f = A * e^(-((x-xc)^2/sigma_x^2
+    * + (y-yc)^2/sigma_y^2)/2) + b J =
     * { q/A, 1, dx*q/sigma_x^2, dy*q/sigma_y^2, dx^2*q/sigma_x^3, dy^2*q/sigma_y^3 }
     *
     * @param params - Parameters to be optimized
@@ -680,9 +673,9 @@ public class GaussianUtils {
          //e.message = "Params for Gaussian function has too few values"; //throw (e);
       }
 
-      double exponent = ((params[S1] * sqr(x - params[XC])) +
-            (params[S3] * sqr(y - params[YC])) +
-            (2.0 * params[S2] * (x - params[XC]) * (y - params[YC]))
+      double exponent = ((params[S1] * sqr(x - params[XC]))
+            + (params[S3] * sqr(y - params[YC]))
+            + (2.0 * params[S2] * (x - params[XC]) * (y - params[YC]))
       ) / 2;
       double res = params[INT] * Math.exp(-exponent) + params[BGR];
       return res;
@@ -735,74 +728,7 @@ public class GaussianUtils {
       result[1] = Math.sqrt((sqr(costheta) - sqr(sintheta)) / ((costheta * a) - (sintheta * c)));
       result[2] = Math.sqrt((sqr(costheta) - sqr(sintheta)) / ((costheta * c) - (sintheta * a)));
       
-      /*
-      double c0 = Math.sqrt(0.5 + (a-c) / 2 * (Math.sqrt(sqr(a-c) + 4 * sqr(b))));
-      double s0 = sqr(1- sqr(c0));
-
-      result[1] = 1 / (a + c + b/(c0+s0));
-      result[2] = 1 / (a + c - b/(c0+s0));
-
-      if (result[2] > result[1])
-         result[0] = Math.asin(c0);
-      else
-         result[0] = Math.acos(c0);
-      */
       return result;
    }
-
-   /**
-    * Linear Regression to find the best line between a set of points
-    * returns an array where [0] = slope and [1] = offset
-    * Input: arrays with x and y data points
-    * Not used anymore
-    *
-    public double[] fitLine(Vector<Point2D.Double> xyPoints) {
-    double[][] xWithOne = new double[xyPoints.size()][2];
-    double[][] yWithOne = new double[xyPoints.size()][2];
-    for (int i =0; i< xyPoints.size(); i++) {
-    xWithOne[i][0] = xyPoints.get(i).getX();
-    xWithOne[i][1] = 1;
-    yWithOne[i][0] = xyPoints.get(i).getY();
-    yWithOne[i][1] = 1;
-    }
-
-    Array2DRowRealMatrix xM = new Array2DRowRealMatrix(xWithOne);
-    Array2DRowRealMatrix yM = new Array2DRowRealMatrix(yWithOne);
-
-    QRDecompositionImpl qX = new QRDecompositionImpl(xM);
-    BlockRealMatrix mX = (BlockRealMatrix) qX.getSolver().solve(yM);
-
-    RealMatrix theY = xM.multiply(mX);
-    double ansX = theY.subtract(yM).getColumnVector(0).getNorm();
-    print ("Answer X: " + ansX);
-
-    QRDecompositionImpl qY = new QRDecompositionImpl(yM);
-    BlockRealMatrix mY = (BlockRealMatrix) qY.getSolver().solve(xM);
-
-    RealMatrix theX = yM.multiply(mY);
-    double ansY = theX.subtract(xM).getColumnVector(0).getNorm();
-    print ("Answer Y: " + ansY);
-
-    double[][] res = mX.getData();
-    double[] ret = new double[2];
-    ret[0] = res[0][0];
-    ret[1] = res[1][0];
-
-    if (ansY < ansX) {
-    res = mY.getData();
-    ret[0] = 1 / res[0][0];
-    ret[1] = - res[1][0]/res[0][0];
-    }
-
-    return ret;
-    }
-
-    public AffineTransform computeAffineTransform(double a, double b) {
-    AffineTransform T = new AffineTransform();
-    T.rotate(-Math.atan(a));
-    T.translate(0, -b);
-    return T;
-    }
-    */
 
 }

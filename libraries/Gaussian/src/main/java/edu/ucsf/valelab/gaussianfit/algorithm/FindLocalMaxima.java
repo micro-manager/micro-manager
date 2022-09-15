@@ -32,6 +32,8 @@
 
 package edu.ucsf.valelab.gaussianfit.algorithm;
 
+import static edu.ucsf.valelab.gaussianfit.algorithm.FindLocalMaxima.FilterType.GAUSSIAN1_5;
+
 import ij.ImagePlus;
 import ij.plugin.ImageCalculator;
 import ij.plugin.filter.GaussianBlur;
@@ -39,7 +41,6 @@ import ij.process.ImageProcessor;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 
-import static edu.ucsf.valelab.gaussianfit.algorithm.FindLocalMaxima.FilterType.GAUSSIAN1_5;
 
 
 /**
@@ -132,14 +133,14 @@ public class FindLocalMaxima {
          int x = inputPoints.xpoints[i];
          int y = inputPoints.ypoints[i];
          int value = iProc.getPixel(x, y) - threshold;
-         if (value > iProc.getPixel(x - 1, y - 1) ||
-               value > iProc.getPixel(x - 1, y) ||
-               value > iProc.getPixel(x - 1, y + 1) ||
-               value > iProc.getPixel(x, y - 1) ||
-               value > iProc.getPixel(x, y + 1) ||
-               value > iProc.getPixel(x + 1, y - 1) ||
-               value > iProc.getPixel(x + 1, y) ||
-               value > iProc.getPixel(x + 1, y + 1)
+         if (value > iProc.getPixel(x - 1, y - 1)
+               || value > iProc.getPixel(x - 1, y)
+               || value > iProc.getPixel(x - 1, y + 1)
+               || value > iProc.getPixel(x, y - 1)
+               || value > iProc.getPixel(x, y + 1)
+               || value > iProc.getPixel(x + 1, y - 1)
+               || value > iProc.getPixel(x + 1, y)
+               || value > iProc.getPixel(x + 1, y + 1)
          ) {
             outputPoints.addPoint(x, y);
          }

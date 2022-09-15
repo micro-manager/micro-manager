@@ -1,5 +1,5 @@
 /**
- * <p>Model for the data shown in the Data window in Localization microscopy plugin.
+ * Model for the data shown in the Data window in Localization microscopy plugin.
  *
  * <p>Copyright (c) 2016-2017, Regents of the University of California All rights reserved.
  *

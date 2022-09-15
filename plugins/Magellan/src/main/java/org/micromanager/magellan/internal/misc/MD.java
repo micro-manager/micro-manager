@@ -129,23 +129,23 @@ public class MD {
       }
    }
 
-    public static String getAcqDate(JSONObject map) {
-        try {
-            return map.getString(DATE_TIME);
-        } catch (JSONException ex) {
-            Log.log("Missing Acq dat time tag");
-            throw new RuntimeException();
-        }
-    }
+   public static String getAcqDate(JSONObject map) {
+      try {
+         return map.getString(DATE_TIME);
+      } catch (JSONException ex) {
+         Log.log("Missing Acq dat time tag");
+         throw new RuntimeException();
+      }
+   }
 
-    public static void setAcqDate(JSONObject map, String dateTime) {
+   public static void setAcqDate(JSONObject map, String dateTime) {
       try {
          map.put(DATE_TIME, dateTime);
       } catch (JSONException ex) {
          Log.log("couldnt set core focus tag");
          throw new RuntimeException();
       }
-    }
+   }
    
    public static int getPositionIndex(JSONObject map) {
       try {
@@ -165,7 +165,7 @@ public class MD {
       }
    }
    
-      public static void setBitDepth(JSONObject map, int bitDepth)  {
+   public static void setBitDepth(JSONObject map, int bitDepth)  {
       try {
          map.put(BIT_DEPTH, bitDepth);
       } catch (JSONException ex) {
@@ -201,7 +201,7 @@ public class MD {
    }
 
    
-    public static String getSavingPrefix(JSONObject map) {
+   public static String getSavingPrefix(JSONObject map) {
       try {
          return map.getString(SAVING_PREFIX);
       } catch (JSONException ex) {
@@ -254,7 +254,7 @@ public class MD {
          map.put(SLICE_INDEX, sliceIndex);
          map.put(SLICE, sliceIndex);
       } catch (JSONException ex) {
-                 Log.log("Couldn't set slice index");
+         Log.log("Couldn't set slice index");
          throw new RuntimeException();
       }
    }
@@ -264,7 +264,7 @@ public class MD {
       try {
          return map.getInt(CHANNEL_INDEX);
       } catch (JSONException ex) {
-                  Log.log("Missing channel index tag");
+         Log.log("Missing channel index tag");
          throw new RuntimeException();
       }
    }
@@ -273,16 +273,16 @@ public class MD {
       try {
          map.put(CHANNEL_INDEX, channelIndex);
       } catch (JSONException ex) {
-                  Log.log("Couldn't set channel index");
+         Log.log("Couldn't set channel index");
          throw new RuntimeException();
       }
    }
    
-    public static String getChannelName(JSONObject map)  {
+   public static String getChannelName(JSONObject map)  {
       try {
          return map.getString(CHANNEL_NAME);
       } catch (JSONException ex) {
-                  Log.log("Missing channel index tag");
+         Log.log("Missing channel index tag");
          throw new RuntimeException();
       }
    }
@@ -291,7 +291,7 @@ public class MD {
       try {
          map.put(CHANNEL_NAME, channelName);
       } catch (JSONException ex) {
-                  Log.log("Couldn't set channel index");
+         Log.log("Couldn't set channel index");
          throw new RuntimeException();
       }
    }
@@ -314,7 +314,7 @@ public class MD {
          map.put(FRAME, frameIndex);
          map.put(FRAME_INDEX, frameIndex);
       } catch (JSONException ex) {
-                  Log.log("Couldn't set frame index");
+         Log.log("Couldn't set frame index");
          throw new RuntimeException();
       }
    }
@@ -332,7 +332,7 @@ public class MD {
       try {
          map.put(POS_NAME, positionName);
       } catch (JSONException ex) {
-                  Log.log("Couldn't set position name");
+         Log.log("Couldn't set position name");
          throw new RuntimeException();
       }
    }
@@ -347,8 +347,6 @@ public class MD {
                return ImagePlus.GRAY8;
             } else if (pixelType.contentEquals(PIX_TYPE_GRAY16)) {
                return ImagePlus.GRAY16;
-//            } else if (pixelType.contentEquals("GRAY32")) {
-//               return ImagePlus.GRAY32;
             } else if (pixelType.contentEquals("RGB32")) {
                return ImagePlus.GRAY8;
             } else {
@@ -362,29 +360,21 @@ public class MD {
 
    public static String getPixelType(JSONObject map)   {
       try {
-         if (map != null)
+         if (map != null) {
             return map.getString(PIX_TYPE);
+         }
       } catch (JSONException e) {
          try {
             int ijType = map.getInt(IJ_TYPE);
             if (ijType == ImagePlus.GRAY8) {
                return PIX_TYPE_GRAY8;
-            }
-            else if (ijType == ImagePlus.GRAY16) {
+            } else if (ijType == ImagePlus.GRAY16) {
                return PIX_TYPE_GRAY16;
-            }
-//            else if (ijType == ImagePlus.GRAY32) {
-//               return "GRAY32";
-//            }
-//            else if (ijType == ImagePlus.COLOR_RGB) {
-//               return "RGB32";
-//            }
-            else {
+            } else {
                throw new RuntimeException();
             }
             // There is no IJType for RGB64.
-         }
-         catch (JSONException e2) {
+         } catch (JSONException e2) {
             throw new RuntimeException();
          }
       }
@@ -395,86 +385,77 @@ public class MD {
       try {
          map.put(PIX_TYPE, type);
       } catch (JSONException ex) {
-                  Log.log("Couldn't set pixel type");
+         Log.log("Couldn't set pixel type");
          throw new RuntimeException();
       }
    }
 
-      public static void setPixelTypeFromByteDepth(JSONObject map, int depth)  {
-         try {
+   public static void setPixelTypeFromByteDepth(JSONObject map, int depth)  {
+      try {
          switch (depth) {
-         case 1:
-            map.put(PIX_TYPE, PIX_TYPE_GRAY8);
-         break;
-         case 2:
-            map.put(PIX_TYPE, PIX_TYPE_GRAY16);
-         break;
-         case 4:
-            map.put(PIX_TYPE, "RGB32");
-         break;
-//         case 8:
-//            map.put(PIX_TYPE, "RGB64");
-//         break;
-      }
-         } catch (JSONException e) {
-                     Log.log("Couldn't set pixel type");
-         throw new RuntimeException();
+            case 1:
+               map.put(PIX_TYPE, PIX_TYPE_GRAY8);
+               break;
+            case 2:
+               map.put(PIX_TYPE, PIX_TYPE_GRAY16);
+               break;
+            case 4:
+               map.put(PIX_TYPE, "RGB32");
+               break;
+            default:
+               Log.log("Couldn't set pixel type");
+               throw new RuntimeException();
          }
+      } catch (JSONException e) {
+         Log.log("Couldn't set pixel type");
+         throw new RuntimeException();
+      }
    }
       
    public static int getBytesPerPixel(JSONObject map)  {
-       if (isGRAY8(map)) return 1;
-       if (isGRAY16(map)) return 2;
-//       if (isGRAY32(map)) return 4;
-       if (isRGB32(map)) return 4;
-//       if (isRGB64(map)) return 8;
-       return 0;
+      if (isGRAY8(map)) {
+         return 1;
+      }
+      if (isGRAY16(map)) {
+         return 2;
+      }
+      if (isRGB32(map)) {
+         return 4;
+      }
+      return 0;
    }
 
    public static int getNumberOfComponents(JSONObject map)  {
       String pixelType = getPixelType(map);
-      if (pixelType.contentEquals(PIX_TYPE_GRAY8))
-           return 1;
-      else if (pixelType.contentEquals(PIX_TYPE_GRAY16))
-           return 1;
-//      else if (pixelType.contentEquals("GRAY32"))
-//         return 1;
-      else if (pixelType.contentEquals("RGB32"))
-           return 3;
-//      else if (pixelType.contentEquals("RGB64"))
-//           return 3;
-      else {
+      if (pixelType.contentEquals(PIX_TYPE_GRAY8)) {
+         return 1;
+      } else if (pixelType.contentEquals(PIX_TYPE_GRAY16)) {
+         return 1;
+      } else if (pixelType.contentEquals("RGB32")) {
+         return 3;
+      } else {
          throw new RuntimeException();
       }
    }
 
    public static boolean isGRAY8(JSONObject map) {
-         return getPixelType(map).contentEquals(PIX_TYPE_GRAY8);
+      return getPixelType(map).contentEquals(PIX_TYPE_GRAY8);
    }
 
    public static boolean isGRAY16(JSONObject map) {
-         return getPixelType(map).contentEquals(PIX_TYPE_GRAY16);
+      return getPixelType(map).contentEquals(PIX_TYPE_GRAY16);
    }
     
-//   public static boolean isGRAY32(JSONObject map)  {
-//      return getPixelType(map).contentEquals("GRAY32");
-//   }
-//
    public static boolean isRGB32(JSONObject map) {
       return getPixelType(map).contentEquals("RGB32");
    }
 
-//   public static boolean isRGB64(JSONObject map)  {
-//      return getPixelType(map).contentEquals("RGB64");
-//   }
-
    public static boolean isGRAY(JSONObject map)  {
-      return (isGRAY8(map) || isGRAY16(map) );
+      return (isGRAY8(map) || isGRAY16(map));
    }
 
    public static boolean isRGB(JSONObject map)   {
       return (isRGB32(map));
-//              || isRGB64(map));
    }
 
    public static String getLabel(JSONObject md) {
@@ -485,14 +466,14 @@ public class MD {
    }
 
    public static String generateLabel(int channel, int slice, int frame, int position) {
-      return channel +"_"+slice+"_"+frame+"_"+position;
+      return channel + "_" + slice + "_" + frame + "_" + position;
    }
 
    public static String[] getKeys(JSONObject md) {
       int n = md.length();
       String [] keyArray = new String[n];
       Iterator<String> keys = md.keys();
-      for (int i=0; i<n; ++i) {
+      for (int i = 0; i < n; ++i) {
          keyArray[i] = keys.next();
       }
       return keyArray;
@@ -512,7 +493,7 @@ public class MD {
       try {
          return map.getString(TIME);
       } catch (JSONException ex) {
-                  Log.log("Missing image time tag");
+         Log.log("Missing image time tag");
          throw new RuntimeException();
       }
    }
@@ -528,16 +509,13 @@ public class MD {
 
    public static int getDepth(JSONObject tags) {
       String pixelType = getPixelType(tags);
-      if (pixelType.contains(PIX_TYPE_GRAY8))
+      if (pixelType.contains(PIX_TYPE_GRAY8)) {
          return 1;
-      else if (pixelType.contains(PIX_TYPE_GRAY16))
+      } else if (pixelType.contains(PIX_TYPE_GRAY16)) {
          return 2;
-//      else if (pixelType.contains(MMTags.Values.PIX_TYPE_RGB_32))
-//         return 4;
-//      else if (pixelType.contains(MMTags.Values.PIX_TYPE_RGB_64))
-//         return 8;
-      else
+      } else {
          return 0;
+      }
    }
 
    public static int getNumFrames(JSONObject tags) {
@@ -576,12 +554,12 @@ public class MD {
       }
    }
 
-      public static double getExposure(JSONObject tags)   {
+   public static double getExposure(JSONObject tags)   {
       try {
          return  tags.getDouble(EXPOSURE);
       } catch (JSONException ex) {
-        Log.log("Exposure tag missiing");
-        throw new RuntimeException();
+         Log.log("Exposure tag missiing");
+         throw new RuntimeException();
       }
    }
    
@@ -593,7 +571,7 @@ public class MD {
       }
    }
    
-     public static void setSurfacePoints(JSONObject tags, JSONArray arr) {
+   public static void setSurfacePoints(JSONObject tags, JSONArray arr) {
       try {
          tags.put(FIXED_SURFACE_POINTS, arr);
       } catch (JSONException ex) {
@@ -633,7 +611,7 @@ public class MD {
       try {
          map.put(Z_STEP_UM, val);
       } catch (JSONException ex) {
-                  Log.log("Couldn't set z step tag");
+         Log.log("Couldn't set z step tag");
          throw new RuntimeException();
       }
    }
@@ -660,15 +638,16 @@ public class MD {
       try {
          return map.getLong(ELAPSED_TIME_MS);
       } catch (JSONException ex) {
-                  Log.log("missing elapsed time tag");
+         Log.log("missing elapsed time tag");
          throw new RuntimeException();
       }
    }
+
    public static void setElapsedTimeMs(JSONObject map, long val) {
       try {
          map.put(ELAPSED_TIME_MS, val);
       } catch (JSONException ex) {
-                 Log.log("Couldn't set elapsed time");
+         Log.log("Couldn't set elapsed time");
          throw new RuntimeException();
       }
    }
@@ -681,6 +660,7 @@ public class MD {
          return 0;
       }
    }
+
    public static void setIntervalMs(JSONObject map, double val) {
       try {
          map.put(TIMELAPSE_INTERVAL, val);
@@ -693,15 +673,16 @@ public class MD {
       try {
          return map.getBoolean(ZC_ORDER);
       } catch (JSONException ex) {
-                  Log.log("Missing ZCT Tag");
+         Log.log("Missing ZCT Tag");
          throw new RuntimeException();
       }
    }
+
    public static void setZCTOrder(JSONObject map, boolean val)  {
       try {
          map.put(ZC_ORDER, val);
       } catch (JSONException ex) {
-                  Log.log("Couldn't set ZCT Order");
+         Log.log("Couldn't set ZCT Order");
          throw new RuntimeException();
       }
    }
@@ -710,8 +691,8 @@ public class MD {
       try {
          summaryMD.put(AFFINE_TRANSFORM, affine);
       } catch (JSONException ex) {
-        Log.log("Couldn't set affine transform");
-        throw new RuntimeException();
+         Log.log("Couldn't set affine transform");
+         throw new RuntimeException();
       }
    }
    
@@ -719,8 +700,8 @@ public class MD {
       try {
          return summaryMD.getString(AFFINE_TRANSFORM);
       } catch (JSONException ex) {
-        Log.log("Affine transform missing from summary metadata");
-        return "";
+         Log.log("Affine transform missing from summary metadata");
+         return "";
       }
    }
 
@@ -751,7 +732,7 @@ public class MD {
       }
    }
    
-    public static void setRankFilterRank(JSONObject smd, double rank) {
+   public static void setRankFilterRank(JSONObject smd, double rank) {
       try {
          smd.put(RANK_FILTER_RANK, rank);
       } catch (JSONException ex) {

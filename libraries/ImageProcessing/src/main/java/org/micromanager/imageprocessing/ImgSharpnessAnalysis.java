@@ -28,6 +28,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
+
 package org.micromanager.imageprocessing;
 
 import ij.gui.OvalRoi;
@@ -270,8 +271,8 @@ public class ImgSharpnessAnalysis {
     * @author Jon
     */
    public static double computeMedianEdges(ImageProcessor proc) {
-      int h = proc.getHeight();
-      int w = proc.getWidth();
+      final int h = proc.getHeight();
+      final int w = proc.getWidth();
       double sum = 0.0;
       int[] ken1 = {2, 1, 0, 1, 0, -1, 0, -1, -2};
       int[] ken2 = {0, 1, 2, -1, 0, 1, -2, -1, 0};

@@ -31,14 +31,14 @@ public class Log {
    }
 
    public static void log(String message, boolean show) {
-     try {
-      Magellan.getCore().logMessage(message);
-     } catch (NoClassDefFoundError e) {
+      try {
+         Magellan.getCore().logMessage(message);
+      } catch (NoClassDefFoundError e) {
         //running outside of MM, ignore
-     }
-       if (show) {
-          Magellan.getStudio().logs().showError(message);
-       }
+      }
+      if (show) {
+         Magellan.getStudio().logs().showError(message);
+      }
    }
 
    public static void log(Exception e) {
@@ -58,7 +58,7 @@ public class Log {
       }
    }
    
-      private static String getStackTraceAsString(Throwable aThrowable) {
+   private static String getStackTraceAsString(Throwable aThrowable) {
       String result = "";
       for (StackTraceElement line : aThrowable.getStackTrace()) {
          result += "  at " + line.toString() + "\n";

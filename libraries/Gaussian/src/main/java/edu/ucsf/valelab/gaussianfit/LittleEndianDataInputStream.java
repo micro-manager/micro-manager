@@ -28,8 +28,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
    public final short readShort() throws IOException {
       d.readFully(w, 0, 2);
       return (short) (
-            (w[1] & 0xff) << 8 |
-                  (w[0] & 0xff));
+            (w[1] & 0xff) << 8 | (w[0] & 0xff));
    }
 
    /**
@@ -39,8 +38,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
    public final int readUnsignedShort() throws IOException {
       d.readFully(w, 0, 2);
       return (
-            (w[1] & 0xff) << 8 |
-                  (w[0] & 0xff));
+            (w[1] & 0xff) << 8 | (w[0] & 0xff));
    }
 
    /**
@@ -50,8 +48,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
    public final char readChar() throws IOException {
       d.readFully(w, 0, 2);
       return (char) (
-            (w[1] & 0xff) << 8 |
-                  (w[0] & 0xff));
+            (w[1] & 0xff) << 8 | (w[0] & 0xff));
    }
 
    /**
@@ -61,10 +58,10 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
    public final int readInt() throws IOException {
       d.readFully(w, 0, 4);
       return
-            (w[3]) << 24 |
-                  (w[2] & 0xff) << 16 |
-                  (w[1] & 0xff) << 8 |
-                  (w[0] & 0xff);
+            (w[3]) << 24
+            | (w[2] & 0xff) << 16
+            | (w[1] & 0xff) << 8
+            | (w[0] & 0xff);
    }
 
    /**
@@ -74,14 +71,14 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
    public final long readLong() throws IOException {
       d.readFully(w, 0, 8);
       return
-            (long) (w[7]) << 56 |
-                  (long) (w[6] & 0xff) << 48 |
-                  (long) (w[5] & 0xff) << 40 |
-                  (long) (w[4] & 0xff) << 32 |
-                  (long) (w[3] & 0xff) << 24 |
-                  (long) (w[2] & 0xff) << 16 |
-                  (long) (w[1] & 0xff) << 8 |
-                  (long) (w[0] & 0xff);
+            (long) (w[7]) << 56
+                  | (long) (w[6] & 0xff) << 48
+                  | (long) (w[5] & 0xff) << 40
+                  | (long) (w[4] & 0xff) << 32
+                  | (long) (w[3] & 0xff) << 24
+                  | (long) (w[2] & 0xff) << 16
+                  | (long) (w[1] & 0xff) << 8
+                  | (long) (w[0] & 0xff);
    }
 
    @Override
@@ -95,17 +92,22 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
    }
 
    @Override
-   public final int read(byte b[], int off, int len) throws IOException {
+   public final int read(byte[] b, int off, int len) throws IOException {
       return in.read(b, off, len);
    }
 
    @Override
-   public final void readFully(byte b[]) throws IOException {
+   public int read() throws IOException {
+      return in.read();
+   }
+
+   @Override
+   public final void readFully(byte[] b) throws IOException {
       d.readFully(b, 0, b.length);
    }
 
    @Override
-   public final void readFully(byte b[], int off, int len) throws IOException {
+   public final void readFully(byte[] b, int off, int len) throws IOException {
       d.readFully(b, off, len);
    }
 
@@ -122,11 +124,6 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
    @Override
    public final byte readByte() throws IOException {
       return d.readByte();
-   }
-
-   @Override
-   public int read() throws IOException {
-      return in.read();
    }
 
    @Override
