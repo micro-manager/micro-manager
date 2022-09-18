@@ -72,7 +72,7 @@ public class RatioImaging implements ProcessorPlugin, SciJavaPlugin {
 
    @Override
    public String getVersion() {
-      return "0.1";
+      return "0.2";
    }
    
    @Override

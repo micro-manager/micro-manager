@@ -38,11 +38,13 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
 import java.text.ParseException;
+import java.util.Vector;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import mmcorej.CMMCore;
+import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import net.miginfocom.swing.MigLayout;
@@ -189,8 +191,8 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
               configuratorSettings.getString(BACKGROUND2CONSTANT, ""));
       settings.putString(FACTOR, configuratorSettings.getString(FACTOR, ""));
    }
-   
-   private JComboBox createChannelCombo( 
+
+   private JComboBox createChannelCombo(
            MutablePropertyMapView settings, String prefKey) {
       
       final JComboBox cBox = new JComboBox();
@@ -213,13 +215,37 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       settings.putString(prefKey, (String) cBox.getSelectedItem());
       return cBox;
    }
-   
+
+   /**
+    * Get the channel names from the core.
+    * If there is more than one camera, add those as "channel-camera", however, try
+    * to avoid the MultiCamera device by checking the library it comes from (Utilities).
+    * Quite a bit of heuristics here...
+    *
+    * @param cBox The comboBox to be populated.
+    */
    private void populateWithChannels(JComboBox cBox) {
       cBox.removeAllItems();
       String channelGroup = core_.getChannelGroup();
       StrVector channels = core_.getAvailableConfigs(channelGroup);
+      StrVector camerasStrV = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
+      Vector<String> cameras = new Vector<>();
+      for (String camera : camerasStrV) {
+         try {
+            if (!core_.getDeviceLibrary(camera).equals("Utilities")) {
+               cameras.add(camera);
+            }
+         } catch (Exception ex) {
+            studio_.logs().logError(ex);
+         }
+      }
       for (int i = 0; i < channels.size(); i++) {
-        cBox.addItem(channels.get(i));
+         cBox.addItem(channels.get(i));
+         if (cameras.size() > 1) {
+            for (String camera : cameras) {
+               cBox.addItem(channels.get(i) + "-" + camera);
+            }
+         }
       }
    }
    
