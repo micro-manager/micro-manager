@@ -248,6 +248,11 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
             }
          }
       }
+      if (channels.size() == 0 && cameras.size() > 1) {
+         for (String camera : cameras) {
+            cBox.addItem(camera);
+         }
+      }
    }
    
    final JTextField darkFieldTextField = new JTextField(50);
