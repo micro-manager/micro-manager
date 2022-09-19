@@ -19,15 +19,17 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-
-
 package org.micromanager.ratioimaging;
 
-import org.micromanager.data.Processor;
-import org.micromanager.data.ProcessorFactory;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorFactory;
 
+/**
+ * Factory for the RatioImaging Processing plugin.
+ * Needed by Micro-Manager Processing API.
+ */
 public class RatioImagingFactory implements ProcessorFactory {
    private final Studio studio_;
    private final PropertyMap settings_;

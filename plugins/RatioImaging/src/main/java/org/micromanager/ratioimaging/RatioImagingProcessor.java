@@ -31,18 +31,15 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Rectangle;
 import java.text.ParseException;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.micromanager.PropertyMap;
-
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.Studio;
-
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
@@ -51,7 +48,7 @@ import org.micromanager.Studio;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**
- * DataProcessor that splits images as instructed in SplitViewFrame
+ * DataProcessor that splits images as instructed in SplitViewFrame.
  *
  * @author nico, heavily updated by Chris Weisiger
  */
@@ -72,11 +69,19 @@ public class RatioImagingProcessor implements Processor {
    private int ch2Index_;
    private int ratioIndex_;
 
+   /**
+    * Constructor of the Processor doing the heavy lifting.
+    *
+    * @param studio Studio object gives access to all we need.
+    * @param settings Plugin Settings
+    */
    public RatioImagingProcessor(Studio studio, PropertyMap settings) {
       studio_ = studio;
       settings_ = settings;
       images_ = new ArrayList<Image>();
-      int factor = 1; int bc1Constant = 0; int bc2Constant = 0;
+      int factor = 1;
+      int bc1Constant = 0;
+      int bc2Constant = 0;
       try {
          factor = NumberUtils.displayStringToInt(
               settings_.getString(RatioImagingFrame.FACTOR, "1"));
@@ -130,14 +135,23 @@ public class RatioImagingProcessor implements Processor {
       }
       newNames[chNames.size() ] = "ratio " + ch1Name + "-" + ch2Name;
       ratioIndex_ = chNames.size();
-      Coords newDimensions = summary.getIntendedDimensions().copyBuilder().
-              c(newNames.length).build();
+      Coords newDimensions = summary.getIntendedDimensions().copyBuilder()
+                  .c(newNames.length).build();
       
-      return summary.copyBuilder().channelNames(newNames).
-              intendedDimensions(newDimensions).build();
+      return summary.copyBuilder().channelNames(newNames)
+                  .intendedDimensions(newDimensions).build();
    }
-   
-   
+
+
+   /**
+    * Provides the background image, corrected for binning and ROI when needed.
+    *
+    * @param path Path on the file system to the Background image
+    * @param binning Binning to be applied
+    * @param roi Roi to be set
+    * @param nrBytesPerPixel Desired Bytes Per Pixel
+    * @return Corrected background image as an ImagePlus
+    */
    public ImagePlus getBackground(String path, int binning, Rectangle roi, int nrBytesPerPixel) {
 
       if (path.equals("")) {
@@ -158,11 +172,10 @@ public class RatioImagingProcessor implements Processor {
     * (i.e. binning = 1, full field image) If the original image was normalized,
     * this one will be as well (as it is derived from the normalized image)
     *
-    * @param ipi
-    * @param binning
-    * @param roi
-    * @return
-    * @throws org.micromanager.internal.utils.MMException
+    * @param ipi input ImagePlus object
+    * @param binning Binning to be applied to the input ImagePlus
+    * @param roi  To be applied to the output image
+    * @return ImagePlus representation of the desired output image
     */
    private ImagePlus makeDerivedImage(ImagePlus ipi, int binning, Rectangle roi,
            int nrBytesPerPixel) {
@@ -202,7 +215,7 @@ public class RatioImagingProcessor implements Processor {
       if (newImage.getNumComponents() > 1) {
          return;
       }
-      if (! (newImage.getBytesPerPixel() == 1 || newImage.getBytesPerPixel() == 2) ) {
+      if (! (newImage.getBytesPerPixel() == 1 || newImage.getBytesPerPixel() == 2)) {
          return;
       }
       
@@ -250,7 +263,7 @@ public class RatioImagingProcessor implements Processor {
       
    private void process(Image ch1Image, Image ch2Image, ProcessorContext context) {
       
-      Coords ratioCoords = ch1Image.getCoords().copyBuilder().c(ratioIndex_).build();
+      final Coords ratioCoords = ch1Image.getCoords().copyBuilder().c(ratioIndex_).build();
       
       ImageProcessor ch1Proc = studio_.data().ij().createProcessor(ch1Image);
       ImageProcessor ch2Proc = studio_.data().ij().createProcessor(ch2Image);
@@ -275,47 +288,46 @@ public class RatioImagingProcessor implements Processor {
          ch3Proc = ch3Proc.convertToByteProcessor();
       } else if (ch1Image.getBytesPerPixel() == 2) {
          // ImageJ method seems to be broken. Copied code from ImageJ1 here
-         ch3Proc = convertFloatToShort( (FloatProcessor) ch3Proc);
+         ch3Proc = convertFloatToShort((FloatProcessor) ch3Proc);
       }
       int max = (int) ch3Proc.getMax();
       int bitDepth = 1;
-      while ( (1 << bitDepth) < max && bitDepth <= ch1Image.getBytesPerPixel() * 8) {
+      while ((1 << bitDepth) < max && bitDepth <= ch1Image.getBytesPerPixel() * 8) {
          bitDepth += 1;
       }
       
       Image ratioImage = studio_.data().ij().createImage(ch3Proc, ratioCoords, 
-              ch1Image.getMetadata().copyBuilderWithNewUUID().bitDepth(bitDepth).
-                      build());
+              ch1Image.getMetadata().copyBuilderWithNewUUID().bitDepth(bitDepth)
+                          .build());
       
       context.outputImage(ratioImage);
    }
    
    /**
-    * Copied from https://github.com/imagej/imagej1/blob/master/ij/process/TypeConverter.java
-    * 
-    * The call to chrProc.convertToShortProcess results in pixel values of -1
+    * Copied from https://github.com/imagej/imagej1/blob/master/ij/process/TypeConverter.java.
+    *
+    * <p>The call to chrProc.convertToShortProcess results in pixel values of -1
     * Not sure why (but in included ImageJ version?) 
     * Copying the relevant code from the ImageJ1 source fixes it
-    *  
+    *
     * @param ip FloatProcessor to be converted
     * @return Shortprocessor
     */
    ShortProcessor convertFloatToShort(FloatProcessor ip) {
-		float[] pixels32 = (float[])ip.getPixels();
-		short[] pixels16 = new short[ip.getWidth()*ip.getHeight()];
-		double value;
-		for (int i=0,j=0; i< (ip.getWidth() * ip.getHeight()); i++) {
-			value = pixels32[i];
-			if (value<0.0) {
+      float[] pixels32 = (float[]) ip.getPixels();
+      short[] pixels16 = new short[ip.getWidth() * ip.getHeight()];
+      double value;
+      for (int i = 0, j = 0; i < (ip.getWidth() * ip.getHeight()); i++) {
+         value = pixels32[i];
+         if (value < 0.0) {
             value = 0.0;
          }
-			if (value>65535.0) {
+         if (value > 65535.0) {
             value = 65535.0;
          }
-			pixels16[i] = (short)(value+0.5);
-		}
-	    return new ShortProcessor(ip.getWidth(), ip.getHeight(), pixels16, 
-               ip.getColorModel());
+         pixels16[i] = (short) (value + 0.5);
+      }
+      return new ShortProcessor(ip.getWidth(), ip.getHeight(), pixels16, ip.getColorModel());
    }
    
    private static ByteProcessor subtractByteProcessors(ByteProcessor proc1, ByteProcessor proc2) {
@@ -323,28 +335,42 @@ public class RatioImagingProcessor implements Processor {
               subtractPixelArrays((byte []) proc1.getPixels(), (byte []) proc2.getPixels()),
               null);
    }
-   
-   
-   private static ShortProcessor subtractShortProcessors(ShortProcessor proc1, ShortProcessor proc2) {
+
+   private static ShortProcessor subtractShortProcessors(ShortProcessor proc1,
+                                                         ShortProcessor proc2) {
       return new ShortProcessor(proc1.getWidth(), proc1.getHeight(),
               subtractPixelArrays((short []) proc1.getPixels(), (short []) proc2.getPixels()),
               null);
    }
-   
-    public static byte[] subtractPixelArrays(byte[] array1, byte[] array2) {
+
+   /**
+    * Subtracts array 2 from array 1 and returens the result.
+    *
+    * @param array1 Source array
+    * @param array2 Array to subtract (member by member) from the source array
+    * @return Resulting array
+    */
+   public static byte[] subtractPixelArrays(byte[] array1, byte[] array2) {
       int l = array1.length;
       byte[] result = new byte[l];
-      for (int i=0;i<l;++i) {
-         result[i] = (byte) Math.max(0, unsignedValue(array1[i]) - 
-                 unsignedValue(array2[i]) );
+      for (int i = 0; i < l; ++i) {
+         result[i] = (byte) Math.max(0, unsignedValue(array1[i])
+               - unsignedValue(array2[i]));
       }
       return result;
    }
-   
+
+   /**
+    * Subtracts array 2 from array 1 and returens the result.
+    *
+    * @param array1 Source array
+    * @param array2 Array to subtract (member by member) from the source array
+    * @return Resulting array
+    */
    public static short[] subtractPixelArrays(short[] array1, short[] array2) {
       int l = array1.length;
       short[] result = new short[l];
-      for (int i=0;i<l;++i) {
+      for (int i = 0; i < l; ++i) {
          result[i] = (short) Math.max(0, unsignedValue(array1[i]) - unsignedValue(array2[i]));
       }
       return result;
@@ -359,8 +385,16 @@ public class RatioImagingProcessor implements Processor {
       // Sign-extend, then mask
       return ((int) s) & 0x0000ffff;
    }
-   
-   public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
+
+   /**
+    * Subtracts ImageProcessor 2 from 1 and returns the result.
+    *
+    * @param proc1 Source image
+    * @param proc2 Image subtract (pixel by pixel) from the proc1
+    * @return Resulting Image
+    */
+   public static ImageProcessor subtractImageProcessors(ImageProcessor proc1,
+                                                        ImageProcessor proc2) {
       if ((proc1.getWidth() != proc2.getWidth())
               || (proc1.getHeight() != proc2.getHeight())) {
          return null;

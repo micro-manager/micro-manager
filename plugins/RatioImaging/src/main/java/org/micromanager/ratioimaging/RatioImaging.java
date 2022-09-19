@@ -21,18 +21,16 @@
 
 package org.micromanager.ratioimaging;
 
+import org.micromanager.PropertyMap;
+import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.data.ProcessorPlugin;
-import org.micromanager.PropertyMap;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-import org.micromanager.Studio;
-
 /** 
- * Micro-Manager plugin to create ratio image 
+ * Micro-Manager plugin to create ratio image.
  *
  * @author nico
  */
@@ -40,7 +38,7 @@ import org.micromanager.Studio;
 public class RatioImaging implements ProcessorPlugin, SciJavaPlugin {
    public static final String MENU_NAME = "RatioImaging";
    public static final String TOOL_TIP_DESCRIPTION =
-      "Generates a ratio image from two channels";
+         "Generates a ratio image from two channels";
    private Studio studio_;
 
    @Override
@@ -72,7 +70,7 @@ public class RatioImaging implements ProcessorPlugin, SciJavaPlugin {
 
    @Override
    public String getVersion() {
-      return "0.1";
+      return "0.2";
    }
    
    @Override

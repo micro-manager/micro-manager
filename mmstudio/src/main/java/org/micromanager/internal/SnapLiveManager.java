@@ -542,6 +542,14 @@ public final class SnapLiveManager extends DataViewerListener
          displayInfo_ = null;
       }
 
+      try {
+         pipeline_.insertSummaryMetadata(store_.getSummaryMetadata());
+      } catch (IOException e) {
+         mmStudio_.logs().logError(e);
+      } catch (PipelineErrorException e) {
+         mmStudio_.logs().logError(e);
+      }
+
 
    }
 
