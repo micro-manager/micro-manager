@@ -19,7 +19,9 @@ public class SpotOverlay extends AbstractOverlay {
 
    private class Square {
 
-      int x_, y_, width_;
+      int x_;
+      int y_;
+      int width_;
 
       public Square(int x, int y, int width) {
          x_ = x;
@@ -51,8 +53,8 @@ public class SpotOverlay extends AbstractOverlay {
 
    /**
     * {@inheritDoc}
-    * <p>
-    * This default implementation draws nothing. Override to draw the overlay graphics.
+    *
+    * <p>This default implementation draws nothing. Override to draw the overlay graphics.
     */
    @Override
    public void paintOverlay(final Graphics2D g, final Rectangle screenRect,

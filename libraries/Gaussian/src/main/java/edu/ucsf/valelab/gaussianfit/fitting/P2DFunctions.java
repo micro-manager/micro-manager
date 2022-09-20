@@ -35,7 +35,7 @@ import org.apache.commons.math3.analysis.function.Exp;
  */
 public class P2DFunctions {
 
-   private final static Exp EXP = new Exp();
+   private static final Exp EXP = new Exp();
 
    /**
     * Calculates the probability density function: p2D(r) = (r / sigma2) exp(-(mu2 + r2)/2sigma2)
@@ -62,9 +62,9 @@ public class P2DFunctions {
    }
 
    /**
-    * Used when r > sigma
-    * <p>
-    * Sqrt( r / (2Pi * sigma * mu)) * e pow(- (r - mu)^2 / (2 * sigma^2) )
+    * Used when r > sigma.
+    *
+    * <p>Sqrt( r / (2Pi * sigma * mu)) * e pow(- (r - mu)^2 / (2 * sigma^2) )
     *
     * @param r
     * @param mu
@@ -73,8 +73,8 @@ public class P2DFunctions {
     */
    public static double p2dApproximation(double r, double mu, double sigma) {
 
-      double result = Math.sqrt(r / (2 * Math.PI * sigma * mu)) *
-            EXP.value(-(r - mu) * (r - mu) / (2 * sigma * sigma));
+      double result = Math.sqrt(r / (2 * Math.PI * sigma * mu))
+              * EXP.value(-(r - mu) * (r - mu) / (2 * sigma * sigma));
       if (result < Double.MIN_NORMAL) {
          result = Double.MIN_NORMAL;
       }

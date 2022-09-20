@@ -52,7 +52,8 @@ public abstract class KdTree<T> {
    private double splitValue;
 
    // Bounds
-   private double[] minLimit, maxLimit;
+   private double[] minLimit;
+   private double[] maxLimit;
    private boolean singularity;
 
    // Temporary
@@ -689,7 +690,7 @@ public abstract class KdTree<T> {
             if (distance[p] < distance[c]) {
                // Swap the points
                Object pData = data[p];
-               double pDist = distance[p];
+               final double pDist = distance[p];
                data[p] = data[c];
                distance[p] = distance[c];
                data[c] = pData;

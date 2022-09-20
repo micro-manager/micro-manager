@@ -1,4 +1,4 @@
-/**
+/*
  * @author - Nico Stuurman,  2012
  * <p>
  * <p>
@@ -143,9 +143,9 @@ public class SpotLinker {
 
          // Add destList to rowData
          RowData.Builder builder = rowData.copy();
-         builder.setName(rowData.getName() + " Linked").
-               setMaxNrSpots(destList.size()).
-               setSpotList(destList);
+         builder.setName(rowData.getName() + " Linked")
+                 .setMaxNrSpots(destList.size())
+                 .setSpotList(destList);
          DataCollectionForm.getInstance().addSpotData(builder);
 
       } catch (OutOfMemoryError oome) {
@@ -170,7 +170,7 @@ public class SpotLinker {
          return;
       }
 
-      SpotData sp = new SpotData(source.get(0));
+      final SpotData sp = new SpotData(source.get(0));
 
       double intensity = 0.0;
       double background = 0.0;
@@ -215,9 +215,9 @@ public class SpotLinker {
 
       // sample standard deviation
       double sampleWeightedSum = 1.0 / (n - 1) * sum;
-      double stdDev = Math.sqrt(sampleWeightedSum);
-      double stdDevX = Math.sqrt(1.0 / (n - 1) * sumx);
-      double stdDevY = Math.sqrt(1.0 / (n - 1) * sumy);
+      final double stdDev = Math.sqrt(sampleWeightedSum);
+      final double stdDevX = Math.sqrt(1.0 / (n - 1) * sumx);
+      final double stdDevY = Math.sqrt(1.0 / (n - 1) * sumy);
 
       sp.setData(intensity, background, xCenter, yCenter, 0.0, width, a, theta, sigma);
       sp.originalFrame_ = source.get(0).getFrame();
@@ -263,7 +263,7 @@ public class SpotLinker {
 
          // maintain active tracks here
          List<Integer> trackIndex;
-         Map<List<Integer>, List<TrackData>> trackMap = new HashMap<List<Integer>, List<TrackData>>();
+         Map<List<Integer>, List<TrackData>> trackMap = new HashMap<>();
          for (int pos = 1; pos <= rowData.nrPositions_; pos++) {
             for (int ch = 1; ch <= rowData.nrChannels_; ch++) {
                for (int s = 1; s <= rowData.nrSlices_; s++) {
@@ -290,8 +290,8 @@ public class SpotLinker {
                                  if (track.missingMoreThan(nrMissing)) {
                                     // track could not be extended, finalize it
                                     // Write out the track:
-                                    if (track.size() > minNr &&
-                                          track.get(0).distance(track.get(track.size() - 1))
+                                    if (track.size() > minNr
+                                            && track.get(0).distance(track.get(track.size() - 1))
                                                 > minTotalDistance) {
                                        writeTrack(rowData, track.getList(), trackNr);
                                        trackNr++;
@@ -400,12 +400,12 @@ public class SpotLinker {
 
    private static void writeTrack(RowData rowData, List<SpotData> track, int trackNr) {
       RowData.Builder builder = rowData.copy();
-      builder.setName(rowData.getName() + " Track " + trackNr).
-            setNrSlices(1).
-            setNrPositions(1).
-            setMaxNrSpots(track.size()).
-            setIsTrack(true).
-            setSpotList(track);
+      builder.setName(rowData.getName() + " Track " + trackNr)
+              .setNrSlices(1)
+              .setNrPositions(1)
+              .setMaxNrSpots(track.size())
+              .setIsTrack(true)
+              .setSpotList(track);
       DataCollectionForm.getInstance().addSpotData(builder);
 
    }

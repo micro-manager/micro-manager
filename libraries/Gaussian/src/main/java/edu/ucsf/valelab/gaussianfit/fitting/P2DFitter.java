@@ -38,227 +38,6 @@ import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.NelderMeadSimplex;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.SimplexOptimizer;
 
-/**
- * Implements fitting of pairwise distribution function as described in
- * http://dx.doi.org/10.1529/biophysj.105.065599
- *
- * @author nico
- */
-class P2DFunc implements MultivariateFunction {
-
-   private final double[] points_;
-   private final boolean fitSigma_;
-   private final double sigma_;
-
-   /**
-    * Fits either mu and sigma, or only mu
-    *
-    * @param points   array with measurements
-    * @param fitSigma whether sigma value should be fitted
-    * @param sigma    Fixed sigma, only needed when fitSigma is true
-    */
-   public P2DFunc(double[] points, final boolean fitSigma, final double sigma) {
-      points_ = points;
-      fitSigma_ = fitSigma;
-      sigma_ = sigma;
-   }
-
-   /**
-    * Calculate the sum of the likelihood function
-    *
-    * @param doubles array with parameters, here doubles[0] == mu, doubles [1] == sigma
-    * @return -sum(logP2D(points, mu, sigma));
-    */
-   @Override
-   public double value(double[] doubles) {
-      double sum = 0.0;
-      double sigma = sigma_;
-      if (fitSigma_) {
-         sigma = doubles[1];
-      }
-      for (double point : points_) {
-         double predictedValue = P2DFunctions.p2d(point, doubles[0], sigma);
-         sum += Math.log(predictedValue);
-      }
-      return sum;
-   }
-
-   public double nonLogValue(double[] doubles) {
-      double sum = 0;
-      double sigma = sigma_;
-      if (fitSigma_) {
-         sigma = doubles[1];
-      }
-      for (double point : points_) {
-         double predictedValue = P2DFunctions.p2d(point, doubles[0], sigma);
-         sum *= predictedValue;
-      }
-      return sum;
-   }
-
-}
-
-
-/**
- * Implements fitting of pairwise distribution function as described in
- * http://dx.doi.org/10.1529/biophysj.105.065599 Keeps mu fixed
- *
- * @author nico
- */
-
-class P2DFuncFixedMu implements MultivariateFunction {
-
-   private final double[] points_;
-   private final double mu_;
-
-   /**
-    * Fits either mu and sigma, or only mu
-    *
-    * @param points   array with measurements
-    * @param fitSigma whether sigma value should be fitted
-    * @param sigma    Fixed sigma, only needed when fitSigma is true
-    */
-   public P2DFuncFixedMu(double[] points, final double mu) {
-      points_ = points;
-      mu_ = mu;
-   }
-
-   /**
-    * Calculate the sum of the likelihood function
-    *
-    * @param doubles array with parameters, here doubles[0] == mu, doubles [1] == sigma
-    * @return -sum(logP2D(points, mu, sigma));
-    */
-   @Override
-   public double value(double[] doubles) {
-      double sum = 0.0;
-      double mu = mu_;
-      for (double point : points_) {
-         double predictedValue = P2DFunctions.p2d(point, mu, doubles[0]);
-         sum += Math.log(predictedValue);
-      }
-      return sum;
-   }
-
-   public double nonLogValue(double[] doubles) {
-      double sum = 0;
-      double mu = mu_;
-      for (double point : points_) {
-         double predictedValue = P2DFunctions.p2d(point, mu, doubles[0]);
-         sum *= predictedValue;
-      }
-      return sum;
-   }
-
-}
-
-
-/**
- * Calculates the difference of the likelihood with the target
- */
-class P2D50 implements MultivariateFunction {
-
-   private final double target_;
-   private final double mu_;
-   private final double sigma_;
-
-   /**
-    *
-    */
-   public P2D50(double target, double mu, double sigma) {
-      target_ = target;
-      mu_ = mu;
-      sigma_ = sigma;
-   }
-
-   /**
-    * Calculates the difference of the likelihood with the target
-    *
-    * @param doubles array of size 1 containing r (i.e. we are looking for the r that gives a value
-    *                closest to target_)
-    * @return target - P2D(r, mu, sigma));
-    */
-   @Override
-   public double value(double[] doubles) {
-      double result = target_ - P2DFunctions.p2d(doubles[0], mu_, sigma_);
-      return result * result;
-   }
-
-
-}
-
-/**
- * Implements fitting of pairwise distribution function as described in
- * http://dx.doi.org/10.1529/biophysj.105.065599
- * <p>
- * This version uses the measured sigmas for each individual spot (pair)
- *
- * @author nico
- */
-class P2DIndividualSigmasFunc implements MultivariateFunction {
-
-   private final double[] points_;
-   private final double[] sigmas_;
-   private final boolean useApproximation_;
-
-   /**
-    * @param useApproximation Use approximation to p2d if true. This is needed to accurately solve
-    *                         instances where mu >> sigma
-    * @param points           array with measurements
-    * @param fitSigma         whether sigma value should be fitted
-    * @param sigma            Fixed sigma, only needed when fitSigma is true
-    */
-   public P2DIndividualSigmasFunc(final boolean useApproximation,
-         final double[] points, final double[] sigmas) {
-      useApproximation_ = useApproximation;
-      points_ = points;
-      sigmas_ = sigmas;
-
-      // TODO: bail out if these two arrays are not identical in size
-   }
-
-   /**
-    * Calculate the sum of the likelihood function
-    *
-    * @param doubles array with parameters, here doubles[0] == mu
-    * @return -sum(logP2D(points, mu, sigma));
-    */
-   @Override
-   public double value(double[] doubles) {
-      double sum = 0.0;
-      if (useApproximation_) {
-         for (int i = 0; i < points_.length; i++) {
-            double predictedValue = P2DFunctions
-                  .p2dApproximation(points_[i], doubles[0], sigmas_[i]);
-            sum += Math.log(predictedValue);
-         }
-      } else {
-         for (int i = 0; i < points_.length; i++) {
-            double predictedValue = P2DFunctions.p2d(points_[i], doubles[0], sigmas_[i]);
-            sum += Math.log(predictedValue);
-         }
-      }
-      return sum;
-   }
-
-   public double nonLogValue(double[] doubles) {
-      double sum = 0;
-      if (useApproximation_) {
-         for (int i = 0; i < points_.length; i++) {
-            double predictedValue = P2DFunctions
-                  .p2dApproximation(points_[i], doubles[0], sigmas_[i]);
-            sum *= predictedValue;
-         }
-      } else {
-         for (int i = 0; i < points_.length; i++) {
-            double predictedValue = P2DFunctions.p2d(points_[i], doubles[0], sigmas_[i]);
-            sum *= predictedValue;
-         }
-      }
-      return sum;
-   }
-
-}
 
 
 /**
@@ -269,6 +48,229 @@ class P2DIndividualSigmasFunc implements MultivariateFunction {
  */
 
 public class P2DFitter {
+
+   /**
+    * Implements fitting of pairwise distribution function as described in
+    * http://dx.doi.org/10.1529/biophysj.105.065599
+    *
+    * @author nico
+    */
+   class P2DFunc implements MultivariateFunction {
+
+      private final double[] points_;
+      private final boolean fitSigma_;
+      private final double sigma_;
+
+      /**
+       * Fits either mu and sigma, or only mu
+       *
+       * @param points   array with measurements
+       * @param fitSigma whether sigma value should be fitted
+       * @param sigma    Fixed sigma, only needed when fitSigma is true
+       */
+      public P2DFunc(double[] points, final boolean fitSigma, final double sigma) {
+         points_ = points;
+         fitSigma_ = fitSigma;
+         sigma_ = sigma;
+      }
+
+      /**
+       * Calculate the sum of the likelihood function
+       *
+       * @param doubles array with parameters, here doubles[0] == mu, doubles [1] == sigma
+       * @return -sum(logP2D(points, mu, sigma));
+       */
+      @Override
+      public double value(double[] doubles) {
+         double sum = 0.0;
+         double sigma = sigma_;
+         if (fitSigma_) {
+            sigma = doubles[1];
+         }
+         for (double point : points_) {
+            double predictedValue = P2DFunctions.p2d(point, doubles[0], sigma);
+            sum += Math.log(predictedValue);
+         }
+         return sum;
+      }
+
+      public double nonLogValue(double[] doubles) {
+         double sum = 0;
+         double sigma = sigma_;
+         if (fitSigma_) {
+            sigma = doubles[1];
+         }
+         for (double point : points_) {
+            double predictedValue = P2DFunctions.p2d(point, doubles[0], sigma);
+            sum *= predictedValue;
+         }
+         return sum;
+      }
+
+   }
+
+
+   /**
+    * Implements fitting of pairwise distribution function as described in
+    * http://dx.doi.org/10.1529/biophysj.105.065599 Keeps mu fixed
+    *
+    * @author nico
+    */
+
+   class P2DFuncFixedMu implements MultivariateFunction {
+
+      private final double[] points_;
+      private final double mu_;
+
+      /**
+       * Fits either mu and sigma, or only mu
+       *
+       * @param points   array with measurements
+       * @param fitSigma whether sigma value should be fitted
+       * @param sigma    Fixed sigma, only needed when fitSigma is true
+       */
+      public P2DFuncFixedMu(double[] points, final double mu) {
+         points_ = points;
+         mu_ = mu;
+      }
+
+      /**
+       * Calculate the sum of the likelihood function
+       *
+       * @param doubles array with parameters, here doubles[0] == mu, doubles [1] == sigma
+       * @return -sum(logP2D(points, mu, sigma));
+       */
+      @Override
+      public double value(double[] doubles) {
+         double sum = 0.0;
+         double mu = mu_;
+         for (double point : points_) {
+            double predictedValue = P2DFunctions.p2d(point, mu, doubles[0]);
+            sum += Math.log(predictedValue);
+         }
+         return sum;
+      }
+
+      public double nonLogValue(double[] doubles) {
+         double sum = 0;
+         double mu = mu_;
+         for (double point : points_) {
+            double predictedValue = P2DFunctions.p2d(point, mu, doubles[0]);
+            sum *= predictedValue;
+         }
+         return sum;
+      }
+
+   }
+
+
+   /**
+    * Calculates the difference of the likelihood with the target
+    */
+   class P2D50 implements MultivariateFunction {
+
+      private final double target_;
+      private final double mu_;
+      private final double sigma_;
+
+      /**
+       *
+       */
+      public P2D50(double target, double mu, double sigma) {
+         target_ = target;
+         mu_ = mu;
+         sigma_ = sigma;
+      }
+
+      /**
+       * Calculates the difference of the likelihood with the target.
+       *
+       * @param doubles array of size 1 containing r (i.e. we are looking for the r that
+       *                gives a value closest to target_)
+       * @return target - P2D(r, mu, sigma));
+       */
+      @Override
+      public double value(double[] doubles) {
+         double result = target_ - P2DFunctions.p2d(doubles[0], mu_, sigma_);
+         return result * result;
+      }
+
+
+   }
+
+   /**
+    * Implements fitting of pairwise distribution function as described in
+    * http://dx.doi.org/10.1529/biophysj.105.065599
+    *
+    * <p>This version uses the measured sigmas for each individual spot (pair)
+    *
+    * @author nico
+    */
+   class P2DIndividualSigmasFunc implements MultivariateFunction {
+
+      private final double[] points_;
+      private final double[] sigmas_;
+      private final boolean useApproximation_;
+
+      /**
+       * Implements fitting of pairwise distribution function.
+       *
+       * @param useApproximation Use approximation to p2d if true. This is needed to accurately
+       *                         solve instances where mu >> sigma
+       * @param points           array with measurements
+       * @param sigmas          Sigmas
+       */
+      public P2DIndividualSigmasFunc(final boolean useApproximation,
+                                     final double[] points, final double[] sigmas) {
+         useApproximation_ = useApproximation;
+         points_ = points;
+         sigmas_ = sigmas;
+
+         // TODO: bail out if these two arrays are not identical in size
+      }
+
+      /**
+       * Calculate the sum of the likelihood function
+       *
+       * @param doubles array with parameters, here doubles[0] == mu
+       * @return -sum(logP2D(points, mu, sigma));
+       */
+      @Override
+      public double value(double[] doubles) {
+         double sum = 0.0;
+         if (useApproximation_) {
+            for (int i = 0; i < points_.length; i++) {
+               double predictedValue = P2DFunctions
+                       .p2dApproximation(points_[i], doubles[0], sigmas_[i]);
+               sum += Math.log(predictedValue);
+            }
+         } else {
+            for (int i = 0; i < points_.length; i++) {
+               double predictedValue = P2DFunctions.p2d(points_[i], doubles[0], sigmas_[i]);
+               sum += Math.log(predictedValue);
+            }
+         }
+         return sum;
+      }
+
+      public double nonLogValue(double[] doubles) {
+         double sum = 0;
+         if (useApproximation_) {
+            for (int i = 0; i < points_.length; i++) {
+               double predictedValue = P2DFunctions
+                       .p2dApproximation(points_[i], doubles[0], sigmas_[i]);
+               sum *= predictedValue;
+            }
+         } else {
+            for (int i = 0; i < points_.length; i++) {
+               double predictedValue = P2DFunctions.p2d(points_[i], doubles[0], sigmas_[i]);
+               sum *= predictedValue;
+            }
+         }
+         return sum;
+      }
+
+   }
 
    private final double[] points_;
    private final double[] sigmas_;
@@ -281,10 +283,12 @@ public class P2DFitter {
 
 
    /**
+    * Actual Fitter.
+    *
     * @param points     array with data points to be fitted
     * @param sigmas     array with sigmas for points above. Set to null when use of individual
     *                   sigmas is undesired
-    * @param fitMu      Whether or not to fit my.  When false, the muEstimate in setStartParams will
+    * @param fitMu      Whether or not to fit mu.  When false, the muEstimate in setStartParams will
     *                   be used as a fixed parameter.
     * @param fitSigma   whether or not sigma should be fitted.  When false, the sigmaEstimate given
     *                   in setStartParams will be used as a fixed parameter in the P2D function

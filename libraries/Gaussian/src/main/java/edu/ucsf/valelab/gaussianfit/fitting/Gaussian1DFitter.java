@@ -40,47 +40,49 @@ import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.NelderMeadSimplex
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.SimplexOptimizer;
 
 /**
- * @author nico
- */
-class Gaussian1DFunc implements MultivariateFunction {
-
-   private final double[] points_;
-
-   /**
-    * @param points array with measurements
-    */
-   public Gaussian1DFunc(double[] points) {
-      points_ = points;
-   }
-
-   /**
-    * Calculate the sum of the likelihood function
-    *
-    * @param doubles array with parameters, here doubles[0] == mu, doubles [1] == sigma
-    * @return -sum(logP2D(points, mu, sigma));
-    */
-   @Override
-   public double value(double[] doubles) {
-      double sum = 0.0;
-      for (double point : points_) {
-         double predictedValue = Gaussian1DFitter.gaussian(point, doubles[0], doubles[1]);
-         sum += Math.log(predictedValue);
-      }
-      return sum;
-   }
-
-
-}
-
-
-/**
  * Class that uses the apache commons math3 library to fit a Gaussian distribution by optimizing the
  * maximum likelihood function distances.
  *
  * @author nico
  */
-
 public class Gaussian1DFitter {
+
+   /**
+    * Implements a 1D Gaussian as a MultivariateFunction.
+    *
+    * @author nico
+    */
+   class Gaussian1DFunc implements MultivariateFunction {
+
+      private final double[] points_;
+
+      /**
+       * Constructor of the 1D Gaussian function.
+       *
+       * @param points array with measurements
+       */
+      public Gaussian1DFunc(double[] points) {
+         points_ = points;
+      }
+
+      /**
+       * Calculate the sum of the likelihood function.
+       *
+       * @param doubles array with parameters, here doubles[0] == mu, doubles [1] == sigma
+       * @return -sum(logP2D(points, mu, sigma));
+       */
+      @Override
+      public double value(double[] doubles) {
+         double sum = 0.0;
+         for (double point : points_) {
+            double predictedValue = Gaussian1DFitter.gaussian(point, doubles[0], doubles[1]);
+            sum += Math.log(predictedValue);
+         }
+         return sum;
+      }
+
+
+   }
 
    private final double[] points_;
    private double muGuess_ = 0.0;
@@ -91,6 +93,14 @@ public class Gaussian1DFitter {
    static double sqrt2Pi = Math.sqrt(2 * Math.PI);
 
 
+   /**
+    * Calculates teh value of the Gaussian function at input r.
+    *
+    * @param r Input value
+    * @param mu Mu
+    * @param sigma Sigma
+    * @return Value for given inputs.
+    */
    public static double gaussian(double r, double mu, double sigma) {
       double first = 1 / (sqrt2Pi * sigma);
       Exp exp = new Exp();
@@ -101,6 +111,8 @@ public class Gaussian1DFitter {
 
 
    /**
+    * Sets the upper bounds for this fitter.
+    *
     * @param points     array with data points to be fitted
     * @param upperBound Upper bound for average and sigma
     */
@@ -110,10 +122,10 @@ public class Gaussian1DFitter {
    }
 
    /**
-    * Lets caller provide start parameters for fit of mu and sigma
+    * Lets caller provide start parameters for fit of mu and sigma.
     *
-    * @param mu
-    * @param sigma
+    * @param mu Mu
+    * @param sigma Sigma
     */
    public void setStartParams(double mu, double sigma) {
       muGuess_ = mu;
@@ -131,7 +143,7 @@ public class Gaussian1DFitter {
    }
 
    /**
-    * Given a stepsize, generate an array with distances between 0 and upperBound
+    * Given a stepsize, generate an array with distances between 0 and upperBound.
     *
     * @param stepSize distance between values in output array
     * @return array with distances between 0 and upperbound, stepsize apart
@@ -141,7 +153,7 @@ public class Gaussian1DFitter {
    }
 
    /**
-    * Given a stepsize, generate an array with distances between 0 and upperBound
+    * Given a stepsize, generate an array with distances between 0 and upperBound.
     *
     * @param start    first distance in the array
     * @param stepSize distance between values in output array
@@ -164,6 +176,12 @@ public class Gaussian1DFitter {
    }
 
 
+   /**
+    * Actually solves the function.
+    *
+    * @return Fitted Values.
+    * @throws FittingException Likely to be thrown with weird inputs.
+    */
    public double[] solve() throws FittingException {
       SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
       Gaussian1DFunc myGaussianFunc = new Gaussian1DFunc(points_);

@@ -28,6 +28,7 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
+
 package edu.ucsf.valelab.gaussianfit.utils;
 
 import java.awt.event.ActionEvent;
@@ -81,7 +82,7 @@ public class ReportingUtils {
       }
 
       int maxNrLines = 30;
-      String test[] = fullMsg.split("\n");
+      String[] test = fullMsg.split("\n");
       if (test.length < maxNrLines) {
          JOptionPane
                .showMessageDialog(null, fullMsg, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
@@ -104,6 +105,10 @@ public class ReportingUtils {
       showError(null, msg);
    }
 
+   public static void showError(ActionEvent e) {
+      throw new UnsupportedOperationException("Not yet implemented");
+   }
+
    private static String getStackTraceAsString(Throwable aThrowable) {
       String result = "";
       for (StackTraceElement line : aThrowable.getStackTrace()) {
@@ -116,10 +121,5 @@ public class ReportingUtils {
          return result;
       }
    }
-
-   public static void showError(ActionEvent e) {
-      throw new UnsupportedOperationException("Not yet implemented");
-   }
-
 
 }

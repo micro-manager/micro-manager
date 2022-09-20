@@ -1258,10 +1258,10 @@ public class DataCollectionForm extends JFrame {
             studio_.alerts().postAlert("2C Reference", DataCollectionForm.class,
                   "Used " + points.size() + " spot pairs to calculate 2C Reference");
 
-            String name = "ID: " + mainTableModel_.getRow(rows[0]).ID_;
+            String name = "ID: " + mainTableModel_.getRow(rows[0]).id_;
             if (rows.length > 1) {
                for (int i = 1; i < rows.length; i++) {
-                  name += "," + mainTableModel_.getRow(rows[i]).ID_;
+                  name += "," + mainTableModel_.getRow(rows[i]).id_;
                }
             }
             reference2CName_.setText(name);
@@ -1916,7 +1916,7 @@ public class DataCollectionForm extends JFrame {
                double predictedDistStdDev = ListUtils.listAvg(predictedDistStdDevs);
                predictedSigmas.add(predictedDistStdDev);
 
-               output.append(rowData.ID_).append("\t").append(sRowData.ID_)
+               output.append(rowData.id_).append("\t").append(sRowData.id_)
                            .append("\t").append(measuredSigma)
                            .append("\t").append(predictedDistStdDev)
                            .append("\n");

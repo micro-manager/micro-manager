@@ -39,10 +39,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Data structure to internally store fit data
- * <p>
- * Also contains utility functions to generate an ImageJ ImageProcessor containing the spot in the
- * image
+ * Data structure to internally store fit data.
+ *
+ * <p>Also contains utility functions to generate an ImageJ ImageProcessor containing
+ * the spot in the image.
  *
  * @author Nico Stuurman
  */
@@ -80,22 +80,22 @@ public class SpotData implements PointData {
    public static final Object LOCK_IP = new Object();
 
    private ImageProcessor ip_ = null;   // ImageProcessor for given spot
-   private final int frame_;        // frame number in the original stack - 1-based
-   private final int channel_;      // channel number in the original stack
-   private final int slice_;        // slice number in the original stack - 1-based
-   private int position_;     // position number in the original stack
-   private final int nr_;           // spot index in given image
-   private final int x_;            // x as found by spotfinder
-   private final int y_;            // y as found by spotfinder
-   private double intensity_; // total intensity expressed in photons
-   private double background_;// background expressed in photons (may or may not be corrected for baseline)
-   private double xCenter_;      // center of gaussian in Coordinates (image coordinate system)
-   private double yCenter_;      // center of gaussian in Coordinates (image coordinate system)
-   private double zCenter_;   // estimate of z position in nm
-   private double xOri_;      // original position before correction in Coordinates
-   private double yOri_;      // original position before correction in Coordinates
-   private double zOri_;      // original position before correction
-   private double width_;         // width of the gaussian (in nm)
+   private final int frame_;    // frame number in the original stack - 1-based
+   private final int channel_;  // channel number in the original stack
+   private final int slice_;    // slice number in the original stack - 1-based
+   private int position_;       // position number in the original stack
+   private final int nr_;       // spot index in given image
+   private final int x_;        // x as found by spotfinder
+   private final int y_;        // y as found by spotfinder
+   private double intensity_;   // total intensity expressed in photons
+   private double background_;  // background expressed in photons (possibly corrected for baseline)
+   private double xCenter_;     // center of gaussian in Coordinates (image coordinate system)
+   private double yCenter_;     // center of gaussian in Coordinates (image coordinate system)
+   private double zCenter_;     // estimate of z position in nm
+   private double xOri_;        // original position before correction in Coordinates
+   private double yOri_;        // original position before correction in Coordinates
+   private double zOri_;        // original position before correction
+   private double width_;        // width of the gaussian (in nm)
    private double a_;         // shape of the peak, defined as width(long axis) / width (short axis)
    private double theta_;     // shape factor for spot (rotation of assymetric peak)
    private double sigma_;     // Estimate of error in localization based on Web et al. formula
@@ -103,7 +103,8 @@ public class SpotData implements PointData {
 
    public int nrLinks_;       // number of frames/slices in which this spot was found
    public int originalFrame_; // original first frame/slice in which this spot was found
-   private final Map<String, Double> keyValue_; // Map of keys/values that can be used to extend what we store in the SpotData
+   // Map of keys/values that can be used to extend what we store in the SpotData
+   private final Map<String, Double> keyValue_;
 
    public SpotData(ImageProcessor ip, int channel, int slice, int frame,
          int position, int nr, int x, int y) {

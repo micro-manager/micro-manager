@@ -94,7 +94,7 @@ public class TrackPlotter {
 
             } else {
                for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
+                  datas[index] = new XYSeries(rowDatas[index].id_);
                }
 
                for (int index = 0; index < rowDatas.length; index++) {
@@ -131,10 +131,10 @@ public class TrackPlotter {
                      0, 400, useShapes, doLog);
             } else {
                for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
+                  datas[index] = new XYSeries(rowDatas[index].id_);
                }
                for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
+                  datas[index] = new XYSeries(rowDatas[index].id_);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      SpotData spot = rowDatas[index].spotList_.get(i);
                      if (hasTimeInfo) {
@@ -170,10 +170,10 @@ public class TrackPlotter {
                        * */
             } else {
                for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
+                  datas[index] = new XYSeries(rowDatas[index].id_);
                }
                for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
+                  datas[index] = new XYSeries(rowDatas[index].id_);
                   SpotData sp = rowDatas[index].spotList_.get(0);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      SpotData spot = rowDatas[index].spotList_.get(i);
@@ -211,10 +211,10 @@ public class TrackPlotter {
                JOptionPane.showMessageDialog(comp, "Function is not implemented");
             } else {
                for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
+                  datas[index] = new XYSeries(rowDatas[index].id_);
                }
                for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
+                  datas[index] = new XYSeries(rowDatas[index].id_);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      SpotData spot = rowDatas[index].spotList_.get(i);
                      if (hasTimeInfo) {
@@ -251,7 +251,7 @@ public class TrackPlotter {
                double maxX = Double.MIN_VALUE;
                double maxY = Double.MIN_VALUE;
                for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
+                  datas[index] = new XYSeries(rowDatas[index].id_, false, true);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      SpotData spot = rowDatas[index].spotList_.get(i);
                      datas[index].add(spot.getXCenter(), spot.getYCenter());
@@ -275,7 +275,7 @@ public class TrackPlotter {
                }
                if (xDivisor != 1.0 || yDivisor != 1.0) {
                   for (int index = 0; index < rowDatas.length; index++) {
-                     datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
+                     datas[index] = new XYSeries(rowDatas[index].id_, false, true);
                      for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                         SpotData spot = rowDatas[index].spotList_.get(i);
                         datas[index].add(spot.getXCenter() / xDivisor,
@@ -289,6 +289,9 @@ public class TrackPlotter {
             }
          }
          break;
+
+         default:
+            break;
       }
    }
 

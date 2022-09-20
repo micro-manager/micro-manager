@@ -82,7 +82,7 @@ public class DataTableModel extends AbstractTableModel {
     */
    public RowData getDataByID(int id) {
       for (RowData row : rowData_) {
-         if (row.ID_ == id) {
+         if (row.id_ == id) {
             return row;
          }
       }
@@ -110,7 +110,7 @@ public class DataTableModel extends AbstractTableModel {
    @Override
    public Object getValueAt(int row, int col) {
       if (col == 0 && rowData_ != null) {
-         return rowData_.get(row).ID_;
+         return rowData_.get(row).id_;
       } else if (col == 1 && rowData_ != null) {
          return rowData_.get(row).getName();
       } else if (col == 2) {

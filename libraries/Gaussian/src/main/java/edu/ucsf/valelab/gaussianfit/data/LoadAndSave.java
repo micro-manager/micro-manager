@@ -461,14 +461,14 @@ public class LoadAndSave {
          }
 
          RowData.Builder builder = new RowData.Builder();
-         builder.setName(name).setTitle(title).setWidth(width).setHeight(height).
-               setPixelSizeNm(pixelSize).setZStackStepSizeNm(0.0f).setShape(shape).
-               setHalfSize(halfSize).setNrChannels(nrChannels).
-               setNrFrames(nrFrames).setNrSlices(nrSlices).
-               setNrPositions(nrPositions).setMaxNrSpots(maxNrSpots).
-               setSpotList(spotList).setIsTrack(isTrack).
-               setCoordinate(DataCollectionForm.Coordinates.NM).
-               setHasZ(hasZ).setMinZ(minZ).setMaxZ(maxZ);
+         builder.setName(name).setTitle(title).setWidth(width).setHeight(height)
+                 .setPixelSizeNm(pixelSize).setZStackStepSizeNm(0.0f).setShape(shape)
+                 .setHalfSize(halfSize).setNrChannels(nrChannels)
+                 .setNrFrames(nrFrames).setNrSlices(nrSlices)
+                 .setNrPositions(nrPositions).setMaxNrSpots(maxNrSpots)
+                 .setSpotList(spotList).setIsTrack(isTrack)
+                 .setCoordinate(DataCollectionForm.Coordinates.NM)
+                 .setHasZ(hasZ).setMinZ(minZ).setMaxZ(maxZ);
          DataCollectionForm.getInstance().addSpotData(builder);
 
       } catch (FileNotFoundException ex) {
@@ -529,22 +529,22 @@ public class LoadAndSave {
             for (int rowNr = 0; rowNr < rowData.length; rowNr++) {
                TaggedSpotsProtos.SpotList.Builder tspBuilder = TaggedSpotsProtos.SpotList
                      .newBuilder();
-               tspBuilder.setApplicationId(MMAPPID).
-                     setName(rowData[rowNr].getName()).
-                     setFilepath(rowData[rowNr].title_).
-                     setNrPixelsX(rowData[rowNr].width_).
-                     setNrPixelsY(rowData[rowNr].height_).
-                     setNrSpots(rowData[rowNr].spotList_.size()).
-                     setPixelSize(rowData[rowNr].pixelSizeNm_).
-                     setBoxSize(rowData[rowNr].halfSize_ * 2).
-                     setNrChannels(rowData[rowNr].nrChannels_).
-                     setNrSlices(rowData[rowNr].nrSlices_).
-                     setIsTrack(rowData[rowNr].isTrack_).
-                     setNrPos(rowData[rowNr].nrPositions_).
-                     setNrFrames(rowData[rowNr].nrFrames_).
-                     setLocationUnits(TaggedSpotsProtos.LocationUnits.NM).
-                     setIntensityUnits(TaggedSpotsProtos.IntensityUnits.PHOTONS).
-                     setNrSpots(rowData[rowNr].maxNrSpots_);
+               tspBuilder.setApplicationId(MMAPPID)
+                       .setName(rowData[rowNr].getName())
+                       .setFilepath(rowData[rowNr].title_)
+                       .setNrPixelsX(rowData[rowNr].width_)
+                       .setNrPixelsY(rowData[rowNr].height_)
+                       .setNrSpots(rowData[rowNr].spotList_.size())
+                       .setPixelSize(rowData[rowNr].pixelSizeNm_)
+                       .setBoxSize(rowData[rowNr].halfSize_ * 2)
+                       .setNrChannels(rowData[rowNr].nrChannels_)
+                       .setNrSlices(rowData[rowNr].nrSlices_)
+                       .setIsTrack(rowData[rowNr].isTrack_)
+                       .setNrPos(rowData[rowNr].nrPositions_)
+                       .setNrFrames(rowData[rowNr].nrFrames_)
+                       .setLocationUnits(TaggedSpotsProtos.LocationUnits.NM)
+                       .setIntensityUnits(TaggedSpotsProtos.IntensityUnits.PHOTONS)
+                       .setNrSpots(rowData[rowNr].maxNrSpots_);
                switch (rowData[rowNr].shape_) {
                   case (1):
                      tspBuilder.setFitMode(TaggedSpotsProtos.FitMode.ONEAXIS);
@@ -554,6 +554,8 @@ public class LoadAndSave {
                      break;
                   case (3):
                      tspBuilder.setFitMode(TaggedSpotsProtos.FitMode.TWOAXISANDTHETA);
+                     break;
+                  default:
                      break;
                }
 

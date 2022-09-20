@@ -36,18 +36,14 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 
 /**
- * @author Nico Stuurman
- * <p>
- * Function as defined in Bo Huang Science paper
- * <p>
- * minimize the distance D in sqrt wx and sqrt wy space D = sqrt (  square (sqrt wx - sqrt wx,
+ * Function as defined in Bo Huang Science paper.
+ *
+ * <p>Minimize the distance D in sqrt wx and sqrt wy space D = sqrt (  square (sqrt wx - sqrt wx,
  * calib) + sqr(sqrt wy - sqrt wx, calib) )
- * <p>
- * where wx and wy calib are functions depended on z using functions defined in zCalibrator
- */
-
-/**
- * @author nico
+ *
+ * <p>Where wx and wy calib are functions depended on z using functions defined in zCalibrator
+ *
+ * @author Nico Stuurman
  */
 public class MultiVariateZFunction implements MultivariateRealFunction {
 
@@ -67,9 +63,11 @@ public class MultiVariateZFunction implements MultivariateRealFunction {
 
 
    /**
+    * Returns the value of this function.
+    *
     * @param params array of double with function parameters where: 0: z
-    * @return
-    * @throws FunctionEvaluationException
+    * @return The value of the function
+    * @throws FunctionEvaluationException Will happen
     */
    public double value(double[] params) throws FunctionEvaluationException {
       if (params.length < 1) {
@@ -80,9 +78,9 @@ public class MultiVariateZFunction implements MultivariateRealFunction {
    }
 
    /**
-    * actual function evaluation
-    * <p>
-    * D = sqrt (  square (sqrt wx - sqrt wx, calib) + sqr(sqrt wy - sqrt wx, calib) )
+    * Actual function evaluation.
+    *
+    * <p>D = sqrt (  square (sqrt wx - sqrt wx, calib) + sqr(sqrt wy - sqrt wx, calib) )
     */
    public double funcval(double[] params) {
 

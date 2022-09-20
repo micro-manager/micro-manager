@@ -54,7 +54,7 @@ public class MathForm extends JFrame {
    private static final String FRAMEYPOS = "MathYPos";
    private static final String DATASET1 = "DataSet1";
    private static final String DATASET2 = "DataSet2";
-   private final String SELECTED = "Selected";
+   private static final String SELECTED = "Selected";
    private final UserProfile profile_;
 
    private JComboBox actionComboBox_;
@@ -156,7 +156,7 @@ public class MathForm extends JFrame {
       okButton_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            okButton_ActionPerformed(evt);
+            okButtonActionPerformed(evt);
          }
       });
 
@@ -165,7 +165,7 @@ public class MathForm extends JFrame {
       cancelButton_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            cancelButton_ActionPerformed(evt);
+            cancelButtonActionPerformed(evt);
          }
       });
 
@@ -185,12 +185,12 @@ public class MathForm extends JFrame {
       pack();
    }
 
-   private void cancelButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {
       formWindowClosing(null);
       dispose();
    }
 
-   private void okButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {
 
       boolean usr = false;
       int i1 = 0;
@@ -221,21 +221,21 @@ public class MathForm extends JFrame {
 
             if (!useSelectedRows) {
                for (int i = 0; i < df.getNumberOfSpotData(); i++) {
-                  if (id1 == df.getSpotData(i).ID_) {
+                  if (id1 == df.getSpotData(i).id_) {
                      rd1 = df.getSpotData(i);
                   }
-                  if (id2 == df.getSpotData(i).ID_) {
+                  if (id2 == df.getSpotData(i).id_) {
                      rd2 = df.getSpotData(i);
                   }
                }
                df.doMathOnRows(rd1, rd2, 0);
             } else {
                for (int i = 0; i < df.getNumberOfSpotData(); i++) {
-                  if (id2 == df.getSpotData(i).ID_) {
+                  if (id2 == df.getSpotData(i).id_) {
                      rd2 = df.getSpotData(i);
                   }
                }
-               int rows[] = df.getResultsTable().getSelectedRows();
+               int[] rows = df.getResultsTable().getSelectedRows();
                if (rows.length > 0) {
                   for (int i = 0; i < rows.length; i++) {
                      df.doMathOnRows(df.getSpotData(rows[i]), rd2, 0);

@@ -83,7 +83,7 @@ public class FFTUtils {
          DataCollectionForm.PlotMode plotMode) {
       for (int index = 0; index < rowDatas.length; index++) {
          final FastFourierTransformer fft = new FastFourierTransformer();
-         datas[index] = new XYSeries(rowDatas[index].ID_);
+         datas[index] = new XYSeries(rowDatas[index].id_);
          int length = rowDatas[index].spotList_.size();
          if (!FastFourierTransformer.isPowerOf2(length)) {
             length = FFTUtils.previousPowerOf2(length);

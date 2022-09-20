@@ -22,7 +22,7 @@ public final class MMLocM {
     * <code>extend .TSF.Spot { ... }</code>
     */
    public static final
-   com.google.protobuf.GeneratedMessage.GeneratedExtension<
+         com.google.protobuf.GeneratedMessage.GeneratedExtension<
          edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot,
          java.lang.Float> intensityAperture = com.google.protobuf.GeneratedMessage
          .newFileScopedGeneratedExtension(
@@ -33,7 +33,7 @@ public final class MMLocM {
     * <code>extend .TSF.Spot { ... }</code>
     */
    public static final
-   com.google.protobuf.GeneratedMessage.GeneratedExtension<
+         com.google.protobuf.GeneratedMessage.GeneratedExtension<
          edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot,
          java.lang.Float> intensityBackground = com.google.protobuf.GeneratedMessage
          .newFileScopedGeneratedExtension(
@@ -44,7 +44,7 @@ public final class MMLocM {
     * <code>extend .TSF.Spot { ... }</code>
     */
    public static final
-   com.google.protobuf.GeneratedMessage.GeneratedExtension<
+         com.google.protobuf.GeneratedMessage.GeneratedExtension<
          edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot,
          java.lang.Float> intensityRatio = com.google.protobuf.GeneratedMessage
          .newFileScopedGeneratedExtension(
@@ -55,7 +55,7 @@ public final class MMLocM {
     * <code>extend .TSF.Spot { ... }</code>
     */
    public static final
-   com.google.protobuf.GeneratedMessage.GeneratedExtension<
+         com.google.protobuf.GeneratedMessage.GeneratedExtension<
          edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot,
          java.lang.Float> mSigma = com.google.protobuf.GeneratedMessage
          .newFileScopedGeneratedExtension(
@@ -66,7 +66,7 @@ public final class MMLocM {
     * <code>extend .TSF.Spot { ... }</code>
     */
    public static final
-   com.google.protobuf.GeneratedMessage.GeneratedExtension<
+         com.google.protobuf.GeneratedMessage.GeneratedExtension<
          edu.ucsf.valelab.tsf.TaggedSpotsProtos.Spot,
          java.lang.Float> integralApertureSigma = com.google.protobuf.GeneratedMessage
          .newFileScopedGeneratedExtension(
@@ -74,7 +74,7 @@ public final class MMLocM {
                null);
 
    public static com.google.protobuf.Descriptors.FileDescriptor
-   getDescriptor() {
+         getDescriptor() {
       return descriptor;
    }
 
@@ -83,13 +83,13 @@ public final class MMLocM {
 
    static {
       java.lang.String[] descriptorData = {
-            "\n\014MMLocM.proto\032\016TSFProto.proto:&\n\022intens" +
-                  "ity_aperture\022\t.TSF.Spot\030\334\013 \001(\002:(\n\024intens" +
-                  "ity_background\022\t.TSF.Spot\030\335\013 \001(\002:#\n\017inte" +
-                  "nsity_ratio\022\t.TSF.Spot\030\336\013 \001(\002:\033\n\007m_sigma" +
-                  "\022\t.TSF.Spot\030\337\013 \001(\002:+\n\027integral_aperture_" +
-                  "sigma\022\t.TSF.Spot\030\340\013 \001(\002B\026\n\024edu.ucsf.vale" +
-                  "lab.tsf"
+            "\n\014MMLocM.proto\032\016TSFProto.proto:&\n\022intens"
+            + "ity_aperture\022\t.TSF.Spot\030\334\013 \001(\002:(\n\024intens"
+                    + "ity_background\022\t.TSF.Spot\030\335\013 \001(\002:#\n\017inte"
+                    + "nsity_ratio\022\t.TSF.Spot\030\336\013 \001(\002:\033\n\007m_sigma"
+                    + "\022\t.TSF.Spot\030\337\013 \001(\002:+\n\027integral_aperture_"
+                    + "sigma\022\t.TSF.Spot\030\340\013 \001(\002B\026\n\024edu.ucsf.vale"
+                    + "lab.tsf"
       };
       com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
             new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

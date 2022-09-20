@@ -151,5 +151,5 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
    // DataInputStream
    private final InputStream in; // to get at the low-level read methods of
    // InputStream
-   private final byte w[]; // work array for buffering input
+   private final byte[] w; // work array for buffering input
 }

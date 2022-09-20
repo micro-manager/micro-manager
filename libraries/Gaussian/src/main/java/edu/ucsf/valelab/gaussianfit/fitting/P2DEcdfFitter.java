@@ -84,8 +84,8 @@ public class P2DEcdfFitter {
          for (Vector2D d : data_) {
             if (d.getX() <= previousIntegral.getX()) {
                // will happen when same value occurs twice as in bootstrapping
-               lsqErrorSum += (previousIntegral.getY() - d.getY()) *
-                     (previousIntegral.getY() - d.getY());
+               lsqErrorSum += (previousIntegral.getY() - d.getY())
+                       * (previousIntegral.getY() - d.getY());
             } else {
                double incrementalIntegral = in.integrate(100000000, function,
                      previousIntegral.getX(), d.getX());
@@ -129,8 +129,7 @@ public class P2DEcdfFitter {
             GoalType.MINIMIZE,
             new InitialGuess(new double[]{muGuess_, sigmaGuess_}),
             new NelderMeadSimplex(new double[]{0.2, 0.2})
-            //, this may work in math4:
-            // new SimpleBounds(new double[] {0.0, 0.0}, new double[] {100.0, 50.0}
+      // in math4?: new SimpleBounds(new double[] {0.0, 0.0}, new double[] {100.0, 50.0}
       );
 
       return result.getPoint();

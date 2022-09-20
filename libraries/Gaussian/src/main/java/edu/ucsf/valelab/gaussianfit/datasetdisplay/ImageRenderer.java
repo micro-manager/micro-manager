@@ -366,7 +366,7 @@ public class ImageRenderer {
     *
     * @param lutName - name of file containing Lut data
     */
-    private static void readLut(String lutName) {
+   private static void readLut(String lutName) {
       InputStream fin = ImageRenderer.class.getResourceAsStream(lutName);
       if (fin == null) {
          return;
