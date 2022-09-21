@@ -1575,12 +1575,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
             primaryImage = image;
          }
       }
-      List<Overlay> overlays = displayController_.getOverlays();
-      for (Overlay overlay : overlays) {
-         if (overlay.isVisible()) {
-            overlay.paintOverlay(g, destRect, displaySettings,
-                  images, primaryImage, viewPort);
+      if (primaryImage != null) {
+         List<Overlay> overlays = displayController_.getOverlays();
+         for (Overlay overlay : overlays) {
+            if (overlay.isVisible()) {
+               overlay.paintOverlay(g, destRect, displaySettings,
+                       images, primaryImage, viewPort);
+            }
          }
+      } else {
+         studio_.logs().logError("DisplayUIController failed to find a primary image.");
       }
    }
 

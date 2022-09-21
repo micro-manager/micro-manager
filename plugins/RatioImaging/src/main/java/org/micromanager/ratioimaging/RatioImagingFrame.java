@@ -19,11 +19,6 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-
-/**
-
- * Created on Aug 28, 2011, 9:41:57 PM
- */
 package org.micromanager.ratioimaging;
 
 
@@ -38,22 +33,22 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
 import java.text.ParseException;
-import javax.swing.*;
+import java.util.Vector;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
 import mmcorej.CMMCore;
+import mmcorej.DeviceType;
 import mmcorej.StrVector;
-
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.events.ChannelGroupChangedEvent;
-import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.propertymap.MutablePropertyMapView;
-
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
@@ -61,9 +56,11 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 // should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.WindowPositioning;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
- * Micro-Manager plugin for ratio imaging
+ * Micro-Manager plugin for ratio imaging.
  *
  * @author nico
  */
@@ -77,7 +74,7 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
    static final String BACKGROUND1CONSTANT = "Background1Constant";
    static final String BACKGROUND2CONSTANT = "Background2Constant";
    static final String FACTOR = "Factor";
-   private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
+   private static final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
 
    private final Studio studio_;
    private final CMMCore core_;
@@ -89,6 +86,12 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
    private final JButton background1Button_;
    private final JButton background2Button_;
 
+   /**
+    * Constructs the UI of the plugin.
+    *
+    * @param configuratorSettings Map with settings.
+    * @param studio Our beloved Studio object.
+    */
    public RatioImagingFrame(PropertyMap configuratorSettings, Studio studio) {
       studio_ = studio;
       core_ = studio_.getCMMCore();
@@ -103,7 +106,7 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       
       super.setLayout(new MigLayout("flowx"));
       
-      JLabel darkImageLabel = new JLabel("background");
+      final JLabel darkImageLabel = new JLabel("background");
       
       background1TextField_ = createBackgroundTextField(settings_, BACKGROUND1);
       background2TextField_ = createBackgroundTextField(settings_, BACKGROUND2);
@@ -128,12 +131,12 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       final int maxValue = 2 << core_.getImageBitDepth();
       final JTextField factorTextField = new JTextField(5);
       factorTextField.setText(settings_.getString(FACTOR, 
-              NumberUtils.intToDisplayString( (maxValue))));
+              NumberUtils.intToDisplayString((maxValue))));
       factorTextField.getDocument().addDocumentListener(
               new TextFieldUpdater(factorTextField, FACTOR, settings_));
       settings_.putString(FACTOR, factorTextField.getText());
 
-      super.add (darkImageLabel, "skip 2, center");
+      super.add(darkImageLabel, "skip 2, center");
       super.add(new JLabel("constant"), "skip 1, center, gap 20:push, wrap");
       
       super.add(new JLabel("Ch. 1"));
@@ -178,7 +181,7 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
    }
 
    
-   private void copySettings (MutablePropertyMapView settings, PropertyMap configuratorSettings) {
+   private void copySettings(MutablePropertyMapView settings, PropertyMap configuratorSettings) {
       settings.putString(CHANNEL1, configuratorSettings.getString(CHANNEL1, ""));
       settings.putString(CHANNEL2, configuratorSettings.getString(CHANNEL2, ""));
       settings.putString(BACKGROUND1, configuratorSettings.getString(BACKGROUND1, ""));
@@ -189,22 +192,22 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
               configuratorSettings.getString(BACKGROUND2CONSTANT, ""));
       settings.putString(FACTOR, configuratorSettings.getString(FACTOR, ""));
    }
-   
-   private JComboBox createChannelCombo( 
+
+   private JComboBox<String> createChannelCombo(
            MutablePropertyMapView settings, String prefKey) {
       
-      final JComboBox cBox = new JComboBox();
+      final JComboBox<String> cBox = new JComboBox<>();
       String ch = "";
       if (settings.containsString(prefKey)) {
          ch = settings.getString(prefKey, "");
       }
       populateWithChannels(cBox);
       for (int i = 0; i < cBox.getItemCount(); i++) {
-          if (ch.equals( (String) cBox.getItemAt(i))){
-             cBox.setSelectedItem(ch);
-          }
+         if (ch.equals(cBox.getItemAt(i))) {
+            cBox.setSelectedItem(ch);
+         }
       }
-      cBox.addActionListener(new ActionListener(){
+      cBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             settings.putString(prefKey, (String) cBox.getSelectedItem());
@@ -213,13 +216,42 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       settings.putString(prefKey, (String) cBox.getSelectedItem());
       return cBox;
    }
-   
-   private void populateWithChannels(JComboBox cBox) {
+
+   /**
+    * Get the channel names from the core.
+    * If there is more than one camera, add those as "channel-camera", however, try
+    * to avoid the MultiCamera device by checking the library it comes from (Utilities).
+    * Quite a bit of heuristics here...
+    *
+    * @param cBox The comboBox to be populated.
+    */
+   private void populateWithChannels(JComboBox<String> cBox) {
       cBox.removeAllItems();
       String channelGroup = core_.getChannelGroup();
       StrVector channels = core_.getAvailableConfigs(channelGroup);
+      StrVector camerasStrV = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
+      Vector<String> cameras = new Vector<>();
+      for (String camera : camerasStrV) {
+         try {
+            if (!core_.getDeviceLibrary(camera).equals("Utilities")) {
+               cameras.add(camera);
+            }
+         } catch (Exception ex) {
+            studio_.logs().logError(ex);
+         }
+      }
       for (int i = 0; i < channels.size(); i++) {
-        cBox.addItem(channels.get(i));
+         cBox.addItem(channels.get(i));
+         if (cameras.size() > 1) {
+            for (String camera : cameras) {
+               cBox.addItem(channels.get(i) + "-" + camera);
+            }
+         }
+      }
+      if (channels.size() == 0 && cameras.size() > 1) {
+         for (String camera : cameras) {
+            cBox.addItem(camera);
+         }
       }
    }
    
@@ -231,13 +263,8 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       final JTextField backgroundTextField = new JTextField(20);
       backgroundTextField.setText(settings.getString(prefKey, ""));
       backgroundTextField.setHorizontalAlignment(JTextField.RIGHT);
-      backgroundTextField.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            
-            processBackgroundImage(backgroundTextField.getText(), settings, prefKey);
-         }
-      });
+      backgroundTextField.addActionListener(
+            evt -> processBackgroundImage(backgroundTextField.getText(), settings, prefKey));
       backgroundTextField.addFocusListener(new FocusListener() {
          @Override
          public void focusGained(FocusEvent fe) {
@@ -289,7 +316,12 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       return button;
       
    }
-   
+
+   /**
+    * Updates the UI when the ChannelGroup changes.
+    *
+    * @param event Event signalling the Channel group changed
+    */
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
       populateWithChannels(ch1Combo_);

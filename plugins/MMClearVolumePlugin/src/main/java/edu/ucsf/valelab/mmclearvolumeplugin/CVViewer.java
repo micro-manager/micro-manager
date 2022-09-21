@@ -44,6 +44,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -193,7 +194,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
       try {
          maxValue_ = 1 << dataProvider_.getAnyImage().getMetadata().getBitDepth();
-
          final int nrCh = dataProvider_.getNextIndex(Coords.CHANNEL);
 
          DisplaySettings.Builder dsb = ds.copyBuilder();
@@ -377,8 +377,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             if (ds.isAutostretchEnabled()) {
                try {
                   ds = autostretch(ds);
-                  //drawVolume(currentlyShownTimePoint_);
-                  //displayBus_.post(new CanvasDrawCompleteEvent());
                } catch (IOException ioe) {
                   studio_.logs().logError(ioe);
                }
@@ -523,6 +521,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
             // Bypass Micro-Manager api to get access to the pixels to avoid extra copying
             DefaultImage image = (DefaultImage) dataProvider_.getImage(coords);
+            int maxIntensity = 255;
 
             // add the contiguous memory as fragment:
             if (image != null) {
@@ -530,6 +529,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                   byte[] pixels = ((ByteBuffer) image.getPixelBuffer()).array();
                   fragmentedMemory.add(ByteBuffer.allocateDirect(pixels.length).put(pixels));
                } else if (image.getBytesPerPixel() == 2) {
+                  maxIntensity = 65535;
                   short[] pixels = ((ShortBuffer) image.getPixelBuffer()).array();
                   fragmentedMemory.add(ByteBuffer.allocateDirect(
                         2 * pixels.length).order(NATIVE_ORDER).asShortBuffer().put(pixels));
@@ -541,6 +541,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                               * randomImage.getWidth()
                               * randomImage.getBytesPerPixel()));
             }
+            maxValue_ = maxIntensity;
          }
 
          // TODO: correct x and y voxel sizes using aspect ratio
@@ -599,6 +600,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       if (!clearVolumeRenderer_.waitToFinishAllDataBufferCopy(2, TimeUnit.SECONDS)) {
          studio_.logs().logError("ClearVolume timed out after 2 seconds");
       }
+
+      setDisplaySettings(displaySettings_);
   
    }
 
@@ -629,6 +632,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }
 
+   /**
+    * Implements the Reset button in the display.  Resets translation and rotation to where they
+    * were at the start.
+    */
    public void resetRotationTranslation() {
       if (clearVolumeRenderer_ != null) {
          clearVolumeRenderer_.resetRotationTranslation();
@@ -671,7 +678,12 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          clearVolumeRenderer_.setTranslationZ(z);
       }
    }
-   
+
+   /**
+    * Attaches a video recorder to the current viewer.
+    *
+    * @param recorder VideoRecorder to be attched.
+    */
    public void attachRecorder(VideoRecorderInterface recorder) {
       Runnable dt = new Thread(() -> {
          clearVolumeRenderer_.setVideoRecorder(recorder);
@@ -701,15 +713,15 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          float max = ((float) maxVal / (float) CVInspectorPanelController.SLIDERRANGE) * 2 - 1;
          float[] clipBox = clearVolumeRenderer_.getClipBox();
          switch (axis) {
-            case CVInspectorPanelController.XAXIS :
+            case CVInspectorPanelController.XAXIS:
                clipBox[0] = min;
                clipBox[1] = max;
                break;
-            case CVInspectorPanelController.YAXIS :
+            case CVInspectorPanelController.YAXIS:
                clipBox[2] = min;
                clipBox[3] = max;
                break;
-            case CVInspectorPanelController.ZAXIS :
+            case CVInspectorPanelController.ZAXIS:
                clipBox[4] = min;
                clipBox[5] = max;
                break;
@@ -778,7 +790,12 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       
       return newSettings;
    }
-     
+
+   /**
+    * Application message bus handler called when the application is shutting down.
+    *
+    * @param sce The ShutdownCommencing event itself.
+    */
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent sce) {
       if (!sce.isCanceled() && cvFrame_ != null) {
