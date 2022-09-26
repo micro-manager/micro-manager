@@ -120,7 +120,8 @@ public class JavaUtils {
                        jarEntry = jarFile.getNextJarEntry()) {
                   final String classFileName = jarEntry.getName();
                   if (classFileName.endsWith(".class")) {
-                     final String className = stripFilenameExtension(classFileName).replace("/", ".");
+                     final String className = stripFilenameExtension(classFileName)
+                           .replace("/", ".");
                      try {
                         classes.add(Class.forName(className));
                      } catch (ClassNotFoundException e) {

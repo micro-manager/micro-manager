@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.magellan.internal.gui;
 
 import java.util.List;
@@ -21,14 +17,15 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
  */
 public class SurfaceGridTableModel extends AbstractTableModel implements SurfaceGridListener {
 
-   private final String[] COLUMNS = {"Type", "Name", "Z Device", "# Positions"};
+   private static final String[] COLUMNS = {"Type", "Name", "Z Device", "# Positions"};
 
    private SurfaceGridManager manager_;
 
    public SurfaceGridTableModel() {
       manager_ = SurfaceGridManager.getInstance();
       manager_.registerSurfaceGridListener(this);
-      //I suppose it never needs to be removed because this table is persisten as longa as magellan is open
+      //I suppose it never needs to be removed because this table is i
+      // persisten as longa as magellan is open
    }
 
    @Override
@@ -50,7 +47,8 @@ public class SurfaceGridTableModel extends AbstractTableModel implements Surface
    public boolean isCellEditable(int rowIndex, int colIndex) {
       if (colIndex == 1) {
          return true;
-      } else if (colIndex == 2 && manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator) {
+      } else if (colIndex == 2 && manager_.getSurfaceOrGrid(rowIndex)
+            instanceof SurfaceInterpolator) {
          return true; // only surfaces have XY padding
       }
       return false;
@@ -69,12 +67,11 @@ public class SurfaceGridTableModel extends AbstractTableModel implements Surface
 
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
-//         private final String[] COLUMNS = {"Type", "Name", "XY padding (um)", "Z Device", "# Positions",
-//      "# Rows", "# Cols", "Width (um)", "Height (um)"};
 
       XYFootprint surfaceOrGird = manager_.getSurfaceOrGrid(rowIndex);
       if (columnIndex == 0) {
-         return manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator ? "Surface" : "Grid";
+         return manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator
+               ? "Surface" : "Grid";
       } else if (columnIndex == 1) {
          return manager_.getSurfaceOrGrid(rowIndex).getName();
       } else if (columnIndex == 2) {
@@ -90,27 +87,27 @@ public class SurfaceGridTableModel extends AbstractTableModel implements Surface
    }
 
    @Override
-   public void SurfaceOrGridChanged(XYFootprint f) {
+   public void surfaceOrGridChanged(XYFootprint f) {
       fireTableDataChanged();
    }
 
    @Override
-   public void SurfaceOrGridDeleted(XYFootprint f) {
+   public void surfaceOrGridDeleted(XYFootprint f) {
       fireTableDataChanged();
    }
 
    @Override
-   public void SurfaceOrGridCreated(XYFootprint f) {
+   public void surfaceOrGridCreated(XYFootprint f) {
       fireTableDataChanged();
    }
 
    @Override
-   public void SurfaceOrGridRenamed(XYFootprint f) {
+   public void surfaceOrGridRenamed(XYFootprint f) {
       fireTableDataChanged();
    }
 
    @Override
-   public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
+   public void surfaceInterpolationUpdated(SurfaceInterpolator s) {
       //nothin
    }
 

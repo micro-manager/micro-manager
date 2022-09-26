@@ -10,16 +10,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
+ * Use the ClearVolume VideRecorder interface to grab a single
+ * image and convert it into a Java AWT RGBA image.  Display as an ImageJ RGB image.
  *
  * @author nico
- * 
- * Use the ClearVolume VideRecorder interface to grab a single 
- * image and convert it into a Java AWT RGBA image.  Display as an ImageJ RGB image.
- *  
  */
 public class CVSnapshot extends VideoRecorderBase {
-   
-
 
    @Override
    public boolean screenshot(GLAutoDrawable pGLAutoDrawable,

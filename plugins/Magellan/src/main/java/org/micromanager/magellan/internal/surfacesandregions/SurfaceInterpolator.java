@@ -14,27 +14,32 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.surfacesandregions;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-
-import org.micromanager.magellan.internal.main.Magellan;
-import org.micromanager.magellan.internal.misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
-import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.acqj.internal.AffineTransformUtils;
+import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.magellan.internal.gui.GUI;
+import org.micromanager.magellan.internal.main.Magellan;
+import org.micromanager.magellan.internal.misc.Log;
 
 /**
  *
@@ -47,28 +52,39 @@ public abstract class SurfaceInterpolator extends XYFootprint {
    private static final int ABOVE_SURFACE = 0;
    private static final int BELOW_SURFACE = 1;
 
-   //surface coordinates are neccessarily associated with the coordinate space of particular xy and z devices
+   //surface coordinates are neccessarily associated with the coordinate space of particular
+   // xy and z devices
    private final String zDeviceName_;
    protected volatile TreeSet<Point3d> points_;
    private MonotoneChain mChain_;
    protected volatile Vector2D[] convexHullVertices_;
    protected volatile Region<Euclidean2D> convexHullRegion_;
-   private volatile int numRows_, numCols_;
+   private volatile int numRows_;
+   private volatile int numCols_;
    private volatile List<XYStagePosition> xyPositions_;
-   protected volatile double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
-   protected volatile int boundXPixelMin_, boundXPixelMax_, boundYPixelMin_, boundYPixelMax_;
+   protected volatile double boundXMax_;
+   protected volatile double boundXMin_;
+   protected volatile double boundYMax_;
+   protected volatile double boundYMin_;
+   protected volatile int boundXPixelMin_;
+   protected volatile int boundXPixelMax_;
+   protected volatile int boundYPixelMin_;
+   protected volatile int boundYPixelMax_;
    protected volatile int minPixelsPerInterpPoint_ = 1;
    private ExecutorService executor_;
    protected volatile SingleResolutionInterpolation currentInterpolation_;
    private volatile Future currentInterpolationTask_;
    //Objects for wait/notify sync of calcualtions
-   protected Object xyPositionLock_ = new Object(), interpolationLock_ = new Object(), convexHullLock_ = new Object();
+   protected Object xyPositionLock_ = new Object();
+   protected Object interpolationLock_ = new Object();
+   protected Object convexHullLock_ = new Object();
 
    public SurfaceInterpolator(String xyDevice, String zDevice) {
       super(xyDevice);
       name_ = manager_.getNewSurfaceName();
       zDeviceName_ = zDevice;
-      //store points sorted by z coordinate to easily find the top, for generating slice index 0 position
+      // store points sorted by z coordinate to easily find the top, for generating slice
+      // index 0 position
       points_ = new TreeSet<Point3d>(new Comparator<Point3d>() {
          @Override
          public int compare(Point3d p1, Point3d p2) {
@@ -134,10 +150,10 @@ public abstract class SurfaceInterpolator extends XYFootprint {
    }
 
    /**
-    * Blocks until convex hull vertices have been calculated
+    * Blocks until convex hull vertices have been calculated.
     *
-    * @return
-    * @throws InterruptedException
+    * @return array with convex hull points
+    * @throws InterruptedException can happen since we are accessing a lock
     */
    public Vector2D[] getConvexHullPoints() {
       // block until convex hull points available
@@ -194,7 +210,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
     */
    public boolean isPositionCompletelyAboveSurface(Point2D.Double[] positionCorners,
            SurfaceInterpolator surface, double zPos, boolean extrapolate) {
-      return testPositionRelativeToSurface(positionCorners, surface, zPos, ABOVE_SURFACE,  extrapolate);
+      return testPositionRelativeToSurface(positionCorners, surface, zPos, ABOVE_SURFACE,
+            extrapolate);
    }
 
    /**
@@ -229,7 +246,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
             throw new Exception();
          }
       } catch (Exception e) {
-         Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
+         Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware "
+               + "Configuration Wizard");
          throw new RuntimeException();
       }
       //First check position corners before going into a more detailed set of test points
@@ -251,9 +269,10 @@ public abstract class SurfaceInterpolator extends XYFootprint {
             return false;
          }
       }
-      //then check a grid of points spanning entire position        
-      //9x9 square of points to check for each position
-      //square is aligned with axes in pixel space, so convert to pixel space to generate test points
+      // then check a grid of points spanning entire position
+      // 9x9 square of points to check for each position
+      // square is aligned with axes in pixel space, so convert to pixel space to generate
+      // test points
       double xSpan = positionCorners[2].getX() - positionCorners[0].getX();
       double ySpan = positionCorners[2].getY() - positionCorners[0].getY();
       Point2D.Double pixelSpan = new Point2D.Double();
@@ -284,7 +303,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
                   continue;
                }
             } else {
-               interpVal = surface.getCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
+               interpVal = surface.getCurentInterpolation().getInterpolatedValue(stageCoords.x,
+                     stageCoords.y);
             }
             if ((towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos >= interpVal)
                     || (towardsSampleIsPositive && mode == BELOW_SURFACE && zPos <= interpVal)
@@ -318,7 +338,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
          //also get pixel bounds of convex hull for fitting of XY positions
          double dx = convexHullVertices_[i].getX() - convexHullVertices_[0].getX();
          double dy = convexHullVertices_[i].getY() - convexHullVertices_[0].getY();
-         Point2D.Double pixelOffset = new Point2D.Double(); // pixel offset from convex hull vertex 0;
+         // pixel offset from convex hull vertex 0;
+         Point2D.Double pixelOffset = new Point2D.Double();
          try {
             transform.inverseTransform(new Point2D.Double(dx, dy), pixelOffset);
          } catch (NoninvertibleTransformException ex) {
@@ -331,7 +352,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
       }
    }
 
-   protected abstract void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException;
+   protected abstract void interpolateSurface(LinkedList<Point3d> points)
+         throws InterruptedException;
 
    /**
     * calculated ad hoc unlike interpolated values which are cached
@@ -345,8 +367,10 @@ public abstract class SurfaceInterpolator extends XYFootprint {
       int overlapY = (int) (Magellan.getCore().getImageHeight() * overlap / 100);
       int tileWidthMinusOverlap = fullTileWidth - overlapX;
       int tileHeightMinusOverlap = fullTileHeight - overlapY;
-      numRows_ = (int) Math.ceil((boundYPixelMax_ - boundYPixelMin_) / (double) tileHeightMinusOverlap);
-      numCols_ = (int) Math.ceil((boundXPixelMax_ - boundXPixelMin_) / (double) tileWidthMinusOverlap);
+      numRows_ = (int) Math.ceil((boundYPixelMax_ - boundYPixelMin_)
+            / (double) tileHeightMinusOverlap);
+      numCols_ = (int) Math.ceil((boundXPixelMax_ - boundXPixelMin_)
+            / (double) tileWidthMinusOverlap);
 
       //take center of bounding box and create grid
       int pixelCenterX = boundXPixelMin_ + (boundXPixelMax_ - boundXPixelMin_) / 2;
@@ -447,7 +471,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
     * @param y
     * @param toleranceXY radius in stage space
     */
-   public synchronized void deleteClosestPoint(double x, double y, double toleranceXY, double zMin, double zMax) {
+   public synchronized void deleteClosestPoint(double x, double y, double toleranceXY,
+                                               double zMin, double zMax) {
       double minDistance = toleranceXY + 1;
       Point3d minDistancePoint = null;
       for (Point3d point : points_) {
@@ -495,7 +520,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
       //duplicate points for use on caluclation thread
       final LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
       if (currentInterpolationTask_ != null && !currentInterpolationTask_.isDone()) {
-         //cancel current interpolation because interpolation points have changed, call does not block
+         // cancel current interpolation because interpolation points have changed,
+         // call does not block
          currentInterpolationTask_.cancel(true);
       }
       //don't want one of the get methods returning a null object thinking it has a value
@@ -542,12 +568,13 @@ public abstract class SurfaceInterpolator extends XYFootprint {
                   if (Thread.interrupted()) {
                      throw new InterruptedException();
                   }
-                  //use the most recently set overlap value for display purposes. When it comes time to calc the real thing, 
-                  //get it from the acquisition settings
+                  // use the most recently set overlap value for display purposes.
+                  // When it comes time to calc the real thing,
+                  // get it from the acquisition settings
                   fitXYPositionsToConvexHull(GUI.getTileOverlap());
-                  //Interpolate surface as specified by the subclass method
+                  // Interpolate surface as specified by the subclass method
                   interpolateSurface(points);
-                  //let manager handle event firing to acquisitions using surface
+                  // let manager handle event firing to acquisitions using surface
                   manager_.surfaceOrGridUpdated(SurfaceInterpolator.this);
                } catch (InterruptedException e) {
                   return;

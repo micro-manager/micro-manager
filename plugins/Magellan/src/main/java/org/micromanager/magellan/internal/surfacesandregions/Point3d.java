@@ -22,8 +22,10 @@ package org.micromanager.magellan.internal.surfacesandregions;
  */
 public class Point3d {
    
-   public double x, y, z;
-   
+   public double x;
+   public double y;
+   public double z;
+
    public Point3d(double xx, double yy, double zz) {
       x = xx;
       y = yy;

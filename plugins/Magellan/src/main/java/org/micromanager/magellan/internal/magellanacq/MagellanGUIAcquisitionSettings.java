@@ -14,6 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.magellanacq;
 
 import org.micromanager.magellan.api.MagellanAcquisitionSettingsAPI;
@@ -45,14 +46,22 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
 
    public static final String PREF_PREFIX = "Fixed area acquisition ";
 
-   public static int FOOTPRINT_FROM_TOP = 0, FOOTPRINT_FROM_BOTTOM = 1;
+   public static int FOOTPRINT_FROM_TOP = 0;
+   public static int FOOTPRINT_FROM_BOTTOM = 1;
 
    //space
-   public volatile double zStart_, zEnd_, distanceBelowFixedSurface_, distanceAboveFixedSurface_,
-           distanceAboveTopSurface_, distanceBelowBottomSurface_;
+   public volatile double zStart_;
+   public volatile double zEnd_;
+   public volatile double distanceBelowFixedSurface_;
+   public volatile double distanceAboveFixedSurface_;
+   public volatile double distanceAboveTopSurface_;
+   public volatile double distanceBelowBottomSurface_;
    public volatile int spaceMode_;
    public volatile XYFootprint xyFootprint_;
-   public volatile SurfaceInterpolator topSurface_, bottomSurface_, fixedSurface_, collectionPlane_;
+   public volatile SurfaceInterpolator topSurface_;
+   public volatile SurfaceInterpolator bottomSurface_;
+   public volatile SurfaceInterpolator fixedSurface_;
+   public volatile SurfaceInterpolator collectionPlane_;
 
    //time
    public volatile boolean timeEnabled_;
@@ -63,8 +72,10 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
    public MagellanGUIAcquisitionSettings() {
       super();
       //now replace everything with values gotten from preferences
-      MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
-      if (GUI.getInstance() != null && GUI.getInstance().getSavingDir() != null) { //To avoid error on init
+      MutablePropertyMapView prefs = Magellan.getStudio().profile()
+            .getSettings(MagellanGUIAcquisitionSettings.class);
+      // To avoid error on init
+      if (GUI.getInstance() != null && GUI.getInstance().getSavingDir() != null) {
          dir_ = GUI.getInstance().getSavingDir();
       }
       name_ = prefs.getString(PREF_PREFIX + "NAME", "Untitled");
@@ -89,7 +100,8 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
    }
 
    public void storePreferedValues() {
-      MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
+      MutablePropertyMapView prefs = Magellan.getStudio().profile()
+            .getSettings(MagellanGUIAcquisitionSettings.class);
       prefs.putString(PREF_PREFIX + "NAME", name_);
       prefs.putBoolean(PREF_PREFIX + "TE", timeEnabled_);
       prefs.putDouble(PREF_PREFIX + "TPI", timePointInterval_);
@@ -174,22 +186,22 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
 
-   public void setZStep(double zStep_um) {
-      zStep_ = zStep_um;
+   public void setZStep(double zStepUm) {
+      zStep_ = zStepUm;
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
 
-   public void setZStart(double zStart_um) {
-      zStart_ = zStart_um;
-      distanceAboveFixedSurface_ = zStart_um;
-      distanceAboveTopSurface_ = zStart_um;
+   public void setZStart(double zStartUm) {
+      zStart_ = zStartUm;
+      distanceAboveFixedSurface_ = zStartUm;
+      distanceAboveTopSurface_ = zStartUm;
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
 
-   public void setZEnd(double zEnd_um) {
-      zEnd_ = zEnd_um;
-      distanceBelowFixedSurface_ = zEnd_um;
-      distanceBelowBottomSurface_ = zEnd_um;
+   public void setZEnd(double zEndUm) {
+      zEnd_ = zEndUm;
+      distanceBelowFixedSurface_ = zEndUm;
+      distanceBelowBottomSurface_ = zEndUm;
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
 
@@ -241,7 +253,8 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
    }
 
    public void setSurface(String withinDistanceSurfaceName) {
-      SurfaceInterpolator s = SurfaceGridManager.getInstance().getSurfaceNamed(withinDistanceSurfaceName);
+      SurfaceInterpolator s = SurfaceGridManager.getInstance()
+            .getSurfaceNamed(withinDistanceSurfaceName);
       if (s == null) {
          throw new RuntimeException("No surface named: " + withinDistanceSurfaceName);
       }

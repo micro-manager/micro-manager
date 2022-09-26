@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.magellan.api;
 
 /**
@@ -11,45 +7,46 @@ package org.micromanager.magellan.api;
  */
 public interface MagellanAcquisitionSettingsAPI {
    
-   public void setNumTimePoints(int nTimePoints);
+   void setNumTimePoints(int nTimePoints);
    
-   public void setTimeInterval(double interval, String unit);
+   void setTimeInterval(double interval, String unit);
    
-   public void setTimeEnabled(boolean enable);
+   void setTimeEnabled(boolean enable);
    
-   public void setZStep(double zStep_um);
+   void setZStep(double zStepUm);
    
-   public void setZStart(double zStart_um);
+   void setZStart(double zStartUm);
    
-   public void setZEnd(double zEnd_um);
+   void setZEnd(double zEndUm);
       
    /**
     *
-    * @param type One of: "3d_cuboid", "3d_between_surfaces", "3d_distance_from_surface", "2d_flat", "2d_surface"
+    * @param type One of: "3d_cuboid", "3d_between_surfaces", "3d_distance_from_surface",
+    *             "2d_flat", "2d_surface"
     */
-   public void setAcquisitionSpaceType(String type);
+   void setAcquisitionSpaceType(String type);
    
-   public void setAcquisitionOrder(String order);
+   void setAcquisitionOrder(String order);
    
-   public void setXYPositionSource(String surfaceOrGridName);
+   void setXYPositionSource(String surfaceOrGridName);
    
-   public void setTopSurface(String topSurfaceName);
+   void setTopSurface(String topSurfaceName);
    
-   public void setBottomSurface(String bottomSurfaceName);
+   void setBottomSurface(String bottomSurfaceName);
    
-   public void setSurface(String withinDistanceSurfaceName);
+   void setSurface(String withinDistanceSurfaceName);
    
-   public void setChannelGroup(String channelGroup);
+   void setChannelGroup(String channelGroup);
 
-   public void setUseChannel(String channelName, boolean use);
+   void setUseChannel(String channelName, boolean use);
 
-   public void setChannelExposure(String channelName, double exposure);
+   void setChannelExposure(String channelName, double exposure);
 
-   public void setChannelZOffset(String channelName, double offset);
+   void setChannelZOffset(String channelName, double offset);
    
-   public void setSavingDir(String dirPath);
+   void setSavingDir(String dirPath);
    
-   public void setAcquisitionName(String newName);
+   void setAcquisitionName(String newName);
    
    
 }

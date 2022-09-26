@@ -58,7 +58,7 @@ public class LicenseWriter {
                if (f.getName().endsWith(".java")) {
                   String fileString = fileToString(f);
                   fileString = removeNetbeansDefault(fileString);
-                  if ( !fileString.startsWith("/")) {
+                  if (!fileString.startsWith("/")) {
                      System.out.println("Overwriting");
                      String withLic = MAGELLAN_HEADER + fileString;
                      FileWriter fw = new FileWriter(f, false);
@@ -79,7 +79,7 @@ public class LicenseWriter {
       String h1 = "/*" + "\r\n"
             + " * To change this license header, choose License Headers in Project Properties."
             + "\r\n"
-            + " * To change this template file, choose Tools | Templates"+ "\r\n"
+            + " * To change this template file, choose Tools | Templates" + "\r\n"
             + " * and open the template in the editor." + "\r\n"
             + "*/";
       String h2 = "/*" + "\r\n"
@@ -99,7 +99,7 @@ public class LicenseWriter {
       String s = "";
       Scanner scanner = new Scanner(f);
       scanner.useDelimiter("\r\n");
-      while(scanner.hasNext()) {
+      while (scanner.hasNext()) {
          s += scanner.next() + "\r\n";
       }
       scanner.close();

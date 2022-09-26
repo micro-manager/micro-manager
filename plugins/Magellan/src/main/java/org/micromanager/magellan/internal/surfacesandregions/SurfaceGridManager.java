@@ -14,9 +14,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.surfacesandregions;
 
-import org.micromanager.magellan.internal.gui.GUI;
 import java.awt.FileDialog;
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
@@ -29,10 +29,10 @@ import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.acqj.internal.NumUtils;
 import org.micromanager.magellan.internal.coordinates.AffineUndefinedException;
-import org.micromanager.acqj.internal.AffineTransformUtils;
-//import org.micromanager.magellan.imagedisplaynew.DisplayWindowSurfaceGridTableModel;
+import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.JavaUtils;
 import org.micromanager.magellan.internal.misc.Log;
@@ -52,11 +52,11 @@ public class SurfaceGridManager {
       singletonInstance_ = this;
    }
    
-   public void registerSurfaceGridListener(SurfaceGridListener l ) {
+   public void registerSurfaceGridListener(SurfaceGridListener l) {
       listeners_.add(l);
    }
    
-   public void unregisterSurfaceGridListener(SurfaceGridListener l ) {
+   public void unregisterSurfaceGridListener(SurfaceGridListener l) {
       listeners_.remove(l);
    }
    
@@ -116,15 +116,15 @@ public class SurfaceGridManager {
    }
    
    public void deleteAll() {
-      for (SurfaceInterpolator s: surfaces_) {
+      for (SurfaceInterpolator s : surfaces_) {
          s.delete();
          for (SurfaceGridListener l : listeners_) {
-            l.SurfaceOrGridDeleted(s);
+            l.surfaceOrGridDeleted(s);
          }
       }
       for (MultiPosGrid g : grids_) {
          for (SurfaceGridListener l : listeners_) {
-            l.SurfaceOrGridDeleted(g);
+            l.surfaceOrGridDeleted(g);
          }
       }
       surfaces_.clear();
@@ -136,12 +136,12 @@ public class SurfaceGridManager {
       if (index < grids_.size()) {
          removed = grids_.remove(index);
          for (SurfaceGridListener l : listeners_) {
-            l.SurfaceOrGridDeleted(removed);
+            l.surfaceOrGridDeleted(removed);
          }
       } else {
          removed = surfaces_.remove(index - grids_.size());
          for (SurfaceGridListener l : listeners_) {
-            l.SurfaceOrGridDeleted(removed);
+            l.surfaceOrGridDeleted(removed);
          }
          ((SurfaceInterpolator) removed).delete();
       }
@@ -149,24 +149,26 @@ public class SurfaceGridManager {
    
    public SurfaceInterpolator addNewSurface() {
       if (!AffineTransformUtils.isAffineTransformDefined()) {
-          throw new AffineUndefinedException();
+         throw new AffineUndefinedException();
       }
-       SurfaceInterpolator s = new SurfaceInterpolatorSimple(Magellan.getCore().getXYStageDevice(), Magellan.getCore().getFocusDevice());
+      SurfaceInterpolator s = new SurfaceInterpolatorSimple(Magellan.getCore().getXYStageDevice(),
+            Magellan.getCore().getFocusDevice());
       surfaces_.add(s);
       for (SurfaceGridListener l : listeners_) {
-            l.SurfaceOrGridCreated(s);
+         l.surfaceOrGridCreated(s);
       }
       return s;
    }
    
    public MultiPosGrid addNewGrid(int rows, int cols, Point2D.Double center) {
       if (!AffineTransformUtils.isAffineTransformDefined()) {
-          throw new AffineUndefinedException();
+         throw new AffineUndefinedException();
       }     
-       MultiPosGrid grid = new MultiPosGrid(this, Magellan.getCore().getXYStageDevice(), rows, cols, center);
+      MultiPosGrid grid = new MultiPosGrid(this, Magellan.getCore().getXYStageDevice(),
+            rows, cols, center);
       grids_.add(grid);
       for (SurfaceGridListener l : listeners_) {
-            l.SurfaceOrGridCreated(grid);
+         l.surfaceOrGridCreated(grid);
       }  
       return grid;
    }
@@ -221,18 +223,19 @@ public class SurfaceGridManager {
 
    public void surfaceOrGridUpdated(XYFootprint s) {
       for (SurfaceGridListener l : listeners_) {
-         l.SurfaceOrGridChanged(s);
+         l.surfaceOrGridChanged(s);
       }
    }
    
-   //This is called by tile overlap changing but this should propogate throught o displays to update them
+   // This is called by tile overlap changing but this should propogate throught
+   // to displays to update them
    public void updateAll() {
       for (SurfaceGridListener l : listeners_) {
          for (SurfaceInterpolator s : surfaces_) {
-            l.SurfaceOrGridChanged(s);
+            l.surfaceOrGridChanged(s);
          }
          for (MultiPosGrid g : grids_) {
-            l.SurfaceOrGridChanged(g);
+            l.surfaceOrGridChanged(g);
          }
       }
    }
@@ -279,19 +282,19 @@ public class SurfaceGridManager {
          if (i == row) {
             continue;
          }
-         if (grids_.get(i).getName().equals(newName) ) {
+         if (grids_.get(i).getName().equals(newName)) {
             throw new Exception();
          }
       } 
       if (row < grids_.size()) {
          grids_.get(row).rename(newName);
          for (SurfaceGridListener l : listeners_) {
-            l.SurfaceOrGridRenamed(grids_.get(row));
+            l.surfaceOrGridRenamed(grids_.get(row));
          }
       } else {
          surfaces_.get(row).rename(newName);
          for (SurfaceGridListener l : listeners_) {
-            l.SurfaceOrGridRenamed(surfaces_.get(row));
+            l.surfaceOrGridRenamed(surfaces_.get(row));
          }
       }
    }
@@ -322,9 +325,11 @@ public class SurfaceGridManager {
       if (!name.endsWith(".txt")) {
          name += ".txt";
       }
-      selectedFile = new File(new File(selectedFile.getParent()).getPath() + File.separator + name);
+      selectedFile = new File(new File(selectedFile.getParent()).getPath()
+            + File.separator + name);
       if (selectedFile.exists()) {
-         int reply = JOptionPane.showConfirmDialog(null, "OVerwrite exisitng file?", "Confirm overwrite", JOptionPane.YES_NO_OPTION);
+         int reply = JOptionPane.showConfirmDialog(null,
+               "Overwrite exisitng file?", "Confirm overwrite", JOptionPane.YES_NO_OPTION);
          if (reply == JOptionPane.NO_OPTION) {
             return;
          }
@@ -335,9 +340,10 @@ public class SurfaceGridManager {
          selectedFile.createNewFile();
          FileWriter writer = new FileWriter(selectedFile);
          for (SurfaceInterpolator surface : surfaces_) {
-            writer.write(surface.getName() + "\t" + surface.getXYDevice() + "\t" + surface.getZDevice() + "\n");
+            writer.write(surface.getName() + "\t" + surface.getXYDevice() + "\t"
+                  + surface.getZDevice() + "\n");
             for (Point3d p : surface.getPoints()) {
-               writer.write( p.x + "\t" + p.y + "\t" + p.z + "\n");
+               writer.write(p.x + "\t" + p.y + "\t" + p.z + "\n");
             }
             writer.write("\n");
          }
@@ -351,7 +357,7 @@ public class SurfaceGridManager {
    }
 
    public void load(GUI gui) {
-        File selectedFile = null;
+      File selectedFile = null;
       if (JavaUtils.isMac()) {
          FileDialog fd = new FileDialog(gui, "Load surfaces", FileDialog.LOAD);
          fd.setFilenameFilter(new FilenameFilter() {
@@ -400,7 +406,7 @@ public class SurfaceGridManager {
          fileContents = sb.toString();
          br.close();
       } catch (IOException e) {
-         Log.log("Problem reading file",true);
+         Log.log("Problem reading file", true);
       }
       //Read file and reconstruct surfaces
       for (String surfaceString : fileContents.split("\n\n")) { //for each surface
@@ -426,23 +432,24 @@ public class SurfaceGridManager {
          }
          for (int i = 1; i < lines.length; i++) {
             String[] xyz = lines[i].split("\t");
-            surface.addPoint(NumUtils.parseDouble(xyz[0]), NumUtils.parseDouble(xyz[1]), NumUtils.parseDouble(xyz[2]));
+            surface.addPoint(NumUtils.parseDouble(xyz[0]), NumUtils.parseDouble(xyz[1]),
+                  NumUtils.parseDouble(xyz[2]));
          }
          for (SurfaceGridListener l : listeners_) {
-            l.SurfaceOrGridCreated(surface);
+            l.surfaceOrGridCreated(surface);
          }
       }
    }
 
    void surfaceOrGridRenamed(XYFootprint gs) {
       for (SurfaceGridListener l : listeners_) {
-         l.SurfaceOrGridRenamed(gs);
+         l.surfaceOrGridRenamed(gs);
       }
    }
    
-   public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
+   public void surfaceInterpolationUpdated(SurfaceInterpolator s) {
       for (SurfaceGridListener l : listeners_) {
-           l.SurfaceInterpolationUpdated(s);
+         l.surfaceInterpolationUpdated(s);
       }
    }
 }

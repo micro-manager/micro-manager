@@ -17,10 +17,9 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.acqj.internal.Engine;
-import org.micromanager.magellan.internal.gui.MagellanViewer;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
@@ -30,7 +29,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.*;
+//import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,14 +42,16 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.api.DataSink;
-import org.micromanager.acqj.util.xytiling.XYStagePosition;
+import org.micromanager.acqj.internal.Engine;
+import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
+import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
 import org.micromanager.magellan.internal.gui.MagellanOverlayer;
+import org.micromanager.magellan.internal.gui.MagellanViewer;
 import org.micromanager.magellan.internal.gui.SurfaceGridPanel;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
@@ -57,8 +63,8 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.DataSourceInterface;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
-import org.micromanager.ndviewer.overlay.Overlay;
 import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
+import org.micromanager.ndviewer.overlay.Overlay;
 
 /**
  * Created by magellan acquisition to manage viewer, data storage, and
@@ -122,7 +128,8 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
                  AcqEngMetadata.getPixelOverlapX(summaryMetadata),
                  AcqEngMetadata.getPixelOverlapY(summaryMetadata),
                  true, null, SAVING_QUEUE_SIZE,
-                Engine.getCore().debugLogEnabled() ? (Consumer<String>) s -> Engine.getCore().logMessage(s) : null, true);
+                Engine.getCore().debugLogEnabled() ? (Consumer<String>) s
+                      -> Engine.getCore().logMessage(s) : null, true);
 
       if (showDisplay_) {
          createDisplay();
@@ -142,8 +149,10 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
          display_.setWindowTitle(getUniqueAcqName() + (acq_ != null
                  ? (acq_.isFinished() ? " (Finished)" : " (Running)") : " (Loaded)"));
          //add functions so display knows how to parse time and z infomration from image tags
-         display_.setReadTimeMetadataFunction((JSONObject tags) -> AcqEngMetadata.getElapsedTimeMs(tags));
-         display_.setReadZMetadataFunction((JSONObject tags) -> AcqEngMetadata.getStageZIntended(tags));
+         display_.setReadTimeMetadataFunction((JSONObject tags)
+               -> AcqEngMetadata.getElapsedTimeMs(tags));
+         display_.setReadZMetadataFunction((JSONObject tags)
+               -> AcqEngMetadata.getStageZIntended(tags));
 
          //add in custom mouse listener for the canvas
          mouseListener_ = new MagellanMouseListener(this, display_);
@@ -211,13 +220,14 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
                   String channelName = MagellanMD.getChannelName(taggedImg.tags);
                   display_.newImageArrived(axes, channelName);
 
-                  if (axes.containsKey(AcqEngMetadata.Z_AXIS) && axes.get(AcqEngMetadata.Z_AXIS) != null
-                          && zExploreControls_ != null) {
+                  if (axes.containsKey(AcqEngMetadata.Z_AXIS) && axes.get(AcqEngMetadata.Z_AXIS)
+                        != null && zExploreControls_ != null) {
                      Integer i = axes.get(AcqEngMetadata.Z_AXIS);
                      zExploreControls_.updateExploreZControls(i);
                   }
 
-                  surfaceGridControls_.enable(); //technically this only needs to happen once, but eh
+                  //technically this only needs to happen once, but eh
+                  surfaceGridControls_.enable();
                } catch (Exception e) {
                   e.printStackTrace();;
                   throw new RuntimeException(e);
@@ -261,7 +271,8 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
     */
    public JSONObject getDisplayJSON() {
       try {
-         return storage_.getDisplaySettings() == null ? null : new JSONObject(storage_.getDisplaySettings().toString());
+         return storage_.getDisplaySettings() == null ? null
+               : new JSONObject(storage_.getDisplaySettings().toString());
       } catch (JSONException ex) {
          throw new RuntimeException("THis shouldnt happen");
       }
@@ -308,11 +319,13 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    public int getDisplayTileHeight() {
-      return acq_.getPixelStageTranslator() == null ? 0 : acq_.getPixelStageTranslator().getDisplayTileHeight();
+      return acq_.getPixelStageTranslator() == null ? 0
+            : acq_.getPixelStageTranslator().getDisplayTileHeight();
    }
 
    public int getDisplayTileWidth() {
-      return acq_.getPixelStageTranslator() == null ? 0 : acq_.getPixelStageTranslator().getDisplayTileWidth();
+      return acq_.getPixelStageTranslator() == null ? 0
+            : acq_.getPixelStageTranslator().getDisplayTileWidth();
    }
 
    public boolean isExploreAcquisition() {
@@ -340,16 +353,17 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    @Override
    public Set<HashMap<String, Integer>> getStoredAxes() {
 
-      return storage_.getAxesSet().stream().map(new Function<HashMap<String, Integer>, HashMap<String, Integer>>() {
-         @Override
-         public HashMap<String, Integer> apply(HashMap<String, Integer> axes) {
-            HashMap<String, Integer> copy = new HashMap<String, Integer>(axes);
-            //delete row and column so viewer doesn't use them
-            copy.remove(NDTiffStorage.ROW_AXIS);
-            copy.remove(NDTiffStorage.COL_AXIS);
-            return copy;
-         }
-      }).collect(Collectors.toSet());
+      return storage_.getAxesSet().stream().map(
+            new Function<HashMap<String, Integer>, HashMap<String, Integer>>() {
+            @Override
+            public HashMap<String, Integer> apply(HashMap<String, Integer> axes) {
+               HashMap<String, Integer> copy = new HashMap<String, Integer>(axes);
+               //delete row and column so viewer doesn't use them
+               copy.remove(NDTiffStorage.ROW_AXIS);
+               copy.remove(NDTiffStorage.COL_AXIS);
+               return copy;
+            }
+         }).collect(Collectors.toSet());
    }
 
    public boolean anythingAcquired() {
@@ -374,7 +388,8 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    public Point2D.Double stageCoordsFromPixelCoords(int x, int y) {
-      return stageCoordsFromPixelCoords(x, y, display_.getMagnification(), display_.getViewOffset());
+      return stageCoordsFromPixelCoords(x, y, display_.getMagnification(),
+            display_.getViewOffset());
    }
 
    /**
@@ -430,8 +445,10 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       return pixelSizeZ_;
    }
 
-   public LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> getTilesWaitingToAcquireAtVisibleSlice() {
-      return ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(display_.getAxisPosition(AcqEngMetadata.Z_AXIS));
+   public LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire>
+         getTilesWaitingToAcquireAtVisibleSlice() {
+      return ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(
+            display_.getAxisPosition(AcqEngMetadata.Z_AXIS));
    }
 
    public MagellanMouseListener getMouseListener() {
@@ -509,7 +526,8 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       }
       List<String> channelNamesList = new ArrayList<String>(channelNames.values());
 
-      display_.initializeViewerToLoaded(channelNamesList, storage_.getDisplaySettings(), axisMins, axisMaxs);
+      display_.initializeViewerToLoaded(channelNamesList, storage_.getDisplaySettings(),
+            axisMins, axisMaxs);
    }
 
    public Set<HashMap<String, Integer>> getAxesSet() {
@@ -521,27 +539,27 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    @Override
-   public void SurfaceOrGridChanged(XYFootprint f) {
+   public void surfaceOrGridChanged(XYFootprint f) {
       update();
    }
 
    @Override
-   public void SurfaceOrGridDeleted(XYFootprint f) {
+   public void surfaceOrGridDeleted(XYFootprint f) {
       update();
    }
 
    @Override
-   public void SurfaceOrGridCreated(XYFootprint f) {
+   public void surfaceOrGridCreated(XYFootprint f) {
       update();
    }
 
    @Override
-   public void SurfaceOrGridRenamed(XYFootprint f) {
+   public void surfaceOrGridRenamed(XYFootprint f) {
       update();
    }
 
    @Override
-   public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
+   public void surfaceInterpolationUpdated(SurfaceInterpolator s) {
       update();
    }
 

@@ -14,16 +14,17 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.surfacesandregions;
 
-import org.micromanager.acqj.internal.AffineTransformUtils;
-import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import java.awt.geom.Point2D;
 import java.util.List;
-import org.micromanager.magellan.internal.main.Magellan;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
+import org.micromanager.acqj.internal.AffineTransformUtils;
+import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.magellan.internal.gui.GUI;
+import org.micromanager.magellan.internal.main.Magellan;
 
 /**
  *
@@ -32,9 +33,13 @@ import org.micromanager.magellan.internal.gui.GUI;
 public class MultiPosGrid extends XYFootprint {
 
    private volatile Point2D.Double center_; //stored in stage space
-   private volatile int overlapX_, overlapY_, rows_, cols_;
+   private volatile int overlapX_;
+   private volatile int overlapY_;
+   private volatile int rows_;
+   private volatile int cols_;
 
-   public MultiPosGrid(SurfaceGridManager manager, String xyDevice, int r, int c, Point2D.Double center) {
+   public MultiPosGrid(SurfaceGridManager manager, String xyDevice, int r, int c,
+                       Point2D.Double center) {
       super(xyDevice);
       name_ = manager_.getNewGridName();
 
@@ -42,13 +47,13 @@ public class MultiPosGrid extends XYFootprint {
       updateParams(r, c);
    }
 
-   public double getWidth_um() {
+   public double getWidthUm() {
       double pixelSize = Magellan.getCore().getPixelSizeUm();
       int pixelWidth = (int) (cols_ * (Magellan.getCore().getImageWidth() - overlapX_) + overlapX_);
       return pixelSize * pixelWidth;
    }
 
-   public double getHeight_um() {
+   public double getHeightUm() {
       double pixelSize = Magellan.getCore().getPixelSizeUm();
       int imageHeight = (int) Magellan.getCore().getImageHeight();
       int pixelHeight = rows_ * (imageHeight - overlapY_) + overlapY_;
@@ -106,9 +111,9 @@ public class MultiPosGrid extends XYFootprint {
       for (XYStagePosition pos : getXYPositions()) {
          Region<Euclidean2D> tileSquare = getStagePositionRegion(posCorners);
          Region<Euclidean2D> intersection = regionFactory_.intersection(square, tileSquare);
-          if (!intersection.isEmpty()) {
-             return true;
-          }
+         if (!intersection.isEmpty()) {
+            return true;
+         }
       }
       return false;
    }

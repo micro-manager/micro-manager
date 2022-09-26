@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.magellan.internal.channels;
 
 import java.awt.Color;
@@ -10,7 +6,7 @@ import org.micromanager.acqj.util.ChannelSetting;
 
 /**
  * Convenience class that encapsulates a single channel setting
- * 
+ *
  * @author henrypinkard
  */
 public class SingleChannelSetting extends ChannelSetting {
