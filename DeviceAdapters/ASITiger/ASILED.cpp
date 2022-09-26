@@ -47,7 +47,8 @@ CLED::CLED(const char* name) :
    open_(false),
    intensity_(50),
    channel_(0),  // 0 for LED on 2-axis card
-   channelAxisChar_('X')
+   channelAxisChar_('X'),
+   stablight_(false)
 {
    //Figure out what channel we are on
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
