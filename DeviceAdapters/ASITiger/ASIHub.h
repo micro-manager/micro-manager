@@ -92,6 +92,7 @@ public:
    // accessing serial commands and answers
    string LastSerialAnswer() const { return serialAnswer_; } // use with caution!; crashes to access something that doesn't exist!
    string LastSerialCommand() const { return serialCommand_; }
+   char LastSerialAnswerChar() const { return serialAnswer_[serialAnswer_.size()-1]; } // Note: will crash when operating on empty strings!
    void SetLastSerialAnswer(string s) { serialAnswer_ = s; }  // used to parse subsets of full answer for commands like PZINFO using "Split" functions
 
    // Interpreting serial response

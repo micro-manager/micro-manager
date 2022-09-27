@@ -99,6 +99,13 @@ int CLED::Initialize()
 
    CPropertyAction* pAct;
 
+   // detect Stabilight or not based on build name
+   char buildName[MM::MaxStrLength];
+   GetProperty(g_FirmwareBuildPropertyName, buildName);
+   string s = buildName;
+   stablight_ = (s.length() > 5) && 
+       ((s.substr(0, 6).compare("TGLED_S") == 0) || (s.substr(0, 6).compare("TGLEDS") == 0));
+   
    pAct = new CPropertyAction (this, &CLED::OnIntensity);
    CreateProperty(g_LEDIntensityPropertyName, "50", MM::Integer, false, pAct);
    SetPropertyLimits(g_LEDIntensityPropertyName, 1, 100);
@@ -130,7 +137,7 @@ int CLED::Initialize()
 
    // LED current limit, card wide setting
    // once mechanism for shared settings devices gets implemented use for this one
-   if (channel_ > 0)
+   if (channel_ > 0 && !stablight_)
    {
       pAct = new CPropertyAction (this, &CLED::OnCurrentLimit);
       CreateProperty(g_LEDCurrentLimitPropertyName, "700", MM::Integer, false, pAct);

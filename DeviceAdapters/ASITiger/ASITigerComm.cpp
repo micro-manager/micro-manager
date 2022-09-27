@@ -259,12 +259,21 @@ int CTigerCommHub::DetectInstalledDevices()
             command << build.vAxesAddr[i] << "BU";
             ret = QueryCommandVerify(command.str(), "TGLED");
             if (ret == ERR_UNRECOGNIZED_ANSWER)
-            { // error, guess 4 as reasonable default
-               channels = 4;
+            {
+                // error, guess 4 as reasonable default
+                channels = 4;
             }
             else
             {
-               RETURN_ON_MM_ERROR ( ParseAnswerAfterUnderscore(channels) );
+                // Check for 'S' at the end of the serial answer (TGLED_S or TGLEDS)
+                if (LastSerialAnswerChar() == 83)
+                {
+                    channels = 4;
+                }
+                else // TGLED_4 build
+                {
+                    RETURN_ON_MM_ERROR(ParseAnswerAfterUnderscore(channels));
+                }
             }
             break; 
          case 'c': // TGPMT
