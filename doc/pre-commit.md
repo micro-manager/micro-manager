@@ -102,6 +102,8 @@ changes, and try again.
 the issues by reformatting the code. In that case, inspect the changes, stage
 them (`git add`), and try again.)
 
+You can also check if there are problems by running `pre-commit run --all-files`.
+
 **Bypassing:** If there is some reason why you absolutely need to commit code
 that doesn't pass the checks (maybe it is a temporary commit to save your
 work), you can use `git commit --no-verify` to bypass the pre-commit hook.
