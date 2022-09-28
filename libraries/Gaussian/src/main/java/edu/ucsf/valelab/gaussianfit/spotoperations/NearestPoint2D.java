@@ -1,4 +1,4 @@
-/**
+/*
  * Utility class to find the nearest point given an ArrayList of Points
  *
  * @author - Nico Stuurman,  2012
@@ -38,9 +38,9 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
- * Class that finds the closest by point in a point collection given a single point
- * <p>
- * The method findKDWSE uses a kd tree approach based written by Rednaxela
+ * Class that finds the closest by point in a point collection given a single point.
+ *
+ * <p>The method findKDWSE uses a kd tree approach based written by Rednaxela
  *
  * @author nico
  */

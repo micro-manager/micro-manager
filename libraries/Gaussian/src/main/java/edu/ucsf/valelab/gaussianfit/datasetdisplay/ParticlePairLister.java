@@ -24,6 +24,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package edu.ucsf.valelab.gaussianfit.datasetdisplay;
 
 import edu.ucsf.valelab.gaussianfit.DataCollectionForm;
@@ -67,18 +68,18 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class ParticlePairLister {
 
-   final private int[] rows_;
-   final private Double maxDistanceNm_; //maximum distance in nm for two spots in different
+   private final int[] rows_;
+   private final Double maxDistanceNm_; //maximum distance in nm for two spots in different
    // channels to be considered a pair
-   final private Boolean showPairs_;
-   final private Boolean showSummary_;
-   final private Boolean showOverlay_;
-   final private Boolean showXYHistogram_;
-   final private Boolean p2dDistanceCalc_;
-   final private Boolean p2dSingleFrames_;
-   final private Double registrationError_;
-   final private Boolean showHistogram_;
-   final private Boolean bootstrap_;
+   private final Boolean showPairs_;
+   private final Boolean showSummary_;
+   private final Boolean showOverlay_;
+   private final Boolean showXYHistogram_;
+   private final Boolean p2dDistanceCalc_;
+   private final Boolean p2dSingleFrames_;
+   private final Double registrationError_;
+   private final Boolean showHistogram_;
+   private final Boolean bootstrap_;
 
 
    public static class Builder {
@@ -173,35 +174,35 @@ public class ParticlePairLister {
    }
 
    public Builder copy() {
-      return new Builder().
-            rows(rows_).
-            maxDistanceNm(maxDistanceNm_).
-            showPairs(showPairs_).
-            showSummary(showSummary_).
-            showOverlay(showOverlay_).
-            p2d(p2dDistanceCalc_).
-            showHistogram(showHistogram_).
-            p2dSingleFrames(p2dSingleFrames_).
-            registrationError(registrationError_).
-            showXYHistogram(showXYHistogram_).
-            bootstrap(bootstrap_);
+      return new Builder()
+              .rows(rows_)
+              .maxDistanceNm(maxDistanceNm_)
+              .showPairs(showPairs_)
+              .showSummary(showSummary_)
+              .showOverlay(showOverlay_)
+              .p2d(p2dDistanceCalc_)
+              .showHistogram(showHistogram_)
+              .p2dSingleFrames(p2dSingleFrames_)
+              .registrationError(registrationError_)
+              .showXYHistogram(showXYHistogram_)
+              .bootstrap(bootstrap_);
    }
 
 
    /**
     * Cycles through the spots of the selected data set and finds the most nearby spot in channel 2.
     * It will list this as a pair if the two spots are within maxDistanceNm_ of each other.
-    * <p>
-    * Once all pairs are found, it will go through all frames and try to build up tracks. If the
+    *
+    * <p>Once all pairs are found, it will go through all frames and try to build up tracks. If the
     * spot is within maxDistanceNm_ between frames, the code will consider the particle to be
     * identical.
-    * <p>
-    * All "tracks" of particles will be listed
-    * <p>
-    * Distances are calculated using various flavors of the P2D implementation. See:
+    *
+    * <p>All "tracks" of particles will be listed
+    *
+    * <p>Distances are calculated using various flavors of the P2D implementation. See:
     * https://doi.org/10.1101/234740
-    * <p>
-    * Needed input variables are set through a builder.
+    *
+    * <p>Needed input variables are set through a builder.
     */
    public void listParticlePairTracks() {
 
@@ -236,7 +237,7 @@ public class ParticlePairLister {
                      = new HashMap<Integer, ArrayList<ArrayList<GsSpotPair>>>();
 
                // index spots by position
-               Map<Integer, ArrayList<SpotData>> spotListsByPosition = new HashMap<Integer, ArrayList<SpotData>>();
+               Map<Integer, ArrayList<SpotData>> spotListsByPosition = new HashMap<>();
                // and keep track of the positions that are actually used
                List<Integer> positions = new ArrayList<Integer>();
                for (SpotData spot : dc.getSpotData(row).spotList_) {
@@ -244,7 +245,7 @@ public class ParticlePairLister {
                      positions.add(spot.getPosition());
                   }
                   if (spotListsByPosition.get(spot.getPosition()) == null) {
-                     spotListsByPosition.put(spot.getPosition(), new ArrayList<SpotData>());
+                     spotListsByPosition.put(spot.getPosition(), new ArrayList<>());
                   }
                   spotListsByPosition.get(spot.getPosition()).add(spot);
                }
@@ -281,7 +282,8 @@ public class ParticlePairLister {
 
                      if (xyPointsCh2.isEmpty()) {
                         //MMStudio.getInstance().alerts().postAlert("No points found error", null,
-                        //        "Pairs function in Localization plugin: no points found in second channel in frame "
+                        //        "Pairs function in Localization plugin: no points found in second
+                        //        channel in frame "
                         //        + frame);
                         continue;
                      }
@@ -331,14 +333,14 @@ public class ParticlePairLister {
                            pairTable.addValue("X1", pair.getFirstSpot().getXCenter());
                            pairTable.addValue("Y1", pair.getFirstSpot().getYCenter());
                            if (pair.getFirstSpot().hasKey(SpotData.Keys.INTEGRALAPERTURESIGMA)) {
-                              pairTable.addValue("Sigma1", pair.getFirstSpot().
-                                    getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
+                              pairTable.addValue("Sigma1", pair.getFirstSpot()
+                                      .getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
                            }
                            pairTable.addValue("X2", pair.getSecondSpot().getXCenter());
                            pairTable.addValue("Y2", pair.getSecondSpot().getYCenter());
                            if (pair.getSecondSpot().hasKey(SpotData.Keys.INTEGRALAPERTURESIGMA)) {
-                              pairTable.addValue("Sigma2", pair.getSecondSpot().
-                                    getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
+                              pairTable.addValue("Sigma2", pair.getSecondSpot()
+                                      .getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
                            }
                            double d2 = NearestPoint2D
                                  .distance2(pair.getFirstPoint(), pair.getSecondPoint());
@@ -430,8 +432,8 @@ public class ParticlePairLister {
 
                if (tracks.isEmpty()) {
                   MMStudio.getInstance().alerts().postAlert("P2D fit error",
-                        null, "ID: " + dc.getSpotData(row).ID_ +
-                              ", No Pairs found");
+                        null, "ID: " + dc.getSpotData(row).id_
+                                  + ", No Pairs found");
                }
 
                ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
@@ -484,7 +486,7 @@ public class ParticlePairLister {
                   }
                   GsSpotPair pair = track.get(0);
                   rt2.incrementCounter();
-                  rt2.addValue("Row ID", dc.getSpotData(row).ID_);
+                  rt2.addValue("Row ID", dc.getSpotData(row).id_);
                   rt2.addValue("Spot ID", spotId);
                   rt2.addValue(Terms.FRAME, pair.getFirstSpot().getFrame());
                   rt2.addValue(Terms.SLICE, pair.getFirstSpot().getSlice());
@@ -510,8 +512,8 @@ public class ParticlePairLister {
                   if (p2dDistanceCalc_ && !p2dSingleFrames_) {
                      double xDiffAvg = ListUtils.listAvg(xDiff);
                      double yDiffAvg = ListUtils.listAvg(yDiff);
-                     double vectorDistanceAvg = (Math.sqrt(xDiffAvg * xDiffAvg +
-                           yDiffAvg * yDiffAvg));
+                     double vectorDistanceAvg = (Math.sqrt(xDiffAvg * xDiffAvg
+                             + yDiffAvg * yDiffAvg));
                      vectorDistances.add(vectorDistanceAvg);
                      rt2.addValue("Distance-VectorAvg", vectorDistanceAvg);
                   }
@@ -550,10 +552,10 @@ public class ParticlePairLister {
                   for (int pos : positions) {
                      for (ArrayList<GsSpotPair> pairList : spotPairsByFrame.get(pos)) {
                         for (GsSpotPair pair : pairList) {
-                           xDiff.add(pair.getFirstPoint().getX() -
-                                 pair.getSecondPoint().getX());
-                           yDiff.add(pair.getFirstPoint().getY() -
-                                 pair.getSecondPoint().getY());
+                           xDiff.add(pair.getFirstPoint().getX()
+                                   - pair.getSecondPoint().getX());
+                           yDiff.add(pair.getFirstPoint().getY()
+                                   - pair.getSecondPoint().getY());
                         }
                      }
                   }
@@ -579,15 +581,15 @@ public class ParticlePairLister {
                            5.0 * yGaussian[1],
                            yGaussian, 750, 300);
                      final double combinedError = Math.sqrt(
-                           xGaussian[0] * xGaussian[0] +
-                                 yGaussian[0] * yGaussian[0]);
-                     ij.IJ.log(dc.getSpotData(row).getName() + " X-error: " +
-                           NumberUtils.doubleToDisplayString(xGaussian[0], 3) +
-                           "nm, Y-error: " +
-                           NumberUtils.doubleToDisplayString(yGaussian[0], 3) +
-                           "nm, combined error: " +
-                           NumberUtils.doubleToDisplayString(combinedError, 3) +
-                           "nm.");
+                           xGaussian[0] * xGaussian[0]
+                                   + yGaussian[0] * yGaussian[0]);
+                     ij.IJ.log(dc.getSpotData(row).getName() + " X-error: "
+                             + NumberUtils.doubleToDisplayString(xGaussian[0], 3)
+                             + "nm, Y-error: "
+                             + NumberUtils.doubleToDisplayString(yGaussian[0], 3)
+                             + "nm, combined error: "
+                             + NumberUtils.doubleToDisplayString(combinedError, 3)
+                             + "nm.");
                   } catch (FittingException ex) {
                      ReportingUtils.showError(
                            "Failed to fit Gaussian, try decreasing the Maximum Distance value");
@@ -620,7 +622,7 @@ public class ParticlePairLister {
                   }
                }
 
-               /***************** Single frame calculations *******************/
+               ////////////////// Single frame calculations ////////////////////
 
                if (p2dDistanceCalc_ && p2dSingleFrames_ && allDistances.size() > 0) {
                   double[] d = ListUtils.toArray(allDistances);
@@ -628,7 +630,8 @@ public class ParticlePairLister {
                   if (d.length != sigmas.length) {
                      ReportingUtils.showError(
                            "Internal Error: number of distances and sigmas not identical\n"
-                                 + "Data may not contain Mortenson Integral Sigma from Aperture intensity");
+                             + "Data may not contain Mortenson Integral Sigma from "
+                             + "Aperture intensity");
                      return;
                   }
 
@@ -641,8 +644,8 @@ public class ParticlePairLister {
                   double sfsStdDev = ListUtils.listStdDev(sigmasFirstSpot, sfsAvg);
                   double sSsStdDev = ListUtils.listStdDev(sigmasSecondSpot, sSsAvg);
                   double distStd = Math.sqrt(sfsAvg * sfsAvg + sSsAvg * sSsAvg
-                        + sfsStdDev * sfsStdDev + sSsStdDev * sSsStdDev +
-                        registrationError_ * registrationError_);
+                        + sfsStdDev * sfsStdDev + sSsStdDev * sSsStdDev
+                        + registrationError_ * registrationError_);
 
                   p2df.setStartParams(distMean, distStd);
 
@@ -660,8 +663,7 @@ public class ParticlePairLister {
                      double[] llTest = {mu - dMu, mu, mu + dMu};
                      double[] llResult = p2df.logLikelihood(p2dfResult, llTest);
                      double info = Math.abs(
-                           llResult[2] + llResult[0] - 2 * llResult[1]) /
-                           (dMu * dMu);
+                           llResult[2] + llResult[0] - 2 * llResult[1]) / (dMu * dMu);
                      double fisherStdDev = 1 / Math.sqrt(info);
 
                      // Uncomment the following to plot loglikelihood
@@ -698,7 +700,7 @@ public class ParticlePairLister {
                      String msg1 = "P2D fit for " + dc.getSpotData(row).getName();
                      String msg2 = "n = " + allDistances.size() + ", mu = "
                            + NumberUtils.doubleToDisplayString(mu, 2)
-                           + "\u00b1"
+                           + "\u00b1" // +-
                            + NumberUtils.doubleToDisplayString(fisherStdDev, 2)
                            + "  nm, sigma = "
                            + NumberUtils.doubleToDisplayString(distStd, 2)
@@ -751,7 +753,7 @@ public class ParticlePairLister {
                      rt3.show("P2D Summary");
 
                   } catch (FittingException fe) {
-                     String msg = "ID: " + dc.getSpotData(row).ID_
+                     String msg = "ID: " + dc.getSpotData(row).id_
                            + ", Failed to fit p2d function";
                      MMStudio.getInstance().alerts().postAlert("P2D fit error",
                            null, msg);
@@ -759,7 +761,7 @@ public class ParticlePairLister {
                         ReportingUtils.showError(msg);
                      }
                   } catch (TooManyEvaluationsException tmee) {
-                     String msg = "ID: " + dc.getSpotData(row).ID_
+                     String msg = "ID: " + dc.getSpotData(row).id_
                            + ", Too many evaluations while fitting";
                      MMStudio.getInstance().alerts().postAlert("P2D fit error",
                            null, msg);
@@ -769,14 +771,14 @@ public class ParticlePairLister {
                   }
                }
 
-               /****************** P2D - Multi-Frame ***********************/
+               /////////////////// P2D - Multi-Frame ////////////////////////
 
                if (p2dDistanceCalc_ && !p2dSingleFrames_ && allDistances.size() > 0) {
                   double[] p2dfResult = {0.0, 0.0};
                   try {
                      p2dfResult = p2dLeastSquareFit(vectorDistances, maxDistanceNm_);
                   } catch (FittingException fe) {
-                     String msg = "ID: " + dc.getSpotData(row).ID_
+                     String msg = "ID: " + dc.getSpotData(row).id_
                            + ", Failed to fit p2d function";
                      MMStudio.getInstance().alerts().postAlert("P2D fit error",
                            null, msg);
@@ -784,7 +786,7 @@ public class ParticlePairLister {
                         ReportingUtils.showError(msg);
                      }
                   } catch (TooManyEvaluationsException tmee) {
-                     String msg = "ID: " + dc.getSpotData(row).ID_
+                     String msg = "ID: " + dc.getSpotData(row).id_
                            + ", Too many evaluations while fitting";
                      MMStudio.getInstance().alerts().postAlert("P2D fit error",
                            null, msg);
@@ -832,7 +834,7 @@ public class ParticlePairLister {
                               ij.IJ.showProgress(counter, nrRuns);
                            }
                         } catch (FittingException fe) {
-                           String msg = "ID: " + dc.getSpotData(row).ID_
+                           String msg = "ID: " + dc.getSpotData(row).id_
                                  + ", Failed to fit p2d function";
                            MMStudio.getInstance().alerts().postAlert("P2D fit error",
                                  null, msg);
@@ -841,7 +843,7 @@ public class ParticlePairLister {
                            }
                            errorCounter++;
                         } catch (TooManyEvaluationsException tmee) {
-                           String msg = "ID: " + dc.getSpotData(row).ID_
+                           String msg = "ID: " + dc.getSpotData(row).id_
                                  + ", Too many evaluations while fitting";
                            MMStudio.getInstance().alerts().postAlert("P2D fit error",
                                  null, msg);
@@ -850,7 +852,7 @@ public class ParticlePairLister {
                            }
                            errorCounter++;
                         } catch (NumberIsTooLargeException nitle) {
-                           String msg = "ID: " + dc.getSpotData(row).ID_
+                           String msg = "ID: " + dc.getSpotData(row).id_
                                  + ", Internal error during bootystrapping";
                            MMStudio.getInstance().alerts().postAlert("P2D fit error",
                                  null, msg);

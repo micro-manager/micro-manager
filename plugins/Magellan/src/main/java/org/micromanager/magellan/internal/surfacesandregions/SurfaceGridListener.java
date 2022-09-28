@@ -14,22 +14,21 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.internal.surfacesandregions;
 
-import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
+package org.micromanager.magellan.internal.surfacesandregions;
 
 
 public interface SurfaceGridListener {
    
    //Data changed or name changed
-   public void SurfaceOrGridChanged(XYFootprint f);
+   void surfaceOrGridChanged(XYFootprint f);
    
-   public void SurfaceOrGridDeleted(XYFootprint f);
+   void surfaceOrGridDeleted(XYFootprint f);
    
-   public void SurfaceOrGridCreated(XYFootprint f);
+   void surfaceOrGridCreated(XYFootprint f);
 
-   public void SurfaceOrGridRenamed(XYFootprint f);
+   void surfaceOrGridRenamed(XYFootprint f);
    
-   public void SurfaceInterpolationUpdated(SurfaceInterpolator s);
+   void surfaceInterpolationUpdated(SurfaceInterpolator s);
    
 }

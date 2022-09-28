@@ -31,6 +31,7 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
+
 package edu.ucsf.valelab.gaussianfit.data;
 
 import edu.ucsf.valelab.gaussianfit.DataCollectionForm.Coordinates;
@@ -211,7 +212,7 @@ public class RowData {
    public final double stdX_;
    public final double stdY_;
    public final double std_;
-   public final int ID_;
+   public final int id_;
    public final Coordinates coordinate_;
    public final boolean hasZ_;
    public final double minZ_;
@@ -281,21 +282,21 @@ public class RowData {
       stdY_ = stdY;
       std_ = std;
       totalNrPhotons_ = nrPhotons;
-      ID_ = rowDataID_;
+      id_ = rowDataID_;
       rowDataID_++;
    }
 
    public RowData.Builder copy() {
       RowData.Builder builder = new Builder();
-      builder.setName(name_).setTitle(title_).setDisplayWindow(dw_).
-            setColColorRef(colCorrRef_).setWidth(width_).setHeight(height_).
-            setPixelSizeNm(pixelSizeNm_).setZStackStepSizeNm(zStackStepSizeNm_).
-            setShape(shape_).setHalfSize(halfSize_).setNrChannels(nrChannels_).
-            setNrFrames(nrFrames_).setNrSlices(nrSlices_).
-            setNrPositions(nrPositions_).setMaxNrSpots(maxNrSpots_).
-            setSpotList(spotList_).setTimePoints(timePoints_).
-            setIsTrack(isTrack_).setCoordinate(coordinate_).setHasZ(hasZ_).
-            setMinZ(minZ_).setMaxZ(maxZ_);
+      builder.setName(name_).setTitle(title_).setDisplayWindow(dw_)
+              .setColColorRef(colCorrRef_).setWidth(width_).setHeight(height_)
+              .setPixelSizeNm(pixelSizeNm_).setZStackStepSizeNm(zStackStepSizeNm_)
+              .setShape(shape_).setHalfSize(halfSize_).setNrChannels(nrChannels_)
+              .setNrFrames(nrFrames_).setNrSlices(nrSlices_)
+              .setNrPositions(nrPositions_).setMaxNrSpots(maxNrSpots_)
+              .setSpotList(spotList_).setTimePoints(timePoints_)
+              .setIsTrack(isTrack_).setCoordinate(coordinate_).setHasZ(hasZ_)
+              .setMinZ(minZ_).setMaxZ(maxZ_);
       return builder;
    }
 

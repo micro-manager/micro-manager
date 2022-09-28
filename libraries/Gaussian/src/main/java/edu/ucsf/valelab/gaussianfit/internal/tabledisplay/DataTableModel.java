@@ -1,24 +1,17 @@
 /**
- * Nico Stuurman, nico.stuurman at ucsf.edu
- * <p>
- * <p>
- * <p>
- * Model for the data shown in the Data window in Localization microscopy plugin
+ * Model for the data shown in the Data window in Localization microscopy plugin.
  *
- * @author - Nico Stuurman, September 2016
- * <p>
- * <p>
- * Copyright (c) 2016-2017, Regents of the University of California All rights reserved.
- * <p>
- * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * <p>Copyright (c) 2016-2017, Regents of the University of California All rights reserved.
+ *
+ * <p>Redistribution and use in source and binary forms, with or without modification, are permitted
  * provided that the following conditions are met:
- * <p>
- * 1. Redistributions of source code must retain the above copyright notice, this list of conditions
- * and the following disclaimer. 2. Redistributions in binary form must reproduce the above
- * copyright notice, this list of conditions and the following disclaimer in the documentation
+ *
+ * <p>1. Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the
+ * above copyright notice, this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * <p>
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ *
+ * <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
  * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -26,10 +19,12 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * <p>
- * The views and conclusions contained in the software and documentation are those of the authors
+ *
+ * <p>The views and conclusions contained in the software and documentation are those of the authors
  * and should not be interpreted as representing official policies, either expressed or implied, of
  * the FreeBSD Project.
+ *
+ * @author Nico Stuurman, nico.stuurman at ucsf.edu.
  */
 
 package edu.ucsf.valelab.gaussianfit.internal.tabledisplay;
@@ -48,7 +43,7 @@ public class DataTableModel extends AbstractTableModel {
    private final String[] columnNames_ = {"ID", "Image", "Nr of spots",
          "2C Reference", "Ch.", "X", "Y", "std", "nrPhotons"};
    private final ArrayList<RowData> rowData_;
-   public final static NullClass NULLINSTANCE = new NullClass();
+   public static final NullClass NULLINSTANCE = new NullClass();
 
    public DataTableModel() {
       rowData_ = new ArrayList<RowData>();
@@ -82,12 +77,12 @@ public class DataTableModel extends AbstractTableModel {
    /**
     * Return a dataset
     *
-    * @param ID with requested ID.
-    * @return RowData with selected ID, or null if not found
+    * @param id with requested id.
+    * @return RowData with selected id, or null if not found
     */
-   public RowData getDataByID(int ID) {
+   public RowData getDataByID(int id) {
       for (RowData row : rowData_) {
-         if (row.ID_ == ID) {
+         if (row.id_ == id) {
             return row;
          }
       }
@@ -115,7 +110,7 @@ public class DataTableModel extends AbstractTableModel {
    @Override
    public Object getValueAt(int row, int col) {
       if (col == 0 && rowData_ != null) {
-         return rowData_.get(row).ID_;
+         return rowData_.get(row).id_;
       } else if (col == 1 && rowData_ != null) {
          return rowData_.get(row).getName();
       } else if (col == 2) {

@@ -111,29 +111,29 @@ class DisplayWindowSurfaceGridTableModel extends AbstractTableModel
    }
 
    @Override
-   public void SurfaceOrGridChanged(XYFootprint f) {
+   public void surfaceOrGridChanged(XYFootprint f) {
       this.fireTableDataChanged();
    }
 
    @Override
-   public void SurfaceOrGridDeleted(XYFootprint f) {
+   public void surfaceOrGridDeleted(XYFootprint f) {
       showSurfaceOrGridMap.remove(f);
       this.fireTableDataChanged();
    }
 
    @Override
-   public void SurfaceOrGridCreated(XYFootprint f) {
+   public void surfaceOrGridCreated(XYFootprint f) {
       showSurfaceOrGridMap.put(f, Boolean.TRUE);
       this.fireTableDataChanged();
    }
 
    @Override
-   public void SurfaceOrGridRenamed(XYFootprint f) {
+   public void surfaceOrGridRenamed(XYFootprint f) {
       this.fireTableDataChanged();
    }
 
    @Override
-   public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
+   public void surfaceInterpolationUpdated(SurfaceInterpolator s) {
       //nothing to do
    }
 

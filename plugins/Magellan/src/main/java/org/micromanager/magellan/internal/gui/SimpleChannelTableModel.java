@@ -14,15 +14,16 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.gui;
 
 import java.awt.Color;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.magellan.internal.main.Magellan;
 import mmcorej.CMMCore;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
+import org.micromanager.magellan.internal.main.Magellan;
 
 /**
  *
@@ -34,12 +35,12 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
    private final CMMCore core_;
    private final boolean exploreTable_;
    private boolean selectAll_ = true;
-   public final String[] COLUMN_NAMES = new String[]{
+   public static final String[] COLUMN_NAMES = new String[]{
       "Use",
       "Configuration",
       "Exposure",
       "Z-offset (um)",
-      "Color",};
+      "Color", };
 
    public SimpleChannelTableModel(ChannelGroupSettings channels, boolean showColor) {
       exploreTable_ = !showColor;
@@ -134,7 +135,8 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          channels_.getChannelListSetting(row).use_ = ((Boolean) value);
          //same for all other channels of the same camera_
          if (numCamChannels > 1) {
-            for (int i = (row - row % numCamChannels); i < (row / numCamChannels + 1) * numCamChannels; i++) {
+            for (int i = (row - row % numCamChannels); i < (row / numCamChannels + 1)
+                  * numCamChannels; i++) {
                channels_.getChannelListSetting(i).use_ = ((Boolean) value);
             }
             fireTableDataChanged();
@@ -147,7 +149,8 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          channels_.getChannelListSetting(row).exposure_ = val;
          //same for all other channels of the same camera_
          if (numCamChannels > 1) {
-            for (int i = (row - row % numCamChannels); i < (row / numCamChannels + 1) * numCamChannels; i++) {
+            for (int i = (row - row % numCamChannels); i < (row / numCamChannels + 1)
+                  * numCamChannels; i++) {
                channels_.getChannelListSetting(i).exposure_ = val;
             }
             fireTableDataChanged();

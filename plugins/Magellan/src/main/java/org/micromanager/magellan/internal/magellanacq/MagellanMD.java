@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.magellan.internal.magellanacq;
 
 import mmcorej.org.json.JSONArray;
@@ -36,7 +31,6 @@ public class MagellanMD extends AcqEngMetadata {
       try {
          return smd.getBoolean(EXPLORE_ACQ);
       } catch (JSONException ex) {
-//         System.err.println("Couldnt find explore tag");
          return false;
 
       }

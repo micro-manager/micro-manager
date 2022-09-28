@@ -56,15 +56,15 @@ public class ImageIndex {
          return false;
       }
       ImageIndex t = (ImageIndex) test;
-      return t.frame_ == frame_ && t.slice_ == slice_ &&
-            t.channel_ == channel_ && t.position_ == position_;
+      return t.frame_ == frame_ && t.slice_ == slice_
+            && t.channel_ == channel_ && t.position_ == position_;
    }
 
 
    @Override
    public int hashCode() {
-      int hash = frame_ + 256 * slice_ + 256 * 256 * channel_ +
-            256 * 256 * 256 * position_;
+      int hash = frame_ + 256 * slice_ + 256 * 256 * channel_
+            + 256 * 256 * 256 * position_;
       return hash;
    }
 }

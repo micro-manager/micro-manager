@@ -26,7 +26,7 @@ import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManage
  */
 public class MultipleAcquisitionTableModel extends AbstractTableModel {
 
-   private static final String[] COLUMNS = {"Name","Description","Status"};
+   private static final String[] COLUMNS = {"Name", "Description", "Status"};
    private MagellanAcquisitionsManager manager_;
    private GUI gui_;
    
@@ -65,7 +65,7 @@ public class MultipleAcquisitionTableModel extends AbstractTableModel {
 
    @Override
    public void setValueAt(Object value, int row, int col) {
-       if (col == 0) {
+      if (col == 0) {
          manager_.getAcquisitionSettings(row).name_ = (String) value;
       }
       gui_.storeCurrentAcqSettings();

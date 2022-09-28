@@ -84,13 +84,13 @@ public class FileDialogs {
       }
 
       @Override
-      public String getDescription() {
-         return fileDescription_;
+      public boolean accept(File dir, String name) {
+         return accept(new File(dir, name));
       }
 
       @Override
-      public boolean accept(File dir, String name) {
-         return accept(new File(dir, name));
+      public String getDescription() {
+         return fileDescription_;
       }
    }
 

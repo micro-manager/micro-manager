@@ -17,8 +17,9 @@
 
 package org.micromanager.magellan.internal.gui;
 
-import javax.swing.*;
 
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.SwingUtilities;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
@@ -34,7 +35,8 @@ public class SurfaceGridComboBoxModel extends DefaultComboBoxModel implements Su
    
    private SurfaceGridManager manager_;
    private Object selectedItem_;
-   private final boolean surfacesOnly_, gridsOnly_;
+   private final boolean surfacesOnly_;
+   private final boolean gridsOnly_;
 
    public SurfaceGridComboBoxModel(boolean surfacesOnly, boolean gridsOnly)  {
       manager_ = SurfaceGridManager.getInstance();
@@ -50,7 +52,7 @@ public class SurfaceGridComboBoxModel extends DefaultComboBoxModel implements Su
 
    @Override
    public void setSelectedItem(Object anItem) {
-     selectedItem_ = anItem;
+      selectedItem_ = anItem;
    }
 
    @Override
@@ -67,7 +69,8 @@ public class SurfaceGridComboBoxModel extends DefaultComboBoxModel implements Su
    @Override
    public Object getElementAt(int index) {
       //default to current location
-      if (!surfacesOnly_ && manager_.getNumberOfSurfaces() == 0 && manager_.getNumberOfGrids() == 0) {
+      if (!surfacesOnly_ && manager_.getNumberOfSurfaces() == 0
+            && manager_.getNumberOfGrids() == 0) {
          return DEFAULT_NAME;
       }
       
@@ -91,27 +94,27 @@ public class SurfaceGridComboBoxModel extends DefaultComboBoxModel implements Su
    }
 
    @Override
-   public void SurfaceOrGridChanged(XYFootprint f) {
+   public void surfaceOrGridChanged(XYFootprint f) {
       //not reflected here
    }
 
    @Override
-   public void SurfaceOrGridDeleted(XYFootprint f) {
+   public void surfaceOrGridDeleted(XYFootprint f) {
       this.update();
    }
 
    @Override
-   public void SurfaceOrGridCreated(XYFootprint f) {
+   public void surfaceOrGridCreated(XYFootprint f) {
       this.update();
    }
 
    @Override
-   public void SurfaceOrGridRenamed(XYFootprint f) {
+   public void surfaceOrGridRenamed(XYFootprint f) {
       this.update();
    }
 
    @Override
-   public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
+   public void surfaceInterpolationUpdated(SurfaceInterpolator s) {
       //nothin
    }
    

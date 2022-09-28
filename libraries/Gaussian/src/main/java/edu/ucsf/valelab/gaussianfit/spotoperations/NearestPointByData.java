@@ -1,4 +1,4 @@
-/**
+/*
  * Utility class to find the nearest point given a List of PointData
  *
  * @copyright UCSF, Dec. 2012
@@ -28,6 +28,7 @@
  * and should not be interpreted as representing official policies, either expressed or implied, of
  * the FreeBSD Project.
  */
+
 package edu.ucsf.valelab.gaussianfit.spotoperations;
 
 import ags.utils.KdTree;
@@ -36,9 +37,9 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
- * Class that finds the closest by point in a point collection given a single point
- * <p>
- * The method findKDWSE uses a kd tree approach based written by Rednaxela
+ * Class that finds the closest by point in a point collection given a single point.
+ *
+ * <p>The method findKDWSE uses a kd tree approach based written by Rednaxela
  *
  * @author nico
  */
@@ -61,7 +62,7 @@ public class NearestPointByData {
     *
     * @param input - point for which we want to find the nearest neighbor
     * @return copy of the point found or null when it was farther away than the cutoff set in the
-    * constructor
+    *         constructor
     */
    public PointData findKDWSE(Point2D.Double input) {
       // construct a new KD tree if needed

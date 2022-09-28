@@ -435,23 +435,23 @@ public class CoordinateMapper {
          Map<Point2D.Double, Point2D.Double> pointPairs) {
       int number = pointPairs.size();
 
-      RealMatrix X = new Array2DRowRealMatrix(2 * number, 4);
-      RealMatrix U = new Array2DRowRealMatrix(2 * number, 1);
+      RealMatrix realMatrixX = new Array2DRowRealMatrix(2 * number, 4);
+      RealMatrix realMatrixU = new Array2DRowRealMatrix(2 * number, 1);
 
       int i = 0;
       for (Map.Entry<Point2D.Double, Point2D.Double> pair : pointPairs.entrySet()) {
          double[] thisRow = {pair.getKey().x, pair.getKey().y, 1.0, 0.0};
-         X.setRow(i, thisRow);
+         realMatrixX.setRow(i, thisRow);
          double[] otherRow = {pair.getKey().y, -pair.getKey().x, 0.0, 1.0};
-         X.setRow(i + number, otherRow);
+         realMatrixX.setRow(i + number, otherRow);
 
-         U.setEntry(i, 0, pair.getValue().x);
-         U.setEntry(i + number, 0, pair.getValue().y);
+         realMatrixU.setEntry(i, 0, pair.getValue().x);
+         realMatrixU.setEntry(i + number, 0, pair.getValue().y);
          i++;
       }
 
-      DecompositionSolver solver = (new QRDecompositionImpl(X)).getSolver();
-      double[][] m = solver.solve(U).getData();
+      DecompositionSolver solver = (new QRDecompositionImpl(realMatrixX)).getSolver();
+      double[][] m = solver.solve(realMatrixU).getData();
 
       return new AffineTransform(m[0][0], m[1][0], -m[1][0], m[0][0], m[2][0], m[3][0]);
    }

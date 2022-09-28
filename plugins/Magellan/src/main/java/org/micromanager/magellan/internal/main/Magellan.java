@@ -14,17 +14,13 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.magellan.internal.main;
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-import org.micromanager.magellan.internal.gui.GUI;
 import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-import org.micromanager.magellan.api.MagellanAPI;
+import org.micromanager.magellan.internal.gui.GUI;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -34,7 +30,8 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    public static final String VERSION = "2.2.0";
 
    public static final String menuName = "Micro-Magellan";
-   public static final String tooltipDescription = "High throughout, automated micrscopy for slidescanning or volumetric imaging";
+   public static final String tooltipDescription = "High throughout, automated micrscopy for "
+         + "slidescanning or volumetric imaging";
 
    private static Studio mmAPI_;
    private static GUI gui_;
@@ -46,14 +43,6 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
       return mmAPI_;
    }
 
-//   public static String getConfigFileName() {
-//      try {
-//         return mmAPI_.getInstance().getSysConfigFile();
-//      } catch (Exception e) {
-//         //since this is not an API method
-//         return "";
-//      }    
-//   }
    @Override
    public String getSubMenu() {
       return "";

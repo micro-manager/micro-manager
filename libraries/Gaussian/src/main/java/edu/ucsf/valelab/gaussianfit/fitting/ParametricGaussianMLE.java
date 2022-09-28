@@ -1,4 +1,4 @@
-/**
+/*
  * @author - Nico Stuurman, 2013
  * <p>
  * <p>

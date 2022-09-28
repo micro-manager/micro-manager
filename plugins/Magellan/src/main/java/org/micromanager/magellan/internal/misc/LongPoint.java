@@ -23,8 +23,9 @@ package org.micromanager.magellan.internal.misc;
  */
 public class LongPoint {
    
-   public long x_, y_;
-   
+   public long x_;
+   public long y_;
+
    public LongPoint(long x, long y) {
       x_ = x;
       y_ = y;

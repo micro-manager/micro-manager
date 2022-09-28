@@ -135,8 +135,9 @@ public class PairFilter {
 
                   if (xyPointsCh2.isEmpty()) {
                      ReportingUtils.logError(
-                           "Pairs function in Localization plugin: no points found in second channel in frame "
-                                 + frame);
+                           "Pairs function in Localization plugin: no points found "
+                             + "in second channel in frame "
+                             + frame);
                      continue;
                   }
 
@@ -181,7 +182,8 @@ public class PairFilter {
                         it2 = gsCh1.get(q).iterator();
                         while (it2.hasNext()) {
                            SpotData gs = (SpotData) it2.next();
-                           Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+                           Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(),
+                                   gs.getYCenter());
                            Point2D.Double pCh2 = npsByPosition.get(gs.getPosition() - 1)
                                    .findKDWSE(pCh1);
                            if (pCh2 != null) {
@@ -211,8 +213,8 @@ public class PairFilter {
 
                // Add transformed data to data overview window
                RowData.Builder builder = rowData.copy();
-               builder.setName(rowData.getName() + "-Pair-Corrected").
-                     setSpotList(correctedData);
+               builder.setName(rowData.getName() + "-Pair-Corrected")
+                       .setSpotList(correctedData);
                DataCollectionForm.getInstance().addSpotData(builder);
 
                ij.IJ.showStatus("Finished pair correction");

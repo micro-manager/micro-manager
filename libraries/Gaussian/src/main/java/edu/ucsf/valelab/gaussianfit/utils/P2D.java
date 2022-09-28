@@ -24,6 +24,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package edu.ucsf.valelab.gaussianfit.utils;
 
 import edu.ucsf.valelab.gaussianfit.fitting.P2DFunctions;
@@ -32,12 +33,12 @@ import org.jfree.data.function.Function2D;
 /**
  * Utility functions to calculate and fit the Probability density function to estimate the distance
  * between two single molecules. Based on: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1367071/
- * <p>
- * A Non-Gaussian Distribution Quantifies Distances Measured with Fluorescence Localization
+ *
+ * <p>A Non-Gaussian Distribution Quantifies Distances Measured with Fluorescence Localization
  * Techniques L. Stirling Churchman, Henrik Flyvbjerg, and James A. Spudich Biophys J. Jan 15, 2006;
  * 90(2): 668-671.
- * <p>
- * To avoid running into problems with positive and negative infinity, we use the approximation
+ *
+ * <p>To avoid running into problems with positive and negative infinity, we use the approximation
  * function when sigma < mu/2
  *
  * @author nico

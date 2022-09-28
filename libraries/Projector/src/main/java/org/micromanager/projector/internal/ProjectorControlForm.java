@@ -422,10 +422,12 @@ public class ProjectorControlForm extends JFrame {
    /**
     * Flips a point if the image was mirrored. TODO: also correct for rotation..
     *
-    * <p>private Point mirrorIfNecessary(DataViewer dv, Point pOffscreen) { boolean isImageMirrored =
-    * false; int imageWidth = 0; DataProvider dp = dv.getDataProvider(); if (dp != null) { try {
+    * <p>private Point mirrorIfNecessary(DataViewer dv, Point pOffscreen) { boolean
+    * isImageMirrored = false; int imageWidth = 0; DataProvider dp = dv.getDataProvider();
+    * if (dp != null) { try {
     * Image lastImage = dp.getImage(dp.getMaxIndices()); if (lastImage != null) { PropertyMap
-    * userData = lastImage.getMetadata().getUserData(); if (userData.containsString("ImageFlipper-Mirror"))
+    * userData = lastImage.getMetadata().getUserData(); if (userData.containsString
+    * ("ImageFlipper-Mirror"))
     * { String value = userData.getString("ImageFlipper-Mirror", ""); if (value.equals("On")) {
     * isImageMirrored = true; imageWidth = lastImage.getWidth(); } } } } catch (IOException ioe) {
     * studio_.logs().logError(ioe); } } if (isImageMirrored) { return new Point(imageWidth -
@@ -703,6 +705,7 @@ public class ProjectorControlForm extends JFrame {
 
    /**
     * Sets an roi.
+    *
     * @param rois Roi to be applied to the device
     */
    public void setROIs(Roi[] rois) {

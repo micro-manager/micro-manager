@@ -24,6 +24,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package edu.ucsf.valelab.gaussianfit.utils;
 
 import java.awt.GraphicsConfiguration;
@@ -127,11 +128,11 @@ public class GUFrame extends JFrame {
    protected void loadAndRestorePosition(int x, int y, int width, int height) {
       loadPosition(x, y, width, height);
       this.addWindowListener(new WindowAdapter() {
-                                @Override
-                                public void windowClosing(WindowEvent arg0) {
-                                   savePosition();
-                                }
-                             }
+            @Override
+            public void windowClosing(WindowEvent arg0) {
+               savePosition();
+            }
+         }
       );
    }
 
@@ -146,12 +147,11 @@ public class GUFrame extends JFrame {
    protected void loadAndRestorePosition(int x, int y) {
       loadPosition(x, y);
       this.addWindowListener(new WindowAdapter() {
-                                @Override
-                                public void windowClosing(WindowEvent arg0) {
-                                   savePosition();
-                                }
-                             }
-      );
+         @Override
+         public void windowClosing(WindowEvent arg0) {
+            savePosition();
+         }
+      });
    }
 
 

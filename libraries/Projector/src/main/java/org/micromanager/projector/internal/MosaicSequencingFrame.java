@@ -46,13 +46,23 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle;
 import javax.swing.ListModel;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.TableModelEvent;
@@ -99,11 +109,11 @@ public class MosaicSequencingFrame extends JFrame {
    // The triggerProperties_ allow us to convert GUI names for triggering
    // to the Mosaic3 device adapter names for triggering.
    final Map<String, String> triggerProperties_ = new HashMap<String, String>() {{
-      put("External Frame Bulb", "ExternalBulb");
-      put("Sequence Start", "InternalExpose");
-      put("External Advance", "ExternalExpose");
-      put("External Start", "ExternalSequenceStart");
-   }};
+         put("External Frame Bulb", "ExternalBulb");
+         put("Sequence Start", "InternalExpose");
+         put("External Advance", "ExternalExpose");
+         put("External Start", "ExternalSequenceStart");
+      }};
 
    // Returns all active Mosaic devices reported by the MMCore.
    public static ArrayList<String> getMosaicDevices(CMMCore core) {
@@ -217,7 +227,7 @@ public class MosaicSequencingFrame extends JFrame {
 
    // Create the ROI list table
    private void setupRoiListTable() {
-      String roiTypes[] = {"FRAP", "Image"};
+      String[] roiTypes = {"FRAP", "Image"};
       setComboBoxColumn(roiListTable_, 2, roiTypes);
       Vector<String> intensityNames = new Vector<String>();
       intensityNames.addAll(intensityNames_);
@@ -508,7 +518,7 @@ public class MosaicSequencingFrame extends JFrame {
       }
       List<FloatPolygon> availableFloatRoiPolygons =
             ProjectorActions.transformROIs(getRois(), mapping, roi, binning);
-      List<Polygon> availableRoiPolygons = Utils.FloatToNormalPolygon(
+      List<Polygon> availableRoiPolygons = Utils.floatToNormalPolygon(
             availableFloatRoiPolygons);
       ArrayList<SequenceEvent> events = new ArrayList<SequenceEvent>();
       for (int i = 0; i < sequenceTableModel_.getRowCount(); ++i) {
@@ -775,7 +785,8 @@ public class MosaicSequencingFrame extends JFrame {
    public void attachToAcquisition() throws Exception {
       if (getSequenceCount() == 0) {
          throw new Exception(
-               "Please upload a sequence to the Mosaic for attaching to multi-dimensional acquisition.");
+               "Please upload a sequence to the Mosaic for attaching to "
+               + "multi-dimensional acquisition.");
       }
       gui_.acquisitions().attachRunnable(0, 0, 0, 0,
             new Thread(
@@ -864,60 +875,60 @@ public class MosaicSequencingFrame extends JFrame {
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
-      jLabel5 = new javax.swing.JLabel();
-      jPanel1 = new javax.swing.JPanel();
-      jLabel2 = new javax.swing.JLabel();
-      jLabel3 = new javax.swing.JLabel();
-      jLabel4 = new javax.swing.JLabel();
-      onDurationTextField_ = new javax.swing.JTextField();
-      offDurationTextField_ = new javax.swing.JTextField();
-      loopCountTextField_ = new javax.swing.JTextField();
-      sequenceTypeComboBox = new javax.swing.JComboBox();
-      generateSequenceButton = new javax.swing.JButton();
-      jLabel1 = new javax.swing.JLabel();
-      jPanel2 = new javax.swing.JPanel();
-      jScrollPane2 = new javax.swing.JScrollPane();
-      sequenceTable_ = new javax.swing.JTable();
-      downButton = new javax.swing.JButton();
-      cloneButton = new javax.swing.JButton();
-      addTimeSlotButton_ = new javax.swing.JButton();
-      upButton = new javax.swing.JButton();
-      deleteButton = new javax.swing.JButton();
-      jLabel8 = new javax.swing.JLabel();
-      detachFromAcquisitionButton_ = new javax.swing.JButton();
-      loadButton_ = new javax.swing.JButton();
-      uploadButton_ = new javax.swing.JButton();
-      jLabel7 = new javax.swing.JLabel();
-      sequenceTriggerComboBox = new javax.swing.JComboBox();
-      runButton_ = new javax.swing.JButton();
-      stopButton_ = new javax.swing.JButton();
-      jLabel6 = new javax.swing.JLabel();
-      sequenceLoopCountTextField_ = new javax.swing.JTextField();
-      attachToAcquisitionButton_ = new javax.swing.JButton();
-      saveButton_ = new javax.swing.JButton();
-      jSeparator1 = new javax.swing.JSeparator();
-      jPanel5 = new javax.swing.JPanel();
-      numRoisAcrossLabel_ = new javax.swing.JLabel();
-      numRoisDownLabel = new javax.swing.JLabel();
-      roisDownSpacingLabel = new javax.swing.JLabel();
-      roisAcrossSpacingLabel1 = new javax.swing.JLabel();
-      generateROIGridButton_ = new javax.swing.JButton();
-      numRoisAcrossField_ = new javax.swing.JTextField();
-      roiSpacingAcrossField_ = new javax.swing.JTextField();
-      numRoisDownField_ = new javax.swing.JTextField();
-      roiSpacingDownField_ = new javax.swing.JTextField();
-      roiListPanel_ = new javax.swing.JPanel();
-      roiListScrollPane = new javax.swing.JScrollPane();
-      roiListTable_ = new javax.swing.JTable();
-      jPanel6 = new javax.swing.JPanel();
+      jLabel5 = new JLabel();
+      jPanel1 = new JPanel();
+      jLabel2 = new JLabel();
+      jLabel3 = new JLabel();
+      jLabel4 = new JLabel();
+      onDurationTextField_ = new JTextField();
+      offDurationTextField_ = new JTextField();
+      loopCountTextField_ = new JTextField();
+      sequenceTypeComboBox = new JComboBox();
+      generateSequenceButton = new JButton();
+      jLabel1 = new JLabel();
+      jPanel2 = new JPanel();
+      jScrollPane2 = new JScrollPane();
+      sequenceTable_ = new JTable();
+      downButton = new JButton();
+      cloneButton = new JButton();
+      addTimeSlotButton_ = new JButton();
+      upButton = new JButton();
+      deleteButton = new JButton();
+      jLabel8 = new JLabel();
+      detachFromAcquisitionButton_ = new JButton();
+      loadButton_ = new JButton();
+      uploadButton_ = new JButton();
+      jLabel7 = new JLabel();
+      sequenceTriggerComboBox = new JComboBox();
+      runButton_ = new JButton();
+      stopButton_ = new JButton();
+      jLabel6 = new JLabel();
+      sequenceLoopCountTextField_ = new JTextField();
+      attachToAcquisitionButton_ = new JButton();
+      saveButton_ = new JButton();
+      jSeparator1 = new JSeparator();
+      jPanel5 = new JPanel();
+      numRoisAcrossLabel_ = new JLabel();
+      numRoisDownLabel = new JLabel();
+      roisDownSpacingLabel = new JLabel();
+      roisAcrossSpacingLabel1 = new JLabel();
+      generateROIGridButton_ = new JButton();
+      numRoisAcrossField_ = new JTextField();
+      roiSpacingAcrossField_ = new JTextField();
+      numRoisDownField_ = new JTextField();
+      roiSpacingDownField_ = new JTextField();
+      roiListPanel_ = new JPanel();
+      roiListScrollPane = new JScrollPane();
+      roiListTable_ = new JTable();
+      jPanel6 = new JPanel();
 
       jLabel5.setText("jLabel5");
 
       setTitle("Andor Mosaic 3 ROI Sequencing");
       setResizable(false);
 
-      jPanel1.setBorder(javax.swing.BorderFactory
-            .createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Create Sequence",
+      jPanel1.setBorder(BorderFactory
+            .createTitledBorder(BorderFactory.createEtchedBorder(), "Create Sequence",
                   javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
                   javax.swing.border.TitledBorder.DEFAULT_POSITION,
                   new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(0, 0, 0))); // NOI18N
@@ -934,7 +945,7 @@ public class MosaicSequencingFrame extends JFrame {
 
       loopCountTextField_.setText("1");
 
-      sequenceTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel(
+      sequenceTypeComboBox.setModel(new DefaultComboBoxModel(
             new String[]{"Sequential", "Cumulative", "Simultaneous"}));
 
       generateSequenceButton.setText("Generate Sequence");
@@ -946,95 +957,95 @@ public class MosaicSequencingFrame extends JFrame {
 
       jLabel1.setText("Sequence type:");
 
-      javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+      GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
       jPanel1.setLayout(jPanel1Layout);
       jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(35, 35, 35)
                         .addGroup(jPanel1Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                              .createParallelGroup(GroupLayout.Alignment.LEADING)
                               .addGroup(jPanel1Layout.createSequentialGroup()
                                     .addComponent(jLabel1)
                                     .addPreferredGap(
-                                          javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                          LayoutStyle.ComponentPlacement.UNRELATED)
                                     .addComponent(sequenceTypeComboBox,
-                                          javax.swing.GroupLayout.PREFERRED_SIZE, 127,
-                                          javax.swing.GroupLayout.PREFERRED_SIZE))
+                                          GroupLayout.PREFERRED_SIZE, 127,
+                                          GroupLayout.PREFERRED_SIZE))
                               .addGroup(jPanel1Layout.createSequentialGroup()
                                     .addGroup(jPanel1Layout.createParallelGroup(
-                                          javax.swing.GroupLayout.Alignment.LEADING)
+                                          GroupLayout.Alignment.LEADING)
                                           .addComponent(jLabel3,
-                                                javax.swing.GroupLayout.Alignment.TRAILING)
+                                                GroupLayout.Alignment.TRAILING)
                                           .addComponent(jLabel2,
-                                                javax.swing.GroupLayout.Alignment.TRAILING))
+                                                GroupLayout.Alignment.TRAILING))
                                     .addPreferredGap(
-                                          javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                          LayoutStyle.ComponentPlacement.UNRELATED)
                                     .addGroup(jPanel1Layout.createParallelGroup(
-                                          javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                          GroupLayout.Alignment.TRAILING, false)
                                           .addComponent(offDurationTextField_,
-                                                javax.swing.GroupLayout.Alignment.LEADING)
+                                                GroupLayout.Alignment.LEADING)
                                           .addComponent(onDurationTextField_,
-                                                javax.swing.GroupLayout.Alignment.LEADING,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE, 57,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED,
-                              javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                GroupLayout.Alignment.LEADING,
+                                                GroupLayout.PREFERRED_SIZE, 57,
+                                                GroupLayout.PREFERRED_SIZE))))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED,
+                              GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(jPanel1Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                              .createParallelGroup(GroupLayout.Alignment.LEADING)
                               .addGroup(jPanel1Layout.createSequentialGroup()
                                     .addComponent(jLabel4)
                                     .addGap(18, 18, 18)
                                     .addComponent(loopCountTextField_,
-                                          javax.swing.GroupLayout.PREFERRED_SIZE, 57,
-                                          javax.swing.GroupLayout.PREFERRED_SIZE))
+                                          GroupLayout.PREFERRED_SIZE, 57,
+                                          GroupLayout.PREFERRED_SIZE))
                               .addComponent(generateSequenceButton))
                         .addGap(97, 97, 97))
       );
       jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(jPanel1Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(sequenceTypeComboBox,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE)
                               .addComponent(jLabel1)
                               .addComponent(loopCountTextField_,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE)
                               .addComponent(jLabel4))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(jPanel1Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(jLabel2)
                               .addComponent(onDurationTextField_,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE)
                               .addComponent(generateSequenceButton))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(jLabel3)
                               .addComponent(offDurationTextField_,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
-      jPanel2.setBorder(javax.swing.BorderFactory
-            .createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Sequence",
-                  javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-                  javax.swing.border.TitledBorder.DEFAULT_POSITION,
+      jPanel2.setBorder(BorderFactory
+            .createTitledBorder(BorderFactory.createEtchedBorder(), "Sequence",
+                  TitledBorder.DEFAULT_JUSTIFICATION,
+                  TitledBorder.DEFAULT_POSITION,
                   new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(0, 0, 0))); // NOI18N
       jPanel2.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
 
-      sequenceTable_.setModel(new javax.swing.table.DefaultTableModel(
+      sequenceTable_.setModel(new DefaultTableModel(
             new Object[][]{
 
             },
@@ -1074,7 +1085,7 @@ public class MosaicSequencingFrame extends JFrame {
       addTimeSlotButton_.setText("Add");
       addTimeSlotButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            addTimeSlotButton_ActionPerformed(evt);
+            addTimeSlotButtonActionPerformed(evt);
          }
       });
 
@@ -1087,27 +1098,27 @@ public class MosaicSequencingFrame extends JFrame {
       detachFromAcquisitionButton_.setText("Detach");
       detachFromAcquisitionButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            detachFromAcquisitionButton_ActionPerformed(evt);
+            detachFromAcquisitionButtonActionPerformed(evt);
          }
       });
 
       loadButton_.setText("Load");
       loadButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            loadButton_ActionPerformed(evt);
+            loadButtonActionPerformed(evt);
          }
       });
 
       uploadButton_.setText("Upload Sequence");
       uploadButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            uploadButton_ActionPerformed(evt);
+            uploadButtonActionPerformed(evt);
          }
       });
 
       jLabel7.setText("Sequence Trigger:");
 
-      sequenceTriggerComboBox.setModel(new javax.swing.DefaultComboBoxModel(
+      sequenceTriggerComboBox.setModel(new DefaultComboBoxModel(
             new String[]{"Sequence Start", "External Start", "External Advance",
                   "External Frame Bulb"}));
       sequenceTriggerComboBox.addActionListener(new java.awt.event.ActionListener() {
@@ -1119,14 +1130,14 @@ public class MosaicSequencingFrame extends JFrame {
       runButton_.setText("Run");
       runButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            runButton_ActionPerformed(evt);
+            runButtonActionPerformed(evt);
          }
       });
 
       stopButton_.setText("Stop");
       stopButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            stopButton_ActionPerformed(evt);
+            stopButtonActionPerformed(evt);
          }
       });
 
@@ -1137,145 +1148,145 @@ public class MosaicSequencingFrame extends JFrame {
       attachToAcquisitionButton_.setText("Attach to Acquisition");
       attachToAcquisitionButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            attachToAcquisitionButton_ActionPerformed(evt);
+            attachToAcquisitionButtonActionPerformed(evt);
          }
       });
 
       saveButton_.setText("Save");
       saveButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            saveButton_ActionPerformed(evt);
+            saveButtonActionPerformed(evt);
          }
       });
 
-      javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+      GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
       jPanel2.setLayout(jPanel2Layout);
       jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGroup(jPanel2Layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(jPanel2Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                              .createParallelGroup(GroupLayout.Alignment.LEADING)
                               .addGroup(jPanel2Layout.createSequentialGroup()
                                     .addGroup(jPanel2Layout.createParallelGroup(
-                                          javax.swing.GroupLayout.Alignment.LEADING)
+                                          GroupLayout.Alignment.LEADING)
                                           .addComponent(jLabel6)
                                           .addGroup(jPanel2Layout.createSequentialGroup()
                                                 .addComponent(runButton_)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                      LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(stopButton_)))
                                     .addPreferredGap(
-                                          javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                          LayoutStyle.ComponentPlacement.RELATED)
                                     .addGroup(jPanel2Layout.createParallelGroup(
-                                          javax.swing.GroupLayout.Alignment.LEADING)
+                                          GroupLayout.Alignment.LEADING)
                                           .addGroup(jPanel2Layout.createSequentialGroup()
                                                 .addGap(10, 10, 10)
                                                 .addComponent(attachToAcquisitionButton_)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                      LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(detachFromAcquisitionButton_)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.RELATED,
-                                                      javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                      LayoutStyle.ComponentPlacement.RELATED,
+                                                      GroupLayout.DEFAULT_SIZE,
                                                       Short.MAX_VALUE)
                                                 .addComponent(loadButton_)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                      LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(saveButton_))
                                           .addGroup(jPanel2Layout.createSequentialGroup()
                                                 .addComponent(sequenceLoopCountTextField_,
-                                                      javax.swing.GroupLayout.PREFERRED_SIZE, 47,
-                                                      javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                      GroupLayout.PREFERRED_SIZE, 47,
+                                                      GroupLayout.PREFERRED_SIZE)
                                                 .addGap(18, 18, 18)
                                                 .addComponent(jLabel7)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.RELATED,
-                                                      javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                      LayoutStyle.ComponentPlacement.RELATED,
+                                                      GroupLayout.DEFAULT_SIZE,
                                                       Short.MAX_VALUE)
                                                 .addComponent(sequenceTriggerComboBox,
-                                                      javax.swing.GroupLayout.PREFERRED_SIZE, 106,
-                                                      javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                      GroupLayout.PREFERRED_SIZE, 106,
+                                                      GroupLayout.PREFERRED_SIZE)
                                                 .addGap(18, 18, 18)
                                                 .addComponent(uploadButton_)))
                                     .addGap(20, 20, 20))
                               .addGroup(jPanel2Layout.createSequentialGroup()
                                     .addGroup(jPanel2Layout.createParallelGroup(
-                                          javax.swing.GroupLayout.Alignment.LEADING)
+                                          GroupLayout.Alignment.LEADING)
                                           .addComponent(jSeparator1,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE, 525,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                GroupLayout.PREFERRED_SIZE, 525,
+                                                GroupLayout.PREFERRED_SIZE)
                                           .addComponent(jScrollPane2,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE, 525,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                GroupLayout.PREFERRED_SIZE, 525,
+                                                GroupLayout.PREFERRED_SIZE)
                                           .addGroup(jPanel2Layout.createSequentialGroup()
                                                 .addComponent(jLabel8)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                      LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(addTimeSlotButton_)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                      LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(cloneButton)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                      LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(deleteButton)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                      LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(upButton)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                      LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(downButton)))
-                                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE,
+                                    .addContainerGap(GroupLayout.DEFAULT_SIZE,
                                           Short.MAX_VALUE))))
       );
       jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGroup(jPanel2Layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 197,
-                              javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 197,
+                              GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel2Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(cloneButton)
                               .addComponent(deleteButton)
                               .addComponent(upButton)
                               .addComponent(downButton)
                               .addComponent(addTimeSlotButton_)
                               .addComponent(jLabel8))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 5,
-                              javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, 5,
+                              GroupLayout.PREFERRED_SIZE)
                         .addGap(2, 2, 2)
                         .addGroup(jPanel2Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(uploadButton_)
                               .addComponent(jLabel7)
                               .addComponent(sequenceTriggerComboBox,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE)
                               .addComponent(jLabel6)
                               .addComponent(sequenceLoopCountTextField_,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(jPanel2Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(runButton_)
                               .addComponent(attachToAcquisitionButton_)
                               .addComponent(stopButton_)
                               .addComponent(loadButton_)
                               .addComponent(detachFromAcquisitionButton_)
                               .addComponent(saveButton_))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
-      jPanel5.setBorder(javax.swing.BorderFactory
-            .createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Create ROI Grid",
-                  javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-                  javax.swing.border.TitledBorder.DEFAULT_POSITION,
+      jPanel5.setBorder(BorderFactory
+            .createTitledBorder(BorderFactory.createEtchedBorder(), "Create ROI Grid",
+                  TitledBorder.DEFAULT_JUSTIFICATION,
+                  TitledBorder.DEFAULT_POSITION,
                   new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(0, 0, 0))); // NOI18N
 
       numRoisAcrossLabel_.setText("Number across:");
@@ -1289,7 +1300,7 @@ public class MosaicSequencingFrame extends JFrame {
       generateROIGridButton_.setText("Generate ROI Grid");
       generateROIGridButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            generateROIGridButton_ActionPerformed(evt);
+            generateROIGridButtonActionPerformed(evt);
          }
       });
 
@@ -1301,81 +1312,81 @@ public class MosaicSequencingFrame extends JFrame {
 
       roiSpacingDownField_.setText("100");
 
-      javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+      GroupLayout jPanel5Layout = new GroupLayout(jPanel5);
       jPanel5.setLayout(jPanel5Layout);
       jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGroup(jPanel5Layout.createSequentialGroup()
                         .addGap(57, 57, 57)
                         .addGroup(jPanel5Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                              .createParallelGroup(GroupLayout.Alignment.TRAILING)
                               .addComponent(generateROIGridButton_)
                               .addGroup(jPanel5Layout.createSequentialGroup()
                                     .addGroup(jPanel5Layout.createParallelGroup(
-                                          javax.swing.GroupLayout.Alignment.TRAILING)
+                                          GroupLayout.Alignment.TRAILING)
                                           .addComponent(roisAcrossSpacingLabel1)
                                           .addComponent(roisDownSpacingLabel)
                                           .addComponent(numRoisDownLabel)
                                           .addComponent(numRoisAcrossLabel_))
                                     .addPreferredGap(
-                                          javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                          LayoutStyle.ComponentPlacement.UNRELATED)
                                     .addGroup(jPanel5Layout.createParallelGroup(
-                                          javax.swing.GroupLayout.Alignment.LEADING, false)
+                                          GroupLayout.Alignment.LEADING, false)
                                           .addComponent(roiSpacingAcrossField_)
                                           .addComponent(numRoisAcrossField_)
                                           .addComponent(numRoisDownField_)
                                           .addComponent(roiSpacingDownField_,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE, 53,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                                GroupLayout.PREFERRED_SIZE, 53,
+                                                GroupLayout.PREFERRED_SIZE))))
                         .addContainerGap(70, Short.MAX_VALUE))
       );
       jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(jPanel5Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(numRoisAcrossLabel_)
                               .addComponent(numRoisAcrossField_,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE))
                         .addGap(3, 3, 3)
                         .addGroup(jPanel5Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(roisAcrossSpacingLabel1)
                               .addComponent(roiSpacingAcrossField_,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel5Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(numRoisDownLabel)
                               .addComponent(numRoisDownField_,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel5Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                              .createParallelGroup(GroupLayout.Alignment.BASELINE)
                               .addComponent(roisDownSpacingLabel)
                               .addComponent(roiSpacingDownField_,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(generateROIGridButton_)
                         .addContainerGap())
       );
 
-      roiListPanel_.setBorder(javax.swing.BorderFactory
-            .createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "ROI list",
-                  javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-                  javax.swing.border.TitledBorder.DEFAULT_POSITION,
+      roiListPanel_.setBorder(BorderFactory
+            .createTitledBorder(BorderFactory.createEtchedBorder(), "ROI list",
+                  TitledBorder.DEFAULT_JUSTIFICATION,
+                  TitledBorder.DEFAULT_POSITION,
                   new java.awt.Font("Tahoma", 1, 11))); // NOI18N
 
-      roiListTable_.setModel(new javax.swing.table.DefaultTableModel(
+      roiListTable_.setModel(new DefaultTableModel(
             new Object[][]{
                   {null, null, null, null},
                   {null, null, null, null},
@@ -1397,218 +1408,218 @@ public class MosaicSequencingFrame extends JFrame {
       roiListTable_.getTableHeader().setReorderingAllowed(false);
       roiListScrollPane.setViewportView(roiListTable_);
 
-      javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+      GroupLayout jPanel6Layout = new GroupLayout(jPanel6);
       jPanel6.setLayout(jPanel6Layout);
       jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel6Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGap(0, 0, Short.MAX_VALUE)
       );
       jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel6Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGap(0, 156, Short.MAX_VALUE)
       );
 
-      javax.swing.GroupLayout roiListPanel_Layout = new javax.swing.GroupLayout(roiListPanel_);
-      roiListPanel_.setLayout(roiListPanel_Layout);
-      roiListPanel_Layout.setHorizontalGroup(
-            roiListPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                  .addGroup(roiListPanel_Layout.createSequentialGroup()
+      GroupLayout roiListPanelLayout = new GroupLayout(roiListPanel_);
+      roiListPanel_.setLayout(roiListPanelLayout);
+      roiListPanelLayout.setHorizontalGroup(
+            roiListPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                  .addGroup(roiListPanelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(roiListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 239,
+                        .addComponent(roiListScrollPane, GroupLayout.DEFAULT_SIZE, 239,
                               Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE,
-                              javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel6, GroupLayout.DEFAULT_SIZE,
+                              GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
-      roiListPanel_Layout.setVerticalGroup(
-            roiListPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                  .addGroup(roiListPanel_Layout.createSequentialGroup()
-                        .addGroup(roiListPanel_Layout
-                              .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                              .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE,
-                                    javax.swing.GroupLayout.DEFAULT_SIZE,
-                                    javax.swing.GroupLayout.PREFERRED_SIZE)
-                              .addGroup(roiListPanel_Layout.createSequentialGroup()
+      roiListPanelLayout.setVerticalGroup(
+            roiListPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                  .addGroup(roiListPanelLayout.createSequentialGroup()
+                        .addGroup(roiListPanelLayout
+                              .createParallelGroup(GroupLayout.Alignment.LEADING)
+                              .addComponent(jPanel6, GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE)
+                              .addGroup(roiListPanelLayout.createSequentialGroup()
                                     .addContainerGap()
                                     .addComponent(roiListScrollPane,
-                                          javax.swing.GroupLayout.PREFERRED_SIZE, 122,
-                                          javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                          GroupLayout.PREFERRED_SIZE, 122,
+                                          GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
-      javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+      GroupLayout layout = new GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(
-                              layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING,
+                              layout.createParallelGroup(GroupLayout.Alignment.TRAILING,
                                     false)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING,
+                                    .addGroup(GroupLayout.Alignment.LEADING,
                                           layout.createSequentialGroup()
                                                 .addComponent(roiListPanel_,
-                                                      javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                      javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                      javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                      GroupLayout.PREFERRED_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(
-                                                      javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                      LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(jPanel5,
-                                                      javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                      javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
                                                       Short.MAX_VALUE))
-                                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                          javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                    .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE,
+                                          GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE,
                                           554, Short.MAX_VALUE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                   .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(
-                              layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING,
+                              layout.createParallelGroup(GroupLayout.Alignment.LEADING,
                                     false)
                                     .addComponent(roiListPanel_,
-                                          javax.swing.GroupLayout.PREFERRED_SIZE, 0,
+                                          GroupLayout.PREFERRED_SIZE, 0,
                                           Short.MAX_VALUE)
-                                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                          javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE,
-                              javax.swing.GroupLayout.DEFAULT_SIZE,
-                              javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE,
-                              javax.swing.GroupLayout.DEFAULT_SIZE,
-                              javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(jPanel5, GroupLayout.DEFAULT_SIZE,
+                                          GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE,
+                              GroupLayout.DEFAULT_SIZE,
+                              GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE,
+                              GroupLayout.DEFAULT_SIZE,
+                              GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
       jPanel2.getAccessibleContext().setAccessibleName("Sequences");
 
       pack();
-   }// </editor-fold>//GEN-END:initComponents
+   } // </editor-fold>//GEN-END:initComponents
 
    private void generateSequenceButtonActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateSequenceButtonActionPerformed
+         java.awt.event.ActionEvent evt) { //GEN-FIRST:event_generateSequenceButtonActionPerformed
       try {
          generateNewSequence();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-   }//GEN-LAST:event_generateSequenceButtonActionPerformed
+   } //GEN-LAST:event_generateSequenceButtonActionPerformed
 
-   private void runButton_ActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButton_ActionPerformed
+   private void runButtonActionPerformed(
+         java.awt.event.ActionEvent evt) { //GEN-FIRST:event_runButton_ActionPerformed
       try {
          runSequence();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-   }//GEN-LAST:event_runButton_ActionPerformed
+   } //GEN-LAST:event_runButton_ActionPerformed
 
-   private void stopButton_ActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButton_ActionPerformed
+   private void stopButtonActionPerformed(
+         java.awt.event.ActionEvent evt) { //GEN-FIRST:event_stopButton_ActionPerformed
       stopSequence();
-   }//GEN-LAST:event_stopButton_ActionPerformed
+   } //GEN-LAST:event_stopButton_ActionPerformed
 
-   private void addTimeSlotButton_ActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTimeSlotButton_ActionPerformed
+   private void addTimeSlotButtonActionPerformed(
+         java.awt.event.ActionEvent evt) { //GEN-FIRST:event_addTimeSlotButton_ActionPerformed
       addTimeSlot();
-   }//GEN-LAST:event_addTimeSlotButton_ActionPerformed
+   } //GEN-LAST:event_addTimeSlotButton_ActionPerformed
 
-   private void uploadButton_ActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_uploadButton_ActionPerformed
+   private void uploadButtonActionPerformed(
+         java.awt.event.ActionEvent evt) { //GEN-FIRST:event_uploadButton_ActionPerformed
       try {
          uploadSequence();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-   }//GEN-LAST:event_uploadButton_ActionPerformed
+   } //GEN-LAST:event_uploadButton_ActionPerformed
 
-   private void generateROIGridButton_ActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateROIGridButton_ActionPerformed
+   private void generateROIGridButtonActionPerformed(
+         java.awt.event.ActionEvent evt) { //GEN-FIRST:event_generateROIGridButton_ActionPerformed
       generateRoiGrid();
-   }//GEN-LAST:event_generateROIGridButton_ActionPerformed
+   } //GEN-LAST:event_generateROIGridButton_ActionPerformed
 
-   private void loadButton_ActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButton_ActionPerformed
+   private void loadButtonActionPerformed(
+         java.awt.event.ActionEvent evt) { //GEN-FIRST:event_loadButton_ActionPerformed
       load();
-   }//GEN-LAST:event_loadButton_ActionPerformed
+   } //GEN-LAST:event_loadButton_ActionPerformed
 
-   private void saveButton_ActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButton_ActionPerformed
+   private void saveButtonActionPerformed(
+         java.awt.event.ActionEvent evt) { //GEN-FIRST:event_saveButton_ActionPerformed
       save();
-   }//GEN-LAST:event_saveButton_ActionPerformed
+   } //GEN-LAST:event_saveButton_ActionPerformed
 
-   private void attachToAcquisitionButton_ActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_attachToAcquisitionButton_ActionPerformed
+   private void attachToAcquisitionButtonActionPerformed(
+         java.awt.event.ActionEvent evt) {
       try {
          attachToAcquisition();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-   }//GEN-LAST:event_attachToAcquisitionButton_ActionPerformed
+   } //GEN-LAST:event_attachToAcquisitionButton_ActionPerformed
 
-   private void detachFromAcquisitionButton_ActionPerformed(
-         java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detachFromAcquisitionButton_ActionPerformed
+   private void detachFromAcquisitionButtonActionPerformed(
+         java.awt.event.ActionEvent evt) {
       detachFromAcquisition();
-   }//GEN-LAST:event_detachFromAcquisitionButton_ActionPerformed
+   } //GEN-LAST:event_detachFromAcquisitionButton_ActionPerformed
 
    private void sequenceTriggerComboBoxActionPerformed(
          java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sequenceTriggerComboBoxActionPerformed
       // TODO add your handling code here:
-   }//GEN-LAST:event_sequenceTriggerComboBoxActionPerformed
+   } //GEN-LAST:event_sequenceTriggerComboBoxActionPerformed
 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JButton addTimeSlotButton_;
-   private javax.swing.JButton attachToAcquisitionButton_;
-   private javax.swing.JButton cloneButton;
-   private javax.swing.JButton deleteButton;
-   private javax.swing.JButton detachFromAcquisitionButton_;
-   private javax.swing.JButton downButton;
-   private javax.swing.JButton generateROIGridButton_;
-   private javax.swing.JButton generateSequenceButton;
-   private javax.swing.JLabel jLabel1;
-   private javax.swing.JLabel jLabel2;
-   private javax.swing.JLabel jLabel3;
-   private javax.swing.JLabel jLabel4;
-   private javax.swing.JLabel jLabel5;
-   private javax.swing.JLabel jLabel6;
-   private javax.swing.JLabel jLabel7;
-   private javax.swing.JLabel jLabel8;
-   private javax.swing.JPanel jPanel1;
-   private javax.swing.JPanel jPanel2;
-   private javax.swing.JPanel jPanel5;
-   private javax.swing.JPanel jPanel6;
-   private javax.swing.JScrollPane jScrollPane2;
-   private javax.swing.JSeparator jSeparator1;
-   private javax.swing.JButton loadButton_;
-   private javax.swing.JTextField loopCountTextField_;
-   private javax.swing.JTextField numRoisAcrossField_;
-   private javax.swing.JLabel numRoisAcrossLabel_;
-   private javax.swing.JTextField numRoisDownField_;
-   private javax.swing.JLabel numRoisDownLabel;
-   private javax.swing.JTextField offDurationTextField_;
-   private javax.swing.JTextField onDurationTextField_;
-   private javax.swing.JPanel roiListPanel_;
-   private javax.swing.JScrollPane roiListScrollPane;
-   private javax.swing.JTable roiListTable_;
-   private javax.swing.JTextField roiSpacingAcrossField_;
-   private javax.swing.JTextField roiSpacingDownField_;
-   private javax.swing.JLabel roisAcrossSpacingLabel1;
-   private javax.swing.JLabel roisDownSpacingLabel;
-   private javax.swing.JButton runButton_;
-   private javax.swing.JButton saveButton_;
-   private javax.swing.JTextField sequenceLoopCountTextField_;
-   private javax.swing.JTable sequenceTable_;
-   private javax.swing.JComboBox sequenceTriggerComboBox;
-   private javax.swing.JComboBox sequenceTypeComboBox;
-   private javax.swing.JButton stopButton_;
-   private javax.swing.JButton upButton;
-   private javax.swing.JButton uploadButton_;
+   private JButton addTimeSlotButton_;
+   private JButton attachToAcquisitionButton_;
+   private JButton cloneButton;
+   private JButton deleteButton;
+   private JButton detachFromAcquisitionButton_;
+   private JButton downButton;
+   private JButton generateROIGridButton_;
+   private JButton generateSequenceButton;
+   private JLabel jLabel1;
+   private JLabel jLabel2;
+   private JLabel jLabel3;
+   private JLabel jLabel4;
+   private JLabel jLabel5;
+   private JLabel jLabel6;
+   private JLabel jLabel7;
+   private JLabel jLabel8;
+   private JPanel jPanel1;
+   private JPanel jPanel2;
+   private JPanel jPanel5;
+   private JPanel jPanel6;
+   private JScrollPane jScrollPane2;
+   private JSeparator jSeparator1;
+   private JButton loadButton_;
+   private JTextField loopCountTextField_;
+   private JTextField numRoisAcrossField_;
+   private JLabel numRoisAcrossLabel_;
+   private JTextField numRoisDownField_;
+   private JLabel numRoisDownLabel;
+   private JTextField offDurationTextField_;
+   private JTextField onDurationTextField_;
+   private JPanel roiListPanel_;
+   private JScrollPane roiListScrollPane;
+   private JTable roiListTable_;
+   private JTextField roiSpacingAcrossField_;
+   private JTextField roiSpacingDownField_;
+   private JLabel roisAcrossSpacingLabel1;
+   private JLabel roisDownSpacingLabel;
+   private JButton runButton_;
+   private JButton saveButton_;
+   private JTextField sequenceLoopCountTextField_;
+   private JTable sequenceTable_;
+   private JComboBox sequenceTriggerComboBox;
+   private JComboBox sequenceTypeComboBox;
+   private JButton stopButton_;
+   private JButton upButton;
+   private JButton uploadButton_;
    // End of variables declaration//GEN-END:variables
 }

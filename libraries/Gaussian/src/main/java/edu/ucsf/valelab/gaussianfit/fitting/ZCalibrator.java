@@ -132,7 +132,7 @@ public class ZCalibrator {
 
    public void plotDataPoints() {
 
-      String xAxis = "Z (frame nr)";
+      final String xAxis = "Z (frame nr)";
 
       XYSeries[] plotData = new XYSeries[2];
       plotData[0] = new XYSeries("wx");
@@ -150,7 +150,7 @@ public class ZCalibrator {
    }
 
    private void plotFitFunctions() {
-      String xAxis = "Z (frame nr)";
+      final String xAxis = "Z (frame nr)";
 
       XYSeries[] plotData = new XYSeries[2];
       plotData[0] = new XYSeries("wx");
@@ -174,13 +174,13 @@ public class ZCalibrator {
     */
    public void fitFunction() throws FunctionEvaluationException, OptimizationException {
 
-      NelderMead nmx = new NelderMead();
-      SimpleScalarValueChecker convergedChecker_ = new SimpleScalarValueChecker(1e-6, -1);
+      final NelderMead nmx = new NelderMead();
+      final SimpleScalarValueChecker convergedChecker = new SimpleScalarValueChecker(1e-6, -1);
 
       double[][] wxData = getDataAsArray(0);
-      MultiVariateZCalibrationFunction mvcx = new MultiVariateZCalibrationFunction(wxData);
+      final MultiVariateZCalibrationFunction mvcx = new MultiVariateZCalibrationFunction(wxData);
 
-      double[] params0_ = new double[5]; // initial estimates:
+      final double[] params0_ = new double[5]; // initial estimates:
       params0_[0] = 37;  // TODO: better estimate for c
       params0_[1] = 200; // Estimate for w0
       params0_[2] = 10;  // TODO: better estimate for d
@@ -188,7 +188,7 @@ public class ZCalibrator {
       params0_[4] = 1;   // TODO: better estimate for B
 
       nmx.setStartConfiguration(params0_);
-      nmx.setConvergenceChecker(convergedChecker_);
+      nmx.setConvergenceChecker(convergedChecker);
       nmx.setMaxIterations(maxIterations_);
 
       double[] paramsOut;
@@ -233,9 +233,9 @@ public class ZCalibrator {
 
 
    /**
-    * Use the fitfunction to estimate the z position given width in x and y
-    * <p>
-    * minimize the distance D in sqrt wx and sqrt wy space D = sqrt (  square (sqrt wx - sqrt wx,
+    * Use the fit-function to estimate the z position given width in x and y.
+    *
+    * <p>Minimize the distance D in sqrt wx and sqrt wy space D = sqrt (  square (sqrt wx - sqrt wx,
     * calib) + sqr(sqrt wy - sqrt w, calib) )
     *
     * @param wx - width in x
@@ -249,22 +249,22 @@ public class ZCalibrator {
       }
 
       NelderMead nmx = new NelderMead();
-      SimpleScalarValueChecker convergedChecker_ = new SimpleScalarValueChecker(1e-6, -1);
+      SimpleScalarValueChecker convergedChecker = new SimpleScalarValueChecker(1e-6, -1);
 
       MultiVariateZFunction mz = new MultiVariateZFunction(fitFunctionWx_, fitFunctionWy_,
             wx, wy);
 
-      double[] params0_ = new double[1]; // initial estimates:
-      params0_[0] = 15;  // TODO: Need the middle z value of the stack here!!!
+      double[] params0 = new double[1]; // initial estimates:
+      params0[0] = 15;  // TODO: Need the middle z value of the stack here!!!
 
-      nmx.setStartConfiguration(params0_);
-      nmx.setConvergenceChecker(convergedChecker_);
+      nmx.setStartConfiguration(params0);
+      nmx.setConvergenceChecker(convergedChecker);
       nmx.setMaxIterations(maxIterations_);
 
       double[] paramsOut = {0.0};
 
       try {
-         RealPointValuePair result = nmx.optimize(mz, GoalType.MINIMIZE, params0_);
+         RealPointValuePair result = nmx.optimize(mz, GoalType.MINIMIZE, params0);
          paramsOut = result.getPoint();
       } catch (java.lang.OutOfMemoryError e) {
          throw (e);

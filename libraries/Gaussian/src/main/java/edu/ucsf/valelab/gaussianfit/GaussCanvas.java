@@ -66,11 +66,6 @@ public class GaussCanvas extends ImageCanvas {
       orImageWidth_ = sp.getWidth();
       orImageHeight_ = sp.getHeight();
    }
-/*
-   public void setImageWindow(ImageWindow iw) {
-      iw_ = iw;
-   }
-   */
 
    /**
     * Transforms the sourceRct Rectangle into a Rectangle in nm coordinates
@@ -139,55 +134,7 @@ public class GaussCanvas extends ImageCanvas {
       }
 
       repaint();
-      //if (srcRect.width<imageWidth || srcRect.height<imageHeight)
-      //	resetMaxBounds();
    }
-
-   /*
-
-    public void paint(Graphics g) {
-		Roi roi = imp.getRoi();
-		if (roi!=null) {
-			//if (roi!=null) 
-          //  roi.updatePaste();
-			//if (!IJ.isMacOSX() && imageWidth!=0) {
-			//	paintDoubleBuffered(g);
-			//	return;
-			//}
-		}
-		try {
-			      if (imageUpdated) {
-            imageUpdated = false;
-            imp.updateImage();
-         }
-         //setInterpolation(g, Prefs.interpolateScaledImages);
-         if (magnification > 1.0) {
-            double f = magnification * originalMag_;
-            Rectangle magRect = new Rectangle((int) (f * srcRect.x), (int) (f * srcRect.y),
-                    imp.getWidth(), imp.getHeight());
-            ImageProcessor ipTmp = ImageRenderer.renderData(rowData_, renderMethod_,
-                    f, magRect, sf_);
-            imp.setProcessor(ipTmp);
-            
-            Image img = imp.getImage();
-            g.drawImage(img, 0, 0, magRect.width, magRect.height, null);
-         } else {
-            Image img = imp.getImage();
-            if (img != null) {
-               g.drawImage(img, 0, 0, (int) (srcRect.width * magnification), (int) (srcRect.height * magnification),
-                       srcRect.x, srcRect.y, srcRect.x + srcRect.width, srcRect.y + srcRect.height, null);
-            }
-         }
-			//if (overlay!=null) drawOverlay(g);
-			//if (showAllROIs) drawAllROIs(g);
-			//if (roi!=null) drawRoi(roi, g);
-			//if (srcRect.width<imageWidth || srcRect.height<imageHeight)
-			//	super.drawZoomIndicator(g);
-			//if (IJ.debugMode) showFrameRate(g);
-		}
-		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
-    }
-*/
 
    Rectangle getRect(double newMag, int x, int y) {
       //IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
@@ -250,63 +197,5 @@ public class GaussCanvas extends ImageCanvas {
       setMagnification(newMag);
       //IJ.log("adjustSourceRect2: "+srcRect+" "+dstWidth+"  "+dstHeight);
    }
-   
-/*
-   @Override
-   public void mouseReleased(MouseEvent me) {
-      if (Toolbar.getToolId() != Toolbar.MAGNIFIER) {
-         super.mouseReleased(me);
-         return;
-      }
-      
-      // TODO: override zoomin, zoomout functions instead
-      double mag = this.getMagnification() * myMag_;
-      myMag_ = mag;
-      Rectangle vis = this.getBounds();
-      Dimension d = this.getSize();
-      Rectangle vis2 = this.getBounds();
-      Point a = this.getLocation();
-      Point c = this.getCursorLoc();
-
-      System.out.println("mag : " + mag);
-
-      if (mag > 1) {
-         Rectangle roi = null;
-         if (d.width >= (mag * rowData_.width_)) {
-            roi = new Rectangle(0, 0, (int) (mag * rowData_.width_),
-                    (int) (mag * rowData_.height_));
-         } else {
-            int xCenter = (int) (c.x * mag);
-            int yCenter = (int) (c.y * mag);
-            int halfWidth = d.width / 2;
-            int halfHeight = d.height / 2;
-            if (xCenter - halfWidth < 0) {
-               xCenter = halfWidth;
-            }
-            if (xCenter + halfWidth > (int) (mag * rowData_.width_)) {
-               xCenter = (int) (mag * rowData_.width_) - halfWidth;
-            }
-            if (yCenter - halfHeight < 0) {
-               yCenter = halfHeight;
-            }
-            if (yCenter + halfHeight > (int) (mag * rowData_.height_)) {
-               yCenter = (int) (mag * rowData_.height_) - halfHeight;
-            }
-
-            roi = new Rectangle(xCenter - halfWidth, yCenter - halfHeight,
-                    d.width, d.height);
-
-         }
-         //ImageRenderer.renderData(iw_, rowData_, renderMethod_, mag, roi, sf_);
-
-      } else {
-         //iw_.setImage(originalIP_);
-         // myMag_ = originalMag_;
-      }
-
-   }
-
-   
-*/
 
 }

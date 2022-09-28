@@ -56,7 +56,8 @@ class ExploreZSliders extends JPanel {
    private double zOrigin_;
    private int displayHeight_ = -1;
    //thread safe fields for currently displaye dimage
-   private int minZExplored_ = Integer.MAX_VALUE, maxZExplored_ = Integer.MIN_VALUE;
+   private int minZExplored_ = Integer.MAX_VALUE;
+   private int maxZExplored_ = Integer.MIN_VALUE;
    private JPanel controlsPanel_;
 
    public ExploreZSliders(MagellanDataManager manager) {
@@ -141,11 +142,13 @@ class ExploreZSliders extends JPanel {
 
    private void expandZLimitsIfNeeded(int topScrollbarIndex, int bottomScrollbarIndex) {
       //extent of 1 needs to be accounted for on top
-      if (topScrollbarIndex >= zTopScrollbar_.getMaximum() - 1 || bottomScrollbarIndex >= zBottomScrollbar_.getMaximum() - 1) {
+      if (topScrollbarIndex >= zTopScrollbar_.getMaximum() - 1
+            || bottomScrollbarIndex >= zBottomScrollbar_.getMaximum() - 1) {
          zTopScrollbar_.setMaximum(Math.max(topScrollbarIndex, bottomScrollbarIndex) + 2);
          zBottomScrollbar_.setMaximum(Math.max(topScrollbarIndex, bottomScrollbarIndex) + 2);
       }
-      if (bottomScrollbarIndex <= zBottomScrollbar_.getMinimum() || topScrollbarIndex <= zTopScrollbar_.getMinimum()) {
+      if (bottomScrollbarIndex <= zBottomScrollbar_.getMinimum()
+            || topScrollbarIndex <= zTopScrollbar_.getMinimum()) {
          zTopScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1);
          zBottomScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1);
       }

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.magellan.internal.gui;
 
 import java.awt.Point;
@@ -10,7 +5,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import javax.swing.SwingUtilities;
-
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
@@ -29,15 +23,19 @@ public class MagellanMouseListener implements CanvasMouseListenerInterface {
    private static final double ZOOM_FACTOR_MOUSE = 1.4;
 
    //all these are volatile because they are accessed by overlayer
-   private volatile Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
+   private volatile Point mouseDragStartPointLeft_;
+   private volatile Point mouseDragStartPointRight_;
+   private volatile Point currentMouseLocation_;
    private volatile long lastMouseWheelZoomTime_ = 0;
    private volatile boolean mouseDragging_ = false;
 
    private MagellanDataManager manager_;
    private MagellanViewer viewer_;
 
-   private volatile Point exploreStartTile_, exploreEndTile_;
-   private boolean exploreMode_, surfaceMode_;
+   private volatile Point exploreStartTile_;
+   private volatile Point exploreEndTile_;
+   private boolean exploreMode_;
+   private boolean surfaceMode_;
 
    public MagellanMouseListener(MagellanDataManager manager, MagellanViewer viewer) {
       manager_ = manager;
@@ -127,20 +125,26 @@ public class MagellanMouseListener implements CanvasMouseListenerInterface {
       } else if (surfaceMode_ && manager_.getCurrentEditableSurfaceOrGrid() != null
               && manager_.getCurrentEditableSurfaceOrGrid() instanceof SurfaceInterpolator
               && manager_.isCurrentlyEditableSurfaceGridVisible()) {
-         SurfaceInterpolator currentSurface = (SurfaceInterpolator) manager_.getCurrentEditableSurfaceOrGrid();
+         SurfaceInterpolator currentSurface = (SurfaceInterpolator)
+               manager_.getCurrentEditableSurfaceOrGrid();
          if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
             double z = manager_.getZCoordinateOfDisplayedSlice();
             if (e.isShiftDown()) {
                //delete all points at slice
-               currentSurface.deletePointsWithinZRange(Math.min(z - manager_.getZStep() / 2, z + manager_.getZStep() / 2),
+               currentSurface.deletePointsWithinZRange(Math.min(z - manager_.getZStep() / 2,
+                           z + manager_.getZStep() / 2),
                        Math.max(z - manager_.getZStep() / 2, z + manager_.getZStep() / 2));
             } else {
                //delete point if one is nearby
-               Point2D.Double stagePos = manager_.stageCoordsFromPixelCoords(e.getPoint().x, e.getPoint().y);
+               Point2D.Double stagePos = manager_.stageCoordsFromPixelCoords(e.getPoint().x,
+                     e.getPoint().y);
                //calculate tolerance
-               Point2D.Double toleranceStagePos = manager_.stageCoordsFromPixelCoords(e.getPoint().x
-                       + DELETE_SURF_POINT_PIXEL_TOLERANCE, e.getPoint().y + DELETE_SURF_POINT_PIXEL_TOLERANCE);
-               double stageDistanceTolerance = Math.sqrt((toleranceStagePos.x - stagePos.x) * (toleranceStagePos.x - stagePos.x)
+               Point2D.Double toleranceStagePos = manager_.stageCoordsFromPixelCoords(
+                     e.getPoint().x
+                       + DELETE_SURF_POINT_PIXEL_TOLERANCE, e.getPoint().y
+                           + DELETE_SURF_POINT_PIXEL_TOLERANCE);
+               double stageDistanceTolerance = Math.sqrt((toleranceStagePos.x - stagePos.x)
+                     * (toleranceStagePos.x - stagePos.x)
                        + (toleranceStagePos.y - stagePos.y) * (toleranceStagePos.y - stagePos.y));
                currentSurface.deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance,
                        Math.min(z - manager_.getZStep() / 2, z + manager_.getZStep() / 2),
@@ -149,7 +153,8 @@ public class MagellanMouseListener implements CanvasMouseListenerInterface {
          } else if (SwingUtilities.isLeftMouseButton(e)) {
             //convert to real coordinates in 3D space
             //Click point --> full res pixel point --> stage coordinate
-            Point2D.Double stagePos = manager_.stageCoordsFromPixelCoords(e.getPoint().x, e.getPoint().y);
+            Point2D.Double stagePos = manager_.stageCoordsFromPixelCoords(e.getPoint().x,
+                  e.getPoint().y);
             double z = manager_.getZCoordinateOfDisplayedSlice();
             if (currentSurface == null) {
                Log.log("Can't add point--No surface selected", true);
@@ -158,10 +163,7 @@ public class MagellanMouseListener implements CanvasMouseListenerInterface {
             }
          }
       }
-//      if (mouseDragging_ && SwingUtilities.isRightMouseButton(e)) {
-//         //drag event finished, make sure pixels updated
-//         display_.recomputeDisplayedImage();
-//      }
+
       mouseDragging_ = false;
       viewer_.redrawOverlay();
    }
@@ -177,7 +179,8 @@ public class MagellanMouseListener implements CanvasMouseListenerInterface {
       mouseDragging_ = true;
       if (SwingUtilities.isRightMouseButton(e)) {
          //pan
-         viewer_.pan(mouseDragStartPointRight_.x - currentPoint.x, mouseDragStartPointRight_.y - currentPoint.y);
+         viewer_.pan(mouseDragStartPointRight_.x - currentPoint.x,
+               mouseDragStartPointRight_.y - currentPoint.y);
          mouseDragStartPointRight_ = currentPoint;
       } else if (SwingUtilities.isLeftMouseButton(e)) {
          //only move grid

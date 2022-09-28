@@ -97,7 +97,7 @@ public class ImageRenderer {
          if (method == 0) {
             if (!rowData.hasZ_) {
                ip = new ShortProcessor(width, height);
-               short pixels[] = new short[size];
+               short[] pixels = new short[size];
                ip.setPixels(pixels);
                for (SpotData spot : rowData.spotList_) {
                   if (sf.filter(spot)) {
@@ -147,7 +147,7 @@ public class ImageRenderer {
                   }
                }
                // we have 3 ShortProcessors.  Combine into a color image:
-               ColorProcessor cp = new ColorProcessor(width, height);
+               final ColorProcessor cp = new ColorProcessor(width, height);
                byte[][] colorPixels = new byte[3][];
                for (int i = 0; i < 3; i++) {
                   colorPixels[i] = new byte[size];
@@ -178,7 +178,7 @@ public class ImageRenderer {
             }
 
             ip = new FloatProcessor(width, height);
-            float pixels[] = new float[size];
+            float[] pixels = new float[size];
             ip.setPixels(pixels);
 
             ij.IJ.showStatus("Rendering Image...");
@@ -331,7 +331,7 @@ public class ImageRenderer {
 
       if (method == 0) {
 
-         short pixels[][] = new short[nrZs][size];
+         short[][] pixels = new short[nrZs][size];
          for (int i = 0; i < nrZs; i++) {
             ip[i] = new ShortProcessor(width, height);
             ip[i].setPixels(pixels[i]);
@@ -366,7 +366,7 @@ public class ImageRenderer {
     *
     * @param lutName - name of file containing Lut data
     */
-   static private void readLut(String lutName) {
+   private static void readLut(String lutName) {
       InputStream fin = ImageRenderer.class.getResourceAsStream(lutName);
       if (fin == null) {
          return;

@@ -43,15 +43,14 @@ import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayWindow;
 
-/**
- * @author nico
- */
 
 /**
- * KeyListener and MouseListenerclass for ResultsTable When user selected a line in the ResulsTable
+ * KeyListener and MouseListenerclass for ResultsTable When user selected a line in the ResultsTable
  * and presses a key, the corresponding image will move to the correct slice and draw the ROI that
- * was used to calculate the Gaussian fit Works only in conjunction with appropriate column names Up
- * and down keys also work as expected
+ * was used to calculate the Gaussian fit.
+ * Works only in conjunction with appropriate column names. Up and down keys also work as expected.
+ *
+ * @author nico
  */
 public class ResultsTableListener implements KeyListener, MouseListener {
 
@@ -175,8 +174,8 @@ public class ResultsTableListener implements KeyListener, MouseListener {
 
          if (dw_ != null) {
             Coords.CoordsBuilder builder = Coordinates.builder();
-            Coords coords = builder.channel(channel - 1).time(frame - 1).
-                  z(slice - 1).stagePosition(pos - 1).build();
+            Coords coords = builder.channel(channel - 1).time(frame - 1)
+                    .z(slice - 1).stagePosition(pos - 1).build();
             dw_.setDisplayPosition(coords);
          } else if (siPlus_.isHyperStack()) {
             siPlus_.setPosition(channel, slice, frame);

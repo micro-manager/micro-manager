@@ -25,6 +25,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package edu.ucsf.valelab.gaussianfit;
 
 import edu.ucsf.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
@@ -115,7 +116,8 @@ public class PairDisplayForm extends GUFrame {
             makeCheckBox("Show X-Y distance histogram (registration error)", SHOWXYHISTOGRAMPREF);
       panel.add(showXYHistogram, "span 2, wrap");
 
-      // Calculate Gaussian fit of vector distances (calculate distance from average x position and average y position)
+      // Calculate Gaussian fit of vector distances (calculate distance from average x position
+      // and average y position)
       // final JCheckBox gaussianEstimate = 
       //        makeCheckBox("Use Gaussian fit of Vector distances", USEGAUSSIAN);
 
@@ -228,16 +230,16 @@ public class PairDisplayForm extends GUFrame {
             }
 
             ParticlePairLister.Builder ppb = new ParticlePairLister.Builder();
-            ppb.maxDistanceNm(maxDistance).
-                  showPairs(showPairList.isSelected()).
-                  showSummary(showPairTrackSummary.isSelected()).
-                  showOverlay(showOverlay.isSelected()).
-                  p2d(p2dDistanceEstimate.isSelected()).
-                  showXYHistogram(showXYHistogram.isSelected()).
-                  p2dSingleFrames(p2dSingle.isSelected()).
-                  registrationError(registrationError).
-                  showHistogram(showHistogram.isSelected()).
-                  bootstrap(bootstrap.isSelected());
+            ppb.maxDistanceNm(maxDistance)
+                    .showPairs(showPairList.isSelected())
+                    .showSummary(showPairTrackSummary.isSelected())
+                    .showOverlay(showOverlay.isSelected())
+                    .p2d(p2dDistanceEstimate.isSelected())
+                    .showXYHistogram(showXYHistogram.isSelected())
+                    .p2dSingleFrames(p2dSingle.isSelected())
+                    .registrationError(registrationError)
+                    .showHistogram(showHistogram.isSelected())
+                    .bootstrap(bootstrap.isSelected());
             DataCollectionForm.getInstance().listPairTracks(ppb);
 
             myFrame.dispose();

@@ -32,7 +32,7 @@ public class Utils {
       return roiManager;
    }
 
-   public static List<Polygon> FloatToNormalPolygon(List<FloatPolygon> floatPolygons) {
+   public static List<Polygon> floatToNormalPolygon(List<FloatPolygon> floatPolygons) {
       // manually copy from FloatPolygon to Polygon
       List<Polygon> roiPolygons = new ArrayList<>();
       for (FloatPolygon fp : floatPolygons) {
@@ -62,8 +62,8 @@ public class Utils {
 
    /**
     * Simple utility methods for points
-    * <p>
-    * Adds a point to an existing polygon.
+    *
+    * <p>Adds a point to an existing polygon.
     *
     * @param polygon Existing polygon
     * @param p       Point to be added
@@ -79,7 +79,7 @@ public class Utils {
     * @return Vertices  of the polygon
     */
    public static Point[] getVertices(Polygon polygon) {
-      Point vertices[] = new Point[polygon.npoints];
+      Point[] vertices = new Point[polygon.npoints];
       for (int i = 0; i < polygon.npoints; ++i) {
          vertices[i] = new Point(polygon.xpoints[i], polygon.ypoints[i]);
       }

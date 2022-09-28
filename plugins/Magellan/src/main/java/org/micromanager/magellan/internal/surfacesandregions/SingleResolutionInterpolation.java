@@ -35,13 +35,18 @@ public class SingleResolutionInterpolation {
    private final boolean[][] interpDefined_;
    private final float[][] interpolation_;
    private final float[][] normals_; //stored in degrees
-   private final double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
+   private final double boundXMin_;
+   private final double boundXMax_;
+   private final double boundYMin_;
+   private final double boundYMax_;
    private Region<Euclidean2D> convexHullRegion_;
    //for extrapolation
    private TreeSet<Vector2D> convexHullVertices_;
 
-   public SingleResolutionInterpolation(int pixPerPoint, boolean[][] defined, float[][] interp, float[][] normals, double boundXMin, double boundXMax, double boundYMin, double boundYMax, 
-           Region<Euclidean2D> ch, Vector2D[] convexHullVertices ) {
+   public SingleResolutionInterpolation(int pixPerPoint, boolean[][] defined,
+                                        float[][] interp, float[][] normals, double boundXMin,
+                                        double boundXMax, double boundYMin, double boundYMax,
+           Region<Euclidean2D> ch, Vector2D[] convexHullVertices) {
       pixPerInterpPoint_ = pixPerPoint;
       interpDefined_ = defined;
       interpolation_ = interp;      
@@ -73,11 +78,12 @@ public class SingleResolutionInterpolation {
    
  
    /**
-    * Get the angle of the surface normal at this point to vertical
-    * If extrpolated value, return 0
-    * @param x
-    * @param y
-    * @return 
+    * Get the angle of the surface normal at this point to vertical.
+    * If extrapolated value, return 0
+    *
+    * @param x x coordinate of point
+    * @param y y coordinate of poinyt
+    * @return angle
     */
    public float getNormalAngleToVertical(double x, double y) {
       if (!isInsideConvexHull(x, y)) {
@@ -85,24 +91,29 @@ public class SingleResolutionInterpolation {
       }
       int numInterpPointsX = normals_[0].length;
       int numInterpPointsY = normals_.length;
-      int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_)) * (numInterpPointsX - 1));
-      int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_)) * (numInterpPointsY - 1));
+      int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_))
+            * (numInterpPointsX - 1));
+      int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_))
+            * (numInterpPointsY - 1));
       if (xIndex >= 0 && yIndex >= 0 && xIndex < normals_[0].length && yIndex < normals_.length) {
          return normals_[yIndex][xIndex];
       }
       return 0;
    }
 
-      public boolean isInterpDefined(double x, double y) {
+   public boolean isInterpDefined(double x, double y) {
       if (!isInsideConvexHull(x, y)) {
          return false;
       }
       //try to get the value from the calulated interpolation
       int numInterpPointsX = interpolation_[0].length;
       int numInterpPointsY = interpolation_.length;
-      int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_)) * (numInterpPointsX - 1));
-      int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_)) * (numInterpPointsY - 1));
-      if (xIndex >= 0 && yIndex >= 0 && xIndex < interpolation_[0].length && yIndex < interpolation_.length) {
+      int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_))
+            * (numInterpPointsX - 1));
+      int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_))
+            * (numInterpPointsY - 1));
+      if (xIndex >= 0 && yIndex >= 0 && xIndex < interpolation_[0].length && yIndex
+            < interpolation_.length) {
          return interpDefined_[yIndex][xIndex];
 
       }
@@ -110,14 +121,14 @@ public class SingleResolutionInterpolation {
    }
    
    public float getInterpolatedValue(double x, double y) {
-         //try to get the value from the calulated interpolation
-         int numInterpPointsX = interpolation_[0].length;
-         int numInterpPointsY = interpolation_.length;
-         int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_)) * (numInterpPointsX - 1));
-         int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_)) * (numInterpPointsY - 1));
-//         if (xIndex >= 0 && yIndex >= 0 && xIndex < interpolation_[0].length && yIndex < interpolation_.length ){
-            return interpolation_[yIndex][xIndex];               
-//         }
+      //try to get the value from the calulated interpolation
+      int numInterpPointsX = interpolation_[0].length;
+      int numInterpPointsY = interpolation_.length;
+      int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_))
+            * (numInterpPointsX - 1));
+      int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_))
+            * (numInterpPointsY - 1));
+      return interpolation_[yIndex][xIndex];
    }
       
 

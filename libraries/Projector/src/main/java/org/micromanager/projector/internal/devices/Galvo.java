@@ -38,7 +38,7 @@ public class Galvo implements ProjectionDevice {
    private final ExecutorService galvoExecutor_;
    private final HashSet<OnStateListener> onStateListeners_ =
          new HashSet<>();
-   private long interval_us_;
+   private long intervalUs_;
    private String externalShutter_;
 
    public Galvo(Studio app, CMMCore mmc) {
@@ -296,10 +296,10 @@ public class Galvo implements ProjectionDevice {
    }
 
    @Override
-   public void setExposure(long interval_us) {
+   public void setExposure(long intervalUs) {
       try {
-         interval_us_ = interval_us;
-         mmc_.setGalvoSpotInterval(galvo_, interval_us);
+         intervalUs_ = intervalUs;
+         mmc_.setGalvoSpotInterval(galvo_, intervalUs);
       } catch (Exception ex) {
          app_.logs().showError(ex);
       }
@@ -308,7 +308,7 @@ public class Galvo implements ProjectionDevice {
    // Reads the exposure time in us
    @Override
    public long getExposure() {
-      return interval_us_;
+      return intervalUs_;
    }
 
    @Override

@@ -1,4 +1,4 @@
-/**
+/*
  * Gaussian Fitting package Implements MultiVariaRealFunction using the Gaussian functions defined
  * in GaussianUtils.  Implement MLE
  *

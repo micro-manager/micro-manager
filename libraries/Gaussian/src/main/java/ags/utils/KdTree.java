@@ -1,17 +1,18 @@
 /**
- * Copyright 2009 Rednaxela
- * <p>
- * This software is provided 'as-is', without any express or implied warranty. In no event will the
- * authors be held liable for any damages arising from the use of this software.
- * <p>
- * Permission is granted to anyone to use this software for any purpose, including commercial
+ * Copyright 2009 Rednaxela.
+ *
+ * <p>This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the use
+ * of this software.
+ *
+ * <p>Permission is granted to anyone to use this software for any purpose, including commercial
  * applications, and to alter it and redistribute it freely, subject to the following restrictions:
- * <p>
- * 1. The origin of this software must not be misrepresented; you must not claim that you wrote the
- * original software. If you use this software in a product, an acknowledgment in the product
- * documentation would be appreciated but is not required.
- * <p>
- * 2. This notice may not be removed or altered from any source distribution.
+ *
+ * <p>1. The origin of this software must not be misrepresented; you must not claim that you
+ * wrote the original software. If you use this software in a product, an acknowledgment in
+ * the product documentation would be appreciated but is not required.
+ *
+ * <p>2. This notice may not be removed or altered from any source distribution.
  */
 
 package ags.utils;
@@ -45,12 +46,14 @@ public abstract class KdTree<T> {
    private int locationCount;
 
    // Stem only
-   private KdTree<T> left, right;
+   private KdTree<T> left;
+   private KdTree<T> right;
    private int splitDimension;
    private double splitValue;
 
    // Bounds
-   private double[] minLimit, maxLimit;
+   private double[] minLimit;
+   private double[] maxLimit;
    private boolean singularity;
 
    // Temporary
@@ -645,10 +648,9 @@ public abstract class KdTree<T> {
             distance[values] = dist;
             upHeapify(values);
             values++;
-         }
-         // If there is no room left in the heap, and the new entry is lower
-         // than the max entry
-         else if (dist < distance[0]) {
+         } else if (dist < distance[0]) {
+            // If there is no room left in the heap, and the new entry is lower
+            // than the max entry
             // Replace the max entry with the new entry
             data[0] = value;
             distance[0] = dist;
@@ -671,8 +673,8 @@ public abstract class KdTree<T> {
 
       private void upHeapify(int c) {
          for (int p = (c - 1) / 2; c != 0 && distance[c] > distance[p]; c = p, p = (c - 1) / 2) {
-            Object pData = data[p];
-            double pDist = distance[p];
+            final Object pData = data[p];
+            final double pDist = distance[p];
             data[p] = data[c];
             distance[p] = distance[c];
             data[c] = pData;
@@ -688,7 +690,7 @@ public abstract class KdTree<T> {
             if (distance[p] < distance[c]) {
                // Swap the points
                Object pData = data[p];
-               double pDist = distance[p];
+               final double pDist = distance[p];
                data[p] = data[c];
                distance[p] = distance[c];
                data[c] = pData;

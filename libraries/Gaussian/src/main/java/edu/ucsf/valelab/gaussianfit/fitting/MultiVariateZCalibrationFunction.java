@@ -38,16 +38,16 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 
 /**
+ * Function as defined in Bo Huang Science paper.
+ *
+ * <p>f = (z-c) / d;
+ *
+ * <p>w(x or y) (z) = w0 * Sqrt (1 + f*f + A * f*f*f + B * f*f*f*f )
+ *
+ * <p>Where z = z position of the stage c = offset from average focal plane w0 = PSF width
+ * where z==c d = focus depth of the microscope A, B = higher order coeficients
+ *
  * @author Nico Stuurman
- * <p>
- * Function as defined in Bo Huang Science paper
- * <p>
- * f = (z-c) / d;
- * <p>
- * w(x or y) (z) = w0 * Sqrt (1 + f*f + A * f*f*f + B * f*f*f*f )
- * <p>
- * Where z = z position of the stage c = offset from average focal plane w0 = PSF width where z==c d
- * = focus depth of the microscope A, B = higher order coeficients
  */
 public class MultiVariateZCalibrationFunction implements MultivariateRealFunction {
 
@@ -63,9 +63,11 @@ public class MultiVariateZCalibrationFunction implements MultivariateRealFunctio
 
 
    /**
+    * Returns value of this function.
+    *
     * @param params array of double with function parameters where: 0: c 1: w0 2: d 3: A 4: B
-    * @return
-    * @throws FunctionEvaluationException
+    * @return Results
+    * @throws FunctionEvaluationException Will happen
     */
    public double value(double[] params) throws FunctionEvaluationException {
       if (params.length < 5) {
@@ -88,9 +90,9 @@ public class MultiVariateZCalibrationFunction implements MultivariateRealFunctio
 
       double f = (z - params[0]) / params[2];
 
-      return params[1] * Math.sqrt(1 + f * f +
-            params[3] * f * f * f +
-            params[4] * f * f * f * f);
+      return params[1] * Math.sqrt(1 + f * f
+              + params[3] * f * f * f
+              + params[4] * f * f * f * f);
    }
 
 

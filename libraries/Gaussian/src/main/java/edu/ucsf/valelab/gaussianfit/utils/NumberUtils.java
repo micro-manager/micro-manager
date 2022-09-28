@@ -32,6 +32,7 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
+
 package edu.ucsf.valelab.gaussianfit.utils;
 
 import java.text.NumberFormat;
@@ -46,7 +47,8 @@ public class NumberUtils {
    private static final int MAXFRACTIONDIGITS = 4;
 
    static {
-      // The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
+      // The display is supposed to use local formatting
+      // (e.g., switch commas with periods in Locale.GERMANY).
       FORMAT = NumberFormat.getInstance();
       FORMAT.setMaximumFractionDigits(MAXFRACTIONDIGITS);
    }

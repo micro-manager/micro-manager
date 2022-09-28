@@ -83,8 +83,8 @@ public class ProjectorControlExecution {
          if (targetingChannel != null && targetingChannel.length() > 0) {
             originalConfig = studio_.core().getConfigGroupState(channelGroup);
             if (studio_.core().isConfigDefined(channelGroup, targetingChannel)
-                  && !originalConfig.isConfigurationIncluded(studio_.core().
-                  getConfigData(channelGroup, targetingChannel))) {
+                  && !originalConfig.isConfigurationIncluded(studio_.core()
+                        .getConfigData(channelGroup, targetingChannel))) {
                if (studio_.acquisitions().isAcquisitionRunning()) {
                   studio_.acquisitions().setPause(true);
                }
@@ -149,9 +149,9 @@ public class ProjectorControlExecution {
     */
    public void returnShutter(final String targetingShutter, final boolean originallyOpen) {
       try {
-         if (targetingShutter != null &&
-               (targetingShutter.length() > 0) &&
-               !originallyOpen) {
+         if (targetingShutter != null
+               && (targetingShutter.length() > 0)
+               && !originallyOpen) {
             studio_.core().setShutterOpen(targetingShutter, false);
             studio_.core().waitForDevice(targetingShutter);
          }
@@ -163,24 +163,24 @@ public class ProjectorControlExecution {
    /**
     * Illuminate the polygons ROIs that have been previously uploaded to phototargeter.
     *
-    * @param dev_
+    * @param dev
     * @param targetingChannel
     * @param targetingShutter
     * @param rois             Rois as they appear on the camera.  Only used to records with the
     *                         images
     */
-   public void exposeRois(final ProjectionDevice dev_, final String targetingChannel,
+   public void exposeRois(final ProjectionDevice dev, final String targetingChannel,
          final String targetingShutter, Roi[] rois) {
-      if (dev_ == null) {
+      if (dev == null) {
          return;
       }
-      boolean isGalvo = dev_ instanceof Galvo;
-      Configuration originalConfig = prepareChannel(targetingChannel);
+      boolean isGalvo = dev instanceof Galvo;
+      final Configuration originalConfig = prepareChannel(targetingChannel);
       boolean originalShutterState = prepareShutter(targetingShutter);
-      dev_.runPolygons();
+      dev.runPolygons();
       if (!isGalvo) {
          try {
-            Thread.sleep(dev_.getExposure() / 1000);
+            Thread.sleep(dev.getExposure() / 1000);
          } catch (InterruptedException ex) {
             studio_.logs().logError(ex);
          }
@@ -204,7 +204,7 @@ public class ProjectorControlExecution {
 
 
    // Save ROIs in the acquisition path, if it exists.
-   private void recordPolygons(Roi[] individualRois_) {
+   private void recordPolygons(Roi[] individualRois) {
       if (studio_.acquisitions().isAcquisitionRunning()) {
          if (studio_.acquisitions().getAcquisitionSettings().save()) {
             String location = store_ == null ? null : store_.getSavePath();
@@ -212,7 +212,7 @@ public class ProjectorControlExecution {
                try {
                   File f = new File(location, "ProjectorROIs.zip");
                   if (!f.exists()) {
-                     saveROIs(f, individualRois_);
+                     saveROIs(f, individualRois);
                   }
                } catch (Exception ex) {
                   studio_.logs().logError(ex);
@@ -360,8 +360,8 @@ public class ProjectorControlExecution {
       if (dws != null) {
          for (DisplayWindow dw : dws) {
             if (dw instanceof DisplayController) {
-               if (((DisplayController) dw).getUIController().
-                     getIJImageCanvas().equals(canvas)) {
+               if (((DisplayController) dw).getUIController()
+                           .getIJImageCanvas().equals(canvas)) {
                   return dw.getDataProvider();
                }
             }

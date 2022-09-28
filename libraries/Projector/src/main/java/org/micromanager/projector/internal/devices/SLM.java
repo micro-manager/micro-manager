@@ -116,9 +116,9 @@ public class SLM implements ProjectionDevice {
    // Sets how long the SLM will be illuminated when we display an
    // image.
    @Override
-   public void setExposure(long interval_us) {
+   public void setExposure(long intervalUs) {
       try {
-         mmc_.setSLMExposure(slm_, interval_us / 1000.);
+         mmc_.setSLMExposure(slm_, intervalUs / 1000.);
       } catch (Exception ex) {
          app_.logs().showError(ex);
       }
@@ -279,7 +279,7 @@ public class SLM implements ProjectionDevice {
    @Override
    public void loadRois(List<FloatPolygon> roiFloatPolygons) {
       try {
-         List<Polygon> roiPolygons = Utils.FloatToNormalPolygon(roiFloatPolygons);
+         List<Polygon> roiPolygons = Utils.floatToNormalPolygon(roiFloatPolygons);
          mmc_.setSLMImage(slm_, roisToPixels(slmWidth_, slmHeight_, roiPolygons));
       } catch (Exception ex) {
          app_.logs().showError(ex);

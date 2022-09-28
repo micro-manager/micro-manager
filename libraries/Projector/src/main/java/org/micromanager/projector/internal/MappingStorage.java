@@ -17,12 +17,12 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  */
 public class MappingStorage {
 
-   private final static String MAP_NR_ENTRIES = "NrEntries";
-   private final static String MAP_POLYGON_MAP = "polygonMap-";
-   private final static String MAP_AFFINE_TRANSFORM = "affineTransform-";
-   private final static String MAP_APPROXIMATE_AFFINE = "approximateAffine";
-   private final static String MAP_CAMERA_ROI = "CameraROI";
-   private final static String MAP_CAMERA_BINNING = "CameraBinning";
+   private static final String MAP_NR_ENTRIES = "NrEntries";
+   private static final String MAP_POLYGON_MAP = "polygonMap-";
+   private static final String MAP_AFFINE_TRANSFORM = "affineTransform-";
+   private static final String MAP_APPROXIMATE_AFFINE = "approximateAffine";
+   private static final String MAP_CAMERA_ROI = "CameraROI";
+   private static final String MAP_CAMERA_BINNING = "CameraBinning";
 
    /**
     * Returns the key where we store the Calibration mapping. Each channel/camera combination is
@@ -56,13 +56,13 @@ public class MappingStorage {
    /**
     * Builds a Property Map representing the input
     *
-    * @param mapping Map<Polygon, AffineTransform>
+    * <p>Polygon PropertyMaps are structured as: - Integer - nrEntries - x-i - x position
+    * of point #i - y-i - y position of point #i
+    *
+    * @param mapping Map-Polygon, AffineTransform-
     * @return Propertymap, structured as: - Integer - nrEntries - entries with keys: polygonMap-i  -
-    * Contains a PropertyMap encoding Polygon affineTransform-i - Contained affineTransform
-    * belonging to this Polygon
-    * <p>
-    * Polygon PropertyMaps are structured as: - Integer - nrEntries - x-i - x position of point #i -
-    * y-i - y position of point #i
+    *     Contains a PropertyMap encoding Polygon affineTransform-i - Contained affineTransform
+    *     belonging to this Polygon.
     */
    static PropertyMap mapToPropertyMap(Mapping mapping) {
       PropertyMap.Builder pMapBuilder = PropertyMaps.builder();

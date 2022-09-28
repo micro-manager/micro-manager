@@ -36,9 +36,10 @@ import java.util.Set;
 
 /**
  * Simple filter for spot data.
- * <p>
- * Spots can be filtered based on intensity and sigma (width) Setup the filter using the setSigma,
- * setIntensity, and setItemFilter functions, then use the filter class to test individual spots
+ *
+ * <p>Spots can be filtered based on intensity and sigma (width).
+ * Setup the filter using the setSigma, setIntensity, and setItemFilter functions,
+ * then use the filter class to test individual spots
  *
  * @author Nico Stuuman
  */
@@ -97,17 +98,18 @@ public class SpotDataFilter {
    public boolean filter(SpotData spot) {
       final String INTEGRALSIGMA = SpotData.Keys.INTEGRALSIGMA;
       if (useSigma_) {
-         if (spot.hasKey(INTEGRALSIGMA) && (  // return false if no IntegralSigma found?
-               spot.getValue(INTEGRALSIGMA)) < sigmaMin_ ||
-               spot.getValue(INTEGRALSIGMA) > sigmaMax_) {
+         // return false if no IntegralSigma found?
+         if (spot.hasKey(INTEGRALSIGMA) && (
+               spot.getValue(INTEGRALSIGMA)) < sigmaMin_
+               || spot.getValue(INTEGRALSIGMA) > sigmaMax_) {
             return false;
          }
       }
       if (useIntensity_) {
          final String INTENSITY = SpotData.Keys.APERTUREINTENSITY;
          if (spot.hasKey(INTENSITY) && (
-               spot.getValue(INTENSITY) < intensityMin_ ||
-                     spot.getValue(INTENSITY) > intensityMax_)) {
+               spot.getValue(INTENSITY) < intensityMin_
+                       || spot.getValue(INTENSITY) > intensityMax_)) {
             return false;
          }
       }
