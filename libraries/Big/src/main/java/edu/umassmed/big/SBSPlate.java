@@ -16,23 +16,23 @@ public class SBSPlate {
       SBS_384_WELL(24, 16, 4500, "384 Microplate"),
       SBS_1536_WELL(48, 32, 2250, "1536 Microplate");
 
-      SBSPlateTypes(int X, int Y, int wellSpacing, String Name) {
-         this.X = X;
-         this.Y = Y;
+      SBSPlateTypes(int x, int y, int wellSpacing, String name) {
+         this.x = x;
+         this.y = y;
          this.wellSpacing = wellSpacing;
-         this.Name = Name;
+         this.name = name;
       }
 
       public int getX() {
-         return X;
+         return x;
       }
 
       public int getY() {
-         return Y;
+         return y;
       }
 
       public int getXY() {
-         return X * Y;
+         return x * y;
       }
 
       public int getWellSpacing() {
@@ -40,13 +40,13 @@ public class SBSPlate {
       }
 
       public String getWellPlateName() {
-         return Name;
+         return name;
       }
 
-      private int X; // 1 indexed
-      private int Y; // 1 indexed
+      private int x; // 1 indexed
+      private int y; // 1 indexed
       private int wellSpacing;
-      private String Name;
+      private String name;
    }
 
    class Well {
@@ -59,21 +59,21 @@ public class SBSPlate {
          this.bSkip = skip;
       }
 
-      Well(double X, double Y, double Z) {
+      Well(double x, double y, double z) {
          this.bSkip = false;
          position = new double[3];
-         position[0] = X;
-         position[1] = Y;
-         position[2] = Z;
+         position[0] = x;
+         position[1] = y;
+         position[2] = z;
          this.wellPositionList.add(position);
       }
 
-      void addPosition(double X, double Y, double Z) {
+      void addPosition(double x, double y, double z) {
          this.bSkip = false;
          position = new double[3];
-         position[0] = X;
-         position[1] = Y;
-         position[2] = Z;
+         position[0] = x;
+         position[1] = y;
+         position[2] = z;
          this.wellPositionList.add(position);
 
       }
@@ -92,7 +92,7 @@ public class SBSPlate {
    private int[] lastWell = {11, 7}; // 0 indexed
    private int[] currentWell = {0, 0};
    private Well[][] wellArray;
-   private double[] A1Position = {0,
+   private double[] a1Position = {0,
          0}; // if stage can't be zeroed, then use this an an offset, in microns.
    private Vector<double[]> globalPositionList = new Vector<double[]>();
 
@@ -108,10 +108,10 @@ public class SBSPlate {
       initialize(platesize, x, y);
    }
 
-   public SBSPlate(int Size) {
+   public SBSPlate(int size) {
       SBSPlateTypes platesize;
 
-      switch (Size) {
+      switch (size) {
          case 24: {
             platesize = SBSPlate.SBSPlateTypes.SBS_24_WELL;
             ;
@@ -135,10 +135,10 @@ public class SBSPlate {
       initialize(platesize, 0, 0);
    }
 
-   public SBSPlate(int Size, double x, double y) {
+   public SBSPlate(int size, double x, double y) {
       SBSPlateTypes platesize;
 
-      switch (Size) {
+      switch (size) {
          case 24: {
             platesize = SBSPlate.SBSPlateTypes.SBS_24_WELL;
             ;
@@ -168,8 +168,8 @@ public class SBSPlate {
       firstWell[1] = 0;
       lastWell[0] = this.plateSize.getX() - 1;
       lastWell[1] = this.plateSize.getY() - 1;
-      A1Position[0] = x;
-      A1Position[1] = y;
+      a1Position[0] = x;
+      a1Position[1] = y;
       wellArray = new Well[this.plateSize.getX()][this.plateSize.getY()];
    }
 
@@ -247,8 +247,8 @@ public class SBSPlate {
     * @param y micron coordinate the shortest dimension of the wellplate at well A1
     */
    public void setPositionA1(double x, double y) {
-      A1Position[0] = x;
-      A1Position[1] = y;
+      a1Position[0] = x;
+      a1Position[1] = y;
    }
 
    public void setLastWell(int x, int y) {
@@ -277,16 +277,16 @@ public class SBSPlate {
    /**
     * Adds global offset, values need to be relative to center of well
     *
-    * @param X coordinate of the longest dimension of the well plate in microns
-    * @param Y coordinate of the shortest dimension of the well plate in microns
-    * @param Z focus depth in microns
+    * @param x coordinate of the longest dimension of the well plate in microns
+    * @param y coordinate of the shortest dimension of the well plate in microns
+    * @param z focus depth in microns
     */
-   public void addPosition(double X, double Y, double Z) {
+   public void addPosition(double x, double y, double z) {
       double[] position = {0, 0, 0};
 
-      position[0] = X;
-      position[1] = Y;
-      position[2] = Z;
+      position[0] = x;
+      position[1] = y;
+      position[2] = z;
 
       globalPositionList.add(position);
    }
@@ -294,28 +294,28 @@ public class SBSPlate {
    /**
     * Adds local offset of the current position, values need to be relative to center of well
     *
-    * @param X    coordinate of the longest dimension of the well plate in microns
-    * @param Y    coordinate of the shortest dimension of the well plate in microns
-    * @param Z    focus depth in microns
+    * @param x    coordinate of the longest dimension of the well plate in microns
+    * @param y    coordinate of the shortest dimension of the well plate in microns
+    * @param z    focus depth in microns
     * @param well number within the plate, or within region of the plate if first and last wells are
     *             set
     */
-   public void addPosition(double X, double Y, double Z, int well) {
+   public void addPosition(double x, double y, double z, int well) {
       // switch to 0 indexed
       int[] coordinates = {0, 0};
-      double[] position = {0, 0, 0};
+      final double[] position = {0.0, 0.0, 0.0};
 
       coordinates = getPlateCoordinates(well); // returns 1 indexed
       // convert to 0 indexed
       coordinates[0]--;
       coordinates[1]--;
 
-      position[0] = X;
-      position[1] = Y;
-      position[2] = Z;
+      position[0] = x;
+      position[1] = y;
+      position[2] = z;
 
       if (wellArray[coordinates[0]][coordinates[1]] == null) {
-         wellArray[coordinates[0]][coordinates[1]] = new Well(X, Y, Z);
+         wellArray[coordinates[0]][coordinates[1]] = new Well(x, y, z);
       } else {
          wellArray[coordinates[0]][coordinates[1]].wellPositionList.add(position);
       }
@@ -386,29 +386,30 @@ public class SBSPlate {
     */
    public String getWellLabel(int well) {
       int[] coordinates = {0, 0};
-      int X, Y;
+      int x;
+      int y;
       String xLabel;
       String yLabel;
       // convert position into X and Y coordinates
 
       coordinates = getPlateCoordinates(well);
-      X = coordinates[0];
-      Y = coordinates[1];
+      x = coordinates[0];
+      y = coordinates[1];
 
-      if (X < 0 || Y < 0) {
+      if (x < 0 || y < 0) {
          return ("Out of Bounds!");
       }
 
-      if (X < 10) {
-         xLabel = "0" + Integer.toString(X);
+      if (x < 10) {
+         xLabel = "0" + Integer.toString(x);
       } else {
-         xLabel = Integer.toString(X);
+         xLabel = Integer.toString(x);
       }
 
-      if (Y <= 26) {
-         yLabel = "" + (char) (Y + 64);
+      if (y <= 26) {
+         yLabel = "" + (char) (y + 64);
       } else {
-         yLabel = "A" + (char) (Y + 38);
+         yLabel = "A" + (char) (y + 38);
       }
 
       return (yLabel + xLabel);
@@ -426,8 +427,8 @@ public class SBSPlate {
    /**
     * checks the number of positions of the current well. It will check the position list for the
     * current well and if that exits, return that.
-    * <p>
-    * Otherwise it will return the number of positions of the global list.
+    *
+    * <p>Otherwise it will return the number of positions of the global list.
     *
     * @return number of positions within then current well
     */
@@ -448,8 +449,8 @@ public class SBSPlate {
    /**
     * checks the number of positions of a given well. It will check the position list for the
     * current well and if that exits, return that.
-    * <p>
-    * Otherwise it will return the number of positions of the global list.
+    *
+    * <p>Otherwise it will return the number of positions of the global list.
     *
     * @param well number within the plate, or within region of the plate if first and last wells are
     *             set
@@ -482,8 +483,8 @@ public class SBSPlate {
    public double[] getNextWellPosition(int index) {
       double[] position = {0, 0, 0}; // returns microns position
 
-      position[0] = ((currentWell[0]) * this.plateSize.getWellSpacing()) + A1Position[0];
-      position[1] = ((currentWell[1]) * this.plateSize.getWellSpacing()) + A1Position[1];
+      position[0] = ((currentWell[0]) * this.plateSize.getWellSpacing()) + a1Position[0];
+      position[1] = ((currentWell[1]) * this.plateSize.getWellSpacing()) + a1Position[1];
       position[2] = 0;
 
       if (index < 0) {
@@ -533,20 +534,20 @@ public class SBSPlate {
    /**
     * Returns the X, and Y coordinates of the center of the current well in microns.
     *
-    * @param X coordinate position of the current well in microns
-    * @param Y coordinate position of the current well in microns
+    * @param x coordinate position of the current well in microns
+    * @param y coordinate position of the current well in microns
     * @return returns an two double array containing X, Y coordinates of a well in microns
     */
-   public double[] getPlatePosition(int X, int Y) {
+   public double[] getPlatePosition(int x, int y) {
       double[] position = {0, 0, 0}; // X, Y, Z
       // switch to 0 indexed
-      X--;
-      Y--;
-      position[0] = (X * this.plateSize.getWellSpacing()) + A1Position[0];
-      position[1] = (Y * this.plateSize.getWellSpacing()) + A1Position[1];
+      x--;
+      y--;
+      position[0] = (x * this.plateSize.getWellSpacing()) + a1Position[0];
+      position[1] = (y * this.plateSize.getWellSpacing()) + a1Position[1];
       position[2] = 0;
 
-      if (wellArray[X][Y] == null) {
+      if (wellArray[x][y] == null) {
          // if Well class doesn't exist, then check global list
          if (globalPositionList.size() >= 1) {
             position[0] += globalPositionList.get(0)[0];
@@ -555,9 +556,9 @@ public class SBSPlate {
          }
       } else {
          if (wellArray[firstWell[0]][firstWell[1]].wellPositionList.size() >= 1) {
-            position[0] += wellArray[X][Y].wellPositionList.get(0)[0];
-            position[1] += wellArray[X][Y].wellPositionList.get(0)[1];
-            position[2] += wellArray[X][Y].wellPositionList.get(0)[2];
+            position[0] += wellArray[x][y].wellPositionList.get(0)[0];
+            position[1] += wellArray[x][y].wellPositionList.get(0)[1];
+            position[2] += wellArray[x][y].wellPositionList.get(0)[2];
          }
       }
 
@@ -577,7 +578,8 @@ public class SBSPlate {
     * Returns the position, in microns, of the next well, based on position of the last well.
     *
     * @return either the first position for that well, and if it that does not exist, returns the
-    * first global position of that well, which is usually the center of that well, if not defined.
+    *     first global position of that well, which is usually the center of that well,
+    *     if not defined.
     */
    public double[] getNextPlatePosition() {
       double[] position = {0, 0, 0}; // returns microns position
@@ -617,8 +619,8 @@ public class SBSPlate {
          currentWell[0] = firstWell[0];
          currentWell[1] = firstWell[1];
       }
-      position[0] = ((currentWell[0]) * this.plateSize.getWellSpacing()) + A1Position[0];
-      position[1] = ((currentWell[1]) * this.plateSize.getWellSpacing()) + A1Position[1];
+      position[0] = ((currentWell[0]) * this.plateSize.getWellSpacing()) + a1Position[0];
+      position[1] = ((currentWell[1]) * this.plateSize.getWellSpacing()) + a1Position[1];
       position[2] = 0;
 
       if (wellArray[currentWell[0]][currentWell[1]] == null) {
@@ -662,7 +664,8 @@ public class SBSPlate {
          coordinates[1] = 1 + firstWell[1] + (well % (lastWell[1] - firstWell[1] + 1));
       }
 
-      // reverse well position because we reverse direction on odd rows in reference to starting column, which may not be the first column
+      // reverse well position because we reverse direction on odd rows in reference to
+      // starting column, which may not be the first column
       int even = coordinates[0] - firstWell[0]; // position is 1 indexed, firstWell is 0 indexed.
       if (even % 2 == 0) {
          coordinates[1] = (lastWell[1] + 1) - (coordinates[1] - firstWell[1] - 1);

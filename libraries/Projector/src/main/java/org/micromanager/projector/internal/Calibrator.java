@@ -110,9 +110,10 @@ public class Calibrator {
          Thread.sleep(delayMs);
          core_.snapImage();
          TaggedImage image = core_.getTaggedImage();
-         ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
+         final ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
          // JonD: should use the exposure that the user has set to avoid hardcoding a value;
-         // if the user wants a different exposure time for calibration than for use it's easy to specify
+         // if the user wants a different exposure time for calibration than for use it's easy
+         // to specify
          // => commenting out next two lines
          // long originalExposure = dev_.getExposure();
          // dev_.setExposure(500000);
@@ -181,13 +182,14 @@ public class Calibrator {
          return null;
       }
       try {
-         // require that the RMS value between the mapped points and the measured points be less than 5% of image size
+         // require that the RMS value between the mapped points and the measured points be
+         // less than 5% of image size
          final long imageSize = Math.min(core_.getImageWidth(), core_.getImageHeight());
          return MathFunctions
                .generateAffineTransformFromPointPairs(spotMap, imageSize * 0.05, Double.MAX_VALUE);
       } catch (Exception e) {
-         throw new RuntimeException("Spots aren't detected as expected. " +
-               "Is the Projector in focus and roughly centered in camera's field of view?");
+         throw new RuntimeException("Spots aren't detected as expected. "
+               + "Is the Projector in focus and roughly centered in camera's field of view?");
       }
    }
 
@@ -224,7 +226,8 @@ public class Calibrator {
       // min/max because we don't know the relative orientation of the camera and SLM
       // do some extra checking in case camera/SLM aren't at exactly 90 degrees from each other, 
       // but still better that they are at 0, 90, 180, or 270 degrees from each other
-      // TODO can create grid along camera location instead of SLM's if camera is the limiting factor; this will make arbitrary rotation possible
+      // TODO can create grid along camera location instead of SLM's if camera is the limiting
+      //  factor; this will make arbitrary rotation possible
       final double camLeft = Math
             .min(Math.min(Math.min(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
       final double camRight = Math
@@ -254,8 +257,8 @@ public class Calibrator {
       // require (nGrid + 1)^2 spot measurements to get nGrid^2 squares
       // TODO allow user to change nGrid
       final int nGrid = 7;
-      Point2D.Double slmPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
-      Point2D.Double camPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
+      Point2D.Double[][] slmPoint = new Point2D.Double[1 + nGrid][1 + nGrid];
+      Point2D.Double[][] camPoint = new Point2D.Double[1 + nGrid][1 + nGrid];
 
       // tabulate the camera spot at each of SLM grid points
       for (int i = 0; i <= nGrid; ++i) {
@@ -340,7 +343,7 @@ public class Calibrator {
                   // using the NewDisplayEvent)
                   Thread.sleep(1000);
                }
-               Roi originalROI = IJ.getImage().getRoi();
+               final Roi originalROI = IJ.getImage().getRoi();
 
                // do the heavy lifting of generating the local affine transform map
                Mapping mapping = generateNonlinearMapping();
@@ -353,7 +356,8 @@ public class Calibrator {
                }
 
                // save local affine transform map to preferences
-               // TODO allow different mappings to be stored for different channels (e.g. objective magnification)
+               // TODO allow different mappings to be stored for different channels
+               //  (e.g. objective magnification)
                if (!stopRequested_.get()) {
                   List<Image> snap = app_.live().snap(false);
                   snap.get(0).getHeight();
