@@ -229,7 +229,7 @@ public class ChannelCorrectorPanel extends JPanel {
       ArrayList<Point2D.Double> pointsList = new ArrayList<>();
       ImageProcessor siProc = studio_.data().ij().createProcessor(img);
       ImagePlus siPlus = new ImagePlus("noname", siProc);
-      Polygon maxima = FindLocalMaxima.FindMax(siPlus, distance_, threshold_,
+      Polygon maxima = FindLocalMaxima.findMax(siPlus, distance_, threshold_,
               FindLocalMaxima.FilterType.NONE);
 
       int[][] sC = new int[maxima.npoints][2];
