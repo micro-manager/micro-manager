@@ -932,7 +932,7 @@ public class MainForm extends JFrame {
             ImagePlus siPlus = new ImagePlus("tmp", iProc);
             int val = Integer.parseInt(noiseToleranceTextField_.getText());
             int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
-            Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 * halfSize, val, preFilterType_);
+            Polygon pol = FindLocalMaxima.findMax(siPlus, 2 * halfSize, val, preFilterType_);
             for (int i = 0; i < pol.npoints; i++) {
                int x = pol.xpoints[i];
                int y = pol.ypoints[i];
@@ -1061,7 +1061,7 @@ public class MainForm extends JFrame {
             if (rois != null && rois.length > 0) {
                for (Roi roi : rois) {
                   siPlus.setRoi(roi, false);
-                  Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 *  halfSize, val, preFilterType_);
+                  Polygon pol = FindLocalMaxima.findMax(siPlus, 2 *  halfSize, val, preFilterType_);
                   for (int i = 0; i < pol.npoints && !aStop_.get(); i++) {
                      int x = pol.xpoints[i];
                      int y = pol.ypoints[i];
@@ -1073,7 +1073,7 @@ public class MainForm extends JFrame {
                   }
                }
             } else {  // no Rois in RoiManager
-               Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 * halfSize, val, preFilterType_);
+               Polygon pol = FindLocalMaxima.findMax(siPlus, 2 * halfSize, val, preFilterType_);
                for (int i = 0; i < pol.npoints && !aStop_.get(); i++) {
                   int x = pol.xpoints[i];
                   int y = pol.ypoints[i];
