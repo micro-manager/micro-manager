@@ -12,12 +12,12 @@
 	<property name="mm.tmpdir" location="${mm.basedir}"/>
 
 	<!-- C++ artifacts used during build -->
-	<property name="mm.build.java.library.path" location="${mm.basedir}/MMCoreJ_wrap/.libs"/>
+	<property name="mm.build.java.library.path" location="${mm.cpp.basedir}/MMCoreJ_wrap/.libs"/>
 
 	<!-- Java artifacts -->
 	<property name="mm.java.lib.AntExtensions"
 		location="${mm.basedir}/buildscripts/AntExtensions/AntExtensions.jar"/>
-	<property name="mm.java.lib.mmcorej" location="${mm.cpp.srcdir}/MMCoreJ_wrap/MMCoreJ.jar"/>
+	<property name="mm.java.lib.mmcorej" location="${mm.cpp.basedir}/MMCoreJ_wrap/MMCoreJ.jar"/>
 	<property name="mm.java.lib.mmstudio" location="${mm.basedir}/mmstudio/MMJ_.jar"/>
 	<property name="mm.java.lib.acq-engine" location="${mm.basedir}/acqEngine/MMAcqEngine.jar"/>
 
