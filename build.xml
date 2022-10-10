@@ -18,7 +18,7 @@
 				<property name="mm.java.autofocus.installdir" value="${mm.java.autofocus.installdir}"/>
 				<filelist dir="${mm.basedir}">
 					<!-- Note: Order matters -->
-					<file name="${mm.cpp.srcdir}/MMCoreJ_wrap/build.xml"/>
+					<file name="${mm.cpp.basedir}/MMCoreJ_wrap/build.xml"/>
 					<file name="mmstudio/build.xml"/>
 					<file name="acqEngine/build.xml"/>
 					<file name="libraries/build.xml"/>
@@ -35,7 +35,7 @@
 	</target>
 
 	<target name="build-cpp" description="Build all C++ components">
-		<mm-msbuild project="${mm.cpp.srcdir}/micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
+		<mm-msbuild project="${mm.cpp.basedir}/micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
 			logbasename="msbuild-micromanager${mm.build.logsuffix}"/>
 	</target>
 
@@ -58,7 +58,7 @@
 				<copy todir="${mm.dll.installdir}">
 					<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
 				</copy>
-				<ant antfile="${mm.cpp.srcdir}/DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
+				<ant antfile="${mm.cpp.basedir}/DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
 					<property name="mm.dll.installdir" value="${mm.dll.installdir}"/>
 					<property name="mm.dll.helper.installdir" value="${mm.dll.helper.installdir}"/>
 				</ant>
@@ -190,26 +190,31 @@
 	</target>
 
 	<target name="clean-swig">
-		<!-- Delete SWIG-generated source
+		<!-- Delete SWIG-generated files not covered by clean-cpp
 		     Sorry for the hard-coding, but even running the Clean
 		     target using MSBuild doesn't seem to delete these. -->
-		<delete file="${mm.cpp.srcdir}/MMCoreJ_wrap/MMCoreJ_wrap.cpp"/>
-		<delete file="${mm.cpp.srcdir}/MMCoreJ_wrap/MMCoreJ_wrap.h"/>
-		<delete dir="${mm.basedir}/build/intermediates/Swig"/>
+		<delete file="${mm.cpp.basedir}/MMCoreJ_wrap/MMCoreJ_wrap.cxx"/>
+		<delete file="${mm.cpp.basedir}/MMCoreJ_wrap/MMCoreJ_wrap.h"/>
+		<delete dir="${mm.swig.javasrcdir}"/>
+	</target>
+
+	<target name="clean-cpp" depends="clean-swig" description="Clean only the C++ components">
+		<delete dir="${mm.cpp.outdir}"/>
+		<delete dir="${mm.cpp.intdir}"/>
 	</target>
 
 	<target name="clean-java" description="Clean only the Java components">
 		<run-all-java-projects target="clean"/>
 	</target>
 
-	<target name="clean" depends="clean-swig,clean-java" description="Delete build intermediate and output files">
-		<delete dir="${mm.cpp.outdir}"/>
-		<delete dir="${mm.cpp.intdir}"/>
+	<target name="clean" depends="clean-cpp,clean-java" description="Delete build intermediate and output files">
 	</target>
 
-	<target name="clean-all" depends="clean-swig" description="Delete build files for all configurations and architectures">
+	<target name="clean-all" depends="clean-cpp" description="Delete build files for all configurations and architectures">
+		<!-- Skip clean-java (which is slow and redundant here) -->
 		<delete dir="${mm.outdir}"/>
 		<delete dir="${mm.intdir}"/>
+		<delete dir="${mm.cpp.basedir}/build"/>
 	</target>
 
 	<target name="unstage" description="Delete staged files">

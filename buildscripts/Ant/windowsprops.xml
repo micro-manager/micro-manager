@@ -41,8 +41,8 @@
 	<property name="mm.tmpdir" location="${mm.intdir}"/>
 
 	<!-- C++ components -->
-	<property name="mm.cpp.intdir" location="${mm.intdir}/${mm.configuration}/${mm.architecture}"/>
-	<property name="mm.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.architecture}"/>
+	<property name="mm.cpp.intdir" location="${mm.cpp.basedir}/build/intermediates/${mm.configuration}/${mm.architecture}"/>
+	<property name="mm.cpp.outdir" location="${mm.cpp.basedir}/build/${mm.configuration}/${mm.architecture}"/>
 	<if>
 		<istrue value="${mm.build.for.imagej2updater}"/>
 		<then>
@@ -55,14 +55,13 @@
 	<property name="mm.dll.helper.installdir" location="${mm.dll.installdir}"/>
 
 	<!-- C++ DLLs matching the build system architecture -->
-	<property name="mm.build.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.build.architecture}"/>
+	<property name="mm.build.cpp.outdir" location="${mm.cpp.basedir}/build/${mm.configuration}/${mm.build.architecture}"/>
 
 	<!-- Only include demo device adapter -->
 	<property name="mm.build.stage.demo.only" value="false"/>
 
 	<!-- Swig output -->
-	<property name="mm.swig.javasrcdir" location="${mm.intdir}/Swig"/>
-	<property name="mm.swig.pysrcdir" location="${mm.outdir}/Swig"/>
+	<property name="mm.swig.javasrcdir" location="${mm.cpp.basedir}/build/intermediates/Swig"/>
 
 	<!-- C++ artifacts used during build (architecture matches build system) -->
 	<property name="mm.build.java.library.path" location="${mm.build.cpp.outdir}"/>
@@ -134,7 +133,7 @@
 
 			<local name="msbuild.params"/>
 			<property name="msbuild.params"
-				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /p:MM_BUILDDIR=${mm.outdir} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
+				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
 
 			<!-- Find the bat file that activates the Visual Studio environment -->
 			<local name="vsDevCmdBat"/>
