@@ -477,8 +477,7 @@ public class CRISP {
     public String getAxis() {
         String result = "";
         try {
-            result = core.getProperty(deviceName, 
-                isTiger() ? PropName.TIGER.AXIS_LETTER : PropName.MS2000.AXIS_LETTER);
+            result = core.getProperty(deviceName,  PropName.AXIS_LETTER);
         } catch (Exception e) {
             //studio.logs().showError("CRISP: Failed to read the axis letter.");
         }
