@@ -62,7 +62,7 @@ export SDKROOT=$MM_MACOSX_SDKROOT
 cd $MM_SRCDIR
 
 if [ -z "$MM_VERSION" ]; then
-   MM_VERSION="$(cat version.txt)"
+   MM_VERSION="$(cat version.txt | tr -d '[\r\n]')"
    # Include date unless release build; use US Pacific _Standard_ Time.
    # Note that POSIX TZ has the sign inverted comapred to the usual GMT-8.
    [ "$use_release_version" = yes ] || MM_VERSION="$MM_VERSION-$(TZ=Etc/GMT+8 date +%Y%m%d)"
