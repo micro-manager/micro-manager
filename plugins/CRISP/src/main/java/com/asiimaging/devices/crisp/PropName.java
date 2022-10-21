@@ -14,7 +14,9 @@ public class PropName {
     
     public static final String CRISP_STATE = "CRISP State";
     public static final String DESCRIPTION = "Description";
-    
+
+    public static final String AXIS_LETTER = "AxisLetter";
+
     public static final String SUM = "Sum";
     public static final String SNR = "Signal Noise Ratio";
     public static final String GAIN = "GainMultiplier";
@@ -31,17 +33,9 @@ public class PropName {
     public static final String REFRESH_PROP_VALUES = "RefreshPropertyValues";
     
     /**
-     * PropName only on Tiger.
-     */
-    public class TIGER {
-        public static final String AXIS_LETTER = "AxisLetter";
-    }
-    
-    /**
      * PropName only on MS2000.
      */
     public class MS2000 {
-        public static final String AXIS_LETTER = "Axis";
         public static final String OBTAIN_FOCUS_CURVE = "Obtain Focus Curve";
         public static final String FOCUS_CURVE_DATA_PREFIX = "Focus Curve Data"; // Focus Curve Data0 ... Focus Curve Data23
     }
