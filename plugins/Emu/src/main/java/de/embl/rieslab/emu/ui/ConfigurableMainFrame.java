@@ -169,7 +169,12 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
       }
       this.setIconImages(lst);
 
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      // allow using ConfigurableMainFrame outside Micro-Manager (e.g. Eclipse WindowBuilder)
+      try {
+         WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      } catch (NullPointerException e){
+         // do nothing
+      }
    }
 
    private ArrayList<ConfigurablePanel> listConfigurablePanels(Component[] c,
