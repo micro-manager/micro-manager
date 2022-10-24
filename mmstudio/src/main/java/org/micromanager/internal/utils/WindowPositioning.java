@@ -360,10 +360,16 @@ public final class WindowPositioning {
       }
 
       private void restoreGeometry() {
-         PropertyMap pmap = MMStudio.getInstance().profile().getSettings(getClass())
+         PropertyMap pmap;
+         try {
+            pmap = MMStudio.getInstance().profile().getSettings(getClass())
                .getPropertyMap(positioningClass_.getCanonicalName(),
                      PropertyMaps.emptyPropertyMap()).getPropertyMap(
                      positioningKey_, PropertyMaps.emptyPropertyMap());
+         } catch (Exception e) {
+            // Better to continue without restoring geometry than to throw.
+            return;
+         }
 
          switch (mode_) {
             case MEMORIZE_BOUNDS:
