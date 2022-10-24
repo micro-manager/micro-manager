@@ -22,16 +22,21 @@ package org.micromanager.plugins.micromanager;
 
 import graphics.scenery.Settings;
 import kotlin.Unit;
-import microscenery.ControlledVolumeStreamServer;
-import microscenery.network.ServerSignal;
+import microscenery.Util;
+import microscenery.hardware.micromanagerConnection.MMConnection;
+import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
+import microscenery.network.ControlSignalsClient;
+import microscenery.network.RemoteMicroscopeServer;
+import microscenery.network.SliceStorage;
+import microscenery.signals.*;
 import net.miginfocom.swing.MigLayout;
-import org.joml.Vector3i;
+import org.joml.Vector2i;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
+import org.zeromq.ZContext;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.util.stream.Collectors;
 
 // Imports for MMStudio internal packages
@@ -54,23 +59,26 @@ public class MicrosceneryStreamFrame extends JFrame {
     private final JLabel dimensionsLabel_;
     private final JLabel timesLabel;
 
-    //   private final JLabel imageInfoLabel_;
-//   private final JLabel exposureTimeLabel_;
-    private final ControlledVolumeStreamServer cvss;
+    private final RemoteMicroscopeServer server;
     private final Settings msSettings;
+    private final MicromanagerWrapper micromanagerWrapper;
 
 
     public MicrosceneryStreamFrame(Studio studio) {
         super("Microscenery Stream Plugin");
-        cvss = new ControlledVolumeStreamServer(studio.core());
-        msSettings = cvss.getSettings();
-
+        ZContext zContext = new ZContext();
+        MMConnection mmcon = new MMConnection(studio.core());
+        micromanagerWrapper = new MicromanagerWrapper(mmcon,200);
+        server = new RemoteMicroscopeServer(micromanagerWrapper, zContext,new SliceStorage(mmcon.getHeight()*mmcon.getWidth()*500));
+        msSettings  = Util.getMicroscenerySettings();
         //studio.acquisitions().runAcquisition().getImage()
+
+        ControlSignalsClient loopBackConnection = new ControlSignalsClient(zContext,server.getBasePort(),"localhost", java.util.List.of(this::updateLabels));
 
         super.setLayout(new MigLayout());//"fill, insets 2, gap 2, flowx"));
 
         super.add(new JLabel("Ports: "));
-        portLabel_ = new JLabel(cvss.getBasePort() + "" + cvss.getVolumeSender().usedPorts().stream().map(p -> " ," + p).collect(Collectors.joining()));
+        portLabel_ = new JLabel(server.getBasePort() + "" + server.getStatus().getDataPorts().stream().map(p -> " ," + p).collect(Collectors.joining()));
         super.add(portLabel_);
 
         super.add(new JLabel("Clients: "));
@@ -110,7 +118,7 @@ public class MicrosceneryStreamFrame extends JFrame {
 
 
         super.add(new JLabel("Refresh Time (ms): "));
-        refreshTimeText_ = new JTextField(String.valueOf(cvss.getTimeBetweenUpdates()),10);
+        refreshTimeText_ = new JTextField(String.valueOf(micromanagerWrapper.getTimeBetweenUpdates()),10);
         super.add(refreshTimeText_, "wrap");
 
 
@@ -126,9 +134,9 @@ public class MicrosceneryStreamFrame extends JFrame {
         timesLabel = new JLabel("uninitalized");
         super.add(timesLabel, "wrap");
         final Timer timer = new Timer(500, null);
-        ActionListener listener = e -> timesLabel.setText("c:" + cvss.getMmConnection().getMeanCopyTime() + " s:" + cvss.getMmConnection().getMeanSnapTime());
-        timer.addActionListener(listener);
-        timer.start();
+        //ActionListener listener = e -> timesLabel.setText("c:" + cvss.getMmConnection().getMeanCopyTime() + " s:" + cvss.getMmConnection().getMeanSnapTime());
+        //timer.addActionListener(listener);
+        //timer.start();
 
         JButton applyButton = new JButton("Apply Params");
         applyButton.addActionListener(e -> updateParams());
@@ -156,6 +164,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         });
         super.add(copyFromAcqEngButton);
 
+        /*
         JButton sendButton = new JButton("Start Imaging");
         sendButton.addActionListener(e -> cvss.start());
         super.add(sendButton);
@@ -163,8 +172,8 @@ public class MicrosceneryStreamFrame extends JFrame {
         JButton stopButton = new JButton("Stop Imaging");
         stopButton.addActionListener(e -> cvss.pause());
         super.add(stopButton, "wrap");
-
-        super.add(new JLabel("vAcquEngine"));
+*/
+        super.add(new JLabel("vProtocol2V"));
 
 //      // Snap an image, show the image in the Snap/Live view, and show some
 //      // stats on the image in our frame.
@@ -212,11 +221,8 @@ public class MicrosceneryStreamFrame extends JFrame {
         super.pack();
 
 
-        updateLabels(cvss.getStatus());
-        cvss.getStatusChange().add(status -> {
-            updateLabels(status);
-            return Unit.INSTANCE;
-        });
+        updateLabels(server.getStatus());
+        updateLabels(new ActualMicroscopeSignal(micromanagerWrapper.status()));
 
         // Registering this class for events means that its event handlers
         // (that is, methods with the @Subscribe annotation) will be invoked when
@@ -246,7 +252,7 @@ public class MicrosceneryStreamFrame extends JFrame {
             msSettings.set("MMConnection.maxZ", maxZ.floatValue());
             msSettings.set("MMConnection.slices", steps);
             msSettings.set("MMConnection.TimeBetweenStackAcquisition", updateTime);
-            cvss.setTimeBetweenUpdates(updateTime);
+            micromanagerWrapper.setTimeBetweenUpdates(updateTime);
         } catch (NumberFormatException exc) {
             JOptionPane.showMessageDialog(null, "Values could not be parsed. Max and Min Z need to be a floating point number and steps an integer. ");
         }
@@ -276,29 +282,35 @@ public class MicrosceneryStreamFrame extends JFrame {
 //            //data.getMaxVal(), data.getMean(), data.getStdDev()));
 //   }
 
-    private void updateLabels(ServerSignal.Status status) {
+    private Unit updateLabels(RemoteMicroscopeSignal signal) {
 
-        // ports label
-        portLabel_.setText(cvss.getBasePort() + "" + status.getDataPorts().stream().map(p -> " ," + p).collect(Collectors.joining()));
+        if (signal instanceof RemoteMicroscopeStatus){
+            // ports label
+            RemoteMicroscopeStatus status = (RemoteMicroscopeStatus) signal;
+            portLabel_.setText(server.getBasePort() + "" + status.getDataPorts().stream().map(p -> " ," + p).collect(Collectors.joining()));
 
-        // connections label
-        connectionsLabel_.setText(status.getConnectedClients() + "");
-
-        // status label
-        switch (status.getState()) {
-            case Paused:
-                statusLabel_.setText("Paused");
-                break;
-            case Imaging:
-                statusLabel_.setText("Imaging");
-                break;
-            case ShuttingDown:
-                statusLabel_.setText("ShuttingDown");
-                break;
+            // connections label
+            connectionsLabel_.setText(status.getConnectedClients() + "");
+        } else if (signal instanceof ActualMicroscopeSignal) {
+            ActualMicroscopeSignal ams = (ActualMicroscopeSignal) signal;
+            if (ams.getSignal() instanceof MicroscopeStatus) {
+                MicroscopeStatus status = (MicroscopeStatus) ams.getSignal();
+                statusLabel_.setText(status.getState().toString());
+            /*
+            // status label
+            switch (status.getState()) {
+                case MANUAL ->
+                case Paused -> statusLabel_.setText("Paused");
+                case Imaging -> statusLabel_.setText("Imaging");
+                case ShuttingDown -> statusLabel_.setText("ShuttingDown");
+            }*/
+            }
         }
 
         // dimensions label
-        Vector3i d = status.getImageSize();
-        dimensionsLabel_.setText(d.x + "x" + d.y + "x" + d.z);
+        Vector2i d =micromanagerWrapper.hardwareDimensions().getImageSize();
+        dimensionsLabel_.setText(d.x + "x" + d.y);
+
+        return Unit.INSTANCE;
     }
 }
