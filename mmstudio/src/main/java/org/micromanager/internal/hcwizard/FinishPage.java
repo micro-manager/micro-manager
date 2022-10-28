@@ -47,7 +47,6 @@ public final class FinishPage extends PagePanel {
 
    private final JTextField fileNameField_;
    private boolean overwrite_ = false;
-   JCheckBox sendCheck_;
 
    /**
     * Create the panel.
@@ -70,24 +69,10 @@ public final class FinishPage extends PagePanel {
       JButton browseButton = new JButton("Browse...");
       browseButton.addActionListener(e -> browseConfigurationFile());
       add(browseButton, "wrap");
-
-      sendCheck_ = new JCheckBox("Send configuration to micro-manager.org");
-      sendCheck_.setFont(new Font("", Font.PLAIN, 12));
-      sendCheck_.addActionListener(arg0 -> model_.setSendConfiguration(sendCheck_.isSelected()));
-
-      add(sendCheck_, "wrap");
-
-      final JLabel sendConfigExplain = new JLabel(
-            "Sending us your configuration file will help us study how"
-                  + " \u00b5Manager is used."); // Micro-Manager
-      sendConfigExplain.setAutoscrolls(true);
-      sendConfigExplain.setFont(sendCheck_.getFont());
-      add(sendConfigExplain, "wrap");
    }
 
    @Override
    public boolean enterPage(boolean next) {
-      sendCheck_.setSelected(model_.getSendConfiguration());
       if (model_.creatingNew_) {
          fileNameField_.setText("");
       } else {

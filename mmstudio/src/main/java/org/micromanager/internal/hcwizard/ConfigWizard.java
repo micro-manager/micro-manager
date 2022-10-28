@@ -27,24 +27,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -54,11 +37,9 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
-import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.HttpUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 
@@ -80,8 +61,6 @@ public final class ConfigWizard extends JDialog {
    private final Studio studio_;
    private JLabel titleLabel_;
    private final String defaultPath_;
-
-   private static final String CFG_OKAY_TO_SEND = "CFG_Okay_To_Send";
 
 
    /**
@@ -148,8 +127,6 @@ public final class ConfigWizard extends JDialog {
 
       // Create microscope model used by pages.
       microModel_ = new MicroscopeModel();
-      microModel_.setSendConfiguration(studio_.profile()
-            .getSettings(ConfigWizard.class).getBoolean(CFG_OKAY_TO_SEND, true));
       microModel_.loadAvailableDeviceList(core_);
       microModel_.setFileName(defaultPath_);
 
@@ -222,106 +199,6 @@ public final class ConfigWizard extends JDialog {
       titleLabel_.setText(pages_[curPage_].getTitle());
    }
 
-   private String uploadCurrentConfigFile() {
-      String returnValue = "";
-      try {
-         HttpUtils httpu = new HttpUtils();
-         if (this.getFileName() == null) {
-            return "No config file";
-         }
-         File conff = new File(this.getFileName());
-         if (conff.exists()) {
-
-            // contruct a filename for the configuration file which is extremely
-            // likely to be unique as follows:
-            // yyyyMMddHHmmss + timezone + ip address
-            String prependedLine = "#";
-            String qualifiedConfigFileName = "";
-            try {
-               SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
-               qualifiedConfigFileName += df.format(new Date());
-               String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
-               qualifiedConfigFileName += shortTZName;
-               qualifiedConfigFileName += "@";
-               try {
-                  // a handy, unique ID for the user's computer
-                  String physicalAddress = "00-00-00-00-00-00";
-
-                  StrVector ss = core_.getMACAddresses();
-                  if (0 < ss.size()) {
-                     String pa2 = ss.get(0);
-                     if (null != pa2) {
-                        if (0 < pa2.length()) {
-                           physicalAddress = pa2;
-                        }
-                     }
-                  }
-                  qualifiedConfigFileName += physicalAddress;
-                  prependedLine += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
-               } catch (UnknownHostException e) {
-                  studio_.logs().logError(e);
-               }
-               prependedLine += "User: " + core_.getUserId() + " configuration file: "
-                     + conff.getName() + "\n";
-            } catch (Throwable t) {
-               studio_.logs().logError(t.getMessage());
-            }
-
-            // can raw IP address have :'s in them? (ipv6??)
-            // try ensure valid and convenient UNIX file name
-            qualifiedConfigFileName = qualifiedConfigFileName.replace(':', '_');
-            qualifiedConfigFileName = qualifiedConfigFileName.replace(';', '_');
-
-            File fileToSend = new File(qualifiedConfigFileName);
-
-            FileReader reader = new FileReader(conff);
-            FileWriter writer = new FileWriter(fileToSend);
-            writer.append(prependedLine);
-            int c;
-            while (-1 != (c = reader.read())) {
-               writer.write(c);
-            }
-            try {
-               reader.close();
-            } catch (IOException e) {
-               ReportingUtils.logError(e);
-            }
-            try {
-               writer.close();
-            } catch (IOException e) {
-               ReportingUtils.logError(e);
-            }
-            try {
-
-               URL url = new URL("https://valelab.ucsf.edu/~MM/upload_file.php");
-
-               List<File> flist = new ArrayList<>();
-               flist.add(fileToSend);
-               // for each of a colleciton of files to send...
-               for (File o0 : flist) {
-                  File f0 = o0;
-                  try {
-                     httpu.upload(url, f0);
-                  } catch (Exception e) {
-                     returnValue = e.toString();
-                  }
-               }
-            } catch (MalformedURLException e) {
-               returnValue = e.toString();
-            } finally {
-               // now delete the temporary file
-               if (!fileToSend.delete()) {
-                  ReportingUtils.logError(
-                        "Couldn't delete temporary file " + qualifiedConfigFileName);
-               }
-            }
-         }
-      } catch (IOException e) {
-         returnValue = e.toString();
-      }
-      return returnValue;
-
-   }
 
    private void onCloseWindow() {
       for (int i = 0; i < pages_.length; i++) {
@@ -346,41 +223,6 @@ public final class ConfigWizard extends JDialog {
                return;
          }
       }
-      if (microModel_.getSendConfiguration()) {
-         class Uploader extends Thread {
-
-            private String statusMessage_;
-
-            public Uploader() {
-               super("uploader");
-               statusMessage_ = "";
-            }
-
-            @Override
-            public void run() {
-               statusMessage_ = uploadCurrentConfigFile();
-            }
-
-            public String status() {
-               return statusMessage_;
-            }
-         }
-
-         Uploader u = new Uploader();
-         u.start();
-         try {
-            u.join();
-         } catch (InterruptedException ex) {
-            Logger.getLogger(ConfigWizard.class.getName()).log(Level.SEVERE, null, ex);
-         }
-         if (0 < u.status().length()) {
-            ReportingUtils.logError("Error uploading configuration file: " + u.status());
-            //ReportingUtils.showMessage("Error uploading configuration file:\n" + u.Status());
-         }
-      }
-
-      studio_.profile().getSettings(ConfigWizard.class).putBoolean(
-            CFG_OKAY_TO_SEND, microModel_.getSendConfiguration());
 
       org.micromanager.internal.utils.HotKeys.active_ = true;
       dispose();
@@ -403,20 +245,5 @@ public final class ConfigWizard extends JDialog {
 
    public String getFileName() {
       return microModel_.getFileName();
-   }
-
-   /**
-    * Read string out of stream.
-    */
-   private static String readStream(InputStream is) throws IOException {
-      StringBuffer bf = new StringBuffer();
-      BufferedReader br = new BufferedReader(new InputStreamReader(is));
-      String line;
-      //Note: not exactly the original
-      while ((line = br.readLine()) != null) {
-         bf.append(line);
-         bf.append("\n");
-      }
-      return bf.toString();
    }
 }
