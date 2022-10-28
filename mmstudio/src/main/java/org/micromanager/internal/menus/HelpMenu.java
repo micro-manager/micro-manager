@@ -6,9 +6,7 @@ import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMVersion;
 import org.micromanager.internal.dialogs.AboutDlg;
-import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -35,19 +33,6 @@ public final class HelpMenu {
             GUIUtils.makeURLRunnable(
                   "http://micro-manager.org/wiki/Micro-Manager_Configuration_Guide")
       );
-
-      if (!RegistrationDlg.getHaveRegistered(studio_)) {
-         GUIUtils.addMenuItem(helpMenu,
-               "Register your copy of Micro-Manager...", null, () -> {
-                  try {
-                     RegistrationDlg regDlg = new RegistrationDlg(studio_);
-                     regDlg.setVisible(true);
-                  } catch (Exception e1) {
-                     ReportingUtils.showError(e1);
-                  }
-               }
-         );
-      }
 
       GUIUtils.addMenuItem(helpMenu, "Create Problem Report...", null,
             () -> org.micromanager.internal.diagnostics.gui.ProblemReportController.start(core_));

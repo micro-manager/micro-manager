@@ -84,7 +84,6 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.IJVersionCheckDlg;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
-import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
@@ -317,8 +316,6 @@ public final class MMStudio implements Studio {
 
       // Start loading acqEngine in the background
       prepAcquisitionEngine();
-
-      RegistrationDlg.showIfNecessary(this);
 
       // We wait for plugin loading to finish now, since IntroPlugins may be
       // needed to display the intro dialog. Fortunately, plugin loading is
