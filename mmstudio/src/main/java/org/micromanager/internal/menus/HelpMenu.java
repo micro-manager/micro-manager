@@ -1,5 +1,7 @@
 package org.micromanager.internal.menus;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import mmcorej.CMMCore;
@@ -39,11 +41,24 @@ public final class HelpMenu {
 
       GUIUtils.addMenuItem(helpMenu, "About Micromanager", null, () -> {
          final AboutDlg dlg = new AboutDlg();
+
+         String hostName;
+         try {
+            hostName = InetAddress.getLocalHost().getHostName();
+         } catch (UnknownHostException e) {
+            hostName = "(unknown)";
+         }
+
+         String userName = System.getProperty("user.name");
+         if (userName == null) {
+            userName = "(unknown)";
+         }
+
          String versionInfo = "MM Studio version: " + MMVersion.VERSION_STRING
                + "\n" + core_.getVersionInfo()
                + "\n" + core_.getAPIVersionInfo()
-               + "\nUser: " + core_.getUserId()
-               + "\nHost: " + core_.getHostName();
+               + "\nUser: " + userName
+               + "\nHost: " + hostName;
          dlg.setVersionInfo(versionInfo);
          dlg.setVisible(true);
       });
