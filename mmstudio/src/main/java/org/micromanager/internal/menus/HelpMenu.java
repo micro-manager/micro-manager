@@ -1,14 +1,14 @@
 package org.micromanager.internal.menus;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMVersion;
 import org.micromanager.internal.dialogs.AboutDlg;
-import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -36,29 +36,29 @@ public final class HelpMenu {
                   "http://micro-manager.org/wiki/Micro-Manager_Configuration_Guide")
       );
 
-      if (!RegistrationDlg.getHaveRegistered(studio_)) {
-         GUIUtils.addMenuItem(helpMenu,
-               "Register your copy of Micro-Manager...", null, () -> {
-                  try {
-                     RegistrationDlg regDlg = new RegistrationDlg(studio_);
-                     regDlg.setVisible(true);
-                  } catch (Exception e1) {
-                     ReportingUtils.showError(e1);
-                  }
-               }
-         );
-      }
-
       GUIUtils.addMenuItem(helpMenu, "Create Problem Report...", null,
             () -> org.micromanager.internal.diagnostics.gui.ProblemReportController.start(core_));
 
       GUIUtils.addMenuItem(helpMenu, "About Micromanager", null, () -> {
          final AboutDlg dlg = new AboutDlg();
+
+         String hostName;
+         try {
+            hostName = InetAddress.getLocalHost().getHostName();
+         } catch (UnknownHostException e) {
+            hostName = "(unknown)";
+         }
+
+         String userName = System.getProperty("user.name");
+         if (userName == null) {
+            userName = "(unknown)";
+         }
+
          String versionInfo = "MM Studio version: " + MMVersion.VERSION_STRING
                + "\n" + core_.getVersionInfo()
                + "\n" + core_.getAPIVersionInfo()
-               + "\nUser: " + core_.getUserId()
-               + "\nHost: " + core_.getHostName();
+               + "\nUser: " + userName
+               + "\nHost: " + hostName;
          dlg.setVersionInfo(versionInfo);
          dlg.setVisible(true);
       });
