@@ -20,7 +20,9 @@ import com.asiimaging.devices.crisp.CRISPTimer;
 import com.asiimaging.devices.crisp.ControllerType;
 import com.asiimaging.devices.zstage.ZStage;
 import com.asiimaging.ui.Panel;
+
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.WindowPositioning;
 
 import com.asiimaging.crisp.data.Icons;
 import com.asiimaging.crisp.panels.ButtonPanel;
@@ -79,6 +81,9 @@ public class CRISPFrame extends JFrame {
         crisp = new CRISP(studio);
         zStage = new ZStage(studio);
         timer = new CRISPTimer(crisp);
+
+        // saves/loads window position
+        WindowPositioning.setUpBoundsMemory(this, this.getClass(), this.getClass().getSimpleName());
 
         // some ui panels require both crisp and the timer
         createUserInterface();

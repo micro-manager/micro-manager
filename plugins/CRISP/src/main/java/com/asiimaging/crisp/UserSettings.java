@@ -22,7 +22,7 @@ import java.util.Objects;
 
 /**
  * This class provides a convenient wrapper around MM's UserProfile class.
- *
+ * <p>
  * If you need access to everything MutablePropertyMapView can do, use the
  * get() method to retrieve a reference to the MutablePropertyMapView object.
  *
@@ -37,12 +37,10 @@ public class UserSettings {
     private final CRISPTimer timer;
     private final CRISPFrame frame;
 
-    // these settings are independent from the saved software settings
+    // these settings are independent of the saved software settings
     private static class Settings {
         public static final String POLL_RATE_MS = "pollRateMs";  // int
         public static final String POLL_CHECKED = "pollChecked"; // boolean
-        public static final String WINDOW_X = "windowX"; // boolean
-        public static final String WINDOW_Y = "windowY"; // boolean
     };
 
     public UserSettings(final Studio studio, final CRISP crisp, final CRISPTimer timer, final CRISPFrame frame) {
@@ -89,12 +87,6 @@ public class UserSettings {
         final int pollRateMs = settings.getInteger(Settings.POLL_RATE_MS, Defaults.POLL_RATE_MS);
         final boolean isPollChecked = settings.getBoolean(Settings.POLL_CHECKED, Defaults.POLL_CHECKED);
 
-        // window location
-        final int windowX = settings.getInteger(Settings.WINDOW_X, 0);
-        final int windowY = settings.getInteger(Settings.WINDOW_Y, 0);
-
-        // update ui elements
-        frame.setLocation(windowX, windowY);
         frame.getSpinnerPanel().getPollRateSpinner().setInt(pollRateMs);
         frame.getSpinnerPanel().setPollingCheckBox(isPollChecked);
         timer.setPollRateMs(pollRateMs);
@@ -119,10 +111,6 @@ public class UserSettings {
         // get values from ui elements
         final int pollRateMs = frame.getSpinnerPanel().getPollRateSpinner().getInt();
         final boolean isPollChecked = frame.getSpinnerPanel().isPollingEnabled();
-
-        // window location
-        settings.putInteger(Settings.WINDOW_X, frame.getX());
-        settings.putInteger(Settings.WINDOW_Y, frame.getY());
 
         // save values into settings
         settings.putInteger(Settings.POLL_RATE_MS, pollRateMs);
