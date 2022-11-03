@@ -56,7 +56,9 @@ import org.micromanager.ScriptController;
 import org.micromanager.ShutterManager;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
+import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
 import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
@@ -146,6 +148,8 @@ public final class MMStudio implements Studio {
    // MMcore
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
+   private Engine acqEngineJava_;
+   private final AcqEngJAdapter acqEngJTo2010Adapter_;
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
 
@@ -316,6 +320,10 @@ public final class MMStudio implements Studio {
 
       // Start loading acqEngine in the background
       prepAcquisitionEngine();
+      // Create Java acquisition engine, which doesnt need its own thread because its fast
+      acqEngineJava_ = new Engine(core_);
+      // Create adapter that converts acqEngJ to the legacy clojure interface
+      acqEngJTo2010Adapter_ = new AcqEngJAdapter(acqEngineJava_);
 
       // We wait for plugin loading to finish now, since IntroPlugins may be
       // needed to display the intro dialog. Fortunately, plugin loading is
@@ -708,6 +716,10 @@ public final class MMStudio implements Studio {
          acqEngine_.shutdown();
       }
 
+      if (acqEngineJava_ != null) {
+         // Currently there is no shutdown method for AcqEngJ
+      }
+
       synchronized (shutdownLock_) {
          EDTHangLogger.stopDefault();
 
@@ -948,24 +960,28 @@ public final class MMStudio implements Studio {
     * @return instance of the AcquisitionEngine2010 object.
     */
    public IAcquisitionEngine2010 getAcquisitionEngine2010() {
-      try {
-         acquisitionEngine2010LoadingThread_.join();
-         if (acquisitionEngine2010_ == null) {
-            acquisitionEngine2010_ =
-                  (IAcquisitionEngine2010)
-                        acquisitionEngine2010Class_.getConstructor(Studio.class)
-                              .newInstance(studio_);
+      if (settings().getShouldUseAcqEngJ()) {
+         return acqEngJTo2010Adapter_;
+      } else {
+         try {
+            acquisitionEngine2010LoadingThread_.join();
+            if (acquisitionEngine2010_ == null) {
+               acquisitionEngine2010_ =
+                       (IAcquisitionEngine2010)
+                               acquisitionEngine2010Class_.getConstructor(Studio.class)
+                                       .newInstance(studio_);
+            }
+            return acquisitionEngine2010_;
+         } catch (IllegalAccessException
+                 | IllegalArgumentException
+                 | InstantiationException
+                 | InterruptedException
+                 | NoSuchMethodException
+                 | SecurityException
+                 | InvocationTargetException e) {
+            ReportingUtils.logError(e);
+            return null;
          }
-         return acquisitionEngine2010_;
-      } catch (IllegalAccessException
-            | IllegalArgumentException
-            | InstantiationException
-            | InterruptedException
-            | NoSuchMethodException
-            | SecurityException
-            | InvocationTargetException e) {
-         ReportingUtils.logError(e);
-         return null;
       }
    }
 
@@ -1187,6 +1203,8 @@ public final class MMStudio implements Studio {
       private static final String CIRCULAR_BUFFER_SIZE
             = "size, in megabytes of the circular buffer used to temporarily store images"
             + "before they are written to disk";
+      private static final String SHOULD_USE_ACQENGJ
+              = "Use new Acquisition Engine";
 
       public boolean getShouldDeleteOldCoreLogs() {
          return profile().getSettings(MMStudio.class).getBoolean(
@@ -1233,6 +1251,16 @@ public final class MMStudio implements Studio {
       public void setCircularBufferSize(int newSize) {
          profile().getSettings(MMStudio.class).putInteger(
                CIRCULAR_BUFFER_SIZE, newSize);
+      }
+
+      public boolean getShouldUseAcqEngJ() {
+         return profile().getSettings(MMStudio.class).getBoolean(
+                 SHOULD_USE_ACQENGJ, false);
+      }
+
+      public void setShouldUseAcqEngJ(boolean use) {
+         profile().getSettings(MMStudio.class).putBoolean(
+                 SHOULD_USE_ACQENGJ, use);
       }
    }
 }

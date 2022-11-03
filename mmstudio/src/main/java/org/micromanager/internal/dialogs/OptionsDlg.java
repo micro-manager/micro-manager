@@ -271,6 +271,14 @@ public final class OptionsDlg extends JDialog {
          mmStudio_.settings().setShouldRunZMQServer(runServer.isSelected());
       });
 
+      final JCheckBox acqEngJ = new JCheckBox();
+      runServer.setText("Use new Acquisition Engine");
+      runServer.setSelected(mmStudio.settings().getShouldUseAcqEngJ());
+      runServer.addActionListener((ActionEvent arg0) -> {
+         mmStudio_.settings().setShouldUseAcqEngJ(runServer.isSelected());
+      });
+
+
       final JButton closeButton = new JButton();
       closeButton.setText("Close");
       closeButton.addActionListener((final ActionEvent ev) -> closeRequested());
