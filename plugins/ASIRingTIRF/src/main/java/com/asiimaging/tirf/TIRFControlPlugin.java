@@ -1,29 +1,31 @@
 /*
- * Project: ASI CRISP Control
+ * Project: ASI Ring TIRF Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2022, Applied Scientific Instrumentation
  */
-package com.asiimaging.crisp;
+package com.asiimaging.tirf;
 
-import com.asiimaging.crisp.utils.WindowUtils;
+import com.asiimaging.tirf.model.TIRFControlModel;
+import com.asiimaging.tirf.ui.TIRFControlFrame;
+import com.asiimaging.tirf.ui.utils.WindowUtils;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-// The original plugin was created by Nico Stuurman, rewritten by Vikram Kopuri, 
-// and then once again rewritten by the current maintainer.
 @Plugin(type = MenuPlugin.class)
-public class CRISPPlugin implements MenuPlugin, SciJavaPlugin {
-    public static final String copyright = "Applied Scientific Instrumentation (ASI), 2014-2021";
-    public static final String description = "Interface to control ASIs CRISP Autofocus system.";
-    public static final String menuName = "ASI CRISP Control";
-    public static final String version = "2.5.1";
+public class TIRFControlPlugin implements MenuPlugin, SciJavaPlugin {
+
+    public static final String copyright = "Applied Scientific Instrumentation (ASI), 2022";
+    public static final String description = "Controls an ASI Ring TIRF microscope.";
+    public static final String menuName = "ASI Ring TIRF Control";
+    public static final String version = "0.2.1";
 
     private Studio studio;
-    private CRISPFrame frame;
+    private TIRFControlFrame frame;
+    private TIRFControlModel model;
 
     @Override
     public void setContext(final Studio studio) {
@@ -41,7 +43,21 @@ public class CRISPPlugin implements MenuPlugin, SciJavaPlugin {
         if (WindowUtils.isOpen(frame)) {
             WindowUtils.close(frame);
         }
-        frame = new CRISPFrame(studio);
+
+        frame = new TIRFControlFrame(studio);
+        model = new TIRFControlModel(studio);
+
+        frame.setModel(model);
+        model.setFrame(frame);
+
+        if (model.validate()) {
+            model.loadSettings();
+            frame.createUserInterface();
+        } else {
+            frame.createErrorInterface();
+        }
+
+        // show the frame
         frame.setVisible(true);
         frame.toFront();
     }
