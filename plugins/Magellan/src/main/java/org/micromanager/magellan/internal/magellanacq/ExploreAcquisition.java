@@ -28,18 +28,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.DataSink;
+import org.micromanager.acqj.api.*;
 import org.micromanager.acqj.internal.AcquisitionEventIterator;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
-import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.AcquisitionEvent;
+import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.AcqEventModules;
 import org.micromanager.acqj.util.ChannelSetting;
+import org.micromanager.acqj.util.xytiling.PixelStageTranslator;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.SingleChannelSetting;
@@ -53,8 +55,9 @@ import org.micromanager.ndtiffstorage.NDTiffAPI;
  *
  * @author Henry
  */
-public class ExploreAcquisition extends Acquisition implements MagellanAcquisition {
+public class ExploreAcquisition implements MagellanAcquisition {
 
+   private boolean started_ = false;
    private volatile double zTop_;
    private volatile double zBottom_;
    private List<XYStagePosition> positions_;
@@ -69,15 +72,19 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
             return new Thread(r, "Submitted sequence monitor");
          });
 
+   private String zStage_;
+
    private final double zOrigin_;
    private final double zStep_;
    private int minSliceIndex_;
    private int maxSliceIndex_;
 
-   public ExploreAcquisition(ExploreAcqSettings settings, DataSink sink) {
-      super(sink);
+   private XYTiledAcquisitionAPI acq_;
+
+   public ExploreAcquisition(ExploreAcqSettings settings) {
       settings_ = settings;
       zStep_ = settings.zStep_;
+      DataSink sink = new MagellanDatasetAndAcquisition(this, settings.dir_, settings.name_, true);
 
       try {
          zStage_ = Magellan.getCore().getFocusDevice();
@@ -91,35 +98,118 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       }
       int overlapX = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
       int overlapY = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
-      initialize(overlapX, overlapY);
+      acq_ = new XYTiledAcquisition(sink, overlapX, overlapY, new Consumer<JSONObject>() {
+         @Override
+         public void accept(JSONObject jsonObject) {
+            addExploreSummaryMetadata(jsonObject, sink);
+         }
+      });
+      started_ = true;
    }
 
-   @Override
-   public void addToSummaryMetadata(JSONObject summaryMetadata) {
+   private void addExploreSummaryMetadata(JSONObject summaryMetadata, DataSink sink) {
       MagellanMD.setExploreAcq(summaryMetadata, true);
-      MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getName());
-      MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getDir());
-
+      MagellanMD.setSavingName(summaryMetadata, ((MagellanDatasetAndAcquisition) sink).getName());
+      MagellanMD.setSavingDir(summaryMetadata, ((MagellanDatasetAndAcquisition) sink).getDir());
       AcqEngMetadata.setZStepUm(summaryMetadata, ((ExploreAcqSettings) settings_).zStep_);
       createXYPositions();
    }
 
-   public void addToImageMetadata(JSONObject tags) {
-
-   }
-
    @Override
    public boolean isFinished() {
-      if (dataSink_ != null) {
-         return dataSink_.isFinished();
+      if (!started_) {
+         return false;
+      }
+      if (acq_ != null) {
+         return acq_.getDataSink().isFinished();
       }
       return true;
    }
 
    @Override
+   public void finish() {
+      acq_.finish();
+   }
+
+   @Override
+   public boolean areEventsFinished() {
+      return acq_.areEventsFinished();
+   }
+
+   @Override
    public void abort() {
-      super.abort();
+      acq_.abort();
       submittedSequenceMonitorExecutor_.shutdownNow();
+   }
+
+   @Override
+   public void togglePaused() {
+      acq_.togglePaused();
+   }
+
+   @Override
+   public boolean isPaused() {
+      return acq_.isPaused();
+   }
+
+   @Override
+   public void waitForCompletion() {
+      acq_.waitForCompletion();
+   }
+
+   @Override
+   public void abort(Exception e) {
+      acq_.abort();
+   }
+
+   @Override
+   public boolean isAbortRequested() {
+      return acq_.isAbortRequested();
+   }
+
+   @Override
+   public JSONObject getSummaryMetadata() {
+      return acq_.getSummaryMetadata();
+   }
+
+   @Override
+   public boolean anythingAcquired() {
+      return acq_.anythingAcquired();
+   }
+
+   @Override
+   public void addImageMetadataProcessor(Consumer<JSONObject> modifier) {
+      acq_.anythingAcquired();
+   }
+
+   @Override
+   public void addImageProcessor(TaggedImageProcessor p) {
+      acq_.addImageProcessor(p);
+   }
+
+   @Override
+   public void addHook(AcquisitionHook hook, int type) {
+
+   }
+
+   @Override
+   public Future submitEventIterator(Iterator<AcquisitionEvent> evt) {
+      return null;
+   }
+
+   @Override
+   public DataSink getDataSink() {
+      return null;
+   }
+
+   @Override
+   public boolean isDebugMode() {
+      return false;
+   }
+
+   @Override
+   public void setDebugMode(boolean debug) {
+
    }
 
    /**
@@ -134,7 +224,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       submittedSequenceMonitorExecutor_.submit(() -> {
          Future iteratorFuture = null;
          try {
-            iteratorFuture = Engine.getInstance().submitEventIterator(iter, this);
+            iteratorFuture = Engine.getInstance().submitEventIterator(iter);
             iteratorFuture.get();
          } catch (InterruptedException ex) {
             iteratorFuture.cancel(true);
@@ -146,7 +236,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
 
    //Called by pycromanager
    public NDTiffAPI getStorage() {
-      return dataSink_ == null ? null : ((MagellanDataManager) dataSink_).getStorage();
+      return acq_.getDataSink() == null ? null : ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getStorage();
    }
 
    private void createXYPositions() {
@@ -190,12 +280,12 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       }
 
       int sliceIndex = (int) Math.round((zPos - zOrigin_) / zStep_);
-      int posIndex = ((MagellanDataManager) dataSink_)
+      int posIndex = ((MagellanDatasetAndAcquisition) acq_.getDataSink())
             .getFullResPositionIndexFromStageCoords(xPos, yPos);
 
-      submitEvents(new int[]{(int) ((MagellanDataManager) dataSink_)
+      submitEvents(new int[]{(int) ((MagellanDatasetAndAcquisition) acq_.getDataSink())
                   .getXYPosition(posIndex).getGridRow()},
-              new int[]{(int) ((MagellanDataManager) dataSink_).getXYPosition(posIndex)
+              new int[]{(int) ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getXYPosition(posIndex)
                     .getGridCol()}, sliceIndex, sliceIndex);
    }
 
@@ -233,9 +323,9 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
 
    private void submitEvents(int[] newPositionRows, int[] newPositionCols, int minZIndex,
                              int maxZIndex) {
-      int[] posIndices = ((MagellanDataManager) dataSink_).getPositionIndices(
+      int[] posIndices = ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getPositionIndices(
             newPositionRows, newPositionCols);
-      List<XYStagePosition> allPositions = ((MagellanDataManager) dataSink_).getPositionList();
+      List<XYStagePosition> allPositions = ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getPositionList();
       List<XYStagePosition> selectedXYPositions = new ArrayList<XYStagePosition>();
       for (int i : posIndices) {
          selectedXYPositions.add(allPositions.get(i));
@@ -258,7 +348,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       }
 
       Iterator<AcquisitionEvent> iterator = new AcquisitionEventIterator(
-              new AcquisitionEvent(this), acqFunctions, monitorSliceIndices());
+              new AcquisitionEvent(acq_), acqFunctions, monitorSliceIndices());
 
       //Get rid of duplicates, send to acquisition engine 
       Predicate<AcquisitionEvent> predicate = filterExistingEventsAndDisplayQueuedTiles();
@@ -396,6 +486,11 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    @Override
    public MagellanGenericAcquisitionSettings getAcquisitionSettings() {
       return settings_;
+   }
+
+   @Override
+   public PixelStageTranslator getPixelStageTranslator() {
+      return acq_.getPixelStageTranslator();
    }
 
    //slice and row/col index of an acquisition event in the queue

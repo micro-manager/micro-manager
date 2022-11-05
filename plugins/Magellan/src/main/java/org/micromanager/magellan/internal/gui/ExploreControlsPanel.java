@@ -11,7 +11,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
-import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
+import org.micromanager.magellan.internal.magellanacq.MagellanDatasetAndAcquisition;
 import org.micromanager.ndviewer.api.ControlsPanelInterface;
 
 /**
@@ -21,13 +21,13 @@ import org.micromanager.ndviewer.api.ControlsPanelInterface;
 public class ExploreControlsPanel extends javax.swing.JPanel implements ControlsPanelInterface {
 
    private ChannelGroupSettings channels_; 
-   private MagellanDataManager manager_;
+   private MagellanDatasetAndAcquisition manager_;
    private ExploreZSliders zSliders_;
 
    /**
     * Creates new form ExploreChannelsPanel
     */
-   public ExploreControlsPanel(MagellanDataManager manager, ChannelGroupSettings channels) {
+   public ExploreControlsPanel(MagellanDatasetAndAcquisition manager, ChannelGroupSettings channels) {
       channels_ = channels;
       manager_ = manager;
       zSliders_ = new ExploreZSliders(manager);

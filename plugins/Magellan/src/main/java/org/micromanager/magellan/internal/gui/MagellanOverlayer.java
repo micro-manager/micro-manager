@@ -30,7 +30,7 @@ import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.magellan.internal.magellanacq.ExploreAcquisition;
-import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
+import org.micromanager.magellan.internal.magellanacq.MagellanDatasetAndAcquisition;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;
@@ -108,11 +108,11 @@ public class MagellanOverlayer implements OverlayerPlugin {
    private volatile boolean showSurface_ = true;
    private volatile boolean showConvexHull_ = true;
    private volatile boolean showXYFootprint_ = false;
-   private MagellanDataManager manager_;
+   private MagellanDatasetAndAcquisition manager_;
    private boolean exploreMode_;
    private boolean surfaceMode_;
 
-   public MagellanOverlayer(MagellanDataManager manager) {
+   public MagellanOverlayer(MagellanDatasetAndAcquisition manager) {
       manager_ = manager;
    }
 

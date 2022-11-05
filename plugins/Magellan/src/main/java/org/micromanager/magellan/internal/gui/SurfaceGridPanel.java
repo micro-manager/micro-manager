@@ -9,7 +9,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.micromanager.magellan.internal.coordinates.NoPositionsDefinedYetException;
-import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
+import org.micromanager.magellan.internal.magellanacq.MagellanDatasetAndAcquisition;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
@@ -27,12 +27,12 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements
    private MagellanViewer display_;
    private ListSelectionListener surfaceTableListSelectionListener_;
    private volatile int selectedSurfaceGridIndex_ = -1;
-   private MagellanDataManager manager_;
+   private MagellanDatasetAndAcquisition manager_;
 
    /**
     * Creates new form SurfaceGridPanel.
     */
-   public SurfaceGridPanel(MagellanDataManager manager, MagellanViewer disp) {
+   public SurfaceGridPanel(MagellanDatasetAndAcquisition manager, MagellanViewer disp) {
       manager_ = manager;
       display_ = disp;
       initComponents();

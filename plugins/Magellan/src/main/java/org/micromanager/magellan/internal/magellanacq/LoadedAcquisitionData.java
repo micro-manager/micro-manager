@@ -20,9 +20,8 @@ package org.micromanager.magellan.internal.magellanacq;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
+
 import org.micromanager.magellan.internal.misc.Log;
 
 /**
@@ -32,7 +31,7 @@ public class LoadedAcquisitionData {
 
    public LoadedAcquisitionData(String dir) {
       try {
-         MagellanDataManager dataManager = new MagellanDataManager(dir);
+         MagellanDatasetAndAcquisition dataManager = new MagellanDatasetAndAcquisition(dir);
 
          //Iterate through all image keys and expand scrollbars to appropriate sizes
          Set<HashMap<String, Integer>> axesList = dataManager.getAxesSet();

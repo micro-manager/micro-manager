@@ -25,6 +25,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.swing.JOptionPane;
+
+import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -44,7 +46,7 @@ public class MagellanAcquisitionsManager {
          = new CopyOnWriteArrayList<>();
    private String[] acqStatus_;
    private GUI gui_;
-   private volatile Acquisition currentAcq_;
+   private volatile AcquisitionAPI currentAcq_;
    private volatile int currentAcqIndex_;
    private ExecutorService acqManageExecuterService_;
    ArrayList<Future> acqFutures_;
@@ -166,15 +168,13 @@ public class MagellanAcquisitionsManager {
             return null;
          }
       }
-      exploreAcq_ = new ExploreAcquisition(settings,
-            new MagellanDataManager(settings.dir_, settings.name_, true));
+      exploreAcq_ = new ExploreAcquisition(settings);
       return exploreAcq_;
    }
    
    public MagellanGUIAcquisition createAcquisition(int index) {
       MagellanGUIAcquisitionSettings settings = acqSettingsList_.get(index);
-      return new MagellanGUIAcquisition(settings,
-              new MagellanDataManager(settings.dir_, settings.name_, true));
+      return new MagellanGUIAcquisition(settings, true);
    }
 
    public void runAllAcquisitions() {
@@ -208,9 +208,7 @@ public class MagellanAcquisitionsManager {
                acqStatus_[index] = "Running";
                gui_.acquisitionRunning(true);
                try {
-                  currentAcq_ = new MagellanGUIAcquisition(acqSettings,
-                          new MagellanDataManager(acqSettings.dir_, acqSettings.name_, true));
-                  currentAcq_.start();
+                  currentAcq_ = new MagellanGUIAcquisition(acqSettings, true);
                   currentAcqIndex_ = index;
                   currentAcq_.waitForCompletion();
                   acqStatus_[index] = "Complete";
