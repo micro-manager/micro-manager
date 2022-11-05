@@ -43,6 +43,8 @@ public class TIRFControlModel {
     private final Studio studio;
     private final CMMCore core;
 
+    private static final String TIGER_DEVICE_LIBRARY = "ASITiger";
+
     // hardware devices
     private final Scanner scanner;
     private final XYStage xyStage;
@@ -71,45 +73,53 @@ public class TIRFControlModel {
     private TIRFControlFrame frame;
     private final UserSettings settings;
 
-    public TIRFControlModel(final Studio studio) throws Exception {
+    public TIRFControlModel(final Studio studio) {
         this.studio = Objects.requireNonNull(studio);
         core = this.studio.core();
 
         // used to save and load software settings
         settings = new UserSettings(studio);
 
+        // true if the acquisition thread is running
+        run = new AtomicBoolean(false);
+
         // hardware devices
+        camera = new Camera(studio);
         scanner = new Scanner(studio);
         xyStage = new XYStage(studio);
         zStage = new ZStage(studio);
         plc = new PLC(studio);
+
         getDeviceNames();
 
-        // validate hardware configuration
-        if (!isTigerDevice()) {
-            throw new Exception("This plugin requires an ASITiger controller.");
+        // return early if no Tiger controller or FAST_CIRCLES module
+        if (!validate()) {
+            return;
         }
 
-        if (!scanner.hasFastCirclesModule()) {
-            throw new Exception("This plugin requires a Scanner with the FAST_CIRCLES module.");
-        }
-
-        camera = new Camera(studio);
+        // update camera properties based on detected camera model
         camera.setup();
 
         // datastore
         datastore = studio.data().createRAMDatastore();
-
-        // flag is true if acquisition thread is running
-        run = new AtomicBoolean(false);
 
         // used to serialize settings into JSON
         GSON = new GsonBuilder()
                 .excludeFieldsWithoutExposeAnnotation()
                 .create();
 
-        // setup the PLogic card for fast circles
+        // set up the PLogic card for fast circles
         setupPLC();
+    }
+
+    /**
+     * Returns true if the Hardware Device Configuration has an ASITiger device,
+     * and a Scanner with the fast circles module.
+     *
+     * @return true if the plugin has what it requires to operate.
+     */
+    public boolean validate() {
+        return isTigerDevice() && scanner.hasFastCirclesModule();
     }
 
     public void loadSettings() {
@@ -120,7 +130,8 @@ public class TIRFControlModel {
 
     /**
      * Return the {@code UserSettings} object.
-     * <p>Used to save software settings.
+     * <p>
+     * Used to save software settings.
      *
      * @return the {@code UserSettings} object
      */
@@ -136,10 +147,16 @@ public class TIRFControlModel {
     public boolean isTigerDevice() {
         final StrVector devices = core.getLoadedDevices();
         for (final String device : devices) {
-            if (device.equals("TigerCommHub")) {
-                return true;
+            try {
+                if (core.getDeviceLibrary(device).equals(TIGER_DEVICE_LIBRARY)) {
+                    return true;
+                }
+            } catch (Exception e) {
+                studio.logs().logError("isTigerDevice(): could not get the device library " +
+                        "of the device with name => " + device);
             }
         }
+        // if we made it here there were no Tiger devices
         return false;
     }
 

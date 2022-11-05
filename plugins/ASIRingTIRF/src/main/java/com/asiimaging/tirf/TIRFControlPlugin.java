@@ -21,7 +21,7 @@ public class TIRFControlPlugin implements MenuPlugin, SciJavaPlugin {
     public static final String copyright = "Applied Scientific Instrumentation (ASI), 2022";
     public static final String description = "Controls an ASI Ring TIRF microscope.";
     public static final String menuName = "ASI Ring TIRF Control";
-    public static final String version = "0.2.0";
+    public static final String version = "0.2.1";
 
     private Studio studio;
     private TIRFControlFrame frame;
@@ -44,18 +44,22 @@ public class TIRFControlPlugin implements MenuPlugin, SciJavaPlugin {
             WindowUtils.close(frame);
         }
 
-        try {
-            frame = new TIRFControlFrame(studio);
-            model = new TIRFControlModel(studio);
-            frame.setModel(model);
-            model.setFrame(frame);
+        frame = new TIRFControlFrame(studio);
+        model = new TIRFControlModel(studio);
+
+        frame.setModel(model);
+        model.setFrame(frame);
+
+        if (model.validate()) {
             model.loadSettings();
             frame.createUserInterface();
-        } catch (Exception e) {
-            if (studio != null) {
-                studio.logs().showError(e);
-            }
+        } else {
+            frame.createErrorInterface();
         }
+
+        // show the frame
+        frame.setVisible(true);
+        frame.toFront();
     }
 
     @Override

@@ -7,15 +7,18 @@
 package com.asiimaging.tirf.ui;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 
 import com.asiimaging.tirf.model.TIRFControlModel;
 import com.asiimaging.tirf.TIRFControlPlugin;
 import com.asiimaging.tirf.model.data.Icons;
+import com.asiimaging.tirf.ui.components.Button;
 import com.asiimaging.tirf.ui.panels.ButtonPanel;
 import com.asiimaging.tirf.ui.panels.TabPanel;
 import com.asiimaging.tirf.model.devices.Scanner;
 import com.asiimaging.tirf.ui.components.Label;
 
+import com.asiimaging.tirf.ui.utils.BrowserUtils;
 import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 
@@ -24,6 +27,7 @@ import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.LiveModeEvent;
 import org.micromanager.internal.utils.WindowPositioning;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -42,15 +46,76 @@ public class TIRFControlFrame extends JFrame {
     public TIRFControlFrame(final Studio studio) {
         this.studio = studio;
 
-        // register for events
-        studio.events().registerForEvents(this);
-
-        // window closing method
-        registerWindowEventHandlers();
-
         // save/load window position
         WindowPositioning.setUpBoundsMemory(this, this.getClass(), this.getClass().getSimpleName());
+    }
 
+    /**
+     * Creates the user interface for when an error occurs in the plugin.
+     */
+    public void createErrorInterface() {
+        // frame settings
+        setTitle(TIRFControlPlugin.menuName);
+        setResizable(false);
+
+        // use MigLayout as the layout manager
+        setLayout(new MigLayout(
+                "insets 20 50 20 50",
+                "[]0[]",
+                "[]10[]"
+        ));
+
+        // draw the title in bold
+        final JLabel lblTitle = new JLabel(TIRFControlPlugin.menuName + ": Error");
+        lblTitle.setFont(new Font(Font.MONOSPACED, Font.BOLD, 20));
+
+        final JLabel lblError = new JLabel("<html>This plugin requires an <b>ASITiger</b> controller.</html>");
+        lblError.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+
+        final JLabel lblHelp = new JLabel("<html>An ASI scanner with the <b>FAST_CIRCLES</b><br>" +
+                " firmware module is also required.</html>");
+        lblHelp.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+
+        final Button btnWebsite = new Button("Website", 120, 30);
+        final Button btnManual = new Button("Manual", 120, 30);
+
+
+        final JLabel lblTigerFound = new JLabel("");
+        final JLabel lblFastCirclesFound = new JLabel("");
+
+        if (model.isTigerDevice()) {
+            lblTigerFound.setText("Tiger Controller Found");
+            lblTigerFound.setForeground(Color.GREEN);
+        } else {
+            lblTigerFound.setText("Tiger Controller Not Found");
+            lblTigerFound.setForeground(Color.RED);
+        }
+        if (model.getScanner().hasFastCirclesModule()) {
+            lblFastCirclesFound.setText("FAST_CIRCLES Found");
+            lblFastCirclesFound.setForeground(Color.GREEN);
+        } else {
+            lblFastCirclesFound.setText("FAST_CIRCLES Not Found");
+            lblFastCirclesFound.setForeground(Color.RED);
+        }
+
+        btnWebsite.registerListener(e -> BrowserUtils.openWebsite(studio,
+                "https://www.asiimaging.com/products/light-sheet-microscopy/fiber-coupled-laser-scanner"));
+        btnManual.registerListener(e -> BrowserUtils.openWebsite(studio,
+                "https://www.asiimaging.com/docs/ringtirf"));
+
+        add(lblTitle, "align center, wrap");
+        add(lblError, "align center, wrap");
+        add(lblHelp, "align center, wrap");
+        add(lblTigerFound, "align center, wrap");
+        add(lblFastCirclesFound, "align center, wrap");
+        add(btnWebsite, "split 2, align center");
+        add(btnManual, "align center");
+
+        pack(); // set the window size automatically
+        setIconImage(Icons.MICROSCOPE.getImage());
+
+        // clean up resources when the frame is closed
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
     public void createUserInterface() {
@@ -71,6 +136,12 @@ public class TIRFControlFrame extends JFrame {
         tabPanel = new TabPanel(model, this);
         buttonPanel = new ButtonPanel(model, this);
 
+        // register for events
+        studio.events().registerForEvents(this);
+
+        // window closing method
+        registerWindowEventHandlers();
+
         // add ui elements to the panel
         add(lblTitle, "wrap");
         add(tabPanel, "wrap");
@@ -81,10 +152,6 @@ public class TIRFControlFrame extends JFrame {
 
         // clean up resources when the frame is closed
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-        // show the frame
-        setVisible(true);
-        toFront();
     }
 
     /**
