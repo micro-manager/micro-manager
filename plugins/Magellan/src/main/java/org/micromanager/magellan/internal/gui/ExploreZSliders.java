@@ -32,7 +32,7 @@ import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
+import org.micromanager.magellan.internal.magellanacq.MagellanDatasetAndAcquisition;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.JavaUtils;
 import org.micromanager.magellan.internal.misc.Log;
@@ -46,7 +46,7 @@ class ExploreZSliders extends JPanel {
 
    private static final int DEFAULT_FPS = 7;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
-   private MagellanDataManager manager_;
+   private MagellanDatasetAndAcquisition manager_;
    private JPanel sliderPanel_;
    private JScrollBar zTopScrollbar_;
    private JScrollBar zBottomScrollbar_;
@@ -60,7 +60,7 @@ class ExploreZSliders extends JPanel {
    private int maxZExplored_ = Integer.MIN_VALUE;
    private JPanel controlsPanel_;
 
-   public ExploreZSliders(MagellanDataManager manager) {
+   public ExploreZSliders(MagellanDatasetAndAcquisition manager) {
       super(new FlowLayout(FlowLayout.LEADING));
       manager_ = manager;
       zStep_ = manager.getZStep();

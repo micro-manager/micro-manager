@@ -21,18 +21,21 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.DataSink;
+import org.micromanager.acqj.api.*;
 import org.micromanager.acqj.internal.AcquisitionEventIterator;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
-import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.AcquisitionEvent;
+import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.AcqEventModules;
 import org.micromanager.acqj.util.ChannelSetting;
+import org.micromanager.acqj.util.xytiling.PixelStageTranslator;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.SingleChannelSetting;
@@ -46,7 +49,7 @@ import org.micromanager.ndtiffstorage.NDTiffAPI;
  *
  * @author Henry
  */
-public class MagellanGUIAcquisition extends Acquisition implements MagellanAcquisition {
+public class MagellanGUIAcquisition implements MagellanAcquisition {
 
    private double zOrigin_;
    private double zStep_;
@@ -55,6 +58,11 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
    private List<XYStagePosition> positions_;
    private MagellanGenericAcquisitionSettings settings_;
    private volatile boolean started_ = false;
+   private String zStage_;
+   protected boolean zStageHasLimits_ = false;
+   protected double zStageLowerLimit_, zStageUpperLimit_;
+
+   private XYTiledAcquisitionAPI acq_;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -67,45 +75,71 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
     * @param settings Magellan AcquisitionSettings
     * @throws java.lang.Exception can happen
     */
-   public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings, DataSink sink) {
-      super(sink);
+   public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings, boolean showDisplay) {
       settings_ = settings;
+      DataSink sink = new MagellanDatasetAndAcquisition(this, settings.dir_, settings.name_, showDisplay);
       int overlapX = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
       int overlapY = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
-      initialize(overlapX, overlapY);
-   }
+      zStep_ = ((MagellanGUIAcquisitionSettings) settings).zStep_;
+      zStage_ = Magellan.getCore().getFocusDevice();
 
-   public void start() {
-      super.start();
-      if (eventsFinished_) {
+      acq_ = new XYTiledAcquisition(sink, (Integer) overlapX, (Integer) overlapY, new Consumer<JSONObject>() {
+         @Override
+         public void accept(JSONObject jsonObject) {
+            addMagellanSummaryMetadata(jsonObject, sink);
+         }
+      });
+      acq_.addImageMetadataProcessor(new Consumer<JSONObject>() {
+         @Override
+         public void accept(JSONObject imageMetadata) {
+            addToImageMetadata(imageMetadata);
+         }
+      });
+      getPixelStageTranslator().setPositions(positions_);
+
+      //"postion" is not generic name...and as of right now there is now way of getting generic z positions
+      //from a z deviec in MM, but the following code works for some devices
+      String positionName = "Position";
+      try {
+         if (Magellan.getCore().getFocusDevice() != null && Magellan.getCore().getFocusDevice().length() > 0) {
+            if (Magellan.getCore().hasProperty(zStage_, positionName)) {
+               zStageHasLimits_ = Magellan.getCore().hasPropertyLimits(zStage_, positionName);
+               if (zStageHasLimits_) {
+                  zStageLowerLimit_ = Magellan.getCore().getPropertyLowerLimit(zStage_, positionName);
+                  zStageUpperLimit_ = Magellan.getCore().getPropertyUpperLimit(zStage_, positionName);
+               }
+            }
+         }
+      } catch (Exception ex) {
+         throw new RuntimeException("Problem communicating with core to get Z stage limits");
+      }
+      if (acq_.areEventsFinished()) {
          throw new RuntimeException("Cannot start acquistion since it has already been run");
       }
       Iterator<AcquisitionEvent> acqEventIterator = buildAcqEventGenerator();
-      Engine.getInstance().submitEventIterator(acqEventIterator, this);
-      Engine.getInstance().finishAcquisition(this);
+      Engine.getInstance().submitEventIterator(acqEventIterator);
+      Engine.getInstance().finishAcquisition(acq_);
       started_ = true;
    }
 
-   @Override
-   public void addToSummaryMetadata(JSONObject summaryMetadata) {
+   private void addMagellanSummaryMetadata(JSONObject summaryMetadata, DataSink sink) {
       MagellanMD.setExploreAcq(summaryMetadata, false);
-      MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getName());
-      MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getDir());
-
-      zStep_ = ((MagellanGUIAcquisitionSettings) settings_).zStep_;
-
+      MagellanMD.setSavingName(summaryMetadata, ((MagellanDatasetAndAcquisition) sink).getName());
+      MagellanMD.setSavingName(summaryMetadata, ((MagellanDatasetAndAcquisition) sink).getDir());
       AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
       AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
       AcqEngMetadata.setIntervalMs(summaryMetadata, getTimeIntervalMs());
       createXYPositions();
    }
 
-   @Override
-   public void addToImageMetadata(JSONObject tags) {
+   public PixelStageTranslator pixelStageTranslator() {
+      return acq_.getPixelStageTranslator();
+   }
 
+   private void addToImageMetadata(JSONObject tags) {
       //add metadata specific to magellan acquisition
+      // I don't remember why this here and not in summary metadata
       AcqEngMetadata.setIntervalMs(tags, ((MagellanGUIAcquisition) this).getTimeIntervalMs());
-
       //add data about surface
       //right now this only works for fixed distance from the surface
       if (getSpaceMode() == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
@@ -116,15 +150,37 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
 
    //Called by pycromanager
    public NDTiffAPI getStorage() {
-      return dataSink_ == null ? null : ((MagellanDataManager) dataSink_).getStorage();
+      return acq_.getDataSink() == null ? null : ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getStorage();
+   }
+
+   public boolean isFinished() {
+      if (!started_) {
+         return false;
+      }
+      if (acq_.getDataSink() != null) {
+         return acq_.getDataSink().isFinished();
+      }
+      return true;
    }
 
    @Override
-   public boolean isFinished() {
-      if (dataSink_ != null) {
-         return dataSink_.isFinished();
-      }
-      return true;
+   public void abort() {
+      acq_.abort();
+   }
+
+   @Override
+   public void abort(Exception e) {
+      acq_.abort(e);
+   }
+
+   @Override
+   public void togglePaused() {
+      acq_.togglePaused();
+   }
+
+   @Override
+   public boolean isPaused() {
+      return acq_.isPaused();
    }
 
    private Iterator<AcquisitionEvent> buildAcqEventGenerator() {
@@ -179,7 +235,7 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
          }
          acqFunctions.add(magellanZStack());
       }
-      AcquisitionEvent baseEvent = new AcquisitionEvent(this);
+      AcquisitionEvent baseEvent = new AcquisitionEvent(acq_);
       return new AcquisitionEventIterator(baseEvent, acqFunctions, monitorSliceIndices());
    }
 
@@ -188,7 +244,67 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
          //it was never successfully started
          return;
       }
-      super.waitForCompletion();
+      acq_.waitForCompletion();
+   }
+
+   @Override
+   public void finish() {
+      acq_.finish();
+   }
+
+   @Override
+   public boolean areEventsFinished() {
+      return acq_.areEventsFinished();
+   }
+
+   @Override
+   public boolean isAbortRequested() {
+      return acq_.isAbortRequested();
+   }
+
+   @Override
+   public JSONObject getSummaryMetadata() {
+      return acq_.getSummaryMetadata();
+   }
+
+   @Override
+   public boolean anythingAcquired() {
+      return acq_.anythingAcquired();
+   }
+
+   @Override
+   public void addImageMetadataProcessor(Consumer<JSONObject> modifier) {
+      acq_.addImageMetadataProcessor(modifier);
+   }
+
+   @Override
+   public void addImageProcessor(TaggedImageProcessor p) {
+      acq_.addImageProcessor(p);
+   }
+
+   @Override
+   public void addHook(AcquisitionHook hook, int type) {
+      acq_.addHook(hook, type);
+   }
+
+   @Override
+   public Future submitEventIterator(Iterator<AcquisitionEvent> evt) {
+      return submitEventIterator(evt);
+   }
+
+   @Override
+   public DataSink getDataSink() {
+      return acq_.getDataSink();
+   }
+
+   @Override
+   public boolean isDebugMode() {
+      return acq_.isDebugMode();
+   }
+
+   @Override
+   public void setDebugMode(boolean debug) {
+      acq_.setDebugMode(debug);
    }
 
    @Override
@@ -448,7 +564,6 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
             positions_ = ((MagellanGUIAcquisitionSettings) settings_).xyFootprint_.getXYPositions();
          }
 
-         getPixelStageTranslator().setPositions(positions_);
       } catch (Exception e) {
          e.printStackTrace();
          Log.log("Problem with Acquisition's XY positions. Check acquisition settings");
@@ -474,6 +589,11 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
    @Override
    public MagellanGenericAcquisitionSettings getAcquisitionSettings() {
       return settings_;
+   }
+
+   @Override
+   public PixelStageTranslator getPixelStageTranslator() {
+      return acq_.getPixelStageTranslator();
    }
 
 }
