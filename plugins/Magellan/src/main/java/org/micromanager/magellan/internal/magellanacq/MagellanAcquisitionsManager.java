@@ -25,10 +25,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.swing.JOptionPane;
-
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.internal.AffineTransformUtils;
-import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
@@ -84,7 +82,7 @@ public class MagellanAcquisitionsManager {
    }
 
    /**
-    * change in position of selected acq
+    * change in position of selected acq.
     */
    public int moveUp(int index) {
       acqStatus_ = null;
