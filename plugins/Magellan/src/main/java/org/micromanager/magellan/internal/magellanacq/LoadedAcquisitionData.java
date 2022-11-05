@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.micromanager.magellan.internal.misc.Log;
 
 /**

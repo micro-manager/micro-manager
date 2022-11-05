@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package org.micromanager.magellan.internal.gui;
 
 import javax.swing.DefaultCellEditor;
@@ -25,9 +19,10 @@ public class ExploreControlsPanel extends javax.swing.JPanel implements Controls
    private ExploreZSliders zSliders_;
 
    /**
-    * Creates new form ExploreChannelsPanel
+    * Creates new form ExploreChannelsPanel.
     */
-   public ExploreControlsPanel(MagellanDatasetAndAcquisition manager, ChannelGroupSettings channels) {
+   public ExploreControlsPanel(MagellanDatasetAndAcquisition manager,
+                               ChannelGroupSettings channels) {
       channels_ = channels;
       manager_ = manager;
       zSliders_ = new ExploreZSliders(manager);

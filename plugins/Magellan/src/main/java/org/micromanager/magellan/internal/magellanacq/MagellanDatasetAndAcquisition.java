@@ -69,7 +69,7 @@ import org.micromanager.ndviewer.overlay.Overlay;
 /**
  * Created by magellan acquisition to manage viewer, data storage, and
  * conversion between pixel coordinate space (which the viewer and storage work
- * in) and the stage coordiante space (which the acquisition works in)
+ * in) and the stage coordiante space (which the acquisition works in).
  */
 public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterface,
         SurfaceGridListener {
@@ -92,7 +92,8 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    private ExploreControlsPanel zExploreControls_;
    private SurfaceGridPanel surfaceGridControls_;
 
-   public MagellanDatasetAndAcquisition(MagellanAcquisition acq, String dir, String name, boolean showDisplay) {
+   public MagellanDatasetAndAcquisition(MagellanAcquisition acq, String dir, String name,
+                                        boolean showDisplay) {
       acq_ = acq;
       displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
               -> new Thread(r, "Magellan viewer communication thread"));
@@ -242,7 +243,7 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    }
 
    /**
-    * Called when images done arriving
+    * Called when images done arriving.
     */
    public void finished() {
       if (!storage_.isFinished()) {
@@ -265,7 +266,7 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    }
 
    /**
-    * Used for data loaded from disk
+    * Used for data loaded from disk.
     *
     * @return
     */
@@ -279,7 +280,7 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    }
 
    /**
-    * The display calls this when its closing
+    * The display calls this when its closing.
     */
    @Override
    public void close() {

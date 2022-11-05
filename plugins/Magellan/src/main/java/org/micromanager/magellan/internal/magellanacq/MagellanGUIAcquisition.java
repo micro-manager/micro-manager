@@ -27,7 +27,10 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.*;
+import org.micromanager.acqj.api.AcquisitionHook;
+import org.micromanager.acqj.api.DataSink;
+import org.micromanager.acqj.api.TaggedImageProcessor;
+import org.micromanager.acqj.api.XYTiledAcquisitionAPI;
 import org.micromanager.acqj.internal.AcquisitionEventIterator;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
@@ -60,7 +63,8 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
    private volatile boolean started_ = false;
    private String zStage_;
    protected boolean zStageHasLimits_ = false;
-   protected double zStageLowerLimit_, zStageUpperLimit_;
+   protected double zStageLowerLimit_;
+   protected double zStageUpperLimit_;
 
    private XYTiledAcquisitionAPI acq_;
 
@@ -77,13 +81,14 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
     */
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings, boolean showDisplay) {
       settings_ = settings;
-      DataSink sink = new MagellanDatasetAndAcquisition(this, settings.dir_, settings.name_, showDisplay);
+      DataSink sink = new MagellanDatasetAndAcquisition(this, settings.dir_,
+            settings.name_, showDisplay);
       int overlapX = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
       int overlapY = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
       zStep_ = ((MagellanGUIAcquisitionSettings) settings).zStep_;
       zStage_ = Magellan.getCore().getFocusDevice();
 
-      acq_ = new XYTiledAcquisition(sink, (Integer) overlapX, (Integer) overlapY, new Consumer<JSONObject>() {
+      acq_ = new XYTiledAcquisition(sink, overlapX, overlapY, new Consumer<JSONObject>() {
          @Override
          public void accept(JSONObject jsonObject) {
             addMagellanSummaryMetadata(jsonObject, sink);
@@ -97,16 +102,20 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
       });
       getPixelStageTranslator().setPositions(positions_);
 
-      //"postion" is not generic name...and as of right now there is now way of getting generic z positions
-      //from a z deviec in MM, but the following code works for some devices
+      //"position" is not generic name...and as of right now there is no way of getting
+      // generic z positions.
+      // from a z device in MM, but the following code works for some devices
       String positionName = "Position";
       try {
-         if (Magellan.getCore().getFocusDevice() != null && Magellan.getCore().getFocusDevice().length() > 0) {
+         if (Magellan.getCore().getFocusDevice() != null && Magellan.getCore()
+               .getFocusDevice().length() > 0) {
             if (Magellan.getCore().hasProperty(zStage_, positionName)) {
                zStageHasLimits_ = Magellan.getCore().hasPropertyLimits(zStage_, positionName);
                if (zStageHasLimits_) {
-                  zStageLowerLimit_ = Magellan.getCore().getPropertyLowerLimit(zStage_, positionName);
-                  zStageUpperLimit_ = Magellan.getCore().getPropertyUpperLimit(zStage_, positionName);
+                  zStageLowerLimit_ = Magellan.getCore()
+                        .getPropertyLowerLimit(zStage_, positionName);
+                  zStageUpperLimit_ = Magellan.getCore()
+                        .getPropertyUpperLimit(zStage_, positionName);
                }
             }
          }
@@ -150,7 +159,8 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
 
    //Called by pycromanager
    public NDTiffAPI getStorage() {
-      return acq_.getDataSink() == null ? null : ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getStorage();
+      return acq_.getDataSink() == null ? null
+            : ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getStorage();
    }
 
    public boolean isFinished() {
@@ -431,7 +441,7 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
 
    /**
     * This function and the one below determine which slices will be collected
-    * for a given position
+    * for a given position.
     *
     * @param zPos
     * @return
