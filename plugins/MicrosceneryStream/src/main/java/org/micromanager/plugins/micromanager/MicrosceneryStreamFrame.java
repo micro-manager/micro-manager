@@ -36,7 +36,10 @@ import org.micromanager.internal.utils.WindowPositioning;
 import org.zeromq.ZContext;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 // Imports for MMStudio internal packages
@@ -71,6 +74,9 @@ public class MicrosceneryStreamFrame extends JFrame {
         micromanagerWrapper = new MicromanagerWrapper(mmcon,200);
         server = new RemoteMicroscopeServer(micromanagerWrapper, zContext,new SliceStorage(mmcon.getHeight()*mmcon.getWidth()*500));
         msSettings  = Util.getMicroscenerySettings();
+
+        super.add(new JLabel("Version: stage limits"));
+
         //studio.acquisitions().runAcquisition().getImage()
 
         ControlSignalsClient loopBackConnection = new ControlSignalsClient(zContext,server.getBasePort(),"localhost", java.util.List.of(this::updateLabels));
@@ -162,7 +168,7 @@ public class MicrosceneryStreamFrame extends JFrame {
 
             updateParams();
         });
-        super.add(copyFromAcqEngButton);
+        super.add(copyFromAcqEngButton,"wrap");
 
         /*
         JButton sendButton = new JButton("Start Imaging");
@@ -173,46 +179,9 @@ public class MicrosceneryStreamFrame extends JFrame {
         stopButton.addActionListener(e -> cvss.pause());
         super.add(stopButton, "wrap");
 */
-        super.add(new JLabel("vProtocol2V"));
 
-//      // Snap an image, show the image in the Snap/Live view, and show some
-//      // stats on the image in our frame.
-//      imageInfoLabel_ = new JLabel();
-//      super.add(imageInfoLabel_, "growx, split, span");
-//      JButton snapButton = new JButton("Snap Image");
-//      snapButton.addActionListener(new ActionListener() {
-//         @Override
-//         public void actionPerformed(ActionEvent e) {
-//            // Multiple images are returned only if there are multiple
-//            // cameras. We only care about the first image.
-//            List<Image> images = studio_.live().snap(true);
-//            Image firstImage = images.get(0);
-//            showImageInfo(firstImage);
-//         }
-//      });
-//      super.add(snapButton, "wrap");
-//
-//      exposureTimeLabel_ = new JLabel("");
-//      super.add(exposureTimeLabel_, "split, span, growx");
-//
-//      // Run an acquisition using the current MDA parameters.
-//      JButton acquireButton = new JButton("Run Acquisition");
-//      acquireButton.addActionListener(new ActionListener() {
-//         @Override
-//         public void actionPerformed(ActionEvent e) {
-//            // All GUI event handlers are invoked on the EDT (Event Dispatch
-//            // Thread). Acquisitions are not allowed to be started from the
-//            // EDT. Therefore we must make a new thread to run this.
-//            Thread acqThread = new Thread(new Runnable() {
-//               @Override
-//               public void run() {
-//                  studio_.acquisitions().runAcquisition();
-//               }
-//            });
-//            acqThread.start();
-//         }
-//      });
-//      super.add(acquireButton, "wrap");
+        super.add(buildStageLimitsPanel(mmcon),"wrap, span");
+
 
         super.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
         super.setLocation(100, 100);
@@ -233,6 +202,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         // to one image display window.
         studio.events().registerForEvents(this);
     }
+
 
     private void updateParams() {
         try {
@@ -258,29 +228,6 @@ public class MicrosceneryStreamFrame extends JFrame {
         }
     }
 
-//   /**
-//    * To be invoked, this method must be public and take a single parameter
-//    * which is the type of the event we care about.
-//    * @param event
-//    */
-//   @Subscribe
-//   public void onExposureChanged(ExposureChangedEvent event) {
-//      exposureTimeLabel_.setText(String.format("Camera %s exposure time set to %.2fms",
-//               event.getCameraName(), event.getNewExposureTime()));
-//   }
-//
-//   /**
-//    * Display some information on the data in the provided image.
-//    */
-//   private void showImageInfo(Image image) {
-//      // See DisplayManager for information on these parameters.
-//      //HistogramData data = studio_.displays().calculateHistogram(
-//      //   image, 0, 16, 16, 0, true);
-//      imageInfoLabel_.setText(String.format(
-//            "Image size: %dx%d", // min: %d, max: %d, mean: %d, std: %.2f",
-//            image.getWidth(), image.getHeight() ) ); //, data.getMinVal(),
-//            //data.getMaxVal(), data.getMean(), data.getStdDev()));
-//   }
 
     private Unit updateLabels(RemoteMicroscopeSignal signal) {
 
@@ -312,5 +259,59 @@ public class MicrosceneryStreamFrame extends JFrame {
         dimensionsLabel_.setText(d.x + "x" + d.y);
 
         return Unit.INSTANCE;
+    }
+
+    private JPanel buildStageLimitsPanel(MMConnection mmcon){
+        JPanel stageLimitsPanel = new JPanel();
+        stageLimitsPanel.setLayout(new MigLayout());
+
+        TitledBorder title;
+        title = BorderFactory.createTitledBorder("Stage limits");
+        stageLimitsPanel.setBorder(title);
+
+        ArrayList<JTextField> stageLimits = new ArrayList<>(6);
+
+        Font bold = new JLabel().getFont();
+        bold = bold.deriveFont(bold.getStyle() | Font.BOLD);
+
+        String[] dims = {"X","Y","Z"};
+        String[] dirs = {"Min","Max"};
+        for (int dimIndex = 0;dimIndex < 3 ;dimIndex++){
+
+            String dim = dims[dimIndex];
+            JLabel xLabel = new JLabel(dim);
+            xLabel.setFont(bold);
+            stageLimitsPanel.add(xLabel,"wrap");
+
+            for (String dir: dirs){
+                stageLimitsPanel.add(new JLabel(dir));
+
+                JTextField valueField = new JTextField(10);
+                stageLimitsPanel.add(valueField);
+                Float value = msSettings.getOrNull("Stage."+dir.toLowerCase(Locale.ROOT)+dim.toUpperCase());
+                if (value == null) value = mmcon.getStagePosition().get(dimIndex);
+                valueField.setText(value+"");
+
+                JButton dirLabel = new JButton("copy stage position");
+                int finalDimIndex = dimIndex;
+                dirLabel.addActionListener(e -> valueField.setText(mmcon.getStagePosition().get(finalDimIndex) + ""));
+                stageLimitsPanel.add(dirLabel, "wrap");
+
+                stageLimits.add(valueField);
+            }
+        }
+
+        JButton applyStageLimitsButton = new JButton("Apply stage limits");
+        applyStageLimitsButton.addActionListener(e -> {
+            msSettings.set("Stage.minX", Float.parseFloat(stageLimits.get(0).getText()));
+            msSettings.set("Stage.maxX", Float.parseFloat(stageLimits.get(1).getText()));
+            msSettings.set("Stage.minY", Float.parseFloat(stageLimits.get(2).getText()));
+            msSettings.set("Stage.maxY", Float.parseFloat(stageLimits.get(3).getText()));
+            msSettings.set("Stage.maxZ", Float.parseFloat(stageLimits.get(4).getText()));
+            msSettings.set("Stage.minZ", Float.parseFloat(stageLimits.get(5).getText()));
+        });
+        stageLimitsPanel.add(applyStageLimitsButton, "span, wrap");
+
+        return stageLimitsPanel;
     }
 }
