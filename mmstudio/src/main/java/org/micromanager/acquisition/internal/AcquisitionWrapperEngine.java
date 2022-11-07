@@ -210,15 +210,25 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          // note: summaryMetadata contain instructions how/where to safe the data
          // summary metadata generated in the clojure acq engine will look at the
          // sequenceSettings.save flag and set "Directory" and "Prefix" only
-         // when save == true.  summaryMetadata.Directory and Prefix are used
+         // when save == true.  Directory and Prefix are used
          // by MMAcquisition to decide whether and where to save the acquisition.
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
          // file type (multi or single) is a global setting, not sure where/when that is applied
 
          boolean shouldShow = acquisitionSettings.shouldDisplayImages();
-         MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata_, this,
-               shouldShow);
+         // Extract directory and saving prefix from metadata here, to remove hidden
+         // requirements on metadata fields in the MMAcquistion constructor
+         String dir = null;
+         String prefix = null;
+         if (summaryMetadata_.has("Directory")
+                 && summaryMetadata_.get("Directory").toString().length() > 0) {
+            // Set up saving to the target directory.
+            dir = summaryMetadata_.getString("Directory");
+            prefix = summaryMetadata_.getString("Prefix");
+         }
+         MMAcquisition acq = new MMAcquisition(studio_, dir, prefix,
+                 summaryMetadata_, this, shouldShow);
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
 

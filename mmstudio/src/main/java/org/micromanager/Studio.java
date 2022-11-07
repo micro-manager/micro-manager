@@ -25,6 +25,7 @@ package org.micromanager;
 
 import mmcorej.CMMCore;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.alerts.AlertManager;
 import org.micromanager.data.DataManager;
 import org.micromanager.display.DisplayManager;
@@ -333,4 +334,5 @@ public interface Studio {
     * @return PropertyManager instance
     */
    PropertyManager getPropertyManager();
+
 }

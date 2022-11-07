@@ -61,21 +61,21 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
 
    private final Studio studio_;
-   private final AcquisitionWrapperEngine engine_;
    private final AcqControlDlg mdaDialog_;
 
    /**
     * Constructor only sets essential member values.
     *
     * @param studio    Implementation of Studio
-    * @param engine    Implementation of the acquisition engine.
     * @param mdaDialog The MDA dialog.
     */
-   public DefaultAcquisitionManager(Studio studio,
-                                    AcquisitionWrapperEngine engine, AcqControlDlg mdaDialog) {
+   public DefaultAcquisitionManager(Studio studio, AcqControlDlg mdaDialog) {
       studio_ = studio;
-      engine_ = engine;
       mdaDialog_ = mdaDialog;
+   }
+
+   private AcquisitionEngine getAcquisitionEngine() {
+      return ((MMStudio) studio_).getAcquisitionEngine();
    }
 
    @Override
@@ -118,16 +118,16 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          }
       } else {
          // Use the provided settings.
-         engine_.setSequenceSettings(settings);
+         getAcquisitionEngine().setSequenceSettings(settings);
          try {
-            store = engine_.acquire();
+            store = getAcquisitionEngine().acquire();
          } catch (MMException e) {
             throw new RuntimeException(e);
          }
       }
       if (isBlocking) {
          try {
-            while (engine_.isAcquisitionRunning()) {
+            while (getAcquisitionEngine().isAcquisitionRunning()) {
                Thread.sleep(50);
             }
          } catch (InterruptedException e) {
@@ -171,7 +171,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
 
    @Override
    public void haltAcquisition() {
-      engine_.abortRequest();
+      getAcquisitionEngine().abortRequest();
    }
 
    /**
@@ -182,7 +182,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
     */
    @Override
    public void loadAcquisition(String path) throws IOException {
-      engine_.shutdown();
+      getAcquisitionEngine().shutdown();
 
       // load protocol
       if (mdaDialog_ != null) {
@@ -206,14 +206,10 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
 
    @Override
    public boolean isAcquisitionRunning() {
-      if (engine_ == null) {
+      if (getAcquisitionEngine() == null) {
          return false;
       }
-      return engine_.isAcquisitionRunning();
-   }
-
-   public AcquisitionWrapperEngine getAcquisitionEngine() {
-      return engine_;
+      return getAcquisitionEngine().isAcquisitionRunning();
    }
 
    @Override
@@ -238,18 +234,18 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
 
    @Override
    public SequenceSettings getAcquisitionSettings() {
-      if (engine_ == null) {
+      if (getAcquisitionEngine() == null) {
          return new SequenceSettings.Builder().build();
       }
-      return engine_.getSequenceSettings();
+      return getAcquisitionEngine().getSequenceSettings();
    }
 
    @Override
    public void setAcquisitionSettings(SequenceSettings ss) {
-      if (engine_ == null) {
+      if (getAcquisitionEngine() == null) {
          return;
       }
-      engine_.setSequenceSettings(ss);
+      getAcquisitionEngine().setSequenceSettings(ss);
       mdaDialog_.updateGUIBlocking();
    }
 
@@ -344,6 +340,6 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
 
    @Override
    public boolean isOurAcquisition(Object source) {
-      return source == engine_;
+      return source == getAcquisitionEngine();
    }
 }

@@ -1556,6 +1556,9 @@ public enum PropertyKey {
                         JsonElement je2 = jsonArray.get(i);
                         builder.putString(e.getKey(), je2.getAsString());
                      }
+                  } else if (e.getValue().isJsonObject()) {
+                     JsonObject jsonObj = e.getValue().getAsJsonObject();
+                     builder.putString(e.getKey(), jsonObj.toString());
                   } else {
                      builder.putString(e.getKey(), e.getValue().getAsString());
                   }

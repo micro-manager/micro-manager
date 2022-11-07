@@ -85,6 +85,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
+import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
@@ -149,7 +150,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JFormattedTextField zStep_;
    private JFormattedTextField zTop_;
    private JFormattedTextField zBottom_;
-   private final AcquisitionWrapperEngine acqEng_;
    private final JScrollPane channelTablePane_;
    private final JTable channelTable_;
    private ChannelCellEditor channelCellEditor_;
@@ -216,10 +216,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * Acquisition control dialog box.
     * Specification of all parameters required for the acquisition.
     *
-    * @param acqEng   - acquisition engine
     * @param mmStudio - ScriptInterface
     */
-   public AcqControlDlg(AcquisitionWrapperEngine acqEng, MMStudio mmStudio) {
+   public AcqControlDlg(MMStudio mmStudio) {
       super("acquisition configuration dialog");
 
       mmStudio_ = mmStudio;
@@ -241,8 +240,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             close();
          }
       });
-      acqEng_ = acqEng;
-      acqEng.addSettingsListener(this);
+      mmStudio_.addMDAWindowSettingsToAcqEngines(this);
 
       super.setTitle("Multi-Dimensional Acquisition");
       super.setLayout(new MigLayout("fill, flowy, gap 2, insets 6",
@@ -359,7 +357,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       super.setBounds(100, 100, size.width, size.height);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), "MDA");
 
-      acqEng_.setSequenceSettings(sequenceSettings); // listener will call updateGUIContent()
+      getAcquisitionEngine().setSequenceSettings(sequenceSettings); // listener will call updateGUIContent()
 
       mmStudio_.events().registerForEvents(this);
 
@@ -382,6 +380,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       super.addWindowFocusListener(windowFocusListener);
    }
 
+   private AcquisitionEngine getAcquisitionEngine() {
+      return mmStudio_.getAcquisitionEngine();
+   }
 
    /**
     * Creates the table displaying channels.
@@ -389,7 +390,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * @return the table with channels.
     */
    public final JTable createChannelTable() {
-      model_ = new ChannelTableModel(mmStudio_, acqEng_);
+      model_ = new ChannelTableModel(mmStudio_, getAcquisitionEngine());
       model_.addTableModelListener(this);
 
       JTable channelTable = new DaytimeNighttime.Table() {
@@ -412,7 +413,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       channelTable.setModel(model_);
 
       channelCellEditor_ = new ChannelCellEditor();
-      ChannelCellRenderer cellRenderer = new ChannelCellRenderer(acqEng_);
+      ChannelCellRenderer cellRenderer = new ChannelCellRenderer(getAcquisitionEngine());
       channelTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
       for (int k = 0; k < model_.getColumnCount(); k++) {
@@ -531,7 +532,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
       disableCustomIntervalsButton.addActionListener((ActionEvent e) ->
-            acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder()
+            getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings().copyBuilder()
                   .useCustomIntervals(false).build()));
       disableCustomIntervalsButton.setFont(DEFAULT_FONT);
 
@@ -696,10 +697,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) afSkipInterval_.getEditor();
       editor.setFont(DEFAULT_FONT);
       editor.getTextField().setColumns(3);
-      afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount());
+      afSkipInterval_.setValue(getAcquisitionEngine().getSequenceSettings().skipAutofocusCount());
       afSkipInterval_.addChangeListener((ChangeEvent e) -> {
          applySettingsFromGUI();
-         afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount());
+         afSkipInterval_.setValue(getAcquisitionEngine().getSequenceSettings().skipAutofocusCount());
       });
       afPanel_.add(afSkipInterval_);
 
@@ -732,7 +733,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       updateGroupsCombo();
       channelGroupCombo_.addActionListener((ActionEvent arg0) -> {
          String newGroup = (String) channelGroupCombo_.getSelectedItem();
-         if (acqEng_.setChannelGroup(newGroup)) {
+         if (getAcquisitionEngine().setChannelGroup(newGroup)) {
             channelCellEditor_.stopCellEditing();
             if (mmStudio_.getAutofocusManager() != null) {
                mmStudio_.getAutofocusManager().refresh();
@@ -842,7 +843,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       result.add(acquireButton, BUTTON_SIZE);
 
       final JButton stopButton = new JButton("Stop");
-      stopButton.addActionListener((final ActionEvent e) -> acqEng_.abortRequest());
+      stopButton.addActionListener((final ActionEvent e) -> getAcquisitionEngine().abortRequest());
       stopButton.setFont(new Font("Arial", Font.BOLD, 12));
       result.add(stopButton, BUTTON_SIZE);
       return result;
@@ -1022,7 +1023,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    public void propertyChange(PropertyChangeEvent e) {
       // update summary
       applySettingsFromGUI();
-      summaryTextArea_.setText(acqEng_.getVerboseSummary());
+      summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
    }
 
 
@@ -1089,7 +1090,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     */
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
-      acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder()
+      getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings().copyBuilder()
             .channelGroup(event.getNewChannelGroup()).build());
       updateChannelAndGroupCombo();
    }
@@ -1131,14 +1132,14 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * Updates the channel group drop down box.
     */
    public final void updateGroupsCombo() {
-      String[] groups = acqEng_.getAvailableGroups();
+      String[] groups = getAcquisitionEngine().getAvailableGroups();
       if (groups.length != 0) {
          channelGroupCombo_.setModel(new DefaultComboBoxModel<>(groups));
-         if (!inArray(acqEng_.getChannelGroup(), groups)) {
-            acqEng_.setChannelGroup(acqEng_.getFirstConfigGroup());
+         if (!inArray(getAcquisitionEngine().getChannelGroup(), groups)) {
+            getAcquisitionEngine().setChannelGroup(getAcquisitionEngine().getFirstConfigGroup());
          }
 
-         channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
+         channelGroupCombo_.setSelectedItem(getAcquisitionEngine().getChannelGroup());
       }
    }
 
@@ -1175,7 +1176,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    public final void updateGUIContents() {
-      SequenceSettings sequenceSettings = acqEng_.getSequenceSettings();
+      SequenceSettings sequenceSettings = getAcquisitionEngine().getSequenceSettings();
       updateGUIFromSequenceSettings(sequenceSettings);
    }
 
@@ -1221,7 +1222,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
          channelsPanel_.setSelected(sequenceSettings.useChannels());
          channelGroupCombo_.setSelectedItem(sequenceSettings.channelGroup());
-         acqEng_.setChannelGroup(sequenceSettings.channelGroup());
+         getAcquisitionEngine().setChannelGroup(sequenceSettings.channelGroup());
          model_.setChannels(sequenceSettings.channels());
          model_.fireTableStructureChanged();
          chanKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenChannels());
@@ -1286,7 +1287,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          }
 
          // update summary
-         summaryTextArea_.setText(acqEng_.getVerboseSummary());
+         summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
 
          framesPanel_.repaint();
          positionsPanel_.repaint();
@@ -1309,9 +1310,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(() -> onNewPositionList(newPositionListEvent));
       } else {
-         acqEng_.setPositionList(newPositionListEvent.getPositionList());
+         getAcquisitionEngine().setPositionList(newPositionListEvent.getPositionList());
          // update summary
-         summaryTextArea_.setText(acqEng_.getVerboseSummary());
+         summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
       }
    }
 
@@ -1320,7 +1321,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     */
    public synchronized void saveAcqSettingsToProfile() {
       applySettingsFromGUI();
-      SequenceSettings sequenceSettings = acqEng_.getSequenceSettings();
+      SequenceSettings sequenceSettings = getAcquisitionEngine().getSequenceSettings();
       settings_.putString(MDA_SEQUENCE_SETTINGS, SequenceSettings.toJSONStream(sequenceSettings));
 
       // Save model column widths and order
@@ -1358,9 +1359,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             FileDialogs.MM_DATA_SET);
       if (result != null) {
          rootField_.setText(result.getAbsolutePath().trim());
-         acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder()
+         getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings().copyBuilder()
                .root(result.getAbsolutePath().trim()).build());
-         //acqEng_.getSequenceSettings().root = result.getAbsolutePath().trim();
+         //getAcquisitionEngine().getSequenceSettings().root = result.getAbsolutePath().trim();
       }
    }
 
@@ -1372,7 +1373,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          double z = mmStudio_.core().getPosition();
          zTop_.setText(NumberUtils.doubleToDisplayString(z));
          applySettingsFromGUI();
-         summaryTextArea_.setText(acqEng_.getVerboseSummary());
+         summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
       } catch (Exception e) {
          mmStudio_.logs().showError(e, "Error getting Z Position");
       }
@@ -1383,7 +1384,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          double z = mmStudio_.core().getPosition();
          zBottom_.setText(NumberUtils.doubleToDisplayString(z));
          applySettingsFromGUI();
-         summaryTextArea_.setText(acqEng_.getVerboseSummary());
+         summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
       } catch (Exception e) {
          mmStudio_.logs().showError(e, "Error getting Z Position");
       }
@@ -1411,7 +1412,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (new File(path).canRead()) {
          final SequenceSettings settings = mmStudio_.acquisitions().loadSequenceSettings(path);
          try {
-            GUIUtils.invokeAndWait(() -> acqEng_.setSequenceSettings(settings));
+            GUIUtils.invokeAndWait(() -> getAcquisitionEngine().setSequenceSettings(settings));
          } catch (InterruptedException e) {
             ReportingUtils.logError(e, "Interrupted while updating GUI");
          } catch (InvocationTargetException e) {
@@ -1428,7 +1429,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             FileDialogs.ACQ_SETTINGS_FILE);
       if (file != null) {
          try {
-            SequenceSettings settings = acqEng_.getSequenceSettings();
+            SequenceSettings settings = getAcquisitionEngine().getSequenceSettings();
             mmStudio_.acquisitions().saveSequenceSettings(settings,
                   file.getAbsolutePath());
          } catch (IOException e) {
@@ -1450,7 +1451,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          return false;
       }
 
-      long acqTotalBytes = acqEng_.getTotalMemory();
+      long acqTotalBytes = getAcquisitionEngine().getTotalMemory();
       if (acqTotalBytes < 0) {
          return true;
       }
@@ -1516,7 +1517,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * @return Datastore destination of the acquisition that was started.
     */
    public Datastore runAcquisition() {
-      if (acqEng_.isAcquisitionRunning()) {
+      if (getAcquisitionEngine().isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(this,
                "Cannot start acquisition: previous acquisition still in progress.");
          return null;
@@ -1530,7 +1531,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          applySettingsFromGUI();
          saveAcqSettingsToProfile();
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
-         if (acqEng_.getSequenceSettings().useChannels() && model.duplicateChannels()) {
+         if (getAcquisitionEngine().getSequenceSettings().useChannels() && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this,
                   "Cannot start acquisition using the same channel twice");
             return null;
@@ -1559,9 +1560,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                return null;
             }
          }
-         return acqEng_.acquire();
+         return getAcquisitionEngine().acquire();
       } catch (MMException | RuntimeException e) {
-         acqEng_.shutdown();
+         getAcquisitionEngine().shutdown();
          ReportingUtils.showError(e);
          return null;
       }
@@ -1576,7 +1577,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     * @return Datastore destination of the acquisition that was started.
     */
    public Datastore runAcquisition(String acqName, String acqRoot) {
-      if (acqEng_.isAcquisitionRunning()) {
+      if (getAcquisitionEngine().isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(this,
                "Unable to start the new acquisition task: previous acquisition still in progress.");
          return null;
@@ -1589,15 +1590,15 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       try {
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
-         if (acqEng_.getSequenceSettings().useChannels() && model.duplicateChannels()) {
+         if (getAcquisitionEngine().getSequenceSettings().useChannels() && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this,
                   "Cannot start acquisition using the same channel twice");
             return null;
          }
-         SequenceSettings.Builder sb = acqEng_.getSequenceSettings().copyBuilder();
-         acqEng_.setSequenceSettings(sb.prefix(acqName).root(acqRoot).save(true).build());
+         SequenceSettings.Builder sb = getAcquisitionEngine().getSequenceSettings().copyBuilder();
+         getAcquisitionEngine().setSequenceSettings(sb.prefix(acqName).root(acqRoot).save(true).build());
 
-         return acqEng_.acquire();
+         return getAcquisitionEngine().acquire();
       } catch (MMException e) {
          ReportingUtils.showError(e);
          return null;
@@ -1655,8 +1656,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                NumberUtils.displayStringToDouble(interval_.getText()),
                timeUnitCombo_.getSelectedIndex()));
          ssb.displayTimeUnit(timeUnitCombo_.getSelectedIndex());
-         ssb.useCustomIntervals(acqEng_.getSequenceSettings().useCustomIntervals());
-         ssb.customIntervalsMs(acqEng_.getSequenceSettings().customIntervalsMs());
+         ssb.useCustomIntervals(getAcquisitionEngine().getSequenceSettings().useCustomIntervals());
+         ssb.customIntervalsMs(getAcquisitionEngine().getSequenceSettings().customIntervalsMs());
 
          ssb.sliceZBottomUm(NumberUtils.displayStringToDouble(zBottom_.getText()));
          ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zTop_.getText()));
@@ -1667,7 +1668,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.usePositionList(positionsPanel_.isSelected());
 
          ssb.useChannels(channelsPanel_.isSelected());
-         ssb.channelGroup(acqEng_.getChannelGroup());
+         ssb.channelGroup(getAcquisitionEngine().getChannelGroup());
          ssb.channels(((ChannelTableModel) channelTable_.getModel()).getChannels());
 
          ssb.skipAutofocusCount(
@@ -1707,14 +1708,14 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                "Unknown save mode button or no save mode buttons selected");
       }
       ssb.saveMode(DefaultDatastore.getPreferredSaveMode(mmStudio_));
-      ssb.cameraTimeout(acqEng_.getSequenceSettings().cameraTimeout());
+      ssb.cameraTimeout(getAcquisitionEngine().getSequenceSettings().cameraTimeout());
 
       try {
-         acqEng_.setSequenceSettings(ssb.build());
+         getAcquisitionEngine().setSequenceSettings(ssb.build());
       } catch (UnsupportedOperationException uoex) {
          mmStudio_.logs().showError(
                "Zero Z step size is not supported, resetting to 1 micron", this);
-         acqEng_.setSequenceSettings(ssb.sliceZStepUm(1.0).build());
+         getAcquisitionEngine().setSequenceSettings(ssb.sliceZStepUm(1.0).build());
       }
 
       disableGUItoSettings_ = false;
@@ -1778,7 +1779,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          return;
       }
 
-      double curZ = acqEng_.getCurrentZPos();
+      double curZ = getAcquisitionEngine().getCurrentZPos();
       double newTop;
       double newBottom;
       if (zRelativeAbsolute_ == 0) {
@@ -1797,14 +1798,14 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    private void showCustomTimesDialog() {
       if (customTimesWindow == null) {
-         customTimesWindow = new CustomTimesDialog(acqEng_, mmStudio_);
+         customTimesWindow = new CustomTimesDialog(getAcquisitionEngine(), mmStudio_);
       }
       customTimesWindow.setVisible(true);
    }
 
    @Override
    public void tableChanged(TableModelEvent e) {
-      summaryTextArea_.setText(acqEng_.getVerboseSummary());
+      summaryTextArea_.setText(getAcquisitionEngine().getVerboseSummary());
    }
 
    /**

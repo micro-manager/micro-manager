@@ -34,7 +34,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.*;
-import org.micromanager.acqj.internal.AcquisitionEventIterator;
+import org.micromanager.acqj.util.AcquisitionEventIterator;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
@@ -144,12 +144,17 @@ public class ExploreAcquisition implements MagellanAcquisition {
 
    @Override
    public void togglePaused() {
-      acq_.togglePaused();
+      setPaused(!isPaused());
    }
 
    @Override
    public boolean isPaused() {
       return acq_.isPaused();
+   }
+
+   @Override
+   public void setPaused(boolean pause) {
+      acq_.setPaused(pause);
    }
 
    @Override

@@ -56,8 +56,8 @@ import org.micromanager.ScriptController;
 import org.micromanager.ShutterManager;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
-import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
@@ -147,9 +147,8 @@ public final class MMStudio implements Studio {
 
    // MMcore
    private CMMCore core_;
-   private AcquisitionWrapperEngine acqEngine_;
-   private Engine acqEngineJava_;
-   private final AcqEngJAdapter acqEngJTo2010Adapter_;
+   private AcquisitionWrapperEngine acqEngineClojure_;
+   private AcqEngJAdapter acqEngineJava_;
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
 
@@ -294,9 +293,11 @@ public final class MMStudio implements Studio {
       // The tools menu depends on the Quick-Access Manager.
       quickAccess_ = new DefaultQuickAccessManager(studio_);
 
-      acqEngine_ = new AcquisitionWrapperEngine();
-      acqEngine_.setParentGUI(this);
-      acqEngine_.setZStageDevice(core_.getFocusDevice());
+      acqEngineClojure_ = new AcquisitionWrapperEngine();
+      acqEngineClojure_.setParentGUI(this);
+      acqEngineClojure_.setZStageDevice(core_.getFocusDevice());
+
+      acqEngineJava_ = new AcqEngJAdapter(core_);
 
       // Load, but do not show, image pipeline panel.
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
@@ -309,7 +310,7 @@ public final class MMStudio implements Studio {
       afMgr_ = new DefaultAutofocusManager(studio_);
 
       posListManager_ = new DefaultPositionListManager(this);
-      acqEngine_.setPositionList(posListManager_.getPositionList());
+      acqEngineClojure_.setPositionList(posListManager_.getPositionList());
 
       propertyManager_ = new DefaultPropertyManager();
 
@@ -320,10 +321,6 @@ public final class MMStudio implements Studio {
 
       // Start loading acqEngine in the background
       prepAcquisitionEngine();
-      // Create Java acquisition engine, which doesnt need its own thread because its fast
-      acqEngineJava_ = new Engine(core_);
-      // Create adapter that converts acqEngJ to the legacy clojure interface
-      acqEngJTo2010Adapter_ = new AcqEngJAdapter(acqEngineJava_);
 
       // We wait for plugin loading to finish now, since IntroPlugins may be
       // needed to display the intro dialog. Fortunately, plugin loading is
@@ -394,7 +391,7 @@ public final class MMStudio implements Studio {
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
 
       // This entity is a class property to avoid garbage collection.
-      coreCallback_ = new CoreEventCallback(studio_, acqEngine_);
+      coreCallback_ = new CoreEventCallback(studio_, acqEngineClojure_);
 
       // Load hardware configuration
       // Note that this also initializes Autofocus plugins.
@@ -406,7 +403,7 @@ public final class MMStudio implements Studio {
       }
 
       acquisitionManager_ = new DefaultAcquisitionManager(
-            this, acqEngine_, ui_.getAcquisitionWindow());
+            this, ui_.getAcquisitionWindow());
 
       try {
          core_.setCircularBufferMemoryFootprint(settings().getCircularBufferSize());
@@ -527,6 +524,14 @@ public final class MMStudio implements Studio {
     */
    public static MMStudio getInstance() {
       return studio_;
+   }
+
+   /**
+    * Make all available acquisition engines listen for settings changes on the MDA window
+    */
+   public void addMDAWindowSettingsToAcqEngines(AcqControlDlg acqControlDlg) {
+      acqEngineClojure_.addSettingsListener(acqControlDlg);
+      acqEngineJava_.addSettingsListener(acqControlDlg);
    }
 
    /**
@@ -712,8 +717,8 @@ public final class MMStudio implements Studio {
          afMgr_.closeOptionsDialog();
       }
 
-      if (acqEngine_ != null) {
-         acqEngine_.shutdown();
+      if (acqEngineClojure_ != null) {
+         acqEngineClojure_.shutdown();
       }
 
       if (acqEngineJava_ != null) {
@@ -950,8 +955,12 @@ public final class MMStudio implements Studio {
       return configChanged_;
    }
 
-   public AcquisitionWrapperEngine getAcquisitionEngine() {
-      return acqEngine_;
+   public AcquisitionEngine getAcquisitionEngine() {
+      if (settings().getShouldUseAcqEngJ()) {
+         return acqEngineJava_;
+      } else {
+         return acqEngineClojure_;
+      }
    }
 
    /**
@@ -960,33 +969,25 @@ public final class MMStudio implements Studio {
     * @return instance of the AcquisitionEngine2010 object.
     */
    public IAcquisitionEngine2010 getAcquisitionEngine2010() {
-      if (settings().getShouldUseAcqEngJ()) {
-         return acqEngJTo2010Adapter_;
-      } else {
-         try {
-            acquisitionEngine2010LoadingThread_.join();
-            if (acquisitionEngine2010_ == null) {
-               acquisitionEngine2010_ =
-                       (IAcquisitionEngine2010)
-                               acquisitionEngine2010Class_.getConstructor(Studio.class)
-                                       .newInstance(studio_);
-            }
-            return acquisitionEngine2010_;
-         } catch (IllegalAccessException
-                 | IllegalArgumentException
-                 | InstantiationException
-                 | InterruptedException
-                 | NoSuchMethodException
-                 | SecurityException
-                 | InvocationTargetException e) {
-            ReportingUtils.logError(e);
-            return null;
+      try {
+         acquisitionEngine2010LoadingThread_.join();
+         if (acquisitionEngine2010_ == null) {
+            acquisitionEngine2010_ =
+                    (IAcquisitionEngine2010)
+                            acquisitionEngine2010Class_.getConstructor(Studio.class)
+                                    .newInstance(studio_);
          }
+         return acquisitionEngine2010_;
+      } catch (IllegalAccessException
+              | IllegalArgumentException
+              | InstantiationException
+              | InterruptedException
+              | NoSuchMethodException
+              | SecurityException
+              | InvocationTargetException e) {
+         ReportingUtils.logError(e);
+         return null;
       }
-   }
-
-   public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {
-      acqEngine_ = eng;
    }
 
    @Override

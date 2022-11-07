@@ -272,10 +272,10 @@ public final class OptionsDlg extends JDialog {
       });
 
       final JCheckBox acqEngJ = new JCheckBox();
-      runServer.setText("Use new Acquisition Engine");
-      runServer.setSelected(mmStudio.settings().getShouldUseAcqEngJ());
-      runServer.addActionListener((ActionEvent arg0) -> {
-         mmStudio_.settings().setShouldUseAcqEngJ(runServer.isSelected());
+      acqEngJ.setText("Use new Acquisition Engine");
+      acqEngJ.setSelected(mmStudio.settings().getShouldUseAcqEngJ());
+      acqEngJ.addActionListener((ActionEvent arg0) -> {
+         mmStudio_.settings().setShouldUseAcqEngJ(acqEngJ.isSelected());
       });
 
 
@@ -332,6 +332,7 @@ public final class OptionsDlg extends JDialog {
       super.add(syncExposureMainAndMDA, "wrap");
       super.add(hideMDAdisplay, "wrap");
       super.add(runServer, "wrap");
+      super.add(acqEngJ, "wrap");
 
       super.add(new JSeparator(), "wrap");
 
