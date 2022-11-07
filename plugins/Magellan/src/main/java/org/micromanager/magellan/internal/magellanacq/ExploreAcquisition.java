@@ -33,13 +33,16 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.*;
-import org.micromanager.acqj.util.AcquisitionEventIterator;
+import org.micromanager.acqj.api.AcquisitionHook;
+import org.micromanager.acqj.api.DataSink;
+import org.micromanager.acqj.api.TaggedImageProcessor;
+import org.micromanager.acqj.api.XYTiledAcquisitionAPI;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.AcqEventModules;
+import org.micromanager.acqj.util.AcquisitionEventIterator;
 import org.micromanager.acqj.util.ChannelSetting;
 import org.micromanager.acqj.util.xytiling.PixelStageTranslator;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
@@ -51,7 +54,7 @@ import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 
 /**
- * A single time point acquisition that can dynamically expand in X,Y, and Z
+ * A single time point acquisition that can dynamically expand in X,Y, and Z.
  *
  * @author Henry
  */
@@ -143,6 +146,11 @@ public class ExploreAcquisition implements MagellanAcquisition {
    }
 
    @Override
+   public void abort(Exception e) {
+      acq_.abort();
+   }
+
+   @Override
    public void togglePaused() {
       setPaused(!isPaused());
    }
@@ -160,11 +168,6 @@ public class ExploreAcquisition implements MagellanAcquisition {
    @Override
    public void waitForCompletion() {
       acq_.waitForCompletion();
-   }
-
-   @Override
-   public void abort(Exception e) {
-      acq_.abort();
    }
 
    @Override
@@ -202,21 +205,6 @@ public class ExploreAcquisition implements MagellanAcquisition {
       return null;
    }
 
-   @Override
-   public DataSink getDataSink() {
-      return null;
-   }
-
-   @Override
-   public boolean isDebugMode() {
-      return false;
-   }
-
-   @Override
-   public void setDebugMode(boolean debug) {
-
-   }
-
    /**
     * Submit a iterator of acquisition events for execution.
     *
@@ -239,9 +227,26 @@ public class ExploreAcquisition implements MagellanAcquisition {
       });
    }
 
+   @Override
+   public DataSink getDataSink() {
+      return null;
+   }
+
+   @Override
+   public boolean isDebugMode() {
+      return false;
+   }
+
+   @Override
+   public void setDebugMode(boolean debug) {
+
+   }
+
+
    //Called by pycromanager
    public NDTiffAPI getStorage() {
-      return acq_.getDataSink() == null ? null : ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getStorage();
+      return acq_.getDataSink() == null ? null
+            : ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getStorage();
    }
 
    private void createXYPositions() {
@@ -290,8 +295,8 @@ public class ExploreAcquisition implements MagellanAcquisition {
 
       submitEvents(new int[]{(int) ((MagellanDatasetAndAcquisition) acq_.getDataSink())
                   .getXYPosition(posIndex).getGridRow()},
-              new int[]{(int) ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getXYPosition(posIndex)
-                    .getGridCol()}, sliceIndex, sliceIndex);
+              new int[]{(int) ((MagellanDatasetAndAcquisition) acq_.getDataSink())
+                    .getXYPosition(posIndex).getGridCol()}, sliceIndex, sliceIndex);
    }
 
    public void acquireTiles(final int r1, final int c1, final int r2, final int c2) {
@@ -330,7 +335,8 @@ public class ExploreAcquisition implements MagellanAcquisition {
                              int maxZIndex) {
       int[] posIndices = ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getPositionIndices(
             newPositionRows, newPositionCols);
-      List<XYStagePosition> allPositions = ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getPositionList();
+      List<XYStagePosition> allPositions = ((MagellanDatasetAndAcquisition) acq_
+            .getDataSink()).getPositionList();
       List<XYStagePosition> selectedXYPositions = new ArrayList<XYStagePosition>();
       for (int i : posIndices) {
          selectedXYPositions.add(allPositions.get(i));
@@ -445,7 +451,7 @@ public class ExploreAcquisition implements MagellanAcquisition {
    }
 
    /**
-    * get min slice index for according to z limit sliders
+    * get min slice index for according to z limit sliders.
     *
     * @return
     */
@@ -454,14 +460,14 @@ public class ExploreAcquisition implements MagellanAcquisition {
    }
 
    /**
-    * get max slice index for current settings in explore acquisition
+    * get max slice index for current settings in explore acquisition.
     */
    private int getZLimitMaxSliceIndex() {
       return (int) Math.round((zBottom_ - zOrigin_) / zStep_);
    }
 
    /**
-    * get z coordinate for slice position
+    * get z coordinate for slice position.
     */
    private double getZCoordinate(int sliceIndex) {
       return zOrigin_ + zStep_ * sliceIndex;
