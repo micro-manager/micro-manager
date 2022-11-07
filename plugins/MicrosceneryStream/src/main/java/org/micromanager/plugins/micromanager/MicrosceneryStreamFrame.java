@@ -74,14 +74,12 @@ public class MicrosceneryStreamFrame extends JFrame {
         micromanagerWrapper = new MicromanagerWrapper(mmcon,200);
         server = new RemoteMicroscopeServer(micromanagerWrapper, zContext,new SliceStorage(mmcon.getHeight()*mmcon.getWidth()*500));
         msSettings  = Util.getMicroscenerySettings();
-
-        super.add(new JLabel("Version: stage limits"));
-
-        //studio.acquisitions().runAcquisition().getImage()
-
-        ControlSignalsClient loopBackConnection = new ControlSignalsClient(zContext,server.getBasePort(),"localhost", java.util.List.of(this::updateLabels));
+        // loopBackConnection
+        new ControlSignalsClient(zContext,server.getBasePort(),"localhost", java.util.List.of(this::updateLabels));
 
         super.setLayout(new MigLayout());//"fill, insets 2, gap 2, flowx"));
+
+        super.add(new JLabel("Version: stage limits"),"wrap");
 
         super.add(new JLabel("Ports: "));
         portLabel_ = new JLabel(server.getBasePort() + "" + server.getStatus().getDataPorts().stream().map(p -> " ," + p).collect(Collectors.joining()));
@@ -180,7 +178,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         super.add(stopButton, "wrap");
 */
 
-        super.add(buildStageLimitsPanel(mmcon),"wrap, span");
+        super.add(buildStageLimitsPanel(mmcon,micromanagerWrapper),"wrap, span");
 
 
         super.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -261,7 +259,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         return Unit.INSTANCE;
     }
 
-    private JPanel buildStageLimitsPanel(MMConnection mmcon){
+    private JPanel buildStageLimitsPanel(MMConnection mmcon,MicromanagerWrapper wrapper){
         JPanel stageLimitsPanel = new JPanel();
         stageLimitsPanel.setLayout(new MigLayout());
 
@@ -307,8 +305,15 @@ public class MicrosceneryStreamFrame extends JFrame {
             msSettings.set("Stage.maxX", Float.parseFloat(stageLimits.get(1).getText()));
             msSettings.set("Stage.minY", Float.parseFloat(stageLimits.get(2).getText()));
             msSettings.set("Stage.maxY", Float.parseFloat(stageLimits.get(3).getText()));
-            msSettings.set("Stage.maxZ", Float.parseFloat(stageLimits.get(4).getText()));
-            msSettings.set("Stage.minZ", Float.parseFloat(stageLimits.get(5).getText()));
+            msSettings.set("Stage.minZ", Float.parseFloat(stageLimits.get(4).getText()));
+            msSettings.set("Stage.maxZ", Float.parseFloat(stageLimits.get(5).getText()));
+//            System.out.println(""+ Float.parseFloat(stageLimits.get(0).getText()));
+//            System.out.println(""+ Float.parseFloat(stageLimits.get(1).getText()));
+//            System.out.println(""+ Float.parseFloat(stageLimits.get(2).getText()));
+//            System.out.println(""+ Float.parseFloat(stageLimits.get(3).getText()));
+//            System.out.println(""+ Float.parseFloat(stageLimits.get(4).getText()));
+//            System.out.println(""+ Float.parseFloat(stageLimits.get(5).getText()));
+            wrapper.updateHardwareDimensions();
         });
         stageLimitsPanel.add(applyStageLimitsButton, "span, wrap");
 
