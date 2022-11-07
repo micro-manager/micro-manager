@@ -14,3 +14,7 @@ For orginal readme see parent repo.
 
 - check for logs in '..\Micro-Manager-2.0gamma\CoreLogs'
 
+### Build dependency
+
+- run './gradlew build' in microscenery to build new jar
+
