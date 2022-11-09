@@ -87,5 +87,3 @@ bin
 .vs/
 .vscode/
 
-# pre-commit hook script
-/pc
