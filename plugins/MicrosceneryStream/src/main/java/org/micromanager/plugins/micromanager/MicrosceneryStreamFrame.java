@@ -37,6 +37,8 @@ import org.zeromq.ZContext;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -71,7 +73,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         super("Microscenery Stream Plugin");
         ZContext zContext = new ZContext();
         MMConnection mmcon = new MMConnection(studio.core());
-        micromanagerWrapper = new MicromanagerWrapper(mmcon,200);
+        micromanagerWrapper = new MicromanagerWrapper(mmcon,200,false);
         server = new RemoteMicroscopeServer(micromanagerWrapper, zContext,new SliceStorage(mmcon.getHeight()*mmcon.getWidth()*500));
         msSettings  = Util.getMicroscenerySettings();
         // loopBackConnection
@@ -269,6 +271,9 @@ public class MicrosceneryStreamFrame extends JFrame {
 
         ArrayList<JTextField> stageLimits = new ArrayList<>(6);
 
+        JLabel notAppliedWarningLabel = new JLabel();
+        notAppliedWarningLabel.setForeground(Color.RED);
+
         Font bold = new JLabel().getFont();
         bold = bold.deriveFont(bold.getStyle() | Font.BOLD);
 
@@ -289,6 +294,20 @@ public class MicrosceneryStreamFrame extends JFrame {
                 Float value = msSettings.getOrNull("Stage."+dir.toLowerCase(Locale.ROOT)+dim.toUpperCase());
                 if (value == null) value = mmcon.getStagePosition().get(dimIndex);
                 valueField.setText(value+"");
+                valueField.getDocument().addDocumentListener(new DocumentListener() {
+                    public void changedUpdate(DocumentEvent e) {
+                        displayApplyWarning();
+                    }
+                    public void removeUpdate(DocumentEvent e) {
+                        displayApplyWarning();
+                    }
+                    public void insertUpdate(DocumentEvent e) {
+                        displayApplyWarning();
+                    }
+                    public void displayApplyWarning() {
+                        notAppliedWarningLabel.setText("New limits have not been applied yet.");
+                    }
+                });
 
                 JButton dirLabel = new JButton("copy stage position");
                 int finalDimIndex = dimIndex;
@@ -301,6 +320,16 @@ public class MicrosceneryStreamFrame extends JFrame {
 
         JButton applyStageLimitsButton = new JButton("Apply stage limits");
         applyStageLimitsButton.addActionListener(e -> {
+            for (JTextField tf : stageLimits){
+                try{
+                    Float.parseFloat(tf.getText());
+                }catch (NumberFormatException n){
+                    JOptionPane.showMessageDialog(null,
+                            tf.getText()+ "Is not a valid floating point number", "Invalid number",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
             msSettings.set("Stage.minX", Float.parseFloat(stageLimits.get(0).getText()));
             msSettings.set("Stage.maxX", Float.parseFloat(stageLimits.get(1).getText()));
             msSettings.set("Stage.minY", Float.parseFloat(stageLimits.get(2).getText()));
@@ -313,9 +342,11 @@ public class MicrosceneryStreamFrame extends JFrame {
 //            System.out.println(""+ Float.parseFloat(stageLimits.get(3).getText()));
 //            System.out.println(""+ Float.parseFloat(stageLimits.get(4).getText()));
 //            System.out.println(""+ Float.parseFloat(stageLimits.get(5).getText()));
+            notAppliedWarningLabel.setText("");
             wrapper.updateHardwareDimensions();
         });
-        stageLimitsPanel.add(applyStageLimitsButton, "span, wrap");
+        stageLimitsPanel.add(applyStageLimitsButton, "span 2");
+        stageLimitsPanel.add(notAppliedWarningLabel,"wrap");
 
         return stageLimitsPanel;
     }
