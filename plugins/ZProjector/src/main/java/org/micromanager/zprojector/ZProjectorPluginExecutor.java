@@ -115,7 +115,9 @@ public class ZProjectorPluginExecutor {
 
             CoordsBuilder newSizeCoordsBuilder = studio_.data().getCoordsBuilder();
             for (String axis: oldStore_.getAxes()) {
-               newSizeCoordsBuilder.index(axis, oldStore_.getNextIndex(axis) - 1 );
+               if (!axis.equals(projectionAxis)) {
+                  newSizeCoordsBuilder.index(axis, oldStore_.getNextIndex(axis) - 1);
+               }
             }
             SummaryMetadata metadata = oldStore_.getSummaryMetadata();
 
