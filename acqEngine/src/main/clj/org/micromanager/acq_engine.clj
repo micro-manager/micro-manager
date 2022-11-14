@@ -462,16 +462,17 @@
         image-number (+ image-number-offset
                         (Long/parseLong (get-in image [:tags "ImageNumber"])))
         burst-event (nth burst-events image-number)
-        camera-channel-name (nth camera-channel-names cam-chan)
         num-camera-channels (count camera-channel-names)
+        index (if (< cam-chan num-camera-channels) cam-chan 0)
+        camera-channel-name (nth camera-channel-names index)
         event (-> burst-event
                 (update-in [:channel-index]
                            make-multicamera-channel
-                           cam-chan num-camera-channels)
+                           index num-camera-channels)
                 (update-in [:channel :name]
                            super-channel-name
                            camera-channel-name num-camera-channels)
-                (assoc :camera-channel-index cam-chan))
+                (assoc :camera-channel-index index))
         time-stamp (burst-time (:tags image) @state)]
     (annotate-image image event @state time-stamp)))
 
@@ -702,7 +703,7 @@
                  (not (core isContinuousFocusEnabled)))
         (enable-continuous-focus true))
       (when gui (.. gui uiManager frame (enableRoiButtons true))))
-    (catch Throwable t 
+    (catch Throwable t
            (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
 ;; running events
@@ -927,7 +928,7 @@
         simple-channels (if-not (empty? channels)
                           channels
                           [{:name "Default" :color java.awt.Color/WHITE}])
-        super-channels (all-super-channels simple-channels 
+        super-channels (all-super-channels simple-channels
                                            (get-camera-channel-names))
         ch-names (vec (map :name super-channels))
         computer (try (.. InetAddress getLocalHost getHostName) (catch UnknownHostException e ""))]
