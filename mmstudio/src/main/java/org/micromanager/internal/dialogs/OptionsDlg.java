@@ -272,7 +272,7 @@ public final class OptionsDlg extends JDialog {
       });
 
       final JCheckBox acqEngJ = new JCheckBox();
-      acqEngJ.setText("Use new Acquisition Engine");
+      acqEngJ.setText("Use new Acquisition Engine (DANGER--experimental)");
       acqEngJ.setSelected(mmStudio.settings().getShouldUseAcqEngJ());
       acqEngJ.addActionListener((ActionEvent arg0) -> {
          mmStudio_.settings().setShouldUseAcqEngJ(acqEngJ.isSelected());
