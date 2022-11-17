@@ -29,7 +29,14 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
@@ -37,7 +44,6 @@ import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.display.DisplayWindow;
-
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
@@ -54,7 +60,7 @@ public class DuplicatorPluginFrame extends JDialog {
    private final DisplayWindow ourWindow_;
    private final DataProvider ourProvider_;
    
-   public DuplicatorPluginFrame (Studio studio, DisplayWindow window) {
+   public DuplicatorPluginFrame(Studio studio, DisplayWindow window) {
       studio_ = studio;
       final DuplicatorPluginFrame cpFrame = this;
       
@@ -63,7 +69,6 @@ public class DuplicatorPluginFrame extends JDialog {
       ourWindow_ = window;
       ourProvider_ = ourWindow_.getDataProvider();
 
-      
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       String shortName = ourProvider_.getName();
       super.setTitle(DuplicatorPlugin.MENUNAME + shortName);
@@ -91,7 +96,8 @@ public class DuplicatorPluginFrame extends JDialog {
                        (int) ourProvider_.getNextIndex(axis), 1);
                mins.put(axis, 0);
                final JSpinner minSpinner = new JSpinner(model);
-               JFormattedTextField field = (JFormattedTextField) minSpinner.getEditor().getComponent(0);
+               JFormattedTextField field =
+                     (JFormattedTextField) minSpinner.getEditor().getComponent(0);
                DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
                formatter.setCommitsOnValidEdit(true);
                minSpinner.addChangeListener((ChangeEvent ce) -> {
@@ -140,19 +146,19 @@ public class DuplicatorPluginFrame extends JDialog {
       final JTextField nameField = new JTextField(shortName);
       super.add(nameField, "span2, grow, wrap");
       
-      JButton OKButton = new JButton("OK");
-      OKButton.addActionListener(new ActionListener() {
+      JButton okButton = new JButton("OK");
+      okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
             cpFrame.dispose();
             DuplicatorExecutor de = new DuplicatorExecutor(
                     studio_, ourWindow_, nameField.getText(), mins, maxes);
-            final ProgressBar pb = new ProgressBar (ourWindow_.getWindow(),
+            final ProgressBar pb = new ProgressBar(ourWindow_.getWindow(),
                     "Duplicating..", 0, 100);
             de.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                if ("progress".equals(evt.getPropertyName())) {
                   pb.setProgress((Integer) evt.getNewValue());
-                  if ((Integer) evt.getNewValue() == 100 ) {
+                  if ((Integer) evt.getNewValue() == 100) {
                      pb.setVisible(false);
                   } 
                }
@@ -160,13 +166,13 @@ public class DuplicatorPluginFrame extends JDialog {
             de.execute();
          }
       });
-      super.add(OKButton, "span 3, split 2, tag ok, wmin button");
+      super.add(okButton, "span 3, split 2, tag ok, wmin button");
       
-      JButton CancelButton = new JButton("Cancel");
-      CancelButton.addActionListener((ActionEvent ae) -> {
+      JButton cancelButton = new JButton("Cancel");
+      cancelButton.addActionListener((ActionEvent ae) -> {
          cpFrame.dispose();
       });
-      super.add(CancelButton, "tag cancel, wrap");     
+      super.add(cancelButton, "tag cancel, wrap");
       
       super.pack();
       

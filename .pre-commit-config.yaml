@@ -10,5 +10,5 @@ repos:
           - --
           - -c
           - buildscripts/codestyle/checkstyle.xml
-        files: '^(mmstudio/src/main/java/|libraries|plugins/MMClearVolumePlugin|plugins/Magellan|plugins/SharpnessInspector|plugins/ZProjector)'
+        files: '^(mmstudio/src/main/java/|libraries|plugins/Duplicator|plugins/MMClearVolumePlugin|plugins/Magellan|plugins/SharpnessInspector|plugins/ZProjector)'
         exclude: '^(libraries/Gaussian/src/main/java/edu/ucsf/valelab/tsf)'
