@@ -23,6 +23,11 @@ package org.micromanager.duplicator;
 
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.swing.SwingWorker;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -31,19 +36,16 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 
-import javax.swing.SwingWorker;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 /**
+ * Does the actual Duplication.
  *
  * @author nico
  */
-public class DuplicatorExecutor extends SwingWorker <Void, Void> {
+public class DuplicatorExecutor extends SwingWorker<Void, Void> {
    private final Studio studio_;
    private final DisplayWindow theWindow_;
    private final String newName_;
@@ -51,8 +53,8 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
    private final Map<String, Integer> maxes_;
    
    /**
-    * Performs the actual creation of a new image with reduced content
-    * 
+    * Performs the actual creation of a new image with reduced content.
+    *
     * @param studio - instance of Micro-Manager Studio
     * @param theWindow - original window to be copied
     * @param newName - name for the copy
@@ -74,25 +76,26 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
    @Override
    protected Void doInBackground() {
       
-       // TODO: provide options for disk-backed datastores
-      Datastore newStore = studio_.data().createRAMDatastore();
-      
-      DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+      // TODO: provide options for disk-backed datastores
+      final Datastore newStore = studio_.data().createRAMDatastore();
+      final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
       copyDisplay.setCustomTitle(newName_);
-      copyDisplay.setDisplaySettings(
-              theWindow_.getDisplaySettings().copyBuilder().build());
-      
+      final DisplaySettings originalDisplaySettings = theWindow_.getDisplaySettings();
+      final DisplaySettings.Builder newDisplaySettingsBuilder =
+            theWindow_.getDisplaySettings().copyBuilder();
+
       // TODO: use Overlays instead
       Roi roi = theWindow_.getImagePlus().getRoi();
       
       DataProvider oldStore = theWindow_.getDataProvider();
-      Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().getCoordsBuilder();
-      for (String axis: oldStore.getAxes()) {
-         newSizeCoordsBuilder.index(axis, oldStore.getNextIndex(axis) - 1 );
+      Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
+      for (String axis : oldStore.getAxes()) {
+         newSizeCoordsBuilder.index(axis, oldStore.getNextIndex(axis) - 1);
       }
       SummaryMetadata metadata = oldStore.getSummaryMetadata();
       List<String> channelNames = metadata.getChannelNameList();
       if (mins_.containsKey(Coords.CHANNEL)) {
+         List<ChannelDisplaySettings> channelDisplaySettings = new ArrayList<>();
          int min = mins_.get(Coords.CHANNEL);
          int max = maxes_.get(Coords.CHANNEL);
          List<String> chNameList = new ArrayList<>();
@@ -101,9 +104,11 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
                chNameList.add("channel " + index);
             } else {
                chNameList.add(channelNames.get(index));
-            }  
+               channelDisplaySettings.add(originalDisplaySettings.getChannelSettings(index));
+            }
          }
          channelNames = chNameList;
+         newDisplaySettingsBuilder.channels(channelDisplaySettings);
       }
       newSizeCoordsBuilder.channel(channelNames.size());
       float  nrToBeCopied = 1;
@@ -120,6 +125,8 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
               .channelNames(channelNames)
               .intendedDimensions(newSizeCoordsBuilder.build())
               .build();
+      copyDisplay.setDisplaySettings(newDisplaySettingsBuilder.build());
+
       try {
          newStore.setSummaryMetadata(metadata);
 
@@ -141,7 +148,7 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
                Coords.CoordsBuilder newCoordBuilder = oldCoord.copyBuilder();
                for (String axis : oldCoord.getAxes()) {
                   if (mins_.containsKey(axis)) {
-                     newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins_.get(axis) );
+                     newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins_.get(axis));
                   }
                }
                Image img = oldStore.getImage(oldCoord);
@@ -170,15 +177,16 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
                              img.getBytesPerPixel(), img.getNumComponents(), 
                              newCoords, newImgShallow.getMetadata());
                   } else {
-                     throw new DuplicatorException("Unsupported pixel type.  Can only copy 8 or 16 bit images.");
+                     throw new DuplicatorException(
+                           "Unsupported pixel type.  Can only copy 8 or 16 bit images.");
                   }
                }
                newStore.putImage(newImgShallow);
                nrCopied++;
                try {
-                  setProgress( (int) ( nrCopied / nrToBeCopied * 100.0) );
+                  setProgress((int) (nrCopied / nrToBeCopied * 100.0));
                } catch (IllegalArgumentException iae) {
-                  System.out.println ("Value was: " + (int) (nrCopied / nrToBeCopied * 100.0));
+                  System.out.println("Value was: " + (int) (nrCopied / nrToBeCopied * 100.0));
                }
                
             }
