@@ -20,7 +20,7 @@ public class CRISPPlugin implements MenuPlugin, SciJavaPlugin {
     public static final String copyright = "Applied Scientific Instrumentation (ASI), 2014-2021";
     public static final String description = "Interface to control ASIs CRISP Autofocus system.";
     public static final String menuName = "ASI CRISP Control";
-    public static final String version = "2.5.0";
+    public static final String version = "2.5.1";
 
     private Studio studio;
     private CRISPFrame frame;
@@ -41,16 +41,9 @@ public class CRISPPlugin implements MenuPlugin, SciJavaPlugin {
         if (WindowUtils.isOpen(frame)) {
             WindowUtils.close(frame);
         }
-
-        try {
-            frame = new CRISPFrame(studio);
-            frame.setVisible(true);
-            frame.toFront();
-        } catch (Exception e) {
-            if (studio != null) {
-                studio.logs().showError(e);
-            }
-        }
+        frame = new CRISPFrame(studio);
+        frame.setVisible(true);
+        frame.toFront();
     }
 
     @Override

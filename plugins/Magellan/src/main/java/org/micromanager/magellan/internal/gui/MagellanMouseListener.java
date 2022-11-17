@@ -5,7 +5,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import javax.swing.SwingUtilities;
-import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
+import org.micromanager.magellan.internal.magellanacq.MagellanDatasetAndAcquisition;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
@@ -29,7 +29,7 @@ public class MagellanMouseListener implements CanvasMouseListenerInterface {
    private volatile long lastMouseWheelZoomTime_ = 0;
    private volatile boolean mouseDragging_ = false;
 
-   private MagellanDataManager manager_;
+   private MagellanDatasetAndAcquisition manager_;
    private MagellanViewer viewer_;
 
    private volatile Point exploreStartTile_;
@@ -37,7 +37,7 @@ public class MagellanMouseListener implements CanvasMouseListenerInterface {
    private boolean exploreMode_;
    private boolean surfaceMode_;
 
-   public MagellanMouseListener(MagellanDataManager manager, MagellanViewer viewer) {
+   public MagellanMouseListener(MagellanDatasetAndAcquisition manager, MagellanViewer viewer) {
       manager_ = manager;
       viewer_ = viewer;
    }

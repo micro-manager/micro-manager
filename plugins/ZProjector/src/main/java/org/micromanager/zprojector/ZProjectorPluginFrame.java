@@ -28,7 +28,18 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
@@ -41,6 +52,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
+ * UI of the ZProjector plugin.
  *
  * @author nico
  */
@@ -50,7 +62,7 @@ public class ZProjectorPluginFrame extends JDialog {
    private final DataProvider ourProvider_;
    private final MutablePropertyMapView settings_;
    
-   public ZProjectorPluginFrame (Studio studio, DisplayWindow window) {
+   public ZProjectorPluginFrame(Studio studio, DisplayWindow window) {
       studio_ = studio;
       settings_ = studio_.profile().getSettings(ZProjectorPlugin.class);
       final ZProjectorPluginFrame cpFrame = this;
@@ -104,7 +116,8 @@ public class ZProjectorPluginFrame extends JDialog {
                        (int) ourProvider_.getNextIndex(axis), 1);
                mins.put(axis, 0);
                final JSpinner minSpinner = new JSpinner(model);
-               JFormattedTextField field = (JFormattedTextField) minSpinner.getEditor().getComponent(0);
+               JFormattedTextField field = (JFormattedTextField) minSpinner.getEditor()
+                     .getComponent(0);
                DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
                formatter.setCommitsOnValidEdit(true);
                minSpinner.addChangeListener((ChangeEvent ce) -> {
@@ -171,8 +184,7 @@ public class ZProjectorPluginFrame extends JDialog {
       
       // Note: Median and Std.Dev. yield 32-bit images
       // Those would need to be converted to 16-bit to be shown...
-      final String[] projectionMethods = new String[] 
-                                    {"Max", "Min", "Avg", "Median", "Std.Dev"};
+      final String[] projectionMethods = new String[] {"Max", "Min", "Avg", "Median", "Std.Dev"};
       final JComboBox methodBox = new JComboBox(projectionMethods);
       methodBox.setSelectedItem(settings_.getString(
                                     ZProjectorPlugin.PROJECTION_METHOD, "Max"));
@@ -194,8 +206,8 @@ public class ZProjectorPluginFrame extends JDialog {
       });
       super.add(saveBox, "span3, grow, wrap");
       
-      JButton OKButton = new JButton("OK");
-      OKButton.addActionListener((ActionEvent ae) -> {
+      JButton okButton = new JButton("OK");
+      okButton.addActionListener((ActionEvent ae) -> {
          String axis = bg.getSelection().getActionCommand();
          ZProjectorPluginExecutor zp = new ZProjectorPluginExecutor(studio_, ourWindow_);
          int projectionMethod = ZProjector.MAX_METHOD;
@@ -228,13 +240,13 @@ public class ZProjectorPluginFrame extends JDialog {
                  projectionMethod);
          cpFrame.dispose();
       });
-      super.add(OKButton, "span 3, split 2, tag ok, wmin button");
+      super.add(okButton, "span 3, split 2, tag ok, wmin button");
       
-      JButton CancelButton = new JButton("Cancel");
-      CancelButton.addActionListener((ActionEvent ae) -> {
+      JButton cancelButton = new JButton("Cancel");
+      cancelButton.addActionListener((ActionEvent ae) -> {
          cpFrame.dispose();
       });
-      super.add(CancelButton, "tag cancel, wrap");     
+      super.add(cancelButton, "tag cancel, wrap");
       
       super.pack();
       

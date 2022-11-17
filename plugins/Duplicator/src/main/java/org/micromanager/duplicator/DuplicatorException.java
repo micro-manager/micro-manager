@@ -7,7 +7,8 @@ package org.micromanager.duplicator;
  */
 public class DuplicatorException extends Exception {
    
-      public DuplicatorException(String text) {
+   public DuplicatorException(String text) {
       super(text);
    }
+
 }

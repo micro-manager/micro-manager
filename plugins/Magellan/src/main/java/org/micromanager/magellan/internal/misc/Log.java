@@ -17,7 +17,6 @@
 
 package org.micromanager.magellan.internal.misc;
 
-import ij.IJ;
 import org.micromanager.magellan.internal.main.Magellan;
 
 /**

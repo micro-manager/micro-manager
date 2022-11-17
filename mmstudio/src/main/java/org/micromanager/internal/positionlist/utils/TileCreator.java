@@ -34,11 +34,16 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * @author N2-LiveCell
+ * Business end of TileCreator.  Given user input, generate MultiStagePosition List.
+ *
+ * @author Nick Anthony 2018, Nico Stuurman 2008 and 2022
  */
 public final class TileCreator {
    private final CMMCore core_;
 
+   /**
+    * Units used for the overlap.
+    */
    public enum OverlapUnitEnum { UM, PX, PERCENT
    }
 
@@ -48,8 +53,20 @@ public final class TileCreator {
       core_ = core;
    }
 
-   /*
-    * Create the tile list based on user input, pixelsize, and imagesize
+   /**
+    * Create the tile list based on user input, pixelsize, and imagesize.
+    *
+    * @param overlap Overlap desired by user.  This may be increased, but not decreased.
+    * @param overlapUnit Units used to specify desired overlap
+    * @param endPoints Array of MultiStagePositions (should be size 2-4) with corners.
+    * @param pixelSizeUm Pixel Size of the camera in Microns at the image plane.
+    * @param labelPrefix Label Prefix to be used for naming the positions.
+    * @param xyStage Name of the xyStage that will be used.
+    * @param zStages Name of the xStage that will be used (optional).
+    * @param zType ZGenerator to be used if we do Z positions.
+    * @return PositionList with annotated MultiStagePositions organized as a line
+    *          from one corner to the other with a minimum overlap as specified
+    *          by the operator.
     */
    public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit,
                                    MultiStagePosition[] endPoints, double pixelSizeUm,
@@ -191,6 +208,151 @@ public final class TileCreator {
       return posList;
    }
 
+   /**
+    * Create a line of locations between two input points,
+    * taking into account desired overlap, pixelsize, and imagesize.
+    *
+    * @param overlap Overlap desired by user.  This may be increased, but not decreased.
+    * @param overlapUnit Units used to specify desired overlap
+    * @param endPoints Array of MultiStagePositions (should be size 2) with corners.
+    * @param pixelSizeUm Pixel Size of the camera in Microns at the image plane.
+    * @param labelPrefix Label Prefix to be used for naming the positions.
+    * @param xyStage Name of the xyStage that will be used.
+    * @param zStages Name of the xStage that will be used (optional).
+    * @param zType ZGenerator to be used if we do Z positions.
+    * @return PositionList with annotated MultiStagePositions organized as a line
+    *          from one corner to the other with a minimum overlap as specified
+    *          by the operator.
+    */
+   public PositionList createLine(double overlap, OverlapUnitEnum overlapUnit,
+                                   MultiStagePosition[] endPoints, double pixelSizeUm,
+                                   String labelPrefix, String xyStage, StrVector zStages,
+                                   ZGenerator.Type zType) {
+      // Make sure two corners were set
+      if (endPoints.length != 2) {
+         ReportingUtils.showError("Two endpoints should be set");
+         return null;
+      }
+      // Make sure all Points have the same stage
+      for (int i = 1; i < endPoints.length; i++) {
+         if (!xyStage.equals(endPoints[i].getDefaultXYStage())) {
+            ReportingUtils
+                  .showError("All positions given to TileCreator must use the same xy stage");
+            return null;
+         }
+      }
+
+      ZGenerator zGen = null;
+      if (zStages == null) {
+         zStages = new StrVector();
+      }
+      if (zStages.size() > 0) {
+         PositionList posList = new PositionList();
+         posList.setPositions(endPoints);
+         switch (zType) {
+            case SHEPINTERPOLATE:
+               zGen = new ZGeneratorShepard(posList);
+               break;
+            case AVERAGE:
+            default:
+               zGen = new ZGeneratorAverage(posList);
+               break;
+         }
+      }
+
+      // Calculate a bounding rectangle around the defaultXYStage positions
+      // TODO: develop method to deal with multiple axis
+      StagePosition[] coords = boundingBox(endPoints, xyStage);
+      double maxX = coords[1].get2DPositionX();
+      double minX = coords[0].get2DPositionX();
+      double maxY = coords[1].get2DPositionY();
+      double minY = coords[0].get2DPositionY();
+
+      double[] ans = getImageSize(pixelSizeUm);
+      double imageSizeXUm = ans[0];
+      double imageSizeYUm = ans[1];
+
+      ans = getTileSize(overlap, overlapUnit, pixelSizeUm);
+      final double tileSizeXUm = ans[0];
+      final double tileSizeYUm = ans[1];
+
+      double overlapXUm = imageSizeXUm - tileSizeXUm;
+      double overlapYUm = imageSizeYUm - tileSizeYUm;
+
+      // bounding box size accounting for the fact that the edges of the image extend
+      // past the max/min values set.
+      final double boundingXUm = maxX - minX + tileSizeXUm;
+      final double boundingYUm = maxY - minY + tileSizeYUm;
+
+      // calculate number of images in X and Y
+      final int nrImagesX = (int) Math.ceil((boundingXUm) / tileSizeXUm);
+      final int nrImagesY = (int) Math.ceil((boundingYUm) / tileSizeYUm);
+
+      // since we are moving a line, the number of images to take is the larger
+      // of X and Y
+      final int nrImages = nrImagesX > nrImagesY ? nrImagesX : nrImagesY;
+      if (nrImages < 1) {
+         ReportingUtils.showError("Zero or negative number of images requested. "
+               + "Is the overlap larger than the Image Width or Height?");
+         return null;
+      }
+
+      double totalSizeXUm = nrImages * tileSizeXUm > boundingXUm ? boundingXUm :
+            nrImages * tileSizeXUm;
+      double totalSizeYUm = nrImagesY * tileSizeYUm > boundingYUm ? boundingYUm :
+            nrImages * tileSizeYUm;
+
+      final double xStepSize = (totalSizeXUm - tileSizeXUm) / (nrImages - 1);
+      final double yStepSize = (totalSizeYUm - tileSizeYUm) / (nrImages - 1);
+
+      PositionList posList = new PositionList();
+      // todo handle mirrorX mirrorY
+      for (int i = 0; i < nrImages; i++) {
+         MultiStagePosition msp = new MultiStagePosition();
+
+         // Add XY position
+         // xyStage is not null; we've checked above.
+         msp.setDefaultXYStage(xyStage);
+         double dx = minX + (i * xStepSize);
+         double dy = minY + (i * yStepSize);
+         StagePosition spXY = StagePosition.create2D(xyStage, dx, dy);
+         msp.add(spXY);
+
+         // Add Z position
+         if (zGen != null) {
+            msp.setDefaultZStage(zStages.get(0));
+            //loop over Z coordinates and add the correct positions for any we are using
+            for (int a = 0; a < zStages.size(); a++) {
+               StagePosition newSP = StagePosition.create1D(zStages.get(a),
+                     zGen.getZ(dx, dy, zStages.get(a)));
+               msp.add(newSP);
+            }
+         }
+
+         // Add 'metadata'
+         msp.setLabel(labelPrefix + "-Pos" + FMT_POS.format(i));
+         msp.setProperty("Source", "LineCreator");
+
+         if (overlapUnit == OverlapUnitEnum.UM || overlapUnit == OverlapUnitEnum.PX) {
+            msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
+            final int overlapPixX = (int) Math.floor(overlapXUm / pixelSizeUm);
+            msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
+            msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
+            final int overlapPixY = (int) Math.floor(overlapXUm / pixelSizeUm);
+            msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
+         } else { // overlapUnit_ == OverlapUnit.PERCENT
+            msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
+            msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
+            int overlapPixX = (int) Math.floor(overlapXUm / pixelSizeUm);
+            int overlapPixY = (int) Math.floor(overlapYUm / pixelSizeUm);
+            msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
+            msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
+         }
+         posList.addPosition(msp);
+      }
+      return posList;
+   }
+
    private boolean isSwappedXY() {
       // Returns true if the the camera device adapter indicates that it's x and y axis
       // should be swapped.
@@ -213,8 +375,15 @@ public final class TileCreator {
       return !correction && transposeXY;
    }
 
+   /**
+    * Returns the x and y sizes of the image in microns after subtracting the overlap.
+    *
+    * @param overlap Desired overlap
+    * @param overlapUnit Units of the overlap given (pixels, microns, percentage)
+    * @param pixSizeUm Pixel size of the image in microns
+    * @return Size of a tile, i.e. image size minus the overlap in microns.
+    */
    public double[] getTileSize(double overlap, OverlapUnitEnum overlapUnit, double pixSizeUm) {
-      //Returns the x and y sizes of the image after subtracting the overlap.
       double overlapUmX;
       double overlapUmY;
 
@@ -242,8 +411,14 @@ public final class TileCreator {
       return new double[] {tileSizeXUm, tileSizeYUm};
    }
 
+   /**
+    * Returns the x and y sizes of the image not accounting for the overlap.
+    * Asks the Core for the current Image Height and Width.
+    *
+    * @param pixSizeUm  pixelSize in Microns
+    * @return Image Size in microns as array of size with X in first position.
+    */
    public double[] getImageSize(double pixSizeUm) {
-      //Returns the x and y sizes of the image not accounting for the overlap.
       boolean swapXY = isSwappedXY();
       double imageSizeXUm = swapXY ? pixSizeUm * core_.getImageHeight() :
             pixSizeUm * core_.getImageWidth();
@@ -253,6 +428,13 @@ public final class TileCreator {
       return new double[] {imageSizeXUm, imageSizeYUm};
    }
 
+   /**
+    *  Given an array os positions, returns their (square) bounding box.
+    *
+    * @param endPoints Array of MultiStagePosition endpoints.
+    * @param xyStage Name of the XYStage that we are interested in.
+    * @return Minimum and Maximum X and Y coordinates found in these endpoints.
+    */
    public StagePosition[] boundingBox(MultiStagePosition[] endPoints, String xyStage) {
       //Returns the minimum and maximum coordinates found in the set of input coordinates.
       double minX = Double.POSITIVE_INFINITY;

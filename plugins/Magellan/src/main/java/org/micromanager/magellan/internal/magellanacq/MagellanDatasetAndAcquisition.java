@@ -69,9 +69,9 @@ import org.micromanager.ndviewer.overlay.Overlay;
 /**
  * Created by magellan acquisition to manage viewer, data storage, and
  * conversion between pixel coordinate space (which the viewer and storage work
- * in) and the stage coordiante space (which the acquisition works in)
+ * in) and the stage coordiante space (which the acquisition works in).
  */
-public class MagellanDataManager implements DataSink, DataSourceInterface,
+public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterface,
         SurfaceGridListener {
 
    private static final int SAVING_QUEUE_SIZE = 30;
@@ -92,7 +92,9 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    private ExploreControlsPanel zExploreControls_;
    private SurfaceGridPanel surfaceGridControls_;
 
-   public MagellanDataManager(String dir, String name, boolean showDisplay) {
+   public MagellanDatasetAndAcquisition(MagellanAcquisition acq, String dir, String name,
+                                        boolean showDisplay) {
+      acq_ = acq;
       displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
               -> new Thread(r, "Magellan viewer communication thread"));
 
@@ -104,7 +106,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    //Constructor for opening loaded data
-   public MagellanDataManager(String dir) throws IOException {
+   public MagellanDatasetAndAcquisition(String dir) throws IOException {
       displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
               -> new Thread(r, "Magellan viewer communication thread"));
       storage_ = new NDTiffStorage(dir);
@@ -117,7 +119,6 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
 
    public void initialize(Acquisition acq, JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
-      acq_ = (MagellanAcquisition) acq;
       pixelSizeZ_ = acq_.getZStep();
 
       AcqEngMetadata.setHeight(summaryMetadata, (int) Magellan.getCore().getImageHeight());
@@ -242,7 +243,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    /**
-    * Called when images done arriving
+    * Called when images done arriving.
     */
    public void finished() {
       if (!storage_.isFinished()) {
@@ -265,7 +266,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    /**
-    * Used for data loaded from disk
+    * Used for data loaded from disk.
     *
     * @return
     */
@@ -279,7 +280,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    /**
-    * The display calls this when its closing
+    * The display calls this when its closing.
     */
    @Override
    public void close() {
@@ -300,7 +301,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               MagellanDataManager.this.close();
+               MagellanDatasetAndAcquisition.this.close();
             }
          });
       }

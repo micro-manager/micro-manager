@@ -24,19 +24,17 @@ package org.micromanager.zprojector;
 import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
-
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 
 /**
- * Plugin that projects Micro-Manager datasets along a selected axis 
+ * Plugin that projects Micro-Manager datasets along a selected axis.
  * Usually, this is a projection along the z-axis (but others such as t, can 
- * be useful as well)
+ * be useful as well).
+ *
  * @author nico
  */
-
 // to make the code show up in the gearmenu when running under Netbeans
 @Plugin(type = DisplayGearMenuPlugin.class)
 public class ZProjectorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {

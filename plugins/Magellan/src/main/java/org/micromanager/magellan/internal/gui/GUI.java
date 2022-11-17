@@ -1952,7 +1952,7 @@ public class GUI extends javax.swing.JFrame {
       String name = exploreSavingNameTextField_.getText();
       String cGroup = (String) exploreChannelGroupCombo_.getSelectedItem();
       MagellanAcquisitionsManager.getInstance().createExploreAcquisition(zStep, overlap, dir,
-            name, cGroup).start();
+            name, cGroup);
    } //GEN-LAST:event_newExploreWindowButton_ActionPerformed
 
    private void exploreZStepSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {

@@ -211,8 +211,7 @@ public final class DefaultDataManager implements DataManager {
    @Override
    public Datastore loadData(Component parent, String directory, boolean isVirtual)
          throws IOException {
-      // If the user selected a TIFF file, select the directory the file is
-      // in.
+      // If the user selected a TIFF file, select the directory the file is in
       File dirFile = new File(directory);
       if (!dirFile.isDirectory()) {
          directory = dirFile.getParent();
@@ -262,6 +261,8 @@ public final class DefaultDataManager implements DataManager {
                return null;
             } else if (options[selection].equals(VIRTUAL_OPTION)) {
                // We already have the virtual dataset ready.
+               result.setSavePath(directory);
+               result.freeze();
                return result;
             }
          }
