@@ -13,6 +13,7 @@
 
 package org.micromanager.display.internal.animate;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -91,7 +92,7 @@ public final class AnimationController<P> {
    private final AnimationStateDelegate<P> sequencer_;
 
    private int tickIntervalMs_ = 100;
-   private double animationRateFPS_ = 10.0;
+   private AtomicDouble animationRateFPS_ = new AtomicDouble(10.0);
    private final Map<String, NewPositionHandlingMode> newPositionModes_ =
          new HashMap<>();
    private int newPositionFlashDurationMs_ = 500;
@@ -195,15 +196,15 @@ public final class AnimationController<P> {
     *
     * @param fps Rate in frames per second.
     */
-   public synchronized void setAnimationRateFPS(double fps) {
+   public void setAnimationRateFPS(double fps) {
       if (fps < 0.0) {
          throw new IllegalArgumentException("fps must not be negative");
       }
-      animationRateFPS_ = fps;
+      animationRateFPS_.set(fps);
    }
 
    public synchronized double getAnimationRateFPS() {
-      return animationRateFPS_;
+      return animationRateFPS_.get();
    }
 
    /**
