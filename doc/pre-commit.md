@@ -136,7 +136,11 @@ a lot of manual work.
     (this can be done per project). You might want to set Severity to Warning.
   - Additionally, import the Checkstyle rules into code formatting settings: go
     to `Settings > Editor > Code Style > Java`; from the Gear (⚙️) menu, choose
-    `Import Scheme > Checkstyle Configuration`.
+    `Import Scheme > Checkstyle Configuration`. Then select
+    `buildscripts/codestyle/checkstyle.xml`.
+    - If the import fails in this last step (observed on macOS), you can
+      instead use `Import Scheme > IntelliJ IDEA code style XML` and import
+      `buildscripts/codestyle/idea-java-code-style.xml`.
 
 - Eclipse has a [Checkstyle plugin](https://checkstyle.org/eclipse-cs/)
 
