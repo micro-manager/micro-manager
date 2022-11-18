@@ -277,7 +277,7 @@ public final class OptionsDlg extends JDialog {
       acqEngJ.addActionListener((ActionEvent arg0) -> {
          mmStudio_.settings().setShouldUseAcqEngJ(acqEngJ.isSelected());
       });
-
+  
 
       final JButton closeButton = new JButton();
       closeButton.setText("Close");
