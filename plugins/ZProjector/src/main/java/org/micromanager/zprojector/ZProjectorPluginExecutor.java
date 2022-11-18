@@ -43,7 +43,6 @@ import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.display.DisplayWindow;
-
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
@@ -53,6 +52,7 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ProgressBar;
 
 /**
+ * Executes the Projection.
  *
  * @author nico
  */
@@ -65,6 +65,12 @@ public class ZProjectorPluginExecutor {
    private int projectionNr_;
    private ProgressBar progressBar_;
 
+   /**
+    * Constructs this pluginb's executor.
+    *
+    * @param studio Omnipresent Micro-Manager Studio object.
+    * @param window DisplayWindow whose data we will project.
+    */
    public ZProjectorPluginExecutor(Studio studio, DisplayWindow window) {
       studio_ = studio;
       window_ = window;
@@ -72,7 +78,7 @@ public class ZProjectorPluginExecutor {
    }
 
    /**
-    * Performs the actual creation of a new image with reduced content
+    * Performs the actual creation of a new image with reduced content.
     *
     * @param save  True when projection should be saved automatically
     * @param newName  Name for the copy
@@ -99,7 +105,7 @@ public class ZProjectorPluginExecutor {
                            FileDialogs.MM_DATA_SET);
                if (result != null) {
                   try {
-                  newStore = studio_.data().createMultipageTIFFDatastore(
+                     newStore = studio_.data().createMultipageTIFFDatastore(
                           result.getAbsolutePath() + File.separator + newName, true, 
                           StorageMultipageTiff.getShouldSplitPositions());
                   } catch (IOException ioe) {
@@ -114,8 +120,10 @@ public class ZProjectorPluginExecutor {
             }
 
             CoordsBuilder newSizeCoordsBuilder = studio_.data().getCoordsBuilder();
-            for (String axis: oldStore_.getAxes()) {
-               newSizeCoordsBuilder.index(axis, oldStore_.getNextIndex(axis) - 1 );
+            for (String axis : oldStore_.getAxes()) {
+               if (!axis.equals(projectionAxis)) {
+                  newSizeCoordsBuilder.index(axis, oldStore_.getNextIndex(axis) - 1);
+               }
             }
             SummaryMetadata metadata = oldStore_.getSummaryMetadata();
 
@@ -127,7 +135,7 @@ public class ZProjectorPluginExecutor {
                newStore.setSummaryMetadata(metadata);               
                List<String> axes = oldStore_.getAxes();
                axes.remove(projectionAxis);
-               axes.sort( new CoordsComparator());
+               axes.sort(new CoordsComparator());
                if (!save) {
                   DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
                   copyDisplay.setCustomTitle(newName);
@@ -139,7 +147,7 @@ public class ZProjectorPluginExecutor {
                   for (String axis : axes) {
                      nrProjections_ *= oldStore_.getNextIndex(axis);
                   }
-                  progressBar_ = new ProgressBar (window_.getWindow(), 
+                  progressBar_ = new ProgressBar(window_.getWindow(),
                                        "Projection Progress", 1, nrProjections_);
                   progressBar_.setVisible(true);
                }
@@ -185,8 +193,8 @@ public class ZProjectorPluginExecutor {
     * Recursively figures out which projections need to be performed
     * It does so by taking the first remaining axes, cycle through all positions
     * in that axes, and recursively calling this function (omitting that axis).
-    * When no more axes are remining, the actual projection will be exected.
-    * 
+    * When no more axes are remaining, the actual projection will be executed.
+    *
     * @param newStore Datastore to put the new projected images into
     * @param remainingAxes List with axes to look at
     * @param cbp      Coordinates build set to the correct position
@@ -218,8 +226,8 @@ public class ZProjectorPluginExecutor {
    }
    
    /**
-    * Do the actual projection
-    * 
+    * Do the actual projection.
+    *
     * @param newStore Datastore to put the new projected images into
     * @param cbp Coordinates build set to the correct position
     * @param projectionAxis Axis that needs to be projected
@@ -233,7 +241,7 @@ public class ZProjectorPluginExecutor {
            throws IOException {
       cbp.index(projectionAxis, min);
       Image tmpImg = oldStore_.getAnyImage();
-      if (tmpImg== null) {
+      if (tmpImg == null) {
          studio_.alerts().postAlert("Projection problem", this.getClass(),
                  "No images found while projecting");
          return;

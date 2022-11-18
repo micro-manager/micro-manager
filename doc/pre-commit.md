@@ -48,37 +48,20 @@ want `python` to be on the command search path (`PATH` environment variable).
 
 ### Installing pre-commit
 
-See also: pre-commit's [installation
-instructions](https://pre-commit.com/#install).
-
 `pre-commit` is a Python package that includes a command-line interface.
 
-It is possible to install `pre-commit` globally, and this works well on macOS
-and Linux. Use `pip` (or `python -m pip`), `brew`, or `conda`/`mamba`.
-
-That method works on Windows, too (at least with cmd.exe or PowerShell), but I
-find that installing to a [virtual
-environment](https://docs.python.org/3/library/venv.html) works better in Git
-Bash:
-
+You can install it with the following command:
 ```sh
-cd path/to/micro-manager
-python -m venv venv              # Run the 'venv' module to create 'venv'
-echo '*' > venv/.gitignore       # Tell Git to ignore 'venv/'
-source venv/Scripts/activate     # Activate the venv
 python -m pip install pre-commit
 ```
 
-Make sure you activate the virtual environment (`. venv/Scripts/activate`)
-every time you work with a new Git Bash window. In Bash, the abbreviation `.`
-(period) is equivalent to `source`.
-
-If you use `venv` on macOS or Linux, the activation script is
-`venv/bin/activate`. You can also use a Conda virtual environment.
+(You can also install pre-commit via `brew`, `conda`, or `mamba`. See
+pre-commit's [installation instructions](https://pre-commit.com/#install).)
 
 ### Enabling pre-commit
 
 ```sh
+cd path/to/micro-manager
 pre-commit install
 ```
 
@@ -153,7 +136,11 @@ a lot of manual work.
     (this can be done per project). You might want to set Severity to Warning.
   - Additionally, import the Checkstyle rules into code formatting settings: go
     to `Settings > Editor > Code Style > Java`; from the Gear (⚙️) menu, choose
-    `Import Scheme > Checkstyle Configuration`.
+    `Import Scheme > Checkstyle Configuration`. Then select
+    `buildscripts/codestyle/checkstyle.xml`.
+    - If the import fails in this last step (observed on macOS), you can
+      instead use `Import Scheme > IntelliJ IDEA code style XML` and import
+      `buildscripts/codestyle/idea-java-code-style.xml`.
 
 - Eclipse has a [Checkstyle plugin](https://checkstyle.org/eclipse-cs/)
 
