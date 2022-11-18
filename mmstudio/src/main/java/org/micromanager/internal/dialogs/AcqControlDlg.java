@@ -357,7 +357,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       super.setBounds(100, 100, size.width, size.height);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), "MDA");
 
-      getAcquisitionEngine().setSequenceSettings(sequenceSettings); // listener will call updateGUIContent()
+      // listener will call updateGUIContent()
+      getAcquisitionEngine().setSequenceSettings(sequenceSettings);
 
       mmStudio_.events().registerForEvents(this);
 
@@ -532,8 +533,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
       disableCustomIntervalsButton.addActionListener((ActionEvent e) ->
-            getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings().copyBuilder()
-                  .useCustomIntervals(false).build()));
+            getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine()
+                  .getSequenceSettings().copyBuilder().useCustomIntervals(false).build()));
       disableCustomIntervalsButton.setFont(DEFAULT_FONT);
 
       customTimesPanel_.add(overrideLabel, "alignx center, wrap");
@@ -700,7 +701,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       afSkipInterval_.setValue(getAcquisitionEngine().getSequenceSettings().skipAutofocusCount());
       afSkipInterval_.addChangeListener((ChangeEvent e) -> {
          applySettingsFromGUI();
-         afSkipInterval_.setValue(getAcquisitionEngine().getSequenceSettings().skipAutofocusCount());
+         afSkipInterval_.setValue(getAcquisitionEngine().getSequenceSettings()
+               .skipAutofocusCount());
       });
       afPanel_.add(afSkipInterval_);
 
@@ -1090,8 +1092,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     */
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
-      getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings().copyBuilder()
-            .channelGroup(event.getNewChannelGroup()).build());
+      getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings()
+            .copyBuilder().channelGroup(event.getNewChannelGroup()).build());
       updateChannelAndGroupCombo();
    }
 
@@ -1359,9 +1361,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             FileDialogs.MM_DATA_SET);
       if (result != null) {
          rootField_.setText(result.getAbsolutePath().trim());
-         getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings().copyBuilder()
-               .root(result.getAbsolutePath().trim()).build());
-         //getAcquisitionEngine().getSequenceSettings().root = result.getAbsolutePath().trim();
+         getAcquisitionEngine().setSequenceSettings(getAcquisitionEngine().getSequenceSettings()
+               .copyBuilder().root(result.getAbsolutePath().trim()).build());
       }
    }
 
@@ -1531,7 +1532,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          applySettingsFromGUI();
          saveAcqSettingsToProfile();
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
-         if (getAcquisitionEngine().getSequenceSettings().useChannels() && model.duplicateChannels()) {
+         if (getAcquisitionEngine().getSequenceSettings().useChannels()
+               && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this,
                   "Cannot start acquisition using the same channel twice");
             return null;
@@ -1590,13 +1592,15 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       try {
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
-         if (getAcquisitionEngine().getSequenceSettings().useChannels() && model.duplicateChannels()) {
+         if (getAcquisitionEngine().getSequenceSettings().useChannels()
+               && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this,
                   "Cannot start acquisition using the same channel twice");
             return null;
          }
          SequenceSettings.Builder sb = getAcquisitionEngine().getSequenceSettings().copyBuilder();
-         getAcquisitionEngine().setSequenceSettings(sb.prefix(acqName).root(acqRoot).save(true).build());
+         getAcquisitionEngine().setSequenceSettings(sb.prefix(acqName).root(acqRoot).save(true)
+               .build());
 
          return getAcquisitionEngine().acquire();
       } catch (MMException e) {

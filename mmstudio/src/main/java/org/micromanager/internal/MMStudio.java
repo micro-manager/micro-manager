@@ -58,10 +58,10 @@ import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
 import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
+import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
 import org.micromanager.alerts.AlertManager;
 import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.data.DataManager;
@@ -527,7 +527,7 @@ public final class MMStudio implements Studio {
    }
 
    /**
-    * Make all available acquisition engines listen for settings changes on the MDA window
+    * Make all available acquisition engines listen for settings changes on the MDA window.
     */
    public void addMDAWindowSettingsToAcqEngines(AcqControlDlg acqControlDlg) {
       acqEngineClojure_.addSettingsListener(acqControlDlg);
