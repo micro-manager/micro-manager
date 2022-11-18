@@ -5,27 +5,27 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.acqj.main.AcqEngMetadata;
-import org.micromanager.acqj.main.AcquisitionEvent;
-import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.acqj.internal.Engine;
+import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acquisition.ChannelSpec;
 
 
 public class MDAAcqEventModules {
-/**
- * A utility class with multiple "modules" functions for creating common
- * acquisition functions that can be combined to encode complex behaviors
- *
- * @author henrypinkard
- */
+    /**
+     * A utility class with multiple "modules" functions for creating common
+     * acquisition functions that can be combined to encode complex behaviors
+     *
+     * @author henrypinkard
+     */
 
     public static final String POSITION_AXIS = "position";
 
-    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(int startSliceIndex, int stopSliceIndex, double zStep, double zOrigin) {
+    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(int startSliceIndex,
+                                                                                int stopSliceIndex,
+                                                                                double zStep,
+                                                                                double zOrigin) {
         return (AcquisitionEvent event) -> {
             return new Iterator<AcquisitionEvent>() {
 
@@ -42,7 +42,7 @@ public class MDAAcqEventModules {
                     AcquisitionEvent sliceEvent = event.copy();
                     //Do plus equals here in case z positions have been modified by another function (e.g. channel specific focal offsets)
                     sliceEvent.setZ(zIndex_,
-                            (sliceEvent.getZPosition() == null ? 0.0 : sliceEvent.getZPosition()) + zPos);
+                          (sliceEvent.getZPosition() == null ? 0.0 : sliceEvent.getZPosition()) + zPos);
                     zIndex_++;
                     return sliceEvent;
                 }
@@ -50,7 +50,8 @@ public class MDAAcqEventModules {
         };
     }
 
-    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse(int numTimePoints, double interval_ms) {
+    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse(int numTimePoints,
+                                                                                   double interval_ms) {
         return (AcquisitionEvent event) -> {
             return new Iterator<AcquisitionEvent>() {
 
@@ -88,7 +89,8 @@ public class MDAAcqEventModules {
      * @param channelList
      * @return
      */
-    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(List<ChannelSpec> channelList) {
+    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(
+          List<ChannelSpec> channelList) {
         return (AcquisitionEvent event) -> {
             return new Iterator<AcquisitionEvent>() {
                 int index = 0;
@@ -104,7 +106,7 @@ public class MDAAcqEventModules {
                     channelEvent.setChannelGroup(channelList.get(index).channelGroup());
                     channelEvent.setChannelConfig(channelList.get(index).config());
                     boolean hasZOffsets = channelList.stream().map(t -> t.zOffset()).
-                            filter(t -> t != 0).collect(Collectors.toList()).size() > 0;
+                          filter(t -> t != 0).collect(Collectors.toList()).size() > 0;
                     Double zPos;
                     if (channelEvent.getZPosition() == null) {
                         if (hasZOffsets) {
@@ -137,7 +139,8 @@ public class MDAAcqEventModules {
      * @param positionList
      * @return
      */
-    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions(PositionList positionList) {
+    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions(
+          PositionList positionList) {
         return (AcquisitionEvent event) -> {
             Stream.Builder<AcquisitionEvent> builder = Stream.builder();
             if (positionList == null) {
