@@ -108,7 +108,7 @@ public final class MMAcquisition extends DataViewerListener {
     * @param show            Whether or not open a display on the ongoing acquisition.
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public MMAcquisition(Studio studio, JSONObject summaryMetadata,
+   public MMAcquisition(Studio studio, String dir, String prefix, JSONObject summaryMetadata,
                         AcquisitionEngine eng, boolean show) {
       studio_ = studio;
       eng_ = eng;
@@ -116,27 +116,20 @@ public final class MMAcquisition extends DataViewerListener {
       // TODO: get rid of MMStudo cast
       store_ = new DefaultDatastore(studio);
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
-      try {
-         if (summaryMetadata.has("Directory")
-               && summaryMetadata.get("Directory").toString().length() > 0) {
-            // Set up saving to the target directory.
-            try {
-               String acqDirectory = createAcqDirectory(
-                     summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
-               summaryMetadata.put("Prefix", acqDirectory);
-               String acqPath = summaryMetadata.getString("Directory")
-                     + File.separator + acqDirectory;
-               store_.setStorage(getAppropriateStorage(studio_, store_, acqPath, true));
-            } catch (Exception e) {
-               ReportingUtils.showError(e, "Unable to create directory for saving images.");
-               eng_.stop(true);
-               return;
-            }
-         } else {
-            store_.setStorage(new StorageRAM(store_));
+      if (dir != null) {
+         // Set up saving to the target directory.
+         try {
+            String acqDirectory = createAcqDirectory(dir, prefix);
+            summaryMetadata.put("Prefix", acqDirectory);
+            String acqPath = dir + File.separator + acqDirectory;
+            store_.setStorage(getAppropriateStorage(studio_, store_, acqPath, true));
+         } catch (Exception e) {
+            ReportingUtils.showError(e, "Unable to create directory for saving images.");
+            eng_.stop(true);
+            return;
          }
-      } catch (JSONException e) {
-         ReportingUtils.logError(e, "Couldn't adjust summary metadata.");
+      } else {
+         store_.setStorage(new StorageRAM(store_));
       }
 
       // Transfer any summary comment from the acquisition engine.

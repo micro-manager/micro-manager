@@ -1,24 +1,61 @@
-package org.micromanager.acquisition.internal;
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Henry Pinkard
+//
+// COPYRIGHT:    Photomics Inc, 2022
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
+
+package org.micromanager.acquisition.internal.acqengjcompat;
 
 import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
+import java.util.function.Function;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.acqj.api.AcquisitionHook;
+import org.micromanager.acqj.internal.Engine;
+import org.micromanager.acqj.main.AcqEngMetadata;
+import org.micromanager.acqj.main.Acquisition;
+import org.micromanager.acqj.main.AcquisitionEvent;
+import org.micromanager.acqj.util.AcquisitionEventIterator;
 import org.micromanager.acquisition.AcquisitionEndedEvent;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
+import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
+import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
+import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
@@ -28,11 +65,20 @@ import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-
 /**
- * Wraps AcuiqitionsEngine 2010 in the AcquisitionEngine interface.
+ * This class provides a compatibility layer between AcqEngJ and the
+ * AcquisitionEngine interface. It is analagous to the AcquisitionWrapperEngine.java,
+ * which does the same thing for the clojure acquisition engine
+ *
+ * <p>AcquisitionEngine implements a subset of the functionality of AcqEngJ,
+ * and this class enforces those specific assumptions. These include:
+ * - One and only one acquisition can be run at any given time
+ * - The axes of the acquisition are limited to channel, slice, frame, and position
+ * - The number of images and other parameters are all known at the start of acquisition
  */
-public final class AcquisitionWrapperEngine implements AcquisitionEngine {
+public class AcqEngJAdapter implements AcquisitionEngine {
+
+   private Acquisition currentAcquisition_;
 
    private CMMCore core_;
    protected Studio studio_;
@@ -40,94 +86,43 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String zstage_;
    private SequenceSettings sequenceSettings_;
 
-   private IAcquisitionEngine2010 acquisitionEngine2010_;
    protected JSONObject summaryMetadata_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
 
-   public AcquisitionWrapperEngine() {
+   private long nextWakeTime_ = -1;
+
+   private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<RunnablePlusIndices>();
+
+   private class RunnablePlusIndices {
+      int channel_;
+      int slice_;
+      int frame_;
+      int position_;
+      Runnable runnable_;
+
+      public RunnablePlusIndices(Runnable r, int channel, int slice, int frame, int position) {
+         runnable_ = r;
+         channel_ = channel;
+         slice_ = slice;
+         frame_ = frame;
+         position_ = position;
+      }
+   }
+
+   public AcqEngJAdapter(CMMCore core) {
+      // Create AcqEngJ
+      new Engine(core);
+      core_ = core;
+      studio_ = MMStudio.getInstance();
       settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
 
-   public SequenceSettings getSequenceSettings() {
-      return sequenceSettings_;
-   }
-
-   /**
-    * Sets the settings to be used in the next acquisition.
-    *
-    * @param sequenceSettings Settings for the next acquisition.
-    */
-   public void setSequenceSettings(SequenceSettings sequenceSettings) {
-      sequenceSettings_ = sequenceSettings;
-      calculateSlices();
-      settingsChanged();
-   }
-
-
-   @Override
-   public Datastore acquire() throws MMException {
-      calculateSlices();
-      return runAcquisition(sequenceSettings_);
-   }
-
-   @Override
-   public Datastore getAcquisitionDatastore() {
-      return curStore_;
-   }
-
-   @Override
-   public void addSettingsListener(AcqSettingsListener listener) {
-      settingsListeners_.add(listener);
-   }
-
-   @Override
-   public void removeSettingsListener(AcqSettingsListener listener) {
-      settingsListeners_.remove(listener);
-   }
-
-   /**
-    *  Will notify registered AcqSettingsListeners that the settings have changed.
-    */
-   public void settingsChanged() {
-      for (AcqSettingsListener listener : settingsListeners_) {
-         listener.settingsChanged();
-      }
-   }
-
-   protected IAcquisitionEngine2010 getAcquisitionEngine2010() {
-      if (acquisitionEngine2010_ == null) {
-         acquisitionEngine2010_ = ((MMStudio) studio_).getAcquisitionEngine2010();
-      }
-      return acquisitionEngine2010_;
-   }
-
-   private void calculateSlices() {
-      // Slices
-      if (sequenceSettings_.useSlices()) {
-         double start = sequenceSettings_.sliceZBottomUm();
-         double stop = sequenceSettings_.sliceZTopUm();
-         double step = Math.abs(sequenceSettings_.sliceZStepUm());
-         if (step == 0.0) {
-            throw new UnsupportedOperationException("zero Z step size");
-         }
-         int count = getNumSlices();
-         if (start > stop) {
-            step = -step;
-         }
-         ArrayList<Double> slices = new ArrayList<>();
-         for (int i = 0; i < count; i++) {
-            slices.add(start + i * step);
-         }
-         sequenceSettings_ = sequenceSettings_.copyBuilder().slices(slices).build();
-      }
-   }
-
-   protected Datastore runAcquisition(SequenceSettings sequenceSettings) {
+   // this is where the work happens
+   private Datastore runAcquisition(SequenceSettings sequenceSettings) {
       SequenceSettings.Builder sb = sequenceSettings.copyBuilder();
-
       //Make sure computer can write to selected location and there is enough space to do so
       if (sequenceSettings.save()) {
          File root = new File(sequenceSettings.root());
@@ -155,7 +150,6 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
 
          DefaultDatastore.setPreferredSaveMode(studio_, sequenceSettings.saveMode());
-
       }
 
       // manipulate positionlist
@@ -203,32 +197,22 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       try {
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
-         final BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(
-               acquisitionSettings, true, posListToUse,
-               studio_.getAutofocusManager().getAutofocusMethod());
+         currentAcquisition_ = new Acquisition(null);
+         loadRunnables(acquisitionSettings);
+         // This TaggedImageProcessor is used to divert images away from the optional
+         // processing and saving of AcqEngJ, and into the system used by the studio API
+         // (which has its own system for processing and saving)
+         TaggedImageDiverter diverter = new TaggedImageDiverter();
+         currentAcquisition_.addImageProcessor(diverter);
+         final BlockingQueue<TaggedImage> engineOutputQueue = diverter.getQueue();
 
-         // note: summaryMetadata contain instructions how/where to safe the data
-         // summary metadata generated in the clojure acq engine will look at the
-         // sequenceSettings.save flag and set "Directory" and "Prefix" only
-         // when save == true.  Directory and Prefix are used
-         // by MMAcquisition to decide whether and where to save the acquisition.
-         summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
+         summaryMetadata_ = currentAcquisition_.getSummaryMetadata();
+         addMMSummaryMetadata(summaryMetadata_, sequenceSettings);
 
-         // file type (multi or single) is a global setting, not sure where/when that is applied
-
+         // MMAcquisition
          boolean shouldShow = acquisitionSettings.shouldDisplayImages();
-         // Extract directory and saving prefix from metadata here, to remove hidden
-         // requirements on metadata fields in the MMAcquistion constructor
-         String dir = null;
-         String prefix = null;
-         if (summaryMetadata_.has("Directory")
-                 && summaryMetadata_.get("Directory").toString().length() > 0) {
-            // Set up saving to the target directory.
-            dir = summaryMetadata_.getString("Directory");
-            prefix = summaryMetadata_.getString("Prefix");
-         }
-         MMAcquisition acq = new MMAcquisition(studio_, dir, prefix,
-                 summaryMetadata_, this, shouldShow);
+         MMAcquisition acq = new MMAcquisition(studio_, acquisitionSettings.root(),
+               acquisitionSettings.prefix(), summaryMetadata_, this, shouldShow);
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
 
@@ -236,9 +220,13 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
                this, acquisitionSettings));
 
          // Start pumping images through the pipeline and into the datastore.
-         DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
+         AcqEngJDataSink sink = new AcqEngJDataSink(
                engineOutputQueue, curPipeline_, curStore_, this, studio_.events());
-         sink.start(() -> getAcquisitionEngine2010().stop());
+         sink.start(() -> currentAcquisition_.abort());
+
+         // Start the events and signal to finish when complete
+         currentAcquisition_.submitEventIterator(createAcqEventIterator(acquisitionSettings));
+         currentAcquisition_.finish();
 
          return curStore_;
 
@@ -249,6 +237,310 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          return null;
       }
    }
+
+   /**
+    * Higher level stuff in MM may depend in many hidden, undocumented
+    * ways on summary metadata generated by the clojure acquisition engine.
+    * This function adds in its fields in order to achieve compatibility
+    */
+   private void addMMSummaryMetadata(JSONObject summaryMetadata, SequenceSettings acqSettings)
+         throws JSONException {
+      // These are the ones from the clojure engine that may yet need to be translated
+      //        "Channels" -> {Long@25854} 2
+
+      if (acqSettings.channels().size() > 1) {
+         summaryMetadata_.put(PropertyKey.CHANNEL_GROUP.key(), acqSettings.channelGroup());
+         JSONArray chNames = new JSONArray();
+         JSONArray chColors = new JSONArray();
+         for (ChannelSpec c : acqSettings.channels()) {
+            chNames.put(c.config());
+            chColors.put(c.color().getRGB());
+         }
+         summaryMetadata_.put(PropertyKey.CHANNEL_NAMES.key(), chNames);
+         summaryMetadata_.put(PropertyKey.CHANNEL_COLORS.key(), chColors);
+      }
+
+      // MM MDA acquisitions have a defined number of
+      // frames/slices/channels/positions at the outset
+      summaryMetadata_.put(PropertyKey.FRAMES.key(), acqSettings.numFrames());
+      summaryMetadata_.put(PropertyKey.SLICES.key(), acqSettings.slices().size());
+      summaryMetadata_.put(PropertyKey.CHANNELS.key(), acqSettings.channels().size());
+      summaryMetadata_.put(PropertyKey.POSITIONS.key(),
+            acqSettings.usePositionList() ? posList_.getNumberOfPositions() : 1);
+
+      // MM MDA acquisitions have a defined order
+      summaryMetadata_.put(PropertyKey.SLICES_FIRST.key(),
+            acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
+                  || acqSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE);
+      summaryMetadata_.put(PropertyKey.TIME_FIRST.key(),
+            acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
+                  || acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE);
+
+
+      DefaultSummaryMetadata dsmd = new DefaultSummaryMetadata.Builder().build();
+      summaryMetadata.put(PropertyKey.MICRO_MANAGER_VERSION.key(),
+            dsmd.getMicroManagerVersion());
+
+   }
+
+   /**
+    * Higher level code in MMStudio expects certain metadata tags that
+    * are added by the Clojure engine. For compatibility, we must translate
+    * AcqEnJ's metadata to indlude this here
+    */
+   public static void addMMImageMetadata(JSONObject imageMD) {
+      // These might be required...
+
+      //    getUUID();
+      //    getCamera();
+      //    getBinning();
+      //    getROI();
+      //    getBitDepth();
+      //    getExposureMs();
+      //    getElapsedTimeMs(0.0);
+      //    getImageNumber();
+      //    getReceivedTime();
+      //    getPixelSizeUm();
+      //    getPixelAspect();
+      //    getPositionName("");
+      //    getXPositionUm();
+      //    getYPositionUm();
+      //    getZPositionUm();
+
+
+      try {
+         if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.TIME_AXIS)) {
+            imageMD.put(PropertyKey.FRAME_INDEX.key(),
+                  AcqEngMetadata.getAxisPosition(imageMD, AcqEngMetadata.TIME_AXIS));
+         }
+         if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.Z_AXIS)) {
+            imageMD.put(PropertyKey.SLICE_INDEX.key(),
+                  AcqEngMetadata.getAxisPosition(imageMD, AcqEngMetadata.Z_AXIS));
+         }
+         if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.CHANNEL_AXIS)) {
+            imageMD.put(PropertyKey.CHANNEL_INDEX.key(),
+                  AcqEngMetadata.getAxisPosition(imageMD, AcqEngMetadata.CHANNEL_AXIS));
+            imageMD.put(PropertyKey.CHANNEL_NAME.key(), AcqEngMetadata.getChannelName(imageMD));
+            // TODO acqEngJ doesnt currently report this in metadata...
+            // imageMD.put(PropertyKey.CAMERA_CHANNEL_INDEX.key(), AcqEngMetadata.(imageMD));
+            // Maybe core channel group is needed?
+         }
+         if (AcqEngMetadata.hasAxis(imageMD, "position")) {
+            imageMD.put(PropertyKey.POSITION_INDEX.key(),
+                  AcqEngMetadata.getAxisPosition(imageMD, "position"));
+         }
+      } catch (JSONException e) {
+         throw new RuntimeException("Couldn't convert metadata");
+      }
+   }
+
+
+   /**
+    * Attach Runnables as acquisition hooks.
+    *
+    * @param acquisitionSettings
+    */
+   private void loadRunnables(SequenceSettings acquisitionSettings) {
+      for (RunnablePlusIndices r : runnables_) {
+         currentAcquisition_.addHook(new AcquisitionHook() {
+            @Override
+            public AcquisitionEvent run(AcquisitionEvent event) {
+               boolean zMatch = event.getZIndex() == null || event.getZIndex() == r.slice_;
+               boolean tMatch = event.getTIndex() == null || event.getTIndex() == r.frame_;
+               boolean cMatch = event.getChannelConfig() == null
+                     || acquisitionSettings.channels().get(r.channel_).config()
+                           .equals(event.getChannelConfig());
+               boolean pMatch = event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null
+                     || event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == r.position_;
+               if (pMatch && zMatch && tMatch && cMatch) {
+                  r.runnable_.run();
+               }
+               return event;
+            }
+
+            @Override
+            public void close() {
+               // Runnable interface doesn't provide anything for close...
+            }
+         }, Acquisition.AFTER_HARDWARE_HOOK);
+         // TODO: does current API expect this to be before or after hardware? after camera?
+         //  during event generation?
+      }
+      ;
+   }
+
+   /**
+    * This function converts acquisitionSettings to a lazy sequence (i.e. an iterator) of
+    * AcquisitionEvents.
+    */
+   private Iterator<AcquisitionEvent> createAcqEventIterator(SequenceSettings acquisitionSettings) {
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
+
+      ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
+            = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
+
+      if (acquisitionSettings.useSlices()) {
+         zStack = MDAAcqEventModules.zStack(0, acquisitionSettings.slices().size() - 1,
+               acquisitionSettings.slices().get(0), acquisitionSettings.sliceZStepUm());
+      }
+
+      if (acquisitionSettings.useChannels()) {
+         channels = MDAAcqEventModules.channels(acquisitionSettings.channels());
+         //TODO: keep shutter open
+         //TODO: skip frames
+         //TODO: z stack off for channel
+      }
+
+      if (acquisitionSettings.usePositionList()) {
+         positions = MDAAcqEventModules.positions(posList_);
+         // TODO: is acq engine supposed to move multiple stages?
+         // TODO: What about Z positions in position list
+      }
+
+      if (acquisitionSettings.useFrames()) {
+         timelapse = MDAAcqEventModules.timelapse(acquisitionSettings.numFrames(),
+               acquisitionSettings.intervalMs());
+         //TODO custom time intervals
+      }
+
+      //TODO autofocus
+
+      if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
+         if (acquisitionSettings.usePositionList()) {
+            acqFunctions.add(positions);
+         }
+         if (acquisitionSettings.useFrames()) {
+            acqFunctions.add(timelapse);
+         }
+         if (acquisitionSettings.useChannels()) {
+            acqFunctions.add(channels);
+         }
+         if (acquisitionSettings.useSlices()) {
+            acqFunctions.add(zStack);
+         }
+      } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
+         if (acquisitionSettings.usePositionList()) {
+            acqFunctions.add(positions);
+         }
+         if (acquisitionSettings.useFrames()) {
+            acqFunctions.add(timelapse);
+         }
+         if (acquisitionSettings.useSlices()) {
+            acqFunctions.add(zStack);
+         }
+         if (acquisitionSettings.useChannels()) {
+            acqFunctions.add(channels);
+         }
+      } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE) {
+         if (acquisitionSettings.useFrames()) {
+            acqFunctions.add(timelapse);
+         }
+         if (acquisitionSettings.usePositionList()) {
+            acqFunctions.add(positions);
+         }
+         if (acquisitionSettings.useChannels()) {
+            acqFunctions.add(channels);
+         }
+         if (acquisitionSettings.useSlices()) {
+            acqFunctions.add(zStack);
+         }
+      } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
+         if (acquisitionSettings.useFrames()) {
+            acqFunctions.add(timelapse);
+         }
+         if (acquisitionSettings.usePositionList()) {
+            acqFunctions.add(positions);
+         }
+         if (acquisitionSettings.useSlices()) {
+            acqFunctions.add(zStack);
+         }
+         if (acquisitionSettings.useChannels()) {
+            acqFunctions.add(channels);
+         }
+      } else {
+         throw new RuntimeException("Unknown acquisiton order");
+      }
+
+      AcquisitionEvent baseEvent = new AcquisitionEvent(currentAcquisition_);
+      return new AcquisitionEventIterator(baseEvent, acqFunctions,
+            acqEventMonitor(acquisitionSettings));
+
+   }
+
+   /**
+    * This function monitors acquisition events as they are dynamically created.
+    *
+    * @return
+    */
+   private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(SequenceSettings settings) {
+      return (AcquisitionEvent event) -> {
+         if (event.getMinimumStartTimeAbsolute() != null) {
+            nextWakeTime_ = event.getMinimumStartTimeAbsolute();
+         }
+         return event;
+      };
+   }
+
+   private void calculateSlices() {
+      // Slices
+      if (sequenceSettings_.useSlices()) {
+         double start = sequenceSettings_.sliceZBottomUm();
+         double stop = sequenceSettings_.sliceZTopUm();
+         double step = Math.abs(sequenceSettings_.sliceZStepUm());
+         if (step == 0.0) {
+            throw new UnsupportedOperationException("zero Z step size");
+         }
+         int count = getNumSlices();
+         if (start > stop) {
+            step = -step;
+         }
+         ArrayList<Double> slices = new ArrayList<>();
+         for (int i = 0; i < count; i++) {
+            slices.add(start + i * step);
+         }
+         sequenceSettings_ = sequenceSettings_.copyBuilder().slices(slices).build();
+      }
+   }
+
+   private boolean enoughDiskSpace() {
+      File root = new File(sequenceSettings_.root());
+      //Need to find a file that exists to check space
+      while (!root.exists()) {
+         root = root.getParentFile();
+         if (root == null) {
+            return false;
+         }
+      }
+      long usableMB = root.getUsableSpace();
+      return (1.25 * getTotalMemory()) < usableMB;
+   }
+
+   private String getSource(ChannelSpec channel) {
+      try {
+         Configuration state = core_.getConfigState(core_.getChannelGroup(), channel.config());
+         if (state.isPropertyIncluded("Core", "Camera")) {
+            return state.getSetting("Core", "Camera").getPropertyValue();
+         } else {
+            return "";
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return "";
+      }
+   }
+
+   /**
+    * Will notify registered AcqSettingsListeners that the settings have changed.
+    */
+   private void settingsChanged() {
+      for (AcqSettingsListener listener : settingsListeners_) {
+         listener.settingsChanged();
+      }
+   }
+
 
    private int getNumChannels() {
       if (!sequenceSettings_.useChannels()) {
@@ -271,7 +563,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
     *
     * @return Number of Frames (time points) in this acquisition.
     */
-   public int getNumFrames() {
+   private int getNumFrames() {
       int numFrames = sequenceSettings_.numFrames();
       if (!sequenceSettings_.useFrames()) {
          numFrames = 1;
@@ -280,6 +572,9 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private int getNumPositions() {
+      if (posList_ == null) {
+         return 1;
+      }
       int numPositions = Math.max(1, posList_.getNumberOfPositions());
       if (!sequenceSettings_.usePositionList()) {
          numPositions = 1;
@@ -292,14 +587,54 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          return 1;
       }
       if (sequenceSettings_.sliceZStepUm() == 0) {
-         // XXX How should this be handled?
+         // This TODOitem inherited from corresponding fuction in clojure engine
+         // TODO How should zero z step be handled?
          return Integer.MAX_VALUE;
       }
       return 1
             + (int) Math.abs((sequenceSettings_.sliceZTopUm()
             - sequenceSettings_.sliceZBottomUm())
-                  / sequenceSettings_.sliceZStepUm());
+            / sequenceSettings_.sliceZStepUm());
    }
+
+
+   private boolean isFocusStageAvailable() {
+      return zstage_ != null && zstage_.length() > 0;
+   }
+
+   /**
+    * The name of this function is a bit misleading
+    * Every channel group name provided as an argument will return
+    * true, unless the group exists and only contains a single property with
+    * propertylimits (i.e. a slider in the UI)
+    *
+    * @param group channel group name to be tested
+    * @return false if the group exists and only has a single property that has
+    *     propertylimits, true otherwise
+    */
+   private boolean groupIsEligibleChannel(String group) {
+      StrVector cfgs = core_.getAvailableConfigs(group);
+      if (cfgs.size() == 1) {
+         Configuration presetData;
+         try {
+            presetData = core_.getConfigData(group, cfgs.get(0));
+            if (presetData.size() == 1) {
+               PropertySetting setting = presetData.getSetting(0);
+               String devLabel = setting.getDeviceLabel();
+               String propName = setting.getPropertyName();
+               if (core_.hasPropertyLimits(devLabel, propName)) {
+                  return false;
+               }
+            }
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+            return false;
+         }
+
+      }
+      return true;
+   }
+
 
    private int getTotalImages() {
       if (!sequenceSettings_.useChannels() || sequenceSettings_.channels().size() == 0) {
@@ -329,27 +664,55 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       return nrImages * getNumPositions();
    }
 
+   //////////////////////////////////////////
+   ///////// AcquisitionEngine API //////////
+   /////////////////////////////////////////
+
+   @Override
+   public SequenceSettings getSequenceSettings() {
+      return sequenceSettings_;
+   }
+
    /**
-    * Estimates the total memory needed for this acuisition.
+    * Sets the settings to be used in the next acquisition.
     *
-    * @return Total memory needed for this acquisition in bytes.
+    * @param sequenceSettings Settings for the next acquisition.
     */
+   @Override
+   public void setSequenceSettings(SequenceSettings sequenceSettings) {
+      sequenceSettings_ = sequenceSettings;
+      calculateSlices();
+      settingsChanged();
+   }
+
+   @Override
+   public Datastore acquire() throws MMException {
+      calculateSlices();
+      return runAcquisition(sequenceSettings_);
+   }
+
+   @Override
+   public Datastore getAcquisitionDatastore() {
+      return curStore_;
+   }
+
+   @Override
+   public void addSettingsListener(AcqSettingsListener listener) {
+      settingsListeners_.add(listener);
+   }
+
+   @Override
+   public void removeSettingsListener(AcqSettingsListener listener) {
+      settingsListeners_.remove(listener);
+   }
+
+   @Override
    public long getTotalMemory() {
       CMMCore core = studio_.core();
       return core.getImageWidth()
             * core.getImageHeight()
             * core.getBytesPerPixel()
             * ((long) getTotalImages());
-   }
-
-   private void updateChannelCameras() {
-      ArrayList<ChannelSpec> camChannels = new ArrayList<>();
-      ArrayList<ChannelSpec> channels = sequenceSettings_.channels();
-      for (int row = 0; row < channels.size(); row++) {
-         camChannels.add(row,
-               channels.get(row).copyBuilder().camera(getSource(channels.get(row))).build());
-      }
-      sequenceSettings_ = sequenceSettings_.copyBuilder().channels(camChannels).build();
    }
 
    /*
@@ -360,7 +723,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
     */
    @Override
    public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable) {
-      getAcquisitionEngine2010().attachRunnable(frame, position, channel, slice, runnable);
+      runnables_.add(new RunnablePlusIndices(runnable, channel, slice, frame, position));
    }
    /*
     * Clear all attached runnables from the acquisition engine.
@@ -368,30 +731,15 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public void clearRunnables() {
-      getAcquisitionEngine2010().clearRunnables();
+      runnables_.clear();
    }
-
-   private String getSource(ChannelSpec channel) {
-      try {
-         Configuration state = core_.getConfigState(core_.getChannelGroup(), channel.config());
-         if (state.isPropertyIncluded("Core", "Camera")) {
-            return state.getSetting("Core", "Camera").getPropertyValue();
-         } else {
-            return "";
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         return "";
-      }
-   }
-
 
    //////////////////// Actions ///////////////////////////////////////////
    @Override
    public void stop(boolean interrupted) {
       try {
-         if (acquisitionEngine2010_ != null) {
-            acquisitionEngine2010_.stop();
+         if (currentAcquisition_ != null) {
+            currentAcquisition_.abort();
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex, "Acquisition engine stop request failed");
@@ -420,7 +768,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public boolean abortRequested() {
-      return acquisitionEngine2010_.stopHasBeenRequested();
+      if (currentAcquisition_ != null) {
+         return currentAcquisition_.isAbortRequested();
+      }
+      return false;
    }
 
    @Override
@@ -430,10 +781,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public void setPause(boolean state) {
-      if (state) {
-         acquisitionEngine2010_.pause();
-      } else {
-         acquisitionEngine2010_.resume();
+      if (currentAcquisition_ != null) {
+         currentAcquisition_.setPaused(state);
       }
    }
 
@@ -442,8 +791,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    public boolean isAcquisitionRunning() {
       // Even after the acquisition finishes, if the pipeline is still "live",
       // we should consider the acquisition to be running.
-      if (acquisitionEngine2010_ != null) {
-         return (acquisitionEngine2010_.isRunning()
+      if (currentAcquisition_ != null) {
+         return (!currentAcquisition_.areEventsFinished()
                || (curPipeline_ != null && !curPipeline_.isHalted()));
       } else {
          return false;
@@ -452,8 +801,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public boolean isFinished() {
-      if (acquisitionEngine2010_ != null) {
-         return acquisitionEngine2010_.isFinished();
+      if (currentAcquisition_ != null) {
+         return currentAcquisition_.areEventsFinished();
       } else {
          return false;
       }
@@ -466,7 +815,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public long getNextWakeTime() {
-      return acquisitionEngine2010_.nextWakeTime();
+      // TODO What to do if next wake time undefined?
+      return nextWakeTime_;
    }
 
 
@@ -475,11 +825,6 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public void setPositionList(PositionList posList) {
       posList_ = posList;
-   }
-
-   @Subscribe
-   public void onNewPositionListEvent(NewPositionListEvent newPositionListEvent) {
-      posList_ = newPositionListEvent.getPositionList();
    }
 
    @Override
@@ -527,7 +872,6 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       sequenceSettings_ = (new SequenceSettings.Builder(sequenceSettings_))
             .channels(channels).build();
    }
-
 
    /**
     * Get first available config group.
@@ -614,19 +958,6 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void setShouldDisplayImages(boolean shouldDisplay) {
       sequenceSettings_ =
             sequenceSettings_.copyBuilder().shouldDisplayImages(shouldDisplay).build();
-   }
-
-   protected boolean enoughDiskSpace() {
-      File root = new File(sequenceSettings_.root());
-      //Need to find a file that exists to check space
-      while (!root.exists()) {
-         root = root.getParentFile();
-         if (root == null) {
-            return false;
-         }
-      }
-      long usableMB = root.getUsableSpace();
-      return (1.25 * getTotalMemory()) < usableMB;
    }
 
    @Override
@@ -792,44 +1123,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public boolean isPaused() {
-      return acquisitionEngine2010_.isPaused();
-   }
-
-   protected boolean isFocusStageAvailable() {
-      return zstage_ != null && zstage_.length() > 0;
-   }
-
-   /**
-    * The name of this function is a bit misleading
-    * Every channel group name provided as an argument will return
-    * true, unless the group exists and only contains a single property with
-    * propertylimits (i.e. a slider in the UI)
-    *
-    * @param group channel group name to be tested
-    * @return false if the group exists and only has a single property that has
-    *     propertylimits, true otherwise
-    */
-   private boolean groupIsEligibleChannel(String group) {
-      StrVector cfgs = core_.getAvailableConfigs(group);
-      if (cfgs.size() == 1) {
-         Configuration presetData;
-         try {
-            presetData = core_.getConfigData(group, cfgs.get(0));
-            if (presetData.size() == 1) {
-               PropertySetting setting = presetData.getSetting(0);
-               String devLabel = setting.getDeviceLabel();
-               String propName = setting.getPropertyName();
-               if (core_.hasPropertyLimits(devLabel, propName)) {
-                  return false;
-               }
-            }
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-            return false;
-         }
-
+      if (currentAcquisition_ != null) {
+         return currentAcquisition_.isPaused();
       }
-      return true;
+      return false;
    }
 
    /*
@@ -845,6 +1142,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       return sequenceSettings_.comment();
    }
 
+
+   ////////////////////////////////////////////
+   ////////// Event handlers
+   /////////////////////////////////////////////
+
    /**
     * Event handler for the AcquisitionEndedEvent.
     *
@@ -854,7 +1156,13 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
       curStore_ = null;
       curPipeline_ = null;
+      currentAcquisition_ = null;
       studio_.events().unregisterForEvents(this);
+   }
+
+   @Subscribe
+   public void onNewPositionListEvent(NewPositionListEvent newPositionListEvent) {
+      posList_ = newPositionListEvent.getPositionList();
    }
 
    /**
@@ -871,7 +1179,9 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
                JOptionPane.INFORMATION_MESSAGE);
 
          if (result == JOptionPane.YES_OPTION) {
-            getAcquisitionEngine2010().stop();
+            if (currentAcquisition_ != null) {
+               currentAcquisition_.abort();
+            }
          } else {
             event.cancelShutdown();
          }

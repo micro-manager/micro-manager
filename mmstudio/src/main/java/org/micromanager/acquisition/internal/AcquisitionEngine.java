@@ -231,4 +231,11 @@ public interface AcquisitionEngine {
    void removeSettingsListener(AcqSettingsListener listener);
 
    void setShouldDisplayImages(boolean shouldDisplay);
+
+   /**
+    * Estimates the total memory needed for this acquisition.
+    *
+    * @return Total memory needed for this acquisition in bytes.
+    */
+   long getTotalMemory();
 }

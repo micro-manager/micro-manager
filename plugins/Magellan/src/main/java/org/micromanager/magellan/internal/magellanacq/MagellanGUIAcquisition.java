@@ -31,12 +31,12 @@ import org.micromanager.acqj.api.AcquisitionHook;
 import org.micromanager.acqj.api.DataSink;
 import org.micromanager.acqj.api.TaggedImageProcessor;
 import org.micromanager.acqj.api.XYTiledAcquisitionAPI;
-import org.micromanager.acqj.internal.AcquisitionEventIterator;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.AcqEventModules;
+import org.micromanager.acqj.util.AcquisitionEventIterator;
 import org.micromanager.acqj.util.ChannelSetting;
 import org.micromanager.acqj.util.xytiling.PixelStageTranslator;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
@@ -185,12 +185,17 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
 
    @Override
    public void togglePaused() {
-      acq_.togglePaused();
+      acq_.setPaused(!isPaused());
    }
 
    @Override
    public boolean isPaused() {
       return acq_.isPaused();
+   }
+
+   @Override
+   public void setPaused(boolean pause) {
+      acq_.setPaused(pause);
    }
 
    private Iterator<AcquisitionEvent> buildAcqEventGenerator() {

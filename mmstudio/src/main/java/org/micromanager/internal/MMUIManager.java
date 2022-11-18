@@ -139,7 +139,7 @@ public class MMUIManager {
     */
    public AcqControlDlg getAcquisitionWindow() {
       if (acqControlWin_ == null) {
-         acqControlWin_ = new AcqControlDlg(studio_.getAcquisitionEngine(), studio_);
+         acqControlWin_ = new AcqControlDlg(studio_);
       }
       return acqControlWin_;
    }
@@ -150,7 +150,7 @@ public class MMUIManager {
    public void openAcqControlDialog() {
       try {
          if (acqControlWin_ == null) {
-            acqControlWin_ = new AcqControlDlg(studio_.getAcquisitionEngine(), studio_);
+            acqControlWin_ = new AcqControlDlg(studio_);
          }
          if (acqControlWin_.isActive()) {
             acqControlWin_.setTopPosition();
