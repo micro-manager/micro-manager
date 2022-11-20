@@ -20,7 +20,6 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-
 package org.micromanager.ptctools;
 
 import ij.CompositeImage;
@@ -32,11 +31,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
-
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
@@ -44,8 +40,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.swing.*;
-
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
@@ -56,22 +54,16 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 
-public class PtcToolsExecutor extends Thread  {
+public class PtcToolsExecutor extends Thread {
    private final Studio studio_;
    private final PropertyMap settings_;
    private final List<ExpMeanStdDev> expMeanStdDev_;
    private ImageStack stack_;
-   
+
    /**
     * Simple class to hold Avg. Intensity and StdDev of Avg. intensities
     * for a stack of images at identical exposure time.  Used to
@@ -81,7 +73,7 @@ public class PtcToolsExecutor extends Thread  {
       public double mean_;
       public double stdDev_;
    }
-   
+
    public PtcToolsExecutor(Studio studio, PropertyMap settings) {
       studio_ = studio;
       settings_ = settings;
@@ -92,9 +84,9 @@ public class PtcToolsExecutor extends Thread  {
    public void run() {
       PtcSequenceRunner sr = new DarkSequence();
       showDialog("Prevent all ligt going to the camera.", sr);
-         
+
    }
-     
+
    private class DarkSequence implements PtcSequenceRunner {
 
       @Override
@@ -105,6 +97,7 @@ public class PtcToolsExecutor extends Thread  {
                resultLabel.setText("Collecting dark images...");
             });
          } catch (InterruptedException | InvocationTargetException ex) {
+            studio_.logs().logError(ex);
          }
 
          CMMCore core = studio_.getCMMCore(); // to reduce typing
@@ -114,17 +107,16 @@ public class PtcToolsExecutor extends Thread  {
 
          // Stack that holds the resulting images
          stack_ = new ImageStack((int) core.getImageWidth(),
-                 (int) core.getImageHeight());
+               (int) core.getImageHeight());
 
          // temporary store to hold images while calculating mean and stdDev
          Datastore store = studio_.data().createRAMDatastore();
          final SummaryMetadata.Builder smb = studio_.data().summaryMetadataBuilder();
          final Coords.Builder cb = Coordinates.builder();
-         Coords coords = cb.c(1).p(1).
-                 t(nrFrames).z(1).build();
+         Coords coords = cb.c(1).p(1).t(nrFrames).z(1).build();
          try {
             store.setSummaryMetadata(smb.intendedDimensions(coords).startDate(
-                    new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date())).build());
+                  new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date())).build());
          } catch (IOException ex) {
             // should never happen with a RAMDatastore...
          }
@@ -132,7 +124,7 @@ public class PtcToolsExecutor extends Thread  {
          double exposure;
          try {
             exposure = NumberUtils.displayStringToDouble(
-                    settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
+                  settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
          } catch (ParseException ex) {
             studio_.logs().showError("Minimum exposure should be a number");
             return;
@@ -164,7 +156,7 @@ public class PtcToolsExecutor extends Thread  {
 
          PtcSequenceRunner sr = new LightSequence();
          showDialog("Now switch on the light, and make sure it can reach the"
-                 + " camera.", sr);
+               + " camera.", sr);
       }
    }
 
@@ -180,12 +172,13 @@ public class PtcToolsExecutor extends Thread  {
 
          // establish the exposure times we will use as a logarithmically spaced series
          int nrExposures = settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30);
-         double minExposure, maxExposure;
+         double minExposure;
+         double maxExposure;
          try {
             minExposure = NumberUtils.displayStringToDouble(
-                    settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
+                  settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
             maxExposure = NumberUtils.displayStringToDouble(
-                    settings_.getString(PtcToolsTerms.MAXIMUMEXPOSURE, "100.0"));
+                  settings_.getString(PtcToolsTerms.MAXIMUMEXPOSURE, "100.0"));
          } catch (ParseException ex) {
             studio_.logs().showError("Minimum exposure should be a number");
             return;
@@ -202,8 +195,9 @@ public class PtcToolsExecutor extends Thread  {
                   resultLabel.setText("working on exposure: " + nr + "(of " + nrExposures + ")");
                });
             } catch (InterruptedException | InvocationTargetException ex) {
+               studio_.logs().logError(ex);
             }
-            
+
             exposures[i] = Math.exp(minExpLog + i * expLogStep);
 
             Datastore store = studio_.data().createRAMDatastore();
@@ -247,18 +241,18 @@ public class PtcToolsExecutor extends Thread  {
          comp.show();
       }
    }
-   
-   
+
+
    private void showDialog(final String label, final PtcSequenceRunner sr) {
       final JFrame dialog = new JFrame();
-      dialog.setBounds(settings_.getInteger(PtcToolsTerms.WINDOWX, 100), 
-              settings_.getInteger(PtcToolsTerms.WINDOWY, 100), 400, 100);
+      dialog.setBounds(settings_.getInteger(PtcToolsTerms.WINDOWX, 100),
+            settings_.getInteger(PtcToolsTerms.WINDOWY, 100), 400, 100);
       dialog.setLayout(new MigLayout());
       dialog.setTitle("PTC Tools");
       dialog.add(new JLabel(label), "wrap");
       dialog.add(new JLabel("Press OK when ready"), "wrap");
       dialog.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       WindowPositioning.setUpBoundsMemory(dialog, dialog.getClass(), null);
       JButton cancelButton = new JButton("Cancel");
       final JLabel resultLabel = new JLabel("Not started yet...");
@@ -287,7 +281,7 @@ public class PtcToolsExecutor extends Thread  {
    }
 
    private void runSequence(CMMCore core, Datastore store, int nrFrames,
-           double exposure) throws Exception {
+                            double exposure) throws Exception {
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
       core.setExposure(exposure);
       core.startSequenceAcquisition(nrFrames, 0.0, true);
@@ -305,34 +299,34 @@ public class PtcToolsExecutor extends Thread  {
       }
       store.freeze();
    }
-   
-   private void calculateAndAddToStack(ImageStack stack, Datastore store) 
-            throws IOException, OutOfMemoryError {
+
+   private void calculateAndAddToStack(ImageStack stack, Datastore store)
+         throws IOException, OutOfMemoryError {
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
       int nrFrames = store.getNextIndex(Coords.T);
       ImageStack tmpStack = new ImageStack(stack.getWidth(), stack.getHeight());
       List<ShortProcessor> lc = new ArrayList<>(nrFrames);
-         for (int i = 0; i < nrFrames; i++) {
-            ShortProcessor tmpShortProc = new ShortProcessor(stack.getWidth(), 
-                    stack.getHeight());
-            tmpShortProc.setPixels(store.getImage(cb.t(i).build()).getRawPixels());
-            tmpStack.addSlice(tmpShortProc);
-         }
-         ZProjector zProj = new ZProjector(new ImagePlus("tmp", tmpStack));
-         zProj.setMethod(ZProjector.AVG_METHOD);
-         zProj.doProjection();
-         ImagePlus  meanP = zProj.getProjection();
-         FloatProcessor mean = (FloatProcessor) meanP.getProcessor().convertToFloat();
-         zProj.setMethod(ZProjector.SD_METHOD);
-         zProj.doProjection();
-         ImagePlus  stdDevP = zProj.getProjection();
-         FloatProcessor stdDev = (FloatProcessor) stdDevP.getProcessor().convertToFloat();
-         
-         stack.addSlice(mean);
-         stack.addSlice(stdDev);
+      for (int i = 0; i < nrFrames; i++) {
+         ShortProcessor tmpShortProc = new ShortProcessor(stack.getWidth(),
+               stack.getHeight());
+         tmpShortProc.setPixels(store.getImage(cb.t(i).build()).getRawPixels());
+         tmpStack.addSlice(tmpShortProc);
+      }
+      ZProjector zProj = new ZProjector(new ImagePlus("tmp", tmpStack));
+      zProj.setMethod(ZProjector.AVG_METHOD);
+      zProj.doProjection();
+      ImagePlus meanP = zProj.getProjection();
+      FloatProcessor mean = (FloatProcessor) meanP.getProcessor().convertToFloat();
+      zProj.setMethod(ZProjector.SD_METHOD);
+      zProj.doProjection();
+      ImagePlus stdDevP = zProj.getProjection();
+      FloatProcessor stdDev = (FloatProcessor) stdDevP.getProcessor().convertToFloat();
+
+      stack.addSlice(mean);
+      stack.addSlice(stdDev);
    }
-   
-   
+
+
    private ExpMeanStdDev calcExpMeanStdDev(Datastore store) throws IOException {
       ExpMeanStdDev result = new ExpMeanStdDev();
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
@@ -342,15 +336,15 @@ public class PtcToolsExecutor extends Thread  {
          Image image = store.getImage(cb.t(i).build());
          ImageProcessor proc = studio_.data().ij().createProcessor(image);
          ImageStatistics stats = ImageStatistics.getStatistics(proc,
-              ImageStatistics.MEAN, null);
+               ImageStatistics.MEAN, null);
          means[i] = stats.mean;
       }
       result.mean_ = avg(means);
       result.stdDev_ = stdDev(means, result.mean_);
-      
+
       return result;
    }
-   
+
    public static double avg(double[] numbers) {
       double sum = 0.0;
       for (double num : numbers) {
@@ -358,8 +352,8 @@ public class PtcToolsExecutor extends Thread  {
       }
       return sum / numbers.length;
    }
-   
-      
+
+
    public static double stdDev(double[] numbers, double avg) {
       double result = 0.0;
       for (double val : numbers) {
@@ -368,10 +362,10 @@ public class PtcToolsExecutor extends Thread  {
       if (numbers.length < 2) {
          return 0.0;
       }
-      result /= (numbers.length -1);
-      
+      result /= (numbers.length - 1);
+
       return Math.sqrt(result);
    }
-   
-  
+
+
 }

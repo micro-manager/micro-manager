@@ -1,18 +1,17 @@
 /**
- * 
  * Nico Stuurman, 2012
  * copyright University of California
- *  
- * LICENSE:      This file is distributed under the BSD license.
- *               License text is included with the source distribution.
  *
- *               This file is distributed in the hope that it will be useful,
- *               but WITHOUT ANY WARRANTY; without even the implied warranty
- *               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * <p>LICENSE:      This file is distributed under the BSD license.
+ *    License text is included with the source distribution.
  *
- *               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- *               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+ * <p>This file is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty
+ *    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * <p>IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
 
 
@@ -21,7 +20,6 @@ package org.micromanager.intelligentacquisition;
 import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -29,7 +27,7 @@ import org.scijava.plugin.SciJavaPlugin;
 public class IntelligentAcquisition implements MenuPlugin, SciJavaPlugin {
    public static final String MENU_NAME = "Intelligent Acquisition";
    public static final String TOOL_TIP_DESCIRIPTION =
-      "Use image analysis to drive image acquisition";
+         "Use image analysis to drive image acquisition";
 
    private CMMCore core_;
    private Studio gui_;
@@ -53,8 +51,9 @@ public class IntelligentAcquisition implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public void onPluginSelected() {
-      if (myFrame_ == null)
+      if (myFrame_ == null) {
          myFrame_ = new IntelligentAcquisitionFrame(gui_);
+      }
       myFrame_.setVisible(true);
    }
 
@@ -71,7 +70,7 @@ public class IntelligentAcquisition implements MenuPlugin, SciJavaPlugin {
    public String getVersion() {
       return "1.0";
    }
-   
+
    @Override
    public String getCopyright() {
       return "University of California, 2012";

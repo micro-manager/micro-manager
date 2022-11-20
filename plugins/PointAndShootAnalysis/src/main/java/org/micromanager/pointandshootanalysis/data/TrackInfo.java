@@ -6,8 +6,8 @@ import java.util.Map;
  * Data structure that holds the interpretation of a (bleached) particle track.
  * DataCalculates the average size of a particle, fits recovery of the bleach
  * spot, as well as of the particle itself
- * 
- * TODO: Add t 1/2 and Rsquared
+ *
+ * <p>TODO: Add t 1/2 and Rsquared
  *
  * @author nico
  */
@@ -37,19 +37,19 @@ public class TrackInfo {
    public final Double particleImmobileFraction_;
 
    private TrackInfo(
-           String imageName,
-           String trackID,
-           Double size,
-           Double bleachIntercept,
-           Double bleachPlateau,
-           Double bleachRateConstant,
-           Double bleachMobileFraction,
-           Double bleachImmobileFraction,
-           Double particleIntercept,
-           Double particlePlateau,
-           Double particleRateConstant,
-           Double particleMobileFraction,
-           Double particleImmobileFraction) {
+         String imageName,
+         String trackID,
+         Double size,
+         Double bleachIntercept,
+         Double bleachPlateau,
+         Double bleachRateConstant,
+         Double bleachMobileFraction,
+         Double bleachImmobileFraction,
+         Double particleIntercept,
+         Double particlePlateau,
+         Double particleRateConstant,
+         Double particleMobileFraction,
+         Double particleImmobileFraction) {
       imageName_ = imageName;
       trackID_ = trackID;
       size_ = size;
@@ -84,89 +84,93 @@ public class TrackInfo {
       private Double particleMobileFraction_;
       private Double particleImmobileFraction_;
 
-      
+
       public Builder(String imageName, String trackID) {
          imageName_ = imageName;
          trackID_ = trackID;
       }
-      
-      public Builder size(Double size) { size_ = size; return this; }
-       
-      public Builder bleachIntercept(Double bleachIntercept) { 
-         bleachIntercept_ = bleachIntercept; 
-         return this; 
+
+      public Builder size(Double size) {
+         size_ = size;
+         return this;
       }
-      
+
+      public Builder bleachIntercept(Double bleachIntercept) {
+         bleachIntercept_ = bleachIntercept;
+         return this;
+      }
+
       public Builder bleachPlateau(Double bleachPlateau) {
          bleachPlateau_ = bleachPlateau;
          return this;
       }
-      
+
       public Builder bleachRateConstant(Double bleachRateConstant) {
          bleachRateConstant_ = bleachRateConstant;
          return this;
       }
-      
+
       public Builder bleachMobileFraction(Double bleachMobileFraction) {
          bleachMobileFraction_ = bleachMobileFraction;
          return this;
       }
-      
-      public Builder bleachImmobileFraction (Double bleachImmobileFraction) {
+
+      public Builder bleachImmobileFraction(Double bleachImmobileFraction) {
          bleachImmobileFraction_ = bleachImmobileFraction;
          return this;
       }
-      
-      public Builder particleIntercept (Double particleIntercept) {
+
+      public Builder particleIntercept(Double particleIntercept) {
          particleIntercept_ = particleIntercept;
          return this;
       }
-      
-      public Builder particlePlateau (Double particlePlateau) {
+
+      public Builder particlePlateau(Double particlePlateau) {
          particlePlateau_ = particlePlateau;
          return this;
       }
-      
-      public Builder particleRateConstant (Double particleRateConstant) {
+
+      public Builder particleRateConstant(Double particleRateConstant) {
          particleRateConstant_ = particleRateConstant;
          return this;
-      } 
-      
-      public Builder particleMobileFraction (Double particleMobileFraction) {
+      }
+
+      public Builder particleMobileFraction(Double particleMobileFraction) {
          particleMobileFraction_ = particleMobileFraction;
          return this;
       }
-      
-      public Builder particleImmobileFraction (Double particleImmobileFraction) {
+
+      public Builder particleImmobileFraction(Double particleImmobileFraction) {
          particleImmobileFraction_ = particleImmobileFraction;
          return this;
       }
-      
+
       public TrackInfo build() {
          return new TrackInfo(imageName_,
-                 trackID_,
-                 size_,
-                 bleachIntercept_, 
-                 bleachPlateau_,
-                 bleachRateConstant_,
-                 bleachMobileFraction_,
-                 bleachImmobileFraction_,
-                 particleIntercept_,
-                 particlePlateau_,
-                 particleRateConstant_,
-                 particleMobileFraction_,
-                 particleImmobileFraction_
+               trackID_,
+               size_,
+               bleachIntercept_,
+               bleachPlateau_,
+               bleachRateConstant_,
+               bleachMobileFraction_,
+               bleachImmobileFraction_,
+               particleIntercept_,
+               particlePlateau_,
+               particleRateConstant_,
+               particleMobileFraction_,
+               particleImmobileFraction_
          );
       }
-   }   
-   
-   public static TrackInfo calculateTrackInfo(PASData pasData, Map<Integer, Double> controlAvgIntensity) {
-      Map<Integer, ParticleData> track = pasData.particleDataTrack();
-      
-      Builder b = new Builder("", "");
-              
-      return b.build();
-      
    }
-   
+
+   public static TrackInfo calculateTrackInfo(PASData pasData,
+                                              Map<Integer, Double> controlAvgIntensity) {
+      Map<Integer, ParticleData> track = pasData.particleDataTrack();
+
+      Builder b = new Builder("", "");
+
+      return b.build();
+
+   }
+
 }

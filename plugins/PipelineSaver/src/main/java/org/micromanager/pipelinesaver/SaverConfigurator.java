@@ -24,27 +24,26 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-
-import javax.swing.*;
-
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
+import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.WindowPositioning;
 
 public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
-   private static final String PREFERRED_FORMAT = "preferred format for saving mid-pipeline datasets";
-   private static final String SHOULD_DISPLAY_PIPELINE_DATA = "whether or not to display mid-pipeline datasets";
+   private static final String PREFERRED_FORMAT =
+         "preferred format for saving mid-pipeline datasets";
+   private static final String SHOULD_DISPLAY_PIPELINE_DATA =
+         "whether or not to display mid-pipeline datasets";
    private static final String SAVE_PATH = "default save path for saving mid-pipeline datasets";
 
    private final Studio studio_;
@@ -56,11 +55,13 @@ public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
    public SaverConfigurator(PropertyMap settings, Studio studio) {
       studio_ = studio;
       JPanel panel = new JPanel(new MigLayout("flowx"));
-      panel.add(new JLabel("<html>This \"processor\" will save images at this point in the pipeline.</html>"), "span, wrap");
+      panel.add(new JLabel(
+            "<html>This \"processor\" will save images at this point in the pipeline.</html>"),
+            "span, wrap");
 
       panel.add(new JLabel("Save format: "), "split 2");
       String[] formats = new String[] {SaverPlugin.RAM,
-         SaverPlugin.MULTIPAGE_TIFF, SaverPlugin.SINGLEPLANE_TIFF_SERIES};
+            SaverPlugin.MULTIPAGE_TIFF, SaverPlugin.SINGLEPLANE_TIFF_SERIES};
       saveFormat_ = new JComboBox(formats);
       saveFormat_.setSelectedItem(
             settings.getString("format", getPreferredSaveFormat()));
@@ -87,8 +88,8 @@ public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
          public void actionPerformed(ActionEvent e) {
             // Pop up a browse dialog.
             File path = FileDialogs.save(SaverConfigurator.this,
-               "Please choose a directory to save to",
-               FileDialogs.MM_DATA_SET);
+                     "Please choose a directory to save to",
+                     FileDialogs.MM_DATA_SET);
             if (path != null) {
                savePath_.setText(path.getAbsolutePath());
             }
@@ -99,7 +100,7 @@ public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
       updateControls();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(300, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
@@ -168,6 +169,6 @@ public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
 
    private void setSavePath(String path) {
       studio_.profile().getSettings(SaverConfigurator.class).putString(
-              SAVE_PATH, path);
+            SAVE_PATH, path);
    }
 }

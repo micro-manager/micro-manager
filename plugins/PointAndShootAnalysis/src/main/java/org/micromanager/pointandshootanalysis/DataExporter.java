@@ -1,6 +1,8 @@
 
 package org.micromanager.pointandshootanalysis;
 
+import static org.micromanager.pointandshootanalysis.utils.ListUtils.xAvgLastN;
+
 import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -28,37 +30,34 @@ import org.micromanager.pointandshootanalysis.data.ParticleData;
 import org.micromanager.pointandshootanalysis.data.TrackInfoCalculator;
 import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
-import static org.micromanager.pointandshootanalysis.utils.ListUtils.xAvgLastN;
 
 /**
- *
  * @author Nico
  */
 public class DataExporter {
-   public enum Type {BLEACH, PARTICLE, PARTICLE_AND_BLEACH}
-   
-   final private Type type_;
-   final private Studio studio_;
-   final private List<PASData> data_;
-   final private Map<Integer, Instant> frameTimeStamps_;
-   
-   final static private Integer MSLIMIT = 2000;
-   
-   public DataExporter(Studio studio, List<PASData> data, Map<Integer, 
-               Instant> frameTimeStamps, Type type) {
+   public enum Type { BLEACH, PARTICLE, PARTICLE_AND_BLEACH }
+
+   private final Type type_;
+   private final Studio studio_;
+   private final List<PASData> data_;
+   private final Map<Integer, Instant> frameTimeStamps_;
+
+   private static final Integer MSLIMIT = 2000;
+
+   public DataExporter(Studio studio, List<PASData> data, Map<Integer,
+         Instant> frameTimeStamps, Type type) {
       studio_ = studio;
       data_ = data;
       frameTimeStamps_ = frameTimeStamps;
       type_ = type;
    }
-   
+
    /**
-    * 
     * @param index
     * @param type
     * @param fitFunction
     * @param msLimit
-    * @return 
+    * @return
     */
    public FitData fit(int index, Type type, Class fitFunction, Integer msLimit) {
       PASData d = data_.get(index);
@@ -74,7 +73,7 @@ public class DataExporter {
       // n should be expressed in seconds (or ms) and be provided by the user
       final int n = 50;
       for (int frame = d.framePasClicked(); frame < d.framePasClicked() + n
-              && frame < frameTimeStamps_.size(); frame++) {
+            && frame < frameTimeStamps_.size(); frame++) {
          if (d.particleDataTrack().get(frame) != null) {
             Double intensity = null;
             switch (type) {
@@ -85,7 +84,11 @@ public class DataExporter {
                   intensity = d.particleDataTrack().get(frame).getNormalizedMaskAvg();
                   break;
                case PARTICLE_AND_BLEACH:
-                  intensity = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+                  intensity =
+                        d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+                  break;
+               default:
+                  break;
             }
             if (intensity != null && intensity < startIntensity) {
                startIntensity = intensity;
@@ -93,7 +96,7 @@ public class DataExporter {
             }
          }
       }
-      
+
       List<Point2D> dataAsList = new ArrayList<>();
       for (int frame = startFrame; frame < frameTimeStamps_.size(); frame++) {
          Double intensity = null;
@@ -106,22 +109,28 @@ public class DataExporter {
                   intensity = d.particleDataTrack().get(frame).getNormalizedMaskAvg();
                   break;
                case PARTICLE_AND_BLEACH:
-                  intensity = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+                  intensity =
+                        d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+                  break;
+               default:
+                  break;
             }
             if (intensity != null) {
                double ms = frameTimeStamps_.get(frame).toEpochMilli()
-                       - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
+                     - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
                if (msLimit == null || ms < msLimit) {
-                  if (Double.isInfinite(ms))
+                  if (Double.isInfinite(ms)) {
                      System.out.println("ms is infinte");
-                  if (Double.isInfinite(intensity)) 
+                  }
+                  if (Double.isInfinite(intensity)) {
                      System.out.println("intensity is infinite");
+                  }
                   dataAsList.add(new Point2D.Double(ms, intensity));
                }
             }
          }
       }
-      if (dataAsList.size() < 3) { 
+      if (dataAsList.size() < 3) {
          return null;
       }
       double endIntensityEstimate = xAvgLastN(dataAsList, dataAsList.size() / 10);
@@ -134,27 +143,25 @@ public class DataExporter {
       if (func == null) {
          return null;
       }
-      UnconstrainedLeastSquares<DMatrixRMaj> optimizer = FactoryOptimization.levenbergMarquardt(null, true);
+      UnconstrainedLeastSquares<DMatrixRMaj> optimizer =
+            FactoryOptimization.levenbergMarquardt(null, true);
       optimizer.setFunction(func, null);
       //optimizer.setVerbose(System.out,0);
-      double startTimeEstimate = frameTimeStamps_.get(startFrame).toEpochMilli() - 
-              frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
+      double startTimeEstimate = frameTimeStamps_.get(startFrame).toEpochMilli()
+            - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
       if (fitFunction == SingleExpRecoveryFunc.class) {
-         optimizer.initialize(new double[]
-                  {endIntensityEstimate, startTimeEstimate, 0.0005}, 
-                  1e-12, 1e-12);
+         optimizer.initialize(new double[] {endIntensityEstimate, startTimeEstimate, 0.0005},
+               1e-12, 1e-12);
       } else if (fitFunction == LinearFunc.class) {
-         optimizer.initialize(new double[]
-                  {dataAsList.get(0).getY(), 0.001}, 
-                  1e-12, 1e-12);
+         optimizer.initialize(new double[] {dataAsList.get(0).getY(), 0.001}, 1e-12, 1e-12);
       }
       UtilOptimize.process(optimizer, 50);
       double[] found = optimizer.getParameters();
       double rSquared = func.getRSquared(found);
       double yAtStart = func.calculate(found, frameTimeStamps_.get(startFrame).toEpochMilli()
-                          - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli() );
+            - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli());
       double tAtStart = frameTimeStamps_.get(startFrame).toEpochMilli()
-                          - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
+            - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
       double yHalf = (found[0] - yAtStart) / 2.0 + yAtStart;
       double tHalf = func.calculateX(found, yHalf) - tAtStart;
       func.setParms(found);
@@ -165,16 +172,16 @@ public class DataExporter {
       }
       System.out.println("RSquared: " + rSquared + ", t1/2: " + tHalf + " ms");
       */
-      FitData fitData = new FitData(dataAsList, 
-              func.getClass(), 
-              type_, 
-              found, 
-              rSquared, 
-              tHalf);
-      
+      FitData fitData = new FitData(dataAsList,
+            func.getClass(),
+            type_,
+            found,
+            rSquared,
+            tHalf);
+
       return fitData;
    }
-   
+
    public void exportRaw(List<Integer> indices) {
       StringBuilder export = new StringBuilder();
       for (int index : indices) {
@@ -182,16 +189,24 @@ public class DataExporter {
          if (d != null) {
             export.append(d.dataSetName()).append("\t\n");
             export.append(d.id()).append("\t\n");
-            switch(type_) {
-                  case BLEACH: export.append("type: bleach\t\n"); break;
-                  case PARTICLE: export.append("type: particle\t\n"); break;
-                  case PARTICLE_AND_BLEACH: export.append("type: particle plus bleach\t\n"); break;
-               }
+            switch (type_) {
+               case BLEACH:
+                  export.append("type: bleach\t\n");
+                  break;
+               case PARTICLE:
+                  export.append("type: particle\t\n");
+                  break;
+               case PARTICLE_AND_BLEACH:
+                  export.append("type: particle plus bleach\t\n");
+                  break;
+               default:
+                  break;
+            }
             export.append("ms\tintensity\n");
             Set<Map.Entry<Integer, ParticleData>> entrySet = d.particleDataTrack().entrySet();
             for (Entry<Integer, ParticleData> es : entrySet) {
                double ts = frameTimeStamps_.get(es.getKey()).toEpochMilli()
-                          - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
+                     - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
                Double val = null;
                if (es.getValue() != null) {
                   switch (type_) {
@@ -203,6 +218,8 @@ public class DataExporter {
                         break;
                      case PARTICLE_AND_BLEACH:
                         val = es.getValue().getNormalizedMaskIncludingBleachAvg();
+                        break;
+                     default:
                         break;
                   }
                }
@@ -216,7 +233,7 @@ public class DataExporter {
       Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
       clipboard.setContents(selection, selection);
    }
-   
+
    public void exportSummary(List<Integer> indices) {
       StringBuilder export = new StringBuilder();
       export.append("title\tID\tParticle Size\tBleach Spot k\t");
@@ -226,18 +243,19 @@ public class DataExporter {
          PASData d = data_.get(index);
          if (d != null) {
             try {
-            export.append(d.dataSetName()).append("\t").append(d.id()).append("\t");
-            double avgPSize = TrackInfoCalculator.avgParticleSize(d);
-            export.append(avgPSize).append("\t");
-            FitData fitData = fit(index, Type.BLEACH, SingleExpRecoveryFunc.class, null);
-            export.append(fitData.parms()[2]).append("\t");  // k
-            export.append(fitData.parms()[0]).append("\t");  // A
-            export.append(fitData.tHalf()).append("\t");
-            export.append(fitData.rSquared()).append("\t");
-            FitData particleFitData = fit(index, Type.PARTICLE_AND_BLEACH, LinearFunc.class, MSLIMIT);
-            export.append(particleFitData.parms()[1]).append("\t"); // particle k
-            export.append(particleFitData.parms()[0]).append("\n"); // particle y0:w
-            
+               export.append(d.dataSetName()).append("\t").append(d.id()).append("\t");
+               double avgPSize = TrackInfoCalculator.avgParticleSize(d);
+               export.append(avgPSize).append("\t");
+               FitData fitData = fit(index, Type.BLEACH, SingleExpRecoveryFunc.class, null);
+               export.append(fitData.parms()[2]).append("\t");  // k
+               export.append(fitData.parms()[0]).append("\t");  // A
+               export.append(fitData.tHalf()).append("\t");
+               export.append(fitData.rSquared()).append("\t");
+               FitData particleFitData =
+                     fit(index, Type.PARTICLE_AND_BLEACH, LinearFunc.class, MSLIMIT);
+               export.append(particleFitData.parms()[1]).append("\t"); // particle k
+               export.append(particleFitData.parms()[0]).append("\n"); // particle y0:w
+
             } catch (java.lang.RuntimeException re) {
                export.append("Export Failure!\n");
             }
@@ -289,24 +307,32 @@ public class DataExporter {
          }
       }
       String title = null;
-      switch(type_) {
-         case BLEACH: title = "Fit of Bleach"; break;
-         case PARTICLE: title = "Fit of Particle"; break;
-         case PARTICLE_AND_BLEACH: title = "Fit of Particle (+Bleach)"; break;
+      switch (type_) {
+         case BLEACH:
+            title = "Fit of Bleach";
+            break;
+         case PARTICLE:
+            title = "Fit of Particle";
+            break;
+         case PARTICLE_AND_BLEACH:
+            title = "Fit of Particle (+Bleach)";
+            break;
+         default:
+            break;
       }
       PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
       List<Color> colorList = new ArrayList<>();
       for (Integer index : succesfullFits) {
-         colorList.add(WidgetSettings.COLORS[index % WidgetSettings.COLORS.length]);          
-         colorList.add(WidgetSettings.COLORS[index % WidgetSettings.COLORS.length]);   
+         colorList.add(WidgetSettings.COLORS[index % WidgetSettings.COLORS.length]);
+         colorList.add(WidgetSettings.COLORS[index % WidgetSettings.COLORS.length]);
       }
-      pu.plotData(title, 
-                    xySeries.toArray(new XYSeries[xySeries.size()]),
-                    "Time (ms)",
-                    "Normalized Intensity", "", 
-                    1.3, 
-                    colorList.toArray(new Color[colorList.size()]), 
-                    null);
+      pu.plotData(title,
+            xySeries.toArray(new XYSeries[xySeries.size()]),
+            "Time (ms)",
+            "Normalized Intensity", "",
+            1.3,
+            colorList.toArray(new Color[colorList.size()]),
+            null);
    }
-   
+
 }

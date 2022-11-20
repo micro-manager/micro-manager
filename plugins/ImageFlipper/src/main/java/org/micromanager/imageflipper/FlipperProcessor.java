@@ -21,16 +21,13 @@
 package org.micromanager.imageflipper;
 
 import ij.process.ImageProcessor;
-
-
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
+import org.micromanager.Studio;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
-
-import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
-import org.micromanager.Studio;
 
 
 public class FlipperProcessor implements Processor {
@@ -47,13 +44,14 @@ public class FlipperProcessor implements Processor {
    int rotation_;
 
    public FlipperProcessor(Studio studio, String camera, int rotation,
-         boolean isMirrored) {
+                           boolean isMirrored) {
       studio_ = studio;
       camera_ = camera;
-      if (rotation != R0 && rotation != R90 && rotation != R180 &&
-            rotation != R270) {
+      if (rotation != R0 && rotation != R90 && rotation != R180
+            && rotation != R270) {
          // Invalid rotation.
-         throw new RuntimeException("Invalid rotation " + rotation + "; must be a multiple of 90 degrees");
+         throw new RuntimeException(
+               "Invalid rotation " + rotation + "; must be a multiple of 90 degrees");
       }
       rotation_ = rotation;
       isMirrored_ = isMirrored;
@@ -75,22 +73,22 @@ public class FlipperProcessor implements Processor {
          }
       }
       context.outputImage(
-              transformImage(studio_, image, isMirrored_, rotation_));
+            transformImage(studio_, image, isMirrored_, rotation_));
    }
 
    /**
     * Executes image transformation
     * First mirror the image if requested, than rotate as requested
-    * 
+    *
     * @param studio
-    * @param image Image to be transformed.
+    * @param image      Image to be transformed.
     * @param isMirrored Whether or not to mirror the image.
-    * @param rotation Degrees to rotate by (R0, R90, R180, R270)
+    * @param rotation   Degrees to rotate by (R0, R90, R180, R270)
     * @return - Transformed Image, otherwise a copy of the input
     */
    public static Image transformImage(Studio studio, Image image,
-         boolean isMirrored, int rotation) {
-      
+                                      boolean isMirrored, int rotation) {
+
       ImageProcessor proc = studio.data().ij().createProcessor(image);
 
       if (isMirrored) {
@@ -111,13 +109,13 @@ public class FlipperProcessor implements Processor {
       PropertyMap userData = image.getMetadata().getUserData();
       if (userData != null) {
          builder = userData.copyBuilder();
-      }
-      else {
+      } else {
          builder = PropertyMaps.builder();
       }
       builder.putInteger("ImageFlipper-Rotation", rotation);
       builder.putString("ImageFlipper-Mirror", isMirrored ? "On" : "Off");
-      Metadata newMetadata = image.getMetadata().copyBuilderPreservingUUID().userData(builder.build()).build();
+      Metadata newMetadata =
+            image.getMetadata().copyBuilderPreservingUUID().userData(builder.build()).build();
       Image result = studio.data().ij().createImage(proc, image.getCoords(),
             newMetadata);
       return result;

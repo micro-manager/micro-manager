@@ -1,10 +1,9 @@
 package org.micromanager.intelligentacquisition;
 
 /**
- * Strings needed in various classes in this plugin
- * Guarantees that these strings are the same and that they can be changed
- * 
- * 
+ * Strings needed in various classes in this plugin.
+ * Guarantees that these strings are the same and that they can be changed.
+ *
  * @author nico
  */
 public class Terms {

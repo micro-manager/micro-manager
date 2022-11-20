@@ -5,283 +5,277 @@ import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
-
 import ij.process.ImageStatistics;
 import java.awt.Dimension;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.Point;
 import java.awt.Rectangle;
-
-import org.micromanager.slideexplorer.Hub.ModeManager;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
-import org.micromanager.internal.utils.imageanalysis.ImageUtils;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
+import org.micromanager.slideexplorer.Hub.ModeManager;
 
 public class Display {
 
-	private final ImagePlus imgp_;
-	private final Window win_;
-	private final Canvas cvs_;
-	private ImageProcessor proc_;
-	private final Hub hub_;
-	private double displayRangeMin_;
-	private double displayRangeMax_;
+   private final ImagePlus imgp_;
+   private final Window win_;
+   private final Canvas cvs_;
+   private ImageProcessor proc_;
+   private final Hub hub_;
+   private double displayRangeMin_;
+   private double displayRangeMax_;
    private final int type_;
    private boolean currentlyPanning_ = false;
    private RoiManager roiManager_;
    private Coordinates coords_;
    private boolean windowExists_ = true;
 
-	public Display(Hub hub, int imageType, int width, int height) {
-		hub_ = hub;
-		if (IJ.getInstance() != null)
-		   IJ.setTool("hand");
+   public Display(Hub hub, int imageType, int width, int height) {
+      hub_ = hub;
+      if (IJ.getInstance() != null) {
+         IJ.setTool("hand");
+      }
 
-                type_ = imageType;
-		proc_ = ImageUtils.makeProcessor(imageType, width, height);
-		imgp_ = new ImagePlus("Slide Explorer",proc_);
+      type_ = imageType;
+      proc_ = ImageUtils.makeProcessor(imageType, width, height);
+      imgp_ = new ImagePlus("Slide Explorer", proc_);
 
-		cvs_ = new Canvas(this, imgp_);
+      cvs_ = new Canvas(this, imgp_);
 
-		win_ = new Window(imgp_, (ImageCanvas) cvs_, this);
+      win_ = new Window(imgp_, (ImageCanvas) cvs_, this);
       win_.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
             windowExists_ = false;
          }
       });
-		win_.setVisible(true);
+      win_.setVisible(true);
 
-        }
+   }
 
-    public void setCoords(Coordinates coords) {
-        coords_ = coords;
-		updateDimensions();
-    }
+   public void setCoords(Coordinates coords) {
+      coords_ = coords;
+      updateDimensions();
+   }
 
-    /*
-	 * Updates the dimensions so that OffScreen is 3x
-	 * the size of OnScreen and such that OnScreen is
-	 * concentric with OffScreen.
-	 */
-	public void updateDimensions() {
-		Rectangle bounds = cvs_.getBounds();
-		int w = bounds.width;
-		int h = bounds.height;
+   /*
+    * Updates the dimensions so that OffScreen is 3x
+    * the size of OnScreen and such that OnScreen is
+    * concentric with OffScreen.
+    */
+   public void updateDimensions() {
+      Rectangle bounds = cvs_.getBounds();
+      int w = bounds.width;
+      int h = bounds.height;
 
-		Rectangle srcRect = cvs_.getSrcRect();
-		if (srcRect.x != w || srcRect.height != h) {
-			srcRect.x = w;
-			srcRect.y = h;
-			srcRect.width = w;
-			srcRect.height = h;
-            coords_.setViewDimensionsOffScreen(new Dimension(3*w,3*h));
+      Rectangle srcRect = cvs_.getSrcRect();
+      if (srcRect.x != w || srcRect.height != h) {
+         srcRect.x = w;
+         srcRect.y = h;
+         srcRect.width = w;
+         srcRect.height = h;
+         coords_.setViewDimensionsOffScreen(new Dimension(3 * w, 3 * h));
 
-			hub_.resize(new Dimension(w, h));
-		}
-	}
+         hub_.resize(new Dimension(w, h));
+      }
+   }
 
-    public Window getWindow() {
-        return win_;
-    }
+   public Window getWindow() {
+      return win_;
+   }
 
-	public void placeImage(Point offScreenPosition, ImageProcessor img) {
-		proc_.insert(img, offScreenPosition.x, offScreenPosition.y);
-	}
+   public void placeImage(Point offScreenPosition, ImageProcessor img) {
+      proc_.insert(img, offScreenPosition.x, offScreenPosition.y);
+   }
 
-	public void pan(Rectangle panRectangle, boolean update) {
-        if (!currentlyPanning_) {
-            currentlyPanning_ = true;
-            int w = cvs_.getWidth();
-            int h = cvs_.getHeight();
-            int dx = panRectangle.x - w;
-            int dy = panRectangle.y - h;
+   public void pan(Rectangle panRectangle, boolean update) {
+      if (!currentlyPanning_) {
+         currentlyPanning_ = true;
+         int w = cvs_.getWidth();
+         int h = cvs_.getHeight();
+         int dx = panRectangle.x - w;
+         int dy = panRectangle.y - h;
 
-            if (dx != 0 || dy != 0 || update) {
-                saveDisplayRange();
-                ImageProcessor newProc = ImageUtils.makeProcessor(imgp_.getType(), 3*w, 3*h);
-                newProc.insert(proc_, -dx, -dy);
-                proc_ = newProc;
-                imgp_.setProcessor("Slide Explorer", proc_);
-                hub_.panBy(-dx, -dy);
-                updateDimensions();
-                imgp_.setProcessor(imgp_.getTitle(), proc_);
-                reapplyDisplayRange();
-                panRoisBy(dx, dy);
-            }
-            currentlyPanning_ = false;
-        }
-	}
+         if (dx != 0 || dy != 0 || update) {
+            saveDisplayRange();
+            ImageProcessor newProc = ImageUtils.makeProcessor(imgp_.getType(), 3 * w, 3 * h);
+            newProc.insert(proc_, -dx, -dy);
+            proc_ = newProc;
+            imgp_.setProcessor("Slide Explorer", proc_);
+            hub_.panBy(-dx, -dy);
+            updateDimensions();
+            imgp_.setProcessor(imgp_.getTitle(), proc_);
+            reapplyDisplayRange();
+            panRoisBy(dx, dy);
+         }
+         currentlyPanning_ = false;
+      }
+   }
 
 
-    protected void panRoisBy(int dx, int dy) {
-        Roi roi = imgp_.getRoi();
-		panRoi(roi, dx, dy);
-            if (roiManager_ != null) {
-            for (Roi eachRoi:roiManager_.getRoisAsArray()) {
-                panRoi(eachRoi, dx, dy);
-            }
-        }
-	}
+   protected void panRoisBy(int dx, int dy) {
+      Roi roi = imgp_.getRoi();
+      panRoi(roi, dx, dy);
+      if (roiManager_ != null) {
+         for (Roi eachRoi : roiManager_.getRoisAsArray()) {
+            panRoi(eachRoi, dx, dy);
+         }
+      }
+   }
 
-    protected void panRoi(Roi roi, int dx, int dy) {
-		if (roi != null) {
-			Rectangle rect = roi.getBounds();
-			roi.setLocation(rect.x-dx, rect.y-dy);
-		}
-	}
+   protected void panRoi(Roi roi, int dx, int dy) {
+      if (roi != null) {
+         Rectangle rect = roi.getBounds();
+         roi.setLocation(rect.x - dx, rect.y - dy);
+      }
+   }
 
-	void showRoiAt(Rectangle roiRect) {
-		imgp_.setRoi(roiRect);
-	}
+   void showRoiAt(Rectangle roiRect) {
+      imgp_.setRoi(roiRect);
+   }
 
-	public void updateAndDraw(boolean adjustContrast) {
-		imgp_.updateAndDraw();
+   public void updateAndDraw(boolean adjustContrast) {
+      imgp_.updateAndDraw();
       if (adjustContrast) {
          ImageStatistics stats = imgp_.getStatistics();
-         double displayRange = imgp_.getDisplayRangeMax()-imgp_.getDisplayRangeMin();
+         double displayRange = imgp_.getDisplayRangeMax() - imgp_.getDisplayRangeMin();
          double actualRange = stats.max - stats.min;
-         if ((displayRange < 5) || (displayRange/actualRange < 0.6667) || (displayRange/actualRange > 1.5)) {
+         if ((displayRange < 5) || (displayRange / actualRange < 0.6667)
+               || (displayRange / actualRange > 1.5)) {
             imgp_.setDisplayRange(stats.min, stats.max);
          }
       }
-	}
+   }
 
-	public void show() {
-		imgp_.show();
-	}
+   public void show() {
+      imgp_.show();
+   }
 
-	protected void saveDisplayRange() {
-		displayRangeMin_ = imgp_.getDisplayRangeMin();
-		displayRangeMax_ = imgp_.getDisplayRangeMax();
-	}
+   protected void saveDisplayRange() {
+      displayRangeMin_ = imgp_.getDisplayRangeMin();
+      displayRangeMax_ = imgp_.getDisplayRangeMax();
+   }
 
-	protected void reapplyDisplayRange() {
-		imgp_.setDisplayRange(displayRangeMin_, displayRangeMax_);
-	}
+   protected void reapplyDisplayRange() {
+      imgp_.setDisplayRange(displayRangeMin_, displayRangeMax_);
+   }
 
-	public void zoomOut(Point point) {
-		hub_.zoomBy(-1);
-	}
+   public void zoomOut(Point point) {
+      hub_.zoomBy(-1);
+   }
 
-	public void zoomIn(Point point) {
-		hub_.zoomBy(+1);
-	}
+   public void zoomIn(Point point) {
+      hub_.zoomBy(+1);
+   }
 
-    public void zoomTo(int zoomLevel, Point point) {
-        hub_.zoomTo(zoomLevel, point);
-    }
+   public void zoomTo(int zoomLevel, Point point) {
+      hub_.zoomTo(zoomLevel, point);
+   }
 
-	public void shutdown() {
-		hub_.shutdown();
+   public void shutdown() {
+      hub_.shutdown();
 
-	}
+   }
 
-	public void navigate(Point canvasPos) {
-		hub_.navigate(new Point(canvasPos.x, canvasPos.y));
-	}
+   public void navigate(Point canvasPos) {
+      hub_.navigate(new Point(canvasPos.x, canvasPos.y));
+   }
 
-	public void survey() {
-		hub_.survey();
+   public void survey() {
+      hub_.survey();
 
-	}
+   }
 
-    public void pauseSlideExplorer() {
-        hub_.pauseSlideExplorer();
-    }
+   public void pauseSlideExplorer() {
+      hub_.pauseSlideExplorer();
+   }
 
-	public void hideRoi() {
-		imgp_.killRoi();
-	}
+   public void hideRoi() {
+      imgp_.killRoi();
+   }
 
-    public void fillWithBlack() {
-        proc_ = ImageUtils.makeProcessor(type_, imgp_.getWidth(), imgp_.getHeight());
-        imgp_.setProcessor(imgp_.getTitle(), proc_);
-        try {
-           // TODO: the below code was rendered inoperable by MM2.0 changes.
-//        ContrastSettings contrastSettings = ((MMStudio) hub_.getApp()).getContrastSettings();
-//        imgp_.setDisplayRange(contrastSettings.min, contrastSettings.max);
-        } catch (Exception e) {
-            ReportingUtils.logError(e);
-        }
-    }
+   public void fillWithBlack() {
+      proc_ = ImageUtils.makeProcessor(type_, imgp_.getWidth(), imgp_.getHeight());
+      imgp_.setProcessor(imgp_.getTitle(), proc_);
+      try {
+         // TODO: the below code was rendered inoperable by MM2.0 changes.
+         // ContrastSettings contrastSettings = ((MMStudio) hub_.getApp()).getContrastSettings();
+         // imgp_.setDisplayRange(contrastSettings.min, contrastSettings.max);
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+   }
 
-    void showConfig() {
-        hub_.showConfig();
-    }
+   void showConfig() {
+      hub_.showConfig();
+   }
 
-    void showRoiManager() {
-        hub_.deployRoiManager();
-    }
+   void showRoiManager() {
+      hub_.deployRoiManager();
+   }
 
-    void setRoiManager(RoiManager roiManager) {
-        roiManager_ = roiManager;
-    }
+   void setRoiManager(RoiManager roiManager) {
+      roiManager_ = roiManager;
+   }
 
-    void acquireMosaics() {
-        hub_.acquireMosaics();
-    }
+   void acquireMosaics() {
+      hub_.acquireMosaics();
+   }
 
-    public int getMode() {
-        return hub_.getMode();
-    }
+   public int getMode() {
+      return hub_.getMode();
+   }
 
-    void update() {
-        win_.updateControls();
-    }
+   void update() {
+      win_.updateControls();
+   }
 
-    int getZoomLevel() {
-        return hub_.getZoomLevel();
-    }
+   int getZoomLevel() {
+      return hub_.getZoomLevel();
+   }
 
-    void snap() {
-        hub_.snap();
-    }
+   void snap() {
+      hub_.snap();
+   }
 
-    void onClick(Point offScreenPos) {
-        if (hub_.getMode() == ModeManager.NAVIGATE) {
-            navigate(offScreenPos);
-        }
+   void onClick(Point offScreenPos) {
+      if (hub_.getMode() == ModeManager.NAVIGATE) {
+         navigate(offScreenPos);
+      }
 
-    }
+   }
 
-    void roiDrawn() {
+   void roiDrawn() {
       Roi roi = imgp_.getRoi();
       if (roi.getState() == Roi.NORMAL) {
-         roiManager_.add(imgp_,roi,-1);
+         roiManager_.add(imgp_, roi, -1);
       }
       cvs_.setShowAllROIs(true);
       cvs_.repaint();
-    }
+   }
 
-    void clearRois() {
-        imgp_.killRoi();
-        roiManager_.getROIs().clear();
-        // Not sure why this was there - remove if nothing bad happens
-        // roiManager_.getList().removeAll();
-        cvs_.setShowAllROIs(false);
-        cvs_.repaint();
-    }
+   void clearRois() {
+      imgp_.killRoi();
+      roiManager_.getROIs().clear();
+      // Not sure why this was there - remove if nothing bad happens
+      // roiManager_.getList().removeAll();
+      cvs_.setShowAllROIs(false);
+      cvs_.repaint();
+   }
 
-    public void reactivateRoiManager() {
-       if (roiManager_ != null) {
-          roiManager_.runCommand("Reset");
-          roiManager_.setVisible(true);
-    	    roiManager_.close();
-       }
-    }
+   public void reactivateRoiManager() {
+      if (roiManager_ != null) {
+         roiManager_.runCommand("Reset");
+         roiManager_.setVisible(true);
+         roiManager_.close();
+      }
+   }
 
-    public boolean setVisible(boolean isVisible) {
-        if (windowExists_) {
-            win_.setVisible(isVisible);
-            return true;
-        }
-        return false;
-    }
+   public boolean setVisible(boolean isVisible) {
+      if (windowExists_) {
+         win_.setVisible(isVisible);
+         return true;
+      }
+      return false;
+   }
 }

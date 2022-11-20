@@ -52,22 +52,16 @@ import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
 
 /**
  * The main control code for Snap-on-Move.
  *
- * Starts and stops a thread to monitor changes (movements) and trigger
+ * <p>Starts and stops a thread to monitor changes (movements) and trigger
  * snaps.
  *
- * Monitored items (typically stage positions) can be updated either by
+ * <p>Monitored items (typically stage positions) can be updated either by
  * notifications from the Core, or by polling.
  */
 class MainController {
@@ -105,7 +99,10 @@ class MainController {
    private Thread monitorThread_;
 
    private UpdatableAlert statusAlert_;
-   private static final class WarningAlertTag {}
+
+   private static final class WarningAlertTag {
+   }
+
    private static final String WARNING_TITLE = "Snap-on-Live Error";
 
    private static final String PROFILE_KEY_POLLING_INTERVAL_MS =
@@ -116,16 +113,17 @@ class MainController {
    MainController(Studio studio) {
       studio_ = studio;
 
-      pollingIntervalMs_ = studio_.profile().getSettings(this.getClass()).
-              getLong(PROFILE_KEY_POLLING_INTERVAL_MS, 100L);
+      pollingIntervalMs_ = studio_.profile().getSettings(this.getClass())
+                  .getLong(PROFILE_KEY_POLLING_INTERVAL_MS, 100L);
 
-      String criteriaJSON = studio_.profile().getSettings(this.getClass()).
-              getString(PROFILE_KEY_CHANGE_CRITERIA, null);
+      String criteriaJSON = studio_.profile().getSettings(this.getClass())
+                  .getString(PROFILE_KEY_CHANGE_CRITERIA, null);
       if (criteriaJSON != null) {
          PropertyMap listPm = null;
          try {
             listPm = MM1JSONSerializer.fromJSON(criteriaJSON);
          } catch (IOException ignore) {
+            studio.logs().logError(ignore);
          }
          if (listPm != null) {
             for (int i = 0; ; ++i) {
@@ -154,10 +152,10 @@ class MainController {
    }
 
    synchronized void setChangeCriteria(Collection<ChangeCriterion> criteria) {
-      boolean wasEnabled = isEnabled();
       setEnabled(false);
       changeCriteria_.clear();
       changeCriteria_.addAll(criteria);
+      boolean wasEnabled = isEnabled();
       setEnabled(wasEnabled);
 
       // Each criterion is serialized into a PropertyMap. To store the list
@@ -193,14 +191,12 @@ class MainController {
          };
          monitorThread_.start();
          studio_.events().registerForEvents(this);
-      }
-      else {
+      } else {
          studio_.events().unregisterForEvents(this);
          monitorThread_.interrupt();
          try {
             monitorThread_.join();
-         }
-         catch (InterruptedException notOurs) {
+         } catch (InterruptedException notOurs) {
             Thread.currentThread().interrupt();
          }
          eventQueue_.clear();
@@ -232,7 +228,7 @@ class MainController {
          initializeMonitoredValues();
          statusAlert_ = studio_.alerts().postUpdatableAlert("Snap-on-Move",
                String.format("Monitoring %d item(s)...", changeCriteria_.size()));
-         for (;;) {
+         for (; ; ) {
             lastSnapValues_.clear();
             synchronized (latestValues_) {
                lastSnapValues_.putAll(latestValues_);
@@ -240,8 +236,7 @@ class MainController {
             doSnap();
             waitForChange();
          }
-      }
-      catch (InterruptedException shouldExit) {
+      } catch (InterruptedException shouldExit) {
          if (statusAlert_ != null) {
             statusAlert_.dismiss();
             statusAlert_ = null;
@@ -252,7 +247,7 @@ class MainController {
    /**
     * Wait for at least the polling interval, or until a change is detected.
     *
-    * Ensures that latestValues_ reflect just-polled values, which can be
+    * <p>Ensures that latestValues_ reflect just-polled values, which can be
     * considered the "current" values for an immediately following snap.
     *
     * @throws InterruptedException if current thread is interrupted
@@ -263,7 +258,7 @@ class MainController {
       }
       Thread.sleep(getPollingIntervalMs());
       long pollingDeadlineMs = 0; // The first poll should happen immediately
-      for (;;) {
+      for (; ; ) {
          if (waitForEvents(pollingDeadlineMs)) {
             // We have detected a change based on an event.
             // Bring the polled items up to date:
@@ -282,11 +277,11 @@ class MainController {
    /**
     * Wait for queued events until a specified deadline.
     *
-    * Always checks the event queue at least once.
+    * <p>Always checks the event queue at least once.
     *
     * @param deadlineMs deadline to be compared with System.currentTimeMillis().
     * @return true if an event meeting criteria was received; false if the
-    * deadline passed without such an event.
+    *         deadline passed without such an event.
     */
    private boolean waitForEvents(long deadlineMs) throws InterruptedException {
       long remainingMs = Math.max(0, deadlineMs - System.currentTimeMillis());
@@ -312,8 +307,7 @@ class MainController {
             if (value != null) {
                for (ChangeCriterion cc : changeCriteria_) {
                   if (cc.getMonitoredItem().equals(item)) {
-                     if (cc.testForChange(lastSnapValues_.get(item), value))
-                     {
+                     if (cc.testForChange(lastSnapValues_.get(item), value)) {
                         return true;
                      }
                   }
@@ -344,17 +338,15 @@ class MainController {
          MonitoredValue value = null;
          try {
             value = item.poll(core);
-         }
-         catch (MonitoredItem.DeviceError err) {
+         } catch (MonitoredItem.DeviceError err) {
             studio_.alerts().postAlert(WARNING_TITLE, WarningAlertTag.class,
                   "Device error: " + err.getMessage());
          }
          if (value != null) {
-            synchronized(latestValues_) {
+            synchronized (latestValues_) {
                latestValues_.put(item, value);
             }
-            if (cc.testForChange(lastSnapValues_.get(item), value))
-            {
+            if (cc.testForChange(lastSnapValues_.get(item), value)) {
                changeDetected = true;
             }
          }
@@ -381,8 +373,7 @@ class MainController {
          MonitoredValue value = null;
          try {
             value = item.poll(core);
-         }
-         catch (MonitoredItem.DeviceError err) {
+         } catch (MonitoredItem.DeviceError err) {
             studio_.alerts().postAlert(WARNING_TITLE, WarningAlertTag.class,
                   "Device error: " + err.getMessage());
          }
@@ -413,8 +404,7 @@ class MainController {
             latestValues_.put(item, value);
          }
          eventQueue_.put(new AbstractMap.SimpleEntry<MonitoredItem, MonitoredValue>(item, value));
-      }
-      catch (InterruptedException unexpected) {
+      } catch (InterruptedException unexpected) {
          Thread.currentThread().interrupt();
       }
    }
@@ -438,8 +428,7 @@ class MainController {
             latestValues_.put(item, value);
          }
          eventQueue_.put(new AbstractMap.SimpleEntry<MonitoredItem, MonitoredValue>(item, value));
-      }
-      catch (InterruptedException unexpected) {
+      } catch (InterruptedException unexpected) {
          Thread.currentThread().interrupt();
       }
    }

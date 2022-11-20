@@ -30,16 +30,16 @@ import com.google.common.eventbus.Subscribe;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
 public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
-   static public final String VERSION_INFO = "1.5.0";
-   static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013";
-   static private final String DESCRIPTION = "Generate imaging site positions for micro-well plates and slides";
-   static private final String NAME = "HCS Site Generator";
+   public static final String VERSION_INFO = "1.5.0";
+   private static final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013";
+   private static final String DESCRIPTION =
+         "Generate imaging site positions for micro-well plates and slides";
+   private static final String NAME = "HCS Site Generator";
 
    private Studio studio_;
    private SiteGenerator frame_;
@@ -82,7 +82,7 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    public String getVersion() {
       return VERSION_INFO;
    }
-   
+
    @Subscribe
    public void closeRequested(ShutdownCommencingEvent sce) {
       if (!sce.isCanceled() && frame_ != null) {

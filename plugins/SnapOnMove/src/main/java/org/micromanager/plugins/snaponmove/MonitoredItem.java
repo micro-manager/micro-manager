@@ -52,7 +52,7 @@ abstract class MonitoredItem {
    private MonitoredItem(String deviceLabel) {
       deviceLabel_ = deviceLabel;
    }
-   
+
    String getDeviceLabel() {
       return deviceLabel_;
    }
@@ -60,7 +60,7 @@ abstract class MonitoredItem {
    /**
     * Return a string uniquely representing the item.
     *
-    * (This string representation is used for equality, hash computation,
+    * <p>(This string representation is used for equality, hash computation,
     * and serialization. See fromString().)
     *
     * @return string representation of the item
@@ -88,6 +88,7 @@ abstract class MonitoredItem {
 
    /**
     * Poll the hardware for the current value of this item.
+    *
     * @param core the Core instance
     * @return the retrieved value
     */
@@ -119,8 +120,7 @@ abstract class MonitoredItem {
       if (serialized.startsWith(Z_ITEM_SER_PREFIX)) {
          String deviceLabel = serialized.substring(Z_ITEM_SER_PREFIX.length());
          return createZItem(deviceLabel);
-      }
-      else if (serialized.startsWith(XY_ITEM_SER_PREFIX)) {
+      } else if (serialized.startsWith(XY_ITEM_SER_PREFIX)) {
          String deviceLabel = serialized.substring(XY_ITEM_SER_PREFIX.length());
          return createXYItem(deviceLabel);
       }
@@ -141,8 +141,7 @@ abstract class MonitoredItem {
       public MonitoredFloatValue poll(CMMCore core) throws DeviceError {
          try {
             return new MonitoredFloatValue(core.getPosition(getDeviceLabel()));
-         }
-         catch (Exception deviceError) {
+         } catch (Exception deviceError) {
             throw new DeviceError(deviceError.getMessage());
          }
       }
@@ -163,8 +162,7 @@ abstract class MonitoredItem {
          try {
             Point2D.Double xy = core.getXYStagePosition(getDeviceLabel());
             return new MonitoredXYValue(xy.x, xy.y);
-         }
-         catch (Exception deviceError) {
+         } catch (Exception deviceError) {
             throw new DeviceError(deviceError.getMessage());
          }
       }

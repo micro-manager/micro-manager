@@ -26,14 +26,14 @@ package org.micromanager.pointandshootanalysis.data;
  * @author nico
  */
 public class Terms {
-   public final static String LOCATIONSFILENAME = "LocationFileName";
-   public final static String[] FILESUFFIXES = {"txt", "tproj", "log"};
-   public final static String RADIUS = "Radius";
-   public final static String CORERECEIVEDTIMEKEY = "TimeReceivedByCore";
-   public final static String NRFRAMESBEFORE = "NrFramesBefore";
-   public final static String NRFRAMESAFTER = "NrFramesAfter";  
-   public final static String MAXDISTANCE = "MaxDistance";
-   public final static String CAMERAOFFSET = "CameraOffset";   
-   public final static String FIXBLEACHINPARTICLE = "FixBleachInParticle";
-   public final static String NRFRAMESTOFIXBLEACH = "nrFramesToFixBleach";
+   public static final String LOCATIONSFILENAME = "LocationFileName";
+   public static final String[] FILESUFFIXES = {"txt", "tproj", "log"};
+   public static final String RADIUS = "Radius";
+   public static final String CORERECEIVEDTIMEKEY = "TimeReceivedByCore";
+   public static final String NRFRAMESBEFORE = "NrFramesBefore";
+   public static final String NRFRAMESAFTER = "NrFramesAfter";
+   public static final String MAXDISTANCE = "MaxDistance";
+   public static final String CAMERAOFFSET = "CameraOffset";
+   public static final String FIXBLEACHINPARTICLE = "FixBleachInParticle";
+   public static final String NRFRAMESTOFIXBLEACH = "nrFramesToFixBleach";
 }

@@ -24,6 +24,7 @@ package org.micromanager.pointandshootanalysis.plot;
 
 /**
  * Data structure to be used as Key for data series in Point and Shoot code.
+ *
  * @author nico
  */
 public class DataSeriesKey implements Comparable<DataSeriesKey> {

@@ -21,30 +21,31 @@
 
 
 /**
-
  * Created on Aug 28, 2011, 9:41:57 PM
  */
+
 package org.micromanager.splitview;
 
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-
-import javax.swing.*;
-
+import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import mmcorej.CMMCore;
-
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.internal.utils.WindowPositioning;
 
 // Imports for MMStudio internal packages
@@ -65,7 +66,7 @@ public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
    private static final String ORIENTATION = "Orientation";
    private static final String NUM_SPLITS = "numSplits";
    private static final String[] SPLIT_OPTIONS = new String[] {"Two", "Three",
-      "Four", "Five"};
+         "Four", "Five"};
    public static final String LR = "lr";
    public static final String TB = "tb";
 
@@ -88,7 +89,7 @@ public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
       initComponents();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
@@ -98,7 +99,7 @@ public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
 
    @Override
    public PropertyMap getSettings() {
-      PropertyMap.Builder builder =  PropertyMaps.builder();
+      PropertyMap.Builder builder = PropertyMaps.builder();
       builder.putString("orientation", orientation_);
       builder.putInteger("splits", numSplits_);
       return builder.build();
@@ -163,9 +164,9 @@ public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
       add(new JLabel("Number of Splits:"), "alignx right");
       add(splitSelector, "wrap");
       add(new JLabel(
-               "<html>Note: if the image size does not evenly divide<br> " +
-               "the number of splits, then some rows or columns<br>" +
-               "from the source image will be discarded.</html>"),
+                  "<html>Note: if the image size does not evenly divide<br> "
+                        + "the number of splits, then some rows or columns<br>"
+                        + "from the source image will be discarded.</html>"),
             "span, wrap");
       pack();
    }
@@ -174,15 +175,16 @@ public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
       orientation_ = orientation;
       numSplits_ = numSplits;
       studio_.profile().getSettings(SplitViewFrame.class).putString(
-              ORIENTATION, orientation);
+            ORIENTATION, orientation);
       studio_.profile().getSettings(SplitViewFrame.class).putInteger(
-              NUM_SPLITS, numSplits_);
+            NUM_SPLITS, numSplits_);
       studio_.data().notifyPipelineChanged();
       repaint();
    }
 
    private class Preview extends JPanel {
       private final boolean isLeftRight_;
+
       public Preview(boolean isLeftRight) {
          isLeftRight_ = isLeftRight;
       }
@@ -207,8 +209,7 @@ public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
          for (int i = 0; i < numSplits_; ++i) {
             if (isLeftRight_) {
                g.drawLine(i * splitSize, 0, i * splitSize, 50);
-            }
-            else {
+            } else {
                g.drawLine(0, i * splitSize, 50, i * splitSize);
             }
          }

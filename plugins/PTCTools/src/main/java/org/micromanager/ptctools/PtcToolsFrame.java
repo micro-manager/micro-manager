@@ -21,18 +21,20 @@
 
 
 /**
-
  * Created on Aug 28, 2011, 9:41:57 PM
  */
-package org.micromanager.ptctools;
 
+package org.micromanager.ptctools;
 
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import javax.swing.*;
-
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -56,18 +58,20 @@ public class PtcToolsFrame extends JFrame {
 
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
-   private JTextField minExpTF_, maxExpTF_;
-   private JSpinner nrFramesSp_, nrExpSp_;
-   
+   private JTextField minExpTF_;
+   private JTextField maxExpTF_;
+   private JSpinner nrFramesSp_;
+   private JSpinner nrExpSp_;
+
 
    public PtcToolsFrame(Studio studio) {
       studio_ = studio;
       settings_ = studio_.getUserProfile().getSettings(this.getClass());
-      
+
       initComponents();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
@@ -81,38 +85,38 @@ public class PtcToolsFrame extends JFrame {
       setLayout(new MigLayout("flowx"));
 
       add(new JLabel(PtcToolsTerms.MINIMUMEXPOSURE), "");
-      minExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, 
-              "0.0"));
+      minExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE,
+            "0.0"));
       add(minExpTF_, "w 60, wrap");
       add(new JLabel(PtcToolsTerms.MAXIMUMEXPOSURE), "");
-      maxExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MAXIMUMEXPOSURE, 
-              "0.0"));
+      maxExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MAXIMUMEXPOSURE,
+            "0.0"));
       add(maxExpTF_, "w 60, wrap");
       add(new JLabel(PtcToolsTerms.NREXPOSURES), "");
       nrExpSp_ = new JSpinner();
       nrExpSp_.setModel(new SpinnerNumberModel(
-              settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30), 1, null, 1));
+            settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30), 1, null, 1));
       add(nrExpSp_, "w 60, wrap");
       add(new JLabel(PtcToolsTerms.NRFRAMES), "");
       nrFramesSp_ = new JSpinner();
       nrFramesSp_.setModel(new SpinnerNumberModel(
-              settings_.getInteger(PtcToolsTerms.NRFRAMES, 100), 1, null, 1));
+            settings_.getInteger(PtcToolsTerms.NRFRAMES, 100), 1, null, 1));
       add(nrFramesSp_, "w 60, wrap");
-      
+
       JFrame ptf = this;
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener((ActionEvent e) -> {
          new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
-                 "https://micro-manager.org/wiki/Photon_Transfer_Curve_Assistant")).start();
+               "https://micro-manager.org/wiki/Photon_Transfer_Curve_Assistant")).start();
       });
       add(helpButton, "span 2, split 3");
-      JButton cancelButton = new JButton ("Cancel");
+      JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener((ActionEvent evt) -> {
          storeSettings();
          ptf.setVisible(false);
       });
       add(cancelButton, "tag cancel");
-      
+
       JButton okButton = new JButton("OK");
       okButton.addActionListener((ActionEvent evt) -> {
          storeSettings();
@@ -120,7 +124,7 @@ public class PtcToolsFrame extends JFrame {
          ptf.setVisible(false);
       });
       add(okButton, "tag ok");
-      
+
       pack();
    }
 
@@ -133,5 +137,5 @@ public class PtcToolsFrame extends JFrame {
       settings_.putInteger(PtcToolsTerms.WINDOWY, this.getY());
    }
 
-   
+
 }

@@ -4,20 +4,18 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
- *
  * @author nico
  */
-public class SingleExpRecoveryFunc extends PASFunction  {
+public class SingleExpRecoveryFunc extends PASFunction {
 
-   
+
    /**
-    *
     * @param data actual observations. here a list of x-y values
     */
    public SingleExpRecoveryFunc(List<Point2D> data) {
       super(data);
    }
-   
+
    @Override
    public Double calculate(double[] input, double x) {
       if (input.length != getNumOfInputsN()) {
@@ -26,10 +24,10 @@ public class SingleExpRecoveryFunc extends PASFunction  {
       double a = input[0];
       double b = input[1];
       double k = input[2];
-      
+
       return a * (1 - Math.exp(-k * (x + b)));
    }
-   
+
    @Override
    public Double calculateX(double[] input, double y) {
       if (input.length != getNumOfInputsN()) {
@@ -38,23 +36,22 @@ public class SingleExpRecoveryFunc extends PASFunction  {
       double a = input[0];
       double b = input[1];
       double k = input[2];
-      
+
       // x = (ln((y/A -1) / k ) -b
-      
-      double x = - (Math.log(1 - (y/a)) / k) - b;
-      
+
+      double x = -(Math.log(1 - (y / a)) / k) - b;
+
       return x;
    }
-   
+
 
    /**
-    *
     * Process function returns the error between the data point and the function
     * value for that point
     *
-    * @param input: function parameters to be fitted (here: A and k)
-    * @param output: residual error, here: the difference
-    * between function value and measured value
+    * @param input  function parameters to be fitted (here: A and k)
+    * @param output residual error, here: the difference
+    *                between function value and measured value
     */
    @Override
    public void process(double[] input, double[] output) {
@@ -79,7 +76,6 @@ public class SingleExpRecoveryFunc extends PASFunction  {
    public int getNumOfOutputsM() {
       return data_.size();
    }
-   
-   
+
 
 }

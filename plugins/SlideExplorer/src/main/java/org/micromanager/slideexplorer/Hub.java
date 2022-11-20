@@ -1,30 +1,20 @@
 package org.micromanager.slideexplorer;
 
 import ij.process.ImageProcessor;
-
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
 import mmcorej.CMMCore;
-
 import mmcorej.StrVector;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
@@ -58,8 +48,6 @@ public class Hub {
       studio_ = app;
       core_ = studio_.getCMMCore();
 
-      int width = 950;
-      int height = 600;
 
       applyVendorSpecificSettings();
 
@@ -84,6 +72,8 @@ public class Hub {
       coords_.setTileDimensionsOnMap(tileDimensions_);
       coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
 
+      int width = 950;
+      int height = 600;
       resize(new Dimension(width, height));
 
       display_ = new Display(this, type, width, height);
@@ -105,17 +95,16 @@ public class Hub {
       AffineTransform transform = null;
       try {
          transform = AffineUtils.doubleToAffine(core.getPixelSizeAffine());
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio_.logs().logError(e, "Error getting pixel size config");
       }
 
       if (transform == null) {
          int result = JOptionPane.showConfirmDialog(null,
-                 "No Pixel Size Calibration available.\n"
-                 + "Would you like create one?",
-                 "Pixel Size Calibratrion required.",
-                 JOptionPane.YES_NO_OPTION);
+               "No Pixel Size Calibration available.\n"
+                     + "Would you like create one?",
+               "Pixel Size Calibratrion required.",
+               JOptionPane.YES_NO_OPTION);
          if (result == JOptionPane.YES_OPTION) {
             try {
                ((MMStudio) studio_).uiManager().createCalibrationListDlg();
@@ -190,7 +179,8 @@ public class Hub {
     */
    public final void resize(Dimension newViewDimensionsOnScreen) {
       coords_.setViewDimensionsOnScreen(newViewDimensionsOnScreen);
-      coords_.setViewDimensionsOffScreen(new Dimension(3 * newViewDimensionsOnScreen.width, 3 * newViewDimensionsOnScreen.height));
+      coords_.setViewDimensionsOffScreen(new Dimension(3 * newViewDimensionsOnScreen.width,
+            3 * newViewDimensionsOnScreen.height));
    }
 
 
@@ -225,7 +215,6 @@ public class Hub {
    }
 
    public void zoomTo(int zoomLevel, Point zoomTargetOffScreen) {
-      int originalZoomLevel = zoomLevel_;
       zoomLevel_ = zoomLevel;
 
       if (zoomLevel_ > 0) {
@@ -235,6 +224,7 @@ public class Hub {
          zoomLevel_ = -numZoomLevels_ + 1;
       }
 
+      int originalZoomLevel = zoomLevel_;
       if (zoomLevel_ != originalZoomLevel) {
          if (zoomLevel_ > originalZoomLevel) {
             coords_.zoomIn(zoomTargetOffScreen);
@@ -250,12 +240,14 @@ public class Hub {
       SwingUtilities.invokeLater(new GUIUpdater(null));
    }
 
+   /*
    @Override
    protected void finalize() throws Throwable {
       configDialog_.dispose();
       shutdown();
       super.finalize();
    }
+    */
 
    public void navigate(Point offScreenPos) {
       tgt_.navigate(coords_.offScreenClickToMap(offScreenPos));
@@ -453,7 +445,7 @@ public class Hub {
       }
       coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
    }
-   
+
    public boolean isContinuousFocusEnabled() {
       boolean result = false;
       String autofocusDevice = core_.getAutoFocusDevice();
@@ -461,8 +453,8 @@ public class Hub {
          try {
             result = core_.isContinuousFocusEnabled();
          } catch (Exception ex) {
-         studio_.logs().showError(ex);
-      }
+            studio_.logs().showError(ex);
+         }
       }
       return result;
    }
@@ -504,7 +496,7 @@ public class Hub {
       }
       return display_.setVisible(isVisible);
    }
-/*
+   /*
    public class AcqControlDlgMosaic extends AcqControlDlg {
 
       protected static final long serialVersionUID = 1L;
@@ -523,8 +515,10 @@ public class Hub {
          positionsPanel_.removeActionListeners();
          positionsPanel_.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-               ReportingUtils.showMessage("To acquire mosaics, you must use multiple positions.\n\n" +
-                     "To use the standard Multi-Dimensional Acquisition, click the Multi-D Acq. button\n" +
+               ReportingUtils.showMessage("To acquire mosaics, "
+               + "you must use multiple positions.\n\n" +
+                     "To use the standard Multi-Dimensional Acquisition, click the Multi-D Acq. "
+                     + "button\n" +
                      "on the main Micro-Manager window.");
                positionsPanel_.setSelected(true);
             }
@@ -647,7 +641,8 @@ public class Hub {
                   try {
                      sleep(20);
                   } catch (InterruptedException e) {
-                     studio_.logs().logError(e, "tileGrabberThread sleep resulted in an exception.");
+                     studio_.logs()
+                           .logError(e, "tileGrabberThread sleep resulted in an exception.");
                   }
                }
             } else {
@@ -771,6 +766,7 @@ public class Hub {
 
       public ModeManager() {
       }
+
       public static final int IDLE = 0;
       public static final int SURVEY = 1;
       public static final int NAVIGATE = 2;

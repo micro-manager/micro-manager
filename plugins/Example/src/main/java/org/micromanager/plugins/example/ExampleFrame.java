@@ -1,41 +1,39 @@
 /**
  * ExampleFrame.java
  *
- * This module shows an example of creating a GUI (Graphical User Interface).
+ * <p>This module shows an example of creating a GUI (Graphical User Interface).
  * There are many ways to do this in Java; this particular example uses the
  * MigLayout layout manager, which has extensive documentation online.
  *
+ * <p>Nico Stuurman, copyright UCSF, 2012, 2015
  *
- * Nico Stuurman, copyright UCSF, 2012, 2015
- *
- * LICENSE: This file is distributed under the BSD license. License text is
+ * <p>LICENSE: This file is distributed under the BSD license. License text is
  * included with the source distribution.
  *
- * This file is distributed in the hope that it will be useful, but WITHOUT ANY
+ * <p>This file is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
  *
- * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
+ * <p>IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
+
 package org.micromanager.plugins.example;
 
 import com.google.common.eventbus.Subscribe;
-
+import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Font;
 import java.util.List;
-
-import javax.swing.*;
-
-
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
-
+import org.micromanager.Studio;
 import org.micromanager.data.Image;
 import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
 
 // Imports for MMStudio internal packages
@@ -76,7 +74,7 @@ public class ExampleFrame extends JFrame {
          public void actionPerformed(ActionEvent e) {
             // Use the contents of userText_ as the text.
             studio_.alerts().postAlert("Example Alert!",
-               ExampleFrame.class, userText_.getText());
+                  ExampleFrame.class, userText_.getText());
          }
       });
       super.add(alertButton, "wrap");
@@ -121,7 +119,7 @@ public class ExampleFrame extends JFrame {
       super.add(acquireButton, "wrap");
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
@@ -140,12 +138,13 @@ public class ExampleFrame extends JFrame {
    /**
     * To be invoked, this method must be public and take a single parameter
     * which is the type of the event we care about.
+    *
     * @param event
     */
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
       exposureTimeLabel_.setText(String.format("Camera %s exposure time set to %.2fms",
-               event.getCameraName(), event.getNewExposureTime()));
+            event.getCameraName(), event.getNewExposureTime()));
    }
 
    /**
@@ -157,7 +156,7 @@ public class ExampleFrame extends JFrame {
       //   image, 0, 16, 16, 0, true);
       imageInfoLabel_.setText(String.format(
             "Image size: %dx%d", // min: %d, max: %d, mean: %d, std: %.2f",
-            image.getWidth(), image.getHeight() ) ); //, data.getMinVal(),
-            //data.getMaxVal(), data.getMean(), data.getStdDev()));
+            image.getWidth(), image.getHeight())); //, data.getMinVal(),
+      //data.getMaxVal(), data.getMean(), data.getStdDev()));
    }
 }

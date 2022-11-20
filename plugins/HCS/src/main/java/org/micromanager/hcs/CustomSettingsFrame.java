@@ -4,21 +4,13 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
-
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
 
 public class CustomSettingsFrame extends JFrame {
@@ -44,9 +36,9 @@ public class CustomSettingsFrame extends JFrame {
       super.setLayout(new MigLayout("flowx"));
 
       super.add(new JLabel(
-              "<html><body>If you believe your settings would be useful to other labs, " +
-               "please consider sharing<br>the settings file on the &#956;Manager mailing list " +
-               "micro-manager-general@lists.sourceforge.net</body></html>"), "span, wrap");
+            "<html><body>If you believe your settings would be useful to other labs, "
+             + "please consider sharing<br>the settings file on the &#956;Manager mailing list "
+             + "micro-manager-general@lists.sourceforge.net</body></html>"), "span, wrap");
 
       id_ = createText("Layout name: ", 10, false);
       description_ = createText("Layout description: ", 25, true);
@@ -75,7 +67,7 @@ public class CustomSettingsFrame extends JFrame {
       JButton save = new JButton("Save to file");
       save.addActionListener((ActionEvent e) -> {
          File target = FileDialogs.save(CustomSettingsFrame.this,
-                 "Select a file to save the settings to", SBSPlate.PLATE_FILE);
+               "Select a file to save the settings to", SBSPlate.PLATE_FILE);
          if (target != null) {
             saveToFile(target);
          }
@@ -96,20 +88,19 @@ public class CustomSettingsFrame extends JFrame {
       try {
          try (FileWriter writer = new FileWriter(target)) {
             writer.write(SBSPlate.serialize(Integer.parseInt(rows_.getText()),
-                    Integer.parseInt(cols_.getText()),
-                    Double.parseDouble(wellSpacingX_.getText()),
-                    Double.parseDouble(wellSpacingY_.getText()),
-                    Double.parseDouble(sizeXUm_.getText()),
-                    Double.parseDouble(sizeYUm_.getText()),
-                    id_.getText(), description_.getText(),
-                    Double.parseDouble(firstWellX_.getText()),
-                    Double.parseDouble(firstWellY_.getText()),
-                    circular_.isSelected()));
+                  Integer.parseInt(cols_.getText()),
+                  Double.parseDouble(wellSpacingX_.getText()),
+                  Double.parseDouble(wellSpacingY_.getText()),
+                  Double.parseDouble(sizeXUm_.getText()),
+                  Double.parseDouble(sizeYUm_.getText()),
+                  id_.getText(), description_.getText(),
+                  Double.parseDouble(firstWellX_.getText()),
+                  Double.parseDouble(firstWellY_.getText()),
+                  circular_.isSelected()));
          }
          dispose();
          parent_.loadCustom(target);
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          studio_.logs().showError(e, "There was an IO error trying to save your settings");
       } catch (NumberFormatException e) {
          studio_.logs().showError(e, "There was a NumberFormat Error trying to save your settings");

@@ -1,29 +1,25 @@
 /**
  * This example plugin pops up a dialog box that says "Hello, world!".
- * 
- * Copyright University of California
- * 
- * LICENSE:      This file is distributed under the BSD license.
- *               License text is included with the source distribution.
  *
- *               This file is distributed in the hope that it will be useful,
- *               but WITHOUT ANY WARRANTY; without even the implied warranty
- *               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * <p>Copyright University of California
  *
- *               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- *               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+ * <p>LICENSE:      This file is distributed under the BSD license.
+ * License text is included with the source distribution.
+ *
+ * <p>This file is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * <p>IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
 
 package org.micromanager.helloworld;
 
 import javax.swing.JOptionPane;
-
-import mmcorej.CMMCore;
-
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -54,7 +50,6 @@ public class HelloWorldPlugin implements SciJavaPlugin, MenuPlugin {
    public String getSubMenu() {
       return "Developer Tools";
       // Indicates that we should show up in the root Plugins menu.
-//      return "";
    }
 
    @Override

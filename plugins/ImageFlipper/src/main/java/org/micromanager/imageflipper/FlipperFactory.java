@@ -20,11 +20,10 @@
 
 package org.micromanager.imageflipper;
 
-import org.micromanager.data.Processor;
-import org.micromanager.data.ProcessorFactory;
-
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorFactory;
 
 public class FlipperFactory implements ProcessorFactory {
    private final PropertyMap settings_;

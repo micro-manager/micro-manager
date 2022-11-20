@@ -15,14 +15,16 @@
 
 package org.micromanager.plugins.sequencebuffermonitor;
 
-import org.micromanager.internal.utils.WindowPositioning;
-
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.*;
-
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JProgressBar;
+import javax.swing.JTextField;
+import javax.swing.Timer;
+import org.micromanager.internal.utils.WindowPositioning;
 
 
 class SequenceBufferMonitorFrame extends JFrame {
@@ -43,17 +45,16 @@ class SequenceBufferMonitorFrame extends JFrame {
       usageBar_.setStringPainted(true);
 
       JTextField intervalField =
-         new JTextField(Integer.toString(updateIntervalMs_), 4);
+            new JTextField(Integer.toString(updateIntervalMs_), 4);
       intervalField.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            JTextField field = (JTextField)e.getSource();
+            JTextField field = (JTextField) e.getSource();
             String text = field.getText();
             int interval;
             try {
                interval = Integer.valueOf(text);
-            }
-            catch (NumberFormatException nfe) {
+            } catch (NumberFormatException nfe) {
                field.setText(Integer.toString(updateIntervalMs_));
                return;
             }
@@ -65,9 +66,9 @@ class SequenceBufferMonitorFrame extends JFrame {
       });
 
       setLayout(new net.miginfocom.swing.MigLayout(
-               "insets dialog",
-               "[grow, fill]",
-               "[]related[]"));
+            "insets dialog",
+            "[grow, fill]",
+            "[]related[]"));
       add(usageBar_, "wrap");
       add(new JLabel("Update Interval:"), "split 3, gapleft push");
       add(intervalField);
@@ -90,7 +91,7 @@ class SequenceBufferMonitorFrame extends JFrame {
       update();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
@@ -112,9 +113,9 @@ class SequenceBufferMonitorFrame extends JFrame {
          previousTotalCapacity_ = total;
       }
       usageBar_.setValue(total - free);
-      usageBar_.setString(Integer.toString(total - free) + "/" +
-            Integer.toString(total) + " (" +
-            Integer.toString((int)Math.round(percentage)) + "%)");
+      usageBar_.setString(Integer.toString(total - free) + "/"
+            + Integer.toString(total) + " ("
+            + Integer.toString((int) Math.round(percentage)) + "%)");
    }
 
    void start() {

@@ -21,6 +21,8 @@
 
 package org.micromanager.multichannelshading;
 
+import static org.junit.Assert.assertEquals;
+
 import clearcl.ClearCL;
 import clearcl.ClearCLBuffer;
 import clearcl.ClearCLContext;
@@ -32,32 +34,19 @@ import clearcl.enums.BuildStatus;
 import clearcl.exceptions.OpenCLException;
 import coremem.enums.NativeTypeEnum;
 import ij.process.ImageProcessor;
-
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
-
-import mmcorej.Configuration;
-import mmcorej.PropertySetting;
-import static org.junit.Assert.assertEquals;
-
+import org.micromanager.PropertyMap;
+import org.micromanager.Studio;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
-import org.micromanager.PropertyMap;
-import org.micromanager.Studio;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultImage;
 
 /**
- *
  * @author nico, modified for MM2.0 by Chris Weisiger
  */
 public class ShadingProcessor implements Processor {
@@ -74,27 +63,27 @@ public class ShadingProcessor implements Processor {
    private ClearCLProgram cclProgram_;
 
    public ShadingProcessor(Studio studio, String channelGroup,
-           Boolean useOpenCL, String backgroundFile, List<String> presets,
-           List<String> files) {
+                           Boolean useOpenCL, String backgroundFile, List<String> presets,
+                           List<String> files) {
       studio_ = studio;
       channelGroup_ = channelGroup;
       useOpenCL_ = useOpenCL;
       if (useOpenCL_) {
-         ccl_ = new ClearCL(ClearCLBackends.getBestBackend()); 
+         ccl_ = new ClearCL(ClearCLBackends.getBestBackend());
          ClearCLDevice bestGPUDevice = ccl_.getBestGPUDevice();
          if (bestGPUDevice == null) { // assume that is what is returned if there is no GPU
             useOpenCL_ = false;
          } else {
             try {
-            cclContext_ = bestGPUDevice.createContext();
-            cclProgram_ = cclContext_.createProgram(ShadingProcessor.class,
-                                                     "bufferMath.cl");
-            BuildStatus lBuildStatus = cclProgram_.buildAndLog();
+               cclContext_ = bestGPUDevice.createContext();
+               cclProgram_ = cclContext_.createProgram(ShadingProcessor.class,
+                     "bufferMath.cl");
+               BuildStatus lBuildStatus = cclProgram_.buildAndLog();
 
-            assertEquals(lBuildStatus, BuildStatus.Success);
+               assertEquals(lBuildStatus, BuildStatus.Success);
             } catch (IOException ioe) {
-               studio_.alerts().postAlert(MultiChannelShading.MENUNAME, this.getClass(), 
-                       "Failed to initialize OpenCL, falling back");
+               studio_.alerts().postAlert(MultiChannelShading.MENUNAME, this.getClass(),
+                     "Failed to initialize OpenCL, falling back");
                useOpenCL_ = false;
             }
          }
@@ -119,25 +108,32 @@ public class ShadingProcessor implements Processor {
    }
 
    // Classes used to classify alerts in the processImage function below
-   private static class Not8or16BitClass {   }
+   private static class Not8or16BitClass {
+   }
 
-   private static class NoBinningInfoClass {   }
+   private static class NoBinningInfoClass {
+   }
 
-   private static class NoRoiClass {   }
+   private static class NoRoiClass {
+   }
 
-   private static class NoBackgroundForThisBinModeClass {   }
+   private static class NoBackgroundForThisBinModeClass {
+   }
 
-   private static class ErrorSubtractingClass {   }
+   private static class ErrorSubtractingClass {
+   }
 
-   private static class NotFlatFieldedClass {   }
-   
-   private static class ErrorInOpenCLClass {}
+   private static class NotFlatFieldedClass {
+   }
+
+   private static class ErrorInOpenCLClass {
+   }
 
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata source) {
       summaryMetadata_ = source;
       match_ = false;
-      if (channelGroup_.equals(summaryMetadata_.getChannelGroup()) ) {
+      if (channelGroup_.equals(summaryMetadata_.getChannelGroup())) {
          for (String imagePreset : summaryMetadata_.getChannelNameList()) {
             for (String preset : presets_) {
                if (preset.equals(imagePreset)) {
@@ -155,8 +151,8 @@ public class ShadingProcessor implements Processor {
          if (channelList.size() > 0) {
             presetB.append(channelList.get(channelList.size() - 1));
          }
-         studio_.logs().showError("No matching channel and group found.  Add group " +
-                 summaryMetadata_.getChannelGroup() + " and preset(s): " + presetB.toString());
+         studio_.logs().showError("No matching channel and group found.  Add group "
+               + summaryMetadata_.getChannelGroup() + " and preset(s): " + presetB.toString());
       }
       return source;
    }
@@ -203,23 +199,25 @@ public class ShadingProcessor implements Processor {
       } catch (ShadingException e) {
          String msg = "Error getting background for bin mode " + binning + " and rect " + rect;
          studio_.alerts().postAlert(MultiChannelShading.MENUNAME,
-                 NoBackgroundForThisBinModeClass.class, msg);
+               NoBackgroundForThisBinModeClass.class, msg);
       }
 
       ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
-              image, binning, rect);
+            image, binning, rect);
 
       if (useOpenCL_) {
          try {
-            ClearCLBuffer clImg, clBackground, clFlatField;
+            ClearCLBuffer clImg;
+            ClearCLBuffer clBackground;
+            ClearCLBuffer clFlatField;
             String suffix;
             if (image.getBytesPerPixel() == 2) {
                clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort,
-                       image.getWidth() * image.getHeight());
+                     image.getWidth() * image.getHeight());
                suffix = "US";
             } else { //(image.getBytesPerPixel() == 1) 
                clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedByte,
-                       image.getWidth() * image.getHeight());
+                     image.getWidth() * image.getHeight());
                suffix = "UB";
             }
 
@@ -235,7 +233,8 @@ public class ShadingProcessor implements Processor {
                lKernel.setGlobalSizes(clImg);
                lKernel.run();
                String msg = "MultiShadingPlugin: Only background subtracted (no flatfield found).";
-               studio_.alerts().postAlert(MultiChannelShading.MENUNAME, NotFlatFieldedClass.class, msg);
+               studio_.alerts()
+                     .postAlert(MultiChannelShading.MENUNAME, NotFlatFieldedClass.class, msg);
             } else if (background == null && flatFieldImage != null) {
                clFlatField = flatFieldImage.getCLBuffer(cclContext_);
                ClearCLKernel lKernel = cclProgram_.createKernel("multiply" + suffix + "F");
@@ -245,7 +244,8 @@ public class ShadingProcessor implements Processor {
             } else if (background != null && flatFieldImage != null) {
                clBackground = background.getCLBuffer(cclContext_);
                clFlatField = flatFieldImage.getCLBuffer(cclContext_);
-               ClearCLKernel lKernel = cclProgram_.createKernel("subtractAndMultiply" + suffix + "F");
+               ClearCLKernel lKernel =
+                     cclProgram_.createKernel("subtractAndMultiply" + suffix + "F");
                lKernel.setArguments(clImg, clBackground, clFlatField);
                lKernel.setGlobalSizes(clImg);
                lKernel.run();
@@ -258,8 +258,8 @@ public class ShadingProcessor implements Processor {
             return;
          } catch (OpenCLException ocle) {
             studio_.alerts().postAlert(MultiChannelShading.MENUNAME,
-                    ErrorInOpenCLClass.class,
-                    "Error using GPU: " + ocle.getMessage());
+                  ErrorInOpenCLClass.class,
+                  "Error using GPU: " + ocle.getMessage());
             useOpenCL_ = false;
          }
       }
@@ -275,11 +275,11 @@ public class ShadingProcessor implements Processor {
             }
          } catch (ShadingException e) {
             String msg = "Unable to subtract background: " + e.getMessage();
-            studio_.alerts().postAlert(MultiChannelShading.MENUNAME, 
-                 ErrorSubtractingClass.class, msg);
+            studio_.alerts().postAlert(MultiChannelShading.MENUNAME,
+                  ErrorSubtractingClass.class, msg);
          }
          bgSubtracted = studio_.data().ij().createImage(ip, image.getCoords(),
-                 metadata.copyBuilderWithNewUUID().userData(userData).build());
+               metadata.copyBuilderWithNewUUID().userData(userData).build());
       } else {
          String msg = "No background available...";
          studio_.alerts().postAlert(MultiChannelShading.MENUNAME, NotFlatFieldedClass.class, msg);
@@ -300,9 +300,8 @@ public class ShadingProcessor implements Processor {
          userData = userData.copyBuilder().putBoolean("Flatfield-corrected", true).build();
          metadata = metadata.copyBuilderWithNewUUID().userData(userData).build();
       }
-      
-      
-      
+
+
       if (image.getBytesPerPixel() == 1) {
          byte[] newPixels = new byte[width * height];
          byte[] oldPixels = (byte[]) image.getRawPixels();
@@ -317,7 +316,7 @@ public class ShadingProcessor implements Processor {
             newPixels[index] = (byte) (newValue);
          }
          result = studio_.data().createImage(newPixels, width, height,
-                 1, 1, image.getCoords(), metadata);
+               1, 1, image.getCoords(), metadata);
          context.outputImage(result);
       } else if (image.getBytesPerPixel() == 2) {
          short[] newPixels = new short[width * height];
@@ -328,14 +327,14 @@ public class ShadingProcessor implements Processor {
             // the right value
             float oldPixel = (float) ((int) (oldPixels[index]) & 0x0000ffff);
             float newValue = (oldPixel
-                    * flatFieldImage.getProcessor().getf(index)) + 0.5f;
+                  * flatFieldImage.getProcessor().getf(index)) + 0.5f;
             if (newValue > 2 * Short.MAX_VALUE) {
                newValue = 2 * Short.MAX_VALUE;
             }
             newPixels[index] = (short) (((int) newValue) & 0x0000ffff);
          }
          result = studio_.data().createImage(newPixels, width, height,
-                 2, 1, image.getCoords(), metadata);
+               2, 1, image.getCoords(), metadata);
          context.outputImage(result);
       }
    }
@@ -349,20 +348,21 @@ public class ShadingProcessor implements Processor {
     * @return matching flat field image
     */
    ImagePlusInfo getMatchingFlatFieldImage(Image image, int binning,
-           Rectangle rect) {
+                                           Rectangle rect) {
       //PropertyMap scopeData = metadata.getScopeData();
       for (String preset : presets_) {
          // summary metadata is set when using an existing datastore, but not for
          // snap/live.
          if (summaryMetadata_ != null) {
             String imageChannelGroup = summaryMetadata_.getChannelGroup();
-            String imagePreset = summaryMetadata_.getSafeChannelName(image.getCoords().getChannel());
+            String imagePreset =
+                  summaryMetadata_.getSafeChannelName(image.getCoords().getChannel());
             if (channelGroup_.equals(imageChannelGroup) && preset.equals(imagePreset)) {
                try {
                   return imageCollection_.getFlatField(preset, binning, rect);
                } catch (ShadingException e) {
-                  studio_.logs().logError("Failed to find flatfield image for " +
-                          imageChannelGroup + "-" + imagePreset);
+                  studio_.logs().logError("Failed to find flatfield image for "
+                        + imageChannelGroup + "-" + imagePreset);
                }
             }
          } else { // for snap/live we can rely on current settings
@@ -373,8 +373,8 @@ public class ShadingProcessor implements Processor {
                   try {
                      return imageCollection_.getFlatField(preset, binning, rect);
                   } catch (ShadingException e) {
-                     studio_.logs().logError("Failed to find flatfield image for " +
-                             channelGroup + "-" + preset);
+                     studio_.logs().logError("Failed to find flatfield image for "
+                           + channelGroup + "-" + preset);
                   }
                }
             } catch (Exception ex) {
@@ -382,7 +382,7 @@ public class ShadingProcessor implements Processor {
             }
 
          }
-/*
+         /*
             Configuration config = studio_.getCMMCore().getConfigData(
                     channelGroup_, preset);
             boolean presetMatch = true;
@@ -405,8 +405,7 @@ public class ShadingProcessor implements Processor {
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Exception in tag matching");
          }
-
- */
+         */
       }
       return null;
    }
@@ -414,5 +413,5 @@ public class ShadingProcessor implements Processor {
    public ImageCollection getImageCollection() {
       return imageCollection_;
    }
-   
+
 }

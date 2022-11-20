@@ -29,97 +29,93 @@ package org.wallerlab.illuminate;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
-
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
-public class IlluminatePlugin implements MenuPlugin, SciJavaPlugin  {
-    // Provides access to the MicroManager API.
+public class IlluminatePlugin implements MenuPlugin, SciJavaPlugin {
+   // Provides access to the MicroManager API.
 
-    private Studio studio_;
-    public static boolean debugFlag = true;
+   private Studio studio_;
+   public static boolean debugFlag = true;
 
-    @Override
-    public void setContext(Studio studio) {
-        studio_ = studio;
-    }
+   @Override
+   public void setContext(Studio studio) {
+      studio_ = studio;
+   }
 
-    /**
-     * This method is called when the plugin's menu option is selected.
-     */
-    @Override
-    public void onPluginSelected() {
+   /**
+    * This method is called when the plugin's menu option is selected.
+    */
+   @Override
+   public void onPluginSelected() {
 
-        // Create copy of the mmCore object to pass to sub-class
-        CMMCore mmCore = studio_.getCMMCore();
-        
-        // Create LED Map
-        IlluminateControllerFrame controller_frame;
+      // Create copy of the mmCore object to pass to sub-class
+      CMMCore mmCore = studio_.getCMMCore();
 
-        // Search for LED Array Device
-        StrVector devices = mmCore.getLoadedDevices();
-        boolean led_array_found = false;
-        String device_name = "";
-        
-        System.out.println("Devices found:");
-        for (int i = 0; i < devices.size(); i++) {
-            try {
-                if ("Illuminate-Led-Array".equals(devices.get(i)))
-                {
-                    led_array_found = true;
-                    device_name = devices.get(i);
-                    System.out.println(devices.get(i));
-                }
-            } catch (Exception ex) {
-                Logger.getLogger(IlluminatePlugin.class.getName()).log(Level.SEVERE, null, ex);
+      // Create LED Map
+      IlluminateControllerFrame controllerFrame;
+
+      // Search for LED Array Device
+      StrVector devices = mmCore.getLoadedDevices();
+      boolean ledArrayFound = false;
+      String deviceName = "";
+
+      System.out.println("Devices found:");
+      for (int i = 0; i < devices.size(); i++) {
+         try {
+            if ("Illuminate-Led-Array".equals(devices.get(i))) {
+               ledArrayFound = true;
+               deviceName = devices.get(i);
+               System.out.println(devices.get(i));
             }
-        }
-        if (led_array_found)
-        {
-            try {
-                controller_frame = new IlluminateControllerFrame(mmCore, device_name, debugFlag);
-        } catch (Exception ex) {
+         } catch (Exception ex) {
             Logger.getLogger(IlluminatePlugin.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        } else {
-            studio_.logs().showMessage("LED Array not found.  This plugin is no fun without the hardware");
-        }
+         }
+      }
+      if (ledArrayFound) {
+         try {
+            controllerFrame = new IlluminateControllerFrame(mmCore, deviceName, debugFlag);
+         } catch (Exception ex) {
+            Logger.getLogger(IlluminatePlugin.class.getName()).log(Level.SEVERE, null, ex);
+         }
+      } else {
+         studio_.logs()
+               .showMessage("LED Array not found.  This plugin is no fun without the hardware");
+      }
 
-    }
+   }
 
-    /**
-     * This method determines which sub-menu of the Plugins menu we are placed
-     * into.
-     */
-    @Override
-    public String getSubMenu() {
-        return "Device Control";
-    }
+   /**
+    * This method determines which sub-menu of the Plugins menu we are placed
+    * into.
+    */
+   @Override
+   public String getSubMenu() {
+      return "Device Control";
+   }
 
-    @Override
-    public String getName() {
-        return "Illuminate LED Array";
-    }
+   @Override
+   public String getName() {
+      return "Illuminate LED Array";
+   }
 
-    @Override
-    public String getHelpText() {
-        return "Illuminate LED Array Plugin";
-    }
+   @Override
+   public String getHelpText() {
+      return "Illuminate LED Array Plugin";
+   }
 
-    @Override
-    public String getVersion() {
-        return "0.1";
-    }
+   @Override
+   public String getVersion() {
+      return "0.1";
+   }
 
-    @Override
-    public String getCopyright() {
-        return "University of California, 2019";
-    }
+   @Override
+   public String getCopyright() {
+      return "University of California, 2019";
+   }
 }

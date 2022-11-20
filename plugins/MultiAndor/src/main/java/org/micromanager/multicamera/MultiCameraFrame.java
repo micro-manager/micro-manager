@@ -8,44 +8,44 @@
  * Author: Nico Stuurman: nico at cmp.ucsf.edu
  *
  */
+
 package org.micromanager.multicamera;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Toolkit;
-import java.text.ParseException;
-
-import javax.swing.*;
-
 import java.awt.event.ItemEvent;
+import java.text.ParseException;
 import java.util.ArrayList;
-
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
-
+import org.micromanager.Studio;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
-import org.micromanager.Studio;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 
 /**
- *
  * @author Nico Stuurman
  */
 public class MultiCameraFrame extends JFrame {
    private static final long serialVersionUID = 1L;
    private final Studio gui_;
    private final CMMCore core_;
-   private int EMGainMin_ = 4;
-   private int EMGainMax_ = 1000;
+   private int emGainMin_ = 4;
+   private int emGainMax_ = 1000;
    private final String[] cameras_;
    private ArrayList<String> camerasInUse_;
    private String coreCamera_;
@@ -79,10 +79,12 @@ public class MultiCameraFrame extends JFrame {
    private static final String PHYSCAM3 = "Physical Camera 3";
    private static final String PHYSCAM4 = "Physical Camera 4";
 
-   /** Creates new form MultiCameraFrame
-     * @param gui - handle to instance of the Studio
-     * @throws java.lang.Exception 
-     */
+   /**
+    * Creates new form MultiCameraFrame
+    *
+    * @param gui - handle to instance of the Studio
+    * @throws java.lang.Exception
+    */
    public MultiCameraFrame(Studio gui) throws Exception {
       gui_ = gui;
       core_ = gui_.getCMMCore();
@@ -107,12 +109,12 @@ public class MultiCameraFrame extends JFrame {
       }
 
       // find the first non-multi-channel camera to test properties
-      String testCamera = camerasInUse_.get(0);
+      final String testCamera = camerasInUse_.get(0);
 
       initComponents();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
@@ -156,30 +158,30 @@ public class MultiCameraFrame extends JFrame {
 
       if (!core_.hasProperty(testCamera, EMGAIN)) {
          jLabel4.setEnabled(false);
-         EMGainTextField.setEnabled(false);
-         EMGainSlider.setEnabled(false);
+         emGainTextField.setEnabled(false);
+         emGainSlider.setEnabled(false);
       } else {
-         EMGainMin_ = (int) core_.getPropertyLowerLimit(testCamera, EMGAIN);
-         EMGainMax_ = (int) core_.getPropertyUpperLimit(testCamera, EMGAIN);
-         EMGainSlider.setMinimum(EMGainMin_);
-         EMGainSlider.setMaximum(EMGainMax_);
+         emGainMin_ = (int) core_.getPropertyLowerLimit(testCamera, EMGAIN);
+         emGainMax_ = (int) core_.getPropertyUpperLimit(testCamera, EMGAIN);
+         emGainSlider.setMinimum(emGainMin_);
+         emGainSlider.setMaximum(emGainMax_);
          int gain = NumberUtils.coreStringToInt(core_.getProperty(testCamera, EMGAIN));
-         EMGainSlider.setValue(gain);
-         EMGainTextField.setText(NumberUtils.intToDisplayString(gain));
+         emGainSlider.setValue(gain);
+         emGainTextField.setText(NumberUtils.intToDisplayString(gain));
 
          if (!core_.hasProperty(testCamera, EMSWITCH)) {
-            EMCheckBox.setEnabled(false);
+            emCheckBox.setEnabled(false);
          } else {
             String val = core_.getProperty(testCamera, EMSWITCH);
             if (val.equals("On")) {
-               EMCheckBox.setSelected(true);
+               emCheckBox.setSelected(true);
             }
          }
       }
 
       // Pre-amp Gain
       if (!core_.hasProperty(testCamera, AMPGAIN)) {
-         GainLabel.setEnabled(false);
+         gainLabel.setEnabled(false);
          gainComboBox.setEnabled(false);
       } else {
          updateItems(gainComboBox, AMPGAIN);
@@ -187,7 +189,7 @@ public class MultiCameraFrame extends JFrame {
 
       // Readout speed
       if (!core_.hasProperty(testCamera, SPEED)) {
-         SpeedLabel.setEnabled(false);
+         speedLabel.setEnabled(false);
          speedComboBox.setEnabled(false);
       } else {
          updateItems(speedComboBox, SPEED);
@@ -195,7 +197,7 @@ public class MultiCameraFrame extends JFrame {
 
       // Frame Transfer
       if (!core_.hasProperty(testCamera, FRAMETRANSFER)) {
-         FrameTransferLabel.setEnabled(false);
+         frameTransferLabel.setEnabled(false);
          frameTransferComboBox.setEnabled(false);
       } else {
          updateItems(frameTransferComboBox, FRAMETRANSFER);
@@ -203,7 +205,7 @@ public class MultiCameraFrame extends JFrame {
 
       // Trigger
       if (!core_.hasProperty(testCamera, TRIGGER)) {
-         TriggerLabel.setEnabled(false);
+         triggerLabel.setEnabled(false);
          triggerComboBox.setEnabled(false);
       } else {
          updateItems(triggerComboBox, TRIGGER);
@@ -213,12 +215,13 @@ public class MultiCameraFrame extends JFrame {
    private synchronized boolean initialized(boolean set, boolean value) {
       if (set) {
          initialized_ = value;
-      } 
-      
+      }
+
       return initialized_;
    }
 
-   /** This method is called from within the constructor to
+   /**
+    * This method is called from within the constructor to
     * initialize the form.
     * WARNING: Do NOT modify this code. The content of this method is
     * always regenerated by the Form Editor.
@@ -227,59 +230,60 @@ public class MultiCameraFrame extends JFrame {
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
-      jCheckBox1 = new javax.swing.JCheckBox();
-      EMGainSlider = new javax.swing.JSlider();
-      EMGainTextField = new javax.swing.JTextField();
-      modeComboBox = new javax.swing.JComboBox();
-      jLabel4 = new javax.swing.JLabel();
-      jLabel5 = new javax.swing.JLabel();
-      GainLabel = new javax.swing.JLabel();
-      speedComboBox = new javax.swing.JComboBox();
-      SpeedLabel = new javax.swing.JLabel();
-      EMCheckBox = new javax.swing.JCheckBox();
-      gainComboBox = new javax.swing.JComboBox();
-      FrameTransferLabel = new javax.swing.JLabel();
-      frameTransferComboBox = new javax.swing.JComboBox();
-      jLabel9 = new javax.swing.JLabel();
-      cameraSelectComboBox = new javax.swing.JComboBox();
-      TriggerLabel = new javax.swing.JLabel();
-      triggerComboBox = new javax.swing.JComboBox();
-      tempButton = new javax.swing.JButton();
-      tempLabel = new javax.swing.JLabel();
-      jLabel1 = new javax.swing.JLabel();
+      jCheckBox1 = new JCheckBox();
+      emGainSlider = new JSlider();
+      emGainTextField = new JTextField();
+      modeComboBox = new JComboBox();
+      jLabel4 = new JLabel();
+      jLabel5 = new JLabel();
+      gainLabel = new JLabel();
+      speedComboBox = new JComboBox();
+      speedLabel = new JLabel();
+      emCheckBox = new JCheckBox();
+      gainComboBox = new JComboBox();
+      frameTransferLabel = new JLabel();
+      frameTransferComboBox = new JComboBox();
+      jLabel9 = new JLabel();
+      cameraSelectComboBox = new JComboBox();
+      triggerLabel = new JLabel();
+      triggerComboBox = new JComboBox();
+      tempButton = new JButton();
+      tempLabel = new JLabel();
+      jLabel1 = new JLabel();
 
       jCheckBox1.setText("jCheckBox1");
 
-      setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+      setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Andor Control");
       setResizable(false);
 
-      EMGainSlider.addMouseListener(new java.awt.event.MouseAdapter() {
+      emGainSlider.addMouseListener(new java.awt.event.MouseAdapter() {
          public void mouseReleased(java.awt.event.MouseEvent evt) {
-            EMGainSliderMouseReleased(evt);
+            emGainSliderMouseReleased(evt);
          }
       });
 
-      EMGainTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      EMGainTextField.setText("4");
-      EMGainTextField.addFocusListener(new java.awt.event.FocusAdapter() {
+      emGainTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      emGainTextField.setText("4");
+      emGainTextField.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {
-            EMGainTextFieldFocusLost(evt);
+            emGainTextFieldFocusLost(evt);
          }
       });
-      EMGainTextField.addActionListener(new java.awt.event.ActionListener() {
+      emGainTextField.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            EMGainTextFieldActionPerformed(evt);
+            emGainTextFieldActionPerformed(evt);
          }
       });
-      EMGainTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+      emGainTextField.addKeyListener(new java.awt.event.KeyAdapter() {
          public void keyReleased(java.awt.event.KeyEvent evt) {
-            EMGainTextFieldKeyReleased(evt);
+            emGainTextFieldKeyReleased(evt);
          }
       });
 
       modeComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      modeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "EM", "Conventional" }));
+      modeComboBox.setModel(
+            new DefaultComboBoxModel(new String[] {"EM", "Conventional"}));
       modeComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             modeComboBoxItemStateChanged(evt);
@@ -297,41 +301,44 @@ public class MultiCameraFrame extends JFrame {
       jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       jLabel5.setText("Mode");
 
-      GainLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      GainLabel.setText("Gain");
+      gainLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      gainLabel.setText("Gain");
 
       speedComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      speedComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1MHz", "3MHz", "5MHz", "10MHz" }));
+      speedComboBox.setModel(
+            new DefaultComboBoxModel(new String[] {"1MHz", "3MHz", "5MHz", "10MHz"}));
       speedComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             speedComboBoxItemStateChanged(evt);
          }
       });
 
-      SpeedLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      SpeedLabel.setText("Speed");
+      speedLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      speedLabel.setText("Speed");
 
-      EMCheckBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      EMCheckBox.setText("Use");
-      EMCheckBox.addActionListener(new java.awt.event.ActionListener() {
+      emCheckBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      emCheckBox.setText("Use");
+      emCheckBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            EMCheckBoxActionPerformed(evt);
+            emCheckBoxActionPerformed(evt);
          }
       });
 
       gainComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      gainComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3", "4", "5" }));
+      gainComboBox.setModel(
+            new DefaultComboBoxModel(new String[] {"1", "2", "3", "4", "5"}));
       gainComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             gainComboBoxItemStateChanged(evt);
          }
       });
 
-      FrameTransferLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      FrameTransferLabel.setText("OverlapMode");
+      frameTransferLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      frameTransferLabel.setText("OverlapMode");
 
       frameTransferComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      frameTransferComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "On", "Off" }));
+      frameTransferComboBox.setModel(
+            new DefaultComboBoxModel(new String[] {"On", "Off"}));
       frameTransferComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             frameTransferComboBoxItemStateChanged(evt);
@@ -342,18 +349,19 @@ public class MultiCameraFrame extends JFrame {
       jLabel9.setText("Active Camera");
 
       cameraSelectComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      cameraSelectComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "4", "8" }));
+      cameraSelectComboBox.setModel(
+            new DefaultComboBoxModel(new String[] {"1", "2", "4", "8"}));
       cameraSelectComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             cameraSelectComboBoxItemStateChanged(evt);
          }
       });
 
-      TriggerLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      TriggerLabel.setText("Trigger");
+      triggerLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      triggerLabel.setText("Trigger");
 
       triggerComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      triggerComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "On", "Off" }));
+      triggerComboBox.setModel(new DefaultComboBoxModel(new String[] {"On", "Off"}));
       triggerComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
             triggerComboBoxItemStateChanged(evt);
@@ -373,98 +381,154 @@ public class MultiCameraFrame extends JFrame {
       jLabel1.setFont(new java.awt.Font("Lucida Sans", 0, 10)); // NOI18N
       jLabel1.setText("v 1.1");
 
-      javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+      GroupLayout layout = new GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(layout.createSequentialGroup()
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(tempButton, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(jLabel5)
-                     .addComponent(jLabel4)
-                     .addComponent(GainLabel)
-                     .addComponent(SpeedLabel)
-                     .addComponent(FrameTransferLabel)
-                     .addComponent(TriggerLabel))
-                  .addGap(48, 48, 48)
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                     .addComponent(speedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addGroup(layout.createSequentialGroup()
-                        .addGap(50, 50, 50)
-                        .addComponent(EMGainSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE))
-                     .addComponent(triggerComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(gainComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(EMCheckBox)
-                     .addComponent(EMGainTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(frameTransferComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(tempLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 202, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel1))))
-               .addGroup(layout.createSequentialGroup()
-                  .addComponent(jLabel9)
-                  .addGap(7, 7, 7)
-                  .addComponent(cameraSelectComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addContainerGap())
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                  .addGroup(layout.createSequentialGroup()
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(
+                              layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGroup(layout.createParallelGroup(
+                                                      GroupLayout.Alignment.LEADING)
+                                                .addComponent(tempButton,
+                                                      GroupLayout.PREFERRED_SIZE, 63,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(jLabel5)
+                                                .addComponent(jLabel4)
+                                                .addComponent(gainLabel)
+                                                .addComponent(speedLabel)
+                                                .addComponent(frameTransferLabel)
+                                                .addComponent(triggerLabel))
+                                          .addGap(48, 48, 48)
+                                          .addGroup(layout.createParallelGroup(
+                                                      GroupLayout.Alignment.LEADING, false)
+                                                .addComponent(speedComboBox,
+                                                      GroupLayout.PREFERRED_SIZE, 105,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addGroup(layout.createSequentialGroup()
+                                                      .addGap(50, 50, 50)
+                                                      .addComponent(emGainSlider,
+                                                            GroupLayout.PREFERRED_SIZE,
+                                                            180,
+                                                            GroupLayout.PREFERRED_SIZE))
+                                                .addComponent(triggerComboBox,
+                                                      GroupLayout.PREFERRED_SIZE, 105,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(modeComboBox,
+                                                      GroupLayout.PREFERRED_SIZE, 105,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(gainComboBox,
+                                                      GroupLayout.PREFERRED_SIZE, 105,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(emCheckBox)
+                                                .addComponent(emGainTextField,
+                                                      GroupLayout.PREFERRED_SIZE, 49,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(frameTransferComboBox,
+                                                      GroupLayout.PREFERRED_SIZE, 105,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addGroup(layout.createSequentialGroup()
+                                                      .addComponent(tempLabel,
+                                                            GroupLayout.PREFERRED_SIZE,
+                                                            202,
+                                                            GroupLayout.PREFERRED_SIZE)
+                                                      .addPreferredGap(
+                                                            LayoutStyle.ComponentPlacement.RELATED,
+                                                            GroupLayout.DEFAULT_SIZE,
+                                                            Short.MAX_VALUE)
+                                                      .addComponent(jLabel1))))
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addComponent(jLabel9)
+                                          .addGap(7, 7, 7)
+                                          .addComponent(cameraSelectComboBox,
+                                                GroupLayout.PREFERRED_SIZE, 191,
+                                                GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap())
       );
       layout.setVerticalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addGap(10, 10, 10)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(jLabel9)
-               .addComponent(cameraSelectComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(6, 6, 6)
-                  .addComponent(jLabel5)
-                  .addGap(22, 22, 22)
-                  .addComponent(jLabel4)
-                  .addGap(16, 16, 16)
-                  .addComponent(GainLabel)
-                  .addGap(12, 12, 12)
-                  .addComponent(SpeedLabel)
-                  .addGap(12, 12, 12)
-                  .addComponent(FrameTransferLabel)
-                  .addGap(12, 12, 12)
-                  .addComponent(TriggerLabel))
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(90, 90, 90)
-                  .addComponent(speedComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(25, 25, 25)
-                  .addComponent(EMGainSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(140, 140, 140)
-                  .addComponent(triggerComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addComponent(modeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(65, 65, 65)
-                  .addComponent(gainComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(45, 45, 45)
-                  .addComponent(EMCheckBox))
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(25, 25, 25)
-                  .addComponent(EMGainTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(115, 115, 115)
-                  .addComponent(frameTransferComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(tempButton, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(tempLabel)
-               .addComponent(jLabel1))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                  .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addGroup(
+                              layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel9)
+                                    .addComponent(cameraSelectComboBox,
+                                          GroupLayout.PREFERRED_SIZE, 23,
+                                          GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(
+                              layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(6, 6, 6)
+                                          .addComponent(jLabel5)
+                                          .addGap(22, 22, 22)
+                                          .addComponent(jLabel4)
+                                          .addGap(16, 16, 16)
+                                          .addComponent(gainLabel)
+                                          .addGap(12, 12, 12)
+                                          .addComponent(speedLabel)
+                                          .addGap(12, 12, 12)
+                                          .addComponent(frameTransferLabel)
+                                          .addGap(12, 12, 12)
+                                          .addComponent(triggerLabel))
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(90, 90, 90)
+                                          .addComponent(speedComboBox,
+                                                GroupLayout.PREFERRED_SIZE,
+                                                GroupLayout.DEFAULT_SIZE,
+                                                GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(25, 25, 25)
+                                          .addComponent(emGainSlider,
+                                                GroupLayout.PREFERRED_SIZE,
+                                                GroupLayout.DEFAULT_SIZE,
+                                                GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(140, 140, 140)
+                                          .addComponent(triggerComboBox,
+                                                GroupLayout.PREFERRED_SIZE,
+                                                GroupLayout.DEFAULT_SIZE,
+                                                GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(modeComboBox,
+                                          GroupLayout.PREFERRED_SIZE,
+                                          GroupLayout.DEFAULT_SIZE,
+                                          GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(65, 65, 65)
+                                          .addComponent(gainComboBox,
+                                                GroupLayout.PREFERRED_SIZE,
+                                                GroupLayout.DEFAULT_SIZE,
+                                                GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(45, 45, 45)
+                                          .addComponent(emCheckBox))
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(25, 25, 25)
+                                          .addComponent(emGainTextField,
+                                                GroupLayout.PREFERRED_SIZE,
+                                                GroupLayout.DEFAULT_SIZE,
+                                                GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(115, 115, 115)
+                                          .addComponent(frameTransferComboBox,
+                                                GroupLayout.PREFERRED_SIZE,
+                                                GroupLayout.DEFAULT_SIZE,
+                                                GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(
+                              layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                    .addComponent(tempButton,
+                                          GroupLayout.PREFERRED_SIZE, 17,
+                                          GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(tempLabel)
+                                    .addComponent(jLabel1))
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
       pack();
-   }// </editor-fold>//GEN-END:initComponents
+   }
 
    /*
     * If all selected cameras have the same EM Gain value, return EM Gain value
@@ -493,7 +557,7 @@ public class MultiCameraFrame extends JFrame {
          return;
       }
       gui_.live().setSuspended(true);
-      int val = EMGainSlider.getValue();
+      int val = emGainSlider.getValue();
       try {
          for (String camera : camerasInUse_) {
             setPropertyIfPossible(camera, EMGAIN, NumberUtils.intToCoreString(val));
@@ -501,11 +565,10 @@ public class MultiCameraFrame extends JFrame {
          gui_.app().refreshGUI();
       } catch (Exception ex) {
          gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
-      }
-      finally {
+      } finally {
          gui_.live().setSuspended(false);
       }
-      EMGainTextField.setText(NumberUtils.intToDisplayString(val));
+      emGainTextField.setText(NumberUtils.intToDisplayString(val));
    }
 
    /*
@@ -515,8 +578,8 @@ public class MultiCameraFrame extends JFrame {
       try {
          for (String camera : camerasInUse_) {
             if (core_.hasProperty(camera, EMSWITCH)) {
-               String OnOff = core_.getProperty(camera, EMSWITCH);
-               if (OnOff.equals("On")) {
+               String onOff = core_.getProperty(camera, EMSWITCH);
+               if (onOff.equals("On")) {
                   return true;
                }
             } else {
@@ -531,53 +594,54 @@ public class MultiCameraFrame extends JFrame {
    }
 
    private void handleEMGainTextFieldEvent() {
-          if (!initialized(false, false)) {
-          return;
-       }
-       try {
+      if (!initialized(false, false)) {
+         return;
+      }
+      try {
 
-          int val = NumberUtils.displayStringToInt(EMGainTextField.getText());
-          if (val > EMGainMax_) {
-             val = EMGainMax_;
-          }
-          if (val < EMGainMin_) {
-             val = EMGainMin_;
-          }
-          EMGainSlider.setEnabled(true);
-          EMGainSlider.setValue(val);
-          setEMGain();
+         int val = NumberUtils.displayStringToInt(emGainTextField.getText());
+         if (val > emGainMax_) {
+            val = emGainMax_;
+         }
+         if (val < emGainMin_) {
+            val = emGainMin_;
+         }
+         emGainSlider.setEnabled(true);
+         emGainSlider.setValue(val);
+         setEMGain();
 
-       } catch (ParseException e) {
-          // ignore if the user types garbage
-       }
+      } catch (ParseException e) {
+         // ignore if the user types garbage
+      }
    }
-   
-    private void EMGainTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EMGainTextFieldActionPerformed
-       handleEMGainTextFieldEvent();
-    }//GEN-LAST:event_EMGainTextFieldActionPerformed
 
-    private void EMCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EMCheckBoxActionPerformed
-       // EM enable
-       if (!initialized(false, false)) {
-          return;
-       }
-       gui_.live().setSuspended(true);
-       boolean on = EMCheckBox.isSelected();
-       String command = "Off";
-       if (on) {
-          command = "On";
-       }
-       try {
-          for (String camera : camerasInUse_) {
-             setPropertyIfPossible(camera, EMSWITCH, command);
-          }
-       } catch (Exception ex) {
-          gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
-       }
-       finally {
-          gui_.live().setSuspended(false);
-       }
-    }//GEN-LAST:event_EMCheckBoxActionPerformed
+   private void emGainTextFieldActionPerformed(
+         java.awt.event.ActionEvent evt) {
+      handleEMGainTextFieldEvent();
+   }
+
+   private void emCheckBoxActionPerformed(
+         java.awt.event.ActionEvent evt) {
+      // EM enable
+      if (!initialized(false, false)) {
+         return;
+      }
+      gui_.live().setSuspended(true);
+      boolean on = emCheckBox.isSelected();
+      String command = "Off";
+      if (on) {
+         command = "On";
+      }
+      try {
+         for (String camera : camerasInUse_) {
+            setPropertyIfPossible(camera, EMSWITCH, command);
+         }
+      } catch (Exception ex) {
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+      } finally {
+         gui_.live().setSuspended(false);
+      }
+   }
 
    private String getMode() {
       String mode = "";
@@ -628,91 +692,97 @@ public class MultiCameraFrame extends JFrame {
       return mode;
    }
 
-    private void EMGainSliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_EMGainSliderMouseReleased
-       setEMGain();
-       gui_.app().refreshGUI();
-    }//GEN-LAST:event_EMGainSliderMouseReleased
+   private void emGainSliderMouseReleased(
+         java.awt.event.MouseEvent evt) {
+      setEMGain();
+      gui_.app().refreshGUI();
+   }
 
-    private void tempButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempButtonActionPerformed
-       gui_.live().setSuspended(true);
-       updateTemp();
-       gui_.live().setSuspended(false);
-    }//GEN-LAST:event_tempButtonActionPerformed
+   private void tempButtonActionPerformed(
+         java.awt.event.ActionEvent evt) {
+      gui_.live().setSuspended(true);
+      updateTemp();
+      gui_.live().setSuspended(false);
+   }
 
-    private void modeComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_modeComboBoxItemStateChanged
-       // Combo box selecting readout mode (EM/standard)
-       if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
-          return;
-       }
-       if (!initialized(false, false)) {
-          return;
-       }
+   private void modeComboBoxItemStateChanged(
+         java.awt.event.ItemEvent evt) {
+      // Combo box selecting readout mode (EM/standard)
+      if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
+         return;
+      }
+      if (!initialized(false, false)) {
+         return;
+      }
 
-       Object item = modeComboBox.getSelectedItem();
-       if (item.equals(MIXED)) {
-          return;
-       }
+      Object item = modeComboBox.getSelectedItem();
+      if (item.equals(MIXED)) {
+         return;
+      }
 
-       gui_.live().setSuspended(true);
-       String mode = item.toString();
-       try {
-          for (String camera : camerasInUse_) {
-             if (mode.equals(MODEEM14)) {
-                core_.setProperty(camera, ADCONVERTER, AD14BIT);
-                core_.setProperty(camera, MODE, EMMODE);
-             } else if (mode.equals(MODEEM16)) {
-                core_.setProperty(camera, ADCONVERTER, AD16BIT);
-                core_.setProperty(camera, MODE, EMMODE);
-             } else if (mode.equals(MODECONV16)) {
-                core_.setProperty(camera, ADCONVERTER, AD16BIT);
-                core_.setProperty(camera, MODE, NORMALMODE);
-             }
+      gui_.live().setSuspended(true);
+      String mode = item.toString();
+      try {
+         for (String camera : camerasInUse_) {
+            if (mode.equals(MODEEM14)) {
+               core_.setProperty(camera, ADCONVERTER, AD14BIT);
+               core_.setProperty(camera, MODE, EMMODE);
+            } else if (mode.equals(MODEEM16)) {
+               core_.setProperty(camera, ADCONVERTER, AD16BIT);
+               core_.setProperty(camera, MODE, EMMODE);
+            } else if (mode.equals(MODECONV16)) {
+               core_.setProperty(camera, ADCONVERTER, AD16BIT);
+               core_.setProperty(camera, MODE, NORMALMODE);
+            }
 
-          }
+         }
 
-          updateItems(gainComboBox, AMPGAIN);
-          updateItems(speedComboBox, SPEED);
+         updateItems(gainComboBox, AMPGAIN);
+         updateItems(speedComboBox, SPEED);
 
-          gui_.app().refreshGUI();
-       } catch (Exception ex) {
-          gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
-       }
-       finally {
-          gui_.live().setSuspended(false);
-       }
-    }//GEN-LAST:event_modeComboBoxItemStateChanged
+         gui_.app().refreshGUI();
+      } catch (Exception ex) {
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+      } finally {
+         gui_.live().setSuspended(false);
+      }
+   }
 
-    private void gainComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_gainComboBoxItemStateChanged
-       if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
-          return;
-       }
-       setComboSelection(gainComboBox, AMPGAIN);
-       gui_.app().refreshGUI();
-    }//GEN-LAST:event_gainComboBoxItemStateChanged
+   private void gainComboBoxItemStateChanged(
+         java.awt.event.ItemEvent evt) {
+      if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
+         return;
+      }
+      setComboSelection(gainComboBox, AMPGAIN);
+      gui_.app().refreshGUI();
+   }
 
-    private void speedComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_speedComboBoxItemStateChanged
-       if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
-          return;
-       }
-       setComboSelection(speedComboBox, SPEED);
-       gui_.app().refreshGUI();
-    }//GEN-LAST:event_speedComboBoxItemStateChanged
+   private void speedComboBoxItemStateChanged(
+         java.awt.event.ItemEvent evt) {
+      if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
+         return;
+      }
+      setComboSelection(speedComboBox, SPEED);
+      gui_.app().refreshGUI();
+   }
 
-    private void frameTransferComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_frameTransferComboBoxItemStateChanged
-       if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
-          return;
-       }
-       setComboSelection(frameTransferComboBox, FRAMETRANSFER);
-       gui_.app().refreshGUI();
-    }//GEN-LAST:event_frameTransferComboBoxItemStateChanged
+   private void frameTransferComboBoxItemStateChanged(
+         java.awt.event.ItemEvent evt) {
+      if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
+         return;
+      }
+      setComboSelection(frameTransferComboBox, FRAMETRANSFER);
+      gui_.app().refreshGUI();
+   }
 
-    private void triggerComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_triggerComboBoxItemStateChanged
-       if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
-          return;
-       }
-       setComboSelection(triggerComboBox, TRIGGER);
-       gui_.app().refreshGUI();
-    }//GEN-LAST:event_triggerComboBoxItemStateChanged
+   private void triggerComboBoxItemStateChanged(
+         java.awt.event.ItemEvent evt) {
+      if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
+         return;
+      }
+      setComboSelection(triggerComboBox, TRIGGER);
+      gui_.app().refreshGUI();
+   }
 
    private void updateCamerasInUse(String camera) {
       camerasInUse_ = new ArrayList<String>();
@@ -721,7 +791,7 @@ public class MultiCameraFrame extends JFrame {
       } else if (core_.getNumberOfCameraChannels() > 1) {
          try {
             if (core_.hasProperty(camera, PHYSCAM1)) {
-               for (String prop : new String[]{PHYSCAM1, PHYSCAM2, PHYSCAM3, PHYSCAM4}) {
+               for (String prop : new String[] {PHYSCAM1, PHYSCAM2, PHYSCAM3, PHYSCAM4}) {
                   if (core_.hasProperty(camera, prop)) {
                      String cam = core_.getProperty(camera, prop);
                      if (!cam.equals("Undefined")) {
@@ -733,74 +803,74 @@ public class MultiCameraFrame extends JFrame {
                camerasInUse_.add(coreCamera_);
             }
          } catch (Exception ex) {
+            gui_.logs().logError(ex);
          }
       }
    }
 
-    private void cameraSelectComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cameraSelectComboBoxItemStateChanged
-       
-      
-       if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
-          return;
-       }
-       if (!initialized(false, false)) {
-          return;
-       }
+   private void cameraSelectComboBoxItemStateChanged(
+         java.awt.event.ItemEvent evt) {
+      if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
+         return;
+      }
+      if (!initialized(false, false)) {
+         return;
+      }
 
-       // since the core call to set the camera will result in a call
-       // back into our code that will set the externalCameraChange_ flag
-       // we need to record its value now
-       boolean externalCameraChange = externalCameraChange_;
-       externalCameraChange_ = false;
- 
+      gui_.live().setSuspended(true);
+      // since the core call to set the camera will result in a call
+      // back into our code that will set the externalCameraChange_ flag
+      // we need to record its value now
+      boolean externalCameraChange = externalCameraChange_;
+      externalCameraChange_ = false;
+      try {
+         // Use the initialize flag to prevent pushing settings back to the hardware
+         initialized(true, false);
 
-       gui_.live().setSuspended(true);
-       try {
-          // Use the initialize flag to prevent pushing settings back to the hardware
-          initialized(true, false);
+         coreCamera_ = (String) cameraSelectComboBox.getSelectedItem();
+         String currentCamera = core_.getProperty("Core", "Camera");
 
-          coreCamera_ = (String) cameraSelectComboBox.getSelectedItem();
-          String currentCamera = core_.getProperty("Core", "Camera");
+         if (!currentCamera.equals(coreCamera_)) {
+            core_.setProperty("Core", "Camera", coreCamera_);
+         }
+         updateCamerasInUse(coreCamera_);
 
-          if (!currentCamera.equals(coreCamera_)) {
-             core_.setProperty("Core", "Camera", coreCamera_);
-          }
-          updateCamerasInUse(coreCamera_);
+         String fsCamera = camerasInUse_.get(0);
 
-          String fsCamera = camerasInUse_.get(0);
+         adjustUIToCamera(fsCamera);
+         updateTemp();
+         initialized(true, true);
 
-          adjustUIToCamera(fsCamera);
-          updateTemp();
-          initialized(true, true);
+      } catch (Exception ex) {
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+      } finally {
+         gui_.live().setSuspended(false);
+      }
+      if (!externalCameraChange) {
+         gui_.app().refreshGUI();
+      }
+   }
 
-       } catch (Exception ex) {
-          gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
-       } finally {
-          gui_.live().setSuspended(false);
-       }
-       if (!externalCameraChange) {
-          gui_.app().refreshGUI();
-       }
-    }//GEN-LAST:event_cameraSelectComboBoxItemStateChanged
+   private void modeComboBoxActionPerformed(
+         java.awt.event.ActionEvent evt) {
+   }
 
-    private void modeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modeComboBoxActionPerformed
+   private void emGainTextFieldKeyReleased(
+         java.awt.event.KeyEvent evt) {
 
-    }//GEN-LAST:event_modeComboBoxActionPerformed
+   }
 
-    private void EMGainTextFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_EMGainTextFieldKeyReleased
-    
-    }//GEN-LAST:event_EMGainTextFieldKeyReleased
-
-   private void EMGainTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_EMGainTextFieldFocusLost
-       handleEMGainTextFieldEvent();
-   }//GEN-LAST:event_EMGainTextFieldFocusLost
+   private void emGainTextFieldFocusLost(
+         java.awt.event.FocusEvent evt) {
+      handleEMGainTextFieldEvent();
+   }
 
    private void updateTemp() {
       String tempText = "";
       try {
          for (String camera : camerasInUse_) {
             if (core_.hasProperty(camera, TEMP)) {
-               tempText += core_.getProperty(camera, TEMP) + "\u00b0" + "C   ";
+               tempText += core_.getProperty(camera, TEMP) + "\u00b0" + "C   "; // degree symbol
             }
 
          }
@@ -810,7 +880,7 @@ public class MultiCameraFrame extends JFrame {
       tempLabel.setText(tempText);
    }
 
-   private void updateItems(javax.swing.JComboBox comboBox, String property) {
+   private void updateItems(JComboBox comboBox, String property) {
       if (comboBox != null) {
          try {
             String camera = camerasInUse_.get(0);
@@ -830,7 +900,7 @@ public class MultiCameraFrame extends JFrame {
       }
    }
 
-   private void getComboSelection(javax.swing.JComboBox comboBox, String property) {
+   private void getComboSelection(JComboBox comboBox, String property) {
       if (comboBox == null || !comboBox.isEnabled()) {
          return;
       }
@@ -851,7 +921,7 @@ public class MultiCameraFrame extends JFrame {
       }
    }
 
-   private void setComboSelection(javax.swing.JComboBox comboBox, String property) {
+   private void setComboSelection(JComboBox comboBox, String property) {
       if (!initialized(false, false)) {
          return;
       }
@@ -867,35 +937,35 @@ public class MultiCameraFrame extends JFrame {
          }
       } catch (Exception ex) {
          gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
-      }
-      finally {
+      } finally {
          gui_.live().setSuspended(false);
       }
    }
+
    // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JCheckBox EMCheckBox;
-   private javax.swing.JSlider EMGainSlider;
-   private javax.swing.JTextField EMGainTextField;
-   private javax.swing.JLabel FrameTransferLabel;
-   private javax.swing.JLabel GainLabel;
-   private javax.swing.JLabel SpeedLabel;
-   private javax.swing.JLabel TriggerLabel;
-   private javax.swing.JComboBox cameraSelectComboBox;
-   private javax.swing.JComboBox frameTransferComboBox;
-   private javax.swing.JComboBox gainComboBox;
-   private javax.swing.JCheckBox jCheckBox1;
-   private javax.swing.JLabel jLabel1;
-   private javax.swing.JLabel jLabel4;
-   private javax.swing.JLabel jLabel5;
-   private javax.swing.JLabel jLabel9;
-   private javax.swing.JComboBox modeComboBox;
-   private javax.swing.JComboBox speedComboBox;
-   private javax.swing.JButton tempButton;
-   private javax.swing.JLabel tempLabel;
-   private javax.swing.JComboBox triggerComboBox;
+   private JCheckBox emCheckBox;
+   private JSlider emGainSlider;
+   private JTextField emGainTextField;
+   private JLabel frameTransferLabel;
+   private JLabel gainLabel;
+   private JLabel speedLabel;
+   private JLabel triggerLabel;
+   private JComboBox cameraSelectComboBox;
+   private JComboBox frameTransferComboBox;
+   private JComboBox gainComboBox;
+   private JCheckBox jCheckBox1;
+   private JLabel jLabel1;
+   private JLabel jLabel4;
+   private JLabel jLabel5;
+   private JLabel jLabel9;
+   private JComboBox modeComboBox;
+   private JComboBox speedComboBox;
+   private JButton tempButton;
+   private JLabel tempLabel;
+   private JComboBox triggerComboBox;
    // End of variables declaration//GEN-END:variables
 
- 
+
    @Subscribe
    public void onPropertiesChanged(PropertiesChangedEvent event) {
       updateItems(speedComboBox, SPEED);
@@ -907,8 +977,8 @@ public class MultiCameraFrame extends JFrame {
       final String property = event.getProperty();
       final String value = event.getValue();
       try {
-         if (device.equals("Core") && property.equals("Camera") && 
-                 !value.equals(cameraSelectComboBox.getSelectedItem() ) ) {
+         if (device.equals("Core") && property.equals("Camera")
+               && !value.equals(cameraSelectComboBox.getSelectedItem())) {
             SwingUtilities.invokeLater(new Runnable() {
                @Override
                public void run() {
@@ -918,6 +988,7 @@ public class MultiCameraFrame extends JFrame {
             });
          }
       } catch (Exception ex) {
+         gui_.logs().logError(ex);
       }
    }
 

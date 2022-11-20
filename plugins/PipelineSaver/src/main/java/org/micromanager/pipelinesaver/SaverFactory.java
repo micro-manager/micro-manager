@@ -20,11 +20,10 @@
 
 package org.micromanager.pipelinesaver;
 
-import org.micromanager.data.Processor;
-import org.micromanager.data.ProcessorFactory;
-
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorFactory;
 
 public class SaverFactory implements ProcessorFactory {
    private final PropertyMap settings_;

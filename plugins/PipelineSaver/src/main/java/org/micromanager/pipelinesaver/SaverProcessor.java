@@ -22,14 +22,13 @@ package org.micromanager.pipelinesaver;
 
 import java.io.File;
 import java.io.IOException;
-
+import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
-import org.micromanager.Studio;
 
 public class SaverProcessor implements Processor {
    private Studio studio_;
@@ -38,7 +37,7 @@ public class SaverProcessor implements Processor {
    private final String savePath_;
 
    public SaverProcessor(Studio studio, String format, String savePath,
-         boolean shouldDisplay) {
+                         boolean shouldDisplay) {
       studio_ = studio;
       format_ = format;
       // Update save path to account for duplicates -- append a numerical
@@ -49,18 +48,14 @@ public class SaverProcessor implements Processor {
             // TODO: hardcoded whether or not to split positions.
             store_ = studio_.data().createMultipageTIFFDatastore(savePath_,
                   true, true);
-         }
-         else if (format.equals(SaverPlugin.SINGLEPLANE_TIFF_SERIES)) {
+         } else if (format.equals(SaverPlugin.SINGLEPLANE_TIFF_SERIES)) {
             store_ = studio.data().createSinglePlaneTIFFSeriesDatastore(savePath_);
-         }
-         else if (format.equals(SaverPlugin.RAM)) {
+         } else if (format.equals(SaverPlugin.RAM)) {
             store_ = studio.data().createRewritableRAMDatastore();
-         }
-         else {
+         } else {
             studio_.logs().logError("Unrecognized save format " + format);
          }
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          studio_.logs().showError(e, "Error creating datastore at " + savePath_);
       }
 
@@ -75,8 +70,7 @@ public class SaverProcessor implements Processor {
    public void processImage(Image image, ProcessorContext context) {
       try {
          store_.putImage(image);
-      }
-      catch (DatastoreFrozenException e) {
+      } catch (DatastoreFrozenException e) {
          // Weird that we can not query the store if it is frozen but have to rely
          // on an exception...
          if (format_.equals(SaverPlugin.RAM)) {
@@ -91,11 +85,10 @@ public class SaverProcessor implements Processor {
          } else {
             studio_.logs().logError(e, "Unable to save data: datastore is frozen");
          }
-      }
-      catch (DatastoreRewriteException e) {
-         studio_.logs().logError(e, "Unable to save data: image already exists at " + image.getCoords());
-      }
-      catch (IOException e) {
+      } catch (DatastoreRewriteException e) {
+         studio_.logs()
+               .logError(e, "Unable to save data: image already exists at " + image.getCoords());
+      } catch (IOException e) {
          studio_.logs().logError(e, "Unable to save data: IOException");
       }
       context.outputImage(image);
@@ -132,8 +125,7 @@ public class SaverProcessor implements Processor {
                String[] fields = item.split("_");
                maxSuffix = Math.max(maxSuffix,
                      Integer.parseInt(fields[fields.length - 1]));
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                // No suffix available to use.
             }
          }

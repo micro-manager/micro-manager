@@ -43,20 +43,20 @@ import org.micromanager.display.DisplayWindow;
 
 /**
  * Plugin that randomizes the position names to assist in blind scoring.
- * It requires data generated using the HCS plugin and will replace the 
- * well in the name with a random number.  The keys relating numbers back 
+ * It requires data generated using the HCS plugin and will replace the
+ * well in the name with a random number.  The keys relating numbers back
  * to wells are put in the summarymetadata, so do not look at those until
  * you are done scoring the images.
- * 
+ *
  * @author nico
  */
 public class RandomizePositionNames {
    private final Studio studio_;
    private static final String KEYFILENAME = "Key.txt";
-   
-   public RandomizePositionNames (Studio studio, DisplayWindow window) {
+
+   public RandomizePositionNames(Studio studio, DisplayWindow window) {
       studio_ = studio;
-      
+
       try {
          DataProvider dp = window.getDataProvider();
          int nrP = dp.getNextIndex(Coords.P);
@@ -107,8 +107,8 @@ public class RandomizePositionNames {
          for (Map.Entry<Integer, String> entry : r2Well.entrySet()) {
             udb.putString("Key: " + entry.getKey(), entry.getValue());
          }
-         newStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().
-                 userData(udb.build()).build());
+         newStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder()
+                     .userData(udb.build()).build());
          // fill with images with scrambled positionname
          // and show them
          int newPos = -1;
@@ -120,8 +120,8 @@ public class RandomizePositionNames {
                if (img != null && img.getMetadata().hasPositionName()) {
                   String posName = img.getMetadata().getPositionName("");
                   String wellImg = posName.substring(0, posName.indexOf("-", 0));
-                  if (wellImg.equals(well)) {                     
-                     newPos++; 
+                  if (wellImg.equals(well)) {
+                     newPos++;
                      for (int c = 0; c < dp.getNextIndex(Coords.P); c++) {
                         for (int t = 0; t < dp.getNextIndex(Coords.T); t++) {
                            oldCoords = coords.copyBuilder().p(pos).c(c).t(t).build();
@@ -130,9 +130,11 @@ public class RandomizePositionNames {
                               posName = img.getMetadata().getPositionName("");
                               wellImg = posName.substring(0, posName.indexOf("-", 0));
                               if (wellImg.equals(well)) {
-                                 Metadata newMetadata = img.getMetadata().copyBuilderWithNewUUID().
-                                         positionName("" + r + posName.substring(posName.indexOf("-", 0))).
-                                         build();
+                                 Metadata newMetadata = img.getMetadata().copyBuilderWithNewUUID()
+                                             .positionName(
+                                             "" + r + posName.substring(
+                                                   posName.indexOf("-", 0)))
+                                             .build();
                                  Coords newCoords = oldCoords.copyBuilder().p(newPos).build();
                                  Image newImg = img.copyWith(newCoords, newMetadata);
                                  newStore.putImage(newImg);
@@ -147,7 +149,7 @@ public class RandomizePositionNames {
          DisplayWindow newDisplay = studio_.displays().createDisplay(newStore);
          newDisplay.setDisplaySettings(window.getDisplaySettings());
          studio.displays().manage(newStore);
-         
+
          try {
             if (dp instanceof Datastore) {
                Datastore ds = (Datastore) dp;
@@ -160,14 +162,16 @@ public class RandomizePositionNames {
                   try (BufferedWriter output = new BufferedWriter(new FileWriter(keyFile))) {
                      Set<Map.Entry<Integer, String>> entrySet = r2Well.entrySet();
                      for (Entry<Integer, String> entry : entrySet) {
-                        output.append(entry.getKey().toString()).append(" - ").
-                                append(entry.getValue()).append(System.getProperty("line.separator"));
+                        output.append(entry.getKey().toString()).append(" - ")
+                                    .append(entry.getValue()).append(
+                                          System.getProperty("line.separator"));
                      }
                   }
                }
             }
          } catch (IOException ioe) {
-            studio_.logs().showError("Key file not saved.  Be sure to check the Summarymetadata before closing");
+            studio_.logs().showError(
+                  "Key file not saved.  Be sure to check the Summarymetadata before closing");
          }
 
       } catch (IOException ioe) {
@@ -175,7 +179,6 @@ public class RandomizePositionNames {
       }
 
 
-      
    }
-     
+
 }

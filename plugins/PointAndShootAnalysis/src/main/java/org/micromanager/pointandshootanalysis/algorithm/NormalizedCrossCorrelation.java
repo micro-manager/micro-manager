@@ -9,45 +9,44 @@ import java.util.Map;
 /**
  * Executes Normalized Cross Correlation in the spatial domain
  * Is very slow, and results are not convincing
- * 
- * 
+ *
  * @author nico
  */
 public class NormalizedCrossCorrelation {
-   final private float[] normalizedTemplate_;
-   final private Point templateDim_;
-   final private double templateStdDev_;
-   
+   private final float[] normalizedTemplate_;
+   private final Point templateDim_;
+   private final double templateStdDev_;
+
    public NormalizedCrossCorrelation(ShortProcessor template) {
       short[] pixels = (short[]) template.getPixels();
-      templateDim_ = new Point (template.getWidth(), template.getHeight());
+      templateDim_ = new Point(template.getWidth(), template.getHeight());
 
       double avg = shortAverage(pixels);
-      
+
       normalizedTemplate_ = normalizeShorts(pixels, (float) avg);
 
       templateStdDev_ = stdDevFromNormalizedData(normalizedTemplate_);
-      
+
    }
-   
-   
+
+
    /**
     * Performs Zero-normalized cross-correlation in the spatial domain
     * using the normalized template from the constructor
-    * 
+    *
     * @param target image target to which we match our template
     * @param center center position (in pixels) in the target around we cross-correlate
-    * @param range in pixels over which we will do cross correlate
+    * @param range  in pixels over which we will do cross correlate
     * @return position (in pixels) in the target where we find the highest cross-correlation
     */
-   public Point correlate (ShortProcessor target, Point center, Point range) {
-      
+   public Point correlate(ShortProcessor target, Point center, Point range) {
+
       target.snapshot();
       // TODO: check dimensions
-      Point halfTemplateDim_ = new Point(templateDim_.x / 2, templateDim_.y / 2);
-      Point startPos = new Point(center.x - halfTemplateDim_.x, center.y - halfTemplateDim_.y);
+      Point halfTemplateDim = new Point(templateDim_.x / 2, templateDim_.y / 2);
+      Point startPos = new Point(center.x - halfTemplateDim.x, center.y - halfTemplateDim.y);
       Map<Point, Float> result = new HashMap<Point, Float>();
-      
+
       for (int x = startPos.x - range.x; x <= startPos.x + range.x; x++) {
          for (int y = startPos.y - range.y; y <= startPos.y + range.y; y++) {
             target.setRoi(x, y, templateDim_.x, templateDim_.y);
@@ -66,7 +65,7 @@ public class NormalizedCrossCorrelation {
             target.reset();
          }
       }
-      
+
       float max = -Float.MAX_VALUE;
       Point maxPoint = null;
       for (Map.Entry<Point, Float> entry : result.entrySet()) {
@@ -74,12 +73,12 @@ public class NormalizedCrossCorrelation {
             maxPoint = entry.getKey();
          }
       }
-         
-      return new Point(maxPoint.x + halfTemplateDim_.x, 
-              maxPoint.y + halfTemplateDim_.y);
-      
+
+      return new Point(maxPoint.x + halfTemplateDim.x,
+            maxPoint.y + halfTemplateDim.y);
+
    }
-   
+
    public static double shortAverage(short[] data) {
       double avg = 0.0;
       for (short d : data) {
@@ -87,7 +86,7 @@ public class NormalizedCrossCorrelation {
       }
       return (avg / data.length);
    }
-   
+
    public static float[] normalizeShorts(short[] data, float avg) {
       float[] result = new float[data.length];
       for (int i = 0; i < data.length; i++) {
@@ -95,13 +94,13 @@ public class NormalizedCrossCorrelation {
       }
       return result;
    }
-   
+
    public static double stdDevFromNormalizedData(float[] data) {
       double stdDev = 0.0;
       for (float p : data) {
-         stdDev += (p ) * (p);
+         stdDev += (p) * (p);
       }
       return Math.sqrt(stdDev / data.length);
    }
-   
+
 }

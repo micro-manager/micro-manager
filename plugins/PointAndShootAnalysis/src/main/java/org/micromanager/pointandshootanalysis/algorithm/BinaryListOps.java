@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Dilation/Erosion/combination option on lists of pixels
- * 
+ * Dilation/Erosion/combination option on lists of pixels.
+ *
  * @author nico
  */
 public class BinaryListOps {
@@ -19,8 +19,8 @@ public class BinaryListOps {
     * Dilate a set of points with "4 neighbor rule"
     * I originally had this with Point2D_I32, but somehow that resulted in 
     * adding duplicate Points.  I don't understand why, since the equals method
-    * of POint2D_I32 looks fine.
-    * 
+    * of Point2D_I32 looks fine.
+    *
     * @param input Set of points to be dilated
     * @param width width of the image/dataset
     * @param height height of the image/dataset

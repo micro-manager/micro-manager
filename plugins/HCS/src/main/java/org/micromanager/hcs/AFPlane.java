@@ -5,23 +5,29 @@ import org.micromanager.StagePosition;
 
 
 public class AFPlane {
-   private double A;
-   private double B;
-   private double C;
-   private double D;
+   private double a;
+   private double b;
+   private double c;
+   private double d;
    private boolean valid_ = false;
    private String zStage_;
 
-   public AFPlane(MultiStagePosition posList[]) {
-      A = 0.0;
-      B = 0.0;
-      C = 0.0;
-      D = 0.0;
+   public AFPlane(MultiStagePosition[] posList) {
+      a = 0.0;
+      b = 0.0;
+      c = 0.0;
+      d = 0.0;
 
       if (posList.length == 3) {
-         double x1, x2, x3;
-         double y1, y2, y3;
-         double z1, z2, z3;
+         double x1;
+         double x2;
+         double x3;
+         double y1;
+         double y2;
+         double y3;
+         double z1;
+         double z2;
+         double z3;
 
          try {
             MultiStagePosition msp = posList[0];
@@ -38,7 +44,7 @@ public class AFPlane {
             x3 = getX(msp);
             y3 = getY(msp);
             z3 = getZ(msp);
-            
+
             for (int i = 0; i < msp.size(); i++) {
                StagePosition sp = msp.get(i);
                if (sp.is1DStagePosition()) {
@@ -50,12 +56,13 @@ public class AFPlane {
             }
 
             if (x1 != 0.0 && x2 != 0.0 && x3 != 0.0
-                    && y1 != 0.0 && y2 != 0.0 && y3 != 0.0
-                    && z1 != 0.0 && z2 != 0.0 && z3 != 0.0) {
-               A = y1 * (z2 - z3) + y2 * (z3 - z1) + y3 * (z1 - z2);
-               B = z1 * (x2 - x3) + z2 * (x3 - x1) + z3 * (x1 - x2);
-               C = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
-               D = -(x1 * (y2 * z3 - y3 * z2) + x2 * (y3 * z1 - y1 * z3) + x3 * (y1 * z2 - y2 * z1));
+                  && y1 != 0.0 && y2 != 0.0 && y3 != 0.0
+                  && z1 != 0.0 && z2 != 0.0 && z3 != 0.0) {
+               a = y1 * (z2 - z3) + y2 * (z3 - z1) + y3 * (z1 - z2);
+               b = z1 * (x2 - x3) + z2 * (x3 - x1) + z3 * (x1 - x2);
+               c = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
+               d = -(x1 * (y2 * z3 - y3 * z2) + x2 * (y3 * z1 - y1 * z3)
+                     + x3 * (y1 * z2 - y2 * z1));
             }
             valid_ = true;
 
@@ -71,15 +78,17 @@ public class AFPlane {
    }
 
    public double getZPos(double x, double y) {
-      if (C == 0.0) {
+      if (c == 0.0) {
          return 0.0;
       }
 
-      double z = (-D - A * x - B * y) / C;
+      double z = (-d - a * x - b * y) / c;
       return z;
    }
-   
-   public String getZStage() { return zStage_; }
+
+   public String getZStage() {
+      return zStage_;
+   }
 
    private double getX(MultiStagePosition msp) throws NoSuchStageException {
       // only works correctly if there is only 1 2Dstage

@@ -21,25 +21,20 @@
 package org.micromanager.imageflipper;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import ij.process.ByteProcessor;
-
 import java.awt.Toolkit;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.swing.*;
-
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
 import mmcorej.StrVector;
-
-
-
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Image;
 import org.micromanager.data.ProcessorConfigurator;
-import org.micromanager.data.Coordinates;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -54,18 +49,18 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
    private static final String DEFAULT_CAMERA = "Default camera for image flipper";
    private static final String DEFAULT_MIRRORED = "Whether or not to mirror the image flipper";
    private static final String DEFAULT_ROTATION = "How much to rotate the image flipper";
-   private static final String R0 = "0" + "\u00B0";
-   private static final String R90 = "90" + "\u00B0";
-   private static final String R180 = "180" + "\u00B0";
-   private static final String R270 = "270" + "\u00B0";
+   private static final String R0 = "0" + "\u00B0"; // degree symbol
+   private static final String R90 = "90" + "\u00B0"; //degree symbol
+   private static final String R180 = "180" + "\u00B0"; // degree symbol
+   private static final String R270 = "270" + "\u00B0"; // degree symbol
    private static final String[] RS = {R0, R90, R180, R270};
    private static final List<Integer> R_INTS =
-      Arrays.asList(new Integer[] {FlipperProcessor.R0,
-         FlipperProcessor.R90, FlipperProcessor.R180, FlipperProcessor.R270});
+         Arrays.asList(new Integer[] {FlipperProcessor.R0,
+               FlipperProcessor.R90, FlipperProcessor.R180, FlipperProcessor.R270});
    private static final String EXAMPLE_ICON_PATH =
-                        "/org/micromanager/icons/R.png";
+         "/org/micromanager/icons/R.png";
    private static final Icon EXAMPLE_ICON = IconLoader.getIcon(EXAMPLE_ICON_PATH);
-   
+
    private final int frameXPos_ = 300;
    private final int frameYPos_ = 300;
 
@@ -85,22 +80,22 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
       defaults_ = studio_.profile().getSettings(this.getClass());
       initComponents();
       selectedCamera_ = settings.getString("camera",
-            defaults_.getString(DEFAULT_CAMERA, 
-                    studio_.core().getCameraDevice()));
+            defaults_.getString(DEFAULT_CAMERA,
+                  studio_.core().getCameraDevice()));
       Boolean shouldMirror = settings.getBoolean("shouldMirror",
             defaults_.getBoolean(DEFAULT_MIRRORED, false));
-      Integer rotation = settings.getInteger("rotation",
+      final Integer rotation = settings.getInteger("rotation",
             defaults_.getInteger(DEFAULT_ROTATION, FlipperProcessor.R0));
 
       mirrorCheckBox_.setSelected(shouldMirror);
       rotateComboBox_.removeAllItems();
-      for (String item: RS) {
+      for (String item : RS) {
          rotateComboBox_.addItem(item);
       }
       rotateComboBox_.setSelectedIndex(R_INTS.indexOf(rotation));
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(frameXPos_, frameYPos_);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       updateCameras();
@@ -117,12 +112,12 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
    }
 
    /**
-    * updates the content of the camera selection drop down box
-    * 
-    * Shows all available cameras and sets the currently selected camera
+    * Updates the content of the camera selection drop down box.
+    *
+    * <p>Shows all available cameras and sets the currently selected camera
     * as the selected item in the drop down box
     */
-   final public void updateCameras() {
+   public final void updateCameras() {
       cameraComboBox_.removeAllItems();
       try {
          StrVector cameras = studio_.core().getAllowedPropertyValues(
@@ -136,7 +131,8 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
       cameraComboBox_.setSelectedItem(selectedCamera_);
    }
 
-   /** This method is called from within the constructor to
+   /**
+    * This method is called from within the constructor to
     * initialize the form.
     */
    @SuppressWarnings("unchecked")
@@ -159,7 +155,7 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
       mirrorCheckBox_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            mirrorCheckBox_ActionPerformed(evt);
+            mirrorCheckBoxActionPerformed(evt);
          }
       });
 
@@ -170,15 +166,16 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
       cameraComboBox_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            cameraComboBox_ActionPerformed(evt);
+            cameraComboBoxActionPerformed(evt);
          }
       });
 
-      rotateComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "0", "90", "180", "270" }));
+      rotateComboBox_.setModel(
+            new javax.swing.DefaultComboBoxModel(new String[] {"0", "90", "180", "270"}));
       rotateComboBox_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            rotateComboBox_ActionPerformed(evt);
+            rotateComboBoxActionPerformed(evt);
          }
       });
 
@@ -187,58 +184,84 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(layout.createSequentialGroup()
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                     .addComponent(cameraComboBox_, javax.swing.GroupLayout.Alignment.LEADING, 0, 153, Short.MAX_VALUE)
-                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(exampleImageSource_, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(exampleImageTarget_, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE))
-                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(rotateComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                  .addGap(38, 38, 38))
-               .addGroup(layout.createSequentialGroup()
-                  .addComponent(mirrorCheckBox_)
-                  .addContainerGap(121, Short.MAX_VALUE))))
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                  .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(
+                              layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGroup(layout.createParallelGroup(
+                                                      javax.swing.GroupLayout.Alignment.TRAILING)
+                                                .addComponent(cameraComboBox_,
+                                                      javax.swing.GroupLayout.Alignment.LEADING, 0,
+                                                      153, Short.MAX_VALUE)
+                                                .addGroup(layout.createSequentialGroup()
+                                                      .addComponent(exampleImageSource_,
+                                                            javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                            70, Short.MAX_VALUE)
+                                                      .addGap(18, 18, 18)
+                                                      .addComponent(exampleImageTarget_,
+                                                            javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                            65,
+                                                            javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                .addGroup(layout.createSequentialGroup()
+                                                      .addComponent(jLabel1)
+                                                      .addPreferredGap(
+                            javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                      .addComponent(rotateComboBox_,
+                                                            javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                            javax.swing.GroupLayout.DEFAULT_SIZE,
+                                   javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                          .addGap(38, 38, 38))
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addComponent(mirrorCheckBox_)
+                                          .addContainerGap(121, Short.MAX_VALUE))))
       );
       layout.setVerticalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-            .addGap(11, 11, 11)
-            .addComponent(cameraComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addComponent(exampleImageTarget_, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
-               .addComponent(exampleImageSource_, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(mirrorCheckBox_)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(rotateComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(jLabel1))
-            .addGap(25, 25, 25))
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                  .addGroup(javax.swing.GroupLayout.Alignment.TRAILING,
+                        layout.createSequentialGroup()
+                              .addGap(11, 11, 11)
+                              .addComponent(cameraComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                    javax.swing.GroupLayout.DEFAULT_SIZE,
+                                    javax.swing.GroupLayout.PREFERRED_SIZE)
+                              .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                              .addGroup(layout.createParallelGroup(
+                                          javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(exampleImageTarget_,
+                                          javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
+                                    .addComponent(exampleImageSource_,
+                                          javax.swing.GroupLayout.DEFAULT_SIZE, 54,
+                                          Short.MAX_VALUE))
+                              .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                              .addComponent(mirrorCheckBox_)
+                              .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                              .addGroup(layout.createParallelGroup(
+                                          javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(rotateComboBox_,
+                                          javax.swing.GroupLayout.PREFERRED_SIZE,
+                                          javax.swing.GroupLayout.DEFAULT_SIZE,
+                                          javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel1))
+                              .addGap(25, 25, 25))
       );
 
       pack();
    }
 
-    private void mirrorCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mirrorCheckBox_ActionPerformed
-       processExample();
-       String camera = (String) cameraComboBox_.getSelectedItem();
-       if (camera != null) {
-          defaults_.putBoolean(DEFAULT_MIRRORED + "-" + camera, 
-                  mirrorCheckBox_.isSelected());
-       }
-       studio_.data().notifyPipelineChanged();
-    }
+   private void mirrorCheckBoxActionPerformed(
+         java.awt.event.ActionEvent evt) {
+      processExample();
+      String camera = (String) cameraComboBox_.getSelectedItem();
+      if (camera != null) {
+         defaults_.putBoolean(DEFAULT_MIRRORED + "-" + camera,
+               mirrorCheckBox_.isSelected());
+      }
+      studio_.data().notifyPipelineChanged();
+   }
 
-   private void rotateComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateComboBox_ActionPerformed
+   private void rotateComboBoxActionPerformed(
+         java.awt.event.ActionEvent evt) {
       processExample();
       String camera = (String) cameraComboBox_.getSelectedItem();
       if (camera != null && rotateComboBox_.getSelectedItem() != null) {
@@ -248,13 +271,14 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
       studio_.data().notifyPipelineChanged();
    }
 
-   private void cameraComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cameraComboBox_ActionPerformed
+   private void cameraComboBoxActionPerformed(
+         java.awt.event.ActionEvent evt) {
       String camera = (String) cameraComboBox_.getSelectedItem();
       if (camera != null) {
          mirrorCheckBox_.setSelected(defaults_.getBoolean(
-                 DEFAULT_MIRRORED + "-" + camera, false));
+               DEFAULT_MIRRORED + "-" + camera, false));
          rotateComboBox_.setSelectedItem(defaults_.getString(
-                  DEFAULT_ROTATION + "-" + camera, R0));
+               DEFAULT_ROTATION + "-" + camera, R0));
          defaults_.putString(DEFAULT_CAMERA, camera);
       }
       studio_.data().notifyPipelineChanged();
@@ -271,7 +295,7 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
     * 2 - 180 degrees
     * 3 - 270 degrees
     * degrees are anti-clockwise
-    * 
+    *
     * @return coded rotation
     */
    public final int getRotate() {
@@ -303,11 +327,11 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
       exampleImageTarget_.setIcon(
             new ImageIcon(studio_.data().ij().createProcessor(testImage).createImage()));
    }
-   
-   
+
+
    @Override
    public PropertyMap getSettings() {
-      PropertyMap.Builder builder = PropertyMaps.builder(); 
+      PropertyMap.Builder builder = PropertyMaps.builder();
       builder.putString("camera", getCamera());
       builder.putInteger("rotation", getRotate());
       builder.putBoolean("shouldMirror", getMirror());

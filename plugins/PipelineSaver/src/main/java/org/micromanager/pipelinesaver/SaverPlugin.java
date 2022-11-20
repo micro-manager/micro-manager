@@ -20,13 +20,11 @@
 
 package org.micromanager.pipelinesaver;
 
-import org.micromanager.data.ProcessorConfigurator;
-import org.micromanager.data.ProcessorPlugin;
-import org.micromanager.data.ProcessorFactory;
-
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-
+import org.micromanager.data.ProcessorConfigurator;
+import org.micromanager.data.ProcessorFactory;
+import org.micromanager.data.ProcessorPlugin;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
