@@ -25,15 +25,16 @@ public class TestParticlePairLister {
       InputStream resource = TestParticlePairLister.class.getResourceAsStream(
               "/edu/ucsf/valelab/gaussianfit/testdata/does-not-list-pairs-if-start-not-at-1.txt");
       try {
-         LoadAndSave.loadTextFromBufferedReader(new BufferedReader(new InputStreamReader(resource, "UTF-8")));
+         LoadAndSave.loadTextFromBufferedReader(new BufferedReader(
+               new InputStreamReader(resource, "UTF-8")));
       } catch (UnsupportedEncodingException ex) {
          Assert.fail("UTF-8 encoding is not supported");
       }
-      Assert.assertEquals(1,df.getResultsTable().getRowCount());
+      Assert.assertEquals(1, df.getResultsTable().getRowCount());
       ParticlePairLister.Builder pb = new ParticlePairLister.Builder();
       int [] selectedRows = {0};
-      ParticlePairLister pp = pb.maxDistanceNm(100.0).showPairs(true).
-              rows(selectedRows).p2d(true).p2dSingleFrames(true).build();
+      ParticlePairLister pp = pb.maxDistanceNm(100.0).showPairs(true)
+            .rows(selectedRows).p2d(true).p2dSingleFrames(true).build();
       pp.listParticlePairTracks();
       Thread.sleep(5000);
    }
