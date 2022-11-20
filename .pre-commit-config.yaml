@@ -11,4 +11,4 @@ repos:
           - -c
           - buildscripts/codestyle/checkstyle.xml
         files: '^(mmstudio/src/main/java/|libraries|plugins)'
-        exclude: '^(libraries/Gaussian/src/main/java/edu/ucsf/valelab/tsf)'
+        exclude: '^(libraries/Gaussian/src/main/java/edu/ucsf/valelab/tsf|plugins/ASIdiSPIM|plugins/Emu)'
