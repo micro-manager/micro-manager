@@ -21,7 +21,6 @@ package org.micromanager.demodisplay;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 

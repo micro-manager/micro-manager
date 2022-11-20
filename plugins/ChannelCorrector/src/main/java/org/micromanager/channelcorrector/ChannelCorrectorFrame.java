@@ -22,20 +22,6 @@
 package org.micromanager.channelcorrector;
 
 import com.google.common.eventbus.Subscribe;
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
-import org.micromanager.channelcorrector.utils.ImageAffineTransform;
-import org.micromanager.channelcorrector.utils.ImageAffineTransformException;
-import org.micromanager.display.DataViewer;
-import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
-import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.propertymap.MutablePropertyMapView;
-
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JSeparator;
-import javax.swing.WindowConstants;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
@@ -45,10 +31,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JSeparator;
+import javax.swing.WindowConstants;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.channelcorrector.utils.ImageAffineTransform;
+import org.micromanager.channelcorrector.utils.ImageAffineTransformException;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 /**
- *
  * @author nico
  */
 public class ChannelCorrectorFrame extends JFrame {
@@ -58,9 +56,9 @@ public class ChannelCorrectorFrame extends JFrame {
    private final ExecutorService executor_ = Executors.newSingleThreadExecutor();
    private DataViewer dataViewer_;
 
-   private final static String USE_ALL_POS_KEY = "UseAllPositions";
-   
-   public ChannelCorrectorFrame (Studio studio) {
+   private static final String USE_ALL_POS_KEY = "UseAllPositions";
+
+   public ChannelCorrectorFrame(Studio studio) {
       studio_ = studio;
       channelCorrectorPanels_ = new ArrayList<>();
       settings_ = studio_.profile().getSettings(this.getClass());
@@ -69,20 +67,20 @@ public class ChannelCorrectorFrame extends JFrame {
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       super.setTitle(ChannelCorrector.MENUNAME);
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
 
       JButton applyButton = new JButton("Apply");
       applyButton.addActionListener((ActionEvent ae) ->
-              executor_.submit(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               apply();
-            } catch (IOException | ImageAffineTransformException e) {
-               studio_.logs().showError(e.getMessage());
-            }
-         }
-      }));
+            executor_.submit(new Runnable() {
+               @Override
+               public void run() {
+                  try {
+                     apply();
+                  } catch (IOException | ImageAffineTransformException e) {
+                     studio_.logs().showError(e.getMessage());
+                  }
+               }
+            }));
       JCheckBox useAllPositions = new JCheckBox("all positions");
       useAllPositions.addActionListener((ActionEvent ae) -> {
          for (ChannelCorrectorPanel ccp : channelCorrectorPanels_) {
@@ -99,7 +97,7 @@ public class ChannelCorrectorFrame extends JFrame {
          dataViewer_ = studio_.displays().getActiveDataViewer();
          redrawChannelPanels(dataViewer_);
       }
-      
+
       super.pack();
       super.setVisible(true);
    }
@@ -130,7 +128,7 @@ public class ChannelCorrectorFrame extends JFrame {
       }
    }
 
-   private void redrawChannelPanels (DataViewer dataViewer) {
+   private void redrawChannelPanels(DataViewer dataViewer) {
       for (ChannelCorrectorPanel ccp : channelCorrectorPanels_) {
          ccp.updateValues();
          super.remove(ccp);
@@ -141,8 +139,8 @@ public class ChannelCorrectorFrame extends JFrame {
 
       for (int row = 1; row < nrCh; row++) {
          ChannelCorrectorPanel ccp = new ChannelCorrectorPanel(studio_,
-                 dataViewer, row, executor_,
-                 settings_.getBoolean(USE_ALL_POS_KEY, false) );
+               dataViewer, row, executor_,
+               settings_.getBoolean(USE_ALL_POS_KEY, false));
          super.add(ccp, "span 4, wrap");
          channelCorrectorPanels_.add(ccp);
       }
@@ -159,17 +157,17 @@ public class ChannelCorrectorFrame extends JFrame {
    public void apply() throws IOException, ImageAffineTransformException {
       final String dataViewerName = dataViewer_.getName();
       studio_.alerts().postAlert("ChannelCorrector", this.getClass(),
-              "Correcting " + dataViewerName);
+            "Correcting " + dataViewerName);
       ArrayList<AffineTransform> affineTransforms = new ArrayList<>(channelCorrectorPanels_.size());
       for (ChannelCorrectorPanel ccp : channelCorrectorPanels_) {
          affineTransforms.add(ccp.getAffineTransform());
       }
       // Note that types other than Nearest Neighbor lead to strange pixel values
       ImageAffineTransform iat = new ImageAffineTransform(studio_, dataViewer_,
-              affineTransforms, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+            affineTransforms, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
       iat.apply(settings_.getBoolean(USE_ALL_POS_KEY, false));
       studio_.alerts().postAlert("ChannelCorrector", this.getClass(),
-              "Finished correcting " + dataViewerName);
+            "Finished correcting " + dataViewerName);
    }
 
 }

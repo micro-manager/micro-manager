@@ -20,39 +20,28 @@
 package org.micromanager.demodisplay;
 
 import com.google.common.eventbus.EventBus;
-
 import java.awt.Dimension;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
-import org.micromanager.data.DataProvider;
-import org.micromanager.display.DataViewerListener;
+import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
 import org.micromanager.internal.utils.WindowPositioning;
@@ -93,7 +82,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
       // draw some information about the image.
       // No images in the Datastore yet.
       // Ensure we're large enough to show our text.
-      JPanel imageDisplay_ = new JPanel() {
+      JPanel imageDisplay = new JPanel() {
          @Override
          public void paint(Graphics g) {
             // Ordinarily you would paint your images here, but we just
@@ -104,7 +93,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
             }
             g.setFont(new Font("Arial", Font.PLAIN, 14));
             g.drawString("Image coords: " + currentImage_.getCoords(),
-                    15, 15);
+                  15, 15);
          }
 
          @Override
@@ -113,7 +102,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
             return new Dimension(400, 100);
          }
       };
-      super.add(imageDisplay_);
+      super.add(imageDisplay);
 
       JButton snap = new JButton("Snap new image");
       snap.addActionListener(e -> addNewImage());
@@ -139,19 +128,16 @@ public class DemoDisplay extends JFrame implements DataViewer {
    /**
     * Snap a new image and add it to our Datastore.
     */
-   private void addNewImage()  {
+   private void addNewImage() {
       Image newImage = studio_.live().snap(false).get(0);
       // Move its timepoint to the end of our little timeseries.
-      newImage = newImage.copyAtCoords(newImage.getCoords().copyBuilder().
-                        t(imageCount_).build());
+      newImage = newImage.copyAtCoords(newImage.getCoords().copyBuilder().t(imageCount_).build());
       try {
          store_.putImage(newImage);
-      }
-      catch (DatastoreFrozenException e) {
+      } catch (DatastoreFrozenException e) {
          // This should be impossible.
          studio_.logs().showError("Datastore has been frozen.");
-      }
-      catch (DatastoreRewriteException e) {
+      } catch (DatastoreRewriteException e) {
          // This should also be impossible.
          studio_.logs().showError("Image already exists at " + newImage.getCoords());
       } catch (IOException ex) {
@@ -165,24 +151,24 @@ public class DemoDisplay extends JFrame implements DataViewer {
       repaint();
    }
 
-   /**
+   /*
     * This method ensures that the Inspector histograms have up-to-date data
     * to display.
- 
-   private void updateHistograms() {
-      // We only ever have one image shown at a time, but if we had multiple
-      // visible, then we would add them all to this list.
-      ArrayList<Image> imageList = new ArrayList<Image>();
-      imageList.add(currentImage_);
-      studio_.displays().updateHistogramDisplays(imageList, this);
-   }
-   *    */
+    * <p>
+    * private void updateHistograms() {
+    * // We only ever have one image shown at a time, but if we had multiple
+    * // visible, then we would add them all to this list.
+    * ArrayList<Image> imageList = new ArrayList<Image>();
+    * imageList.add(currentImage_);
+    * studio_.displays().updateHistogramDisplays(imageList, this);
+    * }
+    */
 
    @Override
    public void setDisplaySettings(DisplaySettings settings) {
       // We must inform our clients of the new display settings, according to
       // the documentation in DataViewer.
-      bus_.post(DefaultDisplaySettingsChangedEvent.create(this, settings_, settings)); 
+      bus_.post(DefaultDisplaySettingsChangedEvent.create(this, settings_, settings));
       // Display settings may have changed how we should paint. Again, this is
       // per the documentation in DataViewer.
       settings_ = settings;
@@ -238,8 +224,10 @@ public class DemoDisplay extends JFrame implements DataViewer {
    }
 
    @Override
-   public boolean compareAndSetDisplaySettings(DisplaySettings originalSettings, DisplaySettings newSettings) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   public boolean compareAndSetDisplaySettings(DisplaySettings originalSettings,
+                                               DisplaySettings newSettings) {
+      throw new UnsupportedOperationException(
+            "Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
    @Override
@@ -249,27 +237,33 @@ public class DemoDisplay extends JFrame implements DataViewer {
 
    @Override
    public void setDisplayPosition(Coords position, boolean forceRedisplay) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException(
+            "Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
    @Override
    public void setDisplayPosition(Coords position) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException(
+            "Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
    @Override
    public Coords getDisplayPosition() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException(
+            "Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
    @Override
-   public boolean compareAndSetDisplayPosition(Coords originalPosition, Coords newPosition, boolean forceRedisplay) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   public boolean compareAndSetDisplayPosition(Coords originalPosition, Coords newPosition,
+                                               boolean forceRedisplay) {
+      throw new UnsupportedOperationException(
+            "Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
    @Override
    public boolean compareAndSetDisplayPosition(Coords originalPosition, Coords newPosition) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException(
+            "Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
    @Override
@@ -279,11 +273,13 @@ public class DemoDisplay extends JFrame implements DataViewer {
 
    @Override
    public void addListener(DataViewerListener listener, int priority) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException(
+            "Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
    @Override
    public void removeListener(DataViewerListener listener) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException(
+            "Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 }

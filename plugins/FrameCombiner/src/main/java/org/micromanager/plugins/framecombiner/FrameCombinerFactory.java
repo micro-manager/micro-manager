@@ -1,10 +1,10 @@
 package org.micromanager.plugins.framecombiner;
 
 import org.micromanager.LogManager;
-import org.micromanager.data.Processor;
-import org.micromanager.data.ProcessorFactory;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorFactory;
 
 public class FrameCombinerFactory implements ProcessorFactory {
 
@@ -20,11 +20,11 @@ public class FrameCombinerFactory implements ProcessorFactory {
 
    @Override
    public Processor createProcessor() {
-      
+
       return new FrameCombiner(studio_,
-              settings_.getString("processorDimension", FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME),
-              settings_.getString("processorAlgo", FrameCombinerPlugin.PROCESSOR_ALGO_MEAN),
-              settings_.getInteger("numerOfImagesToProcess", 10),
-              settings_.getString("channelsToAvoid", ""));
+            settings_.getString("processorDimension", FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME),
+            settings_.getString("processorAlgo", FrameCombinerPlugin.PROCESSOR_ALGO_MEAN),
+            settings_.getInteger("numerOfImagesToProcess", 10),
+            settings_.getString("channelsToAvoid", ""));
    }
 }

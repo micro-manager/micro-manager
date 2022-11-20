@@ -22,16 +22,16 @@
 
 package org.micromanager.channelcorrector;
 
-import org.micromanager.Studio;
 import org.micromanager.MenuPlugin;
-
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 
 /**
- * Plugin that copies (parts of) Micro-Manager datasets to a new datastore
+ * Plugin that copies (parts of) Micro-Manager datasets to a new datastore.
+ *
  * @author nico
  */
 // replace with:

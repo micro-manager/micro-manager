@@ -4,117 +4,119 @@
  * Author: Brandon Simpson (brandon@asiimaging.com)
  * Copyright (c) 2014-2021, Applied Scientific Instrumentation
  */
+
 package com.asiimaging.devices.crisp;
 
 /**
  * A data class to store software settings for CRISP.
  *
- * Also can convert {@code CRISPSettings} to and from JSON.
- * 
+ * <p>Also can convert {@code CRISPSettings} to and from JSON.
  */
 public class CRISPSettings {
 
-    private String name;
-    private int gain;
-    private int ledIntensity;
-    private int updateRateMs;
-    private int numAverages;
-    private float objectiveNA;
-    private float lockRange;
+   private String name;
+   private int gain;
+   private int ledIntensity;
+   private int updateRateMs;
+   private int numAverages;
+   private float objectiveNA;
+   private float lockRange;
 
-    public static final String NAME_PREFIX = "Profile";
-    public static final String SETTINGS_NOT_FOUND = "No Settings";
-    public static final String DEFAULT_PROFILE_NAME = "Default";
+   public static final String NAME_PREFIX = "Profile";
+   public static final String SETTINGS_NOT_FOUND = "No Settings";
+   public static final String DEFAULT_PROFILE_NAME = "Default";
 
-    public CRISPSettings(final String name) {
-        this.name = name;
-        this.gain = 1;
-        this.ledIntensity = 50;
-        this.updateRateMs = 10;
-        this.numAverages = 1;
-        this.objectiveNA = 0.65f;
-        this.lockRange = 1.0f;
-    }
-    
-    public CRISPSettings(
-            final String name, 
-            final int gain, 
-            final int ledIntensity,
-            final int updateRateMs,
-            final int numAverages, 
-            final float objectiveNA, 
-            final float lockRange) {
-        this.name = name;
-        this.gain = gain;
-        this.ledIntensity = ledIntensity;
-        this.updateRateMs = updateRateMs;
-        this.numAverages = numAverages;
-        this.objectiveNA = objectiveNA;
-        this.lockRange = lockRange;
-    }
+   public CRISPSettings(final String name) {
+      this.name = name;
+      this.gain = 1;
+      this.ledIntensity = 50;
+      this.updateRateMs = 10;
+      this.numAverages = 1;
+      this.objectiveNA = 0.65f;
+      this.lockRange = 1.0f;
+   }
 
-    @Override
-    public String toString() {
-        return String.format(
-            "%s[name=\"%s\", gain=%s, ledIntensity=%s, updateRateMs=%s, numAverages=%s, objectiveNA=%s, lockRange=%s]",
-            getClass().getSimpleName(), name, gain, ledIntensity, updateRateMs, numAverages, objectiveNA, lockRange
-        );
-    }
+   public CRISPSettings(
+         final String name,
+         final int gain,
+         final int ledIntensity,
+         final int updateRateMs,
+         final int numAverages,
+         final float objectiveNA,
+         final float lockRange) {
+      this.name = name;
+      this.gain = gain;
+      this.ledIntensity = ledIntensity;
+      this.updateRateMs = updateRateMs;
+      this.numAverages = numAverages;
+      this.objectiveNA = objectiveNA;
+      this.lockRange = lockRange;
+   }
 
-    public int getGain() {
-        return gain;
-    }
-    
-    public int getLEDIntensity() {
-        return ledIntensity;
-    }
+   @Override
+   public String toString() {
+      return String.format(
+            "%s[name=\"%s\", gain=%s, ledIntensity=%s, updateRateMs=%s, numAverages=%s, "
+            + "objectiveNA=%s, lockRange=%s]",
+            getClass().getSimpleName(), name, gain, ledIntensity, updateRateMs, numAverages,
+            objectiveNA, lockRange
+      );
+   }
 
-    public int getUpdateRateMs() {
-        return updateRateMs;
-    }
+   public int getGain() {
+      return gain;
+   }
 
-    public int getNumAverages() {
-        return numAverages;
-    }
-    
-    public float getObjectiveNA() {
-        return objectiveNA;
-    }
-    
-    public float getLockRange() {
-        return lockRange;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    public void setGain(final int n) {
-        gain = n;
-    }
-    
-    public void setLEDIntensity(final int n) {
-        ledIntensity = n;
-    }
+   public int getLEDIntensity() {
+      return ledIntensity;
+   }
 
-    public void setUpdateRateMs(final int n) {
-        updateRateMs = n;
-    }
+   public int getUpdateRateMs() {
+      return updateRateMs;
+   }
 
-    public void setNumAverages(final int n) {
-        numAverages = n;
-    }
-    
-    public void setObjectiveNA(final float n) {
-        objectiveNA = n;
-    }
-    
-    public void setLockRange(final float n) {
-        lockRange = n;
-    }
+   public int getNumAverages() {
+      return numAverages;
+   }
 
-    public void setName(final String newName) {
-        name = newName;
-    }
+   public float getObjectiveNA() {
+      return objectiveNA;
+   }
+
+   public float getLockRange() {
+      return lockRange;
+   }
+
+   public String getName() {
+      return name;
+   }
+
+   public void setGain(final int n) {
+      gain = n;
+   }
+
+   public void setLEDIntensity(final int n) {
+      ledIntensity = n;
+   }
+
+   public void setUpdateRateMs(final int n) {
+      updateRateMs = n;
+   }
+
+   public void setNumAverages(final int n) {
+      numAverages = n;
+   }
+
+   public void setObjectiveNA(final float n) {
+      objectiveNA = n;
+   }
+
+   public void setLockRange(final float n) {
+      lockRange = n;
+   }
+
+   public void setName(final String newName) {
+      name = newName;
+   }
 
 }

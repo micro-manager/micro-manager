@@ -4,32 +4,32 @@
  * Author: Brandon Simpson (brandon@asiimaging.com)
  * Copyright (c) 2022, Applied Scientific Instrumentation
  */
+
 package com.asiimaging.tirf.ui.utils;
 
 import java.awt.event.WindowEvent;
-
 import javax.swing.JFrame;
 
 public final class WindowUtils {
 
-    /**
-     * Returns true if the window is displayable and not null.
-     *
-     * @param frame the frame to check
-     * @return true if the window is open
-     */
-    public static boolean isOpen(final JFrame frame) {
-        return frame != null && frame.isDisplayable();
-    }
+   /**
+    * Returns true if the window is displayable and not null.
+    *
+    * @param frame the frame to check
+    * @return true if the window is open
+    */
+   public static boolean isOpen(final JFrame frame) {
+      return frame != null && frame.isDisplayable();
+   }
 
-    /**
-     * Creates a window event object and dispatches the close event.
-     *
-     * @param frame the frame to close
-     */
-    public static void close(final JFrame frame) {
-        final WindowEvent windowEvent = new WindowEvent(frame, WindowEvent.WINDOW_CLOSING);
-        frame.dispatchEvent(windowEvent);
-    }
+   /**
+    * Creates a window event object and dispatches the close event.
+    *
+    * @param frame the frame to close
+    */
+   public static void close(final JFrame frame) {
+      final WindowEvent windowEvent = new WindowEvent(frame, WindowEvent.WINDOW_CLOSING);
+      frame.dispatchEvent(windowEvent);
+   }
 
 }
