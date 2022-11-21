@@ -152,10 +152,10 @@ class MainController {
    }
 
    synchronized void setChangeCriteria(Collection<ChangeCriterion> criteria) {
+      boolean wasEnabled = isEnabled();
       setEnabled(false);
       changeCriteria_.clear();
       changeCriteria_.addAll(criteria);
-      boolean wasEnabled = isEnabled();
       setEnabled(wasEnabled);
 
       // Each criterion is serialized into a PropertyMap. To store the list

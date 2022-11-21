@@ -215,6 +215,7 @@ public class Hub {
    }
 
    public void zoomTo(int zoomLevel, Point zoomTargetOffScreen) {
+      int originalZoomLevel = zoomLevel_;
       zoomLevel_ = zoomLevel;
 
       if (zoomLevel_ > 0) {
@@ -224,7 +225,6 @@ public class Hub {
          zoomLevel_ = -numZoomLevels_ + 1;
       }
 
-      int originalZoomLevel = zoomLevel_;
       if (zoomLevel_ != originalZoomLevel) {
          if (zoomLevel_ > originalZoomLevel) {
             coords_.zoomIn(zoomTargetOffScreen);
