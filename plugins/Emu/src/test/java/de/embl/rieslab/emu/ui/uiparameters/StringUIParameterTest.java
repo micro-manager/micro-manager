@@ -39,12 +39,12 @@ public class StringUIParameterTest {
    public void testChangeValue() {
       StringParamTestPanel cp = new StringParamTestPanel("My panel");
 
-      String s = "2fsdj*745+$\u00A3%$6(*&) {}~'"; // not sure what sumbol this is.
+      String s = "2fsdj*745+$\u00A3%$6(*&) {}~'"; // U+00A3 POUND SIGN
       cp.parameter.setStringValue(s);
       assertEquals(s, cp.parameter.getStringValue());
       assertEquals(s, cp.parameter.getValue());
 
-      s = "\u00A3$sdjdsn"; // symbol?
+      s = "\u00A3$sdjdsn"; // U+00A3 POUND SIGN
       cp.parameter.setValue(s);
       assertEquals(s, cp.parameter.getStringValue());
       assertEquals(s, cp.parameter.getValue());

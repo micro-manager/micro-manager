@@ -301,7 +301,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       sidebar.add(gridPanel);
 
       final JLabel spacingLabel = new JLabel();
-      spacingLabel.setText("Spacing [\u00b5m]"); // Greek mu
+      spacingLabel.setText("Spacing [\u00b5m]"); // U+00B5 MICRO SIGN
       sidebar.add(spacingLabel);
 
       spacingFieldX_ = new JTextField(3);
@@ -331,19 +331,19 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          String mode = (String) spacingMode_.getSelectedItem();
          switch (mode) {
             case EQUAL_SPACING:
-               spacingLabel.setText("Spacing [\u00b5m]"); // Greek mu
+               spacingLabel.setText("Spacing [\u00b5m]"); // U+00B5 MICRO SIGN
                spacingFieldX_.setVisible(true);
                spacingFieldY_.setVisible(false);
                overlapField_.setVisible(false);
                break;
             case DIFFERENT_SPACING:
-               spacingLabel.setText("Spacing X,Y [\u00b5m]"); // Greek mu
+               spacingLabel.setText("Spacing X,Y [\u00b5m]"); // U+00B5 MICRO SIGN
                spacingFieldX_.setVisible(true);
                spacingFieldY_.setVisible(true);
                overlapField_.setVisible(false);
                break;
             case VIEW_SPACING:
-               spacingLabel.setText("Overlap [\u00b5m]"); // Greek mu
+               spacingLabel.setText("Overlap [\u00b5m]"); // U+00B5 MICRO SIGN
                overlapField_.setVisible(true);
                spacingFieldX_.setVisible(false);
                spacingFieldY_.setVisible(false);

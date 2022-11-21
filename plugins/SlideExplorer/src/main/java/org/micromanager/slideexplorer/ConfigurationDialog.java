@@ -203,8 +203,8 @@ public class ConfigurationDialog extends javax.swing.JFrame {
 
 
       String[] columnNames_ =
-               {"Resolution setting", "x-offset, \u03BCm",  // Greek mu
-                "y-offset, \u03BCm", "z-offset, \u03BCm"}; // Greek mu
+               {"Resolution setting", "x-offset, \u03BCm",  // U+03BC GREEK SMALL LETTER MU
+                "y-offset, \u03BCm", "z-offset, \u03BCm"}; // U+03BC GREEK SMALL LETTER MU
       private final Object[] tableData_;
 
 

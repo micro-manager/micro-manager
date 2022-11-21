@@ -370,7 +370,7 @@ public class SwingUIListenersTest {
       assertEquals(TestableMMProperty.DEFVAL, mmprop.getStringValue());
 
       // changes the text of the JtextField, this does not trigger the action listeners
-      final String value = "\u00A3$\u00A3!14,:{"; // symbols?
+      final String value = "\u00A3$\u00A3!14,:{"; // U+00A3 POUND SIGN
       textfield.setText(value);
 
       // triggers an "Enter" key

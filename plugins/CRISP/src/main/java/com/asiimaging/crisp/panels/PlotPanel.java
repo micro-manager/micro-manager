@@ -171,7 +171,7 @@ public class PlotPanel extends Panel {
                PlotFrame.createPlotWindow(
                      "CRISP Data Plot",
                      "Focus Curve",
-                     "Position (\u00B5m)", // Greek mu
+                     "Position (\u00B5m)", // U+00B5 MICRO SIGN
                      "Error",
                      data
                );

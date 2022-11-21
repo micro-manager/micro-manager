@@ -49,10 +49,10 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
    private static final String DEFAULT_CAMERA = "Default camera for image flipper";
    private static final String DEFAULT_MIRRORED = "Whether or not to mirror the image flipper";
    private static final String DEFAULT_ROTATION = "How much to rotate the image flipper";
-   private static final String R0 = "0" + "\u00B0"; // degree symbol
-   private static final String R90 = "90" + "\u00B0"; //degree symbol
-   private static final String R180 = "180" + "\u00B0"; // degree symbol
-   private static final String R270 = "270" + "\u00B0"; // degree symbol
+   private static final String R0 = "0" + "\u00B0"; // U+00B0 DEGREE SIGN
+   private static final String R90 = "90" + "\u00B0"; // U+00B0 DEGREE SIGN
+   private static final String R180 = "180" + "\u00B0"; // U+00B0 DEGREE SIGN
+   private static final String R270 = "270" + "\u00B0"; // U+00B0 DEGREE SIGN
    private static final String[] RS = {R0, R90, R180, R270};
    private static final List<Integer> R_INTS =
          Arrays.asList(new Integer[] {FlipperProcessor.R0,

@@ -43,12 +43,12 @@ public class UIPropertyParameterTest {
    public void testChangeValue() {
       UIPropertyParamTestPanel cp = new UIPropertyParamTestPanel("My panel");
 
-      String s = "2fsdj*745+$\u00A3%$6(*&) {}~'"; // symbols
+      String s = "2fsdj*745+$\u00A3%$6(*&) {}~'"; // U+00A3 POUND SIGN
       cp.parameter.setStringValue(s);
       assertEquals(s, cp.parameter.getStringValue());
       assertEquals(s, cp.parameter.getValue());
 
-      s = "\u00A3$sdjdsn"; // symbols
+      s = "\u00A3$sdjdsn"; // U+00A3 POUND SIGN
       cp.parameter.setValue(s);
       assertEquals(s, cp.parameter.getStringValue());
       assertEquals(s, cp.parameter.getValue());
