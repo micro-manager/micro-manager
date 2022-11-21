@@ -1,22 +1,22 @@
-/**
+/*
  * Micro-Manager "Live Replay"
  *
- * <p>This plugin will copy all images in the Micro-Manager circular buffer
+ * This plugin will copy all images in the Micro-Manager circular buffer
  * into a viewer window.  The counter of the circular buffer is set to 0 (i.e.
  * images in the circular buffer will be destroyed.
  *
- * <p>This is useful when you see something interesting in live mode and want to
+ * This is useful when you see something interesting in live mode and want to
  * save this data.
  *
- * <p>Nico Stuurman, 2009(?)
+ * Nico Stuurman, 2009(?)
  *
- * <p>Updated June 2013 to use ImageProcssor Queue, so that images from multiple
+ * Updated June 2013 to use ImageProcssor Queue, so that images from multiple
  * cameras are displayed correctly and so that images are all processed by
  * the default image processing queue.
  *
- * <p>Copyright University of California
+ * Copyright University of California
  *
- * <p>LICENSE:      This file is distributed under the BSD license.
+ * LICENSE:      This file is distributed under the BSD license.
  * License text is included with the source distribution.
  * This file is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty

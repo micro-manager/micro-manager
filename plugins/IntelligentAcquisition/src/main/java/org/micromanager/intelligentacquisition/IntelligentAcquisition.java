@@ -1,15 +1,15 @@
-/**
+/*
  * Nico Stuurman, 2012
  * copyright University of California
  *
- * <p>LICENSE:      This file is distributed under the BSD license.
+ * LICENSE:      This file is distributed under the BSD license.
  *    License text is included with the source distribution.
  *
- * <p>This file is distributed in the hope that it will be useful,
+ *    This file is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty
  *    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- * <p>IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *    IN NO EVENT SHALL THE COPYRIGHT OWNER OR
  *    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
  *    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
