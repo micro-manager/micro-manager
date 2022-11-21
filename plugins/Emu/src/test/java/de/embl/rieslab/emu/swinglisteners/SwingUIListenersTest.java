@@ -1642,7 +1642,6 @@ public class SwingUIListenersTest {
             } catch (IncorrectUIPropertyTypeException e) {
                e.printStackTrace();
             }
-            ;
          }
       };
       final TestableConfigurableMainFrame cmf =

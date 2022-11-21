@@ -42,8 +42,6 @@ public class UserSettings {
       public static final String POLL_CHECKED = "pollChecked"; // boolean
    }
 
-   ;
-
    public UserSettings(final Studio studio, final CRISP crisp, final CRISPTimer timer,
                        final CRISPFrame frame) {
       Objects.requireNonNull(studio); // only used to get profile
