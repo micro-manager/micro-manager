@@ -870,7 +870,8 @@ public class MultiCameraFrame extends JFrame {
       try {
          for (String camera : camerasInUse_) {
             if (core_.hasProperty(camera, TEMP)) {
-               tempText += core_.getProperty(camera, TEMP) + "\u00b0" + "C   "; // U+00B0 DEGREE SIGN
+               tempText += core_.getProperty(camera, TEMP)
+                     + "\u00b0" + "C   "; // U+00B0 DEGREE SIGN
             }
 
          }

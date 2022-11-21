@@ -215,25 +215,27 @@ public class Hub {
    }
 
    public void zoomTo(int zoomLevel, Point zoomTargetOffScreen) {
-      int originalZoomLevel = zoomLevel_;
+      if (zoomLevel > 0) {
+         zoomLevel = 0;
+      }
+      if (zoomLevel <= -numZoomLevels_) {
+         zoomLevel = -numZoomLevels_ + 1;
+      }
+
+      if (zoomLevel == zoomLevel_) {
+         return;
+      }
+
+      final int originalZoomLevel = zoomLevel_;
       zoomLevel_ = zoomLevel;
 
-      if (zoomLevel_ > 0) {
-         zoomLevel_ = 0;
+      if (zoomLevel_ > originalZoomLevel) {
+         coords_.zoomIn(zoomTargetOffScreen);
+      } else {
+         coords_.zoomOut(zoomTargetOffScreen);
       }
-      if (zoomLevel_ <= -numZoomLevels_) {
-         zoomLevel_ = -numZoomLevels_ + 1;
-      }
-
-      if (zoomLevel_ != originalZoomLevel) {
-         if (zoomLevel_ > originalZoomLevel) {
-            coords_.zoomIn(zoomTargetOffScreen);
-         } else {
-            coords_.zoomOut(zoomTargetOffScreen);
-         }
-         updateView();
-         display_.update();
-      }
+      updateView();
+      display_.update();
    }
 
    public void updateView() {
