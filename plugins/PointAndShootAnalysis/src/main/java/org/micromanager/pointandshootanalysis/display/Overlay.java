@@ -45,33 +45,32 @@ import org.micromanager.display.overlay.AbstractOverlay;
 import org.micromanager.pointandshootanalysis.data.ParticleData;
 
 /**
- *
  * @author nico
  */
 public class Overlay extends AbstractOverlay {
-   private final String TITLE = "Point and Shoot Overlay";
+   private final String title = "Point and Shoot Overlay";
    private final List<Map<Integer, ParticleData>> controlTracks_;
    private final Map<Integer, List<ParticleData>> tracksIndexedByFrame_;
    private final Map<Integer, List<ParticleData>> controlTracksIndexedByFrame_;
    private final int symbolLenght_ = 30;
    private final Color maskColor_ = new Color(255, 125, 10);
-   private final Color controlMaskColor_ = new Color (125, 255, 10);
+   private final Color controlMaskColor_ = new Color(125, 255, 10);
    private final Color bleachColor_ = new Color(255, 5, 25);
-   
+
    // UI components
    private JPanel configUI_;
    private JCheckBox showMasksCheckBox_;
    private JCheckBox showBleachMasksCheckBox_;
    private JCheckBox showControlMasksCheckBox_;
-   
-   public Overlay(Map<Integer, List<ParticleData>> tracksIndexedByFrame, 
-           List<Map<Integer, ParticleData>> controlTracks) {
+
+   public Overlay(Map<Integer, List<ParticleData>> tracksIndexedByFrame,
+                  List<Map<Integer, ParticleData>> controlTracks) {
       // index tracks by frame for quick look up when we need it
       tracksIndexedByFrame_ = tracksIndexedByFrame;
-      
+
       controlTracks_ = controlTracks;
       controlTracksIndexedByFrame_ = new TreeMap<>();
-      controlTracks_.forEach( (track) -> {
+      controlTracks_.forEach((track) -> {
          track.entrySet().forEach((entry) -> {
             List<ParticleData> particlesInFrame = controlTracksIndexedByFrame_.get(entry.getKey());
             if (particlesInFrame == null) {
@@ -81,34 +80,34 @@ public class Overlay extends AbstractOverlay {
             controlTracksIndexedByFrame_.put(entry.getKey(), particlesInFrame);
          });
       });
-      
+
       super.setVisible(true);
    }
-   
+
    @Override
    public String getTitle() {
-      return TITLE;
+      return title;
    }
-   
+
    @Override
    public JComponent getConfigurationComponent() {
       if (configUI_ == null) {
-         
+
          showMasksCheckBox_ = new JCheckBox("Show masks");
          showMasksCheckBox_.addActionListener((ActionEvent e) -> {
             fireOverlayConfigurationChanged();
          });
-         
+
          showBleachMasksCheckBox_ = new JCheckBox("Show Bleach");
          showBleachMasksCheckBox_.addActionListener((ActionEvent e) -> {
             fireOverlayConfigurationChanged();
          });
-         
+
          showControlMasksCheckBox_ = new JCheckBox("Show Controls");
          showControlMasksCheckBox_.addActionListener((ActionEvent e) -> {
             fireOverlayConfigurationChanged();
          });
-         
+
 
          configUI_ = new JPanel(new MigLayout(new LC().insets("4")));
          CC cc = new CC();
@@ -118,18 +117,15 @@ public class Overlay extends AbstractOverlay {
       }
       return configUI_;
    }
-   
+
    /**
     * {@inheritDoc}
-    * <p>
-    * 
     */
    @Override
    public void paintOverlay(Graphics2D g, Rectangle screenRect,
-         DisplaySettings displaySettings,
-         List<Image> images, Image primaryImage,
-         Rectangle2D.Float imageViewPort)
-   {
+                            DisplaySettings displaySettings,
+                            List<Image> images, Image primaryImage,
+                            Rectangle2D.Float imageViewPort) {
       // TODO: make sure this is our dataviewer
       Integer frame = primaryImage.getCoords().getTimePoint();
       if (tracksIndexedByFrame_.get(frame) != null) {
@@ -138,15 +134,13 @@ public class Overlay extends AbstractOverlay {
 
          // Draw the pattern in image pixel coordinates by applying a transform
          Graphics2D gTfm = (Graphics2D) g.create();
-         gTfm.transform(AffineTransform.
-                 getScaleInstance(1.0 / zoomRatio, 1.0 / zoomRatio));
-         gTfm.transform(AffineTransform.
-                 getTranslateInstance(-imageViewPort.x, -imageViewPort.y));
+         gTfm.transform(AffineTransform.getScaleInstance(1.0 / zoomRatio, 1.0 / zoomRatio));
+         gTfm.transform(AffineTransform.getTranslateInstance(-imageViewPort.x, -imageViewPort.y));
          // Stroke width should be 1.0 in screen coordinates
          gTfm.setStroke(new BasicStroke((float) zoomRatio));
-         
+
          int colorIndex = 0;
-         
+
          if (showControlMasksCheckBox_ != null && showControlMasksCheckBox_.isSelected()) {
             if (controlTracksIndexedByFrame_.get(frame) != null) {
                for (ParticleData p : controlTracksIndexedByFrame_.get(frame)) {
@@ -186,7 +180,7 @@ public class Overlay extends AbstractOverlay {
                   }
                }
                gTfm.setColor(WidgetSettings.COLORS[colorIndex]);
-               
+
                drawMarker1(gTfm, p.getCentroid(), halfLength, halfLength / 2);
                if (p.getBleachSpot() != null) {
                   //   drawCross(gTfm, p.getBleachSpot(), halfLength / 2);
@@ -202,31 +196,31 @@ public class Overlay extends AbstractOverlay {
          }
       }
    }
-   
-   
+
+
    /**
     * Draws:
-    *      |
-    *    -   -
-    *      |
-    * 
-    * @param g - graphics environment to draw on
-    * @param p - 
+    * |
+    * -   -
+    * |
+    *
+    * @param g      - graphics environment to draw on
+    * @param p      -
     * @param width1
-    * @param width2 
+    * @param width2
     */
-   
+
    private void drawMarker1(Graphics2D g, Point2D_I32 p, int width1, int width2) {
       g.drawLine(p.x, p.y - width1, p.x, p.y - width1 + width2);
       g.drawLine(p.x, p.y + width1, p.x, p.y + width1 - width2);
       g.drawLine(p.x - width1, p.y, p.x - width1 + width2, p.y);
       g.drawLine(p.x + width1, p.y, p.x + width1 - width2, p.y);
    }
-   
+
    private void drawCross(Graphics2D g, Point2D_I32 p, int width) {
       g.drawLine(p.x - width, p.y - width, p.x + width, p.y + width);
       g.drawLine(p.x + width, p.y - width, p.x - width, p.y + width);
    }
-   
-     
+
+
 }

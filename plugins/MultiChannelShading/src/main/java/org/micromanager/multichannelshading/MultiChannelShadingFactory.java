@@ -21,13 +21,12 @@
 package org.micromanager.multichannelshading;
 
 import java.util.List;
-import org.micromanager.data.Processor;
-import org.micromanager.data.ProcessorFactory;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorFactory;
 
 /**
- *
  * @author Chris Weisiger
  */
 public class MultiChannelShadingFactory implements ProcessorFactory {
@@ -42,8 +41,8 @@ public class MultiChannelShadingFactory implements ProcessorFactory {
       studio_ = studio;
       channelGroup_ = settings.getString(
             MultiChannelShadingMigForm.CHANNELGROUP, "Channels");
-      useOpenCL_ = settings.getBoolean(MultiChannelShadingMigForm.USEOPENCL, 
-              false);
+      useOpenCL_ = settings.getBoolean(MultiChannelShadingMigForm.USEOPENCL,
+            false);
       presets_ = settings.getStringList("Presets", "");
       backgroundFile_ = settings.getString(
             MultiChannelShadingMigForm.DARKFIELDFILENAME, "");
@@ -52,7 +51,7 @@ public class MultiChannelShadingFactory implements ProcessorFactory {
 
    @Override
    public Processor createProcessor() {
-      return new ShadingProcessor(studio_, channelGroup_, useOpenCL_, 
-              backgroundFile_, presets_, files_);
+      return new ShadingProcessor(studio_, channelGroup_, useOpenCL_,
+            backgroundFile_, presets_, files_);
    }
 }

@@ -41,7 +41,7 @@ import org.micromanager.plugins.snaponmove.MonitoredValue.MonitoredXYValue;
 /**
  * Criterion for detecting a value change for a monitored item.
  *
- * Instances specify the item to be monitored and when to consider its value
+ * <p>Instances specify the item to be monitored and when to consider its value
  * to have changed.
  */
 abstract class ChangeCriterion {
@@ -51,11 +51,13 @@ abstract class ChangeCriterion {
       requiresPolling_ = requiresPolling;
    }
 
-   static ChangeCriterion createZDistanceCriterion(String stageLabel, double threshold, boolean requiresPolling) {
+   static ChangeCriterion createZDistanceCriterion(String stageLabel, double threshold,
+                                                   boolean requiresPolling) {
       return new ZDistanceCriterion(stageLabel, threshold, requiresPolling);
    }
 
-   static ChangeCriterion createXYDistanceCriterion(String stageLabel, double threshold, boolean requiresPolling) {
+   static ChangeCriterion createXYDistanceCriterion(String stageLabel, double threshold,
+                                                    boolean requiresPolling) {
       return new XYDistanceCriterion(stageLabel, threshold, requiresPolling);
    }
 
@@ -64,6 +66,7 @@ abstract class ChangeCriterion {
    }
 
    abstract MonitoredItem getMonitoredItem();
+
    abstract boolean testForChange(MonitoredValue oldValue, MonitoredValue newValue);
 
    private static final String SER_CLASS = "Class";
@@ -94,8 +97,7 @@ abstract class ChangeCriterion {
          return createZDistanceCriterion(item.getDeviceLabel(),
                pm.getDouble(SER_THRESHOLD, 0.1),
                pm.getBoolean(SER_REQUIRES_POLLING, false));
-      }
-      else if (theClass.equals("XYDistanceCriterion")) {
+      } else if (theClass.equals("XYDistanceCriterion")) {
          if (!(item instanceof XYMonitoredItem)) {
             return null;
          }
@@ -122,8 +124,8 @@ abstract class ChangeCriterion {
 
       @Override
       public String toString() {
-         return "Focus \"" + item_.getDeviceLabel() + "\" has moved " +
-               threshold_ + " um" + requiresPollingStringSuffix();
+         return "Focus \"" + item_.getDeviceLabel() + "\" has moved "
+               + threshold_ + " um" + requiresPollingStringSuffix();
       }
 
       @Override
@@ -140,14 +142,12 @@ abstract class ChangeCriterion {
          if (oldValue == null || newValue == null) {
             throw new NullPointerException(); // Programming error
          }
-         if (oldValue instanceof MonitoredFloatValue &&
-               newValue instanceof MonitoredFloatValue)
-         {
-            double diff = ((MonitoredFloatValue) newValue).getValue() -
-                  ((MonitoredFloatValue) oldValue).getValue();
+         if (oldValue instanceof MonitoredFloatValue
+               && newValue instanceof MonitoredFloatValue) {
+            double diff = ((MonitoredFloatValue) newValue).getValue()
+                  - ((MonitoredFloatValue) oldValue).getValue();
             return Math.abs(diff) >= threshold_;
-         }
-         else {
+         } else {
             throw new IllegalArgumentException(); // Programming error
          }
       }
@@ -172,8 +172,8 @@ abstract class ChangeCriterion {
 
       @Override
       public String toString() {
-         return "XY stage \"" + item_.getDeviceLabel() + "\" has moved " +
-               threshold_ + " um" + requiresPollingStringSuffix();
+         return "XY stage \"" + item_.getDeviceLabel() + "\" has moved "
+               + threshold_ + " um" + requiresPollingStringSuffix();
       }
 
       @Override
@@ -190,18 +190,15 @@ abstract class ChangeCriterion {
          if (oldValue == null || newValue == null) {
             throw new NullPointerException(); // Programming error
          }
-         if (oldValue instanceof MonitoredXYValue &&
-               newValue instanceof MonitoredXYValue)
-         {
+         if (oldValue instanceof MonitoredXYValue
+               && newValue instanceof MonitoredXYValue) {
             double x0 = ((MonitoredXYValue) oldValue).getX();
             double y0 = ((MonitoredXYValue) oldValue).getY();
             double x1 = ((MonitoredXYValue) newValue).getX();
             double y1 = ((MonitoredXYValue) newValue).getY();
-            double dist = Math.sqrt((x1 - x0) * (x1 - x0) +
-                  (y1 - y0) * (y1 - y0));
+            double dist = Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
             return dist >= threshold_;
-         }
-         else {
+         } else {
             throw new IllegalArgumentException(); // Programming error
          }
       }

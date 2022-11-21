@@ -20,22 +20,18 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-
 package org.micromanager.splitview;
 
 import ij.process.ImageProcessor;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
-
-import org.micromanager.Studio;
 
 /**
  * DataProcessor that splits images as instructed in SplitViewFrame
@@ -56,17 +52,15 @@ public class SplitViewProcessor implements Processor {
 
       if (orientation_.equals(SplitViewFrame.LR)) {
          channelSuffixes_ = new ArrayList<String>(Arrays.asList(
-                  new String[] {"Left", "Right"}));
-      }
-      else {
+               new String[] {"Left", "Right"}));
+      } else {
          channelSuffixes_ = new ArrayList<String>(Arrays.asList(
-                  new String[] {"Top", "Bottom"}));
+               new String[] {"Top", "Bottom"}));
       }
       // Insert "Middle" suffixes.
       if (numSplits_ == 3) {
          channelSuffixes_.add(1, "Middle");
-      }
-      else if (numSplits_ > 3) {
+      } else if (numSplits_ > 3) {
          // Just number things.
          channelSuffixes_.clear();
          for (int i = 0; i < numSplits_; ++i) {
@@ -104,8 +98,7 @@ public class SplitViewProcessor implements Processor {
       if (orientation_.equals(SplitViewFrame.TB)) {
          height /= numSplits_;
          yStep = height;
-      }
-      else {
+      } else {
          width /= numSplits_;
          xStep = width;
       }
@@ -115,7 +108,7 @@ public class SplitViewProcessor implements Processor {
          proc.setRoi(i * xStep, i * yStep, width, height);
 
          Coords coords = image.getCoords().copy()
-            .channel(channelIndex * numSplits_ + i).build();
+               .channel(channelIndex * numSplits_ + i).build();
          Image output = studio_.data().createImage(proc.crop().getPixels(),
                width, height, image.getBytesPerPixel(),
                image.getNumComponents(), coords, image.getMetadata());

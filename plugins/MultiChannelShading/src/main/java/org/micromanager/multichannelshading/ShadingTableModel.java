@@ -28,16 +28,15 @@ import javax.swing.table.AbstractTableModel;
 import org.micromanager.Studio;
 
 /**
- *
  * @author nico
  */
 @SuppressWarnings("serial")
 public class ShadingTableModel extends AbstractTableModel {
    private final Studio gui_;
-   public final int PRESET = 0;
-   public final int IMAGEFILE = 1;
-   public final int LOADBUTTON = 2;
-   public final String[] COLUMN_NAMES = new String[] {
+   public final int preset_ = 0;
+   public final int imageFile_ = 1;
+   public final int loadButton_ = 2;
+   public final String[] columnNames_ = new String[] {
          "Preset",
          "Image File",
          ""
@@ -46,83 +45,88 @@ public class ShadingTableModel extends AbstractTableModel {
    private List<String> presetList_;
    private List<String> fileList_;
    private final ImageCollection imageCollection_;
-   
-   public ShadingTableModel(Studio gui, ImageCollection 
-           imageCollection) {
+
+   public ShadingTableModel(Studio gui, ImageCollection
+         imageCollection) {
       gui_ = gui;
       imageCollection_ = imageCollection;
       presetList_ = new ArrayList<String>();
       fileList_ = new ArrayList<String>();
    }
-   
-   
+
+
    @Override
    public int getRowCount() {
       if (fileList_.size() < presetList_.size()) {
          return fileList_.size();
-      } 
+      }
       return presetList_.size();
    }
 
    @Override
    public int getColumnCount() {
-      return COLUMN_NAMES.length;
+      return columnNames_.length;
    }
-   
+
    @Override
    public String getColumnName(int columnIndex) {
-      return COLUMN_NAMES[columnIndex];
+      return columnNames_[columnIndex];
    }
-   
+
    @Override
    public Object getValueAt(int row, int column) {
       switch (column) {
-         case 0: 
+         case 0:
             if (presetList_.size() <= row) {
                return "None";
             } else {
                return presetList_.get(row);
             }
-         case 1: 
+         case 1:
             if (fileList_.size() <= row) {
                return "";
             } else {
                return fileList_.get(row);
             }
-         case 2: 
+         case 2:
             //return new JButton("...");
+            break;
+         default:
+            break;
       }
-      return null;     
+      return null;
    }
-   
-   
+
+
    @Override
    public boolean isCellEditable(int rowIndex, int columnIndex) {
       return true;
    }
-   
+
    @Override
    public void setValueAt(Object value, int row, int column) {
       switch (column) {
-         case 0: 
+         case 0:
             presetList_.set(row, (String) value);
             updateFlatFieldImage(row);
             break;
-         case 1: 
+         case 1:
             fileList_.set(row, (String) value);
             updateFlatFieldImage(row);
             break;
-      }     
+         default:
+            break;
+      }
    }
-   
+
    public void setChannelGroup(String newGroup) {
       try {
          // first save our settings
          if (channelGroup_ != null) {
             String[] channels = presetList_.toArray(
-                    new String[presetList_.size()]);
+                  new String[presetList_.size()]);
             String[] files = fileList_.toArray(
-                    new String[fileList_.size()]);
+                  new String[fileList_.size()]);
             gui_.profile().getSettings(this.getClass()).putStringList(
                   channelGroup_ + "-channels", channels);
             gui_.profile().getSettings(this.getClass()).putStringList(
@@ -130,16 +134,16 @@ public class ShadingTableModel extends AbstractTableModel {
          }
          imageCollection_.clearFlatFields();
          channelGroup_ = newGroup;
-         
+
          // then restore mapping from preferences
          fileList_.clear();
          presetList_.clear();
          // Strange workaround since we can not pass null as default
          List<String> emptyList = new ArrayList<String>(0);
-         List<String> channels = gui_.profile().getSettings(this.getClass()).
-               getStringList(channelGroup_ + "-channels", emptyList );
-         List<String> files = gui_.profile().getSettings(this.getClass()).
-               getStringList(channelGroup_ + "-files", emptyList);
+         List<String> channels = gui_.profile().getSettings(this.getClass())
+                     .getStringList(channelGroup_ + "-channels", emptyList);
+         List<String> files = gui_.profile().getSettings(this.getClass())
+                     .getStringList(channelGroup_ + "-files", emptyList);
          if (channels != null && files != null) {
             for (int i = 0; i < channels.size() && i < files.size(); i++) {
                imageCollection_.addFlatField(channels.get(i), files.get(i));
@@ -153,7 +157,7 @@ public class ShadingTableModel extends AbstractTableModel {
       }
       fireTableDataChanged();
    }
-   
+
    public String getChannelGroup() {
       return channelGroup_;
    }
@@ -167,10 +171,9 @@ public class ShadingTableModel extends AbstractTableModel {
       }
       // TODO: handle error 
    }
-   
+
    public String[] getAvailablePresets() {
-      String[] presets = gui_.getCMMCore().getAvailableConfigs(channelGroup_).
-              toArray();
+      String[] presets = gui_.getCMMCore().getAvailableConfigs(channelGroup_).toArray();
       String[] usedPresets = getUsedPresets();
       String[] availablePresets = new String[presets.length - usedPresets.length];
       for (String preset : presets) {
@@ -188,7 +191,7 @@ public class ShadingTableModel extends AbstractTableModel {
       }
       return availablePresets;
    }
-   
+
    public String[] getUsedPresets() {
       String[] presets = new String[presetList_.size()];
       for (int i = 0; i < presetList_.size(); i++) {
@@ -196,7 +199,7 @@ public class ShadingTableModel extends AbstractTableModel {
       }
       return presets;
    }
-   
+
    public String[] getUsedPresets(int excludedRow) {
       String[] presets = new String[presetList_.size() - 1];
       int j = 0;
@@ -208,32 +211,33 @@ public class ShadingTableModel extends AbstractTableModel {
       }
       return presets;
    }
-   
+
    public int getNumberOfPresetsInCurrentGroup() {
       return (int) gui_.getCMMCore().getAvailableConfigs(channelGroup_).size();
    }
-   
+
    public int getUnusedNumberOfPresetsInCurrentGroup() {
       return getNumberOfPresetsInCurrentGroup() - getUsedPresets().length;
    }
-   
-   public ImagePlusInfo getFlatFieldImage (String channelGroup, String preset) {
+
+   public ImagePlusInfo getFlatFieldImage(String channelGroup, String preset) {
       if (channelGroup.equals(channelGroup_)) {
          return imageCollection_.getFlatField(preset);
       }
       return null;
    }
-   
+
    /**
     * Removes selected rows from the tablemodel
     * calls fireTableDataChanged to update the UI
+    *
     * @param selectedRows - array containing selected row numbers
     */
    public void removeRow(int[] selectedRows) {
       // Since we have ordered lists, rebuild them
       List<String> presetList = new ArrayList<String>();
       List<String> fileList = new ArrayList<String>();
-      for (int i = 0; i < presetList_.size(); i++ ) {
+      for (int i = 0; i < presetList_.size(); i++) {
          boolean removeRow = false;
          for (int j = 0; j < selectedRows.length; j++) {
             if (i == selectedRows[j]) {
@@ -249,11 +253,11 @@ public class ShadingTableModel extends AbstractTableModel {
       }
       presetList_ = presetList;
       fileList_ = fileList;
-      
+
       fireTableDataChanged();
    }
 
-   private void updateFlatFieldImage(int row) {   
+   private void updateFlatFieldImage(int row) {
       if (fileList_.get(row) != null && !fileList_.get(row).isEmpty()) {
          String preset = presetList_.get(row);
          if (preset != null) {
@@ -262,11 +266,10 @@ public class ShadingTableModel extends AbstractTableModel {
             } catch (ShadingException ex) {
                gui_.logs().showError(ex);
             }
-            gui_.profile().getSettings(this.getClass()).
-                  putString(preset, fileList_.get(row));
+            gui_.profile().getSettings(this.getClass()).putString(preset, fileList_.get(row));
          }
       }
-         
+
    }
-   
+
 }

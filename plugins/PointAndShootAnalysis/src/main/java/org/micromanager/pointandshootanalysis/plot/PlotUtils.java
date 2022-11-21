@@ -1,22 +1,22 @@
- ///////////////////////////////////////////////////////////////////////////////
- //FILE:          
- //PROJECT:       
- //-----------------------------------------------------------------------------
- //
- // AUTHOR:       Nico Stuurman
- //
- // COPYRIGHT:    University of California, San Francisco 2015
- //
- // LICENSE:      This file is distributed under the BSD license.
- //               License text is included with the source distribution.
- //
- //               This file is distributed in the hope that it will be useful,
- //               but WITHOUT ANY WARRANTY; without even the implied warranty
- //               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- //
- //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+///////////////////////////////////////////////////////////////////////////////
+//FILE:
+//PROJECT:
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman
+//
+// COPYRIGHT:    University of California, San Francisco 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.pointandshootanalysis.plot;
 
@@ -56,39 +56,38 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 /**
  * Utility class to make it simple to show a plot of XY data
  * Multiple datasets can be shown simultaneously
- * 
- * Copied from SpotIntensity Plugin
- * 
- * 
+ *
+ * <p>Copied from SpotIntensity Plugin
+ *
  * @author nico
  */
 public class PlotUtils {
    private static int windowOffset_ = 100;
    MyChartFrame graphFrame_;
-   
+
    private final MutablePropertyMapView prefs_;
-   
+
    public PlotUtils(MutablePropertyMapView prefs) {
       prefs_ = prefs;
    }
-   
+
    /**
     * Simple class whose sole intention is to intercept the dispose function and
     * use it to store window position and size
     */
    @SuppressWarnings("serial")
    private class MyChartFrame extends Frame {
-      private final static String WINDOWPOSX = "PlotWindowPosX";
-      private final static String WINDOWPOSY = "PlotWindowPosY";
-      private final static String WINDOWWIDTH = "PlotWindowWidth";
-      private final static String WINDOWHEIGHT = "PlotWindowHeight";
+      private static final String WINDOWPOSX = "PlotWindowPosX";
+      private static final String WINDOWPOSY = "PlotWindowPosY";
+      private static final String WINDOWWIDTH = "PlotWindowWidth";
+      private static final String WINDOWHEIGHT = "PlotWindowHeight";
       private final String s_;
 
-      
+
       MyChartFrame(String s) {
          super(s);
          s_ = s;
-         
+
          Point screenLoc = new Point();
          screenLoc.x = prefs_.getInteger(WINDOWPOSX + s_, windowOffset_);
          screenLoc.y = prefs_.getInteger(WINDOWPOSY + s_, windowOffset_);
@@ -105,7 +104,7 @@ public class PlotUtils {
          // store window position and size to prefs
          prefs_.putInteger(WINDOWPOSX + s_, getX());
          prefs_.putInteger(WINDOWPOSY + s_, getY());
-         prefs_.putInteger(WINDOWWIDTH + s_,getWidth());
+         prefs_.putInteger(WINDOWWIDTH + s_, getWidth());
          prefs_.putInteger(WINDOWHEIGHT + s_, getHeight());
          super.dispose();
       }
@@ -115,21 +114,20 @@ public class PlotUtils {
     * Create a frame with a plot of the data given in XYSeries overwrite any
     * previously created frame with the same title
     *
-
-    * @param title shown in the top of the plot
-    * @param data array with data series to be plotted
-    * @param xTitle Title of the X axis
-    * @param yTitle Title of the Y axis
-    * @param annotation to be shown in plot
-    * @param yLimit - make sure the Y axis does not ho higher than this
-    *                - ignored when null
+    * @param title        shown in the top of the plot
+    * @param data         array with data series to be plotted
+    * @param xTitle       Title of the X axis
+    * @param yTitle       Title of the Y axis
+    * @param annotation   to be shown in plot
+    * @param yLimit       - make sure the Y axis does not ho higher than this
+    *                     - ignored when null
     * @param colors
-    * @param dataExporter - 
+    * @param dataExporter -
     * @return Frame that displays the data
     */
    public Frame plotData(String title, XYSeries[] data, String xTitle,
-           String yTitle, String annotation, Double yLimit, Color[] colors, 
-           DataExporter dataExporter) {
+                         String yTitle, String annotation, Double yLimit, Color[] colors,
+                         DataExporter dataExporter) {
 
       if (data.length == 0) {
          return null;
@@ -137,11 +135,10 @@ public class PlotUtils {
       // JFreeChart code
       XYSeriesCollection dataset = new XYSeriesCollection();
       // calculate min and max to scale the graph
-      double minX, minY, maxX, maxY;
-      minX = data[0].getMinX();
-      minY = data[0].getMinY();
-      maxX = data[0].getMaxX();
-      maxY = data[0].getMaxY();
+      double minX = data[0].getMinX();
+      double minY = data[0].getMinY();
+      double maxX = data[0].getMaxX();
+      double maxY = data[0].getMaxY();
       for (XYSeries d : data) {
          dataset.addSeries(d);
          if (d.getMinX() < minX) {
@@ -164,13 +161,13 @@ public class PlotUtils {
       }
 
       JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
-              xTitle, // x-axis Label
-              yTitle, // y-axis Label
-              dataset, // Dataset
-              PlotOrientation.VERTICAL, // Plot Orientation
-              true, // Show Legend
-              true, // Use tooltips
-              false // Configure chart to generate URLs?
+            xTitle, // x-axis Label
+            yTitle, // y-axis Label
+            dataset, // Dataset
+            PlotOrientation.VERTICAL, // Plot Orientation
+            true, // Show Legend
+            true, // Use tooltips
+            false // Configure chart to generate URLs?
       );
       XYPlot plot = (XYPlot) chart.getPlot();
       plot.setBackgroundPaint(Color.white);
@@ -198,25 +195,25 @@ public class PlotUtils {
             renderer.setSeriesShapesVisible(i, false);
          }
       }
-      
+
       // place annotation at 80 % of max X, maxY
-      XYAnnotation an = new XYTextAnnotation(annotation, 
-              maxX - 0.2 * (maxX - minX), maxY);
+      XYAnnotation an = new XYTextAnnotation(annotation,
+            maxX - 0.2 * (maxX - minX), maxY);
       plot.addAnnotation(an);
       plot.getRangeAxis().setRange(minY, maxY);
 
       renderer.setUseFillPaint(true);
-      
-      ChartPanel chartPanel = new ChartPanel(chart);      
+
+      ChartPanel chartPanel = new ChartPanel(chart);
       chartPanel.setMouseWheelEnabled(true);
-      
+
 
       if (graphFrame_ == null) {
          graphFrame_ = new MyChartFrame(title);
       } else {
          graphFrame_.removeAll();
       }
-      
+
       final JPanel controlPanel = new JPanel();
       controlPanel.setLayout(new MigLayout());
       JButton allButton = new JButton("All");
@@ -249,7 +246,7 @@ public class PlotUtils {
          int index = i % colors.length;
          jcb.setForeground(colors[index]);
          jcb.setBackground(Color.white);
-         String w =  (i + 1) % 5 == 0 ? "wrap" : "";
+         String w = (i + 1) % 5 == 0 ? "wrap" : "";
          controlPanel.add(jcb, w);
       }
       JMenuItem fitMenuItem = new JMenuItem("Show fit");
@@ -260,8 +257,8 @@ public class PlotUtils {
                indices.add(i);
             }
          }
-            if (dataExporter != null) {
-               dataExporter.plotFits(indices);
+         if (dataExporter != null) {
+            dataExporter.plotFits(indices);
          }
       });
       JMenuItem exportMenuItem = new JMenuItem("Export Normalized");
@@ -272,8 +269,8 @@ public class PlotUtils {
                indices.add(i);
             }
          }
-            if (dataExporter != null) {
-               dataExporter.exportRaw(indices);
+         if (dataExporter != null) {
+            dataExporter.exportRaw(indices);
          }
       });
       JMenuItem exportSummaryMenuItem = new JMenuItem("Export Summary");
@@ -284,8 +281,8 @@ public class PlotUtils {
                indices.add(i);
             }
          }
-            if (dataExporter != null) {
-               dataExporter.exportSummary(indices);
+         if (dataExporter != null) {
+            dataExporter.exportSummary(indices);
          }
       });
       if (dataExporter != null) {
@@ -311,33 +308,32 @@ public class PlotUtils {
 
       return graphFrame_;
    }
-   
 
-   public static XYSeries normalize (XYSeries input)
-   {
+
+   public static XYSeries normalize(XYSeries input) {
       double max = input.getMaxY();
       // double min = input.getMinY();
-      XYSeries output = new XYSeries( input.getKey(), 
-              input.getAutoSort(), input.getAllowDuplicateXValues());
+      XYSeries output = new XYSeries(input.getKey(),
+            input.getAutoSort(), input.getAllowDuplicateXValues());
       for (int i = 0; i < input.getItemCount(); i++) {
-         output.add(input.getX(i), (input.getY(i).doubleValue()) / (max) );
+         output.add(input.getX(i), (input.getY(i).doubleValue()) / (max));
       }
       return output;
    }
-   
+
    private static class VisibleAction implements ItemListener {
 
-        private final XYItemRenderer renderer;
-        private final int index;
+      private final XYItemRenderer renderer;
+      private final int index;
 
-        public VisibleAction(XYItemRenderer renderer, int i) {
-            this.renderer = renderer;
-            this.index = i;
-        }
+      public VisibleAction(XYItemRenderer renderer, int i) {
+         this.renderer = renderer;
+         this.index = i;
+      }
 
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-            renderer.setSeriesVisible(index, !renderer.getSeriesVisible(index));
-        }
-    }
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+         renderer.setSeriesVisible(index, !renderer.getSeriesVisible(index));
+      }
+   }
 }

@@ -1,64 +1,59 @@
 /**
- * MainForm.java
- *
  * Form showing the UI controlling tracking of single molecules using
- * Gaussian Fitting
+ * Gaussian Fitting.
  *
- * The real work is done in class GaussianTrackThread
+ * <p>The real work is done in class GaussianTrackThread.
  *
- * Created on Sep 15, 2010, 9:29:05 PM
-
-* Copyright (c) 2010-2017, Regents of the University of California
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies,
-either expressed or implied, of the FreeBSD Project.
+ * <p>Created on Sep 15, 2010, 9:29:05 PM
+ *
+ * <p>Copyright (c) 2010-2017, Regents of the University of California
+ * All rights reserved.
+ *
+ * <p>Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * <p>1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * <p>The views and conclusions contained in the software and documentation are those
+ * of the authors and should not be interpreted as representing official policies,
+ * either expressed or implied, of the FreeBSD Project.
  */
 
 
 package edu.ucsf.valelab.gaussianfit;
 
-import edu.ucsf.valelab.gaussianfit.fitmanagement.GaussianTrackThread;
-import edu.ucsf.valelab.gaussianfit.fitmanagement.FitAllThread;
 import com.google.common.eventbus.Subscribe;
 import edu.ucsf.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.ucsf.valelab.gaussianfit.data.GaussianInfo;
 import edu.ucsf.valelab.gaussianfit.datasetdisplay.SpotOverlay;
+import edu.ucsf.valelab.gaussianfit.fitmanagement.FitAllThread;
+import edu.ucsf.valelab.gaussianfit.fitmanagement.GaussianTrackThread;
+import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
+import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
-import java.awt.Color;
-import java.awt.Polygon;
-import javax.swing.JOptionPane;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
-import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.process.ImageProcessor;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Polygon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -74,11 +69,14 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
@@ -90,7 +88,6 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayPositionChangedEvent;
 import org.micromanager.display.DisplayWindow;
-
 
 
 /**
@@ -130,17 +127,17 @@ public class MainForm extends JFrame {
    public static boolean WINDOWOPEN = false;
 
    private final Studio studio_;
-   
+
    // Store values of dropdown menus:
    private FindLocalMaxima.FilterType preFilterType_ = FindLocalMaxima.FilterType.NONE;
 
    private FitAllThread ft_;
-   
+
    public AtomicBoolean aStop_ = new AtomicBoolean(false);
-   
+
    // to keep track of front most window
    ImagePlus ip_ = null;
-   
+
    // GUI elements
    private JToggleButton readParmsButton_;
    private JTextField photonConversionTextField_;
@@ -150,20 +147,20 @@ public class MainForm extends JFrame {
    private JTextField zStepTextField_;
    private JTextField baseLevelTextField_;
    private JTextField readNoiseTextField_;
-   
+
    private JToggleButton showOverlay_;
    private JComboBox preFilterComboBox_;
    private JTextField noiseToleranceTextField_;
-   
+
    private JComboBox fitDimensionsComboBox1_;
    private JComboBox fitMethodComboBox1_;
    private JTextField boxSizeTextField;
    private JTextField maxIterationsTextField_;
    private JCheckBox useFixedWidthInFit_;
    private JTextField fixedWidthInFit_;
-           
+
    private JLabel labelNPoints_;
-   
+
    private JCheckBox filterDataCheckBoxWidth_;
    private JTextField minSigmaTextField_;
    private JTextField maxSigmaTextField_;
@@ -172,29 +169,29 @@ public class MainForm extends JFrame {
    private JTextField minNrPhotonsTextField_;
    private JCheckBox endTrackCheckBox_;
    private JSpinner endTrackSpinner_;
-   
+
    private JTextField posTextField_;
-   
+
    private JCheckBox skipChannelsCheckBox_;
    private JTextField channelsToSkip_;
    private JLabel widthLabel_;
-   
+
    private JButton fitAllButton_;
    private JButton mTrackButton_;
-   
+
    private final int nrThreads_;
    private final ExecutorService threadPool_;
-   
+
    private final SpotOverlay spotOverlay_;
 
 
-    /**
-     * Creates new form MainForm
-     * 
-     * @param studio Instance of the Micro-Manager 2.0 api
-     */
+   /**
+    * Creates new form MainForm
+    *
+    * @param studio Instance of the Micro-Manager 2.0 api
+    */
    public MainForm(Studio studio) {
- 
+
       studio_ = studio;
       int nrThreads = ij.Prefs.getThreads();
       if (nrThreads > 8) {
@@ -218,9 +215,11 @@ public class MainForm extends JFrame {
       timeIntervalTextField_.setText(Double.toString(up.getDouble(oc, TIMEINTERVALMS, 1.0)));
       zStepTextField_.setText(Double.toString(up.getDouble(oc, ZSTEPSIZE, 50.0)));
 
-      pixelSizeTextField_.getDocument().addDocumentListener(new BackgroundCleaner(pixelSizeTextField_));
+      pixelSizeTextField_.getDocument()
+            .addDocumentListener(new BackgroundCleaner(pixelSizeTextField_));
       emGainTextField_.getDocument().addDocumentListener(new BackgroundCleaner(emGainTextField_));
-      timeIntervalTextField_.getDocument().addDocumentListener(new BackgroundCleaner(timeIntervalTextField_));
+      timeIntervalTextField_.getDocument()
+            .addDocumentListener(new BackgroundCleaner(timeIntervalTextField_));
 
       minSigmaTextField_.setText(Double.toString(up.getDouble(oc, SIGMAMIN, 100.0)));
       maxSigmaTextField_.setText(Double.toString(up.getDouble(oc, SIGMAMAX, 200.0)));
@@ -241,7 +240,7 @@ public class MainForm extends JFrame {
       skipChannelsCheckBox_.setSelected(up.getBoolean(oc, SKIPCHANNELS, false));
       channelsToSkip_.setText(up.getString(oc, CHANNELSKIPSTRING, ""));
 
-      DocumentListener updateNoiseOverlay = new DocumentListener() {
+      final DocumentListener updateNoiseOverlay = new DocumentListener() {
 
          @Override
          public void changedUpdate(DocumentEvent documentEvent) {
@@ -306,18 +305,18 @@ public class MainForm extends JFrame {
       public void removeUpdate(DocumentEvent documentEvent) {
          updateBackground();
       }
-   };
-    
+   }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
 
-     */
-    @SuppressWarnings("unchecked")
+   /** This method is called from within the constructor to
+    * initialize the form.
+
+    */
+   @SuppressWarnings("unchecked")
    private void initComponents() {
 
       filterDataCheckBoxWidth_ = new JCheckBox();
-      
+
       photonConversionTextField_ = new JTextField();
       emGainTextField_ = new JTextField();
       baseLevelTextField_ = new JTextField();
@@ -334,7 +333,7 @@ public class MainForm extends JFrame {
       fitMethodComboBox1_ = new JComboBox();
       useFixedWidthInFit_ = new JCheckBox();
       fixedWidthInFit_ = new JTextField();
-           
+
       filterDataCheckBoxNrPhotons_ = new JCheckBox();
       minNrPhotonsTextField_ = new JTextField();
       maxNrPhotonsTextField_ = new JTextField();
@@ -345,111 +344,111 @@ public class MainForm extends JFrame {
       mTrackButton_ = new JButton();
       zStepTextField_ = new JTextField();
       labelNPoints_ = new JLabel();
-      
+
       posTextField_ = new JTextField();
       channelsToSkip_ = new JTextField();
-      
-      fitAllButton_ = new JButton();
-      
-      Font gFont = new Font("Lucida Grande", 0, 10);
-      Dimension textFieldDim = new Dimension(57,20);
-      Dimension dropDownSize = new Dimension(90, 20);
-      Dimension dropDownSizeMax = new Dimension(120, 20);
-      String indent = "gapleft 20px";
 
+      fitAllButton_ = new JButton();
+
+      final Font gFont = new Font("Lucida Grande", 0, 10);
+      final Dimension textFieldDim = new Dimension(57, 20);
+      final Dimension dropDownSize = new Dimension(90, 20);
+      final Dimension dropDownSizeMax = new Dimension(120, 20);
+      final String indent = "gapleft 20px";
 
       addWindowListener(new java.awt.event.WindowAdapter() {
          @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
             formWindowClosing(evt);
          }
+
          @Override
          public void windowClosed(java.awt.event.WindowEvent evt) {
             formWindowClosed(evt);
          }
       });
-      
+
       getContentPane().setLayout(new MigLayout("insets 8", "", "[13]0[13]"));
-      
-      
-/*-----------  Imaging Parameters  -----------*/
+
+
+      /*-----------  Imaging Parameters  -----------*/
       getContentPane().add(new JLabel("Imaging parameters..."));
-      
+
       readParmsButton_.setText("read");
       readParmsButton_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            readParmsButton_ActionPerformed(evt);
+            readParmsButtonActionPerformed(evt);
          }
       });
       getContentPane().add(readParmsButton_, "wrap");
 
       JLabel jLabel = new JLabel("Photon Conversion factor");
-      jLabel.setFont(gFont); 
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
 
-      photonConversionTextField_.setFont(gFont); 
+      photonConversionTextField_.setFont(gFont);
       photonConversionTextField_.setText("10.41");
       photonConversionTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(photonConversionTextField_, "wrap");
 
       jLabel = new JLabel("Linear (EM) Gain");
-      jLabel.setFont(gFont); 
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
-      
-      emGainTextField_.setFont(gFont); 
+
+      emGainTextField_.setFont(gFont);
       emGainTextField_.setText("50");
       emGainTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(emGainTextField_, "wrap");
-  
+
       jLabel = new JLabel("PixelSize (nm)");
-      jLabel.setFont(gFont); 
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
-      
-      pixelSizeTextField_.setFont(gFont); 
+
+      pixelSizeTextField_.setFont(gFont);
       pixelSizeTextField_.setText("0.8");
       pixelSizeTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(pixelSizeTextField_, "wrap");
 
       jLabel = new JLabel("Time Interval (ms)");
-      jLabel.setFont(gFont); 
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
-      
-      timeIntervalTextField_.setFont(gFont); 
+
+      timeIntervalTextField_.setFont(gFont);
       timeIntervalTextField_.setText("0.8");
       timeIntervalTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(timeIntervalTextField_, "wrap");
- 
+
       jLabel = new JLabel("Z-step (nm)");
-      jLabel.setFont(gFont); 
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
 
-      zStepTextField_.setFont(gFont); 
+      zStepTextField_.setFont(gFont);
       zStepTextField_.setText("50");
       zStepTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(zStepTextField_, "wrap");
-      
+
       jLabel = new JLabel("Camera Offset (counts)");
-      jLabel.setFont(gFont); 
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
-            
-      baseLevelTextField_.setFont(gFont); 
+
+      baseLevelTextField_.setFont(gFont);
       baseLevelTextField_.setText("100");
       baseLevelTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(baseLevelTextField_, "wrap");
-      
+
       jLabel = new JLabel("Read Noise (e)");
       jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
-      
+
       readNoiseTextField_.setFont(gFont);
       readNoiseTextField_.setText("0.0");
       readNoiseTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(readNoiseTextField_, "wrap");
-      
+
       getContentPane().add(new JSeparator(), "span, grow, wrap");
-      
-/*-----------  Find Maxima  -----------*/      
+
+      /*-----------  Find Maxima  -----------*/
       jLabel = new JLabel("Find Maxima...");
       getContentPane().add(jLabel, "grow");
 
@@ -457,53 +456,53 @@ public class MainForm extends JFrame {
       showOverlay_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            showOverlay_ActionPerformed(evt);
+            showOverlayActionPerformed(evt);
          }
       });
       getContentPane().add(showOverlay_, "wrap");
-      
+
       jLabel = new JLabel("Pre-Filter");
-      jLabel.setFont(gFont); 
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
 
-      preFilterComboBox_.setFont(gFont); 
-      preFilterComboBox_.setModel(new DefaultComboBoxModel(new String[] { "None", "Gaussian1-5" }));
+      preFilterComboBox_.setFont(gFont);
+      preFilterComboBox_.setModel(new DefaultComboBoxModel(new String[] {"None", "Gaussian1-5"}));
       preFilterComboBox_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            preFilterComboBox_ActionPerformed(evt);
+            preFilterComboBoxActionPerformed(evt);
          }
       });
       preFilterComboBox_.setMinimumSize(dropDownSize);
       preFilterComboBox_.setMaximumSize(dropDownSizeMax);
       getContentPane().add(preFilterComboBox_, "wrap");
 
-      labelNPoints_.setFont(gFont); 
+      labelNPoints_.setFont(gFont);
       labelNPoints_.setText("n:       ");
       getContentPane().add(labelNPoints_, indent + ", split 2");
 
-      jLabel = new JLabel("Noise tolerance");   
-      jLabel.setFont(gFont); 
+      jLabel = new JLabel("Noise tolerance");
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, "right");
-           
-      noiseToleranceTextField_.setFont(gFont); 
+
+      noiseToleranceTextField_.setFont(gFont);
       noiseToleranceTextField_.setText("2000");
       noiseToleranceTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(noiseToleranceTextField_, "wrap");
-    
+
       getContentPane().add(new JSeparator(), "span, grow, wrap");
-      
-/*-----------  Fit Parameters  -----------*/
+
+      /*-----------  Fit Parameters  -----------*/
       jLabel = new JLabel("Fit Parameters...");
       getContentPane().add(jLabel, "left, wrap");
- 
-      jLabel = new JLabel("Dimensions");            
+
+      jLabel = new JLabel("Dimensions");
       jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
-         
-      fitDimensionsComboBox1_.setFont(gFont); 
+
+      fitDimensionsComboBox1_.setFont(gFont);
       fitDimensionsComboBox1_.setModel(new DefaultComboBoxModel(
-              new String[] { "1", "2", "3" }));
+            new String[] {"1", "2", "3"}));
       fitDimensionsComboBox1_.setMinimumSize(dropDownSize);
       fitDimensionsComboBox1_.setMaximumSize(dropDownSizeMax);
       fitDimensionsComboBox1_.addActionListener(new ActionListener() {
@@ -516,36 +515,36 @@ public class MainForm extends JFrame {
          }
       });
       getContentPane().add(fitDimensionsComboBox1_, "wrap");
- 
-      jLabel = new JLabel("Fitter");      
+
+      jLabel = new JLabel("Fitter");
       jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
-      
-      fitMethodComboBox1_.setFont(gFont); 
+
+      fitMethodComboBox1_.setFont(gFont);
       fitMethodComboBox1_.setModel(new DefaultComboBoxModel(
-              new String[] { "Simplex", "Levenberg-Marq", "Simplex-MLE", "LM-Weighted" }));
-      fitMethodComboBox1_.setMinimumSize(dropDownSize);    
+            new String[] {"Simplex", "Levenberg-Marq", "Simplex-MLE", "LM-Weighted"}));
+      fitMethodComboBox1_.setMinimumSize(dropDownSize);
       fitMethodComboBox1_.setMaximumSize(dropDownSize);
       getContentPane().add(fitMethodComboBox1_, "gapright push, wrap");
 
-      jLabel = new JLabel("Max Iterations");      
-      jLabel.setFont(gFont); 
+      jLabel = new JLabel("Max Iterations");
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
 
-      maxIterationsTextField_.setFont(gFont); 
+      maxIterationsTextField_.setFont(gFont);
       maxIterationsTextField_.setText("250");
       maxIterationsTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(maxIterationsTextField_, "wrap");
 
       jLabel = new JLabel("Box Size (pixels)");
-      jLabel.setFont(gFont); 
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, indent);
 
-      boxSizeTextField.setFont(gFont); 
+      boxSizeTextField.setFont(gFont);
       boxSizeTextField.setText("16");
       boxSizeTextField.setMinimumSize(textFieldDim);
       getContentPane().add(boxSizeTextField, "wrap");
-      
+
       useFixedWidthInFit_.setFont(gFont);
       useFixedWidthInFit_.setText("Fix Width");
       useFixedWidthInFit_.addActionListener(new ActionListener() {
@@ -563,26 +562,26 @@ public class MainForm extends JFrame {
       jLabel = new JLabel("nm");
       jLabel.setFont(gFont);
       getContentPane().add(jLabel, "wrap");
-      
+
       // HACK: not re-assigning jLabel as done below causes the last 
       // jLabel to not show. No idea why, but this works around the problem
       jLabel = new JLabel("Hack");
       getContentPane().add(new JSeparator(), "span 3, grow, wrap");
-      
-/*-----------  Filter Data  -----------*/
+
+      /*-----------  Filter Data  -----------*/
       getContentPane().add(new JLabel("Filter Data..."), "wrap");
-      
-      widthLabel_ = new JLabel(" nm < Width < "); 
-      
+
+      widthLabel_ = new JLabel(" nm < Width < ");
+
       filterDataCheckBoxWidth_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             updateWidthDisplay();
          }
       });
-      getContentPane().add(filterDataCheckBoxWidth_, indent + ",span 3, split 5");  
+      getContentPane().add(filterDataCheckBoxWidth_, indent + ",span 3, split 5");
 
-      minSigmaTextField_.setFont(gFont); 
+      minSigmaTextField_.setFont(gFont);
       minSigmaTextField_.setText("100");
       minSigmaTextField_.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -592,11 +591,11 @@ public class MainForm extends JFrame {
       });
       minSigmaTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(minSigmaTextField_);
-          
+
       widthLabel_.setFont(gFont);
       getContentPane().add(widthLabel_);
-      
-      maxSigmaTextField_.setFont(gFont); 
+
+      maxSigmaTextField_.setFont(gFont);
       maxSigmaTextField_.setText("200");
       maxSigmaTextField_.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -608,7 +607,7 @@ public class MainForm extends JFrame {
       getContentPane().add(maxSigmaTextField_);
 
       JLabel jLabel3 = new JLabel("nm");
-      jLabel3.setFont(gFont); 
+      jLabel3.setFont(gFont);
       getContentPane().add(jLabel3, "wrap");
 
       filterDataCheckBoxNrPhotons_.addActionListener(new ActionListener() {
@@ -619,7 +618,7 @@ public class MainForm extends JFrame {
       });
       getContentPane().add(filterDataCheckBoxNrPhotons_, indent + ", span, split 4");
 
-      minNrPhotonsTextField_.setFont(gFont); 
+      minNrPhotonsTextField_.setFont(gFont);
       minNrPhotonsTextField_.setText("100");
       minNrPhotonsTextField_.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -630,10 +629,10 @@ public class MainForm extends JFrame {
       getContentPane().add(minNrPhotonsTextField_);
 
       JLabel jLabel2 = new JLabel(" < # photons < ");
-      jLabel2.setFont(gFont); 
+      jLabel2.setFont(gFont);
       getContentPane().add(jLabel2);
 
-      maxNrPhotonsTextField_.setFont(gFont); 
+      maxNrPhotonsTextField_.setFont(gFont);
       maxNrPhotonsTextField_.setText("200");
       maxNrPhotonsTextField_.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -642,8 +641,8 @@ public class MainForm extends JFrame {
          }
       });
       getContentPane().add(maxNrPhotonsTextField_, "wrap");
- 
-      endTrackCheckBox_.setFont(gFont); 
+
+      endTrackCheckBox_.setFont(gFont);
       endTrackCheckBox_.setText("End track when missing");
       endTrackCheckBox_.addActionListener(new ActionListener() {
          @Override
@@ -657,38 +656,38 @@ public class MainForm extends JFrame {
       getContentPane().add(endTrackSpinner_, "width 40");
 
       jLabel.setText(" frames");
-      jLabel.setFont(gFont); 
+      jLabel.setFont(gFont);
       getContentPane().add(jLabel, "wrap");
 
       getContentPane().add(new JSeparator(), "span, grow, wrap");
 
-      
-/*-----------  Positions  -----------*/
+
+      /*-----------  Positions  -----------*/
       getContentPane().add(new JLabel("Positions..."), "wrap");
 
-      JButton allPosButton = new JButton ("All");
-      allPosButton.setFont(gFont); 
+      JButton allPosButton = new JButton("All");
+      allPosButton.setFont(gFont);
       allPosButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            allPosButton_ActionPerformed(evt);
+            allPosButtonActionPerformed(evt);
          }
       });
       getContentPane().add(allPosButton, indent + ",span, split 3");
 
-      
+
       final JButton currentPosButton = new JButton();
-      currentPosButton.setFont(gFont); 
+      currentPosButton.setFont(gFont);
       currentPosButton.setText("Current");
       currentPosButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            currentPosButton_ActionPerformed(evt);
+            currentPosButtonActionPerformed(evt);
          }
       });
       getContentPane().add(currentPosButton);
 
-      posTextField_.setFont(gFont); 
+      posTextField_.setFont(gFont);
       posTextField_.setHorizontalAlignment(JTextField.RIGHT);
       posTextField_.setMinimumSize(textFieldDim);
       posTextField_.setText("1");
@@ -696,27 +695,27 @@ public class MainForm extends JFrame {
 
       getContentPane().add(new JSeparator(), "span, grow, wrap");
 
-/*-----------  Channels  -----------*/
+      /*-----------  Channels  -----------*/
       getContentPane().add(new JLabel("Skip Channels..."), "wrap");
-      
+
       skipChannelsCheckBox_ = new JCheckBox();
-      skipChannelsCheckBox_.setFont(gFont); 
+      skipChannelsCheckBox_.setFont(gFont);
       skipChannelsCheckBox_.setText("Skip channel(s):");
-      getContentPane().add(skipChannelsCheckBox_, indent );
-      
+      getContentPane().add(skipChannelsCheckBox_, indent);
+
       channelsToSkip_.setMinimumSize(textFieldDim);
       getContentPane().add(channelsToSkip_, "wrap");
-      
-      
+
+
       getContentPane().add(new JSeparator(), "span, grow, wrap");
-/*-----------  Buttons  -----------*/
- 
+      /*-----------  Buttons  -----------*/
+
 
       fitAllButton_.setText("Fit");
       fitAllButton_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            fitAllButton_ActionPerformed(evt);
+            fitAllButtonActionPerformed(evt);
          }
       });
       getContentPane().add(fitAllButton_, "span, split 3, align center");
@@ -731,17 +730,17 @@ public class MainForm extends JFrame {
          }
       });
       getContentPane().add(trackButton);
-      
+
       mTrackButton_.setText("MTrack");
       mTrackButton_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            mTrackButton_ActionPerformed(evt);
+            mTrackButtonActionPerformed(evt);
          }
       });
       getContentPane().add(mTrackButton_, "wrap");
 
-          
+
       JButton showButton = new JButton("Data");
       showButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -759,83 +758,94 @@ public class MainForm extends JFrame {
          }
       });
       getContentPane().add(stopButton, "wrap");
-    
+
 
       pack();
-      
+
       setResizable(false);
    }
 
-  
-    private void trackButtonActionPerformed(java.awt.event.ActionEvent evt) {
-       GaussianTrackThread tT = new GaussianTrackThread(IJ.getImage(), 
-               FindLocalMaxima.FilterType.NONE);
-       updateValues(tT);
-       
-       // Execute on another thread,
-       // use tT.trackGaussians to run it on the same thread
-       tT.init();
-       System.out.println("started thread");
-    }
 
-    private void formWindowClosed(java.awt.event.WindowEvent evt) {
-       WINDOWOPEN = false;
-    }
+   private void trackButtonActionPerformed(java.awt.event.ActionEvent evt) {
+      GaussianTrackThread tT = new GaussianTrackThread(IJ.getImage(),
+            FindLocalMaxima.FilterType.NONE);
+      updateValues(tT);
 
-    private void fitAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-       if (ft_ == null || !ft_.isRunning()) {
-          ft_ = new FitAllThread(studio_, 
-                  nrThreads_,
-                  threadPool_,
-                  preFilterType_, 
-                  posTextField_.getText());
-          updateValues(ft_);
-          ft_.init();
-       } else {
-          JOptionPane.showMessageDialog(null, "Already running fitting analysis");
-       }
-    }
+      // Execute on another thread,
+      // use tT.trackGaussians to run it on the same thread
+      tT.init();
+      System.out.println("started thread");
+   }
+
+   private void formWindowClosed(java.awt.event.WindowEvent evt) {
+      WINDOWOPEN = false;
+   }
+
+   private void fitAllButtonActionPerformed(java.awt.event.ActionEvent evt) {
+      if (ft_ == null || !ft_.isRunning()) {
+         ft_ = new FitAllThread(studio_,
+               nrThreads_,
+               threadPool_,
+               preFilterType_,
+               posTextField_.getText());
+         updateValues(ft_);
+         ft_.init();
+      } else {
+         JOptionPane.showMessageDialog(null, "Already running fitting analysis");
+      }
+   }
 
    private void updateWidthDisplay() {
       boolean selected = filterDataCheckBoxWidth_.isSelected();
       minSigmaTextField_.setEnabled(selected);
       widthLabel_.setEnabled(selected);
       maxSigmaTextField_.setEditable(selected);
-    }
-   
+   }
+
    private void updateNrPhotonsDisplay() {
       boolean selected = filterDataCheckBoxNrPhotons_.isSelected();
       minNrPhotonsTextField_.setEnabled(selected);
       maxNrPhotonsTextField_.setEnabled(selected);
    }
-   
+
    private void updateEndTrack() {
       boolean selected = endTrackCheckBox_.isSelected();
       endTrackSpinner_.setEnabled(selected);
    }
-    
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {
+
+   private void formWindowClosing(java.awt.event.WindowEvent evt) {
       try {
          UserProfile up = studio_.getUserProfile();
          Class oc = MainForm.class;
          up.setString(oc, NOISETOLERANCE, noiseToleranceTextField_.getText());
-         up.setDouble(oc, PCF, NumberUtils.displayStringToDouble(photonConversionTextField_.getText()));
+         up.setDouble(oc, PCF,
+               NumberUtils.displayStringToDouble(photonConversionTextField_.getText()));
          up.setDouble(oc, GAIN, NumberUtils.displayStringToDouble(emGainTextField_.getText()));
-         up.setDouble(oc, PIXELSIZE, NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));
-         up.setDouble(oc, TIMEINTERVALMS, NumberUtils.displayStringToDouble(timeIntervalTextField_.getText()));
+         up.setDouble(oc, PIXELSIZE,
+               NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));
+         up.setDouble(oc, TIMEINTERVALMS,
+               NumberUtils.displayStringToDouble(timeIntervalTextField_.getText()));
          up.setDouble(oc, ZSTEPSIZE, NumberUtils.displayStringToDouble(zStepTextField_.getText()));
-         up.setDouble(oc, BACKGROUNDLEVEL, NumberUtils.displayStringToDouble(baseLevelTextField_.getText()));
-         up.setDouble(oc, READNOISE, NumberUtils.displayStringToDouble(readNoiseTextField_.getText()));
+         up.setDouble(oc, BACKGROUNDLEVEL,
+               NumberUtils.displayStringToDouble(baseLevelTextField_.getText()));
+         up.setDouble(oc, READNOISE,
+               NumberUtils.displayStringToDouble(readNoiseTextField_.getText()));
          up.setBoolean(oc, USEFILTER, filterDataCheckBoxWidth_.isSelected());
-         up.setDouble(oc, SIGMAMIN, NumberUtils.displayStringToDouble(minSigmaTextField_.getText()));
-         up.setDouble(oc, SIGMAMAX, NumberUtils.displayStringToDouble(maxSigmaTextField_.getText()));
+         up.setDouble(oc, SIGMAMIN,
+               NumberUtils.displayStringToDouble(minSigmaTextField_.getText()));
+         up.setDouble(oc, SIGMAMAX,
+               NumberUtils.displayStringToDouble(maxSigmaTextField_.getText()));
          up.setBoolean(oc, USENRPHOTONSFILTER, filterDataCheckBoxNrPhotons_.isSelected());
-         up.setDouble(oc, NRPHOTONSMIN, NumberUtils.displayStringToDouble(minNrPhotonsTextField_.getText()));
-         up.setDouble(oc, NRPHOTONSMAX, NumberUtils.displayStringToDouble(maxNrPhotonsTextField_.getText()));
-         up.setInt(oc, MAXITERATIONS, NumberUtils.displayStringToInt(maxIterationsTextField_.getText()));
+         up.setDouble(oc, NRPHOTONSMIN,
+               NumberUtils.displayStringToDouble(minNrPhotonsTextField_.getText()));
+         up.setDouble(oc, NRPHOTONSMAX,
+               NumberUtils.displayStringToDouble(maxNrPhotonsTextField_.getText()));
+         up.setInt(oc, MAXITERATIONS,
+               NumberUtils.displayStringToInt(maxIterationsTextField_.getText()));
          up.setInt(oc, BOXSIZE, NumberUtils.displayStringToInt(boxSizeTextField.getText()));
          up.setBoolean(oc, USEFIXEDWIDTH, useFixedWidthInFit_.isSelected());
-         up.setDouble(oc, FIXEDWIDTH, NumberUtils.displayStringToDouble(fixedWidthInFit_.getText()));
+         up.setDouble(oc, FIXEDWIDTH,
+               NumberUtils.displayStringToDouble(fixedWidthInFit_.getText()));
          up.setInt(oc, PREFILTER, preFilterComboBox_.getSelectedIndex());
          up.setInt(oc, FRAMEXPOS, getX());
          up.setInt(oc, FRAMEYPOS, getY());
@@ -848,7 +858,7 @@ public class MainForm extends JFrame {
       } catch (ParseException ex) {
          ReportingUtils.logError(ex, "Error while closing Localization Microscopy plugin");
       }
-      
+
       threadPool_.shutdownNow();
 
       WINDOWOPEN = false;
@@ -856,16 +866,16 @@ public class MainForm extends JFrame {
       this.setVisible(false);
    }
 
-    public void formWindowOpened() {
-       WINDOWOPEN = true;
-    }
-    
+   public void formWindowOpened() {
+      WINDOWOPEN = true;
+   }
+
    @Override
    public void dispose() {
       formWindowClosing(null);
    }
 
-   private void preFilterComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void preFilterComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
       String item = (String) preFilterComboBox_.getSelectedItem();
       if (item.equals("None")) {
          preFilterType_ = FindLocalMaxima.FilterType.NONE;
@@ -880,15 +890,17 @@ public class MainForm extends JFrame {
 
    private void maxSigmaTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
       if (Double.parseDouble(maxSigmaTextField_.getText())
-              <= Double.parseDouble(minSigmaTextField_.getText())) {
-         minSigmaTextField_.setText(Double.toString(Double.parseDouble(maxSigmaTextField_.getText()) - 1));
+            <= Double.parseDouble(minSigmaTextField_.getText())) {
+         minSigmaTextField_.setText(
+               Double.toString(Double.parseDouble(maxSigmaTextField_.getText()) - 1));
       }
    }
 
    private void minSigmaTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
       if (Double.parseDouble(minSigmaTextField_.getText())
-              >= Double.parseDouble(maxSigmaTextField_.getText())) {
-         maxSigmaTextField_.setText(Double.toString(Double.parseDouble(minSigmaTextField_.getText()) + 1));
+            >= Double.parseDouble(maxSigmaTextField_.getText())) {
+         maxSigmaTextField_.setText(
+               Double.toString(Double.parseDouble(minSigmaTextField_.getText()) + 1));
       }
    }
 
@@ -901,15 +913,17 @@ public class MainForm extends JFrame {
 
    private void minNrPhotonsTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
       if (Double.parseDouble(minNrPhotonsTextField_.getText())
-              >= Double.parseDouble(maxNrPhotonsTextField_.getText())) {
-         minNrPhotonsTextField_.setText(Double.toString(Double.parseDouble(maxNrPhotonsTextField_.getText()) - 1));
+            >= Double.parseDouble(maxNrPhotonsTextField_.getText())) {
+         minNrPhotonsTextField_.setText(
+               Double.toString(Double.parseDouble(maxNrPhotonsTextField_.getText()) - 1));
       }
    }
 
    private void maxNrPhotonsTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
       if (Double.parseDouble(maxNrPhotonsTextField_.getText())
-              <= Double.parseDouble(minNrPhotonsTextField_.getText())) {
-         maxNrPhotonsTextField_.setText(Double.toString(Double.parseDouble(minNrPhotonsTextField_.getText()) + 1));
+            <= Double.parseDouble(minNrPhotonsTextField_.getText())) {
+         maxNrPhotonsTextField_.setText(
+               Double.toString(Double.parseDouble(minNrPhotonsTextField_.getText()) + 1));
       }
    }
 
@@ -927,8 +941,8 @@ public class MainForm extends JFrame {
       if (dv != null) {
          spotOverlay_.clearSquares();
          try {
-            ImageProcessor iProc = studio_.data().ij().
-                    createProcessor(dv.getDisplayedImages().get(0));
+            ImageProcessor iProc = studio_.data().ij()
+                        .createProcessor(dv.getDisplayedImages().get(0));
             ImagePlus siPlus = new ImagePlus("tmp", iProc);
             int val = Integer.parseInt(noiseToleranceTextField_.getText());
             int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
@@ -948,7 +962,7 @@ public class MainForm extends JFrame {
       return true;
    }
 
-   private void readParmsButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void readParmsButtonActionPerformed(java.awt.event.ActionEvent evt) {
       // should not have made this a push button...
       readParmsButton_.setSelected(false);
 
@@ -963,7 +977,7 @@ public class MainForm extends JFrame {
       SummaryMetadata summaryMetadata = dataStore.getSummaryMetadata();
       if (summaryMetadata.getWaitInterval() != null) {
          timeIntervalTextField_.setText(NumberUtils.doubleToDisplayString(
-                 summaryMetadata.getWaitInterval()));
+               summaryMetadata.getWaitInterval()));
       }
       try {
          Image img = dataStore.getAnyImage();
@@ -989,7 +1003,8 @@ public class MainForm extends JFrame {
 
          int nrFrames = dataStore.getNextIndex(Coords.T);
          Image img0 = dataStore.getImage(img.getCoords().copyBuilder().channel(0).t(0).build());
-         Image imgLast = dataStore.getImage(img.getCoords().copyBuilder().channel(0).t(nrFrames - 1).build());
+         Image imgLast =
+               dataStore.getImage(img.getCoords().copyBuilder().channel(0).t(nrFrames - 1).build());
          double startTimeMs = img0.getMetadata().getElapsedTimeMs(0.0);
          double endTimeMs = imgLast.getMetadata().getElapsedTimeMs(0.0);
          double msPerFrame = (endTimeMs - startTimeMs) / nrFrames;
@@ -1001,14 +1016,14 @@ public class MainForm extends JFrame {
    }
 
    @Subscribe
-   public void OnImageChanged(DisplayPositionChangedEvent pe) {
+   public void onImageChanged(DisplayPositionChangedEvent pe) {
       if (spotOverlay_.isVisible()) {
          showNoiseTolerance();
       }
    }
 
-   private void showOverlay_ActionPerformed(java.awt.event.ActionEvent evt) {
-      DataViewer viewer = studio_.displays().getActiveDataViewer(); 
+   private void showOverlayActionPerformed(java.awt.event.ActionEvent evt) {
+      DataViewer viewer = studio_.displays().getActiveDataViewer();
       DisplayWindow dw = studio_.displays().getCurrentWindow();
 
       if (showOverlay_.isSelected()) {
@@ -1030,8 +1045,7 @@ public class MainForm extends JFrame {
       }
    }
 
-   private void mTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-
+   private void mTrackButtonActionPerformed(java.awt.event.ActionEvent evt) {
       // Poor way of tracking multiple spots by running sequential tracks
       // TODO: optimize
       final ImagePlus siPlus;
@@ -1061,13 +1075,13 @@ public class MainForm extends JFrame {
             if (rois != null && rois.length > 0) {
                for (Roi roi : rois) {
                   siPlus.setRoi(roi, false);
-                  Polygon pol = FindLocalMaxima.findMax(siPlus, 2 *  halfSize, val, preFilterType_);
+                  Polygon pol = FindLocalMaxima.findMax(siPlus, 2 * halfSize, val, preFilterType_);
                   for (int i = 0; i < pol.npoints && !aStop_.get(); i++) {
                      int x = pol.xpoints[i];
                      int y = pol.ypoints[i];
                      siPlus.setRoi(x - 2 * halfSize, y - 2 * halfSize, 4 * halfSize, 4 * halfSize);
                      GaussianTrackThread tT = new GaussianTrackThread(siPlus,
-                             FindLocalMaxima.FilterType.NONE);
+                           FindLocalMaxima.FilterType.NONE);
                      updateValues(tT);
                      tT.trackGaussians(true);
                   }
@@ -1079,7 +1093,7 @@ public class MainForm extends JFrame {
                   int y = pol.ypoints[i];
                   siPlus.setRoi(x - 2 * halfSize, y - 2 * halfSize, 4 * halfSize, 4 * halfSize);
                   GaussianTrackThread tT = new GaussianTrackThread(siPlus,
-                          FindLocalMaxima.FilterType.NONE);
+                        FindLocalMaxima.FilterType.NONE);
                   updateValues(tT);
                   tT.trackGaussians(true);
                }
@@ -1091,9 +1105,8 @@ public class MainForm extends JFrame {
 
    }
 
-   private void allPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void allPosButtonActionPerformed(java.awt.event.ActionEvent evt) {
       DataViewer dw = studio_.displays().getActiveDataViewer();
-
       int nrPos = 1;
       if (dw != null) {
          nrPos = dw.getDataProvider().getNextIndex(Coords.STAGE_POSITION);
@@ -1104,23 +1117,24 @@ public class MainForm extends JFrame {
 
    }
 
-   private void currentPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void currentPosButtonActionPerformed(java.awt.event.ActionEvent evt) {
       DataViewer dw = studio_.displays().getActiveDataViewer();
-
       try {
          int pos = 1;
-         if (dw != null ) {
+         if (dw != null) {
             pos = dw.getDisplayedImages().get(0).getCoords().getStagePosition() + 1;
          }
          posTextField_.setText("" + pos);
       } catch (IOException ioe) {
+         studio_.logs().logError(ioe);
       }
    }
 
    public void updateValues(GaussianInfo tT) {
       try {
          tT.setNoiseTolerance(Integer.parseInt(noiseToleranceTextField_.getText()));
-         tT.setPhotonConversionFactor(NumberUtils.displayStringToDouble(photonConversionTextField_.getText()));
+         tT.setPhotonConversionFactor(
+               NumberUtils.displayStringToDouble(photonConversionTextField_.getText()));
          tT.setGain(NumberUtils.displayStringToDouble(emGainTextField_.getText()));
          tT.setPixelSize((float) NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));
          tT.setZStackStepSize((float) NumberUtils.displayStringToDouble(zStepTextField_.getText()));

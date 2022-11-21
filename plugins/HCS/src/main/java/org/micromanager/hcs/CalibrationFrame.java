@@ -32,7 +32,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -42,12 +44,8 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerListModel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.JComboBox;
-import javax.swing.DefaultComboBoxModel;
 import mmcorej.DeviceType;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.Studio;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -57,25 +55,25 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * is currently positioned on.
  * The user can either define the current position as the center of that well
  * or select the 4 edges and let the application calculate the center.
- * 
+ *
  * @author Nico Stuurman
  */
 public class CalibrationFrame extends JFrame {
-   private final String NOTSET = "Not Set Yet";
-   private final String CALIBRATIONMETHOD = "CalibrationMethod";
-   private final String CALIBRATIONLEGACY = "Legacy";
-   private final String CALIBRATIONRECOMMENDED = "Recommended";
-   
-   public CalibrationFrame(final Studio studio, final SBSPlate plate, 
-           final SiteGenerator siteGenerator) {
-      
+   private final String notset = "Not Set Yet";
+   private final String calibrationMethod = "CalibrationMethod";
+   private final String calibrationLegacy = "Legacy";
+   private final String calibrationRecommended = "Recommended";
+
+   public CalibrationFrame(final Studio studio, final SBSPlate plate,
+                           final SiteGenerator siteGenerator) {
+
       final JFrame ourFrame = this;
-      MutablePropertyMapView settings = studio.profile().getSettings(this.getClass());
+      final MutablePropertyMapView settings = studio.profile().getSettings(this.getClass());
       super.setTitle("Calibrate XY Stage");
-      
-      JPanel contents = new JPanel(
+
+      final JPanel contents = new JPanel(
             new MigLayout("align, center, fillx, gap 12"));
-      
+
       JLabel warningLabel1 = new JLabel("Wrong calibrations can result in damaged equipment! ");
       JLabel warningLabel2 = new JLabel("Always check that the calibration is correct!");
       Font warningFont = new Font(warningLabel1.getFont().getName(), Font.PLAIN, 16);
@@ -85,8 +83,8 @@ public class CalibrationFrame extends JFrame {
       warningLabel2.setForeground(Color.red);
       contents.add(warningLabel1, "span 4, center, wrap");
       contents.add(warningLabel2, "span 4, center, wrap");
-      contents.add (new JSeparator(), "span 4, grow, wrap");
-      
+      contents.add(new JSeparator(), "span 4, grow, wrap");
+
       final List<String> rows = new ArrayList<String>();
       final Map<String, Integer> rowNumbers = new HashMap<String, Integer>();
       for (int i = 1; i < plate.getNumRows() + 1; i++) {
@@ -97,45 +95,45 @@ public class CalibrationFrame extends JFrame {
       final JSpinner rowSpinner = new JSpinner(model);
       contents.add(new JLabel("row:"), "span 2, split 2, gap 60");
       contents.add(rowSpinner, "width 50, center, pushx, gap 5");
-      
+
       model = new SpinnerNumberModel((int) 1, (int) 1, plate.getNumColumns(), (int) 1);
       final JSpinner columnSpinner = new JSpinner(model);
       contents.add(new JLabel("column:"), "span 2, split 2, gap 60");
       contents.add(columnSpinner, "width 50, center, pushx, gap 5, wrap");
-      
-      contents.add(new JLabel("Either position the XY stage at the center of " + 
-              "the selected well and press OK."), "span 4, wrap");
-        
+
+      contents.add(new JLabel("Either position the XY stage at the center of "
+            + "the selected well and press OK."), "span 4, wrap");
+
       contents.add(new JSeparator(), "span4, grow, wrap");
-      
-      contents.add(new JLabel("Or mark the top, right, bottom, and left edge " + 
-              "of the selected well and press OK"), "span 4, wrap");
-      contents.add(new JLabel("Use live mode and a Pattern Overlay to position " +
-              " edges in the center of the image."), "span 4, wrap");
-      
+
+      contents.add(new JLabel("Or mark the top, right, bottom, and left edge "
+            + "of the selected well and press OK"), "span 4, wrap");
+      contents.add(new JLabel("Use live mode and a Pattern Overlay to position "
+            + " edges in the center of the image."), "span 4, wrap");
+
       final Point2D.Double[] edges = new Point2D.Double[4];
       for (int i = 0; i < 4; i++) {
          edges[i] = new Point2D.Double();
       }
-      
-      JLabel topLabel = new JLabel(NOTSET);
+
+      JLabel topLabel = new JLabel(notset);
       JButton topButton = new JButton("Top");
       topButton.addActionListener(new EdgeListener(studio, topLabel, edges[0]));
-     
-      JLabel leftLabel = new JLabel(NOTSET);
+
+      JLabel leftLabel = new JLabel(notset);
       JButton leftButton = new JButton("Left");
       leftButton.addActionListener(new EdgeListener(studio, leftLabel, edges[1]));
-      
-      JLabel rightLabel = new JLabel(NOTSET);
+
+      JLabel rightLabel = new JLabel(notset);
       JButton rightButton = new JButton("Right");
       rightButton.addActionListener(new EdgeListener(studio, rightLabel, edges[2]));
-                 
-      JLabel bottomLabel = new JLabel(NOTSET);
+
+      JLabel bottomLabel = new JLabel(notset);
       JButton bottomButton = new JButton("Bottom");
       bottomButton.addActionListener(new EdgeListener(studio, bottomLabel, edges[3]));
-      
+
       final JLabel[] edgeLabels = {leftLabel, topLabel, rightLabel, bottomLabel};
-      
+
       contents.add(topButton, "span 4, center, wrap");
       contents.add(topLabel, "span 4, center, wrap");
       contents.add(leftButton, "span 2, center");
@@ -144,54 +142,55 @@ public class CalibrationFrame extends JFrame {
       contents.add(rightLabel, "span 2, center, wrap");
       contents.add(bottomLabel, "span 4, center, wrap");
       contents.add(bottomButton, "span 4, center, wrap");
-        
+
       contents.add(new JSeparator(), "span4, grow, wrap");
-      
+
       JLabel methodLabel = new JLabel();
       JPanel methodPanel = new JPanel(new MigLayout("align, center, fillx"));
       JComboBox methodCombo = new JComboBox();
       methodPanel.add(methodLabel, "span 2, wrap");
       methodPanel.add(methodCombo, "span 2");
       methodLabel.setText("Calibration Method");
-      methodCombo.setModel(new DefaultComboBoxModel(new String[] 
-               {CALIBRATIONLEGACY,CALIBRATIONRECOMMENDED}));
+      methodCombo.setModel(new DefaultComboBoxModel(new String[]
+               {calibrationLegacy, calibrationRecommended}));
       methodCombo.setToolTipText(
-              "<html>"
-                      + CALIBRATIONLEGACY + ": The XY stage adapter's coordinates will be reset. <br>"
-                      + "Positions saved during this session of MicroManager will not <br>"
-                      + "be valid in a new session unless the same calibration is run again. <br>"
-                      + "Calibration will need to be performed every time this plugin is used.<br><br>"
-                      + CALIBRATIONRECOMMENDED + ": Positions will be saved in terms of the default XY <br>"
-                      + "coordinate system. Calibration will be saved and will only need to be <br>"
-                      + "repeated if there is a change in XY stage hardware. Users of stages with <br>"
-                      + "no homing functionality will need to ensure that their coordinate system <br>"
-                      + "is consistent between sessions."
-                      + "</html>");
+            "<html>"
+                  + calibrationLegacy + ": The XY stage adapter's coordinates will be reset. <br>"
+                  + "Positions saved during this session of MicroManager will not <br>"
+                  + "be valid in a new session unless the same calibration is run again. <br>"
+                  + "Calibration will need to be performed every time this plugin is used.<br><br>"
+                  + calibrationRecommended
+                  + ": Positions will be saved in terms of the default XY <br>"
+                  + "coordinate system. Calibration will be saved and will only need to be <br>"
+                  + "repeated if there is a change in XY stage hardware. Users of stages with <br>"
+                  + "no homing functionality will need to ensure that their coordinate system <br>"
+                  + "is consistent between sessions."
+                  + "</html>");
       contents.add(methodPanel, "span 2");
-      methodCombo.setSelectedItem(settings.getString(CALIBRATIONMETHOD, CALIBRATIONRECOMMENDED));
-      
-      JButton cancelButton = new JButton ("Cancel");
+      methodCombo.setSelectedItem(settings.getString(calibrationMethod, calibrationRecommended));
+
+      JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            cleanup (edgeLabels);
+            cleanup(edgeLabels);
             ourFrame.dispose();
          }
       });
       contents.add(cancelButton, "span 4, split 2, tag cancel");
-      
+
       // OK Button, this is where all the action happens
-      JButton OKButton = new JButton ("OK");
-      OKButton.addActionListener(new ActionListener() {
+      JButton okButton = new JButton("OK");
+      okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            int rowNr = rowNumbers.get( (String) rowSpinner.getValue());
+            int rowNr = rowNumbers.get((String) rowSpinner.getValue());
             int colNr = (Integer) columnSpinner.getValue();
             // check for edges and be smart about it
             boolean allEdges = true;
             boolean anyEdge = false;
             for (JLabel edgeLabel : edgeLabels) {
-               if (edgeLabel.getText().equals(NOTSET)) {
+               if (edgeLabel.getText().equals(notset)) {
                   allEdges = false;
                } else {
                   anyEdge = true;
@@ -201,7 +200,7 @@ public class CalibrationFrame extends JFrame {
             if (anyEdge && !allEdges) {
                // unset all edges and inform the user
                for (JLabel edgeLabel : edgeLabels) {
-                  edgeLabel.setText(NOTSET);
+                  edgeLabel.setText(notset);
                }
                studio.logs().showMessage("Either set all edges or none");
                return;
@@ -214,13 +213,13 @@ public class CalibrationFrame extends JFrame {
                double bottomY = edges[3].y;
                // Sanity checks:
                if (Math.abs(rightX - leftX) > plate.getWellSpacingX()) {
-                  studio.logs().showError("The distance between the right and left edge \n" +
-                          "is larger than the the well-to well distance for this plate.  Aborting");
+                  studio.logs().showError("The distance between the right and left edge \n"
+                        + "is larger than the the well-to well distance for this plate.  Aborting");
                   return;
                }
                if (Math.abs(topY - bottomY) > plate.getWellSpacingY()) {
-                  studio.logs().showError("The distance between the bottom and top edge \n" +
-                          "is larger than the the well-to well distance for this plate.  Aborting");
+                  studio.logs().showError("The distance between the bottom and top edge \n"
+                        + "is larger than the the well-to well distance for this plate.  Aborting");
                   return;
                }
                // Dangerous parts: move the stage to the middle, should the user be warned?
@@ -234,55 +233,58 @@ public class CalibrationFrame extends JFrame {
                   dispose();
                   return;
                }
-            }     
+            }
             try {
-                Point2D.Double pt = new Point2D.Double(plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(),
-                        plate.getFirstWellY() + (rowNr  - 1) * plate.getWellSpacingY());
-                Point2D.Double offset;
-                Boolean saveCalibration;
-                if (CALIBRATIONRECOMMENDED.equals(methodCombo.getSelectedItem())) { 
-                    double x = studio.core().getXPosition();
-                    double y = studio.core().getYPosition();
-                    offset = new Point2D.Double(x - pt.getX(), y - pt.getY());
-                    saveCalibration = true;
-                   JOptionPane.showMessageDialog(ourFrame, 
-                           "Plugin offset set at position: " + offset.x + "," + offset.y);
-                } else { //Legacy. Adjust the coordinate system with no offset.
-                    studio.getCMMCore().setAdapterOriginXY(pt.getX(), pt.getY());
-                    offset = new Point2D.Double(0,0);
-                    saveCalibration = false;
-                    JOptionPane.showMessageDialog(ourFrame, 
-                       "XY Stage set at position: " + pt.x + "," + pt.y);
-                }
-                settings.putString(CALIBRATIONMETHOD, (String) methodCombo.getSelectedItem());
-                siteGenerator.finishCalibration(offset);
+               Point2D.Double pt = new Point2D.Double(
+                     plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(),
+                     plate.getFirstWellY() + (rowNr - 1) * plate.getWellSpacingY());
+               Point2D.Double offset;
+               Boolean saveCalibration;
+               if (calibrationRecommended.equals(methodCombo.getSelectedItem())) {
+                  double x = studio.core().getXPosition();
+                  double y = studio.core().getYPosition();
+                  offset = new Point2D.Double(x - pt.getX(), y - pt.getY());
+                  saveCalibration = true;
+                  JOptionPane.showMessageDialog(ourFrame,
+                        "Plugin offset set at position: " + offset.x + "," + offset.y);
+               } else { //Legacy. Adjust the coordinate system with no offset.
+                  studio.getCMMCore().setAdapterOriginXY(pt.getX(), pt.getY());
+                  offset = new Point2D.Double(0, 0);
+                  saveCalibration = false;
+                  JOptionPane.showMessageDialog(ourFrame,
+                        "XY Stage set at position: " + pt.x + "," + pt.y);
+               }
+               settings.putString(calibrationMethod, (String) methodCombo.getSelectedItem());
+               siteGenerator.finishCalibration(offset);
             } catch (Exception ex) {
                studio.logs().showError(ex, "Failed to reset the stage's coordinates");
             }
-            cleanup (edgeLabels);
+            cleanup(edgeLabels);
             dispose();
          }
       });
-      
-      contents.add(OKButton, "tag ok, wrap");
-      
+
+      contents.add(okButton, "tag ok, wrap");
+
       super.add(contents);
       super.pack();
       super.setLocationRelativeTo(siteGenerator);
       super.setResizable(false);
       super.setVisible(true);
-      
+
    }
-   
+
    private class EdgeListener implements ActionListener {
       private final Studio studio_;
       private final JLabel label_;
-      final private Point2D.Double pos_;
+      private final Point2D.Double pos_;
+
       public EdgeListener(Studio studio, JLabel label, Point2D.Double pos) {
          studio_ = studio;
          label_ = label;
          pos_ = pos;
       }
+
       @Override
       public void actionPerformed(ActionEvent e) {
          try {
@@ -296,11 +298,11 @@ public class CalibrationFrame extends JFrame {
          }
       }
    }
-   
-   private void cleanup (JLabel[] edges) {
+
+   private void cleanup(JLabel[] edges) {
       for (JLabel edge : edges) {
-         edge.setText(NOTSET);
+         edge.setText(notset);
       }
    }
-   
+
 }

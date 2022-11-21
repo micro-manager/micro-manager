@@ -4,6 +4,7 @@
  * Author: Brandon Simpson (brandon@asiimaging.com)
  * Copyright (c) 2014-2021, Applied Scientific Instrumentation
  */
+
 package com.asiimaging.crisp.utils;
 
 import java.io.File;
@@ -19,31 +20,32 @@ import java.util.List;
  */
 public class FileUtils {
 
-    public static Path initPath(final String root, final String fileName, String ext) {
-        int count = 0;
-        ext = ext.toLowerCase();
-        Path path = Paths.get(root, fileName + "." + ext);
-        while (Files.exists(path)) {
-            path = Paths.get(root, fileName + count + "." + ext);
-            count++;
-        }
-        return path;
-    }
+   public static Path initPath(final String root, final String fileName, String ext) {
+      int count = 0;
+      ext = ext.toLowerCase();
+      Path path = Paths.get(root, fileName + "." + ext);
+      while (Files.exists(path)) {
+         path = Paths.get(root, fileName + count + "." + ext);
+         count++;
+      }
+      return path;
+   }
 
-    public static void createDirectory(final String root) throws Exception {
-        final File directory = new File(root);
-        if (!directory.exists()) {
-            if (!directory.mkdir()) {
-                throw new Exception();
-            }
-        }
-    }
+   public static void createDirectory(final String root) throws Exception {
+      final File directory = new File(root);
+      if (!directory.exists()) {
+         if (!directory.mkdir()) {
+            throw new Exception();
+         }
+      }
+   }
 
-    public static List<String> readFile(final File file) throws IOException {
-        return Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
-    }
+   public static List<String> readFile(final File file) throws IOException {
+      return Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
+   }
 
-    public static void saveFile(final List<String> contents, final String filePath, final String extension) throws IOException {
-        Files.write(Paths.get(filePath + extension), contents, StandardCharsets.UTF_8);
-    }
+   public static void saveFile(final List<String> contents, final String filePath,
+                               final String extension) throws IOException {
+      Files.write(Paths.get(filePath + extension), contents, StandardCharsets.UTF_8);
+   }
 }

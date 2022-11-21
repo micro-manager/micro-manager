@@ -28,6 +28,7 @@ public class HCSException extends Exception {
 
    /**
     * Constructs a MMAcqDataException with an explanatory message.
+    *
     * @param message - the reason for the exception.
     */
    public HCSException(String message) {

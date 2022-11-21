@@ -10,23 +10,20 @@
 
 import com.google.common.eventbus.Subscribe;
 import edu.ucsf.valelab.gaussianfit.MainForm;
-
-import ij.plugin.*;
+import ij.plugin.PlugIn;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
-
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
- *
  * @author nico
  */
 @org.scijava.plugin.Plugin(type = MenuPlugin.class)
-public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
+public class GaussianTrack implements PlugIn, MenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Localization Microscopy";
    public static final String TOOLTIPDESCRIPTION =
-       "Toolbox for analyzing spots using Gaussian fitting";
+         "Toolbox for analyzing spots using Gaussian fitting";
 
 
    private MainForm theForm_;
@@ -53,7 +50,7 @@ public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
    }
 
    @Override
-   public void setContext(Studio studio) { 
+   public void setContext(Studio studio) {
       studio_ = studio;
       studio_.events().registerForEvents(this);
    }
@@ -64,8 +61,9 @@ public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
    }
 
    public void dispose() {
-      if (theForm_ != null)
+      if (theForm_ != null) {
          theForm_.dispose();
+      }
    }
 
    @Override
@@ -82,7 +80,7 @@ public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
    public String getCopyright() {
       return "University of California, 2010-2017";
    }
-   
+
    @Subscribe
    public void closeRequested(ShutdownCommencingEvent sce) {
       if (!sce.isCanceled()) {

@@ -28,37 +28,33 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
-
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.Insets;
 import java.io.File;
 import java.util.GregorianCalendar;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.Timer;
 import javax.swing.border.BevelBorder;
-
 import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
-import org.jfree.data.xy.XYSeries;
 import mmcorej.org.json.JSONException;
-
+import org.jfree.data.xy.XYSeries;
+import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.Studio;
-import org.micromanager.UserProfile;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.TextUtils;
@@ -68,7 +64,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 public class TrackerControl extends JFrame {
    public static final String menuName = "Live Tracking";
    public static final String tooltipDescription =
-      "Use image correlation based tracking to countersteer the XY stage";
+         "Use image correlation based tracking to countersteer the XY stage";
 
    private Datastore store_;
    private DisplayWindow display_;
@@ -130,7 +126,7 @@ public class TrackerControl extends JFrame {
    private double distUm_;
    private final JButton topLeftButton_;
    private final JButton bottomRightButton_;
-   
+
    private double firstX_;
    private double firstY_;
 
@@ -145,23 +141,24 @@ public class TrackerControl extends JFrame {
          xmin = 0;
          xmax = 0;
          ymin = 0;
-         ymax = 0;         
+         ymax = 0;
       }
+
       public boolean isValid() {
-         return (xmax-xmin)>0 && (ymax-ymin)>0;
+         return (xmax - xmin) > 0 && (ymax - ymin) > 0;
       }
 
       public boolean isWithin(double x, double y) {
-         return x>xmin && x<xmax && y>ymin && y<ymax;
+         return x > xmin && x < xmax && y > ymin && y < ymax;
       }
 
       public void clear() {
          xmin = 0;
          xmax = 0;
          ymin = 0;
-         ymax = 0;                  
+         ymax = 0;
       }
-      
+
       public void normalize() {
          if (xmin > xmax) {
             double tmp = xmin;
@@ -173,9 +170,11 @@ public class TrackerControl extends JFrame {
             ymin = ymax;
             ymax = tmp;
          }
-            
+
       }
-   };
+   }
+
+   ;
 
    /**
     * Create the dialog
@@ -186,16 +185,17 @@ public class TrackerControl extends JFrame {
       limits_ = new MMRect();
       initialize();
       app_ = app;
-      final UserProfile up  = app_.profile();
+      final UserProfile up = app_.profile();
 
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowOpened(WindowEvent e) {
-            resolutionPix_ = up.getInt(TrackerControl.this.getClass(), RESOLUTION_PIX, resolutionPix_);
+            resolutionPix_ =
+                  up.getInt(TrackerControl.this.getClass(), RESOLUTION_PIX, resolutionPix_);
             offsetPix_ = up.getInt(TrackerControl.this.getClass(), OFFSET_PIX, offsetPix_);
             intervalMs_ = up.getInt(TrackerControl.this.getClass(), INTERVAL_MS, intervalMs_);
             diskRadioButton_.setSelected(up.getBoolean(TrackerControl.this.getClass(),
-                    DISK_RECORDING, diskRadioButton_.isSelected()));
+                  DISK_RECORDING, diskRadioButton_.isSelected()));
             rootField_.setText(up.getString(TrackerControl.this.getClass(), ROOT, ""));
             nameField_.setText(up.getString(TrackerControl.this.getClass(), NAME, ""));
 
@@ -211,7 +211,7 @@ public class TrackerControl extends JFrame {
             up.setInt(TrackerControl.this.getClass(), OFFSET_PIX, offsetPix_);
             up.setInt(TrackerControl.this.getClass(), INTERVAL_MS, intervalMs_);
             up.setBoolean(TrackerControl.this.getClass(), DISK_RECORDING,
-                    diskRadioButton_.isSelected());
+                  diskRadioButton_.isSelected());
             up.setString(TrackerControl.this.getClass(), ROOT, rootField_.getText());
             up.setString(TrackerControl.this.getClass(), NAME, nameField_.getText());
          }
@@ -222,7 +222,7 @@ public class TrackerControl extends JFrame {
       getContentPane().setLayout(null);
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 412, 346);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
@@ -246,7 +246,7 @@ public class TrackerControl extends JFrame {
             pixelsPrev_ = null;
             pixelsCur_ = null;
             timer_.setDelay(intervalMs_);
-            track(); 
+            track();
          }
       });
       trackButton.setText("Track!");
@@ -299,7 +299,7 @@ public class TrackerControl extends JFrame {
       bottomRightButton_ = new JButton();
       bottomRightButton_.setText("Bottom Right");
       bottomRightButton_.setBounds(10, 170, 125, 26);
-      bottomRightButton_.setMargin(new Insets(0,0,0,0));
+      bottomRightButton_.setMargin(new Insets(0, 0, 0, 0));
       getContentPane().add(bottomRightButton_);
 
       labelTopLeft_ = new JLabel();
@@ -407,7 +407,7 @@ public class TrackerControl extends JFrame {
                (new Thread(doTrack)).start();
             }
          }
-       };
+      };
       timer_ = new Timer(intervalMs_, timerHandler);
       timer_.stop();
 
@@ -418,8 +418,8 @@ public class TrackerControl extends JFrame {
     */
    protected void browse() {
       FileDialogs.FileType ft = new FileDialogs.FileType("LiveTracking root", "LiveTracking root",
-           System.getProperty("user.home") + "/LiveTracking",
-           true, "");
+            System.getProperty("user.home") + "/LiveTracking",
+            true, "");
       File f = FileDialogs.openDir(null, "Live Tracking file location", ft);
       if (f != null) {
          rootField_.setText(f.getAbsolutePath());
@@ -429,7 +429,7 @@ public class TrackerControl extends JFrame {
    public void track() {
       imageCounter_ = 0;
       distUm_ = 0.0;
-     
+
       // Detect desired ROI in Snap/Live Window
       ImagePlus implus = null;
       DisplayWindow win = app_.live().getDisplay();
@@ -455,7 +455,7 @@ public class TrackerControl extends JFrame {
       corrStack_.addSlice(corrImproc);
       corrImplus_ = new ij.ImagePlus("Cross Correlation", corrStack_);
       corrImplus_.show();
-      
+
       app_.logs().logMessage("Tracking started at " + GregorianCalendar.getInstance().getTime());
 
       acqName_ = nameField_.getText();
@@ -467,22 +467,20 @@ public class TrackerControl extends JFrame {
          try {
             store_ = app_.data().createMultipageTIFFDatastore(
                   rootField_.getText(), true, false);
-         }
-         catch (java.io.IOException e) {
+         } catch (java.io.IOException e) {
             app_.logs().showError(e, "Error opening file " + rootField_.getText() + " for saving");
          }
-      }
-      else {
+      } else {
          store_ = app_.data().createRAMDatastore();
       }
       display_ = app_.displays().createDisplay(store_);
-      xySeries_ = new XYSeries("Track",false);
-      TrackerUtils.plotData("Cell Track: " + acqName_, xySeries_, "X (micron)", 
-               "Y (micron)", 100, 100);
+      xySeries_ = new XYSeries("Track", false);
+      TrackerUtils.plotData("Cell Track: " + acqName_, xySeries_, "X (micron)",
+            "Y (micron)", 100, 100);
       timer_.start();
    }
-   
-   
+
+
    public void stopTracking() {
 
       app_.logs().logMessage("Tracking stopped at " + GregorianCalendar.getInstance().getTime());
@@ -494,7 +492,7 @@ public class TrackerControl extends JFrame {
       try {
          app_.core().snapImage();
          TaggedImage tagged = app_.core().getTaggedImage();
-        
+
          if (acqName_ != null) {
             MDUtils.setFrameIndex(tagged.tags, imageCounter_);
             Image image = app_.data().convertTaggedImage(tagged);
@@ -504,18 +502,20 @@ public class TrackerControl extends JFrame {
             int size = image.getWidth() * image.getHeight();
             if (tagged.pix instanceof byte[]) {
                pixelsCur_ = new float[size];
-               byte[] pixels = (byte[])tagged.pix;
-               for (int i = 0; i < size; i++)
+               byte[] pixels = (byte[]) tagged.pix;
+               for (int i = 0; i < size; i++) {
                   pixelsCur_[i] = pixels[i];
+               }
             }
             if (tagged.pix instanceof short[]) {
                pixelsCur_ = new float[size];
-               short[] pixels = (short[])tagged.pix;
-               for (int i = 0; i < size; i++)
+               short[] pixels = (short[]) tagged.pix;
+               for (int i = 0; i < size; i++) {
                   pixelsCur_[i] = pixels[i];
+               }
             }
             if (tagged.pix instanceof float[]) {
-               pixelsCur_ = java.util.Arrays.copyOf((float[])tagged.pix, size);
+               pixelsCur_ = java.util.Arrays.copyOf((float[]) tagged.pix, size);
             }
             imWidth_ = image.getWidth();
          }
@@ -526,7 +526,7 @@ public class TrackerControl extends JFrame {
          return null;
       }
    }
-   
+
 
    private void processOneFrame(TaggedImage tagged, boolean moveStage) {
       if (pixelsPrev_ == null) {
@@ -549,12 +549,13 @@ public class TrackerControl extends JFrame {
       display_.getImagePlus().setRoi(roi_, true);
       //IJ.write("ROI pos: " + r.x + "," + r.y);
 
-      int width = r.width, height = r.height;
+      int width = r.width;
+      int height = r.height;
       double corScale = width * height;
 
       double maxCor = 0;
-      for (int k=-offsetPix_; k<offsetPix_; k += resolutionPix_) {
-         for (int l=-offsetPix_; l<offsetPix_; l += resolutionPix_) {
+      for (int k = -offsetPix_; k < offsetPix_; k += resolutionPix_) {
+         for (int l = -offsetPix_; l < offsetPix_; l += resolutionPix_) {
 
             // calculate correlation
             double sum = 0.0;
@@ -574,7 +575,7 @@ public class TrackerControl extends JFrame {
             sum /= corScale;
             meanPrev /= corScale;
             meanCur /= corScale;
-            sum /= meanPrev*meanCur;
+            sum /= meanPrev * meanCur;
 
             int x = (l + offsetPix_) / resolutionPix_;
             int y = (k + offsetPix_) / resolutionPix_;
@@ -592,8 +593,7 @@ public class TrackerControl extends JFrame {
       if (corrImplus_ == null) {
          corrImplus_ = new ij.ImagePlus("Cross Correlation", corrStack_);
          corrImplus_.show();
-      }
-      else {
+      } else {
          corrImplus_.setPosition(imageCounter_ + 1);
          corrImplus_.updateAndRepaintWindow();
       }
@@ -606,10 +606,12 @@ public class TrackerControl extends JFrame {
       double shiftYUm = -kMax * pixelSizeUm_;
 
       // apply image transposition
-      if (mirrorX_)
+      if (mirrorX_) {
          shiftXUm = -shiftXUm;
-      if (mirrorY_)
+      }
+      if (mirrorY_) {
          shiftYUm = -shiftYUm;
+      }
       if (rotate_) {
          double tmp = shiftXUm;
          shiftXUm = shiftYUm;
@@ -627,7 +629,7 @@ public class TrackerControl extends JFrame {
             // obtain current XY stage position
             // NOTE: due to Java parameter passing convention, x and y parameters must be arrays
             double[] xCur = new double[1];
-            double[] yCur = new double[1];            
+            double[] yCur = new double[1];
             app_.core().getXYPosition(stage_, xCur, yCur);
             tagged.tags.put(TRACK_X, xCur[0]);
             tagged.tags.put(TRACK_Y, yCur[0]);
@@ -636,16 +638,16 @@ public class TrackerControl extends JFrame {
             tagged.tags.put(RECT_X, r.x);
             tagged.tags.put(RECT_Y, r.y);
             tagged.tags.put(RECT_W, r.width);
-            tagged.tags.put(RECT_H, r.height);                   
+            tagged.tags.put(RECT_H, r.height);
 
             // update the XY position based on the offset
             double newX = xCur[0] + dxUm;
             double newY = yCur[0] + dyUm;
-            
+
             // Plot relative coordinates, swap Y axis to match image direction
             if (xySeries_.isEmpty()) {
-                firstX_ = newX;
-                firstY_ = newY;
+               firstX_ = newX;
+               firstY_ = newY;
             }
             xySeries_.add(firstX_ - newX, firstY_ - newY);
 
@@ -671,8 +673,10 @@ public class TrackerControl extends JFrame {
       double d = Math.sqrt(dxUm * dxUm + dyUm * dyUm);
       distUm_ += d;
       double v = d / intervalMs_ * 1000.0;
-      speedLabel_.setText("n=" + imageCounter_ + ", t=" + TextUtils.FMT2.format(((double) imageCounter_ * intervalMs_) / 1000.0)
-              +     " s, d=" + TextUtils.FMT2.format(d) + " um, l=" + TextUtils.FMT2.format(distUm_) + " um, v=" + TextUtils.FMT2.format(v) + " um/s");
+      speedLabel_.setText("n=" + imageCounter_ + ", t="
+            + TextUtils.FMT2.format(((double) imageCounter_ * intervalMs_) / 1000.0)
+            + " s, d=" + TextUtils.FMT2.format(d) + " um, l=" + TextUtils.FMT2.format(distUm_)
+            + " um, v=" + TextUtils.FMT2.format(v) + " um/s");
       try {
          tagged.tags.put(D, d);
          tagged.tags.put(V, v);
@@ -683,24 +687,28 @@ public class TrackerControl extends JFrame {
 
       imageCounter_++;
    }
- 
+
    private void initialize() {
-      if (app_ == null)
+      if (app_ == null) {
          return;
-      
+      }
+
       stage_ = app_.core().getXYStageDevice();
       pixelSizeUm_ = app_.core().getPixelSizeUm();
       String camera = app_.core().getCameraDevice();
       try {
-         mirrorX_ = app_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
-         mirrorY_ = app_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
-         rotate_ = app_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
+         mirrorX_ = app_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX())
+               .equals("1");
+         mirrorY_ = app_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY())
+               .equals("1");
+         rotate_ =
+               app_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
 
       } catch (Exception e1) {
          // TODO Auto-generated catch block
          app_.logs().showError(e1, "Problem initializing Live Tracking plugin", this);
       }
-      
+
       topLeftButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
@@ -717,7 +725,7 @@ public class TrackerControl extends JFrame {
             }
          }
       });
-      
+
       bottomRightButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
@@ -734,8 +742,8 @@ public class TrackerControl extends JFrame {
             }
          }
       });
-  }
-   
+   }
+
    public void configurationChanged() {
       initialize();
    }

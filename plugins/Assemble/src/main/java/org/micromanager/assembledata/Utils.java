@@ -87,7 +87,7 @@ public class Utils {
     * and the text at the beginning the modality (here: TIRF or Confocal, but 
     * can be more or less anything without an underscore
     * There should be an underscore behind "Site", and dashes separating the other parts
-    * 
+    *
     * @param input - input file name
     * @param root - Text at the beginning (Tirf or confocal in this case)
     * @param well - Well indicator (from HCS: letter plus number)

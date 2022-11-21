@@ -24,19 +24,17 @@ package org.micromanager.randomizer;
 import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
-
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 
 /**
  * Plugin that randomizes the position names to assist in blind scoring.
- * It requires data generated using the HCS plugin and will replace the 
- * well in the name with a random number.  The keys relating numbers back 
+ * It requires data generated using the HCS plugin and will replace the
+ * well in the name with a random number.  The keys relating numbers back
  * to wells are put in the summarymetadata, so do not look at those until
  * you are done scoring the images.
- * 
+ *
  * @author nico
  */
 @Plugin(type = DisplayGearMenuPlugin.class)

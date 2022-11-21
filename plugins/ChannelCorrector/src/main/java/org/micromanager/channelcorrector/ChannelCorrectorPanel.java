@@ -30,21 +30,6 @@ import edu.ucsf.valelab.gaussianfit.datasettransformations.CoordinateMapper;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
-import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
-import org.micromanager.data.Coordinates;
-import org.micromanager.data.Coords;
-import org.micromanager.data.DataProvider;
-import org.micromanager.data.Image;
-import org.micromanager.display.DataViewer;
-import org.micromanager.propertymap.MutablePropertyMapView;
-
-import javax.swing.JButton;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import java.awt.Polygon;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
@@ -58,6 +43,20 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import javax.swing.JButton;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.Image;
+import org.micromanager.display.DataViewer;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 public class ChannelCorrectorPanel extends JPanel {
@@ -73,7 +72,8 @@ public class ChannelCorrectorPanel extends JPanel {
    private final int threshold_ = 100;
    private final int maxIterations_ = 100; // maximum number of iterations for the Gaussian fit
    private final int fitmode_ = 2; // Use Nelder Mead to perform the minimization
-   private final int maxPairDistance_ = 10; // max distance  in pixels between spots in both channels
+   private final int maxPairDistance_ = 10;
+   // max distance  in pixels between spots in both channels
    // anything larger can not match
 
    public ChannelCorrectorPanel(Studio studio, DataViewer dataViewer, int ch2nr,
@@ -99,7 +99,7 @@ public class ChannelCorrectorPanel extends JPanel {
                try {
                   SwingUtilities.invokeLater(() -> {
                      studio_.alerts().postAlert("ChannelCorrector", this.getClass(),
-                             "Calculating " + channels.get(0) + "-" + channels.get(ch2nr_));
+                           "Calculating " + channels.get(0) + "-" + channels.get(ch2nr_));
                   });
                   AffineTransform af = calculateTransform();
                   if (af != null) {
@@ -115,7 +115,7 @@ public class ChannelCorrectorPanel extends JPanel {
                            }
                         }
                         studio_.alerts().postAlert("ChannelCorrector", this.getClass(),
-                                "Finished " +  channels.get(0) + "-" + channels.get(ch2nr_));
+                              "Finished " + channels.get(0) + "-" + channels.get(ch2nr_));
                      });
                   }
                } catch (IOException ioe) {
@@ -138,12 +138,11 @@ public class ChannelCorrectorPanel extends JPanel {
             ftf.addPropertyChangeListener("value", evt -> {
                if (ftf.getValue() instanceof Double) {
                   flatAffine[r + c * 2] = (Double) ftf.getValue();
-               }
-               else if (ftf.getValue() instanceof Long) {
+               } else if (ftf.getValue() instanceof Long) {
                   flatAffine[r + c * 2] = (Long) ftf.getValue();
                }
                affineTransform_.setTransform(flatAffine[0], flatAffine[1], flatAffine[2],
-                       flatAffine[3], flatAffine[4], flatAffine[5]);
+                     flatAffine[3], flatAffine[4], flatAffine[5]);
                settings.putAffineTransform(key, affineTransform_);
             });
             String wrap = "";
@@ -207,8 +206,8 @@ public class ChannelCorrectorPanel extends JPanel {
 
       if (points.size() < 4) {
          JOptionPane.showMessageDialog(null,
-                 "Found less than 4 matching points.  Can not calculate affine transform",
-                 "Error", JOptionPane.ERROR_MESSAGE);
+               "Found less than 4 matching points.  Can not calculate affine transform",
+               "Error", JOptionPane.ERROR_MESSAGE);
          return null;
       }
 
@@ -219,7 +218,7 @@ public class ChannelCorrectorPanel extends JPanel {
          af = af.createInverse();
       } catch (NoninvertibleTransformException ex) {
          JOptionPane.showMessageDialog(null, "Inexplicably failed to invert the affine transform",
-                 "Annoying Error!", JOptionPane.ERROR_MESSAGE);
+               "Annoying Error!", JOptionPane.ERROR_MESSAGE);
       }
 
       return af;
@@ -230,7 +229,7 @@ public class ChannelCorrectorPanel extends JPanel {
       ImageProcessor siProc = studio_.data().ij().createProcessor(img);
       ImagePlus siPlus = new ImagePlus("noname", siProc);
       Polygon maxima = FindLocalMaxima.findMax(siPlus, distance_, threshold_,
-              FindLocalMaxima.FilterType.NONE);
+            FindLocalMaxima.FilterType.NONE);
 
       int[][] sC = new int[maxima.npoints][2];
       for (int j = 0; j < maxima.npoints; j++) {
@@ -243,14 +242,14 @@ public class ChannelCorrectorPanel extends JPanel {
       for (int j = 0; j < sC.length; j++) {
          // filter out spots too close to the edge
          if (sC[j][0] > halfSize_ && sC[j][0] < siPlus.getWidth() - halfSize_
-                 && sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
+               && sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
             ImageProcessor sp = SpotData.getSpotProcessor(siProc,
-                    halfSize_, sC[j][0], sC[j][1]);
+                  halfSize_, sC[j][0], sC[j][1]);
             if (sp == null) {
                continue;
             }
 
-            GaussianFit.Data gfData =  gf.dogaussianfit(sp, maxIterations_);
+            GaussianFit.Data gfData = gf.dogaussianfit(sp, maxIterations_);
             double[] paramsOut = gfData.getParms();
             if (paramsOut.length > 3) {
                double x = sC[j][0] - halfSize_ + paramsOut[2];

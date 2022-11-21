@@ -32,13 +32,10 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.Studio;
 
 /**
- *
  * @author nico
  */
 
@@ -53,24 +50,24 @@ public class ShadingTable extends JTable {
       private final JPanel panel_ = new JPanel();
       private final JButton button_;
 
-      public LoadFileButtonCellRenderer(MultiChannelShadingMigForm form) {         
-         button_ = form.mcsButton(form.getButtonDimension(), 
-                 form.getButtonFont());
+      public LoadFileButtonCellRenderer(MultiChannelShadingMigForm form) {
+         button_ = form.mcsButton(form.getButtonDimension(),
+               form.getButtonFont());
          button_.setText("...");
          panel_.setLayout(new MigLayout(BUTTONCELLLAYOUTCONSTRAINTS));
-         panel_.add(button_,"gapx push");
+         panel_.add(button_, "gapx push");
       }
 
       @Override
       public Component getTableCellRendererComponent(JTable table,
-            Object dataProcessor, boolean isSelected, boolean hasFocus,
-            int row, int column) {
+                                                     Object dataProcessor, boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row, int column) {
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
-         }
-         else {
+         } else {
             panel_.setBackground(table.getBackground());
-         } 
+         }
          return panel_;
       }
    }
@@ -81,13 +78,13 @@ public class ShadingTable extends JTable {
       private int row_;
       private final MultiChannelShadingMigForm form_;
       private final JPanel panel_ = new JPanel();
-      private final JButton button_ ;
+      private final JButton button_;
 
       @SuppressWarnings("LeakingThisInConstructor")
-      public LoadFileButtonCellEditor(MultiChannelShadingMigForm form) {     
+      public LoadFileButtonCellEditor(MultiChannelShadingMigForm form) {
          form_ = form;
-         button_ = form_.mcsButton(form_.getButtonDimension(), 
-                 form_.getButtonFont());
+         button_ = form_.mcsButton(form_.getButtonDimension(),
+               form_.getButtonFont());
          button_.setText("...");
          row_ = -1;
          panel_.setLayout(new MigLayout(BUTTONCELLLAYOUTCONSTRAINTS));
@@ -108,21 +105,22 @@ public class ShadingTable extends JTable {
 
       @Override
       public Component getTableCellEditorComponent(JTable table,
-            Object someObject, boolean isSelected, int row, int column) {
+                                                   Object someObject, boolean isSelected, int row,
+                                                   int column) {
          row_ = row;
          panel_.setBackground(table.getSelectionBackground());
          return panel_;
       }
    }
-   
-   private class PresetCellEditor extends AbstractCellEditor 
-   implements TableCellEditor, ActionListener {
+
+   private class PresetCellEditor extends AbstractCellEditor
+         implements TableCellEditor, ActionListener {
       private final JPanel panel_ = new JPanel();
       private final JComboBox comboBox_ = new JComboBox();
       private final ShadingTableModel model_;
       private int row_;
       private String selectedPreset_;
-      
+
       @SuppressWarnings("LeakingThisInConstructor")
       public PresetCellEditor(Studio gui, ShadingTableModel model) {
          model_ = model;
@@ -131,18 +129,18 @@ public class ShadingTable extends JTable {
          panel_.add(comboBox_);
          comboBox_.addActionListener(this);
       }
-      
+
       @Override
       public Object getCellEditorValue() {
          return selectedPreset_;
       }
 
       @Override
-      public Component getTableCellEditorComponent(JTable table, Object value, 
-              boolean isSelected, int row, int column) {
+      public Component getTableCellEditorComponent(JTable table, Object value,
+                                                   boolean isSelected, int row, int column) {
          row_ = row;
          String[] presets = gui_.getCMMCore().getAvailableConfigs(
-                 model_.getChannelGroup()).toArray();
+               model_.getChannelGroup()).toArray();
          // remove presets that are already in use
          String[] usedPresets = model_.getUsedPresets(row);
          String[] comboPresets = new String[presets.length - usedPresets.length];
@@ -150,7 +148,7 @@ public class ShadingTable extends JTable {
          for (String preset : presets) {
             boolean found = false;
             for (String usedPreset : usedPresets) {
-               if (preset.equals(usedPreset) ) {
+               if (preset.equals(usedPreset)) {
                   found = true;
                }
             }
@@ -159,7 +157,7 @@ public class ShadingTable extends JTable {
                index++;
             }
          }
-         comboBox_.setModel(new javax.swing.DefaultComboBoxModel(comboPresets));       
+         comboBox_.setModel(new javax.swing.DefaultComboBoxModel(comboPresets));
          String preset = (String) model_.getValueAt(row, column);
          comboBox_.setSelectedItem(preset);
          return panel_;
@@ -177,9 +175,9 @@ public class ShadingTable extends JTable {
 
    private final PresetCellEditor presetCellEditor_;
    private final LoadFileButtonCellEditor loadFileButtonCellEditor_;
-   
-   ShadingTable(Studio gui, ShadingTableModel model, 
-           MultiChannelShadingMigForm form) {
+
+   ShadingTable(Studio gui, ShadingTableModel model,
+                MultiChannelShadingMigForm form) {
       super(model);
       gui_ = gui;
 
@@ -188,20 +186,20 @@ public class ShadingTable extends JTable {
       //Editor for column 0 (preset combobox)
       presetCellEditor_ = new PresetCellEditor(gui, model);
       super.getColumnModel().getColumn(0).setCellEditor(presetCellEditor_);
-                  
+
       // Renderer and Editor for column 2 (button)
-      LoadFileButtonCellRenderer loadFileButtonRenderer = 
-              new LoadFileButtonCellRenderer(form);
+      LoadFileButtonCellRenderer loadFileButtonRenderer =
+            new LoadFileButtonCellRenderer(form);
       super.getColumnModel().getColumn(2).setCellRenderer(loadFileButtonRenderer);
 
-      loadFileButtonCellEditor_ = 
-              new LoadFileButtonCellEditor(form);
+      loadFileButtonCellEditor_ =
+            new LoadFileButtonCellEditor(form);
       super.getColumnModel().getColumn(2).setCellEditor(loadFileButtonCellEditor_);
-      
+
       super.setRowHeight((int) (super.getRowHeight() * 1.5));
 
    }
-   
+
    public void stopCellEditing() {
       presetCellEditor_.stopCellEditing();
       loadFileButtonCellEditor_.stopCellEditing();

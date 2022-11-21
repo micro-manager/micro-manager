@@ -44,7 +44,7 @@ import org.scijava.plugin.SciJavaPlugin;
 /**
  * MenuPlugin class for Snap-on-Move.
  *
- * Manages unique MainController instance, which does the actual work.
+ * <p>Manages unique MainController instance, which does the actual work.
  */
 @Plugin(type = MenuPlugin.class)
 public class SnapOnMovePlugin implements SciJavaPlugin, MenuPlugin {

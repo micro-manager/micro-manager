@@ -24,13 +24,15 @@ public class SingleCombinationProcessor {
    private final boolean processCombinations_;
    private final boolean isAnyChannelToAvoid_;
 
-   private int current_frame_index_;
-   private int processed_frame_index_;
+   private int currentFrameIndex;
+   private int processedFrameIndex;
    private Image[] bufferImages_;
    private int currentBufferIndex_;
 
-   public SingleCombinationProcessor(Coords coords, Studio studio, String processorAlgo, String processorDimension,
-           int numerOfImagesToProcess, boolean processCombinations, boolean isAnyChannelToAvoid) {
+   public SingleCombinationProcessor(Coords coords, Studio studio, String processorAlgo,
+                                     String processorDimension,
+                                     int numerOfImagesToProcess, boolean processCombinations,
+                                     boolean isAnyChannelToAvoid) {
 
       studio_ = studio;
       log_ = studio_.logs();
@@ -43,8 +45,8 @@ public class SingleCombinationProcessor {
       processCombinations_ = processCombinations;
       isAnyChannelToAvoid_ = isAnyChannelToAvoid;
 
-      current_frame_index_ = 0;
-      processed_frame_index_ = 0;
+      currentFrameIndex = 0;
+      processedFrameIndex = 0;
       bufferImages_ = new Image[numerOfImagesToProcess_];
 
       for (int i = 0; i < numerOfImagesToProcess_; i++) {
@@ -57,8 +59,8 @@ public class SingleCombinationProcessor {
 
    public void logMe() {
       log_.logMessage("Z : " + Integer.toString(coords_.getZ())
-              + " | Channel : " + Integer.toString(coords_.getChannel())
-              + " | Stage Position : " + Integer.toString(coords_.getStagePosition()));
+            + " | Channel : " + Integer.toString(coords_.getChannel())
+            + " | Stage Position : " + Integer.toString(coords_.getStagePosition()));
    }
 
    void addImage(Image image, ProcessorContext context) {
@@ -68,7 +70,7 @@ public class SingleCombinationProcessor {
          return;
       }
 
-      currentBufferIndex_ = current_frame_index_ % numerOfImagesToProcess_;
+      currentBufferIndex_ = currentFrameIndex % numerOfImagesToProcess_;
       bufferImages_[currentBufferIndex_] = image;
 
       if (currentBufferIndex_ == (numerOfImagesToProcess_ - 1)) {
@@ -90,8 +92,10 @@ public class SingleCombinationProcessor {
          PropertyMap userData = metadata.getUserData();
          if (userData != null) {
             userData = userData.copy().putBoolean("FrameProcessed", true).build();
-            userData = userData.copy().putString("FrameProcessed-Operation", processorAlgo_).build();
-            userData = userData.copy().putInt("FrameProcessed-StackNumber", numerOfImagesToProcess_).build();
+            userData =
+                  userData.copy().putString("FrameProcessed-Operation", processorAlgo_).build();
+            userData = userData.copy().putInt("FrameProcessed-StackNumber", numerOfImagesToProcess_)
+                  .build();
             metadata = metadata.copy().userData(userData).build();
          }
          processedImage_ = processedImage_.copyWithMetadata(metadata);
@@ -99,13 +103,13 @@ public class SingleCombinationProcessor {
          // Add correct metadata if in acquisition mode
          if (studio_.acquisitions().isAcquisitionRunning() && !isAnyChannelToAvoid_) {
             Coords.CoordsBuilder builder = processedImage_.getCoords().copy();
-            if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)){
-                builder.time(processed_frame_index_);
-            }else if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)){
-                builder.z(processed_frame_index_);
+            if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
+               builder.time(processedFrameIndex);
+            } else if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
+               builder.z(processedFrameIndex);
             }
             processedImage_ = processedImage_.copyAtCoords(builder.build());
-            processed_frame_index_ += 1;
+            processedFrameIndex += 1;
          }
 
          // Output processed image
@@ -115,7 +119,7 @@ public class SingleCombinationProcessor {
          processedImage_ = null;
       }
 
-      current_frame_index_ += 1;
+      currentFrameIndex += 1;
 
    }
 
@@ -137,7 +141,8 @@ public class SingleCombinationProcessor {
       } else if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_MIN)) {
          extremaProcessImages("min");
       } else {
-         throw new Exception("FrameCombiner : Algorithm called " + processorAlgo_ + " is not implemented or not found.");
+         throw new Exception("FrameCombiner : Algorithm called " + processorAlgo_
+               + " is not implemented or not found.");
       }
 
    }
@@ -220,7 +225,7 @@ public class SingleCombinationProcessor {
 
       // Create the processed image
       processedImage_ = studio_.data().createImage(resultPixels, width, height,
-              bytesPerPixel, numComponents, coords, metadata);
+            bytesPerPixel, numComponents, coords, metadata);
 
    }
 
@@ -344,7 +349,7 @@ public class SingleCombinationProcessor {
 
       // Create the processed image
       processedImage_ = studio_.data().createImage(resultPixels, width, height,
-              bytesPerPixel, numComponents, coords, metadata);
+            bytesPerPixel, numComponents, coords, metadata);
 
    }
 }

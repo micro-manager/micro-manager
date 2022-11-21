@@ -37,7 +37,16 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
@@ -52,13 +61,13 @@ import org.micromanager.internal.utils.WindowPositioning;
 /**
  * Allow user to enable/disable Snap-on-Move.
  *
- * Shows a check box to enable/disable movement monitoring.
+ * <p>Shows a check box to enable/disable movement monitoring.
  * This is for testing and may be removed or replaced in the final version.
  */
 final class ConfigFrame extends JFrame {
    private static final String ENABLE_BUTTON = "Start";
    private static final String DISABLE_BUTTON = "Stop";
-   
+
 
    private final JTable criteriaTable_;
    private final JButton addButton_;
@@ -77,15 +86,13 @@ final class ConfigFrame extends JFrame {
       add(new JLabel("Snap-on-Move Preview: "));
 
       final JButton enableButton = new JButton(ENABLE_BUTTON);
-      enableButton.setText(controller.isEnabled() ?
-            DISABLE_BUTTON : ENABLE_BUTTON);
+      enableButton.setText(controller.isEnabled() ? DISABLE_BUTTON : ENABLE_BUTTON);
       enableButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             boolean shouldEnable = enableButton.getText().equals(ENABLE_BUTTON);
             controller.setEnabled(shouldEnable);
-            enableButton.setText(controller.isEnabled() ?
-                  DISABLE_BUTTON : ENABLE_BUTTON);
+            enableButton.setText(controller.isEnabled() ? DISABLE_BUTTON : ENABLE_BUTTON);
             updateButtonStates();
          }
       });
@@ -99,20 +106,20 @@ final class ConfigFrame extends JFrame {
             new JTextField(Long.toString(controller.getPollingIntervalMs()));
       intervalField.setColumns(5);
       intervalField.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               long intervalMs = controller.getPollingIntervalMs();
-               try {
-                  intervalMs = Math.round(Double.parseDouble(intervalField.getText()));
-               }
-               catch (NumberFormatException nfe) {
-               }
-               if (intervalMs > 0) {
-                  controller.setPollingIntervalMs(intervalMs);
-               }
-               intervalField.setText(Long.toString(controller.getPollingIntervalMs()));
-               intervalField.transferFocusUpCycle();
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            long intervalMs = controller.getPollingIntervalMs();
+            try {
+               intervalMs = Math.round(Double.parseDouble(intervalField.getText()));
+            } catch (NumberFormatException nfe) {
+               System.out.println("Caught NumberFormatException");
             }
+            if (intervalMs > 0) {
+               controller.setPollingIntervalMs(intervalMs);
+            }
+            intervalField.setText(Long.toString(controller.getPollingIntervalMs()));
+            intervalField.transferFocusUpCycle();
+         }
       });
       add(intervalField, "split 2");
       add(new JLabel(" ms"), "wrap");
@@ -121,11 +128,11 @@ final class ConfigFrame extends JFrame {
       criteriaTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       criteriaTable_.getSelectionModel().addListSelectionListener(
             new ListSelectionListener() {
-         @Override
-         public void valueChanged(ListSelectionEvent e) {
-            updateButtonStates();
-         }
-      });
+               @Override
+               public void valueChanged(ListSelectionEvent e) {
+                  updateButtonStates();
+               }
+            });
       final JScrollPane criteriaPane = new JScrollPane(criteriaTable_,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -144,8 +151,8 @@ final class ConfigFrame extends JFrame {
                List<ChangeCriterion> criteria = controller.getChangeCriteria();
                criteria.add(criterion);
                controller.setChangeCriteria(criteria);
-               ((CriteriaTableModel) criteriaTable_.getModel()).
-                     fireTableRowsInserted(criteria.size(),
+               ((CriteriaTableModel) criteriaTable_.getModel())
+                     .fireTableRowsInserted(criteria.size(),
                            criteria.size() + 1);
                criteriaTable_.setRowSelectionInterval(criteria.size(),
                      criteria.size() + 1);
@@ -165,8 +172,7 @@ final class ConfigFrame extends JFrame {
             List<ChangeCriterion> criteria = controller.getChangeCriteria();
             criteria.remove(row);
             controller.setChangeCriteria(criteria);
-            ((CriteriaTableModel) criteriaTable_.getModel()).
-                    fireTableRowsDeleted(row, row + 1);
+            ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsDeleted(row, row + 1);
             updateButtonStates();
          }
       });
@@ -188,8 +194,7 @@ final class ConfigFrame extends JFrame {
             if (criterion != null) {
                criteria.set(row, criterion);
                controller.setChangeCriteria(criteria);
-               ((CriteriaTableModel) criteriaTable_.getModel()).
-                       fireTableRowsUpdated(row, row + 1);
+               ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsUpdated(row, row + 1);
                updateButtonStates();
             }
          }
@@ -207,7 +212,7 @@ final class ConfigFrame extends JFrame {
       pack();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(600, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }

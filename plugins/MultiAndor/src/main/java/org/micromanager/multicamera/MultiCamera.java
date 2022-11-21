@@ -2,7 +2,6 @@ package org.micromanager.multicamera;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -10,8 +9,8 @@ import org.scijava.plugin.SciJavaPlugin;
 public class MultiCamera implements MenuPlugin, SciJavaPlugin {
    public static final String MENU_NAME = "Multi-Andor Control";
    public static final String TOOL_TIP_DESCRIPTION =
-      "Control settings for one or more Andor EM-CCD cameras via the " +
-      "Multi Camera device"; 
+         "Control settings for one or more Andor EM-CCD cameras via the "
+               + "Multi Camera device";
 
    private Studio gui_;
    private MultiCameraFrame myFrame_;
@@ -28,7 +27,7 @@ public class MultiCamera implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public void setContext(Studio app) {
-      gui_ = app; 
+      gui_ = app;
    }
 
    @Override
@@ -49,13 +48,13 @@ public class MultiCamera implements MenuPlugin, SciJavaPlugin {
    public String getHelpText() {
       return TOOL_TIP_DESCRIPTION;
    }
-   
-    @Override
+
+   @Override
    public String getVersion() {
       return "0.13";
    }
-   
-    @Override
+
+   @Override
    public String getCopyright() {
       return "University of California, 2010, 2011";
    }

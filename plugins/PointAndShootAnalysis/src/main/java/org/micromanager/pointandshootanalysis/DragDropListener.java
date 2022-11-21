@@ -18,6 +18,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.pointandshootanalysis;
 
 import java.awt.datatransfer.DataFlavor;
@@ -33,16 +34,15 @@ import java.io.IOException;
 import javax.swing.JTextField;
 
 /**
- *
  * @author nico
  */
-public class DragDropListener implements DropTargetListener{
+public class DragDropListener implements DropTargetListener {
    private final JTextField textField_;
-   
+
    public DragDropListener(JTextField textField) {
       textField_ = textField;
    }
-   
+
    @Override
    public void dragEnter(DropTargetDragEvent dtde) {
       // throw new UnsupportedOperationException("Not supported yet."); 

@@ -44,24 +44,23 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.swing.*;
-
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
-
+import org.micromanager.internal.dialogs.ComponentTitledBorder;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.plugins.snaponmove.ChangeCriterion.XYDistanceCriterion;
 import org.micromanager.plugins.snaponmove.ChangeCriterion.ZDistanceCriterion;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
-import org.micromanager.internal.dialogs.ComponentTitledBorder;
-
-
 
 
 final class CriterionDialog extends JDialog {
@@ -90,9 +89,8 @@ final class CriterionDialog extends JDialog {
    }
 
    CriterionDialog(final MainController controller,
-           final ChangeCriterion initialCriterion,
-           final Frame owner)
-   {
+                   final ChangeCriterion initialCriterion,
+                   final Frame owner) {
       super(owner);
       controller_ = controller;
 
@@ -101,7 +99,7 @@ final class CriterionDialog extends JDialog {
       setLocationRelativeTo(owner);
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -114,8 +112,8 @@ final class CriterionDialog extends JDialog {
 
       setTitle("Edit Movement Detection Criterion");
       setLayout(new MigLayout("fill",
-              "[fill, grow]",
-              "[]rel[]rel[]unrel[]"));
+            "[fill, grow]",
+            "[]rel[]rel[]unrel[]"));
 
       // Radio buttons for section titles
       final ButtonGroup radioGroup = new ButtonGroup();
@@ -157,8 +155,8 @@ final class CriterionDialog extends JDialog {
             double threshUm = focusThreshUm_;
             try {
                threshUm = Double.parseDouble(focusThreshField_.getText());
-            }
-            catch (NumberFormatException nfe) {
+            } catch (NumberFormatException nfe) {
+               System.out.println("NumberFormatException");
             }
             if (threshUm >= 0.0) {
                focusThreshUm_ = threshUm;
@@ -187,8 +185,8 @@ final class CriterionDialog extends JDialog {
             double threshUm = xyThreshUm_;
             try {
                threshUm = Double.parseDouble(xyThreshField_.getText());
-            }
-            catch (NumberFormatException nfe) {
+            } catch (NumberFormatException nfe) {
+               System.out.println("NumberFormatException");
             }
             if (threshUm >= 0.0) {
                xyThreshUm_ = threshUm;
@@ -228,12 +226,10 @@ final class CriterionDialog extends JDialog {
       if (focusRadio_.isEnabled()) {
          focusRadio_.setSelected(true);
          disableOtherSections(focusPanel_);
-      }
-      else if (xyRadio_.isEnabled()) {
+      } else if (xyRadio_.isEnabled()) {
          xyRadio_.setSelected(true);
          disableOtherSections(xyPanel_);
-      }
-      else {
+      } else {
          disableOtherSections(null); // Disable all
          okButton.setEnabled(false);
       }
@@ -259,8 +255,7 @@ final class CriterionDialog extends JDialog {
          focusThreshUm_ =
                ((ZDistanceCriterion) criterion).getDistanceThresholdUm();
          focusThreshField_.setText(Double.toString(focusThreshUm_));
-      }
-      else if (criterion instanceof XYDistanceCriterion) {
+      } else if (criterion instanceof XYDistanceCriterion) {
          xyRadio_.setEnabled(true);
          xyRadio_.setSelected(true);
          disableOtherSections(xyPanel_);
@@ -284,12 +279,11 @@ final class CriterionDialog extends JDialog {
                (String) focusDeviceCombo_.getSelectedItem(),
                Double.parseDouble(focusThreshField_.getText()),
                shouldPoll);
-      }
-      else if (xyRadio_.isSelected()) {
+      } else if (xyRadio_.isSelected()) {
          result_ = ChangeCriterion.createXYDistanceCriterion(
-                 (String) xyDeviceCombo_.getSelectedItem(),
-                 Double.parseDouble(xyThreshField_.getText()),
-                 shouldPoll);
+               (String) xyDeviceCombo_.getSelectedItem(),
+               Double.parseDouble(xyThreshField_.getText()),
+               shouldPoll);
       }
       setVisible(false);
    }
@@ -319,15 +313,14 @@ final class CriterionDialog extends JDialog {
 
    private String[] getAvailableDevicesOfTypeForCriteria(
          DeviceType deviceType,
-         Class<? extends ChangeCriterion> criterionClass)
-   {
+         Class<? extends ChangeCriterion> criterionClass) {
       CMMCore core = controller_.getCore();
       if (core == null) {
          return new String[] {};
       }
 
       List<String> devs = Arrays.asList(
-              core.getLoadedDevicesOfType(deviceType).toArray());
+            core.getLoadedDevicesOfType(deviceType).toArray());
 
       List<ChangeCriterion> criteria = controller_.getChangeCriteria();
       Set<String> devsInUse = new HashSet<String>();

@@ -24,7 +24,6 @@ package com.imaging100x.tracker;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -32,11 +31,11 @@ import org.scijava.plugin.SciJavaPlugin;
 public class TrackerPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Live Tracking";
    public static final String tooltipDescription =
-      "Use image correlation based tracking to countersteer the XY stage";
-   static private final String VERSION_INFO = "1.0";
-   static private final String COPYRIGHT_NOTICE = "Copyright by 100X Imaging Inc, 2009";
-   static private final String DESCRIPTION = "Live cell tracking module";
-   static private final String INFO = "Not available";
+         "Use image correlation based tracking to countersteer the XY stage";
+   private static final String VERSION_INFO = "1.0";
+   private static final String COPYRIGHT_NOTICE = "Copyright by 100X Imaging Inc, 2009";
+   private static final String DESCRIPTION = "Live cell tracking module";
+   private static final String INFO = "Not available";
 
    private Studio app_ = null;
    private TrackerControl frame_;

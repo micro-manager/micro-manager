@@ -1,34 +1,21 @@
-/**
- * Intelligent Acquisition Frame
- * 
- * 
+/*
+ * Intelligent Acquisition Frame.
+ *
  * Nico Stuurman, copyright UCSF, 2012, 2015
- *  
+ *
  * LICENSE:      This file is distributed under the BSD license.
- *               License text is included with the source distribution.
+ * License text is included with the source distribution.
  *
- *               This file is distributed in the hope that it will be useful,
- *               but WITHOUT ANY WARRANTY; without even the implied warranty
- *               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * This file is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
- *               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- *               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
 
 package org.micromanager.intelligentacquisition;
-
-import java.awt.Frame;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
-import java.io.IOException;
-import java.io.File;
-import java.text.ParseException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -36,28 +23,36 @@ import ij.WindowManager;
 import ij.measure.ResultsTable;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
-
+import java.awt.Frame;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle;
 import mmcorej.CMMCore;
-
 import org.micromanager.Studio;
-import org.micromanager.data.Datastore;
 import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
 import org.micromanager.display.DataViewer;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**
- *
  * @author nico
  */
-public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
+public class IntelligentAcquisitionFrame extends JFrame {
    private final Studio gui_;
    private final CMMCore core_;
 
@@ -75,107 +70,107 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private static final String ROIWIDTHY = "ROIWIDTHY";
    private static final String EXPFIELDSX = "EXPFIELDSX";
    private static final String EXPFIELDSY = "EXPFIELDSY";
-   
-   private final String[] ACQSUFFIXES = {"txt"};
-   private final String[] SCRIPTSUFFIXES = {"bsh", "txt", "ijm"};
-   
+
+   private final String[] acqSuffixes = {"txt"};
+   private final String[] scriptSuffixes = {"bsh", "txt", "ijm"};
+
    private String acqFileNameA_ = "";
    private String acqFileNameB_ = "";
    private String scriptFileName_ = "";
-   
+
    private int explorationX_ = 5;
    private int explorationY_ = 5;
    private long roiWidthX_ = 256;
    private long roiWidthY_ = 256;
-   
+
    private double pixelWidthMicron_ = 0.1;
-  
+
    private String xyStage_ = "";
-   
+
    private final AtomicBoolean stop_;
 
 
-    /** 
-    * Constructor
-    * 
+   /**
+    * Constructor.
+    *
     * @param gui - Reference to MM script interface
     */
-    public IntelligentAcquisitionFrame(Studio gui) {
-       gui_ = gui;
-       core_ = gui_.getCMMCore();
-       
-       // Read values from PREFS
-       frameXPos_ = gui_.profile().getSettings(cl_).getInteger(
-               FRAMEXPOS, frameXPos_);
-       frameYPos_ = gui_.profile().getSettings(cl_).getInteger(
-               FRAMEYPOS, frameYPos_);
-       acqFileNameA_ = gui_.profile().getSettings(cl_).getString(
-               ACQFILENAMEA, acqFileNameA_);
-       acqFileNameB_ = gui_.profile().getSettings(cl_).getString(
-               ACQFILENAMEB, acqFileNameB_);
-       scriptFileName_ = gui_.profile().getSettings(cl_).getString(
-               SCRIPTFILENAME, scriptFileName_); 
-       explorationX_ = gui_.profile().getSettings(cl_).getInteger(
-               EXPFIELDSX, explorationX_);
-       explorationY_ = gui_.profile().getSettings(cl_).getInteger(
-               EXPFIELDSY, explorationY_);
-       roiWidthX_ = gui_.profile().getSettings(cl_).getLong( 
-               ROIWIDTHX, roiWidthX_);
-       roiWidthY_ = gui_.profile().getSettings(cl_).getLong( 
-               ROIWIDTHY, roiWidthY_);
-       
-       initComponents();
+   public IntelligentAcquisitionFrame(Studio gui) {
+      gui_ = gui;
+      core_ = gui_.getCMMCore();
 
-       super.setLocation(frameXPos_, frameYPos_);
-       acqTextField1_.setText(acqFileNameA_);
-       acqTextField2_.setText(acqFileNameB_);
-       scriptTextField_.setText(scriptFileName_);
-       expAreaFieldX_.setText(NumberUtils.intToDisplayString(explorationX_));
-       expAreaFieldY_.setText(NumberUtils.intToDisplayString(explorationY_));
-       roiFieldX_.setText(NumberUtils.longToDisplayString(roiWidthX_));
-       roiFieldY_.setText(NumberUtils.longToDisplayString(roiWidthY_));
-       
-       stop_ = new AtomicBoolean();
-       
-    }
+      // Read values from PREFS
+      frameXPos_ = gui_.profile().getSettings(cl_).getInteger(
+            FRAMEXPOS, frameXPos_);
+      frameYPos_ = gui_.profile().getSettings(cl_).getInteger(
+            FRAMEYPOS, frameYPos_);
+      acqFileNameA_ = gui_.profile().getSettings(cl_).getString(
+            ACQFILENAMEA, acqFileNameA_);
+      acqFileNameB_ = gui_.profile().getSettings(cl_).getString(
+            ACQFILENAMEB, acqFileNameB_);
+      scriptFileName_ = gui_.profile().getSettings(cl_).getString(
+            SCRIPTFILENAME, scriptFileName_);
+      explorationX_ = gui_.profile().getSettings(cl_).getInteger(
+            EXPFIELDSX, explorationX_);
+      explorationY_ = gui_.profile().getSettings(cl_).getInteger(
+            EXPFIELDSY, explorationY_);
+      roiWidthX_ = gui_.profile().getSettings(cl_).getLong(
+            ROIWIDTHX, roiWidthX_);
+      roiWidthY_ = gui_.profile().getSettings(cl_).getLong(
+            ROIWIDTHY, roiWidthY_);
 
-    /** 
-     * This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
-     */
+      initComponents();
+
+      super.setLocation(frameXPos_, frameYPos_);
+      acqTextField1_.setText(acqFileNameA_);
+      acqTextField2_.setText(acqFileNameB_);
+      scriptTextField_.setText(scriptFileName_);
+      expAreaFieldX_.setText(NumberUtils.intToDisplayString(explorationX_));
+      expAreaFieldY_.setText(NumberUtils.intToDisplayString(explorationY_));
+      roiFieldX_.setText(NumberUtils.longToDisplayString(roiWidthX_));
+      roiFieldY_.setText(NumberUtils.longToDisplayString(roiWidthY_));
+
+      stop_ = new AtomicBoolean();
+
+   }
+
+   /**
+    * This method is called from within the constructor to
+    * initialize the form.
+    * WARNING: Do NOT modify this code. The content of this method is
+    * always regenerated by the Form Editor.
+    */
    //@SuppressWarnings("unchecked")
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
-      jTextField5 = new javax.swing.JTextField();
-      jLabel1 = new javax.swing.JLabel();
-      goButton_ = new javax.swing.JButton();
-      acqTextField1_ = new javax.swing.JTextField();
-      jLabel2 = new javax.swing.JLabel();
-      jLabel3 = new javax.swing.JLabel();
-      acqTextField2_ = new javax.swing.JTextField();
-      acqSettingsButton1_ = new javax.swing.JButton();
-      acqSettingsButton2_ = new javax.swing.JButton();
-      jLabel4 = new javax.swing.JLabel();
-      scriptTextField_ = new javax.swing.JTextField();
-      scriptButton_ = new javax.swing.JButton();
-      jLabel5 = new javax.swing.JLabel();
-      jLabel6 = new javax.swing.JLabel();
-      jLabel7 = new javax.swing.JLabel();
-      roiFieldY_ = new javax.swing.JTextField();
-      roiFieldX_ = new javax.swing.JTextField();
-      helpButton_ = new javax.swing.JButton();
-      fullROIButton_ = new javax.swing.JButton();
-      halfROIButton_ = new javax.swing.JButton();
-      jLabel8 = new javax.swing.JLabel();
-      jLabel9 = new javax.swing.JLabel();
-      expAreaFieldY_ = new javax.swing.JTextField();
-      expAreaFieldX_ = new javax.swing.JTextField();
-      jLabel10 = new javax.swing.JLabel();
-      stopButton_ = new javax.swing.JButton();
-      testButton_ = new javax.swing.JButton();
+      jTextField5 = new JTextField();
+      jLabel1 = new JLabel();
+      goButton_ = new JButton();
+      acqTextField1_ = new JTextField();
+      jLabel2 = new JLabel();
+      jLabel3 = new JLabel();
+      acqTextField2_ = new JTextField();
+      acqSettingsButton1_ = new JButton();
+      acqSettingsButton2_ = new JButton();
+      jLabel4 = new JLabel();
+      scriptTextField_ = new JTextField();
+      scriptButton_ = new JButton();
+      jLabel5 = new JLabel();
+      jLabel6 = new JLabel();
+      jLabel7 = new JLabel();
+      roiFieldY_ = new JTextField();
+      roiFieldX_ = new JTextField();
+      helpButton_ = new JButton();
+      fullROIButton_ = new JButton();
+      halfROIButton_ = new JButton();
+      jLabel8 = new JLabel();
+      jLabel9 = new JLabel();
+      expAreaFieldY_ = new JTextField();
+      expAreaFieldX_ = new JTextField();
+      jLabel10 = new JLabel();
+      stopButton_ = new JButton();
+      testButton_ = new JButton();
 
       setTitle("Intelligent Acquisition");
       setLocationByPlatform(true);
@@ -184,6 +179,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          public void windowClosing(java.awt.event.WindowEvent evt) {
             onWindowClosing(evt);
          }
+
          public void windowClosed(java.awt.event.WindowEvent evt) {
             formWindowClosed(evt);
          }
@@ -194,7 +190,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       goButton_.setText("Go!");
       goButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            goButton_ActionPerformed(evt);
+            goButtonActionPerformed(evt);
          }
       });
 
@@ -211,14 +207,14 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       acqSettingsButton1_.setText("...");
       acqSettingsButton1_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            acqSettingsButton1_ActionPerformed(evt);
+            acqsettingsbutton1Actionperformed(evt);
          }
       });
 
       acqSettingsButton2_.setText("...");
       acqSettingsButton2_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            acqSettingsButton2_ActionPerformed(evt);
+            acqsettingsbutton2Actionperformed(evt);
          }
       });
 
@@ -229,7 +225,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       scriptButton_.setText("...");
       scriptButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            scriptButton_ActionPerformed(evt);
+            scriptbuttonActionperformed(evt);
          }
       });
 
@@ -245,7 +241,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       roiFieldY_.setText("512");
       roiFieldY_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            roiFieldY_ActionPerformed(evt);
+            roifieldyActionperformed(evt);
          }
       });
 
@@ -253,14 +249,14 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       roiFieldX_.setText("512");
       roiFieldX_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            roiFieldX_ActionPerformed(evt);
+            roifieldxActionperformed(evt);
          }
       });
 
       helpButton_.setText("Help");
       helpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            helpButton_ActionPerformed(evt);
+            helpButtonActionPerformed(evt);
          }
       });
 
@@ -268,7 +264,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       fullROIButton_.setText("Full");
       fullROIButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            fullROIButton_ActionPerformed(evt);
+            fullroibuttonActionperformed(evt);
          }
       });
 
@@ -276,7 +272,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       halfROIButton_.setText("Half");
       halfROIButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            halfROIButton_ActionPerformed(evt);
+            halfroibuttonActionperformed(evt);
          }
       });
 
@@ -290,7 +286,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       expAreaFieldY_.setText("512");
       expAreaFieldY_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            expAreaFieldY_ActionPerformed(evt);
+            expareafieldyActionperformed(evt);
          }
       });
 
@@ -298,7 +294,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       expAreaFieldX_.setText("512");
       expAreaFieldX_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            expAreaFieldX_ActionPerformed(evt);
+            expareafieldxActionperformed(evt);
          }
       });
 
@@ -307,258 +303,384 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       stopButton_.setText("Stop");
       stopButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            stopButton_ActionPerformed(evt);
+            stopButtonActionPerformed(evt);
          }
       });
 
       testButton_.setText("Test");
       testButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            testButton_ActionPerformed(evt);
+            testButtonActionPerformed(evt);
          }
       });
 
-      javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+      GroupLayout layout = new GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(layout.createSequentialGroup()
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(28, 28, 28)
-                        .addComponent(helpButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(testButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
-                        .addComponent(stopButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(goButton_))
-                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                           .addGroup(layout.createSequentialGroup()
-                              .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                 .addComponent(jLabel2)
-                                 .addComponent(jLabel3))
-                              .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                              .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                 .addComponent(scriptTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 223, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                 .addComponent(acqTextField2_, javax.swing.GroupLayout.PREFERRED_SIZE, 223, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                 .addComponent(acqTextField1_, javax.swing.GroupLayout.PREFERRED_SIZE, 223, javax.swing.GroupLayout.PREFERRED_SIZE))
-                              .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                              .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                 .addComponent(acqSettingsButton1_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                 .addComponent(acqSettingsButton2_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                 .addComponent(scriptButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                           .addComponent(jLabel4)
-                           .addComponent(jLabel1)
-                           .addComponent(jLabel10)
-                           .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                  .addGap(18, 18, 18)
-                  .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 0, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel8)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(expAreaFieldX_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel9)
-                        .addGap(6, 6, 6)
-                        .addComponent(expAreaFieldY_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
-                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(roiFieldX_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel7)
-                        .addGap(6, 6, 6)
-                        .addComponent(roiFieldY_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(fullROIButton_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(halfROIButton_)
-                  .addContainerGap())))
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                  .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(
+                              layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGroup(layout.createParallelGroup(
+                                                      GroupLayout.Alignment.LEADING)
+                                                .addGroup(
+                                                      GroupLayout.Alignment.TRAILING,
+                                                      layout.createSequentialGroup()
+                                                            .addGap(28, 28, 28)
+                                                            .addComponent(helpButton_)
+                                                            .addPreferredGap(
+                                                      LayoutStyle.ComponentPlacement.RELATED)
+                                                            .addComponent(testButton_)
+                                                            .addPreferredGap(
+                                                      LayoutStyle.ComponentPlacement.RELATED,
+                                                                  10, Short.MAX_VALUE)
+                                                            .addComponent(stopButton_)
+                                                            .addPreferredGap(
+                                                      LayoutStyle.ComponentPlacement.UNRELATED)
+                                                            .addComponent(goButton_))
+                                                .addGroup(layout.createSequentialGroup()
+                                                      .addGroup(layout.createParallelGroup(
+                                                                  GroupLayout.Alignment.LEADING)
+                                                            .addGroup(layout.createSequentialGroup()
+                                                                  .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                  GroupLayout.Alignment.LEADING)
+                                                                              .addComponent(jLabel2)
+                                                                              .addComponent(
+                                                                                    jLabel3))
+                                                                  .addPreferredGap(
+                                                      LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                  .addGroup(
+                                                                        layout.createParallelGroup(
+                                                                     GroupLayout.Alignment.LEADING)
+                                                                              .addComponent(
+                                                                       scriptTextField_,
+                                                                       GroupLayout.PREFERRED_SIZE,
+                                                                  223,
+                                                                       GroupLayout.PREFERRED_SIZE)
+                                                                              .addComponent(
+                                                                       acqTextField2_,
+                                                                       GroupLayout.PREFERRED_SIZE,
+                                                                  223,
+                                                                       GroupLayout.PREFERRED_SIZE)
+                                                                              .addComponent(
+                                                                       acqTextField1_,
+                                                                       GroupLayout.PREFERRED_SIZE,
+                                                                   223,
+                                                                       GroupLayout.PREFERRED_SIZE))
+                                                                  .addPreferredGap(
+                                                      LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                  .addGroup(
+                                                                        layout.createParallelGroup(
+                                                      GroupLayout.Alignment.LEADING)
+                                                                              .addComponent(
+                                                                   acqSettingsButton1_,
+                                                                   GroupLayout.PREFERRED_SIZE,
+                                                              45,
+                                                                   GroupLayout.PREFERRED_SIZE)
+                                                                              .addComponent(
+                                                                   acqSettingsButton2_,
+                                                                   GroupLayout.PREFERRED_SIZE,
+                                                              45,
+                                                                   GroupLayout.PREFERRED_SIZE)
+                                                                              .addComponent(
+                                                                   scriptButton_,
+                                                                   GroupLayout.PREFERRED_SIZE,
+                                                              45,
+                                                                   GroupLayout.PREFERRED_SIZE)))
+                                                            .addComponent(jLabel4)
+                                                            .addComponent(jLabel1)
+                                                            .addComponent(jLabel10)
+                                                            .addComponent(jLabel5,
+                                                                  GroupLayout.PREFERRED_SIZE,
+                                                                  130,
+                                                                  GroupLayout.PREFERRED_SIZE))
+                                                      .addPreferredGap(
+                                                            LayoutStyle.ComponentPlacement.RELATED,
+                                                            GroupLayout.DEFAULT_SIZE,
+                                                            Short.MAX_VALUE)))
+                                          .addGap(18, 18, 18)
+                                          .addComponent(jTextField5,
+                                                GroupLayout.PREFERRED_SIZE, 0,
+                                                GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(GroupLayout.Alignment.TRAILING,
+                                          layout.createSequentialGroup()
+                                                .addGroup(layout.createParallelGroup(
+                                                            GroupLayout.Alignment.TRAILING)
+                                                      .addGroup(layout.createSequentialGroup()
+                                                            .addComponent(jLabel8)
+                                                            .addPreferredGap(
+                                                      LayoutStyle.ComponentPlacement.RELATED)
+                                                            .addComponent(expAreaFieldX_,
+                                                                  GroupLayout.PREFERRED_SIZE,
+                                                                  45,
+                                                                  GroupLayout.PREFERRED_SIZE)
+                                                            .addGap(18, 18, 18)
+                                                            .addComponent(jLabel9)
+                                                            .addGap(6, 6, 6)
+                                                            .addComponent(expAreaFieldY_,
+                                                                  GroupLayout.PREFERRED_SIZE,
+                                                                  46,
+                                                                  GroupLayout.PREFERRED_SIZE))
+                                                      .addGroup(layout.createSequentialGroup()
+                                                            .addComponent(jLabel6)
+                                                            .addPreferredGap(
+                                                      LayoutStyle.ComponentPlacement.RELATED)
+                                                           .addComponent(roiFieldX_,
+                                                                  GroupLayout.PREFERRED_SIZE,
+                                                                  45,
+                                                                  GroupLayout.PREFERRED_SIZE)
+                                                            .addGap(18, 18, 18)
+                                                            .addComponent(jLabel7)
+                                                            .addGap(6, 6, 6)
+                                                            .addComponent(roiFieldY_,
+                                                                  GroupLayout.PREFERRED_SIZE,
+                                                                  46,
+                                                                  GroupLayout.PREFERRED_SIZE)))
+                                                .addPreferredGap(
+                                                      LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(fullROIButton_)
+                                                .addPreferredGap(
+                                                      LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(halfROIButton_)
+                                                .addContainerGap())))
       );
       layout.setVerticalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(164, 164, 164)
-                  .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(layout.createSequentialGroup()
-                  .addGap(9, 9, 9)
-                  .addComponent(jLabel1)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(jLabel2)
-                     .addComponent(acqTextField1_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(acqSettingsButton1_))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(jLabel3)
-                     .addComponent(acqTextField2_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(acqSettingsButton2_))
-                  .addGap(18, 18, 18)
-                  .addComponent(jLabel4)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(scriptTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(scriptButton_))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                  .addComponent(jLabel10)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(jLabel8)
-                     .addComponent(expAreaFieldY_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(expAreaFieldX_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(jLabel9))
-                  .addGap(18, 18, 18)
-                  .addComponent(jLabel5)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(halfROIButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(fullROIButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(jLabel6)
-                     .addComponent(roiFieldY_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(roiFieldX_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(jLabel7))
-                  .addGap(10, 10, 10)
-                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(goButton_)
-                     .addComponent(helpButton_)
-                     .addComponent(stopButton_)
-                     .addComponent(testButton_))))
-            .addContainerGap())
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                  .addGroup(layout.createSequentialGroup()
+                        .addGroup(
+                              layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(164, 164, 164)
+                                          .addComponent(jTextField5,
+                                                GroupLayout.PREFERRED_SIZE,
+                                                GroupLayout.DEFAULT_SIZE,
+                                                GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                          .addGap(9, 9, 9)
+                                          .addComponent(jLabel1)
+                                          .addPreferredGap(
+                                                LayoutStyle.ComponentPlacement.RELATED)
+                                          .addGroup(layout.createParallelGroup(
+                                                      GroupLayout.Alignment.BASELINE)
+                                                .addComponent(jLabel2)
+                                                .addComponent(acqTextField1_,
+                                                      GroupLayout.PREFERRED_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(acqSettingsButton1_))
+                                          .addPreferredGap(
+                                                LayoutStyle.ComponentPlacement.RELATED)
+                                          .addGroup(layout.createParallelGroup(
+                                                      GroupLayout.Alignment.BASELINE)
+                                                .addComponent(jLabel3)
+                                                .addComponent(acqTextField2_,
+                                                      GroupLayout.PREFERRED_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(acqSettingsButton2_))
+                                          .addGap(18, 18, 18)
+                                          .addComponent(jLabel4)
+                                          .addPreferredGap(
+                                                LayoutStyle.ComponentPlacement.RELATED)
+                                          .addGroup(layout.createParallelGroup(
+                                                      GroupLayout.Alignment.BASELINE)
+                                                .addComponent(scriptTextField_,
+                                                      GroupLayout.PREFERRED_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(scriptButton_))
+                                          .addPreferredGap(
+                                                LayoutStyle.ComponentPlacement.RELATED,
+                                                GroupLayout.DEFAULT_SIZE,
+                                                Short.MAX_VALUE)
+                                          .addComponent(jLabel10)
+                                          .addPreferredGap(
+                                                LayoutStyle.ComponentPlacement.RELATED)
+                                          .addGroup(layout.createParallelGroup(
+                                                      GroupLayout.Alignment.BASELINE)
+                                                .addComponent(jLabel8)
+                                                .addComponent(expAreaFieldY_,
+                                                      GroupLayout.PREFERRED_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(expAreaFieldX_,
+                                                      GroupLayout.PREFERRED_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(jLabel9))
+                                          .addGap(18, 18, 18)
+                                          .addComponent(jLabel5)
+                                          .addPreferredGap(
+                                                LayoutStyle.ComponentPlacement.RELATED)
+                                          .addGroup(layout.createParallelGroup(
+                                                      GroupLayout.Alignment.BASELINE)
+                                                .addComponent(halfROIButton_,
+                                                      GroupLayout.PREFERRED_SIZE, 29,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(fullROIButton_,
+                                                      GroupLayout.PREFERRED_SIZE, 29,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(jLabel6)
+                                                .addComponent(roiFieldY_,
+                                                      GroupLayout.PREFERRED_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(roiFieldX_,
+                                                      GroupLayout.PREFERRED_SIZE,
+                                                      GroupLayout.DEFAULT_SIZE,
+                                                      GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(jLabel7))
+                                          .addGap(10, 10, 10)
+                                          .addGroup(layout.createParallelGroup(
+                                                      GroupLayout.Alignment.BASELINE)
+                                                .addComponent(goButton_)
+                                                .addComponent(helpButton_)
+                                                .addComponent(stopButton_)
+                                                .addComponent(testButton_))))
+                        .addContainerGap())
       );
 
       pack();
-   }// </editor-fold>//GEN-END:initComponents
+   }
 
-  
-    /**
-     * When window closes, take the opportunity to save settings to Preferences
-     * @param evt 
-     */
-    private void onWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_onWindowClosing
-       gui_.profile().getSettings(cl_).putInteger(
-               FRAMEXPOS, (int) getLocation().getX());
-       gui_.profile().getSettings(cl_).putInteger(
-               FRAMEYPOS, (int) getLocation().getY());
-       try {
-         gui_.profile().getSettings(cl_).putInteger(EXPFIELDSX, 
+
+   /**
+    * When window closes, take the opportunity to save settings to Preferences.
+    *
+    * @param evt Event signalling the Window is closing
+    */
+   private void onWindowClosing(java.awt.event.WindowEvent evt) {
+      gui_.profile().getSettings(cl_).putInteger(
+            FRAMEXPOS, (int) getLocation().getX());
+      gui_.profile().getSettings(cl_).putInteger(
+            FRAMEYPOS, (int) getLocation().getY());
+      try {
+         gui_.profile().getSettings(cl_).putInteger(EXPFIELDSX,
                NumberUtils.displayStringToInt(expAreaFieldX_.getText()));
-       } catch (ParseException ex) {}
-       try {
-         gui_.profile().getSettings(cl_).putInteger(EXPFIELDSY, 
-                 NumberUtils.displayStringToInt(expAreaFieldY_.getText()));
-       } catch (ParseException ex) {}
-       gui_.profile().getSettings(cl_).putString(
-               SCRIPTFILENAME, scriptTextField_.getText());
-       gui_.profile().getSettings(cl_).putString(
-               ACQFILENAMEA, acqTextField1_.getText());
-       gui_.profile().getSettings(cl_).putString(
-               ACQFILENAMEB, acqTextField2_.getText());
-    }//GEN-LAST:event_onWindowClosing
+      } catch (ParseException ex) {
+         gui_.logs().logError(ex);
+      }
+      try {
+         gui_.profile().getSettings(cl_).putInteger(EXPFIELDSY,
+               NumberUtils.displayStringToInt(expAreaFieldY_.getText()));
+      } catch (ParseException ex) {
+         gui_.logs().logError(ex);
+      }
+      gui_.profile().getSettings(cl_).putString(
+            SCRIPTFILENAME, scriptTextField_.getText());
+      gui_.profile().getSettings(cl_).putString(
+            ACQFILENAMEA, acqTextField1_.getText());
+      gui_.profile().getSettings(cl_).putString(
+            ACQFILENAMEB, acqTextField2_.getText());
+   }
 
-    public void closeWindow() {
-       onWindowClosing(null);
-    }
-    
-   private void acqSettingsButton1_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acqSettingsButton1_ActionPerformed
-      File f = FileDialogs.openFile(this, "Exploration acquisition settings", 
-              new FileType("MMAcq", "Micro-Manager acquisition settings",
-                      acqFileNameA_, true, ACQSUFFIXES ) );
+   public void closeWindow() {
+      onWindowClosing(null);
+   }
+
+   private void acqsettingsbutton1Actionperformed(
+         java.awt.event.ActionEvent evt) {
+      File f = FileDialogs.openFile(this, "Exploration acquisition settings",
+            new FileType("MMAcq", "Micro-Manager acquisition settings",
+                  acqFileNameA_, true, acqSuffixes));
       if (f != null) {
          acqFileNameA_ = f.getAbsolutePath();
          acqTextField1_.setText(acqFileNameA_);
-      }   
-      
-      gui_.profile().getSettings(cl_).putString(ACQFILENAMEA, acqFileNameA_);
-   }//GEN-LAST:event_acqSettingsButton1_ActionPerformed
+      }
 
-   private void acqSettingsButton2_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acqSettingsButton2_ActionPerformed
+      gui_.profile().getSettings(cl_).putString(ACQFILENAMEA, acqFileNameA_);
+   }
+
+   private void acqsettingsbutton2Actionperformed(
+         java.awt.event.ActionEvent evt) {
       File f = FileDialogs.openFile(this, "Imaging acquisition settings",
-              new FileType("MMAcq", "Micro-Manager acquisition settings",
-              acqFileNameB_, true, ACQSUFFIXES));
+            new FileType("MMAcq", "Micro-Manager acquisition settings",
+                  acqFileNameB_, true, acqSuffixes));
       if (f != null) {
          acqFileNameB_ = f.getAbsolutePath();
          acqTextField2_.setText(acqFileNameB_);
       }
-      
-      gui_.profile().getSettings(cl_).putString(ACQFILENAMEB, acqFileNameB_);     
-   }//GEN-LAST:event_acqSettingsButton2_ActionPerformed
 
-   private void scriptButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scriptButton_ActionPerformed
+      gui_.profile().getSettings(cl_).putString(ACQFILENAMEB, acqFileNameB_);
+   }
+
+   private void scriptbuttonActionperformed(
+         java.awt.event.ActionEvent evt) {
       File f = FileDialogs.openFile(this, "Analysis script",
-              new FileType("Script", "Image analysis script (ImageJ macro or " + 
-              "Beanshell script",
-              scriptFileName_, true, SCRIPTSUFFIXES));
+            new FileType("Script", "Image analysis script (ImageJ macro or "
+                  + "Beanshell script",
+                  scriptFileName_, true, scriptSuffixes));
       if (f != null) {
          scriptFileName_ = f.getAbsolutePath();
          scriptTextField_.setText(scriptFileName_);
       }
-      
-      gui_.profile().getSettings(cl_).putString(SCRIPTFILENAME, scriptFileName_);
-   }//GEN-LAST:event_scriptButton_ActionPerformed
 
-   private void roiFieldX_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roiFieldX_ActionPerformed
+      gui_.profile().getSettings(cl_).putString(SCRIPTFILENAME, scriptFileName_);
+   }
+
+   private void roifieldxActionperformed(
+         java.awt.event.ActionEvent evt) {
       try {
          roiWidthX_ = NumberUtils.displayStringToLong(roiFieldX_.getText());
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
       }
       gui_.profile().getSettings(cl_).putLong(ROIWIDTHX, roiWidthX_);
-      
-   }//GEN-LAST:event_roiFieldX_ActionPerformed
 
-   private void roiFieldY_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roiFieldY_ActionPerformed
+   }
+
+   private void roifieldyActionperformed(
+         java.awt.event.ActionEvent evt) {
       try {
          roiWidthY_ = NumberUtils.displayStringToLong(roiFieldY_.getText());
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
-      } 
+      }
       gui_.profile().getSettings(cl_).putLong(ROIWIDTHY, roiWidthY_);
-   }//GEN-LAST:event_roiFieldY_ActionPerformed
+   }
 
-   private void expAreaFieldY_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_expAreaFieldY_ActionPerformed
+   private void expareafieldyActionperformed(
+         java.awt.event.ActionEvent evt) {
       try {
          explorationY_ = NumberUtils.displayStringToInt(expAreaFieldY_.getText());
          gui_.profile().getSettings(cl_).putInteger(EXPFIELDSY, explorationY_);
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
       }
-   }//GEN-LAST:event_expAreaFieldY_ActionPerformed
+   }
 
-   private void expAreaFieldX_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_expAreaFieldX_ActionPerformed
+   private void expareafieldxActionperformed(
+         java.awt.event.ActionEvent evt) {
       try {
          explorationX_ = NumberUtils.displayStringToInt(expAreaFieldX_.getText());
          gui_.profile().getSettings(cl_).putInteger(EXPFIELDSX, explorationX_);
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
       }
-   }//GEN-LAST:event_expAreaFieldX_ActionPerformed
+   }
 
-   private void fullROIButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullROIButton_ActionPerformed
+   private void fullroibuttonActionperformed(
+         java.awt.event.ActionEvent evt) {
       roiWidthX_ = core_.getImageWidth();
       roiWidthY_ = core_.getImageHeight();
       updateROI();
-   }//GEN-LAST:event_fullROIButton_ActionPerformed
+   }
 
-   private void halfROIButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_halfROIButton_ActionPerformed
+   private void halfroibuttonActionperformed(
+         java.awt.event.ActionEvent evt) {
       roiWidthX_ = core_.getImageWidth() / 2;
       roiWidthY_ = core_.getImageHeight() / 2;
       updateROI();
-   }//GEN-LAST:event_halfROIButton_ActionPerformed
+   }
 
-   
+
    private class RunAcq implements Runnable {
       public RunAcq() {
       }
+
       @Override
       public void run() {
          try {
@@ -568,13 +690,15 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          }
       }
    }
-   
-    
+
+
    /**
-    * Runs the actual intelligent acquisition
-    * @param evt 
+    * Runs the actual intelligent acquisition.
+    *
+    * @param evt Event with Button action.
     */
-   private void goButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goButton_ActionPerformed
+   private void goButtonActionPerformed(
+         java.awt.event.ActionEvent evt) {
 
       // we need to run this code on a seperate thread to keep the EDT 
       // responsive and to make the acquisition succeed
@@ -582,9 +706,9 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
          @Override
          public void run() {
-            
+
             stop_.set(false);
-            
+
             // Get a number of useful settings from the core
             pixelWidthMicron_ = core_.getPixelSizeUm();
             double imageWidthMicronX = pixelWidthMicron_ * core_.getImageWidth();
@@ -596,17 +720,17 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
             // read settings needed to relate stage movement to camera movement
 
-            
+
             AffineTransform af = null;
             try {
                af = gui_.compat().getCameraTransform(
-                  core_.getCurrentPixelSizeConfig());
-            }
-            catch (Exception ex) {
+                     core_.getCurrentPixelSizeConfig());
+            } catch (Exception ex) {
                gui_.logs().logError(ex, "Error getting pixel size config");
             }
             if (af == null) {
-               gui_.logs().logError("No pixel calibration data found, please run the Pixel Calibrator");
+               gui_.logs()
+                     .logError("No pixel calibration data found, please run the Pixel Calibrator");
                return;
             }
 
@@ -616,7 +740,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                gui_.acquisitions().loadAcquisition(acqFileNameB_);
             } catch (IOException ex) {
                gui_.logs().showError("Unable to load Imaging Acquisition Settings. "
-                       + "Please select a valid file and try again");
+                     + "Please select a valid file and try again");
                return;
             }
 
@@ -626,14 +750,14 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                gui_.acquisitions().loadAcquisition(acqFileNameA_);
             } catch (IOException ex) {
                try {
-                  acqSettingsButton1_ActionPerformed(null);
+                  acqsettingsbutton1Actionperformed(null);
                   gui_.acquisitions().loadAcquisition(acqFileNameA_);
                } catch (IOException ex1) {
                   gui_.logs().showError(ex1, "Failed to load exploration acquisition settings");
                   return;
                }
             }
-            
+
             try {
                explorationX_ = NumberUtils.displayStringToInt(expAreaFieldX_.getText());
             } catch (ParseException ex) {
@@ -676,21 +800,23 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                      double yPos = res.getValue("Y", 0);
 
                      // TODO: testing!!!
-                     Point2D newStagePos = af.inverseTransform(new Point2D.Double(xPos, yPos), null);
+                     Point2D newStagePos =
+                           af.inverseTransform(new Point2D.Double(xPos, yPos), null);
                      core_.setRelativeXYPosition(xyStage_, newStagePos.getX(),
-                             newStagePos.getY());
+                           newStagePos.getY());
                      core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
-                             (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
-                             (int) roiWidthX_, (int) roiWidthY_);
+                           (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
+                           (int) roiWidthX_, (int) roiWidthY_);
 
                      gui_.logs().showMessage(
-                           "Imaging interesting cell at position: " +
-                           xPos + ", " + yPos);
+                           "Imaging interesting cell at position: "
+                                 + xPos + ", " + yPos);
 
                      gui_.acquisitions().loadAcquisition(acqFileNameB_);
                      Datastore tmpStore = gui_.acquisitions().runAcquisition();
                      gui_.displays().closeDisplaysFor(tmpStore);
-                     core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
+                     core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_,
+                           -yPos * pixelWidthMicron_);
                      core_.clearROI();
                      // org.micromanager.internal.utils.JavaUtils.sleep(200);
                   } catch (Exception ex) {
@@ -716,34 +842,37 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   gui_.logs().showError(ex, "Problem moving XY Stage");
                   // what to do now???
                }
-               
-               if (imageIndex >= (explorationX_ * explorationY_) )
+
+               if (imageIndex >= (explorationX_ * explorationY_)) {
                   stop_.set(true);
+               }
             }
          }
 
       };
-      
+
       executeGo.start();
 
-   }//GEN-LAST:event_goButton_ActionPerformed
+   }
 
-   private void stopButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButton_ActionPerformed
+   private void stopButtonActionPerformed(
+         java.awt.event.ActionEvent evt) {
       stop_.set(true);
       // try to stop ongoing acquisitions here
       gui_.acquisitions().haltAcquisition();
-   }//GEN-LAST:event_stopButton_ActionPerformed
+   }
 
-   private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-       gui_.profile().getSettings(cl_).putInteger(FRAMEXPOS, (int) getLocation().getX());
-       gui_.profile().getSettings(cl_).putInteger(FRAMEYPOS, (int) getLocation().getY());
-       gui_.profile().getSettings(cl_).putInteger(EXPFIELDSX, explorationX_);
-       gui_.profile().getSettings(cl_).putInteger(EXPFIELDSY, explorationY_);
-   }//GEN-LAST:event_formWindowClosed
+   private void formWindowClosed(java.awt.event.WindowEvent evt) {
+      gui_.profile().getSettings(cl_).putInteger(FRAMEXPOS, (int) getLocation().getX());
+      gui_.profile().getSettings(cl_).putInteger(FRAMEYPOS, (int) getLocation().getY());
+      gui_.profile().getSettings(cl_).putInteger(EXPFIELDSX, explorationX_);
+      gui_.profile().getSettings(cl_).putInteger(EXPFIELDSY, explorationY_);
+   }
 
-   
+
    // TODO: this code needs testing and debugging!!!!
-   private void testButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testButton_ActionPerformed
+   private void testButtonActionPerformed(
+         java.awt.event.ActionEvent evt) {
       Thread executeTest = new Thread() {
 
          @Override
@@ -759,7 +888,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             }
             // TODO: the below code was broken by the MM2.0 refactor.
             DataViewer dw = gui_.displays().getActiveDataViewer();
-           
+
             ResultsTable outTable = new ResultsTable();
             String outTableName = Terms.RESULTTABLENAME;
 
@@ -767,18 +896,18 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                // run the script on the current window
                ij.IJ.runMacroFile(scriptFileName_);
                // results should be in results window
-            } else { 
-               int nrPositions = dw.getDataProvider().
-                       getNextIndex(Coords.STAGE_POSITION);
+            } else {
+               int nrPositions = dw.getDataProvider().getNextIndex(Coords.STAGE_POSITION);
 
                for (int p = 1; p <= nrPositions && !stop_.get(); p++) {
                   try {
                      Coords c = dw.getDataProvider().getAnyImage().getCoords();
                      dw.setDisplayPosition(c.copyBuilder().stagePosition(p).build());
-                     
+
                      ij.IJ.runMacroFile(scriptFileName_);
                      ResultsTable res = ij.measure.ResultsTable.getResultsTable();
-                     // get results out, stick them in new window that has listeners coupling to image window
+                     // get results out, stick them in new window that has listeners
+                     // coupling to image window
                      if (res.getCounter() > 0) {
                         String[] headings = res.getHeadings();
                         for (int i = 0; i < res.getCounter(); i++) {
@@ -791,12 +920,14 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                      }
                      outTable.show(outTableName);
                   } catch (IOException ex) {
-                     Logger.getLogger(IntelligentAcquisitionFrame.class.getName()).log(Level.SEVERE, null, ex);
+                     Logger.getLogger(IntelligentAcquisitionFrame.class.getName())
+                           .log(Level.SEVERE, null, ex);
                   }
                }
             }
-            
-            // add listeners to our ResultsTable that let user click on row and go to cell that was found
+
+            // add listeners to our ResultsTable that let user click on row and go
+            // to cell that was found
             TextPanel tp;
             TextWindow win;
             Frame frame = WindowManager.getFrame(outTableName);
@@ -822,30 +953,32 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       };
       executeTest.start();
 
-   }//GEN-LAST:event_testButton_ActionPerformed
+   }
 
-   class Helper extends Thread{
-         Helper(){
-            super("Helper");
-         }
-         @Override
-         public void run(){
-          try {
-               ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/wiki/Intelligent_Acquisition");
-            } catch (IOException e1) {
-               gui_.logs().showError(e1);
-            }
-         }
-
+   class Helper extends Thread {
+      Helper() {
+         super("Helper");
       }
-   
-   
-   private void helpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpButton_ActionPerformed
+
+      @Override
+      public void run() {
+         try {
+            ij.plugin.BrowserLauncher.openURL(
+                  "http://micro-manager.org/wiki/Intelligent_Acquisition");
+         } catch (IOException e1) {
+            gui_.logs().showError(e1);
+         }
+      }
+
+   }
+
+
+   private void helpButtonActionPerformed(
+         java.awt.event.ActionEvent evt) {
       Helper h = new Helper();
       h.start();
-   }//GEN-LAST:event_helpButton_ActionPerformed
+   }
 
-   
 
    private void updateROI() {
       roiFieldX_.setText(NumberUtils.longToDisplayString(roiWidthX_));
@@ -853,33 +986,34 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       gui_.profile().getSettings(cl_).putLong(ROIWIDTHX, roiWidthX_);
       gui_.profile().getSettings(cl_).putLong(ROIWIDTHY, roiWidthY_);
    }
+
    // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JButton acqSettingsButton1_;
-   private javax.swing.JButton acqSettingsButton2_;
-   private javax.swing.JTextField acqTextField1_;
-   private javax.swing.JTextField acqTextField2_;
-   private javax.swing.JTextField expAreaFieldX_;
-   private javax.swing.JTextField expAreaFieldY_;
-   private javax.swing.JButton fullROIButton_;
-   private javax.swing.JButton goButton_;
-   private javax.swing.JButton halfROIButton_;
-   private javax.swing.JButton helpButton_;
-   private javax.swing.JLabel jLabel1;
-   private javax.swing.JLabel jLabel10;
-   private javax.swing.JLabel jLabel2;
-   private javax.swing.JLabel jLabel3;
-   private javax.swing.JLabel jLabel4;
-   private javax.swing.JLabel jLabel5;
-   private javax.swing.JLabel jLabel6;
-   private javax.swing.JLabel jLabel7;
-   private javax.swing.JLabel jLabel8;
-   private javax.swing.JLabel jLabel9;
-   private javax.swing.JTextField jTextField5;
-   private javax.swing.JTextField roiFieldX_;
-   private javax.swing.JTextField roiFieldY_;
-   private javax.swing.JButton scriptButton_;
-   private javax.swing.JTextField scriptTextField_;
-   private javax.swing.JButton stopButton_;
-   private javax.swing.JButton testButton_;
+   private JButton acqSettingsButton1_;
+   private JButton acqSettingsButton2_;
+   private JTextField acqTextField1_;
+   private JTextField acqTextField2_;
+   private JTextField expAreaFieldX_;
+   private JTextField expAreaFieldY_;
+   private JButton fullROIButton_;
+   private JButton goButton_;
+   private JButton halfROIButton_;
+   private JButton helpButton_;
+   private JLabel jLabel1;
+   private JLabel jLabel10;
+   private JLabel jLabel2;
+   private JLabel jLabel3;
+   private JLabel jLabel4;
+   private JLabel jLabel5;
+   private JLabel jLabel6;
+   private JLabel jLabel7;
+   private JLabel jLabel8;
+   private JLabel jLabel9;
+   private JTextField jTextField5;
+   private JTextField roiFieldX_;
+   private JTextField roiFieldY_;
+   private JButton scriptButton_;
+   private JTextField scriptTextField_;
+   private JButton stopButton_;
+   private JButton testButton_;
    // End of variables declaration//GEN-END:variables
 }

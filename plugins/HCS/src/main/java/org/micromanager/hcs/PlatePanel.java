@@ -119,8 +119,8 @@ public class PlatePanel extends JPanel {
       }
 
       public void draw(Graphics2D g) {
-         Paint oldPaint = g.getPaint();
-         Stroke oldStroke = g.getStroke();
+         final Paint oldPaint = g.getPaint();
+         final Stroke oldStroke = g.getStroke();
 
          Color c = color;
          if (active) {
@@ -400,9 +400,9 @@ public class PlatePanel extends JPanel {
       rescale();
 
       // save current settings
-      Color oldColor = g2d.getColor();      
-      Paint oldPaint = g2d.getPaint();
-      Stroke oldStroke = g2d.getStroke();
+      final Color oldColor = g2d.getColor();
+      final Paint oldPaint = g2d.getPaint();
+      final Stroke oldStroke = g2d.getStroke();
 
       g2d.setPaint(Color.black);
       g2d.setStroke(new BasicStroke((float) 1));

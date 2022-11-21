@@ -5,11 +5,14 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
- * Function of the form: y = a + bx
+ * Function of the form: y = a + bx.
+ *
  * @author nico
  */
-public class LinearFunc  extends PASFunction{
+public class LinearFunc  extends PASFunction {
+
    /**
+    * Sets the data.
     *
     * @param data actual observations. here a list of x-y values
     */
@@ -29,14 +32,15 @@ public class LinearFunc  extends PASFunction{
    }
    
    /**
-    * x = (y - a) / b
+    * x = (y - a) / b.
+    *
     * @param input
     * @param y
     * @return 
     */
    @Override
    public Double calculateX(double[] input, double y) {
-            if (input.length != getNumOfInputsN()) {
+      if (input.length != getNumOfInputsN()) {
          return null; // TODO: throw exception
       }
       double a = input[0];

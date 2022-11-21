@@ -70,7 +70,8 @@ public class PointAndShootAnalysis implements PlugIn, MenuPlugin, SciJavaPlugin 
 
    @Override
    public String getHelpText() {
-      return "Plugin to analysis data generate by bleaching spots using the Projector plugin Point And Shoot mode";
+      return "Plugin to analysis data generate by bleaching spots using the Projector plugin "
+           + "Point And Shoot mode";
    }
 
    @Override

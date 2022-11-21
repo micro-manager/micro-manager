@@ -20,18 +20,18 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-
 package org.micromanager.splitview;
 
-import org.micromanager.data.Processor;
-import org.micromanager.data.ProcessorFactory;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorFactory;
 
 public class SplitViewFactory implements ProcessorFactory {
    private final Studio studio_;
    private final String orientation_;
    private final int numSplits_;
+
    public SplitViewFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;
       orientation_ = settings.getString("orientation", SplitViewFrame.LR);

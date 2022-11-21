@@ -33,9 +33,10 @@ import org.micromanager.Studio;
 /**
  * Utility class for Shading plugin that holds the background and flatfield
  * images.  The images are stored as ImagePlusInfo objects.
- * Images should be provided as full frame, unbinned images.  When binned 
+ * Images should be provided as full frame, unbinned images.  When binned
  * images, and/or ROIs of (binned) images are requested, these are provided
  * on the fly, and a copy is cached for later use.
+ *
  * @author nico
  */
 public class ImageCollection {
@@ -45,15 +46,15 @@ public class ImageCollection {
    private final HashMap<String, String> presetFiles_;
    private String backgroundFilePath_;
 
-   private final String BASEIMAGE = "base";
-   
+   private final String baseImage_ = "base";
+
    public ImageCollection(Studio gui) {
       gui_ = gui;
       background_ = new HashMap<>();
       flatFields_ = new HashMap<>();
       presetFiles_ = new HashMap<>();
    }
-   
+
    public void setBackground(String file) throws ShadingException {
       background_.clear();
       if (!file.equals("")) {
@@ -63,7 +64,7 @@ public class ImageCollection {
             throw new ShadingException("Failed to open file: " + file);
          }
          ImagePlusInfo bg = new ImagePlusInfo(ip);
-         background_.put(BASEIMAGE, bg);
+         background_.put(baseImage_, bg);
          background_.put(makeKey(1, bg.getOriginalRoi()), bg);
       }
       backgroundFilePath_ = file;
@@ -74,11 +75,11 @@ public class ImageCollection {
    }
 
    public ImagePlusInfo getBackground() {
-      return background_.get(BASEIMAGE);
+      return background_.get(baseImage_);
    }
-   
-   public ImagePlusInfo getBackground(int binning, Rectangle roi) 
-           throws ShadingException {
+
+   public ImagePlusInfo getBackground(int binning, Rectangle roi)
+         throws ShadingException {
       String key = makeKey(binning, roi);
       if (background_.containsKey(key)) {
          return background_.get(key);
@@ -88,36 +89,36 @@ public class ImageCollection {
       if (bg == null) {
          return null;
       }
-      
-      ImagePlusInfo derivedBg = makeDerivedImage(bg, binning, roi); 
+
+      ImagePlusInfo derivedBg = makeDerivedImage(bg, binning, roi);
       // put it in our cache
       background_.put(makeKey(binning, roi), derivedBg);
       return derivedBg;
    }
-   
+
    /**
     * Stores flatfield image in the internal data store
     * If a background image is present, it will be subtracted first
     * Then, the average pixel value will be calculated
-    * A normalized image will be calculated by dividing the mean through the 
-    * pixel value.  Therefore, use these flatfield images by multiplying  
+    * A normalized image will be calculated by dividing the mean through the
+    * pixel value.  Therefore, use these flatfield images by multiplying
     * background corrected images, rather than by dividing.  This behavior
     * improves performance.
+    *
     * @param preset Configuration preset to be associated with this image
-    * @param file Path to TIFF file with flatfield image
-    * @throws ShadingException 
+    * @param file   Path to TIFF file with flatfield image
+    * @throws ShadingException
     */
    public void addFlatField(String preset, String file) throws ShadingException {
       ij.io.Opener opener = new ij.io.Opener();
       ImagePlus ip = opener.openImage(file);
       if (ip == null) {
-         throw new ShadingException(
-                 "Failed to open flatfield file: " + file);
+         throw new ShadingException("Failed to open flatfield file: " + file);
       }
       if (ip.getType() != ImagePlus.GRAY8 && ip.getType() != ImagePlus.GRAY16
-              && ip.getType() != ImagePlus.GRAY32 ) {
+            && ip.getType() != ImagePlus.GRAY32) {
          throw new ShadingException(
-                 "This plugin only works with gray scale flatfield images of 1 or 2 byte size");
+               "This plugin only works with gray scale flatfield images of 1 or 2 byte size");
       }
       ImagePlusInfo bg = getBackground();
       ImagePlusInfo flatField;
@@ -125,12 +126,12 @@ public class ImageCollection {
          ImageProcessor dp;
          if (bg != null) {
             if (bg.getWidth() != ip.getWidth() || bg.getHeight() != ip.getHeight()) {
-               gui_.getAlertManager().postAlert("Flatfield Error", this.getClass(), 
-                       preset + " flatfield image size differs from background image size.");
+               gui_.getAlertManager().postAlert("Flatfield Error", this.getClass(),
+                     preset + " flatfield image size differs from background image size.");
                throw new ShadingException("Faltfield image and background image differ in size");
             }
             dp = ImageUtils.subtractImageProcessors(
-                    ip.getProcessor(), bg.getProcessor());
+                  ip.getProcessor(), bg.getProcessor());
          } else {
             dp = ip.getProcessor();
          }
@@ -149,8 +150,8 @@ public class ImageCollection {
          }
          float mean = total / nrPixels;
          float[] fPixels = new float[nrPixels];
-          if (dp instanceof FloatProcessor) {
-             for (int i = 0; i < nrPixels; i++) {
+         if (dp instanceof FloatProcessor) {
+            for (int i = 0; i < nrPixels; i++) {
                fPixels[i] = mean / dp.getf(i);
             }
          } else {
@@ -165,19 +166,19 @@ public class ImageCollection {
                fPixels[i] = mean / (float) pValue;
             }
          }
-          
-         FloatProcessor fp = new FloatProcessor (width, height, fPixels);
+
+         FloatProcessor fp = new FloatProcessor(width, height, fPixels);
 
          flatField = new ImagePlusInfo(fp);
 
          HashMap<String, ImagePlusInfo> newFlatField =
-                 new HashMap<String, ImagePlusInfo>();
-         newFlatField.put(BASEIMAGE, flatField);
+               new HashMap<String, ImagePlusInfo>();
+         newFlatField.put(baseImage_, flatField);
          newFlatField.put(makeKey(1, fp.getRoi()), flatField);
          flatFields_.put(preset, newFlatField);
       } catch (ShadingException ex) {
-         gui_.logs().logError("Shading plugin, addFlatField in ImageCollection: " + 
-                 ex.getMessage());
+         gui_.logs().logError("Shading plugin, addFlatField in ImageCollection: "
+               + ex.getMessage());
       }
       presetFiles_.put(preset, file);
    }
@@ -189,10 +190,6 @@ public class ImageCollection {
       return null;
    }
 
-   public ImagePlusInfo getFlatField(String preset) {
-      return flatFields_.get(preset).get(BASEIMAGE);
-   }
-
    public void clearFlatFields() {
       flatFields_.clear();
    }
@@ -201,8 +198,12 @@ public class ImageCollection {
       flatFields_.remove(preset);
    }
 
+   public ImagePlusInfo getFlatField(String preset) {
+      return flatFields_.get(preset).get(baseImage_);
+   }
+
    public ImagePlusInfo getFlatField(String preset, int binning, Rectangle roi)
-           throws ShadingException {
+         throws ShadingException {
       String key = makeKey(binning, roi);
       if (flatFields_.get(preset).containsKey(key)) {
          return flatFields_.get(preset).get(key);
@@ -221,12 +222,12 @@ public class ImageCollection {
 
    private String makeKey(int binning, Rectangle roi) {
       if (binning == 1 && (roi == null || roi.width == 0)) {
-         return BASEIMAGE;
+         return baseImage_;
       }
       String key = "" + binning;
       if (roi != null) {
          key = binning + "-" + roi.x + "-" + roi.y + "-" + roi.width + "-"
-              + roi.height;
+               + roi.height;
       }
       return key;
    }
@@ -240,14 +241,14 @@ public class ImageCollection {
     * @param ipi
     * @param binning
     * @param roi
-    * @return 
-    * @throws org.micromanager.internal.utils.MMException 
+    * @return ImagePlusInfo
+    * @throws ShadingException
     */
    private ImagePlusInfo makeDerivedImage(ImagePlusInfo ipi, int binning, Rectangle roi)
-           throws ShadingException {
+         throws ShadingException {
       if (ipi.getBinning() != 1) {
-         throw new ShadingException("This is not an unbinned image.  " +
-                 "Can not derive binned images from this one");
+         throw new ShadingException("This is not an unbinned image.  "
+               + "Can not derive binned images from this one");
       }
       ImageProcessor resultProcessor;
       if (binning != 1) {
@@ -266,10 +267,10 @@ public class ImageCollection {
          roi.y = 0;
       }
       resultProcessor.setRoi(roi);
-      ImagePlusInfo newIp = new ImagePlusInfo(new ImagePlus("", resultProcessor.crop()), 
-              binning, roi);
-      
-      return newIp;         
+      ImagePlusInfo newIp = new ImagePlusInfo(new ImagePlus("", resultProcessor.crop()),
+            binning, roi);
+
+      return newIp;
    }
-   
+
 }
