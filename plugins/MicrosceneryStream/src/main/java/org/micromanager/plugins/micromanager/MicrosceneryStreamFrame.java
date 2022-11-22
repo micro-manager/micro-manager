@@ -36,12 +36,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 import org.zeromq.ZContext;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 // Imports for MMStudio internal packages
@@ -56,13 +51,7 @@ public class MicrosceneryStreamFrame extends JFrame {
     private final JLabel portLabel_;
     private final JLabel connectionsLabel_;
 
-    private final JTextField minZText_;
-    private final JTextField maxZText_;
-    private final JTextField stepsText_;
-    private final JTextField refreshTimeText_;
-    private final JLabel stepSizeLabel_;
     private final JLabel dimensionsLabel_;
-    private final JLabel timesLabel;
 
     private final RemoteMicroscopeServer server;
     private final Settings msSettings;
@@ -76,12 +65,21 @@ public class MicrosceneryStreamFrame extends JFrame {
         micromanagerWrapper = new MicromanagerWrapper(mmcon,200,false);
         server = new RemoteMicroscopeServer(micromanagerWrapper, zContext,new SliceStorage(mmcon.getHeight()*mmcon.getWidth()*500));
         msSettings  = Util.getMicroscenerySettings();
+
         // loopBackConnection
         new ControlSignalsClient(zContext,server.getBasePort(),"localhost", java.util.List.of(this::updateLabels));
 
-        super.setLayout(new MigLayout());//"fill, insets 2, gap 2, flowx"));
+        super.setLayout(new MigLayout());
+        super.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
+        super.setLocation(100, 100);
+        WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
-        super.add(new JLabel("Version: stage limits"),"wrap");
+        // ---- content ----
+        super.add(new JLabel("Version: vertex size"),"");
+
+        super.add(new JLabel("Status: "));
+        statusLabel_ = new JLabel("uninitalized");
+        super.add(statusLabel_, "");
 
         super.add(new JLabel("Ports: "));
         portLabel_ = new JLabel(server.getBasePort() + "" + server.getStatus().getDataPorts().stream().map(p -> " ," + p).collect(Collectors.joining()));
@@ -89,106 +87,29 @@ public class MicrosceneryStreamFrame extends JFrame {
 
         super.add(new JLabel("Clients: "));
         connectionsLabel_ = new JLabel("0");
-        super.add(connectionsLabel_, "wrap");
-
-
-        super.add(new JLabel("Min Z (μm): "));
-        minZText_ = new JTextField(10);
-        minZText_.setText("0");
-        super.add(minZText_, "");
-
-        super.add(new JLabel("Max Z (μm): "));
-        maxZText_ = new JTextField(10);
-        maxZText_.setText("100");
-        super.add(maxZText_, "wrap");
-
-
-        super.add(new JLabel("Steps: "));
-        stepsText_ = new JTextField(10);
-        stepsText_.setText("100");
-        super.add(stepsText_, "");
-
-        super.add(new JLabel("Step size (μm): "));
-        stepSizeLabel_ = new JLabel("0");
-        super.add(stepSizeLabel_, "wrap");
-
-        { // Z settings
-            Double minZ = msSettings.get("MMConnection.minZ", 0.0f).doubleValue();
-            Double maxZ = msSettings.get("MMConnection.maxZ", 10.0f).doubleValue();
-            Integer steps = msSettings.get("MMConnection.slices", 10);
-            minZText_.setText(minZ.toString());
-            maxZText_.setText(maxZ.toString());
-            stepsText_.setText(steps.toString());
-            stepSizeLabel_.setText(((maxZ - minZ) / steps) + "");
-        }
-
-
-        super.add(new JLabel("Refresh Time (ms): "));
-        refreshTimeText_ = new JTextField(String.valueOf(micromanagerWrapper.getTimeBetweenUpdates()),10);
-        super.add(refreshTimeText_, "wrap");
-
-
-        super.add(new JLabel("Status: "));
-        statusLabel_ = new JLabel("uninitalized");
-        super.add(statusLabel_, "");
+        super.add(connectionsLabel_, "");
 
         super.add(new JLabel("Stack dimensions: "));
         dimensionsLabel_ = new JLabel("uninitalized");
         super.add(dimensionsLabel_, "");
 
-        super.add(new JLabel("Acq time: "));
-        timesLabel = new JLabel("uninitalized");
-        super.add(timesLabel, "wrap");
-        final Timer timer = new Timer(500, null);
-        //ActionListener listener = e -> timesLabel.setText("c:" + cvss.getMmConnection().getMeanCopyTime() + " s:" + cvss.getMmConnection().getMeanSnapTime());
-        //timer.addActionListener(listener);
-        //timer.start();
-
-        JButton applyButton = new JButton("Apply Params");
-        applyButton.addActionListener(e -> updateParams());
-        super.add(applyButton);
-
-        JButton copyFromAcqEngButton = new JButton("Copy from AcqEng");
-        copyFromAcqEngButton.addActionListener(e -> {
-            double min = studio.acquisitions().getAcquisitionSettings().sliceZBottomUm();
-            double max = studio.acquisitions().getAcquisitionSettings().sliceZTopUm();
-            double stepsSize = studio.acquisitions().getAcquisitionSettings().sliceZStepUm();
-
-            if (min > max) {
-                // swat min and max (academic version)
-                min = min + max;
-                max = min - max;
-                min = min - max;
+        super.add(new JLabel("Vertex size"));
+        JTextField vertexSizeText = new JTextField(
+                msSettings.get("MMConnection.vertexDiameter",1.0f).toString()
+                ,10);
+        vertexSizeText.addActionListener(e -> {
+            if (validFloat(vertexSizeText)){
+                micromanagerWrapper.setVertexDiameter(Float.parseFloat(vertexSizeText.getText()));
             }
-
-            minZText_.setText(Double.toString(min));
-            maxZText_.setText(Double.toString(max));
-            double steps = (max - min) / stepsSize +1;
-            stepsText_.setText(((Integer) (int) steps).toString());
-
-            updateParams();
         });
-        super.add(copyFromAcqEngButton,"wrap");
+        super.add(vertexSizeText,"wrap");
 
-        /*
-        JButton sendButton = new JButton("Start Imaging");
-        sendButton.addActionListener(e -> cvss.start());
-        super.add(sendButton);
-
-        JButton stopButton = new JButton("Stop Imaging");
-        stopButton.addActionListener(e -> cvss.pause());
-        super.add(stopButton, "wrap");
-*/
-
-        super.add(buildStageLimitsPanel(mmcon,micromanagerWrapper),"wrap, span");
-
-
-        super.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
-        super.setLocation(100, 100);
-        WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
+        JPanel tmp = new JPanel(new MigLayout());
+        tmp.add(new StageLimitsPanel(mmcon,micromanagerWrapper,msSettings),"");
+        tmp.add(new OldStackAcquisitionPanel(msSettings,studio,micromanagerWrapper), "wrap");
+        super.add(tmp, "span, wrap");
 
         super.pack();
-
 
         updateLabels(server.getStatus());
         updateLabels(new ActualMicroscopeSignal(micromanagerWrapper.status()));
@@ -200,34 +121,8 @@ public class MicrosceneryStreamFrame extends JFrame {
         // there's also Datastore.registerForEvents() for events specific to one
         // Datastore, and DisplayWindow.registerForEvents() for events specific
         // to one image display window.
-        studio.events().registerForEvents(this);
+        //studio.events().registerForEvents(this);
     }
-
-
-    private void updateParams() {
-        try {
-            Double minZ = Double.parseDouble(minZText_.getText());
-            Double maxZ = Double.parseDouble(maxZText_.getText());
-            int steps = Integer.parseInt(stepsText_.getText());
-            double stepSize = (maxZ - minZ) / steps;
-            if (stepSize <= 0) {
-                JOptionPane.showMessageDialog(null, "Max Z has to be lager than Min Z");
-                return;
-            }
-            stepSizeLabel_.setText(stepSize + "");
-
-            int updateTime = Integer.parseInt(refreshTimeText_.getText());
-
-            msSettings.set("MMConnection.minZ", minZ.floatValue());
-            msSettings.set("MMConnection.maxZ", maxZ.floatValue());
-            msSettings.set("MMConnection.slices", steps);
-            msSettings.set("MMConnection.TimeBetweenStackAcquisition", updateTime);
-            micromanagerWrapper.setTimeBetweenUpdates(updateTime);
-        } catch (NumberFormatException exc) {
-            JOptionPane.showMessageDialog(null, "Values could not be parsed. Max and Min Z need to be a floating point number and steps an integer. ");
-        }
-    }
-
 
     private Unit updateLabels(RemoteMicroscopeSignal signal) {
 
@@ -243,14 +138,6 @@ public class MicrosceneryStreamFrame extends JFrame {
             if (ams.getSignal() instanceof MicroscopeStatus) {
                 MicroscopeStatus status = (MicroscopeStatus) ams.getSignal();
                 statusLabel_.setText(status.getState().toString());
-            /*
-            // status label
-            switch (status.getState()) {
-                case MANUAL ->
-                case Paused -> statusLabel_.setText("Paused");
-                case Imaging -> statusLabel_.setText("Imaging");
-                case ShuttingDown -> statusLabel_.setText("ShuttingDown");
-            }*/
             }
         }
 
@@ -261,93 +148,15 @@ public class MicrosceneryStreamFrame extends JFrame {
         return Unit.INSTANCE;
     }
 
-    private JPanel buildStageLimitsPanel(MMConnection mmcon,MicromanagerWrapper wrapper){
-        JPanel stageLimitsPanel = new JPanel();
-        stageLimitsPanel.setLayout(new MigLayout());
-
-        TitledBorder title;
-        title = BorderFactory.createTitledBorder("Stage limits");
-        stageLimitsPanel.setBorder(title);
-
-        ArrayList<JTextField> stageLimits = new ArrayList<>(6);
-
-        JLabel notAppliedWarningLabel = new JLabel();
-        notAppliedWarningLabel.setForeground(Color.RED);
-
-        Font bold = new JLabel().getFont();
-        bold = bold.deriveFont(bold.getStyle() | Font.BOLD);
-
-        String[] dims = {"X","Y","Z"};
-        String[] dirs = {"Min","Max"};
-        for (int dimIndex = 0;dimIndex < 3 ;dimIndex++){
-
-            String dim = dims[dimIndex];
-            JLabel xLabel = new JLabel(dim);
-            xLabel.setFont(bold);
-            stageLimitsPanel.add(xLabel,"wrap");
-
-            for (String dir: dirs){
-                stageLimitsPanel.add(new JLabel(dir));
-
-                JTextField valueField = new JTextField(10);
-                stageLimitsPanel.add(valueField);
-                Float value = msSettings.getOrNull("Stage."+dir.toLowerCase(Locale.ROOT)+dim.toUpperCase());
-                if (value == null) value = mmcon.getStagePosition().get(dimIndex);
-                valueField.setText(value+"");
-                valueField.getDocument().addDocumentListener(new DocumentListener() {
-                    public void changedUpdate(DocumentEvent e) {
-                        displayApplyWarning();
-                    }
-                    public void removeUpdate(DocumentEvent e) {
-                        displayApplyWarning();
-                    }
-                    public void insertUpdate(DocumentEvent e) {
-                        displayApplyWarning();
-                    }
-                    public void displayApplyWarning() {
-                        notAppliedWarningLabel.setText("New limits have not been applied yet.");
-                    }
-                });
-
-                JButton dirLabel = new JButton("copy stage position");
-                int finalDimIndex = dimIndex;
-                dirLabel.addActionListener(e -> valueField.setText(mmcon.getStagePosition().get(finalDimIndex) + ""));
-                stageLimitsPanel.add(dirLabel, "wrap");
-
-                stageLimits.add(valueField);
-            }
+    static boolean validFloat(JTextField tf) {
+        try{
+            Float.parseFloat(tf.getText());
+        }catch (NumberFormatException n){
+            JOptionPane.showMessageDialog(null,
+                    tf.getText()+ "Is not a valid floating point number", "Invalid number",
+                    JOptionPane.ERROR_MESSAGE);
+            return true;
         }
-
-        JButton applyStageLimitsButton = new JButton("Apply stage limits");
-        applyStageLimitsButton.addActionListener(e -> {
-            for (JTextField tf : stageLimits){
-                try{
-                    Float.parseFloat(tf.getText());
-                }catch (NumberFormatException n){
-                    JOptionPane.showMessageDialog(null,
-                            tf.getText()+ "Is not a valid floating point number", "Invalid number",
-                            JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            }
-            msSettings.set("Stage.minX", Float.parseFloat(stageLimits.get(0).getText()));
-            msSettings.set("Stage.maxX", Float.parseFloat(stageLimits.get(1).getText()));
-            msSettings.set("Stage.minY", Float.parseFloat(stageLimits.get(2).getText()));
-            msSettings.set("Stage.maxY", Float.parseFloat(stageLimits.get(3).getText()));
-            msSettings.set("Stage.minZ", Float.parseFloat(stageLimits.get(4).getText()));
-            msSettings.set("Stage.maxZ", Float.parseFloat(stageLimits.get(5).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(0).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(1).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(2).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(3).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(4).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(5).getText()));
-            notAppliedWarningLabel.setText("");
-            wrapper.updateHardwareDimensions();
-        });
-        stageLimitsPanel.add(applyStageLimitsButton, "span 2");
-        stageLimitsPanel.add(notAppliedWarningLabel,"wrap");
-
-        return stageLimitsPanel;
+        return false;
     }
 }
