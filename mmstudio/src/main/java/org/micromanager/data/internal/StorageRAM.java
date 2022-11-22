@@ -49,7 +49,6 @@ public final class StorageRAM implements RewritableStorage {
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;
    private final Set<String> axesInUse_;
-   private Image anyImage_;
 
    /**
     * Image Data Storage located in RAM.
@@ -105,14 +104,10 @@ public final class StorageRAM implements RewritableStorage {
 
    @Override
    public Image getAnyImage() {
-      if (anyImage_ != null) {
-         return anyImage_;
-      }
       synchronized (this) {
          if (coordsToImage_ != null && coordsToImage_.size() > 0) {
             Coords coords = new ArrayList<>(coordsToImage_.keySet()).get(0);
-            anyImage_ = coordsToImage_.get(coords);
-            return anyImage_;
+            return coordsToImage_.get(coords);
          }
       }
       return null;
