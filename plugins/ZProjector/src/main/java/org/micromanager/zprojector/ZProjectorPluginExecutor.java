@@ -119,10 +119,12 @@ public class ZProjectorPluginExecutor {
                newStore = studio_.data().createRAMDatastore();
             }
 
-            CoordsBuilder newSizeCoordsBuilder = studio_.data().getCoordsBuilder();
+            CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
             for (String axis : oldStore_.getAxes()) {
                if (!axis.equals(projectionAxis)) {
-                  newSizeCoordsBuilder.index(axis, oldStore_.getNextIndex(axis) - 1);
+                  newSizeCoordsBuilder.index(axis, oldStore_.getNextIndex(axis));
+               } else {
+                  newSizeCoordsBuilder.index(axis, 0);
                }
             }
             SummaryMetadata metadata = oldStore_.getSummaryMetadata();
@@ -273,6 +275,9 @@ public class ZProjectorPluginExecutor {
                projection.setProcessor(projection.getProcessor().convertToShort(false));
             }
          }
+         // TODO: adjust the metadata with the little knowledge we have about the
+         // projection axis (for instance, if z, set z position to the mean of the
+         // z positions of all images?
          Image outImg = studio_.data().getImageJConverter().createImage(
                  projection.getProcessor(), cbp.index(projectionAxis, 0).build(),
                  imgMetadata.copyBuilderWithNewUUID().build());
