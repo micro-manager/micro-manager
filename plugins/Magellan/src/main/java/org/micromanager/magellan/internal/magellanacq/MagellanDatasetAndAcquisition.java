@@ -245,7 +245,7 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    /**
     * Called when images done arriving.
     */
-   public void finished() {
+   public void finish() {
       if (!storage_.isFinished()) {
          //Get most up to date display settings
          JSONObject displaySettings = display_.getDisplaySettingsJSON();
