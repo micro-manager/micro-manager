@@ -3,6 +3,7 @@ package org.micromanager.acquisition.internal.acqengjcompat;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import mmcorej.TaggedImage;
+import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.TaggedImageProcessor;
 
 /**
@@ -14,7 +15,7 @@ public class TaggedImageDiverter implements TaggedImageProcessor {
    private BlockingQueue<TaggedImage> diverter_;
 
    @Override
-   public void setDequeues(LinkedBlockingDeque<TaggedImage> source,
+   public void setAcqAndDequeues(AcquisitionAPI acq, LinkedBlockingDeque<TaggedImage> source,
                            LinkedBlockingDeque<TaggedImage> sink) {
       diverter_ = source;
    }
