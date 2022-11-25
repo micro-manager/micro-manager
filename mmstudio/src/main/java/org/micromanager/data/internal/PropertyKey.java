@@ -1252,13 +1252,15 @@ public enum PropertyKey {
          if (SCOPE_DATA_KEYS.extractFromGsonObject(jo, tmp)) {
             PropertyMap.Builder builder = PropertyMaps.builder();
             for (String key : tmp.build().getStringList(SCOPE_DATA_KEYS.key())) {
-               String val = "";
-               if (jo.get(key).isJsonObject()) {
-                  val = jo.get(key).getAsJsonObject().get("PropVal").getAsString();
-               } else if (jo.get(key).isJsonPrimitive()) {
-                  val = jo.get(key).getAsString();
+               if (jo.get(key) != null) {
+                  String val = "";
+                  if (jo.get(key).isJsonObject()) {
+                     val = jo.get(key).getAsJsonObject().get("PropVal").getAsString();
+                  } else if (jo.get(key).isJsonPrimitive()) {
+                     val = jo.get(key).getAsString();
+                  }
+                  builder.putString(key, val);
                }
-               builder.putString(key, val);
             }
             dest.putPropertyMap(key(), builder.build());
             return true;
