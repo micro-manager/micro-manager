@@ -256,6 +256,8 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          throw new RuntimeException("No camera configured.");
       }
       core.snapImage();
+      boolean includeSystemStateCache = core.getIncludeSystemStateCache();
+      core.setIncludeSystemStateCache(false);
       ArrayList<Image> result = new ArrayList<>();
       for (int c = 0; c < core.getNumberOfCameraChannels(); ++c) {
          TaggedImage tagged = core.getTaggedImage(c);
@@ -265,6 +267,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          temp = temp.copyWith(newCoords, newMetadata);
          result.add(temp);
       }
+      core.setIncludeSystemStateCache(includeSystemStateCache);
       return result;
    }
 
