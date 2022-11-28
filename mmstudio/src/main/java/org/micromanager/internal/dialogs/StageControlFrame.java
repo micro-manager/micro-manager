@@ -779,6 +779,9 @@ public final class StageControlFrame extends JFrame {
             core_.waitForDevice(core_.getXYStageDevice());
             // ASI stages report not busy, and then become busy again.  Add an extra wait
             // to avoid motion blur with such stages.
+            // A similar issue (movement during the Snap) is seen with the Nikon Ti2 stage.
+            // That prompted to make the extraWait_ variable settable through static functions.
+            // If all of this can be resolved in the device adapters, this wait could go.
             Thread.sleep(extraWait_);
             studio_.live().snap(true);
          } catch (Exception ex) {
