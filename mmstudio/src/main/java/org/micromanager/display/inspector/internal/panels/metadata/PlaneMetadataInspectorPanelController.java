@@ -178,7 +178,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       try {
          images = viewer_.getDisplayedImages();
       } catch (IOException | NullPointerException e) {
-         ReportingUtils.logError("Exception in PlaneMetadataInspectorPanelController");
+         ReportingUtils.logError(e, "Exception in PlaneMetadataInspectorPanelController");
          return;
       }
 
