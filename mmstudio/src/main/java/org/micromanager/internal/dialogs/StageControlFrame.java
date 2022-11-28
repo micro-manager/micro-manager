@@ -93,7 +93,7 @@ public final class StageControlFrame extends JFrame {
    public static final String SMALL_MOVEMENT_Z = "SMALLMOVEMENTZ";
    public static final String MEDIUM_MOVEMENT_Z = "MEDIUMMOVEMENTZ";
 
-   private static final long EXTRA_WAIT = 100;
+   private static long extraWait_ = 100;
 
    // used to keep track of the "active" Z Drive
    public static final String SELECTED_Z_DRIVE = "SELECTED_Z_DRIVE";
@@ -764,6 +764,14 @@ public final class StageControlFrame extends JFrame {
       return panel;
    }
 
+   public static void setExtraWait(long extraWait) {
+      extraWait_ = extraWait;
+   }
+
+   public static long getExtraWait() {
+      return extraWait_;
+   }
+
    private void setRelativeXYStagePosition(double x, double y) {
       uiMovesStageManager_.getXYNavigator().moveSampleOnDisplayUm(x, y);
       if (settings_.getBoolean(SNAP, false)) {
@@ -771,7 +779,7 @@ public final class StageControlFrame extends JFrame {
             core_.waitForDevice(core_.getXYStageDevice());
             // ASI stages report not busy, and then become busy again.  Add an extra wait
             // to avoid motion blur with such stages.
-            Thread.sleep(EXTRA_WAIT);
+            Thread.sleep(extraWait_);
             studio_.live().snap(true);
          } catch (Exception ex) {
             studio_.logs().showError(ex, "Error while waiting for stage: "
