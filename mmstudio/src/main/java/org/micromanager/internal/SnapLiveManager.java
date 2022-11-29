@@ -125,6 +125,8 @@ public final class SnapLiveManager extends DataViewerListener
    // suspended. This gets unexpectedly complicated See setSuspended().
    private int suspendCount_ = 0;
 
+   private boolean includeSystemStateCache_;
+
    private final PerformanceMonitor perfMon_ =
          PerformanceMonitor.createWithTimeConstantMs(1000.0);
    private final PerformanceMonitorUI pmUI_ =
@@ -181,6 +183,7 @@ public final class SnapLiveManager extends DataViewerListener
    public SnapLiveManager(MMStudio mmStudio, CMMCore core) {
       mmStudio_ = mmStudio;
       core_ = core;
+      includeSystemStateCache_ = core_.getIncludeSystemStateCache();
       uiMovesStageManager_ = mmStudio_.getUiMovesStageManager();
       displayInfoLock_ = new Object();
    }
@@ -291,6 +294,8 @@ public final class SnapLiveManager extends DataViewerListener
       }
 
       synchronized (this) {
+         includeSystemStateCache_ = core_.getIncludeSystemStateCache();
+         core_.setIncludeSystemStateCache(false);
          final long liveModeCount = ++liveModeStartCount_;
          final Runnable grab;
          grab = new Runnable() {
@@ -379,6 +384,7 @@ public final class SnapLiveManager extends DataViewerListener
       try {
          if (core_.isSequenceRunning()) {
             core_.stopSequenceAcquisition();
+            core_.setIncludeSystemStateCache(includeSystemStateCache_);
          }
          while (core_.isSequenceRunning()) {
             core_.sleep(2);
