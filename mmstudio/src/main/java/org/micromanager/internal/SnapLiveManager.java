@@ -384,6 +384,7 @@ public final class SnapLiveManager extends DataViewerListener
       try {
          if (core_.isSequenceRunning()) {
             core_.stopSequenceAcquisition();
+            core_.setIncludeSystemStateCache(includeSystemStateCache_);
          }
          while (core_.isSequenceRunning()) {
             core_.sleep(2);
@@ -392,7 +393,6 @@ public final class SnapLiveManager extends DataViewerListener
          ReportingUtils.showError(e,
                "Failed to stop sequence acquisition. Double-check shutter status.");
       }
-      core_.setIncludeSystemStateCache(includeSystemStateCache_);
    }
 
    /**
