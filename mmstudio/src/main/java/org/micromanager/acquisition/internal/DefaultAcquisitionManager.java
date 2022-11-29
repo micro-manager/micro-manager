@@ -259,15 +259,20 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       boolean includeSystemStateCache = core.getIncludeSystemStateCache();
       core.setIncludeSystemStateCache(false);
       ArrayList<Image> result = new ArrayList<>();
-      for (int c = 0; c < core.getNumberOfCameraChannels(); ++c) {
-         TaggedImage tagged = core.getTaggedImage(c);
-         Image temp = new DefaultImage(tagged);
-         Coords newCoords = temp.getCoords().copyBuilder().channel(c).build();
-         Metadata newMetadata = temp.getMetadata().copyBuilderWithNewUUID().build();
-         temp = temp.copyWith(newCoords, newMetadata);
-         result.add(temp);
+      try {
+         for (int c = 0; c < core.getNumberOfCameraChannels(); ++c) {
+            TaggedImage tagged = core.getTaggedImage(c);
+            Image temp = new DefaultImage(tagged);
+            Coords newCoords = temp.getCoords().copyBuilder().channel(c).build();
+            Metadata newMetadata = temp.getMetadata().copyBuilderWithNewUUID().build();
+            temp = temp.copyWith(newCoords, newMetadata);
+            result.add(temp);
+         }
+      } catch (Exception ex) {
+         studio_.logs().logError(ex);
+      } finally {
+         core.setIncludeSystemStateCache(includeSystemStateCache);
       }
-      core.setIncludeSystemStateCache(includeSystemStateCache);
       return result;
    }
 
