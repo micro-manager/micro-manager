@@ -268,8 +268,6 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             temp = temp.copyWith(newCoords, newMetadata);
             result.add(temp);
          }
-      } catch (Exception ex) {
-         studio_.logs().logError(ex);
       } finally {
          core.setIncludeSystemStateCache(includeSystemStateCache);
       }
