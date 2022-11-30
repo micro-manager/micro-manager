@@ -529,7 +529,7 @@ public final class MultipageTiffWriter {
       // If everything went ok, try to split "intelligently", keeping frames together
       if (splitByFrame) {
          size = singleImageBytes * axis1ImagesLeft
-               + singleImageBytes * axis1Size * axis2ImagesLeft
+               + singleImageBytes * axis1Size * (axis2ImagesLeft - 1)
                + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL
                + extraPadding + filePosition_;
          size += omeMDLength;
