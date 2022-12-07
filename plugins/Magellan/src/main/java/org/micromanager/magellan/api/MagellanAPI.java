@@ -24,17 +24,17 @@ public class MagellanAPI {
       acqManager_ = MagellanAcquisitionsManager.getInstance();
    }
 
-   public AcquisitionAPI createAcquisition(int index) {
-      return acqManager_.createAcquisition(index);
+   public AcquisitionAPI createAcquisition(int index, boolean start) {
+      return acqManager_.createAcquisition(index, start);
    }
 
-   public AcquisitionAPI createExploreAcquisition() {
+   public AcquisitionAPI createExploreAcquisition(boolean start) {
       double zStep = GUI.getInstance().getExploreZStep();
       double overlap = GUI.getInstance().getOverlap();
       String dir = GUI.getInstance().getSavingDir();
       String name = GUI.getInstance().getExploreSavingName();
       String cGroup = GUI.getInstance().getExploreChannelGroup();
-      return acqManager_.createExploreAcquisition(zStep, overlap, dir, name, cGroup);
+      return acqManager_.createExploreAcquisition(zStep, overlap, dir, name, cGroup, start);
    }
    
    public MagellanAcquisitionSettingsAPI getAcquisitionSettings(int index) {

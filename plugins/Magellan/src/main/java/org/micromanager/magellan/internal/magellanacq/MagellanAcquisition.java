@@ -22,7 +22,10 @@ public interface MagellanAcquisition extends ViewerAcquisitionInterface, XYTiled
    double getZOrigin();
 
    double getZStep();
-   
+
+   // Called by pycromanager
+   public XYTiledAcquisitionAPI getAcquisition();
+
    ChannelGroupSettings getChannels();
    
    MagellanGenericAcquisitionSettings getAcquisitionSettings();

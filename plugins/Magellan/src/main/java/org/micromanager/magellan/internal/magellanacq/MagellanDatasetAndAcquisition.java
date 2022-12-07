@@ -258,7 +258,7 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    }
 
    public boolean isFinished() {
-      return storage_.isFinished();
+      return storage_ == null ? true :storage_.isFinished();
    }
 
    public String getDiskLocation() {
