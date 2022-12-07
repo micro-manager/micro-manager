@@ -59,14 +59,14 @@ import org.micromanager.internal.utils.ProgressBar;
 public class ZProjectorPluginExecutor {
 
    private final Studio studio_;
-   private final DisplayWindow window_;
-   private final DataProvider oldStore_;
+   private DisplayWindow window_;
+   private final DataProvider oldProvider_;
    private int nrProjections_;
    private int projectionNr_;
    private ProgressBar progressBar_;
 
    /**
-    * Constructs this pluginb's executor.
+    * Constructs this plugin's executor.
     *
     * @param studio Omnipresent Micro-Manager Studio object.
     * @param window DisplayWindow whose data we will project.
@@ -74,7 +74,18 @@ public class ZProjectorPluginExecutor {
    public ZProjectorPluginExecutor(Studio studio, DisplayWindow window) {
       studio_ = studio;
       window_ = window;
-      oldStore_ = window.getDataProvider();      
+      oldProvider_ = window.getDataProvider();
+   }
+
+   /**
+    * Constructs this plugin's executor.
+    *
+    * @param studio Omnipresent Micro-Manager Studio object.
+    * @param oldProvider DataProvider to be projected.
+    */
+   public ZProjectorPluginExecutor(Studio studio, DataProvider oldProvider) {
+      studio_ = studio;
+      oldProvider_ = oldProvider;
    }
 
    /**
@@ -119,63 +130,8 @@ public class ZProjectorPluginExecutor {
                newStore = studio_.data().createRAMDatastore();
             }
 
-            CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
-            for (String axis : oldStore_.getAxes()) {
-               if (!axis.equals(projectionAxis)) {
-                  newSizeCoordsBuilder.index(axis, oldStore_.getNextIndex(axis));
-               } else {
-                  newSizeCoordsBuilder.index(axis, 0);
-               }
-            }
-            SummaryMetadata metadata = oldStore_.getSummaryMetadata();
-
-            metadata = metadata.copyBuilder()
-                    .intendedDimensions(newSizeCoordsBuilder.build())
-                    .build();
-            Coords.CoordsBuilder cb = Coordinates.builder();
-            try {
-               newStore.setSummaryMetadata(metadata);               
-               List<String> axes = oldStore_.getAxes();
-               axes.remove(projectionAxis);
-               axes.sort(new CoordsComparator());
-               if (!save) {
-                  DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-                  copyDisplay.setCustomTitle(newName);
-                  copyDisplay.setDisplaySettings(
-                          window_.getDisplaySettings().copyBuilder().build());
-                  studio_.displays().manage(newStore);
-               } else {
-                  nrProjections_ = 1;
-                  for (String axis : axes) {
-                     nrProjections_ *= oldStore_.getNextIndex(axis);
-                  }
-                  progressBar_ = new ProgressBar(window_.getWindow(),
-                                       "Projection Progress", 1, nrProjections_);
-                  progressBar_.setVisible(true);
-               }
-
-               findAllProjections(newStore, axes, cb, projectionAxis,
-                       firstFrame, lastFrame, projectionMethod);
-               
-            } catch (DatastoreFrozenException ex) {
-               studio_.logs().showError("Can not add data to frozen datastore");
-            } catch (DatastoreRewriteException ex) {
-               studio_.logs().showError("Can not overwrite data");
-            } finally {
-               if (progressBar_ != null) {
-                  progressBar_.setVisible(false);
-               }
-            }
-
-            newStore.freeze();
-            
-            if (save) {
-               DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-               copyDisplay.setCustomTitle(newName);
-               copyDisplay.setDisplaySettings(
-                       window_.getDisplaySettings().copyBuilder().build());
-               studio_.displays().manage(newStore);
-            }
+            project(newStore,  true, projectionAxis, newName, firstFrame, lastFrame,
+                  projectionMethod);
 
             return null;
          }
@@ -186,11 +142,81 @@ public class ZProjectorPluginExecutor {
          }
       }
 
-      
       (new ZProjectTask()).execute();
    }
-   
-   
+
+   /**
+    * Directly performs the actual creation of a new image with reduced content.
+    *
+    * @param newStore Store to put data into, type of store determines if data will be auto-saved
+    * @param show  True when projection should be displayed
+    * @param newName  Name for the copy
+    * @param projectionAxis Axis to be projected (often Z or T), see Coords
+    * @param firstFrame  Frame nr (zero-based) of first frame to include in projection
+    * @param lastFrame  Last frame (nr zero-based) to include in projection
+    * @param projectionMethod ZProjector method see ImageJ code
+    */
+   public Datastore project(final Datastore newStore, final boolean show,
+                            final String projectionAxis, final String newName,
+                            final int firstFrame, final int lastFrame,
+                            final int projectionMethod) throws Exception {
+      CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
+      for (String axis : oldProvider_.getAxes()) {
+         if (!axis.equals(projectionAxis)) {
+            newSizeCoordsBuilder.index(axis, oldProvider_.getNextIndex(axis));
+         } else {
+            newSizeCoordsBuilder.index(axis, 0);
+         }
+      }
+      SummaryMetadata metadata = oldProvider_.getSummaryMetadata();
+
+      metadata = metadata.copyBuilder()
+            .intendedDimensions(newSizeCoordsBuilder.build())
+            .build();
+      Coords.CoordsBuilder cb = Coordinates.builder();
+      try {
+         newStore.setSummaryMetadata(metadata);
+         List<String> axes = oldProvider_.getAxes();
+         axes.remove(projectionAxis);
+         axes.sort(new CoordsComparator());
+         if (show) {
+            DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+            copyDisplay.setCustomTitle(newName);
+            if (window_ != null) {
+               copyDisplay.setDisplaySettings(
+                     window_.getDisplaySettings().copyBuilder().build());
+            }
+            studio_.displays().manage(newStore);
+         } else {
+            nrProjections_ = 1;
+            for (String axis : axes) {
+               nrProjections_ *= oldProvider_.getNextIndex(axis);
+            }
+            if (window_ != null) {
+               progressBar_ = new ProgressBar(window_.getWindow(),
+                     "Projection Progress", 1, nrProjections_);
+               progressBar_.setVisible(true);
+            }
+         }
+
+         findAllProjections(newStore, axes, cb, projectionAxis,
+               firstFrame, lastFrame, projectionMethod);
+
+      } catch (DatastoreFrozenException ex) {
+         studio_.logs().showError("Can not add data to frozen datastore");
+      } catch (DatastoreRewriteException ex) {
+         studio_.logs().showError("Can not overwrite data");
+      } finally {
+         if (progressBar_ != null) {
+            progressBar_.setVisible(false);
+         }
+      }
+
+      newStore.freeze();
+
+      return newStore;
+   }
+
    /**
     * Recursively figures out which projections need to be performed
     * It does so by taking the first remaining axes, cycle through all positions
@@ -212,7 +238,7 @@ public class ZProjectorPluginExecutor {
       String currentAxis = remainingAxes.get(0);
       List<String> rcAxes = new ArrayList<>(remainingAxes);
       rcAxes.remove(currentAxis);
-      for (int i = 0; i < oldStore_.getNextIndex(currentAxis); i++) {
+      for (int i = 0; i < oldProvider_.getNextIndex(currentAxis); i++) {
          cbp.index(currentAxis, i);
          if (rcAxes.isEmpty()) {
             executeProjection(newStore, cbp, projectionAxis, min, max, projectionMethod);
@@ -242,7 +268,7 @@ public class ZProjectorPluginExecutor {
            String projectionAxis, int min, int max, int projectionMethod) 
            throws IOException {
       cbp.index(projectionAxis, min);
-      Image tmpImg = oldStore_.getAnyImage();
+      Image tmpImg = oldProvider_.getAnyImage();
       if (tmpImg == null) {
          studio_.alerts().postAlert("Projection problem", this.getClass(),
                  "No images found while projecting");
@@ -252,7 +278,7 @@ public class ZProjectorPluginExecutor {
                tmpImg.getWidth(), tmpImg.getHeight());
       Metadata imgMetadata = null;
       for (int i = min; i <= max; i++) {
-         Image img = oldStore_.getImage(cbp.index(projectionAxis, i).build());
+         Image img = oldProvider_.getImage(cbp.index(projectionAxis, i).build());
          if (img != null) {  // null happens when this image was skipped
             if (imgMetadata == null) {
                imgMetadata = img.getMetadata().copyBuilderWithNewUUID().build();
