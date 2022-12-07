@@ -123,12 +123,11 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
          throw new RuntimeException("Problem communicating with core to get Z stage limits");
       }
       if (acq_.areEventsFinished()) {
-         throw new RuntimeException("Cannot start acquistion since it has already been run");
+         throw new RuntimeException("Cannot start acquisition since it has already been run");
       }
       Iterator<AcquisitionEvent> acqEventIterator = buildAcqEventGenerator();
       Engine.getInstance().submitEventIterator(acqEventIterator);
       Engine.getInstance().finishAcquisition(acq_);
-      started_ = true;
    }
 
    private void addMagellanSummaryMetadata(JSONObject summaryMetadata, DataSink sink) {
@@ -161,6 +160,11 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
    public NDTiffAPI getStorage() {
       return acq_.getDataSink() == null ? null
             : ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getStorage();
+   }
+
+   // Called by pycromanager
+   public XYTiledAcquisitionAPI getAcquisition() {
+      return acq_;
    }
 
    public boolean isFinished() {
@@ -254,6 +258,12 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
       return new AcquisitionEventIterator(baseEvent, acqFunctions, monitorSliceIndices());
    }
 
+   @Override
+   public void start() {
+      acq_.start();
+      started_ = true;
+   }
+
    public void waitForCompletion() {
       if (!started_) {
          //it was never successfully started
@@ -315,6 +325,11 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
    @Override
    public boolean isDebugMode() {
       return acq_.isDebugMode();
+   }
+
+   @Override
+   public void checkForExceptions() throws Exception {
+      acq_.checkForExceptions();
    }
 
    @Override

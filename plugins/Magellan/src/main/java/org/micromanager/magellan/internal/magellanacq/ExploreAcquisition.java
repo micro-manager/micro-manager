@@ -39,6 +39,7 @@ import org.micromanager.acqj.api.TaggedImageProcessor;
 import org.micromanager.acqj.api.XYTiledAcquisitionAPI;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
+import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.AcqEventModules;
@@ -107,7 +108,6 @@ public class ExploreAcquisition implements MagellanAcquisition {
             addExploreSummaryMetadata(jsonObject, sink);
          }
       });
-      started_ = true;
    }
 
    private void addExploreSummaryMetadata(JSONObject summaryMetadata, DataSink sink) {
@@ -166,6 +166,12 @@ public class ExploreAcquisition implements MagellanAcquisition {
    }
 
    @Override
+   public void start() {
+      acq_.start();
+      started_ = true;
+   }
+
+   @Override
    public void waitForCompletion() {
       acq_.waitForCompletion();
    }
@@ -197,7 +203,7 @@ public class ExploreAcquisition implements MagellanAcquisition {
 
    @Override
    public void addHook(AcquisitionHook hook, int type) {
-
+      acq_.addHook(hook, type);
    }
 
    @Override
@@ -238,15 +244,13 @@ public class ExploreAcquisition implements MagellanAcquisition {
    }
 
    @Override
-   public void setDebugMode(boolean debug) {
-
+   public void checkForExceptions() throws Exception {
+      acq_.checkForExceptions();
    }
 
+   @Override
+   public void setDebugMode(boolean debug) {
 
-   //Called by pycromanager
-   public NDTiffAPI getStorage() {
-      return acq_.getDataSink() == null ? null
-            : ((MagellanDatasetAndAcquisition) acq_.getDataSink()).getStorage();
    }
 
    private void createXYPositions() {
@@ -487,6 +491,11 @@ public class ExploreAcquisition implements MagellanAcquisition {
    @Override
    public double getZStep() {
       return ((ExploreAcqSettings) settings_).zStep_;
+   }
+
+   @Override
+   public XYTiledAcquisitionAPI getAcquisition() {
+      return acq_;
    }
 
    @Override

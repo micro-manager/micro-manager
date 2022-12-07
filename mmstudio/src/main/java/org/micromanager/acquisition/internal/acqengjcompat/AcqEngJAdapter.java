@@ -224,6 +224,9 @@ public class AcqEngJAdapter implements AcquisitionEngine {
                engineOutputQueue, curPipeline_, curStore_, this, studio_.events());
          sink.start(() -> currentAcquisition_.abort());
 
+         // Read for events
+         currentAcquisition_.start();
+
          // Start the events and signal to finish when complete
          currentAcquisition_.submitEventIterator(createAcqEventIterator(acquisitionSettings));
          currentAcquisition_.finish();

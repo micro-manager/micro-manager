@@ -146,7 +146,8 @@ public class MagellanAcquisitionsManager {
    }
 
    public ExploreAcquisition createExploreAcquisition(double zStep, double overlap,
-                                                      String dir, String name, String cGroup) {
+                                                      String dir, String name, String cGroup,
+                                                      boolean start) {
       if (!AffineTransformUtils.isAffineTransformDefined()) {
          ReportingUtils.showError("XY Stage and Camera are not calibrated to each other."
                  + " \nOpen \"Devices--Pixel size calibration\" and set up Affine transform");
@@ -167,12 +168,19 @@ public class MagellanAcquisitionsManager {
          }
       }
       exploreAcq_ = new ExploreAcquisition(settings);
+      if (start) {
+         exploreAcq_.start();
+      }
       return exploreAcq_;
    }
    
-   public MagellanGUIAcquisition createAcquisition(int index) {
+   public MagellanGUIAcquisition createAcquisition(int index, boolean start) {
       MagellanGUIAcquisitionSettings settings = acqSettingsList_.get(index);
-      return new MagellanGUIAcquisition(settings, true);
+      MagellanGUIAcquisition acq = new MagellanGUIAcquisition(settings, true);
+      if (start) {
+         acq.start();
+      }
+      return acq;
    }
 
    public void runAllAcquisitions() {
