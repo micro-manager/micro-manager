@@ -22,6 +22,7 @@ package org.micromanager.plugins.micromanager;
 
 import graphics.scenery.Settings;
 import kotlin.Unit;
+import microscenery.UI.SettingsEditor;
 import microscenery.Util;
 import microscenery.hardware.micromanagerConnection.MMConnection;
 import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
@@ -50,8 +51,9 @@ public class MicrosceneryStreamFrame extends JFrame {
     private final JLabel statusLabel_;
     private final JLabel portLabel_;
     private final JLabel connectionsLabel_;
-
     private final JLabel dimensionsLabel_;
+
+    private final StageLimitsPanel stageLimitsPanel;
 
     private final RemoteMicroscopeServer server;
     private final Settings msSettings;
@@ -102,26 +104,31 @@ public class MicrosceneryStreamFrame extends JFrame {
                 micromanagerWrapper.setVertexDiameter(Float.parseFloat(vertexSizeText.getText()));
             }
         });
-        super.add(vertexSizeText,"wrap");
+        super.add(vertexSizeText,"");
 
-        JPanel tmp = new JPanel(new MigLayout());
-        tmp.add(new StageLimitsPanel(mmcon,micromanagerWrapper,msSettings),"");
-        tmp.add(new OldStackAcquisitionPanel(msSettings,studio,micromanagerWrapper), "wrap");
-        super.add(tmp, "span, wrap");
+        JButton settingsButton = new JButton("Settings");
+        settingsButton.addActionListener(e -> {
+            SettingsEditor editor = new SettingsEditor(480, 500,msSettings,new JFrame("SettingsEditor"));
+        });
+        super.add(settingsButton, "wrap");
+
+        JPanel pannelContainer = new JPanel(new MigLayout());
+        stageLimitsPanel = new StageLimitsPanel(mmcon,micromanagerWrapper,msSettings);
+        pannelContainer.add(stageLimitsPanel,"");
+        pannelContainer.add(new OldStackAcquisitionPanel(msSettings,studio,micromanagerWrapper), "wrap");
+        super.add(pannelContainer, "span, wrap");
 
         super.pack();
 
         updateLabels(server.getStatus());
         updateLabels(new ActualMicroscopeSignal(micromanagerWrapper.status()));
 
-        // Registering this class for events means that its event handlers
-        // (that is, methods with the @Subscribe annotation) will be invoked when
-        // an event occurs. You need to call the right registerForEvents() method
-        // to get events; this one is for the application-wide event bus, but
-        // there's also Datastore.registerForEvents() for events specific to one
-        // Datastore, and DisplayWindow.registerForEvents() for events specific
-        // to one image display window.
-        //studio.events().registerForEvents(this);
+        for (String s : (new String[]{"Stage.minX","Stage.maxX", "Stage.minY", "Stage.maxY", "Stage.minZ", "Stage.maxZ"})) {
+            msSettings.addUpdateRoutine(s,() -> {
+                stageLimitsPanel.updateValues();
+                return null;
+            });
+        }
     }
 
     private Unit updateLabels(RemoteMicroscopeSignal signal) {

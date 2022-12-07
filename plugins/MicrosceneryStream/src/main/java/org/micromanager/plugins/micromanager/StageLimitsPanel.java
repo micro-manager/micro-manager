@@ -15,7 +15,12 @@ import java.util.Locale;
 
 class StageLimitsPanel extends JPanel {
 
+    private final ArrayList<StageLimitContainer> stageLimits = new ArrayList<>(6);
+    private final Settings msSettings;
+
     public StageLimitsPanel(MMConnection mmcon, MicromanagerWrapper wrapper, Settings msSettings) {
+        this.msSettings = msSettings;
+
 
         JPanel stageLimitsPanel = this;
         stageLimitsPanel.setLayout(new MigLayout());
@@ -24,7 +29,6 @@ class StageLimitsPanel extends JPanel {
         title = BorderFactory.createTitledBorder("Stage limits");
         stageLimitsPanel.setBorder(title);
 
-        ArrayList<JTextField> stageLimits = new ArrayList<>(6);
 
         JLabel notAppliedWarningLabel = new JLabel();
         notAppliedWarningLabel.setForeground(Color.RED);
@@ -46,7 +50,8 @@ class StageLimitsPanel extends JPanel {
 
                 JTextField valueField = new JTextField(10);
                 stageLimitsPanel.add(valueField);
-                Float value = msSettings.getOrNull("Stage." + dir.toLowerCase(Locale.ROOT) + dim.toUpperCase());
+                String settingName = "Stage." + dir.toLowerCase(Locale.ROOT) + dim.toUpperCase();
+                Float value = msSettings.getOrNull(settingName);
                 if (value == null) value = mmcon.getStagePosition().get(dimIndex);
                 valueField.setText(value + "");
                 valueField.getDocument().addDocumentListener(new DocumentListener() {
@@ -72,32 +77,54 @@ class StageLimitsPanel extends JPanel {
                 dirLabel.addActionListener(e -> valueField.setText(mmcon.getStagePosition().get(finalDimIndex) + ""));
                 stageLimitsPanel.add(dirLabel, "wrap");
 
-                stageLimits.add(valueField);
+                stageLimits.add(new StageLimitContainer(valueField,settingName));
             }
         }
 
         JButton applyStageLimitsButton = new JButton("Apply stage limits");
         applyStageLimitsButton.addActionListener(e -> {
-            for (JTextField tf : stageLimits) {
-                if (MicrosceneryStreamFrame.validFloat(tf)) return;
+            for (StageLimitContainer tf : stageLimits) {
+                if (MicrosceneryStreamFrame.validFloat(tf.field)) return;
             }
-            msSettings.set("Stage.minX", Float.parseFloat(stageLimits.get(0).getText()));
-            msSettings.set("Stage.maxX", Float.parseFloat(stageLimits.get(1).getText()));
-            msSettings.set("Stage.minY", Float.parseFloat(stageLimits.get(2).getText()));
-            msSettings.set("Stage.maxY", Float.parseFloat(stageLimits.get(3).getText()));
-            msSettings.set("Stage.minZ", Float.parseFloat(stageLimits.get(4).getText()));
-            msSettings.set("Stage.maxZ", Float.parseFloat(stageLimits.get(5).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(0).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(1).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(2).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(3).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(4).getText()));
-//            System.out.println(""+ Float.parseFloat(stageLimits.get(5).getText()));
-            notAppliedWarningLabel.setText("");
-            wrapper.updateHardwareDimensions();
+            for (StageLimitContainer container : stageLimits) {
+                msSettings.set(container.settingName, Float.parseFloat(container.field.getText()));
+            }
+
+            try {
+                wrapper.updateHardwareDimensions();
+                notAppliedWarningLabel.setText("");
+            } catch (IllegalArgumentException exception){
+                if(exception.getMessage().equals("Min allowed stage area parameters need to be smaller than max values")){
+                    JOptionPane.showMessageDialog(null,
+                            "Min allowed stage area parameters need to be smaller than max values",
+                            "Invalid Parameters",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    throw exception;
+                }
+            }
         });
         stageLimitsPanel.add(applyStageLimitsButton, "span 2");
         stageLimitsPanel.add(notAppliedWarningLabel, "wrap");
 
+    }
+
+
+    private static class StageLimitContainer{
+        JTextField field;
+        String settingName;
+
+        public StageLimitContainer(JTextField field, String settingName) {
+            this.field = field;
+            this.settingName = settingName;
+        }
+    }
+
+    public void updateValues() {
+        for (StageLimitContainer container : stageLimits) {
+            Float value = msSettings.getOrNull(container.settingName);
+            if (value == null) value = 0f;
+            container.field.setText(value + "");
+        }
     }
 }
