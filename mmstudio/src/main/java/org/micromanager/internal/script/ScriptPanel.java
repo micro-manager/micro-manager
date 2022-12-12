@@ -29,6 +29,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Toolkit;
+import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -415,10 +416,12 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       final JPanel leftPanel = new JPanel();
       SpringLayout spLeft = new SpringLayout();
       leftPanel.setLayout(spLeft);
+      DropTarget dropTargetLeft1 = new DropTarget(leftPanel, new LeftFrameDropListener(this));
 
       final JPanel topRightPanel = new JPanel();
       SpringLayout spTopRight = new SpringLayout();
       topRightPanel.setLayout(spTopRight);
+      DropTarget dropTarget = new DropTarget(topRightPanel, new TopRightFrameDropListener(this));
 
       final JPanel bottomRightPanel = new JPanel();
       bottomRightPanel.setLayout(new BoxLayout(bottomRightPanel, BoxLayout.Y_AXIS));
@@ -483,6 +486,8 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       scriptArea_.setPreferredSize(new Dimension(800, 300));
       scriptPaneSaved_ = true;
       scriptArea_.setFocusTraversalKeysEnabled(false);
+
+      DropTarget dropTarget2 = new DropTarget(scriptArea_, new TopRightFrameDropListener(this));
 
 
       sp = new RTextScrollPane(scriptArea_);
@@ -815,16 +820,18 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       }
       int result = JOptionPane.showConfirmDialog(this,
             message,
-            APP_NAME, JOptionPane.YES_NO_OPTION,
+            APP_NAME, JOptionPane.YES_NO_CANCEL_OPTION,
             JOptionPane.INFORMATION_MESSAGE);
-      if (result == JOptionPane.NO_OPTION) {
+      if (result == JOptionPane.YES_OPTION) {
+         saveScript(row);
+         return true;
+      } else if (result == JOptionPane.NO_OPTION) {
          // avoid prompting again:
          scriptPaneSaved_ = true;
+         return true;
       } else {
-         saveScript(row);
+         return false;
       }
-
-      return true;
    }
 
    /**
@@ -846,15 +853,20 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
          File curFile = FileDialogs.openFile(this, "Select a Beanshell script", BSH_FILE);
 
          if (curFile != null) {
-            studio_.profile().getSettings(ScriptPanel.class).putString(
-                  SCRIPT_FILE, curFile.getAbsolutePath());
             // only creates a new file when a file with this name does not exist
             addScriptToModel(curFile);
          }
       }
    }
 
-   private void addScriptToModel(File curFile) {
+   protected void addScriptToModel(File curFile) {
+      if (scriptFile_ == null && !scriptPaneSaved_) {
+         if (!promptToSave(-1)) {
+            return;
+         }
+      }
+      studio_.profile().getSettings(ScriptPanel.class).putString(
+            SCRIPT_FILE, curFile.getAbsolutePath());
       model_.addScript(curFile);
       model_.fireTableDataChanged();
       int[] cellAddress = new int[2];
@@ -1089,7 +1101,14 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
 
       File curFile = FileDialogs.openFile(this, "Choose Beanshell script", BSH_FILE);
 
+      openScriptInPane(curFile);
+   }
+
+   public void openScriptInPane(File curFile) {
       if (curFile != null) {
+         if (!scriptPaneSaved_ && !promptToSave(-1)) {
+            return;
+         }
          try {
             settings_.putString(SCRIPT_FILE, curFile.getAbsolutePath());
             int row = scriptTable_.getSelectedRow();
