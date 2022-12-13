@@ -40,7 +40,9 @@ import javax.imageio.stream.ImageOutputStream;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 import org.micromanager.display.DisplayDidShowImageEvent;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.display.internal.displaywindow.DisplayController;
@@ -129,6 +131,7 @@ public final class DefaultImageExporter implements ImageExporter {
    private String directory_;
    private String prefix_;
    private ExporterLoop outerLoop_;
+   private boolean useLabel_ = true;
 
    private int sequenceNum_ = 0;
    private ImageStack stack_;
@@ -239,7 +242,8 @@ public final class DefaultImageExporter implements ImageExporter {
                   addToStack(stack_, currentImage_);
                } else {
                   // Save the image to disk in appropriate format.
-                  exportImage(currentImage_, sequenceNum_++);
+                  String label = createImageLabel(lastDrawnCoords_);
+                  exportImage(currentImage_, label);
                }
                currentGraphics_.dispose();
                drawFlag_.set(false);
@@ -256,8 +260,8 @@ public final class DefaultImageExporter implements ImageExporter {
    /**
     * Save a single image to disk.
     */
-   private void exportImage(BufferedImage image, int sequenceNum) {
-      String filename = getOutputFilename(isSingleShot_ ? -1 : sequenceNum);
+   private void exportImage(BufferedImage image, String label) {
+      String filename = getOutputFilename(label);
       File file = new File(filename);
       if (null != format_) {
          switch (format_) {
@@ -354,7 +358,8 @@ public final class DefaultImageExporter implements ImageExporter {
     * an existing file.
     */
    private void checkForOverwrite(int n) throws IOException {
-      String path = getOutputFilename(n);
+      String label = String.format("010%d", n);
+      String path = getOutputFilename(label);
       if (new File(path).exists()) {
          throw new IOException("File at " + path + " would be overwritten during export");
       }
@@ -365,15 +370,44 @@ public final class DefaultImageExporter implements ImageExporter {
     *
     * @param n image index, or -1 for a single-shot export (of only one image).
     */
-   private String getOutputFilename(int n) {
+   private String getOutputFilename(String label) {
       if (format_ == OutputFormat.OUTPUT_IMAGEJ) {
          throw new RuntimeException("Asked for output filename when exporting in ImageJ format.");
       }
       String suffix = (format_ == OutputFormat.OUTPUT_PNG) ? "png" : "jpg";
-      if (n == -1) {
-         return String.format("%s/%s.%s", directory_, prefix_, suffix);
+      // if (n == -1) {
+      //    return String.format("%s/%s.%s", directory_, prefix_, suffix);
+      // }
+      return String.format("%s/%s%s.%s", directory_, prefix_, label, suffix);
+   }
+
+
+   private String createImageLabel(Coords imageCoords) {
+      StringBuilder sb = new StringBuilder("");
+      DataProvider dp = display_.getDataProvider();;
+      List<String> channels = dp.getSummaryMetadata().getChannelNameList();
+      Coords dimensions = dp.getSummaryMetadata().getIntendedDimensions();
+      try {
+         if (dp.hasImage(imageCoords) && useLabel_) {
+            Metadata  metadata = dp.getImage(imageCoords).getMetadata();
+            for (String axis : dimensions.getAxes()) {
+               long index = lastDrawnCoords_.getIndex(axis);
+               if (axis.equals(Coords.P)) {
+                  if (metadata.hasPositionName()) {
+                     sb.append("_").append(metadata.getPositionName(String.format("08d", index)));
+                  }
+               } else if (axis.equals(Coords.C) && display_.getDisplaySettings().getColorMode()
+                     != DisplaySettings.ColorMode.COMPOSITE) {
+                  sb.append("_").append(channels.get(imageCoords.getC()));
+                  // TODO:
+               } // TODO: add time and z
+            }
+            return sb.toString();
+         }
+      } catch (IOException e) {
+         e.printStackTrace();
       }
-      return String.format("%s/%s_%010d.%s", directory_, prefix_, n, suffix);
+      return String.format("_010%d", sequenceNum_++);
    }
 
    /**
@@ -411,7 +445,7 @@ public final class DefaultImageExporter implements ImageExporter {
          loopThread = new Thread(new Runnable() {
             @Override
             public void run() {
-               // force update, of the onDrawComplete callback will not be invoked
+               // force update, or the onDrawComplete callback will not be invoked
                display_.setDisplayPosition(coords.get(0), true);
             }
          }, "Image export thread");
