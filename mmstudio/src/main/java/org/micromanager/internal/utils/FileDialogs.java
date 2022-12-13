@@ -165,14 +165,14 @@ public final class FileDialogs {
          // it takes us to create this chooser.
          skin.suspendToMode(SkinMode.DAY);
          JFileChooser fc = new JFileChooser();
+         if (selectDirectories) {
+            fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+         }
          if (startFile != null) {
             fc.setSelectedFile(startFile);
          }
          skin.resume();
          fc.setDialogTitle(title);
-         if (selectDirectories) {
-            fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-         }
          if (fileSuffixes != null) {
             fc.setFileFilter(filter);
          }
