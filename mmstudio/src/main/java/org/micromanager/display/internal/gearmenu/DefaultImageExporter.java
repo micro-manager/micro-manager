@@ -37,6 +37,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
+import org.micromanager.LogManager;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
@@ -46,7 +47,6 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.display.internal.displaywindow.DisplayController;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 public final class DefaultImageExporter implements ImageExporter {
@@ -126,6 +126,7 @@ public final class DefaultImageExporter implements ImageExporter {
       }
    }
 
+   private final LogManager logManager_;
    private DisplayController display_;
    private OutputFormat format_;
    private String directory_;
@@ -144,10 +145,11 @@ public final class DefaultImageExporter implements ImageExporter {
    private Graphics currentGraphics_ = null;
    private Coords lastDrawnCoords_ = null;
 
-   public DefaultImageExporter() {
+   public DefaultImageExporter(LogManager logManager) {
       // Initialize to true so that waitForCompletion returns immediately.
       doneFlag_ = new AtomicBoolean(true);
       drawFlag_ = new AtomicBoolean(false);
+      logManager_ = logManager;
    }
 
    @Override
@@ -166,6 +168,11 @@ public final class DefaultImageExporter implements ImageExporter {
    @Override
    public void setOutputQuality(int quality) {
       jpegQuality_ = quality;
+   }
+
+   @Override
+   public void setUseLabel(boolean useLabel) {
+      useLabel_ = useLabel;
    }
 
    @Override
@@ -252,7 +259,7 @@ public final class DefaultImageExporter implements ImageExporter {
                }
             }
          } catch (Exception e) {
-            ReportingUtils.logError(e, "Error handling draw complete");
+            logManager_.logError(e, "Error handling draw complete");
          }
       }
    }
@@ -269,7 +276,7 @@ public final class DefaultImageExporter implements ImageExporter {
                try {
                   ImageIO.write(image, "png", file);
                } catch (IOException e) {
-                  ReportingUtils.logError(e, "Error writing exported PNG image");
+                  logManager_.logError(e, "Error writing exported PNG image");
                }
                break;
             case OUTPUT_JPG:
@@ -286,12 +293,13 @@ public final class DefaultImageExporter implements ImageExporter {
                   writer.write(image);
                   stream.close();
                } catch (IOException e) {
-                  ReportingUtils.logError(e, "Error writing exported JPEG image");
+                  logManager_.showError(e, "Error writing exported JPEG image",
+                        display_.getWindow());
                }
                writer.dispose();
                break;
             default:
-               ReportingUtils.logError("Unrecognized save format " + format_);
+               logManager_.logError("Unrecognized save format " + format_);
                break;
          }
       }
@@ -343,10 +351,10 @@ public final class DefaultImageExporter implements ImageExporter {
          }
          // Check for potential file overwrites.
          if (coords.size() == 1) {
-            checkForOverwrite(-1);
+            checkForOverwrite("");
          } else {
             for (int i = 0; i < coords.size(); ++i) {
-               checkForOverwrite(i);
+               checkForOverwrite(createImageLabel(coords.get(i)));
             }
          }
       }
@@ -357,8 +365,7 @@ public final class DefaultImageExporter implements ImageExporter {
     * Check to make certain that outputting the nth image will not overwrite
     * an existing file.
     */
-   private void checkForOverwrite(int n) throws IOException {
-      String label = String.format("010%d", n);
+   private void checkForOverwrite(String label) throws IOException {
       String path = getOutputFilename(label);
       if (new File(path).exists()) {
          throw new IOException("File at " + path + " would be overwritten during export");
@@ -366,18 +373,16 @@ public final class DefaultImageExporter implements ImageExporter {
    }
 
    /**
-    * Generate a filename to save the nth image.
+    * Generate a filename to save image with given label.
     *
-    * @param n image index, or -1 for a single-shot export (of only one image).
+    * @param label Output will be directory/prefix label.suffix (suffix is png or jpg)
+    * @return directory/prefixlabel.suffix
     */
    private String getOutputFilename(String label) {
       if (format_ == OutputFormat.OUTPUT_IMAGEJ) {
          throw new RuntimeException("Asked for output filename when exporting in ImageJ format.");
       }
       String suffix = (format_ == OutputFormat.OUTPUT_PNG) ? "png" : "jpg";
-      // if (n == -1) {
-      //    return String.format("%s/%s.%s", directory_, prefix_, suffix);
-      // }
       return String.format("%s/%s%s.%s", directory_, prefix_, label, suffix);
    }
 
@@ -391,23 +396,29 @@ public final class DefaultImageExporter implements ImageExporter {
          if (dp.hasImage(imageCoords) && useLabel_) {
             Metadata  metadata = dp.getImage(imageCoords).getMetadata();
             for (String axis : dimensions.getAxes()) {
-               long index = lastDrawnCoords_.getIndex(axis);
-               if (axis.equals(Coords.P)) {
-                  if (metadata.hasPositionName()) {
-                     sb.append("_").append(metadata.getPositionName(String.format("08d", index)));
+               if (dimensions.getIndex(axis) > 1) {
+                  long index = imageCoords.getIndex(axis);
+                  if (axis.equals(Coords.P)) {
+                     if (metadata.hasPositionName()) {
+                        sb.append("_")
+                              .append(metadata.getPositionName(String.format("%06d", index)));
+                     }
+                  } else if (axis.equals(Coords.C) && display_.getDisplaySettings().getColorMode()
+                        != DisplaySettings.ColorMode.COMPOSITE) {
+                     sb.append("_").append(channels.get(imageCoords.getC()));
+                  } else if (axis.equals(Coords.Z)) {
+                     sb.append("_Z").append(String.format("06%d", index + 1));
+                  } else if (axis.equals(Coords.T)) {
+                     sb.append("_T").append(String.format("%06d", index + 1));
                   }
-               } else if (axis.equals(Coords.C) && display_.getDisplaySettings().getColorMode()
-                     != DisplaySettings.ColorMode.COMPOSITE) {
-                  sb.append("_").append(channels.get(imageCoords.getC()));
-                  // TODO:
-               } // TODO: add time and z
+               }
             }
             return sb.toString();
          }
       } catch (IOException e) {
          e.printStackTrace();
       }
-      return String.format("_010%d", sequenceNum_++);
+      return String.format("_%010d", sequenceNum_++);
    }
 
    /**
@@ -426,7 +437,7 @@ public final class DefaultImageExporter implements ImageExporter {
          waitForExport();
       } catch (InterruptedException e) {
          // Give up.
-         ReportingUtils.logError(e, "Interrupted while waiting for other export to finish.");
+         logManager_.logError(e, "Interrupted while waiting for other export to finish.");
          return;
       }
       final ArrayList<Coords> coords = prepAndSanityCheck();
@@ -465,7 +476,7 @@ public final class DefaultImageExporter implements ImageExporter {
                      try {
                         Thread.sleep(10);
                      } catch (InterruptedException e) {
-                        ReportingUtils
+                        logManager_
                               .logError("Interrupted while waiting for drawing to complete.");
                         return;
                      }
@@ -485,7 +496,7 @@ public final class DefaultImageExporter implements ImageExporter {
                try {
                   Thread.sleep(100);
                } catch (InterruptedException e) {
-                  ReportingUtils.logError("Interrupted while waiting for export to complete.");
+                  logManager_.logError("Interrupted while waiting for export to complete.");
                   return;
                }
             }

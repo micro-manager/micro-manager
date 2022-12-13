@@ -4,8 +4,10 @@
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, cweisiger@msg.ucsf.edu, June 2015
+//               Nico Stuuran, De. 2022
 //
 // COPYRIGHT:    University of California, San Francisco, 2006
+//               Altos Labs, 2022
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -24,6 +26,7 @@ package org.micromanager.display.internal.gearmenu;
 
 import com.bulenkov.iconloader.IconLoader;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,6 +39,7 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -55,7 +59,6 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -78,6 +81,9 @@ public final class ExportMovieDlg extends JDialog {
    private static final String[] OUTPUT_FORMATS = {
          FORMAT_PNG, FORMAT_JPEG, FORMAT_IMAGEJ
    };
+   private static final String DEFAULT_USE_LABEL = "Use Label";
+   private static final Boolean USE_LABEL = true;
+   private static final String EXPORT_LOCATION = "Export Location";
 
    /**
     * A set of controls for selecting a range of values for a single axis of
@@ -97,6 +103,7 @@ public final class ExportMovieDlg extends JDialog {
       // Hacky method of coping with action events we don't care about.
       private boolean amInSetAxis_ = false;
 
+
       public AxisPanel(DisplayWindow display, final ExportMovieDlg parent) {
          super(new MigLayout("flowx"));
          super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
@@ -104,34 +111,37 @@ public final class ExportMovieDlg extends JDialog {
          List<String> axes = new ArrayList<>(parent.getNonZeroAxes());
          Collections.sort(axes);
          axisSelector_ = new JComboBox(axes.toArray(new String[] {}));
-         axisSelector_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               String newAxis = (String) axisSelector_.getSelectedItem();
-               if (!amInSetAxis_) {
-                  // this event was directly caused by the user.
-                  parent.changeAxis(oldAxis_, newAxis);
-                  setAxis(newAxis);
-               }
+         axisSelector_.addActionListener(e -> {
+            String newAxis = (String) axisSelector_.getSelectedItem();
+            if (!amInSetAxis_) {
+               // this event was directly caused by the user.
+               parent.changeAxis(oldAxis_, newAxis);
+               setAxis(newAxis);
             }
          });
          minSpinner_ = new JSpinner();
-         minSpinner_.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-               // Ensure that the end point can't go below the start point.
-               int newMin = (Integer) minSpinner_.getValue();
-               maxModel_.setMinimum(newMin);
+         int maxDim = 1;
+         Coords intendedDimensions = store_.getSummaryMetadata().getIntendedDimensions();
+         for (String axis : intendedDimensions.getAxes()) {
+            if (intendedDimensions.getIndex(axis) > maxDim) {
+               maxDim = intendedDimensions.getIndex(axis);
             }
+         }
+         int om = (int) Math.round(Math.log10(maxDim));
+         int minWidth = 30 + (10 * om);
+         Dimension minSize = new Dimension(minWidth, 12);
+         minSpinner_.setMinimumSize(minSize);
+         minSpinner_.addChangeListener(e -> {
+            // Ensure that the end point can't go below the start point.
+            int newMin = (Integer) minSpinner_.getValue();
+            maxModel_.setMinimum(newMin);
          });
          maxSpinner_ = new JSpinner();
-         maxSpinner_.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-               // Ensure that the start point can't come after the end point.
-               int newMax = (Integer) maxSpinner_.getValue();
-               minModel_.setMaximum(newMax);
-            }
+         maxSpinner_.setMinimumSize(minSize);
+         maxSpinner_.addChangeListener(e -> {
+            // Ensure that the start point can't come after the end point.
+            int newMax = (Integer) maxSpinner_.getValue();
+            minModel_.setMaximum(newMax);
          });
 
          final AxisPanel localThis = this;
@@ -253,7 +263,7 @@ public final class ExportMovieDlg extends JDialog {
 
       display_ = display;
       provider_ = display.getDataProvider();
-      axisPanels_ = new ArrayList<AxisPanel>();
+      axisPanels_ = new ArrayList<>();
 
       File file = new File(display.getName());
       String shortName = file.getName();
@@ -275,29 +285,24 @@ public final class ExportMovieDlg extends JDialog {
                "align center");
       }
 
-
       jpegQualitySpinner_ = new JSpinner();
       jpegQualitySpinner_.setModel(new SpinnerNumberModel(getJPEGQuality(), 1, 100, 1));
-
 
       contentsPanel_.add(new JLabel("Output format: "),
             "split 4, flowx");
       outputFormatSelector_ = new JComboBox(OUTPUT_FORMATS);
-      outputFormatSelector_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // Show/hide the JPEG quality controls.
-            String selection = (String) outputFormatSelector_.getSelectedItem();
-            if (selection.equals(FORMAT_JPEG)) {
-               jpegPanel_.add(new JLabel("JPEG quality(%): "));
-               jpegPanel_.add(jpegQualitySpinner_);
-            } else {
-               jpegPanel_.removeAll();
-            }
-            prefixLabel_.setEnabled(!selection.equals(FORMAT_IMAGEJ));
-            prefixText_.setEnabled(!selection.equals(FORMAT_IMAGEJ));
-            pack();
+      outputFormatSelector_.addActionListener(e -> {
+         // Show/hide the JPEG quality controls.
+         String selection = (String) outputFormatSelector_.getSelectedItem();
+         if (selection.equals(FORMAT_JPEG)) {
+            jpegPanel_.add(new JLabel("JPEG quality(%): "));
+            jpegPanel_.add(jpegQualitySpinner_);
+         } else {
+            jpegPanel_.removeAll();
          }
+         prefixLabel_.setEnabled(!selection.equals(FORMAT_IMAGEJ));
+         prefixText_.setEnabled(!selection.equals(FORMAT_IMAGEJ));
+         pack();
       });
       contentsPanel_.add(outputFormatSelector_);
 
@@ -320,6 +325,7 @@ public final class ExportMovieDlg extends JDialog {
       } else {
          contentsPanel_.add(createAxisPanel());
       }
+
       // Dropdown menu with all axes (except channel when in composite mode)
       // show channel note re: composite mode
       // show note about overlays
@@ -327,6 +333,18 @@ public final class ExportMovieDlg extends JDialog {
       // when all axes are used
       // for single-axis datasets just auto-fill the one axis
       // Future req: add ability to export to ImageJ as RGB stack
+
+      JCheckBox useLabel = new JCheckBox("Use label in filename");
+      useLabel.setSelected(studio.profile().getSettings(ExportMovieDlg.class)
+            .getBoolean(DEFAULT_USE_LABEL, USE_LABEL));
+      ChangeListener changeListener = new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            studio.profile().getSettings(ExportMovieDlg.class)
+                  .putBoolean(DEFAULT_USE_LABEL, useLabel.isSelected());
+         }
+      };
+      useLabel.addChangeListener(changeListener);
 
       JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener(new ActionListener() {
@@ -339,10 +357,12 @@ public final class ExportMovieDlg extends JDialog {
       exportButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            export();
+            export(useLabel.isSelected());
+            dispose();
          }
       });
-      contentsPanel_.add(cancelButton, "split 2, flowx, align right");
+      contentsPanel_.add(useLabel, "split 3, flowx, align right");
+      contentsPanel_.add(cancelButton);
       contentsPanel_.add(exportButton);
 
       super.getContentPane().add(contentsPanel_);
@@ -353,8 +373,8 @@ public final class ExportMovieDlg extends JDialog {
       super.setVisible(true);
    }
 
-   private void export() {
-      ImageExporter exporter = new DefaultImageExporter();
+   private void export(boolean useLabel) {
+      ImageExporter exporter = new DefaultImageExporter(studio_.getLogManager());
 
       // Set output format.
       String mode = (String) outputFormatSelector_.getSelectedItem();
@@ -368,6 +388,7 @@ public final class ExportMovieDlg extends JDialog {
       }
       String[] fss = {suffix};
       exporter.setOutputFormat(format);
+      exporter.setUseLabel(useLabel);
 
       // Get save path if relevant.
       String base = System.getProperty("user.home");
@@ -377,6 +398,8 @@ public final class ExportMovieDlg extends JDialog {
             // Default them to where their data was originally saved.
             base = store.getSavePath();
          }
+         base = studio_.profile().getSettings(ExportMovieDlg.class)
+               .getString(EXPORT_LOCATION, base);
       }
       File path = new File(base);
       if (!mode.equals(FORMAT_IMAGEJ)) {
@@ -393,12 +416,13 @@ public final class ExportMovieDlg extends JDialog {
             return;
          }
          try {
-            exporter.setSaveInfo(outputDir.getAbsolutePath(),
-                  prefixText_.getText());
+            studio_.profile().getSettings(ExportMovieDlg.class)
+                  .putString(EXPORT_LOCATION, outputDir.getAbsolutePath());
+            exporter.setSaveInfo(outputDir.getAbsolutePath(), prefixText_.getText());
          } catch (IOException e) {
             // This should be impossible -- it indicates the directory does not
             // exist.
-            ReportingUtils.showError(e, "Unable to save to that directory");
+            studio_.logs().showError(e, "Unable to save to that directory");
             return;
          }
       }
@@ -419,9 +443,9 @@ public final class ExportMovieDlg extends JDialog {
       try {
          exporter.export();
       } catch (IOException e) {
-         ReportingUtils.showError(
-               "Can't export to the selected directory as it would overwrite an i"
-                     + "existing file. Please choose a different directory.");
+         studio_.logs().showError(e,
+               "Can not export to the selected directory as it would overwrite an "
+                     + "existing file. Please choose a different directory.", this);
          return;
       }
       dispose();
@@ -439,10 +463,10 @@ public final class ExportMovieDlg extends JDialog {
          axes.remove(panel.getAxis());
       }
       if (axes.isEmpty()) {
-         ReportingUtils.logError("Asked to create axis control when no more valid axes remain.");
+         studio_.logs().logError("Asked to create axis control when no more valid axes remain.");
          return null;
       }
-      String axis = (new ArrayList<String>(axes)).get(0);
+      String axis = (new ArrayList<>(axes)).get(0);
 
       AxisPanel panel = new AxisPanel(display_, this);
       panel.setAxis(axis);
@@ -509,7 +533,7 @@ public final class ExportMovieDlg extends JDialog {
       ArrayList<String> result = new ArrayList<>();
       for (String axis : provider_.getAxes()) {
          // Channel axis is only available when in non-composite display modes.
-         if (provider_.getNextIndex(axis) > 0
+         if (provider_.getNextIndex(axis) > 1
                && (!axis.equals(Coords.CHANNEL) || !isComposite())) {
             result.add(axis);
          }
