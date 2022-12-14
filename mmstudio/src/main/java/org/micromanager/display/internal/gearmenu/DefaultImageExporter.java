@@ -356,6 +356,7 @@ public final class DefaultImageExporter implements ImageExporter {
             for (int i = 0; i < coords.size(); ++i) {
                checkForOverwrite(createImageLabel(coords.get(i)));
             }
+            sequenceNum_ = 0;
          }
       }
       return coords;
@@ -418,7 +419,7 @@ public final class DefaultImageExporter implements ImageExporter {
       } catch (IOException e) {
          e.printStackTrace();
       }
-      return String.format("_%010d", sequenceNum_++);
+      return String.format("_%010d", ++sequenceNum_);
    }
 
    /**
