@@ -408,7 +408,7 @@ public final class DefaultImageExporter implements ImageExporter {
                         != DisplaySettings.ColorMode.COMPOSITE) {
                      sb.append("_").append(channels.get(imageCoords.getC()));
                   } else if (axis.equals(Coords.Z)) {
-                     sb.append("_Z").append(String.format("06%d", index + 1));
+                     sb.append("_Z").append(String.format("%06d", index + 1));
                   } else if (axis.equals(Coords.T)) {
                      sb.append("_T").append(String.format("%06d", index + 1));
                   }
