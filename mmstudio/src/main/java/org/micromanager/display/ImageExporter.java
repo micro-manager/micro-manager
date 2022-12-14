@@ -63,6 +63,15 @@ public interface ImageExporter {
    void setOutputFormat(OutputFormat format);
 
    /**
+    * Whether to use labels indicating position, channel, time point and z position
+    * (where) appropriate or to sequentially number output files.
+    *
+    * @param label When true, filename will include position, channel, time point and z
+    *              position labels (where appropriate).
+    */
+   void setUseLabel(boolean label);
+
+   /**
     * Set the image quality. This is currently only relevant if the output
     * format is OUTPUT_JPG.
     *

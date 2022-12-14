@@ -465,7 +465,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    @Override
    public ImageExporter createExporter() {
-      return new DefaultImageExporter();
+      return new DefaultImageExporter(studio_.getLogManager());
    }
 
    @Override
