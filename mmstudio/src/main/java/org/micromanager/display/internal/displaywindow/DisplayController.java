@@ -314,6 +314,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void show() {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(this::show);
+      }
       setFrameVisible(true);
       toFront();
    }
