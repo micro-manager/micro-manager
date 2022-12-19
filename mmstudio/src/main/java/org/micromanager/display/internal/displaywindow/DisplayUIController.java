@@ -399,8 +399,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       contentPanel.add(bottomControlPanel_, "align center, growx, wrap");
 
       // Prevent controls from getting obscured by shrinking the frame
-      int minWidth = Math.max(topControlPanel_.getMinimumSize().width,
-            bottomControlPanel_.getMinimumSize().width);
+      int minWidth = Math.max(Math.max(topControlPanel_.getMinimumSize().width,
+            bottomControlPanel_.getMinimumSize().width), canvasPanel_.getMinimumSize().width);
       int minHeight = topControlPanel_.getMinimumSize().height
             + MIN_CANVAS_HEIGHT
             + bottomControlPanel_.getMinimumSize().height;
@@ -503,7 +503,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
       final JPanel panel = makeValidationRootJPanel(
             new MigLayout(new LC().insets("1").gridGap("0", "0").fillX()));
 
-
       pixelInfoLabel_ = new JLabel(" ");
       pixelInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
       pixelInfoLabel_.setMinimumSize(new Dimension(0, 10));
@@ -568,12 +567,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
       saveButton_ = new SaveButton(studio_, displayController_);
       panel.add(saveButton_);
       gearButton_ = new GearButton(displayController_, studio_);
-      panel.add(gearButton_);
+      panel.add(gearButton_, new CC().push());
 
       // automatic calculation of minimum size of bottom panel
       // can be misleading because no minimum size for the scrollbars is included.
       // So, help out a bit by setting a reasonable minimum
-      panel.setMinimumSize(new Dimension(345, 55));
+      panel.setMinimumSize(new Dimension(400, 55));
 
       return panel;
    }
@@ -2059,9 +2058,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
          panel.setVisible(true);
          fullScreenFrame_.validate();
       } else {
+         bottomControlPanel_.setMinimumSize(
+               new Dimension(bottomControlPanel_.getMinimumSize().width,
+                     bottomControlPanel_.getMinimumSize().height + newHeight - oldHeight));
          // Adjust window height
          frame_.setSize(frame_.getWidth(),
                frame_.getHeight() - oldHeight + newHeight);
+         frame_.setMinimumSize(new Dimension(frame_.getMinimumSize().width,
+               frame_.getMinimumSize().height + newHeight - oldHeight));
          panel.setVisible(true);
          frame_.validate();
          // TODO Move frame up if bottom beyond screen bottom (which means we
