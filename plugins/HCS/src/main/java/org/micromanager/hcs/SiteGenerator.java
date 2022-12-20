@@ -104,47 +104,6 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private final JToggleButton selectWells_;
 
 
-   private void updateXySpacing() {
-      String mode = (String) spacingMode_.getSelectedItem();
-      if (mode.equals(VIEW_SPACING)) {
-         core_ = app_.getCMMCore();
-         long width = core_.getImageWidth();
-         long height = core_.getImageHeight();
-         double cameraXFieldOfView = core_.getPixelSizeUm() * width;
-         double cameraYFieldOfView = core_.getPixelSizeUm() * height;
-         double overlap;
-         try {
-            overlap = NumberUtils.displayStringToDouble(overlapField_.getText());
-         } catch (java.text.ParseException nfe) {
-            overlap = 0.0;
-            overlapField_.setText(NumberUtils.doubleToDisplayString(0.0));
-            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
-         }
-         xSpacing_ = cameraXFieldOfView - overlap;
-         ySpacing_ = cameraYFieldOfView - overlap;
-      } else {
-         try {
-            xSpacing_ = NumberUtils.displayStringToDouble(spacingFieldX_.getText());
-         } catch (java.text.ParseException nfe) {
-            xSpacing_ = 0.0;
-            spacingFieldX_.setText(NumberUtils.doubleToDisplayString(0.0));
-            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
-         }
-         if (mode.equals(EQUAL_SPACING)) {
-            ySpacing_ = xSpacing_;
-         } else {
-            try {
-               ySpacing_ = NumberUtils.displayStringToDouble(spacingFieldY_.getText());
-            } catch (java.text.ParseException nfe) {
-               ySpacing_ = 0.0;
-               spacingFieldY_.setText(NumberUtils.doubleToDisplayString(0.0));
-               app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
-            }
-         }
-      }
-   }
-
-
    /**
     * Create the frame.
     *
@@ -572,6 +531,47 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
 
    }
+
+   private void updateXySpacing() {
+      String mode = (String) spacingMode_.getSelectedItem();
+      if (mode.equals(VIEW_SPACING)) {
+         core_ = app_.getCMMCore();
+         long width = core_.getImageWidth();
+         long height = core_.getImageHeight();
+         double cameraXFieldOfView = core_.getPixelSizeUm() * width;
+         double cameraYFieldOfView = core_.getPixelSizeUm() * height;
+         double overlap;
+         try {
+            overlap = NumberUtils.displayStringToDouble(overlapField_.getText());
+         } catch (java.text.ParseException nfe) {
+            overlap = 0.0;
+            overlapField_.setText(NumberUtils.doubleToDisplayString(0.0));
+            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+         }
+         xSpacing_ = cameraXFieldOfView - overlap;
+         ySpacing_ = cameraYFieldOfView - overlap;
+      } else {
+         try {
+            xSpacing_ = NumberUtils.displayStringToDouble(spacingFieldX_.getText());
+         } catch (java.text.ParseException nfe) {
+            xSpacing_ = 0.0;
+            spacingFieldX_.setText(NumberUtils.doubleToDisplayString(0.0));
+            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+         }
+         if (mode.equals(EQUAL_SPACING)) {
+            ySpacing_ = xSpacing_;
+         } else {
+            try {
+               ySpacing_ = NumberUtils.displayStringToDouble(spacingFieldY_.getText());
+            } catch (java.text.ParseException nfe) {
+               ySpacing_ = 0.0;
+               spacingFieldY_.setText(NumberUtils.doubleToDisplayString(0.0));
+               app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+            }
+         }
+      }
+   }
+
 
    /**
     * Marks current position as one point in the 3-pt set.
