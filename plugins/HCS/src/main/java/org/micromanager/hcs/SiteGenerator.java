@@ -147,7 +147,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       contentsPanel.add(platePanel_, "grow, push");
 
       JPanel sidebar = new JPanel(new MigLayout("flowy, gap 0, insets 0"));
-      contentsPanel.add(sidebar, "growprio 0, shrinkprio 200, gap 0, wrap");
+      contentsPanel.add(sidebar, "growprio 0, shrinkprio 200, gap 0, gapright 20, wrap");
 
       // Mutually-exclusive toggle buttons for what the mouse does.
       selectWells_ = new JToggleButton("Select",
@@ -249,7 +249,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       rowsField_ = new JTextField(3);
       rowsField_.setText("1");
       rowsField_.setHorizontalAlignment(SwingConstants.RIGHT);
-      gridPanel.add(rowsField_);
+      gridPanel.add(rowsField_, "gapright 15");
       rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
 
       sidebar.add(new JLabel("Columns"));
@@ -269,7 +269,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       spacingFieldX_.setText("1000");
       spacingFieldX_.setHorizontalAlignment(SwingConstants.RIGHT);
       spacingFieldX_.addFocusListener(regeneratePlateOnLossOfFocus);
-      sidebar.add(spacingFieldX_, "split 2, flowx, wmin 60, hidemode 2");
+      sidebar.add(spacingFieldX_, "split 2, flowx, wmin 60, hidemode 2, gapright 15");
 
       spacingFieldY_ = new JTextField();
       spacingFieldY_.setText("1000");
