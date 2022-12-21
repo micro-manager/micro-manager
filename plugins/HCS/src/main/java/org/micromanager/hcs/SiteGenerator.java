@@ -10,7 +10,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.Collections;
@@ -21,15 +20,14 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.MenuPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
@@ -92,7 +90,6 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
-   private final ButtonGroup toolButtonGroup = new ButtonGroup();
    private final JComboBox spacingMode_;
    private final JComboBox visitOrderInWell_;
    private final JComboBox visitOrderBetweenWells_;
@@ -150,41 +147,32 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       contentsPanel.add(sidebar, "growprio 0, shrinkprio 200, gap 0, gapright 20, wrap");
 
       // Mutually-exclusive toggle buttons for what the mouse does.
-      selectWells_ = new JToggleButton("Select",
-            IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
-      moveStage_ = new JToggleButton("Move",
-            IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+      selectWells_ = new JRadioButton("Select");
 
       selectWells_.setToolTipText("Click and drag to select wells.");
       selectWells_.addActionListener((ActionEvent arg0) -> {
          if (selectWells_.isSelected()) {
             platePanel_.setTool(PlatePanel.Tool.SELECT);
-            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
-            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
-         } else {
-            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
-            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
          }
       });
-      toolButtonGroup.add(selectWells_);
-      // set default tool
-      platePanel_.setTool(PlatePanel.Tool.SELECT);
-      sidebar.add(selectWells_, "split 2, alignx center, flowx");
+
+      moveStage_ = new JRadioButton("Move");
+      //IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
 
       moveStage_.setToolTipText("Click to move the stage");
       moveStage_.addActionListener((ActionEvent e) -> {
          if (moveStage_.isSelected()) {
             platePanel_.setTool(PlatePanel.Tool.MOVE);
-            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
-            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
-         } else {
-            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
-            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
          }
       });
+      final ButtonGroup toolButtonGroup = new ButtonGroup();
+      toolButtonGroup.add(selectWells_);
       toolButtonGroup.add(moveStage_);
       selectWells_.setSelected(true);
-      moveStage_.setEnabled(false);
+
+      // set default tool
+      platePanel_.setTool(PlatePanel.Tool.SELECT);
+      sidebar.add(selectWells_, "split 2, alignx center, flowx");
       sidebar.add(moveStage_);
 
       final JLabel plateFormatLabel = new JLabel();
@@ -269,14 +257,14 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       spacingFieldX_.setText("1000");
       spacingFieldX_.setHorizontalAlignment(SwingConstants.RIGHT);
       spacingFieldX_.addFocusListener(regeneratePlateOnLossOfFocus);
-      sidebar.add(spacingFieldX_, "split 2, flowx, wmin 60, hidemode 2, gapright 15");
+      sidebar.add(spacingFieldX_, "split 2, flowx, wmin 50, hidemode 2, gapright 15");
 
       spacingFieldY_ = new JTextField();
       spacingFieldY_.setText("1000");
       spacingFieldY_.setHorizontalAlignment(SwingConstants.RIGHT);
       spacingFieldY_.addFocusListener(regeneratePlateOnLossOfFocus);
       // Take zero space when invisible.
-      sidebar.add(spacingFieldY_, "wmin 60, hidemode 2");
+      sidebar.add(spacingFieldY_, "wmin 50, hidemode 2");
       spacingFieldY_.setVisible(false);
 
       //same size and position like X_
@@ -285,7 +273,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       overlapField_.setHorizontalAlignment(SwingConstants.RIGHT);
       overlapField_.addFocusListener(regeneratePlateOnLossOfFocus);
       // Take zero space when invisible.
-      sidebar.add(overlapField_, "wmin 60, hidemode 2");
+      sidebar.add(overlapField_, "wmin 50, hidemode 2");
       overlapField_.setVisible(false);
 
       sidebar.add(new JLabel("Spacing Rule:"));
@@ -353,6 +341,12 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       });
       sidebar.add(calibrateXyButton, "growx");
 
+      final JRadioButton overWriteMMList = new JRadioButton("Overwrite");
+      final JRadioButton appendToMMList = new JRadioButton("Append");
+      final ButtonGroup mmListButtonGroup = new ButtonGroup();
+      mmListButtonGroup.add(overWriteMMList);
+      mmListButtonGroup.add(appendToMMList);
+      overWriteMMList.setSelected(true);
 
       final JButton setPositionListButton = new JButton("Build MM List",
             IconLoader.getIcon("/org/micromanager/icons/table.png"));
@@ -361,12 +355,14 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             app_.logs().showMessage("Calibrate XY first");
             return;
          }
-         setPositionList((String) visitOrderBetweenWells_.getSelectedItem());
+         setPositionList((String) visitOrderBetweenWells_.getSelectedItem(), overWriteMMList.isSelected());
       });
       sidebar.add(setPositionListButton, "growx");
 
+      sidebar.add(overWriteMMList, "split 2, alignx center, flowx");
+      sidebar.add(appendToMMList);
+
       chckbxThreePt_ = new JCheckBox("Use 3-Point Z-Plane");
-      
       sidebar.add(chckbxThreePt_, "gaptop 10");
 
       JButton btnMarkPt = new JButton("Mark Point",
@@ -469,7 +465,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       moveStage_.setEnabled(isCalibratedXY_); 
    }
 
-   private void setPositionList(String betweenWellOrder) {
+   private void setPositionList(String betweenWellOrder, boolean replaceList) {
       List<WellPositionList> wpl = platePanel_.getSelectedWellPositions();
       if (!betweenWellOrder.equals(SNAKE_ORDER)) {
          if (betweenWellOrder.equals(TYPEWRITER_ORDER)) {
@@ -491,7 +487,12 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
       }
 
-      PositionList platePl = new PositionList();
+      PositionList platePl;
+      if (replaceList) {
+         platePl = new PositionList();
+      } else {
+         platePl = app_.positions().getPositionList();
+      }
       for (WellPositionList wpl1 : wpl) {
          PositionList pl = PositionList.newInstance(wpl1.getSitePositions());
          for (int j = 0; j < pl.getNumberOfPositions(); j++) {
