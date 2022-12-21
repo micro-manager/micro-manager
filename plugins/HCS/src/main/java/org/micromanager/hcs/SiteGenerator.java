@@ -25,6 +25,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
@@ -228,18 +229,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          platePanel_.repaint();
       });
 
-      sidebar.add(new JLabel("Imaging Sites"));
-      JPanel gridPanel = new JPanel(new MigLayout("flowx, gap 0, insets 0",
-               "0[]0[]0", "0[]0[]0"));
-      gridPanel.add(new JLabel("Rows"));
-      gridPanel.add(new JLabel("Columns"), "wrap");
-
-
-      rowsField_ = new JTextField(3);
-      rowsField_.setText("1");
-      gridPanel.add(rowsField_);
-
-      FocusListener regeneratePlateOnLossOfFocus = new FocusListener() {
+      final FocusListener regeneratePlateOnLossOfFocus = new FocusListener() {
          @Override
          public void focusGained(FocusEvent e) {
          }
@@ -250,13 +240,25 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
       };
 
+      sidebar.add(new JLabel("Imaging Sites"));
+      JPanel gridPanel = new JPanel(new MigLayout("flowx, gap 0, insets 0",
+               "0[]0[]0", "0[]0[]0"));
+      gridPanel.add(new JLabel("Rows"));
+      gridPanel.add(new JLabel("Columns"), "wrap");
+
+      rowsField_ = new JTextField(3);
+      rowsField_.setText("1");
+      rowsField_.setHorizontalAlignment(SwingConstants.RIGHT);
+      gridPanel.add(rowsField_);
       rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
 
       sidebar.add(new JLabel("Columns"));
       columnsField_ = new JTextField(3);
       columnsField_.setText("1");
+      columnsField_.setHorizontalAlignment(SwingConstants.RIGHT);
       gridPanel.add(columnsField_);
       columnsField_.addFocusListener(regeneratePlateOnLossOfFocus);
+
       sidebar.add(gridPanel);
 
       final JLabel spacingLabel = new JLabel();
@@ -265,19 +267,25 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
       spacingFieldX_ = new JTextField(3);
       spacingFieldX_.setText("1000");
-      sidebar.add(spacingFieldX_, "split 2, flowx, hidemode 2");
+      spacingFieldX_.setHorizontalAlignment(SwingConstants.RIGHT);
+      spacingFieldX_.addFocusListener(regeneratePlateOnLossOfFocus);
+      sidebar.add(spacingFieldX_, "split 2, flowx, wmin 60, hidemode 2");
 
       spacingFieldY_ = new JTextField();
       spacingFieldY_.setText("1000");
+      spacingFieldY_.setHorizontalAlignment(SwingConstants.RIGHT);
+      spacingFieldY_.addFocusListener(regeneratePlateOnLossOfFocus);
       // Take zero space when invisible.
-      sidebar.add(spacingFieldY_, "hidemode 2");
+      sidebar.add(spacingFieldY_, "wmin 60, hidemode 2");
       spacingFieldY_.setVisible(false);
 
       //same size and position like X_
       overlapField_ = new JTextField();
       overlapField_.setText("0");
+      overlapField_.setHorizontalAlignment(SwingConstants.RIGHT);
+      overlapField_.addFocusListener(regeneratePlateOnLossOfFocus);
       // Take zero space when invisible.
-      sidebar.add(overlapField_, "hidemode 2");
+      sidebar.add(overlapField_, "wmin 60, hidemode 2");
       overlapField_.setVisible(false);
 
       sidebar.add(new JLabel("Spacing Rule:"));

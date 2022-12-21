@@ -188,7 +188,7 @@ public class PlatePanel extends JPanel {
       gui_ = gui;
       app_ = app;
       plate_ = plate;
-      mode_ = Tool.SELECT;
+      mode_ = PlatePanel.Tool.SELECT;
       lockAspect_ = true;
       stagePointer_ = new Rectangle(3, 3);
       wellMap_ = new Hashtable<>();
