@@ -355,7 +355,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             app_.logs().showMessage("Calibrate XY first");
             return;
          }
-         setPositionList((String) visitOrderBetweenWells_.getSelectedItem(), overWriteMMList.isSelected());
+         setPositionList((String) visitOrderBetweenWells_.getSelectedItem(),
+                 overWriteMMList.isSelected());
       });
       sidebar.add(setPositionListButton, "growx");
 
