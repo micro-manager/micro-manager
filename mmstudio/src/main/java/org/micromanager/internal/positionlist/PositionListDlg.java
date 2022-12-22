@@ -298,15 +298,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       offsetButton.setToolTipText("Add an offset to the selected positions.");
       add(offsetButton);
 
-      final JButton addStageButton = posListButton(buttonSize, arialSmallFont_);
-      addStageButton.addActionListener(arg0 -> addStageToPositions());
-      addStageButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-            "/org/micromanager/icons/empty.png")));
-      addStageButton.setText("Add Stage(s)");
-      addStageButton.setToolTipText(
-            "Adds current position of selected Stages to the selected positions.");
-      add(addStageButton);
-
       final JButton removeAllButton = posListButton(buttonSize, arialSmallFont_);
       removeAllButton.addActionListener(arg0 -> {
          int ret = JOptionPane.showConfirmDialog(PositionListDlg.this,
@@ -1167,40 +1158,5 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       updatePositionData();
    }
 
-   /**
-    * Adds the current position of selected Stages to the selected positions.
-    */
-   public void addStageToPositions() {
-      PositionList positions = getPositionList();
-      for (int rowIndex : posTable_.getSelectedRows()) {
-         MultiStagePosition multiPos = positions.getPosition(rowIndex - 1);
-         for (int axisIndex = 0; axisIndex < axisList_.getNumberOfPositions(); axisIndex++) {
-            AxisData axisData = axisList_.get(axisIndex);
-            if (axisData.getUse() && multiPos != null) {
-               // make sure that we do not overwrite an existing axis
-               // TODO: evaluate if this is desirable behavior.
-               boolean hasStage = false;
-               for (int i = 0; i < multiPos.size(); i++) {
-                  if (multiPos.get(i).getStageDeviceLabel().equals(axisData.getAxisName())) {
-                     hasStage = true;
-                  }
-               }
-               if (!hasStage) {
-                  StagePosition sp = null;
-                  if (axisData.getType() == AxisData.AxisType.oneD) {
-                     double z = curMsp_.get(axisData.getAxisName()).get1DPosition();
-                     sp = StagePosition.create1D(axisData.getAxisName(), z);
-                  } else if (axisData.getType() == AxisData.AxisType.twoD) {
-                     double x = curMsp_.get(axisData.getAxisName()).get2DPositionX();
-                     double y = curMsp_.get(axisData.getAxisName()).get2DPositionY();
-                     sp = StagePosition.create2D(axisData.getAxisName(), x, y);
-                  }
-                  multiPos.add(sp);
-               }
-            }
-         }
-      }
-      updatePositionData();
-   }
 
 }
