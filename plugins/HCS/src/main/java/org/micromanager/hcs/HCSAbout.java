@@ -24,6 +24,7 @@ public class HCSAbout extends JDialog {
       super.setModal(true);
       super.setTitle("About HCS Site Generator " + HCSPlugin.VERSION_INFO);
       super.setBounds(200, 200, 462, 273);
+      super.setLocationRelativeTo(parent);
       super.getContentPane().setLayout(new BorderLayout());
       contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
       super.getContentPane().add(contentPanel, BorderLayout.CENTER);

@@ -10,7 +10,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.Collections;
@@ -21,14 +20,14 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.MenuPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
@@ -70,7 +69,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private static final long serialVersionUID = 1L;
    private SBSPlate plate_;
    private PlatePanel platePanel_;
-   private Studio app_;
+   private Studio studio_;
    private final Point2D.Double xyStagePos_;
    private Point2D.Double offset_;
    private Boolean isCalibratedXY_;
@@ -91,7 +90,6 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
-   private final ButtonGroup toolButtonGroup = new ButtonGroup();
    private final JComboBox spacingMode_;
    private final JComboBox visitOrderInWell_;
    private final JComboBox visitOrderBetweenWells_;
@@ -104,55 +102,14 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private final JToggleButton selectWells_;
 
 
-   private void updateXySpacing() {
-      String mode = (String) spacingMode_.getSelectedItem();
-      if (mode.equals(VIEW_SPACING)) {
-         core_ = app_.getCMMCore();
-         long width = core_.getImageWidth();
-         long height = core_.getImageHeight();
-         double cameraXFieldOfView = core_.getPixelSizeUm() * width;
-         double cameraYFieldOfView = core_.getPixelSizeUm() * height;
-         double overlap;
-         try {
-            overlap = NumberUtils.displayStringToDouble(overlapField_.getText());
-         } catch (java.text.ParseException nfe) {
-            overlap = 0.0;
-            overlapField_.setText(NumberUtils.doubleToDisplayString(0.0));
-            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
-         }
-         xSpacing_ = cameraXFieldOfView - overlap;
-         ySpacing_ = cameraYFieldOfView - overlap;
-      } else {
-         try {
-            xSpacing_ = NumberUtils.displayStringToDouble(spacingFieldX_.getText());
-         } catch (java.text.ParseException nfe) {
-            xSpacing_ = 0.0;
-            spacingFieldX_.setText(NumberUtils.doubleToDisplayString(0.0));
-            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
-         }
-         if (mode.equals(EQUAL_SPACING)) {
-            ySpacing_ = xSpacing_;
-         } else {
-            try {
-               ySpacing_ = NumberUtils.displayStringToDouble(spacingFieldY_.getText());
-            } catch (java.text.ParseException nfe) {
-               ySpacing_ = 0.0;
-               spacingFieldY_.setText(NumberUtils.doubleToDisplayString(0.0));
-               app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
-            }
-         }
-      }
-   }
-
-
    /**
     * Create the frame.
     *
-    * @param app Micro-Manager api
+    * @param studio Micro-Manager api
     */
-   public SiteGenerator(Studio app) {
+   public SiteGenerator(Studio studio) {
       super();
-      app_ = app;
+      studio_ = studio;
       
       super.setMinimumSize(new Dimension(815, 600));
       super.addWindowListener(new WindowAdapter() {
@@ -187,44 +144,35 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       contentsPanel.add(platePanel_, "grow, push");
 
       JPanel sidebar = new JPanel(new MigLayout("flowy, gap 0, insets 0"));
-      contentsPanel.add(sidebar, "growprio 0, shrinkprio 200, gap 0, wrap");
+      contentsPanel.add(sidebar, "growprio 0, shrinkprio 200, gap 0, gapright 20, wrap");
 
       // Mutually-exclusive toggle buttons for what the mouse does.
-      selectWells_ = new JToggleButton("Select",
-            IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
-      moveStage_ = new JToggleButton("Move",
-            IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+      selectWells_ = new JRadioButton("Select");
 
       selectWells_.setToolTipText("Click and drag to select wells.");
       selectWells_.addActionListener((ActionEvent arg0) -> {
          if (selectWells_.isSelected()) {
             platePanel_.setTool(PlatePanel.Tool.SELECT);
-            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
-            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
-         } else {
-            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
-            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
          }
       });
-      toolButtonGroup.add(selectWells_);
-      // set default tool
-      platePanel_.setTool(PlatePanel.Tool.SELECT);
-      sidebar.add(selectWells_, "split 2, alignx center, flowx");
+
+      moveStage_ = new JRadioButton("Move");
+      //IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
 
       moveStage_.setToolTipText("Click to move the stage");
       moveStage_.addActionListener((ActionEvent e) -> {
          if (moveStage_.isSelected()) {
             platePanel_.setTool(PlatePanel.Tool.MOVE);
-            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
-            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
-         } else {
-            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
-            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
          }
       });
+      final ButtonGroup toolButtonGroup = new ButtonGroup();
+      toolButtonGroup.add(selectWells_);
       toolButtonGroup.add(moveStage_);
       selectWells_.setSelected(true);
-      moveStage_.setEnabled(false);
+
+      // set default tool
+      platePanel_.setTool(PlatePanel.Tool.SELECT);
+      sidebar.add(selectWells_, "split 2, alignx center, flowx");
       sidebar.add(moveStage_);
 
       final JLabel plateFormatLabel = new JLabel();
@@ -246,7 +194,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       JButton customButton = new JButton("Create Custom");
       sidebar.add(customButton, "growx");
       customButton.addActionListener((ActionEvent e) -> {
-         CustomSettingsFrame csf = new CustomSettingsFrame(app_, SiteGenerator.this);         
+         CustomSettingsFrame csf = new CustomSettingsFrame(studio_, SiteGenerator.this);
          csf.setVisible(true);
       });
 
@@ -262,25 +210,14 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          try {
             platePanel_.refreshImagingSites(sites);
          } catch (HCSException e1) {
-            if (app_ != null) {
-               app_.logs().logError(e1);
+            if (studio_ != null) {
+               studio_.logs().logError(e1);
             }
          }
          platePanel_.repaint();
       });
 
-      sidebar.add(new JLabel("Imaging Sites"));
-      JPanel gridPanel = new JPanel(new MigLayout("flowx, gap 0, insets 0",
-               "0[]0[]0", "0[]0[]0"));
-      gridPanel.add(new JLabel("Rows"));
-      gridPanel.add(new JLabel("Columns"), "wrap");
-
-
-      rowsField_ = new JTextField(3);
-      rowsField_.setText("1");
-      gridPanel.add(rowsField_);
-
-      FocusListener regeneratePlateOnLossOfFocus = new FocusListener() {
+      final FocusListener regeneratePlateOnLossOfFocus = new FocusListener() {
          @Override
          public void focusGained(FocusEvent e) {
          }
@@ -291,13 +228,25 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
       };
 
+      sidebar.add(new JLabel("Imaging Sites"));
+      JPanel gridPanel = new JPanel(new MigLayout("flowx, gap 0, insets 0",
+               "0[]0[]0", "0[]0[]0"));
+      gridPanel.add(new JLabel("Rows"));
+      gridPanel.add(new JLabel("Columns"), "wrap");
+
+      rowsField_ = new JTextField(3);
+      rowsField_.setText("1");
+      rowsField_.setHorizontalAlignment(SwingConstants.RIGHT);
+      gridPanel.add(rowsField_, "gapright 15");
       rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
 
       sidebar.add(new JLabel("Columns"));
       columnsField_ = new JTextField(3);
       columnsField_.setText("1");
+      columnsField_.setHorizontalAlignment(SwingConstants.RIGHT);
       gridPanel.add(columnsField_);
       columnsField_.addFocusListener(regeneratePlateOnLossOfFocus);
+
       sidebar.add(gridPanel);
 
       final JLabel spacingLabel = new JLabel();
@@ -306,19 +255,25 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
       spacingFieldX_ = new JTextField(3);
       spacingFieldX_.setText("1000");
-      sidebar.add(spacingFieldX_, "split 2, flowx, hidemode 2");
+      spacingFieldX_.setHorizontalAlignment(SwingConstants.RIGHT);
+      spacingFieldX_.addFocusListener(regeneratePlateOnLossOfFocus);
+      sidebar.add(spacingFieldX_, "split 2, flowx, wmin 50, hidemode 2, gapright 15");
 
       spacingFieldY_ = new JTextField();
       spacingFieldY_.setText("1000");
+      spacingFieldY_.setHorizontalAlignment(SwingConstants.RIGHT);
+      spacingFieldY_.addFocusListener(regeneratePlateOnLossOfFocus);
       // Take zero space when invisible.
-      sidebar.add(spacingFieldY_, "hidemode 2");
+      sidebar.add(spacingFieldY_, "wmin 50, hidemode 2");
       spacingFieldY_.setVisible(false);
 
       //same size and position like X_
       overlapField_ = new JTextField();
       overlapField_.setText("0");
+      overlapField_.setHorizontalAlignment(SwingConstants.RIGHT);
+      overlapField_.addFocusListener(regeneratePlateOnLossOfFocus);
       // Take zero space when invisible.
-      sidebar.add(overlapField_, "hidemode 2");
+      sidebar.add(overlapField_, "wmin 50, hidemode 2");
       overlapField_.setVisible(false);
 
       sidebar.add(new JLabel("Spacing Rule:"));
@@ -349,7 +304,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
                spacingFieldY_.setVisible(false);
                break;
             default:
-               app_.logs().showError("Unrecognized spacing mode " + mode);
+               studio_.logs().showError("Unrecognized spacing mode " + mode);
                break;
          }
          regenerate();
@@ -386,20 +341,29 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       });
       sidebar.add(calibrateXyButton, "growx");
 
+      final JRadioButton overWriteMMList = new JRadioButton("Overwrite");
+      final JRadioButton appendToMMList = new JRadioButton("Append");
+      final ButtonGroup mmListButtonGroup = new ButtonGroup();
+      mmListButtonGroup.add(overWriteMMList);
+      mmListButtonGroup.add(appendToMMList);
+      overWriteMMList.setSelected(true);
 
       final JButton setPositionListButton = new JButton("Build MM List",
             IconLoader.getIcon("/org/micromanager/icons/table.png"));
       setPositionListButton.addActionListener((final ActionEvent e) -> {
          if (!isCalibratedXY_) {
-            app_.logs().showMessage("Calibrate XY first");
+            studio_.logs().showMessage("Calibrate XY first");
             return;
          }
-         setPositionList((String) visitOrderBetweenWells_.getSelectedItem());
+         setPositionList((String) visitOrderBetweenWells_.getSelectedItem(),
+                 overWriteMMList.isSelected());
       });
       sidebar.add(setPositionListButton, "growx");
 
+      sidebar.add(overWriteMMList, "split 2, alignx center, flowx");
+      sidebar.add(appendToMMList);
+
       chckbxThreePt_ = new JCheckBox("Use 3-Point Z-Plane");
-      
       sidebar.add(chckbxThreePt_, "gaptop 10");
 
       JButton btnMarkPt = new JButton("Mark Point",
@@ -448,8 +412,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
-         if (app_ != null) {
-            app_.logs().logError(e1);
+         if (studio_ != null) {
+            studio_.logs().logError(e1);
          }
       }
    }
@@ -460,17 +424,17 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
    protected void saveSettings() {
-      app_.profile().setString(SiteGenerator.class, PLATE_FORMAT_ID,
+      studio_.profile().setString(SiteGenerator.class, PLATE_FORMAT_ID,
             (String) plateIDCombo_.getSelectedItem());
-      app_.profile().setString(SiteGenerator.class, SITE_SPACING_X,
+      studio_.profile().setString(SiteGenerator.class, SITE_SPACING_X,
             spacingFieldX_.getText().replace(',', '.'));
-      app_.profile().setString(SiteGenerator.class, SITE_SPACING_Y,
+      studio_.profile().setString(SiteGenerator.class, SITE_SPACING_Y,
             spacingFieldY_.getText().replace(',', '.'));
-      app_.profile().setString(SiteGenerator.class, SITE_OVERLAP,
+      studio_.profile().setString(SiteGenerator.class, SITE_OVERLAP,
             overlapField_.getText());
-      app_.profile().setString(SiteGenerator.class, SITE_ROWS,
+      studio_.profile().setString(SiteGenerator.class, SITE_ROWS,
             rowsField_.getText());
-      app_.profile().setString(SiteGenerator.class, SITE_COLS,
+      studio_.profile().setString(SiteGenerator.class, SITE_COLS,
             columnsField_.getText());
       Double[] offset;
       if (isCalibratedXY_) {
@@ -478,23 +442,23 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       } else {
          offset = new Double[] {Double.NaN, Double.NaN};
       }
-      app_.profile().setDoubleArray(SiteGenerator.class, SITE_OFFSET, offset);
+      studio_.profile().setDoubleArray(SiteGenerator.class, SITE_OFFSET, offset);
    }
 
    protected final void loadSettings() {
-      plateIDCombo_.setSelectedItem(app_.getUserProfile().getString(
+      plateIDCombo_.setSelectedItem(studio_.getUserProfile().getString(
                SiteGenerator.class, PLATE_FORMAT_ID, SBSPlate.SBS_96_WELL));
-      rowsField_.setText(app_.profile().getString(SiteGenerator.class,
+      rowsField_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_ROWS, "1"));
-      columnsField_.setText(app_.profile().getString(SiteGenerator.class,
+      columnsField_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_COLS, "1"));
-      spacingFieldX_.setText(app_.profile().getString(SiteGenerator.class,
+      spacingFieldX_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_SPACING_X, "200"));
-      spacingFieldY_.setText(app_.profile().getString(SiteGenerator.class,
+      spacingFieldY_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_SPACING_Y, "200"));
-      overlapField_.setText(app_.profile().getString(SiteGenerator.class,
+      overlapField_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_OVERLAP, "10"));
-      Double[] offset = app_.profile().getDoubleArray(SiteGenerator.class,
+      Double[] offset = studio_.profile().getDoubleArray(SiteGenerator.class,
               SITE_OFFSET, new Double[] {Double.NaN, Double.NaN});
       // If the offset appears to be valid numbers then a calibration was previously run.
       isCalibratedXY_ = Double.isFinite(offset[0]) && Double.isFinite(offset[1]);
@@ -502,7 +466,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       moveStage_.setEnabled(isCalibratedXY_); 
    }
 
-   private void setPositionList(String betweenWellOrder) {
+   private void setPositionList(String betweenWellOrder, boolean replaceList) {
       List<WellPositionList> wpl = platePanel_.getSelectedWellPositions();
       if (!betweenWellOrder.equals(SNAKE_ORDER)) {
          if (betweenWellOrder.equals(TYPEWRITER_ORDER)) {
@@ -524,15 +488,20 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
       }
 
-      PositionList platePl = new PositionList();
+      PositionList platePl;
+      if (replaceList) {
+         platePl = new PositionList();
+      } else {
+         platePl = studio_.positions().getPositionList();
+      }
       for (WellPositionList wpl1 : wpl) {
          PositionList pl = PositionList.newInstance(wpl1.getSitePositions());
          for (int j = 0; j < pl.getNumberOfPositions(); j++) {
             MultiStagePosition msp = pl.getPosition(j);
             // make label unique
             msp.setLabel(wpl1.getLabel() + "-" + msp.getLabel());
-            if (app_ != null) {
-               msp.setDefaultXYStage(app_.getCMMCore().getXYStageDevice());
+            if (studio_ != null) {
+               msp.setDefaultXYStage(studio_.getCMMCore().getXYStageDevice());
             }
             // set the proper XYstage name
             for (int k = 0; k < msp.size(); k++) {
@@ -563,9 +532,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
 
       try {
-         if (app_ != null) {
-            app_.positions().setPositionList(platePl);
-            app_.app().showPositionList();
+         if (studio_ != null) {
+            studio_.positions().setPositionList(platePl);
+            studio_.app().showPositionList();
          }
       } catch (Exception e) {
          displayError(e.getMessage());
@@ -573,34 +542,75 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    }
 
+   private void updateXySpacing() {
+      String mode = (String) spacingMode_.getSelectedItem();
+      if (mode.equals(VIEW_SPACING)) {
+         core_ = studio_.getCMMCore();
+         long width = core_.getImageWidth();
+         long height = core_.getImageHeight();
+         double cameraXFieldOfView = core_.getPixelSizeUm() * width;
+         double cameraYFieldOfView = core_.getPixelSizeUm() * height;
+         double overlap;
+         try {
+            overlap = NumberUtils.displayStringToDouble(overlapField_.getText());
+         } catch (java.text.ParseException nfe) {
+            overlap = 0.0;
+            overlapField_.setText(NumberUtils.doubleToDisplayString(0.0));
+            studio_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+         }
+         xSpacing_ = cameraXFieldOfView - overlap;
+         ySpacing_ = cameraYFieldOfView - overlap;
+      } else {
+         try {
+            xSpacing_ = NumberUtils.displayStringToDouble(spacingFieldX_.getText());
+         } catch (java.text.ParseException nfe) {
+            xSpacing_ = 0.0;
+            spacingFieldX_.setText(NumberUtils.doubleToDisplayString(0.0));
+            studio_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+         }
+         if (mode.equals(EQUAL_SPACING)) {
+            ySpacing_ = xSpacing_;
+         } else {
+            try {
+               ySpacing_ = NumberUtils.displayStringToDouble(spacingFieldY_.getText());
+            } catch (java.text.ParseException nfe) {
+               ySpacing_ = 0.0;
+               spacingFieldY_.setText(NumberUtils.doubleToDisplayString(0.0));
+               studio_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+            }
+         }
+      }
+   }
+
+
    /**
     * Marks current position as one point in the 3-pt set.
     * Ensures that one XY stage and one Z stage are selected in the PositionList
     * Also ensures that the same stages as in the previous points are selected
     */
    private void markOnePoint() {
-      app_.app().showPositionList();
-      int nrPositions = app_.positions().getPositionList().getNumberOfPositions();
+      studio_.app().showPositionList();
+      int nrPositions = studio_.positions().getPositionList().getNumberOfPositions();
       if (nrPositions > 3) {
-         app_.logs().showMessage(
+         studio_.logs().showMessage(
                "PositionList contains > 3 points.  Try to clear the Stage Position List");
          return;
       }
       if (nrPositions == 3) {
-         app_.logs().showMessage(
+         studio_.logs().showMessage(
                "PositionList already contains 3 positions.  Delete at least one");
          return;
       }
-      app_.positions().markCurrentPosition();
+      studio_.positions().markCurrentPosition();
       // check that exactly one z-stage and one xy-stage is checked
-      MultiStagePosition msp = app_.positions().getPositionList().getPosition(nrPositions);
+      MultiStagePosition msp = studio_.positions().getPositionList().getPosition(nrPositions);
       if (msp == null) {
-         app_.logs().logError("Failed to mark current position in PositionList");
+         studio_.logs().logError("Failed to mark current position in PositionList");
          return;
       }
       if (msp.size() != 2) {
-         app_.positions().getPositionList().removePosition(nrPositions);
-         app_.logs().showMessage(
+         studio_.positions().getPositionList().removePosition(nrPositions);
+         studio_.logs().showMessage(
                "Make sure that only one XY stage and one Z stage is checked", this);
          return;
       }
@@ -610,22 +620,22 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          stagesOK = true;
       }
       if (!stagesOK) {  
-         app_.positions().getPositionList().removePosition(nrPositions);
-         app_.logs().showMessage(
+         studio_.positions().getPositionList().removePosition(nrPositions);
+         studio_.logs().showMessage(
                "Make sure that only one XY stage and one Z stage is checked", this);
          return;
       }
       // also ensure that the same stages are checked
-      nrPositions = app_.positions().getPositionList().getNumberOfPositions();
+      nrPositions = studio_.positions().getPositionList().getNumberOfPositions();
       if (nrPositions > 1) {        
          String stage0 = msp.get(0).getStageDeviceLabel();
          String stage1 = msp.get(1).getStageDeviceLabel();
          for (int i = 0; i < nrPositions; i++) {
-            MultiStagePosition mspTest = app_.positions().getPositionList().getPosition(i);
+            MultiStagePosition mspTest = studio_.positions().getPositionList().getPosition(i);
             if (!mspTest.get(0).getStageDeviceLabel().equals(stage0)
                   || !mspTest.get(1).getStageDeviceLabel().equals(stage1)) {
-               app_.positions().getPositionList().removePosition(nrPositions - 1);
-               app_.logs().showMessage(
+               studio_.positions().getPositionList().removePosition(nrPositions - 1);
+               studio_.logs().showMessage(
                        "Make sure that the same stages are checked for all 3 positions", this);
             }
          }
@@ -634,9 +644,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private void setThreePoint() {
       try {
-         PositionList plist = app_.positions().getPositionList();
+         PositionList plist = studio_.positions().getPositionList();
          if (plist.getNumberOfPositions() != 3) {
-            app_.logs().showMessage(
+            studio_.logs().showMessage(
                     "We need exactly three positions to fit AF plane. "
                   + "Please create XY list with exactly 3 positions.");
             return;
@@ -753,8 +763,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    @Override
    public String getXYStageName() {
-      if (app_ != null) {
-         return app_.getCMMCore().getXYStageDevice();
+      if (studio_ != null) {
+         return studio_.getCMMCore().getXYStageDevice();
       } else {
          return SBSPlate.DEFAULT_XYSTAGE_NAME;
       }
@@ -762,19 +772,19 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    @Override
    public void displayError(String txt) {
-      if (app_ != null) {
-         app_.logs().showError(txt, this);
+      if (studio_ != null) {
+         studio_.logs().showError(txt, this);
       }
    }
 
    protected void calibrateXY() {
-      if (app_ == null) {
+      if (studio_ == null) {
          return;
       }
       if (calFrame_ != null) {
          calFrame_.setVisible(true);
       } else {
-         calFrame_ = new CalibrationFrame(app_, plate_, this);
+         calFrame_ = new CalibrationFrame(studio_, plate_, this);
       }
    }
 
@@ -838,8 +848,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
-         if (app_ != null) {
-            app_.logs().logError(e1);
+         if (studio_ != null) {
+            studio_.logs().logError(e1);
          }
       }
       shouldIgnoreFormatEvent_ = true;

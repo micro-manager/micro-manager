@@ -75,6 +75,9 @@ public class CustomSettingsFrame extends JFrame {
       super.add(save, "align right");
 
       super.pack();
+
+      super.setLocationRelativeTo(parent);
+
    }
 
    private JTextField createText(String label, int width, boolean shouldWrap) {
