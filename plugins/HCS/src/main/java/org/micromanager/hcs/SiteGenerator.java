@@ -140,7 +140,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       super.setBounds(100, 100, 1000, 640);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
-      platePanel_ = new PlatePanel(plate_, null, this, app);
+      platePanel_ = new PlatePanel(plate_, null, this, studio_);
       contentsPanel.add(platePanel_, "grow, push");
 
       JPanel sidebar = new JPanel(new MigLayout("flowy, gap 0, insets 0"));
@@ -157,8 +157,6 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       });
 
       moveStage_ = new JRadioButton("Move");
-      //IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
-
       moveStage_.setToolTipText("Click to move the stage");
       moveStage_.addActionListener((ActionEvent e) -> {
          if (moveStage_.isSelected()) {
