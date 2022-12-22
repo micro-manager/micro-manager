@@ -89,6 +89,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private static final String SITE_ROWS       = "site_rows";
    private static final String SITE_COLS       = "site_cols";
    private static final String SITE_OFFSET     = "site_offset"; // in um
+   private static final String SPACING_MODE    = "spacing_mode";
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
@@ -177,8 +178,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
       final JLabel plateFormatLabel = new JLabel();
       plateFormatLabel.setAlignmentY(Component.TOP_ALIGNMENT);
-      plateFormatLabel.setText("Plate Format:");
-      sidebar.add(plateFormatLabel);
+      plateFormatLabel.setText("<html><b>Plate Format:</b></html>");
+      sidebar.add(plateFormatLabel, "gaptop 14");
 
       plateIDCombo_ = new JComboBox<>();
       sidebar.add(plateIDCombo_);
@@ -228,7 +229,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          }
       };
 
-      sidebar.add(new JLabel("Imaging Sites"));
+      sidebar.add(new JLabel("<html><b>Imaging Sites:</b></html"), "gaptop 14");
       JPanel gridPanel = new JPanel(new MigLayout("flowx, gap 0, insets 0",
                "0[]0[]0", "0[]0[]0"));
       gridPanel.add(new JLabel("Rows"));
@@ -240,7 +241,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       gridPanel.add(rowsField_, "gapright 15");
       rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
 
-      sidebar.add(new JLabel("Columns"));
+      //sidebar.add(new JLabel("Columns"));
       columnsField_ = new JTextField(3);
       columnsField_.setText("1");
       columnsField_.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -310,13 +311,13 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          regenerate();
       });
 
-      sidebar.add(new JLabel("Site visit order:"));
+      sidebar.add(new JLabel("<html><b>Site visit order:</b></html>"), "gaptop 14");
       visitOrderInWell_ = new JComboBox<>(
             new String[] {SNAKE_ORDER, TYPEWRITER_ORDER, CASCADE_ORDER});
       visitOrderInWell_.addActionListener((ActionEvent e) -> {
          regenerate();
       });
-      sidebar.add(new JLabel("In well"), "split 2");
+      sidebar.add(new JLabel("In well:"), "split 2");
       sidebar.add(visitOrderInWell_, "growx");
 
       visitOrderBetweenWells_ = new JComboBox<>(
@@ -324,7 +325,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       visitOrderBetweenWells_.addActionListener((ActionEvent e) -> {
          regenerate();
       });
-      sidebar.add(new JLabel("Between wells"), "split 2");
+      sidebar.add(new JLabel("Between wells:"), "split 2");
       sidebar.add(visitOrderBetweenWells_, "growx");
 
       final JButton refreshButton = new JButton("Refresh",
@@ -332,7 +333,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       refreshButton.addActionListener((final ActionEvent e) -> {
          regenerate();
       });
-      sidebar.add(refreshButton, "growx, gaptop 10");
+      sidebar.add(refreshButton, "growx, gaptop 14");
 
       final JButton calibrateXyButton = new JButton("Calibrate XY...",
             IconLoader.getIcon("/org/micromanager/icons/cog.png"));
@@ -364,7 +365,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       sidebar.add(appendToMMList);
 
       chckbxThreePt_ = new JCheckBox("Use 3-Point Z-Plane");
-      sidebar.add(chckbxThreePt_, "gaptop 10");
+      sidebar.add(chckbxThreePt_, "gaptop 14");
 
       JButton btnMarkPt = new JButton("Mark Point",
             IconLoader.getIcon("/org/micromanager/icons/plus.png"));
@@ -395,7 +396,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          HCSAbout dlgAbout = new HCSAbout(SiteGenerator.this);
          dlgAbout.setVisible(true);
       });
-      sidebar.add(btnAbout, "growx");
+      sidebar.add(btnAbout, "growx, gaptop 14");
 
       statusLabel_ = new JLabel();
       statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
@@ -431,6 +432,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       settings.putString(SITE_OVERLAP, overlapField_.getText());
       settings.putString(SITE_ROWS, rowsField_.getText());
       settings.putString(SITE_COLS, columnsField_.getText());
+      settings.putString(SPACING_MODE, (String) spacingMode_.getSelectedItem());
       Double[] offset;
       if (isCalibratedXY_) {
          offset = new Double[] {offset_.getX(), offset_.getY()};
@@ -448,6 +450,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       spacingFieldX_.setText(settings.getString(SITE_SPACING_X, "200"));
       spacingFieldY_.setText(settings.getString(SITE_SPACING_Y, "200"));
       overlapField_.setText(settings.getString(SITE_OVERLAP, "10"));
+      spacingMode_.setSelectedItem(settings.getString(SPACING_MODE, EQUAL_SPACING));
       Double[] offset = settings.getDoubleList(SITE_OFFSET,
                       Arrays.asList(new Double[]{Double.NaN, Double.NaN}))
               .toArray(new Double[0]);
