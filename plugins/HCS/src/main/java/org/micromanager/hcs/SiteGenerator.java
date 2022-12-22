@@ -12,7 +12,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -39,7 +41,7 @@ import org.micromanager.Studio;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
 import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.propertymap.*;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * This is the primary user interface for the plugin.
@@ -276,7 +278,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
       sidebar.add(new JLabel("Spacing Rule:"));
 
-      spacingMode_ = new JComboBox(new String[] {
+      spacingMode_ = new JComboBox<>(new String[] {
          EQUAL_SPACING, DIFFERENT_SPACING, VIEW_SPACING});
       sidebar.add(spacingMode_, "growx");
       spacingMode_.setSelectedIndex(0);
@@ -309,7 +311,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       });
 
       sidebar.add(new JLabel("Site visit order:"));
-      visitOrderInWell_ = new JComboBox(
+      visitOrderInWell_ = new JComboBox<>(
             new String[] {SNAKE_ORDER, TYPEWRITER_ORDER, CASCADE_ORDER});
       visitOrderInWell_.addActionListener((ActionEvent e) -> {
          regenerate();
