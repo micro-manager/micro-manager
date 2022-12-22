@@ -63,14 +63,12 @@ public class PlatePanel extends JPanel {
    private Tool mode_;
    private Studio app_;
    private boolean lockAspect_;
-   private ParentPlateGUI gui_;
+   private final ParentPlateGUI gui_;
    private Point anchor_;
    private Point previous_;
 
    public static Color LIGHT_YELLOW = new Color(255, 255, 145);
-   public static Color LIGHT_ORANGE = new Color(255, 176, 138);
    public static Color LIGHT_GREEN = new Color(204, 224, 201);
-   public static Color LIGHT_BRICK = new Color(246, 151, 134);
    private DrawingParams drawingParams_;
    private double zStagePos_;
 
@@ -760,7 +758,13 @@ public class PlatePanel extends JPanel {
       lockAspect_ = state;
       rescale();
    }
-   
+
+   /**
+    * Gets the current stage position from the hardware and draws the current position
+    * on the plate picture.
+    *
+    * @throws HCSException
+    */
    public void refreshStagePosition() throws HCSException {
       if (app_ != null) {
          try {

@@ -22,6 +22,9 @@
 
 package org.micromanager.hcs;
 
+/**
+ * Exception used in the HCS plugin.
+ */
 public class HCSException extends Exception {
    private static final long serialVersionUID = -8829247065013272369L;
    private Throwable cause;

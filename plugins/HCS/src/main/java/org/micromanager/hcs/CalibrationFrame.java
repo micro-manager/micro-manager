@@ -64,6 +64,14 @@ public class CalibrationFrame extends JFrame {
    private final String calibrationLegacy = "Legacy";
    private final String calibrationRecommended = "Recommended";
 
+   /**
+    * Displays the dialog used to calibrate the HCS plugin (i.e. figure out the relation
+    * between our plate layout and the actual XY stage).
+    *
+    * @param studio The omni-present Micro-Manager Studio api
+    * @param plate Plate layout used for calibration
+    * @param siteGenerator HCS GUI
+    */
    public CalibrationFrame(final Studio studio, final SBSPlate plate,
                            final SiteGenerator siteGenerator) {
 
@@ -85,8 +93,8 @@ public class CalibrationFrame extends JFrame {
       contents.add(warningLabel2, "span 4, center, wrap");
       contents.add(new JSeparator(), "span 4, grow, wrap");
 
-      final List<String> rows = new ArrayList<String>();
-      final Map<String, Integer> rowNumbers = new HashMap<String, Integer>();
+      final List<String> rows = new ArrayList<>();
+      final Map<String, Integer> rowNumbers = new HashMap<>();
       for (int i = 1; i < plate.getNumRows() + 1; i++) {
          rows.add(plate.getRowLabel(i));
          rowNumbers.put(plate.getRowLabel(i), i);
@@ -96,7 +104,7 @@ public class CalibrationFrame extends JFrame {
       contents.add(new JLabel("row:"), "span 2, split 2, gap 60");
       contents.add(rowSpinner, "width 50, center, pushx, gap 5");
 
-      model = new SpinnerNumberModel((int) 1, (int) 1, plate.getNumColumns(), (int) 1);
+      model = new SpinnerNumberModel(1, 1, plate.getNumColumns(), 1);
       final JSpinner columnSpinner = new JSpinner(model);
       contents.add(new JLabel("column:"), "span 2, split 2, gap 60");
       contents.add(columnSpinner, "width 50, center, pushx, gap 5, wrap");
@@ -147,11 +155,11 @@ public class CalibrationFrame extends JFrame {
 
       JLabel methodLabel = new JLabel();
       JPanel methodPanel = new JPanel(new MigLayout("align, center, fillx"));
-      JComboBox methodCombo = new JComboBox();
+      JComboBox<String> methodCombo = new JComboBox<>();
       methodPanel.add(methodLabel, "span 2, wrap");
       methodPanel.add(methodCombo, "span 2");
       methodLabel.setText("Calibration Method");
-      methodCombo.setModel(new DefaultComboBoxModel(new String[]
+      methodCombo.setModel(new DefaultComboBoxModel<>(new String[]
                {calibrationLegacy, calibrationRecommended}));
       methodCombo.setToolTipText(
             "<html>"
@@ -170,98 +178,89 @@ public class CalibrationFrame extends JFrame {
       methodCombo.setSelectedItem(settings.getString(calibrationMethod, calibrationRecommended));
 
       JButton cancelButton = new JButton("Cancel");
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            cleanup(edgeLabels);
-            ourFrame.dispose();
-         }
+      cancelButton.addActionListener(e -> {
+         cleanup(edgeLabels);
+         ourFrame.dispose();
       });
       contents.add(cancelButton, "span 4, split 2, tag cancel");
 
       // OK Button, this is where all the action happens
       JButton okButton = new JButton("OK");
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int rowNr = rowNumbers.get((String) rowSpinner.getValue());
-            int colNr = (Integer) columnSpinner.getValue();
-            // check for edges and be smart about it
-            boolean allEdges = true;
-            boolean anyEdge = false;
-            for (JLabel edgeLabel : edgeLabels) {
-               if (edgeLabel.getText().equals(notset)) {
-                  allEdges = false;
-               } else {
-                  anyEdge = true;
-               }
+      okButton.addActionListener(e -> {
+         int rowNr = rowNumbers.get((String) rowSpinner.getValue());
+         int colNr = (Integer) columnSpinner.getValue();
+         // check for edges and be smart about it
+         boolean allEdges = true;
+         boolean anyEdge = false;
+         for (JLabel edgeLabel : edgeLabels) {
+            if (edgeLabel.getText().equals(notset)) {
+               allEdges = false;
+            } else {
+               anyEdge = true;
             }
-            // if the user sets some but not all edges we have a problem:
-            if (anyEdge && !allEdges) {
-               // unset all edges and inform the user
-               for (JLabel edgeLabel : edgeLabels) {
-                  edgeLabel.setText(notset);
-               }
-               studio.logs().showMessage("Either set all edges or none");
+         }
+         // if the user sets some but not all edges we have a problem:
+         if (anyEdge && !allEdges) {
+            // unset all edges and inform the user
+            for (JLabel edgeLabel : edgeLabels) {
+               edgeLabel.setText(notset);
+            }
+            studio.logs().showMessage("Either set all edges or none");
+            return;
+         }
+         // when we have all edges, move the stage to the center
+         if (allEdges) {
+            double leftX = edges[1].x;
+            double rightX = edges[2].x;
+            double topY = edges[0].y;
+            double bottomY = edges[3].y;
+            // Sanity checks:
+            if (Math.abs(rightX - leftX) > plate.getWellSpacingX()) {
+               studio.logs().showError("The distance between the right and left edge \n"
+                     + "is larger than the the well-to well distance for this plate.  Aborting");
                return;
             }
-            // when we have all edges, move the stage to the center
-            if (allEdges) {
-               double leftX = edges[1].x;
-               double rightX = edges[2].x;
-               double topY = edges[0].y;
-               double bottomY = edges[3].y;
-               // Sanity checks:
-               if (Math.abs(rightX - leftX) > plate.getWellSpacingX()) {
-                  studio.logs().showError("The distance between the right and left edge \n"
-                        + "is larger than the the well-to well distance for this plate.  Aborting");
-                  return;
-               }
-               if (Math.abs(topY - bottomY) > plate.getWellSpacingY()) {
-                  studio.logs().showError("The distance between the bottom and top edge \n"
-                        + "is larger than the the well-to well distance for this plate.  Aborting");
-                  return;
-               }
-               // Dangerous parts: move the stage to the middle, should the user be warned?
-               double middleX = (rightX + leftX) / 2.0;
-               double middleY = (topY + bottomY) / 2.0;
-               try {
-                  studio.getCMMCore().setXYPosition(middleX, middleY);
-                  studio.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
-               } catch (Exception ex) {
-                  studio.logs().showError(ex, "Failed to reset the stage's coordinates");
-                  dispose();
-                  return;
-               }
+            if (Math.abs(topY - bottomY) > plate.getWellSpacingY()) {
+               studio.logs().showError("The distance between the bottom and top edge \n"
+                     + "is larger than the the well-to well distance for this plate.  Aborting");
+               return;
             }
+            // Dangerous parts: move the stage to the middle, should the user be warned?
+            double middleX = (rightX + leftX) / 2.0;
+            double middleY = (topY + bottomY) / 2.0;
             try {
-               Point2D.Double pt = new Point2D.Double(
-                     plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(),
-                     plate.getFirstWellY() + (rowNr - 1) * plate.getWellSpacingY());
-               Point2D.Double offset;
-               Boolean saveCalibration;
-               if (calibrationRecommended.equals(methodCombo.getSelectedItem())) {
-                  double x = studio.core().getXPosition();
-                  double y = studio.core().getYPosition();
-                  offset = new Point2D.Double(x - pt.getX(), y - pt.getY());
-                  saveCalibration = true;
-                  JOptionPane.showMessageDialog(ourFrame,
-                        "Plugin offset set at position: " + offset.x + "," + offset.y);
-               } else { //Legacy. Adjust the coordinate system with no offset.
-                  studio.getCMMCore().setAdapterOriginXY(pt.getX(), pt.getY());
-                  offset = new Point2D.Double(0, 0);
-                  saveCalibration = false;
-                  JOptionPane.showMessageDialog(ourFrame,
-                        "XY Stage set at position: " + pt.x + "," + pt.y);
-               }
-               settings.putString(calibrationMethod, (String) methodCombo.getSelectedItem());
-               siteGenerator.finishCalibration(offset);
+               studio.getCMMCore().setXYPosition(middleX, middleY);
+               studio.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
             } catch (Exception ex) {
                studio.logs().showError(ex, "Failed to reset the stage's coordinates");
+               dispose();
+               return;
             }
-            cleanup(edgeLabels);
-            dispose();
          }
+         try {
+            Point2D.Double pt = new Point2D.Double(
+                  plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(),
+                  plate.getFirstWellY() + (rowNr - 1) * plate.getWellSpacingY());
+            Point2D.Double offset;
+            if (calibrationRecommended.equals(methodCombo.getSelectedItem())) {
+               double x = studio.core().getXPosition();
+               double y = studio.core().getYPosition();
+               offset = new Point2D.Double(x - pt.getX(), y - pt.getY());
+               JOptionPane.showMessageDialog(ourFrame,
+                     "Plugin offset set at position: " + offset.x + "," + offset.y);
+            } else { //Legacy. Adjust the coordinate system with no offset.
+               studio.getCMMCore().setAdapterOriginXY(pt.getX(), pt.getY());
+               offset = new Point2D.Double(0, 0);
+               JOptionPane.showMessageDialog(ourFrame,
+                     "XY Stage set at position: " + pt.x + "," + pt.y);
+            }
+            settings.putString(calibrationMethod, (String) methodCombo.getSelectedItem());
+            siteGenerator.finishCalibration(offset);
+         } catch (Exception ex) {
+            studio.logs().showError(ex, "Failed to reset the stage's coordinates");
+         }
+         cleanup(edgeLabels);
+         dispose();
       });
 
       contents.add(okButton, "tag ok, wrap");

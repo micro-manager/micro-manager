@@ -2,23 +2,23 @@ package org.micromanager.hcs;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 
+
+/**
+ * Provides information about this plugin (mainly disclaimers).
+ */
 public class HCSAbout extends JDialog {
    private static final long serialVersionUID = 1L;
-
-   private final JPanel contentPanel = new JPanel();
 
    /**
     * Create the dialog.
     *
-    * @param parent
+    * @param parent The HCS plugin GUI.
     */
    public HCSAbout(SiteGenerator parent) {
       super.setModal(true);
@@ -26,6 +26,7 @@ public class HCSAbout extends JDialog {
       super.setBounds(200, 200, 462, 273);
       super.setLocationRelativeTo(parent);
       super.getContentPane().setLayout(new BorderLayout());
+      JPanel contentPanel = new JPanel();
       contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
       super.getContentPane().add(contentPanel, BorderLayout.CENTER);
       contentPanel.setLayout(new BorderLayout(0, 0));
@@ -46,12 +47,7 @@ public class HCSAbout extends JDialog {
       buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
       super.getContentPane().add(buttonPane, BorderLayout.SOUTH);
       JButton okButton = new JButton("OK");
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            dispose();
-         }
-      });
+      okButton.addActionListener(e -> dispose());
       okButton.setActionCommand("OK");
       buttonPane.add(okButton);
       super.getRootPane().setDefaultButton(okButton);
