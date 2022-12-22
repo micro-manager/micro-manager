@@ -96,24 +96,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
 
    protected EventBus bus_;
 
-   @Subscribe
-   public void onTileUpdate(MoversChangedEvent event) {
-      setTileButtonEnabled(); //This handler is executed when the axis checkboxes are changed.
-   }
-
-   private void setTileButtonEnabled() {
-      int n2DStages = 0;
-      for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
-         AxisData ad = axisList_.get(i);
-         if (ad.getUse()) {
-            if (ad.getType() == AxisData.AxisType.twoD) {
-               n2DStages++;
-            }
-         }
-      }
-      tileButton_.setEnabled(n2DStages == 1);
-   }
-
    /**
     * Create the dialog.
     *
@@ -185,8 +167,9 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       axisPane.setViewportView(axisTable_);
       // make sure that the complete axis Table will always be visible
       int tableHeight = axisList_.getNumberOfPositions() * axisTable_.getRowHeight();
-      axisPane.setMaximumSize(new Dimension(32767, 30 + tableHeight));
-      axisPane.setMinimumSize(new Dimension(50, 30 + tableHeight));
+      // For whatever reason, axisTable_.getTableHeader().getHeight() returns 0, so estimate
+      axisPane.setMaximumSize(new Dimension(32767, 40 + tableHeight));
+      axisPane.setMinimumSize(new Dimension(50, 40 + tableHeight));
       // set divider location
       int axisCol0Width = profile.getSettings(PositionListDlg.class).getInteger(
             AXIS_COL0_WIDTH, 75);
@@ -298,10 +281,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       add(removeButton);
 
       final JButton setOriginButton = posListButton(buttonSize, arialSmallFont_);
-      setOriginButton.addActionListener(arg0 -> {
-         calibrate(); //setOrigin();
-      });
-
+      setOriginButton.addActionListener(arg0 -> calibrate()); //setOrigin();
       setOriginButton.setIcon(new ImageIcon(MMStudio.class.getResource(
             "/org/micromanager/icons/empty.png")));
       setOriginButton.setText("Set Origin");
@@ -312,7 +292,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
 
       final JButton offsetButton = posListButton(buttonSize, arialSmallFont_);
       offsetButton.addActionListener(arg0 -> offsetPositions());
-
       offsetButton.setIcon(new ImageIcon(MMStudio.class.getResource(
             "/org/micromanager/icons/empty.png")));
       offsetButton.setText("Add Offset");
@@ -371,6 +350,24 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       refreshCurrentPosition();
    }
 
+   @Subscribe
+   public void onTileUpdate(MoversChangedEvent event) {
+      setTileButtonEnabled(); //This handler is executed when the axis checkboxes are changed.
+   }
+
+   private void setTileButtonEnabled() {
+      int n2DStages = 0;
+      for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
+         AxisData ad = axisList_.get(i);
+         if (ad.getUse()) {
+            if (ad.getType() == AxisData.AxisType.twoD) {
+               n2DStages++;
+            }
+         }
+      }
+      tileButton_.setEnabled(n2DStages == 1);
+   }
+
    private JButton posListButton(Dimension buttonSize, Font font) {
       JButton button = new JButton();
       button.setPreferredSize(buttonSize);
@@ -388,7 +385,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       posTable_.addMouseListener(this);
       getPositionList().addChangeListener(this);
    }
-
 
    @Override
    public void stateChanged(ChangeEvent e) {
@@ -665,7 +661,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    /**
     * The stage position changed; update curMsp_.
     *
-    * @param event Signals that the stafe position changed
+    * @param event Signals that the stage position changed
     */
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
@@ -819,7 +815,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
     * Calibrate the XY stage.
     */
    private void calibrate() {
-
       JOptionPane.showMessageDialog(this, "ALERT! Please REMOVE objectives! It may damage lens!",
             "Calibrate the XY stage", JOptionPane.WARNING_MESSAGE);
 
@@ -855,7 +850,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-
    }
 
    class StopCalThread extends Thread {
@@ -1084,7 +1078,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       public void run() {
          JOptionPane.showMessageDialog(d, "Going back to the original position!");
       }
-   } // End BackThread class
+   }
 
    /**
     * Implementation of MouseListener.
@@ -1131,7 +1125,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
     * Generate a dialog that will call our offsetSelectedSites() function
     * with a set of X/Y/Z offsets to apply.
     */
-   @SuppressWarnings("ResultOfObjectAllocationIgnored")
    private void offsetPositions() {
       new OffsetPositionsDialog(this, core_);
    }
@@ -1164,4 +1157,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       }
       updatePositionData();
    }
+
+
 }

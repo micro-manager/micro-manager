@@ -89,6 +89,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private static final String SITE_COLS       = "site_cols";
    private static final String SITE_OFFSET     = "site_offset"; // in um
    private static final String SPACING_MODE    = "spacing_mode";
+   private static final String LIST_OVERWRITE  = "list_overwrite";
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
@@ -102,6 +103,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private CalibrationFrame calFrame_ = null;
    private final JToggleButton moveStage_;
    private final JToggleButton selectWells_;
+   private final JRadioButton overWriteMMList_;
+   private final JRadioButton appendToMMList_;
 
 
    /**
@@ -333,12 +336,12 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       calibrateXyButton.addActionListener((final ActionEvent e) -> calibrateXY());
       sidebar.add(calibrateXyButton, "growx");
 
-      final JRadioButton overWriteMMList = new JRadioButton("Overwrite");
-      final JRadioButton appendToMMList = new JRadioButton("Append");
+      overWriteMMList_ = new JRadioButton("Overwrite");
+      appendToMMList_ = new JRadioButton("Append");
       final ButtonGroup mmListButtonGroup = new ButtonGroup();
-      mmListButtonGroup.add(overWriteMMList);
-      mmListButtonGroup.add(appendToMMList);
-      overWriteMMList.setSelected(true);
+      mmListButtonGroup.add(overWriteMMList_);
+      mmListButtonGroup.add(appendToMMList_);
+      overWriteMMList_.setSelected(true);
 
       final JButton setPositionListButton = new JButton("Build MM List",
             IconLoader.getIcon("/org/micromanager/icons/table.png"));
@@ -348,12 +351,12 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             return;
          }
          setPositionList((String) visitOrderBetweenWells_.getSelectedItem(),
-                 overWriteMMList.isSelected());
+                 overWriteMMList_.isSelected());
       });
       sidebar.add(setPositionListButton, "growx");
 
-      sidebar.add(overWriteMMList, "split 2, alignx center, flowx");
-      sidebar.add(appendToMMList);
+      sidebar.add(overWriteMMList_, "split 2, alignx center, flowx");
+      sidebar.add(appendToMMList_);
 
       chckbxThreePt_ = new JCheckBox("Use 3-Point Z-Plane");
       sidebar.add(chckbxThreePt_, "gaptop 14");
@@ -427,6 +430,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          offset = new Double[] {Double.NaN, Double.NaN};
       }
       settings.putDoubleList(SITE_OFFSET, Arrays.asList(offset));
+      settings.putBoolean(LIST_OVERWRITE, overWriteMMList_.isSelected());
    }
 
    protected final void loadSettings() {
@@ -444,7 +448,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       // If the offset appears to be valid numbers then a calibration was previously run.
       isCalibratedXY_ = Double.isFinite(offset[0]) && Double.isFinite(offset[1]);
       offset_ = new Point2D.Double(offset[0], offset[1]);
-      moveStage_.setEnabled(isCalibratedXY_); 
+      moveStage_.setEnabled(isCalibratedXY_);
+      overWriteMMList_.setSelected(settings.getBoolean(LIST_OVERWRITE, true));
+      appendToMMList_.setSelected(!settings.getBoolean(LIST_OVERWRITE, true));
    }
 
    private void setPositionList(String betweenWellOrder, boolean replaceList) {
