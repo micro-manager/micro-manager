@@ -47,6 +47,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.SwingConstants;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -68,6 +69,10 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * TODO: The XYZKeyListener now gets the active z Stage and the amount each
  * keypress should move each stage from this dialog.  The Dialog should also
  * show which keys do what, and possibly provide the option to change these keys.
+ *
+ * <p>If the stage moves while snapping (when snap after move is checked), increase the
+ * waittime using the static function StageControlFrame.setExtraWait(double ms).  This
+ * is best done in a MMStartup.bsh script.
  *
  * @author Nico Stuurman
  * @author Jon Daniels
@@ -121,16 +126,8 @@ public final class StageControlFrame extends JFrame {
    private JCheckBox snapAfterMoveCB_;
    private Timer timer_ = null;
    // Ordered small, medium, large.
-   private final JFormattedTextField[] xStepTexts_ = new JFormattedTextField[] {
-         new JFormattedTextField(NumberFormat.getNumberInstance()),
-         new JFormattedTextField(NumberFormat.getNumberInstance()),
-         new JFormattedTextField(NumberFormat.getNumberInstance())
-   };
-   private final JFormattedTextField[] yStepTexts_ = new JFormattedTextField[] {
-         new JFormattedTextField(NumberFormat.getNumberInstance()),
-         new JFormattedTextField(NumberFormat.getNumberInstance()),
-         new JFormattedTextField(NumberFormat.getNumberInstance())
-   };
+   private final JFormattedTextField[] xStepTexts_;
+   private final JFormattedTextField[] yStepTexts_;
    private final JFormattedTextField[] zStepTextsSmall_ =
          new JFormattedTextField[MAX_NUM_Z_PANELS];
    private final JFormattedTextField[] zStepTextsMedium_ =
@@ -164,6 +161,18 @@ public final class StageControlFrame extends JFrame {
       settings_ = studio_.profile().getSettings(StageControlFrame.class);
       uiMovesStageManager_ = ((MMStudio) studio_).getUiMovesStageManager(); // TODO: add to API?
 
+      NumberFormat numberInstance = NumberFormat.getNumberInstance();
+      numberInstance.setMaximumFractionDigits(1);
+      xStepTexts_ = new JFormattedTextField[] {
+            new JFormattedTextField(numberInstance),
+            new JFormattedTextField(numberInstance),
+            new JFormattedTextField(numberInstance)
+      };
+      yStepTexts_ = new JFormattedTextField[] {
+            new JFormattedTextField(numberInstance),
+            new JFormattedTextField(numberInstance),
+            new JFormattedTextField(numberInstance)
+      };
       initComponents();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
@@ -177,7 +186,7 @@ public final class StageControlFrame extends JFrame {
     * Can be called at any time to adjust display (for instance after hardware
     * configuration change). Also called when user requests window to be shown.
     */
-   public final void initialize() {
+   public void initialize() {
       stopTimer();
       double[] xStepSizes = new double[] {1.0, 10.0, 100.0};
       double[] yStepSizes = new double[] {1.0, 10.0, 100.0};
@@ -193,6 +202,7 @@ public final class StageControlFrame extends JFrame {
       for (int i = 0; i < 3; ++i) {
          final int j = i;
          xStepSizes[i] = settings_.getDouble(X_MOVEMENTS[i], xStepSizes[i]);
+         xStepTexts_[i].setHorizontalAlignment(SwingConstants.RIGHT);
          xStepTexts_[i].setText(
                NumberUtils.doubleToDisplayString(xStepSizes[i]));
          xStepTexts_[i].addPropertyChangeListener("value", new PropertyChangeListener() {
@@ -223,6 +233,7 @@ public final class StageControlFrame extends JFrame {
             }
          });
          yStepSizes[i] = settings_.getDouble(Y_MOVEMENTS[i], yStepSizes[i]);
+         yStepTexts_[i].setHorizontalAlignment(SwingConstants.RIGHT);
          yStepTexts_[i].setText(
                NumberUtils.doubleToDisplayString(yStepSizes[i]));
          yStepTexts_[i].addPropertyChangeListener("value", new PropertyChangeListener() {
@@ -515,8 +526,8 @@ public final class StageControlFrame extends JFrame {
          final int index = i;
 
          // See above HACK note.
-         result.add(xStepTexts_[i], "height 20!, width 40");
-         result.add(yStepTexts_[i], "height 20!, width 40");
+         result.add(xStepTexts_[i], "height 20!, width 55");
+         result.add(yStepTexts_[i], "height 20!, width 55");
 
          result.add(new JLabel("\u00b5m")); //micro-m, i.e. micron
 
@@ -637,7 +648,7 @@ public final class StageControlFrame extends JFrame {
       result.add(new JLabel(IconLoader.getIcon(
             "/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
             "height 20!, span, split 3, flowx");
-      result.add(zStepTextsSmall_[idx], "height 20!, width 50");
+      result.add(zStepTextsSmall_[idx], "height 20!, width 55");
       result.add(new JLabel("\u00b5m"), "height 20!"); //micro-m, i.e. micron
 
       zStepTextsMedium_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(
@@ -645,7 +656,7 @@ public final class StageControlFrame extends JFrame {
       result.add(new JLabel(IconLoader.getIcon(
             "/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
-      result.add(zStepTextsMedium_[idx], "height 20!, width 50");
+      result.add(zStepTextsMedium_[idx], "height 20!, width 55");
       result.add(new JLabel("\u00b5m"), "height 20!"); // micro-m, i.e micron
 
       minusButtons_[idx] = new JButton("-");
@@ -812,8 +823,8 @@ public final class StageControlFrame extends JFrame {
    private void setXYPosLabel(double x, double y) {
       xyPositionLabel_.setText(String.format(
             "<html>X: %s \u00b5m<br>Y: %s \u00b5m</html>", // micro-m, i.e. micron
-            TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(x)),
-            TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(y))));
+            TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(x, 1)),
+            TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(y, 1))));
    }
 
    private void getZPosLabelFromCore(int idx) throws Exception {
@@ -824,7 +835,7 @@ public final class StageControlFrame extends JFrame {
    private void setZPosLabel(double z, int idx) {
       zPositionLabel_[idx].setText(
             TextUtils.removeNegativeZero(
-                  NumberUtils.doubleToDisplayString(z))
+                  NumberUtils.doubleToDisplayString(z, 1))
                   + " \u00B5m"); // U+00B5 MICRO SIGN
    }
 
@@ -868,7 +879,10 @@ public final class StageControlFrame extends JFrame {
          }
       }
 
-      JFormattedTextField tf = new JFormattedTextField(NumberFormat.getNumberInstance());
+      NumberFormat numberInstance = NumberFormat.getNumberInstance();
+      numberInstance.setMaximumFractionDigits(1);
+      JFormattedTextField tf = new JFormattedTextField(numberInstance);
+      tf.setHorizontalAlignment(SwingConstants.RIGHT);
       FieldListener listener = new FieldListener(tf, settings, cb, prefix);
       tf.setValue(settings.getDouble(listener.toString(), aDefault));
       tf.addPropertyChangeListener("value", listener);

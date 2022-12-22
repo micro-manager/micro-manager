@@ -92,7 +92,7 @@ public class SBSPlate {
 
    public SBSPlate() {
       // initialize as 96-well plate
-      wellMap_ = new HashMap<String, Well>();
+      wellMap_ = new HashMap<>();
       initialize(SBS_96_WELL);
    }
 
@@ -448,13 +448,13 @@ public class SBSPlate {
 
       // build the row label
       int tempRow = row;
-      String label = new String();
+      StringBuilder label = new StringBuilder();
       while (tempRow > 0) {
          int letterIndex = (tempRow - 1) % ROW_ALPHABET.length;
-         label += ROW_ALPHABET[letterIndex];
+         label.append(ROW_ALPHABET[letterIndex]);
          tempRow = (tempRow - 1) / ROW_ALPHABET.length;
       }
-      return label;
+      return label.toString();
    }
 
    private void generateWells() throws HCSException {

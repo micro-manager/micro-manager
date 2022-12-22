@@ -110,7 +110,7 @@ public final class ExportMovieDlg extends JDialog {
          store_ = display.getDataProvider();
          List<String> axes = new ArrayList<>(parent.getNonZeroAxes());
          Collections.sort(axes);
-         axisSelector_ = new JComboBox(axes.toArray(new String[] {}));
+         axisSelector_ = new JComboBox<>(axes.toArray(new String[] {}));
          axisSelector_.addActionListener(e -> {
             String newAxis = (String) axisSelector_.getSelectedItem();
             if (!amInSetAxis_) {
@@ -239,7 +239,7 @@ public final class ExportMovieDlg extends JDialog {
    private final DataProvider provider_;
    private final ArrayList<AxisPanel> axisPanels_;
    private final JPanel contentsPanel_;
-   private JComboBox outputFormatSelector_;
+   private JComboBox<String> outputFormatSelector_;
    private JLabel prefixLabel_;
    private JTextField prefixText_;
    private JPanel jpegPanel_;
@@ -290,7 +290,7 @@ public final class ExportMovieDlg extends JDialog {
 
       contentsPanel_.add(new JLabel("Output format: "),
             "split 4, flowx");
-      outputFormatSelector_ = new JComboBox(OUTPUT_FORMATS);
+      outputFormatSelector_ = new JComboBox<>(OUTPUT_FORMATS);
       outputFormatSelector_.addActionListener(e -> {
          // Show/hide the JPEG quality controls.
          String selection = (String) outputFormatSelector_.getSelectedItem();

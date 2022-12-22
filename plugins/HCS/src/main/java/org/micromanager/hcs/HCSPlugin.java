@@ -33,6 +33,10 @@ import org.micromanager.events.ShutdownCommencingEvent;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
+/**
+ * Adapter between Micro-Manager 2.0 plugin API and the HCS plugin.
+ *
+ */
 @Plugin(type = MenuPlugin.class)
 public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String VERSION_INFO = "1.5.0";

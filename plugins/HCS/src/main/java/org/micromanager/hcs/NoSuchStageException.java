@@ -2,6 +2,7 @@
 package org.micromanager.hcs;
 
 /**
+ * Exception used when the designated stage is not found in this microscope.
  *
  * @author nico
  */

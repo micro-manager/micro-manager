@@ -13,6 +13,10 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.FileDialogs;
 
+/**
+ * Dialog that lets the operator create a new plate layout and save it in a file for
+ * later use.
+ */
 public class CustomSettingsFrame extends JFrame {
    private final JTextField id_;
    private final JTextField description_;
@@ -29,6 +33,12 @@ public class CustomSettingsFrame extends JFrame {
    private final Studio studio_;
    private final SiteGenerator parent_;
 
+   /**
+    * Creates the dialog.
+    *
+    * @param studio The always present Studio instance.
+    * @param parent The HCS GUI.
+    */
    public CustomSettingsFrame(Studio studio, SiteGenerator parent) {
       super();
       studio_ = studio;
@@ -59,9 +69,7 @@ public class CustomSettingsFrame extends JFrame {
       super.add(circular_, "wrap");
 
       JButton cancel = new JButton("Cancel");
-      cancel.addActionListener((ActionEvent e) -> {
-         dispose();
-      });
+      cancel.addActionListener((ActionEvent e) -> dispose());
       super.add(cancel, "align right");
 
       JButton save = new JButton("Save to file");
