@@ -69,7 +69,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private static final long serialVersionUID = 1L;
    private SBSPlate plate_;
    private PlatePanel platePanel_;
-   private Studio app_;
+   private Studio studio_;
    private final Point2D.Double xyStagePos_;
    private Point2D.Double offset_;
    private Boolean isCalibratedXY_;
@@ -105,11 +105,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    /**
     * Create the frame.
     *
-    * @param app Micro-Manager api
+    * @param studio Micro-Manager api
     */
-   public SiteGenerator(Studio app) {
+   public SiteGenerator(Studio studio) {
       super();
-      app_ = app;
+      studio_ = studio;
       
       super.setMinimumSize(new Dimension(815, 600));
       super.addWindowListener(new WindowAdapter() {
@@ -194,7 +194,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       JButton customButton = new JButton("Create Custom");
       sidebar.add(customButton, "growx");
       customButton.addActionListener((ActionEvent e) -> {
-         CustomSettingsFrame csf = new CustomSettingsFrame(app_, SiteGenerator.this);         
+         CustomSettingsFrame csf = new CustomSettingsFrame(studio_, SiteGenerator.this);
          csf.setVisible(true);
       });
 
@@ -210,8 +210,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          try {
             platePanel_.refreshImagingSites(sites);
          } catch (HCSException e1) {
-            if (app_ != null) {
-               app_.logs().logError(e1);
+            if (studio_ != null) {
+               studio_.logs().logError(e1);
             }
          }
          platePanel_.repaint();
@@ -304,7 +304,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
                spacingFieldY_.setVisible(false);
                break;
             default:
-               app_.logs().showError("Unrecognized spacing mode " + mode);
+               studio_.logs().showError("Unrecognized spacing mode " + mode);
                break;
          }
          regenerate();
@@ -352,7 +352,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             IconLoader.getIcon("/org/micromanager/icons/table.png"));
       setPositionListButton.addActionListener((final ActionEvent e) -> {
          if (!isCalibratedXY_) {
-            app_.logs().showMessage("Calibrate XY first");
+            studio_.logs().showMessage("Calibrate XY first");
             return;
          }
          setPositionList((String) visitOrderBetweenWells_.getSelectedItem(),
@@ -412,8 +412,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
-         if (app_ != null) {
-            app_.logs().logError(e1);
+         if (studio_ != null) {
+            studio_.logs().logError(e1);
          }
       }
    }
@@ -424,17 +424,17 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
    protected void saveSettings() {
-      app_.profile().setString(SiteGenerator.class, PLATE_FORMAT_ID,
+      studio_.profile().setString(SiteGenerator.class, PLATE_FORMAT_ID,
             (String) plateIDCombo_.getSelectedItem());
-      app_.profile().setString(SiteGenerator.class, SITE_SPACING_X,
+      studio_.profile().setString(SiteGenerator.class, SITE_SPACING_X,
             spacingFieldX_.getText().replace(',', '.'));
-      app_.profile().setString(SiteGenerator.class, SITE_SPACING_Y,
+      studio_.profile().setString(SiteGenerator.class, SITE_SPACING_Y,
             spacingFieldY_.getText().replace(',', '.'));
-      app_.profile().setString(SiteGenerator.class, SITE_OVERLAP,
+      studio_.profile().setString(SiteGenerator.class, SITE_OVERLAP,
             overlapField_.getText());
-      app_.profile().setString(SiteGenerator.class, SITE_ROWS,
+      studio_.profile().setString(SiteGenerator.class, SITE_ROWS,
             rowsField_.getText());
-      app_.profile().setString(SiteGenerator.class, SITE_COLS,
+      studio_.profile().setString(SiteGenerator.class, SITE_COLS,
             columnsField_.getText());
       Double[] offset;
       if (isCalibratedXY_) {
@@ -442,23 +442,23 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       } else {
          offset = new Double[] {Double.NaN, Double.NaN};
       }
-      app_.profile().setDoubleArray(SiteGenerator.class, SITE_OFFSET, offset);
+      studio_.profile().setDoubleArray(SiteGenerator.class, SITE_OFFSET, offset);
    }
 
    protected final void loadSettings() {
-      plateIDCombo_.setSelectedItem(app_.getUserProfile().getString(
+      plateIDCombo_.setSelectedItem(studio_.getUserProfile().getString(
                SiteGenerator.class, PLATE_FORMAT_ID, SBSPlate.SBS_96_WELL));
-      rowsField_.setText(app_.profile().getString(SiteGenerator.class,
+      rowsField_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_ROWS, "1"));
-      columnsField_.setText(app_.profile().getString(SiteGenerator.class,
+      columnsField_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_COLS, "1"));
-      spacingFieldX_.setText(app_.profile().getString(SiteGenerator.class,
+      spacingFieldX_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_SPACING_X, "200"));
-      spacingFieldY_.setText(app_.profile().getString(SiteGenerator.class,
+      spacingFieldY_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_SPACING_Y, "200"));
-      overlapField_.setText(app_.profile().getString(SiteGenerator.class,
+      overlapField_.setText(studio_.profile().getString(SiteGenerator.class,
                SITE_OVERLAP, "10"));
-      Double[] offset = app_.profile().getDoubleArray(SiteGenerator.class,
+      Double[] offset = studio_.profile().getDoubleArray(SiteGenerator.class,
               SITE_OFFSET, new Double[] {Double.NaN, Double.NaN});
       // If the offset appears to be valid numbers then a calibration was previously run.
       isCalibratedXY_ = Double.isFinite(offset[0]) && Double.isFinite(offset[1]);
@@ -492,7 +492,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       if (replaceList) {
          platePl = new PositionList();
       } else {
-         platePl = app_.positions().getPositionList();
+         platePl = studio_.positions().getPositionList();
       }
       for (WellPositionList wpl1 : wpl) {
          PositionList pl = PositionList.newInstance(wpl1.getSitePositions());
@@ -500,8 +500,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             MultiStagePosition msp = pl.getPosition(j);
             // make label unique
             msp.setLabel(wpl1.getLabel() + "-" + msp.getLabel());
-            if (app_ != null) {
-               msp.setDefaultXYStage(app_.getCMMCore().getXYStageDevice());
+            if (studio_ != null) {
+               msp.setDefaultXYStage(studio_.getCMMCore().getXYStageDevice());
             }
             // set the proper XYstage name
             for (int k = 0; k < msp.size(); k++) {
@@ -532,9 +532,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
 
       try {
-         if (app_ != null) {
-            app_.positions().setPositionList(platePl);
-            app_.app().showPositionList();
+         if (studio_ != null) {
+            studio_.positions().setPositionList(platePl);
+            studio_.app().showPositionList();
          }
       } catch (Exception e) {
          displayError(e.getMessage());
@@ -545,7 +545,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private void updateXySpacing() {
       String mode = (String) spacingMode_.getSelectedItem();
       if (mode.equals(VIEW_SPACING)) {
-         core_ = app_.getCMMCore();
+         core_ = studio_.getCMMCore();
          long width = core_.getImageWidth();
          long height = core_.getImageHeight();
          double cameraXFieldOfView = core_.getPixelSizeUm() * width;
@@ -556,7 +556,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          } catch (java.text.ParseException nfe) {
             overlap = 0.0;
             overlapField_.setText(NumberUtils.doubleToDisplayString(0.0));
-            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+            studio_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
          }
          xSpacing_ = cameraXFieldOfView - overlap;
          ySpacing_ = cameraYFieldOfView - overlap;
@@ -566,7 +566,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          } catch (java.text.ParseException nfe) {
             xSpacing_ = 0.0;
             spacingFieldX_.setText(NumberUtils.doubleToDisplayString(0.0));
-            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+            studio_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
          }
          if (mode.equals(EQUAL_SPACING)) {
             ySpacing_ = xSpacing_;
@@ -576,7 +576,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             } catch (java.text.ParseException nfe) {
                ySpacing_ = 0.0;
                spacingFieldY_.setText(NumberUtils.doubleToDisplayString(0.0));
-               app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+               studio_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
             }
          }
       }
@@ -589,28 +589,28 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
     * Also ensures that the same stages as in the previous points are selected
     */
    private void markOnePoint() {
-      app_.app().showPositionList();
-      int nrPositions = app_.positions().getPositionList().getNumberOfPositions();
+      studio_.app().showPositionList();
+      int nrPositions = studio_.positions().getPositionList().getNumberOfPositions();
       if (nrPositions > 3) {
-         app_.logs().showMessage(
+         studio_.logs().showMessage(
                "PositionList contains > 3 points.  Try to clear the Stage Position List");
          return;
       }
       if (nrPositions == 3) {
-         app_.logs().showMessage(
+         studio_.logs().showMessage(
                "PositionList already contains 3 positions.  Delete at least one");
          return;
       }
-      app_.positions().markCurrentPosition();
+      studio_.positions().markCurrentPosition();
       // check that exactly one z-stage and one xy-stage is checked
-      MultiStagePosition msp = app_.positions().getPositionList().getPosition(nrPositions);
+      MultiStagePosition msp = studio_.positions().getPositionList().getPosition(nrPositions);
       if (msp == null) {
-         app_.logs().logError("Failed to mark current position in PositionList");
+         studio_.logs().logError("Failed to mark current position in PositionList");
          return;
       }
       if (msp.size() != 2) {
-         app_.positions().getPositionList().removePosition(nrPositions);
-         app_.logs().showMessage(
+         studio_.positions().getPositionList().removePosition(nrPositions);
+         studio_.logs().showMessage(
                "Make sure that only one XY stage and one Z stage is checked", this);
          return;
       }
@@ -620,22 +620,22 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          stagesOK = true;
       }
       if (!stagesOK) {  
-         app_.positions().getPositionList().removePosition(nrPositions);
-         app_.logs().showMessage(
+         studio_.positions().getPositionList().removePosition(nrPositions);
+         studio_.logs().showMessage(
                "Make sure that only one XY stage and one Z stage is checked", this);
          return;
       }
       // also ensure that the same stages are checked
-      nrPositions = app_.positions().getPositionList().getNumberOfPositions();
+      nrPositions = studio_.positions().getPositionList().getNumberOfPositions();
       if (nrPositions > 1) {        
          String stage0 = msp.get(0).getStageDeviceLabel();
          String stage1 = msp.get(1).getStageDeviceLabel();
          for (int i = 0; i < nrPositions; i++) {
-            MultiStagePosition mspTest = app_.positions().getPositionList().getPosition(i);
+            MultiStagePosition mspTest = studio_.positions().getPositionList().getPosition(i);
             if (!mspTest.get(0).getStageDeviceLabel().equals(stage0)
                   || !mspTest.get(1).getStageDeviceLabel().equals(stage1)) {
-               app_.positions().getPositionList().removePosition(nrPositions - 1);
-               app_.logs().showMessage(
+               studio_.positions().getPositionList().removePosition(nrPositions - 1);
+               studio_.logs().showMessage(
                        "Make sure that the same stages are checked for all 3 positions", this);
             }
          }
@@ -644,9 +644,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private void setThreePoint() {
       try {
-         PositionList plist = app_.positions().getPositionList();
+         PositionList plist = studio_.positions().getPositionList();
          if (plist.getNumberOfPositions() != 3) {
-            app_.logs().showMessage(
+            studio_.logs().showMessage(
                     "We need exactly three positions to fit AF plane. "
                   + "Please create XY list with exactly 3 positions.");
             return;
@@ -763,8 +763,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    @Override
    public String getXYStageName() {
-      if (app_ != null) {
-         return app_.getCMMCore().getXYStageDevice();
+      if (studio_ != null) {
+         return studio_.getCMMCore().getXYStageDevice();
       } else {
          return SBSPlate.DEFAULT_XYSTAGE_NAME;
       }
@@ -772,19 +772,19 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    @Override
    public void displayError(String txt) {
-      if (app_ != null) {
-         app_.logs().showError(txt, this);
+      if (studio_ != null) {
+         studio_.logs().showError(txt, this);
       }
    }
 
    protected void calibrateXY() {
-      if (app_ == null) {
+      if (studio_ == null) {
          return;
       }
       if (calFrame_ != null) {
          calFrame_.setVisible(true);
       } else {
-         calFrame_ = new CalibrationFrame(app_, plate_, this);
+         calFrame_ = new CalibrationFrame(studio_, plate_, this);
       }
    }
 
@@ -848,8 +848,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
-         if (app_ != null) {
-            app_.logs().logError(e1);
+         if (studio_ != null) {
+            studio_.logs().logError(e1);
          }
       }
       shouldIgnoreFormatEvent_ = true;
