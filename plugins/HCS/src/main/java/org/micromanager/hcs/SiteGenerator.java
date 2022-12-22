@@ -12,8 +12,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -40,6 +39,7 @@ import org.micromanager.Studio;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
 import org.micromanager.internal.utils.WindowPositioning;
+import org.micromanager.propertymap.*;
 
 /**
  * This is the primary user interface for the plugin.
@@ -64,7 +64,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private JTextField overlapField_;
    private JTextField columnsField_;
    private JTextField rowsField_;
-   private JComboBox plateIDCombo_;
+   private JComboBox<String> plateIDCombo_;
    private boolean shouldIgnoreFormatEvent_ = false;
    private static final long serialVersionUID = 1L;
    private SBSPlate plate_;
@@ -90,9 +90,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
-   private final JComboBox spacingMode_;
-   private final JComboBox visitOrderInWell_;
-   private final JComboBox visitOrderBetweenWells_;
+   private final JComboBox<String> spacingMode_;
+   private final JComboBox<String> visitOrderInWell_;
+   private final JComboBox<String> visitOrderBetweenWells_;
 
    private double xSpacing_ = 0.0;
    private double ySpacing_ = 0.0;
@@ -178,7 +178,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       plateFormatLabel.setText("Plate Format:");
       sidebar.add(plateFormatLabel);
 
-      plateIDCombo_ = new JComboBox();
+      plateIDCombo_ = new JComboBox<>();
       sidebar.add(plateIDCombo_);
       plateIDCombo_.addItem(SBSPlate.SBS_6_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_12_WELL);
@@ -422,42 +422,33 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    }
 
    protected void saveSettings() {
-      studio_.profile().setString(SiteGenerator.class, PLATE_FORMAT_ID,
-            (String) plateIDCombo_.getSelectedItem());
-      studio_.profile().setString(SiteGenerator.class, SITE_SPACING_X,
-            spacingFieldX_.getText().replace(',', '.'));
-      studio_.profile().setString(SiteGenerator.class, SITE_SPACING_Y,
-            spacingFieldY_.getText().replace(',', '.'));
-      studio_.profile().setString(SiteGenerator.class, SITE_OVERLAP,
-            overlapField_.getText());
-      studio_.profile().setString(SiteGenerator.class, SITE_ROWS,
-            rowsField_.getText());
-      studio_.profile().setString(SiteGenerator.class, SITE_COLS,
-            columnsField_.getText());
+      final MutablePropertyMapView settings = studio_.profile().getSettings(SiteGenerator.class);
+      settings.putString(PLATE_FORMAT_ID, (String) plateIDCombo_.getSelectedItem());
+      settings.putString(SITE_SPACING_X, spacingFieldX_.getText().replace(',', '.'));
+      settings.putString(SITE_SPACING_Y, spacingFieldY_.getText().replace(',', '.'));
+      settings.putString(SITE_OVERLAP, overlapField_.getText());
+      settings.putString(SITE_ROWS, rowsField_.getText());
+      settings.putString(SITE_COLS, columnsField_.getText());
       Double[] offset;
       if (isCalibratedXY_) {
          offset = new Double[] {offset_.getX(), offset_.getY()};
       } else {
          offset = new Double[] {Double.NaN, Double.NaN};
       }
-      studio_.profile().setDoubleArray(SiteGenerator.class, SITE_OFFSET, offset);
+      settings.putDoubleList(SITE_OFFSET, Arrays.asList(offset));
    }
 
    protected final void loadSettings() {
-      plateIDCombo_.setSelectedItem(studio_.getUserProfile().getString(
-               SiteGenerator.class, PLATE_FORMAT_ID, SBSPlate.SBS_96_WELL));
-      rowsField_.setText(studio_.profile().getString(SiteGenerator.class,
-               SITE_ROWS, "1"));
-      columnsField_.setText(studio_.profile().getString(SiteGenerator.class,
-               SITE_COLS, "1"));
-      spacingFieldX_.setText(studio_.profile().getString(SiteGenerator.class,
-               SITE_SPACING_X, "200"));
-      spacingFieldY_.setText(studio_.profile().getString(SiteGenerator.class,
-               SITE_SPACING_Y, "200"));
-      overlapField_.setText(studio_.profile().getString(SiteGenerator.class,
-               SITE_OVERLAP, "10"));
-      Double[] offset = studio_.profile().getDoubleArray(SiteGenerator.class,
-              SITE_OFFSET, new Double[] {Double.NaN, Double.NaN});
+      final MutablePropertyMapView settings = studio_.profile().getSettings(SiteGenerator.class);
+      plateIDCombo_.setSelectedItem(settings.getString(PLATE_FORMAT_ID, SBSPlate.SBS_96_WELL));
+      rowsField_.setText(settings.getString(SITE_ROWS, "1"));
+      columnsField_.setText(settings.getString(SITE_COLS, "1"));
+      spacingFieldX_.setText(settings.getString(SITE_SPACING_X, "200"));
+      spacingFieldY_.setText(settings.getString(SITE_SPACING_Y, "200"));
+      overlapField_.setText(settings.getString(SITE_OVERLAP, "10"));
+      Double[] offset = settings.getDoubleList(SITE_OFFSET,
+                      Arrays.asList(new Double[]{Double.NaN, Double.NaN}))
+              .toArray(new Double[0]);
       // If the offset appears to be valid numbers then a calibration was previously run.
       isCalibratedXY_ = Double.isFinite(offset[0]) && Double.isFinite(offset[1]);
       offset_ = new Point2D.Double(offset[0], offset[1]);
