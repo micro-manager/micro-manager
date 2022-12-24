@@ -33,9 +33,9 @@ public class LoadedAcquisitionData {
          MagellanDatasetAndAcquisition dataManager = new MagellanDatasetAndAcquisition(dir);
 
          //Iterate through all image keys and expand scrollbars to appropriate sizes
-         Set<HashMap<String, Integer>> axesList = dataManager.getAxesSet();
+         Set<HashMap<String, Object>> axesList = dataManager.getAxesSet();
          HashSet<String> axesNames = new HashSet<String>();
-         for (HashMap<String, Integer> ax : axesList) {
+         for (HashMap<String, Object> ax : axesList) {
             axesNames.addAll(ax.keySet());
          }
          //Hide row and column axes form the viewer
@@ -45,16 +45,16 @@ public class LoadedAcquisitionData {
          if (axesNames.contains(MagellanMD.AXES_GRID_COL)) {
             axesNames.remove(MagellanMD.AXES_GRID_COL);
          }
-         HashMap<String, Integer> axisMins = new HashMap<String, Integer>();
-         HashMap<String, Integer> axisMaxs = new HashMap<String, Integer>();
+         HashMap<String, Object> axisMins = new HashMap<String, Object>();
+         HashMap<String, Object> axisMaxs = new HashMap<String, Object>();
          for (String axis : axesNames) {
-            for (HashMap<String, Integer> ax : axesList) {
+            for (HashMap<String, Object> ax : axesList) {
                if (!axisMins.containsKey(axis)) {
                   axisMins.put(axis, ax.get(axis));
                   axisMaxs.put(axis, ax.get(axis));
                }
-               axisMins.put(axis, Math.min(ax.get(axis), axisMins.get(axis)));
-               axisMaxs.put(axis, Math.max(ax.get(axis), axisMaxs.get(axis)));
+               axisMins.put(axis, Math.min((Integer) ax.get(axis), (Integer) axisMins.get(axis)));
+               axisMaxs.put(axis, Math.max((Integer) ax.get(axis), (Integer) axisMaxs.get(axis)));
             }
          }
          dataManager.initializeViewerToLoaded(axisMins, axisMaxs);

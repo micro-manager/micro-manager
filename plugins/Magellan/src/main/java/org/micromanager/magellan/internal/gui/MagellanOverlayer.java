@@ -118,7 +118,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
 
    @Override
    public void drawOverlay(Overlay defaultOverlay, Point2D.Double displayImageSize,
-           double downsampleFactor, Graphics g, HashMap<String, Integer> axes,
+           double downsampleFactor, Graphics g, HashMap<String, Object> axes,
            double magnification, Point2D.Double viewOffset) throws InterruptedException {
 
       final Overlay easyOverlay = new Overlay();
@@ -131,7 +131,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
       }
       //Create a simple overlay and send it to EDT for display
       addEasyPartsOfOverlay(easyOverlay, magnification, displayImageSize,
-              axes.containsKey(AcqEngMetadata.Z_AXIS) ? axes.get(AcqEngMetadata.Z_AXIS) : 0, g,
+              axes.containsKey(AcqEngMetadata.Z_AXIS) ? (Integer) axes.get(AcqEngMetadata.Z_AXIS) : 0, g,
               viewOffset);
       manager_.setOverlay(easyOverlay);
 
