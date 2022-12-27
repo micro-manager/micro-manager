@@ -797,6 +797,12 @@ public class ControllerUtils {
                }
                piezoAmplitude = 0.0f;
             }
+            
+            // very special for Sebastian
+            piezoCenter = prefs_.getFloat(
+                  MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+                  Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0.0f);
+            piezoAmplitude = 0.0f;
 
             float piezoMin = props_.getPropValueFloat(piezoDevice, Properties.Keys.LOWER_LIMIT)*1000;
             float piezoMax = props_.getPropValueFloat(piezoDevice, Properties.Keys.UPPER_LIMIT)*1000;
@@ -816,12 +822,11 @@ public class ControllerUtils {
             props_.setPropValue(piezoDevice,
                   Properties.Keys.SA_OFFSET, piezoCenter);
             
-            if (!settings.isStageScanning) {
+            // TEMPORARY for Harsh do this all the time even for stage scanning
                props_.setPropValue(piezoDevice,
                      Properties.Keys.SPIM_NUM_SLICES, numSlices);
                props_.setPropValue(piezoDevice,
                      Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
-            }
          }
 
          // TODO figure out what we should do with piezo illumination/center position during stage scan
