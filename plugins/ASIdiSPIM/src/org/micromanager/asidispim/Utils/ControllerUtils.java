@@ -617,6 +617,8 @@ public class ControllerUtils {
     * 
     * @param side A, B, or none
     * @param settings
+    * @param channelOffset
+    * @param offset only: only set the slice offset and not refresh everything else
     * 
     * @return false if there was some error that should abort acquisition
     */
@@ -710,16 +712,16 @@ public class ControllerUtils {
 
       // use this instead of settings.numSlices from here on out because
       // we modify it if we are taking "extra slice" for synchronous/overlap
-      int numSlices = settings.numSlices;
+      int numSlicesHW = settings.numSlices;
       
       // tweak the parameters if we are using synchronous/overlap mode
       // object is to get exact same piezo/scanner positions in first
       // N frames (piezo/scanner will move to N+1st position but no image taken)
       final CameraModes.Keys cameraMode = settings.cameraMode;
       if (cameraMode == CameraModes.Keys.OVERLAP) {
-         piezoAmplitude *= ((float)numSlices)/((float)numSlices-1f);
-         piezoCenter += piezoAmplitude/(2*numSlices);
-         numSlices += 1;
+         piezoAmplitude *= ((float)numSlicesHW)/((float)numSlicesHW-1f);
+         piezoCenter += piezoAmplitude/(2*numSlicesHW);
+         numSlicesHW += 1;
       }
       
       float sliceRate = prefs_.getFloat(
@@ -742,7 +744,7 @@ public class ControllerUtils {
          // if we artificially shifted centers due to extra trigger and only moving piezo
          // then move galvo center back to where it would have been
          if (cameraMode == CameraModes.Keys.OVERLAP) {
-            float actualPiezoCenter = piezoCenter - piezoAmplitude/(2*(numSlices-1));
+            float actualPiezoCenter = piezoCenter - piezoAmplitude/(2*(numSlicesHW-1));
             sliceCenter = (actualPiezoCenter - sliceOffset) / sliceRate;
          }
          sliceAmplitude = 0.0f;
@@ -754,7 +756,7 @@ public class ControllerUtils {
       if (offsetOnly) {
          props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
                sliceCenter, skipScannerWarnings);
-      } else {
+      } else {  // normal case
 
          // only do alternating scan directions if the user is using advanced timing
          //    and user has option enabled on the advanced timing panel
@@ -778,7 +780,7 @@ public class ControllerUtils {
          props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
                sliceCenter, skipScannerWarnings);
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES,
-               numSlices, skipScannerWarnings);
+               numSlicesHW, skipScannerWarnings);
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SIDES,
                settings.numSides, skipScannerWarnings);
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_FIRSTSIDE,
@@ -793,17 +795,11 @@ public class ControllerUtils {
                // if we artificially shifted centers due to extra trigger and only moving piezo
                // then move galvo center back to where it would have been
                if (cameraMode == CameraModes.Keys.OVERLAP) {
-                  piezoCenter -= piezoAmplitude/(2*(numSlices-1));
+                  piezoCenter -= piezoAmplitude/(2*(numSlicesHW-1));
                }
                piezoAmplitude = 0.0f;
             }
             
-            // very special for Sebastian
-            piezoCenter = prefs_.getFloat(
-                  MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-                  Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0.0f);
-            piezoAmplitude = 0.0f;
-
             float piezoMin = props_.getPropValueFloat(piezoDevice, Properties.Keys.LOWER_LIMIT)*1000;
             float piezoMax = props_.getPropValueFloat(piezoDevice, Properties.Keys.UPPER_LIMIT)*1000;
 
@@ -818,15 +814,16 @@ public class ControllerUtils {
             piezoAmplitude = MyNumberUtils.roundFloatToPlace(piezoAmplitude, 3);
             piezoCenter = MyNumberUtils.roundFloatToPlace(piezoCenter, 3);
             props_.setPropValue(piezoDevice,
-                  Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
+                  Properties.Keys.SA_AMPLITUDE, piezoAmplitude, false, true);  // force-set value
             props_.setPropValue(piezoDevice,
-                  Properties.Keys.SA_OFFSET, piezoCenter);
+                  Properties.Keys.SA_OFFSET, piezoCenter, false, true);  // force-set value
             
-            // TEMPORARY for Harsh do this all the time even for stage scanning
+            if (!settings.isStageScanning) {
                props_.setPropValue(piezoDevice,
-                     Properties.Keys.SPIM_NUM_SLICES, numSlices);
+                     Properties.Keys.SPIM_NUM_SLICES, numSlicesHW);
                props_.setPropValue(piezoDevice,
                      Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
+            }
          }
 
          // TODO figure out what we should do with piezo illumination/center position during stage scan

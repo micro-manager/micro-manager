@@ -518,9 +518,11 @@ public class Properties {
     * @param name enum key for property 
     * @param strVal value in string form, sent to core using setProperty()
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param forceSet true will call setProperty regardless(otherwise possible bypass
+    *            depending on field value and whether property is set to current value already)
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal,
-         boolean ignoreError) {
+         boolean ignoreError, boolean forceSet) {
       if (device == Devices.Keys.PLUGIN) {
          prefs_.putString(PLUGIN_PREF_NODE, name, strVal);
       }
@@ -528,7 +530,7 @@ public class Properties {
          String mmDevice = null;
          try {
             mmDevice = devices_.getMMDeviceException(device);
-            if (name.doForceSet() 
+            if (forceSet || name.doForceSet() 
                   || !core_.getProperty(mmDevice, name.toString()).equals(strVal)) {
                core_.setProperty(mmDevice, name.toString(), strVal);
             }
@@ -555,7 +557,18 @@ public class Properties {
     * @param strVal value in string form, sent to core using setProperty()
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal) {
-      setPropValue(device, name, strVal, false);
+      setPropValue(device, name, strVal, false, false);
+   }
+   
+   /**
+    * writes string property value to the device adapter using a core call
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param strVal value in string form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal, boolean ignoreError) {
+      setPropValue(device, name, strVal, ignoreError, false);
    }
    
    /**
@@ -566,7 +579,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, String strVal) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, strVal, false);
+         setPropValue(device, name, strVal, false, false);
       }
    }
    
@@ -579,7 +592,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, String strVal, boolean ignoreError) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, strVal, ignoreError);
+         setPropValue(device, name, strVal, ignoreError, false);
       }
    }
    
@@ -592,7 +605,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val,
          boolean ignoreError) {
-      setPropValue(device, name, val.toString(), ignoreError);
+      setPropValue(device, name, val.toString(), ignoreError, false);
    }
    
    /**
@@ -602,7 +615,7 @@ public class Properties {
     * @param val value in Properties.Values enum form, sent to core using setProperty() after toString() call
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val) {
-      setPropValue(device, name, val.toString(), false);
+      setPropValue(device, name, val.toString(), false, false);
    }
    
    /**
@@ -613,7 +626,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, Properties.Values val) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, val.toString(), false);
+         setPropValue(device, name, val.toString(), false, false);
       }
    }
    
@@ -626,7 +639,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, Properties.Values val, boolean ignoreError) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, val.toString(), ignoreError);
+         setPropValue(device, name, val.toString(), ignoreError, false);
       }
    }
  
@@ -636,9 +649,11 @@ public class Properties {
     * @param name enum key for property 
     * @param intVal value in integer form, sent to core using setProperty()
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param forceSet true will call setProperty regardless(otherwise possible bypass
+    *            depending on field value and whether property is set to current value already)
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal,
-         boolean ignoreError) {
+         boolean ignoreError, boolean forceSet) {
       if (device == Devices.Keys.PLUGIN) {
          prefs_.putInt(PLUGIN_PREF_NODE, name, intVal);
       }
@@ -646,7 +661,7 @@ public class Properties {
          String mmDevice = null;
          try {
             mmDevice = devices_.getMMDeviceException(device);
-            if (name.doForceSet()
+            if (forceSet || name.doForceSet()
                   || intVal != NumberUtils.coreStringToInt(
                         core_.getProperty(mmDevice, name.toString()))) {
                core_.setProperty(mmDevice, name.toString(), intVal);
@@ -674,7 +689,18 @@ public class Properties {
     * @param intVal value in integer form, sent to core using setProperty()
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal) {
-      setPropValue(device, name, intVal, false);
+      setPropValue(device, name, intVal, false, false);
+   }
+   
+   /**
+    * writes integer property value to the device adapter using a core call, with error checking
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param intVal value in integer form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal, boolean ignoreError) {
+      setPropValue(device, name, intVal, ignoreError, false);
    }
    
    /**
@@ -685,7 +711,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, int intVal) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, intVal, false);
+         setPropValue(device, name, intVal, false, false);
       }
    }
    
@@ -698,7 +724,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, int intVal, boolean ignoreError) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, intVal, ignoreError);
+         setPropValue(device, name, intVal, ignoreError, false);
       }
    }
 
@@ -708,9 +734,11 @@ public class Properties {
     * @param name enum key for property 
     * @param floatVal value in float form, sent to core using setProperty()
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param forceSet true will call setProperty regardless(otherwise possible bypass
+    *            depending on field value and whether property is set to current value already)
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal,
-         boolean ignoreError) {
+         boolean ignoreError, boolean forceSet) {
       if (device == Devices.Keys.PLUGIN) {
          prefs_.putFloat(PLUGIN_PREF_NODE, name, floatVal);
       }
@@ -718,7 +746,7 @@ public class Properties {
          String mmDevice = null;
          try {
             mmDevice = devices_.getMMDeviceException(device);
-            if (name.forceSet
+            if (forceSet || name.doForceSet()
                   || !MyNumberUtils.floatsEqual(floatVal, (float)NumberUtils.coreStringToDouble(
                         core_.getProperty(mmDevice, name.toString())))) {
                core_.setProperty(mmDevice, name.toString(), floatVal);
@@ -746,7 +774,18 @@ public class Properties {
     * @param floatVal value in float form, sent to core using setProperty()
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal) {
-      setPropValue(device, name, floatVal, false);
+      setPropValue(device, name, floatVal, false, false);
+   }
+   
+   /**
+    * writes float property value to the device adapter using a core call, with error checking
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param floatVal value in float form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal, boolean ignoreError) {
+      setPropValue(device, name, floatVal, ignoreError, false);
    }
    
    /**
@@ -757,7 +796,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, float floatVal) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, floatVal, false);
+         setPropValue(device, name, floatVal, false, false);
       }
    }
    
@@ -770,7 +809,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, float floatVal, boolean ignoreError) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, floatVal, ignoreError);
+         setPropValue(device, name, floatVal, ignoreError, false);
       }
    }
 
