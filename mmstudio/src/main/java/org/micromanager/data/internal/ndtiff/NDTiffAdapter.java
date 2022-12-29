@@ -158,8 +158,9 @@ public class NDTiffAdapter implements Storage {
       } catch (JSONException e) {
          throw new RuntimeException(e);
       }
-
-      storage_.putImage(image.getRawPixels(), json, axes, rgb, image.getHeight(), image.getWidth());
+      // TODO: where to get the actual bit depth?
+      int bitDepth = image.getBytesPerPixel() * 8;
+      storage_.putImage(image.getRawPixels(), json, axes, rgb, bitDepth, image.getHeight(), image.getWidth());
    }
 
    @Override
@@ -314,12 +315,12 @@ public class NDTiffAdapter implements Storage {
          ti.tags.put(PropertyKey.WIDTH.key(), essMD.width);
          ti.tags.put(PropertyKey.HEIGHT.key(), essMD.height);
          String pixType;
-         if (essMD.byteDepth == 1 && essMD.rgb) {
+         if (essMD.bitDepth == 8 && essMD.rgb) {
             pixType = "RGB32";
-         } else if (essMD.byteDepth == 2) {
-            pixType = "GRAY16";
-         } else {
+         } else if (essMD.bitDepth == 8) {
             pixType = "GRAY8";
+         } else {
+            pixType = "GRAY16";
          }
          ti.tags.put(PropertyKey.PIXEL_TYPE.key(), pixType);
       } catch (Exception e) {

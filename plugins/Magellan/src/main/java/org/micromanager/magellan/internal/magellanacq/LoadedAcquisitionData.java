@@ -48,6 +48,9 @@ public class LoadedAcquisitionData {
          HashMap<String, Object> axisMins = new HashMap<String, Object>();
          HashMap<String, Object> axisMaxs = new HashMap<String, Object>();
          for (String axis : axesNames) {
+            if (axis.equals("channel")) {
+               continue; // String axis, no min or max
+            }
             for (HashMap<String, Object> ax : axesList) {
                if (!axisMins.containsKey(axis)) {
                   axisMins.put(axis, ax.get(axis));

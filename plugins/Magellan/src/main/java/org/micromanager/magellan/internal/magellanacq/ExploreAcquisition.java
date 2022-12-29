@@ -39,7 +39,6 @@ import org.micromanager.acqj.api.TaggedImageProcessor;
 import org.micromanager.acqj.api.XYTiledAcquisitionAPI;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
-import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.AcqEventModules;
@@ -52,7 +51,6 @@ import org.micromanager.magellan.internal.channels.SingleChannelSetting;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.ndtiffstorage.NDTiffAPI;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z.
@@ -112,8 +110,6 @@ public class ExploreAcquisition implements MagellanAcquisition {
 
    private void addExploreSummaryMetadata(JSONObject summaryMetadata, DataSink sink) {
       MagellanMD.setExploreAcq(summaryMetadata, true);
-      MagellanMD.setSavingName(summaryMetadata, ((MagellanDatasetAndAcquisition) sink).getName());
-      MagellanMD.setSavingDir(summaryMetadata, ((MagellanDatasetAndAcquisition) sink).getDir());
       AcqEngMetadata.setZStepUm(summaryMetadata, ((ExploreAcqSettings) settings_).zStep_);
       createXYPositions();
    }
@@ -377,7 +373,7 @@ public class ExploreAcquisition implements MagellanAcquisition {
 
       Function<AcquisitionEvent, AcquisitionEvent> removeTileToAcquireFn = (AcquisitionEvent e) -> {
          queuedTileEvents_.get(e.getZIndex()).remove(new ExploreTileWaitingToAcquire(e.getGridRow(),
-                 e.getGridCol(), e.getZIndex(), e.getChannelConfig()));
+                 e.getGridCol(), e.getZIndex(), e.getConfigPreset()));
          return e;
       };
 
@@ -433,7 +429,7 @@ public class ExploreAcquisition implements MagellanAcquisition {
             }
 
             ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(event.getGridRow(),
-                    event.getGridCol(), event.getZIndex(), event.getChannelConfig());
+                    event.getGridCol(), event.getZIndex(), event.getConfigPreset());
             if (queuedTileEvents_.get(event.getZIndex()).contains(tile)) {
                return false; //This tile is already waiting to be acquired
             }
