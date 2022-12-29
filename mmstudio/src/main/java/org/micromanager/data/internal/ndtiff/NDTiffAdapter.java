@@ -160,7 +160,8 @@ public class NDTiffAdapter implements Storage {
       }
       // TODO: where to get the actual bit depth?
       int bitDepth = image.getBytesPerPixel() * 8;
-      storage_.putImage(image.getRawPixels(), json, axes, rgb, bitDepth, image.getHeight(), image.getWidth());
+      storage_.putImage(image.getRawPixels(), json, axes, rgb, bitDepth,
+              image.getHeight(), image.getWidth());
    }
 
    @Override

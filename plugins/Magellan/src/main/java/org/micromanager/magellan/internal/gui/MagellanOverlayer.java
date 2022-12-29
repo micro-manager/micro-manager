@@ -131,8 +131,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
       }
       //Create a simple overlay and send it to EDT for display
       addEasyPartsOfOverlay(easyOverlay, magnification, displayImageSize,
-              axes.containsKey(AcqEngMetadata.Z_AXIS) ? (Integer) axes.get(AcqEngMetadata.Z_AXIS) : 0, g,
-              viewOffset);
+              axes.containsKey(AcqEngMetadata.Z_AXIS) ?
+                      (Integer) axes.get(AcqEngMetadata.Z_AXIS) : 0, g, viewOffset);
       manager_.setOverlay(easyOverlay);
 
       if (surfaceMode_) {

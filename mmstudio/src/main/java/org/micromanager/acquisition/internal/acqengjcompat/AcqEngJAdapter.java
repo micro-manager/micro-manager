@@ -325,7 +325,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
                   AcqEngMetadata.getAxisPosition(imageMD, AcqEngMetadata.CHANNEL_AXIS));
 
             // TODO change to reading channel name from the axes
-//            imageMD.put(PropertyKey.CHANNEL_NAME.key(), AcqEngMetadata.getChannelName(imageMD));
+            //  imageMD.put(PropertyKey.CHANNEL_NAME.key(), AcqEngMetadata.getChannelName(imageMD));
             // TODO acqEngJ doesnt currently report this in metadata...
             // imageMD.put(PropertyKey.CAMERA_CHANNEL_INDEX.key(), AcqEngMetadata.(imageMD));
             // Maybe core channel group is needed?
@@ -356,7 +356,8 @@ public class AcqEngJAdapter implements AcquisitionEngine {
                      || acquisitionSettings.channels().get(r.channel_).config()
                            .equals(event.getConfigPreset());
                boolean pMatch = event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null
-                     || ((Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS)) == r.position_;
+                     || ((Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS)) ==
+                       r.position_;
                if (pMatch && zMatch && tMatch && cMatch) {
                   r.runnable_.run();
                }

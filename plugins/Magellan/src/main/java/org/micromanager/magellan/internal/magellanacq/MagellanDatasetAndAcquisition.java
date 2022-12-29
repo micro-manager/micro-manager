@@ -208,7 +208,7 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
                   //Display doesn't know about these in tiled layout
                   axes.remove(AcqEngMetadata.AXES_GRID_ROW);
                   axes.remove(AcqEngMetadata.AXES_GRID_COL);
-//                  String channelName = MagellanMD.getChannelName(taggedImg.tags);
+                  //  String channelName = MagellanMD.getChannelName(taggedImg.tags);
                   display_.newImageArrived(axes);
 
                   if (newChannel) {
