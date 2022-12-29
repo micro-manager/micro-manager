@@ -356,8 +356,8 @@ public class AcqEngJAdapter implements AcquisitionEngine {
                      || acquisitionSettings.channels().get(r.channel_).config()
                            .equals(event.getConfigPreset());
                boolean pMatch = event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null
-                     || ((Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS)) ==
-                       r.position_;
+                     || ((Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS))
+                       == r.position_;
                if (pMatch && zMatch && tMatch && cMatch) {
                   r.runnable_.run();
                }
