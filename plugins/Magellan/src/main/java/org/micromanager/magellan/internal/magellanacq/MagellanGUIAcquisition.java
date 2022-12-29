@@ -132,9 +132,6 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
 
    private void addMagellanSummaryMetadata(JSONObject summaryMetadata, DataSink sink) {
       MagellanMD.setExploreAcq(summaryMetadata, false);
-      MagellanMD.setSavingName(summaryMetadata, ((MagellanDatasetAndAcquisition) sink).getName());
-      MagellanMD.setSavingName(summaryMetadata, ((MagellanDatasetAndAcquisition) sink).getDir());
-      AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
       AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
       AcqEngMetadata.setIntervalMs(summaryMetadata, getTimeIntervalMs());
       createXYPositions();

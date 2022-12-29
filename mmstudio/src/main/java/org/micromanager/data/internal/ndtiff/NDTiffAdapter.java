@@ -79,8 +79,8 @@ public class NDTiffAdapter implements Storage {
               ? "" : File.separator) + "NDTiff.index").exists();
    }
 
-   private HashMap<String, Integer> coordsToHashMap(Coords coords) {
-      HashMap<String, Integer> axes = new HashMap<String, Integer>();
+   private HashMap<String, Object> coordsToHashMap(Coords coords) {
+      HashMap<String, Object> axes = new HashMap<String, Object>();
       for (String s : coords.getAxes()) {
          axes.put(s, coords.getIndex(s));
       }
@@ -94,10 +94,10 @@ public class NDTiffAdapter implements Storage {
       return axes;
    }
 
-   private static Coords hashMapToCoords(HashMap<String, Integer> axes) {
+   private static Coords hashMapToCoords(HashMap<String, Object> axes) {
       Coords.Builder builder = Coordinates.builder();
       for (String s : axes.keySet()) {
-         builder.index(s, axes.get(s));
+         builder.index(s, (Integer) axes.get(s));
       }
       return builder.build();
    }
@@ -143,7 +143,7 @@ public class NDTiffAdapter implements Storage {
    @Override
    public void putImage(Image image) throws IOException {
       boolean rgb = image.getNumComponents() > 1;
-      HashMap<String, Integer> axes = coordsToHashMap(image.getCoords());
+      HashMap<String, Object> axes = coordsToHashMap(image.getCoords());
 
       //TODO: This is getting the JSON metadata as a String, and then converting it into
       // A JSONObject again, and then it gets converted to string again in NDTiffStorage
@@ -158,8 +158,10 @@ public class NDTiffAdapter implements Storage {
       } catch (JSONException e) {
          throw new RuntimeException(e);
       }
-
-      storage_.putImage(image.getRawPixels(), json, axes, rgb, image.getHeight(), image.getWidth());
+      // TODO: where to get the actual bit depth?
+      int bitDepth = image.getBytesPerPixel() * 8;
+      storage_.putImage(image.getRawPixels(), json, axes, rgb, bitDepth,
+              image.getHeight(), image.getWidth());
    }
 
    @Override
@@ -186,7 +188,7 @@ public class NDTiffAdapter implements Storage {
       if (storage_.getAxesSet().size() == 0) {
          return null;
       }
-      HashMap<String, Integer> axes = storage_.getAxesSet().iterator().next();
+      HashMap<String, Object> axes = storage_.getAxesSet().iterator().next();
       TaggedImage ti = storage_.getImage(axes);
       addEssentialImageMetadata(ti, axes);
       return new DefaultImage(ti, hashMapToCoords(axes), studioMetadataFromJSON(ti.tags));
@@ -195,7 +197,7 @@ public class NDTiffAdapter implements Storage {
    @Override
    public Iterable<Coords> getUnorderedImageCoords() {
       return () -> {
-         Stream<HashMap<String, Integer>> axesStream = storage_.getAxesSet().stream();
+         Stream<HashMap<String, Object>> axesStream = storage_.getAxesSet().stream();
          Stream<Coords> coordsStream = axesStream.map(NDTiffAdapter::hashMapToCoords);
          return coordsStream.iterator();
       };
@@ -206,20 +208,20 @@ public class NDTiffAdapter implements Storage {
       if (storage_ == null) {
          return new LinkedList<Image>();
       }
-      Stream<HashMap<String, Integer>> axesStream = storage_.getAxesSet().stream();
+      Stream<HashMap<String, Object>> axesStream = storage_.getAxesSet().stream();
       axesStream = axesStream.filter(stringIntegerHashMap -> {
          for (String axis : coords.getAxes()) {
             if (!stringIntegerHashMap.containsKey(axis)) {
                return false;
-            } else if (stringIntegerHashMap.get(axis) != coords.getIndex(axis)) {
+            } else if ((Integer) stringIntegerHashMap.get(axis) != coords.getIndex(axis)) {
                return false;
             }
          }
          return true;
       });
-      return axesStream.map(new Function<HashMap<String, Integer>, Image>() {
+      return axesStream.map(new Function<HashMap<String, Object>, Image>() {
          @Override
-         public Image apply(HashMap<String, Integer> axes) {
+         public Image apply(HashMap<String, Object> axes) {
             TaggedImage ti = addEssentialImageMetadata(storage_.getImage(axes), axes);
             return new DefaultImage(ti, hashMapToCoords(axes),
                     studioMetadataFromJSON(ti.tags));
@@ -237,11 +239,11 @@ public class NDTiffAdapter implements Storage {
 
    @Override
    public int getMaxIndex(String axis) {
-      return storage_.getAxesSet().stream().map(new Function<HashMap<String, Integer>, Integer>() {
+      return storage_.getAxesSet().stream().map(new Function<HashMap<String, Object>, Integer>() {
          @Override
-         public Integer apply(HashMap<String, Integer> stringIntegerHashMap) {
+         public Integer apply(HashMap<String, Object> stringIntegerHashMap) {
             if (stringIntegerHashMap.containsKey(axis)) {
-               return stringIntegerHashMap.get(axis);
+               return (Integer) stringIntegerHashMap.get(axis);
             }
             return -1;
          }
@@ -263,7 +265,7 @@ public class NDTiffAdapter implements Storage {
          builder.index(axis,
                  storage_.getAxesSet().stream().map(stringIntegerHashMap -> {
                     if (stringIntegerHashMap.containsKey(axis)) {
-                       return stringIntegerHashMap.get(axis);
+                       return (Integer) stringIntegerHashMap.get(axis);
                     }
                     return -1;
                  }).reduce(Math::max).get());
@@ -307,19 +309,19 @@ public class NDTiffAdapter implements Storage {
     * @param axes List with axes.  What are these for?
     * @return TaggedImage with width and height metadata added.
     */
-   private TaggedImage addEssentialImageMetadata(TaggedImage ti, HashMap<String, Integer> axes) {
+   private TaggedImage addEssentialImageMetadata(TaggedImage ti, HashMap<String, Object> axes) {
       EssentialImageMetadata essMD = storage_.getEssentialImageMetadata(axes);
       //Load essential metadata into the image metadata.
       try {
          ti.tags.put(PropertyKey.WIDTH.key(), essMD.width);
          ti.tags.put(PropertyKey.HEIGHT.key(), essMD.height);
          String pixType;
-         if (essMD.byteDepth == 1 && essMD.rgb) {
+         if (essMD.bitDepth == 8 && essMD.rgb) {
             pixType = "RGB32";
-         } else if (essMD.byteDepth == 2) {
-            pixType = "GRAY16";
-         } else {
+         } else if (essMD.bitDepth == 8) {
             pixType = "GRAY8";
+         } else {
+            pixType = "GRAY16";
          }
          ti.tags.put(PropertyKey.PIXEL_TYPE.key(), pixType);
       } catch (Exception e) {

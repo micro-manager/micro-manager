@@ -44,22 +44,5 @@ public class MagellanMD extends AcqEngMetadata {
 
       }
    }
-   
-
-   static void setSavingName(JSONObject md, String name) {
-      try {
-         md.put(SAVING_NAME, name);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldnt set pixel overlap tag");
-      }
-   }
-   
-   static void setSavingDir(JSONObject md, String dir) {
-      try {
-         md.put(SAVING_DIR, dir);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldnt set pixel overlap tag");
-      }
-   }
 
 }

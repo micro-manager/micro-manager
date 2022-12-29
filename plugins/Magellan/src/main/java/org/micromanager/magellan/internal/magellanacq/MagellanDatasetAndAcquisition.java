@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 //import java.util.concurrent.*;
@@ -183,18 +184,15 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
 
    public void putImage(final TaggedImage taggedImg) {
 
-      String channelName = MagellanMD.getChannelName(taggedImg.tags);
+      String channelName = (String) AcqEngMetadata.getAxes(taggedImg.tags).get("channel");
       boolean newChannel = !channelNames_.contains(channelName);
       if (newChannel) {
          channelNames_.add(channelName);
       }
-
-      HashMap<String, Integer> axes = MagellanMD.getAxes(taggedImg.tags);
-      axes.put(MagellanMD.CHANNEL_AXIS, channelNames_.indexOf(channelName));
-
+      HashMap<String, Object> axes = MagellanMD.getAxes(taggedImg.tags);
       Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
-              AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getHeight(taggedImg.tags),
-              AcqEngMetadata.getWidth(taggedImg.tags));
+              AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
+              AcqEngMetadata.getHeight(taggedImg.tags), AcqEngMetadata.getWidth(taggedImg.tags));
 
       if (showDisplay_) {
          //put on different thread to not slow down acquisition
@@ -205,25 +203,28 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
                try {
                   added.get();
 
-                  if (newChannel) {
-                     //Insert a preferred color. Make a copy just in case concurrency issues
-                     String chName = MagellanMD.getChannelName(taggedImg.tags);
-                     ChannelGroupSettings ch = ((ChannelGroupSettings) acq_.getChannels());
-                     Color c = ch == null ? Color.white : ch.getPreferredChannelColor(chName);
-                     int bitDepth = MagellanMD.getBitDepth(taggedImg.tags);
-                     display_.setChannelDisplaySettings(chName, c, bitDepth);
-                  }
 
-                  HashMap<String, Integer> axes = MagellanMD.getAxes(taggedImg.tags);
+                  HashMap<String, Object> axes = MagellanMD.getAxes(taggedImg.tags);
                   //Display doesn't know about these in tiled layout
                   axes.remove(AcqEngMetadata.AXES_GRID_ROW);
                   axes.remove(AcqEngMetadata.AXES_GRID_COL);
-                  String channelName = MagellanMD.getChannelName(taggedImg.tags);
-                  display_.newImageArrived(axes, channelName);
+                  //  String channelName = MagellanMD.getChannelName(taggedImg.tags);
+                  display_.newImageArrived(axes);
+
+                  if (newChannel) {
+                     //Insert a preferred color. Make a copy just in case concurrency issues
+                     String chName = (String) AcqEngMetadata.getAxes(taggedImg.tags).get("channel");
+                     if (chName == null) {
+                        chName = "";
+                     }
+                     ChannelGroupSettings ch = ((ChannelGroupSettings) acq_.getChannels());
+                     Color c = ch == null ? Color.white : ch.getPreferredChannelColor(chName);
+                     display_.setChannelColor(chName, c);
+                  }
 
                   if (axes.containsKey(AcqEngMetadata.Z_AXIS) && axes.get(AcqEngMetadata.Z_AXIS)
                         != null && zExploreControls_ != null) {
-                     Integer i = axes.get(AcqEngMetadata.Z_AXIS);
+                     Integer i = (Integer) axes.get(AcqEngMetadata.Z_AXIS);
                      zExploreControls_.updateExploreZControls(i);
                   }
 
@@ -307,6 +308,11 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
       }
    }
 
+   @Override
+   public int getImageBitDepth(HashMap<String, Object> axesPositions) {
+      return storage_.getEssentialImageMetadata(axesPositions).bitDepth;
+   }
+
    public JSONObject getSummaryMD() {
       if (storage_ == null) {
          Log.log("imageStorage_ is null in getSummaryMetadata", true);
@@ -341,7 +347,7 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    }
 
    @Override
-   public TaggedImage getImageForDisplay(HashMap<String, Integer> axes, int resolutionindex,
+   public TaggedImage getImageForDisplay(HashMap<String, Object> axes, int resolutionindex,
            double xOffset, double yOffset, int imageWidth, int imageHeight) {
 
       return storage_.getDisplayImage(
@@ -352,13 +358,13 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    }
 
    @Override
-   public Set<HashMap<String, Integer>> getStoredAxes() {
+   public Set<HashMap<String, Object>> getImageKeys() {
 
       return storage_.getAxesSet().stream().map(
-            new Function<HashMap<String, Integer>, HashMap<String, Integer>>() {
+            new Function<HashMap<String, Object>, HashMap<String, Object>>() {
             @Override
-            public HashMap<String, Integer> apply(HashMap<String, Integer> axes) {
-               HashMap<String, Integer> copy = new HashMap<String, Integer>(axes);
+            public HashMap<String, Object> apply(HashMap<String, Object> axes) {
+               HashMap<String, Object> copy = new HashMap<String, Object>(axes);
                //delete row and column so viewer doesn't use them
                copy.remove(NDTiffStorage.ROW_AXIS);
                copy.remove(NDTiffStorage.COL_AXIS);
@@ -449,7 +455,7 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    public LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire>
          getTilesWaitingToAcquireAtVisibleSlice() {
       return ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(
-            display_.getAxisPosition(AcqEngMetadata.Z_AXIS));
+              (Integer) display_.getAxisPosition(AcqEngMetadata.Z_AXIS));
    }
 
    public MagellanMouseListener getMouseListener() {
@@ -513,25 +519,21 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    }
 
    public void initializeViewerToLoaded(
-           HashMap<String, Integer> axisMins, HashMap<String, Integer> axisMaxs) {
+           HashMap<String, Object> axisMins, HashMap<String, Object> axisMaxs) {
 
-      HashMap<Integer, String> channelNames = new HashMap<Integer, String>();
-      for (HashMap<String, Integer> axes : storage_.getAxesSet()) {
+      LinkedList<String> channelNames = new LinkedList<String>();
+      for (HashMap<String, Object> axes : storage_.getAxesSet()) {
          if (axes.containsKey(MagellanMD.CHANNEL_AXIS)) {
-            if (!channelNames.containsKey(axes.get(MagellanMD.CHANNEL_AXIS))) {
-               //read this channel indexs name from metadata
-               String channelName = MagellanMD.getChannelName(storage_.getImage(axes).tags);
-               channelNames.put(axes.get(MagellanMD.CHANNEL_AXIS), channelName);
+            if (!channelNames.contains(axes.get(MagellanMD.CHANNEL_AXIS))) {
+               channelNames.add((String) axes.get(MagellanMD.CHANNEL_AXIS));
             }
          }
       }
-      List<String> channelNamesList = new ArrayList<String>(channelNames.values());
-
-      display_.initializeViewerToLoaded(channelNamesList, storage_.getDisplaySettings(),
+      display_.initializeViewerToLoaded(channelNames, storage_.getDisplaySettings(),
             axisMins, axisMaxs);
    }
 
-   public Set<HashMap<String, Integer>> getAxesSet() {
+   public Set<HashMap<String, Object>> getAxesSet() {
       return storage_.getAxesSet();
    }
 
@@ -565,7 +567,7 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
    }
 
    public double getZCoordinateOfDisplayedSlice() {
-      int index = display_.getAxisPosition(AcqEngMetadata.Z_AXIS);
+      int index = (Integer) display_.getAxisPosition(AcqEngMetadata.Z_AXIS);
       return index * acq_.getZStep() + acq_.getZOrigin();
    }
 

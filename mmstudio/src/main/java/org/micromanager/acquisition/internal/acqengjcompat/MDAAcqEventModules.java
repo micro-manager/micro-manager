@@ -104,8 +104,9 @@ public class MDAAcqEventModules {
             @Override
             public AcquisitionEvent next() {
                AcquisitionEvent channelEvent = event.copy();
-               channelEvent.setChannelGroup(channelList.get(index).channelGroup());
-               channelEvent.setChannelConfig(channelList.get(index).config());
+               channelEvent.setConfigGroup(channelList.get(index).channelGroup());
+               channelEvent.setConfigPreset(channelList.get(index).config());
+               channelEvent.setChannelName(channelList.get(index).config());
                boolean hasZOffsets = channelList.stream().map(t -> t.zOffset())
                            .filter(t -> t != 0).collect(Collectors.toList()).size() > 0;
                Double zPos;

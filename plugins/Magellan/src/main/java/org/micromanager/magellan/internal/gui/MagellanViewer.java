@@ -45,10 +45,10 @@ public class MagellanViewer implements ViewerInterface {
                          JSONObject summmaryMD) {
       viewer_ = new NDViewer(cache, acq, summmaryMD, MagellanMD.getPixelSizeUm(summmaryMD),
             MagellanMD.isRGB(summmaryMD)) {
-            public void setImageEvent(HashMap<String, Integer> axes, boolean fromHuman) {
+            public void setImageEvent(HashMap<String, Object> axes, boolean fromHuman) {
                super.setImageEvent(axes, fromHuman);
                if (axes.containsKey(AcqEngMetadata.Z_AXIS) && acq instanceof ExploreAcquisition) {
-                  Integer i = axes.get(AcqEngMetadata.Z_AXIS);
+                  Integer i = (Integer) axes.get(AcqEngMetadata.Z_AXIS);
                   cache.updateExploreZControls(i);
                }
             }
@@ -59,7 +59,7 @@ public class MagellanViewer implements ViewerInterface {
    private void moveViewToVisibleArea() {
       //check for valid tiles (at lowest res) at this slice        
       Set<Point> tiles = manager_.getTileIndicesWithDataAt(
-            viewer_.getAxisPosition(AcqEngMetadata.Z_AXIS));
+              (Integer) viewer_.getAxisPosition(AcqEngMetadata.Z_AXIS));
       if (tiles.size() == 0) {
          return;
       }
@@ -202,7 +202,7 @@ public class MagellanViewer implements ViewerInterface {
    }
 
    @Override
-   public int getAxisPosition(String z) {
+   public Object getAxisPosition(String z) {
       return viewer_.getAxisPosition(z);
    }
 
@@ -247,8 +247,8 @@ public class MagellanViewer implements ViewerInterface {
    }
 
    @Override
-   public void newImageArrived(HashMap<String, Integer> axes, String channelName) {
-      viewer_.newImageArrived(axes, channelName);
+   public void newImageArrived(HashMap<String, Object> axes) {
+      viewer_.newImageArrived(axes);
    }
 
    @Override
@@ -257,8 +257,8 @@ public class MagellanViewer implements ViewerInterface {
    }
 
    @Override
-   public void setChannelDisplaySettings(String chName, Color c, int bitDepth) {
-      viewer_.setChannelDisplaySettings(chName, c, bitDepth);
+   public void setChannelColor(String chName, Color c) {
+      viewer_.setChannelColor(chName, c);
    }
 
    @Override
@@ -307,8 +307,8 @@ public class MagellanViewer implements ViewerInterface {
 
    @Override
    public void initializeViewerToLoaded(List<String> channelNames, JSONObject dispSettings,
-                                        HashMap<String, Integer> axisMins,
-                                        HashMap<String, Integer> axisMaxs) {
+                                        HashMap<String, Object> axisMins,
+                                        HashMap<String, Object> axisMaxs) {
       viewer_.initializeViewerToLoaded(channelNames, dispSettings, axisMins, axisMaxs);
    }
 }
