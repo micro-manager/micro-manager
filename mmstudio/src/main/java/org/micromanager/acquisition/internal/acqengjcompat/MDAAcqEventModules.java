@@ -22,6 +22,16 @@ public class MDAAcqEventModules {
 
    public static final String POSITION_AXIS = "position";
 
+   /**
+    * Translates desired Z stack settings into acquisition events.
+    *
+    * @param startSliceIndex index of first slice (most often 0)
+    * @param stopSliceIndex index of last slice
+    * @param zStep Desired step size in microns
+    * @param zOrigin Origin of Z drive.  When MDA uses absolute Z, this will be zero, when
+    *                using relative Z, it will be the current Z position
+    * @return Not quire sure, but something that tells the AcqEngineJ what to do.
+    */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(int startSliceIndex,
                                                                                int stopSliceIndex,
                                                                                double zStep,

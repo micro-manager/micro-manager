@@ -379,7 +379,8 @@ public class AcqEngJAdapter implements AcquisitionEngine {
     * This function converts acquisitionSettings to a lazy sequence (i.e. an iterator) of
     * AcquisitionEvents.
     */
-   private Iterator<AcquisitionEvent> createAcqEventIterator(SequenceSettings acquisitionSettings) {
+   private Iterator<AcquisitionEvent> createAcqEventIterator(SequenceSettings acquisitionSettings)
+         throws Exception {
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
@@ -389,8 +390,14 @@ public class AcqEngJAdapter implements AcquisitionEngine {
             = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
 
       if (acquisitionSettings.useSlices()) {
-         zStack = MDAAcqEventModules.zStack(0, acquisitionSettings.slices().size() - 1,
-               acquisitionSettings.slices().get(0), acquisitionSettings.sliceZStepUm());
+         double origin = acquisitionSettings.slices().get(0);
+         if (acquisitionSettings.relativeZSlice()) {
+            origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
+         }
+         zStack = MDAAcqEventModules.zStack(0,
+               acquisitionSettings.slices().size() - 1,
+               acquisitionSettings.sliceZStepUm(),
+               origin);
       }
 
       if (acquisitionSettings.useChannels()) {
