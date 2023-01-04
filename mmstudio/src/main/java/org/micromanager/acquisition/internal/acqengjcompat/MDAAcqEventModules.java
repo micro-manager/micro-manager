@@ -43,7 +43,7 @@ public class MDAAcqEventModules {
 
             @Override
             public boolean hasNext() {
-               return zIndex_ < stopSliceIndex;
+               return zIndex_ <= stopSliceIndex;
             }
 
             @Override

@@ -289,7 +289,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
    /**
     * Higher level code in MMStudio expects certain metadata tags that
     * are added by the Clojure engine. For compatibility, we must translate
-    * AcqEnJ's metadata to indlude this here
+    * AcqEnJ's metadata to include this here
     */
    public static void addMMImageMetadata(JSONObject imageMD) {
       // These might be required...
