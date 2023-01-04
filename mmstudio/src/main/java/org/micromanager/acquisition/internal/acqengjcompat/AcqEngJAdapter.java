@@ -216,8 +216,8 @@ public class AcqEngJAdapter implements AcquisitionEngine {
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
 
-         studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_,
-               this, acquisitionSettings));
+         studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_, this,
+               acquisitionSettings));
 
          // Start pumping images through the pipeline and into the datastore.
          AcqEngJDataSink sink = new AcqEngJDataSink(
@@ -387,7 +387,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
 
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
-            = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
+            = new ArrayList<>();
 
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
@@ -410,7 +410,11 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       if (acquisitionSettings.usePositionList()) {
          positions = MDAAcqEventModules.positions(posList_);
          // TODO: is acq engine supposed to move multiple stages?
+         // Yes: when moving to a new position, all stages in the MultiStagePosition instance
+         // should be moved to the desired location
          // TODO: What about Z positions in position list
+         // Yes: First move all stages in the MSP to their desired location, then do
+         // whatever is asked to do.
       }
 
       if (acquisitionSettings.useFrames()) {
@@ -474,7 +478,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
             acqFunctions.add(channels);
          }
       } else {
-         throw new RuntimeException("Unknown acquisiton order");
+         throw new RuntimeException("Unknown acquisition order");
       }
 
       AcquisitionEvent baseEvent = new AcquisitionEvent(currentAcquisition_);
