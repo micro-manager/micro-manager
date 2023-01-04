@@ -174,26 +174,26 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       detachDataViewer();
       viewer_ = viewer;
       viewer_.registerForEvents(this);
-      final List<Image> images;
+      List<Image> images = null;
       try {
          images = viewer_.getDisplayedImages();
-      } catch (IOException | NullPointerException e) {
+      } catch (IOException e) {
          ReportingUtils.logError(e, "Exception in PlaneMetadataInspectorPanelController");
          return;
+      } catch (NullPointerException e) {
+         ReportingUtils.logError("attachDataViewer called on DataViewer without images");
       }
 
-      background_.submit(new Runnable() {
-         @Override
-         public void run() {
-            // Note: This will initialize all state even if we receive an
-            // event from the viewer before we get here.
-            unchangingValues_.clear();
-            unchangingValuesInitialized_ = false;
-            if (images.isEmpty()) {
-               updateMetadata(null, true);
-            } else {
-               updateMetadata(images.get(0).getMetadata(), true);
-            }
+      final List<Image> finalImages = images;
+      background_.submit(() -> {
+         // Note: This will initialize all state even if we receive an
+         // event from the viewer before we get here.
+         unchangingValues_.clear();
+         unchangingValuesInitialized_ = false;
+         if (finalImages == null || finalImages.isEmpty()) {
+            updateMetadata(null, true);
+         } else {
+            updateMetadata(finalImages.get(0).getMetadata(), true);
          }
       });
    }
