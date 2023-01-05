@@ -351,6 +351,24 @@ public class AcqEngJAdapter implements AcquisitionEngine {
             imageMD.put(PropertyKey.POSITION_INDEX.key(),
                   AcqEngMetadata.getAxisPosition(imageMD, "position"));
          }
+         if (imageMD.has("XPosition_um")) {
+            imageMD.put(PropertyKey.X_POSITION_UM.key(), AcqEngMetadata.getStageX(imageMD));
+         } else if (imageMD.has("XPosition_um_Intended")) {
+            imageMD.put(PropertyKey.X_POSITION_UM.key(), imageMD.getDouble(
+                  "XPosition_um_Intended"));
+         }
+         if (imageMD.has("YPosition_um")) {
+            imageMD.put(PropertyKey.Y_POSITION_UM.key(), AcqEngMetadata.getStageY(imageMD));
+         } else if (imageMD.has("YPosition_um_Intended")) {
+            imageMD.put(PropertyKey.Y_POSITION_UM.key(), imageMD.getDouble(
+                  "YPosition_um_Intended"));
+         }
+         if (imageMD.has("ZPosition_um")) {
+            imageMD.put(PropertyKey.Z_POSITION_UM.key(), AcqEngMetadata.getZPositionUm(imageMD));
+         } else if (imageMD.has("ZPosition_um_Intended")) {
+            imageMD.put(PropertyKey.Z_POSITION_UM.key(), imageMD.getDouble(
+                  "ZPosition_um_Intended"));
+         }
       } catch (JSONException e) {
          throw new RuntimeException("Couldn't convert metadata");
       }
