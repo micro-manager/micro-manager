@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.acqj.internal.Engine;
+import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acquisition.ChannelSpec;
 
@@ -95,7 +96,7 @@ public class MDAAcqEventModules {
    }
 
    /**
-    * Make an iterator for events for each active channel
+    * Make an iterator for events for each active channel.
     *
     * @param channelList
     * @return
@@ -116,7 +117,7 @@ public class MDAAcqEventModules {
                AcquisitionEvent channelEvent = event.copy();
                channelEvent.setConfigGroup(channelList.get(index).channelGroup());
                channelEvent.setConfigPreset(channelList.get(index).config());
-               channelEvent.setChannelName(channelList.get(index).config());
+               channelEvent.setAxisPosition(AcqEngMetadata.CHANNEL_AXIS, index);
                boolean hasZOffsets = channelList.stream().map(t -> t.zOffset())
                            .filter(t -> t != 0).collect(Collectors.toList()).size() > 0;
                Double zPos;
@@ -144,9 +145,9 @@ public class MDAAcqEventModules {
    }
 
    /**
-    * Iterate over an arbitrary list of positions. Adds in postition indices to
-    * the axes that assumer the order in the list provided correspond to the
-    * desired indices
+    * Iterate over an arbitrary list of positions. Adds in position indices to
+    * the axes that assume the order in the list provided correspondis to the
+    * desired indices.
     *
     * @param positionList
     * @return
@@ -181,5 +182,3 @@ public class MDAAcqEventModules {
    }
 
 }
-
-
