@@ -342,7 +342,7 @@ public class SBSPlate {
     * Takes a list of sites and merges them into the well list.
     * Site XY coordinates are assumed to be relative to the well center.
     *
-    * @param xyStageName
+    * @param xyStageName Name of the (default) XY stage
     * @param sites
     * @return - an array of well positions
     */
@@ -608,9 +608,14 @@ public class SBSPlate {
 
    boolean isPointWithin(double x, double y) {
       return x >= 0.0 && x < sizeXUm_ && y >= 0.0 && y < sizeYUm_;
+   }
 
+   boolean isPointWithinWell(double x, double y) {
+      if (circular_) {
+         return (x * x + y * y < (wellSizeX_ * wellSizeY_ * 0.25));
+      } else {
+         return (x < wellSizeX_ * 0.5 && y < wellSizeY_ * 0.5);
+      }
    }
 
 }
-
-
