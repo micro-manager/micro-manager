@@ -205,6 +205,25 @@ public class AcqEngJAdapter implements AcquisitionEngine {
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
          currentAcquisition_ = new Acquisition(null);
+
+         currentAcquisition_.addHook(new AcquisitionHook() {
+            @Override
+            public AcquisitionEvent run(AcquisitionEvent event) {
+               // TODO auto shutter logic here
+               System.out.println();
+               event.getTIndex();
+               event.getZIndex() == 0;
+               acquisitionSettings
+//               core_.se
+               return event;
+            }
+
+            @Override
+            public void close() {
+
+            }
+         }, Acquisition.AFTER_HARDWARE_HOOK);
+
          loadRunnables(acquisitionSettings);
          // This TaggedImageProcessor is used to divert images away from the optional
          // processing and saving of AcqEngJ, and into the system used by the studio API
@@ -528,11 +547,33 @@ public class AcqEngJAdapter implements AcquisitionEngine {
     * @return
     */
    private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(SequenceSettings settings) {
-      return (AcquisitionEvent event) -> {
-         if (event.getMinimumStartTimeAbsolute() != null) {
-            nextWakeTime_ = event.getMinimumStartTimeAbsolute();
+      return new Function<AcquisitionEvent, AcquisitionEvent>() {
+         private int lastPositionIndex_ = -1;
+         private long timeOffset_ = 0;
+         private long startTime_ = 0;
+
+         @Override
+         public AcquisitionEvent apply(AcquisitionEvent event) {
+            if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE ||
+                    sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
+               if (startTime_ == 0) {
+                  startTime_ = System.currentTimeMillis();
+               }
+
+               if ((int) event.getAxisPosition("position") != lastPositionIndex_){
+                  timeOffset_ =  System.currentTimeMillis() - startTime_;
+                  lastPositionIndex_ = (int) event.getAxisPosition("position");
+               }
+               if (event.getMinimumStartTimeAbsolute() != -1) {
+
+                  event.setMinimumStartTime(timeOffset_ + (System.currentTimeMillis() - event.getMinimumStartTimeAbsolute()));
+               }
+            }
+            if (event.getMinimumStartTimeAbsolute() != null) {
+               nextWakeTime_ = event.getMinimumStartTimeAbsolute();
+            }
+            return event;
          }
-         return event;
       };
    }
 
