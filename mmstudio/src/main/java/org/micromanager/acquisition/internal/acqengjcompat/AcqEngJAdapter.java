@@ -210,11 +210,10 @@ public class AcqEngJAdapter implements AcquisitionEngine {
             @Override
             public AcquisitionEvent run(AcquisitionEvent event) {
                // TODO auto shutter logic here
-               System.out.println();
+               //System.out.println();
                event.getTIndex();
-               event.getZIndex() == 0;
-               acquisitionSettings
-//               core_.se
+               // event.getZIndex() == 0;
+               //acquisitionSettings
                return event;
             }
 
@@ -548,25 +547,34 @@ public class AcqEngJAdapter implements AcquisitionEngine {
     */
    private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(SequenceSettings settings) {
       return new Function<AcquisitionEvent, AcquisitionEvent>() {
-         private int lastPositionIndex_ = -1;
-         private long timeOffset_ = 0;
+         private int lastPositionIndex_ = 0;
+         private long relativePositionStartTime_ = 0;
          private long startTime_ = 0;
+         private boolean positionMoved_ = false;
 
          @Override
          public AcquisitionEvent apply(AcquisitionEvent event) {
-            if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE ||
-                    sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
+            if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+                    || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
                if (startTime_ == 0) {
                   startTime_ = System.currentTimeMillis();
                }
 
-               if ((int) event.getAxisPosition("position") != lastPositionIndex_){
-                  timeOffset_ =  System.currentTimeMillis() - startTime_;
+               int thisPosition = (int) event.getAxisPosition("position");
+               if (thisPosition != lastPositionIndex_) {
+                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
+                  System.out.println("Position " + thisPosition + " started "
+                          + relativePositionStartTime_ + "  ms after acquisition start");
                   lastPositionIndex_ = (int) event.getAxisPosition("position");
+                  positionMoved_ = true;
                }
-               if (event.getMinimumStartTimeAbsolute() != -1) {
-
-                  event.setMinimumStartTime(timeOffset_ + (System.currentTimeMillis() - event.getMinimumStartTimeAbsolute()));
+               if (positionMoved_) {
+                  long relativeStartTime = relativePositionStartTime_
+                          + event.getMinimumStartTimeAbsolute() - startTime_;
+                  int frame = (int) event.getAxisPosition("time");
+                  System.out.println("Pos " + thisPosition + ", Frame " + frame
+                          + " start at " + relativeStartTime);
+                  event.setMinimumStartTime(relativeStartTime);
                }
             }
             if (event.getMinimumStartTimeAbsolute() != null) {
