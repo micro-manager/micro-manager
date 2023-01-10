@@ -555,7 +555,8 @@ public class AcqEngJAdapter implements AcquisitionEngine {
          @Override
          public AcquisitionEvent apply(AcquisitionEvent event) {
             if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                    || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
+                    || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
+                     && event.getAxisPosition("position") != null) {
                if (startTime_ == 0) {
                   startTime_ = System.currentTimeMillis();
                }

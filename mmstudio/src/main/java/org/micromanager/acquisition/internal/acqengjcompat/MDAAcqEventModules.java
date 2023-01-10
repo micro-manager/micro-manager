@@ -83,9 +83,7 @@ public class MDAAcqEventModules {
             @Override
             public AcquisitionEvent next() {
                AcquisitionEvent timePointEvent = event.copy();
-
                timePointEvent.setMinimumStartTime((long) (intervalMs * frameIndex_));
-
                timePointEvent.setTimeIndex(frameIndex_);
                frameIndex_++;
 
@@ -156,7 +154,7 @@ public class MDAAcqEventModules {
          PositionList positionList) {
       return (AcquisitionEvent event) -> {
          Stream.Builder<AcquisitionEvent> builder = Stream.builder();
-         if (positionList == null) {
+         if (positionList == null || positionList.getNumberOfPositions() == 0) {
             builder.accept(event);
          } else {
             for (int index = 0; index < positionList.getNumberOfPositions(); index++) {
