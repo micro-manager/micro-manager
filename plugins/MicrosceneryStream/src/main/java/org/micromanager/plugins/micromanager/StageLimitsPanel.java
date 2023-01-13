@@ -17,6 +17,8 @@ class StageLimitsPanel extends JPanel {
 
     private final ArrayList<StageLimitContainer> stageLimits = new ArrayList<>(6);
     private final Settings msSettings;
+    // really ugly but prevents the settings update routines to trigger when the values are applied
+    private boolean applyingStageLimits = false;
 
     public StageLimitsPanel(MMConnection mmcon, MicromanagerWrapper wrapper, Settings msSettings) {
         this.msSettings = msSettings;
@@ -87,7 +89,9 @@ class StageLimitsPanel extends JPanel {
                 if (MicrosceneryStreamFrame.validFloat(tf.field)) return;
             }
             for (StageLimitContainer container : stageLimits) {
+                applyingStageLimits = true;
                 msSettings.set(container.settingName, Float.parseFloat(container.field.getText()));
+                applyingStageLimits = false;
             }
 
             try {
@@ -121,6 +125,7 @@ class StageLimitsPanel extends JPanel {
     }
 
     public void updateValues() {
+        if (applyingStageLimits) return;
         for (StageLimitContainer container : stageLimits) {
             Float value = msSettings.getOrNull(container.settingName);
             if (value == null) value = 0f;
