@@ -14,6 +14,7 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,7 +27,7 @@ class RGBColorModeStrategy implements ColorModeStrategy {
    private final List<Integer> minima_;
    private final List<Integer> maxima_;
 
-   private int[] rgbLUTs_; // RGB LUTS are ARGB ints
+   private final int[][] rgbLUTs_ = new int[3][]; // 256-element each
    private ImageProcessor unscaledRGBImage_;
 
    static ColorModeStrategy create() {
@@ -38,19 +39,19 @@ class RGBColorModeStrategy implements ColorModeStrategy {
       maxima_ = new ArrayList<Integer>(Collections.nCopies(3, 255));
    }
 
-   /**
-    * For now, we use one LUT for Red, Green, and Blue.
-    * This behavior can (and should) be changed in the future
-    */
-   private int[] getRGBLUTs() {
-      if (rgbLUTs_ == null) {
-         rgbLUTs_ = new int[256];
-         float min = minima_.get(0);
-         float max = Math.min(255, maxima_.get(0));
+   private int[][] getRGBLUTs() {
+      for (int c = 0; c < 3; ++c) {
+         if (rgbLUTs_[c] != null) {
+            continue;
+         }
+         int[] lut = new int[256];
+         float min = minima_.get(c);
+         float max = Math.min(255, maxima_.get(c));
          for (int k = 0; k < 256; ++k) {
             float f = (float) Math.max(Math.min(1.0, (k - min) / (max - min)), 0.0);
-            rgbLUTs_[k] = (int) Math.round(255.0f * f);
+            lut[k] = Math.round(255.0f * f);
          }
+         rgbLUTs_[c] = lut;
       }
       return rgbLUTs_;
    }
@@ -73,7 +74,23 @@ class RGBColorModeStrategy implements ColorModeStrategy {
       if (stack.size() <= 1) {
          imagePlus_.setStack(stack);
       }
-      ((ColorProcessor) imagePlus_.getProcessor()).applyTable(getRGBLUTs());
+      applyLUTs((ColorProcessor) imagePlus_.getProcessor(), getRGBLUTs());
+   }
+
+   private static void applyLUTs(ColorProcessor proc, int[][] rgbLUTs) {
+      int[] rLUT = rgbLUTs[0];
+      int[] gLUT = rgbLUTs[1];
+      int[] bLUT = rgbLUTs[2];
+      int[] pixelsARGB = (int[]) proc.getPixels();
+      for (int i = 0; i < pixelsARGB.length; i++) {
+         int argb = pixelsARGB[i];
+         int b = bLUT[argb & 0xff];
+         argb >>= 8;
+         int g = gLUT[argb & 0xff];
+         argb >>= 8;
+         int r = rLUT[argb & 0xff];
+         pixelsARGB[i] = (((r << 8) | g) << 8) | b;
+      }
    }
 
    @Override
@@ -97,18 +114,20 @@ class RGBColorModeStrategy implements ColorModeStrategy {
    }
 
    @Override
-   public void applyScaling(int component, int min, int max) {
+   public void applyScaling(int component, int min, int max, boolean defer) {
       Preconditions.checkArgument(min >= 0);
       Preconditions.checkArgument(max >= min);
       if (min != minima_.get(component)) {
          minima_.set(component, min);
-         rgbLUTs_ = null;
+         rgbLUTs_[component] = null;
       }
       if (max != maxima_.get(component)) {
          maxima_.set(component, max);
-         rgbLUTs_ = null;
+         rgbLUTs_[component] = null;
       }
-      apply();
+      if (!defer) {
+         apply();
+      }
    }
 
    @Override
@@ -131,7 +150,7 @@ class RGBColorModeStrategy implements ColorModeStrategy {
    @Override
    public void releaseImagePlus() {
       imagePlus_ = null;
-      rgbLUTs_ = null;
+      Arrays.fill(rgbLUTs_, null);
       unscaledRGBImage_ = null;
    }
 }

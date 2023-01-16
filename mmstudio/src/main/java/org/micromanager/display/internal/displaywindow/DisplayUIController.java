@@ -1030,7 +1030,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                      componentSettings.getScalingMaximum()));
                int min = (int) Math.min(max - 1,
                      componentSettings.getScalingMinimum());
-               ijBridge_.mm2ijSetIntensityScaling(i, min, max);
+               ijBridge_.mm2ijSetIntensityScaling(i, min, max, false);
             }
             double gamma = componentSettings.getScalingGamma();
             ijBridge_.mm2ijSetIntensityGamma(i, gamma);
@@ -1043,23 +1043,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       } else {
          for (int chNr = 0; chNr < nChannels; chNr++) {
-            // Note: Since the UI currently manipulates all components
-            // identically, and setting a component results in many calculations
-            // and redrawing the image, for performance reasons we only set one
-            // component. Setting components differently in a performant way
-            //  will need a bit of re-architecting.
-            // int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
-            // for (int i = 0; i < nComponents; ++i) {
-            int i = 0;
-            ComponentDisplaySettings componentSettings
-                  = settings.getChannelSettings(0).getComponentSettings(i);
-            int max = Math.min(Integer.MAX_VALUE,
-                  (int) componentSettings.getScalingMaximum());
-            int min = Math.max(1, (Math.min(max - 1,
-                  (int) componentSettings.getScalingMinimum())));
-            max = Math.max(min + 1, max);
-            ijBridge_.mm2ijSetIntensityScaling(i, min, max);
-            //}
+            int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
+            for (int i = 0; i < nComponents; ++i) {
+               ComponentDisplaySettings componentSettings
+                     = settings.getChannelSettings(0).getComponentSettings(i);
+               int max = Math.min(Integer.MAX_VALUE,
+                     (int) componentSettings.getScalingMaximum());
+               int min = Math.max(1, (Math.min(max - 1,
+                     (int) componentSettings.getScalingMinimum())));
+               max = Math.max(min + 1, max);
+               ijBridge_.mm2ijSetIntensityScaling(i, min, max, i < nComponents - 1);
+            }
          }
       }
 
@@ -1075,38 +1069,36 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return;
       }
 
-      // TODO RGB
       // TODO "uniform" scaling
 
       int nChannels = ijBridge_.getIJNumberOfChannels();
       double q = settings.getAutoscaleIgnoredQuantile();
-      for (int i = 0; i < nChannels; ++i) {
+      for (int ch = 0; ch < nChannels; ++ch) {
          int statsIndex = 0;
-         for (int j = 0; j < images.getRequest().getNumberOfImages(); ++j) {
-            Coords c = images.getRequest().getImage(j).getCoords();
+         for (int i = 0; i < images.getRequest().getNumberOfImages(); ++i) {
+            Coords c = images.getRequest().getImage(i).getCoords();
             if (c.hasAxis(Coords.CHANNEL)) {
-               if (c.getChannel() == i) {
-                  statsIndex = j;
+               if (c.getChannel() == ch) {
+                  statsIndex = i;
+                  break;
                }
             }
          }
 
-         if (images.getResult().size() > statsIndex) {
-            ImageStats stats = images.getResult().get(statsIndex);
-            long min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
-            long max = Math.min(Integer.MAX_VALUE,
-                  stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
-            // NS 2019-05-29: This should not be done here, but in IntegerComponentsStats
-            // however, I do not understand that code enough to touch it....
-            // This at least fixes the display somewhat (showing black for
-            // a saturated image is really, really bad!)
-            if (min == max) {
-               if (max == 0) {
-                  max++;
-               } else {
-                  min--;
-               }
-            }
+         ImageStats stats;
+         try {
+            stats = images.getResult().get(statsIndex);
+         } catch (IndexOutOfBoundsException e) {
+            continue;
+         }
+
+         int nComponents = stats.getNumberOfComponents();
+         for (int compo = 0; compo < nComponents; compo++) {
+            long[] minMax = new long[2];
+            stats.getComponentStats(compo).getAutoscaleMinMaxForQuantile(q, minMax);
+            long min = minMax[0];
+            long max = minMax[1];
+
             // NS 2019-08-15: We really do need to write the min and max to
             // the DisplaySettings (there already is a work-around in the
             // IntensityInspectorPanelController handleAutostretch function, but
@@ -1117,14 +1109,29 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // object with completely new ComnponentDisplaySettings, but it seems
             // more than a little bit excessive to do that on every autostrech update
             // so we take the shortcut here
+            //
+            // Mark T. 2022-05-19: It is not stated above _why_ it is
+            // that the autostretched min/max in the DisplaySettings need to
+            // be always up to date. The intended semantics were that the
+            // scaling min/max should be considered invalid when autostretch
+            // is enabled, so any code that relies on those values is
+            // incorrect. However, one could say that thanks to those
+            // semantics, "correct" components should not have a problem even
+            // if the scaling min/max is mutated, as long as this is only done
+            // when autostretch is enabled. So I'm leaving this as is for now.
+            // Fortunately, we don't have to worry about autostretch having
+            // been switched off before we reach here, since we are only
+            // modifying the DisplaySettings instance passed to us, which had
+            // autostretch enabled (see, immutability is really nice!).
+            // It will still be nice to remove this if we ever can.
             DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings)
-                  settings.getChannelSettings(i).getComponentSettings(0);
-            dcds.setScalingMinimum(min);
-            dcds.setScalingMaximum(max);
-            ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
-         } else {
-            ReportingUtils.logMessage("DisplayUICOntroller: Received request to "
-                  + "autostretch image for which no statistics are available");
+                  settings.getChannelSettings(ch).getComponentSettings(compo);
+            dcds.hackScalingMinimum(min);
+            dcds.hackScalingMaximum(max);
+
+            int ijIndex = nComponents > 1 ? compo : ch;
+            boolean defer = nComponents > 1 && compo < nComponents - 1;
+            ijBridge_.mm2ijSetIntensityScaling(ijIndex, (int) min, (int) max, defer);
          }
       }
    }

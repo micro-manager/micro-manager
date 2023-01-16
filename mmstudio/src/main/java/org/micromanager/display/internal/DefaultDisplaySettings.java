@@ -37,6 +37,7 @@ import org.micromanager.UserProfile;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
+import org.micromanager.display.DisplayIntensityRanges;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MDUtils;
@@ -164,6 +165,20 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             channelSettings_.add(channelSetting);
          }
          return this;
+      }
+
+      @Override
+      public Builder intensityScaling(DisplayIntensityRanges ranges) {
+         int nChannels = ranges.getNumberOfChannels();
+         Builder ret = this;
+         ret = ret.channel(nChannels - 1);
+         for (int ch = 0; ch < nChannels; ++ch) {
+            ret = ret.channel(ch,
+                  channelSettings_.get(ch).copyBuilder()
+                        .intensityScaling(ranges.getChannelRanges(ch))
+                        .build());
+         }
+         return ret;
       }
 
       @Override

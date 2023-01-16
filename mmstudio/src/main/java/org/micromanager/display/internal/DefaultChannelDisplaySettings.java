@@ -8,6 +8,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ChannelIntensityRanges;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.internal.utils.ColorPalettes;
 
@@ -150,6 +151,20 @@ public final class DefaultChannelDisplaySettings
          component(component);
          componentSettings_.set(component, settings);
          return this;
+      }
+
+      @Override
+      public Builder intensityScaling(ChannelIntensityRanges ranges) {
+         int nComponents = ranges.getNumberOfComponents();
+         Builder ret = this;
+         ret = ret.component(nComponents - 1);
+         for (int c = 0; c < nComponents; ++c) {
+            ret = ret.component(c,
+                  componentSettings_.get(c).copyBuilder()
+                        .scalingRange(ranges.getComponentRange(c))
+                        .build());
+         }
+         return ret;
       }
 
       @Override

@@ -180,7 +180,7 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
    }
 
    @Override
-   public void applyScaling(int index, int min, int max) {
+   public void applyScaling(int index, int min, int max, boolean defer) {
       Preconditions.checkArgument(min >= 0);
       Preconditions.checkArgument(max >= min);
       if (minima_.size() <= index) {
@@ -192,7 +192,9 @@ abstract class AbstractColorModeStrategy implements ColorModeStrategy {
       }
       minima_.set(index, min);
       maxima_.set(index, max);
-      apply();
+      if (!defer) {
+         apply();
+      }
    }
 
    @Override

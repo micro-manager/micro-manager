@@ -2,6 +2,7 @@ package org.micromanager.display;
 
 import java.awt.Color;
 import java.util.List;
+import org.micromanager.display.internal.DefaultChannelDisplaySettings;
 
 /**
  * Stores the display settings for individual channels Coords of image to be displayed.
@@ -52,6 +53,8 @@ public interface ChannelDisplaySettings {
       Builder component(int component);
 
       Builder component(int component, ComponentDisplaySettings settings);
+
+      Builder intensityScaling(ChannelIntensityRanges ranges);
 
       int getNumberOfComponents();
 
@@ -117,4 +120,7 @@ public interface ChannelDisplaySettings {
 
    Builder copyBuilderWithComponentSettings(int component, ComponentDisplaySettings settings);
 
+   static Builder builder() {
+      return DefaultChannelDisplaySettings.builder();
+   }
 }
