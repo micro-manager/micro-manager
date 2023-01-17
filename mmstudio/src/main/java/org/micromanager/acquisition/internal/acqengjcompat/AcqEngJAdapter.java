@@ -39,6 +39,7 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
@@ -259,6 +260,14 @@ public class AcqEngJAdapter implements AcquisitionEngine {
          AcqEngJDataSink sink = new AcqEngJDataSink(
                engineOutputQueue, curPipeline_, curStore_, this, studio_.events());
          sink.start(() -> currentAcquisition_.abort());
+
+         if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+               || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
+            // Pos_time ordered acquisistion need their timelapse minimum start time to be
+            // adjusted for each position.  The only place to do that seems to be a hardware hook.
+            currentAcquisition_.addHook(timeLapseHook(acquisitionSettings),
+                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+         }
 
          // Read for events
          currentAcquisition_.start();
@@ -554,6 +563,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
 
          @Override
          public AcquisitionEvent apply(AcquisitionEvent event) {
+            /*
             if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                     || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
                      && event.getAxisPosition("position") != null) {
@@ -578,6 +588,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
                   event.setMinimumStartTime(relativeStartTime);
                }
             }
+             */
             if (event.getMinimumStartTimeAbsolute() != null) {
                nextWakeTime_ = event.getMinimumStartTimeAbsolute();
             }
@@ -585,6 +596,52 @@ public class AcqEngJAdapter implements AcquisitionEngine {
          }
       };
    }
+
+   private AcquisitionHook timeLapseHook(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+         private int lastPositionIndex_ = 0;
+         private long relativePositionStartTime_ = 0;
+         private long startTime_ = 0;
+         private boolean positionMoved_ = false;
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+                  || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
+                  && event.getAxisPosition("position") != null) {
+               if (startTime_ == 0) {
+                  startTime_ = System.currentTimeMillis();
+               }
+
+               int thisPosition = (int) event.getAxisPosition("position");
+               if (thisPosition != lastPositionIndex_) {
+                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
+                  System.out.println("Position " + thisPosition + " started "
+                        + relativePositionStartTime_ + "  ms after acquisition start");
+                  lastPositionIndex_ = (int) event.getAxisPosition("position");
+                  positionMoved_ = true;
+               }
+               if (positionMoved_) {
+                  long relativeStartTime = relativePositionStartTime_
+                        + event.getMinimumStartTimeAbsolute() - startTime_;
+                  int frame = (int) event.getAxisPosition("time");
+                  System.out.println("Pos " + thisPosition + ", Frame " + frame
+                        + " start at " + relativeStartTime);
+                  event.setMinimumStartTime(relativeStartTime);
+               }
+            }
+            if (event.getMinimumStartTimeAbsolute() != null) {
+               nextWakeTime_ = event.getMinimumStartTimeAbsolute();
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+         }
+      };
+   }
+
 
    private void calculateSlices() {
       // Slices
