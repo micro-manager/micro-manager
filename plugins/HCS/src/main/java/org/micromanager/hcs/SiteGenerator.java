@@ -660,7 +660,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       if (visitOrderInWell_.getSelectedItem().equals(CASCADE_ORDER)) {
          for (int col = 0; col < cols; col++) {
             for (int row = 0; row < rows; row++) {
-               sites.addPosition(stagePositionInWell(rows, cols, row, col));
+               MultiStagePosition msp = stagePositionInWell(rows, cols, row, col);
+               if (msp != null) {
+                  sites.addPosition(msp);
+               }
             }
          }
       } else {
@@ -682,7 +685,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
                stepDir = isEven ? 1 : -1;
             }
             for (int col = start; col != end; col += stepDir) {
-               sites.addPosition(stagePositionInWell(rows, cols, row, col));
+               MultiStagePosition msp = stagePositionInWell(rows, cols, row, col);
+               if (msp != null) {
+                  sites.addPosition(msp);
+               }
             }
          }
       }
@@ -690,6 +696,17 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       return sites;
    }
 
+   /**
+    * Generates a MSP for the given row and column within a well.  MultiStagePosition is
+    * centered at the center of the well (i.e. 0,0 is at the center of the well).
+    * Will check if the location falls outside of the well and return null if that is the case.
+    *
+    * @param rows Total number of rows for this PositionList
+    * @param cols Total number of columns for this PositionList
+    * @param row Specific row number for which to generate an MSP
+    * @param col Specific column number for which to generate an MSP
+    * @return MultiStagePosition for just the default XY stage relative to center of the well.
+    */
    private MultiStagePosition stagePositionInWell(int rows, int cols, int row, int col) {
       double x;
       double y;
@@ -705,11 +722,14 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          y = 0.0;
       }
 
-      MultiStagePosition mps = new MultiStagePosition();
-      StagePosition sp = StagePosition.create2D("", x, y);
-
-      mps.add(sp);
-      return mps;
+      // check if this location is outside the actual well
+      if (plate_.isPointWithinWell(x, y)) {
+         MultiStagePosition mps = new MultiStagePosition();
+         StagePosition sp = StagePosition.create2D("", x, y);
+         mps.add(sp);
+         return mps;
+      }
+      return null;
    }
 
    @Override

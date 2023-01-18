@@ -362,6 +362,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       mmStudio_.events().registerForEvents(this);
 
+      updateAcquisitionOrderText();
+
       // when focus is lots, ensure that channel cell editors close
       WindowFocusListener windowFocusListener = new WindowFocusListener() {
          @Override
@@ -377,7 +379,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             }
          }
       };
-      mmStudio_.events().registerForEvents(this);
+
       super.addWindowFocusListener(windowFocusListener);
    }
 
@@ -445,7 +447,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    private CheckBoxPanel createCheckBoxPanel(String text) {
-      CheckBoxPanel thePanel = new CheckBoxPanel(text);
+      CheckBoxPanel thePanel = new CheckBoxPanel(text, this);
       setupPanel(thePanel);
       return thePanel;
    }
@@ -1882,7 +1884,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       JCheckBox checkBox;
 
-      CheckBoxPanel(String title) {
+      CheckBoxPanel(String title, AcqControlDlg dlg) {
          super();
          titleComponent = new JCheckBox(title);
          checkBox = (JCheckBox) titleComponent;
@@ -1899,6 +1901,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             public void actionPerformed(ActionEvent e) {
                boolean enable = checkBox.isSelected();
                thisPanel.setChildrenEnabled(enable);
+               dlg.updateAcquisitionOrderText();
             }
 
             public void writeObject(java.io.ObjectOutputStream stream) throws MMException {
