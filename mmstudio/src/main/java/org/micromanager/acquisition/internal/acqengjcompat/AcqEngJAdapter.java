@@ -280,8 +280,9 @@ public class AcqEngJAdapter implements AcquisitionEngine {
 
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
-         studio_.events().post(new DefaultAcquisitionEndedEvent(
-               curStore_, this));
+         if (currentAcquisition_ != null && currentAcquisition_.areEventsFinished()) {
+            studio_.events().post(new DefaultAcquisitionEndedEvent(curStore_, this));
+         }
          return null;
       }
    }
