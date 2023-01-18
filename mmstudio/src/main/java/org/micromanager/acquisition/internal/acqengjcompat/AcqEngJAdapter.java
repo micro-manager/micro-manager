@@ -379,23 +379,20 @@ public class AcqEngJAdapter implements AcquisitionEngine {
             imageMD.put(PropertyKey.POSITION_INDEX.key(),
                   AcqEngMetadata.getAxisPosition(imageMD, "position"));
          }
-         if (imageMD.has("XPosition_um")) {
+         if (AcqEngMetadata.hasStageX(imageMD)) {
             imageMD.put(PropertyKey.X_POSITION_UM.key(), AcqEngMetadata.getStageX(imageMD));
-         } else if (imageMD.has("XPosition_um_Intended")) {
-            imageMD.put(PropertyKey.X_POSITION_UM.key(), imageMD.getDouble(
-                  "XPosition_um_Intended"));
+         } else if (AcqEngMetadata.hasStageXIntended(imageMD)) {
+            imageMD.put(PropertyKey.X_POSITION_UM.key(), AcqEngMetadata.getStageXIntended(imageMD));
          }
-         if (imageMD.has("YPosition_um")) {
+         if (AcqEngMetadata.hasStageY(imageMD)) {
             imageMD.put(PropertyKey.Y_POSITION_UM.key(), AcqEngMetadata.getStageY(imageMD));
-         } else if (imageMD.has("YPosition_um_Intended")) {
-            imageMD.put(PropertyKey.Y_POSITION_UM.key(), imageMD.getDouble(
-                  "YPosition_um_Intended"));
+         } else if (AcqEngMetadata.hasStageYIntended(imageMD)) {
+            imageMD.put(PropertyKey.Y_POSITION_UM.key(), AcqEngMetadata.getStageYIntended(imageMD));
          }
-         if (imageMD.has("ZPosition_um")) {
+         if (AcqEngMetadata.hasZPositionUm(imageMD)) {
             imageMD.put(PropertyKey.Z_POSITION_UM.key(), AcqEngMetadata.getZPositionUm(imageMD));
-         } else if (imageMD.has("ZPosition_um_Intended")) {
-            imageMD.put(PropertyKey.Z_POSITION_UM.key(), imageMD.getDouble(
-                  "ZPosition_um_Intended"));
+         } else if (AcqEngMetadata.hasStageZIntended(imageMD)) {
+            imageMD.put(PropertyKey.Z_POSITION_UM.key(), AcqEngMetadata.getStageZIntended(imageMD));
          }
       } catch (JSONException e) {
          throw new RuntimeException("Couldn't convert metadata");
