@@ -51,6 +51,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
 
+   @Override
    public SequenceSettings getSequenceSettings() {
       return sequenceSettings_;
    }
@@ -60,6 +61,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
     *
     * @param sequenceSettings Settings for the next acquisition.
     */
+   @Override
    public void setSequenceSettings(SequenceSettings sequenceSettings) {
       sequenceSettings_ = sequenceSettings;
       calculateSlices();

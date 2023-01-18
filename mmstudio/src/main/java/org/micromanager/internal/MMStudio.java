@@ -297,7 +297,7 @@ public final class MMStudio implements Studio {
       acqEngineClojure_.setParentGUI(this);
       acqEngineClojure_.setZStageDevice(core_.getFocusDevice());
 
-      acqEngineJava_ = new AcqEngJAdapter(core_);
+      acqEngineJava_ = new AcqEngJAdapter(this);
 
       // Load, but do not show, image pipeline panel.
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 

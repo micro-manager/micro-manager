@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.acqj.internal.Engine;
+import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acquisition.ChannelSpec;
 
@@ -22,6 +23,16 @@ public class MDAAcqEventModules {
 
    public static final String POSITION_AXIS = "position";
 
+   /**
+    * Translates desired Z stack settings into acquisition events.
+    *
+    * @param startSliceIndex index of first slice (most often 0)
+    * @param stopSliceIndex index of last slice
+    * @param zStep Desired step size in microns
+    * @param zOrigin Origin of Z drive.  When MDA uses absolute Z, this will be zero, when
+    *                using relative Z, it will be the current Z position
+    * @return Not quire sure, but something that tells the AcqEngineJ what to do.
+    */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(int startSliceIndex,
                                                                                int stopSliceIndex,
                                                                                double zStep,
@@ -33,7 +44,7 @@ public class MDAAcqEventModules {
 
             @Override
             public boolean hasNext() {
-               return zIndex_ < stopSliceIndex;
+               return zIndex_ <= stopSliceIndex;
             }
 
             @Override
@@ -72,9 +83,7 @@ public class MDAAcqEventModules {
             @Override
             public AcquisitionEvent next() {
                AcquisitionEvent timePointEvent = event.copy();
-
                timePointEvent.setMinimumStartTime((long) (intervalMs * frameIndex_));
-
                timePointEvent.setTimeIndex(frameIndex_);
                frameIndex_++;
 
@@ -85,7 +94,7 @@ public class MDAAcqEventModules {
    }
 
    /**
-    * Make an iterator for events for each active channel
+    * Make an iterator for events for each active channel.
     *
     * @param channelList
     * @return
@@ -106,7 +115,7 @@ public class MDAAcqEventModules {
                AcquisitionEvent channelEvent = event.copy();
                channelEvent.setConfigGroup(channelList.get(index).channelGroup());
                channelEvent.setConfigPreset(channelList.get(index).config());
-               channelEvent.setChannelName(channelList.get(index).config());
+               channelEvent.setAxisPosition(AcqEngMetadata.CHANNEL_AXIS, index);
                boolean hasZOffsets = channelList.stream().map(t -> t.zOffset())
                            .filter(t -> t != 0).collect(Collectors.toList()).size() > 0;
                Double zPos;
@@ -134,9 +143,9 @@ public class MDAAcqEventModules {
    }
 
    /**
-    * Iterate over an arbitrary list of positions. Adds in postition indices to
-    * the axes that assumer the order in the list provided correspond to the
-    * desired indices
+    * Iterate over an arbitrary list of positions. Adds in position indices to
+    * the axes that assume the order in the list provided correspondis to the
+    * desired indices.
     *
     * @param positionList
     * @return
@@ -145,7 +154,7 @@ public class MDAAcqEventModules {
          PositionList positionList) {
       return (AcquisitionEvent event) -> {
          Stream.Builder<AcquisitionEvent> builder = Stream.builder();
-         if (positionList == null) {
+         if (positionList == null || positionList.getNumberOfPositions() == 0) {
             builder.accept(event);
          } else {
             for (int index = 0; index < positionList.getNumberOfPositions(); index++) {
@@ -171,5 +180,3 @@ public class MDAAcqEventModules {
    }
 
 }
-
-

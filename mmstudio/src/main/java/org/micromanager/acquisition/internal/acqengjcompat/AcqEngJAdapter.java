@@ -36,8 +36,10 @@ import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
@@ -83,7 +85,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
    private CMMCore core_;
    protected Studio studio_;
    private PositionList posList_;
-   private String zstage_;
+   private String zStage_;
    private SequenceSettings sequenceSettings_;
 
    protected JSONObject summaryMetadata_;
@@ -91,9 +93,13 @@ public class AcqEngJAdapter implements AcquisitionEngine {
    private Datastore curStore_;
    private Pipeline curPipeline_;
 
+   private double zStart_;
+   private AutofocusPlugin autofocusMethod_;
+   private boolean autofocusOn_;
+
    private long nextWakeTime_ = -1;
 
-   private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<RunnablePlusIndices>();
+   private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
 
    private class RunnablePlusIndices {
       int channel_;
@@ -111,10 +117,11 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       }
    }
 
-   public AcqEngJAdapter(CMMCore core) {
+   public AcqEngJAdapter(Studio studio) {
       // Create AcqEngJ
-      new Engine(core);
-      core_ = core;
+      studio_ = studio;
+      core_ = studio_.core();
+      new Engine(core_);
       studio_ = MMStudio.getInstance();
       settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
@@ -157,6 +164,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       if (posList_ == null && sequenceSettings_.usePositionList()) {
          posListToUse = studio_.positions().getPositionList();
       }
+      posList_ = posListToUse;
 
       // The clojure acquisition engine always uses numFrames, and customIntervals
       // unless they are null.
@@ -198,6 +206,24 @@ public class AcqEngJAdapter implements AcquisitionEngine {
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
          currentAcquisition_ = new Acquisition(null);
+
+         currentAcquisition_.addHook(new AcquisitionHook() {
+            @Override
+            public AcquisitionEvent run(AcquisitionEvent event) {
+               // TODO auto shutter logic here
+               //System.out.println();
+               event.getTIndex();
+               // event.getZIndex() == 0;
+               //acquisitionSettings
+               return event;
+            }
+
+            @Override
+            public void close() {
+
+            }
+         }, Acquisition.AFTER_HARDWARE_HOOK);
+
          loadRunnables(acquisitionSettings);
          // This TaggedImageProcessor is used to divert images away from the optional
          // processing and saving of AcqEngJ, and into the system used by the studio API
@@ -210,19 +236,38 @@ public class AcqEngJAdapter implements AcquisitionEngine {
          addMMSummaryMetadata(summaryMetadata_, sequenceSettings);
 
          // MMAcquisition
-         boolean shouldShow = acquisitionSettings.shouldDisplayImages();
-         MMAcquisition acq = new MMAcquisition(studio_, acquisitionSettings.root(),
-               acquisitionSettings.prefix(), summaryMetadata_, this, shouldShow);
+         MMAcquisition acq = new MMAcquisition(studio_,
+               acquisitionSettings.save() ? acquisitionSettings.root() : null,
+               acquisitionSettings.prefix(),
+               summaryMetadata_,
+               this,
+               acquisitionSettings.shouldDisplayImages());
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
 
-         studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_,
-               this, acquisitionSettings));
+         zStage_ = core_.getFocusDevice();
+         zStart_ = core_.getPosition(zStage_);
+         autofocusMethod_ = studio_.getAutofocusManager().getAutofocusMethod();
+         autofocusOn_ = false;
+         if (autofocusMethod_ != null) {
+            autofocusOn_ = autofocusMethod_.isContinuousFocusEnabled();
+         }
+         studio_.events().registerForEvents(this);
+         studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_, this,
+               acquisitionSettings));
 
          // Start pumping images through the pipeline and into the datastore.
          AcqEngJDataSink sink = new AcqEngJDataSink(
                engineOutputQueue, curPipeline_, curStore_, this, studio_.events());
          sink.start(() -> currentAcquisition_.abort());
+
+         if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+               || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
+            // Pos_time ordered acquisistion need their timelapse minimum start time to be
+            // adjusted for each position.  The only place to do that seems to be a hardware hook.
+            currentAcquisition_.addHook(timeLapseHook(acquisitionSettings),
+                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+         }
 
          // Read for events
          currentAcquisition_.start();
@@ -235,41 +280,43 @@ public class AcqEngJAdapter implements AcquisitionEngine {
 
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
-         studio_.events().post(new DefaultAcquisitionEndedEvent(
-               curStore_, this));
+         if (currentAcquisition_ != null && currentAcquisition_.areEventsFinished()) {
+            studio_.events().post(new DefaultAcquisitionEndedEvent(curStore_, this));
+         }
          return null;
       }
    }
 
    /**
-    * Higher level stuff in MM may depend in many hidden, undocumented
-    * ways on summary metadata generated by the clojure acquisition engine.
-    * This function adds in its fields in order to achieve compatibility
+    * Higher level stuff in MM may depend in many hidden, poorly documented
+    * ways on summary metadata generated by the acquisition engine.
+    * This function adds in its fields in order to achieve compatibility.
     */
    private void addMMSummaryMetadata(JSONObject summaryMetadata, SequenceSettings acqSettings)
          throws JSONException {
       // These are the ones from the clojure engine that may yet need to be translated
       //        "Channels" -> {Long@25854} 2
 
-      if (acqSettings.channels().size() > 1) {
-         summaryMetadata_.put(PropertyKey.CHANNEL_GROUP.key(), acqSettings.channelGroup());
-         JSONArray chNames = new JSONArray();
-         JSONArray chColors = new JSONArray();
+      summaryMetadata_.put(PropertyKey.CHANNEL_GROUP.key(), acqSettings.channelGroup());
+      JSONArray chNames = new JSONArray();
+      JSONArray chColors = new JSONArray();
+      if (acqSettings.useChannels() && acqSettings.channels().size() > 0) {
          for (ChannelSpec c : acqSettings.channels()) {
             chNames.put(c.config());
             chColors.put(c.color().getRGB());
          }
-         summaryMetadata_.put(PropertyKey.CHANNEL_NAMES.key(), chNames);
-         summaryMetadata_.put(PropertyKey.CHANNEL_COLORS.key(), chColors);
+      } else {
+         chNames.put("Default");
       }
+      summaryMetadata_.put(PropertyKey.CHANNEL_NAMES.key(), chNames);
+      summaryMetadata_.put(PropertyKey.CHANNEL_COLORS.key(), chColors);
 
       // MM MDA acquisitions have a defined number of
       // frames/slices/channels/positions at the outset
-      summaryMetadata_.put(PropertyKey.FRAMES.key(), acqSettings.numFrames());
-      summaryMetadata_.put(PropertyKey.SLICES.key(), acqSettings.slices().size());
-      summaryMetadata_.put(PropertyKey.CHANNELS.key(), acqSettings.channels().size());
-      summaryMetadata_.put(PropertyKey.POSITIONS.key(),
-            acqSettings.usePositionList() ? posList_.getNumberOfPositions() : 1);
+      summaryMetadata_.put(PropertyKey.FRAMES.key(), getNumFrames());
+      summaryMetadata_.put(PropertyKey.SLICES.key(), getNumSlices());
+      summaryMetadata_.put(PropertyKey.CHANNELS.key(), getNumChannels());
+      summaryMetadata_.put(PropertyKey.POSITIONS.key(), getNumPositions());
 
       // MM MDA acquisitions have a defined order
       summaryMetadata_.put(PropertyKey.SLICES_FIRST.key(),
@@ -279,17 +326,15 @@ public class AcqEngJAdapter implements AcquisitionEngine {
             acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
                   || acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE);
 
-
       DefaultSummaryMetadata dsmd = new DefaultSummaryMetadata.Builder().build();
       summaryMetadata.put(PropertyKey.MICRO_MANAGER_VERSION.key(),
             dsmd.getMicroManagerVersion());
-
    }
 
    /**
     * Higher level code in MMStudio expects certain metadata tags that
     * are added by the Clojure engine. For compatibility, we must translate
-    * AcqEnJ's metadata to indlude this here
+    * AcqEnJ's metadata to include this here
     */
    public static void addMMImageMetadata(JSONObject imageMD) {
       // These might be required...
@@ -334,6 +379,21 @@ public class AcqEngJAdapter implements AcquisitionEngine {
             imageMD.put(PropertyKey.POSITION_INDEX.key(),
                   AcqEngMetadata.getAxisPosition(imageMD, "position"));
          }
+         if (AcqEngMetadata.hasStageX(imageMD)) {
+            imageMD.put(PropertyKey.X_POSITION_UM.key(), AcqEngMetadata.getStageX(imageMD));
+         } else if (AcqEngMetadata.hasStageXIntended(imageMD)) {
+            imageMD.put(PropertyKey.X_POSITION_UM.key(), AcqEngMetadata.getStageXIntended(imageMD));
+         }
+         if (AcqEngMetadata.hasStageY(imageMD)) {
+            imageMD.put(PropertyKey.Y_POSITION_UM.key(), AcqEngMetadata.getStageY(imageMD));
+         } else if (AcqEngMetadata.hasStageYIntended(imageMD)) {
+            imageMD.put(PropertyKey.Y_POSITION_UM.key(), AcqEngMetadata.getStageYIntended(imageMD));
+         }
+         if (AcqEngMetadata.hasZPositionUm(imageMD)) {
+            imageMD.put(PropertyKey.Z_POSITION_UM.key(), AcqEngMetadata.getZPositionUm(imageMD));
+         } else if (AcqEngMetadata.hasStageZIntended(imageMD)) {
+            imageMD.put(PropertyKey.Z_POSITION_UM.key(), AcqEngMetadata.getStageZIntended(imageMD));
+         }
       } catch (JSONException e) {
          throw new RuntimeException("Couldn't convert metadata");
       }
@@ -343,7 +403,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
    /**
     * Attach Runnables as acquisition hooks.
     *
-    * @param acquisitionSettings
+    * @param acquisitionSettings Object with settings for the acquisition
     */
    private void loadRunnables(SequenceSettings acquisitionSettings) {
       for (RunnablePlusIndices r : runnables_) {
@@ -379,18 +439,25 @@ public class AcqEngJAdapter implements AcquisitionEngine {
     * This function converts acquisitionSettings to a lazy sequence (i.e. an iterator) of
     * AcquisitionEvents.
     */
-   private Iterator<AcquisitionEvent> createAcqEventIterator(SequenceSettings acquisitionSettings) {
+   private Iterator<AcquisitionEvent> createAcqEventIterator(SequenceSettings acquisitionSettings)
+         throws Exception {
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
 
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
-            = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
+            = new ArrayList<>();
 
       if (acquisitionSettings.useSlices()) {
-         zStack = MDAAcqEventModules.zStack(0, acquisitionSettings.slices().size() - 1,
-               acquisitionSettings.slices().get(0), acquisitionSettings.sliceZStepUm());
+         double origin = acquisitionSettings.slices().get(0);
+         if (acquisitionSettings.relativeZSlice()) {
+            origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
+         }
+         zStack = MDAAcqEventModules.zStack(0,
+               acquisitionSettings.slices().size() - 1,
+               acquisitionSettings.sliceZStepUm(),
+               origin);
       }
 
       if (acquisitionSettings.useChannels()) {
@@ -403,7 +470,11 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       if (acquisitionSettings.usePositionList()) {
          positions = MDAAcqEventModules.positions(posList_);
          // TODO: is acq engine supposed to move multiple stages?
+         // Yes: when moving to a new position, all stages in the MultiStagePosition instance
+         // should be moved to the desired location
          // TODO: What about Z positions in position list
+         // Yes: First move all stages in the MSP to their desired location, then do
+         // whatever is asked to do.
       }
 
       if (acquisitionSettings.useFrames()) {
@@ -467,7 +538,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
             acqFunctions.add(channels);
          }
       } else {
-         throw new RuntimeException("Unknown acquisiton order");
+         throw new RuntimeException("Unknown acquisition order");
       }
 
       AcquisitionEvent baseEvent = new AcquisitionEvent(currentAcquisition_);
@@ -482,13 +553,93 @@ public class AcqEngJAdapter implements AcquisitionEngine {
     * @return
     */
    private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(SequenceSettings settings) {
-      return (AcquisitionEvent event) -> {
-         if (event.getMinimumStartTimeAbsolute() != null) {
-            nextWakeTime_ = event.getMinimumStartTimeAbsolute();
+      return new Function<AcquisitionEvent, AcquisitionEvent>() {
+         private int lastPositionIndex_ = 0;
+         private long relativePositionStartTime_ = 0;
+         private long startTime_ = 0;
+         private boolean positionMoved_ = false;
+
+         @Override
+         public AcquisitionEvent apply(AcquisitionEvent event) {
+            /*
+            if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+                    || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
+                     && event.getAxisPosition("position") != null) {
+               if (startTime_ == 0) {
+                  startTime_ = System.currentTimeMillis();
+               }
+
+               int thisPosition = (int) event.getAxisPosition("position");
+               if (thisPosition != lastPositionIndex_) {
+                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
+                  System.out.println("Position " + thisPosition + " started "
+                          + relativePositionStartTime_ + "  ms after acquisition start");
+                  lastPositionIndex_ = (int) event.getAxisPosition("position");
+                  positionMoved_ = true;
+               }
+               if (positionMoved_) {
+                  long relativeStartTime = relativePositionStartTime_
+                          + event.getMinimumStartTimeAbsolute() - startTime_;
+                  int frame = (int) event.getAxisPosition("time");
+                  System.out.println("Pos " + thisPosition + ", Frame " + frame
+                          + " start at " + relativeStartTime);
+                  event.setMinimumStartTime(relativeStartTime);
+               }
+            }
+             */
+            if (event.getMinimumStartTimeAbsolute() != null) {
+               nextWakeTime_ = event.getMinimumStartTimeAbsolute();
+            }
+            return event;
          }
-         return event;
       };
    }
+
+   private AcquisitionHook timeLapseHook(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+         private int lastPositionIndex_ = 0;
+         private long relativePositionStartTime_ = 0;
+         private long startTime_ = 0;
+         private boolean positionMoved_ = false;
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
+                  || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
+                  && event.getAxisPosition("position") != null) {
+               if (startTime_ == 0) {
+                  startTime_ = System.currentTimeMillis();
+               }
+
+               int thisPosition = (int) event.getAxisPosition("position");
+               if (thisPosition != lastPositionIndex_) {
+                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
+                  System.out.println("Position " + thisPosition + " started "
+                        + relativePositionStartTime_ + "  ms after acquisition start");
+                  lastPositionIndex_ = (int) event.getAxisPosition("position");
+                  positionMoved_ = true;
+               }
+               if (positionMoved_) {
+                  long relativeStartTime = relativePositionStartTime_
+                        + event.getMinimumStartTimeAbsolute() - startTime_;
+                  int frame = (int) event.getAxisPosition("time");
+                  System.out.println("Pos " + thisPosition + ", Frame " + frame
+                        + " start at " + relativeStartTime);
+                  event.setMinimumStartTime(relativeStartTime);
+               }
+            }
+            if (event.getMinimumStartTimeAbsolute() != null) {
+               nextWakeTime_ = event.getMinimumStartTimeAbsolute();
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+         }
+      };
+   }
+
 
    private void calculateSlices() {
       // Slices
@@ -605,7 +756,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
 
 
    private boolean isFocusStageAvailable() {
-      return zstage_ != null && zstage_.length() > 0;
+      return zStage_ != null && zStage_.length() > 0;
    }
 
    /**
@@ -840,9 +991,15 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       studio_.events().registerForEvents(this);
    }
 
+   /**
+    * This is ignored by the Clojure engine, and also does not have any function
+    * in this engine.  Deprecate?  Do not rely on this to do anything.
+    *
+    * @param stageLabel Name of the focus drive to use.  Ignored.
+    */
    @Override
    public void setZStageDevice(String stageLabel) {
-      zstage_ = stageLabel;
+      zStage_ = stageLabel;
    }
 
    @Override
@@ -1116,7 +1273,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       if (isFocusStageAvailable()) {
          double z = 0.0;
          try {
-            //core_.waitForDevice(zstage_);
+            // core_.waitForDevice(zstage_);
             // NS: make sure we work with the current Focus device
             z = core_.getPosition(core_.getFocusDevice());
          } catch (Exception e) {
@@ -1160,10 +1317,23 @@ public class AcqEngJAdapter implements AcquisitionEngine {
     */
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
-      curStore_ = null;
-      curPipeline_ = null;
-      currentAcquisition_ = null;
-      studio_.events().unregisterForEvents(this);
+      if (event.getStore().equals(curStore_)) {
+         // Restore original Z position and autofocus if applicable.
+         if (isFocusStageAvailable()) {
+            try {
+               core_.setPosition(zStage_, zStart_);
+               if (autofocusMethod_ != null) {
+                  autofocusMethod_.enableContinuousFocus(autofocusOn_);
+               }
+            } catch (Exception e) {
+               studio_.logs().logError(e);
+            }
+         }
+         curStore_ = null;
+         curPipeline_ = null;
+         currentAcquisition_ = null;
+         studio_.events().unregisterForEvents(this);
+      }
    }
 
    @Subscribe
