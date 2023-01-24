@@ -77,7 +77,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
         // ---- content ----
-        super.add(new JLabel("Version: cube explore"),"");
+        super.add(new JLabel("Version: ablation"),"");
 
         super.add(new JLabel("Status: "));
         statusLabel_ = new JLabel("uninitalized");
@@ -110,18 +110,18 @@ public class MicrosceneryStreamFrame extends JFrame {
         settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("SettingsEditor"),480, 500));
         super.add(settingsButton, "wrap");
 
-        JPanel pannelContainer = new JPanel(new MigLayout());
+        JPanel panelContainer = new JPanel(new MigLayout());
         stageLimitsPanel = new StageLimitsPanel(mmcon,micromanagerWrapper,msSettings);
-        pannelContainer.add(stageLimitsPanel,"");
+        panelContainer.add(stageLimitsPanel,"");
 
         JButton stopButton = new JButton("STOP");
         stopButton.addActionListener(e -> micromanagerWrapper.stop());
-        pannelContainer.add(stopButton,"grow");
+        panelContainer.add(stopButton,"grow");
         JTextArea helpTextArea = new JTextArea("1: drag\n2: snap\n3: live\n" +
-                "4: steer\n5: stack\n6: explore Cube\n0: STOP\nE: toggle controls");
-        pannelContainer.add(helpTextArea,"wrap");
-        //pannelContainer.add(new OldStackAcquisitionPanel(msSettings,studio,micromanagerWrapper), "wrap");
-        super.add(pannelContainer, "span, wrap");
+                "4: steer\n5: stack\n6: explore Cube\n7: ablate\n0: STOP\nE: toggle controls");
+        panelContainer.add(helpTextArea,"wrap");
+        //panelContainer.add(new OldStackAcquisitionPanel(msSettings,studio,micromanagerWrapper), "wrap");
+        super.add(panelContainer, "span, wrap");
 
         super.pack();
 
