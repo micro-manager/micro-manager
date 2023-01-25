@@ -77,25 +77,26 @@ public class MicrosceneryStreamFrame extends JFrame {
         WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
         // ---- content ----
-        super.add(new JLabel("Version: ablation"),"");
+        JPanel miscContainer = new JPanel(new MigLayout());
+        miscContainer.add(new JLabel("Version: abl shutter"), "wrap");
 
-        super.add(new JLabel("Status: "));
+        miscContainer.add(new JLabel("Status: "));
         statusLabel_ = new JLabel("uninitalized");
-        super.add(statusLabel_, "");
+        miscContainer.add(statusLabel_, "wrap");
 
-        super.add(new JLabel("Ports: "));
+        miscContainer.add(new JLabel("Ports: "));
         portLabel_ = new JLabel(server.getBasePort() + "" + server.getStatus().getDataPorts().stream().map(p -> " ," + p).collect(Collectors.joining()));
-        super.add(portLabel_);
+        miscContainer.add(portLabel_, "wrap");
 
-        super.add(new JLabel("Clients: "));
+        miscContainer.add(new JLabel("Clients: "));
         connectionsLabel_ = new JLabel("0");
-        super.add(connectionsLabel_, "");
+        miscContainer.add(connectionsLabel_, "wrap");
 
-        super.add(new JLabel("Stack dimensions: "));
+        miscContainer.add(new JLabel("Stack dimensions: "));
         dimensionsLabel_ = new JLabel("uninitalized");
-        super.add(dimensionsLabel_, "");
+        miscContainer.add(dimensionsLabel_, "wrap");
 
-        super.add(new JLabel("Vertex size"));
+        miscContainer.add(new JLabel("Vertex size"));
         JTextField vertexSizeText = new JTextField(
                 msSettings.get("MMConnection.vertexDiameter",1.0f).toString()
                 ,10);
@@ -104,19 +105,35 @@ public class MicrosceneryStreamFrame extends JFrame {
                 micromanagerWrapper.setVertexDiameter(Float.parseFloat(vertexSizeText.getText()));
             }
         });
-        super.add(vertexSizeText,"");
+        miscContainer.add(vertexSizeText, "wrap");
+
+        miscContainer.add(new JLabel("Ablation Shutter:"));
+        JComboBox<String> shutterComboBox = new JComboBox<>( studio.shutter().getShutterDevices().toArray(new String[0]));
+        shutterComboBox.addActionListener(e -> {
+            @SuppressWarnings("unchecked") JComboBox<String> cb = (JComboBox<String>)e.getSource();
+            String name = (String)cb.getSelectedItem();
+            assert name != null;
+            msSettings.set("Ablation.Shutter",name);
+        });
+        miscContainer.add(shutterComboBox, "wrap");
 
         JButton settingsButton = new JButton("Settings");
         settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("SettingsEditor"),480, 500));
-        super.add(settingsButton, "wrap");
+        miscContainer.add(settingsButton, "wrap");
+
+        super.add(miscContainer);
+
+
+        stageLimitsPanel = new StageLimitsPanel(mmcon,micromanagerWrapper,msSettings);
+        super.add(stageLimitsPanel,"");
+
 
         JPanel panelContainer = new JPanel(new MigLayout());
-        stageLimitsPanel = new StageLimitsPanel(mmcon,micromanagerWrapper,msSettings);
-        panelContainer.add(stageLimitsPanel,"");
 
         JButton stopButton = new JButton("STOP");
         stopButton.addActionListener(e -> micromanagerWrapper.stop());
         panelContainer.add(stopButton,"grow");
+
         JTextArea helpTextArea = new JTextArea("1: drag\n2: snap\n3: live\n" +
                 "4: steer\n5: stack\n6: explore Cube\n7: ablate\n0: STOP\nE: toggle controls");
         panelContainer.add(helpTextArea,"wrap");
