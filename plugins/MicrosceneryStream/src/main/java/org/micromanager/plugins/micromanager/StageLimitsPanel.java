@@ -1,6 +1,6 @@
 package org.micromanager.plugins.micromanager;
 
-import graphics.scenery.Settings;
+import fromScenery.Settings;
 import microscenery.hardware.micromanagerConnection.MMConnection;
 import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
 import net.miginfocom.swing.MigLayout;

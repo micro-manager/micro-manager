@@ -20,8 +20,8 @@
  */
 package org.micromanager.plugins.micromanager;
 
-import graphics.scenery.Settings;
-import graphics.scenery.SettingsEditor;
+import fromScenery.Settings;
+//import graphics.scenery.SettingsEditor;
 import kotlin.Unit;
 import microscenery.Util;
 import microscenery.hardware.micromanagerConnection.MMConnection;
@@ -38,6 +38,7 @@ import org.zeromq.ZContext;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 // Imports for MMStudio internal packages
@@ -69,7 +70,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         msSettings  = Util.getMicroscenerySettings();
 
         // loopBackConnection
-        new ControlSignalsClient(zContext,server.getBasePort(),"localhost", java.util.List.of(this::updateLabels));
+        new ControlSignalsClient(zContext,server.getBasePort(),"localhost", Collections.singletonList(this::updateLabels));
 
         super.setLayout(new MigLayout());
         super.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -118,7 +119,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         miscContainer.add(shutterComboBox, "wrap");
 
         JButton settingsButton = new JButton("Settings");
-        settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("SettingsEditor"),480, 500));
+        //settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("SettingsEditor"),480, 500));
         miscContainer.add(settingsButton, "wrap");
 
         super.add(miscContainer);
