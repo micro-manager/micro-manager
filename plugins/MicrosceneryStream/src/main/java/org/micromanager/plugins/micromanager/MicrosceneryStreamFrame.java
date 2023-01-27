@@ -21,7 +21,7 @@
 package org.micromanager.plugins.micromanager;
 
 import fromScenery.Settings;
-//import graphics.scenery.SettingsEditor;
+//import graphics.scenery.org.micromanager.plugins.micromanager.SettingsEditor;
 import kotlin.Unit;
 import microscenery.Util;
 import microscenery.hardware.micromanagerConnection.MMConnection;
@@ -119,7 +119,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         miscContainer.add(shutterComboBox, "wrap");
 
         JButton settingsButton = new JButton("Settings");
-        //settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("SettingsEditor"),480, 500));
+        settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("org.micromanager.plugins.micromanager.SettingsEditor"),480, 500));
         miscContainer.add(settingsButton, "wrap");
 
         super.add(miscContainer);

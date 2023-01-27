@@ -11,6 +11,13 @@ For orginal readme see parent repo.
 - copy microscenerys dependencies from the '\microsceneryDependencies' folder into '\dependencies\artifacts\compile'
 - run 'ant jar'
 
+#### Build with Idea
+
+- copy "C:\Users\JanCasus\repos\micro-manager\dependencies\artifacts\compile\iconloader-GIT.jar" also into "'\dependencies\artifacts\compile'"
+- point IDE to "\dependencies\artifacts\compile" for libraries (or not?)
+- point IDE to "C:\Program Files\Micro-Manager-2.0gamma\plugins\MicroManager"
+- delete old protobuff dependency (2.x) from "\dependencies\artifacts\compile"
+
 ### Prepare a MicroManger Installation for the plugin
 
 - build microscenery-core and copy "..\core\build\libs\microscenery-core-1.0-SNAPSHOT.jar" to "mm/plugins"
