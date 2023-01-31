@@ -21,7 +21,6 @@
 package org.micromanager.plugins.micromanager;
 
 import fromScenery.Settings;
-//import graphics.scenery.org.micromanager.plugins.micromanager.SettingsEditor;
 import kotlin.Unit;
 import microscenery.Util;
 import microscenery.hardware.micromanagerConnection.MMConnection;
@@ -29,7 +28,10 @@ import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
 import microscenery.network.ControlSignalsClient;
 import microscenery.network.RemoteMicroscopeServer;
 import microscenery.network.SliceStorage;
-import microscenery.signals.*;
+import microscenery.signals.ActualMicroscopeSignal;
+import microscenery.signals.MicroscopeStatus;
+import microscenery.signals.RemoteMicroscopeSignal;
+import microscenery.signals.RemoteMicroscopeStatus;
 import net.miginfocom.swing.MigLayout;
 import org.joml.Vector2i;
 import org.micromanager.Studio;
@@ -64,9 +66,9 @@ public class MicrosceneryStreamFrame extends JFrame {
     public MicrosceneryStreamFrame(Studio studio) {
         super("Microscenery Stream Plugin");
         ZContext zContext = new ZContext();
-        MMConnection mmcon = new MMConnection(studio.core());
-        micromanagerWrapper = new MicromanagerWrapper(mmcon,200,false);
-        server = new RemoteMicroscopeServer(micromanagerWrapper, zContext,new SliceStorage(mmcon.getHeight()*mmcon.getWidth()*500));
+        MMConnection mmCon = new MMConnection(studio.core());
+        micromanagerWrapper = new MicromanagerWrapper(mmCon,200,false);
+        server = new RemoteMicroscopeServer(micromanagerWrapper, zContext,new SliceStorage(mmCon.getHeight()*mmCon.getWidth()*500));
         msSettings  = Util.getMicroscenerySettings();
 
         // loopBackConnection
@@ -125,7 +127,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         super.add(miscContainer);
 
 
-        stageLimitsPanel = new StageLimitsPanel(mmcon,micromanagerWrapper,msSettings);
+        stageLimitsPanel = new StageLimitsPanel(mmCon,micromanagerWrapper,msSettings);
         super.add(stageLimitsPanel,"");
 
 
@@ -152,6 +154,7 @@ public class MicrosceneryStreamFrame extends JFrame {
                 return null;
             });
         }
+
     }
 
     private Unit updateLabels(RemoteMicroscopeSignal signal) {
