@@ -143,6 +143,8 @@ public class MicrosceneryStreamFrame extends JFrame {
         //panelContainer.add(new OldStackAcquisitionPanel(msSettings,studio,micromanagerWrapper), "wrap");
         super.add(panelContainer, "span, wrap");
 
+        super.add(new AblationPanel(msSettings,mmCon,studio,micromanagerWrapper),"wrap");
+
         super.pack();
 
         updateLabels(server.getStatus());
