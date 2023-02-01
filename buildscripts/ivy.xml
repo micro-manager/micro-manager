@@ -52,7 +52,7 @@
 		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.9.31">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.35.5">
+		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.35.7">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 
