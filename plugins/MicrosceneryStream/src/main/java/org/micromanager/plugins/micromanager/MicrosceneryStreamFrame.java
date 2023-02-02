@@ -20,6 +20,7 @@
  */
 package org.micromanager.plugins.micromanager;
 
+import com.google.common.eventbus.Subscribe;
 import fromScenery.Settings;
 import kotlin.Unit;
 import microscenery.Util;
@@ -40,14 +41,9 @@ import org.zeromq.ZContext;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
 import java.util.Collections;
 import java.util.stream.Collectors;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 
 public class MicrosceneryStreamFrame extends JFrame {
 
@@ -61,6 +57,7 @@ public class MicrosceneryStreamFrame extends JFrame {
     private final RemoteMicroscopeServer server;
     private final Settings msSettings;
     private final MicromanagerWrapper micromanagerWrapper;
+    private final EventListener eventListener;
 
 
     public MicrosceneryStreamFrame(Studio studio) {
@@ -71,12 +68,14 @@ public class MicrosceneryStreamFrame extends JFrame {
         server = new RemoteMicroscopeServer(micromanagerWrapper, zContext,new SliceStorage(mmCon.getHeight()*mmCon.getWidth()*500));
         msSettings  = Util.getMicroscenerySettings();
 
+        eventListener = new EventListener(studio, micromanagerWrapper);
+        
         // loopBackConnection
         new ControlSignalsClient(zContext,server.getBasePort(),"localhost", Collections.singletonList(this::updateLabels));
 
-        super.setLayout(new MigLayout());
-        super.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
-        super.setLocation(100, 100);
+        this.setLayout(new MigLayout());
+        this.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
+        this.setLocation(100, 100);
         WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
         // ---- content ----
@@ -120,15 +119,19 @@ public class MicrosceneryStreamFrame extends JFrame {
         });
         miscContainer.add(shutterComboBox, "wrap");
 
+        JCheckBox watchStagePosCheckbox = new JCheckBox("Watch stage position", true);
+        watchStagePosCheckbox.addChangeListener(e -> eventListener.listenToStage = watchStagePosCheckbox.isSelected());
+        miscContainer.add(watchStagePosCheckbox,"wrap");
+
         JButton settingsButton = new JButton("Settings");
         settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("org.micromanager.plugins.micromanager.SettingsEditor"),480, 500));
         miscContainer.add(settingsButton, "wrap");
 
-        super.add(miscContainer);
+        this.add(miscContainer);
 
 
         stageLimitsPanel = new StageLimitsPanel(mmCon,micromanagerWrapper,msSettings);
-        super.add(stageLimitsPanel,"");
+        this.add(stageLimitsPanel,"");
 
 
         JPanel panelContainer = new JPanel(new MigLayout());
@@ -141,11 +144,12 @@ public class MicrosceneryStreamFrame extends JFrame {
                 "4: steer\n5: stack\n6: explore Cube\n7: ablate\n0: STOP\nE: toggle controls");
         panelContainer.add(helpTextArea,"wrap");
         //panelContainer.add(new OldStackAcquisitionPanel(msSettings,studio,micromanagerWrapper), "wrap");
-        super.add(panelContainer, "span, wrap");
+        this.add(panelContainer, "span, wrap");
 
-        super.add(new AblationPanel(msSettings,mmCon,studio,micromanagerWrapper),"wrap");
+        this.add(new AblationPanel(msSettings,mmCon,studio,micromanagerWrapper),"wrap");
 
-        super.pack();
+        this.pack();
+
 
         updateLabels(server.getStatus());
         updateLabels(new ActualMicroscopeSignal(micromanagerWrapper.status()));
@@ -157,6 +161,15 @@ public class MicrosceneryStreamFrame extends JFrame {
             });
         }
 
+        this.addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+                // if any component is not displayed this container is likely going down
+                if (!panelContainer.isDisplayable()) {
+                    // detach listener gracefully otherwise there will be errors
+                    eventListener.close();
+                }
+            }
+        });
     }
 
     private Unit updateLabels(RemoteMicroscopeSignal signal) {
