@@ -37,6 +37,7 @@ public class AblationPanel extends JPanel {
 
         JButton planButton = new JButton("Plan");
         planButton.addActionListener(e ->{
+            @SuppressWarnings("deprecation")
             ImagePlus img = this.studio.getSnapLiveManager().getDisplay().getImagePlus();
             //IJ.getImage()
             // do calibration like https://imagej.nih.gov/ij/developer/source/ij/plugin/Coordinates.java.html ?
@@ -108,27 +109,18 @@ public class AblationPanel extends JPanel {
             List<Vector3f> pathInStageSpace = plannedCut.stream().map(vec -> vec.add(offset)).collect(Collectors.toList());
 
             mmWrapper.setStagePosition(pathInStageSpace.get(0));
-            String msg = "Stage will be moved to first position.\n" +
-                    "Please ready the laser then press 'OK'.";
-            int result = JOptionPane.showConfirmDialog(null, msg,"Preparing Ablation", JOptionPane.OK_CANCEL_OPTION);
-            switch (result){
-                case JOptionPane.OK_OPTION:{
-                    mmWrapper.ablatePoints(new ClientSignal.AblationPoints(
-                            pathInStageSpace.stream().map(vec -> new ClientSignal.AblationPoint(
-                                    vec,
-                                    0,
-                                    pathInStageSpace.get(0).equals(vec),
-                                    pathInStageSpace.get(pathInStageSpace.size()-1).equals(vec),
-                                    0,
-                                    false
-                            )).collect(Collectors.toList())
-                    ));
-                    break;
-                }
-                case JOptionPane.CANCEL_OPTION:{
-                    this.studio.alerts().postAlert("Aborted Ablation", null, "Ablation has been aborted by the user.");
-                }
-            }
+
+            mmWrapper.ablatePoints(new ClientSignal.AblationPoints(
+                    pathInStageSpace.stream().map(vec -> new ClientSignal.AblationPoint(
+                            vec,
+                            0,
+                            pathInStageSpace.get(0).equals(vec),
+                            pathInStageSpace.get(pathInStageSpace.size()-1).equals(vec),
+                            0,
+                            false
+                    )).collect(Collectors.toList())
+            ));
+
 
         });
         this.add(executeBut, "wrap");
