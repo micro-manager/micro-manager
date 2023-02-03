@@ -13,6 +13,7 @@ import org.joml.Vector3f;
 import org.micromanager.Studio;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,10 @@ public class AblationPanel extends JPanel {
         Util.setVector3fIfUnset(msSettings, "Ablation.precision",new Vector3f(1f));
 
         this.setLayout(new MigLayout());
+
+        TitledBorder title;
+        title = BorderFactory.createTitledBorder("Photomanipulation");
+        this.setBorder(title);
 
         JButton planButton = new JButton("Plan");
         planButton.addActionListener(e ->{

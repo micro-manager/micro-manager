@@ -40,6 +40,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 import org.zeromq.ZContext;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.util.Collections;
@@ -73,14 +74,16 @@ public class MicrosceneryStreamFrame extends JFrame {
         // loopBackConnection
         new ControlSignalsClient(zContext,server.getBasePort(),"localhost", Collections.singletonList(this::updateLabels));
 
-        this.setLayout(new MigLayout());
+        // -- start GUI --
+        this.setLayout(new MigLayout("fill","","align top"));
         this.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/micromanager/icons/microscope.gif")));
         this.setLocation(100, 100);
         WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
-        // ---- content ----
+        // -- misc container --
         JPanel miscContainer = new JPanel(new MigLayout());
         miscContainer.add(new JLabel("Version: abl shutter"), "wrap");
+        miscContainer.setBorder(BorderFactory.createTitledBorder("General"));
 
         miscContainer.add(new JLabel("Status: "));
         statusLabel_ = new JLabel("uninitalized");
@@ -127,29 +130,26 @@ public class MicrosceneryStreamFrame extends JFrame {
         settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("org.micromanager.plugins.micromanager.SettingsEditor"),480, 500));
         miscContainer.add(settingsButton, "wrap");
 
-        this.add(miscContainer);
+        this.add(miscContainer, "grow");
+        // -- end misc container --
 
+        this.add(new AblationPanel(msSettings,mmCon,studio,micromanagerWrapper),"growx,wrap");
 
         stageLimitsPanel = new StageLimitsPanel(mmCon,micromanagerWrapper,msSettings);
         this.add(stageLimitsPanel,"");
 
-
-        JPanel panelContainer = new JPanel(new MigLayout());
-
+        JPanel stopAndHelpPanel = new JPanel(new MigLayout());
+        stopAndHelpPanel.setBorder(BorderFactory.createTitledBorder("Other"));
         JButton stopButton = new JButton("STOP");
         stopButton.addActionListener(e -> micromanagerWrapper.stop());
-        panelContainer.add(stopButton,"grow");
-
+        stopAndHelpPanel.add(stopButton,"grow");
         JTextArea helpTextArea = new JTextArea("1: drag\n2: snap\n3: live\n" +
                 "4: steer\n5: stack\n6: explore Cube\n7: ablate\n0: STOP\nE: toggle controls");
-        panelContainer.add(helpTextArea,"wrap");
-        //panelContainer.add(new OldStackAcquisitionPanel(msSettings,studio,micromanagerWrapper), "wrap");
-        this.add(panelContainer, "span, wrap");
-
-        this.add(new AblationPanel(msSettings,mmCon,studio,micromanagerWrapper),"wrap");
+        stopAndHelpPanel.add(helpTextArea,"wrap");
+        //stopAndHelpPanel.add(new OldStackAcquisitionPanel(msSettings,studio,micromanagerWrapper), "wrap");
+        this.add(stopAndHelpPanel, "span, wrap");
 
         this.pack();
-
 
         updateLabels(server.getStatus());
         updateLabels(new ActualMicroscopeSignal(micromanagerWrapper.status()));
@@ -164,7 +164,7 @@ public class MicrosceneryStreamFrame extends JFrame {
         this.addHierarchyListener(e -> {
             if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
                 // if any component is not displayed this container is likely going down
-                if (!panelContainer.isDisplayable()) {
+                if (!stopAndHelpPanel.isDisplayable()) {
                     // detach listener gracefully otherwise there will be errors
                     eventListener.close();
                 }
