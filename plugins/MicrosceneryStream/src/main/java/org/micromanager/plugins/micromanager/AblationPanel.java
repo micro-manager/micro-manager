@@ -4,9 +4,11 @@ import fromScenery.Settings;
 import ij.ImagePlus;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
+import microscenery.Ablation;
 import microscenery.Util;
 import microscenery.hardware.micromanagerConnection.MMConnection;
 import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
+import microscenery.signals.AblationResults;
 import microscenery.signals.ClientSignal;
 import net.miginfocom.swing.MigLayout;
 import org.joml.Vector3f;
@@ -28,17 +30,36 @@ public class AblationPanel extends JPanel {
     private int imgMidX = 0;
     private int imgMidY = 0;
 
-    public AblationPanel(Settings msSettings, MMConnection mmCon, Studio studio, MicromanagerWrapper mmWrapper) {
+    private final JLabel totalTimeLabel = new JLabel("no data");
+    private final JLabel meanTimeLabel = new JLabel("no data");
+    private final JLabel stdTimeLabel = new JLabel("no data");
+
+    public AblationPanel(MMConnection mmCon, Studio studio, MicromanagerWrapper mmWrapper) {
         this.mmCon = mmCon;
         this.studio = studio;
 
+        Settings msSettings = Util.getMicroscenerySettings();
+
         Util.setVector3fIfUnset(msSettings, "Ablation.precision",new Vector3f(1f));
+        msSettings.set("Ablation.dwellTimeMillis", 0L);
+        msSettings.set("Ablation.laserPower", 0f);
+        // count time it takes to move towards next point to that points dwell time
+        msSettings.set("Ablation.CountMoveTime", true);
+        msSettings.set("Ablation.PauseLaserOnMove", false);
+        msSettings.set("Ablation.dryRun", true);
 
         this.setLayout(new MigLayout());
 
         TitledBorder title;
         title = BorderFactory.createTitledBorder("Photomanipulation");
         this.setBorder(title);
+
+        this.add(new JLabel("Total Time(ms):"));
+        this.add(totalTimeLabel,"wrap");
+        this.add(new JLabel("mean time per point(ms):"));
+        this.add(meanTimeLabel,"wrap");
+        this.add(new JLabel("mtpp std(ms):"));
+        this.add(stdTimeLabel,"wrap");
 
         JButton planButton = new JButton("Plan");
         planButton.addActionListener(e ->{
@@ -74,14 +95,14 @@ public class AblationPanel extends JPanel {
 
                 Vector3f cur = new Vector3f((float)x, (float) y,0);
                 if(prev != null){
-                    List<Vector3f> sampled = Util.sampleLine(prev, cur, precision);
+                    List<Vector3f> sampled = Ablation.sampleLine(prev, cur, precision);
                     samplePointsIS.addAll(sampled);
                 }
                 samplePointsIS.add(cur);
                 prev = cur;
             }
             if (samplePointsIS.size() > 1){
-                samplePointsIS.addAll(Util.sampleLine(prev, samplePointsIS.get(0),precision));
+                samplePointsIS.addAll(Ablation.sampleLine(prev, samplePointsIS.get(0),precision));
             }
 
             int[] newX = samplePointsIS.stream().mapToInt(v -> (int) v.x).toArray();
@@ -129,5 +150,36 @@ public class AblationPanel extends JPanel {
 
         });
         this.add(executeBut, "wrap");
+    }
+
+    public void updateTimings(AblationResults results){
+        totalTimeLabel.setText(results.getTotalTimeMillis()+"");
+        meanTimeLabel.setText(results.mean() + "");
+        double[] dar = results.getPerPointTime().stream().mapToDouble(Integer::doubleValue).toArray();
+        if (dar.length > 2){
+            stdTimeLabel.setText(calculateStandardDeviation(dar).intValue()+"");
+        }
+    }
+
+    // taken from https://www.baeldung.com/java-calculate-standard-deviation
+    public static Double calculateStandardDeviation(double[] array) {
+
+        // get the sum of array
+        double sum = 0.0;
+        for (double i : array) {
+            sum += i;
+        }
+
+        // get the mean of array
+        int length = array.length;
+        double mean = sum / length;
+
+        // calculate the standard deviation
+        double standardDeviation = 0.0;
+        for (double num : array) {
+            standardDeviation += Math.pow(num - mean, 2);
+        }
+
+        return Math.sqrt(standardDeviation / length);
     }
 }

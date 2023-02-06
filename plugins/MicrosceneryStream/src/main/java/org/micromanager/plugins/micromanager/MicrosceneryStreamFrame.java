@@ -29,10 +29,7 @@ import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
 import microscenery.network.ControlSignalsClient;
 import microscenery.network.RemoteMicroscopeServer;
 import microscenery.network.SliceStorage;
-import microscenery.signals.ActualMicroscopeSignal;
-import microscenery.signals.MicroscopeStatus;
-import microscenery.signals.RemoteMicroscopeSignal;
-import microscenery.signals.RemoteMicroscopeStatus;
+import microscenery.signals.*;
 import net.miginfocom.swing.MigLayout;
 import org.joml.Vector2i;
 import org.micromanager.Studio;
@@ -54,6 +51,7 @@ public class MicrosceneryStreamFrame extends JFrame {
     private final JLabel dimensionsLabel_;
 
     private final StageLimitsPanel stageLimitsPanel;
+    private final AblationPanel ablationPanel;
 
     private final RemoteMicroscopeServer server;
     private final Settings msSettings;
@@ -133,7 +131,8 @@ public class MicrosceneryStreamFrame extends JFrame {
         this.add(miscContainer, "grow");
         // -- end misc container --
 
-        this.add(new AblationPanel(msSettings,mmCon,studio,micromanagerWrapper),"growx,wrap");
+        ablationPanel = new AblationPanel(mmCon,studio,micromanagerWrapper);
+        this.add(ablationPanel,"growx,wrap");
 
         stageLimitsPanel = new StageLimitsPanel(mmCon,micromanagerWrapper,msSettings);
         this.add(stageLimitsPanel,"");
@@ -186,6 +185,8 @@ public class MicrosceneryStreamFrame extends JFrame {
             if (ams.getSignal() instanceof MicroscopeStatus) {
                 MicroscopeStatus status = (MicroscopeStatus) ams.getSignal();
                 statusLabel_.setText(status.getState().toString());
+            } else if(ams.getSignal() instanceof AblationResults){
+                ablationPanel.updateTimings((AblationResults) ams.getSignal());
             }
         }
 
