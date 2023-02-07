@@ -244,7 +244,7 @@ public final class AnimationController<P> {
     * Starts the display animation.
     */
    public synchronized void startAnimation() {
-      if (animationEnabled_.compareAndSet(true, true)) {
+      if (!animationEnabled_.compareAndSet(false, true)) {
          return;
       }
       startTicks(tickIntervalMs_, tickIntervalMs_);
@@ -254,7 +254,7 @@ public final class AnimationController<P> {
     * Stops the display animation.
     */
    public void stopAnimation() {
-      if (animationEnabled_.compareAndSet(false, false)) {
+      if (!animationEnabled_.compareAndSet(true, false)) {
          return;
       }
       if (isTicksScheduled()) {
