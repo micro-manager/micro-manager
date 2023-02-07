@@ -33,15 +33,18 @@
 package org.micromanager.plugins.micromanager;
 
 import org.micromanager.MenuPlugin;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
+import org.micromanager.data.*;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
-public class MicrosceneryStream implements SciJavaPlugin, MenuPlugin {
+public class MicrosceneryStream implements SciJavaPlugin, MenuPlugin, ProcessorPlugin {
    private Studio studio_;
    private MicrosceneryStreamFrame frame_;
+   private MicrosceneryContext mmContext;
 
    /**
     * This method receives the Studio object, which is the gateway to the
@@ -62,9 +65,12 @@ public class MicrosceneryStream implements SciJavaPlugin, MenuPlugin {
     */
    @Override
    public void onPluginSelected() {
+      if (mmContext == null){
+         mmContext = new MicrosceneryContext(studio_);
+      }
       if (frame_ == null) {
          // We have never before shown our GUI, so now we need to create it.
-         frame_ = new MicrosceneryStreamFrame(studio_);
+         frame_ = new MicrosceneryStreamFrame(studio_, mmContext,this);
       }
       frame_.setVisible(true);
    }
@@ -99,5 +105,27 @@ public class MicrosceneryStream implements SciJavaPlugin, MenuPlugin {
    @Override
    public String getCopyright() {
       return "Jan";
+   }
+
+   @Override
+   public ProcessorConfigurator createConfigurator(PropertyMap settings) {
+      if (mmContext == null){
+         mmContext = new MicrosceneryContext(studio_);
+      }
+      if (frame_ == null) {
+         // We have never before shown our GUI, so now we need to create it.
+         frame_ = new MicrosceneryStreamFrame(studio_, mmContext,this);
+      }
+      return frame_;
+   }
+
+   @Override
+   public ProcessorFactory createFactory(PropertyMap settings) {
+      return () -> {
+         if (mmContext == null){
+            mmContext = new MicrosceneryContext(studio_);
+         }
+         return new ImageProcessor(mmContext);
+      };
    }
 }

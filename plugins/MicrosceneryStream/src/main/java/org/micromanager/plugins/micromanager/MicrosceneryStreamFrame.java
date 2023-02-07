@@ -20,7 +20,6 @@
  */
 package org.micromanager.plugins.micromanager;
 
-import com.google.common.eventbus.Subscribe;
 import fromScenery.Settings;
 import kotlin.Unit;
 import microscenery.Util;
@@ -32,18 +31,19 @@ import microscenery.network.SliceStorage;
 import microscenery.signals.*;
 import net.miginfocom.swing.MigLayout;
 import org.joml.Vector2i;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.zeromq.ZContext;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.HierarchyEvent;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
-public class MicrosceneryStreamFrame extends JFrame {
+public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigurator {
 
     private final JLabel statusLabel_;
     private final JLabel portLabel_;
@@ -59,18 +59,17 @@ public class MicrosceneryStreamFrame extends JFrame {
     private final EventListener eventListener;
 
 
-    public MicrosceneryStreamFrame(Studio studio) {
+    public MicrosceneryStreamFrame(Studio studio, MicrosceneryContext msContext, MicrosceneryStream plugin) {
         super("Microscenery Stream Plugin");
-        ZContext zContext = new ZContext();
-        MMConnection mmCon = new MMConnection(studio.core());
-        micromanagerWrapper = new MicromanagerWrapper(mmCon,200,false);
-        server = new RemoteMicroscopeServer(micromanagerWrapper, zContext,new SliceStorage(mmCon.getHeight()*mmCon.getWidth()*500));
-        msSettings  = Util.getMicroscenerySettings();
+        MMConnection mmCon = msContext.mmCon;
+        micromanagerWrapper = msContext.micromanagerWrapper;
+        server = msContext.server;
+        msSettings  = msContext.msSettings;
 
         eventListener = new EventListener(studio, micromanagerWrapper);
         
         // loopBackConnection
-        new ControlSignalsClient(zContext,server.getBasePort(),"localhost", Collections.singletonList(this::updateLabels));
+        new ControlSignalsClient(msContext.zContext,server.getBasePort(),"localhost", Collections.singletonList(this::updateLabels));
 
         // -- start GUI --
         this.setLayout(new MigLayout("fill","","align top"));
@@ -128,6 +127,10 @@ public class MicrosceneryStreamFrame extends JFrame {
         settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("org.micromanager.plugins.micromanager.SettingsEditor"),480, 500));
         miscContainer.add(settingsButton, "wrap");
 
+        JButton addPipelineButton = new JButton("Add stream to pipeline");
+        addPipelineButton.addActionListener(e -> studio.data().addAndConfigureProcessor(plugin));
+        miscContainer.add(addPipelineButton,"wrap");
+
         this.add(miscContainer, "grow");
         // -- end misc container --
 
@@ -159,16 +162,12 @@ public class MicrosceneryStreamFrame extends JFrame {
                 return null;
             });
         }
+    }
 
-        this.addHierarchyListener(e -> {
-            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
-                // if any component is not displayed this container is likely going down
-                if (!stopAndHelpPanel.isDisplayable()) {
-                    // detach listener gracefully otherwise there will be errors
-                    eventListener.close();
-                }
-            }
-        });
+    @Override
+    public void dispose() {
+        eventListener.close();
+        super.dispose();
     }
 
     private Unit updateLabels(RemoteMicroscopeSignal signal) {
@@ -207,5 +206,20 @@ public class MicrosceneryStreamFrame extends JFrame {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void showGUI() {
+        setVisible(true);
+    }
+
+    @Override
+    public void cleanup() {
+        dispose();
+    }
+
+    @Override
+    public PropertyMap getSettings() {
+        return PropertyMaps.builder().build();
     }
 }
