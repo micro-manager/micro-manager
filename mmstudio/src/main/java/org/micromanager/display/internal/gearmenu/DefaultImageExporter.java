@@ -236,7 +236,9 @@ public final class DefaultImageExporter implements ImageExporter {
                currentImage_ = new BufferedImage(canvasSize.width,
                      canvasSize.height, BufferedImage.TYPE_INT_RGB);
                currentGraphics_ = currentImage_.getGraphics();
+               dc.getUIController().getIJImageCanvas().hideZoomIndicator(true);
                dc.getUIController().getIJImageCanvas().paint(currentGraphics_);
+               dc.getUIController().getIJImageCanvas().hideZoomIndicator(false);
 
                // Display just finished painting to currentGraphics_, so export
                // now.
