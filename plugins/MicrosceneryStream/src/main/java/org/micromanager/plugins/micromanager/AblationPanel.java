@@ -54,6 +54,16 @@ public class AblationPanel extends JPanel {
         title = BorderFactory.createTitledBorder("Photomanipulation");
         this.setBorder(title);
 
+        this.add(new JLabel("Shutter:"));
+        JComboBox<String> shutterComboBox = new JComboBox<>( studio.shutter().getShutterDevices().toArray(new String[0]));
+        shutterComboBox.addActionListener(e -> {
+            @SuppressWarnings("unchecked") JComboBox<String> cb = (JComboBox<String>)e.getSource();
+            String name = (String)cb.getSelectedItem();
+            assert name != null;
+            msSettings.set("Ablation.Shutter",name);
+        });
+        this.add(shutterComboBox, "wrap");
+
         this.add(new JLabel("Total Time(ms):"));
         this.add(totalTimeLabel,"wrap");
         this.add(new JLabel("mean time per point(ms):"));

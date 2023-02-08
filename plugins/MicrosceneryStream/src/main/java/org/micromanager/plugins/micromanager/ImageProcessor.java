@@ -20,13 +20,19 @@ public class ImageProcessor implements Processor {
     @Override
     public void processImage(Image image, ProcessorContext context) {
         Metadata meta = image.getMetadata();
+
+        String cam = mmContext.msSettings.get("Stream.Camera","any");
+        if (!cam.equals("any") && !image.getMetadata().getCamera().equals(cam)){
+            context.outputImage(image);
+            return;
+        }
+
         Vector3f pos = new Vector3f(
                 meta.getXPositionUm().floatValue(),
                 meta.getYPositionUm().floatValue(),
                 meta.getZPositionUm().floatValue());
 
-        ByteBuffer buf = MemoryUtil.memAlloc(
-                mmContext.micromanagerWrapper.hardwareDimensions().getByteSize());
+        ByteBuffer buf = MemoryUtil.memAlloc(image.getWidth()*image.getHeight()*image.getBytesPerPixel());
         buf.order(ByteOrder.LITTLE_ENDIAN);
         switch (image.getBytesPerPixel() ){
             case 1:

@@ -22,13 +22,12 @@ package org.micromanager.plugins.micromanager;
 
 import fromScenery.Settings;
 import kotlin.Unit;
-import microscenery.Util;
 import microscenery.hardware.micromanagerConnection.MMConnection;
 import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
 import microscenery.network.ControlSignalsClient;
 import microscenery.network.RemoteMicroscopeServer;
-import microscenery.network.SliceStorage;
 import microscenery.signals.*;
+import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
 import org.joml.Vector2i;
 import org.micromanager.PropertyMap;
@@ -36,10 +35,11 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.internal.utils.WindowPositioning;
-import org.zeromq.ZContext;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
@@ -109,13 +109,15 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
         });
         miscContainer.add(vertexSizeText, "wrap");
 
-        miscContainer.add(new JLabel("Ablation Shutter:"));
-        JComboBox<String> shutterComboBox = new JComboBox<>( studio.shutter().getShutterDevices().toArray(new String[0]));
+        miscContainer.add(new JLabel("Stream camera:"));
+        ArrayList<String> camSelectionValues = new ArrayList<>(Arrays.asList(studio.core().getLoadedDevicesOfType(DeviceType.CameraDevice).toArray()));
+        camSelectionValues.add(0,"any");
+        JComboBox<String> shutterComboBox = new JComboBox<>( camSelectionValues.toArray(new String[0]));
         shutterComboBox.addActionListener(e -> {
             @SuppressWarnings("unchecked") JComboBox<String> cb = (JComboBox<String>)e.getSource();
             String name = (String)cb.getSelectedItem();
             assert name != null;
-            msSettings.set("Ablation.Shutter",name);
+            msSettings.set("Stream.Camera",name);
         });
         miscContainer.add(shutterComboBox, "wrap");
 
