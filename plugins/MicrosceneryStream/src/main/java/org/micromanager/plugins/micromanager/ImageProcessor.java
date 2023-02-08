@@ -28,8 +28,16 @@ public class ImageProcessor implements Processor {
         ByteBuffer buf = MemoryUtil.memAlloc(
                 mmContext.micromanagerWrapper.hardwareDimensions().getByteSize());
         buf.order(ByteOrder.LITTLE_ENDIAN);
-        short[] sa = (short[]) image.getRawPixels();
-        buf.asShortBuffer().put(sa);
+        switch (image.getBytesPerPixel() ){
+            case 1:
+                buf.put((byte[]) image.getRawPixels());
+                buf.flip();
+                break;
+            case 2:
+                short[] sa = (short[]) image.getRawPixels();
+                buf.asShortBuffer().put(sa);
+                break;
+        }
 
         mmContext.micromanagerWrapper.externalSnap(pos,buf);
 
