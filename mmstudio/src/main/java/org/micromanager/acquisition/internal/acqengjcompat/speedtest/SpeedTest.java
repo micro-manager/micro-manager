@@ -19,7 +19,7 @@ public class SpeedTest  {
    private ArrayList<long[]> imageData = new ArrayList<>();
    private long startTime = System.currentTimeMillis();
 
-   public static void runSpeedTest(String dir, String name,
+   public static String runSpeedTest(String dir, String name,
                                    CMMCore core_, int numTimePoints, boolean showViewer ) {
       try {
          if (core_.hasProperty("Camera", "FastImage")) {
@@ -94,9 +94,12 @@ public class SpeedTest  {
                (int) (core_.getImageHeight() * core_.getImageWidth() * core_.getBytesPerPixel())
          );
          acquisition.checkForExceptions();
+         return ndTiffAndViewerAdapter.getDiskLocation() + "/"
+               + ndTiffAndViewerAdapter.getStorage().getUniqueAcqName();
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
+
    }
 
    private static Iterator<AcquisitionEvent> createSpeedTestEvents(Acquisition a, int numTimePoints) {
