@@ -1,38 +1,33 @@
-package org.micromanager.acquisition.internal.acqengjcompat.speedtest;/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+package org.micromanager.acquisition.internal.acqengjcompat.speedtest;
 
 import java.util.HashMap;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.api.DataSink;
-import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.internal.Engine;
-import org.micromanager.ndtiffstorage.NDTiffStorage;
+import org.micromanager.acqj.main.AcqEngMetadata;
+import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
+import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.DataSourceInterface;
+import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 import org.micromanager.ndviewer.api.ViewerInterface;
 import org.micromanager.ndviewer.main.NDViewer;
-import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
 /**
  * The class is the glue needed in order for AcqEngJ, NDViwer, and NDTiff
  * to be able to be used together, since they are independent libraries that do not know about one
- * another. It implements the Acquisition engine API for a {@link DataSink} interface, dispatching acquired images
- * to viewer and storage as appropriate. It implements NDviewer's {@link DataSourceInterface}, so
- * that images in storage can be requested by the viewer for display. Each time it recieves an image
- * it will pass it to storage and alert the display that a new image has arrived
- *
- * There are analagous classes to this one in Micro-Magellan (MagellanDatasetAndAcquisition) and
- * the Java side of pycro-manger (RemoteViewerStorageAdapter)
+ * another. It implements the Acquisition engine API for a {@link DataSink} interface, dispatching
+ * acquired images to viewer and storage as appropriate. It implements NDviewer's
+ * {@link DataSourceInterface}, so that images in storage can be requested by the viewer for
+ * display. Each time it recieves an image it will pass it to storage and alert the display that
+ * a new image has arrived. There are analogous classes to this one in Micro-Magellan
+ * (MagellanDatasetAndAcquisition) and the Java side of pycro-manger (RemoteViewerStorageAdapter).
  *
  * @author henrypinkard
  */
@@ -44,7 +39,8 @@ public class NDTiffAndViewerAdapter implements DataSourceInterface, DataSink {
    private volatile Acquisition acq_;
    private volatile MultiresNDTiffAPI storage_;
 
-   private final boolean showViewer_, storeData_;
+   private final boolean showViewer_;
+   private final boolean storeData_;
    private String dir_;
    private String name_;
    private int savingQueueSize_;
@@ -126,10 +122,11 @@ public class NDTiffAndViewerAdapter implements DataSourceInterface, DataSink {
       };
 
       viewer_ = new NDViewer(this, vai,
-            summaryMetadata, AcqEngMetadata.getPixelSizeUm(summaryMetadata), AcqEngMetadata.isRGB(summaryMetadata));
+            summaryMetadata, AcqEngMetadata.getPixelSizeUm(summaryMetadata),
+            AcqEngMetadata.isRGB(summaryMetadata));
 
       viewer_.setWindowTitle(name_ + (acq_ != null
-            ? (acq_.areEventsFinished()? " (Finished)" : " (Running)") : " (Loaded)"));
+            ? (acq_.areEventsFinished() ? " (Finished)" : " (Running)") : " (Loaded)"));
       //add functions so display knows how to parse time and z infomration from image tags
       viewer_.setReadTimeMetadataFunction(AcqEngMetadata::getElapsedTimeMs);
       viewer_.setReadZMetadataFunction(AcqEngMetadata::getStageZIntended);
@@ -165,7 +162,7 @@ public class NDTiffAndViewerAdapter implements DataSourceInterface, DataSink {
 
    @Override
    public TaggedImage getImageForDisplay(HashMap<String, Object> axes, int resolutionindex,
-                                         double xOffset, double yOffset, int imageWidth, int imageHeight) {
+                      double xOffset, double yOffset, int imageWidth, int imageHeight) {
 
       return storage_.getDisplayImage(
             axes, resolutionindex, (int) xOffset, (int) yOffset,

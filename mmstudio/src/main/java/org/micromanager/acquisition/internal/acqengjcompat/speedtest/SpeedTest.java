@@ -1,4 +1,5 @@
 package org.micromanager.acquisition.internal.acqengjcompat.speedtest;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,20 +21,20 @@ public class SpeedTest  {
    private long startTime = System.currentTimeMillis();
 
    public static String runSpeedTest(String dir, String name,
-                                   CMMCore core_, int numTimePoints, boolean showViewer ) {
+                                   CMMCore core, int numTimePoints, boolean showViewer) {
       try {
-         if (core_.hasProperty("Camera", "FastImage")) {
+         if (core.hasProperty("Camera", "FastImage")) {
             // demo camera
-            core_.setProperty("Camera", "FastImage", false);
-            core_.snapImage();
-            core_.setProperty("Camera", "FastImage", true);
+            core.setProperty("Camera", "FastImage", false);
+            core.snapImage();
+            core.setProperty("Camera", "FastImage", true);
 
 
             // so that the capicty is reported correctly
-            core_.clearCircularBuffer();
-            core_.initializeCircularBuffer();
-            core_.startContinuousSequenceAcquisition(0);
-            core_.stopSequenceAcquisition();
+            core.clearCircularBuffer();
+            core.initializeCircularBuffer();
+            core.startContinuousSequenceAcquisition(0);
+            core.stopSequenceAcquisition();
          }
 
          NDTiffAndViewerAdapter ndTiffAndViewerAdapter = new NDTiffAndViewerAdapter(showViewer,
@@ -43,7 +44,7 @@ public class SpeedTest  {
          Acquisition acquisition = new Acquisition(ndTiffAndViewerAdapter);
 
 
-         SpeedTest speedTest = new SpeedTest(core_.getBufferTotalCapacity(),
+         SpeedTest speedTest = new SpeedTest(core.getBufferTotalCapacity(),
                acquisition.getImageTransferQueueSize(),
                ndTiffAndViewerAdapter.getStorage().getWritingQueueTaskMaxSize());
 
@@ -64,13 +65,13 @@ public class SpeedTest  {
 
 
          acquisition.start();
-         long start = System.currentTimeMillis();
+         final long start = System.currentTimeMillis();
 
          acquisition.submitEventIterator(createSpeedTestEvents(acquisition, numTimePoints));
          acquisition.finish();
 
          while (!acquisition.areEventsFinished()) {
-            int bufferFreeCapacity = core_.getBufferTotalCapacity() - core_.getBufferFreeCapacity();
+            int bufferFreeCapacity = core.getBufferTotalCapacity() - core.getBufferFreeCapacity();
             int acqEngQueueCount = acquisition.getImageTransferQueueCount();
             int writingTaskCount = ndTiffAndViewerAdapter.getStorage().getWritingQueueTaskSize();
             speedTest.logStatus(System.currentTimeMillis(), bufferFreeCapacity,
@@ -91,7 +92,7 @@ public class SpeedTest  {
                      + ndTiffAndViewerAdapter.getStorage().getUniqueAcqName() + "_queues.csv",
                ndTiffAndViewerAdapter.getDiskLocation() + "/"
                      + ndTiffAndViewerAdapter.getStorage().getUniqueAcqName() + "_image_data.csv",
-               (int) (core_.getImageHeight() * core_.getImageWidth() * core_.getBytesPerPixel())
+               (int) (core.getImageHeight() * core.getImageWidth() * core.getBytesPerPixel())
          );
          acquisition.checkForExceptions();
          return ndTiffAndViewerAdapter.getDiskLocation() + "/"
@@ -102,7 +103,8 @@ public class SpeedTest  {
 
    }
 
-   private static Iterator<AcquisitionEvent> createSpeedTestEvents(Acquisition a, int numTimePoints) {
+   private static Iterator<AcquisitionEvent> createSpeedTestEvents(Acquisition a,
+                                                                   int numTimePoints) {
       AcquisitionEvent baseEvent = new AcquisitionEvent(a);
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
             = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
@@ -110,38 +112,40 @@ public class SpeedTest  {
       return new AcquisitionEventIterator(baseEvent, acqFunctions);
    }
 
-   private SpeedTest(int circBufferSizeMax, int acqEngOutputQueueSize, int writingTaskQueueSizeMax) {
+   private SpeedTest(int circBufferSizeMax, int acqEngOutputQueueSize,
+                     int writingTaskQueueSizeMax) {
       queueData.add(new int[]{circBufferSizeMax, acqEngOutputQueueSize, writingTaskQueueSizeMax});
    }
 
-    private void logStatus(long time, int circularBuffer, int acqEngOutput, int writingTask){
-       queueData.add(new int[]{(int) (time - startTime), circularBuffer, acqEngOutput, writingTask});
-    }
+   private void logStatus(long time, int circularBuffer, int acqEngOutput, int writingTask) {
+      queueData.add(new int[]{(int) (time - startTime), circularBuffer, acqEngOutput,
+            writingTask});
+   }
 
-    private void save(String queuePath, String dataPath, int bytesPerImage) throws IOException {
-       File csvFile = new File(queuePath);
-       FileWriter fileWriter = new FileWriter(csvFile);
+   private void save(String queuePath, String dataPath, int bytesPerImage) throws IOException {
+      File csvFile = new File(queuePath);
+      FileWriter fileWriter = new FileWriter(csvFile);
 
-       //write header line here if you need.
+      //write header line here if you need.
 
-       int[] max = queueData.remove(0);
-       fileWriter.write("," + max[0] + "," + max[1] + "," + max[2] + "\n");
+      int[] max = queueData.remove(0);
+      fileWriter.write("," + max[0] + "," + max[1] + "," + max[2] + "\n");
 
-       for (int[] line : queueData) {
-          fileWriter.write(line[0] + "," + line[1] + "," + line[2] + "," + line[3] + "\n");
-       }
-       fileWriter.close();
+      for (int[] line : queueData) {
+         fileWriter.write(line[0] + "," + line[1] + "," + line[2] + "," + line[3] + "\n");
+      }
+      fileWriter.close();
 
 
-       csvFile = new File(dataPath);
-       fileWriter = new FileWriter(csvFile);
+      csvFile = new File(dataPath);
+      fileWriter = new FileWriter(csvFile);
 
-       for (long[] line : imageData) {
-          fileWriter.write(line[0] + "," + (bytesPerImage * line[1]) + "\n");
-       }
-       fileWriter.close();
+      for (long[] line : imageData) {
+         fileWriter.write(line[0] + "," + (bytesPerImage * line[1]) + "\n");
+      }
+      fileWriter.close();
 
-    }
+   }
 
 
    private void imageWritten(int count) {
