@@ -16,7 +16,7 @@ A community member can become a contributor by interacting directly with the pro
 * proposing a change to the code via a GitHub pull request;
 * reporting issues on our GitHub issues page;
 * proposing a change to the documentation or website via a GitHub pull request;
-* Asking and answering usage questions on image.sc
+* Asking and answering usage questions on [image.sc](https://forum.image.sc/tag/micro-manager)
 * discussing the design of the website, software, and APIs in existing issues and pull requests
 * reviewing open pull requests
 
@@ -25,10 +25,14 @@ among other possibilities. Any community member can become a contributor, and al
 
 ### **Core developer**
 
-Core developers are contributors that have demonstrated continued commitment to the project through ongoing contributions. They have shown they can be trusted to maintain Micro-Manager with care. Becoming a core developer allows contributors to merge approved pull requests, cast votes for and against merging a pull-request, and be involved in deciding major changes to the API, and thereby more easily carry on with their project related activities. Core developers appear as organization members on the Micro-Manager GitHub organization, and will have “owner” permissions for the Micro-Manager organization on Github. Core developers are expected to review code contributions while adhering to the core developer guide. Core developers may make changes to the governance docs that are related to development workflows (for example, the core developer guide, when to merge a pull request, etc.). However, larger changes (such as changes the Mission or voting procedures) must be done by the steering council (see below).
+Core developers are contributors that have demonstrated continued commitment to the project through ongoing contributions. They have shown they can be trusted to maintain Micro-Manager with care. Becoming a core developer allows contributors to merge approved pull requests, cast votes for and against merging a pull-request, and be involved in deciding major changes to the API, and thereby more easily carry on with their project related activities. Core developers appear as organization members on the Micro-Manager GitHub organization, and will have “owner” permissions for the Micro-Manager organization on Github. Core developers are expected to review code contributions while adhering to the core developer guide. Core developers may make changes to the governance docs that are related to development workflows (for example, the [core developer guide](https://github.com/micro-manager/micro-manager/blob/main/governance/Core%20Developer%20Guide.md), when to merge a pull request, etc.). However, larger changes (such as changes the Mission or voting procedures) must be done by the steering council (see below).
 
 New core developers can be nominated by any existing core developer. Discussion about new core developer nominations is one of the few activities that takes place on private email. The decision to invite a new core developer must be made by “lazy consensus”, meaning unanimous agreement by all responding existing core developers. Invitation must take place at least one month after initial nomination, to allow existing members time to voice any objections.[ \
 ](http://micro-manager.org)
+
+#### Inviting New Core Developers
+
+Any core member may nominate other contributors to join the core team. Nominations happen in private email communications. As of this writing, there is no hard-and-fast rule about who can be nominated; at a minimum, they should have: been part of the project for at least six months, contributed significant changes of their own, contributed to the discussion and review of others’ work, and collaborated in a way befitting our community values.
 
 
 ### **Steering council**
@@ -53,8 +57,7 @@ Micro-Manager uses a “consensus seeking” process for making decisions. The g
 Decisions are made according to the following rules:
 
 
-
 * **Minor documentation changes**, such as typo fixes, or addition / correction of a sentence require approval by a core developer _and_ no disagreement or requested changes by a core developer on the issue or pull request page (lazy consensus). Core developers are expected to give “reasonable time” to others to give their opinion on the pull request if they’re not confident others would agree.
 * **Code changes and major documentation changes** require agreement by _two_ core developers _and_ no disagreement or requested changes by a core developer on the issue or pull-request page (lazy consensus).
-* **New major versions and big picture roadmaps of MMStudio, MMCore (including its language bindings) and/or MMDevice,** require a **formal** **Micro-Manager Improvement Proposal**
-* **Changes to this governance model or Micro-Manager’s Mission and Vision** are automatically elevated to the Steering Council
+* **New major versions and big picture roadmaps of MMStudio, MMCore (including its language bindings) and/or MMDevice,** require a **formal** [**Micro-Manager Improvement Proposal**](https://github.com/henrypinkard/micro-manager/blob/main/governance/Micro-Manager%20Improvement%20Proposals.md)
+* **Changes to this governance model or Micro-Manager’s [Mission and Vision](https://github.com/henrypinkard/micro-manager/blob/main/governance/Micro-Manager%20Improvement%20Proposal%20Template.md)** are automatically elevated to the Steering Council
