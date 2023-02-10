@@ -1,23 +1,20 @@
 
 Welcome, new core developer! The core team appreciates the quality of your work, and enjoy working with you; we have therefore invited you to join us. Thank you for your numerous contributions to the project so far.
 
-This document offers guidelines for your new role. First and foremost, you should familiarize yourself with the project’s Mission and Vision. When in doubt, always refer back here.
+This document offers guidelines for your new role. First and foremost, you should familiarize yourself with the project’s [Mission and Vision](https://github.com/micro-manager/micro-manager/blob/main/governance/Micro-Manager%20Improvement%20Proposal%20Template.md). When in doubt, always refer back here.
 
 As a core team member, you gain the responsibility of shepherding other contributors through the review process; here are some guidelines.
 
 
 ## **All Contributors Are Treated The Same**
 
-You now have the ability to push changes directly to the main branch, but should never do so; 
-
-As a core contributor, you gain the ability to merge or approve other contributors’ pull requests. 
-
+As a core contributor, you gain the ability to merge or approve your other contributors’ pull requests. These guidlines for doing this are: 
 
 
 * Minor changes that are likely uncontroversial: merge as you see fit, no need to wait
 * Major changes: 2 core devs (one of which may be the author of the PR) must sign off
 
-There are no definitive criteria for what constitutes a “Major change” or “Minor change”. It may also change depending on what repository the contribution is in: for example, a change to a single device adapter is more likely to be considered minor than a change to MMDevice API. Developers are encouraged to ask each other what is okay to merge without review and what isn’t, in order to develop a better understanding of the boundary. 
+There are no definitive criteria for what constitutes a “Major change” or “Minor change”. It may also change depending on what repository the contribution is in: for example, a change to a single device adapter is far more likely to be considered minor than a change to MMDevice API. Developers are encouraged to ask each other what is okay to merge without review and what isn’t, in order to develop a better understanding of the boundary. 
 
 
 ## **Reviewing**
@@ -31,7 +28,7 @@ Micro-Manager strongly values mentorship in code review. New users often need mo
 
 When reviewing, suggesting big picture changes to the pull request to the author is important to improve the quality of code. It is also important to try to provide as much positive feedback and encouragement as possible during the process. Encouragement is an important motivator for contributors.
 
-Other suggestions may be _nitpicky_: spelling mistakes, formatting, etc. Do not ask contributors to make these changes, and instead make the changes by[ pushing to their branch](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/committing-changes-to-a-pull-request-branch-created-from-a-fork) or using GitHub’s[ suggestion feature](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/commenting-on-a-pull-request). (The latter is preferred because it gives the contributor a choice in whether to accept the changes.)
+Other suggestions may be _nitpicky_: spelling mistakes, formatting, etc. Do not ask contributors to make these changes, and instead make the changes by [pushing to their branch](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/committing-changes-to-a-pull-request-branch-created-from-a-fork) or using GitHub’s[ suggestion feature](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/commenting-on-a-pull-request). (The latter is preferred because it gives the contributor a choice in whether to accept the changes.)
 
 Please add a note to a pull request after you push new changes; GitHub does not send out notifications for these.
 
@@ -51,14 +48,11 @@ In practice, if you are the second core developer reviewing and approving a give
 
 Sometimes, an issue must be closed that was not fully resolved. This can be for a number of reasons:
 
-
-
 * the person behind the original post has not responded to calls for clarification, and none of the core developers have been able to reproduce their issue;
 * fixing the issue is difficult, and it is deemed too niche a use case to devote sustained effort or prioritize over other issues; or
 * the use case or feature request is something that core developers feel does not belong in Micro-Manager,
 
 among others. Similarly, pull requests sometimes need to be closed without merging, because:
-
 
 
 * the pull request implements a niche feature that we consider not worth the added maintenance burden;
