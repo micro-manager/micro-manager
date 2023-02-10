@@ -5,13 +5,9 @@
 
 # **MMIP X — Template and Instructions[¶](https://scikit-image.org/docs/stable/skips/template.html#skip-x-template-and-instructions)**
 
-Author&lt;list of authors’ real names and github handles>
-
-Status&lt;Draft | Active | Accepted | Rejected | Withdrawn >
-
-Created Date
-
-Updated date
+| Author         | Status     | Created date | Updated date |
+|--------------------------|-----------|------------|-----|
+| list of authors’ real names and github handles |Draft/Active/Accepted/Rejected/Withdrawn   |  |    |
 
 
 ## **Abstract**
@@ -49,7 +45,6 @@ If there were any alternative solutions to solving the same problem, they should
 ## **Discussion**
 
 This section may just be a bullet list including links to any discussions regarding the MMIP, but could also contain additional comments about that discussion:
-
 
 
 * This includes links to discussion forum threads or relevant GitHub discussions.
