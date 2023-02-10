@@ -61,3 +61,9 @@ Decisions are made according to the following rules:
 * **Code changes and major documentation changes** require agreement by _two_ core developers _and_ no disagreement or requested changes by a core developer on the issue or pull-request page (lazy consensus).
 * **New major versions and big picture roadmaps of MMStudio, MMCore (including its language bindings) and/or MMDevice,** require a **formal** [**Micro-Manager Improvement Proposal**](https://github.com/micro-manager/micro-manager/blob/main/governance/Micro-Manager%20Improvement%20Proposals.md)
 * **Changes to this governance model or Micro-Manager’s [Mission and Vision](https://github.com/micro-manager/micro-manager/blob/main/governance/Micro-Manager%20Improvement%20Proposal%20Template.md)** are automatically elevated to the Steering Council
+
+
+
+# Copyright
+
+This document is loosely based on the [scikit-image governance document](https://scikit-image.org/docs/stable/skips/1-governance.html) and is placed in the public domain.
