@@ -92,10 +92,10 @@ To improve upon the [current limitations](https://github.com/micro-manager/mmCor
 <a id="ndbin"></a>
 #### Fast streaming to disk with `NDBin` format
 
-In addition, low-level code for streaming image data to disk at high frame rates is needed. [@edyoshikun](https://github.com/edyoshikun) has achieved this with many cameras in parallel using c++ code that writes blocks image data at a time to disk, the the block size tuned to a specific value to maximize performance. This code can be readily adapted to provide such functionality in the c++ layer of Micro-Manager. 
+In addition, low-level code for streaming image data to disk at high frame rates is needed. [@edyoshikun](https://github.com/edyoshikun) has achieved this with many cameras in parallel using c++ code that writes blocks image data at a time to disk, the the block size tuned to a specific value to maximize performance. [This code can be readily adapted to provide such functionality in the c++ layer of Micro-Manager](https://github.com/micro-manager/mmCoreAndDevices/issues/323). 
 
 
-In order to quickly integrate the reading and testing of this code into existing pipelines, a variant of NDTiff is proposed called **NDBin**. This would be essentially the same as NDTiff, allowing existing Python/Java reading code to take advantage of it. It would be almost the same format as NDTiff, only with contiguous blocks of image data instead of blocks of image data interspersed with ~100 byte TIFF headers (**TODO: open an issue describing this**).
+In order to quickly integrate the reading and testing of this code into existing pipelines, a variant of NDTiff is proposed called **NDBin**. This would be essentially the same as NDTiff, allowing existing Python/Java reading code to take advantage of it. It would be almost the same format as NDTiff, only with contiguous blocks of image data instead of blocks of image data interspersed with ~100 byte TIFF headers.
 
 
 
@@ -141,7 +141,7 @@ Micro-Manager currently has two official Python entry points: Pymmcore and Pycro
 
 Much of the heavy lifting of Pycro-Manager's acquistion system is done through Java libraries: [AcqEngJ](https://github.com/micro-manager/AcqEngJ), [NDTiffStorage](https://github.com/henrypinkard/NDTiffStorage), and [NDViewer](https://github.com/micro-manager/NDViewer). Building a pure Python backend would require developing alternatives to each of these. NDViewer is the easiest to replace, since Pycro-Manager can already be used with a napari-based viewer. With the implementation of the [NDBin](#ndbin) format in the c++ layers, this format will be able to be written by either Python or Java. This leaves the need for a pure Python acquisition engine.
 
-The easiest and most straightforward way to do this is by making an `AcqEngPy` that is identical in its API and functionality to `AcqEngJ`. This could be created sooner by accessing devices through pymmcore, or it could wait to route throught the newer [MMKernel](#mmkernel) API. It could reuse all the same automated tests as AcqEngJ does (in the pycro-manager repository), thus ensuring it could quickly become stable and usable. And by initially developing using experimental functions outside the API it could be a very useful prototyping tool for new acquisition engine abstractions.
+The easiest and most straightforward way to do this is by [making an `AcqEngPy` that is identical in its API and functionality to `AcqEngJ`](https://github.com/micro-manager/pycro-manager/issues/552). This could be created sooner by accessing devices through pymmcore, or it could wait to route throught the newer [MMKernel](#mmkernel) API. It could reuse all the same automated tests as AcqEngJ does (in the pycro-manager repository), thus ensuring it could quickly become stable and usable. And by initially developing using experimental functions outside the API it could be a very useful prototyping tool for new acquisition engine abstractions.
 
 
 
@@ -181,7 +181,7 @@ Completion of this work in the device layer will then open the possibility of fa
 
 <!-- This section lists the major steps required to implement the MMIP. Where possible, it should be noted where one step is dependent on another, and which steps may be optionally omitted. Where it makes sense, each step should include a link related pull requests as the implementation progresses. -->
 
-General principles for implementation of this roadmap:
+#### General principles for implementation of this roadmap:
 
 - Start at the lowest levels of the software and build upwards
 - Prioritize features that can be merged sooner rather than later and yield short term benefits
@@ -189,16 +189,14 @@ General principles for implementation of this roadmap:
 - One feature per a branch; if multiple features depend on one another, make branches of a branch
 
 
-
+#### Subprojects
 
 - [ ] [New image buffer](https://github.com/micro-manager/mmCoreAndDevices/issues/244)
-- [ ] NDBin file format (**TODO make issue**)
-- [ ] MMKernel for direct device access
+- [ ] [Fast c++ layer saving with NDBin file format](https://github.com/micro-manager/mmCoreAndDevices/issues/323)
 
-- [ ] Python acquisition engine (AcqEngPy)
-
+- [ ] MMKernel for direct device access (TODO make issue)
+- [ ] [Python acquisition engine (AcqEngPy)](https://github.com/micro-manager/pycro-manager/issues/552)
 - [ ] [Acquisition protocols](https://github.com/micro-manager/micro-manager/issues/1524)
-
 - [ ] Expand Device APIs
 - [ ] [Camera API](https://github.com/micro-manager/mmCoreAndDevices/issues/243)
 - [ ] Signalling API
