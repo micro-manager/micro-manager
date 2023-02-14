@@ -79,8 +79,10 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
 
         // -- misc container --
         JPanel miscContainer = new JPanel(new MigLayout());
-        miscContainer.add(new JLabel("Version: abl shutter"), "wrap");
         miscContainer.setBorder(BorderFactory.createTitledBorder("General"));
+
+        miscContainer.add(new JLabel("Version:"));
+        miscContainer.add(new JLabel("abl img"), "wrap");
 
         miscContainer.add(new JLabel("Status: "));
         statusLabel_ = new JLabel("uninitalized");
@@ -121,7 +123,7 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
         });
         miscContainer.add(shutterComboBox, "wrap");
 
-        JCheckBox watchStagePosCheckbox = new JCheckBox("Watch stage position", true);
+        JCheckBox watchStagePosCheckbox = new JCheckBox("Stream stage position", true);
         watchStagePosCheckbox.addChangeListener(e -> eventListener.listenToStage = watchStagePosCheckbox.isSelected());
         miscContainer.add(watchStagePosCheckbox,"wrap");
 
@@ -131,7 +133,7 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
 
         JButton addPipelineButton = new JButton("Add stream to pipeline");
         addPipelineButton.addActionListener(e -> studio.data().addAndConfigureProcessor(plugin));
-        miscContainer.add(addPipelineButton,"wrap");
+        miscContainer.add(addPipelineButton, " wrap");
 
         this.add(miscContainer, "grow");
         // -- end misc container --

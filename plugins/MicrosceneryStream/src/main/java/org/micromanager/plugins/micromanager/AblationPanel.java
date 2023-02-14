@@ -40,13 +40,7 @@ public class AblationPanel extends JPanel {
 
         Settings msSettings = Util.getMicroscenerySettings();
 
-        Util.setVector3fIfUnset(msSettings, "Ablation.precision",new Vector3f(1f));
-        msSettings.set("Ablation.dwellTimeMillis", 0L);
-        msSettings.set("Ablation.laserPower", 0f);
-        // count time it takes to move towards next point to that points dwell time
-        msSettings.set("Ablation.CountMoveTime", true);
-        msSettings.set("Ablation.PauseLaserOnMove", false);
-        msSettings.set("Ablation.dryRun", true);
+        Ablation.initAblationSettings();
 
         this.setLayout(new MigLayout());
 
@@ -122,10 +116,20 @@ public class AblationPanel extends JPanel {
             PointRoi newPoly = new PointRoi(newX, newY, newX.length);
             img.setOverlay(newPoly, Color.YELLOW, 3,null);
 
+            // -- transform to stage space --
+
             // assuming the laser points to the middle of the image
             imgMidX = img.getWidth() /2;
             imgMidY = img.getHeight()/2;
-            plannedCut = samplePointsIS;
+            Vector3f offset = this.mmCon.getStagePosition();
+            offset.x -= imgMidX * pixelSize;
+            offset.y -= imgMidY * pixelSize;
+
+            plannedCut = samplePointsIS.stream().map(vec -> {
+                // z is 0 therefore mul is ok
+                vec.mul((float) pixelSize);
+                return vec.add(offset);
+            }).collect(Collectors.toList());
         });
         this.add(planButton, "");
 
@@ -135,29 +139,10 @@ public class AblationPanel extends JPanel {
                 this.studio.alerts().postAlert("Missing ablation plan", null, "Please plan a ablation path first");
                 return;
             }
-
-            double pixelSize = this.studio.core().getPixelSizeUm();
-
-            Vector3f offset = this.mmCon.getStagePosition();
-            offset.x += imgMidX * pixelSize;
-            offset.y += imgMidY * pixelSize; //todo: or minus?
-
-            List<Vector3f> pathInStageSpace = plannedCut.stream().map(vec -> vec.add(offset)).collect(Collectors.toList());
-
-            mmWrapper.setStagePosition(pathInStageSpace.get(0));
-
-            mmWrapper.ablatePoints(new ClientSignal.AblationPoints(
-                    pathInStageSpace.stream().map(vec -> new ClientSignal.AblationPoint(
-                            vec,
-                            0,
-                            pathInStageSpace.get(0).equals(vec),
-                            pathInStageSpace.get(pathInStageSpace.size()-1).equals(vec),
-                            0,
-                            false
-                    )).collect(Collectors.toList())
-            ));
-
-
+            Ablation.executeAblationCommandSequence(
+                    mmWrapper,
+                    Ablation.buildLaserPath(plannedCut)
+            );
         });
         this.add(executeBut, "wrap");
     }
