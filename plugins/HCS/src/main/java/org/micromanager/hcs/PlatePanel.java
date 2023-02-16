@@ -272,7 +272,7 @@ public class PlatePanel extends JPanel {
             //wait for the stage to stop moving before updating the gui.
             app_.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
             xyStagePos_ = app_.getCMMCore().getXYStagePosition();
-            zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
+            zStagePos_ = app_.getCMMCore().getPosition(gui_.getZStageName());
             gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
             refreshStagePosition();
             repaint();
@@ -769,7 +769,7 @@ public class PlatePanel extends JPanel {
       if (app_ != null) {
          try {
             xyStagePos_ = app_.getCMMCore().getXYStagePosition();
-            zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
+            zStagePos_ = app_.getCMMCore().getPosition(gui_.getZStageName());
          } catch (Exception e) {
             throw new HCSException(e);
          }

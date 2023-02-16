@@ -14,6 +14,8 @@ public interface ParentPlateGUI {
 
    String getXYStageName();
 
+   String getZStageName();
+
    boolean useThreePtAF();
 
    PositionList getThreePointList();
