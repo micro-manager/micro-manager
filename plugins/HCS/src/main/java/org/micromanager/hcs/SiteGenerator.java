@@ -777,6 +777,21 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       }
    }
 
+   /**
+    * Returns the Z stage in use by the HCS plugin.
+    * If a 3 point calibration has been carried out, it will return the
+    * Z Stage of the 3 point calibration.  Otherwise, the default Core focusdevice.
+    *
+    * @return Name of the Z stage in use by the HCS plugin.
+    */
+   @Override
+   public String getZStageName() {
+      if (useThreePtAF() && focusPlane_ != null) {
+         return focusPlane_.getZStage();
+      }
+      return studio_.core().getFocusDevice();
+   }
+
    @Override
    public void displayError(String txt) {
       if (studio_ != null) {
