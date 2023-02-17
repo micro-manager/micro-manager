@@ -22,9 +22,11 @@
 package org.micromanager.acquisition.internal.acqengjcompat;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
@@ -53,11 +55,13 @@ import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
@@ -907,7 +911,12 @@ public class AcqEngJAdapter implements AcquisitionEngine {
    public boolean abortRequest() {
       if (isAcquisitionRunning()) {
          String[] options = {"Abort", "Cancel"};
-         int result = JOptionPane.showOptionDialog(null,
+         List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) curStore_);
+         Component parentComponent = null;
+         if (displays != null && ! displays.isEmpty()) {
+            parentComponent = displays.get(0).getWindow();
+         }
+         int result = JOptionPane.showOptionDialog(parentComponent,
                "Abort current acquisition task?",
                "Micro-Manager",
                JOptionPane.DEFAULT_OPTION,
