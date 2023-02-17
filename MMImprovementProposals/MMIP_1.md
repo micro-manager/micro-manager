@@ -133,7 +133,8 @@ While doing this, there are several other changes, some of which may need to be 
 - Adding support for [array-valued properties](https://github.com/micro-manager/futureMMCore/issues/15)
     
   
-
+**TODO: Better support for threading/blocking calls**
+https://github.com/micro-manager/mmCoreAndDevices/pull/296#issuecomment-1310704453
 
 ### 3) Expanding Python functionality using `AcqEngPy`
 
