@@ -267,7 +267,8 @@ public class PlatePanel extends JPanel {
             pt = gui_.applyOffset(pt);
             app_.getCMMCore().setXYPosition(pt.x, pt.y);
             if (gui_.useThreePtAF() && gui_.getThreePointZPos(pt.x, pt.y) != null) {
-               app_.getCMMCore().setPosition(gui_.getThreePointZPos(pt.x, pt.y));
+               app_.getCMMCore().setPosition(gui_.getZStageName(),
+                     gui_.getThreePointZPos(pt.x, pt.y));
             }
             //wait for the stage to stop moving before updating the gui.
             app_.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
