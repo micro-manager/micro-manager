@@ -27,8 +27,6 @@ public class AblationPanel extends JPanel {
     private final Studio studio;
 
     private List<Vector3f> plannedCut = null;
-    private int imgMidX = 0;
-    private int imgMidY = 0;
 
     private final JLabel totalTimeLabel = new JLabel("no data");
     private final JLabel meanTimeLabel = new JLabel("no data");
@@ -41,6 +39,8 @@ public class AblationPanel extends JPanel {
         Settings msSettings = Util.getMicroscenerySettings();
 
         Ablation.initAblationSettings();
+        msSettings.set("Ablation.flipX", false);
+        msSettings.set("Ablation.flipY", false);
 
         this.setLayout(new MigLayout());
 
@@ -91,7 +91,7 @@ public class AblationPanel extends JPanel {
             Vector3f precision = Objects.requireNonNull(Util.getVector3(msSettings, "Ablation.precision")).div((float) pixelSize);
 
             // points to sample in image space
-            java.util.List<Vector3f> samplePointsIS = new ArrayList<>();
+            List<Vector3f> samplePointsIS = new ArrayList<>();
             Vector3f prev = null;
             for(int i = 0; i < polygon.npoints; i++){
                 double x = xa[i];
@@ -117,18 +117,27 @@ public class AblationPanel extends JPanel {
             img.setOverlay(newPoly, Color.YELLOW, 3,null);
 
             // -- transform to stage space --
+            int imgMidX = img.getWidth() / 2;
+            int imgMidY = img.getHeight() / 2;
+            Vector3f stagePos = this.mmCon.getStagePosition();
 
-            // assuming the laser points to the middle of the image
-            imgMidX = img.getWidth() /2;
-            imgMidY = img.getHeight()/2;
-            Vector3f offset = this.mmCon.getStagePosition();
-            offset.x -= imgMidX * pixelSize;
-            offset.y -= imgMidY * pixelSize;
+            plannedCut = samplePointsIS.stream().peek(vec -> {
+                // assuming the laser points to the middle of the image and center of stage
+                // move path "center from middle of image to origin
+                vec.x -= imgMidX;
+                vec.y -= imgMidY;
 
-            plannedCut = samplePointsIS.stream().map(vec -> {
+                if (msSettings.get("Ablation.flipX", false)){
+                    vec.x = vec.x *-1;
+                }
+                if (msSettings.get("Ablation.flipY", false)){
+                    vec.y = vec.y *-1;
+                }
+                // transform to stage space
                 // z is 0 therefore mul is ok
                 vec.mul((float) pixelSize);
-                return vec.add(offset);
+                // move origin relative to current stage position (should be the same as position of the image)
+                vec.add(stagePos);
             }).collect(Collectors.toList());
         });
         this.add(planButton, "");
