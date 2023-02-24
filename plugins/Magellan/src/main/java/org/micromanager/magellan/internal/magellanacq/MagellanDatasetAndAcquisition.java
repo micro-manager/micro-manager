@@ -65,6 +65,7 @@ import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.DataSourceInterface;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
+import org.micromanager.ndviewer.api.ViewerInterface;
 import org.micromanager.ndviewer.overlay.Overlay;
 
 /**
@@ -116,6 +117,13 @@ public class MagellanDatasetAndAcquisition implements DataSink, DataSourceInterf
       showDisplay_ = true;
       summaryMetadata_ = storage_.getSummaryMetadata();
       createDisplay();
+   }
+
+   /**
+    * Called by python side
+    */
+   public ViewerInterface getViewer() {
+      return display_;
    }
 
    public void initialize(Acquisition acq, JSONObject summaryMetadata) {

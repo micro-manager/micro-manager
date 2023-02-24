@@ -6,6 +6,7 @@ import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.xytiling.PixelStageTranslator;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
+import org.micromanager.ndviewer.api.ViewerInterface;
 
 /**
  * Functions shared by magellan acquistions
@@ -31,5 +32,10 @@ public interface MagellanAcquisition extends ViewerAcquisitionInterface, XYTiled
    MagellanGenericAcquisitionSettings getAcquisitionSettings();
 
    PixelStageTranslator getPixelStageTranslator();
+
+   /**
+    * Called by python side
+    */
+   public ViewerInterface getViewer();
 
 }
