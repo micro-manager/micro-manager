@@ -51,6 +51,7 @@ import org.micromanager.magellan.internal.channels.SingleChannelSetting;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
+import org.micromanager.ndviewer.api.ViewerInterface;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z.
@@ -80,6 +81,7 @@ public class ExploreAcquisition implements MagellanAcquisition {
    private final double zStep_;
    private int minSliceIndex_;
    private int maxSliceIndex_;
+   private ViewerInterface viewer_;
 
    private XYTiledAcquisitionAPI acq_;
 
@@ -87,6 +89,7 @@ public class ExploreAcquisition implements MagellanAcquisition {
       settings_ = settings;
       zStep_ = settings.zStep_;
       DataSink sink = new MagellanDatasetAndAcquisition(this, settings.dir_, settings.name_, true);
+      viewer_ = ((MagellanDatasetAndAcquisition)sink).getViewer();
 
       try {
          zStage_ = Magellan.getCore().getFocusDevice();
@@ -507,6 +510,11 @@ public class ExploreAcquisition implements MagellanAcquisition {
    @Override
    public PixelStageTranslator getPixelStageTranslator() {
       return acq_.getPixelStageTranslator();
+   }
+
+   @Override
+   public ViewerInterface getViewer() {
+      return viewer_;
    }
 
    //slice and row/col index of an acquisition event in the queue

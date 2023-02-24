@@ -47,6 +47,7 @@ import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
+import org.micromanager.ndviewer.api.ViewerInterface;
 
 /**
  *
@@ -621,6 +622,11 @@ public class MagellanGUIAcquisition implements MagellanAcquisition {
    @Override
    public PixelStageTranslator getPixelStageTranslator() {
       return acq_.getPixelStageTranslator();
+   }
+
+   @Override
+   public ViewerInterface getViewer() {
+      return ((MagellanDatasetAndAcquisition) getDataSink()).getViewer();
    }
 
 }
