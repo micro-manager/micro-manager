@@ -266,13 +266,22 @@ public class PlatePanel extends JPanel {
          try {
             pt = gui_.applyOffset(pt);
             app_.getCMMCore().setXYPosition(pt.x, pt.y);
-            if (gui_.useThreePtAF() && gui_.getThreePointZPos(pt.x, pt.y) != null) {
-               app_.getCMMCore().setPosition(gui_.getThreePointZPos(pt.x, pt.y));
-            }
-            //wait for the stage to stop moving before updating the gui.
+            // wait for the stage to stop moving before updating the gui.
             app_.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
+            if (gui_.useThreePtAF() && gui_.getThreePointZPos(pt.x, pt.y) != null) {
+               // This is a bit of a hack, but this is essential for the Nikon PFS
+               boolean continuousFocusOn = app_.getCMMCore().isContinuousFocusEnabled();
+               if (continuousFocusOn) {
+                  app_.getCMMCore().enableContinuousFocus(false);
+               }
+               app_.getCMMCore().setPosition(gui_.getZStageName(),
+                     gui_.getThreePointZPos(pt.x, pt.y));
+               if (continuousFocusOn) {
+                  app_.getCMMCore().enableContinuousFocus(true);
+               }
+            }
             xyStagePos_ = app_.getCMMCore().getXYStagePosition();
-            zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
+            zStagePos_ = app_.getCMMCore().getPosition(gui_.getZStageName());
             gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
             refreshStagePosition();
             repaint();
@@ -769,7 +778,7 @@ public class PlatePanel extends JPanel {
       if (app_ != null) {
          try {
             xyStagePos_ = app_.getCMMCore().getXYStagePosition();
-            zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
+            zStagePos_ = app_.getCMMCore().getPosition(gui_.getZStageName());
          } catch (Exception e) {
             throw new HCSException(e);
          }
