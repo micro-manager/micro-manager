@@ -89,7 +89,7 @@ public class ExploreAcquisition implements MagellanAcquisition {
       settings_ = settings;
       zStep_ = settings.zStep_;
       DataSink sink = new MagellanDatasetAndAcquisition(this, settings.dir_, settings.name_, true);
-      viewer_ = ((MagellanDatasetAndAcquisition)sink).getViewer();
+      viewer_ = ((MagellanDatasetAndAcquisition) sink).getViewer();
 
       try {
          zStage_ = Magellan.getCore().getFocusDevice();
