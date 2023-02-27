@@ -51,9 +51,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.micromanager.acqj.internal.Engine;
-import org.micromanager.magellan.internal.channels.ColorEditor;
-import org.micromanager.magellan.internal.channels.ColorRenderer;
-import org.micromanager.magellan.internal.magellanacq.ExploreAcqSettings;
+import org.micromanager.explore.gui.SimpleChannelTableModel;
 import org.micromanager.magellan.internal.magellanacq.LoadedAcquisitionData;
 import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
 import org.micromanager.magellan.internal.magellanacq.MagellanGUIAcquisitionSettings;
@@ -76,6 +74,11 @@ public class GUI extends javax.swing.JFrame {
    private static final Color DARK_GREEN = new Color(0, 128, 0);
    private static final Color LIGHT_GREEN = new Color(0, 200, 0);
    private static final Color DEFAULT_RADIO_BUTTON_TEXT_COLOR = new JRadioButton().getForeground();
+
+   private static final String EXPLORE_NAME_PREF = "Explore acq name";
+   private static final String EXPLORE_DIR_PREF = "Explore acq dir";
+   private static final String EXPLORE_Z_STEP = "Explore acq zStep";
+   private static final String EXPLORE_TILE_OVERLAP = "Explore tile overlap";
 
 
    private MutablePropertyMapView prefs_;
@@ -264,10 +267,14 @@ public class GUI extends javax.swing.JFrame {
 
       //load global settings     
       globalSavingDirTextField_.setText(settings_.getStoredSavingDirectory());
-      //load explore settings
-      exploreSavingNameTextField_.setText(ExploreAcqSettings.getNameFromPrefs());
-      exploreZStepSpinner_.setValue(ExploreAcqSettings.getZStepFromPrefs());
-      tileOverlapSpinner_.setValue(ExploreAcqSettings.getExploreTileOverlapFromPrefs());
+
+
+      // load explore settings
+      exploreSavingNameTextField_.setText(
+              GlobalSettings.getInstance().getStringInPrefs(EXPLORE_NAME_PREF,
+                 "Untitled Explore Acquisition"));
+      exploreZStepSpinner_.setValue( GlobalSettings.getInstance().getDoubleInPrefs(EXPLORE_Z_STEP, 1));
+      tileOverlapSpinner_.setValue(GlobalSettings.getInstance().getDoubleInPrefs(EXPLORE_TILE_OVERLAP, 0));
 
       refreshAcqControlsFromSettings();
       enableAndChangeFonts();
@@ -1461,7 +1468,7 @@ public class GUI extends javax.swing.JFrame {
 
       jScrollPane1.setFont(new Font("Tahoma", 0, 14)); // NOI18N
 
-      channelsTable_.setModel(new SimpleChannelTableModel(null, true)
+      channelsTable_.setModel(new SimpleChannelTableModel(null)
       );
       channelsTable_.getTableHeader().addMouseListener(new MouseAdapter() {
          @Override
@@ -1951,6 +1958,15 @@ public class GUI extends javax.swing.JFrame {
       String dir = globalSavingDirTextField_.getText();
       String name = exploreSavingNameTextField_.getText();
       String cGroup = (String) exploreChannelGroupCombo_.getSelectedItem();
+
+
+      //now that explore acquisition is being run, store values
+      GlobalSettings.getInstance().storeStringInPrefs(EXPLORE_DIR_PREF, dir);
+      GlobalSettings.getInstance().storeStringInPrefs(EXPLORE_NAME_PREF, name);
+      GlobalSettings.getInstance().storeDoubleInPrefs(EXPLORE_Z_STEP, zStep);
+      GlobalSettings.getInstance().storeDoubleInPrefs(EXPLORE_TILE_OVERLAP, overlap);
+
+
       MagellanAcquisitionsManager.getInstance().createExploreAcquisition(zStep, overlap, dir,
             name, cGroup, true);
    } //GEN-LAST:event_newExploreWindowButton_ActionPerformed

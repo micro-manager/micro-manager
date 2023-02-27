@@ -25,12 +25,12 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
+
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
-import org.micromanager.magellan.internal.magellanacq.ExploreAcquisition;
-import org.micromanager.magellan.internal.magellanacq.MagellanDatasetAndAcquisition;
+import org.micromanager.explore.ExploreOverlayer;
+import org.micromanager.magellan.internal.magellanacq.MagellanUIViewerStorageAdapater;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;
@@ -108,12 +108,16 @@ public class MagellanOverlayer implements OverlayerPlugin {
    private volatile boolean showSurface_ = true;
    private volatile boolean showConvexHull_ = true;
    private volatile boolean showXYFootprint_ = false;
-   private MagellanDatasetAndAcquisition manager_;
+   private MagellanUIViewerStorageAdapater viewerStorageAdapter_;
    private boolean exploreMode_;
    private boolean surfaceMode_;
+   private ExploreOverlayer exploreOverlayer_;
+   private SurfaceGridPanel surfaceGridPanel_;
 
-   public MagellanOverlayer(MagellanDatasetAndAcquisition manager) {
-      manager_ = manager;
+   public MagellanOverlayer(MagellanUIViewerStorageAdapater manager, SurfaceGridPanel surfaceGridPanel) {
+      surfaceGridPanel_ = surfaceGridPanel;
+      viewerStorageAdapter_ = manager;
+      exploreOverlayer_ = new ExploreOverlayer(manager, manager.getExploreMouseListener());
    }
 
    @Override
@@ -133,7 +137,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
       addEasyPartsOfOverlay(easyOverlay, magnification, displayImageSize,
               axes.containsKey(AcqEngMetadata.Z_AXIS)
                       ? (Integer) axes.get(AcqEngMetadata.Z_AXIS) : 0, g, viewOffset);
-      manager_.setOverlay(easyOverlay);
+      viewerStorageAdapter_.setOverlay(easyOverlay);
 
       if (surfaceMode_) {
          //    * Calculate the surface on a different thread, and block until it returns an
@@ -178,7 +182,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
                if (Thread.interrupted()) {
                   throw new InterruptedException();
                }
-               manager_.setOverlay(surfOverlay);
+               viewerStorageAdapter_.setOverlay(surfOverlay);
 
                maxMinPixPerInterpPoint = Math.min(maxMinPixPerInterpPoint,
                      surface.getMinPixelsPerInterpPoint());
@@ -212,7 +216,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
            Point2D.Double offset) {
       try {
          if (exploreMode_) {
-            addExploreToOverlay(base, magnification, g, displayImageSize);
+            exploreOverlayer_.addExploreToOverlay(base, magnification, g, displayImageSize);
             return base;
          } else if (surfaceMode_) {
             //Add in the easier to render parts of all surfaces and grids
@@ -272,59 +276,6 @@ public class MagellanOverlayer implements OverlayerPlugin {
       }
    }
 
-   private void addExploreToOverlay(Overlay overlay, double magnification, Graphics g,
-           Point2D.Double displayImageSize) {
-      Point currentMouseLocation = manager_.getMouseListener().getCurrentMouseLocation();
-      if (manager_.getMouseListener().getExploreEndTile() != null) {
-         //draw explore tiles waiting to be confirmed with a click
-         highlightTilesOnOverlay(overlay, Math.min(
-               manager_.getMouseListener().getExploreEndTile().y,
-                 manager_.getMouseListener().getExploreStartTile().y),
-                 Math.max(manager_.getMouseListener().getExploreEndTile().y,
-                         manager_.getMouseListener().getExploreStartTile().y),
-                 Math.min(manager_.getMouseListener().getExploreEndTile().x,
-                         manager_.getMouseListener().getExploreStartTile().x),
-                 Math.max(manager_.getMouseListener().getExploreEndTile().x,
-                         manager_.getMouseListener().getExploreStartTile().x),
-                 TRANSPARENT_MAGENTA, magnification);
-         addTextBox(new String[]{"Left click again to confirm acquire", "Right click to cancel"},
-               overlay, g, displayImageSize);
-      } else if (manager_.getMouseListener().getMouseDragStartPointLeft() != null) {
-         //highlight multiple tiles when mouse dragging    
-         Point dragStart = manager_.getMouseListener().getMouseDragStartPointLeft();
-         Point p2Tiles = manager_.getTileIndicesFromDisplayedPixel(currentMouseLocation.x,
-               currentMouseLocation.y);
-         Point p1Tiles = manager_.getTileIndicesFromDisplayedPixel(dragStart.x, dragStart.y);
-         highlightTilesOnOverlay(overlay, Math.min(p1Tiles.y, p2Tiles.y),
-               Math.max(p1Tiles.y, p2Tiles.y),
-               Math.min(p1Tiles.x, p2Tiles.x),
-               Math.max(p1Tiles.x, p2Tiles.x),
-               TRANSPARENT_BLUE, magnification);
-      } else if (currentMouseLocation != null) {
-         //draw single highlighted tile under mouse
-         Point coords = manager_.getTileIndicesFromDisplayedPixel(
-                 currentMouseLocation.x, currentMouseLocation.y);
-         highlightTilesOnOverlay(overlay, coords.y, coords.y, coords.x, coords.x,
-                 TRANSPARENT_BLUE, magnification); //highligth single tile
-      } else if (!manager_.anythingAcquired()) {
-
-         String[] text = {"Explore mode controls:", "",
-               "Left click or left click and drag to select tiles",
-            "Left click again to confirm", "Right click and drag to pan",
-               "+/- keys or mouse wheel to zoom in/out"};
-         addTextBox(text, overlay, g, displayImageSize);
-      }
-      //      always draw tiles waiting to be acquired
-      LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> tiles
-              = manager_.getTilesWaitingToAcquireAtVisibleSlice();
-      if (tiles != null) {
-         for (ExploreAcquisition.ExploreTileWaitingToAcquire t : tiles) {
-            highlightTilesOnOverlay(overlay, t.row, t.row, t.col, t.col,
-                  TRANSPARENT_GREEN, magnification);
-         }
-      }
-   }
-
    private void addTextBox(String[] text, Overlay overlay, Graphics g,
                            Point2D.Double displayImageSize) {
       int fontSize = 12;
@@ -361,10 +312,10 @@ public class MagellanOverlayer implements OverlayerPlugin {
          return;
       }
       for (Point3d point : newSurface.getPoints()) {
-         Point displayLocation = manager_.pixelCoordsFromStageCoords(point.x, point.y,
+         Point displayLocation = viewerStorageAdapter_.pixelCoordsFromStageCoords(point.x, point.y,
                  mag, offset);
          int displaySlice;
-         displaySlice = manager_.zCoordinateToZIndex(point.z);
+         displaySlice = viewerStorageAdapter_.zCoordinateToZIndex(point.z);
 
          if (displaySlice != zIndex) {
             continue;
@@ -379,7 +330,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
    }
 
    private Color getSurfaceGridLineColor(XYFootprint xy) {
-      if (xy == manager_.getCurrentEditableSurfaceOrGrid()) {
+      if (xy == surfaceGridPanel_.getCurrentSurfaceOrGrid()) {
          return ACTIVE_OBJECT_COLOR;
       }
       return BACKGROUND_OBJECT_COLOR;
@@ -394,7 +345,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
       Point firstPoint = null;
       for (Vector2D v : hullPoints) {
          //convert to image coords
-         Point p = manager_.pixelCoordsFromStageCoords(v.getX(), v.getY(),
+         Point p = viewerStorageAdapter_.pixelCoordsFromStageCoords(v.getX(), v.getY(),
                  mag, offset);
          if (lastPoint != null) {
             Line l = new Line(p.x, p.y, lastPoint.x, lastPoint.y);
@@ -418,19 +369,19 @@ public class MagellanOverlayer implements OverlayerPlugin {
       List<XYStagePosition> positionsXY = surface.getXYPositions();
       if (positionsXY == null) {
          if (surface.getPoints() != null && surface.getPoints().size() >= 3) {
-            manager_.setOverlay(overlay);
+            viewerStorageAdapter_.setOverlay(overlay);
          }
          return;
       }
       for (XYStagePosition pos : positionsXY) {
-         Point2D.Double[] corners = manager_.getDisplayTileCorners(pos);
-         Point corner1 = manager_.pixelCoordsFromStageCoords(corners[0].x, corners[0].y,
+         Point2D.Double[] corners = viewerStorageAdapter_.getDisplayTileCorners(pos);
+         Point corner1 = viewerStorageAdapter_.pixelCoordsFromStageCoords(corners[0].x, corners[0].y,
                  mag, offset);
-         Point corner2 = manager_.pixelCoordsFromStageCoords(corners[1].x, corners[1].y,
+         Point corner2 = viewerStorageAdapter_.pixelCoordsFromStageCoords(corners[1].x, corners[1].y,
                  mag, offset);
-         Point corner3 = manager_.pixelCoordsFromStageCoords(corners[2].x, corners[2].y,
+         Point corner3 = viewerStorageAdapter_.pixelCoordsFromStageCoords(corners[2].x, corners[2].y,
                  mag, offset);
-         Point corner4 = manager_.pixelCoordsFromStageCoords(corners[3].x, corners[3].y,
+         Point corner4 = viewerStorageAdapter_.pixelCoordsFromStageCoords(corners[3].x, corners[3].y,
                  mag, offset);
          //add lines connecting 4 corners
          final Line l1 = new Line(corner1.x, corner1.y, corner2.x, corner2.y);
@@ -455,8 +406,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
    ) throws InterruptedException {
       int width = (int) displayImageSize.x;
       int height = (int) displayImageSize.y;
-      double sliceZ = manager_.getZCoordinateOfDisplayedSlice();
-      double zStep = manager_.getZStep();
+      double sliceZ = viewerStorageAdapter_.getZCoordinateOfDisplayedSlice();
+      double zStep = viewerStorageAdapter_.getZStep();
 
       //Make numTestPoints a factor of image size for clean display of surface
       int numTestPointsX = width / displayPixPerInterpTile;
@@ -469,7 +420,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
             if (Thread.interrupted()) {
                throw new InterruptedException();
             }
-            Point2D.Double stageCoord = manager_.stageCoordsFromPixelCoords(
+            Point2D.Double stageCoord = viewerStorageAdapter_.stageCoordsFromPixelCoords(
                     (int) ((x + 0.5) * roiWidth), (int) ((y + 0.5) * roiHeight),
                      mag,  viewOffset);
             if (!interp.isInterpDefined(stageCoord.x, stageCoord.y)) {
@@ -500,11 +451,11 @@ public class MagellanOverlayer implements OverlayerPlugin {
            double magnification, Point2D.Double offset) {
       double dsTileWidth;
       double dsTileHeight;
-      dsTileWidth = manager_.getDisplayTileWidth() * magnification;
-      dsTileHeight = manager_.getDisplayTileHeight() * magnification;
+      dsTileWidth = viewerStorageAdapter_.getDisplayTileWidth() * magnification;
+      dsTileHeight = viewerStorageAdapter_.getDisplayTileHeight() * magnification;
       int roiWidth = (int) ((grid.numCols() * dsTileWidth));
       int roiHeight = (int) ((grid.numRows() * dsTileHeight));
-      Point displayCenter = manager_.pixelCoordsFromStageCoords(grid.center().x, grid.center().y,
+      Point displayCenter = viewerStorageAdapter_.pixelCoordsFromStageCoords(grid.center().x, grid.center().y,
               magnification, offset);
       Roi rectangle = new Roi(displayCenter.x - roiWidth / 2,
             displayCenter.y - roiHeight / 2, roiWidth, roiHeight);
@@ -533,10 +484,10 @@ public class MagellanOverlayer implements OverlayerPlugin {
 
    private void highlightTilesOnOverlay(Overlay base, long row1, long row2, long col1,
            long col2, Color color, double magnification) {
-      Point topLeft = manager_.getDisplayedPixel(row1, col1);
-      int width = (int) Math.round(manager_.getDisplayTileWidth()
+      Point topLeft = viewerStorageAdapter_.getDisplayedPixel(row1, col1);
+      int width = (int) Math.round(viewerStorageAdapter_.getDisplayTileWidth()
             * (col2 - col1 + 1) * magnification);
-      int height = (int) Math.round(manager_.getDisplayTileHeight()
+      int height = (int) Math.round(viewerStorageAdapter_.getDisplayTileHeight()
             * (row2 - row1 + 1) * magnification);
       Roi rect = new Roi(topLeft.x, topLeft.y, width, height);
       rect.setFillColor(color);
@@ -549,7 +500,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
 
    private void drawSurfaceInterpScaleBar(Overlay overlay, Point2D.Double displayImageSize,
                                           int zIndex, Graphics g) {
-      double zStep = manager_.getZStep();
+      double zStep = viewerStorageAdapter_.getZStep();
       String label1 = fmt(zIndex - zStep / 2) + " \u00B5m"; // U+00B5 MICRO SIGN
       String label2 = fmt(zIndex) + " \u00B5m"; // U+00B5 MICRO SIGN
       String label3 = fmt(zIndex + zStep / 2) + " \u00B5m"; // U+00B5 MICRO SIGN
@@ -609,16 +560,16 @@ public class MagellanOverlayer implements OverlayerPlugin {
 
    //put the active one last in the list so that it gets drawn on top
    private ArrayList<XYFootprint> getSurfacesAndGridsInDrawOrder() {
-      ArrayList<XYFootprint> list = manager_.getSurfacesAndGridsForDisplay();
-      if (list.contains(manager_.getCurrentEditableSurfaceOrGrid())) {
-         list.remove(manager_.getCurrentEditableSurfaceOrGrid());
-         list.add((XYFootprint) manager_.getCurrentEditableSurfaceOrGrid());
+      ArrayList<XYFootprint> list = surfaceGridPanel_.getSurfacesAndGridsForDisplay();
+      if (list.contains(surfaceGridPanel_.getCurrentSurfaceOrGrid())) {
+         list.remove(surfaceGridPanel_.getCurrentSurfaceOrGrid());
+         list.add((XYFootprint) surfaceGridPanel_.getCurrentSurfaceOrGrid());
       }
       return list;
    }
 
    public void setSurfaceGridMode(boolean b) {
       surfaceMode_ = b;
-      exploreMode_ = (!b) && manager_.isExploreAcquisition();
+      exploreMode_ = (!b) && viewerStorageAdapter_.isExploreAcquisition();
    }
 }

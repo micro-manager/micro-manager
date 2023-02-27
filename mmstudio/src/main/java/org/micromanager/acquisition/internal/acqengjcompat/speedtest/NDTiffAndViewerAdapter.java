@@ -15,8 +15,8 @@ import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 import org.micromanager.ndviewer.api.DataSourceInterface;
-import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
-import org.micromanager.ndviewer.api.ViewerInterface;
+import org.micromanager.ndviewer.api.NDViewerAcqInterface;
+import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.main.NDViewer;
 
 /**
@@ -35,7 +35,7 @@ public class NDTiffAndViewerAdapter implements DataSourceInterface, DataSink {
 
    private ExecutorService displayCommunicationExecutor_;
 
-   private volatile ViewerInterface viewer_;
+   private volatile NDViewerAPI viewer_;
    private volatile Acquisition acq_;
    private volatile MultiresNDTiffAPI storage_;
 
@@ -94,7 +94,7 @@ public class NDTiffAndViewerAdapter implements DataSourceInterface, DataSink {
             -> new Thread(r, "Image viewer communication thread"));
 
       // simple class that allows viewer to start and stop acquisition
-      ViewerAcquisitionInterface vai = new ViewerAcquisitionInterface() {
+      NDViewerAcqInterface vai = new NDViewerAcqInterface() {
          @Override
          public boolean isFinished() {
             return acq_.areEventsFinished();
@@ -106,8 +106,8 @@ public class NDTiffAndViewerAdapter implements DataSourceInterface, DataSink {
          }
 
          @Override
-         public void togglePaused() {
-            acq_.setPaused(!acq_.isPaused());
+         public void setPaused(boolean paused) {
+            acq_.setPaused(paused);
          }
 
          @Override

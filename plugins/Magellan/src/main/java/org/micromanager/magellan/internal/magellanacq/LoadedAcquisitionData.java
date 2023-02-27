@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.micromanager.explore.XYTiledAcqViewerStorageAdapater;
 import org.micromanager.magellan.internal.misc.Log;
 
 /**
@@ -30,7 +32,7 @@ public class LoadedAcquisitionData {
 
    public LoadedAcquisitionData(String dir) {
       try {
-         MagellanDatasetAndAcquisition dataManager = new MagellanDatasetAndAcquisition(dir);
+         XYTiledAcqViewerStorageAdapater dataManager = new MagellanUIViewerStorageAdapater(dir);
 
          //Iterate through all image keys and expand scrollbars to appropriate sizes
          Set<HashMap<String, Object>> axesList = dataManager.getAxesSet();

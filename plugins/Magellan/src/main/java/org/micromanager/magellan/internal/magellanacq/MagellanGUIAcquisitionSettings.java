@@ -18,7 +18,7 @@
 package org.micromanager.magellan.internal.magellanacq;
 
 import org.micromanager.magellan.api.MagellanAcquisitionSettingsAPI;
-import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
+import org.micromanager.explore.gui.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
@@ -122,6 +122,11 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       //Individual channel settings sotred in ChannelUtils
    }
 
+   public double getTimeIntervalMs() {
+      return this.timePointInterval_ * this.timeIntervalUnit_ == 1
+              ? 1000 : this.timeIntervalUnit_ == 2 ? 60000 : 1;
+   }
+
    public String toString() {
       String s = "";
       if (spaceMode_ == CUBOID_Z_STACK) {
@@ -221,6 +226,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       }
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
+
 
    public void setXYPositionSource(String surfaceOrGridName) {
       XYFootprint xy = SurfaceGridManager.getInstance().getSurfaceNamed(surfaceOrGridName);

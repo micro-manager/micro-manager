@@ -9,13 +9,14 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.micromanager.magellan.internal.coordinates.NoPositionsDefinedYetException;
-import org.micromanager.magellan.internal.magellanacq.MagellanDatasetAndAcquisition;
+import org.micromanager.magellan.internal.magellanacq.MagellanUIViewerStorageAdapater;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
 import org.micromanager.ndviewer.api.ControlsPanelInterface;
+import org.micromanager.ndviewer.main.NDViewer;
 
 /**
  *
@@ -24,15 +25,15 @@ import org.micromanager.ndviewer.api.ControlsPanelInterface;
 public class SurfaceGridPanel extends javax.swing.JPanel implements
         SurfaceGridListener, ControlsPanelInterface {
 
-   private MagellanViewer display_;
+   private NDViewer display_;
    private ListSelectionListener surfaceTableListSelectionListener_;
    private volatile int selectedSurfaceGridIndex_ = -1;
-   private MagellanDatasetAndAcquisition manager_;
+   private MagellanUIViewerStorageAdapater manager_;
 
    /**
     * Creates new form SurfaceGridPanel.
     */
-   public SurfaceGridPanel(MagellanDatasetAndAcquisition manager, MagellanViewer disp) {
+   public SurfaceGridPanel(MagellanUIViewerStorageAdapater manager, NDViewer disp) {
       manager_ = manager;
       display_ = disp;
       initComponents();
