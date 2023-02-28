@@ -11,7 +11,7 @@ This document describes a roadmap of proposed changes to Micro-Manager to modern
 ](https://github.com/micro-manager/futureMMCore), and the [2020 Janelia Software for Microscopy Workshop](https://arxiv.org/pdf/2005.00082) aimed at bringing together developers and users to plot a path forward. It includes five general areas: 
 
 1. Performance improvements to enable handling large amounts of image data (in memory and writing to disk) 
-2. A an improved API with more direct access to hardware devices and additional features
+2. An improved API with **progressive disclosure of complexity**: When high-level functionality doesn't exactly match the intended use case, direct control of hardware should be accessible while still retaining the convenience of high-level APIs.
 3. Expanding the Python-accessible features of Micro-Manager
 4. Development of a general purpose acquisition engine that is not specific to any one modality of microscopy
 5. Expanding the API of existing devices and adding new devices to make it easier to synchronize devices via hardware triggering
