@@ -70,7 +70,9 @@ CScanner::CScanner(const char* name) :
    targetSettling_(5),
    axisIndexX_(0),
    axisIndexY_(1),
-   fastCirclesOn_(false)
+   fastCirclesOn_(false),
+   dac4ch_(false),
+   signalDAC_(false)
 {
 
    // initialize these structs
@@ -358,19 +360,39 @@ int CScanner::Initialize()
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
 
-   if (hub_->IsDefinePresent(build, "DAC_4CH"))  // special galvo firmware with analog outputs
+   if (hub_->IsDefinePresent(build, "DAC_4CH"))  // special firmware with analog outputs
    {
-      // output mode
-      pAct = new CPropertyAction (this, &CScanner::OnOutputMode);
-      CreateProperty(g_ScannerOutputModePropertyName, "0", MM::String, false, pAct);
-      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_0);
-      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_1);
-      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_2);
-      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_4);
-      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_5);
-      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_6);
-      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_7);
-      UpdateProperty(g_ScannerOutputModePropertyName);
+      dac4ch_ = true;
+      if (hub_->IsDefinePresent(build, "SIGNAL_DAC"))
+      {
+         signalDAC_ = true;
+         // add output mode property, for SIGNAL_DAC a restart is required and use PR instead of PM
+         //    but the list of modes is exactly the same as with the generic DAC_4CH
+         pAct = new CPropertyAction (this, &CScanner::OnOutputMode);
+         CreateProperty(g_DACModePropertyName, "0", MM::String, false, pAct);
+         AddAllowedValue(g_DACModePropertyName, g_DACOutputMode_0);
+         AddAllowedValue(g_DACModePropertyName, g_DACOutputMode_1);
+         AddAllowedValue(g_DACModePropertyName, g_DACOutputMode_2);
+         AddAllowedValue(g_DACModePropertyName, g_DACOutputMode_4);
+         AddAllowedValue(g_DACModePropertyName, g_DACOutputMode_5);
+         AddAllowedValue(g_DACModePropertyName, g_DACOutputMode_6);
+         AddAllowedValue(g_DACModePropertyName, g_DACOutputMode_7);
+         UpdateProperty(g_DACModePropertyName);
+      }
+      else
+      {
+         // add output mode property
+         pAct = new CPropertyAction (this, &CScanner::OnOutputMode);
+         CreateProperty(g_ScannerOutputModePropertyName, "0", MM::String, false, pAct);
+         AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_0);
+         AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_1);
+         AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_2);
+         AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_4);
+         AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_5);
+         AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_6);
+         AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_7);
+         UpdateProperty(g_ScannerOutputModePropertyName);
+      }
    }
    else  // original MEMS scanner firmware
    {
@@ -1263,6 +1285,8 @@ int CScanner::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CScanner::OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // assume X axis's mode is for both, and then set mode for both axes together just like XYStage properties
+// this property should only be present when dac4ch_ is true
+// signalDAC_ tells whether we should use PM or PR command
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -1271,7 +1295,14 @@ int CScanner::OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
       ostringstream response; response.str("");
-      command << "PM " << axisLetterX_ << "?";
+      if (signalDAC_)
+      {
+         command << "PR " << axisLetterX_ << "?";
+      }
+      else
+      {
+         command << "PM " << axisLetterX_ << "?";
+      }
       response << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -1309,7 +1340,14 @@ int CScanner::OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 7;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      command << "PM " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      if (signalDAC_)
+      {
+         command << "PR " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      }
+      else
+      {
+         command << "PM " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      }
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;

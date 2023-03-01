@@ -196,6 +196,9 @@ private:
 
    bool fastCirclesOn_;
 
+   bool dac4ch_;
+   bool signalDAC_;
+
    int SetIlluminationStateHelper(bool on);
    int OnSaveJoystickSettings();
 };
