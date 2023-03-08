@@ -27,16 +27,20 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
-import org.micromanager.acqj.main.AcqEngMetadata;
+import org.micromanager.acqj.internal.Engine;
+import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
-import org.micromanager.explore.ExploreOverlayer;
-import org.micromanager.magellan.internal.magellanacq.MagellanUIViewerStorageAdapater;
+import org.micromanager.explore.ExploreAcquisition;
+import org.micromanager.explore.gui.ExploreMouseListener;
+import org.micromanager.explore.gui.ExploreOverlayer;
+import org.micromanager.magellan.internal.magellanacq.MagellanAcqUIAndStorage;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;
 import org.micromanager.magellan.internal.surfacesandregions.SingleResolutionInterpolation;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
+import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.overlay.Line;
 import org.micromanager.ndviewer.overlay.OvalRoi;
@@ -108,16 +112,20 @@ public class MagellanOverlayer implements OverlayerPlugin {
    private volatile boolean showSurface_ = true;
    private volatile boolean showConvexHull_ = true;
    private volatile boolean showXYFootprint_ = false;
-   private MagellanUIViewerStorageAdapater viewerStorageAdapter_;
-   private boolean exploreMode_;
-   private boolean surfaceMode_;
+
    private ExploreOverlayer exploreOverlayer_;
    private SurfaceGridPanel surfaceGridPanel_;
+   private XYTiledAcquisition acq_;
+   private NDViewerAPI viewer_;
 
-   public MagellanOverlayer(MagellanUIViewerStorageAdapater manager, SurfaceGridPanel surfaceGridPanel) {
+   public MagellanOverlayer(NDViewerAPI viewer, XYTiledAcquisition acq,
+                            MagellanMouseListener mouseListener, SurfaceGridPanel surfaceGridPanel) {
       surfaceGridPanel_ = surfaceGridPanel;
-      viewerStorageAdapter_ = manager;
-      exploreOverlayer_ = new ExploreOverlayer(manager, manager.getExploreMouseListener());
+      if (acq instanceof ExploreAcquisition) {
+         exploreOverlayer_ = new ExploreOverlayer(viewer, mouseListener, acq);
+      }
+      acq_ = acq;
+      viewer_ = viewer;
    }
 
    @Override
@@ -135,11 +143,12 @@ public class MagellanOverlayer implements OverlayerPlugin {
       }
       //Create a simple overlay and send it to EDT for display
       addEasyPartsOfOverlay(easyOverlay, magnification, displayImageSize,
-              axes.containsKey(AcqEngMetadata.Z_AXIS)
-                      ? (Integer) axes.get(AcqEngMetadata.Z_AXIS) : 0, g, viewOffset);
-      viewerStorageAdapter_.setOverlay(easyOverlay);
+              // TODO: picking a z like this at random may fail when multiple present
+              axes.containsKey(getZAxisName())
+                      ? (Integer) axes.get(getZAxisName()) : 0, g, viewOffset);
+      viewer_.setOverlay(easyOverlay);
 
-      if (surfaceMode_) {
+      if (surfaceGridPanel_.isActive()) {
          //    * Calculate the surface on a different thread, and block until it returns an
          //    * overlay, then add the rendering of that overlay back onto EDT.
          //start out with 10 interpolation points across the whole image 
@@ -182,7 +191,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
                if (Thread.interrupted()) {
                   throw new InterruptedException();
                }
-               viewerStorageAdapter_.setOverlay(surfOverlay);
+               viewer_.setOverlay(surfOverlay);
 
                maxMinPixPerInterpPoint = Math.min(maxMinPixPerInterpPoint,
                      surface.getMinPixelsPerInterpPoint());
@@ -197,6 +206,10 @@ public class MagellanOverlayer implements OverlayerPlugin {
             }
          }
       }
+   }
+
+   private String getZAxisName() {
+      return acq_.getZAxes().keySet().stream().findFirst().get();
    }
 
    public void setSurfaceDisplayParams(boolean surf, boolean footprint) {
@@ -215,10 +228,10 @@ public class MagellanOverlayer implements OverlayerPlugin {
            Point2D.Double displayImageSize, int zIndex, Graphics g,
            Point2D.Double offset) {
       try {
-         if (exploreMode_) {
+         if (!surfaceGridPanel_.isActive() && acq_ instanceof ExploreAcquisition) {
             exploreOverlayer_.addExploreToOverlay(base, magnification, g, displayImageSize);
             return base;
-         } else if (surfaceMode_) {
+         } else if (surfaceGridPanel_.isActive()) {
             //Add in the easier to render parts of all surfaces and grids
             ArrayList<XYFootprint> sAndg = getSurfacesAndGridsInDrawOrder();
             if (sAndg.isEmpty()) {
@@ -306,16 +319,21 @@ public class MagellanOverlayer implements OverlayerPlugin {
       }
    }
 
+   private int zCoordinateToZIndex(double z) {
+      return (int) ((z - acq_.getZOrigin(Engine.getCore().getFocusDevice()) /
+              acq_.getZOrigin(Engine.getCore().getFocusDevice())));
+   }
+
    private void addInterpPoints(SurfaceInterpolator newSurface, Overlay overlay,
            int zIndex, double mag, Point2D.Double offset) {
       if (newSurface == null) {
          return;
       }
       for (Point3d point : newSurface.getPoints()) {
-         Point displayLocation = viewerStorageAdapter_.pixelCoordsFromStageCoords(point.x, point.y,
+         Point displayLocation = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(point.x, point.y,
                  mag, offset);
          int displaySlice;
-         displaySlice = viewerStorageAdapter_.zCoordinateToZIndex(point.z);
+         displaySlice = zCoordinateToZIndex(point.z);
 
          if (displaySlice != zIndex) {
             continue;
@@ -327,6 +345,11 @@ public class MagellanOverlayer implements OverlayerPlugin {
          circle.setStrokeColor(getSurfaceGridLineColor(newSurface));
          overlay.add(circle);
       }
+   }
+
+   private double getZCoordinateOfDisplayedSlice(String name) {
+      int index = (Integer) viewer_.getAxisPosition(name);
+      return index * acq_.getZStep(Engine.getCore().getFocusDevice()) + acq_.getZOrigin(name);
    }
 
    private Color getSurfaceGridLineColor(XYFootprint xy) {
@@ -345,7 +368,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
       Point firstPoint = null;
       for (Vector2D v : hullPoints) {
          //convert to image coords
-         Point p = viewerStorageAdapter_.pixelCoordsFromStageCoords(v.getX(), v.getY(),
+         Point p = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(v.getX(), v.getY(),
                  mag, offset);
          if (lastPoint != null) {
             Line l = new Line(p.x, p.y, lastPoint.x, lastPoint.y);
@@ -369,19 +392,19 @@ public class MagellanOverlayer implements OverlayerPlugin {
       List<XYStagePosition> positionsXY = surface.getXYPositions();
       if (positionsXY == null) {
          if (surface.getPoints() != null && surface.getPoints().size() >= 3) {
-            viewerStorageAdapter_.setOverlay(overlay);
+            viewer_.setOverlay(overlay);
          }
          return;
       }
       for (XYStagePosition pos : positionsXY) {
-         Point2D.Double[] corners = viewerStorageAdapter_.getDisplayTileCorners(pos);
-         Point corner1 = viewerStorageAdapter_.pixelCoordsFromStageCoords(corners[0].x, corners[0].y,
+         Point2D.Double[] corners = acq_.getPixelStageTranslator().getDisplayTileCornerStageCoords(pos);
+         Point corner1 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(corners[0].x, corners[0].y,
                  mag, offset);
-         Point corner2 = viewerStorageAdapter_.pixelCoordsFromStageCoords(corners[1].x, corners[1].y,
+         Point corner2 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(corners[1].x, corners[1].y,
                  mag, offset);
-         Point corner3 = viewerStorageAdapter_.pixelCoordsFromStageCoords(corners[2].x, corners[2].y,
+         Point corner3 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(corners[2].x, corners[2].y,
                  mag, offset);
-         Point corner4 = viewerStorageAdapter_.pixelCoordsFromStageCoords(corners[3].x, corners[3].y,
+         Point corner4 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(corners[3].x, corners[3].y,
                  mag, offset);
          //add lines connecting 4 corners
          final Line l1 = new Line(corner1.x, corner1.y, corner2.x, corner2.y);
@@ -406,8 +429,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
    ) throws InterruptedException {
       int width = (int) displayImageSize.x;
       int height = (int) displayImageSize.y;
-      double sliceZ = viewerStorageAdapter_.getZCoordinateOfDisplayedSlice();
-      double zStep = viewerStorageAdapter_.getZStep();
+      double sliceZ = getZCoordinateOfDisplayedSlice(getZAxisName());
+      double zStep = acq_.getZStep(getZAxisName());
 
       //Make numTestPoints a factor of image size for clean display of surface
       int numTestPointsX = width / displayPixPerInterpTile;
@@ -420,7 +443,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
             if (Thread.interrupted()) {
                throw new InterruptedException();
             }
-            Point2D.Double stageCoord = viewerStorageAdapter_.stageCoordsFromPixelCoords(
+            Point2D.Double stageCoord = acq_.getPixelStageTranslator().stageCoordsFromPixelCoords(
                     (int) ((x + 0.5) * roiWidth), (int) ((y + 0.5) * roiHeight),
                      mag,  viewOffset);
             if (!interp.isInterpDefined(stageCoord.x, stageCoord.y)) {
@@ -451,11 +474,11 @@ public class MagellanOverlayer implements OverlayerPlugin {
            double magnification, Point2D.Double offset) {
       double dsTileWidth;
       double dsTileHeight;
-      dsTileWidth = viewerStorageAdapter_.getDisplayTileWidth() * magnification;
-      dsTileHeight = viewerStorageAdapter_.getDisplayTileHeight() * magnification;
+      dsTileWidth = acq_.getPixelStageTranslator().getDisplayTileWidth() * magnification;
+      dsTileHeight = acq_.getPixelStageTranslator().getDisplayTileHeight() * magnification;
       int roiWidth = (int) ((grid.numCols() * dsTileWidth));
       int roiHeight = (int) ((grid.numRows() * dsTileHeight));
-      Point displayCenter = viewerStorageAdapter_.pixelCoordsFromStageCoords(grid.center().x, grid.center().y,
+      Point displayCenter = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(grid.center().x, grid.center().y,
               magnification, offset);
       Roi rectangle = new Roi(displayCenter.x - roiWidth / 2,
             displayCenter.y - roiHeight / 2, roiWidth, roiHeight);
@@ -482,25 +505,13 @@ public class MagellanOverlayer implements OverlayerPlugin {
       return overlay;
    }
 
-   private void highlightTilesOnOverlay(Overlay base, long row1, long row2, long col1,
-           long col2, Color color, double magnification) {
-      Point topLeft = viewerStorageAdapter_.getDisplayedPixel(row1, col1);
-      int width = (int) Math.round(viewerStorageAdapter_.getDisplayTileWidth()
-            * (col2 - col1 + 1) * magnification);
-      int height = (int) Math.round(viewerStorageAdapter_.getDisplayTileHeight()
-            * (row2 - row1 + 1) * magnification);
-      Roi rect = new Roi(topLeft.x, topLeft.y, width, height);
-      rect.setFillColor(color);
-      base.add(rect);
-   }
-
    private static String fmt(double val) {
       return val == 0 ? "0" : String.format("%.1f", val);
    }
 
    private void drawSurfaceInterpScaleBar(Overlay overlay, Point2D.Double displayImageSize,
                                           int zIndex, Graphics g) {
-      double zStep = viewerStorageAdapter_.getZStep();
+      double zStep = acq_.getZStep(Engine.getCore().getFocusDevice());
       String label1 = fmt(zIndex - zStep / 2) + " \u00B5m"; // U+00B5 MICRO SIGN
       String label2 = fmt(zIndex) + " \u00B5m"; // U+00B5 MICRO SIGN
       String label3 = fmt(zIndex + zStep / 2) + " \u00B5m"; // U+00B5 MICRO SIGN
@@ -568,8 +579,4 @@ public class MagellanOverlayer implements OverlayerPlugin {
       return list;
    }
 
-   public void setSurfaceGridMode(boolean b) {
-      surfaceMode_ = b;
-      exploreMode_ = (!b) && viewerStorageAdapter_.isExploreAcquisition();
-   }
 }

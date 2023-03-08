@@ -18,8 +18,8 @@
 package org.micromanager.magellan.internal.magellanacq;
 
 import java.awt.geom.Point2D;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
@@ -27,7 +27,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.DataSink;
+import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
@@ -36,7 +36,7 @@ import org.micromanager.acqj.util.AcqEventModules;
 import org.micromanager.acqj.util.AcquisitionEventIterator;
 import org.micromanager.acqj.util.ChannelSetting;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
-import org.micromanager.explore.XYTiledAcqViewerStorageAdapater;
+import org.micromanager.acqj.internal.ZAxis;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
@@ -59,7 +59,6 @@ public class MagellanGUIAcquisition extends
    private int maxSliceIndex_;
    private List<XYStagePosition> positions_;
    private MagellanGenericAcquisitionSettings settings_;
-   private volatile boolean started_ = false;
    private String zStage_;
    protected boolean zStageHasLimits_ = false;
    protected double zStageLowerLimit_;
@@ -76,10 +75,12 @@ public class MagellanGUIAcquisition extends
     * @param settings Magellan AcquisitionSettings
     * @throws java.lang.Exception can happen
     */
-   public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings, XYTiledAcqViewerStorageAdapater adapter, boolean showDisplay) throws IOException {
+   public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings,
+                                 MagellanAcqUIAndStorage adapter, boolean showDisplay) throws Exception {
       super(adapter,
               (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100),
               (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100),
+              settings.zStep_,
               // Add metadata specific to Magellan explore
               new Consumer<JSONObject>() {
                  @Override
@@ -99,6 +100,7 @@ public class MagellanGUIAcquisition extends
       try {
          if (Magellan.getCore().getFocusDevice() != null && Magellan.getCore()
                .getFocusDevice().length() > 0) {
+            zStage_ = Magellan.getCore().getFocusDevice();
             if (Magellan.getCore().hasProperty(zStage_, positionName)) {
                zStageHasLimits_ = Magellan.getCore().hasPropertyLimits(zStage_, positionName);
                if (zStageHasLimits_) {
@@ -117,12 +119,10 @@ public class MagellanGUIAcquisition extends
               ((MagellanGUIAcquisitionSettings) settings_), zStageHasLimits_,
               zStageLowerLimit_, zStageUpperLimit_, zStage_);
 
-      DataSink sink = new MagellanUIViewerStorageAdapater(settings.dir_, settings.name_, false, null, true );
 
-      int overlapX = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
-      int overlapY = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
+//      int overlapX = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
+//      int overlapY = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
       zStage_ = Magellan.getCore().getFocusDevice();
-
 
       addImageMetadataProcessor(new Consumer<JSONObject>() {
          @Override
@@ -140,19 +140,22 @@ public class MagellanGUIAcquisition extends
       });
 
 
-      getPixelStageTranslator().setPositions(positions_);
-
       if (areEventsFinished()) {
          throw new RuntimeException("Cannot start acquisition since it has already been run");
       }
+   }
+
+   @Override
+   public void start() {
+      super.start();
       Iterator<AcquisitionEvent> acqEventIterator = buildAcqEventGenerator();
-      Engine.getInstance().submitEventIterator(acqEventIterator);
+      submitEventIterator(acqEventIterator);
       Engine.getInstance().finishAcquisition(this);
    }
 
    public NDTiffAPI getStorage() {
       return getDataSink() == null ? null
-            : ((XYTiledAcqViewerStorageAdapater) getDataSink()).getStorage();
+            : ((MagellanAcqUIAndStorage) getDataSink()).getStorage();
    }
 
    @Override
@@ -166,7 +169,7 @@ public class MagellanGUIAcquisition extends
    }
 
    public boolean isFinished() {
-      if (!started_) {
+      if (!isStarted()) {
          return false;
       }
       if (getDataSink() != null) {
@@ -189,9 +192,11 @@ public class MagellanGUIAcquisition extends
                          ? 1000 : (((MagellanGUIAcquisitionSettings) settings_)
                        .timeIntervalUnit_ == 2 ? 60000 : 1)))));
       }
-      if (positions_ != null) {
-         acqFunctions.add(AcqEventModules.positions(positions_));
-      }
+      // Always do positions because need the current stage coord?
+      createXYPositions();
+      getPixelStageTranslator().setPositions(positions_);
+
+      acqFunctions.add(AcqEventModules.positions(positions_));
 
       ArrayList<ChannelSetting> channels = new ArrayList<ChannelSetting>();
       if (settings_.channels_ != null) {
@@ -229,14 +234,8 @@ public class MagellanGUIAcquisition extends
       return new AcquisitionEventIterator(baseEvent, acqFunctions, monitorSliceIndices());
    }
 
-   @Override
-   public void start() {
-      super.start();
-      started_ = true;
-   }
-
    public void waitForCompletion() {
-      if (!started_) {
+      if (!isStarted()) {
          //it was never successfully started
          return;
       }
@@ -486,8 +485,8 @@ public class MagellanGUIAcquisition extends
 
    private void createXYPositions() {
       try {
-         //Use current stage position
          if (((MagellanGUIAcquisitionSettings) settings_).xyFootprint_ == null) {
+            //Use current stage position
             positions_ = new ArrayList<XYStagePosition>();
             positions_.add(new XYStagePosition(new Point2D.Double(
                     Magellan.getCore().getXPosition(), Magellan.getCore().getYPosition()), 0, 0));
@@ -503,6 +502,19 @@ public class MagellanGUIAcquisition extends
    }
 
    public double getZOrigin() {
+      return zOrigin_;
+   }
+
+   @Override
+   public HashMap<String, ZAxis> getZAxes() {
+      HashMap<String, ZAxis> zAxes = new HashMap<String, ZAxis>();
+      String name = Magellan.getCore().getFocusDevice();
+      zAxes.put(name, new ZAxis(name, zOrigin_, zStep_));
+      return zAxes;
+   }
+
+   @Override
+   public double getZOrigin(String name) {
       return zOrigin_;
    }
 

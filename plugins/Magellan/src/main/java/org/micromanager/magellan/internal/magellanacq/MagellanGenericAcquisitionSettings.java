@@ -2,7 +2,7 @@
 package org.micromanager.magellan.internal.magellanacq;
 
 import org.micromanager.acqj.internal.Engine;
-import org.micromanager.explore.gui.ChannelGroupSettings;
+import org.micromanager.explore.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.GUI;
 
 /**

@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.micromanager.explore.XYTiledAcqViewerStorageAdapater;
+import org.micromanager.explore.ExploreAcqUIAndStorage;
 import org.micromanager.magellan.internal.misc.Log;
 
 /**
@@ -32,7 +32,7 @@ public class LoadedAcquisitionData {
 
    public LoadedAcquisitionData(String dir) {
       try {
-         XYTiledAcqViewerStorageAdapater dataManager = new MagellanUIViewerStorageAdapater(dir);
+         MagellanAcqUIAndStorage dataManager = new MagellanAcqUIAndStorage(dir);
 
          //Iterate through all image keys and expand scrollbars to appropriate sizes
          Set<HashMap<String, Object>> axesList = dataManager.getAxesSet();

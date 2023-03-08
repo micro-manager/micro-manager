@@ -18,7 +18,7 @@
 package org.micromanager.magellan.internal.magellanacq;
 
 import org.micromanager.magellan.api.MagellanAcquisitionSettingsAPI;
-import org.micromanager.explore.gui.ChannelGroupSettings;
+import org.micromanager.explore.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;

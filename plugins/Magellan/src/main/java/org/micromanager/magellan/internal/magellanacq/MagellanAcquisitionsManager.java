@@ -32,8 +32,8 @@ import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.explore.XYTiledAcqViewerStorageAdapater;
-import org.micromanager.explore.gui.ChannelGroupSettings;
+import org.micromanager.explore.ExploreAcqUIAndStorage;
+import org.micromanager.explore.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.explore.ExploreAcquisition;
 import org.micromanager.magellan.internal.main.Magellan;
@@ -178,14 +178,17 @@ public class MagellanAcquisitionsManager {
       int yOverlap = (int) (Engine.getCore().getImageHeight() * overlap / 100.);
 
       ChannelGroupSettings channels = new ChannelGroupSettings(cGroup);
-      XYTiledAcqViewerStorageAdapater adapter = new MagellanUIViewerStorageAdapater(
-              dir, name, true, channels, true);
-      exploreAcq_ = new ExploreAcquisition(xOverlap, yOverlap, zStep, channels, adapter, new Consumer<String>() {
-         @Override
-         public void accept(String s) {
-            Log.log(s, true);
-         }
-      });
+      MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(dir, name, channels, true);
+      try {
+         exploreAcq_ = new ExploreAcquisition(xOverlap, yOverlap, zStep, channels, adapter,  new Consumer<String>() {
+            @Override
+            public void accept(String s) {
+               Log.log(s, true);
+            }
+         });
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
       if (start) {
          exploreAcq_.start();
       }
@@ -194,9 +197,14 @@ public class MagellanAcquisitionsManager {
    
    public MagellanGUIAcquisition createAcquisition(int index, boolean start) throws IOException {
       MagellanGUIAcquisitionSettings settings = acqSettingsList_.get(index);
-      XYTiledAcqViewerStorageAdapater adapter = new MagellanUIViewerStorageAdapater(
-              settings.dir_, settings.name_, false, null, true);
-      MagellanGUIAcquisition acq = new MagellanGUIAcquisition(settings, adapter,true);
+      MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(
+              settings.dir_, settings.name_, null, true);
+      MagellanGUIAcquisition acq = null;
+      try {
+         acq = new MagellanGUIAcquisition(settings, adapter,true);
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
       if (start) {
          acq.start();
       }
@@ -234,9 +242,10 @@ public class MagellanAcquisitionsManager {
                acqStatus_[index] = "Running";
                gui_.acquisitionRunning(true);
                try {
-                  XYTiledAcqViewerStorageAdapater adapater = new MagellanUIViewerStorageAdapater(
-                          acqSettings.dir_, acqSettings.name_, false, null, true);
+                  MagellanAcqUIAndStorage adapater = new MagellanAcqUIAndStorage(
+                          acqSettings.dir_, acqSettings.name_, null, true);
                   currentAcq_ = new MagellanGUIAcquisition(acqSettings, adapater,true);
+                  currentAcq_.start();
                   currentAcqIndex_ = index;
                   currentAcq_.waitForCompletion();
                   acqStatus_[index] = "Complete";

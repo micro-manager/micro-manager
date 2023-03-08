@@ -9,7 +9,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.micromanager.magellan.internal.coordinates.NoPositionsDefinedYetException;
-import org.micromanager.magellan.internal.magellanacq.MagellanUIViewerStorageAdapater;
+import org.micromanager.magellan.internal.magellanacq.MagellanAcqUIAndStorage;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
@@ -28,12 +28,13 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements
    private NDViewer display_;
    private ListSelectionListener surfaceTableListSelectionListener_;
    private volatile int selectedSurfaceGridIndex_ = -1;
-   private MagellanUIViewerStorageAdapater manager_;
+   private MagellanAcqUIAndStorage manager_;
+   private boolean active_ = true;
 
    /**
     * Creates new form SurfaceGridPanel.
     */
-   public SurfaceGridPanel(MagellanUIViewerStorageAdapater manager, NDViewer disp) {
+   public SurfaceGridPanel(MagellanAcqUIAndStorage manager, NDViewer disp) {
       manager_ = manager;
       display_ = disp;
       initComponents();
@@ -60,9 +61,13 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements
       updateSurfaceGridSelection();
 
       //knitially disable surfaces and grids
-      for (Component j : this.getComponents()) {
-         j.setEnabled(false);
-      }
+//      for (Component j : this.getComponents()) {
+//         j.setEnabled(false);
+//      }
+   }
+
+   public boolean isActive() {
+      return active_;
    }
 
    public void enable() {
@@ -73,13 +78,13 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements
 
    @Override
    public void selected() {
-      manager_.setSurfaceGridMode(true);
+      active_ = true;
       manager_.update();
    }
 
    @Override
    public void deselected() {
-      manager_.setSurfaceGridMode(false);
+      active_ = false;
       manager_.update();
    }
 
