@@ -46,6 +46,7 @@ import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.remote.PycroManagerCompatibleAcq;
 
+
 /**
  *
  * @author Henry
