@@ -59,11 +59,6 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements
       surfaceGridTable_.getColumnModel().getColumn(1).setMaxWidth(120); //type column
       //So it is initialized correctly when surfaces are already present
       updateSurfaceGridSelection();
-
-      //knitially disable surfaces and grids
-//      for (Component j : this.getComponents()) {
-//         j.setEnabled(false);
-//      }
    }
 
    public boolean isActive() {

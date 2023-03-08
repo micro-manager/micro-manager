@@ -6,15 +6,11 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.util.function.Consumer;
 import javax.swing.SwingUtilities;
-
 import org.micromanager.acqj.internal.Engine;
-import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.xytiling.CameraTilingStageTranslator;
 import org.micromanager.explore.ExploreAcquisition;
-import org.micromanager.explore.gui.ExploreMouseListener;
 import org.micromanager.explore.gui.ExploreMouseListenerAPI;
-import org.micromanager.magellan.internal.magellanacq.MagellanAcqUIAndStorage;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
@@ -25,7 +21,8 @@ import org.micromanager.ndviewer.main.NDViewer;
  *
  * @author henrypinkard
  */
-public class MagellanMouseListener  implements CanvasMouseListenerInterface, ExploreMouseListenerAPI {
+public class MagellanMouseListener  implements
+      CanvasMouseListenerInterface, ExploreMouseListenerAPI {
 
    private static final int DELETE_SURF_POINT_PIXEL_TOLERANCE = 10;
    private boolean mouseDragging_ = false;
@@ -171,8 +168,9 @@ public class MagellanMouseListener  implements CanvasMouseListenerInterface, Exp
    }
 
    protected void mouseReleasedActions(MouseEvent e) {
-      if (acq_ instanceof ExploreAcquisition &&
-              !surfaceGridPanel_.isActive() && SwingUtilities.isLeftMouseButton(e)) {
+      if (acq_ instanceof ExploreAcquisition
+            && !surfaceGridPanel_.isActive()
+            && SwingUtilities.isLeftMouseButton(e)) {
          Point p2 = e.getPoint();
          if (exploreStartTile_ != null) {
             acquireTiles();
@@ -192,13 +190,16 @@ public class MagellanMouseListener  implements CanvasMouseListenerInterface, Exp
                //delete all points at slice
                currentSurface.deletePointsWithinZRange(Math.min(z - zStep / 2,
                                z + acq_.getZStep(Engine.getCore().getFocusDevice()) / 2),
-                       Math.max(z - acq_.getZStep(Engine.getCore().getFocusDevice()) / 2, z + zStep / 2));
+                       Math.max(z - acq_.getZStep(Engine.getCore().getFocusDevice()) / 2,
+                             z + zStep / 2));
             } else {
                //delete point if one is nearby
                Point2D.Double stagePos = acq_.getPixelStageTranslator().stageCoordsFromPixelCoords(
-                       e.getPoint().x, e.getPoint().y, viewer_.getMagnification(), viewer_.getViewOffset());
+                       e.getPoint().x, e.getPoint().y, viewer_.getMagnification(),
+                     viewer_.getViewOffset());
                //calculate tolerance
-               Point2D.Double toleranceStagePos = acq_.getPixelStageTranslator().stageCoordsFromPixelCoords(
+               Point2D.Double toleranceStagePos = acq_.getPixelStageTranslator()
+                     .stageCoordsFromPixelCoords(
                        e.getPoint().x + DELETE_SURF_POINT_PIXEL_TOLERANCE,
                        e.getPoint().y + DELETE_SURF_POINT_PIXEL_TOLERANCE,
                        viewer_.getMagnification(), viewer_.getViewOffset());

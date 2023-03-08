@@ -25,15 +25,12 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
 import org.micromanager.explore.ExploreAcquisition;
-import org.micromanager.explore.gui.ExploreMouseListener;
 import org.micromanager.explore.gui.ExploreOverlayer;
-import org.micromanager.magellan.internal.magellanacq.MagellanAcqUIAndStorage;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;
@@ -119,7 +116,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
    private NDViewerAPI viewer_;
 
    public MagellanOverlayer(NDViewerAPI viewer, XYTiledAcquisition acq,
-                            MagellanMouseListener mouseListener, SurfaceGridPanel surfaceGridPanel) {
+                         MagellanMouseListener mouseListener, SurfaceGridPanel surfaceGridPanel) {
       surfaceGridPanel_ = surfaceGridPanel;
       if (acq instanceof ExploreAcquisition) {
          exploreOverlayer_ = new ExploreOverlayer(viewer, mouseListener, acq);
@@ -320,8 +317,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
    }
 
    private int zCoordinateToZIndex(double z) {
-      return (int) ((z - acq_.getZOrigin(Engine.getCore().getFocusDevice()) /
-              acq_.getZOrigin(Engine.getCore().getFocusDevice())));
+      return (int) ((z - acq_.getZOrigin(Engine.getCore().getFocusDevice())
+            / acq_.getZOrigin(Engine.getCore().getFocusDevice())));
    }
 
    private void addInterpPoints(SurfaceInterpolator newSurface, Overlay overlay,
@@ -330,8 +327,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
          return;
       }
       for (Point3d point : newSurface.getPoints()) {
-         Point displayLocation = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(point.x, point.y,
-                 mag, offset);
+         Point displayLocation = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(
+               point.x, point.y, mag, offset);
          int displaySlice;
          displaySlice = zCoordinateToZIndex(point.z);
 
@@ -397,15 +394,16 @@ public class MagellanOverlayer implements OverlayerPlugin {
          return;
       }
       for (XYStagePosition pos : positionsXY) {
-         Point2D.Double[] corners = acq_.getPixelStageTranslator().getDisplayTileCornerStageCoords(pos);
-         Point corner1 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(corners[0].x, corners[0].y,
-                 mag, offset);
-         Point corner2 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(corners[1].x, corners[1].y,
-                 mag, offset);
-         Point corner3 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(corners[2].x, corners[2].y,
-                 mag, offset);
-         Point corner4 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(corners[3].x, corners[3].y,
-                 mag, offset);
+         Point2D.Double[] corners = acq_.getPixelStageTranslator()
+               .getDisplayTileCornerStageCoords(pos);
+         Point corner1 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(
+               corners[0].x, corners[0].y, mag, offset);
+         Point corner2 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(
+               corners[1].x, corners[1].y, mag, offset);
+         Point corner3 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(
+               corners[2].x, corners[2].y, mag, offset);
+         Point corner4 = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(
+               corners[3].x, corners[3].y, mag, offset);
          //add lines connecting 4 corners
          final Line l1 = new Line(corner1.x, corner1.y, corner2.x, corner2.y);
          final Line l2 = new Line(corner2.x, corner2.y, corner3.x, corner3.y);
@@ -478,8 +476,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
       dsTileHeight = acq_.getPixelStageTranslator().getDisplayTileHeight() * magnification;
       int roiWidth = (int) ((grid.numCols() * dsTileWidth));
       int roiHeight = (int) ((grid.numRows() * dsTileHeight));
-      Point displayCenter = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(grid.center().x, grid.center().y,
-              magnification, offset);
+      Point displayCenter = acq_.getPixelStageTranslator().pixelCoordsFromStageCoords(
+            grid.center().x, grid.center().y, magnification, offset);
       Roi rectangle = new Roi(displayCenter.x - roiWidth / 2,
             displayCenter.y - roiHeight / 2, roiWidth, roiHeight);
       rectangle.setStrokeWidth(5f);

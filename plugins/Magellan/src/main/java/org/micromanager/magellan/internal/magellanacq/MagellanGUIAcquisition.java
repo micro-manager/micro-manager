@@ -27,8 +27,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.acqj.internal.Engine;
+import org.micromanager.acqj.internal.ZAxis;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acqj.main.XYTiledAcquisition;
@@ -36,7 +36,6 @@ import org.micromanager.acqj.util.AcqEventModules;
 import org.micromanager.acqj.util.AcquisitionEventIterator;
 import org.micromanager.acqj.util.ChannelSetting;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
-import org.micromanager.acqj.internal.ZAxis;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
@@ -77,20 +76,20 @@ public class MagellanGUIAcquisition extends
     * @throws java.lang.Exception can happen
     */
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings,
-                                 MagellanAcqUIAndStorage adapter, boolean showDisplay) throws Exception {
+                           MagellanAcqUIAndStorage adapter, boolean showDisplay) throws Exception {
       super(adapter,
               (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100),
               (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100),
               settings.zStep_,
               // Add metadata specific to Magellan explore
               new Consumer<JSONObject>() {
-                 @Override
-                 public void accept(JSONObject summaryMetadata) {
-                    MagellanMD.setExploreAcq(summaryMetadata, false);
-                    AcqEngMetadata.setZStepUm(summaryMetadata, settings.zStep_);
-                    AcqEngMetadata.setIntervalMs(summaryMetadata, settings.getTimeIntervalMs());
-                 }
-              });
+                  @Override
+                  public void accept(JSONObject summaryMetadata) {
+                     MagellanMD.setExploreAcq(summaryMetadata, false);
+                     AcqEngMetadata.setZStepUm(summaryMetadata, settings.zStep_);
+                     AcqEngMetadata.setIntervalMs(summaryMetadata, settings.getTimeIntervalMs());
+                  }
+               });
       settings_ = settings;
       zStep_ = ((MagellanGUIAcquisitionSettings) settings).zStep_;
 
@@ -119,10 +118,6 @@ public class MagellanGUIAcquisition extends
       zOrigin_ = getZTopCoordinate(((MagellanGUIAcquisitionSettings) settings_).spaceMode_,
               ((MagellanGUIAcquisitionSettings) settings_), zStageHasLimits_,
               zStageLowerLimit_, zStageUpperLimit_, zStage_);
-
-
-//      int overlapX = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
-//      int overlapY = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
       zStage_ = Magellan.getCore().getFocusDevice();
 
       addImageMetadataProcessor(new Consumer<JSONObject>() {
@@ -130,7 +125,8 @@ public class MagellanGUIAcquisition extends
          public void accept(JSONObject imageMetadata) {
             //add metadata specific to magellan acquisition
             // I don't remember why this here and not in summary metadata
-            AcqEngMetadata.setIntervalMs(imageMetadata, ((MagellanGUIAcquisitionSettings) settings_).getTimeIntervalMs());
+            AcqEngMetadata.setIntervalMs(imageMetadata,
+                  ((MagellanGUIAcquisitionSettings) settings_).getTimeIntervalMs());
             //add data about surface
             //right now this only works for fixed distance from the surface
             if (getSpaceMode() == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
@@ -502,16 +498,16 @@ public class MagellanGUIAcquisition extends
       }
    }
 
-   public double getZOrigin() {
-      return zOrigin_;
-   }
-
    @Override
    public HashMap<String, ZAxis> getZAxes() {
       HashMap<String, ZAxis> zAxes = new HashMap<String, ZAxis>();
       String name = Magellan.getCore().getFocusDevice();
       zAxes.put(name, new ZAxis(name, zOrigin_, zStep_));
       return zAxes;
+   }
+
+   public double getZOrigin() {
+      return zOrigin_;
    }
 
    @Override

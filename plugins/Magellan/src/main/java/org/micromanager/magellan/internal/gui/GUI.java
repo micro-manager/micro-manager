@@ -273,8 +273,10 @@ public class GUI extends javax.swing.JFrame {
       exploreSavingNameTextField_.setText(
               GlobalSettings.getInstance().getStringInPrefs(EXPLORE_NAME_PREF,
                  "Untitled Explore Acquisition"));
-      exploreZStepSpinner_.setValue( GlobalSettings.getInstance().getDoubleInPrefs(EXPLORE_Z_STEP, 1));
-      tileOverlapSpinner_.setValue(GlobalSettings.getInstance().getDoubleInPrefs(EXPLORE_TILE_OVERLAP, 0));
+      exploreZStepSpinner_.setValue(GlobalSettings.getInstance().getDoubleInPrefs(
+            EXPLORE_Z_STEP, 1));
+      tileOverlapSpinner_.setValue(GlobalSettings.getInstance().getDoubleInPrefs(
+            EXPLORE_TILE_OVERLAP, 0));
 
       refreshAcqControlsFromSettings();
       enableAndChangeFonts();

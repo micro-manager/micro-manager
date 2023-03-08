@@ -6,7 +6,7 @@ import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.main.AcqEngMetadata;
 
 /**
- * Magellan specific metadata
+ * Magellan specific metadata.
  *
  * @author henrypinkard
  */

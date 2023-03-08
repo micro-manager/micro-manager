@@ -27,15 +27,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import javax.swing.JOptionPane;
-
 import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.XYTiledAcquisition;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.explore.ExploreAcqUIAndStorage;
 import org.micromanager.explore.ChannelGroupSettings;
-import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.explore.ExploreAcquisition;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 
@@ -180,12 +178,13 @@ public class MagellanAcquisitionsManager {
       ChannelGroupSettings channels = new ChannelGroupSettings(cGroup);
       MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(dir, name, channels, true);
       try {
-         exploreAcq_ = new ExploreAcquisition(xOverlap, yOverlap, zStep, channels, adapter,  new Consumer<String>() {
-            @Override
-            public void accept(String s) {
-               Log.log(s, true);
-            }
-         });
+         exploreAcq_ = new ExploreAcquisition(xOverlap, yOverlap, zStep, channels, adapter,
+               new Consumer<String>() {
+                  @Override
+                  public void accept(String s) {
+                     Log.log(s, true);
+                  }
+               });
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -201,7 +200,7 @@ public class MagellanAcquisitionsManager {
               settings.dir_, settings.name_, null, true);
       MagellanGUIAcquisition acq = null;
       try {
-         acq = new MagellanGUIAcquisition(settings, adapter,true);
+         acq = new MagellanGUIAcquisition(settings, adapter, true);
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -244,7 +243,7 @@ public class MagellanAcquisitionsManager {
                try {
                   MagellanAcqUIAndStorage adapater = new MagellanAcqUIAndStorage(
                           acqSettings.dir_, acqSettings.name_, null, true);
-                  currentAcq_ = new MagellanGUIAcquisition(acqSettings, adapater,true);
+                  currentAcq_ = new MagellanGUIAcquisition(acqSettings, adapater, true);
                   currentAcq_.start();
                   currentAcqIndex_ = index;
                   currentAcq_.waitForCompletion();

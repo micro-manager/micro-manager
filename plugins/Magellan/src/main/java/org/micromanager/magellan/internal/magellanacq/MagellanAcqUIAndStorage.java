@@ -20,6 +20,18 @@
 
 package org.micromanager.magellan.internal.magellanacq;
 
+import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngJDataSink;
@@ -27,8 +39,8 @@ import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.XYTiledAcquisition;
-import org.micromanager.explore.ExploreAcquisition;
 import org.micromanager.explore.ChannelGroupSettings;
+import org.micromanager.explore.ExploreAcquisition;
 import org.micromanager.explore.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
 import org.micromanager.magellan.internal.gui.MagellanOverlayer;
@@ -45,19 +57,6 @@ import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
 
-import java.awt.geom.Point2D;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 /**
  * This class links data storage, viewer, and acquisition, acting as
  * an intermediary when neccessary to implement functionality specific to
@@ -66,7 +65,6 @@ import java.util.stream.Collectors;
  * they display as one contiguous image.
  */
 public class MagellanAcqUIAndStorage
-//        extends ExploreAcqUIAndStorage
         implements SurfaceGridListener, AcqEngJDataSink, NDViewerDataSource {
 
 
@@ -221,11 +219,13 @@ public class MagellanAcqUIAndStorage
       //create display
       try {
 
-         display_ = new NDViewer(this, (NDViewerAcqInterface) acq_, summaryMetadata_, AcqEngMetadata.getPixelSizeUm(summaryMetadata_),
-                 AcqEngMetadata.isRGB(summaryMetadata_));
+         display_ = new NDViewer(this, (NDViewerAcqInterface) acq_, summaryMetadata_,
+               AcqEngMetadata.getPixelSizeUm(summaryMetadata_),
+               AcqEngMetadata.isRGB(summaryMetadata_));
 
          display_.setWindowTitle(getUniqueAcqName() + (acq_ != null
-                 ? (((NDViewerAcqInterface) acq_).isFinished() ? " (Finished)" : " (Running)") : " (Loaded)"));
+                 ? (((NDViewerAcqInterface) acq_).isFinished()
+               ? " (Finished)" : " (Running)") : " (Loaded)"));
          //add functions so display knows how to parse time and z infomration from image tags
          display_.setReadTimeMetadataFunction((JSONObject tags)
                  -> AcqEngMetadata.getElapsedTimeMs(tags));
@@ -297,7 +297,8 @@ public class MagellanAcqUIAndStorage
    }
 
    @Override
-   public TaggedImage getImageForDisplay(HashMap<String, Object> axes, int resolutionindex, double xOffset, double yOffset, int imageWidth, int imageHeight) {
+   public TaggedImage getImageForDisplay(HashMap<String, Object> axes, int resolutionindex,
+                                double xOffset, double yOffset, int imageWidth, int imageHeight) {
       return storage_.getDisplayImage(
               axes,
               resolutionindex,
@@ -309,15 +310,15 @@ public class MagellanAcqUIAndStorage
    public Set<HashMap<String, Object>> getImageKeys() {
       return storage_.getAxesSet().stream().map(
               new Function<HashMap<String, Object>, HashMap<String, Object>>() {
-                 @Override
-                 public HashMap<String, Object> apply(HashMap<String, Object> axes) {
-                    HashMap<String, Object> copy = new HashMap<String, Object>(axes);
-                    //delete row and column so viewer doesn't use them
-                    copy.remove(NDTiffStorage.ROW_AXIS);
-                    copy.remove(NDTiffStorage.COL_AXIS);
-                    return copy;
-                 }
-              }).collect(Collectors.toSet());
+                  @Override
+                  public HashMap<String, Object> apply(HashMap<String, Object> axes) {
+                     HashMap<String, Object> copy = new HashMap<String, Object>(axes);
+                     //delete row and column so viewer doesn't use them
+                     copy.remove(NDTiffStorage.ROW_AXIS);
+                     copy.remove(NDTiffStorage.COL_AXIS);
+                     return copy;
+                  }
+               }).collect(Collectors.toSet());
    }
 
    @Override
