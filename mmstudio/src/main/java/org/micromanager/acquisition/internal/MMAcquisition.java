@@ -304,6 +304,10 @@ public final class MMAcquisition extends DataViewerListener {
          ReportingUtils.logError("MMAcquisition: received callback from unknown viewer");
          return true;
       }
+      if (eng_.getAcquisitionDatastore() != viewer.getDataProvider()) {
+         // not our problem;)
+         return true;
+      }
       boolean result = eng_.abortRequest();
       if (result) {
          if (viewer instanceof DisplayWindow && viewer.equals(display_)) {

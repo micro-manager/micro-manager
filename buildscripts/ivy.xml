@@ -49,10 +49,10 @@
 		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.8.3">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.9.31">
+		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.11.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.35.26">
+		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.35.27">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 
@@ -62,7 +62,7 @@
       <dependency org="jitk" name="jitk-tps" rev="3.0.2"/>
 
       <!-- ClearVolume dependencies -->
-      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
+      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.3"/>
       <dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
 <!--      <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/>-->
       <dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>
