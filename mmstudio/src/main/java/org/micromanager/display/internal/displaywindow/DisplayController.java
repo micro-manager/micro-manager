@@ -1042,7 +1042,16 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void autostretch() {
-      throw new UnsupportedOperationException();
+      boolean autoStretchOn = getDisplaySettings().isAutostretchEnabled();
+      if (!autoStretchOn) {
+         // since we want to immediately switch off autostretch after applying it, we can not
+         // run this action coalesced, but need to do it directly.
+         uiController_.applyDisplaySettings(getDisplaySettings().copyBuilder().autostretch(true)
+                 .build());
+      }
+      // Strange, but the description specifies that autostretch will be switched off even when it
+      // was on before.
+      setDisplaySettings(getDisplaySettings().copyBuilder().autostretch(false).build());
    }
 
    @Override
