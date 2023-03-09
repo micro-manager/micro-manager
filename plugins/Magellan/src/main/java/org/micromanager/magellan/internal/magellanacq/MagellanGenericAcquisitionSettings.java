@@ -1,7 +1,9 @@
 
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
+import org.micromanager.acqj.internal.Engine;
+import org.micromanager.explore.ChannelGroupSettings;
+import org.micromanager.magellan.internal.gui.GUI;
 
 /**
  *
@@ -50,5 +52,13 @@ public abstract class MagellanGenericAcquisitionSettings  {
       } else {
          throw new RuntimeException("Unrecognized acquisition order");
       }
+   }
+
+   public int getXPixelOverlap() {
+      return (int) (Engine.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
+   }
+
+   public int getYPixelOverlap() {
+      return (int) (Engine.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
    }
 }

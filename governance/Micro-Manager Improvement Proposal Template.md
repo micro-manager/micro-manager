@@ -27,6 +27,7 @@
 
 ## **Implementation**
 
+
 <!-- This section lists the major steps required to implement the MMIP. Where possible, it should be noted where one step is dependent on another, and which steps may be optionally omitted. Where it makes sense, each step should include a link related pull requests as the implementation progresses. -->
 
 <!-- Any pull requests or development branches containing work on this MMIP should be linked to from here. (A MMIP does not need to be implemented in a single pull request if it makes sense to implement it in discrete phases). -->
@@ -35,6 +36,7 @@
 ## **Backward compatibility**
 
 This section describes the ways in which the MMIP breaks backward compatibility.
+
 
 
 

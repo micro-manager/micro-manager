@@ -1,6 +1,7 @@
 package org.micromanager.magellan.api;
 
 import java.awt.geom.Point2D;
+import java.io.IOException;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
@@ -24,7 +25,7 @@ public class MagellanAPI {
       acqManager_ = MagellanAcquisitionsManager.getInstance();
    }
 
-   public AcquisitionAPI createAcquisition(int index, boolean start) {
+   public AcquisitionAPI createAcquisition(int index, boolean start) throws IOException {
       return acqManager_.createAcquisition(index, start);
    }
 
