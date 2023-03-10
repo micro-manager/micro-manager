@@ -111,11 +111,10 @@ public interface DisplayWindow extends DataViewer, Closeable {
    void adjustZoom(double factor);
 
    /**
-    * Perform a one-shot autoscaling of intensities.
+    * Performs a one-shot autoscaling of intensities.
     *
     * <p>The intensity range of the currently displayed image is used to set the
-    * intensity scaling range for all displayed channels. If continuous
-    * autostretching was enabled, it is disabled.</p>
+    * intensity scaling range for all displayed channels.</p>
     *
     * <p> Calls are ignored if the display has closed.</p>
     *
