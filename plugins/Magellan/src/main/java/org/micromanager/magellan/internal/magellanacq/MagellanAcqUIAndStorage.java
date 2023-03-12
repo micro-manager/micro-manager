@@ -53,9 +53,12 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
+import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.remote.PycroManagerCompatibleAcq;
+import org.micromanager.remote.PycroManagerCompatibleUI;
 
 /**
  * This class links data storage, viewer, and acquisition, acting as
@@ -65,7 +68,8 @@ import org.micromanager.ndviewer.main.NDViewer;
  * they display as one contiguous image.
  */
 public class MagellanAcqUIAndStorage
-        implements SurfaceGridListener, AcqEngJDataSink, NDViewerDataSource {
+        implements SurfaceGridListener, AcqEngJDataSink, NDViewerDataSource,
+      PycroManagerCompatibleUI {
 
 
    private static final int SAVING_QUEUE_SIZE = 30;
@@ -359,6 +363,11 @@ public class MagellanAcqUIAndStorage
 
    public NDTiffAPI getStorage() {
       return storage_;
+   }
+
+   @Override
+   public NDViewerAPI getViewer() {
+      return display_;
    }
 
    public void setSurfaceDisplaySettings(boolean showInterp, boolean showStage) {
