@@ -160,11 +160,6 @@ public class MagellanGUIAcquisition extends
       return -1;
    }
 
-   @Override
-   public NDViewerAPI getViewer() {
-      return null;
-   }
-
    public boolean isFinished() {
       if (!isStarted()) {
          return false;
