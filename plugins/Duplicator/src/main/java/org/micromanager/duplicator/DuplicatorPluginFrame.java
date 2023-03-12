@@ -26,10 +26,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -80,13 +83,44 @@ public class DuplicatorPluginFrame extends JDialog {
       // in the UI code
       final Map<String, Integer> mins = new HashMap<>();
       final Map<String, Integer> maxes = new HashMap<>();
+      final List<JCheckBox> channelCheckBoxes = new ArrayList<>();
+      boolean usesChannels = false;
+      for (final String axis : axes) {
+         if (axis.equals(Coords.CHANNEL)) {
+            usesChannels = true;
+            break;
+         }
+      }
+      int nrNoChannelAxes = axes.size();;
+      if (usesChannels) {
+         nrNoChannelAxes = nrNoChannelAxes - 1;
+         List<String> channelNameList = ourProvider_.getSummaryMetadata().getChannelNameList();
+         if (channelNameList.size() > 0) {
+            super.add(new JLabel(Coords.C));;
+         }
+         for (int i = 0; i < channelNameList.size(); i++) {
+            String channelName = channelNameList.get(i);
+            JCheckBox checkBox = new JCheckBox(channelName);
+            checkBox.setSelected(true);
+            channelCheckBoxes.add(checkBox);
+            if (i == channelNameList.size() - 1) {
+               super.add(checkBox, "wrap");
+            } else {
+               super.add(checkBox);
+            }
+         }
+      }
 
-      if (axes.size() > 0) {
+
+      if (nrNoChannelAxes > 0) {
          super.add(new JLabel(" "));
          super.add(new JLabel("min"));
          super.add(new JLabel("max"), "wrap");
 
          for (final String axis : axes) {
+            if (axis.equals(Coords.CHANNEL)) {
+               continue;
+            }
             if (ourProvider_.getNextIndex(axis) > 1) {
                mins.put(axis, 1);
                maxes.put(axis, ourProvider_.getNextIndex(axis));
@@ -151,8 +185,12 @@ public class DuplicatorPluginFrame extends JDialog {
          @Override
          public void actionPerformed(ActionEvent ae) {
             cpFrame.dispose();
+            LinkedHashMap<String, Boolean> channels = new LinkedHashMap<>();
+            for (JCheckBox channelCheckBox : channelCheckBoxes) {
+               channels.put(channelCheckBox.getText(), channelCheckBox.isSelected());
+            }
             DuplicatorExecutor de = new DuplicatorExecutor(
-                    studio_, ourWindow_, nameField.getText(), mins, maxes);
+                    studio_, ourWindow_, nameField.getText(), mins, maxes, channels);
             final ProgressBar pb = new ProgressBar(ourWindow_.getWindow(),
                     "Duplicating..", 0, 100);
             de.addPropertyChangeListener((PropertyChangeEvent evt) -> {
@@ -183,8 +221,6 @@ public class DuplicatorPluginFrame extends JDialog {
               yCenter - super.getHeight());
       
       super.setVisible(true);
-      
-      
    }
      
 }
