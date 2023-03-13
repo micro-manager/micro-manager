@@ -53,6 +53,8 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
    private final Map<String, Integer> mins_;
    private final Map<String, Integer> maxes_;
    private final LinkedHashMap<String, Boolean> channels_;
+   private final Datastore.SaveMode saveMode_;
+   private final String filePath_;
    
    /**
     * Performs the actual creation of a new image with reduced content.
@@ -69,7 +71,9 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
            final String newName, 
            final Map<String, Integer> mins,
            final Map<String, Integer> maxes,
-           final LinkedHashMap<String, Boolean> channels) {
+           final LinkedHashMap<String, Boolean> channels,
+           final Datastore.SaveMode saveMode,
+           final String filePath) {
 
       studio_ = studio;
       theWindow_ = theWindow;
@@ -77,13 +81,33 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       mins_ = mins;
       maxes_ = maxes;
       channels_ = channels;
+      saveMode_ = saveMode;
+      filePath_ = filePath;
    }
 
    @Override
    protected Void doInBackground() {
       
       // TODO: provide options for disk-backed datastores
-      final Datastore newStore = studio_.data().createRAMDatastore();
+      DataProvider oldStore = theWindow_.getDataProvider();
+      Datastore tmpStore = null;
+      try {
+         if (saveMode_ == null) {
+            tmpStore = studio_.data().createRAMDatastore();
+         } else if (saveMode_ == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+            tmpStore = studio_.data().createSinglePlaneTIFFSeriesDatastore(filePath_);
+         } else if (saveMode_ == Datastore.SaveMode.MULTIPAGE_TIFF) {
+            // TODO: read options for parameters here
+            tmpStore = studio_.data().createMultipageTIFFDatastore(filePath_, true, true);
+         } else if (saveMode_ == Datastore.SaveMode.ND_TIFF) {
+            tmpStore = studio_.data().createNDTIFFDatastore(filePath_);
+         }
+      } catch (IOException ioe) {
+         studio_.logs().showError(ioe, "Failed to open new datastore on disk");
+         return null;
+      }
+
+      final Datastore newStore = tmpStore;
       final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
       copyDisplay.setCustomTitle(newName_);
       final DisplaySettings originalDisplaySettings = theWindow_.getDisplaySettings();
@@ -93,7 +117,6 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       // TODO: use Overlays instead
       Roi roi = theWindow_.getImagePlus().getRoi();
       
-      DataProvider oldStore = theWindow_.getDataProvider();
       Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
       for (String axis : oldStore.getAxes()) {
          newSizeCoordsBuilder.index(axis, oldStore.getNextIndex(axis) - 1);
