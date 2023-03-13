@@ -81,7 +81,10 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       }
 
       final SummaryMetadata fSummary = summary;
-      duplicate_.setStorage(saver_);
+      if (!(saver_ instanceof NDTiffAdapter)) {
+         // NDTiffAdapter sets storage in the setSummaryMetadata implementation ????
+         duplicate_.setStorage(saver_);
+      }
       duplicate_.setSummaryMetadata(fSummary);
 
       // Copy images ordered by stage position index.
@@ -151,6 +154,28 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       });
       int counter = 0;
       double multiplier = 100.0 / tmp.size();
+      // Before we can put images into the new storage, we have to be sure that the SummaryMeta-
+      // data are there.  We set it before, but that function is asynchronous internally.
+      // I do not see ways other than polling.  Alternatively, the bus used to post
+      // SummaryMetadata Events, could be made synchronous, but I can not oversee the
+      // consequences.
+      long startTime = System.currentTimeMillis();
+      boolean timeOut = false;
+      while (!timeOut && duplicate_.getSummaryMetadata() == null) {
+         if (System.currentTimeMillis() - startTime > 10000) {
+            timeOut = true;
+         }
+         try {
+            Thread.sleep(100);
+         } catch (InterruptedException e) {
+            timeOut = true;
+            studio.logs().logError(e);
+         }
+      }
+      if (timeOut) {
+         studio.logs().showError("Failed to save data");
+         return null;
+      }
       for (Coords coords : tmp) {
          duplicate_.putImage(store_.getImage(coords));
          counter++;
