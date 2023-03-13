@@ -37,6 +37,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.SwingUtilities;
 import net.imglib2.display.ColorTable8;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -305,6 +306,14 @@ public final class ImageJBridge {
 
    @MustCallOnEDT
    public void mm2ijEnsureDisplayAxisExtents() {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               mm2ijEnsureDisplayAxisExtents();
+            }
+         });
+      }
       int newNChannels = getMMNumberOfChannels();
       int newNSlices = getMMNumberOfZSlices();
       int newNFrames = getMMNumberOfTimePoints();
