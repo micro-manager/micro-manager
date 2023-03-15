@@ -107,12 +107,11 @@ public class DuplicatorPluginFrame extends JDialog {
          ND_TIFF);
 
    // Keys for profile settings
-   private static final String SAVEBOX = "Savebox";
    private static final String UNSELECTED_CHANNELS = "UnSelectedChannels";
 
    /**
     * Constructs the User Interface for data duplication.
-    * Let's the user select channels, and ranges of the other axes to duplicate.
+    * Lets the user select channels, and ranges of the other axes to duplicate.
     * Will restrict duplication to ROIs set by the user.
     *
     * @param studio The always present studio API
@@ -123,16 +122,16 @@ public class DuplicatorPluginFrame extends JDialog {
       final DuplicatorPluginFrame ourFrame = this;
       final MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
       final DuplicatorPluginFrame cpFrame = this;
-      
+
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-      
+
       ourWindow_ = window;
       ourProvider_ = ourWindow_.getDataProvider();
 
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       String shortName = ourProvider_.getName();
       super.setTitle(DuplicatorPlugin.MENUNAME + shortName);
-      
+
       List<String> axes = ourProvider_.getAxes();
       // Note: MM uses 0-based indices in the code, but 1-based indices
       // for the UI.  To avoid confusion, this storage of the desired
@@ -148,12 +147,14 @@ public class DuplicatorPluginFrame extends JDialog {
             break;
          }
       }
-      int nrNoChannelAxes = axes.size();;
+      int nrNoChannelAxes = axes.size();
+      ;
       if (usesChannels) {
          nrNoChannelAxes = nrNoChannelAxes - 1;
          List<String> channelNameList = ourProvider_.getSummaryMetadata().getChannelNameList();
          if (channelNameList.size() > 0) {
-            super.add(new JLabel(Coords.C));;
+            super.add(new JLabel(Coords.C));
+            ;
          }
          for (int i = 0; i < channelNameList.size(); i++) {
             String channelName = channelNameList.get(i);
@@ -192,7 +193,7 @@ public class DuplicatorPluginFrame extends JDialog {
 
                super.add(new JLabel(axis));
                SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
-                       (int) ourProvider_.getNextIndex(axis), 1);
+                     (int) ourProvider_.getNextIndex(axis), 1);
                mins.put(axis, 0);
                final JSpinner minSpinner = new JSpinner(model);
                JFormattedTextField field =
@@ -216,7 +217,7 @@ public class DuplicatorPluginFrame extends JDialog {
                super.add(minSpinner, "wmin 60");
 
                model = new SpinnerNumberModel((int) ourProvider_.getNextIndex(axis),
-                       1, (int) ourProvider_.getNextIndex(axis), 1);
+                     1, (int) ourProvider_.getNextIndex(axis), 1);
                maxes.put(axis, ourProvider_.getNextIndex(axis) - 1);
                final JSpinner maxSpinner = new JSpinner(model);
                field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
@@ -253,68 +254,16 @@ public class DuplicatorPluginFrame extends JDialog {
          fileField.setEnabled(saveBox.isSelected());
          chooserButton.setEnabled(saveBox.isSelected());
          if (saveBox.isSelected()) {
-            Datastore.SaveMode method = getPreferredSaveMode(studio);
-            if (method == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-               saveMethod.setText("Separate Image Files");
-            } else if (method == Datastore.SaveMode.MULTIPAGE_TIFF) {
-               saveMethod.setText("Image Stack File");
-            } else if (method == Datastore.SaveMode.ND_TIFF) {
-               saveMethod.setText("NDTiff File");
-            } else {
-               saveMethod.setText("Unknown");
-            }
+            chooseDataLocation(ourFrame, fileField, saveMethod);
          } else {
             saveMethod.setText("Memory");
          }
       });
-      saveBox.setSelected(settings.getBoolean(SAVEBOX, false));
+      saveBox.setSelected(false);
       fileField.setEnabled(saveBox.isSelected());
       chooserButton.setEnabled(saveBox.isSelected());
       chooserButton.addActionListener(e -> {
-         // Almost verbatim copied from the DefaultDatastore.  It would be nice
-         // to refactor, so that we could use that code directly.
-         JFileChooser chooser = new JFileChooser();
-         chooser.setDialogTitle("Select file location");
-         chooser.setAcceptAllFileFilterUsed(false);
-         chooser.addChoosableFileFilter(SINGLEPLANEFILTER);
-         chooser.addChoosableFileFilter(MULTIPAGEFILTER);
-         chooser.addChoosableFileFilter(NDTIFFFILTER);
-         if (Objects.equals(getPreferredSaveMode(studio_), Datastore.SaveMode.MULTIPAGE_TIFF)) {
-            chooser.setFileFilter(MULTIPAGEFILTER);
-         } else if  (Objects.equals(getPreferredSaveMode(studio_), Datastore.SaveMode.ND_TIFF)) {
-            chooser.setFileFilter(NDTIFFFILTER);
-         } else {
-            chooser.setFileFilter(SINGLEPLANEFILTER);
-         }
-         chooser.setSelectedFile(
-               new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET)));
-         int option = chooser.showDialog(this, "Select");
-         if (option != JFileChooser.APPROVE_OPTION) {
-            // User cancelled.
-            return;
-         }
-         File file = chooser.getSelectedFile();
-         fileField.setText(file.getAbsolutePath());
-         FileDialogs.storePath(FileDialogs.MM_DATA_SET, file);
-
-         // Determine the mode the user selected.
-         FileFilter filter = chooser.getFileFilter();
-         Datastore.SaveMode mode;
-         if (filter == SINGLEPLANEFILTER) {
-            mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
-            saveMethod.setText("Separate Image Files");
-         } else if (filter == MULTIPAGEFILTER) {
-            mode = Datastore.SaveMode.MULTIPAGE_TIFF;
-            saveMethod.setText("Image Stack File");
-         } else if (filter == NDTIFFFILTER) {
-            mode = Datastore.SaveMode.ND_TIFF;
-            saveMethod.setText("NDTiff File");
-         } else {
-            studio_.logs().showError("Unrecognized file format filter "
-                  + filter.getDescription(), ourFrame);
-            return;
-         }
-         setPreferredSaveMode(studio_, mode);
+         chooseDataLocation(ourFrame, fileField, saveMethod);
       });
 
       super.add(saveBox);
@@ -325,13 +274,12 @@ public class DuplicatorPluginFrame extends JDialog {
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            settings.putBoolean(SAVEBOX, saveBox.isSelected());
             if (saveBox.isSelected() && fileField.getText().isEmpty()) {
                studio_.logs().showError("Asked to save, but no file path selected", ourFrame);
                return;
             }
             LinkedHashMap<String, Boolean> channels = new LinkedHashMap<>();
-            List<String>  unselectedChannels = new ArrayList<>();
+            List<String> unselectedChannels = new ArrayList<>();
             for (JCheckBox channelCheckBox : channelCheckBoxes) {
                channels.put(channelCheckBox.getText(), channelCheckBox.isSelected());
                if (!channelCheckBox.isSelected()) {
@@ -344,40 +292,89 @@ public class DuplicatorPluginFrame extends JDialog {
                saveMode = getPreferredSaveMode(studio);
             }
             DuplicatorExecutor de = new DuplicatorExecutor(
-                    studio_, ourWindow_, nameField.getText(), mins, maxes, channels,
+                  studio_, ourWindow_, nameField.getText(), mins, maxes, channels,
                   saveMode, fileField.getText());
             cpFrame.dispose();
             final ProgressBar pb = new ProgressBar(ourWindow_.getWindow(),
-                    "Duplicating..", 0, 100);
+                  "Duplicating..", 0, 100);
             de.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                if ("progress".equals(evt.getPropertyName())) {
                   pb.setProgress((Integer) evt.getNewValue());
                   if ((Integer) evt.getNewValue() == 100) {
                      pb.setVisible(false);
-                  } 
+                  }
                }
-            });  
+            });
             de.execute();
          }
       });
       super.add(saveMethod, "span 2");
       super.add(okButton, "split 2, tag ok, wmin button");
-      
+
       JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener((ActionEvent ae) -> {
          cpFrame.dispose();
       });
       super.add(cancelButton, "tag cancel, wrap");
-      
+
       super.pack();
-      
+
       Window w = ourWindow_.getWindow();
       int xCenter = w.getX() + w.getWidth() / 2;
       int yCenter = w.getY() + w.getHeight() / 2;
-      super.setLocation(xCenter - super.getWidth() / 2, 
-              yCenter - super.getHeight());
-      
+      super.setLocation(xCenter - super.getWidth() / 2,
+            yCenter - super.getHeight());
+
       super.setVisible(true);
    }
-     
+
+   private void chooseDataLocation(DuplicatorPluginFrame ourFrame, JLabel fileField,
+                                   JLabel saveMethod) {
+      // Almost verbatim copied from the DefaultDatastore.  It would be nice
+      // to refactor, so that we could use that code directly.
+      JFileChooser chooser = new JFileChooser();
+      chooser.setDialogTitle("Select file location");
+      chooser.setAcceptAllFileFilterUsed(false);
+      chooser.addChoosableFileFilter(SINGLEPLANEFILTER);
+      chooser.addChoosableFileFilter(MULTIPAGEFILTER);
+      chooser.addChoosableFileFilter(NDTIFFFILTER);
+      if (Objects.equals(getPreferredSaveMode(studio_),
+            Datastore.SaveMode.MULTIPAGE_TIFF)) {
+         chooser.setFileFilter(MULTIPAGEFILTER);
+      } else if (Objects.equals(getPreferredSaveMode(studio_), Datastore.SaveMode.ND_TIFF)) {
+         chooser.setFileFilter(NDTIFFFILTER);
+      } else {
+         chooser.setFileFilter(SINGLEPLANEFILTER);
+      }
+      chooser.setSelectedFile(new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET)));
+      int option = chooser.showDialog(this, "Select");
+      if (option != JFileChooser.APPROVE_OPTION) {
+         // User cancelled.
+         return;
+      }
+
+      File file = chooser.getSelectedFile();
+      fileField.setText(file.getAbsolutePath());
+      FileDialogs.storePath(FileDialogs.MM_DATA_SET, file);
+
+      // Determine the mode the user selected.
+      FileFilter filter = chooser.getFileFilter();
+      Datastore.SaveMode mode;
+      if (filter == SINGLEPLANEFILTER) {
+         mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
+         saveMethod.setText("Separate Image Files");
+      } else if (filter == MULTIPAGEFILTER) {
+         mode = Datastore.SaveMode.MULTIPAGE_TIFF;
+         saveMethod.setText("Image Stack File");
+      } else if (filter == NDTIFFFILTER) {
+         mode = Datastore.SaveMode.ND_TIFF;
+         saveMethod.setText("NDTiff File");
+      } else {
+         studio_.logs().showError("Unrecognized file format filter "
+               + filter.getDescription(), ourFrame);
+         return;
+      }
+      setPreferredSaveMode(studio_, mode);
+   }
+
 }
