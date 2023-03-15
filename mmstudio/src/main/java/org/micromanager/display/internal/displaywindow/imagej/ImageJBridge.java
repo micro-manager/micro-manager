@@ -306,14 +306,6 @@ public final class ImageJBridge {
 
    @MustCallOnEDT
    public void mm2ijEnsureDisplayAxisExtents() {
-      if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               mm2ijEnsureDisplayAxisExtents();
-            }
-         });
-      }
       int newNChannels = getMMNumberOfChannels();
       int newNSlices = getMMNumberOfZSlices();
       int newNFrames = getMMNumberOfTimePoints();
