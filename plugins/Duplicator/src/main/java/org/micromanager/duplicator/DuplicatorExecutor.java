@@ -108,8 +108,6 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       }
 
       final Datastore newStore = tmpStore;
-      final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-      copyDisplay.setCustomTitle(newName_);
       final DisplaySettings originalDisplaySettings = theWindow_.getDisplaySettings();
       final DisplaySettings.Builder newDisplaySettingsBuilder =
             theWindow_.getDisplaySettings().copyBuilder();
@@ -155,10 +153,33 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
               .channelNames(channelNames)
               .intendedDimensions(newSizeCoordsBuilder.build())
               .build();
-      copyDisplay.setDisplaySettings(newDisplaySettingsBuilder.build());
 
       try {
          newStore.setSummaryMetadata(metadata);
+         // The implementations of the store set SummaryMetadata on another thread.
+         // This can lead to disasters, so we have to poll to make sure SummaryMetadata is
+         // there.   Copied from DefaultDataSaver.
+         long startTime = System.currentTimeMillis();
+         boolean timeOut = false;
+         while (!timeOut && newStore.getSummaryMetadata() == null) {
+            if (System.currentTimeMillis() - startTime > 10000) {
+               timeOut = true;
+            }
+            try {
+               Thread.sleep(100);
+            } catch (InterruptedException e) {
+               timeOut = true;
+               studio_.logs().logError(e);
+            }
+         }
+         if (timeOut) {
+            studio_.logs().showError("Failed to save data");
+            return null;
+         }
+
+         final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+         copyDisplay.setCustomTitle(newName_);
+         copyDisplay.setDisplaySettings(newDisplaySettingsBuilder.build());
 
          Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
          int nrCopied = 0;
