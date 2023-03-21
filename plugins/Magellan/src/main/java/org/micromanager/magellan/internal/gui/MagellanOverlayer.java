@@ -317,8 +317,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
    }
 
    private int zCoordinateToZIndex(double z) {
-      return (int) ((z - acq_.getZOrigin(Engine.getCore().getFocusDevice())
-            / acq_.getZOrigin(Engine.getCore().getFocusDevice())));
+      return (int) ((z - acq_.getZOrigin(Engine.getCore().getFocusDevice()))
+            / acq_.getZStep(Engine.getCore().getFocusDevice()));
    }
 
    private void addInterpPoints(SurfaceInterpolator newSurface, Overlay overlay,
