@@ -674,7 +674,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       timepointPanel_.add(numTimepoints_, "wrap");
 
       timepointPanel_.add(new JLabel("Interval [s]:"));
-      acquisitionInterval_ = pu.makeSpinnerFloat(0.1, 32000, 0.1,
+      acquisitionInterval_ = pu.makeSpinnerFloat(0.001, 32000, 0.1,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_ACQUISITION_INTERVAL, 60);
       acquisitionInterval_.addChangeListener(recalculateTimeLapseDisplay);
