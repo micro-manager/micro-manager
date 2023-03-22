@@ -3612,8 +3612,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName_, "AcquisitionName", acqName_);
             gui_.setAcquisitionProperty(acqName_, "Prefix", acqName_);
             gui_.setAcquisitionProperty(acqName_, MMTags.Summary.SLICES_FIRST, Boolean.TRUE.toString());  // whether slices are inner loop compared to channel; not sure why but Nico had this set to true forever so leaving it
-            gui_.setAcquisitionProperty(acqName_, MMTags.Summary.TIME_FIRST, Boolean.FALSE.toString()); 
-                  //Boolean.toString(acqSimultSideA));   // whether timepoints are inner loop compared to position; false for all diSPIM use cases except simultaneous on PathA where we use timepoints as "channels"
+            gui_.setAcquisitionProperty(acqName_, MMTags.Summary.TIME_FIRST, Boolean.FALSE.toString());
+            gui_.setAcquisitionProperty(acqName_, "StageScanAnglePathA", // used in deskew routine
+                    Float.toString(props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA))); 
+            //Boolean.toString(acqSimultSideA));   // whether timepoints are inner loop compared to position; false for all diSPIM use cases except simultaneous on PathA where we use timepoints as "channels"
                       
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered

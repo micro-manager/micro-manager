@@ -617,13 +617,19 @@ public class DataAnalysisPanel extends ListeningJPanel {
             final String windowTitle;
             final AcquisitionModes.Keys acqMode;
             double zStepPx = 0;
+            double scanAngle = 0;
+            double geometricShiftFactor = 0;
+            DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+            
             if (mmW.isMMWindow()) {  // have Micro-Manager dataset
                final JSONObject metadata = mmW.getSummaryMetaData();
+               // System.out.println("metadata: " + metadata);
                acqMode = AcquisitionModes.getKeyFromString(metadata.getString("SPIMmode"));
                if (!( acqMode == AcquisitionModes.Keys.STAGE_SCAN
                      || acqMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
-                     || acqMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL )) {
-                  throw new Exception("Can only deskew stage scanning data");
+                     || acqMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL
+                     || acqMode == AcquisitionModes.Keys.SLICE_SCAN_ONLY )) { // Note: SLICE_SCAN_ONLY is here to deskew SCOPE datasets
+                  throw new Exception("Can only deskew stage scanning and slice scan only data.");
                }
                firstSideIsA = !metadata.getString("FirstSide").equals("B");
                twoSided = metadata.getString("NumberOfSides").equals("2");
@@ -640,6 +646,23 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   }
                   zStepPx = NumberUtils.coreStringToDouble(metadata.getString("z-step_um")) / pixelSize;
                }
+               // do we have scan angle data?
+               if (metadata.has("StageScanAnglePathA")) {
+                   // use metadata instead of values from properties
+                   scanAngle = Double.parseDouble(metadata.getString("StageScanAnglePathA"));
+                   if (!firstSideIsA) {
+                       scanAngle = 90.0 - scanAngle; // based on Path B angle (assumed to be 90 degrees minus Path A angle)
+                   }
+                   geometricShiftFactor = Math.tan(scanAngle/180.0*Math.PI);
+               } else {
+                   // this is only used to display the angle
+                   scanAngle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);
+                   if (scanAngle < 1) {  // case when property not defined
+                       scanAngle = ASIdiSPIM.oSPIM ? 60.0 : 45.0; 
+                   }
+                   // actual computation is here
+                   geometricShiftFactor = du.getStageGeometricShiftFactor(firstSideIsA);
+               }
             } else {
                // guess at settings since we can't access MM metadata
                // TODO considering way of user setting these if they know them since can't easily add metadata
@@ -647,6 +670,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                twoSided = true;
                acqMode = AcquisitionModes.Keys.STAGE_SCAN;
                windowTitle = ip.getTitle();
+               geometricShiftFactor = du.getStageGeometricShiftFactor(firstSideIsA);
                ReportingUtils.logDebugMessage("Deskew may be incorrect because don't have Micro-Manager dataset with metadata");
             }
             
@@ -659,8 +683,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                zStepPx = ip.getCalibration().pixelDepth / pixelSize;
             }
             
-            DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
-            final double dx = zStepPx * du.getStageGeometricShiftFactor(firstSideIsA) * PanelUtils.getSpinnerFloatValue(deskewFactor_);
+            final double dx = zStepPx * geometricShiftFactor * PanelUtils.getSpinnerFloatValue(deskewFactor_);
 
             final int nrChannels = ip.getNChannels();
             final int width = ip.getWidth();
@@ -668,7 +691,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
             final int nrSlices = ip.getNSlices();
             final int nrFrames = ip.getNFrames();
             final int nrImages = nrChannels * nrSlices * nrFrames;
-            final String title = windowTitle + "-deskewed";
+            final String angleDegrees = String.format("%.01f", scanAngle); // 1 decimal place
+            final String title = windowTitle + "-deskewed, angle = " + angleDegrees + "\u00B0";
             final int width_expansion = (int) Math.abs(Math.ceil(dx*(nrSlices-1)));
             
             // create duplicate stack to avoid manipulating original data
