@@ -20,6 +20,13 @@ package org.micromanager.internal.utils;
 
 import java.awt.KeyEventDispatcher;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.ImageExporter;
+import org.micromanager.display.internal.gearmenu.DefaultImageExporter;
 
 /**
  * Application-wide key dispatcher.
@@ -32,17 +39,19 @@ import java.awt.event.KeyEvent;
 public final class MMKeyDispatcher implements KeyEventDispatcher {
    Class textCanvasClass = null;
    final Class[] forbiddenClasses_;
+   private final Studio studio_;
 
    /**
     * Application-wide Key Dispatcher constructor. Sets UI classes where KeyEvents should not
     * be processed.
     */
-   public MMKeyDispatcher() {
+   public MMKeyDispatcher(Studio studio) {
+      studio_ = studio;
       try {
          textCanvasClass = ClassLoader.getSystemClassLoader().loadClass("ij.text.TextCanvas");
       } catch (ClassNotFoundException ex) {
          textCanvasClass = null;
-         ReportingUtils.logError(ex);
+         studio_.logs().logError(ex);
       }
 
       /*
@@ -82,6 +91,33 @@ public final class MMKeyDispatcher implements KeyEventDispatcher {
       }
       if (ke.getID() != KeyEvent.KEY_PRESSED) {
          return false;
+      }
+      // we use Ctrl-C to copy the active image to the clipboard
+      if (ke.isControlDown() && ke.getKeyCode() == 67) {
+         DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
+         // We would like to know if the activeDataViewer has focus, not sure if this
+         // does the trick
+         if (activeDataViewer != null
+               && activeDataViewer.isVisible()
+               && activeDataViewer instanceof DisplayWindow)  {
+            DisplayWindow dw = (DisplayWindow) activeDataViewer;
+            if (dw.getWindow().isFocused()) {
+               System.out.println(ke.getKeyChar());
+               System.out.println(ke.getKeyCode());
+               ImageExporter exporter = new DefaultImageExporter(studio_.getLogManager());
+               exporter.setOutputFormat(ImageExporter.OutputFormat.OUTPUT_CLIPBOARD);
+               exporter.setDisplay(dw);
+               Coords displayedImage = activeDataViewer.getDisplayPosition();
+               for (String axis : activeDataViewer.getDataProvider().getAxes()) {
+                  exporter.loop(axis, displayedImage.getIndex(axis), displayedImage.getIndex(axis));
+               }
+               try {
+                  exporter.export();
+               } catch (IOException | IllegalArgumentException exc) {
+                  studio_.logs().logError(exc, "MMKeyDispatcher: error should never happen");
+               }
+            }
+         }
       }
 
       // Since all key events in the application go through here
