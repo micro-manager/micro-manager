@@ -78,8 +78,9 @@ public final class ExportMovieDlg extends JDialog {
    private static final String FORMAT_PNG = "PNG";
    private static final String FORMAT_JPEG = "JPEG";
    private static final String FORMAT_IMAGEJ = "ImageJ stack window";
+   private static final String FORMAT_SYSTEM_CLIPBOARD = "System Clipboard";
    private static final String[] OUTPUT_FORMATS = {
-         FORMAT_PNG, FORMAT_JPEG, FORMAT_IMAGEJ
+         FORMAT_PNG, FORMAT_JPEG, FORMAT_IMAGEJ, FORMAT_SYSTEM_CLIPBOARD
    };
    private static final String DEFAULT_USE_LABEL = "Use Label";
    private static final Boolean USE_LABEL = true;
@@ -385,6 +386,8 @@ public final class ExportMovieDlg extends JDialog {
          suffix = "jpg";
       } else if (mode.contentEquals(FORMAT_IMAGEJ)) {
          format = ImageExporter.OutputFormat.OUTPUT_IMAGEJ;
+      } else if (mode.contentEquals(FORMAT_SYSTEM_CLIPBOARD)) {
+         format = ImageExporter.OutputFormat.OUTPUT_CLIPBOARD;
       }
       String[] fss = {suffix};
       exporter.setOutputFormat(format);
@@ -402,7 +405,7 @@ public final class ExportMovieDlg extends JDialog {
                .getString(EXPORT_LOCATION, base);
       }
       File path = new File(base);
-      if (!mode.equals(FORMAT_IMAGEJ)) {
+      if (mode.equals(FORMAT_JPEG) || mode.equals(FORMAT_PNG)) {
          File outputDir = FileDialogs.promptForFile(this,
                "Export as",
                path,
