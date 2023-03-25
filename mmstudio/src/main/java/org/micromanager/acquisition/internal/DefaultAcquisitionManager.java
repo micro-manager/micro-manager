@@ -174,6 +174,11 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       getAcquisitionEngine().abortRequest();
    }
 
+   @Override
+   public void stopAcqusition() {
+      getAcquisitionEngine().stop(true);
+   }
+
    /**
     * Loads acquisition settings from file.
     *

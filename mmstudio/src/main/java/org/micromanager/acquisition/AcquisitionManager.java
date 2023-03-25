@@ -100,9 +100,15 @@ public interface AcquisitionManager {
                                         boolean shouldBlock) throws IllegalThreadStateException;
 
    /**
-    * Halt any ongoing acquisition as soon as possible.
+    * Halt any ongoing acquisition as soon as possible, prompting users with a
+    * dialog for confirmation.
     */
    void haltAcquisition();
+
+   /**
+    * Stop any ongoing acquisition as soon as possible, without user dialog.
+    */
+   void stopAcqusition();
 
    /**
     * Load a file containing a SequenceSettings object, and apply the settings
