@@ -92,34 +92,6 @@ public final class MMKeyDispatcher implements KeyEventDispatcher {
       if (ke.getID() != KeyEvent.KEY_PRESSED) {
          return false;
       }
-      // we use Ctrl-C to copy the active image to the clipboard
-      if (ke.isControlDown() && ke.getKeyCode() == 67) {
-         DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
-         // We would like to know if the activeDataViewer has focus, not sure if this
-         // does the trick
-         if (activeDataViewer != null
-               && activeDataViewer.isVisible()
-               && activeDataViewer instanceof DisplayWindow)  {
-            DisplayWindow dw = (DisplayWindow) activeDataViewer;
-            if (dw.getWindow().isFocused()) {
-               System.out.println(ke.getKeyChar());
-               System.out.println(ke.getKeyCode());
-               ImageExporter exporter = new DefaultImageExporter(studio_.getLogManager());
-               exporter.setOutputFormat(ImageExporter.OutputFormat.OUTPUT_CLIPBOARD);
-               exporter.setDisplay(dw);
-               Coords displayedImage = activeDataViewer.getDisplayPosition();
-               for (String axis : activeDataViewer.getDataProvider().getAxes()) {
-                  exporter.loop(axis, displayedImage.getIndex(axis), displayedImage.getIndex(axis));
-               }
-               try {
-                  exporter.export();
-               } catch (IOException | IllegalArgumentException exc) {
-                  studio_.logs().logError(exc, "MMKeyDispatcher: error should never happen");
-               }
-            }
-         }
-      }
-
       // Since all key events in the application go through here
       // we need to efficiently determine whether or not to deal with this
       // key event will be dealt with.  CheckSource seems relatively expensive
