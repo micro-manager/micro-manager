@@ -442,9 +442,13 @@ public final class AnimationController<P> {
       // Wait for cancellation
       try {
          scheduledTickFuture_.get();
-      } catch (ExecutionException | CancellationException e) {
+      } catch (ExecutionException e) {
          ReportingUtils.logError(e);
-      } catch (InterruptedException notUsedByUs) {
+      } catch (CancellationException e) {
+         // nothing to do, we were waiting for this cancellation;
+         ReportingUtils.logDebugMessage(
+               "scheduledTickFuture task cancelled in animationController");
+      } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       }
       scheduledTickFuture_ = null;

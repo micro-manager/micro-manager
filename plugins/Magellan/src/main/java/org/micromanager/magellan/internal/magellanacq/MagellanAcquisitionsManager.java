@@ -18,15 +18,20 @@
 package org.micromanager.magellan.internal.magellanacq;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import javax.swing.JOptionPane;
-import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.internal.AffineTransformUtils;
+import org.micromanager.acqj.internal.Engine;
+import org.micromanager.acqj.main.XYTiledAcquisition;
+import org.micromanager.explore.ChannelGroupSettings;
+import org.micromanager.explore.ExploreAcquisition;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
@@ -44,7 +49,7 @@ public class MagellanAcquisitionsManager {
          = new CopyOnWriteArrayList<>();
    private String[] acqStatus_;
    private GUI gui_;
-   private volatile AcquisitionAPI currentAcq_;
+   private volatile XYTiledAcquisition currentAcq_;
    private volatile int currentAcqIndex_;
    private ExecutorService acqManageExecuterService_;
    ArrayList<Future> acqFutures_;
@@ -154,7 +159,6 @@ public class MagellanAcquisitionsManager {
          throw new RuntimeException();
       }
 
-      ExploreAcqSettings settings = new ExploreAcqSettings(dir, name, cGroup, zStep, overlap);
       //check for abort of existing explore acquisition
       //abort existing explore acq if needed
       if (exploreAcq_ != null && !exploreAcq_.areEventsFinished()) {
@@ -167,16 +171,39 @@ public class MagellanAcquisitionsManager {
             return null;
          }
       }
-      exploreAcq_ = new ExploreAcquisition(settings);
+
+      int xOverlap = (int) (Engine.getCore().getImageWidth() * overlap / 100.);
+      int yOverlap = (int) (Engine.getCore().getImageHeight() * overlap / 100.);
+
+      ChannelGroupSettings channels = new ChannelGroupSettings(cGroup);
+      MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(dir, name, channels, true);
+      try {
+         exploreAcq_ = new ExploreAcquisition(xOverlap, yOverlap, zStep, channels, adapter,
+               new Consumer<String>() {
+                  @Override
+                  public void accept(String s) {
+                     Log.log(s, true);
+                  }
+               });
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
       if (start) {
          exploreAcq_.start();
       }
       return exploreAcq_;
    }
    
-   public MagellanGUIAcquisition createAcquisition(int index, boolean start) {
+   public MagellanGUIAcquisition createAcquisition(int index, boolean start) throws IOException {
       MagellanGUIAcquisitionSettings settings = acqSettingsList_.get(index);
-      MagellanGUIAcquisition acq = new MagellanGUIAcquisition(settings, true);
+      MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(
+              settings.dir_, settings.name_, null, true);
+      MagellanGUIAcquisition acq = null;
+      try {
+         acq = new MagellanGUIAcquisition(settings, adapter, true);
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
       if (start) {
          acq.start();
       }
@@ -214,7 +241,10 @@ public class MagellanAcquisitionsManager {
                acqStatus_[index] = "Running";
                gui_.acquisitionRunning(true);
                try {
-                  currentAcq_ = new MagellanGUIAcquisition(acqSettings, true);
+                  MagellanAcqUIAndStorage adapater = new MagellanAcqUIAndStorage(
+                          acqSettings.dir_, acqSettings.name_, null, true);
+                  currentAcq_ = new MagellanGUIAcquisition(acqSettings, adapater, true);
+                  currentAcq_.start();
                   currentAcqIndex_ = index;
                   currentAcq_.waitForCompletion();
                   acqStatus_[index] = "Complete";

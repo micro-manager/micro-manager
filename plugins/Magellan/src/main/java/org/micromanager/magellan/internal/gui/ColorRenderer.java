@@ -22,7 +22,7 @@
 // CVS:          $Id: ColorRenderer.java 12224 2013-11-27 07:20:28Z nico $
 //
 
-package org.micromanager.magellan.internal.channels;
+package org.micromanager.magellan.internal.gui;
 
 import java.awt.Color;
 import java.awt.Component;

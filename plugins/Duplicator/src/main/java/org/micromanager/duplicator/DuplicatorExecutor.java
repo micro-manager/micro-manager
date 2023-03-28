@@ -25,6 +25,7 @@ import ij.gui.Roi;
 import ij.process.ImageProcessor;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.SwingWorker;
@@ -51,6 +52,9 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
    private final String newName_;
    private final Map<String, Integer> mins_;
    private final Map<String, Integer> maxes_;
+   private final LinkedHashMap<String, Boolean> channels_;
+   private final Datastore.SaveMode saveMode_;
+   private final String filePath_;
    
    /**
     * Performs the actual creation of a new image with reduced content.
@@ -60,26 +64,50 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
     * @param newName - name for the copy
     * @param mins - Map with new (or unchanged) minima for the given axis
     * @param maxes - Map with new (or unchanged) maxima for the given axis
+    * @param channels - Map with names of channels and flag whether or not they should be duplicated
     */
    public DuplicatorExecutor(final Studio studio, 
            final DisplayWindow theWindow, 
            final String newName, 
            final Map<String, Integer> mins,
-           final Map<String, Integer> maxes) {
+           final Map<String, Integer> maxes,
+           final LinkedHashMap<String, Boolean> channels,
+           final Datastore.SaveMode saveMode,
+           final String filePath) {
+
       studio_ = studio;
       theWindow_ = theWindow;
       newName_ = newName;
       mins_ = mins;
       maxes_ = maxes;
+      channels_ = channels;
+      saveMode_ = saveMode;
+      filePath_ = filePath;
    }
 
    @Override
    protected Void doInBackground() {
       
       // TODO: provide options for disk-backed datastores
-      final Datastore newStore = studio_.data().createRAMDatastore();
-      final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-      copyDisplay.setCustomTitle(newName_);
+      DataProvider oldStore = theWindow_.getDataProvider();
+      Datastore tmpStore = null;
+      try {
+         if (saveMode_ == null) {
+            tmpStore = studio_.data().createRAMDatastore();
+         } else if (saveMode_ == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+            tmpStore = studio_.data().createSinglePlaneTIFFSeriesDatastore(filePath_);
+         } else if (saveMode_ == Datastore.SaveMode.MULTIPAGE_TIFF) {
+            // TODO: read options for parameters here
+            tmpStore = studio_.data().createMultipageTIFFDatastore(filePath_, true, true);
+         } else if (saveMode_ == Datastore.SaveMode.ND_TIFF) {
+            tmpStore = studio_.data().createNDTIFFDatastore(filePath_);
+         }
+      } catch (IOException ioe) {
+         studio_.logs().showError(ioe, "Failed to open new datastore on disk");
+         return null;
+      }
+
+      final Datastore newStore = tmpStore;
       final DisplaySettings originalDisplaySettings = theWindow_.getDisplaySettings();
       final DisplaySettings.Builder newDisplaySettingsBuilder =
             theWindow_.getDisplaySettings().copyBuilder();
@@ -87,25 +115,22 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       // TODO: use Overlays instead
       Roi roi = theWindow_.getImagePlus().getRoi();
       
-      DataProvider oldStore = theWindow_.getDataProvider();
       Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
       for (String axis : oldStore.getAxes()) {
          newSizeCoordsBuilder.index(axis, oldStore.getNextIndex(axis) - 1);
       }
-      SummaryMetadata metadata = oldStore.getSummaryMetadata();
-      List<String> channelNames = metadata.getChannelNameList();
-      if (mins_.containsKey(Coords.CHANNEL)) {
+      SummaryMetadata oldMetadata = oldStore.getSummaryMetadata();
+      List<String> channelNames = oldMetadata.getChannelNameList();
+      if (channels_ != null) {
          List<ChannelDisplaySettings> channelDisplaySettings = new ArrayList<>();
-         int min = mins_.get(Coords.CHANNEL);
-         int max = maxes_.get(Coords.CHANNEL);
          List<String> chNameList = new ArrayList<>();
-         for (int index = min; index <= max; index++) {
-            if (channelNames == null || index >= channelNames.size()) {
-               chNameList.add("channel " + index);
-            } else {
-               chNameList.add(channelNames.get(index));
+         int index = 0;
+         for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
+            if (channel.getValue()) {
+               chNameList.add(channel.getKey());
                channelDisplaySettings.add(originalDisplaySettings.getChannelSettings(index));
             }
+            index++;
          }
          channelNames = chNameList;
          newDisplaySettingsBuilder.channels(channelDisplaySettings);
@@ -113,6 +138,9 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       newSizeCoordsBuilder.channel(channelNames.size());
       float  nrToBeCopied = 1;
       for (String axis : oldStore.getAxes()) {
+         if (channels_ != null && channels_.size() > 0) {
+            nrToBeCopied *= channels_.size();
+         }
          if (mins_.containsKey(axis)) {
             int min = mins_.get(axis);
             int max = maxes_.get(axis);
@@ -121,21 +149,57 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          }
       }
 
-      metadata = metadata.copyBuilder()
+      SummaryMetadata metadata = oldMetadata.copyBuilder()
               .channelNames(channelNames)
               .intendedDimensions(newSizeCoordsBuilder.build())
               .build();
-      copyDisplay.setDisplaySettings(newDisplaySettingsBuilder.build());
 
       try {
          newStore.setSummaryMetadata(metadata);
+         // The implementations of the store set SummaryMetadata on another thread.
+         // This can lead to disasters, so we have to poll to make sure SummaryMetadata is
+         // there.   Copied from DefaultDataSaver.
+         long startTime = System.currentTimeMillis();
+         boolean timeOut = false;
+         while (!timeOut && newStore.getSummaryMetadata() == null) {
+            if (System.currentTimeMillis() - startTime > 10000) {
+               timeOut = true;
+            }
+            try {
+               Thread.sleep(100);
+            } catch (InterruptedException e) {
+               timeOut = true;
+               studio_.logs().logError(e);
+            }
+         }
+         if (timeOut) {
+            studio_.logs().showError("Failed to save data");
+            return null;
+         }
+
+         final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+         copyDisplay.setCustomTitle(newName_);
+         copyDisplay.setDisplaySettings(newDisplaySettingsBuilder.build());
 
          Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
          int nrCopied = 0;
          for (Coords oldCoord : unorderedImageCoords) {
-            boolean copy = true;
+            List<String> oldAxes = oldStore.getAxes();
+            boolean copy = !oldAxes.contains(Coords.CHANNEL);
             for (String axis : oldStore.getAxes()) {
-               if (mins_.containsKey(axis) && maxes_.containsKey(axis)) {
+               if (axis.equals(Coords.CHANNEL)) {
+                  int index = 0;
+                  for (Map.Entry<String, Boolean> channel : channels_.entrySet()) {
+                     if (channel.getValue() && oldCoord.getIndex(axis) == index) {
+                        copy = true;
+                        continue;
+                     }
+                     index++;
+                  }
+               }
+            }
+            for (String axis : oldStore.getAxes()) {
+               if (copy && mins_.containsKey(axis) && maxes_.containsKey(axis)) {
                   if (oldCoord.getIndex(axis) < (mins_.get(axis))) {
                      copy = false;
                   }
@@ -147,6 +211,18 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
             if (copy) {
                Coords.CoordsBuilder newCoordBuilder = oldCoord.copyBuilder();
                for (String axis : oldCoord.getAxes()) {
+                  if (axis.equals(Coords.CHANNEL)) {
+                     if (channels_ != null && channels_.size() > 0) {
+                        int chIndex = oldCoord.getIndex(axis);
+                        if (chIndex < oldMetadata.getChannelNameList().size()) {
+                           String channelName = oldMetadata.getChannelNameList().get(chIndex);
+                           if (channelNames.contains(channelName)) {
+                              int newIndex = channelNames.indexOf(channelName);
+                              newCoordBuilder.index(axis, newIndex);
+                           }
+                        }
+                     }
+                  }
                   if (mins_.containsKey(axis)) {
                      newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins_.get(axis));
                   }
@@ -156,19 +232,6 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                Image newImgShallow = img.copyAtCoords(newCoords);
                if (roi != null) {
                   ImageProcessor ip = studio_.data().ij().createProcessor(img);
-                  /*
-                  ImageProcessor ip = null;
-                  if (img.getImageJPixelType() == ImagePlus.GRAY8) {
-                     ip = new ByteProcessor(
-                          img.getWidth(), img.getHeight(), (byte[]) img.getRawPixels());
-                  } else 
-                     if (img.getImageJPixelType() == ImagePlus.GRAY16) {
-                        ip = new ShortProcessor(
-                        img.getWidth(), img.getHeight() );
-                        ip.setPixels((short[]) img.getRawPixels());
-                  }
-
-                   */
                   if (ip != null) {
                      ip.setRoi(roi);
                      ImageProcessor copyIp = ip.crop();

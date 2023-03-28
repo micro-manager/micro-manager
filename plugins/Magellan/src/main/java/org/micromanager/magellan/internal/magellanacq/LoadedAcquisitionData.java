@@ -30,7 +30,7 @@ public class LoadedAcquisitionData {
 
    public LoadedAcquisitionData(String dir) {
       try {
-         MagellanDatasetAndAcquisition dataManager = new MagellanDatasetAndAcquisition(dir);
+         MagellanAcqUIAndStorage dataManager = new MagellanAcqUIAndStorage(dir);
 
          //Iterate through all image keys and expand scrollbars to appropriate sizes
          Set<HashMap<String, Object>> axesList = dataManager.getAxesSet();

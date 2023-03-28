@@ -7,35 +7,35 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.DataSink;
+import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
-import org.micromanager.ndviewer.api.DataSourceInterface;
-import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
-import org.micromanager.ndviewer.api.ViewerInterface;
+import org.micromanager.ndviewer.api.NDViewerAPI;
+import org.micromanager.ndviewer.api.NDViewerAcqInterface;
+import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
 
 /**
  * The class is the glue needed in order for AcqEngJ, NDViwer, and NDTiff
  * to be able to be used together, since they are independent libraries that do not know about one
- * another. It implements the Acquisition engine API for a {@link DataSink} interface, dispatching
- * acquired images to viewer and storage as appropriate. It implements NDviewer's
- * {@link DataSourceInterface}, so that images in storage can be requested by the viewer for
+ * another. It implements the Acquisition engine API for a {@link AcqEngJDataSink} interface,
+ * dispatching acquired images to viewer and storage as appropriate. It implements NDviewer's
+ * {@link NDViewerDataSource}, so that images in storage can be requested by the viewer for
  * display. Each time it recieves an image it will pass it to storage and alert the display that
  * a new image has arrived. There are analogous classes to this one in Micro-Magellan
  * (MagellanDatasetAndAcquisition) and the Java side of pycro-manger (RemoteViewerStorageAdapter).
  *
  * @author henrypinkard
  */
-public class NDTiffAndViewerAdapter implements DataSourceInterface, DataSink {
+public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSink {
 
    private ExecutorService displayCommunicationExecutor_;
 
-   private volatile ViewerInterface viewer_;
+   private volatile NDViewerAPI viewer_;
    private volatile Acquisition acq_;
    private volatile MultiresNDTiffAPI storage_;
 
@@ -94,7 +94,7 @@ public class NDTiffAndViewerAdapter implements DataSourceInterface, DataSink {
             -> new Thread(r, "Image viewer communication thread"));
 
       // simple class that allows viewer to start and stop acquisition
-      ViewerAcquisitionInterface vai = new ViewerAcquisitionInterface() {
+      NDViewerAcqInterface vai = new NDViewerAcqInterface() {
          @Override
          public boolean isFinished() {
             return acq_.areEventsFinished();
@@ -106,8 +106,8 @@ public class NDTiffAndViewerAdapter implements DataSourceInterface, DataSink {
          }
 
          @Override
-         public void togglePaused() {
-            acq_.setPaused(!acq_.isPaused());
+         public void setPaused(boolean paused) {
+            acq_.setPaused(paused);
          }
 
          @Override

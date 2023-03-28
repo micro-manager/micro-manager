@@ -465,16 +465,16 @@ public class DefaultDatastore implements Datastore {
       // Determine the mode the user selected.
       FileFilter filter = chooser.getFileFilter();
       Datastore.SaveMode mode;
-      if (filter != SINGLEPLANEFILTER) {
-         if (filter == MULTIPAGEFILTER) {
-            mode = SaveMode.MULTIPAGE_TIFF;
-         } else {
-            studio_.logs().showError("Unrecognized file format filter "
-                  + filter.getDescription());
-            return null;
-         }
-      } else {
+      if (filter == SINGLEPLANEFILTER) {
          mode = SaveMode.SINGLEPLANE_TIFF_SERIES;
+      } else if (filter == MULTIPAGEFILTER) {
+         mode = SaveMode.MULTIPAGE_TIFF;
+      } else if (filter == NDTIFFFILTER) {
+         mode = SaveMode.ND_TIFF;
+      } else {
+         studio_.logs().showError("Unrecognized file format filter "
+               + filter.getDescription(), parent);
+         return null;
       }
       setPreferredSaveMode(studio_, mode);
       // the DefaultDataSave constructor creates the directory

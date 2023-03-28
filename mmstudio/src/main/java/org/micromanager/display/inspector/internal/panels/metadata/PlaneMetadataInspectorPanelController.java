@@ -181,7 +181,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
          ReportingUtils.logError(e, "Exception in PlaneMetadataInspectorPanelController");
          return;
       } catch (NullPointerException e) {
-         ReportingUtils.logError("attachDataViewer called on DataViewer without images");
+         ReportingUtils.logDebugMessage("attachDataViewer called on DataViewer without images");
       }
 
       final List<Image> finalImages = images;

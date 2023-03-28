@@ -10,6 +10,9 @@ binary downloads.**
 **For support, see [Micro-Manager
 Community](https://micro-manager.org/Micro-Manager_Community).**
 
+**The Micro-Manager community welcomes you!  For our governance structures, 
+go [here](https://github.com/micro-manager/micro-manager/tree/main/governance)**
+
 ## Source code
 
 This repository contains the Java projects that make up the Micro-Manager
