@@ -448,7 +448,9 @@ public final class MMStudio implements Studio {
       events().post(new DefaultStartupCompleteEvent());
 
       if (settings().getShouldRunZMQServer()) { // start zmq server if so desired
-         runZMQServer();
+         Runnable runnable = () -> runZMQServer();
+         Thread t = new Thread(runnable);
+         t.start();
       }
    }
 
