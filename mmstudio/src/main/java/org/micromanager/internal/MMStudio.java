@@ -448,7 +448,9 @@ public final class MMStudio implements Studio {
       events().post(new DefaultStartupCompleteEvent());
 
       if (settings().getShouldRunZMQServer()) { // start zmq server if so desired
-         runZMQServer();
+         Runnable runnable = () -> runZMQServer();
+         Thread t = new Thread(runnable);
+         t.start();
       }
    }
 
@@ -601,10 +603,22 @@ public final class MMStudio implements Studio {
             // It appears that every plugin has its own ClassLoader.
             // We need to extract all of these and pass to ZMQServer, so that it knows
             // where to search for classes to load. If we don't do this, and just create
-            // new ClassLoaders to instantiate objects, static varibles will not be shared
+            // new ClassLoaders to instantiate objects, static variables will not be shared
             // across instances created by the two objects, leading to confusing behavior.
             Collection<ClassLoader> classLoaders = new HashSet<>();
             for (Object plugin : plugins().getMenuPlugins().values()) {
+               classLoaders.add(plugin.getClass().getClassLoader());
+            }
+            for (Object plugin : plugins().getAutofocusPlugins().values()) {
+               classLoaders.add(plugin.getClass().getClassLoader());
+            }
+            for (Object plugin : plugins().getDisplayGearMenuPlugins().values()) {
+               classLoaders.add(plugin.getClass().getClassLoader());
+            }
+            for (Object plugin : plugins().getProcessorPlugins().values()) {
+               classLoaders.add(plugin.getClass().getClassLoader());
+            }
+            for (Object plugin : plugins().getOverlayPlugins().values()) {
                classLoaders.add(plugin.getClass().getClassLoader());
             }
 
