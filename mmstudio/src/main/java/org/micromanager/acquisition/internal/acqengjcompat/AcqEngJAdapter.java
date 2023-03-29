@@ -102,8 +102,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private AutofocusPlugin autofocusMethod_;
    private boolean autofocusOn_;
 
-   private static AcqEngJAdapter singleton_;
-
    private long nextWakeTime_ = -1;
 
    private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
@@ -126,7 +124,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
    public AcqEngJAdapter(Studio studio) {
       // Create AcqEngJ
-      singleton_ = this;
       studio_ = studio;
       core_ = studio_.core();
       new Engine(core_);
@@ -134,11 +131,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
-
-   public static AcqEngJAdapter getInstance() {
-      return singleton_;
-   }
-
+   
    // this is where the work happens
    private Datastore runAcquisition(SequenceSettings sequenceSettings) {
       SequenceSettings.Builder sb = sequenceSettings.copyBuilder();
@@ -218,9 +211,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
 
-         // Start pumping images through the pipeline and into the datastore.
          AcqEngJMDADataSink sink = new AcqEngJMDADataSink(studio_.events());
-
          currentAcquisition_ = new Acquisition(sink);
 
          loadRunnables(acquisitionSettings);
