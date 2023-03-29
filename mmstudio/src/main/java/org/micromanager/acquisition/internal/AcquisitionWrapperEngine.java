@@ -36,7 +36,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Wraps AcuiqitionsEngine 2010 in the AcquisitionEngine interface.
  */
-public final class AcquisitionWrapperEngine implements AcquisitionEngine {
+public final class AcquisitionWrapperEngine implements AcquisitionEngine,
+      MMAcquistionControlCallbacks {
 
    private CMMCore core_;
    protected Studio studio_;
