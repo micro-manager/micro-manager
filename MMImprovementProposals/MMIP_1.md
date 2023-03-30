@@ -169,7 +169,7 @@ In addition, the introduction of several new types of devices would expand Micro
 
 - [A clock type device](https://github.com/micro-manager/mmCoreAndDevices/issues/195)
 - [Signal IO device](https://github.com/micro-manager/mmCoreAndDevices/issues/141)
-- [Adding ability to acquire arbitrary data](https://github.com/micro-manager/mmCoreAndDevices/issues/222)
+- [Adding ability to acquire arbitrary data](https://github.com/micro-manager/mmCoreAndDevices/pull/313)
 
 Completion of this work in the device layer will then open the possibility of far more powerful (and possibly complex) acquisition engine features that assist in automating hardware triggering.
 
