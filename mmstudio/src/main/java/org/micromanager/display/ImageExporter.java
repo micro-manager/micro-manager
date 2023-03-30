@@ -52,11 +52,7 @@ public interface ImageExporter {
        * Output as an ImageJ stack, which will open in a new window; this
        * "format" does not create any files on disk.
        */
-      OUTPUT_IMAGEJ,
-      /**
-       * Output to the System Clipboard, will only work for a single image
-       */
-      OUTPUT_CLIPBOARD
+      OUTPUT_IMAGEJ
    }
 
    /**
