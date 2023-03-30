@@ -157,7 +157,7 @@ public final class MainFrame extends JFrame {
       setupWindowHandlers();
 
       // Add our own keyboard manager that handles Micro-Manager shortcuts
-      MMKeyDispatcher mmKD = new MMKeyDispatcher();
+      MMKeyDispatcher mmKD = new MMKeyDispatcher(mmStudio_);
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
       DropTarget dropTarget = new DropTarget(this, new DragDropUtil(mmStudio_));
 

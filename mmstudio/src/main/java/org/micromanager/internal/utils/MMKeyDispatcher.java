@@ -20,6 +20,13 @@ package org.micromanager.internal.utils;
 
 import java.awt.KeyEventDispatcher;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.ImageExporter;
+import org.micromanager.display.internal.gearmenu.DefaultImageExporter;
 
 /**
  * Application-wide key dispatcher.
@@ -32,17 +39,19 @@ import java.awt.event.KeyEvent;
 public final class MMKeyDispatcher implements KeyEventDispatcher {
    Class textCanvasClass = null;
    final Class[] forbiddenClasses_;
+   private final Studio studio_;
 
    /**
     * Application-wide Key Dispatcher constructor. Sets UI classes where KeyEvents should not
     * be processed.
     */
-   public MMKeyDispatcher() {
+   public MMKeyDispatcher(Studio studio) {
+      studio_ = studio;
       try {
          textCanvasClass = ClassLoader.getSystemClassLoader().loadClass("ij.text.TextCanvas");
       } catch (ClassNotFoundException ex) {
          textCanvasClass = null;
-         ReportingUtils.logError(ex);
+         studio_.logs().logError(ex);
       }
 
       /*
@@ -83,7 +92,6 @@ public final class MMKeyDispatcher implements KeyEventDispatcher {
       if (ke.getID() != KeyEvent.KEY_PRESSED) {
          return false;
       }
-
       // Since all key events in the application go through here
       // we need to efficiently determine whether or not to deal with this
       // key event will be dealt with.  CheckSource seems relatively expensive
