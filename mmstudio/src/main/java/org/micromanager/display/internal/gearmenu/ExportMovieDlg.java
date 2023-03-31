@@ -78,8 +78,9 @@ public final class ExportMovieDlg extends JDialog {
    private static final String FORMAT_PNG = "PNG";
    private static final String FORMAT_JPEG = "JPEG";
    private static final String FORMAT_IMAGEJ = "ImageJ stack window";
+   private static final String FORMAT_SYSTEM_CLIPBOARD = "System Clipboard";
    private static final String[] OUTPUT_FORMATS = {
-         FORMAT_PNG, FORMAT_JPEG, FORMAT_IMAGEJ
+         FORMAT_PNG, FORMAT_JPEG, FORMAT_IMAGEJ, FORMAT_SYSTEM_CLIPBOARD
    };
    private static final String DEFAULT_USE_LABEL = "Use Label";
    private static final Boolean USE_LABEL = true;
@@ -264,6 +265,11 @@ public final class ExportMovieDlg extends JDialog {
       display_ = display;
       provider_ = display.getDataProvider();
       axisPanels_ = new ArrayList<>();
+      AxisPanel ap = null;
+      if (!getNonZeroAxes().isEmpty()) {
+         ap = createAxisPanel();
+      }
+      final AxisPanel axisPanel = ap;
 
       File file = new File(display.getName());
       String shortName = file.getName();
@@ -287,6 +293,7 @@ public final class ExportMovieDlg extends JDialog {
 
       jpegQualitySpinner_ = new JSpinner();
       jpegQualitySpinner_.setModel(new SpinnerNumberModel(getJPEGQuality(), 1, 100, 1));
+      final JCheckBox useLabel = new JCheckBox("Use label in filename");
 
       contentsPanel_.add(new JLabel("Output format: "),
             "split 4, flowx");
@@ -300,8 +307,19 @@ public final class ExportMovieDlg extends JDialog {
          } else {
             jpegPanel_.removeAll();
          }
-         prefixLabel_.setEnabled(!selection.equals(FORMAT_IMAGEJ));
-         prefixText_.setEnabled(!selection.equals(FORMAT_IMAGEJ));
+         boolean usePrefix = selection.equals(FORMAT_PNG) || selection.equals(FORMAT_JPEG);
+         prefixLabel_.setEnabled(usePrefix);
+         prefixLabel_.setVisible(usePrefix);
+         prefixText_.setEnabled(usePrefix);
+         prefixText_.setVisible(usePrefix);
+         useLabel.setVisible(usePrefix);
+         if (axisPanel != null) {
+            if (selection.equals(FORMAT_SYSTEM_CLIPBOARD)) {
+               axisPanel.setVisible(false);
+            } else {
+               axisPanel.setVisible(true);
+            }
+         }
          pack();
       });
       contentsPanel_.add(outputFormatSelector_);
@@ -323,7 +341,7 @@ public final class ExportMovieDlg extends JDialog {
                new JLabel("There is only one image available to export."),
                "align center");
       } else {
-         contentsPanel_.add(createAxisPanel());
+         contentsPanel_.add(axisPanel);
       }
 
       // Dropdown menu with all axes (except channel when in composite mode)
@@ -334,7 +352,6 @@ public final class ExportMovieDlg extends JDialog {
       // for single-axis datasets just auto-fill the one axis
       // Future req: add ability to export to ImageJ as RGB stack
 
-      JCheckBox useLabel = new JCheckBox("Use label in filename");
       useLabel.setSelected(studio.profile().getSettings(ExportMovieDlg.class)
             .getBoolean(DEFAULT_USE_LABEL, USE_LABEL));
       ChangeListener changeListener = new ChangeListener() {
@@ -385,6 +402,8 @@ public final class ExportMovieDlg extends JDialog {
          suffix = "jpg";
       } else if (mode.contentEquals(FORMAT_IMAGEJ)) {
          format = ImageExporter.OutputFormat.OUTPUT_IMAGEJ;
+      } else if (mode.contentEquals(FORMAT_SYSTEM_CLIPBOARD)) {
+         format = ImageExporter.OutputFormat.OUTPUT_CLIPBOARD;
       }
       String[] fss = {suffix};
       exporter.setOutputFormat(format);
@@ -402,7 +421,7 @@ public final class ExportMovieDlg extends JDialog {
                .getString(EXPORT_LOCATION, base);
       }
       File path = new File(base);
-      if (!mode.equals(FORMAT_IMAGEJ)) {
+      if (mode.equals(FORMAT_JPEG) || mode.equals(FORMAT_PNG)) {
          File outputDir = FileDialogs.promptForFile(this,
                "Export as",
                path,
@@ -429,7 +448,13 @@ public final class ExportMovieDlg extends JDialog {
 
       exporter.setOutputQuality((Integer) jpegQualitySpinner_.getValue());
       exporter.setDisplay(display_);
-      if (axisPanels_.size() > 0) {
+      if (mode.contentEquals(FORMAT_SYSTEM_CLIPBOARD)) {
+         // only copy the currently displayed image, do not loop
+         Coords displayedImage = display_.getDisplayPosition();
+         for (String axis : display_.getDataProvider().getAxes()) {
+            exporter.loop(axis, displayedImage.getIndex(axis), displayedImage.getIndex(axis));
+         }
+      } else if (axisPanels_.size() > 0) {
          axisPanels_.get(0).configureExporter(exporter);
       } else {
          exporter.loop(provider_.getAxes().get(0), 0, 0);
