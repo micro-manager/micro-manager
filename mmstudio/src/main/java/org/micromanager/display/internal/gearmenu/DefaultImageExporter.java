@@ -27,6 +27,10 @@ import ij.ImageStack;
 import ij.process.ColorProcessor;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -249,6 +253,9 @@ public final class DefaultImageExporter implements ImageExporter {
                            currentImage_.getHeight());
                   }
                   addToStack(stack_, currentImage_);
+               } else if (format_ == OutputFormat.OUTPUT_CLIPBOARD) {
+                  TransferableImage transferable = new TransferableImage(currentImage_);
+                  Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, null);
                } else {
                   // Save the image to disk in appropriate format.
                   String label = createImageLabel(lastDrawnCoords_);
@@ -344,7 +351,7 @@ public final class DefaultImageExporter implements ImageExporter {
          // Nothing to do.
          return coords;
       }
-      if (format_ != OutputFormat.OUTPUT_IMAGEJ) {
+      if (format_ == OutputFormat.OUTPUT_JPG || format_ == OutputFormat.OUTPUT_PNG) {
          if (directory_ == null || prefix_ == null) {
             // Can't save.
             throw new IllegalArgumentException(String.format(
@@ -382,7 +389,7 @@ public final class DefaultImageExporter implements ImageExporter {
     * @return directory/prefixlabel.suffix
     */
    private String getOutputFilename(String label) {
-      if (format_ == OutputFormat.OUTPUT_IMAGEJ) {
+      if (format_ == OutputFormat.OUTPUT_IMAGEJ || format_ == OutputFormat.OUTPUT_CLIPBOARD) {
          throw new RuntimeException("Asked for output filename when exporting in ImageJ format.");
       }
       String suffix = (format_ == OutputFormat.OUTPUT_PNG) ? "png" : "jpg";
@@ -523,6 +530,40 @@ public final class DefaultImageExporter implements ImageExporter {
    public void waitForExport() throws InterruptedException {
       while (!doneFlag_.get()) {
          Thread.sleep(100);
+      }
+   }
+
+   private class TransferableImage implements Transferable {
+      private java.awt.Image img;
+
+      public TransferableImage(java.awt.Image i) {
+         this.img = i;
+      }
+
+      public Object getTransferData(DataFlavor flavor)
+            throws UnsupportedFlavorException, IOException {
+         if (flavor.equals(DataFlavor.imageFlavor) && img != null)  {
+            return img;
+         } else {
+            throw new UnsupportedFlavorException(flavor);
+         }
+      }
+
+      public DataFlavor[] getTransferDataFlavors() {
+         DataFlavor[] flavors = new DataFlavor[ 1 ];
+         flavors[ 0 ] = DataFlavor.imageFlavor;
+         return flavors;
+      }
+
+      public boolean isDataFlavorSupported(DataFlavor flavor) {
+         DataFlavor[] flavors = getTransferDataFlavors();
+         for (int i = 0; i < flavors.length; i++) {
+            if (flavor.equals(flavors[i])) {
+               return true;
+            }
+         }
+
+         return false;
       }
    }
 }

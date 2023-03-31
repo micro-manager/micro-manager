@@ -32,6 +32,7 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -61,8 +62,10 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRootPane;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
@@ -309,6 +312,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
       }
       setTitle(frame);
+      JRootPane rootPane = frame.getRootPane();
+      String copyText = "Copy";
+      KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C,
+            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+      rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(copyKeyStroke, copyText);
+      rootPane.getActionMap().put(copyText, new CopyAsDisplayed(studio_, this));
       return frame;
    }
 
