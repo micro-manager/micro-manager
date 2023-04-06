@@ -175,7 +175,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
    }
 
    @Override
-   public void stopAcqusition() {
+   public void abortAcquisition() {
       getAcquisitionEngine().stop(true);
    }
 

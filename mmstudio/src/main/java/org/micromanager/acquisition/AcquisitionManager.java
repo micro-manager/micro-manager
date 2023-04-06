@@ -106,9 +106,9 @@ public interface AcquisitionManager {
    void haltAcquisition();
 
    /**
-    * Stop any ongoing acquisition as soon as possible, without user dialog.
+    * Abort any ongoing acquisition as soon as possible, without user dialog.
     */
-   void stopAcqusition();
+   void abortAcquisition();
 
    /**
     * Load a file containing a SequenceSettings object, and apply the settings
