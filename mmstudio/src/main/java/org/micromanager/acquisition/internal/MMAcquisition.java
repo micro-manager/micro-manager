@@ -88,7 +88,7 @@ public final class MMAcquisition extends DataViewerListener {
    private final DefaultDatastore store_;
    private final Pipeline pipeline_;
    private DisplayWindow display_;
-   private final AcquisitionEngine eng_;
+   private final MMAcquistionControlCallbacks callbacks_;
    private final boolean show_;
 
    private int imagesReceived_ = 0;
@@ -104,14 +104,14 @@ public final class MMAcquisition extends DataViewerListener {
     *
     * @param studio          Micro-Manager Studio object.
     * @param summaryMetadata Summarymetadata that will be added to the datastore.
-    * @param eng             acquisition engine object.
+    * @param callbacks       acquisition engine object or other object that implements callbacks.
     * @param show            Whether or not open a display on the ongoing acquisition.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMAcquisition(Studio studio, String dir, String prefix, JSONObject summaryMetadata,
-                        AcquisitionEngine eng, boolean show) {
+                        MMAcquistionControlCallbacks callbacks, boolean show) {
       studio_ = studio;
-      eng_ = eng;
+      callbacks_ = callbacks;
       show_ = show;
       // TODO: get rid of MMStudo cast
       store_ = new DefaultDatastore(studio);
@@ -125,7 +125,7 @@ public final class MMAcquisition extends DataViewerListener {
             store_.setStorage(getAppropriateStorage(studio_, store_, acqPath, true));
          } catch (Exception e) {
             ReportingUtils.showError(e, "Unable to create directory for saving images.");
-            eng_.stop(true);
+            callbacks_.stop(true);
             return;
          }
       } else {
@@ -253,10 +253,10 @@ public final class MMAcquisition extends DataViewerListener {
       studio_.events().registerForEvents(this);
 
       // start thread reporting when next frame will be taken
-      if (eng.getFrameIntervalMs() > 5000) {
+      if (callbacks.getFrameIntervalMs() > 5000) {
          nextFrameAlertGenerator_ = new Timer(1000, (ActionEvent e) -> {
-            if (eng.isAcquisitionRunning()) {
-               setNextImageAlert(eng);
+            if (callbacks.isAcquisitionRunning()) {
+               setNextImageAlert(callbacks);
             }
          });
          nextFrameAlertGenerator_.setInitialDelay(3000);
@@ -304,11 +304,11 @@ public final class MMAcquisition extends DataViewerListener {
          ReportingUtils.logError("MMAcquisition: received callback from unknown viewer");
          return true;
       }
-      if (eng_.getAcquisitionDatastore() != viewer.getDataProvider()) {
+      if (callbacks_.getAcquisitionDatastore() != viewer.getDataProvider()) {
          // not our problem;)
          return true;
       }
-      boolean result = eng_.abortRequest();
+      boolean result = callbacks_.abortRequest();
       if (result) {
          if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
             // saving settings (again) may not be needed
@@ -381,7 +381,7 @@ public final class MMAcquisition extends DataViewerListener {
          abortButton.setMinimumSize(new Dimension(30, 28));
          abortButton.setPreferredSize(new Dimension(30, 28));
          abortButton.addActionListener((ActionEvent e) -> {
-            eng_.abortRequest();
+            callbacks_.abortRequest();
          });
          ArrayList<Component> result = new ArrayList<>();
          result.add(abortButton);
@@ -397,7 +397,7 @@ public final class MMAcquisition extends DataViewerListener {
          pauseButton.setMinimumSize(new Dimension(30, 28));
          pauseButton.setPreferredSize(new Dimension(30, 28));
          pauseButton.addActionListener((ActionEvent e) -> {
-            eng_.setPause(!eng_.isPaused());
+            callbacks_.setPause(!callbacks_.isPaused());
             // Switch the icon depending on if the acquisition is paused.
             Icon icon = pauseButton.getIcon();
             if (icon == pauseIcon) {
@@ -497,7 +497,7 @@ public final class MMAcquisition extends DataViewerListener {
       }
    }
 
-   private void setNextImageAlert(AcquisitionEngine eng) {
+   private void setNextImageAlert(MMAcquistionControlCallbacks eng) {
       if (imagesExpected_ > 0) {
          int s = (int) ((eng.getNextWakeTime() - System.nanoTime() / 1000000.0) / 1000.0);
          String text = "Next frame in " + s + " sec";

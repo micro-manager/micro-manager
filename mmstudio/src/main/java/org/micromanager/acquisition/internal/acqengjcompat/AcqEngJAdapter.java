@@ -55,6 +55,7 @@ import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
+import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
@@ -82,7 +83,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * - The axes of the acquisition are limited to channel, slice, frame, and position
  * - The number of images and other parameters are all known at the start of acquisition
  */
-public class AcqEngJAdapter implements AcquisitionEngine {
+public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCallbacks {
 
    private Acquisition currentAcquisition_;
 
@@ -130,7 +131,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
-
+   
    // this is where the work happens
    private Datastore runAcquisition(SequenceSettings sequenceSettings) {
       SequenceSettings.Builder sb = sequenceSettings.copyBuilder();
@@ -209,32 +210,14 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       try {
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
-         currentAcquisition_ = new Acquisition(null);
 
-         currentAcquisition_.addHook(new AcquisitionHook() {
-            @Override
-            public AcquisitionEvent run(AcquisitionEvent event) {
-               // TODO auto shutter logic here
-               //System.out.println();
-               event.getTIndex();
-               // event.getZIndex() == 0;
-               //acquisitionSettings
-               return event;
-            }
-
-            @Override
-            public void close() {
-
-            }
-         }, Acquisition.AFTER_HARDWARE_HOOK);
+         AcqEngJMDADataSink sink = new AcqEngJMDADataSink(studio_.events());
+         currentAcquisition_ = new Acquisition(sink);
 
          loadRunnables(acquisitionSettings);
          // This TaggedImageProcessor is used to divert images away from the optional
          // processing and saving of AcqEngJ, and into the system used by the studio API
          // (which has its own system for processing and saving)
-         TaggedImageDiverter diverter = new TaggedImageDiverter();
-         currentAcquisition_.addImageProcessor(diverter);
-         final BlockingQueue<TaggedImage> engineOutputQueue = diverter.getQueue();
 
          summaryMetadata_ = currentAcquisition_.getSummaryMetadata();
          addMMSummaryMetadata(summaryMetadata_, sequenceSettings);
@@ -248,6 +231,8 @@ public class AcqEngJAdapter implements AcquisitionEngine {
                acquisitionSettings.shouldDisplayImages());
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
+         sink.setDatastore(curStore_);
+         sink.setPipeline(curPipeline_);
 
          zStage_ = core_.getFocusDevice();
          zStart_ = core_.getPosition(zStage_);
@@ -260,10 +245,12 @@ public class AcqEngJAdapter implements AcquisitionEngine {
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_, this,
                acquisitionSettings));
 
-         // Start pumping images through the pipeline and into the datastore.
-         AcqEngJDataSink sink = new AcqEngJDataSink(
-               engineOutputQueue, curPipeline_, curStore_, this, studio_.events());
-         sink.start(() -> currentAcquisition_.abort());
+
+         /////////////////
+         /////////////////////////////
+
+
+
 
          if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
@@ -301,7 +288,7 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       // These are the ones from the clojure engine that may yet need to be translated
       //        "Channels" -> {Long@25854} 2
 
-      summaryMetadata_.put(PropertyKey.CHANNEL_GROUP.key(), acqSettings.channelGroup());
+      summaryMetadata.put(PropertyKey.CHANNEL_GROUP.key(), acqSettings.channelGroup());
       JSONArray chNames = new JSONArray();
       JSONArray chColors = new JSONArray();
       if (acqSettings.useChannels() && acqSettings.channels().size() > 0) {
@@ -312,21 +299,21 @@ public class AcqEngJAdapter implements AcquisitionEngine {
       } else {
          chNames.put("Default");
       }
-      summaryMetadata_.put(PropertyKey.CHANNEL_NAMES.key(), chNames);
-      summaryMetadata_.put(PropertyKey.CHANNEL_COLORS.key(), chColors);
+      summaryMetadata.put(PropertyKey.CHANNEL_NAMES.key(), chNames);
+      summaryMetadata.put(PropertyKey.CHANNEL_COLORS.key(), chColors);
 
       // MM MDA acquisitions have a defined number of
       // frames/slices/channels/positions at the outset
-      summaryMetadata_.put(PropertyKey.FRAMES.key(), getNumFrames());
-      summaryMetadata_.put(PropertyKey.SLICES.key(), getNumSlices());
-      summaryMetadata_.put(PropertyKey.CHANNELS.key(), getNumChannels());
-      summaryMetadata_.put(PropertyKey.POSITIONS.key(), getNumPositions());
+      summaryMetadata.put(PropertyKey.FRAMES.key(), getNumFrames());
+      summaryMetadata.put(PropertyKey.SLICES.key(), getNumSlices());
+      summaryMetadata.put(PropertyKey.CHANNELS.key(), getNumChannels());
+      summaryMetadata.put(PropertyKey.POSITIONS.key(), getNumPositions());
 
       // MM MDA acquisitions have a defined order
-      summaryMetadata_.put(PropertyKey.SLICES_FIRST.key(),
+      summaryMetadata.put(PropertyKey.SLICES_FIRST.key(),
             acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
                   || acqSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE);
-      summaryMetadata_.put(PropertyKey.TIME_FIRST.key(),
+      summaryMetadata.put(PropertyKey.TIME_FIRST.key(),
             acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
                   || acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE);
 
