@@ -35,19 +35,19 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
    private Pipeline pipeline_;
    private final EventManager studioEvents_;
    private boolean somethingAcquired_ = false;
-    private boolean finished_ = false;
+   private boolean finished_ = false;
 
    public AcqEngJMDADataSink(EventManager studioEvents) {
       studioEvents_ = studioEvents;
    }
 
-    public void setPipeline(Pipeline pipeline) {
-        pipeline_ = pipeline;
-    }
+   public void setPipeline(Pipeline pipeline) {
+      pipeline_ = pipeline;
+   }
 
-    public void setDatastore(Datastore store) {
-        store_ = store;
-    }
+   public void setDatastore(Datastore store) {
+      store_ = store;
+   }
 
    // Never called from EDT
    private void handleOutOfMemory(final OutOfMemoryError e) {
