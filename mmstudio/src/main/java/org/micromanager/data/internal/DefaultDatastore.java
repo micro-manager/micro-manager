@@ -264,7 +264,7 @@ public class DefaultDatastore implements Datastore {
    @Override
    public int getNextIndex(String axis) {
       if (storage_ != null) {
-         if (storage_.getAxes().contains(axis)) {
+         if (storage_.getAxes() != null && storage_.getAxes().contains(axis)) {
             return storage_.getMaxIndex(axis) + 1;
          }
          return 0;
