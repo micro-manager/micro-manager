@@ -236,6 +236,10 @@ public abstract class NonPropertyMapJSONFormats {
                SCOPE_DATA,
                SCOPE_DATA_KEYS,
                USER_DATA,
+               // File name should probably not be included here, since it can/should be handled
+               // a storage layer on its own, and should not be considered required metadata.
+               // but I don't know what the consequences of removing it are, so I'm leaving it
+               // in for now.
                FILE_NAME)) {
             try {
                key.storeInGsonObject(pmap, jo);

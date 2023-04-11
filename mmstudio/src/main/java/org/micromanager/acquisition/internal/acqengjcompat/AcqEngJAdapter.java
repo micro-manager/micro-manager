@@ -131,7 +131,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
-   
+
    // this is where the work happens
    private Datastore runAcquisition(SequenceSettings sequenceSettings) {
       SequenceSettings.Builder sb = sequenceSettings.copyBuilder();
@@ -359,12 +359,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.CHANNEL_AXIS)) {
             imageMD.put(PropertyKey.CHANNEL_INDEX.key(),
                   AcqEngMetadata.getAxisPosition(imageMD, AcqEngMetadata.CHANNEL_AXIS));
-
-            // TODO change to reading channel name from the axes
-            //  imageMD.put(PropertyKey.CHANNEL_NAME.key(), AcqEngMetadata.getChannelName(imageMD));
-            // TODO acqEngJ doesnt currently report this in metadata...
-            // imageMD.put(PropertyKey.CAMERA_CHANNEL_INDEX.key(), AcqEngMetadata.(imageMD));
-            // Maybe core channel group is needed?
+            String channelName = "" + AcqEngMetadata.getAxes(imageMD)
+                  .get(AcqEngMetadata.CHANNEL_AXIS);
+            imageMD.put(PropertyKey.CHANNEL_NAME.key(), channelName);
          }
          if (AcqEngMetadata.hasAxis(imageMD, "position")) {
             imageMD.put(PropertyKey.POSITION_INDEX.key(),
@@ -385,6 +382,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          } else if (AcqEngMetadata.hasStageZIntended(imageMD)) {
             imageMD.put(PropertyKey.Z_POSITION_UM.key(), AcqEngMetadata.getStageZIntended(imageMD));
          }
+         // Add this in to avoid many errors being printed to the log, but probably this should
+         // not be a required field
+         imageMD.put(PropertyKey.FILE_NAME.key(), "Unknown");
       } catch (JSONException e) {
          throw new RuntimeException("Couldn't convert metadata");
       }

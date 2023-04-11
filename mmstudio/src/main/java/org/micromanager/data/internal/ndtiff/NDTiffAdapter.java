@@ -240,6 +240,9 @@ public class NDTiffAdapter implements Storage {
 
    @Override
    public int getMaxIndex(String axis) {
+      if (storage_ == null || storage_.getAxesSet() == null || storage_.getAxesSet().size() == 0) {
+         return -1;
+      }
       return storage_.getAxesSet().stream().map(new Function<HashMap<String, Object>, Integer>() {
          @Override
          public Integer apply(HashMap<String, Object> stringIntegerHashMap) {
@@ -253,6 +256,9 @@ public class NDTiffAdapter implements Storage {
 
    @Override
    public List<String> getAxes() {
+      if (getSummaryMetadata() == null) {
+         return null;
+      }
       return getSummaryMetadata().getOrderedAxes();
    }
 
