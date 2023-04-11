@@ -359,7 +359,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.CHANNEL_AXIS)) {
             imageMD.put(PropertyKey.CHANNEL_INDEX.key(),
                   AcqEngMetadata.getAxisPosition(imageMD, AcqEngMetadata.CHANNEL_AXIS));
-            String channelName = "" + AcqEngMetadata.getAxes(imageMD).get(AcqEngMetadata.CHANNEL_AXIS);
+            String channelName = "" + AcqEngMetadata.getAxes(imageMD)
+                  .get(AcqEngMetadata.CHANNEL_AXIS);
             imageMD.put(PropertyKey.CHANNEL_NAME.key(), channelName);
          }
          if (AcqEngMetadata.hasAxis(imageMD, "position")) {
