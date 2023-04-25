@@ -188,7 +188,8 @@ public class DeviceUtils {
             checkPropertyExists(key, Properties.Keys.CAMERA_X_DIMENSION);
             checkPropertyExists(key, Properties.Keys.CAMERA_Y_DIMENSION);
             checkPropertyExists(key, Properties.Keys.PVCAM_CLEARING_MODE);
-            if (props_.getPropValueString(key, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
+            if (props_.getPropValueString(key, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME) ||
+                  props_.getPropValueString(key, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.KINETIX_CHIPNAME)) {
                checkPropertyExists(key, Properties.Keys.PVCAM_EXPOSURE_TIME);
                checkPropertyExists(key, Properties.Keys.PVCAM_PRE_TIME);
             }

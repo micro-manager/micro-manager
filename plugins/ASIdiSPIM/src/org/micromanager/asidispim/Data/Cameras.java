@@ -642,7 +642,7 @@ public class Cameras {
          }
       case PVCAM:
          Rectangle roi = getCameraROI(camKey);
-         if (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
+         if (props_.hasProperty(camKey, Properties.Keys.PVCAM_READOUT_TIME)) {
             float readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
             return (readoutTimeMs / roi.height);
          } else {
@@ -676,9 +676,12 @@ public class Cameras {
       } else {
          Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
          
+         // TODO Confirm that the Kinetix camera is like the Prime 95B
+         
          // Photometrics Prime 95B is very different from other cameras so handle it as special case
          if (camLibrary == Devices.Libraries.PVCAM 
-               && props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME.toString())) {
+               && (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)
+                     || props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.KINETIX_CHIPNAME))) {
             int trigToGlobal = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_POST_TIME)
                   + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
             // it appears as of end-May 2017 that the clearing time is actually rolled into the post-trigger
@@ -757,7 +760,8 @@ public class Cameras {
             readoutTimeMs = 0.25f;
             break;
          case PVCAM:
-            if (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
+            if (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)
+                  || props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.KINETIX_CHIPNAME)) {
                int preTime = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME);
                readoutTimeMs = (float) preTime / 1e6f;
                // for safety we make sure to wait at least a quarter millisecond to trigger

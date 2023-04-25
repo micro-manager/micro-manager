@@ -417,6 +417,7 @@ public class Properties {
       PRE_SEQUENCE("Pre-Sequence"),          // for PVCam
       PRIME_CHIPNAME("CIS2020F"),            // for PVCam, original Prime
       PRIME_95B_CHIPNAME("GS144BSI"),        // for PVCam, Prime 95B
+      KINETIX_CHIPNAME("TMP-Kinetix"),        // for PVCam, Kinetex
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
       SIXTEENBIT("16bit"),

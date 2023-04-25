@@ -1389,12 +1389,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       //    trigger the laser until 0.24ms after global exposure) use cameraReset_max
       // special adjustment for Photometrics cameras that possibly has extra clear time which is counted in reset time
       //    but not in the camera exposure time
+      // Assumed but didn't check that this applies to Kinetix camera too
       final float actualCameraResetTime = (camLibrary == Devices.Libraries.PVCAM 
-            && props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME))
+            && (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME) 
+                  || props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.KINETIX_CHIPNAME)))
             ? (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f
-            : cameraResetTime; // everything but Photometrics Prime 95B
+            : cameraResetTime; // everything but Photometrics Prime 95B and Kinetix
       final float cameraExposure = MyNumberUtils.ceilToQuarterMs(actualCameraResetTime) + laserDuration;
-   
+
       switch (acqSettings.cameraMode) {
       case EDGE:
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
