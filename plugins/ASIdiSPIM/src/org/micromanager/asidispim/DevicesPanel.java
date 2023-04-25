@@ -94,6 +94,16 @@ public class DevicesPanel extends ListeningJPanel {
          final JComboBox boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
                Devices.Keys.ZDRIVE2, maxSelectorWidth*2);
          add(boxUpperZ_, "span 2, center, wrap");
+         
+         add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.ZDRIVE3) + ":"));
+         final JComboBox boxLowerZdup_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+               Devices.Keys.ZDRIVE3, maxSelectorWidth*2);
+         add(boxLowerZdup_, "span 2, center, wrap");
+         
+         add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.ZDRIVE4) + ":"));
+         final JComboBox boxUpperZdup_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+               Devices.Keys.ZDRIVE4, maxSelectorWidth*2);
+         add(boxUpperZdup_, "span 2, center, wrap");
       } else {
          add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.SUPPLEMENTAL_X) + ":"));
          final JComboBox boxSupX_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
