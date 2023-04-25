@@ -74,7 +74,8 @@ public class ControllerUtils {
    final int triggerStepPulseAddr = 7;
    final int triggerStepOutputAddr = 40;  // BNC #8
    final int triggerInAddr = 35;  // BNC #3
-   final int triggerSPIMAddr = 46;  // backplane signal, same as XY card's TTL output
+   final int triggerSPIMAddr = 46;  // backplane signal, same as XY card's TTL output for stage scanning
+                                    // with external trigger use same address b/c MMSPIM card always uses that backplane line to trigger
    final int laserTriggerAddress = 10;  // this should be set to (42 || 8) = (TTL1 || manual laser on)
    final String MACRO_NAME_STEP = "STEPTRIG";
    final String MACRO_NAME_SCAN = "SCANTRIG";
@@ -544,6 +545,24 @@ public class ControllerUtils {
          // TODO handle other multichannel modes with stage scanning (what does this mean??)
       } else {
          scanDistance_ = 0;
+      }
+      
+      if (settings.spimMode == AcquisitionModes.Keys.EXT_TRIG_ACQ) {
+         
+         // assume external trigger connected to PLC input #3
+         // the jumper from the XY card should be removed so it isn't contending for the same wire
+         //   (the PLC can be pull-down but the XY card is push-pull)
+         // choose to do push-pull here for modicum of safety if the jumper isn't removed
+         // just pass through trigger signal directly onto backplane; don't do one-shot or debounce or anything
+         
+         // configure input #3 as an input
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerInAddr);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_IO_INPUT);
+         
+         // set backplane signal
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerSPIMAddr);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_IO_OUT_OPENDRAIN);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerInAddr);
       }
 
       // sets PLogic "acquisition running" flag
@@ -1203,6 +1222,9 @@ public class ControllerUtils {
          //   two micro-mirror cards, which hasn't ever been done in practice yet
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
                Properties.Values.SPIM_RUNNING, getSkipScannerWarnings(galvoDevice));
+         break;
+      case EXT_TRIG_ACQ:
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
          break;
       default:
          MyDialogUtils.showError("Unknown acquisition mode");

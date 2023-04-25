@@ -1928,6 +1928,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       case STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL:
       case STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL:
       case NO_SCAN:
+      case EXT_TRIG_ACQ:
          return false;
       case PIEZO_SCAN_ONLY:
       case PIEZO_SLICE_SCAN:
@@ -3438,6 +3439,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
          }
          
+         // 100 second timeout only when using external trigger
+         long extraExternalTrigTimeout = (acqSettings.spimMode == AcquisitionModes.Keys.EXT_TRIG_ACQ) ? 100000 : 0;
+
          VirtualAcquisitionDisplay vad = null;
          WindowListener wl_acq = null;
          WindowListener[] wls_orig = null;
@@ -4090,7 +4094,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            long start = System.currentTimeMillis();
                            long now = start;
                            final long timeout = Math.max(3000, Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide))
-                                 + extraStageScanTimeout + extraMultiXYTimeout;
+                                 + extraStageScanTimeout + extraMultiXYTimeout + extraExternalTrigTimeout;
                            while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
                                  && !cancelAcquisition_.get()) {
                               now = System.currentTimeMillis();
@@ -4102,6 +4106,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  msg += "Make sure jumpers are correct on XY card and also micro-micromirror card.";
                                  ReportingUtils.logMessage("Stage speed is " + props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED_X));
                                  positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
+                              } else if (acqSettings.spimMode == AcquisitionModes.Keys.EXT_TRIG_ACQ) {
+                                 msg += "Make sure external pulse is provided within 10 seconds of starting acquistion";
                               } else {
                                  msg += "Make sure camera trigger cables are connected properly.";
                               }
@@ -4123,6 +4129,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  timeout2 += (long)Math.ceil(getStageRetraceDuration(acqSettings));  // in unidirectional case also need to rewind
                               }
                            }
+                           if (acqSettings.spimMode == AcquisitionModes.Keys.EXT_TRIG_ACQ) {
+                              timeout2 += 100000;
+                           }
+                           
                            start = System.currentTimeMillis();
                            long last = start;
                            try {

@@ -52,12 +52,13 @@ public class AcquisitionModes {
       PIEZO_SLICE_SCAN("Synchronous piezo/slice scan", 1),
       NO_SCAN(         "No scan (fixed sheet)", 3),
       STAGE_SCAN(      "Stage scan", 4),  // path A and B scanning opposite directions
-      STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
-      STAGE_SCAN_UNIDIRECTIONAL("Stage scan unidirectional", 7),
+      STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),  // single stage scan with two paths interleaved
+      STAGE_SCAN_UNIDIRECTIONAL("Stage scan unidirectional", 7),  // path A and B scanning same direction
       STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL("Stage step supplemental", 8),
       STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL("Stage scan supplemental", 9),
       SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),
       PIEZO_SCAN_ONLY("Piezo scan only (unusual)", 6),
+      EXT_TRIG_ACQ("External trig per acq", 10),
       NONE(            "None", 0);
       private final String text;
       private final int prefCode;
@@ -196,6 +197,7 @@ public class AcquisitionModes {
          }
          keyList.add(Keys.SLICE_SCAN_ONLY);
          keyList.add(Keys.PIEZO_SCAN_ONLY);
+         keyList.add(Keys.EXT_TRIG_ACQ);
          return keyList;
       }
 
