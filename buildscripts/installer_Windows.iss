@@ -153,6 +153,9 @@ Source: {#MMStageDir}\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#MMStageDir}\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#MMStageDir}\*.dll; DestDir: {app}; Flags: ignoreversion
 
+; MeadowlarkLC calibration file
+Source: {#MMStageDir}\mmgr_dal_MeadowlarkLC.csv; DestDir: {app}; Flags: ignoreversion
+
 ; Olympus IX*3 control module
 Source: {#MMStageDir}\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control; Flags: ignoreversion recursesubdirs createallsubdirs
 
