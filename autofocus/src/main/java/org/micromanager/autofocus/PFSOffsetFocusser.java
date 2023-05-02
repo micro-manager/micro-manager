@@ -28,17 +28,30 @@ import java.util.ArrayList;
 import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
+import mmcorej.PropertyType;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
+ * This plugin was written mainly with the Nikon Perfect Focus in mind, but may be
+ * useful for other hardware autofocus systems as well.  It is often desirable to
+ * use a software autofocus to set the PFS offset.  Doing so directly while using the
+ * PFS offset as a "FocusDevice" leads to bad results (at least in my case with a Ti2),
+ * likely because the lag between setting the offset and the ZDrive arriving at the correct
+ * position is variable, and can not be easily queried by software.  This plugin uses a
+ * user-defined software autofocus algorithm that uses the user-defined ZDrive, then
+ * activates the PFS device, and adjusts the PFS offset such that the ZDrive ends up at
+ * the same location (within a user-defined precision).  The "gearing", relating the
+ * movement of the PFS offset and ZDrive position is measured and stored in the preferences,
+ * so that it lands at the correct position almost instantaneously the second time.
  *
  * @author nico
  */
@@ -51,6 +64,7 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
    private static final String SOFTWARE_AUTOFOCUS = "SoftwareFocusMethod";
    private static final String PFS = "PFS";
    private static final String ZDRIVE = "ZDrive";
+   private static final String PRECISION = "Precision";
 
    private Studio studio_;
 
@@ -61,10 +75,14 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
    private double precision_ = 2.0;
    private String pFS_;
 
+   /**
+    * Constructor of the PFSOffsetFocusser
+    */
    public PFSOffsetFocusser() {
       super.createProperty(SOFTWARE_AUTOFOCUS, "");
       super.createProperty(ZDRIVE, "");
       super.createProperty(PFS, "");
+      super.createProperty(PRECISION, "");
    }
 
    @Override
@@ -143,6 +161,13 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
          studio_.logs().logError(e);
       }
 
+      try {
+         PropertyItem p = getProperty(PRECISION);
+         p.type = PropertyType.Float;
+      } catch (Exception e) {
+         studio_.logs().logError(e);
+      }
+
       return super.getProperties();
    }
 
@@ -152,6 +177,7 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
          softwareFocusMethod_ = getPropertyValue(SOFTWARE_AUTOFOCUS);
          zDrive_ = getPropertyValue(ZDRIVE);
          pFS_ = getPropertyValue(PFS);
+         precision_ = NumberUtils.displayStringToDouble(getPropertyValue(PRECISION));
       } catch (Exception e) {
          studio_.logs().logError(e);
       }
@@ -179,39 +205,41 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
          return 0.0;
       }
       CMMCore core = studio_.getCMMCore();
+      // collect settings so that we can restore them
+      final String autofocusDevice = core.getAutoFocusDevice();
+      final boolean continuousFocusOn = core.isContinuousFocusEnabled();
+      final String zStage = core.getFocusDevice();
+      final String originalAutofocusMethod = studio_.getAutofocusManager().getAutofocusMethod()
+              .getName();
+      core.enableContinuousFocus(false);
       try {
          studio_.getAutofocusManager().setAutofocusMethodByName(softwareFocusMethod_);
          core.getDeviceType(zDrive_);
          core.getDeviceName(pFS_);
       } catch (Exception ex) {
          studio_.logs().showError(
-               "HardwareFocusExtender: Hardware focus device and/or ZDrive were not set");
+               "HardwareFocusExtender: Focus device(s) and/or ZDrive were not set");
          return 0.0;
       }
       double pos = 0.0;
       try {
-         final String autofocusDevice = core.getAutoFocusDevice();
-         final boolean continuousFocusOn = core.isContinuousFocusEnabled();
-         core.enableContinuousFocus(false);
-         final String zStage = core.getFocusDevice();
          core.setFocusDevice(zDrive_);
-         final String originalAutofocusMethod = studio_.getAutofocusManager().getAutofocusMethod()
-               .getName();
          studio_.getAutofocusManager().setAutofocusMethodByName(softwareFocusMethod_);
+         // run the software autofocus
          studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
+         // collect the in focus position of the Z drive
          pos = core.getPosition(zDrive_);
+         // re-engage the PFS
          core.setAutoFocusDevice(pFS_);
          core.enableContinuousFocus(true);
          Thread.sleep(1000);
          // do the offset adjustment to match the ZDrive position we liked.
          final boolean success = adjustPFSOffset(pos);
          // set the hardware back to where it was
-         core.enableContinuousFocus(false);
+         core.enableContinuousFocus(continuousFocusOn);
          studio_.getAutofocusManager().setAutofocusMethodByName(originalAutofocusMethod);
          core.setFocusDevice(zStage);
          core.setAutoFocusDevice(autofocusDevice);
-         core.enableContinuousFocus(continuousFocusOn);
-
          if (success) {
             return pos;
          }
