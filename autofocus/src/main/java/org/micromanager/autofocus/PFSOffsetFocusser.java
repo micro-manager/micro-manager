@@ -24,12 +24,17 @@
 package org.micromanager.autofocus;
 
 import ij.process.ImageProcessor;
+import java.util.ArrayList;
+import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.propertymap.MutablePropertyMapView;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -52,6 +57,8 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
    //These variables store current settings for the plugin
    private String softwareFocusMethod_;
    private String zDrive_;
+   // maximum deviation we are content with, could be user supplied.
+   private double precision_ = 2.0;
    private String pFS_;
 
    public PFSOffsetFocusser() {
@@ -152,13 +159,15 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
    @Override
    public void setContext(Studio app) {
       studio_ = app;
-      studio_.events().registerForEvents(this); //We subscribe to the AutofocusPluginShouldInitialize event.
+      // We subscribe to the AutofocusPluginShouldInitialize event.
+      studio_.events().registerForEvents(this);
    }
 
    /**
+    * Runs the FullFocus.
     *
     * @return z position for in focus image. Returns 0 if no focused position was found.
-    * @throws Exception
+    * @throws Exception thrown by hardware
     */
    @Override
    public double fullFocus() throws Exception {
@@ -174,31 +183,96 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
          core.getDeviceType(zDrive_);
          core.getDeviceName(pFS_);
       } catch (Exception ex) {
-         studio_.logs().showError("HardwareFocusExtender: Hardware focus device and/or ZDrive were not set");
+         studio_.logs().showError(
+               "HardwareFocusExtender: Hardware focus device and/or ZDrive were not set");
          return 0.0;
       }
       double pos = 0.0;
       try {
-         String autofocusDevice = core.getAutoFocusDevice();
-         boolean continuousFocusOn = core.isContinuousFocusEnabled();
+         final String autofocusDevice = core.getAutoFocusDevice();
+         final boolean continuousFocusOn = core.isContinuousFocusEnabled();
          core.enableContinuousFocus(false);
-         String zStage = core.getFocusDevice();
-         core.setFocusDevice(zStage);
-         String originalAutofocusMethod = studio_.getAutofocusManager().getAutofocusMethod().getName();
+         final String zStage = core.getFocusDevice();
+         core.setFocusDevice(zDrive_);
+         final String originalAutofocusMethod = studio_.getAutofocusManager().getAutofocusMethod()
+               .getName();
          studio_.getAutofocusManager().setAutofocusMethodByName(softwareFocusMethod_);
          studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
          pos = core.getPosition(zDrive_);
          core.setAutoFocusDevice(pFS_);
          core.enableContinuousFocus(true);
          Thread.sleep(1000);
-         double pos2 = core.getPosition(zDrive_);
+         // do the offset adjustment to match the ZDrive position we liked.
+         final boolean success = adjustPFSOffset(pos);
+         // set the hardware back to where it was
+         core.enableContinuousFocus(false);
+         studio_.getAutofocusManager().setAutofocusMethodByName(originalAutofocusMethod);
+         core.setFocusDevice(zStage);
+         core.setAutoFocusDevice(autofocusDevice);
+         core.enableContinuousFocus(continuousFocusOn);
 
+         if (success) {
+            return pos;
+         }
       } catch (Exception ex) {
          studio_.logs().logError(ex);
       }
-      //boolean success = testFocus();
 
       return 0.0; //No focus was found.
+   }
+
+   /**
+    * This function moves the PFS offset with the goal to move the zDrive to the
+    * desired position.  This assumes that the PFS is locked.  The function uses
+    * a multiplier to relates PFS offset to zDrive position.  The estimate for this
+    * multiplier is updated in this function and stores in the user profile, tied to
+    * the current pixel size magnification.
+    *
+    * @param desiredZPos the Z position in microns for the main zDrive
+    * @return true on success, false on failure.
+    */
+   private boolean adjustPFSOffset(double desiredZPos) {
+      CMMCore core = studio_.core();
+      ArrayList<Pair<Double, Double>> m = new ArrayList<>();
+      try {
+         String pixelSizeConfig = core.getCurrentPixelSizeConfig();
+         MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
+         double multiplier = settings.getDouble(pixelSizeConfig, 1.0);
+         double zPos = core.getPosition(zDrive_);
+         while (Math.abs(desiredZPos - zPos) > precision_) {
+            double currentOffset = core.getAutoFocusOffset();
+            double offsetDiff = multiplier * (desiredZPos - zPos);
+            core.setAutoFocusOffset(currentOffset + offsetDiff);
+            Thread.sleep(1000);
+            double newZPos = core.getPosition(zDrive_);
+            double zPosDiff = newZPos - zPos;
+            double multiplierEstimate = offsetDiff / zPosDiff;
+            m.add(new ImmutablePair<>(multiplierEstimate, zPosDiff));
+            multiplier = weightedAverage(m);
+         }
+         settings.putDouble(pixelSizeConfig, multiplier);
+      } catch (Exception e) {
+         studio_.logs().logError(e);
+         return false;
+      }
+      return true;
+   }
+
+   /**
+    * Calculates the weighted average of the keys in input Pairs, weighted by the values.
+    *
+    * @param values list of Pairs, where the key is the number we want the weighted average for,
+    *               and the value is the weight.
+    * @return Weighted Average.
+    */
+   private double weightedAverage(List<Pair<Double, Double>> values) {
+      double sumZPosDiffs = 0.0;
+      double weightedEstimateSum = 0.0;
+      for (Pair<Double, Double> val : values) {
+         sumZPosDiffs += val.getValue();
+         weightedEstimateSum += val.getValue() * val.getKey();
+      }
+      return weightedEstimateSum / sumZPosDiffs;
    }
 
    @Override
@@ -207,22 +281,22 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
    }
 
    public int getNumberOfImages() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
    public String getVerboseStatus() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
    public double getCurrentFocusScore() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
    public double computeScore(ImageProcessor impro) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override

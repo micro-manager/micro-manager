@@ -1,0 +1,4 @@
+<project name="PFSOffsetFocusser" default="jar">
+    <property name="sourcefile" value="src/main/java/org/micromanager/autofocus/PFSOffsetFocusser.java"/>
+	<import file="autofocusbuild.xml"/>
+</project>
