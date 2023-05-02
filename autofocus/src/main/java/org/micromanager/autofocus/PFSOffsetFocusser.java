@@ -87,7 +87,7 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
       String[] allowedZDrives = new String[zDrives.length + 1];
       allowedZDrives[0] = "";
       String[] allowedPFSs = new String[pFss.length + 1];
-      pFss[0] = "";
+      allowedPFSs[0] = "";
 
       try {
          PropertyItem p = getProperty(SOFTWARE_AUTOFOCUS);
@@ -151,6 +151,7 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
       try {
          softwareFocusMethod_ = getPropertyValue(SOFTWARE_AUTOFOCUS);
          zDrive_ = getPropertyValue(ZDRIVE);
+         pFS_ = getPropertyValue(PFS);
       } catch (Exception e) {
          studio_.logs().logError(e);
       }
@@ -249,6 +250,7 @@ public class PFSOffsetFocusser extends AutofocusBase implements AutofocusPlugin,
             double multiplierEstimate = offsetDiff / zPosDiff;
             m.add(new ImmutablePair<>(multiplierEstimate, zPosDiff));
             multiplier = weightedAverage(m);
+            zPos = newZPos;
          }
          settings.putDouble(pixelSizeConfig, multiplier);
       } catch (Exception e) {
