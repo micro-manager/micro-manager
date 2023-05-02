@@ -41,9 +41,9 @@ import java.util.function.Function;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-import mmcorej.org.json.JSONException;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
+import mmcorej.org.json.JSONException;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.univariate.BrentOptimizer;
@@ -51,16 +51,16 @@ import org.apache.commons.math3.optim.univariate.SearchInterval;
 import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.micromanager.AutofocusPlugin;
+import org.micromanager.Studio;
 import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 import org.micromanager.internal.utils.AutofocusBase;
-import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
-import org.micromanager.Studio;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -366,7 +366,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       /**
        * Setter for Display Image flag.
        *
-       * @param display If `true` then the images taken by the focuser will be displayed in real-time.
+       * @param display If `true` then the images taken by the focuser will be displayed in
+       *                real-time.
        */
       public void setDisplayImages(boolean display) {
          displayImages_ = display;

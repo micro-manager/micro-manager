@@ -180,7 +180,7 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
          double baseDist = curDist_ - sizeFirst_ * numFirst_;
          core_.setPosition(core_.getFocusDevice(), baseDist);
          core_.waitForDevice(core_.getFocusDevice());
-         delay_time(300);
+         delayTime(300);
          IJ.log(" Before rough search: " + curDist_);
 
          //Rough search
@@ -204,7 +204,7 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
 
          baseDist = bestDist - sizeSecond_ * numSecond_;
          core_.setPosition(core_.getFocusDevice(), baseDist);
-         delay_time(100);
+         delayTime(100);
 
          bestSh = 0;
 
@@ -264,7 +264,7 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
    }
 
    //waiting    
-   private void delay_time(double delay) {
+   private void delayTime(double delay) {
       Date date = new Date();
       long sec = date.getTime();
       while (date.getTime() < (sec + delay)) {
