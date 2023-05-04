@@ -125,4 +125,7 @@ public class MultiPosGrid extends XYFootprint {
               center_.x, center_.y, overlapX_, overlapY_, rows_, cols_);
    }
 
+    public void pixelSizeChanged() {
+       manager_.surfaceOrGridUpdated(this);
+    }
 }

@@ -29,8 +29,12 @@ import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import com.google.common.eventbus.Subscribe;
+import net.imglib2.type.operators.Mul;
 import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.acqj.internal.NumUtils;
+import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.magellan.internal.coordinates.AffineUndefinedException;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
@@ -50,8 +54,19 @@ public class SurfaceGridManager {
    
    public SurfaceGridManager() {
       singletonInstance_ = this;
+      Magellan.getStudio().events().registerForEvents(this);
    }
-   
+
+   @Subscribe
+   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
+      for (SurfaceInterpolator s : surfaces_) {
+         s.pixelSizeChanged();
+      }
+      for (MultiPosGrid g : grids_) {
+         g.pixelSizeChanged();
+      }
+   }
+
    public void registerSurfaceGridListener(SurfaceGridListener l) {
       listeners_.add(l);
    }
