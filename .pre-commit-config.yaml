@@ -10,5 +10,5 @@ repos:
           - --
           - -c
           - buildscripts/codestyle/checkstyle.xml
-        files: '^(mmstudio/src/main/java/|libraries|plugins)'
+        files: '^(mmstudio/src/main/java/|libraries|plugins|autofocus)'
         exclude: '^(libraries/Gaussian/src/main/java/edu/ucsf/valelab/tsf|plugins/ASIdiSPIM)'

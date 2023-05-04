@@ -20,22 +20,18 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+
 package org.micromanager.autofocus;
 
-
 import ij.process.ImageProcessor;
-
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
-
-import org.micromanager.Studio;
-
 import org.micromanager.AutofocusPlugin;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -105,8 +101,7 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
             p.value = allowedAFDevices[0];
          }
          setProperty(p);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          ReportingUtils.logError(e);
       }
 
@@ -124,8 +119,7 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
             p.value = allowedZDrives[0];
          }
          setProperty(p);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          ReportingUtils.logError(e);
       }
 
@@ -151,13 +145,14 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
    @Override
    public void setContext(Studio app) {
       gui_ = app;
-      gui_.events().registerForEvents(this); //We subscribe to the AutofocusPluginShouldInitialize event.
+      // We subscribe to the AutofocusPluginShouldInitialize event.
+      gui_.events().registerForEvents(this);
    }
 
    /**
     *
     * @return z position for in focus image. Returns 0 if no focused position was found.
-    * @throws Exception
+    * @throws Exception thrown by hardware
     */
    @Override
    public double fullFocus() throws Exception {
@@ -172,7 +167,8 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
          core.getDeviceType(hardwareFocusDevice_);
          core.getDeviceType(zDrive_);
       } catch (Exception ex) {
-         gui_.logs().showError("HardwareFocusExtender: Hardware focus device and/or ZDrive were not set");
+         gui_.logs().showError(
+               "HardwareFocusExtender: Hardware focus device and/or ZDrive were not set");
          return 0.0;
       }
       double pos = 0.0;
@@ -192,25 +188,28 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
          } catch (Exception ex) {
             gui_.logs().showError(ex, "Failed to set Z position");
          }
-         gui_.logs().logDebugMessage(String.format("HardwareFocusExtender: Checking hardware focus at %.2f.", z));
+         gui_.logs().logDebugMessage(String.format(
+               "HardwareFocusExtender: Checking hardware focus at %.2f.", z));
          success = testFocus();
       }
       //If searching to `lowerLimit` failed try searching from 0 to `upperLimit`
       for (int i = 0; i < upperLimit_ / stepSize_ && !success; i++) {
-        double z = pos + (stepSize_ * i); 
-        try {
-            core.setPosition(zDrive_, z );
+         double z = pos + (stepSize_ * i);
+         try {
+            core.setPosition(zDrive_, z);
             core.waitForDevice(zDrive_);
          } catch (Exception ex) {
             gui_.logs().showError(ex, "HardwareFocusExtender: Failed to set Z position");
          }
-         gui_.logs().logDebugMessage(String.format("HardwareFocusExtender: Checking hardware focus at %.2f.", z));
+         gui_.logs().logDebugMessage(String.format(
+               "HardwareFocusExtender: Checking hardware focus at %.2f.", z));
          success = testFocus();
       }
       if (success) {
          try {
             double currentZ = core.getPosition(zDrive_);
-            gui_.logs().logDebugMessage(String.format("HardwareFocusExtender: Successfully found focus at %.2f.", currentZ));
+            gui_.logs().logDebugMessage(String.format(
+                  "HardwareFocusExtender: Successfully found focus at %.2f.", currentZ));
             return currentZ;
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
@@ -220,15 +219,19 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
       return 0.0; //No focus was found.
    }
 
+
    /**
-    * Activates the autofocus devices
+    * Activates the autofocus devices.
+    *
     * @return true when the device locks, false otherwise
     */
    private boolean testFocus() {
       CMMCore core = gui_.getCMMCore();
       try {
-         // specific for Nikon TI 1 PFS. If the TI reports that it is out of search range there is not point trying fullFocus.
-         if (core.getDeviceLibrary(hardwareFocusDevice_).equals("NikonTI") && core.hasProperty(hardwareFocusDevice_, "Status")) {
+         // specific for Nikon TI 1 PFS. If the TI reports that it is out of search range
+         // there is no point trying fullFocus.
+         if (core.getDeviceLibrary(hardwareFocusDevice_).equals("NikonTI")
+               && core.hasProperty(hardwareFocusDevice_, "Status")) {
             String result = core.getProperty(hardwareFocusDevice_, "Status");
             if (result.equals("Out of focus search range")) { 
                return false;
@@ -245,27 +248,27 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
    
    @Override
    public double incrementalFocus() throws Exception {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
    public int getNumberOfImages() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
    public String getVerboseStatus() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
    public double getCurrentFocusScore() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
    public double computeScore(ImageProcessor impro) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    @Override
