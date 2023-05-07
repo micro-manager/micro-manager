@@ -17,6 +17,7 @@
 
 package org.micromanager.magellan.internal.surfacesandregions;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.FileDialog;
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
@@ -29,9 +30,6 @@ import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
-import com.google.common.eventbus.Subscribe;
-import net.imglib2.type.operators.Mul;
 import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.acqj.internal.NumUtils;
 import org.micromanager.events.PixelSizeChangedEvent;
@@ -104,8 +102,13 @@ public class SurfaceGridManager {
       }
       return grids_.indexOf(surfaceOrGrid);
    }
-   
-   //For calling from surface onyl combo box
+
+   /**
+    * To be called only from surface combo box.
+    *
+    * @param index selected index in combo box
+    * @return Appropriate SurfaceInterpolator
+    */
    public SurfaceInterpolator getSurface(int index) {
       if (index < 0 || index >= surfaces_.size()) {
          return null;
@@ -113,7 +116,12 @@ public class SurfaceGridManager {
       return surfaces_.get(index);
    }
    
-   //For calling from grid onyl combo box
+   /**
+    * To be called only from Grid combo box.
+    *
+    * @param index selected index in grid box
+    * @return Appropriate MultiPosGrid
+    */
    public MultiPosGrid getGrid(int index) {
       if (index < 0 || index >= grids_.size()) {
          return null;
