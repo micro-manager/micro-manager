@@ -17,6 +17,7 @@
 
 package org.micromanager.magellan.internal.surfacesandregions;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.FileDialog;
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
@@ -31,6 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.acqj.internal.NumUtils;
+import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.magellan.internal.coordinates.AffineUndefinedException;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
@@ -50,8 +52,19 @@ public class SurfaceGridManager {
    
    public SurfaceGridManager() {
       singletonInstance_ = this;
+      Magellan.getStudio().events().registerForEvents(this);
    }
-   
+
+   @Subscribe
+   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
+      for (SurfaceInterpolator s : surfaces_) {
+         s.pixelSizeChanged();
+      }
+      for (MultiPosGrid g : grids_) {
+         g.pixelSizeChanged();
+      }
+   }
+
    public void registerSurfaceGridListener(SurfaceGridListener l) {
       listeners_.add(l);
    }
@@ -89,8 +102,13 @@ public class SurfaceGridManager {
       }
       return grids_.indexOf(surfaceOrGrid);
    }
-   
-   //For calling from surface onyl combo box
+
+   /**
+    * To be called only from surface combo box.
+    *
+    * @param index selected index in combo box
+    * @return Appropriate SurfaceInterpolator
+    */
    public SurfaceInterpolator getSurface(int index) {
       if (index < 0 || index >= surfaces_.size()) {
          return null;
@@ -98,7 +116,12 @@ public class SurfaceGridManager {
       return surfaces_.get(index);
    }
    
-   //For calling from grid onyl combo box
+   /**
+    * To be called only from Grid combo box.
+    *
+    * @param index selected index in grid box
+    * @return Appropriate MultiPosGrid
+    */
    public MultiPosGrid getGrid(int index) {
       if (index < 0 || index >= grids_.size()) {
          return null;

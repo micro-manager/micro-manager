@@ -600,4 +600,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
       return Arrays.asList(points_.toArray(new Point3d[0]));
    }
 
+   public void pixelSizeChanged() {
+      updateConvexHullAndInterpolate();
+      manager_.surfaceOrGridUpdated(this);
+   }
 }
