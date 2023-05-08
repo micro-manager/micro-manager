@@ -1,14 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package org.micromanager.display.inspector.internal.panels.metadata;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -21,11 +16,16 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
@@ -44,6 +44,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 /**
+ * Draws the content in the Image Plane Metadata panel in the Inspector Window.
+ *
  * @author mark
  */
 public final class PlaneMetadataInspectorPanelController extends AbstractInspectorPanelController {
@@ -111,6 +113,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
    private final JTable table_;
    private final JScrollPane scrollPane_;
    private final JCheckBox changingOnlyCheckBox_;
+   private final JTextField searchFilterText_;
 
    private static final ExecutorService background_ =
          Executors.newSingleThreadExecutor(
@@ -155,7 +158,36 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
             });
          }
       });
-      panel_.add(changingOnlyCheckBox_, new CC().growX());
+      panel_.add(changingOnlyCheckBox_, new CC().growX().wrap());
+
+      panel_.add(new JLabel("Device or property name:"),  "gapleft 3, split 3");
+      searchFilterText_ = new JTextField();
+      // searchFilterText_.setFont(entryFont);
+      searchFilterText_.getDocument().addDocumentListener(
+            new DocumentListener() {
+               @Override
+               public void changedUpdate(DocumentEvent e) {
+                  updateMetadata(metadata_, true);
+               }
+
+               @Override
+               public void insertUpdate(DocumentEvent e) {
+                  updateMetadata(metadata_, true);
+               }
+
+               @Override
+               public void removeUpdate(DocumentEvent e) {
+                  updateMetadata(metadata_, true);
+               }
+            });
+      panel_.add(searchFilterText_, "gapleft 3, gapbottom 10, growx");
+      JButton clearFilterButton = new JButton("Clear");
+      // clearFilterButton.setFont(font);
+      clearFilterButton.setMargin(new Insets(3, 6, 3, 6));
+      clearFilterButton.addActionListener((ActionEvent e) -> {
+         searchFilterText_.setText("");
+      });
+      panel_.add(clearFilterButton, "gapbottom 10, growy, aligny center, wrap");
    }
 
    @Override
@@ -237,7 +269,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       PropertyMap metadataMap = metadata == null
             ? PropertyMaps.emptyPropertyMap() : ((DefaultMetadata) metadata).toPropertyMap();
 
-      final TreeMap<String, String> data = new TreeMap<String, String>();
+      final TreeMap<String, String> data = new TreeMap<>();
       for (String key : metadataMap.keySet()) {
          if ("ScopeData".equals(key)) {
             PropertyMap scopeData = metadataMap.getPropertyMap(key, null);
@@ -259,24 +291,40 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
          changedOnly = displayChangedValuesOnly_;
       }
       final List<Map.Entry<String, String>> displayData;
+      final boolean search = !searchFilterText_.getText().equals("");
       if (changedOnly) {
          if (!unchangingValuesInitialized_) {
             if (!data.isEmpty()) {
                unchangingValues_.putAll(data);
                unchangingValuesInitialized_ = true;
             }
-            displayData = new ArrayList<Map.Entry<String, String>>(data.entrySet());
+            displayData = new ArrayList<>();
+            for (Map.Entry<String, String> entry : data.entrySet()) {
+               if (!search || entry.getKey().toLowerCase()
+                     .contains(searchFilterText_.getText().toLowerCase())) {
+                  displayData.add(entry);
+               }
+            }
          } else {
             displayData = new ArrayList<Map.Entry<String, String>>();
             unchangingValues_.entrySet().retainAll(data.entrySet());
             for (Map.Entry<String, String> entry : data.entrySet()) {
                if (!unchangingValues_.containsKey(entry.getKey())) {
-                  displayData.add(entry);
+                  if (!search || entry.getKey().toLowerCase()
+                        .contains(searchFilterText_.getText().toLowerCase())) {
+                     displayData.add(entry);
+                  }
                }
             }
          }
       } else {
-         displayData = new ArrayList<Map.Entry<String, String>>(data.entrySet());
+         displayData = new ArrayList<>();
+         for (Map.Entry<String, String> entry : data.entrySet()) {
+            if (!search || entry.getKey().toLowerCase()
+                  .contains(searchFilterText_.getText().toLowerCase())) {
+               displayData.add(entry);
+            }
+         }
       }
 
       data_ = data;
