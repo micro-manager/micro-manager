@@ -1020,7 +1020,7 @@ public final class StorageMultipageTiff implements Storage {
 
    public static boolean getShouldGenerateMetadataFile() {
       return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class)
-            .getBoolean(SHOULD_GENERATE_METADATA_FILE, false);
+            .getBoolean(SHOULD_GENERATE_METADATA_FILE, true);
    }
 
    public static void setShouldGenerateMetadataFile(boolean shouldGen) {
