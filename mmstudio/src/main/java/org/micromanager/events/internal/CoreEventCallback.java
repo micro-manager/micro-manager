@@ -109,7 +109,7 @@ public final class CoreEventCallback extends MMEventCallback {
       } else {
          // see OnPropertyChanged for reasons to run this on the EDT
          SwingUtilities.invokeLater(() -> studio_.events().post(
-               new DefaultConfigGroupChangedEvent(groupName, newConfig)));
+               new DefaultConfigGroupChangedEvent(studio_, groupName, newConfig)));
       }
    }
 
