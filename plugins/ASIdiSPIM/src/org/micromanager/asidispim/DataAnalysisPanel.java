@@ -69,6 +69,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JTextField baseNameField_;
    private final JSpinner deskewFactor_;
    private final JCheckBox deskewInvert_;
+   private final JCheckBox deskewRotate_;
    private final JCheckBox deskewInterpolate_;
    private final JCheckBox deskewAutoTest_;
    private final JButton exportButton_;
@@ -257,6 +258,10 @@ public class DataAnalysisPanel extends ListeningJPanel {
       deskewInvert_ = pu.makeCheckBox("Invert direction (Shroff)",
             Properties.Keys.PLUGIN_DESKEW_INVERT, panelName_, false);
       deskewPanel_.add(deskewInvert_, "left, span 2, wrap");
+
+      deskewRotate_ = pu.makeCheckBox("Rotate direction",
+            Properties.Keys.PLUGIN_DESKEW_ROTATE, panelName_, false);
+      deskewPanel_.add(deskewRotate_, "left, span 2, wrap");
         
       deskewInterpolate_ = pu.makeCheckBox("Interpolate",
             Properties.Keys.PLUGIN_DESKEW_INTERPOLATE, panelName_, false);
@@ -628,7 +633,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                if (!( acqMode == AcquisitionModes.Keys.STAGE_SCAN
                      || acqMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
                      || acqMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL
-                     || acqMode == AcquisitionModes.Keys.SLICE_SCAN_ONLY )) { // Note: SLICE_SCAN_ONLY is here to deskew SCOPE datasets
+                     || acqMode == AcquisitionModes.Keys.SLICE_SCAN_ONLY )) { // Note: SLICE_SCAN_ONLY is here to deskew single-objective datasets
                   throw new Exception("Can only deskew stage scanning and slice scan only data.");
                }
                firstSideIsA = !metadata.getString("FirstSide").equals("B");
@@ -711,15 +716,24 @@ public class DataAnalysisPanel extends ListeningJPanel {
             int nrImagesProcessed = 0;
             for (int c=0; c<nrChannels; c++) {  // loop over channels
                dir = du.getDeskewSign(c, acqMode, twoSided, firstSideIsA);
+               final boolean rotate = deskewRotate_.isSelected();
                final boolean interpolate = deskewInterpolate_.isSelected();
                ImagePlus i = channels[c];
-               i.setStack(resize.expandStack(i.getImageStack(), width + width_expansion, height, (dir < 0 ? width_expansion : 0), 0));
+               if (rotate) {  // vertical shift
+                  i.setStack(resize.expandStack(i.getImageStack(), width, height + width_expansion, 0, (dir < 0 ? width_expansion : 0)));
+               } else {  // horizontal shift
+                  i.setStack(resize.expandStack(i.getImageStack(), width + width_expansion, height, (dir < 0 ? width_expansion : 0), 0));
+               }
                for (int t=0; t<nrFrames; t++) {
                   for (int s=0; s<nrSlices; s++) {  // loop over slices in stack and shift each by an appropriate amount
                      i.setPositionWithoutUpdate(c+1, s+1, t+1);  // all 1-indexed
                      ImageProcessor proc = i.getProcessor();
                      proc.setInterpolationMethod(interpolate ? ImageProcessor.BILINEAR : ImageProcessor.NONE);
-                     proc.translate(dx*s*dir, 0);
+                     if (rotate) {  // vertical
+                        proc.translate(0, dx*s*dir);
+                     } else { // horizontal
+                        proc.translate(dx*s*dir, 0);
+                     }
                      IJ.showProgress(++nrImagesProcessed, nrImages);
                   }
                }

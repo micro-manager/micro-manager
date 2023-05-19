@@ -289,6 +289,7 @@ public class Properties {
       PLUGIN_ADVANCED_CAMERA_EXPOSURE("AdvancedCameraExposure"),
       PLUGIN_DESKEW_FACTOR("DeskewFactor"),
       PLUGIN_DESKEW_INVERT("DeskewInvert"),
+      PLUGIN_DESKEW_ROTATE("DeskewRotate"),
       PLUGIN_DESKEW_INTERPOLATE("DeskewInterpolate"),
       PLUGIN_DESKEW_AUTO_TEST("DeskewAutoTest"),
       PLUGIN_OVERVIEW_XY_DOWNSAMPLE_FACTOR("OverviewYDownsampleFactor"),

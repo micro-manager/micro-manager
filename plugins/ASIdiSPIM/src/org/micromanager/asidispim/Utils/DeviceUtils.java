@@ -416,6 +416,8 @@ public class DeviceUtils {
          // always the same direction
          sign = -1;
          break;
+      case SLICE_SCAN_ONLY: // for single-objective galvo scan
+         sign = -1;
       default:
          sign = 1;
       }
