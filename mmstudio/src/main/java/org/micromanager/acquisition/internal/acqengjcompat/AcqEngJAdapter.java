@@ -27,14 +27,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
-import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
@@ -74,7 +72,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class provides a compatibility layer between AcqEngJ and the
- * AcquisitionEngine interface. It is analagous to the AcquisitionWrapperEngine.java,
+ * AcquisitionEngine interface. It is analagous to AcquisitionWrapperEngine.java,
  * which does the same thing for the clojure acquisition engine
  *
  * <p>AcquisitionEngine implements a subset of the functionality of AcqEngJ,
@@ -179,32 +177,12 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          sb.customIntervalsMs(null);
       }
 
-      // Several "translations" have to be made to accommodate the Clojure engine:
+      // Several "translations" for the Clojure engine may now be superfluous:
       if (!sequenceSettings.useFrames()) {
          sb.numFrames(0);
       }
       if (!sequenceSettings.useChannels()) {
          sb.channels(null);
-      }
-      switch (sequenceSettings.acqOrderMode()) {
-         case AcqOrderMode.TIME_POS_SLICE_CHANNEL:
-            sb.timeFirst(false);
-            sb.slicesFirst(false);
-            break;
-         case AcqOrderMode.TIME_POS_CHANNEL_SLICE:
-            sb.timeFirst(false);
-            sb.slicesFirst(true);
-            break;
-         case AcqOrderMode.POS_TIME_SLICE_CHANNEL:
-            sb.timeFirst(true);
-            sb.slicesFirst(false);
-            break;
-         case AcqOrderMode.POS_TIME_CHANNEL_SLICE:
-            sb.timeFirst(true);
-            sb.slicesFirst(true);
-            break;
-         default:
-            break;
       }
 
       try {
@@ -250,11 +228,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          /////////////////////////////
 
 
-
-
          if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
-            // Pos_time ordered acquisistion need their timelapse minimum start time to be
+            // Pos_time ordered acquisitions need their timelapse minimum start time to be
             // adjusted for each position.  The only place to do that seems to be a hardware hook.
             currentAcquisition_.addHook(timeLapseHook(acquisitionSettings),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
@@ -293,8 +269,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       JSONArray chColors = new JSONArray();
       if (acqSettings.useChannels() && acqSettings.channels().size() > 0) {
          for (ChannelSpec c : acqSettings.channels()) {
-            chNames.put(c.config());
-            chColors.put(c.color().getRGB());
+            if (c.useChannel()) {
+               chNames.put(c.config());
+               chColors.put(c.color().getRGB());
+            }
          }
       } else {
          chNames.put("Default");
@@ -329,23 +307,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     */
    public static void addMMImageMetadata(JSONObject imageMD) {
       // These might be required...
-
-      //    getUUID();
-      //    getCamera();
-      //    getBinning();
-      //    getROI();
-      //    getBitDepth();
-      //    getExposureMs();
-      //    getElapsedTimeMs(0.0);
-      //    getImageNumber();
-      //    getReceivedTime();
-      //    getPixelSizeUm();
-      //    getPixelAspect();
-      //    getPositionName("");
-      //    getXPositionUm();
-      //    getYPositionUm();
-      //    getZPositionUm();
-
 
       try {
          if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.TIME_AXIS)) {
@@ -440,6 +401,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
             = new ArrayList<>();
 
+      // Select channels that we are actually using
+      List<ChannelSpec> chSpecs = new ArrayList<>();
+      for (ChannelSpec chSpec : acquisitionSettings.channels()) {
+         if (chSpec.useChannel()) {
+            chSpecs.add(chSpec);
+         }
+      }
+
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
          if (acquisitionSettings.relativeZSlice()) {
@@ -448,14 +417,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          zStack = MDAAcqEventModules.zStack(0,
                acquisitionSettings.slices().size() - 1,
                acquisitionSettings.sliceZStepUm(),
-               origin);
+               origin,
+               chSpecs);
       }
 
       if (acquisitionSettings.useChannels()) {
-         channels = MDAAcqEventModules.channels(acquisitionSettings.channels());
+         if (chSpecs.size() > 0) {
+            channels = MDAAcqEventModules.channels(chSpecs);
+         }
          //TODO: keep shutter open
          //TODO: skip frames
-         //TODO: z stack off for channel
+         //TODO: Check if z stack off for channel image is taken at correct Z
       }
 
       if (acquisitionSettings.usePositionList()) {
@@ -578,7 +550,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                }
             }
              */
-            if (event.getMinimumStartTimeAbsolute() != null) {
+            if (event != null && event.getMinimumStartTimeAbsolute() != null) {
                nextWakeTime_ = event.getMinimumStartTimeAbsolute();
             }
             return event;

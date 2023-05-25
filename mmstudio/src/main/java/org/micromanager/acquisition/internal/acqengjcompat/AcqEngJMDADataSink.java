@@ -1,10 +1,8 @@
 package org.micromanager.acquisition.internal.acqengjcompat;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
@@ -15,24 +13,21 @@ import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
-import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
-import org.micromanager.acquisition.internal.TaggedImageQueue;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
-import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.events.EventManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * This object spawns a new thread that pulls images from the Acquistion Engine's output queue
+ * This object spawns a new thread that pulls images from the Acquisition Engine's output queue
  * and adds them to a Pipeline (which in turns send them to the Datastore). It's also
  * responsible for posting the AcquisitionEndedEvent, which it recognizes when
  * it receives the TaggedImageQueue.POISON object.
  *
- * <p>This class is a analagous to DefaultTaggedImageSink, which serves the same
+ * <p>This class is analagous to DefaultTaggedImageSink, which serves the same
  * function for the Clojure engine.
  */
 public final class AcqEngJMDADataSink implements AcqEngJDataSink {
@@ -95,8 +90,9 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
          AcqEngJAdapter.addMMImageMetadata(tagged.tags);
          DefaultImage image = new DefaultImage(tagged);
 
+         HashMap<String, Object> axisNames = AcqEngMetadata.getAxes(tagged.tags);
          // Add any non-standard (ptzc) coords
-         List<String> nonStandardAxisNames = AcqEngMetadata.getAxes(tagged.tags).keySet()
+         List<String> nonStandardAxisNames = axisNames.keySet()
                .stream().filter(new Predicate<String>() {
                   @Override
                   public boolean test(String s) {

@@ -34,9 +34,10 @@ public class MDAAcqEventModules {
     * @return Not quire sure, but something that tells the AcqEngineJ what to do.
     */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(int startSliceIndex,
-                                                                               int stopSliceIndex,
-                                                                               double zStep,
-                                                                               double zOrigin) {
+                                            int stopSliceIndex,
+                                            double zStep,
+                                            double zOrigin,
+                                            List<ChannelSpec> chSpecs) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
 
@@ -44,15 +45,28 @@ public class MDAAcqEventModules {
 
             @Override
             public boolean hasNext() {
+               Integer chIndex = (Integer) event.getAxisPosition("channel");
+               if (chIndex != null) {
+                  if (!chSpecs.get(chIndex).doZStack()) {
+                     return zIndex_ == 0;
+                  }
+               }
                return zIndex_ <= stopSliceIndex;
             }
 
             @Override
             public AcquisitionEvent next() {
                double zPos = zIndex_ * zStep + zOrigin;
-               AcquisitionEvent sliceEvent = event.copy();
                // Do plus equals here in case z positions have been modified by
                // another function (e.g. channel specific focal offsets)
+               Integer chIndex = (Integer) event.getAxisPosition("channel");
+               if (chIndex != null) {
+                  if (!chSpecs.get(chIndex).doZStack()) {
+                     zPos = zOrigin + (stopSliceIndex - startSliceIndex) / 2 * zStep;
+                  }
+               }
+               // Not sure why this was a copy.  Can revert after copy fix is in.
+               AcquisitionEvent sliceEvent = event.copy();
                sliceEvent.setZ(zIndex_,
                      (sliceEvent.getZPosition() == null ? 0.0 : sliceEvent.getZPosition()) + zPos);
                zIndex_++;
