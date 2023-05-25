@@ -423,7 +423,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
       if (acquisitionSettings.useChannels()) {
          if (chSpecs.size() > 0) {
-            channels = MDAAcqEventModules.channels(chSpecs);
+            Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
+            channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex);
          }
          //TODO: keep shutter open
          //TODO: skip frames
