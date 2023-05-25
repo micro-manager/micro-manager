@@ -426,9 +426,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
             channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex);
          }
-         //TODO: keep shutter open
-         //TODO: skip frames
-         //TODO: Check if z stack off for channel image is taken at correct Z
+         // TODO: keep shutter open, I believe this needs to be done in AcqEngJ; there should be
+         //    a flag in AcquisitionEvent that the Engine should look at, much like how it checks
+         //    if sequencing is possible.
+         // TODO: Check if z stack off for channel image is taken at correct Z
       }
 
       if (acquisitionSettings.usePositionList()) {
@@ -444,10 +445,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       if (acquisitionSettings.useFrames()) {
          timelapse = MDAAcqEventModules.timelapse(acquisitionSettings.numFrames(),
                acquisitionSettings.intervalMs());
-         //TODO custom time intervals
+         // TODO custom time intervals
       }
 
-      //TODO autofocus
+      // TODO autofocus
 
       if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
          if (acquisitionSettings.usePositionList()) {

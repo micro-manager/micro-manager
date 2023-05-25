@@ -46,10 +46,12 @@ public class MDAAcqEventModules {
 
             @Override
             public boolean hasNext() {
-               Integer chIndex = (Integer) event.getAxisPosition("channel");
-               if (chIndex != null) {
-                  if (!chSpecs.get(chIndex).doZStack()) {
-                     return zIndex_ == 0;
+               if (event != null) {
+                  Integer chIndex = (Integer) event.getAxisPosition("channel");
+                  if (chIndex != null) {
+                     if (!chSpecs.get(chIndex).doZStack()) {
+                        return zIndex_ == 0;
+                     }
                   }
                }
                return zIndex_ <= stopSliceIndex;
@@ -57,6 +59,10 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
+               if (event == null) {
+                  zIndex_++;
+                  return null;
+               }
                double zPos = zIndex_ * zStep + zOrigin;
                // Do plus equals here in case z positions have been modified by
                // another function (e.g. channel specific focal offsets)
@@ -133,6 +139,15 @@ public class MDAAcqEventModules {
                if (!channelList.get(index).doZStack()) {
                   if (event.getZIndex() != null) {
                      if (!Objects.equals(event.getZIndex(), middleSliceIndex)) {
+                        index++;
+                        return null;
+                     }
+                  }
+               }
+               // Implement Skip Frames:
+               if (channelList.get(index).skipFactorFrame() != 0) {
+                  if (event.getTIndex() != null) {
+                     if (event.getTIndex() % (channelList.get(index).skipFactorFrame() + 1) != 0) {
                         index++;
                         return null;
                      }
