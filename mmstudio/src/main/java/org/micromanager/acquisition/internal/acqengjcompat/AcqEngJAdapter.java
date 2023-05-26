@@ -36,7 +36,6 @@ import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.AutofocusPlugin;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
@@ -97,8 +96,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private Pipeline curPipeline_;
 
    private double zStart_;
-   private AutofocusPlugin autofocusMethod_;
-   private boolean autofocusOn_;
 
    private long nextWakeTime_ = -1;
 
@@ -185,6 +182,30 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          sb.channels(null);
       }
 
+      // It is unclear if this code is still needed, it may be needed to add tags to OME TIFF
+      // that are used by Bioformats to read the data correctly.
+      switch (sequenceSettings.acqOrderMode()) {
+         case AcqOrderMode.TIME_POS_SLICE_CHANNEL:
+            sb.timeFirst(false);
+            sb.slicesFirst(false);
+            break;
+         case AcqOrderMode.TIME_POS_CHANNEL_SLICE:
+            sb.timeFirst(false);
+            sb.slicesFirst(true);
+            break;
+         case AcqOrderMode.POS_TIME_SLICE_CHANNEL:
+            sb.timeFirst(true);
+            sb.slicesFirst(false);
+            break;
+         case AcqOrderMode.POS_TIME_CHANNEL_SLICE:
+            sb.timeFirst(true);
+            sb.slicesFirst(true);
+            break;
+         default:
+            break;
+      }
+
+
       try {
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
@@ -214,11 +235,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          zStage_ = core_.getFocusDevice();
          zStart_ = core_.getPosition(zStage_);
-         autofocusMethod_ = studio_.getAutofocusManager().getAutofocusMethod();
-         autofocusOn_ = false;
-         if (autofocusMethod_ != null) {
-            autofocusOn_ = autofocusMethod_.isContinuousFocusEnabled();
-         }
+
          studio_.events().registerForEvents(this);
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_, this,
                acquisitionSettings));
@@ -233,6 +250,21 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             // Pos_time ordered acquisitions need their timelapse minimum start time to be
             // adjusted for each position.  The only place to do that seems to be a hardware hook.
             currentAcquisition_.addHook(timeLapseHook(acquisitionSettings),
+                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+         }
+
+         // These hook make sure that continuousfocus is off when we are running a
+         // Z stack.
+         if (studio_.core().isContinuousFocusEnabled()) {
+            currentAcquisition_.addHook(continuousFocusHookBefore(acquisitionSettings),
+                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+            currentAcquisition_.addHook(continuousFocusHookAfter(acquisitionSettings),
+                  AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+         }
+
+         // These hooks implement Autofocus
+         if (sequenceSettings_.useAutofocus()) {
+            currentAcquisition_.addHook(autofocusHookBefore(acquisitionSettings),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
@@ -424,10 +456,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
             channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex);
          }
-         // TODO: keep shutter open, I believe this needs to be done in AcqEngJ; there should be
-         //    a flag in AcquisitionEvent that the Engine should look at, much like how it checks
-         //    if sequencing is possible.
-         // TODO: Check if z stack off for channel image is taken at correct Z
+         // TODO: keep shutter open, try to get this to work with Hooks (kind of like
+         // ContinuousFocus)
       }
 
       if (acquisitionSettings.usePositionList()) {
@@ -445,8 +475,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                acquisitionSettings.intervalMs());
          // TODO custom time intervals
       }
-
-      // TODO autofocus
 
       if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
          if (acquisitionSettings.usePositionList()) {
@@ -516,45 +544,11 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     * @return
     */
    private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(SequenceSettings settings) {
-      return new Function<AcquisitionEvent, AcquisitionEvent>() {
-         private int lastPositionIndex_ = 0;
-         private long relativePositionStartTime_ = 0;
-         private long startTime_ = 0;
-         private boolean positionMoved_ = false;
-
-         @Override
-         public AcquisitionEvent apply(AcquisitionEvent event) {
-            /*
-            if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                    || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
-                     && event.getAxisPosition("position") != null) {
-               if (startTime_ == 0) {
-                  startTime_ = System.currentTimeMillis();
-               }
-
-               int thisPosition = (int) event.getAxisPosition("position");
-               if (thisPosition != lastPositionIndex_) {
-                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  System.out.println("Position " + thisPosition + " started "
-                          + relativePositionStartTime_ + "  ms after acquisition start");
-                  lastPositionIndex_ = (int) event.getAxisPosition("position");
-                  positionMoved_ = true;
-               }
-               if (positionMoved_) {
-                  long relativeStartTime = relativePositionStartTime_
-                          + event.getMinimumStartTimeAbsolute() - startTime_;
-                  int frame = (int) event.getAxisPosition("time");
-                  System.out.println("Pos " + thisPosition + ", Frame " + frame
-                          + " start at " + relativeStartTime);
-                  event.setMinimumStartTime(relativeStartTime);
-               }
-            }
-             */
-            if (event != null && event.getMinimumStartTimeAbsolute() != null) {
-               nextWakeTime_ = event.getMinimumStartTimeAbsolute();
-            }
-            return event;
+      return event -> {
+         if (event != null && event.getMinimumStartTimeAbsolute() != null) {
+            nextWakeTime_ = event.getMinimumStartTimeAbsolute();
          }
+         return event;
       };
    }
 
@@ -577,17 +571,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                int thisPosition = (int) event.getAxisPosition("position");
                if (thisPosition != lastPositionIndex_) {
                   relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  System.out.println("Position " + thisPosition + " started "
-                        + relativePositionStartTime_ + "  ms after acquisition start");
+                  // System.out.println("Position " + thisPosition + " started "
+                  //      + relativePositionStartTime_ + "  ms after acquisition start");
                   lastPositionIndex_ = (int) event.getAxisPosition("position");
                   positionMoved_ = true;
                }
                if (positionMoved_) {
                   long relativeStartTime = relativePositionStartTime_
                         + event.getMinimumStartTimeAbsolute() - startTime_;
-                  int frame = (int) event.getAxisPosition("time");
-                  System.out.println("Pos " + thisPosition + ", Frame " + frame
-                        + " start at " + relativeStartTime);
+                  // int frame = (int) event.getAxisPosition("time");
+                  // System.out.println("Pos " + thisPosition + ", Frame " + frame
+                  //      + " start at " + relativeStartTime);
                   event.setMinimumStartTime(relativeStartTime);
                }
             }
@@ -599,6 +593,128 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public void close() {
+         }
+      };
+   }
+
+
+   /**
+    * Hook function to disable continuous focus before running a Z Stack.
+    * The hook should only be attached if continuous focus was on at the beginning of the
+    * acquisition, which is why it is not checked here.
+    *
+    * @param sequenceSettings acquisition settings, ignored here.
+    * @return The Hook.
+    */
+   private AcquisitionHook continuousFocusHookBefore(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.getZIndex() != null) {
+               if (event.getZIndex() == 0) {
+                  try {
+                     // this hook is called before the engine changes the hardware
+                     // since we want to leave the system in a focussed state, first
+                     // move the XY stage to where we want to image, then release autofocus.
+                     if (event.getXPosition() != null && event.getYPosition() != null) {
+                        studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
+                     }
+                     studio_.core().enableContinuousFocus(false);
+                  } catch (Exception ex) {
+                     studio_.logs().logError(ex, "Failed to disable continuousfocus");
+                  }
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // may be superfluous, but hey, why not
+            try {
+               studio_.core().enableContinuousFocus(true);
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Failed to enable continuousfocus");
+            }
+         }
+      };
+   }
+
+
+   /**
+    * Hook function to re-enable continuous focus after running a z stack.
+    *
+    * @param sequenceSettings acquisition settings, used to see if we are at the end of
+    *                         a Z Stack.
+    * @return The Hook.
+    */
+   private AcquisitionHook continuousFocusHookAfter(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.getZIndex() != null && sequenceSettings.useSlices()) {
+               if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                  try {
+                     studio_.core().enableContinuousFocus(true);
+                  } catch (Exception ex) {
+                     studio_.logs().logError(ex, "Failed to enable continuousfocus");
+                  }
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // may be superfluous, but hey, why not
+            try {
+               studio_.core().enableContinuousFocus(true);
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Failed to enable continuousfocus");
+            }
+         }
+      };
+   }
+
+   /**
+    * Hook function executing (software) autofocus.  When autofocus is checked in the MDA,
+    * the autofocus should run before each channel / Z Stack combo (i.e. at each time point
+    * and position.
+    *
+    * @param sequenceSettings acquisition settings, not used here.
+    * @return The Hook.
+    */
+   private AcquisitionHook autofocusHookBefore(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (!event.isAcquisitionFinishedEvent()
+                  && (event.getZIndex() == null || event.getZIndex() == 0)
+                  && (event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null
+                        || (Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == 0)
+                  && (event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == null
+                        || (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0)) {
+                  try {
+                     // this hook is called before the engine changes the hardware
+                     // since we want to leave the system in a focussed state, first
+                     // move the XY stage to where we want to image, then release autofocus.
+                     if (event.getXPosition() != null && event.getYPosition() != null) {
+                        studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
+                     }
+                     studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
+                  } catch (Exception ex) {
+                     studio_.logs().logError(ex, "Failed to disable continuousfocus");
+                  }
+               }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // nothing to do here
          }
       };
    }
@@ -1290,9 +1406,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (isFocusStageAvailable()) {
             try {
                core_.setPosition(zStage_, zStart_);
-               if (autofocusMethod_ != null) {
-                  autofocusMethod_.enableContinuousFocus(autofocusOn_);
-               }
             } catch (Exception e) {
                studio_.logs().logError(e);
             }
