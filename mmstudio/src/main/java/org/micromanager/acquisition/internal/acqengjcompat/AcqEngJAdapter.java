@@ -306,8 +306,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     * AcqEnJ's metadata to include this here
     */
    public static void addMMImageMetadata(JSONObject imageMD) {
-      // These might be required...
-
       try {
          if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.TIME_AXIS)) {
             imageMD.put(PropertyKey.FRAME_INDEX.key(),
