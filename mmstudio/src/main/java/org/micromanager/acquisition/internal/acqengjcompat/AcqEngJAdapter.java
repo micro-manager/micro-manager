@@ -3,9 +3,9 @@
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Henry Pinkard
+// AUTHOR:       Henry Pinkard, Nico Stuurman
 //
-// COPYRIGHT:    Photomics Inc, 2022
+// COPYRIGHT:    Photomics Inc, 2022, Altos Labs, 2023
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -214,14 +214,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          currentAcquisition_ = new Acquisition(sink);
 
          loadRunnables(acquisitionSettings);
-         // This TaggedImageProcessor is used to divert images away from the optional
-         // processing and saving of AcqEngJ, and into the system used by the studio API
-         // (which has its own system for processing and saving)
 
          summaryMetadata_ = currentAcquisition_.getSummaryMetadata();
          addMMSummaryMetadata(summaryMetadata_, sequenceSettings);
 
-         // MMAcquisition
          MMAcquisition acq = new MMAcquisition(studio_,
                acquisitionSettings.save() ? acquisitionSettings.root() : null,
                acquisitionSettings.prefix(),
@@ -253,8 +249,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
-         // These hook make sure that continuousfocus is off when we are running a
-         // Z stack.
+         // These hooks make sure that continuousfocus is off when running a Z stack.
          if (studio_.core().isContinuousFocusEnabled()) {
             currentAcquisition_.addHook(continuousFocusHookBefore(acquisitionSettings),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
@@ -266,6 +261,16 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (sequenceSettings_.useAutofocus()) {
             currentAcquisition_.addHook(autofocusHookBefore(acquisitionSettings),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+         }
+
+         // Hooks to keep shutter open between channel and/or slices if desired
+         if ((sequenceSettings.keepShutterOpenChannels()
+               || sequenceSettings.keepShutterOpenSlices())
+               && core_.getAutoShutter()) {
+            currentAcquisition_.addHook(shutterHookBefore(acquisitionSettings),
+                  AcquisitionAPI.AFTER_HARDWARE_HOOK);
+            currentAcquisition_.addHook(shutterHookAfter(acquisitionSettings),
+                  AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
          // Read for events
@@ -709,6 +714,95 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                      studio_.logs().logError(ex, "Failed to disable continuousfocus");
                   }
                }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // nothing to do here
+         }
+      };
+   }
+
+   /**
+    * Hook function to keep shutter open between channels of slices if desired.
+    *
+    * @param sequenceSettings acquisition settings, used to predict what the next event will be.
+    * @return The Hook.
+    */
+   private AcquisitionHook shutterHookBefore(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (!event.isAcquisitionFinishedEvent()) {
+               try {
+                  if (sequenceSettings.keepShutterOpenSlices()) {
+                     if (event.getZIndex() == 0) {
+                        core_.setAutoShutter(false);
+                        core_.setShutterOpen(true);
+                     }
+                  }
+                  if (sequenceSettings.keepShutterOpenChannels()) {
+                     if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0) {
+                        core_.setAutoShutter(false);
+                        core_.setShutterOpen(true);
+                     }
+                  }
+               } catch (Exception ex) {
+                  studio_.logs().logError(ex, "Failed to open shutter");
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // nothing to do here
+         }
+      };
+   }
+
+   /**
+    * Hook function to close shutter when it was kept open between channels and/or slices.
+    *
+    * @param sequenceSettings acquisition settings, used to predict what the next event will be.
+    * @return The Hook.
+    */
+   private AcquisitionHook shutterHookAfter(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (!event.isAcquisitionFinishedEvent()) {
+               try {
+                  if (sequenceSettings.keepShutterOpenSlices()
+                        && sequenceSettings.keepShutterOpenChannels()) {
+                        if (event.getZIndex() == sequenceSettings.slices().size() - 1
+                              && (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
+                                 == sequenceSettings.channels().size() - 1) {
+                           core_.setShutterOpen(false);
+                           core_.setAutoShutter(true);
+                        }
+                     } else {
+                     if (sequenceSettings.keepShutterOpenSlices()) {
+                        if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                           core_.setShutterOpen(false);
+                           core_.setAutoShutter(true);
+                        }
+                     }
+                     if (sequenceSettings.keepShutterOpenChannels()) {
+                        if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
+                              == sequenceSettings.channels().size() - 1) {
+                           core_.setShutterOpen(false);
+                           core_.setAutoShutter(true);
+                        }
+                     }
+                  }
+               } catch (Exception ex) {
+                  studio_.logs().logError(ex, "Failed to open shutter");
+               }
+            }
             return event;
          }
 

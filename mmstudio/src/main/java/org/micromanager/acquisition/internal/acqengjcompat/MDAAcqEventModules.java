@@ -94,10 +94,7 @@ public class MDAAcqEventModules {
                if (frameIndex_ == 0) {
                   return true;
                }
-               if (frameIndex_ < numTimePoints) {
-                  return true;
-               }
-               return false;
+               return frameIndex_ < numTimePoints;
             }
 
             @Override
