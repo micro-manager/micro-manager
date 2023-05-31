@@ -122,7 +122,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       studio_ = studio;
       core_ = studio_.core();
       new Engine(core_);
-      studio_ = MMStudio.getInstance();
       settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
@@ -212,6 +211,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          AcqEngJMDADataSink sink = new AcqEngJMDADataSink(studio_.events());
          currentAcquisition_ = new Acquisition(sink);
+         currentAcquisition_.setDebugMode(core_.debugLogEnabled());
 
          loadRunnables(acquisitionSettings);
 
@@ -264,8 +264,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
 
          // Hooks to keep shutter open between channel and/or slices if desired
-         if ((sequenceSettings.keepShutterOpenChannels()
-               || sequenceSettings.keepShutterOpenSlices())
+         if (((sequenceSettings.useChannels() && sequenceSettings.keepShutterOpenChannels())
+               || (sequenceSettings.useSlices() && sequenceSettings.keepShutterOpenSlices()))
                && core_.getAutoShutter()) {
             currentAcquisition_.addHook(shutterHookBefore(acquisitionSettings),
                   AcquisitionAPI.AFTER_HARDWARE_HOOK);
