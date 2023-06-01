@@ -2,6 +2,7 @@ package org.micromanager.acquisition.internal.acqengjcompat;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,9 +35,10 @@ public class MDAAcqEventModules {
     * @return Not quire sure, but something that tells the AcqEngineJ what to do.
     */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(int startSliceIndex,
-                                                                               int stopSliceIndex,
-                                                                               double zStep,
-                                                                               double zOrigin) {
+                                            int stopSliceIndex,
+                                            double zStep,
+                                            double zOrigin,
+                                            List<ChannelSpec> chSpecs) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
 
@@ -44,15 +46,33 @@ public class MDAAcqEventModules {
 
             @Override
             public boolean hasNext() {
+               if (event != null) {
+                  Integer chIndex = (Integer) event.getAxisPosition("channel");
+                  if (chIndex != null) {
+                     if (!chSpecs.get(chIndex).doZStack()) {
+                        return zIndex_ == 0;
+                     }
+                  }
+               }
                return zIndex_ <= stopSliceIndex;
             }
 
             @Override
             public AcquisitionEvent next() {
+               if (event == null) {
+                  zIndex_++;
+                  return null;
+               }
                double zPos = zIndex_ * zStep + zOrigin;
-               AcquisitionEvent sliceEvent = event.copy();
                // Do plus equals here in case z positions have been modified by
                // another function (e.g. channel specific focal offsets)
+               Integer chIndex = (Integer) event.getAxisPosition("channel");
+               if (chIndex != null) {
+                  if (!chSpecs.get(chIndex).doZStack()) {
+                     zPos = zOrigin + (stopSliceIndex - startSliceIndex) / 2 * zStep;
+                  }
+               }
+               AcquisitionEvent sliceEvent = event.copy();
                sliceEvent.setZ(zIndex_,
                      (sliceEvent.getZPosition() == null ? 0.0 : sliceEvent.getZPosition()) + zPos);
                zIndex_++;
@@ -74,10 +94,7 @@ public class MDAAcqEventModules {
                if (frameIndex_ == 0) {
                   return true;
                }
-               if (frameIndex_ < numTimePoints) {
-                  return true;
-               }
-               return false;
+               return frameIndex_ < numTimePoints;
             }
 
             @Override
@@ -96,11 +113,14 @@ public class MDAAcqEventModules {
    /**
     * Make an iterator for events for each active channel.
     *
-    * @param channelList
+    * @param channelList Channel settings for this acquisition.  Should only include
+    *                    the channels that are actually used.
+    * @param middleSliceIndex Only used when use ZStack is not checked, indicates index
+    *                         of the middle slice
     * @return
     */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(
-         List<ChannelSpec> channelList) {
+         List<ChannelSpec> channelList, Integer middleSliceIndex) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
             int index = 0;
@@ -112,6 +132,24 @@ public class MDAAcqEventModules {
 
             @Override
             public AcquisitionEvent next() {
+               // For Slice, Channel Acquisitions with channels not doing Z Stacks
+               if (!channelList.get(index).doZStack()) {
+                  if (event.getZIndex() != null) {
+                     if (!Objects.equals(event.getZIndex(), middleSliceIndex)) {
+                        index++;
+                        return null;
+                     }
+                  }
+               }
+               // Implement Skip Frames:
+               if (channelList.get(index).skipFactorFrame() != 0) {
+                  if (event.getTIndex() != null) {
+                     if (event.getTIndex() % (channelList.get(index).skipFactorFrame() + 1) != 0) {
+                        index++;
+                        return null;
+                     }
+                  }
+               }
                AcquisitionEvent channelEvent = event.copy();
                channelEvent.setConfigGroup(channelList.get(index).channelGroup());
                channelEvent.setConfigPreset(channelList.get(index).config());
@@ -119,7 +157,7 @@ public class MDAAcqEventModules {
                boolean hasZOffsets = channelList.stream().map(t -> t.zOffset())
                            .filter(t -> t != 0).collect(Collectors.toList()).size() > 0;
                Double zPos;
-               if (channelEvent.getZPosition() == null) {
+               if (event.getZPosition() == null) {
                   if (hasZOffsets) {
                      try {
                         zPos = Engine.getCore().getPosition() + channelList.get(index).zOffset();
@@ -130,7 +168,7 @@ public class MDAAcqEventModules {
                      zPos = null;
                   }
                } else {
-                  zPos = channelEvent.getZPosition() + channelList.get(index).zOffset();
+                  zPos = event.getZPosition() + channelList.get(index).zOffset();
                }
                channelEvent.setZ(channelEvent.getZIndex(), zPos);
 

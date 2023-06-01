@@ -3,9 +3,9 @@
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Henry Pinkard
+// AUTHOR:       Henry Pinkard, Nico Stuurman
 //
-// COPYRIGHT:    Photomics Inc, 2022
+// COPYRIGHT:    Photomics Inc, 2022, Altos Labs, 2023
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -27,18 +27,15 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
-import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.AutofocusPlugin;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
@@ -65,16 +62,14 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class provides a compatibility layer between AcqEngJ and the
- * AcquisitionEngine interface. It is analagous to the AcquisitionWrapperEngine.java,
+ * AcquisitionEngine interface. It is analagous to AcquisitionWrapperEngine.java,
  * which does the same thing for the clojure acquisition engine
  *
  * <p>AcquisitionEngine implements a subset of the functionality of AcqEngJ,
@@ -98,9 +93,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private Datastore curStore_;
    private Pipeline curPipeline_;
 
-   private double zStart_;
-   private AutofocusPlugin autofocusMethod_;
-   private boolean autofocusOn_;
 
    private long nextWakeTime_ = -1;
 
@@ -122,12 +114,16 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       }
    }
 
+   /**
+    * Constructor, take studio, create the Engine.
+    *
+    * @param studio Always there!
+    */
    public AcqEngJAdapter(Studio studio) {
       // Create AcqEngJ
       studio_ = studio;
       core_ = studio_.core();
       new Engine(core_);
-      studio_ = MMStudio.getInstance();
       settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
@@ -145,17 +141,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   JOptionPane.YES_NO_OPTION);
             if (result == JOptionPane.YES_OPTION) {
                if (!root.mkdirs() || !root.canWrite()) {
-                  ReportingUtils.showError(
+                  studio_.logs().showError(
                         "Unable to save data to selected location: check that "
                               + "location exists.\nAcquisition canceled.");
                   return null;
                }
             } else {
-               ReportingUtils.showMessage("Acquisition canceled.");
+               studio_.logs().showMessage("Acquisition canceled.");
                return null;
             }
          } else if (!this.enoughDiskSpace()) {
-            ReportingUtils.showError(
+            studio_.logs().showError(
                   "Not enough space on disk to save the requested image set; "
                         + "acquisition canceled.");
             return null;
@@ -179,13 +175,16 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          sb.customIntervalsMs(null);
       }
 
-      // Several "translations" have to be made to accommodate the Clojure engine:
+      // Several "translations" for the Clojure engine may now be superfluous:
       if (!sequenceSettings.useFrames()) {
          sb.numFrames(0);
       }
       if (!sequenceSettings.useChannels()) {
          sb.channels(null);
       }
+
+      // It is unclear if this code is still needed, it may be needed to add tags to OME TIFF
+      // that are used by Bioformats to read the data correctly.
       switch (sequenceSettings.acqOrderMode()) {
          case AcqOrderMode.TIME_POS_SLICE_CHANNEL:
             sb.timeFirst(false);
@@ -207,22 +206,20 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             break;
       }
 
+
       try {
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
 
          AcqEngJMDADataSink sink = new AcqEngJMDADataSink(studio_.events());
          currentAcquisition_ = new Acquisition(sink);
+         currentAcquisition_.setDebugMode(core_.debugLogEnabled());
 
          loadRunnables(acquisitionSettings);
-         // This TaggedImageProcessor is used to divert images away from the optional
-         // processing and saving of AcqEngJ, and into the system used by the studio API
-         // (which has its own system for processing and saving)
 
          summaryMetadata_ = currentAcquisition_.getSummaryMetadata();
          addMMSummaryMetadata(summaryMetadata_, sequenceSettings);
 
-         // MMAcquisition
          MMAcquisition acq = new MMAcquisition(studio_,
                acquisitionSettings.save() ? acquisitionSettings.root() : null,
                acquisitionSettings.prefix(),
@@ -235,12 +232,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          sink.setPipeline(curPipeline_);
 
          zStage_ = core_.getFocusDevice();
-         zStart_ = core_.getPosition(zStage_);
-         autofocusMethod_ = studio_.getAutofocusManager().getAutofocusMethod();
-         autofocusOn_ = false;
-         if (autofocusMethod_ != null) {
-            autofocusOn_ = autofocusMethod_.isContinuousFocusEnabled();
-         }
+
          studio_.events().registerForEvents(this);
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_, this,
                acquisitionSettings));
@@ -250,14 +242,46 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          /////////////////////////////
 
 
-
-
          if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
-            // Pos_time ordered acquisistion need their timelapse minimum start time to be
+            // Pos_time ordered acquisitions need their timelapse minimum start time to be
             // adjusted for each position.  The only place to do that seems to be a hardware hook.
             currentAcquisition_.addHook(timeLapseHook(acquisitionSettings),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+         }
+
+         // Hook to move back the ZStage to its original position after a Z stack
+         if (sequenceSettings.useSlices()) {
+            currentAcquisition_.addHook(zPositionHook(acquisitionSettings,
+                  Acquisition.BEFORE_HARDWARE_HOOK),
+                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+            currentAcquisition_.addHook(zPositionHook(acquisitionSettings,
+                        Acquisition.AFTER_EXPOSURE_HOOK),
+                  AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+         }
+
+         // These hooks make sure that continuousfocus is off when running a Z stack.
+         if (studio_.core().isContinuousFocusEnabled()) {
+            currentAcquisition_.addHook(continuousFocusHookBefore(acquisitionSettings),
+                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+            currentAcquisition_.addHook(continuousFocusHookAfter(acquisitionSettings),
+                  AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+         }
+
+         // These hooks implement Autofocus
+         if (sequenceSettings_.useAutofocus()) {
+            currentAcquisition_.addHook(autofocusHookBefore(acquisitionSettings),
+                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+         }
+
+         // Hooks to keep shutter open between channel and/or slices if desired
+         if (((sequenceSettings.useChannels() && sequenceSettings.keepShutterOpenChannels())
+               || (sequenceSettings.useSlices() && sequenceSettings.keepShutterOpenSlices()))
+               && core_.getAutoShutter()) {
+            currentAcquisition_.addHook(shutterHookBefore(acquisitionSettings),
+                  AcquisitionAPI.AFTER_HARDWARE_HOOK);
+            currentAcquisition_.addHook(shutterHookAfter(acquisitionSettings),
+                  AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
          // Read for events
@@ -270,7 +294,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          return curStore_;
 
       } catch (Throwable ex) {
-         ReportingUtils.showError(ex);
+         studio_.logs().showError((Exception) ex);
          if (currentAcquisition_ != null && currentAcquisition_.areEventsFinished()) {
             studio_.events().post(new DefaultAcquisitionEndedEvent(curStore_, this));
          }
@@ -279,7 +303,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    }
 
    /**
-    * Higher level stuff in MM may depend in many hidden, poorly documented
+    * Higher level stuff in MM may depend on many hidden, poorly documented
     * ways on summary metadata generated by the acquisition engine.
     * This function adds in its fields in order to achieve compatibility.
     */
@@ -293,8 +317,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       JSONArray chColors = new JSONArray();
       if (acqSettings.useChannels() && acqSettings.channels().size() > 0) {
          for (ChannelSpec c : acqSettings.channels()) {
-            chNames.put(c.config());
-            chColors.put(c.color().getRGB());
+            if (c.useChannel()) {
+               chNames.put(c.config());
+               chColors.put(c.color().getRGB());
+            }
          }
       } else {
          chNames.put("Default");
@@ -328,25 +354,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     * AcqEnJ's metadata to include this here
     */
    public static void addMMImageMetadata(JSONObject imageMD) {
-      // These might be required...
-
-      //    getUUID();
-      //    getCamera();
-      //    getBinning();
-      //    getROI();
-      //    getBitDepth();
-      //    getExposureMs();
-      //    getElapsedTimeMs(0.0);
-      //    getImageNumber();
-      //    getReceivedTime();
-      //    getPixelSizeUm();
-      //    getPixelAspect();
-      //    getPositionName("");
-      //    getXPositionUm();
-      //    getYPositionUm();
-      //    getZPositionUm();
-
-
       try {
          if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.TIME_AXIS)) {
             imageMD.put(PropertyKey.FRAME_INDEX.key(),
@@ -440,6 +447,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
             = new ArrayList<>();
 
+      // Select channels that we are actually using
+      List<ChannelSpec> chSpecs = new ArrayList<>();
+      for (ChannelSpec chSpec : acquisitionSettings.channels()) {
+         if (chSpec.useChannel()) {
+            chSpecs.add(chSpec);
+         }
+      }
+
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
          if (acquisitionSettings.relativeZSlice()) {
@@ -448,14 +463,15 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          zStack = MDAAcqEventModules.zStack(0,
                acquisitionSettings.slices().size() - 1,
                acquisitionSettings.sliceZStepUm(),
-               origin);
+               origin,
+               chSpecs);
       }
 
       if (acquisitionSettings.useChannels()) {
-         channels = MDAAcqEventModules.channels(acquisitionSettings.channels());
-         //TODO: keep shutter open
-         //TODO: skip frames
-         //TODO: z stack off for channel
+         if (chSpecs.size() > 0) {
+            Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
+            channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex);
+         }
       }
 
       if (acquisitionSettings.usePositionList()) {
@@ -471,10 +487,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       if (acquisitionSettings.useFrames()) {
          timelapse = MDAAcqEventModules.timelapse(acquisitionSettings.numFrames(),
                acquisitionSettings.intervalMs());
-         //TODO custom time intervals
+         // TODO custom time intervals
       }
-
-      //TODO autofocus
 
       if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
          if (acquisitionSettings.usePositionList()) {
@@ -541,48 +555,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    /**
     * This function monitors acquisition events as they are dynamically created.
     *
-    * @return
+    * @return Monitor function.
     */
    private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(SequenceSettings settings) {
-      return new Function<AcquisitionEvent, AcquisitionEvent>() {
-         private int lastPositionIndex_ = 0;
-         private long relativePositionStartTime_ = 0;
-         private long startTime_ = 0;
-         private boolean positionMoved_ = false;
-
-         @Override
-         public AcquisitionEvent apply(AcquisitionEvent event) {
-            /*
-            if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                    || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
-                     && event.getAxisPosition("position") != null) {
-               if (startTime_ == 0) {
-                  startTime_ = System.currentTimeMillis();
-               }
-
-               int thisPosition = (int) event.getAxisPosition("position");
-               if (thisPosition != lastPositionIndex_) {
-                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  System.out.println("Position " + thisPosition + " started "
-                          + relativePositionStartTime_ + "  ms after acquisition start");
-                  lastPositionIndex_ = (int) event.getAxisPosition("position");
-                  positionMoved_ = true;
-               }
-               if (positionMoved_) {
-                  long relativeStartTime = relativePositionStartTime_
-                          + event.getMinimumStartTimeAbsolute() - startTime_;
-                  int frame = (int) event.getAxisPosition("time");
-                  System.out.println("Pos " + thisPosition + ", Frame " + frame
-                          + " start at " + relativeStartTime);
-                  event.setMinimumStartTime(relativeStartTime);
-               }
-            }
-             */
-            if (event.getMinimumStartTimeAbsolute() != null) {
-               nextWakeTime_ = event.getMinimumStartTimeAbsolute();
-            }
-            return event;
+      return event -> {
+         if (event != null && event.getMinimumStartTimeAbsolute() != null) {
+            nextWakeTime_ = event.getMinimumStartTimeAbsolute();
          }
+         return event;
       };
    }
 
@@ -605,17 +585,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                int thisPosition = (int) event.getAxisPosition("position");
                if (thisPosition != lastPositionIndex_) {
                   relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  System.out.println("Position " + thisPosition + " started "
-                        + relativePositionStartTime_ + "  ms after acquisition start");
+                  // System.out.println("Position " + thisPosition + " started "
+                  //      + relativePositionStartTime_ + "  ms after acquisition start");
                   lastPositionIndex_ = (int) event.getAxisPosition("position");
                   positionMoved_ = true;
                }
                if (positionMoved_) {
                   long relativeStartTime = relativePositionStartTime_
                         + event.getMinimumStartTimeAbsolute() - startTime_;
-                  int frame = (int) event.getAxisPosition("time");
-                  System.out.println("Pos " + thisPosition + ", Frame " + frame
-                        + " start at " + relativeStartTime);
+                  // int frame = (int) event.getAxisPosition("time");
+                  // System.out.println("Pos " + thisPosition + ", Frame " + frame
+                  //      + " start at " + relativeStartTime);
                   event.setMinimumStartTime(relativeStartTime);
                }
             }
@@ -627,6 +607,259 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public void close() {
+         }
+      };
+   }
+
+
+   /**
+    * Hook function to disable continuous focus before running a Z Stack.
+    * The hook should only be attached if continuous focus was on at the beginning of the
+    * acquisition, which is why it is not checked here.
+    *
+    * @param sequenceSettings acquisition settings, ignored here.
+    * @return The Hook.
+    */
+   private AcquisitionHook continuousFocusHookBefore(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.getZIndex() != null) {
+               if (event.getZIndex() == 0) {
+                  try {
+                     // this hook is called before the engine changes the hardware
+                     // since we want to leave the system in a focussed state, first
+                     // move the XY stage to where we want to image, then release autofocus.
+                     if (event.getXPosition() != null && event.getYPosition() != null) {
+                        studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
+                     }
+                     studio_.core().enableContinuousFocus(false);
+                  } catch (Exception ex) {
+                     studio_.logs().logError(ex, "Failed to disable continuousfocus");
+                  }
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // may be superfluous, but hey, why not
+            try {
+               studio_.core().enableContinuousFocus(true);
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Failed to enable continuousfocus");
+            }
+         }
+      };
+   }
+
+
+   /**
+    * Hook function to re-enable continuous focus after running a z stack.
+    *
+    * @param sequenceSettings acquisition settings, used to see if we are at the end of
+    *                         a Z Stack.
+    * @return The Hook.
+    */
+   private AcquisitionHook continuousFocusHookAfter(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.getZIndex() != null && sequenceSettings.useSlices()) {
+               if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                  try {
+                     studio_.core().enableContinuousFocus(true);
+                  } catch (Exception ex) {
+                     studio_.logs().logError(ex, "Failed to enable continuousfocus");
+                  }
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // may be superfluous, but hey, why not
+            try {
+               studio_.core().enableContinuousFocus(true);
+            } catch (Exception ex) {
+               studio_.logs().logError(ex, "Failed to enable continuousfocus");
+            }
+         }
+      };
+   }
+
+   /**
+    * Hook function executing (software) autofocus.  When autofocus is checked in the MDA,
+    * the autofocus should run before each channel / Z Stack combo (i.e. at each time point
+    * and position.
+    *
+    * @param sequenceSettings acquisition settings, not used here.
+    * @return The Hook.
+    */
+   private AcquisitionHook autofocusHookBefore(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (!event.isAcquisitionFinishedEvent()
+                  && (event.getZIndex() == null || event.getZIndex() == 0)
+                  && (event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null
+                        || (Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == 0)
+                  && (event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == null
+                        || (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0)) {
+                  try {
+                     // this hook is called before the engine changes the hardware
+                     // since we want to leave the system in a focussed state, first
+                     // move the XY stage to where we want to image, then release autofocus.
+                     if (event.getXPosition() != null && event.getYPosition() != null) {
+                        studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
+                     }
+                     studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
+                  } catch (Exception ex) {
+                     studio_.logs().logError(ex, "Failed to disable continuousfocus");
+                  }
+               }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // nothing to do here
+         }
+      };
+   }
+
+   private double zStagePositionBefore_;
+
+   /**
+    * Hook to return Z Stage to start position after a Z Stack.
+    * May need to think about channels that do not do a Z Stack.
+    *
+    * @param sequenceSettings Settings for this acquisition
+    * @param when Constant defined in acquisitoin API that define when this hook is run.
+    * @return The actual Hook function
+    **/
+   private AcquisitionHook zPositionHook(SequenceSettings sequenceSettings, int when) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.isAcquisitionFinishedEvent()) {
+               return event;
+            }
+            try {
+               if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
+                  if (event.getZIndex() == 0) {
+                     zStagePositionBefore_ = core_.getPosition();
+                  }
+               } else if (when == AcquisitionAPI.AFTER_EXPOSURE_HOOK) {
+                  if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                     core_.setPosition(zStagePositionBefore_);
+                  }
+               }
+            } catch (Exception ex) {
+               studio_.logs().logError(ex,
+                     "Failed to return Z Stage to start position after Z Stack");
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // nothing to do here
+         }
+      };
+   }
+
+   /**
+    * Hook function to keep shutter open between channels of slices if desired.
+    *
+    * @param sequenceSettings acquisition settings, used to predict what the next event will be.
+    * @return The Hook.
+    */
+   private AcquisitionHook shutterHookBefore(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (!event.isAcquisitionFinishedEvent()) {
+               try {
+                  if (sequenceSettings.keepShutterOpenSlices()) {
+                     if (event.getZIndex() == 0) {
+                        core_.setAutoShutter(false);
+                        core_.setShutterOpen(true);
+                     }
+                  }
+                  if (sequenceSettings.keepShutterOpenChannels()) {
+                     if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0) {
+                        core_.setAutoShutter(false);
+                        core_.setShutterOpen(true);
+                     }
+                  }
+               } catch (Exception ex) {
+                  studio_.logs().logError(ex, "Failed to open shutter");
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // nothing to do here
+         }
+      };
+   }
+
+   /**
+    * Hook function to close shutter when it was kept open between channels and/or slices.
+    *
+    * @param sequenceSettings acquisition settings, used to predict what the next event will be.
+    * @return The Hook.
+    */
+   private AcquisitionHook shutterHookAfter(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (!event.isAcquisitionFinishedEvent()) {
+               try {
+                  if (sequenceSettings.keepShutterOpenSlices()
+                        && sequenceSettings.keepShutterOpenChannels()) {
+                        if (event.getZIndex() == sequenceSettings.slices().size() - 1
+                              && (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
+                                 == sequenceSettings.channels().size() - 1) {
+                           core_.setShutterOpen(false);
+                           core_.setAutoShutter(true);
+                        }
+                     } else {
+                     if (sequenceSettings.keepShutterOpenSlices()) {
+                        if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                           core_.setShutterOpen(false);
+                           core_.setAutoShutter(true);
+                        }
+                     }
+                     if (sequenceSettings.keepShutterOpenChannels()) {
+                        if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
+                              == sequenceSettings.channels().size() - 1) {
+                           core_.setShutterOpen(false);
+                           core_.setAutoShutter(true);
+                        }
+                     }
+                  }
+               } catch (Exception ex) {
+                  studio_.logs().logError(ex, "Failed to open shutter");
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // nothing to do here
          }
       };
    }
@@ -675,7 +908,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             return "";
          }
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         studio_.logs().logError(ex);
          return "";
       }
    }
@@ -775,7 +1008,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                }
             }
          } catch (Exception ex) {
-            ReportingUtils.logError(ex);
+            studio_.logs().logError(ex);
             return false;
          }
 
@@ -890,7 +1123,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             currentAcquisition_.abort();
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, "Acquisition engine stop request failed");
+         studio_.logs().showError(ex, "Acquisition engine stop request failed");
       }
    }
 
@@ -1091,7 +1324,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             try {
                core_.setChannelGroup("");
             } catch (Exception ex) {
-               ReportingUtils.logError(ex);
+               studio_.logs().logError(ex);
             }
             return false;
          }
@@ -1251,7 +1484,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       try {
          groups = core_.getAllowedPropertyValues("Core", "ChannelGroup");
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         studio_.logs().logError(ex);
          return new String[0];
       }
       ArrayList<String> strGroups = new ArrayList<>();
@@ -1273,7 +1506,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             // NS: make sure we work with the current Focus device
             z = core_.getPosition(core_.getFocusDevice());
          } catch (Exception e) {
-            ReportingUtils.showError(e);
+            studio_.logs().showError(e);
          }
          return z;
       }
@@ -1314,17 +1547,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
       if (event.getStore().equals(curStore_)) {
-         // Restore original Z position and autofocus if applicable.
-         if (isFocusStageAvailable()) {
-            try {
-               core_.setPosition(zStage_, zStart_);
-               if (autofocusMethod_ != null) {
-                  autofocusMethod_.enableContinuousFocus(autofocusOn_);
-               }
-            } catch (Exception e) {
-               studio_.logs().logError(e);
-            }
-         }
          curStore_ = null;
          curPipeline_ = null;
          currentAcquisition_ = null;
