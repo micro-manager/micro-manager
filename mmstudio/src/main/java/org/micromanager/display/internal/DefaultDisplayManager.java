@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.WeakHashMap;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -446,6 +447,12 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Override
    public boolean promptToSave(Datastore store, DisplayWindow display) throws IOException {
       String[] options = {"Save", "Discard", "Cancel"};
+      if (display.getWindow() instanceof JFrame) {
+         JFrame frame = (JFrame) display.getWindow();
+         if ((frame.getExtendedState() & JFrame.ICONIFIED) != 0) {
+            frame.setExtendedState(JFrame.NORMAL);
+         }
+      }
       int result = JOptionPane.showOptionDialog(display.getWindow(),
             "<html>Do you want to save <i>" + store.getName() + "</i> before closing?",
             "MicroManager", JOptionPane.DEFAULT_OPTION,
