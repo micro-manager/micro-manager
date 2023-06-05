@@ -3,6 +3,7 @@ package org.micromanager.internal.menus;
 import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -55,6 +56,12 @@ public class WindowMenu {
       menuItems_.add(GUIUtils.addMenuItem(windowMenu_, name, name, () -> {
          if (e.getDataViewer() instanceof DisplayWindow) {
             DisplayWindow dw = (DisplayWindow) e.getDataViewer();
+            if (dw.getWindow() instanceof JFrame) {
+               JFrame frame = (JFrame) dw.getWindow();
+               if ((frame.getExtendedState() & JFrame.ICONIFIED) != 0) {
+                  frame.setExtendedState(JFrame.NORMAL);
+               }
+            }
             dw.toFront();
          }
       }));
