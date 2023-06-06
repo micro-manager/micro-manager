@@ -1,5 +1,6 @@
 package org.micromanager.acquisition.internal.acqengjcompat;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -201,14 +202,9 @@ public class MDAAcqEventModules {
                MultiStagePosition msp = positionList.getPosition(index);
                posEvent.setX(msp.getX());
                posEvent.setY(msp.getY());
-               // Not implemented for now because this is the magellan/pycromanager grid
-               // concept which is not identical
-               // posEvent.setGridRow(positionList.get(index).getGridRow());
-               // posEvent.setGridCol(positionList.get(index).getGridCol());
-               // posEvent.setAxisPosition(AcqEngMetadata.AXES_GRID_ROW,
-               //                          positionList.get(index).getGridRow());
-               // posEvent.setAxisPosition(AcqEngMetadata.AXES_GRID_COL,
-               //                          positionList.get(index).getGridCol());
+               HashMap<String, String> tags = posEvent.getTags();
+               tags.put(AcqEngMetadata.POS_NAME, msp.getLabel());
+               posEvent.setTags(tags);
                posEvent.setAxisPosition(POSITION_AXIS, index);
                builder.accept(posEvent);
             }

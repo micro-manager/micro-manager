@@ -238,10 +238,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                acquisitionSettings));
 
 
-         /////////////////
-         /////////////////////////////
-
-
          if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
             // Pos_time ordered acquisitions need their timelapse minimum start time to be
@@ -346,6 +342,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       DefaultSummaryMetadata dsmd = new DefaultSummaryMetadata.Builder().build();
       summaryMetadata.put(PropertyKey.MICRO_MANAGER_VERSION.key(),
             dsmd.getMicroManagerVersion());
+      summaryMetadata.put("MDA_Settings", SequenceSettings.toJSONStream(acqSettings));
    }
 
    /**
@@ -371,8 +368,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             imageMD.put(PropertyKey.CHANNEL_NAME.key(), channelName);
          }
          if (AcqEngMetadata.hasAxis(imageMD, "position")) {
-            imageMD.put(PropertyKey.POSITION_INDEX.key(),
-                  AcqEngMetadata.getAxisPosition(imageMD, "position"));
+            int index = (Integer) AcqEngMetadata.getAxisPosition(imageMD, "position");
+            imageMD.put(PropertyKey.POSITION_INDEX.key(), index);
+            if (imageMD.has(AcqEngMetadata.TAGS)) {
+               JSONObject tags = imageMD.getJSONObject(AcqEngMetadata.TAGS);
+               if (tags.has(AcqEngMetadata.POS_NAME)) {
+                  imageMD.put(PropertyKey.POSITION_NAME.key(), tags.get(AcqEngMetadata.POS_NAME));
+               }
+            }
          }
          if (AcqEngMetadata.hasStageX(imageMD)) {
             imageMD.put(PropertyKey.X_POSITION_UM.key(), AcqEngMetadata.getStageX(imageMD));
