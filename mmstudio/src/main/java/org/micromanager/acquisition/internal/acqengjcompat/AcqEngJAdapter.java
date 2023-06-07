@@ -280,6 +280,12 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
+         if (sequenceSettings.useChannels()) {
+            String channelGroup = core_.getChannelGroup();
+            String channel = core_.getCurrentConfig(channelGroup);
+            currentAcquisition_.addHook(restoreChannelHook(channelGroup, channel), AcquisitionAPI.AFTER_HARDWARE_HOOK);
+         }
+
          // Read for events
          currentAcquisition_.start();
 
@@ -328,7 +334,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       // frames/slices/channels/positions at the outset
       summaryMetadata.put(PropertyKey.FRAMES.key(), getNumFrames());
       summaryMetadata.put(PropertyKey.SLICES.key(), getNumSlices());
-      summaryMetadata.put(PropertyKey.CHANNELS.key(), getNumChannels());
+      summaryMetadata.put(PropertyKey.CHANNELS.key(), getNumChannels(acqSettings));
       summaryMetadata.put(PropertyKey.POSITIONS.key(), getNumPositions());
 
       // MM MDA acquisitions have a defined order
@@ -757,10 +763,25 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             try {
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
                   if (event.getZIndex() == 0) {
+                     if (sequenceSettings.useChannels()
+                             && (sequenceSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
+                             || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL)) {
+                        if ( (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) != 0) {
+                           return event;
+                        }
+                     }
                      zStagePositionBefore_ = core_.getPosition();
                   }
                } else if (when == AcquisitionAPI.AFTER_EXPOSURE_HOOK) {
                   if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                     if (sequenceSettings.useChannels()
+                             && (sequenceSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
+                        || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL)) {
+                        if ( (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
+                                != getNumChannels(sequenceSettings) - 1) {
+                           return event;
+                        }
+                     }
                      core_.setPosition(zStagePositionBefore_);
                   }
                }
@@ -867,13 +888,35 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       };
    }
 
+   private AcquisitionHook restoreChannelHook(String channelGroup, String channel) {
+      return new AcquisitionHook() {
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.isAcquisitionFinishedEvent()){
 
-   private void calculateSlices() {
+               try {
+                  core_.setConfig(channelGroup, channel);
+               } catch (Exception e) {
+                  core_.logMessage(e.getMessage());
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+
+         }
+      };
+   }
+
+
+   private void calculateSlices(SequenceSettings sequenceSettings) {
       // Slices
-      if (sequenceSettings_.useSlices()) {
-         double start = sequenceSettings_.sliceZBottomUm();
-         double stop = sequenceSettings_.sliceZTopUm();
-         double step = Math.abs(sequenceSettings_.sliceZStepUm());
+      if (sequenceSettings.useSlices()) {
+         double start = sequenceSettings.sliceZBottomUm();
+         double stop = sequenceSettings.sliceZTopUm();
+         double step = Math.abs(sequenceSettings.sliceZStepUm());
          if (step == 0.0) {
             throw new UnsupportedOperationException("zero Z step size");
          }
@@ -885,7 +928,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          for (int i = 0; i < count; i++) {
             slices.add(start + i * step);
          }
-         sequenceSettings_ = sequenceSettings_.copyBuilder().slices(slices).build();
+         sequenceSettings_ = sequenceSettings.copyBuilder().slices(slices).build();
       }
    }
 
@@ -926,15 +969,15 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    }
 
 
-   private int getNumChannels() {
-      if (!sequenceSettings_.useChannels()) {
+   private int getNumChannels(SequenceSettings sequenceSettings) {
+      if (!sequenceSettings.useChannels()) {
          return 1;
       }
-      if (sequenceSettings_.channels() == null || sequenceSettings_.channels().size() == 0) {
+      if (sequenceSettings.channels() == null || sequenceSettings.channels().size() == 0) {
          return 1;
       }
       int numChannels = 0;
-      for (ChannelSpec channel : sequenceSettings_.channels()) {
+      for (ChannelSpec channel : sequenceSettings.channels()) {
          if (channel != null && channel.useChannel()) {
             ++numChannels;
          }
@@ -1020,13 +1063,13 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    }
 
 
-   private int getTotalImages() {
-      if (!sequenceSettings_.useChannels() || sequenceSettings_.channels().size() == 0) {
-         return getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
+   private int getTotalImages(SequenceSettings sequenceSettings) {
+      if (!sequenceSettings.useChannels() || sequenceSettings.channels().size() == 0) {
+         return getNumFrames() * getNumSlices() * getNumChannels(sequenceSettings) * getNumPositions();
       }
 
       int nrImages = 0;
-      for (ChannelSpec channel : sequenceSettings_.channels()) {
+      for (ChannelSpec channel : sequenceSettings.channels()) {
          if (channel.useChannel()) {
             for (int t = 0; t < getNumFrames(); t++) {
                boolean doTimePoint = true;
@@ -1065,13 +1108,13 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    @Override
    public void setSequenceSettings(SequenceSettings sequenceSettings) {
       sequenceSettings_ = sequenceSettings;
-      calculateSlices();
+      calculateSlices(sequenceSettings_);
       settingsChanged();
    }
 
    @Override
    public Datastore acquire() throws MMException {
-      calculateSlices();
+      calculateSlices(sequenceSettings_);
       return runAcquisition(sequenceSettings_);
    }
 
@@ -1096,7 +1139,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       return core.getImageWidth()
             * core.getImageHeight()
             * core.getBytesPerPixel()
-            * ((long) getTotalImages());
+            * ((long) getTotalImages(sequenceSettings_));
    }
 
    /*
@@ -1360,7 +1403,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       final int numFrames = getNumFrames();
       final int numSlices = getNumSlices();
       final int numPositions = getNumPositions();
-      final int numChannels = getNumChannels();
+      final int numChannels = getNumChannels(sequenceSettings_);
 
       double exposurePerTimePointMs = 0.0;
       if (sequenceSettings_.useChannels()) {
@@ -1382,7 +1425,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
       }
 
-      final int totalImages = getTotalImages();
+      final int totalImages = getTotalImages(sequenceSettings_);
       final long totalMB = getTotalMemory() / (1024 * 1024);
 
       double totalDurationSec = 0;
