@@ -473,18 +473,19 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                acquisitionSettings.slices().size() - 1,
                acquisitionSettings.sliceZStepUm(),
                origin,
-               chSpecs);
+               chSpecs,
+               null);
       }
 
       if (acquisitionSettings.useChannels()) {
          if (chSpecs.size() > 0) {
             Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
-            channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex);
+            channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex, null);
          }
       }
 
       if (acquisitionSettings.usePositionList()) {
-         positions = MDAAcqEventModules.positions(posList_);
+         positions = MDAAcqEventModules.positions(posList_, null);
          // TODO: is acq engine supposed to move multiple stages?
          // Yes: when moving to a new position, all stages in the MultiStagePosition instance
          // should be moved to the desired location
@@ -495,7 +496,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
       if (acquisitionSettings.useFrames()) {
          timelapse = MDAAcqEventModules.timelapse(acquisitionSettings.numFrames(),
-               acquisitionSettings.intervalMs());
+               acquisitionSettings.intervalMs(), null);
          // TODO custom time intervals
       }
 
@@ -594,17 +595,12 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                int thisPosition = (int) event.getAxisPosition("position");
                if (thisPosition != lastPositionIndex_) {
                   relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  // System.out.println("Position " + thisPosition + " started "
-                  //      + relativePositionStartTime_ + "  ms after acquisition start");
                   lastPositionIndex_ = (int) event.getAxisPosition("position");
                   positionMoved_ = true;
                }
                if (positionMoved_) {
                   long relativeStartTime = relativePositionStartTime_
                         + event.getMinimumStartTimeAbsolute() - startTime_;
-                  // int frame = (int) event.getAxisPosition("time");
-                  // System.out.println("Pos " + thisPosition + ", Frame " + frame
-                  //      + " start at " + relativeStartTime);
                   event.setMinimumStartTime(relativeStartTime);
                }
             }
