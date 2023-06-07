@@ -6,12 +6,12 @@ import java.util.Iterator;
 import java.util.List;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.internal.ChannelColorEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
@@ -23,8 +23,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public final class ChannelTableModel extends AbstractTableModel {
 
    private static final long serialVersionUID = 3290621191844925827L;
-   private final Studio studio_;
-   private final AcquisitionEngine acqEng_;
+   private final MMStudio mmStudio_;
    private final MutablePropertyMapView settings_;
    // Not sure why, but the acqEngine API requires an ArrayList rather than a List
    private final ArrayList<ChannelSpec> channels_;
@@ -62,10 +61,9 @@ public final class ChannelTableModel extends AbstractTableModel {
    /**
     * Constructor for data representation of the channels list in the MDA dialog.
     */
-   public ChannelTableModel(Studio studio, AcquisitionEngine eng) {
-      studio_ = studio;
-      acqEng_ = eng;
-      settings_ = studio_.profile().getSettings(ChannelTableModel.class);
+   public ChannelTableModel(MMStudio studio, AcquisitionEngine eng) {
+      mmStudio_ = studio;
+      settings_ = mmStudio_.profile().getSettings(ChannelTableModel.class);
       channels_ = new ArrayList<>(12);
       cleanUpConfigurationList();
    }
@@ -129,14 +127,15 @@ public final class ChannelTableModel extends AbstractTableModel {
       } else if (col == 1) {
          cb.config(value.toString());
          ChannelSpec cs = ChannelSpec.fromJSONStream(
-               settings_.getString(channelProfileKey(acqEng_.getSequenceSettings().channelGroup(),
+               settings_.getString(channelProfileKey(mmStudio_.getAcquisitionEngine()
+                           .getSequenceSettings().channelGroup(),
                      value.toString()), ""));
          if (cs == null) {
             // Our fallback color is the colorblind-friendly color for our
             // current row index.
             ChannelDisplaySettings cds =
-                  RememberedDisplaySettings.loadChannel(studio_,
-                        acqEng_.getSequenceSettings().channelGroup(),
+                  RememberedDisplaySettings.loadChannel(mmStudio_,
+                        mmStudio_.getAcquisitionEngine().getSequenceSettings().channelGroup(),
                         value.toString(), new Color(
                               ColorPalettes.getFromDefaultPalette(row).getRGB()));
             cb.color(cds.getColor());
@@ -151,10 +150,12 @@ public final class ChannelTableModel extends AbstractTableModel {
       } else if (col == 2) {
          cb.exposure(((Double) value));
          if (AcqControlDlg.getShouldSyncExposure()) {
-            studio_.app().setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
+            mmStudio_.app().setChannelExposureTime(mmStudio_.getAcquisitionEngine()
+                        .getSequenceSettings().channelGroup(),
                   channel.config(), (Double) value);
          } else {
-            this.setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
+            this.setChannelExposureTime(mmStudio_.getAcquisitionEngine()
+                        .getSequenceSettings().channelGroup(),
                   channel.config(), (Double) value);
          }
       } else if (col == 3) {
@@ -165,7 +166,7 @@ public final class ChannelTableModel extends AbstractTableModel {
          cb.skipFactorFrame((Integer) value);
       } else if (col == 6) {
          if (!channel.color().equals(value)) {
-            studio_.events().post(new ChannelColorEvent(
+            mmStudio_.events().post(new ChannelColorEvent(
                   channel.channelGroup(), channel.config(), (Color) value));
          }
          cb.color((Color) value);
@@ -181,7 +182,7 @@ public final class ChannelTableModel extends AbstractTableModel {
    @Override
    public boolean isCellEditable(int nRow, int nCol) {
       if (nCol == 4) {
-         return acqEng_.getSequenceSettings().useSlices();
+         return mmStudio_.getAcquisitionEngine().getSequenceSettings().useSlices();
       }
 
       return true;
@@ -199,12 +200,12 @@ public final class ChannelTableModel extends AbstractTableModel {
    public void setChannels(ArrayList<ChannelSpec> channels) {
       channels_.clear();
       for (ChannelSpec channel : channels) {
-         if (acqEng_.getChannelConfigs().length > 0) {
-            for (String config : acqEng_.getChannelConfigs()) {
+         if (mmStudio_.getAcquisitionEngine().getChannelConfigs().length > 0) {
+            for (String config : mmStudio_.getAcquisitionEngine().getChannelConfigs()) {
                if (config.equals(channel.config())) {
                   // Color information is a displaySetting. The ultimate authority
                   // is in RememberedSettings, so look there now
-                  Color c = RememberedDisplaySettings.loadChannel(studio_, channel.channelGroup(),
+                  Color c = RememberedDisplaySettings.loadChannel(mmStudio_, channel.channelGroup(),
                         channel.config(), channel.color()).getColor();
                   ChannelSpec ch = channel.copyBuilder().color(c).build();
                   channels_.add(ch);
@@ -220,8 +221,8 @@ public final class ChannelTableModel extends AbstractTableModel {
     */
    public void addNewChannel() {
       ChannelSpec.Builder cb = new ChannelSpec.Builder();
-      if (acqEng_.getChannelConfigs().length > 0) {
-         for (String config : acqEng_.getChannelConfigs()) {
+      if (mmStudio_.getAcquisitionEngine().getChannelConfigs().length > 0) {
+         for (String config : mmStudio_.getAcquisitionEngine().getChannelConfigs()) {
             boolean unique = true;
             for (ChannelSpec chan : channels_) {
                if (config.equals(chan.config())) {
@@ -240,11 +241,13 @@ public final class ChannelTableModel extends AbstractTableModel {
          } else {
             // Pick a non-white default color if possible.
             Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
-            cb.channelGroup(acqEng_.getSequenceSettings().channelGroup());
-            cb.color(RememberedDisplaySettings.loadChannel(studio_,
-                  acqEng_.getSequenceSettings().channelGroup(), config, defaultColor).getColor());
+            cb.channelGroup(mmStudio_.getAcquisitionEngine().getSequenceSettings().channelGroup());
+            cb.color(RememberedDisplaySettings.loadChannel(mmStudio_,
+                  mmStudio_.getAcquisitionEngine().getSequenceSettings().channelGroup(),
+                  config, defaultColor).getColor());
             cb.exposure(this.getChannelExposureTime(
-                  acqEng_.getSequenceSettings().channelGroup(), config, 10.0));
+                  mmStudio_.getAcquisitionEngine().getSequenceSettings().channelGroup(),
+                  config, 10.0));
             channels_.add(cb.build());
          }
       }
@@ -298,7 +301,7 @@ public final class ChannelTableModel extends AbstractTableModel {
    }
 
    public String[] getAvailableChannels() {
-      return acqEng_.getChannelConfigs();
+      return mmStudio_.getAcquisitionEngine().getChannelConfigs();
    }
 
    /**
@@ -316,7 +319,7 @@ public final class ChannelTableModel extends AbstractTableModel {
             // write this config to the profile
             settings_.putString(channelProfileKey(cs.channelGroup(), cs.config()),
                   ChannelSpec.toJSONStream(cs));
-            if (!acqEng_.isConfigAvailable(cs.config())) {
+            if (!mmStudio_.getAcquisitionEngine().isConfigAvailable(cs.config())) {
                it.remove();
             }
          }
@@ -325,7 +328,8 @@ public final class ChannelTableModel extends AbstractTableModel {
       settings_.putStringList("CG:" + channelGroup, configNames);
 
       // Restore channels from profile
-      String newChannelGroup = acqEng_.getSequenceSettings().channelGroup();
+      String newChannelGroup = mmStudio_.getAcquisitionEngine().getSequenceSettings()
+            .channelGroup();
       if (!channelGroup.equals(newChannelGroup)) {
          List<String> newConfigNames = settings_.getStringList("CG:" + newChannelGroup);
          for (String newConfig : newConfigNames) {
@@ -334,13 +338,13 @@ public final class ChannelTableModel extends AbstractTableModel {
             if (cs != null) {
                // Definite data about colors is in RememberedSettings
                Color csColor = RememberedDisplaySettings.loadChannel(
-                     studio_, newChannelGroup, newConfig, cs.color()).getColor();
+                     mmStudio_, newChannelGroup, newConfig, cs.color()).getColor();
                cs = cs.copyBuilder().color(csColor).build();
                channels_.add(cs);
             }
          }
-         acqEng_.setSequenceSettings(acqEng_.getSequenceSettings()
-               .copyBuilder().channels(channels_).build());
+         mmStudio_.getAcquisitionEngine().setSequenceSettings(mmStudio_.getAcquisitionEngine()
+               .getSequenceSettings().copyBuilder().channels(channels_).build());
          fireTableDataChanged();
       }
    }
@@ -371,7 +375,8 @@ public final class ChannelTableModel extends AbstractTableModel {
     */
    public void setChannelExposureTime(String channelGroup, String channel,
                                       double exposure) {
-      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) {
+      if (!channelGroup.equals(mmStudio_.getAcquisitionEngine().getSequenceSettings()
+            .channelGroup())) {
          return;
       }
       for (int row = 0; row < channels_.size(); row++) {
@@ -392,7 +397,8 @@ public final class ChannelTableModel extends AbstractTableModel {
     * @return true if the internal list contains the channel, false otherwise
     */
    public boolean hasChannel(String channelGroup, String channel) {
-      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) {
+      if (!channelGroup.equals(mmStudio_.getAcquisitionEngine().getSequenceSettings()
+            .channelGroup())) {
          return false;
       }
       for (ChannelSpec cs : channels_) {
@@ -413,7 +419,8 @@ public final class ChannelTableModel extends AbstractTableModel {
     */
    public double getChannelExposureTime(String channelGroup, String channel,
                                         double defaultExposure) {
-      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) {
+      if (!channelGroup.equals(mmStudio_.getAcquisitionEngine().getSequenceSettings()
+            .channelGroup())) {
          return defaultExposure;
       }
       for (ChannelSpec cs : channels_) {
@@ -432,7 +439,8 @@ public final class ChannelTableModel extends AbstractTableModel {
     * @param color        New color of the channel
     */
    public void setChannelColor(String channelGroup, String channelName, Color color) {
-      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup())) {
+      if (!channelGroup.equals(mmStudio_.getAcquisitionEngine().getSequenceSettings()
+            .channelGroup())) {
          return;
       }
       for (int row = 0; row < channels_.size(); row++) {
@@ -451,7 +459,7 @@ public final class ChannelTableModel extends AbstractTableModel {
     * Writes the internal channel list to the profile.
     */
    public void storeChannels() {
-      String channelGroup = acqEng_.getSequenceSettings().channelGroup();
+      String channelGroup = mmStudio_.getAcquisitionEngine().getSequenceSettings().channelGroup();
       List<String> configNames = new ArrayList<>(channels_.size());
       for (ChannelSpec cs : channels_) {
          if (!cs.config().contentEquals("")) {
@@ -466,7 +474,8 @@ public final class ChannelTableModel extends AbstractTableModel {
       }
       // Stores the config names that we had for the old channelGroup
       settings_.putStringList("CG:" + channelGroup, configNames);
-      acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder()
+      mmStudio_.getAcquisitionEngine().setSequenceSettings(mmStudio_.getAcquisitionEngine()
+            .getSequenceSettings().copyBuilder()
             .channels(channels_).build());
    }
 
