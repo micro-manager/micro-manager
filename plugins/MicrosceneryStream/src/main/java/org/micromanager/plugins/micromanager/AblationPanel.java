@@ -165,14 +165,14 @@ public class AblationPanel extends JPanel {
 
             Vector3f cur = new Vector3f((float)x, (float) y,0);
             if(prev != null){
-                List<Vector3f> sampled = Ablation.sampleLine(prev, cur, precision);
+                List<Vector3f> sampled = Ablation.sampleLineGrid(prev, cur, precision);
                 samplePointsIS.addAll(sampled);
             }
             samplePointsIS.add(cur);
             prev = cur;
         }
         if (samplePointsIS.size() > 1){
-            samplePointsIS.addAll(Ablation.sampleLine(prev, samplePointsIS.get(0),precision));
+            samplePointsIS.addAll(Ablation.sampleLineGrid(prev, samplePointsIS.get(0),precision));
         }
 
         int[] newX = samplePointsIS.stream().mapToInt(v -> (int) v.x).toArray();

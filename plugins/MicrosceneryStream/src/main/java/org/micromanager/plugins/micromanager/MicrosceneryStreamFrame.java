@@ -21,6 +21,7 @@
 package org.micromanager.plugins.micromanager;
 
 import fromScenery.Settings;
+import fromScenery.SettingsEditor;
 import kotlin.Unit;
 import microscenery.hardware.micromanagerConnection.MMConnection;
 import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
@@ -44,6 +45,8 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigurator {
+
+    private final String version = "live stack";
 
     private final JLabel statusLabel_;
     private final JLabel portLabel_;
@@ -82,7 +85,7 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
         miscContainer.setBorder(BorderFactory.createTitledBorder("General"));
 
         miscContainer.add(new JLabel("Version:"));
-        miscContainer.add(new JLabel("abl img"), "wrap");
+        miscContainer.add(new JLabel(version), "wrap");
 
         miscContainer.add(new JLabel("Status: "));
         statusLabel_ = new JLabel("uninitalized");
