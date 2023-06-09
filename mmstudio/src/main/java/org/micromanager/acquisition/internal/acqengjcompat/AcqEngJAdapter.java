@@ -631,19 +631,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
-            if (event.getZIndex() != null) {
-               if (event.getZIndex() == 0) {
-                  try {
-                     // this hook is called before the engine changes the hardware
-                     // since we want to leave the system in a focussed state, first
-                     // move the XY stage to where we want to image, then release autofocus.
-                     if (event.getXPosition() != null && event.getYPosition() != null) {
-                        studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
-                     }
-                     studio_.core().enableContinuousFocus(false);
-                  } catch (Exception ex) {
-                     studio_.logs().logError(ex, "Failed to disable continuousfocus");
+            if ((event.getZIndex() != null && event.getZIndex() == 0) || event.isZSequenced()) {
+               try {
+                  // this hook is called before the engine changes the hardware
+                  // since we want to leave the system in a focussed state, first
+                  // move the XY stage to where we want to image, then release autofocus.
+                  if (event.getXPosition() != null && event.getYPosition() != null) {
+                     studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
                   }
+                  studio_.core().enableContinuousFocus(false);
+               } catch (Exception ex) {
+                  studio_.logs().logError(ex, "Failed to disable continuousfocus");
                }
             }
             return event;
