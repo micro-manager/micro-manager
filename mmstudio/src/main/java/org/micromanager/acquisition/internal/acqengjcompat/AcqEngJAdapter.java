@@ -757,8 +757,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             try {
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
-                  if (event.getZIndex() == 0) {
-                     if (sequenceSettings.useChannels()
+                  if (event.isZSequenced() || event.getZIndex() == 0) {
+                     if (!event.isZSequenced() && sequenceSettings.useChannels()
                              && (sequenceSettings.acqOrderMode()
                                        == AcqOrderMode.TIME_POS_SLICE_CHANNEL
                              || sequenceSettings.acqOrderMode()
@@ -770,8 +770,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                      zStagePositionBefore_ = core_.getPosition();
                   }
                } else if (when == AcquisitionAPI.AFTER_EXPOSURE_HOOK) {
-                  if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
-                     if (sequenceSettings.useChannels()
+                  if (event.isZSequenced()
+                        || event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                     if (!event.isZSequenced() && sequenceSettings.useChannels()
                              && (sequenceSettings.acqOrderMode()
                                        == AcqOrderMode.TIME_POS_SLICE_CHANNEL
                              || sequenceSettings.acqOrderMode()
@@ -811,13 +812,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (!event.isAcquisitionFinishedEvent()) {
                try {
-                  if (sequenceSettings.keepShutterOpenSlices()) {
+                  if (!event.isZSequenced() && sequenceSettings.keepShutterOpenSlices()) {
                      if (event.getZIndex() == 0) {
                         core_.setAutoShutter(false);
                         core_.setShutterOpen(true);
                      }
                   }
-                  if (sequenceSettings.keepShutterOpenChannels()) {
+                  if (!event.isConfigGroupSequenced()
+                        && sequenceSettings.keepShutterOpenChannels()) {
                      if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0) {
                         core_.setAutoShutter(false);
                         core_.setShutterOpen(true);
@@ -859,13 +861,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                            core_.setAutoShutter(true);
                         }
                      } else {
-                     if (sequenceSettings.keepShutterOpenSlices()) {
+                     if (!event.isZSequenced() && sequenceSettings.keepShutterOpenSlices()) {
                         if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
                            core_.setShutterOpen(false);
                            core_.setAutoShutter(true);
                         }
                      }
-                     if (sequenceSettings.keepShutterOpenChannels()) {
+                     if (!event.isConfigGroupSequenced()
+                           && sequenceSettings.keepShutterOpenChannels()) {
                         if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
                               == sequenceSettings.channels().size() - 1) {
                            core_.setShutterOpen(false);
