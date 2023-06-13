@@ -287,7 +287,7 @@ public final class StorageMultipageTiff implements Storage {
          } catch (InvalidIndexMapException e) {
             // Prompt to repair it.
             int choice = JOptionPane.showConfirmDialog(null,
-                  "This file cannot be opened bcause it appears to have \n"
+                  "This file cannot be opened because it appears to have \n"
                         + "been improperly saved. Would you like Micro-Manger to attempt "
                         + "to fix it?",
                   "Micro-Manager", JOptionPane.YES_NO_OPTION);
