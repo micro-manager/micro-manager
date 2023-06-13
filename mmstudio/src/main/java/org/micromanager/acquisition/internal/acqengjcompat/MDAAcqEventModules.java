@@ -1,5 +1,6 @@
 package org.micromanager.acquisition.internal.acqengjcompat;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -38,7 +39,8 @@ public class MDAAcqEventModules {
                                             int stopSliceIndex,
                                             double zStep,
                                             double zOrigin,
-                                            List<ChannelSpec> chSpecs) {
+                                            List<ChannelSpec> chSpecs,
+                                            HashMap<String, String> extraTags) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
 
@@ -74,7 +76,14 @@ public class MDAAcqEventModules {
                }
                AcquisitionEvent sliceEvent = event.copy();
                sliceEvent.setZ(zIndex_,
-                     (sliceEvent.getZPosition() == null ? 0.0 : sliceEvent.getZPosition()) + zPos);
+                      (sliceEvent.getZPosition() == null ? 0.0 : sliceEvent.getZPosition()) + zPos);
+               HashMap<String, String> tags = sliceEvent.getTags();
+               if (extraTags != null) {
+                  for (String key :  extraTags.keySet()) {
+                     tags.put(key, extraTags.get(key));
+                  }
+               }
+               sliceEvent.setTags(tags);
                zIndex_++;
                return sliceEvent;
             }
@@ -83,7 +92,7 @@ public class MDAAcqEventModules {
    }
 
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse(
-         int numTimePoints, double intervalMs) {
+         int numTimePoints, double intervalMs, HashMap<String, String> extraTags) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
 
@@ -102,6 +111,13 @@ public class MDAAcqEventModules {
                AcquisitionEvent timePointEvent = event.copy();
                timePointEvent.setMinimumStartTime((long) (intervalMs * frameIndex_));
                timePointEvent.setTimeIndex(frameIndex_);
+               HashMap<String, String> tags = timePointEvent.getTags();
+               if (extraTags != null) {
+                  for (String key :  extraTags.keySet()) {
+                     tags.put(key, extraTags.get(key));
+                  }
+               }
+               timePointEvent.setTags(tags);
                frameIndex_++;
 
                return timePointEvent;
@@ -120,7 +136,8 @@ public class MDAAcqEventModules {
     * @return
     */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(
-         List<ChannelSpec> channelList, Integer middleSliceIndex) {
+         List<ChannelSpec> channelList, Integer middleSliceIndex,
+         HashMap<String, String> extraTags) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
             int index = 0;
@@ -171,8 +188,14 @@ public class MDAAcqEventModules {
                   zPos = event.getZPosition() + channelList.get(index).zOffset();
                }
                channelEvent.setZ(channelEvent.getZIndex(), zPos);
-
                channelEvent.setExposure(channelList.get(index).exposure());
+               HashMap<String, String> tags = channelEvent.getTags();
+               if (extraTags != null) {
+                  for (String key :  extraTags.keySet()) {
+                     tags.put(key, extraTags.get(key));
+                  }
+               }
+               channelEvent.setTags(tags);
                index++;
                return channelEvent;
             }
@@ -185,11 +208,12 @@ public class MDAAcqEventModules {
     * the axes that assume the order in the list provided correspondis to the
     * desired indices.
     *
-    * @param positionList
+    * @param positionList MM PositionList used in this acquisition
+    * @param extraTags - Key Value pairs that will be added to Image Metadata
     * @return
     */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions(
-         PositionList positionList) {
+         PositionList positionList, HashMap<String, String> extraTags) {
       return (AcquisitionEvent event) -> {
          Stream.Builder<AcquisitionEvent> builder = Stream.builder();
          if (positionList == null || positionList.getNumberOfPositions() == 0) {
@@ -201,14 +225,14 @@ public class MDAAcqEventModules {
                MultiStagePosition msp = positionList.getPosition(index);
                posEvent.setX(msp.getX());
                posEvent.setY(msp.getY());
-               // Not implemented for now because this is the magellan/pycromanager grid
-               // concept which is not identical
-               // posEvent.setGridRow(positionList.get(index).getGridRow());
-               // posEvent.setGridCol(positionList.get(index).getGridCol());
-               // posEvent.setAxisPosition(AcqEngMetadata.AXES_GRID_ROW,
-               //                          positionList.get(index).getGridRow());
-               // posEvent.setAxisPosition(AcqEngMetadata.AXES_GRID_COL,
-               //                          positionList.get(index).getGridCol());
+               HashMap<String, String> tags = posEvent.getTags();
+               tags.put(AcqEngMetadata.POS_NAME, msp.getLabel());
+               if (extraTags != null) {
+                  for (String key :  extraTags.keySet()) {
+                     tags.put(key, extraTags.get(key));
+                  }
+               }
+               posEvent.setTags(tags);
                posEvent.setAxisPosition(POSITION_AXIS, index);
                builder.accept(posEvent);
             }

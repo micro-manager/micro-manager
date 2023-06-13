@@ -238,10 +238,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                acquisitionSettings));
 
 
-         /////////////////
-         /////////////////////////////
-
-
          if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
             // Pos_time ordered acquisitions need their timelapse minimum start time to be
@@ -282,6 +278,13 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.AFTER_HARDWARE_HOOK);
             currentAcquisition_.addHook(shutterHookAfter(acquisitionSettings),
                   AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+         }
+
+         if (sequenceSettings.useChannels()) {
+            String channelGroup = core_.getChannelGroup();
+            String channel = core_.getCurrentConfig(channelGroup);
+            currentAcquisition_.addHook(restoreChannelHook(channelGroup, channel),
+                  AcquisitionAPI.AFTER_HARDWARE_HOOK);
          }
 
          // Read for events
@@ -332,7 +335,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       // frames/slices/channels/positions at the outset
       summaryMetadata.put(PropertyKey.FRAMES.key(), getNumFrames());
       summaryMetadata.put(PropertyKey.SLICES.key(), getNumSlices());
-      summaryMetadata.put(PropertyKey.CHANNELS.key(), getNumChannels());
+      summaryMetadata.put(PropertyKey.CHANNELS.key(), getNumChannels(acqSettings));
       summaryMetadata.put(PropertyKey.POSITIONS.key(), getNumPositions());
 
       // MM MDA acquisitions have a defined order
@@ -346,6 +349,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       DefaultSummaryMetadata dsmd = new DefaultSummaryMetadata.Builder().build();
       summaryMetadata.put(PropertyKey.MICRO_MANAGER_VERSION.key(),
             dsmd.getMicroManagerVersion());
+      summaryMetadata.put("MDA_Settings", SequenceSettings.toJSONStream(acqSettings));
    }
 
    /**
@@ -371,8 +375,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             imageMD.put(PropertyKey.CHANNEL_NAME.key(), channelName);
          }
          if (AcqEngMetadata.hasAxis(imageMD, "position")) {
-            imageMD.put(PropertyKey.POSITION_INDEX.key(),
-                  AcqEngMetadata.getAxisPosition(imageMD, "position"));
+            int index = (Integer) AcqEngMetadata.getAxisPosition(imageMD, "position");
+            imageMD.put(PropertyKey.POSITION_INDEX.key(), index);
+            if (imageMD.has(AcqEngMetadata.TAGS)) {
+               JSONObject tags = imageMD.getJSONObject(AcqEngMetadata.TAGS);
+               if (tags.has(AcqEngMetadata.POS_NAME)) {
+                  imageMD.put(PropertyKey.POSITION_NAME.key(), tags.get(AcqEngMetadata.POS_NAME));
+               }
+            }
          }
          if (AcqEngMetadata.hasStageX(imageMD)) {
             imageMD.put(PropertyKey.X_POSITION_UM.key(), AcqEngMetadata.getStageX(imageMD));
@@ -464,18 +474,19 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                acquisitionSettings.slices().size() - 1,
                acquisitionSettings.sliceZStepUm(),
                origin,
-               chSpecs);
+               chSpecs,
+               null);
       }
 
       if (acquisitionSettings.useChannels()) {
          if (chSpecs.size() > 0) {
             Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
-            channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex);
+            channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex, null);
          }
       }
 
       if (acquisitionSettings.usePositionList()) {
-         positions = MDAAcqEventModules.positions(posList_);
+         positions = MDAAcqEventModules.positions(posList_, null);
          // TODO: is acq engine supposed to move multiple stages?
          // Yes: when moving to a new position, all stages in the MultiStagePosition instance
          // should be moved to the desired location
@@ -486,7 +497,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
       if (acquisitionSettings.useFrames()) {
          timelapse = MDAAcqEventModules.timelapse(acquisitionSettings.numFrames(),
-               acquisitionSettings.intervalMs());
+               acquisitionSettings.intervalMs(), null);
          // TODO custom time intervals
       }
 
@@ -585,17 +596,12 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                int thisPosition = (int) event.getAxisPosition("position");
                if (thisPosition != lastPositionIndex_) {
                   relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  // System.out.println("Position " + thisPosition + " started "
-                  //      + relativePositionStartTime_ + "  ms after acquisition start");
                   lastPositionIndex_ = (int) event.getAxisPosition("position");
                   positionMoved_ = true;
                }
                if (positionMoved_) {
                   long relativeStartTime = relativePositionStartTime_
                         + event.getMinimumStartTimeAbsolute() - startTime_;
-                  // int frame = (int) event.getAxisPosition("time");
-                  // System.out.println("Pos " + thisPosition + ", Frame " + frame
-                  //      + " start at " + relativeStartTime);
                   event.setMinimumStartTime(relativeStartTime);
                }
             }
@@ -625,19 +631,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
-            if (event.getZIndex() != null) {
-               if (event.getZIndex() == 0) {
-                  try {
-                     // this hook is called before the engine changes the hardware
-                     // since we want to leave the system in a focussed state, first
-                     // move the XY stage to where we want to image, then release autofocus.
-                     if (event.getXPosition() != null && event.getYPosition() != null) {
-                        studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
-                     }
-                     studio_.core().enableContinuousFocus(false);
-                  } catch (Exception ex) {
-                     studio_.logs().logError(ex, "Failed to disable continuousfocus");
+            if ((event.getZIndex() != null && event.getZIndex() == 0) || event.isZSequenced()) {
+               try {
+                  // this hook is called before the engine changes the hardware
+                  // since we want to leave the system in a focussed state, first
+                  // move the XY stage to where we want to image, then release autofocus.
+                  if (event.getXPosition() != null && event.getYPosition() != null) {
+                     studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
                   }
+                  studio_.core().enableContinuousFocus(false);
+               } catch (Exception ex) {
+                  studio_.logs().logError(ex, "Failed to disable continuousfocus");
                }
             }
             return event;
@@ -753,11 +757,31 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             try {
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
-                  if (event.getZIndex() == 0) {
+                  if (event.isZSequenced() || event.getZIndex() == 0) {
+                     if (!event.isZSequenced() && sequenceSettings.useChannels()
+                             && (sequenceSettings.acqOrderMode()
+                                       == AcqOrderMode.TIME_POS_SLICE_CHANNEL
+                             || sequenceSettings.acqOrderMode()
+                                       == AcqOrderMode.POS_TIME_SLICE_CHANNEL)) {
+                        if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) != 0) {
+                           return event;
+                        }
+                     }
                      zStagePositionBefore_ = core_.getPosition();
                   }
                } else if (when == AcquisitionAPI.AFTER_EXPOSURE_HOOK) {
-                  if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                  if (event.isZSequenced()
+                        || event.getZIndex() == sequenceSettings.slices().size() - 1) {
+                     if (!event.isZSequenced() && sequenceSettings.useChannels()
+                             && (sequenceSettings.acqOrderMode()
+                                       == AcqOrderMode.TIME_POS_SLICE_CHANNEL
+                             || sequenceSettings.acqOrderMode()
+                                       == AcqOrderMode.POS_TIME_SLICE_CHANNEL)) {
+                        if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
+                                != getNumChannels(sequenceSettings) - 1) {
+                           return event;
+                        }
+                     }
                      core_.setPosition(zStagePositionBefore_);
                   }
                }
@@ -788,13 +812,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (!event.isAcquisitionFinishedEvent()) {
                try {
-                  if (sequenceSettings.keepShutterOpenSlices()) {
+                  if (!event.isZSequenced() && sequenceSettings.keepShutterOpenSlices()) {
                      if (event.getZIndex() == 0) {
                         core_.setAutoShutter(false);
                         core_.setShutterOpen(true);
                      }
                   }
-                  if (sequenceSettings.keepShutterOpenChannels()) {
+                  if (!event.isConfigGroupSequenced()
+                        && sequenceSettings.keepShutterOpenChannels()) {
                      if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0) {
                         core_.setAutoShutter(false);
                         core_.setShutterOpen(true);
@@ -836,13 +861,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                            core_.setAutoShutter(true);
                         }
                      } else {
-                     if (sequenceSettings.keepShutterOpenSlices()) {
+                     if (!event.isZSequenced() && sequenceSettings.keepShutterOpenSlices()) {
                         if (event.getZIndex() == sequenceSettings.slices().size() - 1) {
                            core_.setShutterOpen(false);
                            core_.setAutoShutter(true);
                         }
                      }
-                     if (sequenceSettings.keepShutterOpenChannels()) {
+                     if (!event.isConfigGroupSequenced()
+                           && sequenceSettings.keepShutterOpenChannels()) {
                         if ((Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS)
                               == sequenceSettings.channels().size() - 1) {
                            core_.setShutterOpen(false);
@@ -864,13 +890,34 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       };
    }
 
+   private AcquisitionHook restoreChannelHook(String channelGroup, String channel) {
+      return new AcquisitionHook() {
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.isAcquisitionFinishedEvent()) {
+               try {
+                  core_.setConfig(channelGroup, channel);
+               } catch (Exception e) {
+                  core_.logMessage(e.getMessage());
+               }
+            }
+            return event;
+         }
 
-   private void calculateSlices() {
+         @Override
+         public void close() {
+
+         }
+      };
+   }
+
+
+   private void calculateSlices(SequenceSettings sequenceSettings) {
       // Slices
-      if (sequenceSettings_.useSlices()) {
-         double start = sequenceSettings_.sliceZBottomUm();
-         double stop = sequenceSettings_.sliceZTopUm();
-         double step = Math.abs(sequenceSettings_.sliceZStepUm());
+      if (sequenceSettings.useSlices()) {
+         double start = sequenceSettings.sliceZBottomUm();
+         double stop = sequenceSettings.sliceZTopUm();
+         double step = Math.abs(sequenceSettings.sliceZStepUm());
          if (step == 0.0) {
             throw new UnsupportedOperationException("zero Z step size");
          }
@@ -882,7 +929,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          for (int i = 0; i < count; i++) {
             slices.add(start + i * step);
          }
-         sequenceSettings_ = sequenceSettings_.copyBuilder().slices(slices).build();
+         sequenceSettings_ = sequenceSettings.copyBuilder().slices(slices).build();
       }
    }
 
@@ -923,15 +970,15 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    }
 
 
-   private int getNumChannels() {
-      if (!sequenceSettings_.useChannels()) {
+   private int getNumChannels(SequenceSettings sequenceSettings) {
+      if (!sequenceSettings.useChannels()) {
          return 1;
       }
-      if (sequenceSettings_.channels() == null || sequenceSettings_.channels().size() == 0) {
+      if (sequenceSettings.channels() == null || sequenceSettings.channels().size() == 0) {
          return 1;
       }
       int numChannels = 0;
-      for (ChannelSpec channel : sequenceSettings_.channels()) {
+      for (ChannelSpec channel : sequenceSettings.channels()) {
          if (channel != null && channel.useChannel()) {
             ++numChannels;
          }
@@ -1017,13 +1064,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    }
 
 
-   private int getTotalImages() {
-      if (!sequenceSettings_.useChannels() || sequenceSettings_.channels().size() == 0) {
-         return getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
+   private int getTotalImages(SequenceSettings sequenceSettings) {
+      if (!sequenceSettings.useChannels() || sequenceSettings.channels().size() == 0) {
+         return getNumFrames() * getNumSlices() * getNumChannels(sequenceSettings)
+               * getNumPositions();
       }
 
       int nrImages = 0;
-      for (ChannelSpec channel : sequenceSettings_.channels()) {
+      for (ChannelSpec channel : sequenceSettings.channels()) {
          if (channel.useChannel()) {
             for (int t = 0; t < getNumFrames(); t++) {
                boolean doTimePoint = true;
@@ -1062,13 +1110,13 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    @Override
    public void setSequenceSettings(SequenceSettings sequenceSettings) {
       sequenceSettings_ = sequenceSettings;
-      calculateSlices();
+      calculateSlices(sequenceSettings_);
       settingsChanged();
    }
 
    @Override
    public Datastore acquire() throws MMException {
-      calculateSlices();
+      calculateSlices(sequenceSettings_);
       return runAcquisition(sequenceSettings_);
    }
 
@@ -1093,7 +1141,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       return core.getImageWidth()
             * core.getImageHeight()
             * core.getBytesPerPixel()
-            * ((long) getTotalImages());
+            * ((long) getTotalImages(sequenceSettings_));
    }
 
    /*
@@ -1357,7 +1405,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       final int numFrames = getNumFrames();
       final int numSlices = getNumSlices();
       final int numPositions = getNumPositions();
-      final int numChannels = getNumChannels();
+      final int numChannels = getNumChannels(sequenceSettings_);
 
       double exposurePerTimePointMs = 0.0;
       if (sequenceSettings_.useChannels()) {
@@ -1379,7 +1427,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
       }
 
-      final int totalImages = getTotalImages();
+      final int totalImages = getTotalImages(sequenceSettings_);
       final long totalMB = getTotalMemory() / (1024 * 1024);
 
       double totalDurationSec = 0;

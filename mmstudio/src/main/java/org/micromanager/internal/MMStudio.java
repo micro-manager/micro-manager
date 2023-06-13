@@ -57,6 +57,7 @@ import org.micromanager.ShutterManager;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
@@ -1274,8 +1275,10 @@ public final class MMStudio implements Studio {
       }
 
       public void setShouldUseAcqEngJ(boolean use) {
+         SequenceSettings acqSettings = acquisitions().getAcquisitionSettings();
          profile().getSettings(MMStudio.class).putBoolean(
                  SHOULD_USE_ACQENGJ, use);
+         acquisitions().setAcquisitionSettings(acqSettings);
       }
    }
 }
