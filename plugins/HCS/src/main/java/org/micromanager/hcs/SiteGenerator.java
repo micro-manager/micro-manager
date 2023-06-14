@@ -803,11 +803,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       if (studio_ == null) {
          return;
       }
-      if (calFrame_ != null) {
-         calFrame_.setVisible(true);
-      } else {
-         calFrame_ = new CalibrationFrame(studio_, plate_, this);
-      }
+      new CalibrationFrame(studio_, plate_, this);
    }
 
    /**
@@ -888,7 +884,12 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          return offset_;
       }
    }
-    
+
+   @Override
+   public boolean isCalibratedXY() {
+      return isCalibratedXY_;
+   }
+
    @Override
    public Point2D.Double applyOffset(Point2D.Double pt) {
       Point2D.Double offset = getOffset();

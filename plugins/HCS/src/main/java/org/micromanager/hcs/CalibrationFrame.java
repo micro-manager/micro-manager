@@ -28,6 +28,9 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +49,11 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.internal.propertymap.DefaultPropertyMap;
+import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 
@@ -63,6 +70,9 @@ public class CalibrationFrame extends JFrame {
    private final String calibrationMethod = "CalibrationMethod";
    private final String calibrationLegacy = "Legacy";
    private final String calibrationRecommended = "Recommended";
+   private static final String OFFSETX = "OffsetX";
+   private static final String OFFSETY = "OffsetY";
+
 
    /**
     * Displays the dialog used to calibrate the HCS plugin (i.e. figure out the relation
@@ -152,6 +162,56 @@ public class CalibrationFrame extends JFrame {
       contents.add(bottomButton, "span 4, center, wrap");
 
       contents.add(new JSeparator(), "span4, grow, wrap");
+
+      try {
+         final FileDialogs.FileType OFFSET_FILE = new FileDialogs.FileType(
+               "OFFSET_FILE",
+               "HCS plugin Offset",
+               new File(ij.ImageJ.class.getProtectionDomain().getCodeSource().getLocation()
+                     .toURI()).getParentFile().getPath() + File.separator + "HCS_Offset.json",
+               true, "json");
+
+         JButton loadButton = new JButton("Load");
+         loadButton.addActionListener(e -> {
+            File loadCalibration = FileDialogs.openFile(this, "Load calibration",
+                  OFFSET_FILE);
+            if (loadCalibration != null) {
+               try {
+                  PropertyMap propertyMap = PropertyMaps.loadJSON(loadCalibration);
+                  if (propertyMap.containsDouble(OFFSETX) && propertyMap.containsDouble(OFFSETY)) {
+                     Point2D.Double offset = new Point2D.Double(propertyMap.getDouble(OFFSETX, 0.0),
+                           propertyMap.getDouble(OFFSETY, 0.0));
+                     siteGenerator.applyOffset(offset);
+                     this.dispose();
+                  }
+               } catch (IOException ioe) {
+                  studio.logs().showError(ioe, "Failed to read file", this);
+               }
+
+            }
+         });
+         contents.add(loadButton, "span 4, split 2, align right");
+
+         JButton saveButton = new JButton("Save");
+         saveButton.addActionListener(e -> {
+            Point2D.Double offset = siteGenerator.getOffset();
+            DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
+            builder.putDouble(OFFSETX, offset.getX());
+            builder.putDouble(OFFSETY, offset.getY());
+            File saveCalibration = FileDialogs.save(this, "Save calibration", OFFSET_FILE);
+            if (saveCalibration != null) {
+               try {
+                  builder.build().saveJSON(saveCalibration, true, true);
+               } catch (IOException ioe) {
+                  studio.logs().showError(ioe, "Failed to save offset", this);
+               }
+            }
+         });
+         saveButton.setEnabled(siteGenerator.isCalibratedXY());
+         contents.add(saveButton, "wrap");
+      } catch (URISyntaxException use) {
+         studio.logs().logError(use);
+      }
 
       JLabel methodLabel = new JLabel();
       JPanel methodPanel = new JPanel(new MigLayout("align, center, fillx"));

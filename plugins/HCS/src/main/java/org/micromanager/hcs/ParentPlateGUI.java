@@ -27,4 +27,6 @@ public interface ParentPlateGUI {
    Point2D.Double getOffset();
 
    Point2D.Double applyOffset(Point2D.Double pt);
+
+   boolean isCalibratedXY();
 }
