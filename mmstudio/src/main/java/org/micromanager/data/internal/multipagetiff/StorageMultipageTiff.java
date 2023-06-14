@@ -43,6 +43,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
@@ -235,17 +236,20 @@ public final class StorageMultipageTiff implements Storage {
       MultipageTiffReader reader = null;
       File dir = new File(directory_);
 
-      ProgressBar progressBar = null;
+      ProgressBar tmpProgressBar = null;
       // Allow operation in headless mode.
       File[] listFiles = dir.listFiles();
       if (!GraphicsEnvironment.isHeadless() && listFiles != null) {
-         progressBar = new ProgressBar(parent_, "Reading " + directory_, 0,
+         tmpProgressBar = new ProgressBar(parent_, "Reading " + directory_, 0,
                listFiles.length);
       }
       int numRead = 0;
+      final ProgressBar progressBar = tmpProgressBar;
       if (progressBar != null) {
-         progressBar.setProgress(numRead);
-         progressBar.setVisible(true);
+         SwingUtilities.invokeLater(() -> {
+            progressBar.setProgress(0);
+            progressBar.setVisible(true);
+         });
       }
       if (listFiles != null) {
          for (File f : listFiles) {
@@ -258,13 +262,18 @@ public final class StorageMultipageTiff implements Storage {
                }
             }
             numRead++;
+            final int nr = numRead;
             if (progressBar != null) {
-               progressBar.setProgress(numRead);
+               SwingUtilities.invokeLater(() -> {
+                  progressBar.setProgress(nr);
+               });
             }
          }
       }
       if (progressBar != null) {
-         progressBar.setVisible(false);
+         SwingUtilities.invokeLater(() -> {
+            progressBar.setVisible(false);
+         });
       }
 
       if (reader != null) {
@@ -273,10 +282,6 @@ public final class StorageMultipageTiff implements Storage {
          setSummaryMetadata((DefaultSummaryMetadata) reader.getSummaryMetadata(), true);
       }
 
-      if (progressBar != null) {
-         progressBar.setProgress(1);
-         progressBar.setVisible(false);
-      }
    }
 
    private MultipageTiffReader loadFile(File f) {
@@ -287,7 +292,7 @@ public final class StorageMultipageTiff implements Storage {
          } catch (InvalidIndexMapException e) {
             // Prompt to repair it.
             int choice = JOptionPane.showConfirmDialog(null,
-                  "This file cannot be opened bcause it appears to have \n"
+                  "This file cannot be opened because it appears to have \n"
                         + "been improperly saved. Would you like Micro-Manger to attempt "
                         + "to fix it?",
                   "Micro-Manager", JOptionPane.YES_NO_OPTION);

@@ -25,6 +25,7 @@ package org.micromanager.data.internal.multipagetiff;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -430,7 +431,13 @@ public final class MultipageTiffReader {
       JsonParser parser = new JsonParser();
       JsonReader reader = new JsonReader(new StringReader(mdJSON));
       reader.setLenient(true);
-      JsonElement mdGson = parser.parse(reader);
+      JsonElement mdGson = null;
+      try {
+         mdGson = parser.parse(reader);
+      } catch (JsonSyntaxException jse) {
+         ReportingUtils.logError(jse, "Error parsing image metadata.");
+         return null;
+      }
 
       try {
          PropertyMap formatPmap = NonPropertyMapJSONFormats.imageFormat()
