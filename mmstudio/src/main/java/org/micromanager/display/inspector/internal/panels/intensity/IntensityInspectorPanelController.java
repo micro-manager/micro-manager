@@ -101,6 +101,8 @@ public class IntensityInspectorPanelController
          new JCheckBoxMenuItem("Logarithmic Y Axis");
    private final JCheckBoxMenuItem gearMenuUseROIItem_ =
          new JCheckBoxMenuItem("Use ROI for Histograms and Autostretch");
+   private final JCheckBoxMenuItem gearMenuIgnoreZerosItem_ =
+         new JCheckBoxMenuItem("Ignore zero value pixels in Autostretch");
 
    private final JPanel generalControlPanel_ = new JPanel();
    private final JComboBox<ColorModeCell.Item> colorModeComboBox_ = new JComboBox<>();
@@ -211,6 +213,11 @@ public class IntensityInspectorPanelController
             handleHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected()));
       gearMenuUseROIItem_.addActionListener((ActionEvent e) ->
             handleHistogramUseROI(gearMenuUseROIItem_.isSelected()));
+
+      gearMenu_.add(gearMenuIgnoreZerosItem_);
+      gearMenuIgnoreZerosItem_.addActionListener((ActionEvent e) ->
+            handleIgnoreZeros(gearMenuIgnoreZerosItem_.isSelected()));
+
    }
 
    private void setUpGeneralControlPanel() {
@@ -334,6 +341,18 @@ public class IntensityInspectorPanelController
             return;
          }
          newSettings = oldSettings.copyBuilder().roiAutoscale(useROI).build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
+   }
+
+   private void handleIgnoreZeros(boolean ignoreZeros) {
+      DisplaySettings oldSettings;
+      DisplaySettings newSettings;
+      do {
+         oldSettings = viewer_.getDisplaySettings();
+         if (oldSettings.ignoreZerosWhenAutoScaling() == ignoreZeros) {
+            return;
+         }
+         newSettings = oldSettings.copyBuilder().autoscaleIgnoringZeros(ignoreZeros).build();
       } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
    }
 
@@ -551,8 +570,8 @@ public class IntensityInspectorPanelController
          displaySettingsUpdateSuspended_ = false;
       }
 
-
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
+      gearMenuIgnoreZerosItem_.setSelected(settings.ignoreZerosWhenAutoScaling());
 
       // TODO Disable color mode and show RGB if image is RGB
       switch (settings.getColorMode()) {

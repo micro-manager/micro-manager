@@ -1102,6 +1102,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
          if (images.getResult().size() > statsIndex) {
             ImageStats stats = images.getResult().get(statsIndex);
+
             long min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
             long max = Math.min(Integer.MAX_VALUE,
                   stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));

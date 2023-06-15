@@ -55,6 +55,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    private final boolean autostretch_;
    private final boolean useROI_;
    private final double extremaQuantile_;
+   private final boolean ignoreZeros_;
    private final List<ChannelDisplaySettings> channelSettings_;
 
    private static class Builder implements DisplaySettings.Builder {
@@ -65,6 +66,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       private boolean autostretch_ = true;
       private boolean useROI_ = true;
       private double extremaQuantile_ = 0.001;
+      private boolean ignoreZeros_ = false;
       private List<ChannelDisplaySettings> channelSettings_ = new ArrayList<>();
 
       private Builder() {
@@ -142,6 +144,12 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public Builder autoscaleIgnoringZeros(boolean ignoreZeros) {
+         ignoreZeros_ = ignoreZeros;
+         return this;
+      }
+
+      @Override
       public Builder channel(int channel) {
          Preconditions.checkArgument(channel >= 0);
          while (channelSettings_.size() <= channel) {
@@ -196,6 +204,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       autostretch_ = builder.autostretch_;
       useROI_ = builder.useROI_;
       extremaQuantile_ = builder.extremaQuantile_;
+      ignoreZeros_ = builder.ignoreZeros_;
       channelSettings_ =
             new ArrayList<>(builder.channelSettings_);
    }
@@ -238,6 +247,11 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public double getAutoscaleIgnoredPercentile() {
       return 100.0 * extremaQuantile_;
+   }
+
+   @Override
+   public boolean ignoreZerosWhenAutoScaling() {
+      return ignoreZeros_;
    }
 
    @Override
