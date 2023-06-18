@@ -837,7 +837,8 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .uniformChannelScaling(uniformChannelScaling_)
             .autostretch(autostretch_)
             .roiAutoscale(useROI_)
-            .autoscaleIgnoredQuantile(extremaQuantile_);
+            .autoscaleIgnoredQuantile(extremaQuantile_)
+            .autoscaleIgnoringZeros(ignoreZeros_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {
          ret.channel(i, channelSettings_.get(i));
       }

@@ -275,13 +275,15 @@ public final class IntegerComponentStats {
       }
 
       final long[] cumDistrib = getCumulativeDistribution();
-      // subtract zero pixels from pixelCount
-      long pixelCount = pixelCount_ - histogram_[0];
+      // subtract zero pixels from pixelCount, unexpectedly, zero pixels are contained in
+      // histogram_[1]
+      long pixelCount = pixelCount_ - histogram_[1];
       double countBelowQuantile = q * pixelCount;
 
-      if (countBelowQuantile <= cumDistrib[1] && cumDistrib[1] > 0) {
+      long nr = cumDistrib[2] - histogram_[1];
+      if (countBelowQuantile <= nr && nr > 0) {
          // Quantile is below histogram range
-         return getHistogramRangeMin();
+         return getHistogramRangeMin() + 1;
       }
       if (countBelowQuantile > cumDistrib[cumDistrib.length - 2]) {
          // Quantile is above histogram range
@@ -301,14 +303,15 @@ public final class IntegerComponentStats {
       }
 
       binIndex = binarySearch(cumDistrib, 2, cumDistrib.length - 1,
-            (long) Math.floor(countBelowQuantile));
+            (long) Math.floor(countBelowQuantile) + histogram_[1]);
 
       int binWidth = getHistogramBinWidth();
       long leftEdge = (binIndex - 1) * binWidth;
-      double binFraction =
-            (countBelowQuantile - cumDistrib[binIndex - 1])
-                  / (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
-      return leftEdge + binFraction * binWidth;
+      return leftEdge;
+      // double binFraction =
+      //       (countBelowQuantile - cumDistrib[binIndex - 1])
+      //            / (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
+      // return leftEdge + binFraction * binWidth;
    }
 
    private long[] computeCumulativeDistribution() {
