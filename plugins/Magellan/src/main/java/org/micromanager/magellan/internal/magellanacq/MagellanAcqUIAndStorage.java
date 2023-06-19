@@ -268,10 +268,12 @@ public class MagellanAcqUIAndStorage
             public void accept(HashMap<String, Object> axes) {
 
                // iterate through z devices and update their current z position
-               for (String name : acq_.getZAxes().keySet()) {
-                  if (axes.containsKey(name)) {
-                     Integer i = (Integer) axes.get(name);
-                     exploreControlsPanel_.updateGUIToReflectHardwareZPosition(name, i);
+               if (acq_ != null) {
+                  for (String name : acq_.getZAxes().keySet()) {
+                     if (axes.containsKey(name)) {
+                        Integer i = (Integer) axes.get(name);
+                        exploreControlsPanel_.updateGUIToReflectHardwareZPosition(name, i);
+                     }
                   }
                }
             }
