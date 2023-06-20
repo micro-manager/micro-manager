@@ -61,7 +61,9 @@ public class MagellanMouseListener  implements
             Log.log(s);
          }
       };
-      pixelStageTranslator_ = acq_.getPixelStageTranslator();
+      if (acq_ != null) {
+         pixelStageTranslator_ = acq_.getPixelStageTranslator();
+      }
    }
 
 
