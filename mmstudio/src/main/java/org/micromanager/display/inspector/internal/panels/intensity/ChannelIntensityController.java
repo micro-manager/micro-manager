@@ -410,22 +410,32 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
       IntegerComponentStats componentStats = stats_.getComponentStats(component);
 
-      long min = componentStats.getMinIntensity();
-      intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
-      long max = componentStats.getMaxIntensity();
-      intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
-      long mean = componentStats.getMeanIntensity();
-      intensityStatsPanel_.setMean(mean >= 0 ? Long.toString(mean) : null);
-      double stdev = componentStats.getStandardDeviation();
-      intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
-            String.format("%1.2e", stdev));
-
       try {
          Image anyImage = viewer_.getDataProvider().getAnyImage();
          if (anyImage == null) {
             return;
          }
          final DisplaySettings settings = viewer_.getDisplaySettings();
+
+         long min = componentStats.getMinIntensity();
+         if (settings.ignoreZerosWhenAutoScaling()) {
+            min = componentStats.getMinIntensityExcludingZeros();
+         }
+         intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
+         long max = componentStats.getMaxIntensity();
+         intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
+         long mean = componentStats.getMeanIntensity();
+         if (settings.ignoreZerosWhenAutoScaling()) {
+            mean = componentStats.getMeanIntensityExcludingZeros();
+         }
+         intensityStatsPanel_.setMean(mean >= 0 ? Long.toString(mean) : null);
+         double stdev = componentStats.getStandardDeviation();
+         if (settings.ignoreZerosWhenAutoScaling()) {
+            stdev = componentStats.getStandardDeviationExcludingZeros();
+         }
+         intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
+               String.format("%1.2e", stdev));
+
          cameraBits_ = anyImage.getMetadata().getBitDepth(); // can throw IOException
          ChannelDisplaySettings cSettings = histoRangeComboBoxModel_.getBits(
                viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);

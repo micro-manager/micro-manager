@@ -103,7 +103,7 @@ public class IntensityInspectorPanelController
    private final JCheckBoxMenuItem gearMenuUseROIItem_ =
          new JCheckBoxMenuItem("Use ROI for Histograms and Autostretch");
    private final JCheckBoxMenuItem gearMenuIgnoreZerosItem_ =
-         new JCheckBoxMenuItem("Ignore zero value pixels in Autostretch");
+         new JCheckBoxMenuItem("Ignore zero value pixels in Autostretch and Stats");
 
    private final JPanel generalControlPanel_ = new JPanel();
    private final JComboBox<ColorModeCell.Item> colorModeComboBox_ = new JComboBox<>();
@@ -362,6 +362,7 @@ public class IntensityInspectorPanelController
       } else {
          ignoreLabel_.setText(")");
       }
+      updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
    }
 
    @MustCallOnEDT

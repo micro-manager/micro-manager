@@ -25,8 +25,10 @@ public final class IntegerComponentStats {
    private final long[] histogram_;
    private final int binWidthPowerOf2_;
    private final long pixelCount_;
+   private final long pixelCountExcludingZeros_;
    private final boolean usedROI_;
    private final long minimum_;
+   private final long minimumExcludingZeros_;
    private final long maximum_;
    private final long sum_;
    private final long sumOfSquares_;
@@ -36,8 +38,10 @@ public final class IntegerComponentStats {
       private long[] histogram_;
       private int binWidthPowerOf2_;
       private long pixelCount_;
+      private long pixelCountExcludingZeros_;
       private boolean usedROI_;
       private long minimum_;
+      private long minimumExcludingZeros_;
       private long maximum_;
       private long sum_;
       private long sumOfSquares_;
@@ -57,6 +61,11 @@ public final class IntegerComponentStats {
          return this;
       }
 
+      public Builder pixelCountExcludingZeros(long count) {
+         pixelCountExcludingZeros_ = count;
+         return this;
+      }
+
       public Builder usedROI(boolean used) {
          usedROI_ = used;
          return this;
@@ -64,6 +73,11 @@ public final class IntegerComponentStats {
 
       public Builder minimum(long min) {
          minimum_ = min;
+         return this;
+      }
+
+      public Builder minimumExcludingZeros(long min) {
+         minimumExcludingZeros_ = min;
          return this;
       }
 
@@ -97,8 +111,10 @@ public final class IntegerComponentStats {
             null;
       binWidthPowerOf2_ = b.binWidthPowerOf2_;
       pixelCount_ = b.pixelCount_;
+      pixelCountExcludingZeros_ = b.pixelCountExcludingZeros_;
       usedROI_ = b.usedROI_;
       minimum_ = b.minimum_;
+      minimumExcludingZeros_ = b.minimumExcludingZeros_;
       maximum_ = b.maximum_;
       sum_ = b.sum_;
       sumOfSquares_ = b.sumOfSquares_;
@@ -155,6 +171,10 @@ public final class IntegerComponentStats {
       return pixelCount_;
    }
 
+   public long getPixelCountExcludingZeros() {
+      return pixelCountExcludingZeros_;
+   }
+
    public boolean isROIStats() {
       return usedROI_;
    }
@@ -166,8 +186,19 @@ public final class IntegerComponentStats {
       return Math.round(((double) sum_) / pixelCount_);
    }
 
+   public long getMeanIntensityExcludingZeros() {
+      if (pixelCountExcludingZeros_ == 0) {
+         return 0;
+      }
+      return Math.round(((double) sum_) / pixelCountExcludingZeros_);
+   }
+
    public long getMinIntensity() {
       return minimum_;
+   }
+
+   public long getMinIntensityExcludingZeros() {
+      return minimumExcludingZeros_;
    }
 
    public long getMaxIntensity() {
@@ -353,4 +384,14 @@ public final class IntegerComponentStats {
       double mean = getMeanIntensity();
       return Math.sqrt(meanSq - (mean * mean));
    }
+
+   public double getStandardDeviationExcludingZeros() {
+      if (pixelCountExcludingZeros_ == 0) {
+         return Double.NaN;
+      }
+      double meanSq = ((double) sumOfSquares_) / pixelCountExcludingZeros_;
+      double mean = getMeanIntensityExcludingZeros();
+      return Math.sqrt(meanSq - (mean * mean));
+   }
+
 }
