@@ -45,7 +45,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.SequenceSettings;
-import org.micromanager.acquisition.internal.acqengjcompat.multimda.acqengj.AcqEngJAdapter;
+import org.micromanager.acquisition.internal.acqengjcompat.multimda.acqengj.MultiAcqEngJAdapter;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.WindowPositioning;
@@ -114,7 +114,7 @@ public class MultiMDAFrame extends JFrame {
          Thread acqThread = new Thread(new Runnable() {
             @Override
             public void run() {
-               final AcqEngJAdapter acqj = new AcqEngJAdapter(studio_);
+               final MultiAcqEngJAdapter acqj = new MultiAcqEngJAdapter(studio_);
                List<SequenceSettings> seqs = new ArrayList<>();
                List<PositionList> positionLists = new ArrayList<>();
                SequenceSettings.Builder sb = new SequenceSettings.Builder();

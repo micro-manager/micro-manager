@@ -31,7 +31,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * <p>This class is a analagous to DefaultTaggedImageSink, which serves the same
  * function for the Clojure engine.
  */
-public final class AcqEngJMDADataSink implements AcqEngJDataSink {
+public final class MultiAcqEngJMDADataSink implements AcqEngJDataSink {
 
    private List<Datastore> stores_ = new ArrayList<>();
    private List<Pipeline> pipelines_ = new ArrayList<>();
@@ -39,7 +39,7 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
    private boolean somethingAcquired_ = false;
    private boolean finished_ = false;
 
-   public AcqEngJMDADataSink(EventManager studioEvents) {
+   public MultiAcqEngJMDADataSink(EventManager studioEvents) {
       studioEvents_ = studioEvents;
    }
 
@@ -95,7 +95,7 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
             // TODO: log
             return;
          }
-         AcqEngJAdapter.addMMImageMetadata(tagged.tags);
+         MultiAcqEngJAdapter.addMMImageMetadata(tagged.tags);
          DefaultImage image = new DefaultImage(tagged);
 
          // Add any non-standard (ptzc) coords
