@@ -13,7 +13,7 @@ import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acquisition.ChannelSpec;
 
 
-public class MDAAcqEventModules {
+public class MultiMDAAcqEventModules {
    /**
     * A utility class with multiple "modules" functions for creating common
     * acquisition functions that can be combined to encode complex behaviors.

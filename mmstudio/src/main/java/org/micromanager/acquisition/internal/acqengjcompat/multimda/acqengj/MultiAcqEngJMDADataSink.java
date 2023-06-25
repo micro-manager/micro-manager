@@ -88,9 +88,11 @@ public final class MultiAcqEngJMDADataSink implements AcqEngJDataSink {
       somethingAcquired_ = true;
       int acqIndex = -1;
       try {
-         if (tagged.tags.getJSONObject("Axes").has(MDAAcqEventModules.ACQ_IDENTIFIER)) {
-            acqIndex = tagged.tags.getJSONObject("Axes").getInt(MDAAcqEventModules.ACQ_IDENTIFIER);
-            tagged.tags.getJSONObject("Axes").remove(MDAAcqEventModules.ACQ_IDENTIFIER);
+         if (tagged.tags.has("tags")) {
+            JSONObject tags = tagged.tags.getJSONObject("tags");
+            if (tags.has(MultiAcqEngJAdapter.ACQ_IDENTIFIER)) {
+               acqIndex = Integer.parseInt((String) tags.get(MultiAcqEngJAdapter.ACQ_IDENTIFIER));
+            }
          } else {
             // TODO: log
             return;
