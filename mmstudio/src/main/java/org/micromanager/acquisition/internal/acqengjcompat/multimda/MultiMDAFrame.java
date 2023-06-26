@@ -99,6 +99,7 @@ public class MultiMDAFrame extends JFrame {
       nrSpinner_.addChangeListener(e -> {
          int val = adjustNrSettings((int) nrSpinner_.getValue());
          nrSpinner_.setValue(val);
+         super.pack();
       });
       super.add(nrSpinner_, "wrap");
 
@@ -272,7 +273,9 @@ public class MultiMDAFrame extends JFrame {
          acqPanel_.add(posListButton, "wrap");
 
       }
-      super.pack();
+      while (nr < acqs_.size()) {
+         acqs_.remove(acqs_.size() - 1);
+      }
 
       return nr;
    }

@@ -266,7 +266,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          // These hooks implement Autofocus
          if (sequenceSettings_.useAutofocus()) {
-            currentAcquisition_.addHook(autofocusHookBefore(acquisitionSettings),
+            currentAcquisition_.addHook(autofocusHookBefore(),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
@@ -703,10 +703,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     * the autofocus should run before each channel / Z Stack combo (i.e. at each time point
     * and position.
     *
-    * @param sequenceSettings acquisition settings, not used here.
     * @return The Hook.
     */
-   private AcquisitionHook autofocusHookBefore(SequenceSettings sequenceSettings) {
+   protected AcquisitionHook autofocusHookBefore() {
       return new AcquisitionHook() {
 
          @Override

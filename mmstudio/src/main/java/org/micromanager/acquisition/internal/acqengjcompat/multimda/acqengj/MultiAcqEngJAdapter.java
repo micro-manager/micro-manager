@@ -243,6 +243,12 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                   sequenceSettings.get(i + 1)));
          }
 
+         // These hooks implement Autofocus
+         if (sequenceSettings_.useAutofocus()) {
+            currentMultiMDA_.addHook(autofocusHookBefore(),
+                  currentMultiMDA_.BEFORE_HARDWARE_HOOK);
+         }
+
          // Read for events
          currentMultiMDA_.start();
 
@@ -369,6 +375,18 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
             = new ArrayList<>();
 
+      // Select channels that we are actually using
+      List<List<ChannelSpec>> multiChSpecs = new ArrayList<>();
+      for (SequenceSettings acquisitionSetting : acquisitionSettings) {
+         List<ChannelSpec> chSpecs = new ArrayList<>();
+         for (ChannelSpec chSpec : acquisitionSetting.channels()) {
+            if (chSpec.useChannel()) {
+               chSpecs.add(chSpec);
+            }
+         }
+         multiChSpecs.add(chSpecs);
+      }
+
       // First add timePoints, these are contained in acquisitionSettings.get(0)
       if (acquisitionSettings.get(0).useFrames()) {
          timelapse = MDAAcqEventModules.timelapse(acquisitionSettings.get(0).numFrames(),
@@ -391,14 +409,13 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                   acquisitionSettings.get(i).slices().size() - 1,
                   acquisitionSettings.get(i).sliceZStepUm(),
                   origin,
-                  acquisitionSettings.get(i).channels(),
+                  multiChSpecs.get(i),
                   tag);
          }
 
          if (acquisitionSettings.get(i).useChannels()) {
             Integer middleSliceIndex = (acquisitionSettings.get(i).slices().size() - 1) / 2;
-            channels = MDAAcqEventModules.channels(
-                  acquisitionSettings.get(i).channels(), middleSliceIndex, tag);
+            channels = MDAAcqEventModules.channels(multiChSpecs.get(i), middleSliceIndex, tag);
             //TODO: keep shutter open
             //TODO: skip frames
             //TODO: z stack off for channel
