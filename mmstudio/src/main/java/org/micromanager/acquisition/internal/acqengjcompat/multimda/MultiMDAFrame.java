@@ -27,6 +27,7 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
@@ -48,6 +49,7 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.acqengj.MultiAcqEngJAdapter;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -125,8 +127,14 @@ public class MultiMDAFrame extends JFrame {
                } else if (timeUnitCombo_.getSelectedItem().equals("min")) {
                   multiplier = 60000;
                }
-               sb.useFrames(framesPanel_.isSelected()).numFrames((Integer) numFrames_.getValue())
-                           .intervalMs((Double) interval_.getValue() * multiplier);
+               try {
+                  sb.useFrames(framesPanel_.isSelected())
+                        .numFrames((Integer) numFrames_.getValue())
+                        .intervalMs(NumberUtils.displayStringToDouble(
+                                    interval_.getText()) * multiplier);
+               } catch (ParseException ex) {
+                  ex.printStackTrace();
+               }
                seqs.add(sb.build());
                for (MDASettingData acq : acqs_) {
                   seqs.add(acq.getSequenceSettings());

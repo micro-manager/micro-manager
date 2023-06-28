@@ -3,9 +3,9 @@
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Henry Pinkard
+// AUTHOR:       Henry Pinkard, Nico Stuurman
 //
-// COPYRIGHT:    Photomics Inc, 2022
+// COPYRIGHT:    Photomics Inc, 2022, Altos Labs, 2023
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -86,12 +86,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    protected Studio studio_;
    private PositionList posList_;
    private String zStage_;
-   private SequenceSettings sequenceSettings_;
 
-   //protected JSONObject summaryMetadata_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private List<Datastore> stores_;
    private List<Pipeline> pipelines_;
+   private SequenceSettings timeLapseSettings_ = null;
 
    private double zStart_;
    private AutofocusPlugin autofocusMethod_;
@@ -129,7 +128,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       core_ = studio_.core();
       new Engine(core_);
       settingsListeners_ = new ArrayList<>();
-      sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
 
    /**
@@ -147,6 +145,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          studio_.logs().logError("Please use Position Lists for each acquisition");
          return null;
       }
+      timeLapseSettings_ = sequenceSettings.get(0);
       stores_ = new ArrayList<>(sequenceSettings.size() - 1);
       pipelines_ = new ArrayList<>(sequenceSettings.size() - 1);
       for (int i = 1; i < sequenceSettings.size(); i++) {
@@ -190,16 +189,8 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          }
       }
 
-      // manipulate positionlist
-      PositionList posListToUse = posList_;
-      if (posList_ == null && sequenceSettings_.usePositionList()) {
-         posListToUse = studio_.positions().getPositionList();
-      }
-      posList_ = posListToUse;
-
       try {
          // Start up the acquisition engine
-
          MultiAcqEngJMDADataSink sink = new MultiAcqEngJMDADataSink(studio_.events());
          currentMultiMDA_ = new Acquisition(sink);
          currentMultiMDA_.setDebugMode(core_.debugLogEnabled());
@@ -244,7 +235,8 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          }
 
          // These hooks implement Autofocus
-         if (sequenceSettings_.useAutofocus()) {
+         // TODO: split this out so that the hook checks in which acquisition we are
+         if (sequenceSettings.get(0).useAutofocus()) {
             currentMultiMDA_.addHook(autofocusHookBefore(),
                   currentMultiMDA_.BEFORE_HARDWARE_HOOK);
          }
@@ -253,8 +245,16 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          currentMultiMDA_.start();
 
          // Start the events and signal to finish when complete
-         currentMultiMDA_.submitEventIterator(createAcqEventIterator(
-               sequenceSettings, positionLists));
+         for (int t = 0; t < timeLapseSettings_.numFrames(); t++) {
+            for (int i = 1; i < sequenceSettings.size(); i++) {
+               currentMultiMDA_.submitEventIterator(createAcqEventIterator(
+                     sequenceSettings.get(i),
+                     positionLists.get(i - 1),
+                     i - 1,
+                     t,
+                     (long) (t * timeLapseSettings_.intervalMs())));
+            }
+         }
          currentMultiMDA_.finish();
 
          return stores_;
@@ -357,7 +357,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          // TODO: does current API expect this to be before or after hardware? after camera?
          //  during event generation?
       }
-      ;
    }
 
    /**
@@ -365,95 +364,98 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
     * AcquisitionEvents.
     */
    private Iterator<AcquisitionEvent> createAcqEventIterator(
-         List<SequenceSettings> acquisitionSettings, List<PositionList> positionLists)
+         SequenceSettings acquisitionSettings, PositionList positionList, int acqIndex,
+         int timeIndex, long minimumStartTime)
          throws Exception {
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
       Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
-
-      ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
-            = new ArrayList<>();
 
       // Select channels that we are actually using
-      List<List<ChannelSpec>> multiChSpecs = new ArrayList<>();
-      for (SequenceSettings acquisitionSetting : acquisitionSettings) {
-         List<ChannelSpec> chSpecs = new ArrayList<>();
-         for (ChannelSpec chSpec : acquisitionSetting.channels()) {
-            if (chSpec.useChannel()) {
-               chSpecs.add(chSpec);
-            }
+      List<ChannelSpec> chSpecs = new ArrayList<>();
+      for (ChannelSpec chSpec : acquisitionSettings.channels()) {
+         if (chSpec.useChannel()) {
+            chSpecs.add(chSpec);
          }
-         multiChSpecs.add(chSpecs);
       }
 
-      // First add timePoints, these are contained in acquisitionSettings.get(0)
-      if (acquisitionSettings.get(0).useFrames()) {
-         timelapse = MDAAcqEventModules.timelapse(acquisitionSettings.get(0).numFrames(),
-               acquisitionSettings.get(0).intervalMs(), null);
-         acqFunctions.add(timelapse);
+      HashMap<String, String> tag = new HashMap<>(1);
+      tag.put(ACQ_IDENTIFIER, String.valueOf(acqIndex));
 
-         //TODO custom time intervals
+      ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions =
+            new ArrayList<>();
+
+      if (acquisitionSettings.useSlices()) {
+         double origin = acquisitionSettings.slices().get(0);
+         if (acquisitionSettings.relativeZSlice()) {
+            origin = studio_.core().getPosition() + acquisitionSettings.slices().get(0);
+         }
+         zStack = MDAAcqEventModules.zStack(0,
+               acquisitionSettings.slices().size() - 1,
+               acquisitionSettings.sliceZStepUm(),
+               origin,
+               chSpecs,
+               tag);
       }
 
-      for (int i = 1; i < acquisitionSettings.size(); i++) {
-         HashMap<String, String> tag = new HashMap<>(1);
-         tag.put(ACQ_IDENTIFIER, String.valueOf(i - 1));
+      if (acquisitionSettings.useChannels()) {
+         Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
+         channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex, tag);
+         //TODO: keep shutter open
+         //TODO: skip frames
+         //TODO: z stack off for channel
+      }
 
-         if (acquisitionSettings.get(i).useSlices()) {
-            double origin = acquisitionSettings.get(i).slices().get(0);
-            if (acquisitionSettings.get(i).relativeZSlice()) {
-               origin = studio_.core().getPosition() + acquisitionSettings.get(i).slices().get(0);
-            }
-            zStack = MDAAcqEventModules.zStack(0,
-                  acquisitionSettings.get(i).slices().size() - 1,
-                  acquisitionSettings.get(i).sliceZStepUm(),
-                  origin,
-                  multiChSpecs.get(i),
-                  tag);
-         }
+      if (acquisitionSettings.usePositionList()) {
+         positions = MDAAcqEventModules.positions(positionList, tag);
+      }
 
-         if (acquisitionSettings.get(i).useChannels()) {
-            Integer middleSliceIndex = (acquisitionSettings.get(i).slices().size() - 1) / 2;
-            channels = MDAAcqEventModules.channels(multiChSpecs.get(i), middleSliceIndex, tag);
-            //TODO: keep shutter open
-            //TODO: skip frames
-            //TODO: z stack off for channel
+      if (acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE) {
+         if (acquisitionSettings.usePositionList()) {
+            acqFunctions.add(positions);
          }
-
-         if (acquisitionSettings.get(i).usePositionList()) {
-            positions = MDAAcqEventModules.positions(positionLists.get(i - 1), tag);
+         if (acquisitionSettings.useChannels()) {
+            acqFunctions.add(channels);
          }
-
-         if (acquisitionSettings.get(i).acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE) {
-            if (acquisitionSettings.get(i).usePositionList()) {
-               acqFunctions.add(positions);
-            }
-            if (acquisitionSettings.get(i).useChannels()) {
-               acqFunctions.add(channels);
-            }
-            if (acquisitionSettings.get(i).useSlices()) {
-               acqFunctions.add(zStack);
-            }
-         } else if (acquisitionSettings.get(i).acqOrderMode() == AcqOrderMode
-               .TIME_POS_SLICE_CHANNEL) {
-            if (acquisitionSettings.get(i).usePositionList()) {
-               acqFunctions.add(positions);
-            }
-            if (acquisitionSettings.get(i).useSlices()) {
-               acqFunctions.add(zStack);
-            }
-            if (acquisitionSettings.get(i).useChannels()) {
-               acqFunctions.add(channels);
-            }
-         } else {
-            throw new RuntimeException("Unknown acquisition order");
+         if (acquisitionSettings.useSlices()) {
+            acqFunctions.add(zStack);
          }
+      } else if (acquisitionSettings.acqOrderMode() == AcqOrderMode
+            .TIME_POS_SLICE_CHANNEL) {
+         if (acquisitionSettings.usePositionList()) {
+            acqFunctions.add(positions);
+         }
+         if (acquisitionSettings.useSlices()) {
+            acqFunctions.add(zStack);
+         }
+         if (acquisitionSettings.useChannels()) {
+            acqFunctions.add(channels);
+         }
+      } else {
+         throw new RuntimeException("Unknown acquisition order");
       }
 
       AcquisitionEvent baseEvent = new AcquisitionEvent(currentMultiMDA_);
-      return new AcquisitionEventIterator(baseEvent, acqFunctions, acqEventMonitor());
+      // set time index and minimum startTime in baseEvent
+      baseEvent.setTimeIndex(timeIndex);
+      baseEvent.setMinimumStartTime(minimumStartTime);
 
+      return new AcquisitionEventIterator(baseEvent, acqFunctions,
+            acqEventMonitor(acquisitionSettings));
+   }
+
+   /**
+    * This function monitors acquisition events as they are dynamically created.
+    *
+    * @return Monitor function.
+    */
+   private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(SequenceSettings settings) {
+      return event -> {
+         if (event != null && event.getMinimumStartTimeAbsolute() != null) {
+            nextWakeTime_ = event.getMinimumStartTimeAbsolute();
+         }
+         return event;
+      };
    }
 
    /**
@@ -516,6 +518,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
             if (sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                   || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
                   && event.getAxisPosition("position") != null) {
+
                if (startTime_ == 0) {
                   startTime_ = System.currentTimeMillis();
                }
@@ -550,16 +553,16 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    }
 
 
-   private void calculateSlices() {
+   private SequenceSettings calculateSlices(SequenceSettings sequenceSettings) {
       // Slices
-      if (sequenceSettings_.useSlices()) {
-         double start = sequenceSettings_.sliceZBottomUm();
-         double stop = sequenceSettings_.sliceZTopUm();
-         double step = Math.abs(sequenceSettings_.sliceZStepUm());
+      if (sequenceSettings.useSlices()) {
+         double start = sequenceSettings.sliceZBottomUm();
+         double stop = sequenceSettings.sliceZTopUm();
+         double step = Math.abs(sequenceSettings.sliceZStepUm());
          if (step == 0.0) {
             throw new UnsupportedOperationException("zero Z step size");
          }
-         int count = getNumSlices();
+         int count = getNumSlices(sequenceSettings);
          if (start > stop) {
             step = -step;
          }
@@ -567,8 +570,9 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          for (int i = 0; i < count; i++) {
             slices.add(start + i * step);
          }
-         sequenceSettings_ = sequenceSettings_.copyBuilder().slices(slices).build();
+         return sequenceSettings.copyBuilder().slices(slices).build();
       }
+      return sequenceSettings;
    }
 
    private boolean enoughDiskSpace(File root) {
@@ -607,15 +611,15 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    }
 
 
-   private int getNumChannels() {
-      if (!sequenceSettings_.useChannels()) {
+   private int getNumChannels(SequenceSettings sequenceSettings) {
+      if (!sequenceSettings.useChannels()) {
          return 1;
       }
-      if (sequenceSettings_.channels() == null || sequenceSettings_.channels().size() == 0) {
+      if (sequenceSettings.channels() == null || sequenceSettings.channels().size() == 0) {
          return 1;
       }
       int numChannels = 0;
-      for (ChannelSpec channel : sequenceSettings_.channels()) {
+      for (ChannelSpec channel : sequenceSettings.channels()) {
          if (channel != null && channel.useChannel()) {
             ++numChannels;
          }
@@ -628,38 +632,38 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
     *
     * @return Number of Frames (time points) in this acquisition.
     */
-   private int getNumFrames() {
-      int numFrames = sequenceSettings_.numFrames();
-      if (!sequenceSettings_.useFrames()) {
+   private int getNumFrames(SequenceSettings sequenceSettings) {
+      int numFrames = sequenceSettings.numFrames();
+      if (!sequenceSettings.useFrames()) {
          numFrames = 1;
       }
       return numFrames;
    }
 
-   private int getNumPositions() {
+   private int getNumPositions(SequenceSettings sequenceSettings) {
       if (posList_ == null) {
          return 1;
       }
       int numPositions = Math.max(1, posList_.getNumberOfPositions());
-      if (!sequenceSettings_.usePositionList()) {
+      if (!sequenceSettings.usePositionList()) {
          numPositions = 1;
       }
       return numPositions;
    }
 
-   private int getNumSlices() {
-      if (!sequenceSettings_.useSlices()) {
+   private int getNumSlices(SequenceSettings sequenceSettings) {
+      if (!sequenceSettings.useSlices()) {
          return 1;
       }
-      if (sequenceSettings_.sliceZStepUm() == 0) {
+      if (sequenceSettings.sliceZStepUm() == 0) {
          // This TODOitem inherited from corresponding fuction in clojure engine
          // TODO How should zero z step be handled?
          return Integer.MAX_VALUE;
       }
       return 1
-            + (int) Math.abs((sequenceSettings_.sliceZTopUm()
-            - sequenceSettings_.sliceZBottomUm())
-            / sequenceSettings_.sliceZStepUm());
+            + (int) Math.abs((sequenceSettings.sliceZTopUm()
+            - sequenceSettings.sliceZBottomUm())
+            / sequenceSettings.sliceZStepUm());
    }
 
 
@@ -701,15 +705,16 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    }
 
 
-   private int getTotalImages() {
-      if (!sequenceSettings_.useChannels() || sequenceSettings_.channels().size() == 0) {
-         return getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
+   private int getTotalImages(SequenceSettings sequenceSettings) {
+      if (!sequenceSettings.useChannels() || sequenceSettings.channels().size() == 0) {
+         return getNumFrames(sequenceSettings) * getNumSlices(sequenceSettings)
+               * getNumChannels(sequenceSettings) * getNumPositions(sequenceSettings);
       }
 
       int nrImages = 0;
-      for (ChannelSpec channel : sequenceSettings_.channels()) {
+      for (ChannelSpec channel : sequenceSettings.channels()) {
          if (channel.useChannel()) {
-            for (int t = 0; t < getNumFrames(); t++) {
+            for (int t = 0; t < getNumFrames(sequenceSettings); t++) {
                boolean doTimePoint = true;
                if (channel.skipFactorFrame() > 0) {
                   if (t % (channel.skipFactorFrame() + 1) != 0) {
@@ -718,7 +723,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                }
                if (doTimePoint) {
                   if (channel.doZStack()) {
-                     nrImages += getNumSlices();
+                     nrImages += getNumSlices(sequenceSettings);
                   } else {
                      nrImages++;
                   }
@@ -726,7 +731,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
             }
          }
       }
-      return nrImages * getNumPositions();
+      return nrImages * getNumPositions(sequenceSettings);
    }
 
    /**
@@ -734,12 +739,12 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
     *
     * @return Estimate of memory used by the acquii
     */
-   public long getTotalMemory() {
+   public long getTotalMemory(SequenceSettings sequenceSettings) {
       CMMCore core = studio_.core();
       return core.getImageWidth()
             * core.getImageHeight()
             * core.getBytesPerPixel()
-            * ((long) getTotalImages());
+            * ((long) getTotalImages(sequenceSettings));
    }
 
    /*
@@ -886,24 +891,16 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public double getFrameIntervalMs() {
-      return sequenceSettings_.intervalMs();
+      if (timeLapseSettings_ != null) {
+         return timeLapseSettings_.intervalMs();
+      }
+      return 0.0; // TODO: see where this is actually used...
    }
 
-   public boolean isZSliceSettingEnabled() {
-      return sequenceSettings_.useSlices();
-   }
-
-   public void setChannel(int row, ChannelSpec sp) {
-      ArrayList<ChannelSpec> channels = sequenceSettings_.channels();
-      channels.add(row, sp);
-      sequenceSettings_ = (new SequenceSettings.Builder(sequenceSettings_))
-            .channels(channels).build();
-   }
-
-   public void setChannels(ArrayList<ChannelSpec> channels) {
-      sequenceSettings_ = (new SequenceSettings.Builder(sequenceSettings_))
-            .channels(channels).build();
+   public boolean isZSliceSettingEnabled(SequenceSettings sequenceSettings) {
+      return sequenceSettings.useSlices();
    }
 
    /**
@@ -982,46 +979,42 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    }
 
 
-   public void setShouldDisplayImages(boolean shouldDisplay) {
-      sequenceSettings_ =
-            sequenceSettings_.copyBuilder().shouldDisplayImages(shouldDisplay).build();
-   }
-
-   public String getVerboseSummary() {
-      final int numFrames = getNumFrames();
-      final int numSlices = getNumSlices();
-      final int numPositions = getNumPositions();
-      final int numChannels = getNumChannels();
+   public String getVerboseSummary(SequenceSettings sequenceSettings) {
+      final int numFrames = getNumFrames(sequenceSettings);
+      final int numSlices = getNumSlices(sequenceSettings);
+      final int numPositions = getNumPositions(sequenceSettings);
+      final int numChannels = getNumChannels(sequenceSettings);
 
       double exposurePerTimePointMs = 0.0;
-      if (sequenceSettings_.useChannels()) {
-         for (ChannelSpec channel : sequenceSettings_.channels()) {
+      if (sequenceSettings.useChannels()) {
+         for (ChannelSpec channel : sequenceSettings.channels()) {
             if (channel.useChannel()) {
                double channelExposure = channel.exposure();
                if (channel.doZStack()) {
-                  channelExposure *= getNumSlices();
+                  channelExposure *= getNumSlices(sequenceSettings);
                }
-               channelExposure *= getNumPositions();
+               channelExposure *= getNumPositions(sequenceSettings);
                exposurePerTimePointMs += channelExposure;
             }
          }
       } else { // use the current settings for acquisition
          try {
-            exposurePerTimePointMs = core_.getExposure() * getNumSlices() * getNumPositions();
+            exposurePerTimePointMs = core_.getExposure() * getNumSlices(sequenceSettings)
+                  * getNumPositions(sequenceSettings);
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Failed to get exposure time");
          }
       }
 
-      final int totalImages = getTotalImages();
+      final int totalImages = getTotalImages(sequenceSettings);
       final long totalMB = getTotalMemory() / (1024 * 1024);
 
       double totalDurationSec = 0;
-      double interval = Math.max(sequenceSettings_.intervalMs(), exposurePerTimePointMs);
-      if (!sequenceSettings_.useCustomIntervals()) {
+      double interval = Math.max(sequenceSettings.intervalMs(), exposurePerTimePointMs);
+      if (!sequenceSettings.useCustomIntervals()) {
          totalDurationSec = interval * (numFrames - 1) / 1000.0;
       } else {
-         for (Double d : sequenceSettings_.customIntervalsMs()) {
+         for (Double d : sequenceSettings.customIntervalsMs()) {
             totalDurationSec += d / 1000.0;
          }
       }
@@ -1041,8 +1034,8 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       durationString += NumberUtils.doubleToDisplayString(remainSec) + "s";
 
       String txt =
-            "Number of time points: " + (!sequenceSettings_.useCustomIntervals()
-                  ? numFrames : sequenceSettings_.customIntervalsMs().size())
+            "Number of time points: " + (!sequenceSettings.useCustomIntervals()
+                  ? numFrames : sequenceSettings.customIntervalsMs().size())
                   + "\nNumber of positions: " + numPositions
                   + "\nNumber of slices: " + numSlices
                   + "\nNumber of channels: " + numChannels
@@ -1051,39 +1044,39 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                   NumberUtils.doubleToDisplayString(totalMB / 1024.0) + " GB")
                   + durationString;
 
-      if (sequenceSettings_.useFrames()
-            || sequenceSettings_.usePositionList()
-            || sequenceSettings_.useChannels()
-            || sequenceSettings_.useSlices()) {
+      if (sequenceSettings.useFrames()
+            || sequenceSettings.usePositionList()
+            || sequenceSettings.useChannels()
+            || sequenceSettings.useSlices()) {
          StringBuilder order = new StringBuilder("\nOrder: ");
-         if (sequenceSettings_.useFrames() && sequenceSettings_.usePositionList()) {
-            if (sequenceSettings_.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
-                  || sequenceSettings_.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
+         if (sequenceSettings.useFrames() && sequenceSettings.usePositionList()) {
+            if (sequenceSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                  || sequenceSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
                order.append("Time, Position");
             } else {
                order.append("Position, Time");
             }
-         } else if (sequenceSettings_.useFrames()) {
+         } else if (sequenceSettings.useFrames()) {
             order.append("Time");
-         } else if (sequenceSettings_.usePositionList()) {
+         } else if (sequenceSettings.usePositionList()) {
             order.append("Position");
          }
 
-         if ((sequenceSettings_.useFrames() || sequenceSettings_.usePositionList())
-               && (sequenceSettings_.useChannels() || sequenceSettings_.useSlices())) {
+         if ((sequenceSettings.useFrames() || sequenceSettings.usePositionList())
+               && (sequenceSettings.useChannels() || sequenceSettings.useSlices())) {
             order.append(", ");
          }
 
-         if (sequenceSettings_.useChannels() && sequenceSettings_.useSlices()) {
-            if (sequenceSettings_.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
-                  || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
+         if (sequenceSettings.useChannels() && sequenceSettings.useSlices()) {
+            if (sequenceSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                  || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
                order.append("Channel, Slice");
             } else {
                order.append("Slice, Channel");
             }
-         } else if (sequenceSettings_.useChannels()) {
+         } else if (sequenceSettings.useChannels()) {
             order.append("Channel");
-         } else if (sequenceSettings_.useSlices()) {
+         } else if (sequenceSettings.useSlices()) {
             order.append("Slice");
          }
 
@@ -1158,8 +1151,8 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return currentMultiMDA_.getSummaryMetadata();
    }
 
-   public String getComment() {
-      return sequenceSettings_.comment();
+   public String getComment(SequenceSettings sequenceSettings) {
+      return sequenceSettings.comment();
    }
 
 
