@@ -133,22 +133,23 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    /**
     * This is where the work happens.
     *
-    * @param sequenceSettings First SequenceSettings defines the time lapse, all subsequent
-    *                         ones define acquisitions that should be executed consecutively.
+    * @param timeLapseSettings Defines the time lapse
+    * @param sequenceSettings Acquisitions that should be executed consecutively.
     * @param positionLists PositionLists for each sequenceSetting (>=1).  The size of this list
-    *                      must be 1 fewer than the size of sequenceSettings.
-    * @return Datastores corresponding to sequenceSettings 1 and up
+    *                      must be equal to the size of sequenceSettings.
+    * @return Datastores corresponding to sequenceSettings
     */
-   public List<Datastore> runAcquisition(List<SequenceSettings> sequenceSettings,
-                                          List<PositionList> positionLists) {
-      if (sequenceSettings.size() < 1 || positionLists.size() != sequenceSettings.size() - 1) {
+   public List<Datastore> runAcquisition(SequenceSettings timeLapseSettings,
+                                         List<SequenceSettings> sequenceSettings,
+                                         List<PositionList> positionLists) {
+      if (sequenceSettings.size() < 1 || positionLists.size() != sequenceSettings.size()) {
          studio_.logs().logError("Please use Position Lists for each acquisition");
          return null;
       }
-      timeLapseSettings_ = sequenceSettings.get(0);
-      stores_ = new ArrayList<>(sequenceSettings.size() - 1);
-      pipelines_ = new ArrayList<>(sequenceSettings.size() - 1);
-      for (int i = 1; i < sequenceSettings.size(); i++) {
+      timeLapseSettings_ = timeLapseSettings;
+      stores_ = new ArrayList<>(sequenceSettings.size());
+      pipelines_ = new ArrayList<>(sequenceSettings.size());
+      for (int i = 0; i < sequenceSettings.size(); i++) {
          if (sequenceSettings.get(i).useCustomIntervals()) {
             studio_.logs().showError("Custom time intervals are not supported.");
             return null;
@@ -196,17 +197,18 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          currentMultiMDA_.setDebugMode(core_.debugLogEnabled());
 
          // TODO:
-         // loadRunnables(acquisitionSettings);
+
+         loadRunnables(sequenceSettings);
 
          // This TaggedImageProcessor is used to divert images away from the optional
          // processing and saving of AcqEngJ, and into the system used by the studio API
          // (which has its own system for processing and saving)
 
          // MMAcquisition
-         for (int i = 1; i < sequenceSettings.size(); i++) {
+         for (int i = 0; i < sequenceSettings.size(); i++) {
             JSONObject summaryMetadata = currentMultiMDA_.getSummaryMetadata();
             addMMSummaryMetadata(summaryMetadata, sequenceSettings.get(i),
-                  positionLists.get(i - 1));
+                  positionLists.get(i));
             MMAcquisition acq = new MMAcquisition(studio_,
                   sequenceSettings.get(i).save() ? sequenceSettings.get(i).root() : null,
                   sequenceSettings.get(i).prefix(),
@@ -229,9 +231,9 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          }
          studio_.events().registerForEvents(this);
 
-         for (int i = 0; i < sequenceSettings.size() - 1; i++) {
+         for (int i = 0; i < sequenceSettings.size(); i++) {
             studio_.events().post(new DefaultAcquisitionStartedEvent(stores_.get(i), this,
-                  sequenceSettings.get(i + 1)));
+                  sequenceSettings.get(i)));
          }
 
          // These hooks implement Autofocus
@@ -246,11 +248,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
 
          // Start the events and signal to finish when complete
          for (int t = 0; t < timeLapseSettings_.numFrames(); t++) {
-            for (int i = 1; i < sequenceSettings.size(); i++) {
+            for (int i = 0; i < sequenceSettings.size(); i++) {
                currentMultiMDA_.submitEventIterator(createAcqEventIterator(
                      sequenceSettings.get(i),
-                     positionLists.get(i - 1),
-                     i - 1,
+                     positionLists.get(i),
+                     i,
                      t,
                      (long) (t * timeLapseSettings_.intervalMs())));
             }
@@ -262,7 +264,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
          if (currentMultiMDA_ != null && currentMultiMDA_.areEventsFinished()) {
-            for (int i = 0; i < sequenceSettings.size() - 1; i++) {
+            for (int i = 0; i < sequenceSettings.size(); i++) {
                studio_.events().post(new DefaultAcquisitionEndedEvent(stores_.get(i), this));
             }
          }
@@ -270,78 +272,34 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       }
    }
 
-
-   /**
-    * Higher level code in MMStudio expects certain metadata tags that
-    * are added by the Clojure engine. For compatibility, we must translate
-    * AcqEnJ's metadata to include this here
-    */
-   public static void addMMImageMetadata(JSONObject imageMD) {
-      // These might be required...
-
-      try {
-         if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.TIME_AXIS)) {
-            imageMD.put(PropertyKey.FRAME_INDEX.key(),
-                  AcqEngMetadata.getAxisPosition(imageMD, AcqEngMetadata.TIME_AXIS));
-         }
-         if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.Z_AXIS)) {
-            imageMD.put(PropertyKey.SLICE_INDEX.key(),
-                  AcqEngMetadata.getAxisPosition(imageMD, AcqEngMetadata.Z_AXIS));
-         }
-         if (AcqEngMetadata.hasAxis(imageMD, AcqEngMetadata.CHANNEL_AXIS)) {
-            imageMD.put(PropertyKey.CHANNEL_INDEX.key(),
-                  AcqEngMetadata.getAxisPosition(imageMD, AcqEngMetadata.CHANNEL_AXIS));
-            String channelName = "" + AcqEngMetadata.getAxes(imageMD)
-                  .get(AcqEngMetadata.CHANNEL_AXIS);
-            imageMD.put(PropertyKey.CHANNEL_NAME.key(), channelName);
-         }
-         if (AcqEngMetadata.hasAxis(imageMD, "position")) {
-            imageMD.put(PropertyKey.POSITION_INDEX.key(),
-                  AcqEngMetadata.getAxisPosition(imageMD, "position"));
-         }
-         if (AcqEngMetadata.hasStageX(imageMD)) {
-            imageMD.put(PropertyKey.X_POSITION_UM.key(), AcqEngMetadata.getStageX(imageMD));
-         } else if (AcqEngMetadata.hasStageXIntended(imageMD)) {
-            imageMD.put(PropertyKey.X_POSITION_UM.key(), AcqEngMetadata.getStageXIntended(imageMD));
-         }
-         if (AcqEngMetadata.hasStageY(imageMD)) {
-            imageMD.put(PropertyKey.Y_POSITION_UM.key(), AcqEngMetadata.getStageY(imageMD));
-         } else if (AcqEngMetadata.hasStageYIntended(imageMD)) {
-            imageMD.put(PropertyKey.Y_POSITION_UM.key(), AcqEngMetadata.getStageYIntended(imageMD));
-         }
-         if (AcqEngMetadata.hasZPositionUm(imageMD)) {
-            imageMD.put(PropertyKey.Z_POSITION_UM.key(), AcqEngMetadata.getZPositionUm(imageMD));
-         } else if (AcqEngMetadata.hasStageZIntended(imageMD)) {
-            imageMD.put(PropertyKey.Z_POSITION_UM.key(), AcqEngMetadata.getStageZIntended(imageMD));
-         }
-         // Add this in to avoid many errors being printed to the log, but probably this should
-         // not be a required field
-         imageMD.put(PropertyKey.FILE_NAME.key(), "Unknown");
-      } catch (JSONException e) {
-         throw new RuntimeException("Couldn't convert metadata");
-      }
-   }
-
-
    /**
     * Attach Runnables as acquisition hooks.
     *
-    * @param acquisitionSettings Object with settings for the acquisition
+    * @param acquisitionSettingList List with object with settings for the acquisition
     */
-   private void loadRunnables(SequenceSettings acquisitionSettings) {
+   private void loadRunnables(List<SequenceSettings> acquisitionSettingList) {
       for (RunnablePlusIndices r : runnables_) {
          currentMultiMDA_.addHook(new AcquisitionHook() {
             @Override
             public AcquisitionEvent run(AcquisitionEvent event) {
+               int acqIndex = 0;
+               if (event.getTags().containsKey(ACQ_IDENTIFIER)) {
+                  acqIndex = Integer.parseInt(event.getTags().get(ACQ_IDENTIFIER));
+               }
+               if (acqIndex >= acquisitionSettingList.size()) {
+                  studio_.logs().logError("Event's Acquisition index is higher than "
+                        + "Acquisitions we know about.");
+                  return event;
+               }
+               SequenceSettings acquisitionSettings = acquisitionSettingList.get(acqIndex);
                boolean zMatch = event.getZIndex() == null || event.getZIndex() == r.slice_;
                boolean tMatch = event.getTIndex() == null || event.getTIndex() == r.frame_;
                boolean cMatch = event.getConfigPreset() == null
                      || acquisitionSettings.channels().get(r.channel_).config()
                            .equals(event.getConfigPreset());
                boolean pMatch = event.getAxisPosition(
-                     MultiMDAAcqEventModules.POSITION_AXIS) == null
-                     || ((Integer) event.getAxisPosition(
-                     MultiMDAAcqEventModules.POSITION_AXIS))
+                     MDAAcqEventModules.POSITION_AXIS) == null
+                     || ((Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS))
                        == r.position_;
                if (pMatch && zMatch && tMatch && cMatch) {
                   r.runnable_.run();

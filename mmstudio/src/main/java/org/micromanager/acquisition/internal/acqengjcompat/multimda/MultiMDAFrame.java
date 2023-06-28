@@ -135,12 +135,12 @@ public class MultiMDAFrame extends JFrame {
                } catch (ParseException ex) {
                   ex.printStackTrace();
                }
-               seqs.add(sb.build());
+               SequenceSettings timeLapseSettings = sb.build();
                for (MDASettingData acq : acqs_) {
                   seqs.add(acq.getSequenceSettings());
                   positionLists.add(acq.getPositionList());
                }
-               acqj.runAcquisition(seqs, positionLists);
+               acqj.runAcquisition(timeLapseSettings, seqs, positionLists);
             }
          });
          acqThread.start();
