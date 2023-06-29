@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 
 public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigurator {
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final String version = "live stack";
 
     private final JLabel statusLabel_;
@@ -59,7 +60,6 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
     private final RemoteMicroscopeServer server;
     private final Settings msSettings;
     private final MicromanagerWrapper micromanagerWrapper;
-    private final EventListener eventListener;
 
 
     public MicrosceneryStreamFrame(Studio studio, MicrosceneryContext msContext, MicrosceneryStream plugin) {
@@ -69,7 +69,6 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
         server = msContext.server;
         msSettings  = msContext.msSettings;
 
-        eventListener = new EventListener(studio, micromanagerWrapper);
         
         // loopBackConnection
         new ControlSignalsClient(msContext.zContext,server.getBasePort(),"localhost", Collections.singletonList(this::updateLabels));
@@ -127,7 +126,7 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
         miscContainer.add(shutterComboBox, "wrap");
 
         JCheckBox watchStagePosCheckbox = new JCheckBox("Stream stage position", true);
-        watchStagePosCheckbox.addChangeListener(e -> eventListener.listenToStage = watchStagePosCheckbox.isSelected());
+        watchStagePosCheckbox.addChangeListener(e -> msContext.eventListener.listenToStage = watchStagePosCheckbox.isSelected());
         miscContainer.add(watchStagePosCheckbox,"wrap");
 
         JButton settingsButton = new JButton("Settings");
@@ -173,7 +172,6 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
 
     @Override
     public void dispose() {
-        eventListener.close();
         super.dispose();
     }
 
