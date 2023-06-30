@@ -34,14 +34,13 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
-import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
 import org.micromanager.acqj.internal.Engine;
-import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.AcquisitionEvent;
 import org.micromanager.acqj.util.AcquisitionEventIterator;
@@ -57,7 +56,6 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.internal.DefaultDatastore;
-import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
@@ -76,9 +74,6 @@ import org.micromanager.internal.utils.ReportingUtils;
  * - The number of images and other parameters are all known at the start of acquisition
  */
 public class MultiAcqEngJAdapter extends AcqEngJAdapter {
-
-
-   public static final String ACQ_IDENTIFIER = "Acq_Identifier";
 
    private Acquisition currentMultiMDA_;
 
@@ -133,20 +128,20 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    /**
     * This is where the work happens.
     *
-    * @param timeLapseSettings Defines the time lapse
+    * @param basicSettings Defines the time lapse and autofocus
     * @param sequenceSettings Acquisitions that should be executed consecutively.
     * @param positionLists PositionLists for each sequenceSetting (>=1).  The size of this list
     *                      must be equal to the size of sequenceSettings.
     * @return Datastores corresponding to sequenceSettings
     */
-   public List<Datastore> runAcquisition(SequenceSettings timeLapseSettings,
+   public List<Datastore> runAcquisition(SequenceSettings basicSettings,
                                          List<SequenceSettings> sequenceSettings,
                                          List<PositionList> positionLists) {
       if (sequenceSettings.size() < 1 || positionLists.size() != sequenceSettings.size()) {
          studio_.logs().logError("Please use Position Lists for each acquisition");
          return null;
       }
-      timeLapseSettings_ = timeLapseSettings;
+      timeLapseSettings_ = basicSettings;
       stores_ = new ArrayList<>(sequenceSettings.size());
       pipelines_ = new ArrayList<>(sequenceSettings.size());
       for (int i = 0; i < sequenceSettings.size(); i++) {
@@ -196,8 +191,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          currentMultiMDA_ = new Acquisition(sink);
          currentMultiMDA_.setDebugMode(core_.debugLogEnabled());
 
-         // TODO:
-
          loadRunnables(sequenceSettings);
 
          // This TaggedImageProcessor is used to divert images away from the optional
@@ -237,10 +230,21 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          }
 
          // These hooks implement Autofocus
-         // TODO: split this out so that the hook checks in which acquisition we are
-         if (sequenceSettings.get(0).useAutofocus()) {
-            currentMultiMDA_.addHook(autofocusHookBefore(),
+         if (basicSettings.useAutofocus()) {
+            currentMultiMDA_.addHook(autofocusHookBefore(basicSettings.skipAutofocusCount()),
                   currentMultiMDA_.BEFORE_HARDWARE_HOOK);
+         }
+
+         for (int i = 0; i < sequenceSettings.size(); i++) {
+            // Hook to move back the ZStage to its original position after a Z stack
+            if (sequenceSettings.get(i).useSlices()) {
+               currentMultiMDA_.addHook(zPositionHook(sequenceSettings.get(i),
+                           Acquisition.BEFORE_HARDWARE_HOOK, i),
+                     AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+               currentMultiMDA_.addHook(zPositionHook(sequenceSettings.get(i),
+                           Acquisition.AFTER_EXPOSURE_HOOK, i),
+                     AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+            }
          }
 
          // Read for events
@@ -400,114 +404,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
 
       return new AcquisitionEventIterator(baseEvent, acqFunctions,
             acqEventMonitor(acquisitionSettings));
-   }
-
-   /**
-    * This function monitors acquisition events as they are dynamically created.
-    *
-    * @return Monitor function.
-    */
-   private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(SequenceSettings settings) {
-      return event -> {
-         if (event != null && event.getMinimumStartTimeAbsolute() != null) {
-            nextWakeTime_ = event.getMinimumStartTimeAbsolute();
-         }
-         return event;
-      };
-   }
-
-   /**
-    * This function monitors acquisition events as they are dynamically created.
-    *
-    * @return Function with Acquisition Events
-    */
-   private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor() {
-      return new Function<AcquisitionEvent, AcquisitionEvent>() {
-         private int lastPositionIndex_ = 0;
-         private long relativePositionStartTime_ = 0;
-         private long startTime_ = 0;
-         private boolean positionMoved_ = false;
-
-         @Override
-         public AcquisitionEvent apply(AcquisitionEvent event) {
-            /*
-            if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                    || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
-                     && event.getAxisPosition("position") != null) {
-               if (startTime_ == 0) {
-                  startTime_ = System.currentTimeMillis();
-               }
-
-               int thisPosition = (int) event.getAxisPosition("position");
-               if (thisPosition != lastPositionIndex_) {
-                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  System.out.println("Position " + thisPosition + " started "
-                          + relativePositionStartTime_ + "  ms after acquisition start");
-                  lastPositionIndex_ = (int) event.getAxisPosition("position");
-                  positionMoved_ = true;
-               }
-               if (positionMoved_) {
-                  long relativeStartTime = relativePositionStartTime_
-                          + event.getMinimumStartTimeAbsolute() - startTime_;
-                  int frame = (int) event.getAxisPosition("time");
-                  System.out.println("Pos " + thisPosition + ", Frame " + frame
-                          + " start at " + relativeStartTime);
-                  event.setMinimumStartTime(relativeStartTime);
-               }
-            }
-             */
-            if (event.getMinimumStartTimeAbsolute() != null) {
-               nextWakeTime_ = event.getMinimumStartTimeAbsolute();
-            }
-            return event;
-         }
-      };
-   }
-
-   private AcquisitionHook timeLapseHook(SequenceSettings sequenceSettings) {
-      return new AcquisitionHook() {
-         private int lastPositionIndex_ = 0;
-         private long relativePositionStartTime_ = 0;
-         private long startTime_ = 0;
-         private boolean positionMoved_ = false;
-
-         @Override
-         public AcquisitionEvent run(AcquisitionEvent event) {
-            if (sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                  || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
-                  && event.getAxisPosition("position") != null) {
-
-               if (startTime_ == 0) {
-                  startTime_ = System.currentTimeMillis();
-               }
-
-               int thisPosition = (int) event.getAxisPosition("position");
-               if (thisPosition != lastPositionIndex_) {
-                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  System.out.println("Position " + thisPosition + " started "
-                        + relativePositionStartTime_ + "  ms after acquisition start");
-                  lastPositionIndex_ = (int) event.getAxisPosition("position");
-                  positionMoved_ = true;
-               }
-               if (positionMoved_) {
-                  long relativeStartTime = relativePositionStartTime_
-                        + event.getMinimumStartTimeAbsolute() - startTime_;
-                  int frame = (int) event.getAxisPosition("time");
-                  System.out.println("Pos " + thisPosition + ", Frame " + frame
-                        + " start at " + relativeStartTime);
-                  event.setMinimumStartTime(relativeStartTime);
-               }
-            }
-            if (event.getMinimumStartTimeAbsolute() != null) {
-               nextWakeTime_ = event.getMinimumStartTimeAbsolute();
-            }
-            return event;
-         }
-
-         @Override
-         public void close() {
-         }
-      };
    }
 
 
@@ -795,7 +691,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                }
             }
          }
-         return (!currentMultiMDA_.areEventsFinished() || pipeLinesFinished);
+         return (!currentMultiMDA_.areEventsFinished() || !pipeLinesFinished);
       } else {
          return false;
       }

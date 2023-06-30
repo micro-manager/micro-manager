@@ -20,10 +20,13 @@
 
 package org.micromanager.acquisition.internal.acqengjcompat.multimda;
 
+import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
@@ -42,6 +45,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -71,6 +75,8 @@ public class MultiMDAFrame extends JFrame {
    private JFormattedTextField interval_;
    private JComboBox<String> timeUnitCombo_;
    private final CheckBoxPanel framesPanel_;
+   private final CheckBoxPanel afPanel_;
+   private JSpinner afSkipInterval_;
 
    /**
     * Constructor of the plugin, draws the UI and restores settings from profile.
@@ -92,7 +98,9 @@ public class MultiMDAFrame extends JFrame {
 
       // create time point panel
       framesPanel_ = createTimePoints();
-      super.add(framesPanel_, "span, align center, wrap");
+      super.add(framesPanel_, "span, split 2, gap 12, align center");
+      afPanel_ = createAutoFocus();
+      super.add(afPanel_, "wrap");
 
       // Create a text field for the user to customize their alerts.
       super.add(new JLabel("Number of different settings: "));
@@ -132,15 +140,17 @@ public class MultiMDAFrame extends JFrame {
                         .numFrames((Integer) numFrames_.getValue())
                         .intervalMs(NumberUtils.displayStringToDouble(
                                     interval_.getText()) * multiplier);
+                  sb.useAutofocus(afPanel_.isSelected())
+                        .skipAutofocusCount((Integer) afSkipInterval_.getValue());
                } catch (ParseException ex) {
                   ex.printStackTrace();
                }
-               SequenceSettings timeLapseSettings = sb.build();
+               SequenceSettings baseSettings = sb.build();
                for (MDASettingData acq : acqs_) {
                   seqs.add(acq.getSequenceSettings());
                   positionLists.add(acq.getPositionList());
                }
-               acqj.runAcquisition(timeLapseSettings, seqs, positionLists);
+               acqj.runAcquisition(baseSettings, seqs, positionLists);
             }
          });
          acqThread.start();
@@ -224,7 +234,7 @@ public class MultiMDAFrame extends JFrame {
     * Updates the number of settings we are using based on UI request.
     *
     * @param nr Desired number of different settings.
-    * @return Input number if succesful, input minus 1 on failure
+    * @return Input number if successful, input minus 1 on failure
     */
    private int adjustNrSettings(int nr) {
       acqPanel_.removeAll();
@@ -346,11 +356,49 @@ public class MultiMDAFrame extends JFrame {
       return framesPanel;
    }
 
+   private CheckBoxPanel createAutoFocus() {
+      CheckBoxPanel afPanel = new CheckBoxPanel("Autofocus");
+      afPanel.setLayout(new MigLayout("fillx, gap 2, insets 2" + ", hidemode 3",
+            "[grow, fill]", "[grow, fill]"));
+
+      JButton afButton = new JButton("Options...");
+      afButton.setToolTipText("Set autofocus options");
+      afButton.setIcon(IconLoader.getIcon(
+            "/org/micromanager/icons/wrench_orange.png"));
+      afButton.setMargin(new Insets(2, 5, 2, 5));
+      afButton.setFont(new Font("Dialog", Font.PLAIN, 10));
+      afButton.addActionListener((ActionEvent arg0) -> studio_.app().showAutofocusDialog());
+      afPanel.add(afButton, "alignx center, wrap");
+
+      final JLabel afSkipFrame1 = new JLabel("Skip frame(s):");
+      afSkipFrame1.setFont(new Font("Dialog", Font.PLAIN, 10));
+      afSkipFrame1.setToolTipText("How many frames to skip between running autofocus. "
+            + "Autofocus is always run at new stage positions");
+
+      afPanel.add(afSkipFrame1, "split, spanx, alignx center");
+
+      afSkipInterval_ = new JSpinner(new SpinnerNumberModel(0, 0, null, 1));
+      JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) afSkipInterval_.getEditor();
+      editor.setFont(DEFAULT_FONT);
+      editor.getTextField().setColumns(3);
+      afSkipInterval_.setValue(0);
+      // afSkipInterval_.setValue(getSequenceSettings().skipAutofocusCount());
+      // afSkipInterval_.addChangeListener((ChangeEvent e) -> {
+      //   applySettingsFromGUI();
+      //   afSkipInterval_.setValue(getAcquisitionEngine().getSequenceSettings()
+      //         .skipAutofocusCount());
+      // });
+      afPanel.add(afSkipInterval_);
+
+      // afPanel.addActionListener((ActionEvent arg0) -> applySettingsFromGUI());
+      return afPanel;
+   }
+
    /**
     * Event signalling that MM will shut down.  Out cue to store current settings to
     * the profile
     *
-    * @param sce THis event can be used to stop MM from shutting down, but we only use
+    * @param sce This event can be used to stop MM from shutting down, but we only use
     *            it as a signal.
     */
    @Subscribe

@@ -80,6 +80,8 @@ import org.micromanager.internal.utils.NumberUtils;
  */
 public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCallbacks {
 
+   public static final String ACQ_IDENTIFIER = "Acq_Identifier";
+
    private Acquisition currentAcquisition_;
 
    private CMMCore core_;
@@ -249,10 +251,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // Hook to move back the ZStage to its original position after a Z stack
          if (sequenceSettings.useSlices()) {
             currentAcquisition_.addHook(zPositionHook(acquisitionSettings,
-                  Acquisition.BEFORE_HARDWARE_HOOK),
+                  Acquisition.BEFORE_HARDWARE_HOOK, null),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
             currentAcquisition_.addHook(zPositionHook(acquisitionSettings,
-                        Acquisition.AFTER_EXPOSURE_HOOK),
+                        Acquisition.AFTER_EXPOSURE_HOOK, null),
                   AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
@@ -266,7 +268,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          // These hooks implement Autofocus
          if (sequenceSettings_.useAutofocus()) {
-            currentAcquisition_.addHook(autofocusHookBefore(),
+            currentAcquisition_.addHook(autofocusHookBefore(sequenceSettings_.skipAutofocusCount()),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
@@ -570,7 +572,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     *
     * @return Monitor function.
     */
-   private Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(SequenceSettings settings) {
+   protected Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(
+         SequenceSettings settings) {
       return event -> {
          if (event != null && event.getMinimumStartTimeAbsolute() != null) {
             nextWakeTime_ = event.getMinimumStartTimeAbsolute();
@@ -705,7 +708,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     *
     * @return The Hook.
     */
-   protected AcquisitionHook autofocusHookBefore() {
+   protected AcquisitionHook autofocusHookBefore(int skipFrames) {
       return new AcquisitionHook() {
 
          @Override
@@ -716,18 +719,21 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                         || (Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == 0)
                   && (event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == null
                         || (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0)) {
-                  try {
-                     // this hook is called before the engine changes the hardware
-                     // since we want to leave the system in a focussed state, first
-                     // move the XY stage to where we want to image, then release autofocus.
-                     if (event.getXPosition() != null && event.getYPosition() != null) {
-                        studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
-                     }
-                     studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
-                  } catch (Exception ex) {
-                     studio_.logs().logError(ex, "Failed to disable continuousfocus");
-                  }
+               if (event.getTIndex() != null && event.getTIndex() % skipFrames != 0) {
+                  return event;
                }
+               try {
+                  // this hook is called before the engine changes the hardware
+                  // since we want to leave the system in a focussed state, first
+                  // move the XY stage to where we want to image, then autofocus.
+                  if (event.getXPosition() != null && event.getYPosition() != null) {
+                     studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
+                  }
+                  studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
+               } catch (Exception ex) {
+                  studio_.logs().logError(ex, "Failed to autofocus.");
+               }
+            }
             return event;
          }
 
@@ -748,12 +754,19 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     * @param when Constant defined in acquisitoin API that define when this hook is run.
     * @return The actual Hook function
     **/
-   private AcquisitionHook zPositionHook(SequenceSettings sequenceSettings, int when) {
+   protected AcquisitionHook zPositionHook(SequenceSettings sequenceSettings,
+                                           int when, Integer acqIndex) {
       return new AcquisitionHook() {
 
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (event.isAcquisitionFinishedEvent()) {
+               return event;
+            }
+            // do nothing if this is not our acquisition
+            if (acqIndex != null
+                  && event.getTags().containsKey(ACQ_IDENTIFIER)
+                  && !(Integer.valueOf(event.getTags().get(ACQ_IDENTIFIER)).equals(acqIndex))) {
                return event;
             }
             try {
