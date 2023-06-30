@@ -49,6 +49,7 @@ import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.acqengj.MultiAcqEngJAdapter;
 import org.micromanager.events.ShutdownCommencingEvent;
@@ -288,7 +289,8 @@ public class MultiMDAFrame extends JFrame {
             acqs_.get(lineNr).setPositionList(studio_.positions().getPositionList());
             posListButton.setText("PositionList set");
          });
-         acqPanel_.add(posListButton, "wrap");
+         acqPanel_.add(posListButton);
+         acqPanel_.add(new JLabel(oneLineSummary(acqs_.get(lineNr).getSequenceSettings())), "wrap");
 
       }
       while (nr < acqs_.size()) {
@@ -392,6 +394,23 @@ public class MultiMDAFrame extends JFrame {
 
       // afPanel.addActionListener((ActionEvent arg0) -> applySettingsFromGUI());
       return afPanel;
+   }
+
+   private String oneLineSummary(SequenceSettings sequenceSettings) {
+      StringBuilder sb = new StringBuilder();
+      if (sequenceSettings.useSlices()) {
+         sb.append("ZStack, ").append(MultiAcqEngJAdapter.getNumSlices(sequenceSettings))
+               .append(" slices. ");
+      }
+      if (sequenceSettings.useChannels()) {
+         sb.append("Channels: ");
+         for (ChannelSpec channelSpec : sequenceSettings.channels()) {
+            if (channelSpec.useChannel()) {
+               sb.append(channelSpec.config()).append(" ");
+            }
+         }
+      }
+      return sb.toString();
    }
 
    /**

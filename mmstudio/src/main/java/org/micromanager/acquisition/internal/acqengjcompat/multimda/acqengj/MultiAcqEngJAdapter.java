@@ -505,7 +505,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return numPositions;
    }
 
-   private int getNumSlices(SequenceSettings sequenceSettings) {
+   public static int getNumSlices(SequenceSettings sequenceSettings) {
       if (!sequenceSettings.useSlices()) {
          return 1;
       }
