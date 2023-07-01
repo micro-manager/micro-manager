@@ -418,19 +418,19 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          final DisplaySettings settings = viewer_.getDisplaySettings();
 
          long min = componentStats.getMinIntensity();
-         if (settings.ignoreZerosWhenAutoScaling()) {
+         if (settings.isAutoscaleIgnoringZeros()) {
             min = componentStats.getMinIntensityExcludingZeros();
          }
          intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
          long max = componentStats.getMaxIntensity();
          intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
          long mean = componentStats.getMeanIntensity();
-         if (settings.ignoreZerosWhenAutoScaling()) {
+         if (settings.isAutoscaleIgnoringZeros()) {
             mean = componentStats.getMeanIntensityExcludingZeros();
          }
          intensityStatsPanel_.setMean(mean >= 0 ? Long.toString(mean) : null);
          double stdev = componentStats.getStandardDeviation();
-         if (settings.ignoreZerosWhenAutoScaling()) {
+         if (settings.isAutoscaleIgnoringZeros()) {
             stdev = componentStats.getStandardDeviationExcludingZeros();
          }
          intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
@@ -466,7 +466,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       long max;
       if (settings.isAutostretchEnabled()) {
          double q = settings.getAutoscaleIgnoredQuantile();
-         if (settings.ignoreZerosWhenAutoScaling()) {
+         if (settings.isAutoscaleIgnoringZeros()) {
             min = componentStats.getAutoscaleMinForQuantileIgnoringZeros(q);
             max = componentStats.getAutoscaleMaxForQuantileIgnoringZeros(q);
          } else {
@@ -597,7 +597,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             IntegerComponentStats stats = stats_.getComponentStats(i);
             long min;
             long max;
-            if (oldDisplaySettings.ignoreZerosWhenAutoScaling()) {
+            if (oldDisplaySettings.isAutoscaleIgnoringZeros()) {
                min = stats.getAutoscaleMinForQuantileIgnoringZeros(q);
                max = stats.getAutoscaleMaxForQuantileIgnoringZeros(q);
             } else {

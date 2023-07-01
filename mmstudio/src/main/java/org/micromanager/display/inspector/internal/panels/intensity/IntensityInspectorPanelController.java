@@ -352,7 +352,7 @@ public class IntensityInspectorPanelController
       DisplaySettings newSettings;
       do {
          oldSettings = viewer_.getDisplaySettings();
-         if (oldSettings.ignoreZerosWhenAutoScaling() == ignoreZeros) {
+         if (oldSettings.isAutoscaleIgnoringZeros() == ignoreZeros) {
             return;
          }
          newSettings = oldSettings.copyBuilder().autoscaleIgnoringZeros(ignoreZeros).build();
@@ -571,7 +571,7 @@ public class IntensityInspectorPanelController
       percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
       changingSpinner_.set(false);
 
-      if (settings.ignoreZerosWhenAutoScaling()) {
+      if (settings.isAutoscaleIgnoringZeros()) {
          ignoreLabel_.setText(IGNORE_LABEL);
       } else {
          ignoreLabel_.setText(")");
@@ -586,7 +586,7 @@ public class IntensityInspectorPanelController
       }
 
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
-      gearMenuIgnoreZerosItem_.setSelected(settings.ignoreZerosWhenAutoScaling());
+      gearMenuIgnoreZerosItem_.setSelected(settings.isAutoscaleIgnoringZeros());
 
       // TODO Disable color mode and show RGB if image is RGB
       switch (settings.getColorMode()) {

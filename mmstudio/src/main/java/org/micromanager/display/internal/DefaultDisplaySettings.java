@@ -250,7 +250,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public boolean ignoreZerosWhenAutoScaling() {
+   public boolean isAutoscaleIgnoringZeros() {
       return ignoreZeros_;
    }
 

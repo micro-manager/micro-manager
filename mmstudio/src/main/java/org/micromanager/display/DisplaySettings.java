@@ -201,12 +201,12 @@ public interface DisplaySettings {
 
 
    /**
-    * When autoscaling, whether or not to take zero values into account.
+    * When autoscaling, take zero values into account or not?
     * This can be useful for images that contain artificial zero values.
     *
-    * @return Whether or not to ignore zeros in the
+    * @return Whether zero pixel values are ignored when autoscaling
     */
-   boolean ignoreZerosWhenAutoScaling();
+   boolean isAutoscaleIgnoringZeros();
 
    /**
     * Returns the number of channels in these DisplaySettings
