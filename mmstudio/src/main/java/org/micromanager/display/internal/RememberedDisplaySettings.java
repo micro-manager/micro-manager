@@ -53,6 +53,9 @@ public class RememberedDisplaySettings {
                                    String channelGroup,
                                    String channelName,
                                    ChannelDisplaySettings cds) {
+      if (cds == null || channelName == null || channelGroup == null) {
+         return;
+      }
       String key = genKey(channelGroup, channelName);
       MutablePropertyMapView settings =
             studio.profile().getSettings(RememberedDisplaySettings.class);
