@@ -85,6 +85,8 @@ public interface DisplaySettings {
 
       Builder autoscaleIgnoredPercentile(double percentile);
 
+      Builder autoscaleIgnoringZeros(boolean ignoreZeros);
+
       /**
        * Increases the number of ChannelDisplaySettings in this Builder to
        * the given number.  DefaultSettings for each channel will be added.
@@ -196,6 +198,15 @@ public interface DisplaySettings {
     *     white and black points.  Expressed as percentage.
     */
    double getAutoscaleIgnoredPercentile();
+
+
+   /**
+    * When autoscaling, take zero values into account or not?
+    * This can be useful for images that contain artificial zero values.
+    *
+    * @return Whether zero pixel values are ignored when autoscaling
+    */
+   boolean isAutoscaleIgnoringZeros();
 
    /**
     * Returns the number of channels in these DisplaySettings

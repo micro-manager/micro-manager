@@ -63,6 +63,7 @@ public class IntensityInspectorPanelController
    private static final String RATE_2HZ = "2 Hz";
    private static final String RATE_1HZ = "1 Hz";
    private static final String RATE_05HZ = "0.5 Hz";
+   private static final String IGNORE_LABEL = " ignoring zero pixels)";
 
    private final Studio studio_;
    private final JPanel panel_ = new JPanel();
@@ -101,11 +102,14 @@ public class IntensityInspectorPanelController
          new JCheckBoxMenuItem("Logarithmic Y Axis");
    private final JCheckBoxMenuItem gearMenuUseROIItem_ =
          new JCheckBoxMenuItem("Use ROI for Histograms and Autostretch");
+   private final JCheckBoxMenuItem gearMenuIgnoreZerosItem_ =
+         new JCheckBoxMenuItem("Ignore zero value pixels in Autostretch and Stats");
 
    private final JPanel generalControlPanel_ = new JPanel();
    private final JComboBox<ColorModeCell.Item> colorModeComboBox_ = new JComboBox<>();
    private final JCheckBox autostretchCheckBox_ = new JCheckBox();
    private final JSpinner percentileSpinner_ = new JSpinner();
+   private final JLabel ignoreLabel_ = new JLabel(")");
    private final AtomicBoolean changingSpinner_ = new AtomicBoolean(false);
    private Boolean displaySettingsUpdateSuspended_ = false;
    private final JPanel channelHistogramsPanel_ = new JPanel();
@@ -211,6 +215,11 @@ public class IntensityInspectorPanelController
             handleHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected()));
       gearMenuUseROIItem_.addActionListener((ActionEvent e) ->
             handleHistogramUseROI(gearMenuUseROIItem_.isSelected()));
+
+      gearMenu_.add(gearMenuIgnoreZerosItem_);
+      gearMenuIgnoreZerosItem_.addActionListener((ActionEvent e) ->
+            handleIgnoreZeros(gearMenuIgnoreZerosItem_.isSelected()));
+
    }
 
    private void setUpGeneralControlPanel() {
@@ -245,10 +254,11 @@ public class IntensityInspectorPanelController
             new CC().gapAfter("push").wrap());
 
       generalControlPanel_.add(autostretchCheckBox_,
-            new CC().split(4).gapAfter("related"));
+            new CC().split(5).gapAfter("related"));
       generalControlPanel_.add(new JLabel("(Ignore"), new CC().gapAfter("0"));
       generalControlPanel_.add(percentileSpinner_, new CC().width("72lp!").gapAfter("0"));
-      generalControlPanel_.add(new JLabel(" %)"), new CC().gapAfter("push"));
+      generalControlPanel_.add(new JLabel(" %"), new CC().gapAfter("0"));
+      generalControlPanel_.add(ignoreLabel_, new CC().gapAfter("push"));
    }
 
    private void setUpChannelHistogramsPanel(int numChannels) {
@@ -335,6 +345,24 @@ public class IntensityInspectorPanelController
          }
          newSettings = oldSettings.copyBuilder().roiAutoscale(useROI).build();
       } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
+   }
+
+   private void handleIgnoreZeros(boolean ignoreZeros) {
+      DisplaySettings oldSettings;
+      DisplaySettings newSettings;
+      do {
+         oldSettings = viewer_.getDisplaySettings();
+         if (oldSettings.isAutoscaleIgnoringZeros() == ignoreZeros) {
+            return;
+         }
+         newSettings = oldSettings.copyBuilder().autoscaleIgnoringZeros(ignoreZeros).build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
+      if (ignoreZeros) {
+         ignoreLabel_.setText(IGNORE_LABEL);
+      } else {
+         ignoreLabel_.setText(")");
+      }
+      updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
    }
 
    @MustCallOnEDT
@@ -543,6 +571,12 @@ public class IntensityInspectorPanelController
       percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
       changingSpinner_.set(false);
 
+      if (settings.isAutoscaleIgnoringZeros()) {
+         ignoreLabel_.setText(IGNORE_LABEL);
+      } else {
+         ignoreLabel_.setText(")");
+      }
+
       if (autostretchCheckBox_.isSelected() && !settings.isAutostretchEnabled()) {
          displaySettingsUpdateSuspended_ = true;
          for (ChannelIntensityController ch : channelControllers_) {
@@ -551,8 +585,8 @@ public class IntensityInspectorPanelController
          displaySettingsUpdateSuspended_ = false;
       }
 
-
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
+      gearMenuIgnoreZerosItem_.setSelected(settings.isAutoscaleIgnoringZeros());
 
       // TODO Disable color mode and show RGB if image is RGB
       switch (settings.getColorMode()) {

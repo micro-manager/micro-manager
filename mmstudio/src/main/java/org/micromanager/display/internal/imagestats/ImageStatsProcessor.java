@@ -220,14 +220,18 @@ public final class ImageStatsProcessor {
       // a single interation over the pixels.
       List<Histogram1d<T>> histograms = new ArrayList<Histogram1d<T>>();
       long[] counts = new long[nComponents];
+      long[] countsExcludingZeros = new long[nComponents];
       long[] minima = new long[nComponents];
+      long[] minimaExcludingZeros = new long[nComponents];
       long[] maxima = new long[nComponents];
       long[] sums = new long[nComponents];
       long[] sumsOfSquares = new long[nComponents];
       for (int component = 0; component < nComponents; ++component) {
          histograms.add(new Histogram1d<T>(binMapper));
          counts[component] = 0;
+         countsExcludingZeros[component] = 0;
          minima[component] = Long.MAX_VALUE;
+         minimaExcludingZeros[component] = Long.MAX_VALUE;
          maxima[component] = Long.MIN_VALUE;
          sums[component] = 0;
          sumsOfSquares[component] = 0;
@@ -256,8 +260,14 @@ public final class ImageStatsProcessor {
 
          histograms.get(component).increment(dataSample);
          counts[component]++;
+         if (dataValue > 0) {
+            countsExcludingZeros[component]++;
+         }
          if (dataValue < minima[component]) {
             minima[component] = dataValue;
+            if (dataValue > 0) {
+               minimaExcludingZeros[component] = dataValue;
+            }
          }
          if (dataValue > maxima[component]) {
             maxima[component] = dataValue;
@@ -273,8 +283,10 @@ public final class ImageStatsProcessor {
                .histogram(histograms.get(component).toLongArray(),
                      Math.max(0, sampleBitDepth - binCountPowerOf2))
                .pixelCount(counts[component])
+               .pixelCountExcludingZeros(countsExcludingZeros[component])
                .usedROI(isROI)
                .minimum(minima[component])
+               .minimumExcludingZeros(minimaExcludingZeros[component])
                .maximum(maxima[component])
                .sum(sums[component])
                .sumOfSquares(sumsOfSquares[component])

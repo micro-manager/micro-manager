@@ -410,22 +410,32 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
       IntegerComponentStats componentStats = stats_.getComponentStats(component);
 
-      long min = componentStats.getMinIntensity();
-      intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
-      long max = componentStats.getMaxIntensity();
-      intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
-      long mean = componentStats.getMeanIntensity();
-      intensityStatsPanel_.setMean(mean >= 0 ? Long.toString(mean) : null);
-      double stdev = componentStats.getStandardDeviation();
-      intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
-            String.format("%1.2e", stdev));
-
       try {
          Image anyImage = viewer_.getDataProvider().getAnyImage();
          if (anyImage == null) {
             return;
          }
          final DisplaySettings settings = viewer_.getDisplaySettings();
+
+         long min = componentStats.getMinIntensity();
+         if (settings.isAutoscaleIgnoringZeros()) {
+            min = componentStats.getMinIntensityExcludingZeros();
+         }
+         intensityStatsPanel_.setMin(min >= 0 ? Long.toString(min) : null);
+         long max = componentStats.getMaxIntensity();
+         intensityStatsPanel_.setMax(max >= 0 ? Long.toString(max) : null);
+         long mean = componentStats.getMeanIntensity();
+         if (settings.isAutoscaleIgnoringZeros()) {
+            mean = componentStats.getMeanIntensityExcludingZeros();
+         }
+         intensityStatsPanel_.setMean(mean >= 0 ? Long.toString(mean) : null);
+         double stdev = componentStats.getStandardDeviation();
+         if (settings.isAutoscaleIgnoringZeros()) {
+            stdev = componentStats.getStandardDeviationExcludingZeros();
+         }
+         intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
+               String.format("%1.2e", stdev));
+
          cameraBits_ = anyImage.getMetadata().getBitDepth(); // can throw IOException
          ChannelDisplaySettings cSettings = histoRangeComboBoxModel_.getBits(
                viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);
@@ -456,8 +466,13 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       long max;
       if (settings.isAutostretchEnabled()) {
          double q = settings.getAutoscaleIgnoredQuantile();
-         min = componentStats.getAutoscaleMinForQuantile(q);
-         max = componentStats.getAutoscaleMaxForQuantile(q);
+         if (settings.isAutoscaleIgnoringZeros()) {
+            min = componentStats.getAutoscaleMinForQuantileIgnoringZeros(q);
+            max = componentStats.getAutoscaleMaxForQuantileIgnoringZeros(q);
+         } else {
+            min = componentStats.getAutoscaleMinForQuantile(q);
+            max = componentStats.getAutoscaleMaxForQuantile(q);
+         }
       } else {
          ComponentDisplaySettings componentSettings =
                settings.getChannelSettings(channelIndex_)
@@ -580,8 +595,15 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          int nComponents = 1; // TODO
          for (int i = 0; i < nComponents; ++i) {
             IntegerComponentStats stats = stats_.getComponentStats(i);
-            long min = stats.getAutoscaleMinForQuantile(q);
-            long max = stats.getAutoscaleMaxForQuantile(q);
+            long min;
+            long max;
+            if (oldDisplaySettings.isAutoscaleIgnoringZeros()) {
+               min = stats.getAutoscaleMinForQuantileIgnoringZeros(q);
+               max = stats.getAutoscaleMaxForQuantileIgnoringZeros(q);
+            } else {
+               min = stats.getAutoscaleMinForQuantile(q);
+               max = stats.getAutoscaleMaxForQuantile(q);
+            }
             builder.component(i,
                   channelSettings.getComponentSettings(i).copyBuilder()
                         .scalingRange(min, max).build());

@@ -53,14 +53,14 @@ public class ComponentStatsTest {
 
    @Test
    public void testSize1() {
-      IntegerComponentStats cs = IntegerComponentStats.builder().
-            histogram(new long[] {1, 2, 3}, 0).
-            pixelCount(6).
-            minimum(-1).
-            maximum(1).
-            sum(0).
-            sumOfSquares(4).
-            build();
+      IntegerComponentStats cs = IntegerComponentStats.builder()
+                  .histogram(new long[] {1, 2, 3}, 0)
+                  .pixelCount(6)
+                  .minimum(-1)
+                  .maximum(1)
+                  .sum(0)
+                  .sumOfSquares(4)
+                  .build();
       assertEquals(1, cs.getInRangeHistogram().length);
       assertEquals(2, cs.getInRangeHistogram()[0]);
       assertEquals(1, cs.getHistogramBinCount());
@@ -72,20 +72,22 @@ public class ComponentStatsTest {
       assertEquals(6, cs.getPixelCount());
       assertEquals(0, cs.getMeanIntensity());
       assertEquals(1.0, cs.getQuantile(0.5), 0.001);
+      assertEquals(0.0, cs.getQuantileIgnoringZeros(0.5), 0.001);
+      assertEquals(1.0, cs.getQuantileIgnoringZeros(0.75), 0.001);
       assertEquals(4, cs.getSumOfSquares());
       assertTrue(cs.getStandardDeviation() > 0.0);
    }
 
    @Test
    public void testSize2() {
-      IntegerComponentStats cs = IntegerComponentStats.builder().
-            histogram(new long[] { 0, 1, 2, 0 }, 1).
-            pixelCount(3).
-            minimum(0).
-            maximum(1).
-            sum(6).
-            sumOfSquares(14).
-            build();
+      IntegerComponentStats cs = IntegerComponentStats.builder()
+            .histogram(new long[] { 0, 1, 2, 0 }, 1)
+            .pixelCount(3)
+            .minimum(0)
+            .maximum(1)
+            .sum(6)
+            .sumOfSquares(14)
+            .build();
       assertEquals(2, cs.getInRangeHistogram().length);
       assertEquals(1, cs.getInRangeHistogram()[0]);
       assertEquals(2, cs.getInRangeHistogram()[1]);
@@ -98,6 +100,7 @@ public class ComponentStatsTest {
       assertEquals(3, cs.getPixelCount());
       assertEquals(2, cs.getMeanIntensity());
       assertEquals(2.5, cs.getQuantile(0.5), 0.001);
+      assertEquals(2.5, cs.getQuantileIgnoringZeros(0.5), 0.001);
       assertEquals(14, cs.getSumOfSquares());
       assertEquals(0.8165, cs.getStandardDeviation(), 0.001);
    }
@@ -111,14 +114,14 @@ public class ComponentStatsTest {
       hist[128] = 94;
       hist[255] = 2;
       hist[256] = 1;
-      IntegerComponentStats cs = IntegerComponentStats.builder().
-            histogram(hist, 0).
-            pixelCount(100).
-            minimum(0).
-            maximum(255).
-            sum(0 * 1 + 1 * 2 + 127 * 94 + 254 * 2 + 255 * 1).
-            sumOfSquares(0 * 1 + 1 * 2 + 16129 * 94 + 64516 * 2 + 65025 * 1).
-            build();
+      IntegerComponentStats cs = IntegerComponentStats.builder()
+            .histogram(hist, 0)
+            .pixelCount(100)
+            .minimum(0)
+            .maximum(255)
+            .sum(0 * 1 + 1 * 2 + 127 * 94 + 254 * 2 + 255 * 1)
+            .sumOfSquares(0 * 1 + 1 * 2 + 16129 * 94 + 64516 * 2 + 65025 * 1)
+            .build();
       assertEquals(256, cs.getInRangeHistogram().length);
       assertEquals(1, cs.getInRangeHistogram()[0]);
       assertEquals(1, cs.getInRangeHistogram()[255]);
@@ -143,12 +146,12 @@ public class ComponentStatsTest {
       for (int i = 1; i < 257; ++i) {
          hist[i] = 5;
       }
-      IntegerComponentStats cs = IntegerComponentStats.builder().
-            histogram(hist, 8).
-            pixelCount(5 * 256).
-            minimum(0).
-            maximum(65535).
-            build();
+      IntegerComponentStats cs = IntegerComponentStats.builder()
+            .histogram(hist, 8)
+            .pixelCount(5 * 256)
+            .minimum(0)
+            .maximum(65535)
+            .build();
       assertEquals(256, cs.getInRangeHistogram().length);
       assertEquals(5, cs.getInRangeHistogram()[0]);
       assertEquals(5, cs.getInRangeHistogram()[255]);

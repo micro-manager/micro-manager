@@ -25,8 +25,10 @@ public final class IntegerComponentStats {
    private final long[] histogram_;
    private final int binWidthPowerOf2_;
    private final long pixelCount_;
+   private final long pixelCountExcludingZeros_;
    private final boolean usedROI_;
    private final long minimum_;
+   private final long minimumExcludingZeros_;
    private final long maximum_;
    private final long sum_;
    private final long sumOfSquares_;
@@ -36,8 +38,10 @@ public final class IntegerComponentStats {
       private long[] histogram_;
       private int binWidthPowerOf2_;
       private long pixelCount_;
+      private long pixelCountExcludingZeros_;
       private boolean usedROI_;
       private long minimum_;
+      private long minimumExcludingZeros_;
       private long maximum_;
       private long sum_;
       private long sumOfSquares_;
@@ -57,6 +61,11 @@ public final class IntegerComponentStats {
          return this;
       }
 
+      public Builder pixelCountExcludingZeros(long count) {
+         pixelCountExcludingZeros_ = count;
+         return this;
+      }
+
       public Builder usedROI(boolean used) {
          usedROI_ = used;
          return this;
@@ -64,6 +73,11 @@ public final class IntegerComponentStats {
 
       public Builder minimum(long min) {
          minimum_ = min;
+         return this;
+      }
+
+      public Builder minimumExcludingZeros(long min) {
+         minimumExcludingZeros_ = min;
          return this;
       }
 
@@ -97,8 +111,10 @@ public final class IntegerComponentStats {
             null;
       binWidthPowerOf2_ = b.binWidthPowerOf2_;
       pixelCount_ = b.pixelCount_;
+      pixelCountExcludingZeros_ = b.pixelCountExcludingZeros_;
       usedROI_ = b.usedROI_;
       minimum_ = b.minimum_;
+      minimumExcludingZeros_ = b.minimumExcludingZeros_;
       maximum_ = b.maximum_;
       sum_ = b.sum_;
       sumOfSquares_ = b.sumOfSquares_;
@@ -155,6 +171,10 @@ public final class IntegerComponentStats {
       return pixelCount_;
    }
 
+   public long getPixelCountExcludingZeros() {
+      return pixelCountExcludingZeros_;
+   }
+
    public boolean isROIStats() {
       return usedROI_;
    }
@@ -166,8 +186,19 @@ public final class IntegerComponentStats {
       return Math.round(((double) sum_) / pixelCount_);
    }
 
+   public long getMeanIntensityExcludingZeros() {
+      if (pixelCountExcludingZeros_ == 0) {
+         return 0;
+      }
+      return Math.round(((double) sum_) / pixelCountExcludingZeros_);
+   }
+
    public long getMinIntensity() {
       return minimum_;
+   }
+
+   public long getMinIntensityExcludingZeros() {
+      return minimumExcludingZeros_;
    }
 
    public long getMaxIntensity() {
@@ -179,7 +210,15 @@ public final class IntegerComponentStats {
          // Safe, in-range value that is less than max
          return Math.max(0L, (long) Math.round(getQuantile(0.5)) - 1L);
       }
-      return (long) Math.round(getQuantile(q));
+      return Math.round(getQuantile(q));
+   }
+
+   public long getAutoscaleMinForQuantileIgnoringZeros(double q) {
+      if (q >= 0.5) {
+         // Safe, in-range value that is less than max
+         return Math.max(0L, (long) Math.round(getQuantileIgnoringZeros(0.5)) - 1L);
+      }
+      return Math.round(getQuantileIgnoringZeros(q));
    }
 
    public long getAutoscaleMaxForQuantile(double q) {
@@ -187,11 +226,26 @@ public final class IntegerComponentStats {
          // Safe, in-range value that is greater than min
          return Math.max(1L, (long) Math.round(getQuantile(0.5)));
       }
-      return (long) Math.round(getQuantile(1.0 - q)) - 1L;
+      return Math.round(getQuantile(1.0 - q)) - 1L;
    }
 
-   // Note: return value is in range 0 to (1 + range max), because it is in the
-   // coordinates of bin edges, not centers.
+   public long getAutoscaleMaxForQuantileIgnoringZeros(double q) {
+      if (q >= 0.5) {
+         // Safe, in-range value that is greater than min
+         return Math.max(1L, (long) Math.round(getQuantileIgnoringZeros(0.5)));
+      }
+      return Math.round(getQuantileIgnoringZeros(1.0 - q)) - 1L;
+   }
+
+   /**
+    * Calculates the quantile, i.e. the bin value (ore more precise, the left bin edge)
+    * for the bin where q * 100% of the pixel values are in lower bins.
+    * Note: return value is in range 0 to (1 + range max), because it is in the
+    * coordinates of bin edges, not centers.
+    *
+    * @param q Fraction (0-1) of pixels that should be lower
+    * @return Value at which q * 100% of the pixels are lower
+    */
    public double getQuantile(double q) {
       Preconditions.checkArgument(q >= 0.0);
       Preconditions.checkArgument(q <= 1.0);
@@ -231,6 +285,61 @@ public final class IntegerComponentStats {
       double binFraction =
             (countBelowQuantile - cumDistrib[binIndex - 1])
                   / (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
+      return leftEdge + binFraction * binWidth;
+   }
+
+
+   /**
+    * Calculates the quantile, i.e. the bin value (ore more precise, the left bin edge)
+    * for the bin where q * 100% of the pixel values are in lower bins.
+    * Note: return value is in range 0 to (1 + range max), because it is in the
+    * coordinates of bin edges, not centers.
+    *
+    * @param q Fraction (0-1) of pixels that should be lower
+    * @return Value at which q * 100% of the pixels are lower
+    */
+   public double getQuantileIgnoringZeros(double q) {
+      Preconditions.checkArgument(q >= 0.0);
+      Preconditions.checkArgument(q <= 1.0);
+      if (histogram_ == null) {
+         return 0;
+      }
+
+      final long[] cumDistrib = getCumulativeDistribution();
+      // subtract zero pixels from pixelCount, unexpectedly, zero pixels are contained in
+      // histogram_[1]
+      long pixelCount = pixelCount_ - histogram_[1];
+      double countBelowQuantile = q * pixelCount + histogram_[1];
+
+      if (countBelowQuantile <= cumDistrib[2] && cumDistrib[2] > 0) {
+         // Quantile is below histogram range
+         return getHistogramRangeMin() + 1;
+      }
+      if (countBelowQuantile > cumDistrib[cumDistrib.length - 2]) {
+         // Quantile is above histogram range
+         return getHistogramRangeMax() + 1.0;
+      }
+
+      int binIndex;
+      // The binary seatch will find _a_ bin with the desired cumulative count,
+      // but it may not be the _only_ such bin, if the histogram contains bins
+      // with zero count. This is not an issue when 0 < q < 1 (for our use of
+      // the quantile for limiting scaling range), but when q = 0 or q = 1, we
+      // need to find the exact edge of the non-zero part of the histogram.
+      if (countBelowQuantile == 0) {
+         return minimum_;
+      } else if (countBelowQuantile == pixelCount) {
+         return maximum_ + 1;
+      }
+
+      binIndex = binarySearch(cumDistrib, 2, cumDistrib.length - 1,
+            (long) Math.floor(countBelowQuantile));
+
+      int binWidth = getHistogramBinWidth();
+      long leftEdge = (binIndex - 1) * binWidth;
+      double binFraction =
+             (countBelowQuantile - cumDistrib[binIndex - 1])
+                 / (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
       return leftEdge + binFraction * binWidth;
    }
 
@@ -275,4 +384,14 @@ public final class IntegerComponentStats {
       double mean = getMeanIntensity();
       return Math.sqrt(meanSq - (mean * mean));
    }
+
+   public double getStandardDeviationExcludingZeros() {
+      if (pixelCountExcludingZeros_ == 0) {
+         return Double.NaN;
+      }
+      double meanSq = ((double) sumOfSquares_) / pixelCountExcludingZeros_;
+      double mean = getMeanIntensityExcludingZeros();
+      return Math.sqrt(meanSq - (mean * mean));
+   }
+
 }

@@ -32,7 +32,6 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -1102,9 +1101,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
          if (images.getResult().size() > statsIndex) {
             ImageStats stats = images.getResult().get(statsIndex);
-            long min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
-            long max = Math.min(Integer.MAX_VALUE,
-                  stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
+            long min = 0;
+            long max = 0;
+            if (settings.isAutoscaleIgnoringZeros()) {
+               min = stats.getComponentStats(0).getAutoscaleMinForQuantileIgnoringZeros(q);
+               max = Math.min(Integer.MAX_VALUE,
+                     stats.getComponentStats(0).getAutoscaleMaxForQuantileIgnoringZeros(q));
+            } else {
+               min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
+               max = Math.min(Integer.MAX_VALUE,
+                     stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
+            }
             // NS 2019-05-29: This should not be done here, but in IntegerComponentsStats
             // however, I do not understand that code enough to touch it....
             // This at least fixes the display somewhat (showing black for
