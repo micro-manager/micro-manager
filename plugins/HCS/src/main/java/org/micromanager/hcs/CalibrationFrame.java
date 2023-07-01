@@ -178,10 +178,14 @@ public class CalibrationFrame extends JFrame {
             if (loadCalibration != null) {
                try {
                   PropertyMap propertyMap = PropertyMaps.loadJSON(loadCalibration);
-                  if (propertyMap.containsDouble(OFFSETX) && propertyMap.containsDouble(OFFSETY)) {
+                  if (propertyMap.containsDouble(OFFSETX) && propertyMap.containsDouble(OFFSETY)
+                           && propertyMap.containsString(calibrationMethod)) {
                      Point2D.Double offset = new Point2D.Double(propertyMap.getDouble(OFFSETX, 0.0),
                            propertyMap.getDouble(OFFSETY, 0.0));
                      siteGenerator.applyOffset(offset);
+                     settings.putString(calibrationMethod, propertyMap.getString(
+                           calibrationMethod, calibrationRecommended));
+                     siteGenerator.finishCalibration(offset);
                      this.dispose();
                   }
                } catch (IOException ioe) {
@@ -198,6 +202,8 @@ public class CalibrationFrame extends JFrame {
             DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
             builder.putDouble(OFFSETX, offset.getX());
             builder.putDouble(OFFSETY, offset.getY());
+            builder.putString(calibrationMethod,
+                  settings.getString(calibrationMethod, calibrationRecommended));
             File saveCalibration = FileDialogs.save(this, "Save calibration", OFFSET_FILE);
             if (saveCalibration != null) {
                try {
