@@ -23,7 +23,7 @@ package org.micromanager.plugins.micromanager;
 import fromScenery.Settings;
 import fromScenery.SettingsEditor;
 import kotlin.Unit;
-import microscenery.hardware.micromanagerConnection.MMConnection;
+import microscenery.hardware.micromanagerConnection.MMCoreConnector;
 import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
 import microscenery.network.ControlSignalsClient;
 import microscenery.network.RemoteMicroscopeServer;
@@ -64,7 +64,7 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
 
     public MicrosceneryStreamFrame(Studio studio, MicrosceneryContext msContext, MicrosceneryStream plugin) {
         super("Microscenery Stream Plugin");
-        MMConnection mmCon = msContext.mmCon;
+        MMCoreConnector mmCon = msContext.mmCon;
         micromanagerWrapper = msContext.micromanagerWrapper;
         server = msContext.server;
         msSettings  = msContext.msSettings;

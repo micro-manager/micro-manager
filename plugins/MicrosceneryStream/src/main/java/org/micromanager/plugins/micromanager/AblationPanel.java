@@ -6,7 +6,7 @@ import ij.gui.PointRoi;
 import ij.gui.Roi;
 import microscenery.Ablation;
 import microscenery.Util;
-import microscenery.hardware.micromanagerConnection.MMConnection;
+import microscenery.hardware.micromanagerConnection.MMCoreConnector;
 import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
 import microscenery.signals.AblationResults;
 import microscenery.signals.ClientSignal;
@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class AblationPanel extends JPanel {
-    private final MMConnection mmCon;
+    private final MMCoreConnector mmCon;
     private final Studio studio;
     private final Settings msSettings;
 
@@ -33,7 +33,7 @@ public class AblationPanel extends JPanel {
     private final JLabel meanTimeLabel = new JLabel("no data");
     private final JLabel stdTimeLabel = new JLabel("no data");
 
-    public AblationPanel(MMConnection mmCon, Studio studio, MicromanagerWrapper mmWrapper) {
+    public AblationPanel(MMCoreConnector mmCon, Studio studio, MicromanagerWrapper mmWrapper) {
         this.mmCon = mmCon;
         this.studio = studio;
 

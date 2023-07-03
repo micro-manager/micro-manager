@@ -1,7 +1,7 @@
 package org.micromanager.plugins.micromanager;
 
 import fromScenery.Settings;
-import microscenery.hardware.micromanagerConnection.MMConnection;
+import microscenery.hardware.micromanagerConnection.MMCoreConnector;
 import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
 import net.miginfocom.swing.MigLayout;
 
@@ -20,7 +20,7 @@ class StageLimitsPanel extends JPanel {
     // really ugly but prevents the settings update routines to trigger when the values are applied
     private boolean applyingStageLimits = false;
 
-    public StageLimitsPanel(MMConnection mmcon, MicromanagerWrapper wrapper, Settings msSettings) {
+    public StageLimitsPanel(MMCoreConnector mmcon, MicromanagerWrapper wrapper, Settings msSettings) {
         this.msSettings = msSettings;
 
 
