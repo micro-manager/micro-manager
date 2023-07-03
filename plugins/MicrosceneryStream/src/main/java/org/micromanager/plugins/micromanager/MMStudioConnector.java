@@ -13,4 +13,14 @@ public class MMStudioConnector implements microscenery.hardware.micromanagerConn
     public void startAcquisition() {
         studio.getAcquisitionManager().runAcquisition();
     }
+
+    @Override
+    public void snap() {
+        studio.getSnapLiveManager().snap(true);
+    }
+
+    @Override
+    public void live(boolean b) {
+        studio.live().setLiveModeOn(b);
+    }
 }
