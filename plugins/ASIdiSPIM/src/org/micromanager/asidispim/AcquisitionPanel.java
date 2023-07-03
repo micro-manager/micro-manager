@@ -974,6 +974,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     useMovementCorrectionCB_.isSelected());
            }
       });
+      // since this isn't implemented disable it for now
+      useMovementCorrectionCB_.setSelected(false);
+      useMovementCorrectionCB_.setEnabled(false);
+      useMovementCorrectionCB_.setToolTipText("Not fully implemented");
       
       
       // set up tabbed panels for GUI
