@@ -1,5 +1,6 @@
 package org.micromanager.hcs;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -32,6 +33,7 @@ import org.micromanager.Studio;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
+import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.utils.MMScriptException;
 
 
@@ -246,6 +248,8 @@ public class PlatePanel extends JPanel {
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());         
          wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), i);
       }
+
+      app_.events().registerForEvents(this);
    }
 
    private String getWellKey(int row, int column) {
@@ -792,4 +796,26 @@ public class PlatePanel extends JPanel {
       String well = plate_.getWellLabel(xyStagePos_.x, xyStagePos_.y);
       gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
    }
+
+   @Subscribe
+   public void xyStagePositionChanged(XYStagePositionChangedEvent xyStagePositionChangedEvent) {
+      if (gui_.isCalibratedXY()) {
+         try {
+            zStagePos_ = app_.getCMMCore().getPosition(gui_.getZStageName());
+         } catch (Exception e) {
+            app_.logs().logError(e);
+         }
+         final Graphics2D g = (Graphics2D) getGraphics();
+         xyStagePos_.x = xyStagePositionChangedEvent.getXPos();
+         xyStagePos_.y = xyStagePositionChangedEvent.getYPos();
+         if (!plate_.isPointWithin(xyStagePos_.x, xyStagePos_.y)) {
+            return;
+         }
+         String well = plate_.getWellLabel(xyStagePos_.x, xyStagePos_.y);
+         gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+         drawStagePointer(g);
+         repaint();
+      }
+   }
+
 }
