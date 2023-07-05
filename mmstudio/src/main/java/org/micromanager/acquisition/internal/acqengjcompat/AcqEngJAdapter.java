@@ -36,6 +36,7 @@ import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
@@ -349,7 +350,12 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       DefaultSummaryMetadata dsmd = new DefaultSummaryMetadata.Builder().build();
       summaryMetadata.put(PropertyKey.MICRO_MANAGER_VERSION.key(),
             dsmd.getMicroManagerVersion());
-      summaryMetadata.put("MDA_Settings", SequenceSettings.toJSONStream(acqSettings));
+      summaryMetadata.put(PropertyKey.MDA_SETTINGS.key(),
+            SequenceSettings.toJSONStream(acqSettings));
+      if (acqSettings.usePositionList()) {
+         summaryMetadata.put(PropertyKey.STAGE_POSITIONS.key(),
+               studio_.positions().getPositionList().toPropertyMap().toJSON());
+      }
    }
 
    /**
@@ -1179,24 +1185,27 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    public boolean abortRequest() {
       if (isAcquisitionRunning()) {
          String[] options = {"Abort", "Cancel"};
-         List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) curStore_);
          Component parentComponent = null;
-         if (displays != null && ! displays.isEmpty()) {
-            parentComponent = displays.get(0).getWindow();
-         }
-         int result = JOptionPane.showOptionDialog(parentComponent,
-               "Abort current acquisition task?",
-               "Micro-Manager",
-               JOptionPane.DEFAULT_OPTION,
-               JOptionPane.QUESTION_MESSAGE, null,
-               options, options[1]);
-         if (result == 0) {
-            stop(true);
-            return true;
-         } else {
-            return false;
+         if (curStore_ != null) {
+            List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) curStore_);
+            if (displays != null && !displays.isEmpty()) {
+               parentComponent = displays.get(0).getWindow();
+            }
+            int result = JOptionPane.showOptionDialog(parentComponent,
+                  "Abort current acquisition task?",
+                  "Micro-Manager",
+                  JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.QUESTION_MESSAGE, null,
+                  options, options[1]);
+            if (result == 0) {
+               stop(true);
+               return true;
+            } else {
+               return false;
+            }
          }
       }
+      stop(true);
       return true;
    }
 
