@@ -45,7 +45,6 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -68,6 +67,7 @@ public class MultiMDAFrame extends JFrame {
    private final JPanel acqPanel_;
    private final List<MDASettingData> acqs_ = new ArrayList<>();
    private final List<JLabel> acqLabels_ = new ArrayList<>();
+   private final List<JLabel> acqExplanations_ = new ArrayList<>();
    private static final String NR_ACQ_SETTINGS = "NumberOfSettings";
    private static final String ACQ_PATHS = "AcquisitionPaths";
    private final JSpinner nrSpinner_;
@@ -104,7 +104,7 @@ public class MultiMDAFrame extends JFrame {
       super.add(afPanel_, "wrap");
 
       // Create a text field for the user to customize their alerts.
-      super.add(new JLabel("Number of different settings: "));
+      super.add(new JLabel("Number of different settings: "), "split 2, gap 10");
       nrSpinner_ = new JSpinner();
       nrSpinner_.setValue(0);
       nrSpinner_.addChangeListener(e -> {
@@ -112,10 +112,33 @@ public class MultiMDAFrame extends JFrame {
          nrSpinner_.setValue(val);
          super.pack();
       });
-      super.add(nrSpinner_, "wrap");
+      super.add(nrSpinner_, "gap 10, wrap");
 
-      super.add(acqPanel_, "span 2, wrap");
+      super.add(acqPanel_, "wrap");
 
+
+      // Reload settings from disk, it would be nicer to auto-update whenever a file changes,
+      // but that needs monitoring the file...
+      JButton refreshButton = new JButton("Reload Settings");
+      refreshButton.addActionListener(e -> {
+         for (int i = 0; i < acqs_.size(); i++) {
+            File f = acqs_.get(i).getAcqSettingFile();
+            SequenceSettings seqSb;
+            try {
+               SequenceSettings seqS = studio_.acquisitions().loadSequenceSettings(f.getPath());
+               seqSb = seqS;
+            } catch (IOException ex) {
+               studio_.logs().logError(ex, "Failed to load Acquisition setting file");
+               continue;
+            }
+            if (seqSb != null) {
+               acqs_.get(i).setAcqSettings(f, seqSb);
+               acqExplanations_.get(i).setText(oneLineSummary(acqs_.get(i)));
+            }
+         }
+         super.pack();
+      });
+      super.add(refreshButton, "Span 2, split 2, align left, gap 10");
 
       // Run an acquisition using the current MDA parameters.
       JButton acquireButton = new JButton("Run Multi MDA");
@@ -157,7 +180,7 @@ public class MultiMDAFrame extends JFrame {
          acqThread.start();
       });
 
-      super.add(acquireButton, "span 2, align right, wrap");
+      super.add(acquireButton, "align right, push, gap 10, wrap");
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -172,7 +195,7 @@ public class MultiMDAFrame extends JFrame {
          int count = 0;
          for (String acqPath : acqPaths) {
             File f = new File(acqPath);
-            SequenceSettings seqSb = null;
+            SequenceSettings seqSb;
             try {
                SequenceSettings seqS = studio_.acquisitions().loadSequenceSettings(f.getPath());
                seqSb = seqS;
@@ -181,38 +204,6 @@ public class MultiMDAFrame extends JFrame {
                continue;
             }
             acqs_.add(count, new MDASettingData(studio_, f, seqSb));
-            JLabel label = new JLabel(acqs_.get(count).getAcqSettingFile().getName());
-            acqLabels_.add(count, label);
-            acqPanel_.add(acqLabels_.get(count));
-
-            JButton selectAcqFile = new JButton("...");
-            final int lineNr = count;
-            selectAcqFile.addActionListener(e -> {
-               File ff = FileDialogs.openFile(this,
-                     "Load acquisition settings", FileDialogs.ACQ_SETTINGS_FILE);
-               if (ff != null) {
-                  SequenceSettings seqSbb = null;
-                  try {
-                     seqSbb = studio_.acquisitions().loadSequenceSettings(f.getPath());
-                  } catch (IOException ex) {
-                     studio_.logs().showError(ex, "Failed to load Acquisition setting file");
-                  }
-                  if (seqSbb != null) {
-                     acqs_.get(lineNr).setAcqSettings(f, seqSbb);
-                     acqLabels_.get(lineNr).setText(
-                           acqs_.get(lineNr).getAcqSettingFile().getName());
-                  }
-               }
-            });
-            acqPanel_.add(selectAcqFile);
-
-            final JButton posListButton = new JButton("Use current PositionList");
-            posListButton.addActionListener(e -> {
-               acqs_.get(lineNr).setPositionList(studio_.positions().getPositionList());
-               posListButton.setText("PositionList set");
-            });
-            acqPanel_.add(posListButton, "wrap");
-
             count++;
          }
          nrSpinner_.setValue(count);
@@ -288,9 +279,11 @@ public class MultiMDAFrame extends JFrame {
          posListButton.addActionListener(e -> {
             acqs_.get(lineNr).setPositionList(studio_.positions().getPositionList());
             posListButton.setText("PositionList set");
+            acqExplanations_.get(lineNr).setText(oneLineSummary(acqs_.get(lineNr)));
          });
          acqPanel_.add(posListButton);
-         acqPanel_.add(new JLabel(oneLineSummary(acqs_.get(lineNr).getSequenceSettings())), "wrap");
+         acqExplanations_.add(new JLabel(oneLineSummary(acqs_.get(lineNr))));
+         acqPanel_.add(acqExplanations_.get(lineNr), "wrap");
 
       }
       while (nr < acqs_.size()) {
@@ -396,25 +389,37 @@ public class MultiMDAFrame extends JFrame {
       return afPanel;
    }
 
-   private String oneLineSummary(SequenceSettings sequenceSettings) {
+   private String oneLineSummary(MDASettingData mdaSettingData) {
       StringBuilder sb = new StringBuilder();
-      if (sequenceSettings.useSlices()) {
-         sb.append("ZStack, ").append(MultiAcqEngJAdapter.getNumSlices(sequenceSettings))
-               .append(" slices. ");
+      if (mdaSettingData.getSequenceSettings().useSlices()) {
+         sb.append("ZStack: ").append(MultiAcqEngJAdapter.getNumSlices(
+               mdaSettingData.getSequenceSettings())).append(" slices. ");
       }
-      if (sequenceSettings.useChannels()) {
+      if (mdaSettingData.getSequenceSettings().useChannels()) {
          sb.append("Channels: ");
-         for (ChannelSpec channelSpec : sequenceSettings.channels()) {
+         for (ChannelSpec channelSpec : mdaSettingData.getSequenceSettings().channels()) {
             if (channelSpec.useChannel()) {
-               sb.append(channelSpec.config()).append(" ");
+               sb.append(channelSpec.config()).append(", ");
             }
          }
+      }
+      if (mdaSettingData.getPositionList() != null
+            && mdaSettingData.getPositionList().getNumberOfPositions() > 0) {
+         sb.append("Positions: ").append(mdaSettingData.getPositionList().getNumberOfPositions());
+         sb.append(".");
+      } else {
+         sb.append("Positions: current only.");
+      }
+      if (mdaSettingData.getSequenceSettings().save()) {
+         sb.append(" Saving.");
+      } else {
+         sb.append(" Not saving.");
       }
       return sb.toString();
    }
 
    /**
-    * Event signalling that MM will shut down.  Out cue to store current settings to
+    * Event signalling that MM will shut down.  Our cue to store current settings to
     * the profile
     *
     * @param sce This event can be used to stop MM from shutting down, but we only use

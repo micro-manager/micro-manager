@@ -251,7 +251,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          currentMultiMDA_.start();
 
          // Start the events and signal to finish when complete
-         for (int t = 0; t < timeLapseSettings_.numFrames(); t++) {
+         int nrFrames = 1;
+         if (timeLapseSettings_.useFrames()) {
+            nrFrames = timeLapseSettings_.numFrames();
+         }
+         for (int t = 0; t < nrFrames; t++) {
             for (int i = 0; i < sequenceSettings.size(); i++) {
                currentMultiMDA_.submitEventIterator(createAcqEventIterator(
                      sequenceSettings.get(i),
