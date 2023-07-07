@@ -22,12 +22,13 @@
 package org.micromanager.acquisition.internal.acqengjcompat;
 
 import com.google.common.eventbus.Subscribe;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import java.awt.Component;
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -40,7 +41,6 @@ import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PositionList;
-import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -57,9 +57,9 @@ import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
@@ -84,6 +84,9 @@ import org.micromanager.internal.utils.NumberUtils;
  * - The number of images and other parameters are all known at the start of acquisition
  */
 public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCallbacks {
+   private static final String DATEFORMAT = "yyyy-MM-dd HH:mm:ss.SSS Z";
+
+   private final SimpleDateFormat simpleDateFormat_;
 
    private Acquisition currentAcquisition_;
 
@@ -93,15 +96,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private String zStage_;
    private SequenceSettings sequenceSettings_;
 
-   protected JSONObject summaryMetadata_;
-   private ArrayList<AcqSettingsListener> settingsListeners_;
+   private final ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
 
 
    private long nextWakeTime_ = -1;
 
-   private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
+   private final ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
 
    private class RunnablePlusIndices {
       int channel_;
@@ -131,6 +133,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       new Engine(core_);
       settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
+      simpleDateFormat_ = new SimpleDateFormat(DATEFORMAT);
    }
 
    // this is where the work happens
@@ -222,15 +225,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          loadRunnables(acquisitionSettings);
 
-         summaryMetadata_ = currentAcquisition_.getSummaryMetadata();
-         addMMSummaryMetadata(summaryMetadata_, sequenceSettings);
+         SummaryMetadata summaryMetadata = DefaultSummaryMetadata.fromPropertyMap(
+                  NonPropertyMapJSONFormats.summaryMetadata()
+                  .fromJSON(currentAcquisition_.getSummaryMetadata().toString()));
+         SummaryMetadata.Builder smb = addAcqToSummaryMetadata(summaryMetadata.copyBuilder(),
+                  acquisitionSettings);
+         smb.startDate(simpleDateFormat_.format(new Date()));
 
-         MMAcquisition acq = new MMAcquisition(studio_,
-               acquisitionSettings.save() ? acquisitionSettings.root() : null,
-               acquisitionSettings.prefix(),
-               summaryMetadata_,
-               this,
-               acquisitionSettings.shouldDisplayImages());
+         MMAcquisition acq = new MMAcquisition(studio_, acquisitionSettings, smb.build(), this);
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
          sink.setDatastore(curStore_);
@@ -302,12 +304,76 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          return curStore_;
 
       } catch (Throwable ex) {
-         studio_.logs().showError((Exception) ex);
+         if (ex instanceof Exception) {
+            studio_.logs().showError((Exception) ex);
+         }
          if (currentAcquisition_ != null && currentAcquisition_.areEventsFinished()) {
             studio_.events().post(new DefaultAcquisitionEndedEvent(curStore_, this));
          }
          return null;
       }
+   }
+
+   private SummaryMetadata.Builder addAcqToSummaryMetadata(SummaryMetadata.Builder smb,
+                                                           SequenceSettings acqSettings) {
+      String computerName = null;
+      try {
+         computerName = InetAddress.getLocalHost().getHostName();
+      } catch (UnknownHostException e) {
+         studio_.logs().logError(e);
+      }
+      smb.userName(System.getProperty("user.name"))
+            .profileName(studio_.profile().getProfileName())
+            .computerName(computerName);
+
+      // Channelgroup and channel names
+      smb.channelGroup(acqSettings.channelGroup());
+      List<String> channelNames = new ArrayList<>(acqSettings.channels().size());
+      if (acqSettings.useChannels() && acqSettings.channels().size() > 0) {
+         for (ChannelSpec c : acqSettings.channels()) {
+            if (c.useChannel()) {
+               channelNames.add(c.config());
+            }
+         }
+      }
+      smb.channelNames(channelNames);
+
+      // time related stuff
+      if (acqSettings.useFrames()) {
+         smb.waitInterval(acqSettings.intervalMs());
+      }
+      // TODO: Custom intervals, first support in AcqEngJ
+
+      // Z Steps
+      if (acqSettings.useSlices()) {
+         smb.zStepUm(acqSettings.sliceZStepUm());
+      }
+
+      // Shutter behavior
+      smb.keepShutterOpenChannels(acqSettings.keepShutterOpenChannels());
+      smb.keepShutterOpenSlices(acqSettings.keepShutterOpenSlices());
+
+      // Intended dimensions and axis order
+      smb.intendedDimensions(studio_.data().coordsBuilder().t(getNumFrames()).z(getNumSlices())
+                  .c(getNumChannels(acqSettings)).p(getNumPositions()).build());
+      smb.axisOrder(new AcqOrderMode(acqSettings.acqOrderMode()).getOrderingInCoordStrings());
+
+      // saving location
+      if (acqSettings.save()) {
+         smb.directory(acqSettings.root());
+         smb.prefix(acqSettings.prefix());
+      }
+
+      // TODO: MDA Settings
+      // summaryMetadata.put(PropertyKey.MDA_SETTINGS.key(),
+      //         SequenceSettings.toJSONStream(acqSettings));
+
+      // PositionList
+      if (acqSettings.usePositionList()) {
+         smb.stagePositions(posList_.getPositions());
+      }
+
+      return smb;
    }
 
    /**
@@ -364,16 +430,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       }
    }
 
-   public JsonElement convertToGson(PropertyKey pk, PropertyMap source) {
-      if (!source.containsPropertyMapList(pk.key())) {
-         return null;
-      }
-      JsonArray ja = new JsonArray();
-      for (PropertyMap msp : source.getPropertyMapList(pk.key())) {
-         ja.add(NonPropertyMapJSONFormats.positionList().toGson(msp));
-      }
-      return ja;
-   }
 
    /**
     * Higher level code in MMStudio expects certain metadata tags that
@@ -463,7 +519,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // TODO: does current API expect this to be before or after hardware? after camera?
          //  during event generation?
       }
-      ;
    }
 
    /**
@@ -969,20 +1024,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       return (1.25 * getTotalMemory()) < usableMB;
    }
 
-   private String getSource(ChannelSpec channel) {
-      try {
-         Configuration state = core_.getConfigState(core_.getChannelGroup(), channel.config());
-         if (state.isPropertyIncluded("Core", "Camera")) {
-            return state.getSetting("Core", "Camera").getPropertyValue();
-         } else {
-            return "";
-         }
-      } catch (Exception ex) {
-         studio_.logs().logError(ex);
-         return "";
-      }
-   }
-
    /**
     * Will notify registered AcqSettingsListeners that the settings have changed.
     */
@@ -1204,7 +1245,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          String[] options = {"Abort", "Cancel"};
          Component parentComponent = null;
          if (curStore_ != null) {
-            List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) curStore_);
+            List<DisplayWindow> displays = studio_.displays().getDisplays(curStore_);
             if (displays != null && !displays.isEmpty()) {
                parentComponent = displays.get(0).getWindow();
             }
@@ -1527,7 +1568,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             order.append("Slice");
          }
 
-         return txt + order.toString();
+         return txt + order;
       } else {
          return txt;
       }
@@ -1595,12 +1636,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       return false;
    }
 
-   /*
-    * Returns the summary metadata associated with the most recent acquisition.
+   /**
+    * We maintain the summaryMetadata as a SummaryMetadata object, and there is no path to
+    * convert this cleanly to JSON.
+    * Also, this function does not seem to be used anywhere.
     */
    @Override
    public JSONObject getSummaryMetadata() {
-      return summaryMetadata_;
+      return null;
    }
 
    @Override

@@ -143,7 +143,6 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Subscribe
    public void onDatastoreClosed(DatastoreClosingEvent event) {
       // TODO XXX This should be done by the individual data viewers
-      ArrayList<DisplayWindow> displays = null;
       Datastore store = event.getDatastore();
       synchronized (this) {
          providerToDisplays_.remove(store);
