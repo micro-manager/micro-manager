@@ -22,6 +22,9 @@
 package org.micromanager.acquisition.internal.acqengjcompat;
 
 import com.google.common.eventbus.Subscribe;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
@@ -36,8 +39,8 @@ import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -64,6 +67,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
@@ -353,9 +357,22 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       summaryMetadata.put(PropertyKey.MDA_SETTINGS.key(),
             SequenceSettings.toJSONStream(acqSettings));
       if (acqSettings.usePositionList()) {
+         //   JsonArray jo = convertToGson(PropertyKey.STAGE_POSITIONS,
+         //           studio_.positions().getPositionList().toPropertyMap()).getAsJsonArray();
          summaryMetadata.put(PropertyKey.STAGE_POSITIONS.key(),
-               studio_.positions().getPositionList().toPropertyMap().toJSON());
+                 studio_.positions().getPositionList().toPropertyMap().toJSON());
       }
+   }
+
+   public JsonElement convertToGson(PropertyKey pk, PropertyMap source) {
+      if (!source.containsPropertyMapList(pk.key())) {
+         return null;
+      }
+      JsonArray ja = new JsonArray();
+      for (PropertyMap msp : source.getPropertyMapList(pk.key())) {
+         ja.add(NonPropertyMapJSONFormats.positionList().toGson(msp));
+      }
+      return ja;
    }
 
    /**
