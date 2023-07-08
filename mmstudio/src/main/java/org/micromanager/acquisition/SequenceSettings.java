@@ -333,6 +333,7 @@ public final class SequenceSettings {
          s.sliceZBottomUm = sliceZBottomUm;
          s.sliceZTopUm = sliceZTopUm;
          s.acqOrderMode = acqOrderMode;
+         s.version = Version;
 
          return s;
       }
@@ -558,6 +559,7 @@ public final class SequenceSettings {
     */
    private int acqOrderMode;
 
+   private double version;
 
    /**
     * Create a copy of this SequenceSettings. All parameters will be copied,
@@ -832,6 +834,10 @@ public final class SequenceSettings {
       return acqOrderMode;
    }
 
+   public double getVersion() {
+      return version;
+   }
+
    public static String toJSONStream(SequenceSettings settings) {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       return gson.toJson(settings);
@@ -839,6 +845,11 @@ public final class SequenceSettings {
 
    public static SequenceSettings fromJSONStream(String stream) {
       Gson gson = new Gson();
-      return gson.fromJson(stream, SequenceSettings.class);
+      SequenceSettings result = gson.fromJson(stream, SequenceSettings.class);
+      double version = result.getVersion();
+      if (version <= Version) {
+         return result;
+      }
+      return null;
    }
 }

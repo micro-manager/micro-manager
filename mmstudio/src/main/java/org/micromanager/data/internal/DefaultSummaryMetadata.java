@@ -50,6 +50,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.MMStudio;
@@ -248,6 +249,12 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       @Override
       public Builder userData(PropertyMap userData) {
          b_.putPropertyMap(USER_DATA.key(), userData);
+         return this;
+      }
+
+      @Override
+      public Builder sequenceSettings(SequenceSettings sequenceSettings) {
+         b_.putString(MDA_SETTINGS.key(), SequenceSettings.toJSONStream(sequenceSettings));
          return this;
       }
    }
@@ -451,6 +458,11 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public PropertyMap getUserData() {
       return pmap_.getPropertyMap(USER_DATA.key(), PropertyMaps.emptyPropertyMap());
+   }
+
+   @Override
+   public SequenceSettings getSequenceSettings() {
+      return SequenceSettings.fromJSONStream(pmap_.getString(MDA_SETTINGS.key()));
    }
 
    @Override
