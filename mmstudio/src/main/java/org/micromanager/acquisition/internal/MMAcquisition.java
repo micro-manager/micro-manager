@@ -104,16 +104,17 @@ public final class MMAcquisition extends DataViewerListener {
     * resulting datastore.
     *
     * @param studio          Micro-Manager Studio object.
-    * @param summaryMetadata Summarymetadata that will be added to the datastore.
+    * @param summaryMetadata SummaryMetadata that will be added to the datastore.
     * @param callbacks       acquisition engine object or other object that implements callbacks.
-    * @param show            Whether or not open a display on the ongoing acquisition.
+    * @param acqSettings     Settings to be saved in SummaryMetadata, and to determine whether
+    *                        viewer should be shown.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMAcquisition(Studio studio, String dir, String prefix, JSONObject summaryMetadata,
-                        MMAcquistionControlCallbacks callbacks, boolean show) {
+                        MMAcquistionControlCallbacks callbacks, SequenceSettings acqSettings) {
       studio_ = studio;
       callbacks_ = callbacks;
-      show_ = show;
+      show_ = acqSettings.shouldDisplayImages();
       // TODO: get rid of MMStudo cast
       store_ = new DefaultDatastore(studio);
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
@@ -150,6 +151,7 @@ public final class MMAcquisition extends DataViewerListener {
          SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(
                   NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                            summaryMetadata.toString()));
+         summary = summary.copyBuilder().sequenceSettings(acqSettings).build();
          // Calculate expected images from dimensionality in summary metadata.
          Coords dims = summary.getIntendedDimensions();
          imagesExpected_ = 1;

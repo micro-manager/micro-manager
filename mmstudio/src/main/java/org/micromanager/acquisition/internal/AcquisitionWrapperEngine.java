@@ -235,7 +235,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
             prefix = summaryMetadata_.getString("Prefix");
          }
          MMAcquisition acq = new MMAcquisition(studio_, dir, prefix,
-                 summaryMetadata_, this, shouldShow);
+                 summaryMetadata_, this, acquisitionSettings);
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
 
