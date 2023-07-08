@@ -30,6 +30,7 @@ import static org.micromanager.data.internal.PropertyKey.INTENDED_DIMENSIONS;
 import static org.micromanager.data.internal.PropertyKey.INTERVAL_MS;
 import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS;
 import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_SLICES;
+import static org.micromanager.data.internal.PropertyKey.MDA_SETTINGS;
 import static org.micromanager.data.internal.PropertyKey.METADATA_VERSION;
 import static org.micromanager.data.internal.PropertyKey.MICRO_MANAGER_VERSION;
 import static org.micromanager.data.internal.PropertyKey.PREFIX;
