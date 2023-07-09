@@ -28,13 +28,7 @@ import javax.swing.JPanel;
 import mmcorej.DeviceType;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 import org.micromanager.events.XYStagePositionChangedEvent;
-import org.micromanager.internal.utils.MMScriptException;
 
 
 /**
@@ -289,10 +283,6 @@ public class PlatePanel extends JPanel {
             gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
             refreshStagePosition();
             repaint();
-         } catch (MMScriptException e1) {
-            xyStagePos_ = new Point2D.Double(0.0, 0.0);
-            zStagePos_ = 0.0;
-            throw new HCSException(e1.getMessage());
          } catch (Exception e2) {
             throw new HCSException(e2.getMessage());
          }
