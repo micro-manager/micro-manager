@@ -180,6 +180,11 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
    }
 
    @Override
+   public void increaseMaxResolutionLevel(int i) {
+      storage_.increaseMaxResolutionLevel(i);
+   }
+
+   @Override
    public String getDiskLocation() {
       return dir_;
    }

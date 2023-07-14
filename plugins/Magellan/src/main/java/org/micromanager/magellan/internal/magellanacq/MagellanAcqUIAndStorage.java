@@ -333,6 +333,11 @@ public class MagellanAcqUIAndStorage
    }
 
    @Override
+   public void increaseMaxResolutionLevel(int i) {
+      storage_.increaseMaxResolutionLevel(i);
+   }
+
+   @Override
    public String getDiskLocation() {
       return storage_.getDiskLocation();
    }
