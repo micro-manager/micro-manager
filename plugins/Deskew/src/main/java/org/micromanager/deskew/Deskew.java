@@ -50,6 +50,6 @@ public class Deskew implements ProcessorPlugin, SciJavaPlugin {
 
    @Override
    public ProcessorFactory createFactory(PropertyMap settings) {
-      return new DeskewFactory(settings);
+      return new DeskewFactory(studio_, settings);
    }
 }
