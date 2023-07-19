@@ -1,5 +1,6 @@
 package org.micromanager.deskew;
 
+import java.text.ParseException;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -14,8 +15,6 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
-import java.text.ParseException;
-
 
 public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    private static final int DEFAULT_WIN_X = 100;
@@ -23,7 +22,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    private static final String DIALOG_TITLE = "Deskew";
 
    // keys to store settings in MutablePropertyMap
-   static final String THETA ="Theta";
+   static final String THETA = "Theta";
    static final String FULL_VOLUME = "Create Full Volume";
    static final String PROJECTIONS = "Do Projections";
    static final String KEEP_ORIGINAL = "KeepOriginal";
@@ -97,7 +96,8 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       private final MutablePropertyMapView settings_;
       private final Object type_;
 
-      public TextFieldUpdater(JTextField field, String key, Object type, MutablePropertyMapView settings) {
+      public TextFieldUpdater(JTextField field, String key, Object type,
+                              MutablePropertyMapView settings) {
          field_ = field;
          key_ = key;
          settings_ = settings;
@@ -125,7 +125,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
                double factor = NumberUtils.displayStringToDouble(field_.getText());
                settings_.putString(key_, NumberUtils.doubleToDisplayString(factor));
             } catch (ParseException p) {
-               studio_.logs().logError(p);
+               studio_.logs().logError("Error parsing number in DeskewFrame.");
             }
          }
       }

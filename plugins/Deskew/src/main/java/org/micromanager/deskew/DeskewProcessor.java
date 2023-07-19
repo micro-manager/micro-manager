@@ -1,5 +1,6 @@
 package org.micromanager.deskew;
 
+import java.io.IOException;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
@@ -15,8 +16,6 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.lightsheet.StackResampler;
 
-import java.io.IOException;
-
 public class DeskewProcessor implements Processor {
    private SummaryMetadata inputSummaryMetadata_;
    private final Studio studio_;
@@ -26,7 +25,8 @@ public class DeskewProcessor implements Processor {
    private final boolean keepOriginals_;
    private StackResampler fullVolumeResampler_ = null;
 
-   public DeskewProcessor (Studio studio, double theta, boolean doFullVolume, boolean doProjections, boolean keepOriginals) {
+   public DeskewProcessor(Studio studio, double theta, boolean doFullVolume,
+                           boolean doProjections, boolean keepOriginals) {
       studio_ = studio;
       theta_ = theta;
       doFullVolume_ = doFullVolume;
@@ -45,21 +45,27 @@ public class DeskewProcessor implements Processor {
       if (image.getCoords().getZ() == 1) {
          fullVolumeResampler_ = new StackResampler(StackResampler.FULL_VOLUME, false, theta_,
                  image.getMetadata().getPixelSizeUm(), inputSummaryMetadata_.getZStepUm(),
-                 inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getWidth(), image.getHeight());
+                 inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getWidth(),
+                  image.getHeight());
+         fullVolumeResampler_.initializeProjections();
       }
       if (fullVolumeResampler_ != null) {
-         fullVolumeResampler_.addImageToRecons((short[]) image.getRawPixels(), image.getCoords().getZ());
+         fullVolumeResampler_.addImageToRecons((short[]) image.getRawPixels(),
+                  image.getCoords().getZ());
       }
 
       if (image.getCoords().getZ() == inputSummaryMetadata_.getIntendedDimensions().getZ() - 1) {
          fullVolumeResampler_.finalizeProjections();
          if (doFullVolume_) {
-            int width =fullVolumeResampler_.getResampledShapeX();
+            int width = fullVolumeResampler_.getResampledShapeX();
             int height = fullVolumeResampler_.getResampledShapeY();
             int nrZPlanes = fullVolumeResampler_.getResampledShapeZ();
+            double newZStep = fullVolumeResampler_.getReconstructionVoxelSizeUm();
             Datastore outputStore =  studio_.data().createRAMDatastore();
-            SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder().intendedDimensions(
-                    inputSummaryMetadata_.getIntendedDimensions().copyBuilder().z(nrZPlanes).build()).build();
+            SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
+                     .zStepUm(newZStep).intendedDimensions(inputSummaryMetadata_
+                              .getIntendedDimensions().copyBuilder().z(nrZPlanes).build())
+                     .build();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
             formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
             formatBuilder.putInteger(PropertyKey.HEIGHT.key(), height);
@@ -70,7 +76,8 @@ public class DeskewProcessor implements Processor {
                outputStore.setSummaryMetadata(outputSummaryMetadata);
                short[][] reconstructedVolume = fullVolumeResampler_.getReconstructedVolumeZYX();
                for (int z = 0; z < reconstructedVolume.length; z++) {
-                  Image img = new DefaultImage(reconstructedVolume[z], format, cb.z(z).build(), null);
+                  Image img = new DefaultImage(reconstructedVolume[z], format, cb.z(z).build(),
+                           image.getMetadata().copyBuilderWithNewUUID().build());
                   outputStore.putImage(img);
                }
                DisplayWindow display = studio_.displays().createDisplay(outputStore);

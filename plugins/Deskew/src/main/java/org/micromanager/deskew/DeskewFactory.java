@@ -1,12 +1,11 @@
 package org.micromanager.deskew;
 
+import java.text.ParseException;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.internal.utils.NumberUtils;
-
-import java.text.ParseException;
 
 public class DeskewFactory implements ProcessorFactory {
    private final Studio studio_;
@@ -20,7 +19,8 @@ public class DeskewFactory implements ProcessorFactory {
    @Override
    public Processor createProcessor() {
       try {
-         double theta = NumberUtils.displayStringToDouble(settings_.getString(DeskewFrame.THETA, "0.0"));
+         double theta = NumberUtils.displayStringToDouble(settings_.getString(
+                  DeskewFrame.THETA, "0.0"));
          boolean doFullVolume = settings_.getBoolean(DeskewFrame.FULL_VOLUME, true);
          boolean doProjections = settings_.getBoolean(DeskewFrame.PROJECTIONS, false);
          boolean keepOriginal = settings_.getBoolean(DeskewFrame.KEEP_ORIGINAL, true);
