@@ -23,6 +23,7 @@ package org.micromanager.data;
 import java.util.List;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
+import org.micromanager.acquisition.SequenceSettings;
 
 /**
  * This class defines the summary metadata that applies to all images in a
@@ -99,6 +100,8 @@ public interface SummaryMetadata {
 
       @Override
       Builder userData(PropertyMap userData);
+
+      Builder sequenceSettings(SequenceSettings sequenceSettings);
    }
 
    /**
@@ -349,4 +352,13 @@ public interface SummaryMetadata {
     * @return Any general-purpose user meta data
     */
    PropertyMap getUserData();
+
+
+   /**
+    * Settings that define the Multi-Dimensional Acquisition specified by the user
+    * to acquire this data set.
+    *
+    * @return The settings that define this MDA.
+    */
+   SequenceSettings getSequenceSettings();
 }

@@ -1,5 +1,6 @@
 package org.micromanager.data.internal;
 
+import clojure.lang.PersistentTreeMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -30,6 +31,7 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.SnapLiveManager;
 import org.micromanager.StagePosition;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -702,6 +704,8 @@ public enum PropertyKey {
          return null;
       }
    },
+
+   MDA_SETTINGS("MdaSettings", SequenceSettings.class),
 
    METADATA_VERSION("MetadataVersion", SummaryMetadata.class) {
       @Override

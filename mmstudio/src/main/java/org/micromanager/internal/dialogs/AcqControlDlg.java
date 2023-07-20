@@ -1176,16 +1176,22 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    /**
-    * Loads the Acquisition settings from the use profile.
+    * Loads the Acquisition settings from the user profile.
+    * If there are no settings, or if they are of a newer version that ours,
+    * returns default Acquisition Settings.
     *
     * @return Object defining acquisitions settings.
     */
-   public final synchronized SequenceSettings loadAcqSettingsFromProfile() {
+   public synchronized SequenceSettings loadAcqSettingsFromProfile() {
       String seqString = settings_.getString(MDA_SEQUENCE_SETTINGS, "");
+      SequenceSettings sequenceSettings = null;
       if (!seqString.isEmpty()) {
-         return SequenceSettings.fromJSONStream(seqString);
+         sequenceSettings = SequenceSettings.fromJSONStream(seqString);
       }
-      return (new SequenceSettings.Builder()).build();
+      if (sequenceSettings == null) {
+         sequenceSettings = (new SequenceSettings.Builder()).build();
+      }
+      return sequenceSettings;
    }
 
    /**

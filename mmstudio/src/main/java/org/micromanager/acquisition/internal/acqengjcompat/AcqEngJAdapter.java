@@ -227,7 +227,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                acquisitionSettings.prefix(),
                summaryMetadata_,
                this,
-               acquisitionSettings.shouldDisplayImages());
+               acquisitionSettings);
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
          sink.setDatastore(curStore_);

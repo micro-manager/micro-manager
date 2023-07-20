@@ -30,6 +30,7 @@ import static org.micromanager.data.internal.PropertyKey.INTENDED_DIMENSIONS;
 import static org.micromanager.data.internal.PropertyKey.INTERVAL_MS;
 import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS;
 import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_SLICES;
+import static org.micromanager.data.internal.PropertyKey.MDA_SETTINGS;
 import static org.micromanager.data.internal.PropertyKey.METADATA_VERSION;
 import static org.micromanager.data.internal.PropertyKey.MICRO_MANAGER_VERSION;
 import static org.micromanager.data.internal.PropertyKey.PREFIX;
@@ -41,7 +42,6 @@ import static org.micromanager.data.internal.PropertyKey.USER_NAME;
 import static org.micromanager.data.internal.PropertyKey.Z_STEP_UM;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,6 +51,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.MMStudio;
@@ -251,12 +252,34 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          b_.putPropertyMap(USER_DATA.key(), userData);
          return this;
       }
+
+      @Override
+      public Builder sequenceSettings(SequenceSettings sequenceSettings) {
+         b_.putString(MDA_SETTINGS.key(), SequenceSettings.toJSONStream(sequenceSettings));
+         return this;
+      }
    }
 
 
    private final PropertyMap pmap_;
 
    private DefaultSummaryMetadata(PropertyMap pmap) {
+      if (!pmap.containsString(MICRO_MANAGER_VERSION.key())
+               || !pmap.containsString(METADATA_VERSION.key())) {
+         String version = "Unknown";
+         if (MMStudio.getInstance() != null) {
+            version = MMStudio.getInstance().compat().getVersion();
+         }
+         PropertyMap.Builder builder = pmap.copyBuilder();
+         if (!pmap.containsString(MICRO_MANAGER_VERSION.key())) {
+            builder.putString(MICRO_MANAGER_VERSION.key(), version);
+         }
+         if (!pmap.containsString(METADATA_VERSION.key())) {
+            builder.putString(METADATA_VERSION.key(), CURRENT_METADATA_VERSION);
+         }
+         pmap = builder.build();
+      }
+
       pmap_ = pmap;
 
       // Check map format
@@ -286,6 +309,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          ReportingUtils.showError(ex,
                "Encountered an error reading metadata.  Please report (Help > Report a Problem)");
       }
+
    }
 
    @Override
@@ -435,6 +459,11 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public PropertyMap getUserData() {
       return pmap_.getPropertyMap(USER_DATA.key(), PropertyMaps.emptyPropertyMap());
+   }
+
+   @Override
+   public SequenceSettings getSequenceSettings() {
+      return SequenceSettings.fromJSONStream(pmap_.getString(MDA_SETTINGS.key()));
    }
 
    @Override

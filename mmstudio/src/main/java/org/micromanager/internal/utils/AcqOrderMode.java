@@ -1,6 +1,8 @@
 package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
+import java.util.List;
+import org.micromanager.data.Coords;
 
 /**
  * Information about the order of various axes (z, c, t, etc..) during the acquisition
@@ -129,6 +131,39 @@ public final class AcqOrderMode {
          result.add("Channel");
       } else if (sliceEnabled_) {
          result.add("Slice");
+      }
+
+      return result;
+   }
+
+   public List<String> getOrderingInCoordStrings() {
+      ArrayList<String> result = new ArrayList<>();
+      if (timeEnabled_ && posEnabled_) {
+         if (id_ == TIME_POS_CHANNEL_SLICE || id_ == TIME_POS_SLICE_CHANNEL) {
+            result.add(Coords.T);
+            result.add(Coords.P);
+         } else {
+            result.add(Coords.P);
+            result.add(Coords.T);
+         }
+      } else if (timeEnabled_) {
+         result.add(Coords.T);
+      } else if (posEnabled_) {
+         result.add(Coords.P);
+      }
+
+      if (channelEnabled_ && sliceEnabled_) {
+         if (id_ == TIME_POS_CHANNEL_SLICE || id_ == POS_TIME_CHANNEL_SLICE) {
+            result.add(Coords.C);
+            result.add(Coords.Z);
+         } else {
+            result.add(Coords.Z);
+            result.add(Coords.C);
+         }
+      } else if (channelEnabled_) {
+         result.add(Coords.C);
+      } else if (sliceEnabled_) {
+         result.add(Coords.Z);
       }
 
       return result;
