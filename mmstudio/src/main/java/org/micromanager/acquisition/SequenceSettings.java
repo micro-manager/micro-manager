@@ -25,8 +25,10 @@ package org.micromanager.acquisition;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import java.util.ArrayList;
 import org.micromanager.data.Datastore;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -844,11 +846,15 @@ public final class SequenceSettings {
    }
 
    public static SequenceSettings fromJSONStream(String stream) {
-      Gson gson = new Gson();
-      SequenceSettings result = gson.fromJson(stream, SequenceSettings.class);
-      double version = result.getVersion();
-      if (version <= Version) {
-         return result;
+      try {
+         Gson gson = new Gson();
+         SequenceSettings result = gson.fromJson(stream, SequenceSettings.class);
+         double version = result.getVersion();
+         if (version <= Version) {
+            return result;
+         }
+      } catch (JsonSyntaxException jse) {
+         ReportingUtils.logError(jse);
       }
       return null;
    }
