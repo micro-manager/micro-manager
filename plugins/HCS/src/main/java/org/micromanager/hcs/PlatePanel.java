@@ -1,5 +1,6 @@
 package org.micromanager.hcs;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -27,12 +28,7 @@ import javax.swing.JPanel;
 import mmcorej.DeviceType;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
-import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.events.XYStagePositionChangedEvent;
 
 
 /**
@@ -246,6 +242,8 @@ public class PlatePanel extends JPanel {
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());         
          wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), i);
       }
+
+      app_.events().registerForEvents(this);
    }
 
    private String getWellKey(int row, int column) {
@@ -285,10 +283,6 @@ public class PlatePanel extends JPanel {
             gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
             refreshStagePosition();
             repaint();
-         } catch (MMScriptException e1) {
-            xyStagePos_ = new Point2D.Double(0.0, 0.0);
-            zStagePos_ = 0.0;
-            throw new HCSException(e1.getMessage());
          } catch (Exception e2) {
             throw new HCSException(e2.getMessage());
          }
@@ -792,4 +786,26 @@ public class PlatePanel extends JPanel {
       String well = plate_.getWellLabel(xyStagePos_.x, xyStagePos_.y);
       gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
    }
+
+   @Subscribe
+   public void xyStagePositionChanged(XYStagePositionChangedEvent xyStagePositionChangedEvent) {
+      if (gui_.isCalibratedXY()) {
+         try {
+            zStagePos_ = app_.getCMMCore().getPosition(gui_.getZStageName());
+         } catch (Exception e) {
+            app_.logs().logError(e);
+         }
+         final Graphics2D g = (Graphics2D) getGraphics();
+         xyStagePos_.x = xyStagePositionChangedEvent.getXPos();
+         xyStagePos_.y = xyStagePositionChangedEvent.getYPos();
+         if (!plate_.isPointWithin(xyStagePos_.x, xyStagePos_.y)) {
+            return;
+         }
+         String well = plate_.getWellLabel(xyStagePos_.x, xyStagePos_.y);
+         gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+         drawStagePointer(g);
+         repaint();
+      }
+   }
+
 }

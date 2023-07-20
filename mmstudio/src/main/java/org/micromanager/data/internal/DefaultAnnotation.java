@@ -100,6 +100,9 @@ public final class DefaultAnnotation implements Annotation {
       if (!file.exists()) {
          file.createNewFile();
       }
+      if (!file.canWrite()) {
+         throw new IOException("Can not save Annotation.  File is not writeable.");
+      }
       PropertyMap.Builder builder = PropertyMaps.builder();
       if (generalAnnotation_ != null) {
          builder.putPropertyMap(GENERAL_KEY, generalAnnotation_);

@@ -13,6 +13,7 @@ import javax.swing.JTextField;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.data.Coords;
@@ -70,12 +71,12 @@ public class NavigationInspectorPanelController extends AbstractInspectorPanelCo
          if (provider.getSummaryMetadata().getIntendedDimensions().getIndex(axis) <= 1) {
             continue;
          }
-         Coords oldCoords = viewer_.getDisplayPosition();
          panel_.add(new JLabel(axis + ":"), new CC().split().gapAfter("10"));
          JTextField axisField = new JTextField();
          axisField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
+               Coords oldCoords = viewer_.getDisplayPosition();
                try {
                   int val = Integer.parseInt(axisField.getText());
                   val -= 1;
@@ -89,34 +90,19 @@ public class NavigationInspectorPanelController extends AbstractInspectorPanelCo
                } catch (NumberFormatException nfe) {
                   // studio_.logs().logMessage("Non Integer entered in Navigation Inspector");
                   if (axis.equals("position")) {
-                     try {
-                        if (oldCoords != null) {
-                           if (provider.getImage(oldCoords).getMetadata().hasPositionName()
-                                 && provider.getImage(oldCoords)
-                                 .getMetadata().getPositionName("")
-                                 .contains(axisField.getText())) {
-                              return;
+                     for (int p = 0;
+                           p < provider.getSummaryMetadata().getStagePositionList().size(); p++) {
+                        if (provider.getSummaryMetadata().getStagePositionList().get(p)
+                              .getLabel().contains(axisField.getText())) {
+                           Coords newCoords;
+                           if (oldCoords != null) {
+                              newCoords = oldCoords.copyBuilder().index(axis, p).build();
+                           } else {
+                              newCoords = studio_.data().coordsBuilder().p(p).build();
                            }
+                           viewer.setDisplayPosition(newCoords);
+                           return;
                         }
-                        for (Coords coord : provider.getUnorderedImageCoords()) {
-                           if (provider.getImage(coord).getMetadata().hasPositionName()) {
-                              String positionName = provider.getImage(coord)
-                                    .getMetadata().getPositionName("");
-                              if (positionName.contains(axisField.getText())) {
-                                 Coords newCoords = null;
-                                 if (oldCoords != null) {
-                                    newCoords = oldCoords.copyBuilder()
-                                          .index(axis, coord.getIndex(axis)).build();
-                                 } else {
-                                    newCoords = coord;
-                                 }
-                                 viewer.setDisplayPosition(newCoords);
-                                 return;
-                              }
-                           }
-                        }
-                     } catch (IOException ioe) {
-                        studio_.logs().logError(ioe);
                      }
                   } else if (axis.equals("channel")) {
                      List<String> channels = provider.getSummaryMetadata().getChannelNameList();

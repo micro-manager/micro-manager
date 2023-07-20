@@ -333,8 +333,8 @@ public class MagellanAcqUIAndStorage
    }
 
    @Override
-   public void increaseMaxResolutionLevel(int newMaxResolutionLevel) {
-      storage_.increaseMaxResolutionLevel(newMaxResolutionLevel);
+   public void increaseMaxResolutionLevel(int i) {
+      storage_.increaseMaxResolutionLevel(i);
    }
 
    @Override

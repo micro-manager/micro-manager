@@ -1121,31 +1121,28 @@ public final class DefaultPropertyMap implements PropertyMap {
       // moving to requested location.
       File tempDir = Files.createTempDir();
       File tempFile = new File(tempDir, "property_map.json");
-      try {
-         Files.write(toJSON(), tempFile, Charsets.UTF_8);
-         if (file.exists()) {
-            if (!overwrite) {
-               return false;
-            }
-            if (createBackup) {
-               File backup = new File(file.getParentFile(), file.getName() + "~");
-               backup.delete();
-               if (!file.renameTo(backup)) {
-                  throw new IOException("Failed to create backup file: "
-                        + backup.getPath());
-               }
-            }
-         }
-         try {
-            Files.move(tempFile, file);
-         } catch (FileNotFoundException fne) {
+      Files.write(toJSON(), tempFile, Charsets.UTF_8);
+      if (file.exists()) {
+         if (!overwrite) {
             return false;
          }
-         return true;
-      } finally {
-         tempFile.delete();
-         tempDir.delete();
+         if (createBackup) {
+            File backup = new File(file.getParentFile(), file.getName() + "~");
+            backup.delete();
+            if (!file.renameTo(backup)) {
+               throw new IOException("Failed to create backup file: "
+                     + backup.getPath());
+            }
+         }
       }
+      try {
+         Files.move(tempFile, file);
+      } catch (FileNotFoundException fne) {
+         return false;
+      }
+      tempFile.delete();
+      tempDir.delete();
+      return true;
    }
 
 
