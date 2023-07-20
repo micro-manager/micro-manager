@@ -87,6 +87,7 @@ import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
+import org.micromanager.acquisition.internal.acqengjcompat.multimda.MultiMDAFrame;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.ChannelDisplaySettings;
@@ -211,6 +212,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private CheckBoxPanel savePanel_;
    private boolean disableGUItoSettings_ = false;
    private final FocusListener focusListener_;
+   private MultiMDAFrame multiMDAFrame_;
 
    /**
     * Acquisition control dialog box.
@@ -273,6 +275,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       topRightPanel.add(createCloseButton(), BUTTON_SIZE);
       topRightPanel.add(createRunButtons());
       topRightPanel.add(createSaveButtons());
+      topRightPanel.add(createMultiMDAButton());
 
       JPanel topPanel = new JPanel(new MigLayout(
             "fill, insets 0",
@@ -868,6 +871,26 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       saveAsButton.setMargin(new Insets(-5, -5, -5, -5));
       saveAsButton.addActionListener((ActionEvent e) -> saveAcqSettingsToFile());
       result.add(saveAsButton, BUTTON_SIZE);
+      return result;
+   }
+
+   private JPanel createMultiMDAButton() {
+      final JPanel result = new JPanel(new MigLayout("flowy, insets 0, gapx 0, gapy 2"));
+      final JButton multiMDAButton = new JButton("Multi MDA");
+      multiMDAButton.setToolTipText("Different Settings at different locations");
+      multiMDAButton.setFont(DEFAULT_FONT);
+      multiMDAButton.setMargin(new Insets(-5, -5, -5, -5));
+      multiMDAButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (multiMDAFrame_ == null) {
+               multiMDAFrame_ = new MultiMDAFrame(mmStudio_);
+            }
+            multiMDAFrame_.setVisible(true);
+         }
+      });
+      result.add(multiMDAButton, BUTTON_SIZE);
+
       return result;
    }
 
