@@ -207,7 +207,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                   sequenceSettings.get(i).prefix(),
                   summaryMetadata,
                   this,
-                  sequenceSettings.get(i).shouldDisplayImages());
+                  sequenceSettings.get(i));
             Datastore store = acq.getDatastore();
             stores_.add(store);
             Pipeline pipeline = acq.getPipeline();
