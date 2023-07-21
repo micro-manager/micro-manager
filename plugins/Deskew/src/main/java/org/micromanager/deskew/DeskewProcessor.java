@@ -21,16 +21,21 @@ public class DeskewProcessor implements Processor {
    private final Studio studio_;
    private final double theta_;
    private final boolean doFullVolume_;
-   private final boolean doProjections_;
+   private final boolean doXYProjections_;
+   private final boolean doOrthogonalProjections_;
    private final boolean keepOriginals_;
    private StackResampler fullVolumeResampler_ = null;
+   private StackResampler xyProjectionResampler_ = null;
+   private StackResampler orthogonalProjectionResampler_ = null;
 
    public DeskewProcessor(Studio studio, double theta, boolean doFullVolume,
-                           boolean doProjections, boolean keepOriginals) {
+                          boolean doXYProjections, boolean doOrthogonalProjections,
+                          boolean keepOriginals) {
       studio_ = studio;
       theta_ = theta;
       doFullVolume_ = doFullVolume;
-      doProjections_ = doProjections;
+      doXYProjections_ = doXYProjections;
+      doOrthogonalProjections_ = doOrthogonalProjections;
       keepOriginals_ = keepOriginals;
    }
 
@@ -43,20 +48,47 @@ public class DeskewProcessor implements Processor {
    @Override
    public void processImage(Image image, ProcessorContext context) {
       if (image.getCoords().getZ() == 1) {
-         fullVolumeResampler_ = new StackResampler(StackResampler.FULL_VOLUME, false, theta_,
-                 image.getMetadata().getPixelSizeUm(), inputSummaryMetadata_.getZStepUm(),
-                 inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getWidth(),
-                  image.getHeight());
-         fullVolumeResampler_.initializeProjections();
+         if (doFullVolume_) {
+            fullVolumeResampler_ = new StackResampler(StackResampler.FULL_VOLUME, false, theta_,
+                     image.getMetadata().getPixelSizeUm(), inputSummaryMetadata_.getZStepUm(),
+                     inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getWidth(),
+                     image.getHeight());
+            fullVolumeResampler_.initializeProjections();
+         }
+         if (doXYProjections_) {
+            xyProjectionResampler_ = new StackResampler(StackResampler.YX_PROJECTION, false,
+                     theta_, image.getMetadata().getPixelSizeUm(),
+                     inputSummaryMetadata_.getZStepUm(),
+                     inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getWidth(),
+                     image.getHeight());
+            xyProjectionResampler_.initializeProjections();
+         }
+         if (doOrthogonalProjections_) {
+            orthogonalProjectionResampler_ = new StackResampler(
+                     StackResampler.ORTHOGONAL_VIEWS, false,
+                     theta_, image.getMetadata().getPixelSizeUm(),
+                     inputSummaryMetadata_.getZStepUm(),
+                     inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getWidth(),
+                     image.getHeight());
+            orthogonalProjectionResampler_.initializeProjections();
+         }
       }
       if (fullVolumeResampler_ != null) {
          fullVolumeResampler_.addImageToRecons((short[]) image.getRawPixels(),
                   image.getCoords().getZ());
       }
+      if (xyProjectionResampler_ != null) {
+         xyProjectionResampler_.addImageToRecons((short[]) image.getRawPixels(),
+                  image.getCoords().getZ());
+      }
+      if (orthogonalProjectionResampler_ != null) {
+         orthogonalProjectionResampler_.addImageToRecons((short[]) image.getRawPixels(),
+                  image.getCoords().getZ());
+      }
 
       if (image.getCoords().getZ() == inputSummaryMetadata_.getIntendedDimensions().getZ() - 1) {
-         fullVolumeResampler_.finalizeProjections();
-         if (doFullVolume_) {
+         if (fullVolumeResampler_ != null) {
+            fullVolumeResampler_.finalizeProjections();
             int width = fullVolumeResampler_.getResampledShapeX();
             int height = fullVolumeResampler_.getResampledShapeY();
             int nrZPlanes = fullVolumeResampler_.getResampledShapeZ();
@@ -85,8 +117,64 @@ public class DeskewProcessor implements Processor {
             } catch (IOException e) {
                throw new RuntimeException(e);
             }
-
-
+         }
+         if (xyProjectionResampler_ != null) {
+            xyProjectionResampler_.finalizeProjections();
+            int width = xyProjectionResampler_.getResampledShapeX();
+            int height = xyProjectionResampler_.getResampledShapeY();
+            int nrZPlanes = 1;
+            Datastore outputStore = studio_.data().createRAMDatastore();
+            SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
+                     .intendedDimensions(inputSummaryMetadata_
+                              .getIntendedDimensions().copyBuilder().z(nrZPlanes).build())
+                     .build();
+            PropertyMap.Builder formatBuilder = PropertyMaps.builder();
+            formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
+            formatBuilder.putInteger(PropertyKey.HEIGHT.key(), height);
+            formatBuilder.putString(PropertyKey.PIXEL_TYPE.key(), PixelType.GRAY16.toString());
+            PropertyMap format = formatBuilder.build();
+            Coords.CoordsBuilder cb = studio_.data().coordsBuilder();
+            try {
+               outputStore.setSummaryMetadata(outputSummaryMetadata);
+               short[] yxProjection = xyProjectionResampler_.getYXProjection();
+               Image img = new DefaultImage(yxProjection, format, cb.build(),
+                        image.getMetadata().copyBuilderWithNewUUID().build());
+               outputStore.putImage(img);
+               DisplayWindow display = studio_.displays().createDisplay(outputStore);
+               display.show();
+            } catch (IOException e) {
+               throw new RuntimeException(e);
+            }
+         }
+         if (orthogonalProjectionResampler_ != null) {
+            orthogonalProjectionResampler_.finalizeProjections();
+            int width = orthogonalProjectionResampler_.getResampledShapeX();
+            int height = orthogonalProjectionResampler_.getResampledShapeY();
+            int nrZPlanes = 1;
+            Datastore outputStore = studio_.data().createRAMDatastore();
+            SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
+                     .intendedDimensions(inputSummaryMetadata_
+                              .getIntendedDimensions().copyBuilder().z(nrZPlanes).build())
+                     .build();
+            PropertyMap.Builder formatBuilder = PropertyMaps.builder();
+            formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
+            formatBuilder.putInteger(PropertyKey.HEIGHT.key(), height);
+            formatBuilder.putString(PropertyKey.PIXEL_TYPE.key(), PixelType.GRAY16.toString());
+            PropertyMap format = formatBuilder.build();
+            Coords.CoordsBuilder cb = studio_.data().coordsBuilder();
+            try {
+               outputStore.setSummaryMetadata(outputSummaryMetadata);
+               short[] yxProjection = orthogonalProjectionResampler_.getYXProjection();
+               short[] zyProjection = orthogonalProjectionResampler_.getZYProjection();
+               short[] zxProjection = orthogonalProjectionResampler_.getZXProjection();
+               Image img = new DefaultImage(yxProjection, format, cb.build(),
+                        image.getMetadata().copyBuilderWithNewUUID().build());
+               outputStore.putImage(img);
+               DisplayWindow display = studio_.displays().createDisplay(outputStore);
+               display.show();
+            } catch (IOException e) {
+               throw new RuntimeException(e);
+            }
          }
       }
 

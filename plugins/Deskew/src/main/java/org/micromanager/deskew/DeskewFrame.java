@@ -24,7 +24,8 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    // keys to store settings in MutablePropertyMap
    static final String THETA = "Theta";
    static final String FULL_VOLUME = "Create Full Volume";
-   static final String PROJECTIONS = "Do Projections";
+   static final String XY_PROJECTIONS = "Do XY Projection";
+   static final String ORTHOGONAL_PROJECTIONS = "Do Orthogonal Projections";
    static final String KEEP_ORIGINAL = "KeepOriginal";
 
    private final Studio studio_;
@@ -62,7 +63,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("flowx"));
 
-      add(new JLabel("Theta:"), "alignx left");
+      add(new JLabel("Sheet angle (_\\) in radians:"), "alignx left");
       final JTextField thetaTextField = new JTextField(5);
       thetaTextField.setText(settings_.getString(THETA, "20"));
       thetaTextField.getDocument().addDocumentListener(
@@ -71,7 +72,8 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       add(thetaTextField, "wrap");
 
       add(createCheckBox(FULL_VOLUME, true), "span 2, wrap");
-      add(createCheckBox(PROJECTIONS, true), "span 2, wrap");
+      add(createCheckBox(XY_PROJECTIONS, true), "span 2, wrap");
+      add(createCheckBox(ORTHOGONAL_PROJECTIONS, true), "span 2, wrap");
       add(createCheckBox(KEEP_ORIGINAL, true), "span 2, wrap");
 
       pack();
