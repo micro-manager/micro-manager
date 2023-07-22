@@ -150,24 +150,42 @@ public class DeskewProcessor implements Processor {
             orthogonalProjectionResampler_.finalizeProjections();
             int width = orthogonalProjectionResampler_.getResampledShapeX();
             int height = orthogonalProjectionResampler_.getResampledShapeY();
-            int nrZPlanes = 1;
+            int zSize = orthogonalProjectionResampler_.getResampledShapeZ();
+            int separatorSize = 3;
+            int newWidth = width + separatorSize + zSize;
+            int newHeight = height + separatorSize + zSize;
             Datastore outputStore = studio_.data().createRAMDatastore();
             SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
                      .intendedDimensions(inputSummaryMetadata_
-                              .getIntendedDimensions().copyBuilder().z(nrZPlanes).build())
+                              .getIntendedDimensions().copyBuilder().z(1).build())
                      .build();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
-            formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
-            formatBuilder.putInteger(PropertyKey.HEIGHT.key(), height);
+            formatBuilder.putInteger(PropertyKey.WIDTH.key(), newWidth);
+            formatBuilder.putInteger(PropertyKey.HEIGHT.key(), newHeight);
             formatBuilder.putString(PropertyKey.PIXEL_TYPE.key(), PixelType.GRAY16.toString());
             PropertyMap format = formatBuilder.build();
             Coords.CoordsBuilder cb = studio_.data().coordsBuilder();
             try {
                outputStore.setSummaryMetadata(outputSummaryMetadata);
                short[] yxProjection = orthogonalProjectionResampler_.getYXProjection();
-               short[] zyProjection = orthogonalProjectionResampler_.getZYProjection();
+               short[] yzProjection = orthogonalProjectionResampler_.getYZProjection();
                short[] zxProjection = orthogonalProjectionResampler_.getZXProjection();
-               Image img = new DefaultImage(yxProjection, format, cb.build(),
+               short[] orthogonalView = new short[newWidth * newHeight];
+               for (int row = 0; row < height; row++) {
+                  System.arraycopy(yxProjection, row * width, orthogonalView,
+                           row * newWidth, width);
+                  System.arraycopy(yzProjection, row * zSize, orthogonalView,
+                          (row * newWidth) + (width + separatorSize),
+                         zSize);
+               }
+               int offset = (height + separatorSize) * newWidth;
+               for (int z = 0; z < zSize; z++) {
+                  System.arraycopy(zxProjection, z * width, orthogonalView,
+                           offset + (z * newWidth),
+                           width);
+               }
+
+               Image img = new DefaultImage(orthogonalView, format, cb.build(),
                         image.getMetadata().copyBuilderWithNewUUID().build());
                outputStore.putImage(img);
                DisplayWindow display = studio_.displays().createDisplay(outputStore);
