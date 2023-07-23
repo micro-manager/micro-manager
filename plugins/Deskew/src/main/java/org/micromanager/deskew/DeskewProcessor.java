@@ -16,6 +16,9 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.lightsheet.StackResampler;
 
+/**
+ * Deskews data using the Deskew code in PycroManager.
+ */
 public class DeskewProcessor implements Processor {
    private SummaryMetadata inputSummaryMetadata_;
    private final Studio studio_;
@@ -30,6 +33,20 @@ public class DeskewProcessor implements Processor {
    private StackResampler xyProjectionResampler_ = null;
    private StackResampler orthogonalProjectionResampler_ = null;
 
+   /**
+    * Bit of an awkard way to translate user's desires to the
+    * Pycromanager deskew code.
+    *
+    * @param studio Micro-Manager Studio instance
+    * @param theta ANgle between the light sheet and the sample plane in radians.
+    * @param doFullVolume Whether to generate a full volume.
+    * @param doXYProjections Whether to generate XY Projections.
+    * @param xyProjectionMode Max or average projection
+    * @param doOrthogonalProjections Whether to generate orthogonal projections
+    * @param orthogonalProjectionsMode Max or average projection
+    * @param keepOriginals Whether to send the original data through the pipeline or
+    *                      to drop them.
+    */
    public DeskewProcessor(Studio studio, double theta, boolean doFullVolume,
                           boolean doXYProjections, String xyProjectionMode,
                           boolean doOrthogonalProjections, String orthogonalProjectionsMode,
@@ -137,9 +154,9 @@ public class DeskewProcessor implements Processor {
             int height = xyProjectionResampler_.getResampledShapeY();
             int nrZPlanes = 1;
             Datastore outputStore = studio_.data().createRAMDatastore();
-            String newPrefix = new StringBuilder(inputSummaryMetadata_.getPrefix()).append("-")
-                  .append(xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
-                  .append("-Projection").toString();
+            String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
+                  + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
+                  + "-Projection";
             SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
                      .intendedDimensions(inputSummaryMetadata_
                               .getIntendedDimensions().copyBuilder().z(nrZPlanes).build())
@@ -173,9 +190,9 @@ public class DeskewProcessor implements Processor {
             int newWidth = width + separatorSize + zSize;
             int newHeight = height + separatorSize + zSize;
             Datastore outputStore = studio_.data().createRAMDatastore();
-            String newPrefix = new StringBuilder(inputSummaryMetadata_.getPrefix()).append("-")
-                  .append(orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
-                  .append("-Projection").toString();
+            String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
+                  + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
+                  + "-Projection";
             SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
                      .intendedDimensions(inputSummaryMetadata_
                               .getIntendedDimensions().copyBuilder().z(1).build())

@@ -7,6 +7,9 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.internal.utils.NumberUtils;
 
+/**
+ * Generate DeskewProcessors based on settings.
+ */
 public class DeskewFactory implements ProcessorFactory {
    private final Studio studio_;
    private final PropertyMap settings_;

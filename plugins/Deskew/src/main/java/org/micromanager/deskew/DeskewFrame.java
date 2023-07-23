@@ -21,6 +21,9 @@ import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 
+/**
+ * UI part of the plugin to deskew OPM light sheet data.
+ */
 public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
@@ -40,6 +43,12 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
 
+   /**
+    * Generates the UI.
+    *
+    * @param configuratorSettings I am always confused about this propertymap
+    * @param studio The Studio instance, usually a singleton.
+    */
    public DeskewFrame(PropertyMap configuratorSettings, Studio studio) {
       studio_ = studio;
       settings_ = studio_.profile().getSettings(this.getClass());
@@ -49,7 +58,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
       super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
-
    }
 
    @Override
@@ -76,7 +84,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       final JTextField thetaTextField = new JTextField(5);
       thetaTextField.setText(settings_.getString(THETA, "20"));
       thetaTextField.getDocument().addDocumentListener(
-              new TextFieldUpdater(thetaTextField, THETA, new Double(0.0), settings_));
+              new TextFieldUpdater(thetaTextField, THETA, 0.0, settings_));
       settings_.putString(THETA, thetaTextField.getText());
       add(thetaTextField, "wrap");
 
@@ -107,10 +115,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    private List<JComponent> projectionModeUI(String key) {
       JRadioButton max = new JRadioButton(MAX);
-      max.setSelected(settings_.getString(key, MAX).equals(MAX) ? true : false);
+      max.setSelected(settings_.getString(key, MAX).equals(MAX));
       max.addChangeListener(e -> settings_.putString(key, max.isSelected() ? MAX : AVG));
       JRadioButton avg = new JRadioButton(AVG);
-      avg.setSelected(settings_.getString(key, MAX).equals(AVG) ? true : false);
+      avg.setSelected(settings_.getString(key, MAX).equals(AVG));
       avg.addChangeListener(e -> settings_.putString(key, avg.isSelected() ? AVG : MAX));
       final ButtonGroup bg = new ButtonGroup();
       bg.add(max);
@@ -140,20 +148,20 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
       @Override
       public void insertUpdate(DocumentEvent e) {
-         processEvent(e);
+         processEvent();
       }
 
       @Override
       public void removeUpdate(DocumentEvent e) {
-         processEvent(e);
+         processEvent();
       }
 
       @Override
       public void changedUpdate(DocumentEvent e) {
-         processEvent(e);
+         processEvent();
       }
 
-      private void processEvent(DocumentEvent e) {
+      private void processEvent() {
          if (type_ instanceof Double) {
             try {
                double factor = NumberUtils.displayStringToDouble(field_.getText());
