@@ -22,20 +22,25 @@ public class DeskewProcessor implements Processor {
    private final double theta_;
    private final boolean doFullVolume_;
    private final boolean doXYProjections_;
+   private final String xyProjectionMode_;
    private final boolean doOrthogonalProjections_;
+   private final String orthogonalProjectionsMode_;
    private final boolean keepOriginals_;
    private StackResampler fullVolumeResampler_ = null;
    private StackResampler xyProjectionResampler_ = null;
    private StackResampler orthogonalProjectionResampler_ = null;
 
    public DeskewProcessor(Studio studio, double theta, boolean doFullVolume,
-                          boolean doXYProjections, boolean doOrthogonalProjections,
+                          boolean doXYProjections, String xyProjectionMode,
+                          boolean doOrthogonalProjections, String orthogonalProjectionsMode,
                           boolean keepOriginals) {
       studio_ = studio;
       theta_ = theta;
       doFullVolume_ = doFullVolume;
       doXYProjections_ = doXYProjections;
+      xyProjectionMode_ = xyProjectionMode;
       doOrthogonalProjections_ = doOrthogonalProjections;
+      orthogonalProjectionsMode_ = orthogonalProjectionsMode;
       keepOriginals_ = keepOriginals;
    }
 
@@ -56,19 +61,25 @@ public class DeskewProcessor implements Processor {
             fullVolumeResampler_.initializeProjections();
          }
          if (doXYProjections_) {
-            xyProjectionResampler_ = new StackResampler(StackResampler.YX_PROJECTION, false,
-                     theta_, image.getMetadata().getPixelSizeUm(),
+            xyProjectionResampler_ = new StackResampler(StackResampler.YX_PROJECTION,
+                     xyProjectionMode_.equals(DeskewFrame.MAX),
+                     theta_,
+                     image.getMetadata().getPixelSizeUm(),
                      inputSummaryMetadata_.getZStepUm(),
-                     inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getWidth(),
+                     inputSummaryMetadata_.getIntendedDimensions().getZ(),
+                     image.getWidth(),
                      image.getHeight());
             xyProjectionResampler_.initializeProjections();
          }
          if (doOrthogonalProjections_) {
             orthogonalProjectionResampler_ = new StackResampler(
-                     StackResampler.ORTHOGONAL_VIEWS, false,
-                     theta_, image.getMetadata().getPixelSizeUm(),
+                     StackResampler.ORTHOGONAL_VIEWS,
+                     orthogonalProjectionsMode_.equals(DeskewFrame.MAX),
+                     theta_,
+                     image.getMetadata().getPixelSizeUm(),
                      inputSummaryMetadata_.getZStepUm(),
-                     inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getWidth(),
+                     inputSummaryMetadata_.getIntendedDimensions().getZ(),
+                     image.getWidth(),
                      image.getHeight());
             orthogonalProjectionResampler_.initializeProjections();
          }
@@ -97,6 +108,7 @@ public class DeskewProcessor implements Processor {
             SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
                      .zStepUm(newZStep).intendedDimensions(inputSummaryMetadata_
                               .getIntendedDimensions().copyBuilder().z(nrZPlanes).build())
+                     .prefix(inputSummaryMetadata_.getPrefix() + "-Deskewed")
                      .build();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
             formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
@@ -113,6 +125,7 @@ public class DeskewProcessor implements Processor {
                   outputStore.putImage(img);
                }
                DisplayWindow display = studio_.displays().createDisplay(outputStore);
+               display.setCustomTitle(inputSummaryMetadata_.getPrefix() + "-Deskewed");
                display.show();
             } catch (IOException e) {
                throw new RuntimeException(e);
@@ -124,9 +137,13 @@ public class DeskewProcessor implements Processor {
             int height = xyProjectionResampler_.getResampledShapeY();
             int nrZPlanes = 1;
             Datastore outputStore = studio_.data().createRAMDatastore();
+            String newPrefix = new StringBuilder(inputSummaryMetadata_.getPrefix()).append("-")
+                  .append(xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
+                  .append("-Projection").toString();
             SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
                      .intendedDimensions(inputSummaryMetadata_
                               .getIntendedDimensions().copyBuilder().z(nrZPlanes).build())
+                     .prefix(newPrefix)
                      .build();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
             formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
@@ -141,6 +158,7 @@ public class DeskewProcessor implements Processor {
                         image.getMetadata().copyBuilderWithNewUUID().build());
                outputStore.putImage(img);
                DisplayWindow display = studio_.displays().createDisplay(outputStore);
+               display.setCustomTitle(newPrefix);
                display.show();
             } catch (IOException e) {
                throw new RuntimeException(e);
@@ -155,9 +173,13 @@ public class DeskewProcessor implements Processor {
             int newWidth = width + separatorSize + zSize;
             int newHeight = height + separatorSize + zSize;
             Datastore outputStore = studio_.data().createRAMDatastore();
+            String newPrefix = new StringBuilder(inputSummaryMetadata_.getPrefix()).append("-")
+                  .append(orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
+                  .append("-Projection").toString();
             SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
                      .intendedDimensions(inputSummaryMetadata_
                               .getIntendedDimensions().copyBuilder().z(1).build())
+                     .prefix(newPrefix)
                      .build();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
             formatBuilder.putInteger(PropertyKey.WIDTH.key(), newWidth);
@@ -189,6 +211,7 @@ public class DeskewProcessor implements Processor {
                         image.getMetadata().copyBuilderWithNewUUID().build());
                outputStore.putImage(img);
                DisplayWindow display = studio_.displays().createDisplay(outputStore);
+               display.setCustomTitle(newPrefix);
                display.show();
             } catch (IOException e) {
                throw new RuntimeException(e);

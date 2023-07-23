@@ -25,12 +25,16 @@ public class DeskewFactory implements ProcessorFactory {
             studio_.logs().showError("Can not deskew LighStheet data with an angle of 0.0 radians");
          }
          boolean doFullVolume = settings_.getBoolean(DeskewFrame.FULL_VOLUME, true);
-         boolean doXYProjections = settings_.getBoolean(DeskewFrame.XY_PROJECTIONS, false);
+         boolean doXYProjections = settings_.getBoolean(DeskewFrame.XY_PROJECTION, false);
+         String xyProjectionMode = settings_.getString(DeskewFrame.XY_PROJECTION_MODE,
+               DeskewFrame.MAX);
          boolean doOrthogonalProjections = settings_.getBoolean(DeskewFrame.ORTHOGONAL_PROJECTIONS,
                   false);
+         String orthogonalProjectionsMode = settings_.getString(
+               DeskewFrame.ORTHOGONAL_PROJECTIONS_MODE, DeskewFrame.MAX);
          boolean keepOriginal = settings_.getBoolean(DeskewFrame.KEEP_ORIGINAL, true);
-         return new DeskewProcessor(studio_, theta, doFullVolume, doXYProjections,
-                  doOrthogonalProjections, keepOriginal);
+         return new DeskewProcessor(studio_, theta, doFullVolume, doXYProjections, xyProjectionMode,
+                  doOrthogonalProjections, orthogonalProjectionsMode, keepOriginal);
       } catch (ParseException e) {
          studio_.logs().showError(e, "Failed to parse input");
          e.printStackTrace();

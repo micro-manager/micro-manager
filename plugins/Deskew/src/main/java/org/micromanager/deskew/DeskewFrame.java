@@ -1,9 +1,14 @@
 package org.micromanager.deskew;
 
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -24,9 +29,13 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    // keys to store settings in MutablePropertyMap
    static final String THETA = "Theta";
    static final String FULL_VOLUME = "Create Full Volume";
-   static final String XY_PROJECTIONS = "Do XY Projection";
+   static final String XY_PROJECTION = "Do XY Projection";
+   static final String XY_PROJECTION_MODE = "XY Projection Mode";
    static final String ORTHOGONAL_PROJECTIONS = "Do Orthogonal Projections";
+   static final String ORTHOGONAL_PROJECTIONS_MODE = "Orthogonal Projections Mode";
    static final String KEEP_ORIGINAL = "KeepOriginal";
+   static final String MAX = "Max";
+   static final String AVG = "Avg";
 
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
@@ -72,8 +81,14 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       add(thetaTextField, "wrap");
 
       add(createCheckBox(FULL_VOLUME, true), "span 2, wrap");
-      add(createCheckBox(XY_PROJECTIONS, true), "span 2, wrap");
-      add(createCheckBox(ORTHOGONAL_PROJECTIONS, true), "span 2, wrap");
+      add(createCheckBox(XY_PROJECTION, true), "span 2");
+      List<JComponent> buttons =  projectionModeUI(XY_PROJECTION_MODE);
+      add(buttons.get(0));
+      add(buttons.get(1), "wrap");
+      add(createCheckBox(ORTHOGONAL_PROJECTIONS, true), "span 2");
+      buttons = projectionModeUI(ORTHOGONAL_PROJECTIONS_MODE);
+      add(buttons.get(0));
+      add(buttons.get(1), "wrap");
       add(createCheckBox(KEEP_ORIGINAL, true), "span 2, wrap");
 
       pack();
@@ -88,6 +103,23 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       checkBox.setSelected(settings_.getBoolean(key, initialValue));
       checkBox.addChangeListener(e -> settings_.putBoolean(key, checkBox.isSelected()));
       return checkBox;
+   }
+
+   private List<JComponent> projectionModeUI(String key) {
+      JRadioButton max = new JRadioButton(MAX);
+      max.setSelected(settings_.getString(key, MAX).equals(MAX) ? true : false);
+      max.addChangeListener(e -> settings_.putString(key, max.isSelected() ? MAX : AVG));
+      JRadioButton avg = new JRadioButton(AVG);
+      avg.setSelected(settings_.getString(key, MAX).equals(AVG) ? true : false);
+      avg.addChangeListener(e -> settings_.putString(key, avg.isSelected() ? AVG : MAX));
+      final ButtonGroup bg = new ButtonGroup();
+      bg.add(max);
+      bg.add(avg);
+      List<JComponent> result = new ArrayList<>();
+      result.add(max);
+      result.add(avg);
+      return result;
+
    }
 
 
