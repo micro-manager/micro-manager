@@ -1002,6 +1002,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .putBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key(), uniformChannelScaling_)
             .putBoolean(PropertyKey.AUTOSTRETCH.key(), autostretch_)
             .putBoolean(PropertyKey.ROI_AUTOSCALE.key(), useROI_)
+            .putBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key(), ignoreZeros_)
             .putDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key(), extremaQuantile_)
             .putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings)
             .build();
@@ -1039,6 +1040,10 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          }
          if (pMap.containsBoolean(PropertyKey.ROI_AUTOSCALE.key())) {
             ddsb.roiAutoscale(pMap.getBoolean(PropertyKey.ROI_AUTOSCALE.key(), ddsb.useROI_));
+         }
+         if (pMap.containsBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key())) {
+            ddsb.autoscaleIgnoringZeros(pMap.getBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key(),
+                  ddsb.ignoreZeros_));
          }
          if (pMap.containsDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key())) {
             ddsb.autoscaleIgnoredQuantile(pMap.getDouble(PropertyKey
