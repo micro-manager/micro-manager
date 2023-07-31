@@ -1,6 +1,13 @@
 package org.micromanager.deskew;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
@@ -33,12 +40,20 @@ public class DeskewProcessor implements Processor {
    private StackResampler xyProjectionResampler_ = null;
    private StackResampler orthogonalProjectionResampler_ = null;
 
+   private ExecutorService processingExecutor_ =
+         new ThreadPoolExecutor(1, 12, 1000, TimeUnit.MILLISECONDS,
+               new LinkedBlockingDeque<>());
+   private HashMap<HashMap<String, Object>, Future> processingFutures_ = new HashMap<>();
+   private HashMap<String, StackResampler> freeProcessors_ = new HashMap<>();
+   private HashMap<HashMap<String, Object>, StackResampler> activeProcessors_ = new HashMap<>();
+   private Future<?> f = null;
+
    /**
     * Bit of an awkard way to translate user's desires to the
     * Pycromanager deskew code.
     *
     * @param studio Micro-Manager Studio instance
-    * @param theta ANgle between the light sheet and the sample plane in radians.
+    * @param theta Angle between the light sheet and the sample plane in radians.
     * @param doFullVolume Whether to generate a full volume.
     * @param doXYProjections Whether to generate XY Projections.
     * @param xyProjectionMode Max or average projection
@@ -99,6 +114,8 @@ public class DeskewProcessor implements Processor {
                      image.getWidth(),
                      image.getHeight());
             orthogonalProjectionResampler_.initializeProjections();
+            f = processingExecutor_.submit(orthogonalProjectionResampler_.startStackProcessing());
+            //processingFutures_.put(nonZAxes, f);
          }
       }
       if (fullVolumeResampler_ != null) {
@@ -110,8 +127,10 @@ public class DeskewProcessor implements Processor {
                   image.getCoords().getZ());
       }
       if (orthogonalProjectionResampler_ != null) {
-         orthogonalProjectionResampler_.addImageToRecons((short[]) image.getRawPixels(),
-                  image.getCoords().getZ());
+         //orthogonalProjectionResampler_.addImageToRecons((short[]) image.getRawPixels(),
+         //         image.getCoords().getZ());
+         orthogonalProjectionResampler_.addToProcessImageQueue((short[]) image.getRawPixels(),
+                     image.getCoords().getZ());
       }
 
       if (image.getCoords().getZ() == inputSummaryMetadata_.getIntendedDimensions().getZ() - 1) {
@@ -182,6 +201,15 @@ public class DeskewProcessor implements Processor {
             }
          }
          if (orthogonalProjectionResampler_ != null) {
+            if (f != null) {
+               try {
+                  f.get();
+               } catch (InterruptedException e) {
+                  throw new RuntimeException(e);
+               } catch (ExecutionException e) {
+                  throw new RuntimeException(e);
+               }
+            }
             orthogonalProjectionResampler_.finalizeProjections();
             int width = orthogonalProjectionResampler_.getResampledShapeX();
             int height = orthogonalProjectionResampler_.getResampledShapeY();
