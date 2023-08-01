@@ -1020,7 +1020,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     * @return PropertyMap containing these DisplaySettings
     */
    public PropertyMap toPropertyMap() {
-      List<PropertyMap> channelSettings = new ArrayList<PropertyMap>();
+      List<PropertyMap> channelSettings = new ArrayList<>();
       for (ChannelDisplaySettings cs : channelSettings_) {
          channelSettings.add(((DefaultChannelDisplaySettings) cs).toPropertyMap());
       }

@@ -446,6 +446,12 @@ public final class MMAcquisition extends DataViewerListener {
          return true;
       }
       if (callbacks_.getAcquisitionDatastore() != viewer.getDataProvider()) {
+         if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
+            ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
+                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         }
+         display_.removeListener(this);
+         display_ = null;
          // not our problem;)
          return true;
       }
