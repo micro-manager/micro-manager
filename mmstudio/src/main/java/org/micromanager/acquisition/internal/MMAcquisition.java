@@ -207,31 +207,6 @@ public final class MMAcquisition extends DataViewerListener {
                   } else {
                      displaySettingsBuilder.colorModeComposite();
                   }
-                  for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
-                     displaySettingsBuilder.channel(channelIndex,
-                           RememberedDisplaySettings.loadChannel(studio_,
-                               store_.getSummaryMetadata().getChannelGroup(),
-                               store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
-                           null));  // TODO: use chColors as default Color?
-                     /*
-                     ChannelDisplaySettings channelSettings
-                             = displaySettingsBuilder.getChannelSettings(channelIndex);
-                     Color chColor = new Color(chColors.getInt(channelIndex));
-                     ChannelDisplaySettings.Builder csb =
-                             channelSettings.copyBuilder().color(chColor);
-                     if (summaryMetadata.has("ChNames")) {
-                        Object chNames = summaryMetadata.get("ChNames");
-                        if (chNames instanceof JSONArray) {
-                           JSONArray jChNames = (JSONArray) chNames;
-                           if (channelIndex < jChNames.length()) {
-                              csb.name(jChNames.getString(channelIndex));
-                           }
-                        }
-                     }
-                     displaySettingsBuilder.channel(channelIndex,csb.build());
-
-                      */
-                  }
                } while (!display_.compareAndSetDisplaySettings(
                         display_.getDisplaySettings(), displaySettingsBuilder.build()));
             } else {
