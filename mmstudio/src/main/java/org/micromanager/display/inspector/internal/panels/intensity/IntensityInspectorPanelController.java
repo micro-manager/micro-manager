@@ -309,6 +309,15 @@ public class IntensityInspectorPanelController
       for (ChannelIntensityController ch : channelControllers_) {
          ch.setHistogramLogYAxis(logarithmic);
       }
+      DisplaySettings oldSettings;
+      DisplaySettings newSettings;
+      do {
+         oldSettings = viewer_.getDisplaySettings();
+         if (oldSettings.isHistogramLogarithmic() == logarithmic) {
+            return;
+         }
+         newSettings = oldSettings.copyBuilder().histogramLogarithmic(logarithmic).build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
    }
 
    private void handleColorPalette(List<Color> colors) {
@@ -585,6 +594,7 @@ public class IntensityInspectorPanelController
          displaySettingsUpdateSuspended_ = false;
       }
 
+      gearMenuLogYAxisItem_.setSelected(settings.isHistogramLogarithmic());
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
       gearMenuIgnoreZerosItem_.setSelected(settings.isAutoscaleIgnoringZeros());
 

@@ -719,6 +719,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          histogram_.setGamma(channelSettings
                .getComponentSettings(0)
                .getScalingGamma());
+         histogram_.setLogIntensity(settings.isHistogramLogarithmic());
          // Need to remove actionListeners before setting the histoRangeBox
          ActionListener[] actionListeners = histoRangeComboBox_.getActionListeners();
          for (ActionListener al : actionListeners) {
