@@ -49,10 +49,10 @@
 		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.10.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.13.2">
+		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.14.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.41.3">
+		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.41.4">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 
