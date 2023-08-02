@@ -201,7 +201,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          for (int i = 0; i < sequenceSettings.size(); i++) {
             JSONObject summaryMetadata = currentMultiMDA_.getSummaryMetadata();
             addMMSummaryMetadata(summaryMetadata, sequenceSettings.get(i),
-                  positionLists.get(i));
+                  positionLists.get(i), studio_);
             MMAcquisition acq = new MMAcquisition(studio_,
                   sequenceSettings.get(i).save() ? sequenceSettings.get(i).root() : null,
                   sequenceSettings.get(i).prefix(),

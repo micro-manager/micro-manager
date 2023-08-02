@@ -24,7 +24,11 @@ package org.micromanager.acquisition.internal.acqengjcompat;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -38,6 +42,7 @@ import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
 import org.micromanager.acqj.internal.Engine;
@@ -67,6 +72,7 @@ import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 
+
 /**
  * This class provides a compatibility layer between AcqEngJ and the
  * AcquisitionEngine interface. It is analagous to AcquisitionWrapperEngine.java,
@@ -81,23 +87,19 @@ import org.micromanager.internal.utils.NumberUtils;
 public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCallbacks {
 
    public static final String ACQ_IDENTIFIER = "Acq_Identifier";
-
+   private static final SimpleDateFormat DATE_FORMATTER =
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
    private Acquisition currentAcquisition_;
-
    private CMMCore core_;
    protected Studio studio_;
    private PositionList posList_;
    private String zStage_;
    private SequenceSettings sequenceSettings_;
-
    protected JSONObject summaryMetadata_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
-
-
    private long nextWakeTime_ = -1;
-
    private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
 
    private class RunnablePlusIndices {
@@ -220,7 +222,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          loadRunnables(acquisitionSettings);
 
          summaryMetadata_ = currentAcquisition_.getSummaryMetadata();
-         addMMSummaryMetadata(summaryMetadata_, sequenceSettings, posList_);
+         addMMSummaryMetadata(summaryMetadata_, sequenceSettings, posList_, studio_);
 
          MMAcquisition acq = new MMAcquisition(studio_,
                acquisitionSettings.save() ? acquisitionSettings.root() : null,
@@ -314,14 +316,12 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     */
    protected static void addMMSummaryMetadata(JSONObject summaryMetadata,
                                               SequenceSettings acqSettings,
-                                              PositionList posList)
+                                              PositionList posList,
+                                              Studio studio)
          throws JSONException {
-      // These are the ones from the clojure engine that may yet need to be translated
-      //        "Channels" -> {Long@25854} 2
 
-      summaryMetadata.put(PropertyKey.CHANNEL_GROUP.key(), acqSettings.channelGroup());
-      JSONArray chNames = new JSONArray();
-      JSONArray chColors = new JSONArray();
+      final JSONArray chNames = new JSONArray();
+      final JSONArray chColors = new JSONArray();
       if (acqSettings.useChannels() && acqSettings.channels().size() > 0) {
          for (ChannelSpec c : acqSettings.channels()) {
             if (c.useChannel()) {
@@ -332,28 +332,40 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       } else {
          chNames.put("Default");
       }
+      summaryMetadata.put(PropertyKey.CHANNEL_GROUP.key(), acqSettings.channelGroup());
       summaryMetadata.put(PropertyKey.CHANNEL_NAMES.key(), chNames);
       summaryMetadata.put(PropertyKey.CHANNEL_COLORS.key(), chColors);
-
-      // MM MDA acquisitions have a defined number of
-      // frames/slices/channels/positions at the outset
-      summaryMetadata.put(PropertyKey.FRAMES.key(), getNumFrames(acqSettings));
-      summaryMetadata.put(PropertyKey.SLICES.key(), getNumSlices(acqSettings));
       summaryMetadata.put(PropertyKey.CHANNELS.key(), getNumChannels(acqSettings));
+      String computerName = "";
+      try {
+         computerName = InetAddress.getLocalHost().getHostName();
+      } catch (UnknownHostException e) {
+         studio.logs().logError(e);
+      }
+      summaryMetadata.put(PropertyKey.COMPUTER_NAME.key(), computerName);
+      summaryMetadata.put(PropertyKey.DIRECTORY.key(), acqSettings.root());
+      summaryMetadata.put(PropertyKey.FRAMES.key(), getNumFrames(acqSettings));
+      summaryMetadata.put(PropertyKey.HEIGHT.key(), studio.core().getImageHeight());
+      summaryMetadata.put(PropertyKey.INTERVAL_MS.key(), acqSettings.intervalMs());
+      summaryMetadata.put(PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS.key(),
+               acqSettings.keepShutterOpenChannels());
+      summaryMetadata.put(PropertyKey.KEEP_SHUTTER_OPEN_SLICES.key(),
+               acqSettings.keepShutterOpenSlices());
+      summaryMetadata.put("MDA_Settings", SequenceSettings.toJSONStream(acqSettings));
       summaryMetadata.put(PropertyKey.POSITIONS.key(), getNumPositions(acqSettings, posList));
-
+      summaryMetadata.put(PropertyKey.PREFIX.key(), acqSettings.prefix());
+      summaryMetadata.put(PropertyKey.PROFILE_NAME.key(), studio.profile().getProfileName());
+      summaryMetadata.put(PropertyKey.SLICES.key(), getNumSlices(acqSettings));
       // MM MDA acquisitions have a defined order
       summaryMetadata.put(PropertyKey.SLICES_FIRST.key(),
             acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
                   || acqSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE);
+      summaryMetadata.put(PropertyKey.START_TIME.key(), DATE_FORMATTER.format(new Date()));
       summaryMetadata.put(PropertyKey.TIME_FIRST.key(),
             acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
                   || acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE);
-
-      DefaultSummaryMetadata dsmd = new DefaultSummaryMetadata.Builder().build();
-      summaryMetadata.put(PropertyKey.MICRO_MANAGER_VERSION.key(),
-            dsmd.getMicroManagerVersion());
-      summaryMetadata.put("MDA_Settings", SequenceSettings.toJSONStream(acqSettings));
+      summaryMetadata.put(PropertyKey.USER_NAME.key(), System.getProperty("user.name"));
+      summaryMetadata.put(PropertyKey.Z_STEP_UM.key(), acqSettings.sliceZStepUm());
    }
 
    /**
