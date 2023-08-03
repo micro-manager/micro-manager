@@ -28,6 +28,7 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.ImageSizeChecker;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -48,6 +49,7 @@ public class NDTiffAdapter implements Storage {
 
    private NDTiffAPI storage_;
    private DefaultDatastore store_;
+   private SummaryMetadata summaryMetadata_ = null;
 
    /**
     * Constructor of NDTiffAdapter.
@@ -130,6 +132,13 @@ public class NDTiffAdapter implements Storage {
          storage_ = new NDTiffStorage(store_.getSavePath(), store_.getName(),
                  summaryMetadata, 0, 0, false, 0,
                  SAVING_QUEUE_SIZE, debugLogger, false);
+         try {
+            summaryMetadata_ =  DefaultSummaryMetadata.fromPropertyMap(
+                     NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
+                              storage_.getSummaryMetadata().toString()));
+         } catch (IOException e) {
+            throw new RuntimeException(e);
+         }
       } catch (Exception e) {
          ReportingUtils.logError(e, "Error setting new summary metadata");
       }
@@ -143,6 +152,9 @@ public class NDTiffAdapter implements Storage {
 
    @Override
    public void putImage(Image image) throws IOException {
+      if (summaryMetadata_ != null) {
+         ImageSizeChecker.checkImageSizeInSummary(summaryMetadata_, image);
+      }
       boolean rgb = image.getNumComponents() > 1;
       HashMap<String, Object> axes = coordsToHashMap(image.getCoords());
 

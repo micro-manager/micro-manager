@@ -365,6 +365,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_SLICE_CHANNEL
                   || acqSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE);
       summaryMetadata.put(PropertyKey.USER_NAME.key(), System.getProperty("user.name"));
+      summaryMetadata.put(PropertyKey.WIDTH.key(), studio.core().getImageWidth());
       summaryMetadata.put(PropertyKey.Z_STEP_UM.key(), acqSettings.sliceZStepUm());
    }
 

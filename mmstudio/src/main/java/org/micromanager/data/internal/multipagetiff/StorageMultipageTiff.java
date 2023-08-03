@@ -49,6 +49,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImagesDifferInSizeException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
@@ -340,6 +341,7 @@ public final class StorageMultipageTiff implements Storage {
       }
       if (firstImage_ == null) {
          firstImage_ = image;
+         ImageSizeChecker.checkImageSizeInSummary(summaryMetadata_, image);
       } else {
          ImageSizeChecker.checkImageSizes(firstImage_, image);
       }
