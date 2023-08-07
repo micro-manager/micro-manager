@@ -269,6 +269,8 @@ public abstract class NonPropertyMapJSONFormats {
                CUSTOM_INTERVALS_MS,
                AXIS_ORDER,
                INTENDED_DIMENSIONS,
+               WIDTH,
+               HEIGHT,
                START_TIME,
                STAGE_POSITIONS,
                KEEP_SHUTTER_OPEN_SLICES,

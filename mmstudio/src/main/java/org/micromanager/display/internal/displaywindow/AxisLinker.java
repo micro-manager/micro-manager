@@ -121,7 +121,8 @@ class AxisLinker {
    public void onEvent(DisplayPositionChangedEvent e) {
       Coords oldPos = e.getPreviousDisplayPosition();
       Coords newPos = e.getDisplayPosition();
-      if (oldPos.getIndex(axis_) != newPos.getIndex(axis_)) {
+      if (oldPos != null && newPos != null
+               && (oldPos.getIndex(axis_) != newPos.getIndex(axis_))) {
          anchor_.propagate(newPos.getIndex(axis_));
       }
    }

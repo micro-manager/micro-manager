@@ -26,6 +26,7 @@ import static org.micromanager.data.internal.PropertyKey.CHANNEL_NAMES;
 import static org.micromanager.data.internal.PropertyKey.COMPUTER_NAME;
 import static org.micromanager.data.internal.PropertyKey.CUSTOM_INTERVALS_MS;
 import static org.micromanager.data.internal.PropertyKey.DIRECTORY;
+import static org.micromanager.data.internal.PropertyKey.HEIGHT;
 import static org.micromanager.data.internal.PropertyKey.INTENDED_DIMENSIONS;
 import static org.micromanager.data.internal.PropertyKey.INTERVAL_MS;
 import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS;
@@ -39,6 +40,7 @@ import static org.micromanager.data.internal.PropertyKey.STAGE_POSITIONS;
 import static org.micromanager.data.internal.PropertyKey.START_TIME;
 import static org.micromanager.data.internal.PropertyKey.USER_DATA;
 import static org.micromanager.data.internal.PropertyKey.USER_NAME;
+import static org.micromanager.data.internal.PropertyKey.WIDTH;
 import static org.micromanager.data.internal.PropertyKey.Z_STEP_UM;
 
 import java.net.InetAddress;
@@ -258,6 +260,18 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          b_.putString(MDA_SETTINGS.key(), SequenceSettings.toJSONStream(sequenceSettings));
          return this;
       }
+
+      @Override
+      public Builder imageWidth(Integer width) {
+         b_.putInteger(WIDTH.key(), width);
+         return this;
+      }
+
+      @Override
+      public Builder imageHeight(Integer height) {
+         b_.putInteger(HEIGHT.key(), height);
+         return this;
+      }
    }
 
 
@@ -464,6 +478,18 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public SequenceSettings getSequenceSettings() {
       return SequenceSettings.fromJSONStream(pmap_.getString(MDA_SETTINGS.key()));
+   }
+
+   @Override
+   public Integer getImageWidth() {
+      return pmap_.containsKey(WIDTH.key())
+               ? pmap_.getInteger(WIDTH.key(), 0) : null;
+   }
+
+   @Override
+   public Integer getImageHeight() {
+      return pmap_.containsKey(HEIGHT.key())
+               ? pmap_.getInteger(HEIGHT.key(), 0) : null;
    }
 
    @Override

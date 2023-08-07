@@ -102,6 +102,10 @@ public interface SummaryMetadata {
       Builder userData(PropertyMap userData);
 
       Builder sequenceSettings(SequenceSettings sequenceSettings);
+
+      Builder imageWidth(Integer width);
+
+      Builder imageHeight(Integer height);
    }
 
    /**
@@ -361,4 +365,18 @@ public interface SummaryMetadata {
     * @return The settings that define this MDA.
     */
    SequenceSettings getSequenceSettings();
+
+   /**
+    * ImageWidth in pixels.
+    *
+    * @return ImageWidth in pixels.  Null if Image Width is not known.
+    */
+   Integer getImageWidth();
+
+   /**
+    * ImageHeight in pixels.
+    *
+    * @return ImageHeight in pixels. Null if Image Height is not know.
+    */
+   Integer getImageHeight();
 }

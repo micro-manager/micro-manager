@@ -127,6 +127,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public void putImage(Image image) {
+      ImageSizeChecker.checkImageSizeInSummary(summaryMetadata_, image);
       // Require images to only have time/channel/z/position axes.
       for (String axis : image.getCoords().getAxes()) {
          if (!ALLOWED_AXES.contains(axis)) {
