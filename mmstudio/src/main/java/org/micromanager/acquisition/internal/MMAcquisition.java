@@ -207,31 +207,6 @@ public final class MMAcquisition extends DataViewerListener {
                   } else {
                      displaySettingsBuilder.colorModeComposite();
                   }
-                  for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
-                     displaySettingsBuilder.channel(channelIndex,
-                           RememberedDisplaySettings.loadChannel(studio_,
-                               store_.getSummaryMetadata().getChannelGroup(),
-                               store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
-                           null));  // TODO: use chColors as default Color?
-                     /*
-                     ChannelDisplaySettings channelSettings
-                             = displaySettingsBuilder.getChannelSettings(channelIndex);
-                     Color chColor = new Color(chColors.getInt(channelIndex));
-                     ChannelDisplaySettings.Builder csb =
-                             channelSettings.copyBuilder().color(chColor);
-                     if (summaryMetadata.has("ChNames")) {
-                        Object chNames = summaryMetadata.get("ChNames");
-                        if (chNames instanceof JSONArray) {
-                           JSONArray jChNames = (JSONArray) chNames;
-                           if (channelIndex < jChNames.length()) {
-                              csb.name(jChNames.getString(channelIndex));
-                           }
-                        }
-                     }
-                     displaySettingsBuilder.channel(channelIndex,csb.build());
-
-                      */
-                  }
                } while (!display_.compareAndSetDisplaySettings(
                         display_.getDisplaySettings(), displaySettingsBuilder.build()));
             } else {
@@ -446,6 +421,12 @@ public final class MMAcquisition extends DataViewerListener {
          return true;
       }
       if (callbacks_.getAcquisitionDatastore() != viewer.getDataProvider()) {
+         if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
+            ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
+                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         }
+         display_.removeListener(this);
+         display_ = null;
          // not our problem;)
          return true;
       }

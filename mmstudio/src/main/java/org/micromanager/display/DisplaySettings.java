@@ -88,6 +88,15 @@ public interface DisplaySettings {
       Builder autoscaleIgnoringZeros(boolean ignoreZeros);
 
       /**
+       * Whether the histogram should be shown with a logarithmic (true)
+       * or linear (false) y-axis.
+       *
+       * @param histogramLogarithmic true when y-axis should be logarithmic.
+       * @return builder instance
+       */
+      Builder histogramLogarithmic(boolean histogramLogarithmic);
+
+      /**
        * Increases the number of ChannelDisplaySettings in this Builder to
        * the given number.  DefaultSettings for each channel will be added.
        *
@@ -207,6 +216,13 @@ public interface DisplaySettings {
     * @return Whether zero pixel values are ignored when autoscaling
     */
    boolean isAutoscaleIgnoringZeros();
+
+   /**
+    * Whether the y-axis of the histogram uses a logarithmic or linear scale.
+    *
+    * @return Logarithmic scale when true.
+    */
+   boolean isHistogramLogarithmic();
 
    /**
     * Returns the number of channels in these DisplaySettings

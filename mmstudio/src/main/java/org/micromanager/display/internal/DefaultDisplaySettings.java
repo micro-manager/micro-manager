@@ -55,6 +55,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    private final boolean autostretch_;
    private final boolean useROI_;
    private final double extremaQuantile_;
+   private final boolean histogramLogarithmic_;
    private final boolean ignoreZeros_;
    private final List<ChannelDisplaySettings> channelSettings_;
 
@@ -65,6 +66,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       private boolean useUniformChannelScaling_ = false;
       private boolean autostretch_ = true;
       private boolean useROI_ = true;
+      private boolean histogramLogarithmic_;
       private double extremaQuantile_ = 0.001;
       private boolean ignoreZeros_ = false;
       private List<ChannelDisplaySettings> channelSettings_ = new ArrayList<>();
@@ -149,6 +151,19 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          return this;
       }
 
+      /**
+       * Whether the histogram should be shown with a logarithmic (true)
+       * or linear (false) y-axis.
+       *
+       * @param histogramLogarithmic true when y-axis should be logarithmic.
+       * @return builder instance
+       */
+      @Override
+      public DisplaySettings.Builder histogramLogarithmic(boolean histogramLogarithmic) {
+         histogramLogarithmic_ = histogramLogarithmic;
+         return this;
+      }
+
       @Override
       public Builder channel(int channel) {
          Preconditions.checkArgument(channel >= 0);
@@ -205,6 +220,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       useROI_ = builder.useROI_;
       extremaQuantile_ = builder.extremaQuantile_;
       ignoreZeros_ = builder.ignoreZeros_;
+      histogramLogarithmic_ = builder.histogramLogarithmic_;
       channelSettings_ =
             new ArrayList<>(builder.channelSettings_);
    }
@@ -252,6 +268,11 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public boolean isAutoscaleIgnoringZeros() {
       return ignoreZeros_;
+   }
+
+   @Override
+   public boolean isHistogramLogarithmic() {
+      return histogramLogarithmic_;
    }
 
    @Override
@@ -308,6 +329,8 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    private static final String SHOULD_AUTOSTRETCH = "shouldAutostretch";
    private static final String SHOULD_SCALE_WITH_ROI = "shouldScaleWithROI";
    private static final String EXTREMA_PERCENTAGE = "extremaPercentage";
+   private static final String IGNORE_ZEROS_AUTOSCALE = "IgnoreZerosWhenAutoscaling";
+   private static final String HISTOGRAM_IS_LOGARITHMIC = "histogramIsLogarithmic";
 
    /**
     * Retrieve the display settings that have been saved in the preferences.
@@ -344,6 +367,10 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       builder.shouldAutostretch(settings.getBoolean(key + SHOULD_AUTOSTRETCH, true));
       builder.shouldScaleWithROI(settings.getBoolean(key + SHOULD_SCALE_WITH_ROI, true));
       builder.extremaPercentage(settings.getDouble(key + EXTREMA_PERCENTAGE, 0.0));
+      builder.autoscaleIgnoringZeros(settings.getBoolean(
+            key + IGNORE_ZEROS_AUTOSCALE, false));
+      builder.histogramLogarithmic(settings.getBoolean(
+            key + HISTOGRAM_IS_LOGARITHMIC, false));
       // Note we don't store user data in the prefs explicitly; let third-party
       // code manually access the prefs if they want.
       return builder.build();
@@ -837,6 +864,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .uniformChannelScaling(uniformChannelScaling_)
             .autostretch(autostretch_)
             .roiAutoscale(useROI_)
+            .histogramLogarithmic(histogramLogarithmic_)
             .autoscaleIgnoredQuantile(extremaQuantile_)
             .autoscaleIgnoringZeros(ignoreZeros_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {
@@ -870,7 +898,9 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .uniformChannelScaling(uniformChannelScaling_)
             .autostretch(autostretch_)
             .roiAutoscale(useROI_)
-            .autoscaleIgnoredQuantile(extremaQuantile_);
+            .histogramLogarithmic(histogramLogarithmic_)
+            .autoscaleIgnoredQuantile(extremaQuantile_)
+            .autoscaleIgnoringZeros(ignoreZeros_);
       for (int i = 0; i < getNumberOfChannels(); ++i) {
          ret.channel(i, channelSettings_.get(i));
       }
@@ -990,7 +1020,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     * @return PropertyMap containing these DisplaySettings
     */
    public PropertyMap toPropertyMap() {
-      List<PropertyMap> channelSettings = new ArrayList<PropertyMap>();
+      List<PropertyMap> channelSettings = new ArrayList<>();
       for (ChannelDisplaySettings cs : channelSettings_) {
          channelSettings.add(((DefaultChannelDisplaySettings) cs).toPropertyMap());
       }
@@ -1001,7 +1031,9 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             .putEnumAsString(PropertyKey.COLOR_MODE.key(), mode_)
             .putBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key(), uniformChannelScaling_)
             .putBoolean(PropertyKey.AUTOSTRETCH.key(), autostretch_)
+            .putBoolean(PropertyKey.HISTOGRAM_IS_LOGARITHMIC.key(), histogramLogarithmic_)
             .putBoolean(PropertyKey.ROI_AUTOSCALE.key(), useROI_)
+            .putBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key(), ignoreZeros_)
             .putDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key(), extremaQuantile_)
             .putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings)
             .build();
@@ -1037,8 +1069,16 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          if (pMap.containsBoolean(PropertyKey.AUTOSTRETCH.key())) {
             ddsb.autostretch(pMap.getBoolean(PropertyKey.AUTOSTRETCH.key(), ddsb.autostretch_));
          }
+         if (pMap.containsBoolean(PropertyKey.HISTOGRAM_IS_LOGARITHMIC.key())) {
+            ddsb.histogramLogarithmic(pMap.getBoolean(PropertyKey.HISTOGRAM_IS_LOGARITHMIC.key(),
+                  ddsb.histogramLogarithmic_));
+         }
          if (pMap.containsBoolean(PropertyKey.ROI_AUTOSCALE.key())) {
             ddsb.roiAutoscale(pMap.getBoolean(PropertyKey.ROI_AUTOSCALE.key(), ddsb.useROI_));
+         }
+         if (pMap.containsBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key())) {
+            ddsb.autoscaleIgnoringZeros(pMap.getBoolean(PropertyKey.IGNORE_ZEROS_AUTOSCALE.key(),
+                  ddsb.ignoreZeros_));
          }
          if (pMap.containsDouble(PropertyKey.AUTOSCALE_IGNORED_QUANTILE.key())) {
             ddsb.autoscaleIgnoredQuantile(pMap.getDouble(PropertyKey

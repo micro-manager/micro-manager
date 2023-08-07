@@ -572,6 +572,10 @@ public enum PropertyKey {
 
    HISTOGRAM_BIT_DEPTH("HistogramBitDepth", ChannelDisplaySettings.class),
 
+   HISTOGRAM_IS_LOGARITHMIC("HistogramIsLogarithmic", DisplaySettings.class),
+
+   IGNORE_ZEROS_AUTOSCALE("IgnorZerosAutoscale", DisplaySettings.class),
+
    IJ_TYPE("IJType", Image.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
