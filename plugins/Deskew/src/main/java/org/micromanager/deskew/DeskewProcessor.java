@@ -2,6 +2,7 @@ package org.micromanager.deskew;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -47,6 +48,10 @@ public class DeskewProcessor implements Processor {
    private HashMap<String, StackResampler> freeProcessors_ = new HashMap<>();
    private HashMap<HashMap<String, Object>, StackResampler> activeProcessors_ = new HashMap<>();
    private Future<?> f = null;
+   private Map<Coords, Future<?>> futures_ = new HashMap<>();
+   private Datastore fullVolumeStore_;
+   private Datastore xyProjectionStore_;
+   private Datastore orthogonalStore_;
 
    /**
     * Bit of an awkard way to translate user's desires to the
@@ -82,6 +87,26 @@ public class DeskewProcessor implements Processor {
       return inputSummaryMetadata_;
    }
 
+   private Datastore createStoreAndDisplay(SummaryMetadata summaryMetadata,
+                                           String prefix,
+                                           int nrZSlices) {
+      Datastore store = studio_.data().createRAMDatastore();
+      SummaryMetadata outputSummaryMetadata = summaryMetadata.copyBuilder()
+               .intendedDimensions(summaryMetadata
+                        .getIntendedDimensions().copyBuilder().z(nrZSlices).build())
+               .prefix(prefix)
+               .build();
+      try {
+         store.setSummaryMetadata(outputSummaryMetadata);
+      } catch (IOException ioe) {
+         studio_.logs().logError(ioe);
+      }
+      DisplayWindow display = studio_.displays().createDisplay(store);
+      display.setCustomTitle(prefix);
+      display.show();
+      return store;
+   }
+
    @Override
    public void processImage(Image image, ProcessorContext context) {
       if (image.getCoords().getZ() == 1) {
@@ -91,6 +116,11 @@ public class DeskewProcessor implements Processor {
                      inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getWidth(),
                      image.getHeight());
             fullVolumeResampler_.initializeProjections();
+            if (fullVolumeStore_ == null) {
+               String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
+               fullVolumeStore_ = createStoreAndDisplay(inputSummaryMetadata_,
+                        newPrefix, fullVolumeResampler_.getResampledShapeZ());
+            }
          }
          if (doXYProjections_) {
             xyProjectionResampler_ = new StackResampler(StackResampler.YX_PROJECTION,
@@ -102,6 +132,13 @@ public class DeskewProcessor implements Processor {
                      image.getWidth(),
                      image.getHeight());
             xyProjectionResampler_.initializeProjections();
+            if (xyProjectionStore_ == null) {
+               String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
+                        + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
+                        + "-Projection";
+               xyProjectionStore_ = createStoreAndDisplay(inputSummaryMetadata_,
+                        newPrefix, 1);
+            }
          }
          if (doOrthogonalProjections_) {
             orthogonalProjectionResampler_ = new StackResampler(
@@ -116,6 +153,13 @@ public class DeskewProcessor implements Processor {
             orthogonalProjectionResampler_.initializeProjections();
             f = processingExecutor_.submit(orthogonalProjectionResampler_.startStackProcessing());
             //processingFutures_.put(nonZAxes, f);
+            if (orthogonalStore_ == null) {
+               String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
+                        + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
+                        + "-Projection";
+               orthogonalStore_ = createStoreAndDisplay(inputSummaryMetadata_,
+                        newPrefix, 1);
+            }
          }
       }
       if (fullVolumeResampler_ != null) {
@@ -140,12 +184,6 @@ public class DeskewProcessor implements Processor {
             int height = fullVolumeResampler_.getResampledShapeY();
             int nrZPlanes = fullVolumeResampler_.getResampledShapeZ();
             double newZStep = fullVolumeResampler_.getReconstructionVoxelSizeUm();
-            Datastore outputStore =  studio_.data().createRAMDatastore();
-            SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
-                     .zStepUm(newZStep).intendedDimensions(inputSummaryMetadata_
-                              .getIntendedDimensions().copyBuilder().z(nrZPlanes).build())
-                     .prefix(inputSummaryMetadata_.getPrefix() + "-Deskewed")
-                     .build();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
             formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
             formatBuilder.putInteger(PropertyKey.HEIGHT.key(), height);
@@ -153,16 +191,12 @@ public class DeskewProcessor implements Processor {
             PropertyMap format = formatBuilder.build();
             Coords.CoordsBuilder cb = studio_.data().coordsBuilder();
             try {
-               outputStore.setSummaryMetadata(outputSummaryMetadata);
                short[][] reconstructedVolume = fullVolumeResampler_.getReconstructedVolumeZYX();
                for (int z = 0; z < reconstructedVolume.length; z++) {
                   Image img = new DefaultImage(reconstructedVolume[z], format, cb.z(z).build(),
                            image.getMetadata().copyBuilderWithNewUUID().build());
-                  outputStore.putImage(img);
+                  fullVolumeStore_.putImage(img);
                }
-               DisplayWindow display = studio_.displays().createDisplay(outputStore);
-               display.setCustomTitle(inputSummaryMetadata_.getPrefix() + "-Deskewed");
-               display.show();
             } catch (IOException e) {
                throw new RuntimeException(e);
             }
@@ -172,15 +206,6 @@ public class DeskewProcessor implements Processor {
             int width = xyProjectionResampler_.getResampledShapeX();
             int height = xyProjectionResampler_.getResampledShapeY();
             int nrZPlanes = 1;
-            Datastore outputStore = studio_.data().createRAMDatastore();
-            String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
-                  + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
-                  + "-Projection";
-            SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
-                     .intendedDimensions(inputSummaryMetadata_
-                              .getIntendedDimensions().copyBuilder().z(nrZPlanes).build())
-                     .prefix(newPrefix)
-                     .build();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
             formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
             formatBuilder.putInteger(PropertyKey.HEIGHT.key(), height);
@@ -188,14 +213,10 @@ public class DeskewProcessor implements Processor {
             PropertyMap format = formatBuilder.build();
             Coords.CoordsBuilder cb = studio_.data().coordsBuilder();
             try {
-               outputStore.setSummaryMetadata(outputSummaryMetadata);
                short[] yxProjection = xyProjectionResampler_.getYXProjection();
                Image img = new DefaultImage(yxProjection, format, cb.build(),
                         image.getMetadata().copyBuilderWithNewUUID().build());
-               outputStore.putImage(img);
-               DisplayWindow display = studio_.displays().createDisplay(outputStore);
-               display.setCustomTitle(newPrefix);
-               display.show();
+               xyProjectionStore_.putImage(img);
             } catch (IOException e) {
                throw new RuntimeException(e);
             }
@@ -204,9 +225,7 @@ public class DeskewProcessor implements Processor {
             if (f != null) {
                try {
                   f.get();
-               } catch (InterruptedException e) {
-                  throw new RuntimeException(e);
-               } catch (ExecutionException e) {
+               } catch (InterruptedException | ExecutionException e) {
                   throw new RuntimeException(e);
                }
             }
@@ -217,15 +236,6 @@ public class DeskewProcessor implements Processor {
             int separatorSize = 3;
             int newWidth = width + separatorSize + zSize;
             int newHeight = height + separatorSize + zSize;
-            Datastore outputStore = studio_.data().createRAMDatastore();
-            String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
-                  + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
-                  + "-Projection";
-            SummaryMetadata outputSummaryMetadata = inputSummaryMetadata_.copyBuilder()
-                     .intendedDimensions(inputSummaryMetadata_
-                              .getIntendedDimensions().copyBuilder().z(1).build())
-                     .prefix(newPrefix)
-                     .build();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
             formatBuilder.putInteger(PropertyKey.WIDTH.key(), newWidth);
             formatBuilder.putInteger(PropertyKey.HEIGHT.key(), newHeight);
@@ -233,7 +243,6 @@ public class DeskewProcessor implements Processor {
             PropertyMap format = formatBuilder.build();
             Coords.CoordsBuilder cb = studio_.data().coordsBuilder();
             try {
-               outputStore.setSummaryMetadata(outputSummaryMetadata);
                short[] yxProjection = orthogonalProjectionResampler_.getYXProjection();
                short[] yzProjection = orthogonalProjectionResampler_.getYZProjection();
                short[] zxProjection = orthogonalProjectionResampler_.getZXProjection();
@@ -254,10 +263,7 @@ public class DeskewProcessor implements Processor {
 
                Image img = new DefaultImage(orthogonalView, format, cb.build(),
                         image.getMetadata().copyBuilderWithNewUUID().build());
-               outputStore.putImage(img);
-               DisplayWindow display = studio_.displays().createDisplay(outputStore);
-               display.setCustomTitle(newPrefix);
-               display.show();
+               orthogonalStore_.putImage(img);
             } catch (IOException e) {
                throw new RuntimeException(e);
             }
