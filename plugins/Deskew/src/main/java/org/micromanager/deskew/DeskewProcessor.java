@@ -1,7 +1,9 @@
 package org.micromanager.deskew;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -37,19 +39,19 @@ public class DeskewProcessor implements Processor {
    private final boolean doOrthogonalProjections_;
    private final String orthogonalProjectionsMode_;
    private final boolean keepOriginals_;
-   private StackResampler fullVolumeResampler_ = null;
-   private StackResampler xyProjectionResampler_ = null;
-   private StackResampler orthogonalProjectionResampler_ = null;
 
-   private ExecutorService processingExecutor_ =
+   private final ExecutorService processingExecutor_ =
          new ThreadPoolExecutor(1, 12, 1000, TimeUnit.MILLISECONDS,
                new LinkedBlockingDeque<>());
-   private HashMap<HashMap<String, Object>, Future> processingFutures_ = new HashMap<>();
-   private HashMap<String, StackResampler> freeProcessors_ = new HashMap<>();
-   private HashMap<HashMap<String, Object>, StackResampler> activeProcessors_ = new HashMap<>();
-   private Map<Coords, Future<?>> fullVolumeFutures_ = new HashMap<>();
-   private Map<Coords, Future<?>> xyProjectionFutures_ = new HashMap<>();
-   private Map<Coords, Future<?>> orthogonalFutures_ = new HashMap<>();
+   private final Map<Coords, StackResampler> fullVolumeResamplers_ = new HashMap<>();
+   private final List<StackResampler> freeFullVolumeResamplers_ = new ArrayList<>();
+   private final Map<Coords, StackResampler> xyProjectionResamplers_ = new HashMap<>();
+   private final List<StackResampler> freeXYProjectionResamplers_ = new ArrayList<>();
+   private final Map<Coords, StackResampler> orthogonalProjectionResamplers_ = new HashMap<>();
+   private final List<StackResampler> freeOrthogonalProjectionResamplers_ = new ArrayList<>();
+   private final Map<Coords, Future<?>> fullVolumeFutures_ = new HashMap<>();
+   private final Map<Coords, Future<?>> xyProjectionFutures_ = new HashMap<>();
+   private final Map<Coords, Future<?>> orthogonalFutures_ = new HashMap<>();
    private Datastore fullVolumeStore_;
    private Datastore xyProjectionStore_;
    private Datastore orthogonalStore_;
@@ -114,38 +116,56 @@ public class DeskewProcessor implements Processor {
 
    @Override
    public void processImage(Image image, ProcessorContext context) {
+      Coords coordsNoZ = image.getCoords().copyRemovingAxes(Coords.Z);
       if (image.getCoords().getZ() == 1) {
          if (doFullVolume_) {
-            if (fullVolumeResampler_ == null) {
-               fullVolumeResampler_ = new StackResampler(StackResampler.FULL_VOLUME, false, theta_,
-                        image.getMetadata().getPixelSizeUm(), inputSummaryMetadata_.getZStepUm(),
-                        inputSummaryMetadata_.getIntendedDimensions().getZ(), image.getHeight(),
-                        image.getWidth());
+            if (fullVolumeResamplers_.get(coordsNoZ) == null) {
+               if (freeFullVolumeResamplers_.isEmpty()) {
+                  fullVolumeResamplers_.put(coordsNoZ, new StackResampler(
+                           StackResampler.FULL_VOLUME,
+                           false,
+                           theta_,
+                           image.getMetadata().getPixelSizeUm(),
+                           inputSummaryMetadata_.getZStepUm(),
+                           inputSummaryMetadata_.getIntendedDimensions().getZ(),
+                           image.getHeight(),
+                           image.getWidth()));
+               } else {
+                  fullVolumeResamplers_.put(coordsNoZ, freeFullVolumeResamplers_.remove(0));
+               }
             }
-            fullVolumeResampler_.initializeProjections();
+            fullVolumeResamplers_.get(coordsNoZ).initializeProjections();
             fullVolumeFutures_.put(image.getCoords().copyBuilder().z(0).build(),
-                     processingExecutor_.submit(fullVolumeResampler_.startStackProcessing()));
-            double newZStep = fullVolumeResampler_.getReconstructionVoxelSizeUm();
+                     processingExecutor_.submit(fullVolumeResamplers_.get(coordsNoZ)
+                              .startStackProcessing()));
+            double newZStep = fullVolumeResamplers_.get(coordsNoZ).getReconstructionVoxelSizeUm();
             if (fullVolumeStore_ == null) {
                String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
                fullVolumeStore_ = createStoreAndDisplay(inputSummaryMetadata_,
-                        newPrefix, fullVolumeResampler_.getResampledShapeZ(), newZStep);
+                        newPrefix, fullVolumeResamplers_.get(coordsNoZ).getResampledShapeZ(),
+                        newZStep);
             }
          }
          if (doXYProjections_) {
-            if (xyProjectionResampler_ == null) {
-               xyProjectionResampler_ = new StackResampler(StackResampler.YX_PROJECTION,
+            if (xyProjectionResamplers_.get(coordsNoZ) == null) {
+               if (freeXYProjectionResamplers_.isEmpty()) {
+                  xyProjectionResamplers_.put(coordsNoZ, new StackResampler(
+                        StackResampler.YX_PROJECTION,
                         xyProjectionMode_.equals(DeskewFrame.MAX),
                         theta_,
                         image.getMetadata().getPixelSizeUm(),
                         inputSummaryMetadata_.getZStepUm(),
                         inputSummaryMetadata_.getIntendedDimensions().getZ(),
                         image.getHeight(),
-                        image.getWidth());
+                        image.getWidth()));
+               } else {
+                  xyProjectionResamplers_.put(coordsNoZ, freeXYProjectionResamplers_.remove(0));
+               }
             }
-            xyProjectionResampler_.initializeProjections();
+            xyProjectionResamplers_.get(coordsNoZ).initializeProjections();
             xyProjectionFutures_.put(image.getCoords().copyBuilder().z(0).build(),
-                     processingExecutor_.submit(xyProjectionResampler_.startStackProcessing()));
+                     processingExecutor_.submit(xyProjectionResamplers_.get(coordsNoZ)
+                              .startStackProcessing()));
             if (xyProjectionStore_ == null) {
                String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                         + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
@@ -155,21 +175,28 @@ public class DeskewProcessor implements Processor {
             }
          }
          if (doOrthogonalProjections_) {
-            if (orthogonalProjectionResampler_ == null) {
-               orthogonalProjectionResampler_ = new StackResampler(
-                        StackResampler.ORTHOGONAL_VIEWS,
-                        orthogonalProjectionsMode_.equals(DeskewFrame.MAX),
-                        theta_,
-                        image.getMetadata().getPixelSizeUm(),
-                        inputSummaryMetadata_.getZStepUm(),
-                        inputSummaryMetadata_.getIntendedDimensions().getZ(),
-                        image.getHeight(),
-                        image.getWidth());
+            if (orthogonalProjectionResamplers_.get(coordsNoZ) == null) {
+               if (freeOrthogonalProjectionResamplers_.size() > 0) {
+                  orthogonalProjectionResamplers_.put(coordsNoZ, freeOrthogonalProjectionResamplers_
+                           .get(0));
+                  freeOrthogonalProjectionResamplers_.remove(0);
+               } else {
+                  orthogonalProjectionResamplers_.put(coordsNoZ, new StackResampler(
+                           StackResampler.ORTHOGONAL_VIEWS,
+                           orthogonalProjectionsMode_.equals(DeskewFrame.MAX),
+                           theta_,
+                           image.getMetadata().getPixelSizeUm(),
+                           inputSummaryMetadata_.getZStepUm(),
+                           inputSummaryMetadata_.getIntendedDimensions().getZ(),
+                           image.getHeight(),
+                           image.getWidth()));
+               }
             }
-            orthogonalProjectionResampler_.initializeProjections();
-            orthogonalFutures_.put(image.getCoords().copyBuilder().z(0).build(),
+            orthogonalProjectionResamplers_.get(coordsNoZ).initializeProjections();
+            orthogonalFutures_.put(coordsNoZ,
                      processingExecutor_.submit(
-                              orthogonalProjectionResampler_.startStackProcessing()));
+                              orthogonalProjectionResamplers_.get(coordsNoZ)
+                                       .startStackProcessing()));
             if (orthogonalStore_ == null) {
                String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                         + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
@@ -179,23 +206,22 @@ public class DeskewProcessor implements Processor {
             }
          }
       }
-      if (fullVolumeResampler_ != null) {
-         fullVolumeResampler_.addToProcessImageQueue((short[]) image.getRawPixels(),
+      if (fullVolumeResamplers_.get(coordsNoZ) != null) {
+         fullVolumeResamplers_.get(coordsNoZ).addToProcessImageQueue((short[]) image.getRawPixels(),
                   image.getCoords().getZ());
       }
-      if (xyProjectionResampler_ != null) {
-         xyProjectionResampler_.addToProcessImageQueue((short[]) image.getRawPixels(),
-                  image.getCoords().getZ());
+      if (xyProjectionResamplers_.get(coordsNoZ) != null) {
+         xyProjectionResamplers_.get(coordsNoZ).addToProcessImageQueue(
+                  (short[]) image.getRawPixels(), image.getCoords().getZ());
       }
-      if (orthogonalProjectionResampler_ != null) {
-         orthogonalProjectionResampler_.addToProcessImageQueue((short[]) image.getRawPixels(),
-                     image.getCoords().getZ());
+      if (orthogonalProjectionResamplers_.get(coordsNoZ) != null) {
+         orthogonalProjectionResamplers_.get(coordsNoZ).addToProcessImageQueue(
+                  (short[]) image.getRawPixels(), image.getCoords().getZ());
       }
 
       if (image.getCoords().getZ() == inputSummaryMetadata_.getIntendedDimensions().getZ() - 1) {
-         if (fullVolumeResampler_ != null) {
-            Future<?> future = fullVolumeFutures_.getOrDefault(
-                     image.getCoords().copyBuilder().z(0).build(), null);
+         if (fullVolumeResamplers_.get(coordsNoZ) != null) {
+            Future<?> future = fullVolumeFutures_.getOrDefault(coordsNoZ, null);
             if (future != null) {
                try {
                   future.get();
@@ -203,11 +229,9 @@ public class DeskewProcessor implements Processor {
                   throw new RuntimeException(e);
                }
             }
-            fullVolumeResampler_.finalizeProjections();
-            int width = fullVolumeResampler_.getResampledShapeX();
-            int height = fullVolumeResampler_.getResampledShapeY();
-            int nrZPlanes = fullVolumeResampler_.getResampledShapeZ();
-            double newZStep = fullVolumeResampler_.getReconstructionVoxelSizeUm();
+            fullVolumeResamplers_.get(coordsNoZ).finalizeProjections();
+            int width = fullVolumeResamplers_.get(coordsNoZ).getResampledShapeX();
+            int height = fullVolumeResamplers_.get(coordsNoZ).getResampledShapeY();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
             formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
             formatBuilder.putInteger(PropertyKey.HEIGHT.key(), height);
@@ -215,7 +239,8 @@ public class DeskewProcessor implements Processor {
             PropertyMap format = formatBuilder.build();
             Coords.CoordsBuilder cb = image.getCoords().copyBuilder();
             try {
-               short[][] reconstructedVolume = fullVolumeResampler_.getReconstructedVolumeZYX();
+               short[][] reconstructedVolume = fullVolumeResamplers_.get(coordsNoZ)
+                        .getReconstructedVolumeZYX();
                for (int z = 0; z < reconstructedVolume.length; z++) {
                   Image img = new DefaultImage(reconstructedVolume[z], format, cb.z(z).build(),
                            image.getMetadata().copyBuilderWithNewUUID().build());
@@ -224,10 +249,11 @@ public class DeskewProcessor implements Processor {
             } catch (IOException e) {
                throw new RuntimeException(e);
             }
+            freeFullVolumeResamplers_.add(fullVolumeResamplers_.get(coordsNoZ));
+            fullVolumeResamplers_.remove(coordsNoZ);
          }
-         if (xyProjectionResampler_ != null) {
-            Future<?> future = xyProjectionFutures_.getOrDefault(
-                     image.getCoords().copyBuilder().z(0).build(), null);
+         if (xyProjectionResamplers_.get(coordsNoZ) != null) {
+            Future<?> future = xyProjectionFutures_.getOrDefault(coordsNoZ, null);
             if (future != null) {
                try {
                   future.get();
@@ -235,9 +261,9 @@ public class DeskewProcessor implements Processor {
                   throw new RuntimeException(e);
                }
             }
-            xyProjectionResampler_.finalizeProjections();
-            int width = xyProjectionResampler_.getResampledShapeX();
-            int height = xyProjectionResampler_.getResampledShapeY();
+            xyProjectionResamplers_.get(coordsNoZ).finalizeProjections();
+            int width = xyProjectionResamplers_.get(coordsNoZ).getResampledShapeX();
+            int height = xyProjectionResamplers_.get(coordsNoZ).getResampledShapeY();
             PropertyMap.Builder formatBuilder = PropertyMaps.builder();
             formatBuilder.putInteger(PropertyKey.WIDTH.key(), width);
             formatBuilder.putInteger(PropertyKey.HEIGHT.key(), height);
@@ -245,15 +271,17 @@ public class DeskewProcessor implements Processor {
             PropertyMap format = formatBuilder.build();
             Coords.CoordsBuilder cb = image.getCoords().copyBuilder().z(0);
             try {
-               short[] yxProjection = xyProjectionResampler_.getYXProjection();
+               short[] yxProjection = xyProjectionResamplers_.get(coordsNoZ).getYXProjection();
                Image img = new DefaultImage(yxProjection, format, cb.build(),
                         image.getMetadata().copyBuilderWithNewUUID().build());
                xyProjectionStore_.putImage(img);
             } catch (IOException e) {
                throw new RuntimeException(e);
             }
+            freeXYProjectionResamplers_.add(xyProjectionResamplers_.get(coordsNoZ));
+            xyProjectionResamplers_.remove(coordsNoZ);
          }
-         if (orthogonalProjectionResampler_ != null) {
+         if (orthogonalProjectionResamplers_.get(coordsNoZ) != null) {
             Future<?> future = orthogonalFutures_.getOrDefault(
                      image.getCoords().copyBuilder().z(0).build(), null);
             if (future != null) {
@@ -263,10 +291,10 @@ public class DeskewProcessor implements Processor {
                   throw new RuntimeException(e);
                }
             }
-            orthogonalProjectionResampler_.finalizeProjections();
-            int width = orthogonalProjectionResampler_.getResampledShapeX();
-            int height = orthogonalProjectionResampler_.getResampledShapeY();
-            int zSize = orthogonalProjectionResampler_.getResampledShapeZ();
+            orthogonalProjectionResamplers_.get(coordsNoZ).finalizeProjections();
+            int width = orthogonalProjectionResamplers_.get(coordsNoZ).getResampledShapeX();
+            int height = orthogonalProjectionResamplers_.get(coordsNoZ).getResampledShapeY();
+            int zSize = orthogonalProjectionResamplers_.get(coordsNoZ).getResampledShapeZ();
             int separatorSize = 3;
             int newWidth = width + separatorSize + zSize;
             int newHeight = height + separatorSize + zSize;
@@ -277,9 +305,12 @@ public class DeskewProcessor implements Processor {
             PropertyMap format = formatBuilder.build();
             Coords.CoordsBuilder cb = image.getCoords().copyBuilder().z(0);
             try {
-               short[] yxProjection = orthogonalProjectionResampler_.getYXProjection();
-               short[] yzProjection = orthogonalProjectionResampler_.getYZProjection();
-               short[] zxProjection = orthogonalProjectionResampler_.getZXProjection();
+               short[] yxProjection = orthogonalProjectionResamplers_.get(coordsNoZ)
+                        .getYXProjection();
+               short[] yzProjection = orthogonalProjectionResamplers_.get(coordsNoZ)
+                        .getYZProjection();
+               short[] zxProjection = orthogonalProjectionResamplers_.get(coordsNoZ)
+                        .getZXProjection();
                short[] orthogonalView = new short[newWidth * newHeight];
                for (int row = 0; row < height; row++) {
                   System.arraycopy(yxProjection, row * width, orthogonalView,
@@ -298,6 +329,9 @@ public class DeskewProcessor implements Processor {
                Image img = new DefaultImage(orthogonalView, format, cb.build(),
                         image.getMetadata().copyBuilderWithNewUUID().build());
                orthogonalStore_.putImage(img);
+               freeOrthogonalProjectionResamplers_.add(orthogonalProjectionResamplers_
+                        .get(coordsNoZ));
+               orthogonalProjectionResamplers_.remove(coordsNoZ);
             } catch (IOException e) {
                throw new RuntimeException(e);
             }
@@ -310,7 +344,4 @@ public class DeskewProcessor implements Processor {
 
    }
 
-   @Override
-   public void cleanup(ProcessorContext context) {
-   }
 }
