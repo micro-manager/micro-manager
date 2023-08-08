@@ -15,6 +15,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
@@ -23,6 +24,8 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.PixelType;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.lightsheet.StackResampler;
 
@@ -108,8 +111,20 @@ public class DeskewProcessor implements Processor {
       } catch (IOException ioe) {
          studio_.logs().logError(ioe);
       }
+      // complicated way to find the viewer that had this data
+      DisplaySettings displaySettings = null;
+      List<DataViewer> dataViewers = studio_.displays().getAllDataViewers();
+      for (DataViewer dv : dataViewers) {
+         DataProvider provider = dv.getDataProvider();
+         if (provider != null && provider.getSummaryMetadata() == summaryMetadata) {
+            displaySettings = dv.getDisplaySettings();
+         }
+      }
       DisplayWindow display = studio_.displays().createDisplay(store);
       display.setCustomTitle(prefix);
+      if (displaySettings != null) {
+         display.setDisplaySettings(displaySettings);
+      }
       display.show();
       return store;
    }
