@@ -39,6 +39,9 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    static final String KEEP_ORIGINAL = "KeepOriginal";
    static final String MAX = "Max";
    static final String AVG = "Avg";
+   static final String MODE = "Mode";
+   static final String FAST = "Fast";
+   static final String QUALITY = "Quality";
 
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
@@ -79,6 +82,18 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       super.setTitle(DIALOG_TITLE);
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("flowx"));
+
+      JRadioButton fastButton = new JRadioButton(FAST);
+      fastButton.setSelected(settings_.getString(MODE, FAST).equals(FAST));
+      fastButton.addActionListener(e -> settings_.putString(MODE, FAST));
+      JRadioButton qualityButton = new JRadioButton(QUALITY);
+      qualityButton.addActionListener(e -> settings_.putString(MODE, QUALITY));
+      final ButtonGroup bg = new ButtonGroup();
+      bg.add(fastButton);
+      bg.add(qualityButton);
+      qualityButton.setSelected(settings_.getString(MODE, FAST).equals(QUALITY));
+      add(fastButton, "span 4, split 2");
+      add(qualityButton, "wrap");
 
       add(new JLabel("Sheet angle (_\\) in radians:"), "alignx left");
       final JTextField thetaTextField = new JTextField(5);
