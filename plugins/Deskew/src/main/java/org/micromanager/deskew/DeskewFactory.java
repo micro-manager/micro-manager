@@ -25,7 +25,7 @@ public class DeskewFactory implements ProcessorFactory {
          double theta = NumberUtils.displayStringToDouble(settings_.getString(
                   DeskewFrame.THETA, "0.0"));
          if (theta == 0.0) {
-            studio_.logs().showError("Can not deskew LighStheet data with an angle of 0.0 radians");
+            studio_.logs().showError("Can not deskew LighSheet data with an angle of 0.0 radians");
          }
          boolean doFullVolume = settings_.getBoolean(DeskewFrame.FULL_VOLUME, true);
          boolean doXYProjections = settings_.getBoolean(DeskewFrame.XY_PROJECTION, false);

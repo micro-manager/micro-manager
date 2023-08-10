@@ -132,7 +132,7 @@ public class DeskewProcessor implements Processor {
    @Override
    public void processImage(Image image, ProcessorContext context) {
       Coords coordsNoZ = image.getCoords().copyRemovingAxes(Coords.Z);
-      if (image.getCoords().getZ() == 1) {
+      if (image.getCoords().getZ() == 0) {
          if (doFullVolume_) {
             if (fullVolumeResamplers_.get(coordsNoZ) == null) {
                if (freeFullVolumeResamplers_.isEmpty()) {
@@ -240,7 +240,7 @@ public class DeskewProcessor implements Processor {
             if (future != null) {
                try {
                   future.get();
-               } catch (InterruptedException | ExecutionException e) {
+               } catch (InterruptedException | ExecutionException | OutOfMemoryError e) {
                   throw new RuntimeException(e);
                }
             }
