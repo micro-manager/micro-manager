@@ -19,6 +19,8 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+import org.scijava.io.location.FileLocation;
+import org.scijava.io.location.Location;
 import org.scijava.util.Bytes;
 
 /**
@@ -59,7 +61,8 @@ public class SciFIODataProvider implements DataProvider {
       // create the ScioFIO context that is needed for eveything
       scifio_ = new SCIFIO();
       try {
-         reader_ = scifio_.initializer().initializeReader(path);
+         Location location = new FileLocation(path);
+         reader_ = scifio_.initializer().initializeReader(location);
       } catch (io.scif.FormatException | IOException ex) {
          if (studio != null) {
             studio.getLogManager().showError(ex, "Failed to open: " + path);
