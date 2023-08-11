@@ -12,6 +12,10 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import net.haesleinhuepf.clij.clearcl.ClearCL;
+import net.haesleinhuepf.clij.clearcl.ClearCLDevice;
+import net.haesleinhuepf.clij.clearcl.backend.ClearCLBackendInterface;
+import net.haesleinhuepf.clij.clearcl.backend.ClearCLBackends;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -143,6 +147,16 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       result.add(avg);
       return result;
 
+   }
+
+   private List<String> openCLDevices() {
+      List<String> result = new ArrayList<>();
+      ClearCLBackendInterface lClearCLBackend = ClearCLBackends.getBestBackend();
+      ClearCL lClearCL = new ClearCL(lClearCLBackend);
+      for (ClearCLDevice lDevice : lClearCL.getAllDevices()) {
+         result.add(lDevice.getName());
+      }
+      return result;
    }
 
 

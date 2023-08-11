@@ -37,7 +37,9 @@ public class DeskewFactory implements ProcessorFactory {
                DeskewFrame.ORTHOGONAL_PROJECTIONS_MODE, DeskewFrame.MAX);
          boolean keepOriginal = settings_.getBoolean(DeskewFrame.KEEP_ORIGINAL, true);
          if (settings_.getString(DeskewFrame.MODE, "").equals(DeskewFrame.QUALITY)) {
-            return new CliJDeskewProcessor(studio_, theta);
+            return new CliJDeskewProcessor(studio_, theta, doFullVolume, doXYProjections,
+                     xyProjectionMode, doOrthogonalProjections, orthogonalProjectionsMode,
+                     keepOriginal);
          }
          return new DeskewProcessor(studio_, theta, doFullVolume, doXYProjections, xyProjectionMode,
                   doOrthogonalProjections, orthogonalProjectionsMode, keepOriginal);
