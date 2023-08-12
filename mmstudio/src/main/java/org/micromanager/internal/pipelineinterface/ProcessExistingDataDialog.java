@@ -173,7 +173,6 @@ public final class ProcessExistingDataDialog extends JDialog {
       outputName_.setText(settings_.getString(SAVE_NAME, ""));
       contents.add(outputName_, "wrap");
 
-
       showDisplay_.setToolTipText("Display the processed data in a new image window");
       showDisplay_.setSelected(settings_.getBoolean(SHOW, true));
       contents.add(showDisplay_, "spanx, alignx right, wrap");
@@ -210,13 +209,11 @@ public final class ProcessExistingDataDialog extends JDialog {
       super.dispose();
    }
 
-   // TODO
    @Subscribe
    public void onDisplayAboutToShow(DataViewerAddedEvent event) {
       SwingUtilities.invokeLater(() -> refreshInputOptions());
    }
 
-   // TODO
    @Subscribe
    public void onDisplayDestroyed(DataViewerWillCloseEvent event) {
       SwingUtilities.invokeLater(() -> refreshInputOptions());
@@ -298,7 +295,7 @@ public final class ProcessExistingDataDialog extends JDialog {
       }
 
       // All inputs validated; time to process data.
-      dispose();
+      // dispose();
 
       if (source == null) {
          studio_.logs().showError("The data source named " + input + " is no longer available.");
