@@ -39,15 +39,13 @@ public class CliJDeskewProcessor implements Processor {
    private SummaryMetadata inputSummaryMetadata_;
    private final Map<Coords, ImageStack> stacks_ = new HashMap<>();
 
-   public CliJDeskewProcessor(Studio studio, Double theta, boolean doFullVolume,
+   public CliJDeskewProcessor(Studio studio, String gpuName, Double theta, boolean doFullVolume,
             boolean doXYProjections, String xyProjectionMode,
             boolean doOrthogonalProjections, String orthogonalProjectionsMode,
             boolean keepOriginals) {
       studio_ = studio;
       theta_ = theta;
-      clij2_ = CLIJ2.getInstance();
-      studio_.logs().logMessage(clij2_.clinfo());
-      studio_.logs().logMessage(clij2_.getGPUName());
+      clij2_ = CLIJ2.getInstance(gpuName);
       clij2_.clear(); // Really needed?
       doFullVolume_ = doFullVolume;
       doXYProjections_ = doXYProjections;

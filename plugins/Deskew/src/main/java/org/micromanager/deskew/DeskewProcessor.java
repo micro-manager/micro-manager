@@ -42,10 +42,9 @@ public class DeskewProcessor implements Processor {
    private final boolean doOrthogonalProjections_;
    private final String orthogonalProjectionsMode_;
    private final boolean keepOriginals_;
+   private final PropertyMap settings_;
 
-   private final ExecutorService processingExecutor_ =
-         new ThreadPoolExecutor(1, 12, 1000, TimeUnit.MILLISECONDS,
-               new LinkedBlockingDeque<>());
+   private final ExecutorService processingExecutor_;
    private final Map<Coords, StackResampler> fullVolumeResamplers_ = new HashMap<>();
    private final List<StackResampler> freeFullVolumeResamplers_ = new ArrayList<>();
    private final Map<Coords, StackResampler> xyProjectionResamplers_ = new HashMap<>();
@@ -58,6 +57,7 @@ public class DeskewProcessor implements Processor {
    private Datastore fullVolumeStore_;
    private Datastore xyProjectionStore_;
    private Datastore orthogonalStore_;
+   private final Datastore store_;
 
    /**
     * Bit of an awkard way to translate user's desires to the
@@ -73,11 +73,12 @@ public class DeskewProcessor implements Processor {
     * @param keepOriginals Whether to send the original data through the pipeline or
     *                      to drop them.
     */
-   public DeskewProcessor(Studio studio, double theta, boolean doFullVolume,
+   public DeskewProcessor(Studio studio, Datastore store, double theta, boolean doFullVolume,
                           boolean doXYProjections, String xyProjectionMode,
                           boolean doOrthogonalProjections, String orthogonalProjectionsMode,
-                          boolean keepOriginals) {
+                          boolean keepOriginals, PropertyMap settings) {
       studio_ = studio;
+      store_ = store;
       theta_ = theta;
       doFullVolume_ = doFullVolume;
       doXYProjections_ = doXYProjections;
@@ -85,6 +86,10 @@ public class DeskewProcessor implements Processor {
       doOrthogonalProjections_ = doOrthogonalProjections;
       orthogonalProjectionsMode_ = orthogonalProjectionsMode;
       keepOriginals_ = keepOriginals;
+      processingExecutor_ =
+               new ThreadPoolExecutor(1, settings.getInteger(DeskewFrame.NR_THREADS, 12),
+                        1000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
+      settings_ = settings;
    }
 
    @Override
@@ -93,11 +98,10 @@ public class DeskewProcessor implements Processor {
       return inputSummaryMetadata_;
    }
 
-   private Datastore createStoreAndDisplay(SummaryMetadata summaryMetadata,
+   private Datastore createStoreAndDisplay(Datastore store, SummaryMetadata summaryMetadata,
                                            String prefix,
                                            int nrZSlices,
                                            Double newZStepUm) {
-      Datastore store = studio_.data().createRAMDatastore();
       SummaryMetadata.Builder smb = summaryMetadata.copyBuilder()
                .intendedDimensions(summaryMetadata
                         .getIntendedDimensions().copyBuilder().z(nrZSlices).build())
@@ -132,6 +136,13 @@ public class DeskewProcessor implements Processor {
    @Override
    public void processImage(Image image, ProcessorContext context) {
       Coords coordsNoZ = image.getCoords().copyRemovingAxes(Coords.Z);
+      if (settings_.getString(DeskewFrame.OUTPUT_OPTION, "")
+               .equals(DeskewFrame.OPTION_REWRITABLE_RAM)) {
+         coordsNoZ = coordsNoZ.copyRemovingAxes(Coords.T);
+      }
+      if (inputSummaryMetadata_ == null) { // seems possible in asynchronous context
+         inputSummaryMetadata_ = context.getSummaryMetadata();
+      }
       if (image.getCoords().getZ() == 0) {
          if (doFullVolume_) {
             if (fullVolumeResamplers_.get(coordsNoZ) == null) {
@@ -156,7 +167,7 @@ public class DeskewProcessor implements Processor {
             double newZStep = fullVolumeResamplers_.get(coordsNoZ).getReconstructionVoxelSizeUm();
             if (fullVolumeStore_ == null) {
                String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
-               fullVolumeStore_ = createStoreAndDisplay(inputSummaryMetadata_,
+               fullVolumeStore_ = createStoreAndDisplay(store_, inputSummaryMetadata_,
                         newPrefix, fullVolumeResamplers_.get(coordsNoZ).getResampledShapeZ(),
                         newZStep);
             }
@@ -185,7 +196,7 @@ public class DeskewProcessor implements Processor {
                String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                         + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                         + "-Projection";
-               xyProjectionStore_ = createStoreAndDisplay(inputSummaryMetadata_,
+               xyProjectionStore_ = createStoreAndDisplay(store_, inputSummaryMetadata_,
                         newPrefix, 1, null);
             }
          }
@@ -216,7 +227,7 @@ public class DeskewProcessor implements Processor {
                String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                         + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                         + "-Projection";
-               orthogonalStore_ = createStoreAndDisplay(inputSummaryMetadata_,
+               orthogonalStore_ = createStoreAndDisplay(store_, inputSummaryMetadata_,
                         newPrefix, 1, null);
             }
          }
