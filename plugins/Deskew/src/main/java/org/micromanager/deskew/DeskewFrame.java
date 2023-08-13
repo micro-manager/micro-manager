@@ -28,7 +28,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
-import org.micromanager.internal.pipelineinterface.ProcessExistingDataDialog;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.WindowPositioning;
@@ -194,13 +193,17 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       final JTextField outputPath = new JTextField(25);
       final JButton browseButton = new JButton("...");
       final JTextField outputName = new JTextField(15);
-      ActionListener listener = new ActionListener() {
+      final ActionListener listener = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             if (outputRam.isSelected()) {
                showDisplay.setSelected(true);
                settings_.putBoolean(SHOW, true);
                settings_.putString(OUTPUT_OPTION, OPTION_RAM);
+            } else if (outputRewritableRam.isSelected()) {
+               showDisplay.setSelected(true);
+               settings_.putBoolean(SHOW, true);
+               settings_.putString(OUTPUT_OPTION, OPTION_REWRITABLE_RAM);
             } else if (outputSingleplane.isSelected()) {
                settings_.putString(OUTPUT_OPTION, OPTION_SINGLE_TIFF);
             } else if (outputMultipage.isSelected()) {
@@ -211,6 +214,10 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
             outputName.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
          }
       };
+
+      outputPath.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
+      browseButton.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
+      outputName.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
       outputSingleplane.addActionListener(listener);
       outputMultipage.addActionListener(listener);
       outputRam.addActionListener(listener);
@@ -223,6 +230,22 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       add(new JLabel("Save Directory: "));
       outputPath.setToolTipText("Directory that will contain the new saved data");
       outputPath.setText(settings_.getString(OUTPUT_PATH, ""));
+      outputPath.getDocument().addDocumentListener(new DocumentListener() {
+         @Override
+         public void insertUpdate(DocumentEvent e) {
+            settings_.putString(OUTPUT_PATH, outputPath.getText());
+         }
+
+         @Override
+         public void removeUpdate(DocumentEvent e) {
+            settings_.putString(OUTPUT_PATH, outputPath.getText());
+         }
+
+         @Override
+         public void changedUpdate(DocumentEvent e) {
+            settings_.putString(OUTPUT_PATH, outputPath.getText());
+         }
+      });
       add(outputPath, "split, spanx");
       browseButton.setToolTipText("Browse for a directory to save to");
       browseButton.addActionListener(e -> {
@@ -231,14 +254,17 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
                   FileDialogs.MM_DATA_SET);
          if (result != null) {
             outputPath.setText(result.getAbsolutePath());
+            settings_.putString(OUTPUT_PATH, result.getAbsolutePath());
          }
       });
       add(browseButton, "wrap");
 
+      /*
       add(new JLabel("Save Name: "));
       outputName.setToolTipText("Name to give to the processed data");
       outputName.setText(settings_.getString(SAVE_NAME, ""));
       add(outputName, "wrap");
+       */
 
       showDisplay.setToolTipText("Display the processed data in a new image window");
       showDisplay.setSelected(settings_.getBoolean(SHOW, true));

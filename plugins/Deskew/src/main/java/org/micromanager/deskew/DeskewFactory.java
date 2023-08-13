@@ -45,39 +45,40 @@ public class DeskewFactory implements ProcessorFactory {
                      xyProjectionMode, doOrthogonalProjections, orthogonalProjectionsMode,
                      keepOriginal);
          }
-         return new DeskewProcessor(studio_, createDatastore(""), theta, doFullVolume,
+         return new DeskewProcessor(studio_, theta, doFullVolume,
                   doXYProjections, xyProjectionMode, doOrthogonalProjections,
                   orthogonalProjectionsMode, keepOriginal, settings_);
-      } catch (ParseException | IOException e) {
+      } catch (ParseException e) {
          studio_.logs().showError(e, "Failed to parse input, or Datastore creation failed.");
          e.printStackTrace();
       }
       return null;
    }
 
-   private Datastore createDatastore(String prefix) throws IOException {
+   protected static Datastore createDatastore(Studio studio, PropertyMap settings, String prefix)
+            throws IOException {
       Datastore store = null;
-      String output  = settings_.getString(DeskewFrame.OUTPUT_OPTION, DeskewFrame.OPTION_RAM);
+      String output  = settings.getString(DeskewFrame.OUTPUT_OPTION, DeskewFrame.OPTION_RAM);
       if (output.equals(DeskewFrame.OPTION_RAM)) {
-         return store = studio_.data().createRAMDatastore();
+         return store = studio.data().createRAMDatastore();
+      } else if (output.equals(DeskewFrame.OPTION_REWRITABLE_RAM)) {
+         return store = studio.data().createRewritableRAMDatastore();
       }
-      String path = settings_.getString(DeskewFrame.OUTPUT_PATH, "");
+      String path = settings.getString(DeskewFrame.OUTPUT_PATH, "");
       if (path.contentEquals("")) {
-         studio_.logs().showError("Please choose a location to save data to.");
+         studio.logs().showError("Please choose a location to save data to.");
          return null;
       }
-      path += "/" + settings_.getString(DeskewFrame.SAVE_NAME, "");
-      if (prefix != null && !prefix.equals("")) {
-         path += "_" + prefix;
-      }
+      path += "/" + prefix;
+      path = studio.data().getUniqueSaveDirectory(path);
+
       if (output.equals(DeskewFrame.OPTION_SINGLE_TIFF)) {
-         return studio_.data().createSinglePlaneTIFFSeriesDatastore(path);
+         return studio.data().createSinglePlaneTIFFSeriesDatastore(path);
       } else if (output.equals(DeskewFrame.OPTION_MULTI_TIFF)) {
          // TODO: we should imitate the source dataset when possible for
          // deciding whether to generate metadata.txt and whether to
          // split positions.
-         return studio_.data().createMultipageTIFFDatastore(
-                  settings_.getString(DeskewFrame.OUTPUT_PATH, ""), true, true);
+         return studio.data().createMultipageTIFFDatastore(path, true, true);
       }
       return null;
    }
