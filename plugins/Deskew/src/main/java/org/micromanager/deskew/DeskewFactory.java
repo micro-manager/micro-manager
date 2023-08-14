@@ -95,7 +95,6 @@ public class DeskewFactory implements ProcessorFactory {
          }
       }
       DisplayWindow display = studio.displays().createDisplay(store);
-      display.setCustomTitle(prefix);
       if (displaySettings != null) {
          display.setDisplaySettings(displaySettings);
       }
@@ -107,9 +106,13 @@ public class DeskewFactory implements ProcessorFactory {
             throws IOException {
       String output  = settings.getString(DeskewFrame.OUTPUT_OPTION, DeskewFrame.OPTION_RAM);
       if (output.equals(DeskewFrame.OPTION_RAM)) {
-         return studio.data().createRAMDatastore();
+         Datastore store = studio.data().createRAMDatastore();
+         store.setName(prefix);
+         return store;
       } else if (output.equals(DeskewFrame.OPTION_REWRITABLE_RAM)) {
-         return studio.data().createRewritableRAMDatastore();
+         Datastore store = studio.data().createRewritableRAMDatastore();
+         store.setName(prefix);
+         return store;
       }
       String path = settings.getString(DeskewFrame.OUTPUT_PATH, "");
       if (path.contentEquals("")) {
