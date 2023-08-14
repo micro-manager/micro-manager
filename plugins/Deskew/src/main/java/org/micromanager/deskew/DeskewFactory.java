@@ -2,12 +2,20 @@ package org.micromanager.deskew;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.List;
 import net.haesleinhuepf.clij2.CLIJ2;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorFactory;
+import org.micromanager.data.RewritableDatastore;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**
@@ -43,7 +51,7 @@ public class DeskewFactory implements ProcessorFactory {
          if (settings_.getString(DeskewFrame.MODE, "").equals(DeskewFrame.QUALITY)) {
             return new CliJDeskewProcessor(studio_, gpuName, theta, doFullVolume, doXYProjections,
                      xyProjectionMode, doOrthogonalProjections, orthogonalProjectionsMode,
-                     keepOriginal);
+                     keepOriginal, settings_);
          }
          return new DeskewProcessor(studio_, theta, doFullVolume,
                   doXYProjections, xyProjectionMode, doOrthogonalProjections,
@@ -55,14 +63,53 @@ public class DeskewFactory implements ProcessorFactory {
       return null;
    }
 
+   protected static Datastore createStoreAndDisplay(Studio studio, PropertyMap settings,
+                                                    SummaryMetadata summaryMetadata,
+                                           String prefix,
+                                           int nrZSlices,
+                                           Double newZStepUm) throws IOException {
+      Datastore store = DeskewFactory.createDatastore(studio, settings, prefix);
+      Coords.Builder cb = summaryMetadata.getIntendedDimensions().copyBuilder().z(nrZSlices);
+      if (store instanceof RewritableDatastore) {
+         cb.t(0);
+      }
+      SummaryMetadata.Builder smb = summaryMetadata.copyBuilder()
+               .intendedDimensions(cb.build())
+               .prefix(prefix);
+      if (newZStepUm != null) {
+         smb.zStepUm(newZStepUm);
+      }
+      SummaryMetadata outputSummaryMetadata = smb.build();
+      try {
+         store.setSummaryMetadata(outputSummaryMetadata);
+      } catch (IOException ioe) {
+         studio.logs().logError(ioe);
+      }
+      // complicated way to find the viewer that had this data
+      DisplaySettings displaySettings = null;
+      List<DataViewer> dataViewers = studio.displays().getAllDataViewers();
+      for (DataViewer dv : dataViewers) {
+         DataProvider provider = dv.getDataProvider();
+         if (provider != null && provider.getSummaryMetadata() == summaryMetadata) {
+            displaySettings = dv.getDisplaySettings();
+         }
+      }
+      DisplayWindow display = studio.displays().createDisplay(store);
+      display.setCustomTitle(prefix);
+      if (displaySettings != null) {
+         display.setDisplaySettings(displaySettings);
+      }
+      display.show();
+      return store;
+   }
+
    protected static Datastore createDatastore(Studio studio, PropertyMap settings, String prefix)
             throws IOException {
-      Datastore store = null;
       String output  = settings.getString(DeskewFrame.OUTPUT_OPTION, DeskewFrame.OPTION_RAM);
       if (output.equals(DeskewFrame.OPTION_RAM)) {
-         return store = studio.data().createRAMDatastore();
+         return studio.data().createRAMDatastore();
       } else if (output.equals(DeskewFrame.OPTION_REWRITABLE_RAM)) {
-         return store = studio.data().createRewritableRAMDatastore();
+         return studio.data().createRewritableRAMDatastore();
       }
       String path = settings.getString(DeskewFrame.OUTPUT_PATH, "");
       if (path.contentEquals("")) {

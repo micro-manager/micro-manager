@@ -15,7 +15,6 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
@@ -25,9 +24,6 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.PixelType;
 import org.micromanager.data.internal.PropertyKey;
-import org.micromanager.display.DataViewer;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.lightsheet.StackResampler;
 
 /**
@@ -97,44 +93,6 @@ public class DeskewProcessor implements Processor {
       return inputSummaryMetadata_;
    }
 
-   private Datastore createStoreAndDisplay(SummaryMetadata summaryMetadata,
-                                           String prefix,
-                                           int nrZSlices,
-                                           Double newZStepUm) throws IOException {
-      Datastore store = DeskewFactory.createDatastore(studio_, settings_, prefix);
-      Coords.Builder cb = summaryMetadata.getIntendedDimensions().copyBuilder().z(nrZSlices);
-      if (store instanceof RewritableDatastore) {
-         cb.t(0);
-      }
-      SummaryMetadata.Builder smb = summaryMetadata.copyBuilder()
-               .intendedDimensions(cb.build())
-               .prefix(prefix);
-      if (newZStepUm != null) {
-         smb.zStepUm(newZStepUm);
-      }
-      SummaryMetadata outputSummaryMetadata = smb.build();
-      try {
-         store.setSummaryMetadata(outputSummaryMetadata);
-      } catch (IOException ioe) {
-         studio_.logs().logError(ioe);
-      }
-      // complicated way to find the viewer that had this data
-      DisplaySettings displaySettings = null;
-      List<DataViewer> dataViewers = studio_.displays().getAllDataViewers();
-      for (DataViewer dv : dataViewers) {
-         DataProvider provider = dv.getDataProvider();
-         if (provider != null && provider.getSummaryMetadata() == summaryMetadata) {
-            displaySettings = dv.getDisplaySettings();
-         }
-      }
-      DisplayWindow display = studio_.displays().createDisplay(store);
-      display.setCustomTitle(prefix);
-      if (displaySettings != null) {
-         display.setDisplaySettings(displaySettings);
-      }
-      display.show();
-      return store;
-   }
 
    @Override
    public void processImage(Image image, ProcessorContext context) {
@@ -173,7 +131,9 @@ public class DeskewProcessor implements Processor {
                         coordsNoZPossiblyNoT).getReconstructionVoxelSizeUm();
                if (fullVolumeStore_ == null) {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
-                  fullVolumeStore_ = createStoreAndDisplay(inputSummaryMetadata_,
+                  fullVolumeStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                           settings_,
+                           inputSummaryMetadata_,
                            newPrefix, fullVolumeResamplers_.get(
                                     coordsNoZPossiblyNoT).getResampledShapeZ(),
                            newZStep);
@@ -204,8 +164,12 @@ public class DeskewProcessor implements Processor {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Projection";
-                  xyProjectionStore_ = createStoreAndDisplay(inputSummaryMetadata_,
-                           newPrefix, 0, null);
+                  xyProjectionStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                           settings_,
+                           inputSummaryMetadata_,
+                           newPrefix,
+                           0,
+                           null);
                }
             }
             if (doOrthogonalProjections_) {
@@ -235,8 +199,12 @@ public class DeskewProcessor implements Processor {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Orthogonal-Projection";
-                  orthogonalStore_ = createStoreAndDisplay(inputSummaryMetadata_,
-                           newPrefix, 0, null);
+                  orthogonalStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                           settings_,
+                           inputSummaryMetadata_,
+                           newPrefix,
+                           0,
+                           null);
                }
             }
          } catch (IOException e) {

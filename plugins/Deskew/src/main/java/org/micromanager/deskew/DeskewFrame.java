@@ -1,10 +1,14 @@
 package org.micromanager.deskew;
 
-import java.awt.event.ActionEvent;
+import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -17,6 +21,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.ProgressMonitor;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.haesleinhuepf.clij.clearcl.ClearCL;
@@ -27,7 +33,18 @@ import net.haesleinhuepf.clij2.CLIJ2;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.ProcessorConfigurator;
+import org.micromanager.data.ProcessorFactory;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.event.DataViewerAddedEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.WindowPositioning;
@@ -63,12 +80,12 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    static final String OPTION_RAM = "Option RAM";
    static final String OPTION_REWRITABLE_RAM = "Option Rewritable RAM";
    static final String OUTPUT_PATH = "Output path";
-   static final String SAVE_NAME = "Save name";
    static final String SHOW = "Show";
 
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
    private final CLIJ2 clij2_;
+   private JComboBox<String> input_;
 
    /**
     * Generates the UI.
@@ -85,6 +102,8 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       studio_.logs().logMessage(clij2_.getGPUName());
 
       initComponents();
+
+      studio_.displays().registerForEvents(this);
 
       super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
@@ -193,26 +212,23 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       final JTextField outputPath = new JTextField(25);
       final JButton browseButton = new JButton("...");
       final JTextField outputName = new JTextField(15);
-      final ActionListener listener = new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (outputRam.isSelected()) {
-               showDisplay.setSelected(true);
-               settings_.putBoolean(SHOW, true);
-               settings_.putString(OUTPUT_OPTION, OPTION_RAM);
-            } else if (outputRewritableRam.isSelected()) {
-               showDisplay.setSelected(true);
-               settings_.putBoolean(SHOW, true);
-               settings_.putString(OUTPUT_OPTION, OPTION_REWRITABLE_RAM);
-            } else if (outputSingleplane.isSelected()) {
-               settings_.putString(OUTPUT_OPTION, OPTION_SINGLE_TIFF);
-            } else if (outputMultipage.isSelected()) {
-               settings_.putString(OUTPUT_OPTION, OPTION_MULTI_TIFF);
-            }
-            outputPath.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
-            browseButton.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
-            outputName.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
+      final ActionListener listener = e -> {
+         if (outputRam.isSelected()) {
+            showDisplay.setSelected(true);
+            settings_.putBoolean(SHOW, true);
+            settings_.putString(OUTPUT_OPTION, OPTION_RAM);
+         } else if (outputRewritableRam.isSelected()) {
+            showDisplay.setSelected(true);
+            settings_.putBoolean(SHOW, true);
+            settings_.putString(OUTPUT_OPTION, OPTION_REWRITABLE_RAM);
+         } else if (outputSingleplane.isSelected()) {
+            settings_.putString(OUTPUT_OPTION, OPTION_SINGLE_TIFF);
+         } else if (outputMultipage.isSelected()) {
+            settings_.putString(OUTPUT_OPTION, OPTION_MULTI_TIFF);
          }
+         outputPath.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
+         browseButton.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
+         outputName.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
       };
 
       outputPath.setEnabled(!outputRam.isSelected() && !outputRewritableRam.isSelected());
@@ -227,7 +243,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       add(outputRam);
       add(outputRewritableRam, "wrap");
 
-      add(new JLabel("Save Directory: "));
+      add(new JLabel("Save Directory: "), "split, spanx");
       outputPath.setToolTipText("Directory that will contain the new saved data");
       outputPath.setText(settings_.getString(OUTPUT_PATH, ""));
       outputPath.getDocument().addDocumentListener(new DocumentListener() {
@@ -246,7 +262,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
             settings_.putString(OUTPUT_PATH, outputPath.getText());
          }
       });
-      add(outputPath, "split, spanx");
+      add(outputPath, "growx");
       browseButton.setToolTipText("Browse for a directory to save to");
       browseButton.addActionListener(e -> {
          File result = FileDialogs.openDir(DeskewFrame.this,
@@ -259,16 +275,21 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       });
       add(browseButton, "wrap");
 
-      /*
-      add(new JLabel("Save Name: "));
-      outputName.setToolTipText("Name to give to the processed data");
-      outputName.setText(settings_.getString(SAVE_NAME, ""));
-      add(outputName, "wrap");
-       */
-
       showDisplay.setToolTipText("Display the processed data in a new image window");
       showDisplay.setSelected(settings_.getBoolean(SHOW, true));
       add(showDisplay, "spanx, alignx right, wrap");
+
+      add(new JSeparator(), "span 5, growx, wrap");
+
+      JButton processButton = new JButton("Process");
+      processButton.addActionListener(e -> new Thread(this::processData).start());
+      add(processButton, "split, spanx");
+      // Users can choose between open Datastores (named based on their
+      // displays) or loading a file from disk.
+      input_ = new JComboBox<>();
+      refreshInputOptions();
+      add(input_, "wrap");
+
 
       pack();
    }
@@ -351,6 +372,124 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
                studio_.logs().logError("Error parsing number in DeskewFrame.");
             }
          }
+      }
+   }
+
+   @Subscribe
+   public void onDisplayAboutToShow(DataViewerAddedEvent event) {
+      SwingUtilities.invokeLater(() -> refreshInputOptions());
+   }
+
+   @Subscribe
+   public void onDisplayDestroyed(DataViewerWillCloseEvent event) {
+      SwingUtilities.invokeLater(() -> refreshInputOptions());
+   }
+
+   /**
+    * Rebuild the options in the input_ dropdown menu.
+    */
+   private void refreshInputOptions() {
+      String curSelection = null;
+      if (input_.getItemCount() > 0) {
+         curSelection = (String) (input_.getSelectedItem());
+      }
+      input_.removeAllItems();
+      // Don't add the same datastore twice (because it has multiple open
+      // windows).
+      HashSet<DataProvider> addedProviders = new HashSet<>();
+      for (DisplayWindow display : studio_.displays().getAllImageWindows()) {
+         if (!addedProviders.contains(display.getDataProvider())) {
+            input_.addItem(display.getName());
+            addedProviders.add(display.getDataProvider());
+         }
+      }
+      if (studio_.displays().getActiveDataViewer() != null) {
+         input_.setSelectedItem(studio_.displays().getActiveDataViewer().getName());
+      }
+      if (curSelection != null) {
+         input_.setSelectedItem(curSelection);
+      }
+   }
+
+   private void processData() {
+      Datastore source = null;
+      String input = (String) (input_.getSelectedItem());
+      // Find the display with matching name.
+      for (DisplayWindow display : studio_.displays().getAllImageWindows()) {
+         if (display.getName().contentEquals(input)) {
+            if (display.getDataProvider() instanceof Datastore) {
+               source = (Datastore) display.getDataProvider();
+            }
+            break;
+         }
+      }
+
+      // All inputs validated; time to process data.
+      if (source == null) {
+         studio_.logs().showError("The data source named " + input + " is no longer available.");
+         return;
+      }
+
+      ProgressMonitor monitor = new ProgressMonitor(this,
+               "Processing images...", "", 0, source.getNumImages());
+
+      Datastore destination = studio_.data().createRAMDatastore();
+      List<ProcessorFactory> factories = new ArrayList<>();
+      factories.add(new DeskewFactory(studio_, settings_.toPropertyMap()));
+      Pipeline pipeline = studio_.data().createPipeline(factories, destination, true);
+      try {
+         pipeline.insertSummaryMetadata(source.getSummaryMetadata());
+         int i = 0;
+         Iterable<Coords> unorderedImageCoords = source.getUnorderedImageCoords();
+         List<Coords> orderedImageCoords = new ArrayList<>();
+         for (Coords c : unorderedImageCoords) {
+            orderedImageCoords.add(c);
+         }
+         final List<String> axisOrder = source.getSummaryMetadata().getOrderedAxes();
+         Collections.reverse(axisOrder);
+
+         Collections.sort(orderedImageCoords, new Comparator<Coords>() {
+            @Override
+            public int compare(Coords o1, Coords o2) {
+               for (String axis : axisOrder) {
+                  if (o1.getIndex(axis)  < o2.getIndex(axis)) {
+                     return -1;
+                  }  else if (o1.getIndex(axis) > o2.getIndex(axis)) {
+                     return 1;
+                  }
+               }
+               return 0;
+            }
+         });
+
+         for (Coords c : orderedImageCoords) {
+            i++;
+            monitor.setProgress(i);
+            monitor.setNote("Processing image " + c.toString());
+            pipeline.insertImage(source.getImage(c));
+            if (monitor.isCanceled()) {
+               break;
+            }
+         }
+      } catch (DatastoreFrozenException e) {
+         // This should be impossible!
+         studio_.logs().showError(e, "Error processing data: datastore is frozen.");
+      } catch (DatastoreRewriteException e) {
+         // Indicates a fault in one of the Processors in the pipeline.
+         studio_.logs().showError(e,
+                  "Error processing data: can not overwrite existing image "
+                  + "in destination dataset.");
+      } catch (PipelineErrorException e) {
+         studio_.logs().showError("Error processing data:" + pipeline.getExceptions());
+      } catch (IOException e) {
+         studio_.logs().showError(e, "Error saving data");
+      }
+      monitor.close();
+      pipeline.halt();
+      try {
+         destination.freeze();
+      } catch (IOException e) {
+         studio_.logs().showError(e, "Error saving data");
       }
    }
 
