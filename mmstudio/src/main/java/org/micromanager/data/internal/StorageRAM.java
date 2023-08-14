@@ -31,6 +31,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImagesDifferInSizeException;
 import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.SummaryMetadata;
 
@@ -73,6 +74,8 @@ public final class StorageRAM implements RewritableStorage {
       Image imageExisting = getAnyImage();
       if (imageExisting != null) {
          ImageSizeChecker.checkImageSizes(image, imageExisting);
+      } else {
+         ImageSizeChecker.checkImageSizeInSummary(summaryMetadata_, image);
       }
       Coords coords = image.getCoords();
       coordsToImage_.put(coords, image);

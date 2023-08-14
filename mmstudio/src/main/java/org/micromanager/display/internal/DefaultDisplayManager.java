@@ -143,7 +143,6 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Subscribe
    public void onDatastoreClosed(DatastoreClosingEvent event) {
       // TODO XXX This should be done by the individual data viewers
-      ArrayList<DisplayWindow> displays = null;
       Datastore store = event.getDatastore();
       synchronized (this) {
          providerToDisplays_.remove(store);
@@ -259,6 +258,10 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       ret.show();
       return ret;
    }
+
+   // TODO: Evaluate a version that includes display settings.
+   // This reduce cpu cycles by current code creating display settings that
+   // are over-written later.
 
    @Override
    public DisplayWindow createDisplay(DataProvider provider,

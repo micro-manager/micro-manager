@@ -1,5 +1,6 @@
 package org.micromanager.data.internal;
 
+import clojure.lang.PersistentTreeMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -30,6 +31,7 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.SnapLiveManager;
 import org.micromanager.StagePosition;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -570,6 +572,10 @@ public enum PropertyKey {
 
    HISTOGRAM_BIT_DEPTH("HistogramBitDepth", ChannelDisplaySettings.class),
 
+   HISTOGRAM_IS_LOGARITHMIC("HistogramIsLogarithmic", DisplaySettings.class),
+
+   IGNORE_ZEROS_AUTOSCALE("IgnorZerosAutoscale", DisplaySettings.class),
+
    IJ_TYPE("IJType", Image.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -702,6 +708,8 @@ public enum PropertyKey {
          return null;
       }
    },
+
+   MDA_SETTINGS("MdaSettings", SequenceSettings.class),
 
    METADATA_VERSION("MetadataVersion", SummaryMetadata.class) {
       @Override

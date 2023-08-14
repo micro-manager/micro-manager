@@ -222,6 +222,7 @@ public interface AcquisitionEngine {
    /**
     * Get the summary metadata for the most recent acquisition.
     */
+   @Deprecated
    JSONObject getSummaryMetadata();
 
    String getComment();
