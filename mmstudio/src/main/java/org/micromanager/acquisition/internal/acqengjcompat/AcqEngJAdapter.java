@@ -211,7 +211,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
 
-         AcqEngJMDADataSink sink = new AcqEngJMDADataSink(studio_.events());
+         AcqEngJMDADataSink sink = new AcqEngJMDADataSink(studio_.events(), this);
          currentAcquisition_ = new Acquisition(sink);
          currentAcquisition_.setDebugMode(core_.debugLogEnabled());
 
@@ -335,6 +335,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       // frames/slices/channels/positions at the outset
       summaryMetadata.put(PropertyKey.FRAMES.key(), getNumFrames());
       summaryMetadata.put(PropertyKey.SLICES.key(), getNumSlices());
+      if (getNumSlices() > 1) {
+         summaryMetadata_.put(PropertyKey.Z_STEP_UM.key(), sequenceSettings_.sliceZStepUm());
+      }
       summaryMetadata.put(PropertyKey.CHANNELS.key(), getNumChannels(acqSettings));
       summaryMetadata.put(PropertyKey.POSITIONS.key(), getNumPositions());
 

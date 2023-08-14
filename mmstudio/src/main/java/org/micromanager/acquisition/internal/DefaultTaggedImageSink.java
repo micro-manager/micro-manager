@@ -10,6 +10,7 @@ import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.events.EventManager;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -70,10 +71,18 @@ public final class DefaultTaggedImageSink {
                            pipeline_.insertImage(image);
                         } catch (PipelineErrorException e) {
                            // TODO: make showing the dialog optional.
-                           // TODO: allow user to cancel acquisition from
-                           // here.
-                           ReportingUtils.showError(e,
-                                 "There was an error in processing images.");
+                           MMStudio.getInstance().logs().logError(e,
+                                 "There was an error processing images.");
+                           int result = JOptionPane.showConfirmDialog(
+                                    MMStudio.getInstance().getApplication().getMainWindow(),
+                                 "There was an error processing images.\n"
+                                 + "Abort acquisition?",
+                                 "Error", JOptionPane.YES_NO_OPTION,
+                                 JOptionPane.QUESTION_MESSAGE);
+                           if (result == JOptionPane.YES_OPTION) {
+                              engine_.stop(true);
+                              throw new RuntimeException(e);
+                           }
                            pipeline_.clearExceptions();
                         }
                      } catch (OutOfMemoryError e) {
