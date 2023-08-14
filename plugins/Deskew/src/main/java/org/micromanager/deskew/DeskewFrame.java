@@ -1,6 +1,7 @@
 package org.micromanager.deskew;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
@@ -81,7 +82,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    static final String OPTION_REWRITABLE_RAM = "Option Rewritable RAM";
    static final String OUTPUT_PATH = "Output path";
    static final String SHOW = "Show";
-
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
    private final CLIJ2 clij2_;
@@ -141,6 +141,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       add(fastButton, "span 4, split 3");
       add(new JLabel("Threads:"), "align right");
       JSpinner threadsSpinner = new JSpinner();
+      threadsSpinner.setMinimumSize(new Dimension(50, 12));
       threadsSpinner.setValue(settings_.getInteger(
                NR_THREADS, Runtime.getRuntime().availableProcessors()));
       threadsSpinner.addChangeListener(e -> {
