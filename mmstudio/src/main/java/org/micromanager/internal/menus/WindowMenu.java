@@ -56,6 +56,16 @@ public class WindowMenu {
       menuItems_.add(GUIUtils.addMenuItem(windowMenu_, name, name, () -> {
          if (e.getDataViewer() instanceof DisplayWindow) {
             DisplayWindow dw = (DisplayWindow) e.getDataViewer();
+            if (dw.isClosed()) {
+               // this can happen with DisplayWindows that were renamed.
+               for (JMenuItem mItem : menuItems_) {
+                  if (mItem.getText().equals(name)) {
+                     windowMenu_.remove(mItem);
+                     menuItems_.remove(mItem);
+                     return;
+                  }
+               }
+            }
             if (dw.getWindow() instanceof JFrame) {
                JFrame frame = (JFrame) dw.getWindow();
                if ((frame.getExtendedState() & JFrame.ICONIFIED) != 0) {

@@ -14,12 +14,17 @@
 
 package org.micromanager.internal.pipelineinterface;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -30,6 +35,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.ProgressMonitor;
+import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
@@ -40,10 +46,14 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.event.DataViewerAddedEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
+
+
 
 /**
  * This class allows users to process files that already exist on disk.
@@ -60,7 +70,7 @@ public final class ProcessExistingDataDialog extends JDialog {
 
    public static void makeDialog(Studio studio) {
       ProcessExistingDataDialog dialog = new ProcessExistingDataDialog(studio);
-      studio.events().registerForEvents(dialog);
+      studio.displays().registerForEvents(dialog);
    }
 
    private final Studio studio_;
@@ -163,7 +173,6 @@ public final class ProcessExistingDataDialog extends JDialog {
       outputName_.setText(settings_.getString(SAVE_NAME, ""));
       contents.add(outputName_, "wrap");
 
-
       showDisplay_.setToolTipText("Display the processed data in a new image window");
       showDisplay_.setSelected(settings_.getBoolean(SHOW, true));
       contents.add(showDisplay_, "spanx, alignx right, wrap");
@@ -196,39 +205,19 @@ public final class ProcessExistingDataDialog extends JDialog {
       settings_.putString(OUTPUT_PATH, outputPath_.getText());
       settings_.putString(SAVE_NAME, outputName_.getText());
       settings_.putBoolean(SHOW, showDisplay_.isSelected());
-      studio_.events().unregisterForEvents(this);
+      studio_.displays().unregisterForEvents(this);
       super.dispose();
    }
 
-   // TODO
-   /*
    @Subscribe
-   public void onDisplayAboutToShow(DisplayAboutToShowEvent event) {
-      // HACK: wait until DisplayManager knows about the display. Otherwise
-      // refreshInputOptions() won't pick up the new display.
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            refreshInputOptions();
-         }
-      });
+   public void onDisplayAboutToShow(DataViewerAddedEvent event) {
+      SwingUtilities.invokeLater(() -> refreshInputOptions());
    }
-   */
 
-   // TODO
-   /*
    @Subscribe
-   public void onDisplayDestroyed(GlobalDisplayDestroyedEvent event) {
-      // HACK: wait until DisplayManager knows about the display. Otherwise
-      // refreshInputOptions() will still have the old display.
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            refreshInputOptions();
-         }
-      });
+   public void onDisplayDestroyed(DataViewerWillCloseEvent event) {
+      SwingUtilities.invokeLater(() -> refreshInputOptions());
    }
-   */
 
    /**
     * Rebuild the options in the input_ dropdown menu.
@@ -306,7 +295,7 @@ public final class ProcessExistingDataDialog extends JDialog {
       }
 
       // All inputs validated; time to process data.
-      dispose();
+      // dispose();
 
       if (source == null) {
          studio_.logs().showError("The data source named " + input + " is no longer available.");
@@ -329,7 +318,29 @@ public final class ProcessExistingDataDialog extends JDialog {
          int i = 0;
          // HACK: using arbitrary order to replay images, as the axisOrder
          // metadata property cannot be relied on (c.f. issue #151).
-         for (Coords c : source.getUnorderedImageCoords()) {
+         Iterable<Coords> unorderedImageCoords = source.getUnorderedImageCoords();
+         List<Coords> orderedImageCoords = new ArrayList<Coords>();
+         for (Coords c : unorderedImageCoords) {
+            orderedImageCoords.add(c);
+         }
+         final List<String> axisOrder = source.getSummaryMetadata().getOrderedAxes();
+         Collections.reverse(axisOrder);
+
+         Collections.sort(orderedImageCoords, new Comparator<Coords>() {
+            @Override
+            public int compare(Coords o1, Coords o2) {
+               for (String axis : axisOrder) {
+                  if (o1.getIndex(axis)  < o2.getIndex(axis)) {
+                     return -1;
+                  }  else if (o1.getIndex(axis) > o2.getIndex(axis)) {
+                     return 1;
+                  }
+               }
+               return 0;
+            }
+         });
+
+         for (Coords c : orderedImageCoords) {
             i++;
             monitor.setProgress(i);
             monitor.setNote("Processing image " + c.toString());

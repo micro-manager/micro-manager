@@ -61,6 +61,10 @@
       <!-- Delete once "parent" package upgrade to a log4j free version -->
       <dependency org="jitk" name="jitk-tps" rev="3.0.2"/>
 
+      <!-- CLIJ and friends -->
+      <dependency org="net.haesleinhuepf" name="clij2_" rev="2.5.3.1"/>
+
+
       <!-- ClearVolume dependencies -->
       <dependency org="net.clearvolume" name="clearvolume" rev="1.4.3"/>
       <dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
