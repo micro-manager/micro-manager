@@ -113,7 +113,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
             theWindow_.getDisplaySettings().copyBuilder();
 
       // TODO: use Overlays instead
-      Roi roi = theWindow_.getImagePlus().getRoi();
+      final Roi roi = theWindow_.getImagePlus().getRoi();
       
       Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
       for (String axis : oldStore.getAxes()) {
@@ -149,8 +149,13 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          }
       }
 
+      int width = roi == null ? oldMetadata.getImageWidth() : roi.getBounds().width;
+      int height = roi == null ? oldMetadata.getImageHeight() : roi.getBounds().height;
+
       SummaryMetadata metadata = oldMetadata.copyBuilder()
               .channelNames(channelNames)
+              .imageWidth(width)
+              .imageHeight(height)
               .intendedDimensions(newSizeCoordsBuilder.build())
               .build();
 
@@ -177,8 +182,8 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
             return null;
          }
 
+         newStore.setName(newName_);
          final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-         copyDisplay.setCustomTitle(newName_);
          copyDisplay.setDisplaySettings(newDisplaySettingsBuilder.build());
 
          Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
