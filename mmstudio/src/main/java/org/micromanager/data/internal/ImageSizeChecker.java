@@ -18,7 +18,8 @@ public class ImageSizeChecker {
       }
    }
 
-   public static void checkImageSizeInSummary(SummaryMetadata summaryMetadata, Image image) {
+   public static void checkImageSizeInSummary(SummaryMetadata summaryMetadata, Image image)
+           throws ImagesDifferInSizeException {
       if (summaryMetadata.getImageWidth() != null && summaryMetadata.getImageWidth() != 0) {
          if (summaryMetadata.getImageWidth() != image.getWidth()) {
             throw new ImagesDifferInSizeException();
