@@ -132,7 +132,7 @@ public class DeskewProcessor implements Processor {
                int width = fullVolumeResamplers_.get(coordsNoZPossiblyNoT).getResampledShapeX();
                int height = fullVolumeResamplers_.get(coordsNoZPossiblyNoT).getResampledShapeY();
                if (fullVolumeStore_ == null) {
-                  String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
+                  String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume-CPU";
                   fullVolumeStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
@@ -172,7 +172,7 @@ public class DeskewProcessor implements Processor {
                           coordsNoZPossiblyNoT).getResampledShapeY();
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
-                           + "-Projection";
+                           + "-Projection-CPU";
                   xyProjectionStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
@@ -209,7 +209,7 @@ public class DeskewProcessor implements Processor {
                if (orthogonalStore_ == null) {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
-                           + "-Orthogonal-Projection";
+                           + "-Orthogonal-Projection-CPU";
                   int width = orthogonalProjectionResamplers_.get(
                           coordsNoZPossiblyNoT).getResampledShapeX();
                   int height = orthogonalProjectionResamplers_.get(

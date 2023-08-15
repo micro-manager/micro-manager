@@ -105,7 +105,7 @@ public class CliJDeskewProcessor implements Processor {
                if (xyProjectionStore_ == null) {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
-                           + "-Projection";
+                           + "-Projection-GPU";
                   xyProjectionStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
@@ -126,7 +126,7 @@ public class CliJDeskewProcessor implements Processor {
                if (orthogonalStore_ == null) {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
-                           + "-Orthogonal-Projection";
+                           + "-Orthogonal-Projection-GPU";
                   orthogonalStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
                            inputSummaryMetadata_,
@@ -147,7 +147,7 @@ public class CliJDeskewProcessor implements Processor {
                            coordsNoZPossiblyNoT.copyBuilder().z(i).build(),
                            image.getMetadata());
                   if (fullVolumeStore_ == null) {
-                     String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
+                     String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume-GPU";
                      fullVolumeStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                              settings_,
                              inputSummaryMetadata_,
