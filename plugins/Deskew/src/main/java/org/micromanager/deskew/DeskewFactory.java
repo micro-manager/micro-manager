@@ -66,6 +66,8 @@ public class DeskewFactory implements ProcessorFactory {
    protected static Datastore createStoreAndDisplay(Studio studio, PropertyMap settings,
                                                     SummaryMetadata summaryMetadata,
                                            String prefix,
+                                           int width,
+                                           int height,
                                            int nrZSlices,
                                            Double newZStepUm) throws IOException {
       Datastore store = DeskewFactory.createDatastore(studio, settings, prefix);
@@ -75,6 +77,8 @@ public class DeskewFactory implements ProcessorFactory {
       }
       SummaryMetadata.Builder smb = summaryMetadata.copyBuilder()
                .intendedDimensions(cb.build())
+               .imageWidth(width)
+               .imageHeight(height)
                .prefix(prefix);
       if (newZStepUm != null) {
          smb.zStepUm(newZStepUm);
@@ -86,6 +90,7 @@ public class DeskewFactory implements ProcessorFactory {
          studio.logs().logError(ioe);
       }
       // complicated way to find the viewer that had this data
+      // This depends on the SummaryMetadata being the original
       DisplaySettings displaySettings = null;
       List<DataViewer> dataViewers = studio.displays().getAllDataViewers();
       for (DataViewer dv : dataViewers) {

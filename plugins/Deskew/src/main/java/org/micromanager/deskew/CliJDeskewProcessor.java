@@ -108,9 +108,10 @@ public class CliJDeskewProcessor implements Processor {
                            + "-Projection";
                   xyProjectionStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
-                           inputSummaryMetadata_.copyBuilder().imageWidth(projection.getWidth())
-                                  .imageHeight(projection.getHeight()).build(),
+                           inputSummaryMetadata_,
                            newPrefix,
+                           projection.getWidth(),
+                           projection.getHeight(),
                            0,
                            null);
                }
@@ -128,9 +129,10 @@ public class CliJDeskewProcessor implements Processor {
                            + "-Orthogonal-Projection";
                   orthogonalStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
-                           inputSummaryMetadata_.copyBuilder().imageWidth(projection.getWidth())
-                                  .imageHeight(projection.getHeight()).build(),
+                           inputSummaryMetadata_,
                            newPrefix,
+                           projection.getWidth(),
+                           projection.getHeight(),
                            0,
                            null);
                }
@@ -148,9 +150,10 @@ public class CliJDeskewProcessor implements Processor {
                      String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
                      fullVolumeStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                              settings_,
-                             inputSummaryMetadata_.copyBuilder().imageWidth(image1.getWidth())
-                                     .imageHeight(image1.getHeight()).build(),
+                             inputSummaryMetadata_,
                              newPrefix,
+                             image1.getWidth(),
+                             image1.getHeight(),
                              newDepth_,
                              newZSizeUm_);
                   }

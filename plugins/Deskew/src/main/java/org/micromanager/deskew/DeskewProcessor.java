@@ -135,9 +135,11 @@ public class DeskewProcessor implements Processor {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
                   fullVolumeStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
-                           inputSummaryMetadata_.copyBuilder().imageWidth(width).imageHeight(height)
-                                   .build(),
-                           newPrefix, fullVolumeResamplers_.get(
+                           inputSummaryMetadata_,
+                           newPrefix,
+                           width,
+                           height,
+                           fullVolumeResamplers_.get(
                                     coordsNoZPossiblyNoT).getResampledShapeZ(),
                            newZStep);
                }
@@ -173,9 +175,10 @@ public class DeskewProcessor implements Processor {
                            + "-Projection";
                   xyProjectionStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
-                          inputSummaryMetadata_.copyBuilder().imageWidth(width).imageHeight(height)
-                                  .build(),
+                           inputSummaryMetadata_,
                            newPrefix,
+                           width,
+                           height,
                            0,
                            null);
                }
@@ -218,9 +221,10 @@ public class DeskewProcessor implements Processor {
                   int newHeight = height + separatorSize + zSize;
                   orthogonalStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
-                          inputSummaryMetadata_.copyBuilder().imageWidth(newWidth)
-                                  .imageHeight(newHeight).build(),
+                           inputSummaryMetadata_,
                            newPrefix,
+                           newWidth,
+                           newHeight,
                            0,
                            null);
                }
