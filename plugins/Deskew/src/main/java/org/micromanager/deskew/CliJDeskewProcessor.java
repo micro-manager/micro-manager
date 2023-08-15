@@ -100,57 +100,60 @@ public class CliJDeskewProcessor implements Processor {
                ClearCLBuffer xy = projectXYOnGPU(fullVolumeGPU);
                ImagePlus resultImage = clij2_.pull(xy);
                clij2_.release(xy);
+               Image projection = studio_.data().ij().createImage(resultImage.getProcessor(),
+                       coordsNoZPossiblyNoT.copyBuilder().build(), image.getMetadata());
                if (xyProjectionStore_ == null) {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (xyProjectionMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Projection";
                   xyProjectionStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
-                           inputSummaryMetadata_,
+                           inputSummaryMetadata_.copyBuilder().imageWidth(projection.getWidth())
+                                  .imageHeight(projection.getHeight()).build(),
                            newPrefix,
                            0,
                            null);
                }
-               Image projection = studio_.data().ij().createImage(resultImage.getProcessor(),
-                        coordsNoZPossiblyNoT.copyBuilder().build(), image.getMetadata());
                xyProjectionStore_.putImage(projection);
             }
             if (doOrthogonalProjections_) {
                ClearCLBuffer ortho = projectOrthogonalOnGPU(fullVolumeGPU);
                ImagePlus resultImage = clij2_.pull(ortho);
                clij2_.release(ortho);
+               Image projection = studio_.data().ij().createImage(resultImage.getProcessor(),
+                       coordsNoZPossiblyNoT.copyBuilder().build(), image.getMetadata());
                if (orthogonalStore_ == null) {
                   String newPrefix = inputSummaryMetadata_.getPrefix() + "-"
                            + (orthogonalProjectionsMode_.equals(DeskewFrame.MAX) ? "Max" : "Avg")
                            + "-Orthogonal-Projection";
                   orthogonalStore_ = DeskewFactory.createStoreAndDisplay(studio_,
                            settings_,
-                           inputSummaryMetadata_,
+                           inputSummaryMetadata_.copyBuilder().imageWidth(projection.getWidth())
+                                  .imageHeight(projection.getHeight()).build(),
                            newPrefix,
                            0,
                            null);
                }
-               Image projection = studio_.data().ij().createImage(resultImage.getProcessor(),
-                        coordsNoZPossiblyNoT.copyBuilder().build(), image.getMetadata());
                orthogonalStore_.putImage(projection);
             }
             if (doFullVolume_) {
                ImagePlus resultImage = clij2_.pull(fullVolumeGPU);
                ImageStack resultStack = resultImage.getStack();
-               if (fullVolumeStore_ == null) {
-                  String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
-                  fullVolumeStore_ = DeskewFactory.createStoreAndDisplay(studio_,
-                           settings_,
-                           inputSummaryMetadata_,
-                           newPrefix,
-                           newDepth_,
-                           newZSizeUm_);
-               }
                for (int i = 0; i < resultStack.getSize(); i++) {
                   ImageProcessor ip1 = resultStack.getProcessor(i + 1);
                   Image image1 = studio_.data().ij().createImage(ip1,
                            coordsNoZPossiblyNoT.copyBuilder().z(i).build(),
                            image.getMetadata());
+                  if (fullVolumeStore_ == null) {
+                     String newPrefix = inputSummaryMetadata_.getPrefix() + "-Full-Volume";
+                     fullVolumeStore_ = DeskewFactory.createStoreAndDisplay(studio_,
+                             settings_,
+                             inputSummaryMetadata_.copyBuilder().imageWidth(image1.getWidth())
+                                     .imageHeight(image1.getHeight()).build(),
+                             newPrefix,
+                             newDepth_,
+                             newZSizeUm_);
+                  }
                   fullVolumeStore_.putImage(image1);
                }
             }
