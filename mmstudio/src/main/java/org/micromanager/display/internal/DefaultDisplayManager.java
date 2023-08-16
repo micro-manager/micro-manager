@@ -269,7 +269,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       DisplayWindow ret = new DisplayController.Builder(provider)
             .linkManager(linkManager_).controlsFactory(factory).build(studio_);
       addViewer(ret);
-      ret.show();
+      ret.showOnceThereAreImages();
       return ret;
    }
 

@@ -324,4 +324,11 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * construction, and after attaching listeners as needed, to show the Window.
     */
    void show();
+
+   /**
+    * DisplayWindows are not shown by default.  Call this function after
+    * construction, and after attaching listeners as needed, to show the Window.
+    * This version will only show the display window once there are images available.
+    */
+   void showOnceThereAreImages();
 }
