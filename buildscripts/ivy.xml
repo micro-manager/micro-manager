@@ -16,7 +16,7 @@
    <dependencies defaultconf="compile">
       <dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
       <dependency conf="test" org="junit" name="junit" rev="4.11"/>
-      <dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
+      <dependency conf="imagej" org="net.imagej" name="ij" rev="1.53c"/>
       <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
 
       <dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.6.1"/>
@@ -62,7 +62,9 @@
       <dependency org="jitk" name="jitk-tps" rev="3.0.2"/>
 
       <!-- CLIJ and friends -->
-      <dependency org="net.haesleinhuepf" name="clij2_" rev="2.5.3.1"/>
+      <dependency org="net.haesleinhuepf" name="clij2_" rev="2.5.3.1">
+         <exclude org="net.imagej" name="ij"/>
+      </dependency>
 
 
       <!-- ClearVolume dependencies -->
