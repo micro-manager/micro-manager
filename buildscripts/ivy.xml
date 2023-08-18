@@ -19,17 +19,17 @@
       <dependency conf="imagej" org="net.imagej" name="ij" rev="1.53c"/>
       <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
 
-      <dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.6.1"/>
+      <dependency org="com.fifesoft" name="rsyntaxtextarea" rev="3.1.1"/>
       <dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
       <dependency org="com.google.guava" name="guava" rev="17.0"/>
       <dependency org="com.google.protobuf" name="protobuf-java" rev="2.6.1"/><!-- transitive dep of TSFProto -->
       <dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
-      <dependency org="net.imglib2" name="imglib2" rev="5.6.3"/>
+      <dependency org="net.imglib2" name="imglib2" rev="5.10.0"/>
       <dependency org="ome" name="formats-api" rev="5.1.1"/>
       <dependency org="ome" name="formats-common" rev="5.1.1"/>
       <dependency org="ome" name="ome-xml" rev="5.1.1"/>
       <dependency org="org.apache-extras.beanshell" name="bsh" rev="2.0b6"/>
-      <dependency org="org.apache.commons" name="commons-lang3" rev="3.5"/>
+      <dependency org="org.apache.commons" name="commons-lang3" rev="3.10"/>
       <dependency org="org.apache.commons" name="commons-math" rev="2.2"/>
       <dependency org="org.apache.commons" name="commons-math3" rev="3.6.1"/>
       <dependency org="commons-io" name="commons-io" rev="2.11.0"/>
@@ -39,7 +39,7 @@
       <dependency org="org.clojure" name="data.json" rev="0.1.1"/>
       <dependency org="org.jfree" name="jcommon" rev="1.0.24"/>
       <dependency org="org.jfree" name="jfreechart" rev="1.5.0"/>
-      <dependency org="org.scijava" name="scijava-common" rev="2.77.0"/>
+      <dependency org="org.scijava" name="scijava-common" rev="2.83.3"/>
       <!-- Magellan dependencies -->
       <!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
       <dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
@@ -56,7 +56,7 @@
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 
-      <dependency org="io.scif" name="scifio" rev="0.37.3"/>
+      <dependency org="io.scif" name="scifio" rev="0.41.0"/>
 
       <!-- Delete once "parent" package upgrade to a log4j free version -->
       <dependency org="jitk" name="jitk-tps" rev="3.0.2"/>
