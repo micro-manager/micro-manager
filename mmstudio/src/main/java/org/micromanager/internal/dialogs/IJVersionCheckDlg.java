@@ -50,7 +50,7 @@ public final class IJVersionCheckDlg extends JDialog {
          "user has opted out of receiving warnings about compatibility "
                + "with the version of ImageJ they are using";
    private static final ArrayList<String> ALLOWED_VERSIONS = new ArrayList<String>(
-         Arrays.asList(new String[] {"1.51s"}));
+         Arrays.asList(new String[] {"1.51s", "1.53c"}));
 
    /**
     * Show the warning dialog, if applicable and user has not opted out.
