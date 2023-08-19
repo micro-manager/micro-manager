@@ -197,8 +197,10 @@ public class CliJDeskewProcessor implements Processor {
       ClearCLBuffer gpuOutputImage = clij2_.create(new long[] {newWidth, newHeight, newDepth},
                gpuInputImage.getNativeType());
       String transform = "shearYZ=-" + deskewStep + " scaleX=" + xyScale
-               + " scaleY=" + xyScale + " scaleZ=" + depthScale + " rotateX=-"
-               + Math.toDegrees(theta_) + " translateZ=-" + newDepth;
+               + " scaleY=" + xyScale + " scaleZ=" + depthScale
+               + " rotateX=-" + Math.toDegrees(theta_)
+               + " translateZ=-" + newDepth
+               + " rotateX=180 translateZ=-" + newDepth + " translateY=-" + newHeight;
 
       clij2_.affineTransform3D(gpuInputImage, gpuOutputImage, transform);
       clij2_.release(gpuInputImage);

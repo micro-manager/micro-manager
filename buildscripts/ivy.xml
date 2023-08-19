@@ -16,20 +16,20 @@
    <dependencies defaultconf="compile">
       <dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
       <dependency conf="test" org="junit" name="junit" rev="4.11"/>
-      <dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
+      <dependency conf="imagej" org="net.imagej" name="ij" rev="1.53c"/>
       <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
 
-      <dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.6.1"/>
+      <dependency org="com.fifesoft" name="rsyntaxtextarea" rev="3.1.1"/>
       <dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
       <dependency org="com.google.guava" name="guava" rev="17.0"/>
       <dependency org="com.google.protobuf" name="protobuf-java" rev="2.6.1"/><!-- transitive dep of TSFProto -->
       <dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
-      <dependency org="net.imglib2" name="imglib2" rev="5.6.3"/>
+      <dependency org="net.imglib2" name="imglib2" rev="5.10.0"/>
       <dependency org="ome" name="formats-api" rev="5.1.1"/>
       <dependency org="ome" name="formats-common" rev="5.1.1"/>
       <dependency org="ome" name="ome-xml" rev="5.1.1"/>
       <dependency org="org.apache-extras.beanshell" name="bsh" rev="2.0b6"/>
-      <dependency org="org.apache.commons" name="commons-lang3" rev="3.5"/>
+      <dependency org="org.apache.commons" name="commons-lang3" rev="3.10"/>
       <dependency org="org.apache.commons" name="commons-math" rev="2.2"/>
       <dependency org="org.apache.commons" name="commons-math3" rev="3.6.1"/>
       <dependency org="commons-io" name="commons-io" rev="2.11.0"/>
@@ -39,7 +39,7 @@
       <dependency org="org.clojure" name="data.json" rev="0.1.1"/>
       <dependency org="org.jfree" name="jcommon" rev="1.0.24"/>
       <dependency org="org.jfree" name="jfreechart" rev="1.5.0"/>
-      <dependency org="org.scijava" name="scijava-common" rev="2.77.0"/>
+      <dependency org="org.scijava" name="scijava-common" rev="2.83.3"/>
       <!-- Magellan dependencies -->
       <!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
       <dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
@@ -56,13 +56,42 @@
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 
-      <dependency org="io.scif" name="scifio" rev="0.37.3"/>
+      <dependency org="io.scif" name="scifio" rev="0.41.0"/>
 
       <!-- Delete once "parent" package upgrade to a log4j free version -->
       <dependency org="jitk" name="jitk-tps" rev="3.0.2"/>
 
       <!-- CLIJ and friends -->
-      <dependency org="net.haesleinhuepf" name="clij2_" rev="2.5.3.1"/>
+      <dependency org="net.haesleinhuepf" name="clij2_" rev="2.5.3.1">
+         <exclude org="net.imagej" name="ij"/>
+         <exclude org="com.fifesoft" name="autocomplete"/>
+         <exclude org="org.scijava" name="batch-processor"/>
+         <exclude org="net.imagej" name="ij1-patcher"/>
+         <exclude org="net.imagej" name="imagej-deprecated"/>
+         <exclude org="net.imagej" name="imagej-mesh"/>
+         <exclude org="net.imagej" name="imagej-ops"/>
+         <exclude org="net.imglib2" name="imglib2-algorithm"/>
+         <exclude org="net.imglib2" name="imglib2-algorithm-fft"/>
+         <exclude org="net.imglib2" name="imglib2-cache"/>
+         <exclude org="net.imglib2" name="imglib2-roi"/>
+         <exclude org="org.javassist" name="javassist"/>
+         <exclude org="org.joml" name="joml"/>
+         <exclude org="com.fifesoft" name="languagesupport"/>
+         <exclude org="edu.mines" name="mines-jtk"/>
+         <exclude org="org.scijava" name="minimaven"/>
+         <exclude org="com.github.sbridges" name="object-inspector"/>
+         <exclude org="org.ojalgo" name="ojalgo"/>
+         <exclude org="org.scijava" name="parsington"/>
+         <exclude org="org.ocpsoft.prettytime" name="prettyTime"/>
+         <exclude org="org.mozilla" name="rhino"/>
+         <exclude org="org.scijava" name="scijava-search"/>
+         <exclude org="org.scijava" name="scijava-table"/>
+         <exclude org="org.scijava" name="scijava-ui-awt"/>
+         <exclude org="org.scijava" name="scijava-ui-swing"/>
+         <exclude org="org.scijava" name="script-editor"/>
+         <exclude org="org.scijava" name="scripting-javascript"/>
+         <exclude org="org.scijava" name="swing-checkbox-tree"/>
+      </dependency>
 
 
       <!-- ClearVolume dependencies -->
