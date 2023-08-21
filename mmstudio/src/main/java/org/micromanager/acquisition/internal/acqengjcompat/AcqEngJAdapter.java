@@ -42,7 +42,6 @@ import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
-import org.micromanager.UserProfile;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
 import org.micromanager.acqj.internal.Engine;
@@ -61,6 +60,7 @@ import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
@@ -68,6 +68,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
@@ -95,7 +96,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private PositionList posList_;
    private String zStage_;
    private SequenceSettings sequenceSettings_;
-   protected JSONObject summaryMetadata_;
+   protected JSONObject summaryMetadataJSON_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
@@ -221,14 +222,12 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          loadRunnables(acquisitionSettings);
 
-         summaryMetadata_ = currentAcquisition_.getSummaryMetadata();
-         addMMSummaryMetadata(summaryMetadata_, sequenceSettings, posList_, studio_);
-
-         MMAcquisition acq = new MMAcquisition(studio_,
-               acquisitionSettings.save() ? acquisitionSettings.root() : null,
-               acquisitionSettings.prefix(),
-               summaryMetadata_,
-               this,
+         summaryMetadataJSON_ = currentAcquisition_.getSummaryMetadata();
+         SummaryMetadata summaryMetadata =  DefaultSummaryMetadata.fromPropertyMap(
+                  NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
+                           summaryMetadataJSON_.toString()));
+         addMMSummaryMetadata(summaryMetadataJSON_, sequenceSettings, posList_, studio_);
+         MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
                acquisitionSettings);
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
@@ -240,7 +239,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          studio_.events().registerForEvents(this);
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_, this,
                acquisitionSettings));
-
 
          if (sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
                || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
@@ -1605,7 +1603,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     */
    @Override
    public JSONObject getSummaryMetadata() {
-      return summaryMetadata_;
+      return summaryMetadataJSON_;
    }
 
    @Override

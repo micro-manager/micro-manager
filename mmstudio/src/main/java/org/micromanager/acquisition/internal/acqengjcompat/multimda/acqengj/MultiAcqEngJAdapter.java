@@ -55,11 +55,14 @@ import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -199,14 +202,13 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
 
          // MMAcquisition
          for (int i = 0; i < sequenceSettings.size(); i++) {
-            JSONObject summaryMetadata = currentMultiMDA_.getSummaryMetadata();
-            addMMSummaryMetadata(summaryMetadata, sequenceSettings.get(i),
+            JSONObject summaryMetadataJSON = currentMultiMDA_.getSummaryMetadata();
+            addMMSummaryMetadata(summaryMetadataJSON, sequenceSettings.get(i),
                   positionLists.get(i), studio_);
-            MMAcquisition acq = new MMAcquisition(studio_,
-                  sequenceSettings.get(i).save() ? sequenceSettings.get(i).root() : null,
-                  sequenceSettings.get(i).prefix(),
-                  summaryMetadata,
-                  this,
+            SummaryMetadata summaryMetadata =  DefaultSummaryMetadata.fromPropertyMap(
+                     NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
+                              summaryMetadataJSON.toString()));
+            MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
                   sequenceSettings.get(i));
             Datastore store = acq.getDatastore();
             stores_.add(store);
