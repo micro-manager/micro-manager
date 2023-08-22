@@ -1140,12 +1140,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // however, I do not understand that code enough to touch it....
             // This at least fixes the display somewhat (showing black for
             // a saturated image is really, really bad!)
-            if (min == max) {
-               if (max == 0) {
-                  max++;
-               } else {
-                  min--;
-               }
+            if (min >= max) {
+               max = min + 1;
             }
             // NS 2019-08-15: We really do need to write the min and max to
             // the DisplaySettings (there already is a work-around in the
@@ -1572,7 +1568,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return;
       }
 
-      if (images.get(0).getCoords().hasAxis(Coords.CHANNEL)) {
+      if (images.get(images.size() - 1).getCoords().hasAxis(Coords.CHANNEL)) {
          try {
             displayController_.postDisplayEvent(
                   DataViewerMousePixelInfoChangedEvent
