@@ -35,8 +35,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.Timer;
-import mmcorej.org.json.JSONArray;
-import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionEndedEvent;
@@ -69,7 +67,6 @@ import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -83,20 +80,16 @@ public final class MMAcquisition extends DataViewerListener {
     * Only used when running in asynchronous mode.
     */
 
-   protected int width_ = 0;
-   protected int height_ = 0;
    private final Studio studio_;
    private final DefaultDatastore store_;
    private final Pipeline pipeline_;
    private DisplayWindow display_;
    private final MMAcquistionControlCallbacks callbacks_;
    private final boolean show_;
-
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
    private UpdatableAlert alert_;
    private UpdatableAlert nextImageAlert_;
-
    private Timer nextFrameAlertGenerator_;
 
    /**
@@ -104,142 +97,23 @@ public final class MMAcquisition extends DataViewerListener {
     * resulting datastore.
     *
     * @param studio          Micro-Manager Studio object.
-    * @param summaryMetadata SummaryMetadata that will be added to the datastore.
+    * @param dir             Directory to save images to.
+    * @param prefix          Prefix for image names.
+    * @param summaryMetadata SummaryMetadata in JSON format`
     * @param callbacks       acquisition engine object or other object that implements callbacks.
     * @param acqSettings     Settings to be saved in SummaryMetadata, and to determine whether
     *                        viewer should be shown.
+    * @deprecated Use the constructor that takes a SummaryMetadata object instead.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMAcquisition(Studio studio, String dir, String prefix, JSONObject summaryMetadata,
-                        MMAcquistionControlCallbacks callbacks, SequenceSettings acqSettings) {
-      studio_ = studio;
-      callbacks_ = callbacks;
-      show_ = acqSettings.shouldDisplayImages();
-      // TODO: get rid of MMStudo cast
-      store_ = new DefaultDatastore(studio);
-      pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
-      if (dir != null) {
-         // Set up saving to the target directory.
-         try {
-            String acqDirectory = createAcqDirectory(dir, prefix);
-            summaryMetadata.put("Prefix", acqDirectory);
-            String acqPath = dir + File.separator + acqDirectory;
-            store_.setStorage(getAppropriateStorage(studio_, store_, acqPath, true));
-         } catch (Exception e) {
-            ReportingUtils.showError(e, "Unable to create directory for saving images.");
-            callbacks_.stop(true);
-            return;
-         }
-      } else {
-         store_.setStorage(new StorageRAM(store_));
-      }
-
-      // Transfer any summary comment from the acquisition engine.
-      if (MDUtils.hasComments(summaryMetadata)) {
-         try {
-            CommentsHelper.setSummaryComment(store_,
-                     MDUtils.getComments(summaryMetadata));
-         } catch (JSONException e) {
-            ReportingUtils.logError(e, "Unable to set summary comment");
-         } catch (IOException e) {
-            ReportingUtils.logError(e, "IOException in MMAcquisition");
-         }
-      }
-
-      try {
-         // Compatibility hack: serialize to JSON, then parse as summary metadata JSON format
-         SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(
-                  NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
-                           summaryMetadata.toString()));
-         summary = summary.copyBuilder().sequenceSettings(acqSettings).build();
-         // Calculate expected images from dimensionality in summary metadata.
-         Coords dims = summary.getIntendedDimensions();
-         imagesExpected_ = 1;
-         for (String axis : dims.getAxes()) {
-            imagesExpected_ *= dims.getIndex(axis);
-         }
-         pipeline_.insertSummaryMetadata(summary);
-
-      } catch (DatastoreFrozenException e) {
-         ReportingUtils.logError(e, "Datastore is frozen; can't set summary metadata");
-      } catch (DatastoreRewriteException e) {
-         ReportingUtils.logError(e, "Summary metadata has already been set");
-      } catch (PipelineErrorException e) {
-         ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
-      } catch (IOException e) {
-         throw new RuntimeException("Failed to parse summary metadata", e);
-      }
-
-      if (show_) {
-         studio_.displays().manage(store_);
-         display_ = studio_.displays().createDisplay(store_, makeControlsFactory());
-
-         // Color handling is a problem. They are no longer part of the summary 
-         // metadata.  However, they clearly need to be stored 
-         // with the dataset itself.  I guess that it makes sense to store them in 
-         // the display setting.  However, it then becomes essential that 
-         // display settings are stored with the (meta-)data.  
-         // Handling the conversion from colors in the summary metadata to display
-         // settings here seems clumsy, but I am not sure where else this belongs
-
-         // Use settings of last closed acquisition viewer
-         DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
-                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-
-         if (dsTmp == null) {
-            dsTmp = DefaultDisplaySettings.getStandardSettings(
-                     PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-         }
-
-         try {
-            if (summaryMetadata.has("ChColors")) {
-               JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
-
-               DisplaySettings.Builder displaySettingsBuilder
-                        = dsTmp.copyBuilder();
-
-               final int nrChannels = store_.getSummaryMetadata().getChannelNameList().size();
-               // the do-while loop is a way to set display settings in a thread
-               // safe way.  See docs to compareAndSetDisplaySettings.
-               do {
-                  if (nrChannels == 1) {
-                     displaySettingsBuilder.colorModeGrayscale();
-                  } else {
-                     displaySettingsBuilder.colorModeComposite();
-                  }
-               } while (!display_.compareAndSetDisplaySettings(
-                        display_.getDisplaySettings(), displaySettingsBuilder.build()));
-            } else {
-               display_.compareAndSetDisplaySettings(
-                        display_.getDisplaySettings(), dsTmp);
-            }
-         } catch (JSONException je) {
-            studio_.logs().logError(je);
-            // relatively harmless, but look here when display settings are unexpected
-         }
-
-         // It is a bit funny that there are listeners and events
-         // The listener provides the canClose functionality (which needs to be
-         // synchronous), whereas Events are asynchronous
-         display_.addListener(this, 1);
-         display_.registerForEvents(this);
-
-         alert_ = studio_.alerts().postUpdatableAlert("Acquisition Progress", "");
-         setProgressText();
-      }
-      store_.registerForEvents(this);
-      studio_.events().registerForEvents(this);
-
-      // start thread reporting when next frame will be taken
-      if (callbacks.getFrameIntervalMs() > 5000) {
-         nextFrameAlertGenerator_ = new Timer(1000, (ActionEvent e) -> {
-            if (callbacks.isAcquisitionRunning()) {
-               setNextImageAlert(callbacks);
-            }
-         });
-         nextFrameAlertGenerator_.setInitialDelay(3000);
-         nextFrameAlertGenerator_.start();
-      }
+                        MMAcquistionControlCallbacks callbacks, SequenceSettings acqSettings)
+            throws IOException {
+      this(studio, DefaultSummaryMetadata.fromPropertyMap(
+               NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
+                        summaryMetadata.toString())),
+               callbacks,
+               acqSettings.copyBuilder().root(dir).prefix(prefix).build());
    }
 
    /**
@@ -247,12 +121,13 @@ public final class MMAcquisition extends DataViewerListener {
     * acquisition engine, and resulting datastore.
     *
     * @param studio          Micro-Manager Studio object.
-    * @param acquisitionSettings Defines the acquisition.
     * @param summaryMetadata Complete SummaryMetadata
     * @param callbacks       acquisition engine object or other object that implements callbacks.
+    * @param acquisitionSettings Defines the acquisition.
     */
-   public MMAcquisition(Studio studio, SequenceSettings acquisitionSettings,
-                        SummaryMetadata summaryMetadata, MMAcquistionControlCallbacks callbacks) {
+   public MMAcquisition(Studio studio, SummaryMetadata summaryMetadata,
+                        MMAcquistionControlCallbacks callbacks,
+                        SequenceSettings acquisitionSettings) {
       studio_ = studio;
       callbacks_ = callbacks;
       show_ = acquisitionSettings.shouldDisplayImages;

@@ -21,12 +21,15 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
@@ -46,7 +49,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
    private SequenceSettings sequenceSettings_;
 
    private IAcquisitionEngine2010 acquisitionEngine2010_;
-   protected JSONObject summaryMetadata_;
+   protected JSONObject summaryMetadataJSON_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
@@ -219,23 +222,15 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
          // sequenceSettings.save flag and set "Directory" and "Prefix" only
          // when save == true.  Directory and Prefix are used
          // by MMAcquisition to decide whether and where to save the acquisition.
-         summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
+         summaryMetadataJSON_ = getAcquisitionEngine2010().getSummaryMetadata();
 
-         // file type (multi or single) is a global setting, not sure where/when that is applied
-
-         boolean shouldShow = acquisitionSettings.shouldDisplayImages();
-         // Extract directory and saving prefix from metadata here, to remove hidden
-         // requirements on metadata fields in the MMAcquistion constructor
-         String dir = null;
-         String prefix = null;
-         if (summaryMetadata_.has("Directory")
-                 && summaryMetadata_.get("Directory").toString().length() > 0) {
-            // Set up saving to the target directory.
-            dir = summaryMetadata_.getString("Directory");
-            prefix = summaryMetadata_.getString("Prefix");
-         }
-         MMAcquisition acq = new MMAcquisition(studio_, dir, prefix,
-                 summaryMetadata_, this, acquisitionSettings);
+         // file type (multi or single) is a global setting, this is selected in
+         // MMAcquisition
+         SummaryMetadata summaryMetadata =  DefaultSummaryMetadata.fromPropertyMap(
+                           NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
+                                    summaryMetadataJSON_.toString()));
+         MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata,
+                  this, acquisitionSettings);
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
 
@@ -849,7 +844,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
     */
    @Override
    public JSONObject getSummaryMetadata() {
-      return summaryMetadata_;
+      return summaryMetadataJSON_;
    }
 
    @Override
