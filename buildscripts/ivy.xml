@@ -87,7 +87,6 @@
          <exclude org="org.scijava" name="scijava-search"/>
          <exclude org="org.scijava" name="scijava-table"/>
          <exclude org="org.scijava" name="scijava-ui-awt"/>
-         <exclude org="org.scijava" name="scijava-ui-swing"/>
          <exclude org="org.scijava" name="script-editor"/>
          <exclude org="org.scijava" name="scripting-javascript"/>
          <exclude org="org.scijava" name="swing-checkbox-tree"/>
