@@ -48,10 +48,6 @@ public class DataViewerMousePixelInfoChangedEvent {
          Coords c = image.getCoords();
          Coords.CoordsBuilder cb = new DefaultCoords.Builder();
          for (String axis : indexingAxes) {
-            if (!c.hasAxis(axis)) {
-               throw new IllegalArgumentException(
-                     "Image coords do not contain the requested axis");
-            }
             cb.index(axis, c.getIndex(axis));
          }
          coords.add(cb.build());

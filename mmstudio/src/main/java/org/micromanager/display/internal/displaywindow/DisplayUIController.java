@@ -51,6 +51,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.BorderFactory;
@@ -211,6 +214,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
          Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory
                .createThreadFactory("DisplayUIController"));
 
+   final ScheduledThreadPoolExecutor skippedImageDisplayExecutor_;
+   private ScheduledFuture<?> scheduledDisplayFuture_;
+
    // Display rate estimation
    private static final int DISPLAY_INTERVAL_SMOOTH_N_SAMPLES = 50;
    private final AtomicBoolean repaintScheduledForNewImages_ =
@@ -261,6 +267,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       contentPanel_ = buildInitialUI();
       frame_.add(contentPanel_);
       frame_.validate();
+      skippedImageDisplayExecutor_ =
+               new ScheduledThreadPoolExecutor(1);
+      skippedImageDisplayExecutor_.setRemoveOnCancelPolicy(true);
    }
 
    public void setPerformanceMonitor(PerformanceMonitor perfMon) {
@@ -427,6 +436,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
 
       ijBridge_ = ImageJBridge.create(this, images);
+      if (ijBridge_.getIJImageCanvas() == null) {
+         studio_.logs().logMessage("ImageJBridge failed to create an ImageJ canvas");
+      }
       double zoomRatio = getDisplayController().getDisplaySettings().getZoomRatio();
       if (zoomRatio <= 0) {
          zoomRatio = 1.0;
@@ -787,9 +799,21 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
    }
 
+   private ScheduledFuture<?> scheduleSkippedImages(ImagesAndStats images) {
+      final ImagesAndStats skippedImages_ = images;
+      Runnable task = () -> SwingUtilities.invokeLater(() -> {
+         displayImages(skippedImages_);
+      });
+      return skippedImageDisplayExecutor_.schedule(task, 1, TimeUnit.SECONDS);
+   }
+
    @MustCallOnEDT
    void displayImages(ImagesAndStats images) {
+      if (scheduledDisplayFuture_ != null && !scheduledDisplayFuture_.isDone()) {
+         scheduledDisplayFuture_.cancel(false);
+      }
       if (repaintScheduledForNewImages_.get()) {
+         scheduledDisplayFuture_ = scheduleSkippedImages(images);
          return;
       }
 
@@ -1116,12 +1140,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // however, I do not understand that code enough to touch it....
             // This at least fixes the display somewhat (showing black for
             // a saturated image is really, really bad!)
-            if (min == max) {
-               if (max == 0) {
-                  max++;
-               } else {
-                  min--;
-               }
+            if (min >= max) {
+               max = min + 1;
             }
             // NS 2019-08-15: We really do need to write the min and max to
             // the DisplaySettings (there already is a work-around in the
@@ -1548,7 +1568,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return;
       }
 
-      if (images.get(0).getCoords().hasAxis(Coords.CHANNEL)) {
+      if (images.get(images.size() - 1).getCoords().hasAxis(Coords.CHANNEL)) {
          try {
             displayController_.postDisplayEvent(
                   DataViewerMousePixelInfoChangedEvent
@@ -2160,8 +2180,18 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
    }
 
+   /**
+    * This event changes the color of a channel in the display.
+    * The event currently only comes from the MDA window.  I do not
+    * think that it is great UI to change the channel color of an
+    * existing display when the channel color in the MDA is changed.
+    * Leaving this code commented out for now.
+    *
+    * @param channelColorEvent Event indicating channel and new color
+    */
    @Subscribe
    public void onChannelColorEvent(ChannelColorEvent channelColorEvent) {
+      /*
       // make sure we do not respond to the event we generated ourselves
       if (!channelColorEvent.equals(channelColorEvent_)) {
          if (channelColorEvent.getColor() != null) {
@@ -2195,5 +2225,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   oldDisplaySettings, newDisplaySettings));
          }
       }
+      */
    }
 }
