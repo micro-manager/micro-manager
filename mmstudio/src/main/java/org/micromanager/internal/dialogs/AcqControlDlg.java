@@ -86,7 +86,6 @@ import org.micromanager.UserProfile;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MultiMDAFrame;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
@@ -172,29 +171,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private final UserProfile profile_;
    // persistent properties (app settings), most are only for backward compatibility
    private static final String MDA_SEQUENCE_SETTINGS = "MDA_SEQUENCE_SETTINGS";
-   /*
-   private static final String ACQ_INTERVAL = "acqInterval";
-   private static final String ACQ_ZBOTTOM = "acqZbottom";
-   private static final String ACQ_ZTOP = "acqZtop";
-   private static final String ACQ_ZSTEP = "acqZstep";
-   private static final String ACQ_ENABLE_SLICE_SETTINGS = "enableSliceSettings";
-   private static final String ACQ_ENABLE_MULTI_POSITION = "enableMultiPosition";
-   private static final String ACQ_ENABLE_MULTI_FRAME = "enableMultiFrame";
-   private static final String ACQ_ENABLE_MULTI_CHANNEL = "enableMultiChannels";
-   private static final String ACQ_ORDER_MODE = "acqOrderMode";
-   private static final String ACQ_NUMFRAMES = "acqNumframes";
-   private static final String ACQ_CHANNEL_GROUP = "acqChannelGroup";
-   private static final String ACQ_CHANNELS_KEEP_SHUTTER_OPEN = "acqChannelsKeepShutterOpen";
-   private static final String ACQ_STACK_KEEP_SHUTTER_OPEN = "acqStackKeepShutterOpen";
-   private static final String ACQ_Z_VALUES = "acqZValues";
-   private static final String ACQ_DIR_NAME = "acqDirName";
-   private static final String ACQ_ROOT_NAME = "acqRootName";
-   private static final String ACQ_SAVE_FILES = "acqSaveFiles";
-   private static final String ACQ_AF_ENABLE = "autofocus_enabled";
-   private static final String ACQ_AF_SKIP_INTERVAL = "autofocusSkipInterval";
-   private static final String CUSTOM_INTERVAL_PREFIX = "customInterval";
-   private static final String ACQ_ENABLE_CUSTOM_INTERVALS = "enableCustomIntervals";
-    */
    private static final String ACQ_COLUMN_WIDTH = "column_width";
    private static final String ACQ_COLUMN_ORDER = "column_order";
    private static final int ACQ_DEFAULT_COLUMN_WIDTH = 77;
