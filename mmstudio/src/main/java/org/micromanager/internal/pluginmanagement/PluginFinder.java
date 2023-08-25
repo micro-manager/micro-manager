@@ -72,33 +72,31 @@ public final class PluginFinder {
     */
    public static List<Class> findPlugins(String root) {
       ArrayList<Class> result = new ArrayList<>();
+      List<URL> jarURLs = new ArrayList<>();
       for (String jarPath : findPaths(root, ".jar")) {
-         URL jarURL;
          try {
-            jarURL = new File(jarPath).toURI().toURL();
+            URL jarURL = new File(jarPath).toURI().toURL();
+            jarURLs.add(jarURL);
          } catch (MalformedURLException e) {
             ReportingUtils.logError("Unable to generate URL from path " + jarPath + "; skipping");
-            continue;
          }
+      }
 
-         // The class loader used by the plugin should find classes and
-         // resources within the plugin JAR first, then fall back to the
-         // default class loader.
-         // However, when SciJava is discovering plugin classes, we do NOT
-         // want to search all JARs on the class path.
-         // So we temporarily set the class loader to look only at the given
-         // URL for resources.
-         // try/catch ensures that any failure to load a single jar won't
-         // cause the entire process of loading plugins to fail.
-         try {
-            PluginClassLoader loader = new PluginClassLoader(jarURL,
-                  MMStudio.getInstance().getClass().getClassLoader());
-            loader.setBlockInheritedResources(true);
-            result.addAll(findPluginsWithLoader(loader));
-            loader.setBlockInheritedResources(false);
-         } catch (Throwable e) {
-            ReportingUtils.logError(e, "Unable to load JAR at " + jarURL);
-         }
+      // The class loader used by the plugin should find classes and
+      // resources within the plugin JAR first, then fall back to the
+      // default class loader.
+      // However, when SciJava is discovering plugin classes, we do NOT
+      // want to search all JARs on the class path.
+      // So we temporarily set the class loader to look only at the given
+      // URL for resources.
+      try {
+         PluginClassLoader loader = new PluginClassLoader(jarURLs.toArray(new URL[0]),
+               MMStudio.getInstance().getClass().getClassLoader());
+         loader.setBlockInheritedResources(true);
+         result.addAll(findPluginsWithLoader(loader));
+         loader.setBlockInheritedResources(false);
+      } catch (Throwable e) {
+         ReportingUtils.logError(e, "Unable to load JARs at " + root);
       }
       return result;
    }
@@ -127,8 +125,8 @@ public final class PluginFinder {
    private static class PluginClassLoader extends URLClassLoader {
       private boolean blockInheritedResources_ = false;
 
-      public PluginClassLoader(URL jarURL, ClassLoader parent) {
-         super(new URL[] {jarURL}, parent);
+      public PluginClassLoader(URL[] jarURLs, ClassLoader parent) {
+         super(jarURLs, parent);
       }
 
       public void setBlockInheritedResources(boolean flag) {
