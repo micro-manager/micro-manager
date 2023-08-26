@@ -28,7 +28,6 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
@@ -40,7 +39,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Wraps AcuiqitionsEngine 2010 in the AcquisitionEngine interface.
  */
 public final class AcquisitionWrapperEngine implements AcquisitionEngine,
-      MMAcquistionControlCallbacks {
+         MMAcquistionControlCallbacks {
 
    private CMMCore core_;
    protected Studio studio_;
@@ -50,12 +49,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
 
    private IAcquisitionEngine2010 acquisitionEngine2010_;
    protected JSONObject summaryMetadataJSON_;
-   private ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
 
    public AcquisitionWrapperEngine() {
-      settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
 
@@ -73,7 +70,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
    public void setSequenceSettings(SequenceSettings sequenceSettings) {
       sequenceSettings_ = sequenceSettings;
       calculateSlices();
-      settingsChanged();
+      settingsChanged(sequenceSettings);
    }
 
 
@@ -88,23 +85,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
       return curStore_;
    }
 
-   @Override
-   public void addSettingsListener(AcqSettingsListener listener) {
-      settingsListeners_.add(listener);
-   }
-
-   @Override
-   public void removeSettingsListener(AcqSettingsListener listener) {
-      settingsListeners_.remove(listener);
-   }
-
    /**
     *  Will notify registered AcqSettingsListeners that the settings have changed.
     */
-   public void settingsChanged() {
-      for (AcqSettingsListener listener : settingsListeners_) {
-         listener.settingsChanged();
-      }
+   public void settingsChanged(SequenceSettings sequenceSettings) {
+      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(sequenceSettings));
    }
 
    protected IAcquisitionEngine2010 getAcquisitionEngine2010() {

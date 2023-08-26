@@ -30,7 +30,6 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
-import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.MMException;
 
 /**
@@ -226,10 +225,6 @@ public interface AcquisitionEngine {
    JSONObject getSummaryMetadata();
 
    String getComment();
-
-   void addSettingsListener(AcqSettingsListener listener);
-
-   void removeSettingsListener(AcqSettingsListener listener);
 
    void setShouldDisplayImages(boolean shouldDisplay);
 

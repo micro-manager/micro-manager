@@ -83,6 +83,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
+import org.micromanager.acquisition.AcquisitionSettingsChangedEvent;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
@@ -97,7 +98,6 @@ import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.ColorEditor;
 import org.micromanager.internal.utils.ColorRenderer;
@@ -120,7 +120,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * and only synchronize when really needed. </p>
  */
 public final class AcqControlDlg extends JFrame implements PropertyChangeListener,
-      AcqSettingsListener, TableModelListener {
+       TableModelListener {
 
    private static final long serialVersionUID = 1L;
    private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
@@ -218,7 +218,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             close();
          }
       });
-      mmStudio_.addMDAWindowSettingsToAcqEngines(this);
 
       super.setTitle("Multi-Dimensional Acquisition");
       super.setLayout(new MigLayout("fill, flowy, gap 2, insets 6",
@@ -1633,12 +1632,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return -1;
    }
 
-   @Override
-   public void settingsChanged() {
+   @Subscribe
+   public void onSettingsChanged(AcquisitionSettingsChangedEvent event) {
       if (this.isDisplayable()) {
          updateGUIContents();
       }
    }
+
 
    private void applySettingsFromGUI() {
       if (disableGUItoSettings_) {
@@ -1721,6 +1721,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       ssb.saveMode(DefaultDatastore.getPreferredSaveMode(mmStudio_));
       ssb.cameraTimeout(getAcquisitionEngine().getSequenceSettings().cameraTimeout());
 
+      disableGUItoSettings_ = false;
       try {
          getAcquisitionEngine().setSequenceSettings(ssb.build());
       } catch (UnsupportedOperationException uoex) {
@@ -1729,8 +1730,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          getAcquisitionEngine().setSequenceSettings(ssb.sliceZStepUm(1.0).build());
       }
 
-      disableGUItoSettings_ = false;
-      updateGUIContents();
       channelTable_.editCellAt(editingRow, editingColumn, null);
    }
 
