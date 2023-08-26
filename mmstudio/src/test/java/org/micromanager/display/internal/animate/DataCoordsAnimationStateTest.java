@@ -106,14 +106,13 @@ public class DataCoordsAnimationStateTest {
 
    @Test
    public void testGetSetAdvance() {
-      mockAxes_ = Arrays.asList(DefaultCoords.TIME, DefaultCoords.CHANNEL);
+      mockAxes_ = Arrays.asList(DefaultCoords.TIME_POINT, DefaultCoords.CHANNEL);
       for (int t = 0; t < 10; ++t) {
          for (int ch = 0; ch < 3; ++ch) {
-            mockDataset_.put(new DefaultCoords.Builder().
-                  time(t).channel(ch).build(), Boolean.TRUE);
+            mockDataset_.put(new DefaultCoords.Builder().t(t).channel(ch).build(), Boolean.TRUE);
          }
       }
-      mockAnimatedAxes_ = Collections.singleton(DefaultCoords.TIME);
+      mockAnimatedAxes_ = Collections.singleton(DefaultCoords.TIME_POINT);
 
       DataCoordsAnimationState instance =
             DataCoordsAnimationState.create(mockCoordsProvider_);
@@ -122,9 +121,9 @@ public class DataCoordsAnimationStateTest {
       Coords c = instance.getAnimationPosition();
       List<String> axes = c.getAxes();
       assertEquals(2, axes.size());
-      assertTrue(axes.contains(DefaultCoords.TIME));
+      assertTrue(axes.contains(DefaultCoords.TIME_POINT));
       assertTrue(axes.contains(DefaultCoords.CHANNEL));
-      assertEquals(0, c.getTime());
+      assertEquals(0, c.getT());
       assertEquals(0, c.getChannel());
 
       // Set coords should be recovered, preserving unset axes
@@ -132,23 +131,23 @@ public class DataCoordsAnimationStateTest {
       c = instance.getAnimationPosition();
       axes = c.getAxes();
       assertEquals(axes.size(), 2);
-      assertTrue(axes.contains(DefaultCoords.TIME));
+      assertTrue(axes.contains(DefaultCoords.TIME_POINT));
       assertTrue(axes.contains(DefaultCoords.CHANNEL));
-      assertEquals(3, c.getTime());
+      assertEquals(3, c.getT());
       assertEquals(0, c.getChannel());
 
       // Set coords should be recovered, preserving unset axes
       instance.setAnimationPosition(new DefaultCoords.Builder().channel(1).build());
       c = instance.getAnimationPosition();
       assertEquals(2, c.getAxes().size());
-      assertEquals(3, c.getTime());
+      assertEquals(3, c.getT());
       assertEquals(1, c.getChannel());
 
       // Advance by one should advance time (animated) but not channel (not
       // animated)
       c = instance.advanceAnimationPosition(1.0);
       assertEquals(2, c.getAxes().size());
-      assertEquals(4, c.getTime());
+      assertEquals(4, c.getT());
       assertEquals(1, c.getChannel());
 
       mockAnimatedAxes_ = new HashSet<String>(Arrays.asList(
@@ -157,27 +156,27 @@ public class DataCoordsAnimationStateTest {
       // Advance by many; should end up in expected coords
       c = instance.advanceAnimationPosition(11.0);
       assertEquals(2, c.getAxes().size());
-      assertEquals(8, c.getTime());
+      assertEquals(8, c.getT());
       assertEquals(0, c.getChannel());
 
-      mockDataset_.put(new DefaultCoords.Builder().time(8).channel(1).build(),
+      mockDataset_.put(new DefaultCoords.Builder().t(8).channel(1).build(),
             Boolean.FALSE);
 
       // Check skipping of nonexistent coords
       c = instance.advanceAnimationPosition(1.0);
       assertEquals(2, c.getAxes().size());
-      assertEquals(8, c.getTime());
+      assertEquals(8, c.getT());
       assertEquals(2, c.getChannel());
 
       for (int ch = 0; ch < 3; ++ch) {
-         mockDataset_.put(new DefaultCoords.Builder().time(9).channel(ch).build(),
+         mockDataset_.put(new DefaultCoords.Builder().t(9).channel(ch).build(),
                Boolean.FALSE);
       }
 
       // Another test for skipping
       c = instance.advanceAnimationPosition(1.0);
       assertEquals(2, c.getAxes().size());
-      assertEquals(0, c.getTime());
+      assertEquals(0, c.getT());
       assertEquals(0, c.getChannel());
    }
 

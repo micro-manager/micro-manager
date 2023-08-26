@@ -405,7 +405,7 @@ public class VersionCompatTest {
             Assert.assertNotNull("Non-null user data", userData);
             for (String key : userData.getKeys()) {
                Assert.assertEquals(key + " for " + coords,
-                       userData.getString(key), DEVICE_PROPERTIES.get(key));
+                       userData.getString(key, null), DEVICE_PROPERTIES.get(key));
             }
          } catch (IOException io) {
             Assert.fail("Failed to open image from datastore");

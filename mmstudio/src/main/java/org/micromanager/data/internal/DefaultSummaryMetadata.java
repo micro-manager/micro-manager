@@ -477,7 +477,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public SequenceSettings getSequenceSettings() {
-      return SequenceSettings.fromJSONStream(pmap_.getString(MDA_SETTINGS.key()));
+      return SequenceSettings.fromJSONStream(pmap_.getString(MDA_SETTINGS.key(), ""));
    }
 
    @Override

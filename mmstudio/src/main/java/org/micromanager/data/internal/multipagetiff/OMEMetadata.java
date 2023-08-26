@@ -50,7 +50,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.CommentsHelper;
-import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class OMEMetadata {
@@ -207,7 +207,7 @@ public final class OMEMetadata {
                //make sure each tiffdata entry is present. If it is missing, link Tiffdata entry
                //to a a preveious IFD
                Integer tiffDataIndex =
-                     tiffDataIndexMap_.get(MDUtils.generateLabel(channel, slice, frame, position));
+                     tiffDataIndexMap_.get(generateLabel(channel, slice, frame, position));
                if (tiffDataIndex == null) {
                   // this plane was never added, so link to another IFD
                   // find substitute channel, frame, slice
@@ -220,22 +220,22 @@ public final class OMEMetadata {
                   // point missing, go back until image is found
                   while (tiffDataIndex == null) {
                      tiffDataIndex = tiffDataIndexMap_
-                           .get(MDUtils.generateLabel(channel, s, frameSearchIndex, position));
+                           .get(generateLabel(channel, s, frameSearchIndex, position));
                      if (tiffDataIndex != null) {
                         break;
                      }
 
                      if (backIndex >= 0) {
-                        tiffDataIndex = tiffDataIndexMap_.get(MDUtils
-                              .generateLabel(channel, backIndex, frameSearchIndex, position));
+                        tiffDataIndex = tiffDataIndexMap_.get(generateLabel(
+                                 channel, backIndex, frameSearchIndex, position));
                         if (tiffDataIndex != null) {
                            break;
                         }
                         backIndex--;
                      }
                      if (forwardIndex < numSlices_) {
-                        tiffDataIndex = tiffDataIndexMap_.get(MDUtils
-                              .generateLabel(channel, forwardIndex, frameSearchIndex, position));
+                        tiffDataIndex = tiffDataIndexMap_.get(generateLabel(
+                                 channel, forwardIndex, frameSearchIndex, position));
                         if (tiffDataIndex != null) {
                            break;
                         }
@@ -339,7 +339,7 @@ public final class OMEMetadata {
                "Multipage Tiff storage only supports images in increasing order, t=0, t=2, etc.."));
       }
       tiffDataIndexMap_
-            .put(MDUtils.generateLabel(channel, slice, frame, position), indices.tiffDataIndex_);
+            .put(generateLabel(channel, slice, frame, position), indices.tiffDataIndex_);
       metadata_.setTiffDataPlaneCount(new NonNegativeInteger(1), position, indices.tiffDataIndex_);
 
       metadata_.setPlaneTheZ(new NonNegativeInteger(slice), position, indices.planeIndex_);
@@ -439,4 +439,12 @@ public final class OMEMetadata {
          }
       }
    }
+
+   public static String generateLabel(int channel, int slice, int frame, int position) {
+      return NumberUtils.intToCoreString(channel) + "_"
+               + NumberUtils.intToCoreString(slice) + "_"
+               + NumberUtils.intToCoreString(frame) + "_"
+               + NumberUtils.intToCoreString(position);
+   }
+
 }
