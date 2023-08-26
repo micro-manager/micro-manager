@@ -83,10 +83,10 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
+import org.micromanager.acquisition.AcquisitionSettingsChangedEvent;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MultiMDAFrame;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
@@ -98,7 +98,6 @@ import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.ColorEditor;
 import org.micromanager.internal.utils.ColorRenderer;
@@ -121,7 +120,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * and only synchronize when really needed. </p>
  */
 public final class AcqControlDlg extends JFrame implements PropertyChangeListener,
-      AcqSettingsListener, TableModelListener {
+       TableModelListener {
 
    private static final long serialVersionUID = 1L;
    private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
@@ -172,29 +171,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private final UserProfile profile_;
    // persistent properties (app settings), most are only for backward compatibility
    private static final String MDA_SEQUENCE_SETTINGS = "MDA_SEQUENCE_SETTINGS";
-   /*
-   private static final String ACQ_INTERVAL = "acqInterval";
-   private static final String ACQ_ZBOTTOM = "acqZbottom";
-   private static final String ACQ_ZTOP = "acqZtop";
-   private static final String ACQ_ZSTEP = "acqZstep";
-   private static final String ACQ_ENABLE_SLICE_SETTINGS = "enableSliceSettings";
-   private static final String ACQ_ENABLE_MULTI_POSITION = "enableMultiPosition";
-   private static final String ACQ_ENABLE_MULTI_FRAME = "enableMultiFrame";
-   private static final String ACQ_ENABLE_MULTI_CHANNEL = "enableMultiChannels";
-   private static final String ACQ_ORDER_MODE = "acqOrderMode";
-   private static final String ACQ_NUMFRAMES = "acqNumframes";
-   private static final String ACQ_CHANNEL_GROUP = "acqChannelGroup";
-   private static final String ACQ_CHANNELS_KEEP_SHUTTER_OPEN = "acqChannelsKeepShutterOpen";
-   private static final String ACQ_STACK_KEEP_SHUTTER_OPEN = "acqStackKeepShutterOpen";
-   private static final String ACQ_Z_VALUES = "acqZValues";
-   private static final String ACQ_DIR_NAME = "acqDirName";
-   private static final String ACQ_ROOT_NAME = "acqRootName";
-   private static final String ACQ_SAVE_FILES = "acqSaveFiles";
-   private static final String ACQ_AF_ENABLE = "autofocus_enabled";
-   private static final String ACQ_AF_SKIP_INTERVAL = "autofocusSkipInterval";
-   private static final String CUSTOM_INTERVAL_PREFIX = "customInterval";
-   private static final String ACQ_ENABLE_CUSTOM_INTERVALS = "enableCustomIntervals";
-    */
    private static final String ACQ_COLUMN_WIDTH = "column_width";
    private static final String ACQ_COLUMN_ORDER = "column_order";
    private static final int ACQ_DEFAULT_COLUMN_WIDTH = 77;
@@ -242,7 +218,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             close();
          }
       });
-      mmStudio_.addMDAWindowSettingsToAcqEngines(this);
 
       super.setTitle("Multi-Dimensional Acquisition");
       super.setLayout(new MigLayout("fill, flowy, gap 2, insets 6",
@@ -1657,12 +1632,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return -1;
    }
 
-   @Override
-   public void settingsChanged() {
+   @Subscribe
+   public void onSettingsChanged(AcquisitionSettingsChangedEvent event) {
       if (this.isDisplayable()) {
          updateGUIContents();
       }
    }
+
 
    private void applySettingsFromGUI() {
       if (disableGUItoSettings_) {
@@ -1745,6 +1721,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       ssb.saveMode(DefaultDatastore.getPreferredSaveMode(mmStudio_));
       ssb.cameraTimeout(getAcquisitionEngine().getSequenceSettings().cameraTimeout());
 
+      disableGUItoSettings_ = false;
       try {
          getAcquisitionEngine().setSequenceSettings(ssb.build());
       } catch (UnsupportedOperationException uoex) {
@@ -1753,8 +1730,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          getAcquisitionEngine().setSequenceSettings(ssb.sliceZStepUm(1.0).build());
       }
 
-      disableGUItoSettings_ = false;
-      updateGUIContents();
       channelTable_.editCellAt(editingRow, editingColumn, null);
    }
 

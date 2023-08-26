@@ -530,14 +530,6 @@ public final class MMStudio implements Studio {
    }
 
    /**
-    * Make all available acquisition engines listen for settings changes on the MDA window.
-    */
-   public void addMDAWindowSettingsToAcqEngines(AcqControlDlg acqControlDlg) {
-      acqEngineClojure_.addSettingsListener(acqControlDlg);
-      acqEngineJava_.addSettingsListener(acqControlDlg);
-   }
-
-   /**
     * Get currently used configuration file.
     *
     * @return - Path to currently used configuration file

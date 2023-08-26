@@ -48,6 +48,7 @@ import org.micromanager.acquisition.AcquisitionEndedEvent;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
+import org.micromanager.acquisition.internal.DefaultAcquisitionSettingsChangedEvent;
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
@@ -61,7 +62,6 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.NumberUtils;
@@ -85,7 +85,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    private PositionList posList_;
    private String zStage_;
 
-   private ArrayList<AcqSettingsListener> settingsListeners_;
    private List<Datastore> stores_;
    private List<Pipeline> pipelines_;
    private SequenceSettings timeLapseSettings_ = null;
@@ -125,7 +124,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       studio_ = studio;
       core_ = studio_.core();
       new Engine(core_);
-      settingsListeners_ = new ArrayList<>();
    }
 
    /**
@@ -458,15 +456,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return "";
-      }
-   }
-
-   /**
-    * Will notify registered AcqSettingsListeners that the settings have changed.
-    */
-   private void settingsChanged() {
-      for (AcqSettingsListener listener : settingsListeners_) {
-         listener.settingsChanged();
       }
    }
 

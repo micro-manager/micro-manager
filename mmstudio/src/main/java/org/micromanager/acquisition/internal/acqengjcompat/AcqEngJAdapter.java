@@ -54,6 +54,7 @@ import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
+import org.micromanager.acquisition.internal.DefaultAcquisitionSettingsChangedEvent;
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
@@ -67,7 +68,6 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
@@ -97,7 +97,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private String zStage_;
    private SequenceSettings sequenceSettings_;
    protected JSONObject summaryMetadataJSON_;
-   private ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
    private long nextWakeTime_ = -1;
@@ -129,7 +128,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       studio_ = studio;
       core_ = studio_.core();
       new Engine(core_);
-      settingsListeners_ = new ArrayList<>();
       sequenceSettings_ = (new SequenceSettings.Builder()).build();
    }
 
@@ -988,10 +986,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    /**
     * Will notify registered AcqSettingsListeners that the settings have changed.
     */
-   private void settingsChanged() {
-      for (AcqSettingsListener listener : settingsListeners_) {
-         listener.settingsChanged();
-      }
+   private void settingsChanged(SequenceSettings sequenceSettings) {
+      studio_.events().post(new DefaultAcquisitionSettingsChangedEvent(sequenceSettings));
    }
 
 
@@ -1138,7 +1134,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    public void setSequenceSettings(SequenceSettings sequenceSettings) {
       sequenceSettings_ = sequenceSettings;
       calculateSlices(sequenceSettings_);
-      settingsChanged();
+      settingsChanged(sequenceSettings);
    }
 
    @Override
@@ -1150,16 +1146,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    @Override
    public Datastore getAcquisitionDatastore() {
       return curStore_;
-   }
-
-   @Override
-   public void addSettingsListener(AcqSettingsListener listener) {
-      settingsListeners_.add(listener);
-   }
-
-   @Override
-   public void removeSettingsListener(AcqSettingsListener listener) {
-      settingsListeners_.remove(listener);
    }
 
    @Override
