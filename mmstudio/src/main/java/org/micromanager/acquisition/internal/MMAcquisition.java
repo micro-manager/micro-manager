@@ -105,6 +105,7 @@ public final class MMAcquisition extends DataViewerListener {
     *                        viewer should be shown.
     * @deprecated Use the constructor that takes a SummaryMetadata object instead.
     */
+   @Deprecated
    @SuppressWarnings("LeakingThisInConstructor")
    public MMAcquisition(Studio studio, String dir, String prefix, JSONObject summaryMetadata,
                         MMAcquistionControlCallbacks callbacks, SequenceSettings acqSettings)

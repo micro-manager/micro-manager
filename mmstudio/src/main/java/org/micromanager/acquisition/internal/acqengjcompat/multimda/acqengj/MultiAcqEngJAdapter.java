@@ -232,14 +232,14 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          // These hooks implement Autofocus
          if (basicSettings.useAutofocus()) {
             currentMultiMDA_.addHook(autofocusHookBefore(basicSettings.skipAutofocusCount()),
-                  currentMultiMDA_.BEFORE_HARDWARE_HOOK);
+                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
          for (int i = 0; i < sequenceSettings.size(); i++) {
             // Hook to move back the ZStage to its original position after a Z stack
             if (sequenceSettings.get(i).useSlices()) {
                currentMultiMDA_.addHook(zPositionHook(sequenceSettings.get(i),
-                           Acquisition.BEFORE_HARDWARE_HOOK, i),
+                           AcquisitionAPI.BEFORE_HARDWARE_HOOK, i),
                      AcquisitionAPI.BEFORE_HARDWARE_HOOK);
                currentMultiMDA_.addHook(zPositionHook(sequenceSettings.get(i),
                            Acquisition.AFTER_EXPOSURE_HOOK, i),

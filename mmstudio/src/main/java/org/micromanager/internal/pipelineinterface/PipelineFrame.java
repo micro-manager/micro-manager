@@ -362,31 +362,31 @@ public final class PipelineFrame extends JFrame
     * Set whether or not a configurator is enabled.
     */
    public void setConfiguratorEnabled(int row, boolean enabled) {
-      int column = getTableModel().ENABLED_COLUMN;
+      int column = PipelineTableModel.ENABLED_COLUMN;
       getTableModel().setValueAt(enabled, row, column);
    }
 
    /**
-    * Set whether or not a configurator is enabled for live mode.
+    * Set whether a configurator is enabled for live mode.
     */
    public void setConfiguratorEnabledLive(int row, boolean enabled) {
-      int column = getTableModel().ENABLED_LIVE_COLUMN;
+      int column = PipelineTableModel.ENABLED_LIVE_COLUMN;
       getTableModel().setValueAt(enabled, row, column);
    }
 
    /**
-    * Get whether or not a configurator is enabled.
+    * Get whether a configurator is enabled.
     */
    public boolean getConfiguratorEnabled(int row) {
-      int column = getTableModel().ENABLED_COLUMN;
+      int column = PipelineTableModel.ENABLED_COLUMN;
       return (boolean) getTableModel().getValueAt(row, column);
    }
 
    /**
-    * Get whether or not a configurator is enabled for live mode.
+    * Get whether a configurator is enabled for live mode.
     */
    public boolean getConfiguratorEnabledLive(int row) {
-      int column = getTableModel().ENABLED_LIVE_COLUMN;
+      int column = PipelineTableModel.ENABLED_LIVE_COLUMN;
       return (boolean) getTableModel().getValueAt(row, column);
    }
 

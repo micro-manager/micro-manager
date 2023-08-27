@@ -401,7 +401,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public List<Double> getCustomIntervalsMsList() {
-      return pmap_.getDoubleList(CUSTOM_INTERVALS_MS.key(), (List) null);
+      return pmap_.getDoubleList(CUSTOM_INTERVALS_MS.key(), (List<Double>) null);
    }
 
    @Override
