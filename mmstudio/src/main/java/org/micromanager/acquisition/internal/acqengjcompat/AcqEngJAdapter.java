@@ -221,10 +221,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          loadRunnables(acquisitionSettings);
 
          summaryMetadataJSON_ = currentAcquisition_.getSummaryMetadata();
+         addMMSummaryMetadata(summaryMetadataJSON_, sequenceSettings, posList_, studio_);
          SummaryMetadata summaryMetadata =  DefaultSummaryMetadata.fromPropertyMap(
                   NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                            summaryMetadataJSON_.toString()));
-         addMMSummaryMetadata(summaryMetadataJSON_, sequenceSettings, posList_, studio_);
          MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
                acquisitionSettings);
          curStore_ = acq.getDatastore();
