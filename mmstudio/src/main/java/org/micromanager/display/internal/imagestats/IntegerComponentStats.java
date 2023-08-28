@@ -164,7 +164,7 @@ public final class IntegerComponentStats {
       if (histogram_ == null) {
          return 0;
       }
-      return getHistogramBinWidth() * getHistogramBinCount() - 1;
+      return (long) getHistogramBinWidth() * getHistogramBinCount() - 1;
    }
 
    public long getPixelCount() {
@@ -208,7 +208,7 @@ public final class IntegerComponentStats {
    public long getAutoscaleMinForQuantile(double q) {
       if (q >= 0.5) {
          // Safe, in-range value that is less than max
-         return Math.max(0L, (long) Math.round(getQuantile(0.5)) - 1L);
+         return Math.max(0L, Math.round(getQuantile(0.5)) - 1L);
       }
       return Math.round(getQuantile(q));
    }
@@ -216,7 +216,7 @@ public final class IntegerComponentStats {
    public long getAutoscaleMinForQuantileIgnoringZeros(double q) {
       if (q >= 0.5) {
          // Safe, in-range value that is less than max
-         return Math.max(0L, (long) Math.round(getQuantileIgnoringZeros(0.5)) - 1L);
+         return Math.max(0L, Math.round(getQuantileIgnoringZeros(0.5)) - 1L);
       }
       return Math.round(getQuantileIgnoringZeros(q));
    }
@@ -224,7 +224,7 @@ public final class IntegerComponentStats {
    public long getAutoscaleMaxForQuantile(double q) {
       if (q >= 0.5) {
          // Safe, in-range value that is greater than min
-         return Math.max(1L, (long) Math.round(getQuantile(0.5)));
+         return Math.max(1L, Math.round(getQuantile(0.5)));
       }
       return Math.round(getQuantile(1.0 - q)) - 1L;
    }
@@ -232,7 +232,7 @@ public final class IntegerComponentStats {
    public long getAutoscaleMaxForQuantileIgnoringZeros(double q) {
       if (q >= 0.5) {
          // Safe, in-range value that is greater than min
-         return Math.max(1L, (long) Math.round(getQuantileIgnoringZeros(0.5)));
+         return Math.max(1L, Math.round(getQuantileIgnoringZeros(0.5)));
       }
       return Math.round(getQuantileIgnoringZeros(1.0 - q)) - 1L;
    }
@@ -281,7 +281,7 @@ public final class IntegerComponentStats {
             (long) Math.floor(countBelowQuantile));
 
       int binWidth = getHistogramBinWidth();
-      long leftEdge = (binIndex - 1) * binWidth;
+      long leftEdge = (long) (binIndex - 1) * binWidth;
       double binFraction =
             (countBelowQuantile - cumDistrib[binIndex - 1])
                   / (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
@@ -321,7 +321,7 @@ public final class IntegerComponentStats {
       }
 
       int binIndex;
-      // The binary seatch will find _a_ bin with the desired cumulative count,
+      // The binary search will find _a_ bin with the desired cumulative count,
       // but it may not be the _only_ such bin, if the histogram contains bins
       // with zero count. This is not an issue when 0 < q < 1 (for our use of
       // the quantile for limiting scaling range), but when q = 0 or q = 1, we
@@ -336,7 +336,7 @@ public final class IntegerComponentStats {
             (long) Math.floor(countBelowQuantile));
 
       int binWidth = getHistogramBinWidth();
-      long leftEdge = (binIndex - 1) * binWidth;
+      long leftEdge = (long) (binIndex - 1) * binWidth;
       double binFraction =
              (countBelowQuantile - cumDistrib[binIndex - 1])
                  / (cumDistrib[binIndex] - cumDistrib[binIndex - 1]);
