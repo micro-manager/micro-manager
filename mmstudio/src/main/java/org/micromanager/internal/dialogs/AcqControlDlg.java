@@ -81,6 +81,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
+import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.AcquisitionSettingsChangedEvent;
@@ -89,8 +90,10 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MultiMDAFrame;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.ChannelGroupChangedEvent;
@@ -251,6 +254,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       topRightPanel.add(createRunButtons());
       topRightPanel.add(createSaveButtons());
       topRightPanel.add(createMultiMDAButton());
+      topRightPanel.add(createReUseButton());
 
       JPanel topPanel = new JPanel(new MigLayout(
             "fill, insets 0",
@@ -867,6 +871,65 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       result.add(multiMDAButton, BUTTON_SIZE);
 
       return result;
+   }
+
+   private JPanel createReUseButton() {
+      final JPanel result = new JPanel(new MigLayout("flowy, insets 0, gapx 0, gapy 0"));
+      final JButton reUSeButton = new JButton("ReUse Settings");
+      reUSeButton.setToolTipText("Apply the settings from the active viewer to this dialog");
+      reUSeButton.setFont(DEFAULT_FONT);
+      reUSeButton.setMargin(new Insets(-5, -5, -5, -5));
+      reUSeButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DataViewer dv = mmStudio_.displays().getActiveDataViewer();
+            if (dv != null) {
+               SummaryMetadata summary = dv.getDataProvider().getSummaryMetadata();
+               if (isApplicable(summary.getSequenceSettings())) {
+                  getAcquisitionEngine().setSequenceSettings(summary.getSequenceSettings());
+                  updateGUIContents();
+               } else {
+                  mmStudio_.logs().showMessage(
+                           "Settings not found or incompatible with current microscope");
+               }
+            }
+         }
+      });
+      result.add(reUSeButton, BUTTON_SIZE);
+
+      return result;
+   }
+
+   private boolean isApplicable(SequenceSettings sequenceSettings) {
+      if (sequenceSettings == null) {
+         return false;
+      }
+      // check if we have a group with the same name as the channelgroup
+      boolean groupFound = false;
+      StrVector groups = mmStudio_.core().getAvailableConfigGroups();
+      for (String group : groups) {
+         if (sequenceSettings.channelGroup().equals(group)) {
+            groupFound = true;
+            break;
+         }
+      }
+      if (!groupFound) {
+         return false;
+      }
+      // check that we have all channels
+      for (ChannelSpec channel : sequenceSettings.channels()) {
+         boolean channelFound = false;
+         for (String config : mmStudio_.core().getAvailableConfigs(channel.channelGroup())) {
+            if (channel.config().equals(config)) {
+               channelFound = true;
+               break;
+            }
+         }
+         if (!channelFound) {
+            return false;
+         }
+      }
+      return true;
    }
 
    private JPanel createSavePanel() {

@@ -849,6 +849,9 @@ public final class SequenceSettings {
       try {
          Gson gson = new Gson();
          SequenceSettings result = gson.fromJson(stream, SequenceSettings.class);
+         if (result == null) {
+            return null;
+         }
          double version = result.getVersion();
          if (version <= Version) {
             return result;
