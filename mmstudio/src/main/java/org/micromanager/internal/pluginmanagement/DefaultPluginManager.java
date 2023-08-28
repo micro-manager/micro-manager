@@ -51,7 +51,7 @@ public final class DefaultPluginManager implements PluginManager {
 
    // List of the types of plugins we allow.
    // TODO Remove this list and just load all MMGenericPlugin instances
-   private static final ArrayList<Class> VALID_CLASSES = new ArrayList<>();
+   private static final ArrayList<Class<?>> VALID_CLASSES = new ArrayList<>();
 
    static {
       VALID_CLASSES.add(AcquisitionDialogPlugin.class);
@@ -75,7 +75,7 @@ public final class DefaultPluginManager implements PluginManager {
    public DefaultPluginManager(Studio studio) {
       studio_ = studio;
 
-      for (Class classType : VALID_CLASSES) {
+      for (Class<?> classType : VALID_CLASSES) {
          pluginTypeToPlugins_.put(classType, new ArrayList<>());
       }
       loadingThread_ = new Thread(this::loadPlugins, "Plugin loading thread");
@@ -134,8 +134,8 @@ public final class DefaultPluginManager implements PluginManager {
     * Insert the provided plugins into the pluginTypeToPlugins_ structure,
     * instantiate them, add them to menus, etc.
     */
-   private void loadPlugins(List<Class> pluginClasses) {
-      for (Class pluginClass : pluginClasses) {
+   private void loadPlugins(List<Class<?>> pluginClasses) {
+      for (Class<?> pluginClass : pluginClasses) {
          try {
             // Ignore any SciJava plugins that are not MM plugins.
             if (!MMGenericPlugin.class.isAssignableFrom(pluginClass)) {
@@ -165,7 +165,7 @@ public final class DefaultPluginManager implements PluginManager {
       if (plugin instanceof MMPlugin) { // Legacy plugin base class
          ((MMPlugin) plugin).setContext(studio_);
       }
-      for (Class pluginClass : VALID_CLASSES) {
+      for (Class<?> pluginClass : VALID_CLASSES) {
          if (pluginClass.isInstance(plugin)) {
             pluginTypeToPlugins_.get(pluginClass).add(plugin);
          }

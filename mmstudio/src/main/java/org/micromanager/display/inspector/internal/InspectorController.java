@@ -76,7 +76,7 @@ public final class InspectorController
    private JPanel headerPanel_;
    private JScrollPane scrollPane_;
    private VerticalMultiSplitPane sectionsPane_;
-   private JComboBox viewerComboBox_;
+   private JComboBox<Object> viewerComboBox_;
    private Object viewerComboBoxSelection_;
    private JButton viewerToFrontButton_;
    private DataViewer viewer_;
@@ -158,7 +158,7 @@ public final class InspectorController
             new LC().fill().insets("0").gridGap("0", "0")));
       headerPanel_.add(new JLabel("Inspect:"),
             new CC().gapBefore("rel").split(3));
-      viewerComboBox_ = new JComboBox();
+      viewerComboBox_ = new JComboBox<>();
       viewerComboBox_.setToolTipText("Select the image window to inspect");
       viewerComboBox_.setRenderer(
             ComboBoxSeparatorRenderer.create(viewerComboBox_.getRenderer()));

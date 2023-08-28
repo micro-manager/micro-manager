@@ -401,7 +401,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public List<Double> getCustomIntervalsMsList() {
-      return pmap_.getDoubleList(CUSTOM_INTERVALS_MS.key(), (List) null);
+      return pmap_.getDoubleList(CUSTOM_INTERVALS_MS.key(), (List<Double>) null);
    }
 
    @Override
@@ -477,7 +477,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public SequenceSettings getSequenceSettings() {
-      return SequenceSettings.fromJSONStream(pmap_.getString(MDA_SETTINGS.key()));
+      return SequenceSettings.fromJSONStream(pmap_.getString(MDA_SETTINGS.key(), ""));
    }
 
    @Override

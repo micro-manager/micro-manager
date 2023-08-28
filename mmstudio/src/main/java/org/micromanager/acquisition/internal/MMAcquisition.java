@@ -105,6 +105,7 @@ public final class MMAcquisition extends DataViewerListener {
     *                        viewer should be shown.
     * @deprecated Use the constructor that takes a SummaryMetadata object instead.
     */
+   @Deprecated
    @SuppressWarnings("LeakingThisInConstructor")
    public MMAcquisition(Studio studio, String dir, String prefix, JSONObject summaryMetadata,
                         MMAcquistionControlCallbacks callbacks, SequenceSettings acqSettings)
@@ -130,7 +131,7 @@ public final class MMAcquisition extends DataViewerListener {
                         SequenceSettings acquisitionSettings) {
       studio_ = studio;
       callbacks_ = callbacks;
-      show_ = acquisitionSettings.shouldDisplayImages;
+      show_ = acquisitionSettings.shouldDisplayImages();
       store_ = new DefaultDatastore(studio);
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
       if (acquisitionSettings.save() && acquisitionSettings.root() != null) {
