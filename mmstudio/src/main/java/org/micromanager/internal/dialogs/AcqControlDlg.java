@@ -95,6 +95,7 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.RememberedDisplaySettings;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
@@ -189,6 +190,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JPanel acquisitionOrderPanel_;
    private CheckBoxPanel afPanel_;
    private CheckBoxPanel savePanel_;
+   private JButton reUseButton_;
    private boolean disableGUItoSettings_ = false;
    private final FocusListener focusListener_;
    private MultiMDAFrame multiMDAFrame_;
@@ -254,7 +256,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       topRightPanel.add(createRunButtons());
       topRightPanel.add(createSaveButtons());
       topRightPanel.add(createMultiMDAButton());
-      topRightPanel.add(createReUseButton());
 
       JPanel topPanel = new JPanel(new MigLayout(
             "fill, insets 0",
@@ -343,6 +344,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       getAcquisitionEngine().setSequenceSettings(sequenceSettings);
 
       mmStudio_.events().registerForEvents(this);
+      mmStudio_.displays().registerForEvents(this);
 
       updateAcquisitionOrderText();
 
@@ -850,8 +852,48 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       saveAsButton.setMargin(new Insets(-5, -5, -5, -5));
       saveAsButton.addActionListener((ActionEvent e) -> saveAcqSettingsToFile());
       result.add(saveAsButton, BUTTON_SIZE);
+
+      reUseButton_ = new JButton("ReUse Settings");
+      reUseButton_.setEnabled(false);
+      reUseButton_.setToolTipText("Apply the settings from the active viewer to this dialog");
+      reUseButton_.setFont(DEFAULT_FONT);
+      reUseButton_.setMargin(new Insets(-5, -5, -5, -5));
+      reUseButton_.addActionListener(e -> {
+         DataViewer dv = mmStudio_.displays().getActiveDataViewer();
+         if (dv != null) {
+            SummaryMetadata summary = dv.getDataProvider().getSummaryMetadata();
+            if (isApplicable(summary.getSequenceSettings())) {
+               getAcquisitionEngine().setSequenceSettings(summary.getSequenceSettings());
+               updateGUIContents();
+            } else {
+               mmStudio_.logs().showMessage(
+                        "Settings not found or incompatible with current microscope");
+            }
+         }
+      });
+      result.add(reUseButton_, BUTTON_SIZE);
+
       return result;
    }
+
+
+   /**
+    * Change state of ReUse Button depending on active DataViewer, and
+    * whether that has applicable Sequence Settings.
+    *
+    * @param ddbae event to respond to.
+    */
+   @Subscribe
+   public void onViewerBecameActive(DataViewerDidBecomeActiveEvent ddbae) {
+      DataViewer dv = ddbae.getDataViewer();
+      if (dv != null) {
+         SummaryMetadata summary = dv.getDataProvider().getSummaryMetadata();
+         reUseButton_.setEnabled(isApplicable(summary.getSequenceSettings()));
+      } else {
+         reUseButton_.setEnabled(false);
+      }
+   }
+
 
    private JPanel createMultiMDAButton() {
       final JPanel result = new JPanel(new MigLayout("flowy, insets 0, gapx 0, gapy 2"));
@@ -873,32 +915,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return result;
    }
 
-   private JPanel createReUseButton() {
-      final JPanel result = new JPanel(new MigLayout("flowy, insets 0, gapx 0, gapy 0"));
-      final JButton reUSeButton = new JButton("ReUse Settings");
-      reUSeButton.setToolTipText("Apply the settings from the active viewer to this dialog");
-      reUSeButton.setFont(DEFAULT_FONT);
-      reUSeButton.setMargin(new Insets(-5, -5, -5, -5));
-      reUSeButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            DataViewer dv = mmStudio_.displays().getActiveDataViewer();
-            if (dv != null) {
-               SummaryMetadata summary = dv.getDataProvider().getSummaryMetadata();
-               if (isApplicable(summary.getSequenceSettings())) {
-                  getAcquisitionEngine().setSequenceSettings(summary.getSequenceSettings());
-                  updateGUIContents();
-               } else {
-                  mmStudio_.logs().showMessage(
-                           "Settings not found or incompatible with current microscope");
-               }
-            }
-         }
-      });
-      result.add(reUSeButton, BUTTON_SIZE);
-
-      return result;
-   }
 
    private boolean isApplicable(SequenceSettings sequenceSettings) {
       if (sequenceSettings == null) {
