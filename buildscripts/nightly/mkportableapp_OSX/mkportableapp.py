@@ -112,6 +112,11 @@ def process_libs(destdir, staged_seeds, srcdir,
       deps = get_deps_and_arch_status(os.path.join(destdir, staged_lib))
       for dep, arch_status in deps:
          if dep.startswith("@"):
+            # Third-party libs (to be installed by user into MM) may have
+            # @rpath; replace with @loader-path
+            if dep.startswith("@rpath/"):
+               update_dep(os.path.join(destdir, staged_lib), dep,
+                          dep.replace("@rpath/", "@loader-path/", 1))
             continue
 
          dep = os.path.realpath(dep)
