@@ -225,6 +225,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          SummaryMetadata summaryMetadata =  DefaultSummaryMetadata.fromPropertyMap(
                   NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                            summaryMetadataJSON_.toString()));
+         summaryMetadata = summaryMetadata.copyBuilder().sequenceSettings(
+                  acquisitionSettings).build();
          MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
                acquisitionSettings);
          curStore_ = acq.getDatastore();
