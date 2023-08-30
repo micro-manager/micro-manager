@@ -308,10 +308,10 @@ public final class IntegerComponentStats {
       final long[] cumDistrib = getCumulativeDistribution();
       // subtract zero pixels from pixelCount, unexpectedly, zero pixels are contained in
       // histogram_[1]
-      long pixelCount = pixelCount_ - histogram_[1];
+      final long pixelCount = pixelCount_ - histogram_[1];
       double countBelowQuantile = q * pixelCount + histogram_[1];
 
-      if (countBelowQuantile <= cumDistrib[2] && cumDistrib[2] > 0) {
+      if (countBelowQuantile < cumDistrib[2] && cumDistrib[2] > 0) {
          // Quantile is below histogram range
          return getHistogramRangeMin() + 1;
       }
@@ -328,7 +328,7 @@ public final class IntegerComponentStats {
       // need to find the exact edge of the non-zero part of the histogram.
       if (countBelowQuantile == 0) {
          return minimum_;
-      } else if (countBelowQuantile == pixelCount) {
+      } else if (countBelowQuantile >= pixelCount) {
          return maximum_ + 1;
       }
 
