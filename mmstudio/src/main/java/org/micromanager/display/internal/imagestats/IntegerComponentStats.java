@@ -328,7 +328,7 @@ public final class IntegerComponentStats {
       // need to find the exact edge of the non-zero part of the histogram.
       if (countBelowQuantile == 0) {
          return minimum_;
-      } else if (countBelowQuantile >= pixelCount) {
+      } else if (countBelowQuantile >= pixelCount_) {
          return maximum_ + 1;
       }
 
