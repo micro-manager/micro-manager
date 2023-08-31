@@ -265,9 +265,9 @@ public final class ImageStatsProcessor {
          }
          if (dataValue < minima[component]) {
             minima[component] = dataValue;
-            if (dataValue > 0) {
-               minimaExcludingZeros[component] = dataValue;
-            }
+         }
+         if (dataValue < minimaExcludingZeros[component] && dataValue > 0) {
+            minimaExcludingZeros[component] = dataValue;
          }
          if (dataValue > maxima[component]) {
             maxima[component] = dataValue;
