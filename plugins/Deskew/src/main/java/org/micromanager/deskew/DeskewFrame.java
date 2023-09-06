@@ -432,7 +432,8 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       }
 
       ProgressMonitor monitor = new ProgressMonitor(this,
-               "Processing images...", "", 0, source.getNumImages());
+               "Processing images...                                    \t",
+                "", 0, source.getNumImages());
 
       Datastore destination = studio_.data().createRAMDatastore();
       List<ProcessorFactory> factories = new ArrayList<>();
