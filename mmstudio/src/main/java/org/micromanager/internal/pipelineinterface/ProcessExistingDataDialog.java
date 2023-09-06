@@ -309,7 +309,8 @@ public final class ProcessExistingDataDialog extends JDialog {
       }
 
       ProgressMonitor monitor = new ProgressMonitor(this,
-            "Processing images...", "", 0, source.getNumImages());
+            "Processing images...                                    \t",
+               "", 0, source.getNumImages());
 
       Pipeline pipeline = studio_.data().copyApplicationPipeline(
             destination, false);
