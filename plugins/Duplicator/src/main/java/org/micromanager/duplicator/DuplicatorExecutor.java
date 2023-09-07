@@ -137,10 +137,10 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       }
       newSizeCoordsBuilder.channel(channelNames.size());
       float  nrToBeCopied = 1;
+      if (channels_ != null && channels_.size() > 0) {
+         nrToBeCopied *= channels_.size();
+      }
       for (String axis : oldStore.getAxes()) {
-         if (channels_ != null && channels_.size() > 0) {
-            nrToBeCopied *= channels_.size();
-         }
          if (mins_.containsKey(axis)) {
             int min = mins_.get(axis);
             int max = maxes_.get(axis);
@@ -252,7 +252,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                newStore.putImage(newImgShallow);
                nrCopied++;
                try {
-                  setProgress((int) (nrCopied / nrToBeCopied * 100.0));
+                  setProgress((int) ((nrCopied / nrToBeCopied) * 100.0));
                } catch (IllegalArgumentException iae) {
                   System.out.println("Value was: " + (int) (nrCopied / nrToBeCopied * 100.0));
                }

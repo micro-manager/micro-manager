@@ -33,16 +33,21 @@ import javax.swing.SwingUtilities;
 
 /**
  * Utility class to show a ProgressBar.
- * Note: this will need to be refactored in the near future.  The current
- * version has to be created on the EDT, which is sometimes difficult, and
- * often is not done, resulting in dangerous code.
+ * Construction of the ProgressBar is done on the EDT, on the first call of
+ * SetProgress.  Thus, it is safe to call this class from any thread, with the
+ * possible exception of a call to setVisible(false) from a non-EDT thread.
  */
 public final class ProgressBar extends JPanel {
    private static final long serialVersionUID = 1L;
-   private final long delayTimeMs = 3000;
-   private final long startTimeMs;
-   private final JProgressBar progressBar;
-   private final JFrame frame;
+   private final long delayTimeMs_ = 3000;
+   private final long startTimeMs_;
+   private JProgressBar progressBar_;
+   private JFrame frame_;
+
+   private final Component parent_;
+   private final String windowName_;
+   private int start_;
+   private int end_;
 
    /**
     * Constructor.
@@ -52,27 +57,32 @@ public final class ProgressBar extends JPanel {
     * @param start      Start value
     * @param end        Last value
     */
-   @MustCallOnEDT
    public ProgressBar(Component parent, String windowName, int start, int end) {
-
       super(new BorderLayout());
+      parent_ = parent;
+      windowName_ = windowName;
+      start_ = start;
+      end_ = end;
+      startTimeMs_ = System.currentTimeMillis();
+   }
 
-      frame = new JFrame(windowName);
-      frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-      frame.setBounds(0, 0, 250 + 12 * windowName.length(), 100);
+   @MustCallOnEDT
+   private void initialize() {
+      frame_ = new JFrame(windowName_);
+      frame_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+      frame_.setBounds(0, 0, 250 + 12 * windowName_.length(), 100);
 
-      progressBar = new JProgressBar(start, end);
-      progressBar.setValue(0);
+      progressBar_ = new JProgressBar(start_, end_);
+      progressBar_.setValue(0);
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(progressBar, BorderLayout.CENTER);
+      panel.add(progressBar_, BorderLayout.CENTER);
       super.add(panel, BorderLayout.CENTER);
       panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
       panel.setOpaque(true);
-      frame.setContentPane(panel);
+      frame_.setContentPane(panel);
 
-      frame.setLocationRelativeTo(parent);
-      startTimeMs = System.currentTimeMillis();
+      frame_.setLocationRelativeTo(parent_);
    }
 
    /**
@@ -87,25 +97,37 @@ public final class ProgressBar extends JPanel {
          });
          return;
       }
-      if (!frame.isVisible()) {
-         if (System.currentTimeMillis() - startTimeMs > delayTimeMs) {
-            frame.setVisible(true);
+      if (frame_ == null) {
+         initialize();
+      }
+      if (!frame_.isVisible()) {
+         if (System.currentTimeMillis() - startTimeMs_ > delayTimeMs_) {
+            frame_.setVisible(true);
          }
       }
-      if (frame.isVisible()) {
-         progressBar.setValue(progress);
-         progressBar.repaint();
+      if (frame_.isVisible()) {
+         progressBar_.setValue(progress);
+         progressBar_.repaint();
+      }
+      if (progress >= end_) {
+         frame_.setVisible(false);
       }
    }
 
    @Override
    public void setVisible(boolean visible) {
-      frame.setVisible(visible);
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            setVisible(visible);
+         });
+         return;
+      }
+      frame_.setVisible(visible);
    }
 
    public void setRange(int min, int max) {
-      progressBar.setMinimum(min);
-      progressBar.setMaximum(max);
+      progressBar_.setMinimum(min);
+      progressBar_.setMaximum(max);
    }
 
    /*
