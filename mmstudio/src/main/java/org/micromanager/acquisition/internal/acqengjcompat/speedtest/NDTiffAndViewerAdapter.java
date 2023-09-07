@@ -132,7 +132,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
       viewer_.setReadZMetadataFunction(AcqEngMetadata::getStageZIntended);
    }
 
-   public void putImage(final TaggedImage taggedImg) {
+   public Object putImage(final TaggedImage taggedImg) {
       HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
 
       storage_.putImage(taggedImg.pix, taggedImg.tags, axes,
@@ -152,6 +152,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
             }
          });
       }
+      return null;
    }
 
    ///////// Data source interface for Viewer //////////

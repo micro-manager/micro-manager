@@ -177,7 +177,7 @@ public class MagellanAcqUIAndStorage
       return  storage_.isFinished();
    }
 
-   public void putImage(final TaggedImage taggedImg) {
+   public Object putImage(final TaggedImage taggedImg) {
       HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
       Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
               AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
@@ -212,6 +212,7 @@ public class MagellanAcqUIAndStorage
             }
          });
       }
+      return added;
    }
 
    @Override
