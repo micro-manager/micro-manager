@@ -1,5 +1,6 @@
 package org.micromanager.acquisition.internal.acqengjcompat;
 
+import clojure.lang.Obj;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -89,10 +90,10 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
    }
 
    @Override
-   public void putImage(TaggedImage tagged) {
+   public Object putImage(TaggedImage tagged) {
       somethingAcquired_ = true;
       if (finished_) {
-         return;
+         return null;
       }
       try {
          AcqEngJAdapter.addMMImageMetadata(tagged.tags);
@@ -140,6 +141,7 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
       } catch (Exception ex2) {
          ReportingUtils.logError(ex2);
       }
+        return null;
    }
 
    @Override
