@@ -167,7 +167,7 @@ public class NDTiffAndViewerAdapter implements NDViewerDataSource, AcqEngJDataSi
             }
          });
       }
-        return null;
+      return null;
    }
 
    ///////// Data source interface for Viewer //////////

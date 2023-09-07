@@ -141,7 +141,7 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
       } catch (Exception ex2) {
          ReportingUtils.logError(ex2);
       }
-        return null;
+      return null;
    }
 
    @Override
