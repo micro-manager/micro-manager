@@ -1216,14 +1216,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return; // Not displayed
       }
       int checkedPosition = position;
-      if (checkedPosition < 0) {
+      if (checkedPosition < 0 && scrollBarPanel_ != null) {
          checkedPosition = scrollBarPanel_.getAxisPosition(axis);
       }
       for (Map.Entry<String, PopupButton> e : axisPositionButtons_) {
          if (axis.equals(e.getKey())) {
             e.getValue().setText(String.format("% 5d/% 5d",
                   checkedPosition + 1, checkedLength));
-            if (!animationController_.isAnimating()) {
+            if (animationController_ != null && !animationController_.isAnimating()) {
                JComponent popup = e.getValue().getPopupComponent();
                if (popup instanceof JSpinner) {
                   JSpinner js = (JSpinner) popup;
