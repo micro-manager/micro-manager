@@ -70,7 +70,7 @@ public final class ProgressBar extends JPanel {
    private void initialize() {
       frame_ = new JFrame(windowName_);
       frame_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-      frame_.setBounds(0, 0, 250 + 12 * windowName_.length(), 100);
+      frame_.setBounds(0, 0, 250 + 12 * windowName_.length(), 110);
 
       progressBar_ = new JProgressBar(start_, end_);
       progressBar_.setValue(0);
