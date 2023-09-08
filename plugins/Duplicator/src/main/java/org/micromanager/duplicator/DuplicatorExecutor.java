@@ -23,11 +23,15 @@ package org.micromanager.duplicator;
 
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+import java.awt.Component;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
@@ -38,8 +42,11 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.displaywindow.DisplayController;
 
 /**
  * Does the actual Duplication.
@@ -55,6 +62,48 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
    private final LinkedHashMap<String, Boolean> channels_;
    private final Datastore.SaveMode saveMode_;
    private final String filePath_;
+
+   private class CloseViewerListener extends DataViewerListener {
+      private final DataViewer viewer_;
+      private boolean cancelled_ = false;
+
+      public CloseViewerListener(DataViewer viewer) {
+         viewer_ = viewer;
+      }
+
+      @Override
+      public boolean canCloseViewer(DataViewer viewer) {
+         if (viewer == viewer_) {
+            String[] options = {"Abort", "Cancel"};
+            Component parentComponent = null;
+            if (viewer instanceof DisplayController) {
+               parentComponent = ((DisplayController) viewer).getWindow();
+
+            }
+            int result = JOptionPane.showOptionDialog(parentComponent,
+                     "Abort Duplication?",
+                     "Micro-Manager Duplicator",
+                     JOptionPane.DEFAULT_OPTION,
+                     JOptionPane.QUESTION_MESSAGE, null,
+                     options, options[1]);
+            if (result == 0) {
+               cancelled_ = true;
+               viewer.removeListener(this);
+            } else {
+               return false;
+            }
+         }
+         return true;
+      }
+
+      public void finishDuplication() {
+         viewer_.removeListener(this);
+      }
+
+      public boolean isCancelled() {
+         return cancelled_;
+      }
+   }
    
    /**
     * Performs the actual creation of a new image with reduced content.
@@ -159,6 +208,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
               .intendedDimensions(newSizeCoordsBuilder.build())
               .build();
 
+      CloseViewerListener closeListener = null;
       try {
          newStore.setSummaryMetadata(metadata);
          // The implementations of the store set SummaryMetadata on another thread.
@@ -185,10 +235,33 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          newStore.setName(newName_);
          final DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
          copyDisplay.setDisplaySettings(newDisplaySettingsBuilder.build());
+         closeListener = new CloseViewerListener(copyDisplay);
+         copyDisplay.addListener(closeListener, 1);
 
          Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
+         List<Coords> orderedImageCoords = new ArrayList<>();
+         for (Coords c : unorderedImageCoords) {
+            orderedImageCoords.add(c);
+         }
+         final List<String> axisOrder = oldStore.getSummaryMetadata().getOrderedAxes();
+         Collections.reverse(axisOrder);
+
+         Collections.sort(orderedImageCoords, new Comparator<Coords>() {
+            @Override
+            public int compare(Coords o1, Coords o2) {
+               for (String axis : axisOrder) {
+                  if (o1.getIndex(axis)  < o2.getIndex(axis)) {
+                     return -1;
+                  }  else if (o1.getIndex(axis) > o2.getIndex(axis)) {
+                     return 1;
+                  }
+               }
+               return 0;
+            }
+         });
+
          int nrCopied = 0;
-         for (Coords oldCoord : unorderedImageCoords) {
+         for (Coords oldCoord : orderedImageCoords) {
             List<String> oldAxes = oldStore.getAxes();
             boolean copy = !oldAxes.contains(Coords.CHANNEL);
             for (String axis : oldStore.getAxes()) {
@@ -249,6 +322,10 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                            "Unsupported pixel type.  Can only copy 8 or 16 bit images.");
                   }
                }
+               if (closeListener.isCancelled()) {
+                  newStore.freeze();
+                  return null;
+               }
                newStore.putImage(newImgShallow);
                nrCopied++;
                try {
@@ -259,7 +336,6 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                
             }
          }
-
       } catch (DatastoreFrozenException ex) {
          studio_.logs().showError("Can not add data to frozen datastore");
       } catch (DatastoreRewriteException ex) {
@@ -269,7 +345,8 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "IOException in Duplicator plugin");
       }
-      
+
+      closeListener.finishDuplication();
       try {
          newStore.freeze();
       } catch (IOException ioe) {
@@ -284,5 +361,4 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       setProgress(100);
       studio_.alerts().postAlert("Finished duplicating", this.getClass(), newName_);
    }
-   
 }

@@ -300,9 +300,6 @@ public class DuplicatorPluginFrame extends JDialog {
             de.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                if ("progress".equals(evt.getPropertyName())) {
                   pb.setProgress((Integer) evt.getNewValue());
-                  if ((Integer) evt.getNewValue() == 100) {
-                     pb.setVisible(false);
-                  }
                }
             });
             de.execute();
