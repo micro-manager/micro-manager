@@ -84,7 +84,7 @@ public final class MultiAcqEngJMDADataSink implements AcqEngJDataSink {
    }
 
    @Override
-   public Object putImage(TaggedImage tagged) {
+   public void putImage(TaggedImage tagged) {
       somethingAcquired_ = true;
       int acqIndex = -1;
       try {
@@ -95,7 +95,7 @@ public final class MultiAcqEngJMDADataSink implements AcqEngJDataSink {
             }
          } else {
             // TODO: log
-            return null;
+            return;
          }
          MultiAcqEngJAdapter.addMMImageMetadata(tagged.tags);
          DefaultImage image = new DefaultImage(tagged);
@@ -136,7 +136,6 @@ public final class MultiAcqEngJMDADataSink implements AcqEngJDataSink {
       } catch (JSONException je) {
          throw new RuntimeException(je);
       }
-      return null;
    }
 
    @Override

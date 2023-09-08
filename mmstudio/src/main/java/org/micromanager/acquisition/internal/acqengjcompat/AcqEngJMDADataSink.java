@@ -90,10 +90,10 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
    }
 
    @Override
-   public Object putImage(TaggedImage tagged) {
+   public void putImage(TaggedImage tagged) {
       somethingAcquired_ = true;
       if (finished_) {
-         return null;
+         return;
       }
       try {
          AcqEngJAdapter.addMMImageMetadata(tagged.tags);
@@ -141,7 +141,6 @@ public final class AcqEngJMDADataSink implements AcqEngJDataSink {
       } catch (Exception ex2) {
          ReportingUtils.logError(ex2);
       }
-      return null;
    }
 
    @Override
