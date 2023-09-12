@@ -182,7 +182,6 @@ public class CalibrationFrame extends JFrame {
                            && propertyMap.containsString(calibrationMethod)) {
                      Point2D.Double offset = new Point2D.Double(propertyMap.getDouble(OFFSETX, 0.0),
                            propertyMap.getDouble(OFFSETY, 0.0));
-                     siteGenerator.applyOffset(offset);
                      settings.putString(calibrationMethod, propertyMap.getString(
                            calibrationMethod, calibrationRecommended));
                      siteGenerator.finishCalibration(offset);
