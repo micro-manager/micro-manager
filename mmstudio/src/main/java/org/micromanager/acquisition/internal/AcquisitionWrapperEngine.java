@@ -4,6 +4,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import javax.swing.JOptionPane;
@@ -215,7 +216,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
                            NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                                     summaryMetadataJSON_.toString()));
          summaryMetadata = summaryMetadata.copyBuilder().sequenceSettings(
-                  acquisitionSettings).build();
+                  acquisitionSettings).stagePositions(posListToUse.getPositions()).build();
          MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata,
                   this, acquisitionSettings);
          curStore_ = acq.getDatastore();
