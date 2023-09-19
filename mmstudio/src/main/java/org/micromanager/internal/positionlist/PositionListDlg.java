@@ -33,6 +33,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -54,6 +55,10 @@ import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.MMStudio;
@@ -89,6 +94,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    protected Studio studio_;
    private AxisList axisList_;
    protected final JButton tileButton_;
+   protected final JButton reUseButton_;
 
    protected MultiStagePosition curMsp_;
    protected JButton markButton_;
@@ -328,6 +334,39 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       saveAsButton.setText("Save As...");
       saveAsButton.setToolTipText("Save position list as");
       add(saveAsButton);
+
+      reUseButton_ = posListButton(buttonSize, arialSmallFont_);
+      reUseButton_.setText("from Image");
+      reUseButton_.addActionListener(e -> {
+         DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
+         if (activeDataViewer == null) {
+            return;
+         }
+         SummaryMetadata summaryMetadata = activeDataViewer.getDataProvider()
+                  .getSummaryMetadata();
+         if (summaryMetadata.getStagePositionList() != null
+                  && summaryMetadata.getStagePositionList().size() > 0) {
+            List<MultiStagePosition> positions = summaryMetadata.getStagePositionList();
+            PositionList positionList = new PositionList();
+            for (MultiStagePosition position : positions) {
+               positionList.addPosition(position);
+            }
+            setPositionList(positionList);
+         } else {
+            ReportingUtils.logError("No stage positions found in image metadata");
+         }
+      });
+      reUseButton_.setEnabled(false);
+      DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
+      if (activeDataViewer != null) {
+         SummaryMetadata summaryMetadata = activeDataViewer.getDataProvider()
+                  .getSummaryMetadata();
+         if (summaryMetadata.getStagePositionList() != null
+                  && summaryMetadata.getStagePositionList().size() > 0) {
+            reUseButton_.setEnabled(true);
+         }
+      }
+      add(reUseButton_);
 
       tileButton_ = posListButton(buttonSize, arialSmallFont_);
       tileButton_.addActionListener(arg0 -> showCreateTileDlg());
@@ -1158,5 +1197,32 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       updatePositionData();
    }
 
+   /**
+    * Change state of ReUse Button depending on active DataViewer, and
+    * whether it has applicable Sequence Settings.
+    *
+    * @param ddbae event to respond to.
+    */
+   @Subscribe
+   public void onViewerBecameActive(DataViewerDidBecomeActiveEvent ddbae) {
+      DataViewer dv = ddbae.getDataViewer();
+      if (dv != null) {
+         SummaryMetadata summary = dv.getDataProvider().getSummaryMetadata();
+         if (summary.getStagePositionList() != null && summary.getStagePositionList().size() > 0) {
+            reUseButton_.setEnabled(true);
+         } else {
+            reUseButton_.setEnabled(false);
+         }
+      } else {
+         reUseButton_.setEnabled(false);
+      }
+   }
+
+   @Subscribe
+   public void onViewerWillClose(DataViewerWillCloseEvent dvwce) {
+      if (dvwce.getDataViewer() == studio_.displays().getActiveDataViewer()) {
+         reUseButton_.setEnabled(false);
+      }
+   }
 
 }

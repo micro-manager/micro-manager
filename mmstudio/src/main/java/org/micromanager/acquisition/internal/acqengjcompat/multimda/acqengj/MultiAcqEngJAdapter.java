@@ -206,6 +206,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
             SummaryMetadata summaryMetadata =  DefaultSummaryMetadata.fromPropertyMap(
                      NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                               summaryMetadataJSON.toString()));
+            summaryMetadata = summaryMetadata.copyBuilder()
+                     .sequenceSettings(sequenceSettings.get(i))
+                     .stagePositions(positionLists.get(i).getPositions())
+                     .build();
             MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
                   sequenceSettings.get(i));
             Datastore store = acq.getDatastore();
