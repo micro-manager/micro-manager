@@ -46,13 +46,13 @@
       <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.33.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.10.1">
+		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.10.2">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.15.2">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.44.3">
+		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.44.4">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 
