@@ -300,9 +300,7 @@ public class MagellanGUIAcquisition extends
                AcquisitionEvent sliceEvent = event.copy();
                // Do plus equals here in case z positions have been modified by another
                // function (e.g. channel specific focal offsets)
-
-               sliceEvent.setZ(sliceIndex_, (sliceEvent.getZPosition() == null
-                       ? 0 : sliceEvent.getZPosition()) + zPos);
+               sliceEvent.setZ(sliceIndex_, zPos);
                sliceIndex_++;
                return sliceEvent;
             }
