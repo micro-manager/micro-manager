@@ -24,6 +24,7 @@ package org.micromanager.display.internal.gearmenu;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.plugin.filter.AVI_Writer;
 import ij.process.ColorProcessor;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -67,6 +68,8 @@ public final class DefaultImageExporter implements ImageExporter {
       private ExporterLoop child_;
 
       /**
+       * Outer Loop for the exporter.
+       *
        * @param axis  Axis over which to iterate
        * @param start First coordinate to be exported
        * @param stop  Last coordinate to be exported (will be included!)
@@ -135,6 +138,7 @@ public final class DefaultImageExporter implements ImageExporter {
    private OutputFormat format_;
    private String directory_;
    private String prefix_;
+   private String imageJName_;
    private ExporterLoop outerLoop_;
    private boolean useLabel_ = true;
 
@@ -186,6 +190,11 @@ public final class DefaultImageExporter implements ImageExporter {
       }
       directory_ = directory;
       prefix_ = prefix;
+   }
+
+   @Override
+   public void setImageJName(String imageJName) {
+      imageJName_ = imageJName;
    }
 
    @Override
@@ -246,7 +255,7 @@ public final class DefaultImageExporter implements ImageExporter {
 
                // Display just finished painting to currentGraphics_, so export
                // now.
-               if (format_ == OutputFormat.OUTPUT_IMAGEJ) {
+               if (format_ == OutputFormat.OUTPUT_IMAGEJ || format_ == OutputFormat.OUTPUT_AVI) {
                   if (stack_ == null) {
                      // Create the ImageJ stack object to add images to.
                      stack_ = new ImageStack(currentImage_.getWidth(),
@@ -392,7 +401,9 @@ public final class DefaultImageExporter implements ImageExporter {
       if (format_ == OutputFormat.OUTPUT_IMAGEJ || format_ == OutputFormat.OUTPUT_CLIPBOARD) {
          throw new RuntimeException("Asked for output filename when exporting in ImageJ format.");
       }
-      String suffix = (format_ == OutputFormat.OUTPUT_PNG) ? "png" : "jpg";
+      String suffix = "jpg";
+      suffix = (format_ == OutputFormat.OUTPUT_PNG) ? "png" : suffix;
+      suffix = (format_ == OutputFormat.OUTPUT_AVI) ? "avi" : suffix;
       return String.format("%s/%s%s.%s", directory_, prefix_, label, suffix);
    }
 
@@ -463,60 +474,76 @@ public final class DefaultImageExporter implements ImageExporter {
       if (coords.size() == 1) {
          isSingleShot_ = true;
          // Only one image to draw.
-         loopThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-               // force update, or the onDrawComplete callback will not be invoked
-               display_.setDisplayPosition(coords.get(0), true);
-            }
+         loopThread = new Thread(() -> {
+            // force update, or the onDrawComplete callback will not be invoked
+            display_.setDisplayPosition(coords.get(0), true);
          }, "Image export thread");
       } else {
          isSingleShot_ = false;
-         loopThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-               for (Coords imageCoords : coords) {
-                  drawFlag_.set(true);
-                  // Setting the displayed image will result in our
-                  // CanvasDrawCompleteEvent handler being invoked, which
-                  // causes images to be exported.
-                  display_.setDisplayPosition(imageCoords, true);
-                  // Wait until drawing is done.
-                  while (drawFlag_.get()) {
-                     try {
-                        Thread.sleep(10);
-                     } catch (InterruptedException e) {
-                        logManager_
-                              .logError("Interrupted while waiting for drawing to complete.");
-                        return;
-                     }
+         loopThread = new Thread(() -> {
+            for (Coords imageCoords : coords) {
+               drawFlag_.set(true);
+               // Setting the displayed image will result in our
+               // CanvasDrawCompleteEvent handler being invoked, which
+               // causes images to be exported.
+               display_.setDisplayPosition(imageCoords, true);
+               // Wait until drawing is done.
+               while (drawFlag_.get()) {
+                  try {
+                     Thread.sleep(10);
+                  } catch (InterruptedException e) {
+                     logManager_
+                           .logError("Interrupted while waiting for drawing to complete.");
+                     return;
                   }
                }
-               doneFlag_.set(true);
             }
+            doneFlag_.set(true);
          }, "Image export thread");
       }
 
       // Create a thread to wait for the process to finish, and unsubscribe
       // us at that time.
-      Thread unsubscriber = new Thread(new Runnable() {
-         @Override
-         public void run() {
-            while (!doneFlag_.get()) {
-               try {
-                  Thread.sleep(100);
-               } catch (InterruptedException e) {
-                  logManager_.logError("Interrupted while waiting for export to complete.");
-                  return;
-               }
+      Thread unsubscriber = new Thread(() -> {
+         while (!doneFlag_.get()) {
+            try {
+               Thread.sleep(100);
+            } catch (InterruptedException e) {
+               logManager_.logError("Interrupted while waiting for export to complete.");
+               return;
             }
-            display_.unregisterForEvents(DefaultImageExporter.this);
-            if (stack_ != null) {
-               File f = new File(display_.getName());
-               String shortName = f.getName();
-               // Show the ImageJ stack.
-               ImagePlus plus = new ImagePlus(shortName + "MM-export", stack_);
+         }
+         display_.unregisterForEvents(DefaultImageExporter.this);
+         if (stack_ != null) {
+            File f = new File(display_.getName());
+            String shortName = f.getName();
+            // Show the ImageJ stack.
+            if (format_ == OutputFormat.OUTPUT_IMAGEJ) {
+               ImagePlus plus = new ImagePlus(imageJName_, stack_);
                plus.show();
+            } else if (format_ == OutputFormat.OUTPUT_AVI) {
+               AVI_Writer writer = new AVI_Writer();
+               try {
+                  if (directory_ == null || prefix_ == null) {
+                     // Can't save.
+                     throw new IllegalArgumentException(String.format(
+                              "Save parameters for exporter were not properly set "
+                              + "(directory %s, prefix %s)",
+                              directory_, prefix_));
+                  }
+                  // Check for potential file overwrites.
+                  if (coords.size() == 1) {
+                     checkForOverwrite("");
+                  }
+                  ImagePlus imp = new ImagePlus(shortName + "MM-export", stack_);
+                  imp.getCalibration().fps = display_.getPlaybackSpeedFps();
+                  writer.writeImage(imp, getOutputFilename(""),
+                           AVI_Writer.JPEG_COMPRESSION, jpegQuality_);
+               } catch (IllegalArgumentException e) {
+                  logManager_.showError(e.getMessage());
+               } catch (IOException e) {
+                  logManager_.showError(e, "Error writing AVI file");
+               }
             }
          }
       });

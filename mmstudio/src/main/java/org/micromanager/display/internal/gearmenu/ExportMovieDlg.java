@@ -77,10 +77,11 @@ public final class ExportMovieDlg extends JDialog {
    private static final String JPEG_QUALITY = "JPEG quality";
    private static final String FORMAT_PNG = "PNG";
    private static final String FORMAT_JPEG = "JPEG";
+   private static final String FORMAT_AVI = "AVI";
    private static final String FORMAT_IMAGEJ = "ImageJ stack window";
    private static final String FORMAT_SYSTEM_CLIPBOARD = "System Clipboard";
    private static final String[] OUTPUT_FORMATS = {
-         FORMAT_PNG, FORMAT_JPEG, FORMAT_IMAGEJ, FORMAT_SYSTEM_CLIPBOARD
+         FORMAT_PNG, FORMAT_JPEG, FORMAT_AVI, FORMAT_IMAGEJ, FORMAT_SYSTEM_CLIPBOARD
    };
    private static final String DEFAULT_USE_LABEL = "Use Label";
    private static final Boolean USE_LABEL = true;
@@ -301,24 +302,24 @@ public final class ExportMovieDlg extends JDialog {
       outputFormatSelector_.addActionListener(e -> {
          // Show/hide the JPEG quality controls.
          String selection = (String) outputFormatSelector_.getSelectedItem();
-         if (selection.equals(FORMAT_JPEG)) {
+         if (selection.equals(FORMAT_JPEG) || selection.equals(FORMAT_AVI)) {
+            jpegPanel_.removeAll();
             jpegPanel_.add(new JLabel("JPEG quality(%): "));
             jpegPanel_.add(jpegQualitySpinner_);
          } else {
             jpegPanel_.removeAll();
          }
-         boolean usePrefix = selection.equals(FORMAT_PNG) || selection.equals(FORMAT_JPEG);
+         boolean usePrefix = selection.equals(FORMAT_PNG) || selection.equals(FORMAT_JPEG)
+                  || selection.equals(FORMAT_IMAGEJ);
+         prefixLabel_.setText(selection.equals(FORMAT_IMAGEJ)
+                  ? "ImageJ Name: " : "Filename prefix: ");
          prefixLabel_.setEnabled(usePrefix);
          prefixLabel_.setVisible(usePrefix);
          prefixText_.setEnabled(usePrefix);
          prefixText_.setVisible(usePrefix);
          useLabel.setVisible(usePrefix);
          if (axisPanel != null) {
-            if (selection.equals(FORMAT_SYSTEM_CLIPBOARD)) {
-               axisPanel.setVisible(false);
-            } else {
-               axisPanel.setVisible(true);
-            }
+            axisPanel.setVisible(!selection.equals(FORMAT_SYSTEM_CLIPBOARD));
          }
          pack();
       });
@@ -354,29 +355,16 @@ public final class ExportMovieDlg extends JDialog {
 
       useLabel.setSelected(studio.profile().getSettings(ExportMovieDlg.class)
             .getBoolean(DEFAULT_USE_LABEL, USE_LABEL));
-      ChangeListener changeListener = new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            studio.profile().getSettings(ExportMovieDlg.class)
-                  .putBoolean(DEFAULT_USE_LABEL, useLabel.isSelected());
-         }
-      };
+      ChangeListener changeListener = e -> studio.profile().getSettings(ExportMovieDlg.class)
+            .putBoolean(DEFAULT_USE_LABEL, useLabel.isSelected());
       useLabel.addChangeListener(changeListener);
 
       JButton cancelButton = new JButton("Cancel");
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            dispose();
-         }
-      });
+      cancelButton.addActionListener(e -> dispose());
       JButton exportButton = new JButton("Export");
-      exportButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            export(useLabel.isSelected());
-            dispose();
-         }
+      exportButton.addActionListener(e -> {
+         export(useLabel.isSelected());
+         dispose();
       });
       contentsPanel_.add(useLabel, "split 3, flowx, align right");
       contentsPanel_.add(cancelButton);
@@ -400,6 +388,9 @@ public final class ExportMovieDlg extends JDialog {
       if (mode.contentEquals(FORMAT_JPEG)) {
          format = ImageExporter.OutputFormat.OUTPUT_JPG;
          suffix = "jpg";
+      }  else if (mode.contentEquals(FORMAT_AVI)) {
+         format = ImageExporter.OutputFormat.OUTPUT_AVI;
+         suffix = "avi";
       } else if (mode.contentEquals(FORMAT_IMAGEJ)) {
          format = ImageExporter.OutputFormat.OUTPUT_IMAGEJ;
       } else if (mode.contentEquals(FORMAT_SYSTEM_CLIPBOARD)) {
@@ -415,7 +406,7 @@ public final class ExportMovieDlg extends JDialog {
          Datastore store = (Datastore) provider_;
          if (store.getSavePath() != null) {
             // Default them to where their data was originally saved.
-            base = store.getSavePath();
+            base = (new File(store.getSavePath())).getParent();
          }
          base = studio_.profile().getSettings(ExportMovieDlg.class)
                .getString(EXPORT_LOCATION, base);
@@ -426,7 +417,7 @@ public final class ExportMovieDlg extends JDialog {
                "Export as",
                path,
                true,     // select directories
-               true,
+               false,
                "",
                fss,
                false,
@@ -444,6 +435,36 @@ public final class ExportMovieDlg extends JDialog {
             studio_.logs().showError(e, "Unable to save to that directory");
             return;
          }
+      } else if (mode.equals(FORMAT_AVI)) {
+         File output = FileDialogs.promptForFile(this,
+                  "Save AVI as",
+                  path,
+                  false,     // select directories
+                  false,   // load
+                  "",      // file description
+                  fss,
+                  false,
+                  skin_);
+         if (output == null) {
+            return;
+         }
+         try {
+            String directory = output.getParent();
+            studio_.profile().getSettings(ExportMovieDlg.class)
+                     .putString(EXPORT_LOCATION, directory);
+            String fileName = output.getName();
+            if (fileName.endsWith(".avi")) {
+               fileName = fileName.substring(0, fileName.length() - 4);
+            }
+            exporter.setSaveInfo(directory, fileName);
+         } catch (IOException e) {
+            // This should be impossible -- it indicates the directory does not
+            // exist.
+            studio_.logs().showError(e, "Unable to save to that directory");
+            return;
+         }
+      } else if (mode.equals(FORMAT_IMAGEJ)) {
+         exporter.setImageJName(prefixText_.getText());
       }
 
       exporter.setOutputQuality((Integer) jpegQualitySpinner_.getValue());
