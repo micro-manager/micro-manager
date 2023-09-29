@@ -24,8 +24,8 @@ import java.io.IOException;
 
 /**
  * ImageExporters are used to generate linear sequences of images-as-rendered
- * by a DisplayWindow. Thus they include the current image scaling, any
- * overlays, et cetera.
+ * by a DisplayWindow. They include the current image scaling, any
+ * overlays, etc.
  */
 public interface ImageExporter {
    /**
@@ -49,12 +49,16 @@ public interface ImageExporter {
        */
       OUTPUT_JPG,
       /**
+       * Output as an AVI with JPEG compression.
+       */
+      OUTPUT_AVI,
+      /**
        * Output as an ImageJ stack, which will open in a new window; this
        * "format" does not create any files on disk.
        */
       OUTPUT_IMAGEJ,
       /**
-       * Output to the System Clipboard, will only work for a single image
+       * Output to the System Clipboard, will only work for a single image.
        */
       OUTPUT_CLIPBOARD
    }
@@ -94,6 +98,15 @@ public interface ImageExporter {
     * @throws IllegalArgumentException if the directory does not exist.
     */
    void setSaveInfo(String path, String prefix) throws IOException;
+
+   /**
+    * Sets the name to be used for the ImageJ Stack Window (if this was
+    * used as the output format). Only used when output format is set
+    * to OUTPUT_IMAGEJ
+    *
+    * @param imageJName Name to be used in ImageJ
+    */
+   void setImageJName(String imageJName);
 
    /**
     * Add a new "inner loop" to the export parameters. This determines what
