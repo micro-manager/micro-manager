@@ -169,7 +169,11 @@ public final class FileDialogs {
             fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
          }
          if (startFile != null) {
-            fc.setSelectedFile(startFile);
+            if (startFile.isDirectory()) {
+               fc.setCurrentDirectory(startFile);
+            } else {
+               fc.setSelectedFile(startFile);
+            }
          }
          skin.resume();
          fc.setDialogTitle(title);
