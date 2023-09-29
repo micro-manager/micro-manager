@@ -605,10 +605,7 @@ public final class MultipageTiffReader {
       long progBarMax = (fileChannel_.size() / 2L);
       final ProgressBar progressBar = new ProgressBar(null, "Fixing " + fileName, 0,
             progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
-      progressBar.setRange(0, progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE
-            : (int) progBarMax);
       progressBar.setProgress(0);
-      progressBar.setVisible(true);
       long nextIFDOffsetLocation = 0;
       IFDData data;
       long filePosition = firstIFD;
@@ -641,7 +638,7 @@ public final class MultipageTiffReader {
             break;
          }
       }
-      progressBar.setVisible(false);
+      SwingUtilities.invokeLater(() -> progressBar.setVisible(false));
 
       filePosition += writeIndexMap(filePosition);
 

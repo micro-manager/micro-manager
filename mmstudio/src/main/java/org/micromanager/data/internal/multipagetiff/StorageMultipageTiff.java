@@ -240,17 +240,14 @@ public final class StorageMultipageTiff implements Storage {
       ProgressBar tmpProgressBar = null;
       // Allow operation in headless mode.
       File[] listFiles = dir.listFiles();
+      ProgressBar progressBar = null;
       if (!GraphicsEnvironment.isHeadless() && listFiles != null) {
-         tmpProgressBar = new ProgressBar(parent_, "Reading " + directory_, 0,
+         progressBar = new ProgressBar(parent_, "Reading " + directory_, 0,
                listFiles.length);
       }
       int numRead = 0;
-      final ProgressBar progressBar = tmpProgressBar;
       if (progressBar != null) {
-         SwingUtilities.invokeLater(() -> {
-            progressBar.setProgress(0);
-            progressBar.setVisible(true);
-         });
+         progressBar.setProgress(0);
       }
       if (listFiles != null) {
          for (File f : listFiles) {
@@ -265,15 +262,14 @@ public final class StorageMultipageTiff implements Storage {
             numRead++;
             final int nr = numRead;
             if (progressBar != null) {
-               SwingUtilities.invokeLater(() -> {
-                  progressBar.setProgress(nr);
-               });
+               progressBar.setProgress(nr);
             }
          }
       }
       if (progressBar != null) {
+         final ProgressBar tmpBar = progressBar;
          SwingUtilities.invokeLater(() -> {
-            progressBar.setVisible(false);
+            tmpBar.setVisible(false);
          });
       }
 
@@ -613,7 +609,9 @@ public final class StorageMultipageTiff implements Storage {
             progressBar.setProgress(i);
             i++;
          }
-         progressBar.setVisible(false);
+         SwingUtilities.invokeLater(() -> {
+            progressBar.setVisible(false);
+         });
       } else {
          coordsToReader_.putAll(oldImageMap);
       }

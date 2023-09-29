@@ -190,7 +190,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JPanel acquisitionOrderPanel_;
    private CheckBoxPanel afPanel_;
    private CheckBoxPanel savePanel_;
-   private JButton reuseButton_;
+   private JButton reUseButton_;
    private boolean disableGUItoSettings_ = false;
    private final FocusListener focusListener_;
    private MultiMDAFrame multiMDAFrame_;
@@ -853,12 +853,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       saveAsButton.addActionListener((ActionEvent e) -> saveAcqSettingsToFile());
       result.add(saveAsButton, BUTTON_SIZE);
 
-      reuseButton_ = new JButton("Reuse Settings");
-      reuseButton_.setEnabled(false);
-      reuseButton_.setToolTipText("Apply the settings from the active viewer to this dialog");
-      reuseButton_.setFont(DEFAULT_FONT);
-      reuseButton_.setMargin(new Insets(-5, -5, -5, -5));
-      reuseButton_.addActionListener(e -> {
+      reUseButton_ = new JButton("from Image");
+      reUseButton_.setEnabled(false);
+      reUseButton_.setToolTipText("Apply the settings from the active viewer to this dialog");
+      reUseButton_.setFont(DEFAULT_FONT);
+      reUseButton_.setMargin(new Insets(-5, -5, -5, -5));
+      reUseButton_.addActionListener(e -> {
          DataViewer dv = mmStudio_.displays().getActiveDataViewer();
          if (dv != null) {
             SummaryMetadata summary = dv.getDataProvider().getSummaryMetadata();
@@ -871,7 +871,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             }
          }
       });
-      result.add(reuseButton_, BUTTON_SIZE);
+      result.add(reUseButton_, BUTTON_SIZE);
 
       return result;
    }
@@ -888,9 +888,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       DataViewer dv = ddbae.getDataViewer();
       if (dv != null) {
          SummaryMetadata summary = dv.getDataProvider().getSummaryMetadata();
-         reuseButton_.setEnabled(isApplicable(summary.getSequenceSettings()));
+         reUseButton_.setEnabled(isApplicable(summary.getSequenceSettings()));
       } else {
-         reuseButton_.setEnabled(false);
+         reUseButton_.setEnabled(false);
       }
    }
 
