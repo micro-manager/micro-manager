@@ -1,10 +1,6 @@
 /**
  * MultiMDAFrame.java
  *
- * <p>This module shows an example of creating a GUI (Graphical User Interface).
- * There are many ways to do this in Java; this particular example uses the
- * MigLayout layout manager, which has extensive documentation online.
- *
  * <p>Nico Stuurman, copyright Altos Labs 2023
  *
  * <p>LICENSE: This file is distributed under the BSD license. License text is
@@ -68,15 +64,19 @@ public class MultiMDAFrame extends JFrame {
    private final List<MDASettingData> acqs_ = new ArrayList<>();
    private final List<JLabel> acqLabels_ = new ArrayList<>();
    private final List<JLabel> acqExplanations_ = new ArrayList<>();
+   private static final String USE_TIME_POINTS = "UseTimePoints";
+   private static final String USE_AUTOFOCUS = "UseAutofocus";
+   private static final String USE_PRESET = "UsePreset";
    private static final String NR_ACQ_SETTINGS = "NumberOfSettings";
    private static final String ACQ_PATHS = "AcquisitionPaths";
    private final JSpinner nrSpinner_;
+   private final CheckBoxPanel framesPanel_;
+   private final CheckBoxPanel autoFocusPanel_;
+   private final CheckBoxPanel presetPanel_;
    private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
    private JSpinner numFrames_;
    private JFormattedTextField interval_;
    private JComboBox<String> timeUnitCombo_;
-   private final CheckBoxPanel framesPanel_;
-   private final CheckBoxPanel afPanel_;
    private JSpinner afSkipInterval_;
 
    /**
@@ -87,8 +87,9 @@ public class MultiMDAFrame extends JFrame {
    public MultiMDAFrame(Studio studio) {
       super("Multi-MDA");
       studio_ = studio;
+      final MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
 
-      super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
+      super.setLayout(new MigLayout("fill, insets 2, gap 10, flowx"));
       acqPanel_ = new JPanel();
       acqPanel_.setLayout(new MigLayout("fill, insets 4, gap 8, flowx"));
 
@@ -99,11 +100,15 @@ public class MultiMDAFrame extends JFrame {
 
       // create time point panel
       framesPanel_ = createTimePoints();
-      super.add(framesPanel_, "span, split 2, gap 12, align center");
-      afPanel_ = createAutoFocus();
-      super.add(afPanel_, "wrap");
+      framesPanel_.setSelected(settings.getBoolean(USE_TIME_POINTS, false));
+      super.add(framesPanel_, "span, split 3, gap 12, align left");
+      autoFocusPanel_ = createAutoFocus();
+      autoFocusPanel_.setSelected(settings.getBoolean(USE_AUTOFOCUS, false));
+      super.add(autoFocusPanel_);
+      presetPanel_ = createPresetPanel();
+      presetPanel_.setSelected(settings.getBoolean(USE_PRESET, false));
+      super.add(presetPanel_, "wrap");
 
-      // Create a text field for the user to customize their alerts.
       super.add(new JLabel("Number of different settings: "), "split 2, gap 10");
       nrSpinner_ = new JSpinner();
       nrSpinner_.setValue(0);
@@ -115,7 +120,6 @@ public class MultiMDAFrame extends JFrame {
       super.add(nrSpinner_, "gap 10, wrap");
 
       super.add(acqPanel_, "wrap");
-
 
       // Reload settings from disk, it would be nicer to auto-update whenever a file changes,
       // but that needs monitoring the file...
@@ -164,7 +168,7 @@ public class MultiMDAFrame extends JFrame {
                         .numFrames((Integer) numFrames_.getValue())
                         .intervalMs(NumberUtils.displayStringToDouble(
                                     interval_.getText()) * multiplier);
-                  sb.useAutofocus(afPanel_.isSelected())
+                  sb.useAutofocus(autoFocusPanel_.isSelected())
                         .skipAutofocusCount((Integer) afSkipInterval_.getValue());
                } catch (ParseException ex) {
                   ex.printStackTrace();
@@ -188,7 +192,6 @@ public class MultiMDAFrame extends JFrame {
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       // restore settings from previous session
-      MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
       int nrAcquisitions = settings.getInteger(NR_ACQ_SETTINGS, 0);
       if (nrAcquisitions > 0) {
          List<String> acqPaths = settings.getStringList(ACQ_PATHS);
@@ -306,20 +309,20 @@ public class MultiMDAFrame extends JFrame {
       JPanel defaultTimesPanel = new JPanel(
             new MigLayout("fill, gap 2, insets 0",
                   "push[][][]push", "[][][]"));
+      defaultTimesPanel.setEnabled(framesPanel.isEnabled());
       framesPanel.add(defaultTimesPanel, "grow");
 
       final JLabel numberLabel = new JLabel("Count:");
       numberLabel.setFont(DEFAULT_FONT);
-
+      numberLabel.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(numberLabel, "alignx label");
 
       SpinnerModel sModel = new SpinnerNumberModel(1, 1, null, 1);
-
       numFrames_ = new JSpinner(sModel);
       JTextField field = ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField();
       field.setColumns(5);
       ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField().setFont(DEFAULT_FONT);
-
+      numFrames_.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(numFrames_, "wrap");
 
       final JLabel intervalLabel = new JLabel("Interval:");
@@ -328,12 +331,14 @@ public class MultiMDAFrame extends JFrame {
             "Interval between successive time points.  Setting an interval "
                   + "less than the exposure time will cause micromanager to acquire "
                   + "a 'burst' of images as fast as possible");
+      intervalLabel.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(intervalLabel, "alignx label");
 
       interval_ = new JFormattedTextField(NumberFormat.getInstance());
       interval_.setColumns(5);
       interval_.setFont(DEFAULT_FONT);
       interval_.setValue(1.0);
+      interval_.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(interval_);
 
       timeUnitCombo_ = new JComboBox<>();
@@ -341,13 +346,13 @@ public class MultiMDAFrame extends JFrame {
       timeUnitCombo_.setFont(DEFAULT_FONT);
       // We shove this thing to the left a bit so that it takes up the same
       // vertical space as the spinner for the number of timepoints.
+      timeUnitCombo_.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(timeUnitCombo_, "pad 0 -15 0 0, wrap");
 
       JLabel overrideLabel = new JLabel("Custom time intervals enabled");
       overrideLabel.setFont(new Font("Arial", Font.BOLD, 12));
       overrideLabel.setForeground(Color.red);
 
-      // framesPanel_.addActionListener((ActionEvent e) -> applySettingsFromGUI());
       return framesPanel;
    }
 
@@ -369,7 +374,6 @@ public class MultiMDAFrame extends JFrame {
       afSkipFrame1.setFont(new Font("Dialog", Font.PLAIN, 10));
       afSkipFrame1.setToolTipText("How many frames to skip between running autofocus. "
             + "Autofocus is always run at new stage positions");
-
       afPanel.add(afSkipFrame1, "split, spanx, alignx center");
 
       afSkipInterval_ = new JSpinner(new SpinnerNumberModel(0, 0, null, 1));
@@ -377,16 +381,31 @@ public class MultiMDAFrame extends JFrame {
       editor.setFont(DEFAULT_FONT);
       editor.getTextField().setColumns(3);
       afSkipInterval_.setValue(0);
-      // afSkipInterval_.setValue(getSequenceSettings().skipAutofocusCount());
-      // afSkipInterval_.addChangeListener((ChangeEvent e) -> {
-      //   applySettingsFromGUI();
-      //   afSkipInterval_.setValue(getAcquisitionEngine().getSequenceSettings()
-      //         .skipAutofocusCount());
-      // });
       afPanel.add(afSkipInterval_);
 
-      // afPanel.addActionListener((ActionEvent arg0) -> applySettingsFromGUI());
       return afPanel;
+   }
+
+   private CheckBoxPanel createPresetPanel() {
+      CheckBoxPanel presetPanel = new CheckBoxPanel("Use Preset Before each MDA");
+      presetPanel.setLayout(new MigLayout("fillx, gap 2, insets 2" + ", hidemode 3",
+               "[grow, fill]", "[grow, fill]"));
+
+      presetPanel.add(new JLabel("Runs each time point "), "wrap");
+
+      final JLabel presetLabel = new JLabel("PresetGroup:");
+      presetLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
+      presetLabel.setToolTipText("A preset can be applied before running each MDA. "
+               + "(at each time point). Select the Preset Group here.");
+      presetPanel.add(presetLabel, "split, spanx, alignx center");
+
+      JComboBox<String> configGroupCombo = new JComboBox<>();
+      configGroupCombo.addItem("");
+      studio_.core().getAvailableConfigGroups().forEach(configGroupCombo::addItem);
+      configGroupCombo.setEnabled(presetPanel.isEnabled());
+      presetPanel.add(configGroupCombo, "alignx center, wrap");
+
+      return presetPanel;
    }
 
    private String oneLineSummary(MDASettingData mdaSettingData) {
@@ -429,6 +448,9 @@ public class MultiMDAFrame extends JFrame {
    public void onApplicationShuttingDown(ShutdownCommencingEvent sce) {
       MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
       settings.putInteger(NR_ACQ_SETTINGS, (Integer) nrSpinner_.getValue());
+      settings.putBoolean(USE_TIME_POINTS, framesPanel_.isSelected());
+      settings.putBoolean(USE_AUTOFOCUS, autoFocusPanel_.isSelected());
+      settings.putBoolean(USE_PRESET, presetPanel_.isSelected());
 
       List<String> acqPaths = new ArrayList<>(acqs_.size());
       for (MDASettingData acq : acqs_) {
