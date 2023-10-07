@@ -64,9 +64,11 @@ public class MultiMDAFrame extends JFrame {
    private final List<MDASettingData> acqs_ = new ArrayList<>();
    private final List<JLabel> acqLabels_ = new ArrayList<>();
    private final List<JLabel> acqExplanations_ = new ArrayList<>();
+   private final List<JComboBox> presetCombos_ = new ArrayList<>();
    private static final String USE_TIME_POINTS = "UseTimePoints";
    private static final String USE_AUTOFOCUS = "UseAutofocus";
    private static final String USE_PRESET = "UsePreset";
+   private static final String PRESET_GROUP = "PresetGroup";
    private static final String NR_ACQ_SETTINGS = "NumberOfSettings";
    private static final String ACQ_PATHS = "AcquisitionPaths";
    private final JSpinner nrSpinner_;
@@ -87,7 +89,6 @@ public class MultiMDAFrame extends JFrame {
    public MultiMDAFrame(Studio studio) {
       super("Multi-MDA");
       studio_ = studio;
-      final MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
 
       super.setLayout(new MigLayout("fill, insets 2, gap 10, flowx"));
       acqPanel_ = new JPanel();
@@ -100,13 +101,10 @@ public class MultiMDAFrame extends JFrame {
 
       // create time point panel
       framesPanel_ = createTimePoints();
-      framesPanel_.setSelected(settings.getBoolean(USE_TIME_POINTS, false));
       super.add(framesPanel_, "span, split 3, gap 12, align left");
       autoFocusPanel_ = createAutoFocus();
-      autoFocusPanel_.setSelected(settings.getBoolean(USE_AUTOFOCUS, false));
       super.add(autoFocusPanel_);
       presetPanel_ = createPresetPanel();
-      presetPanel_.setSelected(settings.getBoolean(USE_PRESET, false));
       super.add(presetPanel_, "wrap");
 
       super.add(new JLabel("Number of different settings: "), "split 2, gap 10");
@@ -154,8 +152,6 @@ public class MultiMDAFrame extends JFrame {
             @Override
             public void run() {
                final MultiAcqEngJAdapter acqj = new MultiAcqEngJAdapter(studio_);
-               List<SequenceSettings> seqs = new ArrayList<>();
-               List<PositionList> positionLists = new ArrayList<>();
                SequenceSettings.Builder sb = new SequenceSettings.Builder();
                double multiplier = 1;
                if (timeUnitCombo_.getSelectedItem().equals("s")) {
@@ -174,11 +170,7 @@ public class MultiMDAFrame extends JFrame {
                   ex.printStackTrace();
                }
                SequenceSettings baseSettings = sb.build();
-               for (MDASettingData acq : acqs_) {
-                  seqs.add(acq.getSequenceSettings());
-                  positionLists.add(acq.getPositionList());
-               }
-               acqj.runAcquisition(baseSettings, seqs, positionLists);
+               acqj.runAcquisition(baseSettings, acqs_);
             }
          });
          acqThread.start();
@@ -192,6 +184,10 @@ public class MultiMDAFrame extends JFrame {
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       // restore settings from previous session
+      final MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
+      framesPanel_.setSelected(settings.getBoolean(USE_TIME_POINTS, false));
+      autoFocusPanel_.setSelected(settings.getBoolean(USE_AUTOFOCUS, false));
+      presetPanel_.setSelected(settings.getBoolean(USE_PRESET, false));
       int nrAcquisitions = settings.getInteger(NR_ACQ_SETTINGS, 0);
       if (nrAcquisitions > 0) {
          List<String> acqPaths = settings.getStringList(ACQ_PATHS);
@@ -278,6 +274,23 @@ public class MultiMDAFrame extends JFrame {
          });
          acqPanel_.add(selectAcqFile);
 
+         final JComboBox<String> presetCombo = new JComboBox<>();
+         presetCombo.addItem("");
+         final String presetGroup = studio_.profile().getSettings(
+               this.getClass()).getString(PRESET_GROUP, "");
+         if (presetGroup != null && !presetGroup.isEmpty()) {
+            studio_.core().getAvailableConfigs(presetGroup).forEach(presetCombo::addItem);
+         }
+         acqs_.get(lineNr).setPresetGroup(presetGroup);
+         presetCombo.addActionListener(e -> {
+            String presetName = (String) presetCombo.getSelectedItem();
+            studio_.profile().getSettings((this.getClass())).putString(
+                  acqs_.get(lineNr).getAcqSettingFile().getPath(), presetName);
+            acqs_.get(lineNr).setPresetName(presetName);
+         });
+         presetCombos_.add(presetCombo);
+         acqPanel_.add(presetCombo);
+
          final JButton posListButton = new JButton("Use current PositionList");
          posListButton.addActionListener(e -> {
             acqs_.get(lineNr).setPositionList(studio_.positions().getPositionList());
@@ -287,7 +300,6 @@ public class MultiMDAFrame extends JFrame {
          acqPanel_.add(posListButton);
          acqExplanations_.add(new JLabel(oneLineSummary(acqs_.get(lineNr))));
          acqPanel_.add(acqExplanations_.get(lineNr), "wrap");
-
       }
       while (nr < acqs_.size()) {
          acqs_.remove(acqs_.size() - 1);
@@ -403,6 +415,21 @@ public class MultiMDAFrame extends JFrame {
       configGroupCombo.addItem("");
       studio_.core().getAvailableConfigGroups().forEach(configGroupCombo::addItem);
       configGroupCombo.setEnabled(presetPanel.isEnabled());
+      configGroupCombo.addActionListener(e -> {
+         String presetGroup = (String) configGroupCombo.getSelectedItem();
+         studio_.profile().getSettings((this.getClass())).putString(PRESET_GROUP, presetGroup);
+         for (MDASettingData acq : acqs_) {
+            acq.setPresetGroup(presetGroup);
+            acq.setPresetName("");
+         }
+         for (JComboBox<String> combo : presetCombos_) {
+            combo.removeAllItems();
+            combo.addItem("");
+            studio_.core().getAvailableConfigs(presetGroup).forEach(combo::addItem);
+         }
+      });
+      configGroupCombo.setSelectedItem(studio_.profile().getSettings(
+               this.getClass()).getString(PRESET_GROUP, ""));
       presetPanel.add(configGroupCombo, "alignx center, wrap");
 
       return presetPanel;

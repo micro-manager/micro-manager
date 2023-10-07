@@ -53,6 +53,7 @@ import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
 import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
+import org.micromanager.acquisition.internal.acqengjcompat.multimda.MDASettingData;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
@@ -130,14 +131,18 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
     * This is where the work happens.
     *
     * @param basicSettings Defines the time lapse and autofocus
-    * @param sequenceSettings Acquisitions that should be executed consecutively.
-    * @param positionLists PositionLists for each sequenceSetting (>=1).  The size of this list
-    *                      must be equal to the size of sequenceSettings.
+    * @param acqs Settings for each individual acquisition
     * @return Datastores corresponding to sequenceSettings
     */
    public List<Datastore> runAcquisition(SequenceSettings basicSettings,
-                                         List<SequenceSettings> sequenceSettings,
-                                         List<PositionList> positionLists) {
+                                         List<MDASettingData> acqs) {
+      List<SequenceSettings> sequenceSettings = new ArrayList<>(acqs.size());
+      List<PositionList> positionLists = new ArrayList<>(acqs.size());
+
+      for (MDASettingData acq : acqs) {
+         sequenceSettings.add(acq.getSequenceSettings());
+         positionLists.add(acq.getPositionList());
+      }
       if (sequenceSettings.size() < 1 || positionLists.size() != sequenceSettings.size()) {
          studio_.logs().logError("Please use Position Lists for each acquisition");
          return null;
@@ -261,6 +266,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          }
          for (int t = 0; t < nrFrames; t++) {
             for (int i = 0; i < sequenceSettings.size(); i++) {
+               currentMultiMDA_.submitEventIterator(createPresetEvent(acqs.get(i)));
                currentMultiMDA_.submitEventIterator(createAcqEventIterator(
                      sequenceSettings.get(i),
                      positionLists.get(i),
@@ -414,6 +420,24 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
             acqEventMonitor(acquisitionSettings));
    }
 
+   private Iterator<AcquisitionEvent> createPresetEvent(MDASettingData acq) throws Exception {
+      if (acq.getPresetGroup() == null || acq.getPresetGroup().isEmpty()
+            || acq.getPresetName() == null || acq.getPresetName().isEmpty()) {
+         return null;
+      }
+      AcquisitionEvent event = new AcquisitionEvent(currentMultiMDA_);
+      Configuration config = studio_.core().getConfigData(
+               acq.getPresetGroup(), acq.getPresetName());
+      for (int i = 0; i < config.size(); i++) {
+         PropertySetting setting = config.getSetting(i);
+         event.setProperty(setting.getDeviceLabel(), setting.getPropertyName(),
+               setting.getPropertyValue());
+      }
+      List<AcquisitionEvent> eventList = new ArrayList<>(1);
+      eventList.add(event);
+
+      return eventList.iterator();
+   }
 
    private SequenceSettings calculateSlices(SequenceSettings sequenceSettings) {
       // Slices
