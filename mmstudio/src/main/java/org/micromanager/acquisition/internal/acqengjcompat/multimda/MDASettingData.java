@@ -13,6 +13,7 @@ public class MDASettingData {
    private final Studio studio_;
    private File acqSettingFile_;
    private SequenceSettings acqSettings_;
+   private File positionListFile_;
    private PositionList positionList_;
    private String presetGroup_;
    private String presetName_;
@@ -23,8 +24,18 @@ public class MDASettingData {
       acqSettings_ = acqSettings;
    }
 
-   public void setPositionList(PositionList pl) {
-      positionList_ = pl;
+   public void setPositionListFile(File positionListFile) {
+      positionList_ = new PositionList();
+      try {
+         positionList_.load(positionListFile);
+         positionListFile_ = positionListFile;
+      } catch (Exception e) {
+         studio_.logs().showError(e);
+      }
+   }
+
+   public File getPositionListFile() {
+      return positionListFile_;
    }
 
    public PositionList getPositionList() {

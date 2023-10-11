@@ -36,6 +36,7 @@ import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.AutofocusPlugin;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
@@ -141,9 +142,23 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
 
       for (MDASettingData acq : acqs) {
          sequenceSettings.add(acq.getSequenceSettings());
-         positionLists.add(acq.getPositionList());
+         PositionList pl = acq.getPositionList();
+         if (pl == null) {
+            try {
+               MultiStagePosition msp = new MultiStagePosition(studio_.core().getXYStageDevice(),
+                       studio_.core().getXYStagePosition().getX(),
+                       studio_.core().getXYStagePosition().getY(),
+                       "", 0.0);
+               pl = new PositionList();
+               pl.addPosition(msp);
+            } catch (Exception ex) {
+               studio_.logs().showError(ex);
+               return null;
+            }
+         }
+         positionLists.add(pl);
       }
-      if (sequenceSettings.size() < 1 || positionLists.size() != sequenceSettings.size()) {
+      if (sequenceSettings.isEmpty() || positionLists.size() != sequenceSettings.size()) {
          studio_.logs().logError("Please use Position Lists for each acquisition");
          return null;
       }
@@ -266,7 +281,10 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          }
          for (int t = 0; t < nrFrames; t++) {
             for (int i = 0; i < sequenceSettings.size(); i++) {
-               currentMultiMDA_.submitEventIterator(createPresetEvent(acqs.get(i)));
+               Iterator<AcquisitionEvent> presetEvent = createPresetEvent(acqs.get(i));
+               if (presetEvent != null) {
+                  currentMultiMDA_.submitEventIterator(presetEvent);
+               }
                currentMultiMDA_.submitEventIterator(createAcqEventIterator(
                      sequenceSettings.get(i),
                      positionLists.get(i),
@@ -426,13 +444,8 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          return null;
       }
       AcquisitionEvent event = new AcquisitionEvent(currentMultiMDA_);
-      Configuration config = studio_.core().getConfigData(
-               acq.getPresetGroup(), acq.getPresetName());
-      for (int i = 0; i < config.size(); i++) {
-         PropertySetting setting = config.getSetting(i);
-         event.setProperty(setting.getDeviceLabel(), setting.getPropertyName(),
-               setting.getPropertyValue());
-      }
+      event.setConfigGroup(acq.getPresetGroup());
+      event.setConfigPreset(acq.getPresetName());
       List<AcquisitionEvent> eventList = new ArrayList<>(1);
       eventList.add(event);
 
