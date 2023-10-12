@@ -25,6 +25,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -49,6 +51,7 @@ import org.micromanager.acquisition.internal.acqengjcompat.multimda.acqengj.Mult
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -107,13 +110,25 @@ public class MultiMDAFrame extends JFrame {
       super("Multi-MDA");
       studio_ = studio;
 
-      super.setLayout(new MigLayout("fill, insets 2, gap 10, flowx"));
+      super.setLayout(new MigLayout("fill, insets 2, gap 8, flowx"));
       acqPanel_ = new JPanel();
       acqPanel_.setLayout(new MigLayout("fill, insets 4, gap 8, flowx"));
 
       JLabel title = new JLabel("Use different MDA settings at different positions");
       title.setFont(new Font("Arial", Font.BOLD, 16));
-      super.add(title, "span, alignx center, wrap");
+      super.add(title, "span, split 3, push, alignx center");
+      JButton helpButton = new JButton();
+      helpButton.setText("Help");
+      helpButton.addActionListener(e -> {
+         try {
+            java.awt.Desktop.getDesktop().browse(new URL(
+                    "https://micro-manager.org/Multi-MDA").toURI());
+         } catch (IOException | URISyntaxException ex) {
+            ReportingUtils.logError(ex);
+         }
+      });
+      super.add(new JLabel(" "), "push");
+      super.add(helpButton, "align right, wrap");
       super.add(new JSeparator(), "span, growx, wrap");
 
       // create time point panel
@@ -124,7 +139,7 @@ public class MultiMDAFrame extends JFrame {
       presetPanel_ = createPresetPanel();
       super.add(presetPanel_, "gapx 30, wrap");
 
-      super.add(new JLabelC("NUmber of different settings"), "split 2, gap 10");
+      super.add(new JLabelC("Number of different settings"), "split 2, gap 10");
       nrSpinner_ = new JSpinner();
       nrSpinner_.setFont(DEFAULT_FONT);
       nrSpinner_.setValue(0);
@@ -133,9 +148,9 @@ public class MultiMDAFrame extends JFrame {
          nrSpinner_.setValue(val);
          super.pack();
       });
-      super.add(nrSpinner_, "gapy 20, wrap");
+      super.add(nrSpinner_, "gapy 10, wrap");
 
-      super.add(acqPanel_, "gapy 10, wrap");
+      super.add(acqPanel_, "gapx 10, gapy 5, wrap");
 
       // Reload settings from disk, it would be nicer to auto-update whenever a file changes,
       // but that needs monitoring the file...
@@ -161,7 +176,7 @@ public class MultiMDAFrame extends JFrame {
          }
          super.pack();
       });
-      super.add(refreshButton, "span, split 3, align left, gapy 20");
+      super.add(refreshButton, "span, split 3, align left, gapx 10, gapy 5");
       super.add(new JLabel(""), "growx");
 
       // Run an acquisition using the current MDA parameters.
@@ -456,7 +471,7 @@ public class MultiMDAFrame extends JFrame {
    }
 
    private CheckBoxPanel createPresetPanel() {
-      CheckBoxPanel presetPanel = new CheckBoxPanel("Use Preset Before each MDA");
+      CheckBoxPanel presetPanel = new CheckBoxPanel("Use Preset");
       presetPanel.setLayout(new MigLayout("fillx, gap 2, insets 2" + ", hidemode 3",
                "[grow, fill]", "[grow, fill]"));
 
@@ -469,6 +484,8 @@ public class MultiMDAFrame extends JFrame {
       presetPanel.add(presetLabel, "split, spanx, alignx center");
 
       JComboBox<String> configGroupCombo = new JComboBox<>();
+      configGroupCombo.setFont(DEFAULT_FONT);
+      configGroupCombo.getEditor().getEditorComponent().setFont(DEFAULT_FONT);
       configGroupCombo.addItem("");
       studio_.core().getAvailableConfigGroups().forEach(configGroupCombo::addItem);
       configGroupCombo.setEnabled(presetPanel.isEnabled());
