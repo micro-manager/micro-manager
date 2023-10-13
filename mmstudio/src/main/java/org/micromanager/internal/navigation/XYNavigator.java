@@ -135,6 +135,26 @@ public class XYNavigator {
    }
 
    /**
+    * Moves the stage the requested distance.  If there is a camera, and the
+    * affine transform is known, it will use that to determine the movement.
+    *
+    * @param tmpXUm amount (in microns) the sample should move in the x direction
+    * @param tmpYUm amount (in microns) the sample should move in the y direction
+    */
+   public void moveSampleUm(final double tmpXUm, final double tmpYUm) {
+      String xyStage = studio_.core().getXYStageDevice();
+      if (xyStage == null || xyStage.equals("")) {
+         return;
+      }
+      double pixSizeUm = studio_.core().getPixelSizeUm(true);
+      if (pixSizeUm > 0.0) {
+         moveSampleOnDisplayUm(tmpXUm, tmpYUm);
+         return;
+      }
+      moveXYStageUm(xyStage, tmpXUm, tmpYUm);
+   }
+
+   /**
     * Move the XYStage in such a manner that the sample as displayed in the
     * viewer will move in an absolute Carthesian coordinate system.
     * For instance, moving 1 micron in x will move the stage so that the
@@ -144,7 +164,7 @@ public class XYNavigator {
     * @param tmpXUm amount (in microns) the sample should move in the x direction
     * @param tmpYUm amount (in microns) the sample should move in the y direction
     */
-   public void moveSampleOnDisplayUm(final double tmpXUm, final double tmpYUm) {
+   private void moveSampleOnDisplayUm(final double tmpXUm, final double tmpYUm) {
       double pixSizeUm = studio_.core().getPixelSizeUm(true);
       if (!(pixSizeUm > 0.0)) {
          JOptionPane.showMessageDialog(null,
