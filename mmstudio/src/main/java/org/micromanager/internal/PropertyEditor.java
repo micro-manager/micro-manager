@@ -189,6 +189,7 @@ public final class PropertyEditor extends JFrame {
    public void onShutdownCommencing(ShutdownCommencingEvent event) {
       if (!event.isCanceled()) {
          flags_.save(PropertyEditor.class);
+         dispose();
       }
    }
 
