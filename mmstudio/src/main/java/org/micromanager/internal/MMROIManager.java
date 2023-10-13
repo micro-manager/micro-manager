@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -105,6 +106,8 @@ public class MMROIManager {
    /**
     * Adjust the provided rectangular ROI based on any current ROI that may be
     * in use.
+    * Also correct for image rotation and/or flipping that may have been
+    * introduced by the Image Flipper plugin.
     */
    private Rectangle updateROI(Roi roi) {
       Rectangle r = roi.getBounds();
@@ -115,13 +118,28 @@ public class MMROIManager {
       // old behavior and I'm leaving it in case there are cases where it is
       // necessary).
       Rectangle originalROI = null;
+      Integer rotation = 0;
+      Boolean isMirrored = false;
 
       DataViewer viewer = studio_.displays().getActiveDataViewer();
       if (viewer != null) {
          try {
             List<Image> images = viewer.getDisplayedImages();
             // Just take the first one.
-            originalROI = images.get(0).getMetadata().getROI();
+            Metadata metadata = images.get(0).getMetadata();
+            if (metadata != null) {
+               originalROI = metadata.getROI();
+               if (metadata.getUserData().containsInteger(
+                       "ImageFlipper-Rotation")) {
+                  rotation = metadata.getUserData().getInteger(
+                          "ImageFlipper-Rotation", 0);
+               }
+               if (metadata.getUserData().containsString("ImageFlipper-Mirror")) {
+                  isMirrored = metadata.getUserData().getString(
+                          "ImageFlipper-Mirror", "Off").equals("On");
+               }
+            }
+
          } catch (IOException e) {
             ReportingUtils.showError(e, "There was an error determining the selected ROI");
          }
@@ -135,6 +153,31 @@ public class MMROIManager {
             studio_.logs().logError(e, "Unable to get core ROI");
             return null;
          }
+      }
+
+      // correct for rotation and/or flipping
+      if (rotation == 90) {
+         int temp = r.x;
+         r.x = r.y;
+         r.y = temp;
+         temp = r.width;
+         r.width = r.height;
+         r.height = temp;
+         r.y = originalROI.height - r.y - r.height;
+      } else if (rotation == 180) {
+         r.x = originalROI.width - r.x - r.width;
+         r.y = originalROI.height - r.y - r.height;
+      } else if (rotation == 270) {
+         int temp = r.y;
+         r.y = r.x;
+         r.x = temp;
+         temp = r.width;
+         r.width = r.height;
+         r.height = temp;
+         r.x = originalROI.width - r.x - r.width;
+      }
+      if (isMirrored) {
+         r.x = originalROI.width - r.x - r.width;
       }
 
       r.x += originalROI.x;
