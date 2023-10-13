@@ -1,18 +1,5 @@
 /**
- * A very simple Micro-Manager plugin, intended to be used as an example for
- * developers wishing to create their own, actually useful plugins. This one
- * demonstrates performing various common tasks, but does not do anything
- * really useful.
- *
- * <p>Copy this code to a location of your choice, change the name of the project
- * (and the classes), build the jar file and copy it to the mmplugins folder
- * in your Micro-Manager directory.
- *
- * <p>Once you have it loaded and running, you can attach the NetBean debugger
- * and use all of NetBean's functionality to debug your code.  If you make a
- * generally useful plugin, please do not hesitate to send a copy to
- * info@micro-manager.org for inclusion in the Micro-Manager source code
- * repository.
+ * Multi-MDA plugin
  *
  * <p>LICENSE:      This file is distributed under the BSD license.
  * License text is included with the source distribution.
@@ -23,8 +10,8 @@
  * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  *
- * @author Nico Stuurman, 2012
- * @copyright University of California
+ * @author Nico Stuurman, 2023
+ * @copyright Altos Labs
  */
 
 

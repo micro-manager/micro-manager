@@ -1,10 +1,6 @@
 /**
  * MultiMDAFrame.java
  *
- * <p>This module shows an example of creating a GUI (Graphical User Interface).
- * There are many ways to do this in Java; this particular example uses the
- * MigLayout layout manager, which has extensive documentation online.
- *
  * <p>Nico Stuurman, copyright Altos Labs 2023
  *
  * <p>LICENSE: This file is distributed under the BSD license. License text is
@@ -29,6 +25,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -46,7 +44,6 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
@@ -54,6 +51,7 @@ import org.micromanager.acquisition.internal.acqengjcompat.multimda.acqengj.Mult
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -68,16 +66,40 @@ public class MultiMDAFrame extends JFrame {
    private final List<MDASettingData> acqs_ = new ArrayList<>();
    private final List<JLabel> acqLabels_ = new ArrayList<>();
    private final List<JLabel> acqExplanations_ = new ArrayList<>();
+   private final List<JComboBox<String>> presetCombos_ = new ArrayList<>();
+   private static final String USE_TIME_POINTS = "UseTimePoints";
+   private static final String USE_AUTOFOCUS = "UseAutofocus";
+   private static final String USE_PRESET = "UsePreset";
+   private static final String PRESET_GROUP = "PresetGroup";
    private static final String NR_ACQ_SETTINGS = "NumberOfSettings";
    private static final String ACQ_PATHS = "AcquisitionPaths";
+   private static final String POSITION_LIST_PATHS = "PositionListPaths";
    private final JSpinner nrSpinner_;
+   private final CheckBoxPanel framesPanel_;
+   private final CheckBoxPanel autoFocusPanel_;
+   private final CheckBoxPanel presetPanel_;
    private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
    private JSpinner numFrames_;
    private JFormattedTextField interval_;
    private JComboBox<String> timeUnitCombo_;
-   private final CheckBoxPanel framesPanel_;
-   private final CheckBoxPanel afPanel_;
    private JSpinner afSkipInterval_;
+   protected static final FileDialogs.FileType POSITION_LIST_FILE =
+           new FileDialogs.FileType("POSITION_LIST_FILE", "Position list file",
+                   System.getProperty("user.home") + "/PositionList.pos",
+                   true, "pos");
+
+   public static class JLabelC extends JLabel {
+
+      public JLabelC() {
+         super();
+         this.setFont(DEFAULT_FONT);
+      }
+
+      public JLabelC(String text) {
+         super(text);
+         this.setFont(DEFAULT_FONT);
+      }
+   }
 
    /**
     * Constructor of the plugin, draws the UI and restores settings from profile.
@@ -88,34 +110,47 @@ public class MultiMDAFrame extends JFrame {
       super("Multi-MDA");
       studio_ = studio;
 
-      super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
+      super.setLayout(new MigLayout("fill, insets 2, gap 8, flowx"));
       acqPanel_ = new JPanel();
       acqPanel_.setLayout(new MigLayout("fill, insets 4, gap 8, flowx"));
 
       JLabel title = new JLabel("Use different MDA settings at different positions");
-      title.setFont(new Font("Arial", Font.BOLD, 20));
-      super.add(title, "span, alignx center, wrap");
-      super.add(new JSeparator(), "span, wrap");
+      title.setFont(new Font("Arial", Font.BOLD, 16));
+      super.add(title, "span, split 3, push, alignx center");
+      JButton helpButton = new JButton();
+      helpButton.setText("Help");
+      helpButton.addActionListener(e -> {
+         try {
+            java.awt.Desktop.getDesktop().browse(new URL(
+                    "https://micro-manager.org/Multi-MDA").toURI());
+         } catch (IOException | URISyntaxException ex) {
+            ReportingUtils.logError(ex);
+         }
+      });
+      super.add(new JLabel(" "), "push");
+      super.add(helpButton, "align right, wrap");
+      super.add(new JSeparator(), "span, growx, wrap");
 
       // create time point panel
       framesPanel_ = createTimePoints();
-      super.add(framesPanel_, "span, split 2, gap 12, align center");
-      afPanel_ = createAutoFocus();
-      super.add(afPanel_, "wrap");
+      super.add(framesPanel_, "span, split 3, gapx 30, align left");
+      autoFocusPanel_ = createAutoFocus();
+      super.add(autoFocusPanel_, "gapx 30");
+      presetPanel_ = createPresetPanel();
+      super.add(presetPanel_, "gapx 30, wrap");
 
-      // Create a text field for the user to customize their alerts.
-      super.add(new JLabel("Number of different settings: "), "split 2, gap 10");
+      super.add(new JLabelC("Number of different settings"), "split 2, gap 10");
       nrSpinner_ = new JSpinner();
+      nrSpinner_.setFont(DEFAULT_FONT);
       nrSpinner_.setValue(0);
       nrSpinner_.addChangeListener(e -> {
          int val = adjustNrSettings((int) nrSpinner_.getValue());
          nrSpinner_.setValue(val);
          super.pack();
       });
-      super.add(nrSpinner_, "gap 10, wrap");
+      super.add(nrSpinner_, "gapy 10, wrap");
 
-      super.add(acqPanel_, "wrap");
-
+      super.add(acqPanel_, "gapx 10, gapy 5, wrap");
 
       // Reload settings from disk, it would be nicer to auto-update whenever a file changes,
       // but that needs monitoring the file...
@@ -125,20 +160,24 @@ public class MultiMDAFrame extends JFrame {
             File f = acqs_.get(i).getAcqSettingFile();
             SequenceSettings seqSb;
             try {
-               SequenceSettings seqS = studio_.acquisitions().loadSequenceSettings(f.getPath());
-               seqSb = seqS;
+               seqSb = studio_.acquisitions().loadSequenceSettings(f.getPath());
             } catch (IOException ex) {
                studio_.logs().logError(ex, "Failed to load Acquisition setting file");
                continue;
             }
             if (seqSb != null) {
                acqs_.get(i).setAcqSettings(f, seqSb);
-               acqExplanations_.get(i).setText(oneLineSummary(acqs_.get(i)));
             }
+            File positionListFile = acqs_.get(i).getPositionListFile();
+            if (positionListFile != null) {
+               acqs_.get(i).setPositionListFile(positionListFile);
+            }
+            acqExplanations_.get(i).setText(oneLineSummary(acqs_.get(i)));
          }
          super.pack();
       });
-      super.add(refreshButton, "Span 2, split 2, align left, gap 10");
+      super.add(refreshButton, "span, split 3, align left, gapx 10, gapy 5");
+      super.add(new JLabel(""), "growx");
 
       // Run an acquisition using the current MDA parameters.
       JButton acquireButton = new JButton("Run Multi MDA");
@@ -150,13 +189,12 @@ public class MultiMDAFrame extends JFrame {
             @Override
             public void run() {
                final MultiAcqEngJAdapter acqj = new MultiAcqEngJAdapter(studio_);
-               List<SequenceSettings> seqs = new ArrayList<>();
-               List<PositionList> positionLists = new ArrayList<>();
                SequenceSettings.Builder sb = new SequenceSettings.Builder();
                double multiplier = 1;
-               if (timeUnitCombo_.getSelectedItem().equals("s")) {
+               String token = (String) timeUnitCombo_.getSelectedItem();
+               if (token != null && token.equals("s")) {
                   multiplier = 1000;
-               } else if (timeUnitCombo_.getSelectedItem().equals("min")) {
+               } else if (token != null && token.equals("min")) {
                   multiplier = 60000;
                }
                try {
@@ -164,17 +202,13 @@ public class MultiMDAFrame extends JFrame {
                         .numFrames((Integer) numFrames_.getValue())
                         .intervalMs(NumberUtils.displayStringToDouble(
                                     interval_.getText()) * multiplier);
-                  sb.useAutofocus(afPanel_.isSelected())
+                  sb.useAutofocus(autoFocusPanel_.isSelected())
                         .skipAutofocusCount((Integer) afSkipInterval_.getValue());
                } catch (ParseException ex) {
-                  ex.printStackTrace();
+                  studio_.logs().logError(ex);
                }
                SequenceSettings baseSettings = sb.build();
-               for (MDASettingData acq : acqs_) {
-                  seqs.add(acq.getSequenceSettings());
-                  positionLists.add(acq.getPositionList());
-               }
-               acqj.runAcquisition(baseSettings, seqs, positionLists);
+               acqj.runAcquisition(baseSettings, acqs_);
             }
          });
          acqThread.start();
@@ -188,27 +222,33 @@ public class MultiMDAFrame extends JFrame {
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       // restore settings from previous session
-      MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
+      final MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
+      framesPanel_.setSelected(settings.getBoolean(USE_TIME_POINTS, false));
+      autoFocusPanel_.setSelected(settings.getBoolean(USE_AUTOFOCUS, false));
+      presetPanel_.setSelected(settings.getBoolean(USE_PRESET, false));
       int nrAcquisitions = settings.getInteger(NR_ACQ_SETTINGS, 0);
       if (nrAcquisitions > 0) {
          List<String> acqPaths = settings.getStringList(ACQ_PATHS);
+         List<String> positionListFiles = settings.getStringList(POSITION_LIST_PATHS);
          int count = 0;
          for (String acqPath : acqPaths) {
             File f = new File(acqPath);
             SequenceSettings seqSb;
             try {
-               SequenceSettings seqS = studio_.acquisitions().loadSequenceSettings(f.getPath());
-               seqSb = seqS;
+               seqSb = studio_.acquisitions().loadSequenceSettings(f.getPath());
             } catch (IOException ex) {
                studio_.logs().logError(ex, "Failed to load Acquisition setting file");
                continue;
             }
             acqs_.add(count, new MDASettingData(studio_, f, seqSb));
+            if (positionListFiles.size() > count) {
+               File posFile = new File(positionListFiles.get(count));
+               acqs_.get(count).setPositionListFile(posFile);
+            }
             count++;
          }
          nrSpinner_.setValue(count);
       }
-
 
       super.pack();
 
@@ -231,15 +271,20 @@ public class MultiMDAFrame extends JFrame {
    private int adjustNrSettings(int nr) {
       acqPanel_.removeAll();
       acqLabels_.clear();
+      // add headers to the table
+      acqPanel_.add(new JLabel("Acquisition Settings File"), "span 2, alignx center");
+      acqPanel_.add(new JLabel("Preset"), "alignx center");
+      acqPanel_.add(new JLabel("Position List File"), "span 2, alignx center");
+      acqPanel_.add(new JLabel("Explanation"), "alignx center, wrap");
       for (int i = 0; i < nr; i++) {
+         final int lineNr = i;
          if (acqs_.size() <= i) {
             File f = FileDialogs.openFile(this,
                   "Load acquisition settings", FileDialogs.ACQ_SETTINGS_FILE);
             if (f != null) {
-               SequenceSettings seqSb = null;
+               SequenceSettings seqSb;
                try {
-                  SequenceSettings seqS = studio_.acquisitions().loadSequenceSettings(f.getPath());
-                  seqSb = seqS;
+                  seqSb = studio_.acquisitions().loadSequenceSettings(f.getPath());
                } catch (IOException ex) {
                   studio_.logs().showError(ex, "Failed to load Acquisition setting file");
                   return nr - 1;
@@ -249,42 +294,87 @@ public class MultiMDAFrame extends JFrame {
                return nr - 1;
             }
          }
-         JLabel label = new JLabel(acqs_.get(i).getAcqSettingFile().getName());
+         JLabelC label = new JLabelC(acqs_.get(i).getAcqSettingFile().getName());
          acqLabels_.add(i, label);
          acqPanel_.add(acqLabels_.get(i));
 
          JButton selectAcqFile = new JButton("...");
-         final int lineNr = i;
+         selectAcqFile.setFont(DEFAULT_FONT);
          selectAcqFile.addActionListener(e -> {
             File f = FileDialogs.openFile(this,
                   "Load acquisition settings", FileDialogs.ACQ_SETTINGS_FILE);
             if (f != null) {
                SequenceSettings seqSb = null;
                try {
-                  SequenceSettings seqS =
-                        studio_.acquisitions().loadSequenceSettings(f.getPath());
-                  seqSb = seqS;
+                  seqSb = studio_.acquisitions().loadSequenceSettings(f.getPath());
                } catch (IOException ex) {
                   studio_.logs().showError(ex, "Failed to load Acquisition setting file");
                }
                if (seqSb != null) {
                   acqs_.get(lineNr).setAcqSettings(f, seqSb);
                   acqLabels_.get(lineNr).setText(acqs_.get(lineNr).getAcqSettingFile().getName());
+                  JLabel explanation = acqExplanations_.get(lineNr);
+                  if (explanation != null) {
+                     explanation.setText(oneLineSummary(acqs_.get(lineNr)));
+                  }
                }
             }
          });
          acqPanel_.add(selectAcqFile);
 
-         final JButton posListButton = new JButton("Use current PositionList");
-         posListButton.addActionListener(e -> {
-            acqs_.get(lineNr).setPositionList(studio_.positions().getPositionList());
-            posListButton.setText("PositionList set");
-            acqExplanations_.get(lineNr).setText(oneLineSummary(acqs_.get(lineNr)));
+         final JComboBox<String> presetCombo = new JComboBox<>();
+         presetCombo.setFont(DEFAULT_FONT);
+         presetCombo.getEditor().getEditorComponent().setFont(DEFAULT_FONT);
+         presetCombo.addItem("");
+         final String presetGroup = studio_.profile().getSettings(
+               this.getClass()).getString(PRESET_GROUP, "");
+         if (presetGroup != null && !presetGroup.isEmpty()) {
+            studio_.core().getAvailableConfigs(presetGroup).forEach(presetCombo::addItem);
+         }
+         acqs_.get(lineNr).setPresetGroup(presetGroup);
+         presetCombo.addActionListener(e -> {
+            String presetName = (String) presetCombo.getSelectedItem();
+            if (lineNr < acqs_.size()) {
+               studio_.profile().getSettings((this.getClass())).putString(
+                       presetGroup + acqs_.get(lineNr).getAcqSettingFile().getPath(),
+                       presetName);
+               acqs_.get(lineNr).setPresetName(presetName);
+            }
          });
-         acqPanel_.add(posListButton);
-         acqExplanations_.add(new JLabel(oneLineSummary(acqs_.get(lineNr))));
-         acqPanel_.add(acqExplanations_.get(lineNr), "wrap");
+         presetCombo.setSelectedItem(studio_.profile().getSettings(
+               this.getClass()).getString(presetGroup
+                         + acqs_.get(lineNr).getAcqSettingFile().getPath(),
+                 ""));
+         presetCombos_.add(presetCombo);
+         acqPanel_.add(presetCombo, "gapx 20");
 
+         String positionListText = "current position";
+         if (acqs_.get(lineNr).getPositionList() != null) {
+            positionListText = acqs_.get(lineNr).getPositionListFile().getName();
+         }
+         final JLabelC positionListLabel = new JLabelC(positionListText);
+         acqPanel_.add(positionListLabel, "gapx 20");
+
+         JButton selectPosFile = new JButton("...");
+         selectPosFile.setFont(DEFAULT_FONT);
+         selectPosFile.addActionListener(e -> {
+            File f = FileDialogs.openFile(this,
+                  "Load position list", POSITION_LIST_FILE);
+            if (f != null) {
+               acqs_.get(lineNr).setPositionListFile(f);
+               if (acqs_.get(lineNr).getPositionList() != null) {
+                  positionListLabel.setText(acqs_.get(lineNr).getPositionListFile().getName());
+                  JLabel explanation = acqExplanations_.get(lineNr);
+                  if (explanation != null) {
+                     explanation.setText(oneLineSummary(acqs_.get(lineNr)));
+                  }
+               }
+            }
+         });
+         acqPanel_.add(selectPosFile);
+
+         acqExplanations_.add(new JLabelC(oneLineSummary(acqs_.get(lineNr))));
+         acqPanel_.add(acqExplanations_.get(lineNr), "gapx 20, wrap");
       }
       while (nr < acqs_.size()) {
          acqs_.remove(acqs_.size() - 1);
@@ -306,34 +396,34 @@ public class MultiMDAFrame extends JFrame {
       JPanel defaultTimesPanel = new JPanel(
             new MigLayout("fill, gap 2, insets 0",
                   "push[][][]push", "[][][]"));
+      defaultTimesPanel.setEnabled(framesPanel.isEnabled());
       framesPanel.add(defaultTimesPanel, "grow");
 
-      final JLabel numberLabel = new JLabel("Count:");
-      numberLabel.setFont(DEFAULT_FONT);
-
+      final JLabelC numberLabel = new JLabelC("Count:");
+      numberLabel.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(numberLabel, "alignx label");
 
       SpinnerModel sModel = new SpinnerNumberModel(1, 1, null, 1);
-
       numFrames_ = new JSpinner(sModel);
       JTextField field = ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField();
       field.setColumns(5);
       ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField().setFont(DEFAULT_FONT);
-
+      numFrames_.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(numFrames_, "wrap");
 
-      final JLabel intervalLabel = new JLabel("Interval:");
-      intervalLabel.setFont(DEFAULT_FONT);
+      final JLabelC intervalLabel = new JLabelC("Interval:");
       intervalLabel.setToolTipText(
             "Interval between successive time points.  Setting an interval "
                   + "less than the exposure time will cause micromanager to acquire "
                   + "a 'burst' of images as fast as possible");
+      intervalLabel.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(intervalLabel, "alignx label");
 
       interval_ = new JFormattedTextField(NumberFormat.getInstance());
       interval_.setColumns(5);
       interval_.setFont(DEFAULT_FONT);
       interval_.setValue(1.0);
+      interval_.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(interval_);
 
       timeUnitCombo_ = new JComboBox<>();
@@ -341,13 +431,13 @@ public class MultiMDAFrame extends JFrame {
       timeUnitCombo_.setFont(DEFAULT_FONT);
       // We shove this thing to the left a bit so that it takes up the same
       // vertical space as the spinner for the number of timepoints.
+      timeUnitCombo_.setEnabled(framesPanel.isEnabled());
       defaultTimesPanel.add(timeUnitCombo_, "pad 0 -15 0 0, wrap");
 
-      JLabel overrideLabel = new JLabel("Custom time intervals enabled");
+      JLabelC overrideLabel = new JLabelC("Custom time intervals enabled");
       overrideLabel.setFont(new Font("Arial", Font.BOLD, 12));
       overrideLabel.setForeground(Color.red);
 
-      // framesPanel_.addActionListener((ActionEvent e) -> applySettingsFromGUI());
       return framesPanel;
    }
 
@@ -357,19 +447,17 @@ public class MultiMDAFrame extends JFrame {
             "[grow, fill]", "[grow, fill]"));
 
       JButton afButton = new JButton("Options...");
+      afButton.setFont(DEFAULT_FONT);
       afButton.setToolTipText("Set autofocus options");
       afButton.setIcon(IconLoader.getIcon(
             "/org/micromanager/icons/wrench_orange.png"));
       afButton.setMargin(new Insets(2, 5, 2, 5));
-      afButton.setFont(new Font("Dialog", Font.PLAIN, 10));
       afButton.addActionListener((ActionEvent arg0) -> studio_.app().showAutofocusDialog());
       afPanel.add(afButton, "alignx center, wrap");
 
-      final JLabel afSkipFrame1 = new JLabel("Skip frame(s):");
-      afSkipFrame1.setFont(new Font("Dialog", Font.PLAIN, 10));
+      final JLabelC afSkipFrame1 = new JLabelC("Skip frame(s):");
       afSkipFrame1.setToolTipText("How many frames to skip between running autofocus. "
             + "Autofocus is always run at new stage positions");
-
       afPanel.add(afSkipFrame1, "split, spanx, alignx center");
 
       afSkipInterval_ = new JSpinner(new SpinnerNumberModel(0, 0, null, 1));
@@ -377,16 +465,53 @@ public class MultiMDAFrame extends JFrame {
       editor.setFont(DEFAULT_FONT);
       editor.getTextField().setColumns(3);
       afSkipInterval_.setValue(0);
-      // afSkipInterval_.setValue(getSequenceSettings().skipAutofocusCount());
-      // afSkipInterval_.addChangeListener((ChangeEvent e) -> {
-      //   applySettingsFromGUI();
-      //   afSkipInterval_.setValue(getAcquisitionEngine().getSequenceSettings()
-      //         .skipAutofocusCount());
-      // });
       afPanel.add(afSkipInterval_);
 
-      // afPanel.addActionListener((ActionEvent arg0) -> applySettingsFromGUI());
       return afPanel;
+   }
+
+   private CheckBoxPanel createPresetPanel() {
+      CheckBoxPanel presetPanel = new CheckBoxPanel("Use Preset");
+      presetPanel.setLayout(new MigLayout("fillx, gap 2, insets 2" + ", hidemode 3",
+               "[grow, fill]", "[grow, fill]"));
+
+      JLabel explanation = new JLabelC("Runs each time point ");
+      presetPanel.add(explanation, "wrap");
+
+      final JLabel presetLabel = new JLabelC("PresetGroup:");
+      presetLabel.setToolTipText("A preset can be applied before running each MDA. "
+               + "(at each time point). Select the Preset Group here.");
+      presetPanel.add(presetLabel, "split, spanx, alignx center");
+
+      JComboBox<String> configGroupCombo = new JComboBox<>();
+      configGroupCombo.setFont(DEFAULT_FONT);
+      configGroupCombo.getEditor().getEditorComponent().setFont(DEFAULT_FONT);
+      configGroupCombo.addItem("");
+      studio_.core().getAvailableConfigGroups().forEach(configGroupCombo::addItem);
+      configGroupCombo.setEnabled(presetPanel.isEnabled());
+      configGroupCombo.addActionListener(e -> {
+         String presetGroup = (String) configGroupCombo.getSelectedItem();
+         studio_.profile().getSettings((this.getClass())).putString(PRESET_GROUP, presetGroup);
+         for (JComboBox<String> combo : presetCombos_) {
+            combo.removeAllItems();
+            combo.addItem("");
+            studio_.core().getAvailableConfigs(presetGroup).forEach(combo::addItem);
+         }
+         for (int counter = 0; counter < acqs_.size(); counter++) {
+            acqs_.get(counter).setPresetGroup(presetGroup);
+            String presetName = studio_.profile().getSettings(this.getClass())
+                    .getString(presetGroup
+                    + acqs_.get(counter).getAcqSettingFile().getPath(), "");
+            if (counter < presetCombos_.size()) {
+               presetCombos_.get(counter).setSelectedItem(presetName);
+            }
+         }
+      });
+      configGroupCombo.setSelectedItem(studio_.profile().getSettings(
+               this.getClass()).getString(PRESET_GROUP, ""));
+      presetPanel.add(configGroupCombo, "alignx center, wrap");
+
+      return presetPanel;
    }
 
    private String oneLineSummary(MDASettingData mdaSettingData) {
@@ -403,7 +528,8 @@ public class MultiMDAFrame extends JFrame {
             }
          }
       }
-      if (mdaSettingData.getPositionList() != null
+      if (mdaSettingData.getSequenceSettings().usePositionList()
+            && mdaSettingData.getPositionList() != null
             && mdaSettingData.getPositionList().getNumberOfPositions() > 0) {
          sb.append("Positions: ").append(mdaSettingData.getPositionList().getNumberOfPositions());
          sb.append(".");
@@ -429,12 +555,22 @@ public class MultiMDAFrame extends JFrame {
    public void onApplicationShuttingDown(ShutdownCommencingEvent sce) {
       MutablePropertyMapView settings = studio_.profile().getSettings(this.getClass());
       settings.putInteger(NR_ACQ_SETTINGS, (Integer) nrSpinner_.getValue());
+      settings.putBoolean(USE_TIME_POINTS, framesPanel_.isSelected());
+      settings.putBoolean(USE_AUTOFOCUS, autoFocusPanel_.isSelected());
+      settings.putBoolean(USE_PRESET, presetPanel_.isSelected());
 
       List<String> acqPaths = new ArrayList<>(acqs_.size());
+      List<String> posListPaths = new ArrayList<>(acqs_.size());
       for (MDASettingData acq : acqs_) {
          acqPaths.add(acq.getAcqSettingFile().getPath());
+         if (acq.getPositionListFile() != null) {
+            posListPaths.add(acq.getPositionListFile().getPath());
+         } else {
+            posListPaths.add("");
+         }
       }
       settings.putStringList(ACQ_PATHS, acqPaths);
+      settings.putStringList(POSITION_LIST_PATHS, posListPaths);
    }
 
 }
