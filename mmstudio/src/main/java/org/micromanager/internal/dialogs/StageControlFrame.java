@@ -459,13 +459,13 @@ public final class StageControlFrame extends JFrame {
             int dy = 0;
             switch (index / 3) {
                case 0:
-                  dy = -1;
+                  dy = 1;
                   break;
                case 1:
                   dx = -1;
                   break;
                case 2:
-                  dx = 1;
+                  dx = -1;
                   break;
                case 3:
                   dy = 1;
@@ -784,7 +784,7 @@ public final class StageControlFrame extends JFrame {
    }
 
    private void setRelativeXYStagePosition(double x, double y) {
-      uiMovesStageManager_.getXYNavigator().moveSampleOnDisplayUm(x, y);
+      uiMovesStageManager_.getXYNavigator().moveSampleUm(x, y);
       if (settings_.getBoolean(SNAP, false)) {
          try {
             core_.waitForDevice(core_.getXYStageDevice());
