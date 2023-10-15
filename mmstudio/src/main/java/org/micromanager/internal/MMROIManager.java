@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
+import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
@@ -67,7 +68,13 @@ public class MMROIManager {
       }
       if (roi.getType() == Roi.RECTANGLE) {
          try {
-            studio_.app().setROI(updateROI(roi));
+            if (studio_.core().getNumberOfCameraChannels() < 2) {
+               studio_.app().setROI(updateROI(studio_.core().getCameraDevice(), roi));
+            } else {
+               for (int c = 0; c < studio_.core().getNumberOfCameraChannels(); c++) {
+                  studio_.app().setROI(updateROI(studio_.core().getCameraChannelName(c), roi));
+               }
+            }
          } catch (Exception e) {
             // Core failed to set new ROI.
             studio_.logs().logError(e, "Unable to set new ROI");
@@ -93,7 +100,7 @@ public class MMROIManager {
          // would have to test each angle of each polygon to see if it's
          // 90 degrees and has the correct handedness), and this provides a
          // good- enough solution for now.
-         rois.add(updateROI(subRoi));
+         rois.add(updateROI(studio_.core().getCameraDevice(), subRoi));
       }
       try {
          setMultiROI(rois);
@@ -109,7 +116,7 @@ public class MMROIManager {
     * Also correct for image rotation and/or flipping that may have been
     * introduced by the Image Flipper plugin.
     */
-   private Rectangle updateROI(Roi roi) {
+   private Rectangle updateROI(String camera, Roi roi) {
       Rectangle r = roi.getBounds();
 
       // If the image has ROI info attached to it, correct for the offsets.
@@ -124,9 +131,18 @@ public class MMROIManager {
       DataViewer viewer = studio_.displays().getActiveDataViewer();
       if (viewer != null) {
          try {
-            List<Image> images = viewer.getDisplayedImages();
-            // Just take the first one.
-            Metadata metadata = images.get(0).getMetadata();
+            // Multiple camera images are always multi-channel,
+            // so find all images ignoring the channel
+            List<Image> images = viewer.getDataProvider().getImagesIgnoringAxes(
+                    viewer.getDisplayedImages().get(0).getCoords(), Coords.C);
+            // Find the image that matches the requested camera
+            Image image = findImageTakenWithCamera(images, camera);
+            if (image == null) {
+               studio_.logs().showError("Internal error: "
+                       + "unable to find image taken with camera " + camera);
+               return r;
+            }
+            Metadata metadata = image.getMetadata();
             if (metadata != null) {
                originalROI = metadata.getROI();
                if (metadata.getUserData().containsInteger(
@@ -203,7 +219,13 @@ public class MMROIManager {
       curImage.setRoi(xOffset, yOffset, width, height);
       Roi roi = curImage.getRoi();
       try {
-         studio_.app().setROI(updateROI(roi));
+         if (studio_.core().getNumberOfCameraChannels() < 2) {
+            studio_.app().setROI(updateROI(studio_.core().getCameraDevice(), roi));
+         } else {
+            for (int c = 0; c < studio_.core().getNumberOfCameraChannels(); c++) {
+               studio_.app().setROI(updateROI(studio_.core().getCameraChannelName(c), roi));
+            }
+         }
       } catch (Exception e) {
          // Core failed to set new ROI.
          studio_.logs().logError(e, "Unable to set new ROI");
@@ -249,6 +271,19 @@ public class MMROIManager {
          curImage = dw.getImagePlus();
       }
       return curImage;
+   }
+
+   private Image findImageTakenWithCamera(List<Image> images, String camera) {
+      for (Image image : images) {
+         Metadata metadata = image.getMetadata();
+         if (metadata != null) {
+            String imageCam = metadata.getCamera();
+            if (imageCam != null && imageCam.equals(camera)) {
+               return image;
+            }
+         }
+      }
+      return null;
    }
 
 }
