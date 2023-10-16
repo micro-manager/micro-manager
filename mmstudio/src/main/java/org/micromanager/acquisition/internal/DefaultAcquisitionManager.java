@@ -269,7 +269,10 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             TaggedImage tagged = core.getTaggedImage(c);
             Image temp = new DefaultImage(tagged);
             Coords newCoords = temp.getCoords().copyBuilder().channel(c).build();
-            Metadata newMetadata = temp.getMetadata().copyBuilderWithNewUUID().build();
+            String camera = core.getNumberOfCameraChannels() > 1
+                    ? core.getCameraChannelName(c) : core.getCameraDevice();
+            Metadata newMetadata = temp.getMetadata().copyBuilderWithNewUUID()
+                    .camera(camera).build();
             temp = temp.copyWith(newCoords, newMetadata);
             result.add(temp);
          }
