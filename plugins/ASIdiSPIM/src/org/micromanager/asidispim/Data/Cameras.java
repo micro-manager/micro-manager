@@ -468,6 +468,11 @@ public class Cameras {
             .contains("panda");
    }
    
+   private boolean isFusion(Devices.Keys camKey) {
+      return props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440") ||  // Fusion
+            props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C15440");  // FusionBT
+   }
+   
    /**
     * Goes to properties and sees if this camera has slow readout enabled
     * (which affects row transfer speed and thus reset/readout time).
@@ -477,7 +482,7 @@ public class Cameras {
    public boolean isSlowReadout(Devices.Keys camKey) {
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
-         if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
+         if (isFusion(camKey)) {
             // Fusion has 3 readout speeds but code architecture is only set up for fast/slow :(
             // call mode 3 fast and modes 1 and 2 slow
             // require fast readout for light sheet mode, which is somewhat arbitrary but simplifies code
@@ -531,7 +536,7 @@ public class Cameras {
       int y = 0;
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
-         if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
+         if (isFusion(camKey)) {
             x = 2304;
             y = 2304;
          } else { // Flash4
@@ -583,7 +588,7 @@ public class Cameras {
    public double getRowReadoutTime(Devices.Keys camKey) {
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
-         if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
+         if (isFusion(camKey)) {
             String mode = props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE);
             if (mode.equals("3")) {
                return (11.22/2304);
@@ -802,11 +807,11 @@ public class Cameras {
 
          switch (camLibrary) {
          case HAMCAM:
-            if (camLibrary == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
+            if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
                // trust the device adapter's calculation for USB3
                readoutTimeMs = props_.getPropValueFloat(camKey, Properties.Keys.READOUTTIME)*1000f;
             } else {
-               if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
+               if (isFusion(camKey)) {
                   numReadoutRows = roi.height;
                   readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
                } else {
