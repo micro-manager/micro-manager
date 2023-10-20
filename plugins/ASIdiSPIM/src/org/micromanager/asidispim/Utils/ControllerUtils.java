@@ -694,6 +694,10 @@ public class ControllerUtils {
             delayRepeats = volumeIntervalMs - volumeDurationMs;
             numVolumesPerTrigger = settings.numTimepoints;
          }
+         if (delayRepeats > 32000) {  // not sure if this is actually the limit, but is conservative and this is really corner case anyway
+            MyDialogUtils.showError("Cannot use hardware timepoints with too-large interval.");
+            return false;
+         }
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_REPEATS, delayRepeats, skipScannerWarnings);
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, numVolumesPerTrigger, skipScannerWarnings);
 
