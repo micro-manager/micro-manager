@@ -9,6 +9,7 @@ import javax.swing.SwingWorker;
 import org.micromanager.Studio;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
@@ -55,6 +56,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
                StorageMultipageTiff.getShouldSplitPositions());
       } else if (mode == Datastore.SaveMode.ND_TIFF) {
          saver_ = new NDTiffAdapter(duplicate_, path_, true);
+         ((NDTiffAdapter) saver_).setSummaryMetadata(store.getSummaryMetadata());
       } else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          saver_ = new StorageSinglePlaneTiffSeries(duplicate_, path_, true);
       } else {
@@ -81,10 +83,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       }
 
       final SummaryMetadata fSummary = summary;
-      if (!(saver_ instanceof NDTiffAdapter)) {
-         // NDTiffAdapter sets storage in the setSummaryMetadata implementation ????
-         duplicate_.setStorage(saver_);
-      }
+      duplicate_.setStorage(saver_);
       duplicate_.setSummaryMetadata(fSummary);
 
       // Copy images ordered by stage position index.

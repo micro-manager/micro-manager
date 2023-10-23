@@ -49,14 +49,14 @@ public class NDTiffAdapter implements Storage {
 
    private NDTiffAPI storage_;
    private DefaultDatastore store_;
-   private SummaryMetadata summaryMetadata_ = null;
+   private SummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
 
    /**
     * Constructor of NDTiffAdapter.
     *
     * @param store Micro-Manager data store that will be used
     * @param dir Where to write the data
-    * @param amInWriteMode Whether or not we are writing
+    * @param amInWriteMode Whether we are writing
     * @throws IOException Close to inevitable with data storage
     */
    public NDTiffAdapter(Datastore store, String dir, Boolean amInWriteMode)
@@ -68,7 +68,6 @@ public class NDTiffAdapter implements Storage {
 
       store_.setSavePath(dir);
       store_.setName(new File(dir).getName());
-
 
       if (amInWriteMode) {
          // Wait until summary metadata set to create storage
@@ -83,11 +82,12 @@ public class NDTiffAdapter implements Storage {
    }
 
    private HashMap<String, Object> coordsToHashMap(Coords coords) {
-      HashMap<String, Object> axes = new HashMap<String, Object>();
+      HashMap<String, Object> axes = new HashMap<>();
       for (String s : coords.getAxes()) {
          axes.put(s, coords.getIndex(s));
       }
-      //Axes with a value of 0 aren't explicitly encoded
+      // Axes with a value of 0 aren't explicitly encoded
+      SummaryMetadata summaryMetadata = getSummaryMetadata();
       for (String s : getSummaryMetadata().getOrderedAxes()) {
          if (!axes.containsKey(s)) {
             axes.put(s, 0);
@@ -112,28 +112,31 @@ public class NDTiffAdapter implements Storage {
     */
    @Subscribe
    public void onNewSummaryMetadata(DataProviderHasNewSummaryMetadataEvent event) {
-      try {
+      setSummaryMetadata(event.getSummaryMetadata());
+   }
 
+   /**
+    * This is quite strange.  Only when we have SummaryMetadata, we can create the
+    * Storage.
+    *
+    * @param summary To push to the storage.
+    */
+   public void setSummaryMetadata(SummaryMetadata summary) {
+      try {
          String summaryMDString = NonPropertyMapJSONFormats.summaryMetadata().toJSON(
-                 ((DefaultSummaryMetadata) event.getSummaryMetadata()).toPropertyMap());
-         JSONObject summaryMetadata;
+                 ((DefaultSummaryMetadata) summary).toPropertyMap());
+         JSONObject jsonSummary;
          try {
-            summaryMetadata = new JSONObject(summaryMDString);
+            jsonSummary = new JSONObject(summaryMDString);
          } catch (JSONException e) {
             throw new RuntimeException("Problem with summary metadata");
          }
-
-         Consumer<String> debugLogger = new Consumer<String>() {
-            @Override
-            public void accept(String s) {
-               ReportingUtils.logDebugMessage(s);
-            }
-         };
+         Consumer<String> debugLogger = s -> ReportingUtils.logDebugMessage(s);
          storage_ = new NDTiffStorage(store_.getSavePath(), store_.getName(),
-                 summaryMetadata, 0, 0, false, 0,
+                 jsonSummary, 0, 0, false, 0,
                  SAVING_QUEUE_SIZE, debugLogger, false);
          try {
-            summaryMetadata_ =  DefaultSummaryMetadata.fromPropertyMap(
+            summaryMetadata_ = DefaultSummaryMetadata.fromPropertyMap(
                      NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                               storage_.getSummaryMetadata().toString()));
          } catch (IOException e) {
@@ -152,6 +155,9 @@ public class NDTiffAdapter implements Storage {
 
    @Override
    public void putImage(Image image) throws IOException {
+      if (storage_ == null) {
+         setSummaryMetadata(DefaultSummaryMetadata.getStandardSummaryMetadata());
+      }
       if (summaryMetadata_ != null) {
          ImageSizeChecker.checkImageSizeInSummary(summaryMetadata_, image);
       }
