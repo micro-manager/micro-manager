@@ -30,6 +30,7 @@ public class MagellanAPI {
    }
 
    public AcquisitionAPI createExploreAcquisition(boolean start) {
+      boolean useZ = GUI.getInstance().getUseZ();
       double zStep = GUI.getInstance().getExploreZStep();
       double overlap = GUI.getInstance().getOverlap();
       String dir = GUI.getInstance().getSavingDir();
