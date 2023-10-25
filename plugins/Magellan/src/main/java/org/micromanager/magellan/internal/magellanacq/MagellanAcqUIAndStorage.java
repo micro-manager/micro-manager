@@ -39,9 +39,9 @@ import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.XYTiledAcquisition;
-import org.micromanager.explore.ChannelGroupSettings;
-import org.micromanager.explore.ExploreAcquisition;
-import org.micromanager.explore.gui.ExploreControlsPanel;
+import org.micromanager.magellan.internal.explore.ChannelGroupSettings;
+import org.micromanager.magellan.internal.explore.ExploreAcquisition;
+import org.micromanager.magellan.internal.explore.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
 import org.micromanager.magellan.internal.gui.MagellanOverlayer;
 import org.micromanager.magellan.internal.gui.SurfaceGridPanel;
@@ -57,7 +57,6 @@ import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
-import org.micromanager.remote.PycroManagerCompatibleAcq;
 import org.micromanager.remote.PycroManagerCompatibleUI;
 
 /**
@@ -179,7 +178,7 @@ public class MagellanAcqUIAndStorage
 
    public Object putImage(final TaggedImage taggedImg) {
       HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
-      Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
+      final Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
               AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
               AcqEngMetadata.getHeight(taggedImg.tags), AcqEngMetadata.getWidth(taggedImg.tags));
 
@@ -191,8 +190,6 @@ public class MagellanAcqUIAndStorage
             public void run() {
                try {
                   added.get();
-
-
                   HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
                   //Display doesn't know about these in tiled layout
                   axes.remove(AcqEngMetadata.AXES_GRID_ROW);
@@ -297,6 +294,7 @@ public class MagellanAcqUIAndStorage
 
    @Override
    public int[] getBounds() {
+      //return null;
       if (acq_ instanceof ExploreAcquisition && !loadedData_) {
          return null;
       }
@@ -386,7 +384,6 @@ public class MagellanAcqUIAndStorage
       return acq_.getPixelStageTranslator().getStageCoordsFromPixelCoords(
               (long) (display_.getViewOffset().x + display_.getFullResSourceDataSize().x / 2),
               (long) (display_.getViewOffset().y + display_.getFullResSourceDataSize().y / 2));
-
    }
 
    public void update() {

@@ -27,20 +27,20 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class Magellan implements MenuPlugin, SciJavaPlugin {
 
-   public static final String VERSION = "2.2.0";
+   public static final String VERSION = "2.2.1";
 
    public static final String menuName = "Micro-Magellan";
-   public static final String tooltipDescription = "High throughout, automated micrscopy for "
+   public static final String tooltipDescription = "High throughout, automated microscopy for "
          + "slidescanning or volumetric imaging";
 
-   private static Studio mmAPI_;
+   private static Studio studio_;
    private static GUI gui_;
 
    public Magellan() {
    }
 
    public static Studio getStudio() {
-      return mmAPI_;
+      return studio_;
    }
 
    @Override
@@ -51,7 +51,7 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    @Override
    public void onPluginSelected() {
       if (gui_ == null) {
-         gui_ = new GUI(VERSION);
+         gui_ = new GUI(VERSION, studio_.profile());
       } else {
          gui_.setVisible(true);
       }
@@ -59,7 +59,7 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public void setContext(Studio studio) {
-      mmAPI_ = studio;
+      studio_ = studio;
    }
 
    @Override
@@ -83,6 +83,6 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    }
 
    public static CMMCore getCore() {
-      return mmAPI_.core();
+      return studio_.core();
    }
 }
