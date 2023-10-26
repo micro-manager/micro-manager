@@ -465,10 +465,10 @@ public final class StageControlFrame extends JFrame {
                   dx = -1;
                   break;
                case 2:
-                  dx = -1;
+                  dx = 1;
                   break;
                case 3:
-                  dy = 1;
+                  dy = -1;
                   break;
                default:
                   break;
