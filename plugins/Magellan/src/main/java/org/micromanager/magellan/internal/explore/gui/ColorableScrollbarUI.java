@@ -25,7 +25,7 @@ import javax.swing.JScrollBar;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 /**
- * What is this thing?
+ * Used for Z positions.
  *
  * @author Henry
  */

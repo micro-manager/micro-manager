@@ -95,6 +95,9 @@ public class ExploreAcquisition extends XYTiledAcquisition
       logger_ = logger;
       channels_ = channels;
       useZ_ = useZ;
+      if (!useZ_) {
+         zAxes_.clear();
+      }
 
       createXYPositions();
 

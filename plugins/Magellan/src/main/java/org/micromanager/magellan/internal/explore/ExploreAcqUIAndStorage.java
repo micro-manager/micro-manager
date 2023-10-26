@@ -41,6 +41,7 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
@@ -91,10 +92,12 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
    private final boolean useZ_;
 
 
-   public static ExploreAcqUIAndStorage create(String dir, String name,
-           int overlapX, int overlapY, boolean useZ, double zStep, String channelGroup)
+   public static ExploreAcqUIAndStorage create(Studio studio, String dir, String name,
+                                               int overlapX, int overlapY, boolean useZ,
+                                               double zStep, String channelGroup)
            throws Exception {
-      ChannelGroupSettings channels = new ChannelGroupSettings(channelGroup);
+      ChannelGroupSettings channels = new ChannelGroupSettings(channelGroup, studio.core(),
+              studio.profile());
       ExploreAcqUIAndStorage exploreAcqUIAndStorage = new ExploreAcqUIAndStorage(
               dir, name, true, useZ, channels, (String s) -> {});
       ExploreAcquisition acquisition = new ExploreAcquisition(overlapX, overlapY, useZ, zStep,

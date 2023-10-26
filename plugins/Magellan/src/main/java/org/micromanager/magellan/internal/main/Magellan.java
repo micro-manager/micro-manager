@@ -51,7 +51,7 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    @Override
    public void onPluginSelected() {
       if (gui_ == null) {
-         gui_ = new GUI(VERSION, studio_.profile());
+         gui_ = new GUI(VERSION, studio_);
       } else {
          gui_.setVisible(true);
       }

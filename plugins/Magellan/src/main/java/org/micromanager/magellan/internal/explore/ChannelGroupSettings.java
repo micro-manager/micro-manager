@@ -4,11 +4,12 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
+import org.micromanager.UserProfile;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.util.ChannelSetting;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 /**
@@ -19,14 +20,6 @@ import org.micromanager.acqj.util.ChannelSetting;
  */
 public class ChannelGroupSettings {
 
-
-   /**
-    * Convenience class that encapsulates a single channel setting.
-    *
-    * @author henrypinkard
-    */
-   
-   private static final String PREF_EXPOSURE = "EXPOSURE";
    private static final String PREF_COLOR = "COLOR";
    private static final String PREF_USE = "USE";
    private static final String PREF_OFFSET = "OFFSET";
@@ -35,12 +28,20 @@ public class ChannelGroupSettings {
          Color.pink};
 
    protected ArrayList<ChannelSetting> channels_;
-   private static CMMCore core_;
+   private final CMMCore core_;
+   private final MutablePropertyMapView settings_;
    protected String group_;
+   private static final String PREF_EXPOSURE = "EXPOSURE";
 
-   public ChannelGroupSettings(String channelGroup) {
+   /**
+    * Convenience class that encapsulates a single channel setting.
+    *
+    * @author henrypinkard
+    */
+   public ChannelGroupSettings(String channelGroup, CMMCore core, UserProfile profile) {
       group_ = channelGroup;
-      core_ = Engine.getCore();
+      core_ = core;
+      settings_ = profile.getSettings(this.getClass());
       updateChannelGroup(channelGroup);
    }
 
@@ -74,7 +75,7 @@ public class ChannelGroupSettings {
       }
       //The channel group for this object has been 
       int numCamChannels = (int) core_.getNumberOfCameraChannels();
-      channels_ = new ArrayList<ChannelSetting>();
+      channels_ = new ArrayList<>();
       if (numCamChannels <= 1) {
          for (String config : getChannelConfigs(channelGroup)) {
             channels_.add(new ChannelSetting(channelGroup,
@@ -108,7 +109,7 @@ public class ChannelGroupSettings {
       return channels_.get(i);
    }
 
-   private static String[] getChannelConfigs(String channelGroup) {
+   private String[] getChannelConfigs(String channelGroup) {
       if (channelGroup == null || channelGroup.equals("")) {
          return new String[]{};
       }
@@ -151,29 +152,26 @@ public class ChannelGroupSettings {
    private void setValuesFromPrefs(ChannelSetting setting) {
       String prefix = "CHANNELGROUP"
               + setting.group_ + "CHANNELNAME" + setting.config_;
-      Preferences prefs = Preferences.systemNodeForPackage(ChannelGroupSettings.class);
 
       try {
-         setting.exposure_ = prefs.getDouble(
+         setting.exposure_ = settings_.getDouble(
                  prefix + PREF_EXPOSURE, Engine.getCore().getExposure());
       } catch (Exception ex) {
          ex.printStackTrace();
       }
 
-      setting.offset_ = prefs.getDouble(prefix + PREF_OFFSET, 0.0);
-      setting.use_ = prefs.getBoolean(prefix + PREF_USE, true);
+      setting.offset_ = settings_.getDouble(prefix + PREF_OFFSET, 0.0);
+      setting.use_ = settings_.getBoolean(prefix + PREF_USE, true);
    }
 
    public void storeValuesInPrefs() {
-      Preferences prefs = Preferences.systemNodeForPackage(ChannelGroupSettings.class);
-
       for (ChannelSetting setting : channels_) {
          String prefix =
                   "CHANNELGROUP" + setting.group_ + "CHANNELNAME" + setting.config_;
-         prefs.putBoolean(prefix + PREF_USE, setting.use_);
-         prefs.putDouble(prefix + PREF_EXPOSURE, setting.exposure_);
+         settings_.putBoolean(prefix + PREF_USE, setting.use_);
+         settings_.putDouble(prefix + PREF_EXPOSURE, setting.exposure_);
 
-         prefs.putDouble(prefix + PREF_OFFSET, setting.offset_);
+         settings_.putDouble(prefix + PREF_OFFSET, setting.offset_);
       }
    }
 

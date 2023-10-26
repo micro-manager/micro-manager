@@ -43,6 +43,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -62,7 +63,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import org.micromanager.UserProfile;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.magellan.internal.explore.gui.SimpleChannelTableModel;
 import org.micromanager.magellan.internal.magellanacq.LoadedAcquisitionData;
@@ -79,7 +80,7 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
  *
  * @author Henry Pinkard
  */
-public class GUI extends javax.swing.JFrame {
+public class GUI extends JFrame {
 
    private static final String PREF_SIZE_WIDTH = "Magellan gui size width";
    private static final String PREF_SIZE_HEIGHT = "Magellan gui size height";
@@ -100,18 +101,20 @@ public class GUI extends javax.swing.JFrame {
    private final LinkedList<JSpinner> offsetSpinners_ = new LinkedList<>();
    private static GUI singleton_;
    private volatile boolean acquisitionRunning_ = false;
+   private final Studio studio_;
 
    /**
     * Constructor does the heavy lifting and creates the GUI.
     *
     * @param version version of the Magellan plugin.
     */
-   public GUI(String version, UserProfile profile) {
+   public GUI(String version, Studio studio) {
       singleton_ = this;
       storeAcqSettings_ = false; // dont store during intialization
-      settings_ = new GlobalSettings(profile);
+      settings_ = new GlobalSettings(studio.profile());
+      studio_ = studio;
       this.setTitle("Micro-Magellan " + version);
-      multiAcqManager_ = new MagellanAcquisitionsManager(this);
+      multiAcqManager_ = new MagellanAcquisitionsManager(studio_, this);
       initComponents();
       moreInitialization();
       this.setVisible(true);
@@ -1979,8 +1982,8 @@ public class GUI extends javax.swing.JFrame {
       settings_.getPrefs().putDouble(EXPLORE_Z_STEP, zStep);
       settings_.getPrefs().putDouble(EXPLORE_TILE_OVERLAP, overlap);
 
-      MagellanAcquisitionsManager.getInstance().createExploreAcquisition(useZ, zStep, overlap, dir,
-            name, cGroup, true);
+      MagellanAcquisitionsManager.getInstance().createExploreAcquisition(studio_, useZ, zStep,
+              overlap, dir, name, cGroup, true);
    }
 
    private void exploreBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {

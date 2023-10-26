@@ -78,7 +78,6 @@ public class ExploreOverlayer implements OverlayerPlugin {
    }
 
 
-
    public void addExploreToOverlay(Overlay overlay, double magnification, Graphics g,
            Point2D.Double displayImageSize) {
       Point currentMouseLocation = mouseListener_.getCurrentMouseLocation();
@@ -146,7 +145,7 @@ public class ExploreOverlayer implements OverlayerPlugin {
    }
 
    private LinkedBlockingQueue<HashMap<String, Object>> getTilesWaitingToAcquireAtVisibleSlice() {
-      HashMap<String, Integer> zAxisPositions = new HashMap<String, Integer>();
+      HashMap<String, Integer> zAxisPositions = new HashMap<>();
       for (String zAxisName : acq_.getZAxes().keySet()) {
          zAxisPositions.put(zAxisName, (Integer) viewer_.getAxisPosition(zAxisName));
       }
