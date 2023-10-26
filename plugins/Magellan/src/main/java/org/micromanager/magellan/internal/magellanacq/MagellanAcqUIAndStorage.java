@@ -93,8 +93,9 @@ public class MagellanAcqUIAndStorage
    private MagellanOverlayer overlayer_;
    private SurfaceGridPanel surfaceGridControls_;
    private boolean explore_;
+   private final boolean useZ_;
 
-   public MagellanAcqUIAndStorage(String dir, String name,
+   public MagellanAcqUIAndStorage(String dir, String name, boolean useZ,
                                   ChannelGroupSettings exploreChannels,
                                   boolean showDisplay) {
       displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
@@ -107,6 +108,7 @@ public class MagellanAcqUIAndStorage
       };
       dir_ = dir;
       name_ = name;
+      useZ_ = useZ;
       loadedData_ = false;
       showDisplay_ = showDisplay;
       exploreChannels_ = exploreChannels;
@@ -126,6 +128,7 @@ public class MagellanAcqUIAndStorage
               -> new Thread(r, "Magellan viewer communication thread"));
       storage_ = new NDTiffStorage(dir);
       dir_ = dir;
+      useZ_ = false;
       loadedData_ = true;
       showDisplay_ = true;
       summaryMetadata_ = storage_.getSummaryMetadata();
@@ -255,7 +258,7 @@ public class MagellanAcqUIAndStorage
 
          if (acq_ instanceof ExploreAcquisition) {
             exploreControlsPanel_ = new ExploreControlsPanel((ExploreAcquisition) acq_,
-                    overlayer_, exploreChannels_, acq_.getZAxes());
+                    overlayer_, useZ_, exploreChannels_, acq_.getZAxes());
             display_.addControlPanel(exploreControlsPanel_);
          }
 

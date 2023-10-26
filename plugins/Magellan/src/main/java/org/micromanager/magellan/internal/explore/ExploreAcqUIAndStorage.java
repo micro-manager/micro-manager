@@ -88,38 +88,43 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
    protected ExploreControlsPanel exploreControlsPanel_;
    private Consumer<String> logger_;
    private ChannelGroupSettings channels_;
+   private final boolean useZ_;
 
 
    public static ExploreAcqUIAndStorage create(String dir, String name,
-           int overlapX, int overlapY, double zStep, String channelGroup) throws Exception {
+           int overlapX, int overlapY, boolean useZ, double zStep, String channelGroup)
+           throws Exception {
       ChannelGroupSettings channels = new ChannelGroupSettings(channelGroup);
       ExploreAcqUIAndStorage exploreAcqUIAndStorage = new ExploreAcqUIAndStorage(
-              dir, name, true, channels, (String s) -> {});
-      ExploreAcquisition acquisition = new ExploreAcquisition(overlapX, overlapY, zStep,
+              dir, name, true, useZ, channels, (String s) -> {});
+      ExploreAcquisition acquisition = new ExploreAcquisition(overlapX, overlapY, useZ, zStep,
               channels, exploreAcqUIAndStorage);
       return exploreAcqUIAndStorage;
    }
 
    public ExploreAcqUIAndStorage(String dir, String name, boolean showDisplay,
-                                 ChannelGroupSettings exploreChannels, Consumer<String> logger) {
+                                 boolean useZ, ChannelGroupSettings exploreChannels,
+                                 Consumer<String> logger) {
       displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
               -> new Thread(r, "Magellan viewer communication thread"));
       logger_ = logger;
       dir_ = dir;
       name_ = name;
+      useZ_ = useZ;
       loadedData_ = false;
       showDisplay_ = showDisplay;
       channels_ = exploreChannels;
    }
 
    public ExploreAcqUIAndStorage(String dir, String name, boolean showDisplay,
-                                ChannelGroupSettings exploreChannels) {
-      this(dir, name, showDisplay, exploreChannels, (String s) -> {});
+                                boolean useZ, ChannelGroupSettings exploreChannels) {
+      this(dir, name, showDisplay, useZ, exploreChannels, (String s) -> {});
    }
 
    //Constructor for opening loaded data
    public ExploreAcqUIAndStorage(String dir, Consumer<String> logger) throws IOException {
       logger_ = logger;
+      useZ_ = false;
       displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
               -> new Thread(r, "Magellan viewer communication thread"));
       storage_ = new NDTiffStorage(dir);
@@ -317,7 +322,7 @@ public class ExploreAcqUIAndStorage implements AcqEngJDataSink, NDViewerDataSour
          display_.setOverlayerPlugin(overlayer_);
 
          exploreControlsPanel_ = new ExploreControlsPanel(acq_,
-                  overlayer_,  channels_, acq_.getZAxes());
+                  overlayer_,  useZ_, channels_, acq_.getZAxes());
          display_.addControlPanel(exploreControlsPanel_);
 
          display_.setCustomCanvasMouseListener(mouseListener_);

@@ -1979,7 +1979,7 @@ public class GUI extends javax.swing.JFrame {
       settings_.getPrefs().putDouble(EXPLORE_Z_STEP, zStep);
       settings_.getPrefs().putDouble(EXPLORE_TILE_OVERLAP, overlap);
 
-      MagellanAcquisitionsManager.getInstance().createExploreAcquisition(zStep, overlap, dir,
+      MagellanAcquisitionsManager.getInstance().createExploreAcquisition(useZ, zStep, overlap, dir,
             name, cGroup, true);
    }
 

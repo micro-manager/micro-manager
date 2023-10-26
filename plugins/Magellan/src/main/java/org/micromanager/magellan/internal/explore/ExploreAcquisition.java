@@ -68,16 +68,18 @@ public class ExploreAcquisition extends XYTiledAcquisition
          });
 
    private Consumer<String> logger_;
-   ChannelGroupSettings channels_;
+   private ChannelGroupSettings channels_;
+   private final boolean useZ_;
 
-   public ExploreAcquisition(int pixelOverlapX, int pixelOverlapY, double zStep,
-                             ChannelGroupSettings channels,
+   public ExploreAcquisition(int pixelOverlapX, int pixelOverlapY, boolean useZ,
+                             double zStep, ChannelGroupSettings channels,
                              ExploreAcqUIAndStorage adapter) throws Exception {
-      this(pixelOverlapX, pixelOverlapY, zStep, channels, adapter, (String s) -> {
+      this(pixelOverlapX, pixelOverlapY, useZ, zStep, channels, adapter, (String s) -> {
       });
    }
 
-   public ExploreAcquisition(int pixelOverlapX, int pixelOverlapY, double zStep,
+   public ExploreAcquisition(int pixelOverlapX, int pixelOverlapY, boolean useZ,
+                             double zStep,
                              ChannelGroupSettings channels,
                              AcqEngJDataSink adapter,
                              Consumer<String> logger) throws Exception {
@@ -92,6 +94,7 @@ public class ExploreAcquisition extends XYTiledAcquisition
          });
       logger_ = logger;
       channels_ = channels;
+      useZ_ = useZ;
 
       createXYPositions();
 
@@ -210,14 +213,16 @@ public class ExploreAcquisition extends XYTiledAcquisition
       }
 
 
-      HashMap<String, Integer> zTopIndex = new HashMap<String, Integer>();
-      HashMap<String, Integer> zBottomIndex = new HashMap<String, Integer>();
+      HashMap<String, Integer> zTopIndex = new HashMap<>();
+      HashMap<String, Integer> zBottomIndex = new HashMap<>();
       // get slice axes for all z devices
-      for (String zName : getZDeviceNames()) {
-         double zPosition = Engine.getCore().getPosition(zName);
-         int zIndex = (int) Math.round((zPosition - getZOrigin(zName)) / getZStep(zName));
-         zTopIndex.put(zName, zIndex);
-         zBottomIndex.put(zName, zIndex);
+      if (useZ_) {
+         for (String zName : getZDeviceNames()) {
+            double zPosition = Engine.getCore().getPosition(zName);
+            int zIndex = (int) Math.round((zPosition - getZOrigin(zName)) / getZStep(zName));
+            zTopIndex.put(zName, zIndex);
+            zBottomIndex.put(zName, zIndex);
+         }
       }
 
 
@@ -234,12 +239,14 @@ public class ExploreAcquisition extends XYTiledAcquisition
          HashMap<String, Integer> zMinIndices = new HashMap<String, Integer>();
          HashMap<String, Integer> zMaxIndices = new HashMap<String, Integer>();
 
-         for (String zName : getZDeviceNames()) {
-            try {
-               zMinIndices.put(zName, getZLimitLowerSliceIndex(zName));
-               zMaxIndices.put(zName, getZLimitUpperSliceIndex(zName));
-            } catch (Exception e) {
-               throw new RuntimeException(e);
+         if (useZ_) {
+            for (String zName : getZDeviceNames()) {
+               try {
+                  zMinIndices.put(zName, getZLimitLowerSliceIndex(zName));
+                  zMaxIndices.put(zName, getZLimitUpperSliceIndex(zName));
+               } catch (Exception e) {
+                  throw new RuntimeException(e);
+               }
             }
          }
 
@@ -283,9 +290,11 @@ public class ExploreAcquisition extends XYTiledAcquisition
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
       acqFunctions.add(positions(selectedXYPositions));
-      for (String zName :  getZDeviceNames()) {
-         acqFunctions.add(AcqEventModules.moveStage(zName, zMinIndices.get(zName),
-                 zMaxIndices.get(zName) + 1, getZStep(zName), getZOrigin(zName)));
+      if (useZ_) {
+         for (String zName : getZDeviceNames()) {
+            acqFunctions.add(AcqEventModules.moveStage(zName, zMinIndices.get(zName),
+                    zMaxIndices.get(zName) + 1, getZStep(zName), getZOrigin(zName)));
+         }
       }
       if (channels_ != null && channels_.getNumChannels() > 0) {
          ArrayList<ChannelSetting> channels = new ArrayList<ChannelSetting>();
@@ -310,7 +319,6 @@ public class ExploreAcquisition extends XYTiledAcquisition
             eventList.add(event);
          }
       }
-
 
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> list
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();

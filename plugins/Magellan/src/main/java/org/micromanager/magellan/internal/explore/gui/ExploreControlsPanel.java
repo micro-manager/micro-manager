@@ -20,27 +20,32 @@ import org.micromanager.ndviewer.api.OverlayerPlugin;
  *
  * @author henrypinkard
  */
-public class ExploreControlsPanel extends javax.swing.JPanel implements ControlsPanelInterface {
+public class ExploreControlsPanel extends JPanel implements ControlsPanelInterface {
 
    private ChannelGroupSettings channels_;
    private ExploreAcquisition acquisition_;
    private HashMap<String, ExploreZSliders> zSlidersList_ = new HashMap<>();
    private OverlayerPlugin overlayer_;
+   private final boolean useZ_;
 
    /**
     * Creates new form ExploreChannelsPanel.
     */
    public ExploreControlsPanel(ExploreAcquisition acquisition, OverlayerPlugin overlayer,
-                               ChannelGroupSettings channels, HashMap<String, ZAxis> zAxes) {
+                               boolean useZ, ChannelGroupSettings channels,
+                               HashMap<String, ZAxis> zAxes) {
       channels_ = channels;
       overlayer_ = overlayer;
       acquisition_ = acquisition;
-      try {
-         for (String name : zAxes.keySet()) {
-            zSlidersList_.put(name, new ExploreZSliders(acquisition, zAxes.get(name)));
+      useZ_ = useZ;
+      if (useZ_) {
+         try {
+            for (String name : zAxes.keySet()) {
+               zSlidersList_.put(name, new ExploreZSliders(acquisition, zAxes.get(name)));
+            }
+         } catch (Exception e) {
+            throw new RuntimeException(e);
          }
-      } catch (Exception e) {
-         throw new RuntimeException(e);
       }
       initComponents();
 
@@ -64,9 +69,11 @@ public class ExploreControlsPanel extends javax.swing.JPanel implements Controls
    
    public void updateGUIToReflectHardwareZPosition(String name, Integer zIndex) {
       // iterate through zsliders and update the one with the given name
-      for (String slidersName : zSlidersList_.keySet()) {
-         if (slidersName.equals(name)) {
-            zSlidersList_.get(name).updateZDrivelocation(zIndex);
+      if (useZ_) {
+         for (String slidersName : zSlidersList_.keySet()) {
+            if (slidersName.equals(name)) {
+               zSlidersList_.get(name).updateZDrivelocation(zIndex);
+            }
          }
       }
    }
@@ -143,14 +150,16 @@ public class ExploreControlsPanel extends javax.swing.JPanel implements Controls
 
       this.add(acquireAtCurrentButton_, "wrap");
 
-      JPanel sliderPanel = new JPanel(new MigLayout());
-      for (ExploreZSliders zSliders : zSlidersList_.values()) {
-         sliderPanel.add(zSliders, "grow, wrap");
-      }
+      if (useZ_) {
+         JPanel sliderPanel = new JPanel(new MigLayout());
+         for (ExploreZSliders zSliders : zSlidersList_.values()) {
+            sliderPanel.add(zSliders, "grow, wrap");
+         }
 
-      this.add(sliderPanel, "growx, wrap");
-      sliderPanel.setPreferredSize(new Dimension(650,
-              sliderPanel.getPreferredSize().height));
+         this.add(sliderPanel, "growx, wrap");
+         sliderPanel.setPreferredSize(new Dimension(650,
+                 sliderPanel.getPreferredSize().height));
+      }
 
       JPanel buttonPanel = new JPanel(new FlowLayout());
       buttonPanel.add(selectUseAllButton_);

@@ -150,7 +150,7 @@ public class MagellanAcquisitionsManager {
 
    }
 
-   public ExploreAcquisition createExploreAcquisition(double zStep, double overlap,
+   public ExploreAcquisition createExploreAcquisition(boolean useZ, double zStep, double overlap,
                                                       String dir, String name, String cGroup,
                                                       boolean start) {
       if (!AffineTransformUtils.isAffineTransformDefined()) {
@@ -163,7 +163,7 @@ public class MagellanAcquisitionsManager {
       //abort existing explore acq if needed
       if (exploreAcq_ != null && !exploreAcq_.areEventsFinished()) {
          int result = JOptionPane.showConfirmDialog(null,
-               "Finish exisiting explore acquisition?",
+               "Finish existing explore acquisition?",
                "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
             exploreAcq_.abort();
@@ -176,9 +176,10 @@ public class MagellanAcquisitionsManager {
       int yOverlap = (int) (Engine.getCore().getImageHeight() * overlap / 100.);
 
       ChannelGroupSettings channels = new ChannelGroupSettings(cGroup);
-      MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(dir, name, channels, true);
+      MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(dir, name, useZ, channels,
+              true);
       try {
-         exploreAcq_ = new ExploreAcquisition(xOverlap, yOverlap, zStep, channels, adapter,
+         exploreAcq_ = new ExploreAcquisition(xOverlap, yOverlap, useZ, zStep, channels, adapter,
                new Consumer<String>() {
                   @Override
                   public void accept(String s) {
@@ -197,7 +198,7 @@ public class MagellanAcquisitionsManager {
    public MagellanGUIAcquisition createAcquisition(int index, boolean start) throws IOException {
       MagellanGUIAcquisitionSettings settings = acqSettingsList_.get(index);
       MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(
-              settings.dir_, settings.name_, null, true);
+              settings.dir_, settings.name_, true, null, true);
       MagellanGUIAcquisition acq = null;
       try {
          acq = new MagellanGUIAcquisition(settings, adapter, true);
@@ -241,9 +242,9 @@ public class MagellanAcquisitionsManager {
                acqStatus_[index] = "Running";
                gui_.acquisitionRunning(true);
                try {
-                  MagellanAcqUIAndStorage adapater = new MagellanAcqUIAndStorage(
-                          acqSettings.dir_, acqSettings.name_, null, true);
-                  currentAcq_ = new MagellanGUIAcquisition(acqSettings, adapater, true);
+                  MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(
+                          acqSettings.dir_, acqSettings.name_, true, null, true);
+                  currentAcq_ = new MagellanGUIAcquisition(acqSettings, adapter, true);
                   currentAcq_.start();
                   currentAcqIndex_ = index;
                   currentAcq_.waitForCompletion();
