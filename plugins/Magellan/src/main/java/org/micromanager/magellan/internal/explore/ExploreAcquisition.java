@@ -120,10 +120,16 @@ public class ExploreAcquisition extends XYTiledAcquisition
    }
 
    public double getZOrigin(String name) {
+      if (!getZAxes().containsKey(name) || getZAxes().get(name) == null) {
+         return 0.0;
+      }
       return getZAxes().get(name).zOrigin_um_;
    }
 
    public double getZStep(String name) {
+      if (!getZAxes().containsKey(name) || getZAxes().get(name) == null) {
+         return 0.0;
+      }
       return getZAxes().get(name).zStep_um_;
    }
 
