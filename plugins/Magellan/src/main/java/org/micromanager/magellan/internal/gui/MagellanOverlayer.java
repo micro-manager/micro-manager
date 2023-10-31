@@ -29,8 +29,8 @@ import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.XYTiledAcquisition;
 import org.micromanager.acqj.util.xytiling.XYStagePosition;
-import org.micromanager.explore.ExploreAcquisition;
-import org.micromanager.explore.gui.ExploreOverlayer;
+import org.micromanager.magellan.internal.explore.ExploreAcquisition;
+import org.micromanager.magellan.internal.explore.gui.ExploreOverlayer;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;
@@ -121,7 +121,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
       if (acq instanceof ExploreAcquisition) {
          exploreOverlayer_ = new ExploreOverlayer(viewer, mouseListener, acq);
       }
-      acq_ = acq;
+      acq_  = acq;
       viewer_ = viewer;
    }
 
@@ -139,10 +139,12 @@ public class MagellanOverlayer implements OverlayerPlugin {
          easyOverlay.add(defaultOverlay.get(i));
       }
       //Create a simple overlay and send it to EDT for display
-      addEasyPartsOfOverlay(easyOverlay, magnification, displayImageSize,
-              // TODO: picking a z like this at random may fail when multiple present
-              axes.containsKey(getZAxisName())
-                      ? (Integer) axes.get(getZAxisName()) : 0, g, viewOffset);
+      String firstZAxis = getZAxisName();
+      int zIndex = 0;
+      if (!firstZAxis.isEmpty()) {
+         zIndex = (Integer) axes.get(firstZAxis);
+      }
+      addEasyPartsOfOverlay(easyOverlay, magnification, displayImageSize, zIndex, g, viewOffset);
       viewer_.setOverlay(easyOverlay);
 
       if (surfaceGridPanel_.isActive()) {
@@ -206,6 +208,9 @@ public class MagellanOverlayer implements OverlayerPlugin {
    }
 
    private String getZAxisName() {
+      if (acq_.getZAxes().size() == 0) {
+         return "";
+      }
       return acq_.getZAxes().keySet().stream().findFirst().get();
    }
 

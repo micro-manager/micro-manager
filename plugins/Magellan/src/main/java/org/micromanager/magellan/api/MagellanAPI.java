@@ -2,6 +2,7 @@ package org.micromanager.magellan.api;
 
 import java.awt.geom.Point2D;
 import java.io.IOException;
+import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
@@ -18,9 +19,11 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator
 public class MagellanAPI {
 
    MagellanAcquisitionsManager acqManager_;
+   private final Studio studio_;
 
-   public MagellanAPI() {
+   public MagellanAPI(Studio studio) {
       //make sure Magellan GUI showing
+      studio_ = studio;
       (new Magellan()).onPluginSelected();
       acqManager_ = MagellanAcquisitionsManager.getInstance();
    }
@@ -30,12 +33,14 @@ public class MagellanAPI {
    }
 
    public AcquisitionAPI createExploreAcquisition(boolean start) {
+      boolean useZ = GUI.getInstance().getUseZ();
       double zStep = GUI.getInstance().getExploreZStep();
       double overlap = GUI.getInstance().getOverlap();
       String dir = GUI.getInstance().getSavingDir();
       String name = GUI.getInstance().getExploreSavingName();
       String cGroup = GUI.getInstance().getExploreChannelGroup();
-      return acqManager_.createExploreAcquisition(zStep, overlap, dir, name, cGroup, start);
+      return acqManager_.createExploreAcquisition(studio_, useZ, zStep, overlap,
+              dir, name, cGroup, start);
    }
    
    public MagellanAcquisitionSettingsAPI getAcquisitionSettings(int index) {

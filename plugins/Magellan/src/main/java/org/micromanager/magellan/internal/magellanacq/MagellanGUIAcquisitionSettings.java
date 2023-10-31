@@ -17,8 +17,9 @@
 
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.explore.ChannelGroupSettings;
+import org.micromanager.Studio;
 import org.micromanager.magellan.api.MagellanAcquisitionSettingsAPI;
+import org.micromanager.magellan.internal.explore.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
@@ -69,7 +70,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
    public volatile int numTimePoints_;
    public volatile int timeIntervalUnit_;
 
-   public MagellanGUIAcquisitionSettings() {
+   public MagellanGUIAcquisitionSettings(Studio studio) {
       super();
       //now replace everything with values gotten from preferences
       MutablePropertyMapView prefs = Magellan.getStudio().profile()
@@ -96,7 +97,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       //channels
       String channelGroup = prefs.getString(PREF_PREFIX + "CHANNELGROUP", "");
       //This creates a new Object of channelSpecs that is "Owned" by the accquisition
-      channels_ = new ChannelGroupSettings(channelGroup);
+      channels_ = new ChannelGroupSettings(channelGroup, studio.core(), studio.profile());
    }
 
    public void storePreferedValues() {

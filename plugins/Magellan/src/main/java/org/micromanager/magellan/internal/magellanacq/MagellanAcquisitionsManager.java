@@ -27,12 +27,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import javax.swing.JOptionPane;
+import org.micromanager.Studio;
 import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.XYTiledAcquisition;
-import org.micromanager.explore.ChannelGroupSettings;
-import org.micromanager.explore.ExploreAcquisition;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.magellan.internal.explore.ChannelGroupSettings;
+import org.micromanager.magellan.internal.explore.ExploreAcquisition;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
@@ -54,11 +55,13 @@ public class MagellanAcquisitionsManager {
    private ExecutorService acqManageExecuterService_;
    ArrayList<Future> acqFutures_;
    private ExploreAcquisition exploreAcq_;
+   private final Studio studio_;
 
-   public MagellanAcquisitionsManager(GUI gui) {
+   public MagellanAcquisitionsManager(Studio studio, GUI gui) {
       singleton_ = this;
       gui_ = gui;
-      acqSettingsList_.add(new MagellanGUIAcquisitionSettings());
+      studio_ = studio;
+      acqSettingsList_.add(new MagellanGUIAcquisitionSettings(studio));
       acqManageExecuterService_ = Executors.newSingleThreadScheduledExecutor((Runnable r)
             -> new Thread(r, "Acquisition manager thread"));
    }
@@ -113,7 +116,7 @@ public class MagellanAcquisitionsManager {
 
    public void addNew() {
       acqStatus_ = null;
-      acqSettingsList_.add(new MagellanGUIAcquisitionSettings());
+      acqSettingsList_.add(new MagellanGUIAcquisitionSettings(studio_));
       gui_.acquisitionSettingsChanged();
    }
 
@@ -150,9 +153,9 @@ public class MagellanAcquisitionsManager {
 
    }
 
-   public ExploreAcquisition createExploreAcquisition(double zStep, double overlap,
-                                                      String dir, String name, String cGroup,
-                                                      boolean start) {
+   public ExploreAcquisition createExploreAcquisition(Studio studio, boolean useZ, double zStep,
+                                                      double overlap, String dir, String name,
+                                                      String cGroup, boolean start) {
       if (!AffineTransformUtils.isAffineTransformDefined()) {
          ReportingUtils.showError("XY Stage and Camera are not calibrated to each other."
                  + " \nOpen \"Devices--Pixel size calibration\" and set up Affine transform");
@@ -163,7 +166,7 @@ public class MagellanAcquisitionsManager {
       //abort existing explore acq if needed
       if (exploreAcq_ != null && !exploreAcq_.areEventsFinished()) {
          int result = JOptionPane.showConfirmDialog(null,
-               "Finish exisiting explore acquisition?",
+               "Finish existing explore acquisition?",
                "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
             exploreAcq_.abort();
@@ -175,10 +178,12 @@ public class MagellanAcquisitionsManager {
       int xOverlap = (int) (Engine.getCore().getImageWidth() * overlap / 100.);
       int yOverlap = (int) (Engine.getCore().getImageHeight() * overlap / 100.);
 
-      ChannelGroupSettings channels = new ChannelGroupSettings(cGroup);
-      MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(dir, name, channels, true);
+      ChannelGroupSettings channels = new ChannelGroupSettings(cGroup, studio.core(),
+              studio.profile());
+      MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(dir, name, useZ, channels,
+              true);
       try {
-         exploreAcq_ = new ExploreAcquisition(xOverlap, yOverlap, zStep, channels, adapter,
+         exploreAcq_ = new ExploreAcquisition(xOverlap, yOverlap, useZ, zStep, channels, adapter,
                new Consumer<String>() {
                   @Override
                   public void accept(String s) {
@@ -197,7 +202,7 @@ public class MagellanAcquisitionsManager {
    public MagellanGUIAcquisition createAcquisition(int index, boolean start) throws IOException {
       MagellanGUIAcquisitionSettings settings = acqSettingsList_.get(index);
       MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(
-              settings.dir_, settings.name_, null, true);
+              settings.dir_, settings.name_, true, null, true);
       MagellanGUIAcquisition acq = null;
       try {
          acq = new MagellanGUIAcquisition(settings, adapter, true);
@@ -241,9 +246,9 @@ public class MagellanAcquisitionsManager {
                acqStatus_[index] = "Running";
                gui_.acquisitionRunning(true);
                try {
-                  MagellanAcqUIAndStorage adapater = new MagellanAcqUIAndStorage(
-                          acqSettings.dir_, acqSettings.name_, null, true);
-                  currentAcq_ = new MagellanGUIAcquisition(acqSettings, adapater, true);
+                  MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(
+                          acqSettings.dir_, acqSettings.name_, true, null, true);
+                  currentAcq_ = new MagellanGUIAcquisition(acqSettings, adapter, true);
                   currentAcq_.start();
                   currentAcqIndex_ = index;
                   currentAcq_.waitForCompletion();

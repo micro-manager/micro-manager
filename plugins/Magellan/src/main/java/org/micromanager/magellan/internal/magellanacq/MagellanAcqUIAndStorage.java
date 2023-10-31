@@ -39,9 +39,9 @@ import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
 import org.micromanager.acqj.main.XYTiledAcquisition;
-import org.micromanager.explore.ChannelGroupSettings;
-import org.micromanager.explore.ExploreAcquisition;
-import org.micromanager.explore.gui.ExploreControlsPanel;
+import org.micromanager.magellan.internal.explore.ChannelGroupSettings;
+import org.micromanager.magellan.internal.explore.ExploreAcquisition;
+import org.micromanager.magellan.internal.explore.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
 import org.micromanager.magellan.internal.gui.MagellanOverlayer;
 import org.micromanager.magellan.internal.gui.SurfaceGridPanel;
@@ -57,7 +57,6 @@ import org.micromanager.ndviewer.api.NDViewerAPI;
 import org.micromanager.ndviewer.api.NDViewerAcqInterface;
 import org.micromanager.ndviewer.api.NDViewerDataSource;
 import org.micromanager.ndviewer.main.NDViewer;
-import org.micromanager.remote.PycroManagerCompatibleAcq;
 import org.micromanager.remote.PycroManagerCompatibleUI;
 
 /**
@@ -93,9 +92,9 @@ public class MagellanAcqUIAndStorage
 
    private MagellanOverlayer overlayer_;
    private SurfaceGridPanel surfaceGridControls_;
-   private boolean explore_;
+   private final boolean useZ_;
 
-   public MagellanAcqUIAndStorage(String dir, String name,
+   public MagellanAcqUIAndStorage(String dir, String name, boolean useZ,
                                   ChannelGroupSettings exploreChannels,
                                   boolean showDisplay) {
       displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
@@ -108,6 +107,7 @@ public class MagellanAcqUIAndStorage
       };
       dir_ = dir;
       name_ = name;
+      useZ_ = useZ;
       loadedData_ = false;
       showDisplay_ = showDisplay;
       exploreChannels_ = exploreChannels;
@@ -127,6 +127,7 @@ public class MagellanAcqUIAndStorage
               -> new Thread(r, "Magellan viewer communication thread"));
       storage_ = new NDTiffStorage(dir);
       dir_ = dir;
+      useZ_ = false;
       loadedData_ = true;
       showDisplay_ = true;
       summaryMetadata_ = storage_.getSummaryMetadata();
@@ -136,7 +137,6 @@ public class MagellanAcqUIAndStorage
    @Override
    public void initialize(Acquisition acq, JSONObject summaryMetadata) {
       acq_ = (XYTiledAcquisition) acq;
-      explore_ = acq_ instanceof ExploreAcquisition;
 
       summaryMetadata_ = summaryMetadata;
 
@@ -151,7 +151,6 @@ public class MagellanAcqUIAndStorage
               Engine.getCore().debugLogEnabled() ? (Consumer<String>) s
                       -> Engine.getCore().logMessage(s) : null, true);
 
-      boolean addExploreControls = true;
       if (showDisplay_) {
          createDisplay();
       }
@@ -179,36 +178,27 @@ public class MagellanAcqUIAndStorage
 
    public Object putImage(final TaggedImage taggedImg) {
       HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
-      Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
+      final Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
               AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
               AcqEngMetadata.getHeight(taggedImg.tags), AcqEngMetadata.getWidth(taggedImg.tags));
 
       if (showDisplay_) {
          //put on different thread to not slow down acquisition
-
-         displayCommunicationExecutor_.submit(new Runnable() {
-            @Override
-            public void run() {
-               try {
-                  added.get();
-
-
-                  HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
-                  //Display doesn't know about these in tiled layout
-                  axes.remove(AcqEngMetadata.AXES_GRID_ROW);
-                  axes.remove(AcqEngMetadata.AXES_GRID_COL);
-                  //  String channelName = MagellanMD.getChannelName(taggedImg.tags);
-                  display_.newImageArrived(axes);
-
-                  for (Consumer<HashMap<String, Object>> displayHook : displayUpdateOnImageHooks_) {
-                     displayHook.accept(axes);
-                  }
-
-
-               } catch (Exception e) {
-                  e.printStackTrace();;
-                  throw new RuntimeException(e);
+         displayCommunicationExecutor_.submit(() -> {
+            try {
+               added.get();
+               HashMap<String, Object> axes1 = AcqEngMetadata.getAxes(taggedImg.tags);
+               //Display doesn't know about these in tiled layout
+               axes1.remove(AcqEngMetadata.AXES_GRID_ROW);
+               axes1.remove(AcqEngMetadata.AXES_GRID_COL);
+               //  String channelName = MagellanMD.getChannelName(taggedImg.tags);
+               display_.newImageArrived(axes1);
+               for (Consumer<HashMap<String, Object>> displayHook : displayUpdateOnImageHooks_) {
+                  displayHook.accept(axes1);
                }
+            } catch (Exception e) {
+               e.printStackTrace();;
+               throw new RuntimeException(e);
             }
          });
       }
@@ -223,7 +213,6 @@ public class MagellanAcqUIAndStorage
    private void createDisplay() {
       //create display
       try {
-
          display_ = new NDViewer(this, (NDViewerAcqInterface) acq_, summaryMetadata_,
                AcqEngMetadata.getPixelSizeUm(summaryMetadata_),
                AcqEngMetadata.isRGB(summaryMetadata_));
@@ -237,7 +226,6 @@ public class MagellanAcqUIAndStorage
          display_.setReadZMetadataFunction((JSONObject tags)
                  -> AcqEngMetadata.getStageZIntended(tags));
 
-         //add mouse listener for the canvas
          //add overlayer
          surfaceGridControls_ = new SurfaceGridPanel(this, display_);
 
@@ -246,9 +234,9 @@ public class MagellanAcqUIAndStorage
 
          //add in additional overlayer
          overlayer_ = new MagellanOverlayer(display_, acq_, mouseListener_, surfaceGridControls_);
+
          // replace explore overlayer with magellan one
          display_.setOverlayerPlugin(overlayer_);
-
 
          if (!loadedData_) {
             display_.addControlPanel(surfaceGridControls_);
@@ -258,7 +246,7 @@ public class MagellanAcqUIAndStorage
 
          if (acq_ instanceof ExploreAcquisition) {
             exploreControlsPanel_ = new ExploreControlsPanel((ExploreAcquisition) acq_,
-                    overlayer_, exploreChannels_, acq_.getZAxes());
+                    overlayer_, useZ_, exploreChannels_, acq_.getZAxes());
             display_.addControlPanel(exploreControlsPanel_);
          }
 
@@ -282,7 +270,7 @@ public class MagellanAcqUIAndStorage
 
       } catch (Exception e) {
          e.printStackTrace();
-         logger_.accept("Couldn't create display succesfully");
+         logger_.accept("Couldn't create display successfully");
       }
    }
 
@@ -300,7 +288,29 @@ public class MagellanAcqUIAndStorage
       if (acq_ instanceof ExploreAcquisition && !loadedData_) {
          return null;
       }
-      return storage_.getImageBounds();
+      int[] bounds = storage_.getImageBounds();
+      if (storage_.getAxesSet().isEmpty()) {
+         return bounds;
+      }
+      HashMap<String, Object> axesPositions = new HashMap<>(
+              storage_.getAxesSet().iterator().next());
+      // Need to add back in row and column of a image thats in the data
+      for (HashMap<String, Object> storedAxesPosition : storage_.getAxesSet()) {
+         for (String axis : axesPositions.keySet()) {
+            if (!storedAxesPosition.containsKey(axis) || !axesPositions.containsKey(axis)) {
+               continue;
+            }
+         }
+         axesPositions = storedAxesPosition;
+         break;
+      }
+      int width = storage_.getEssentialImageMetadata(axesPositions).width;
+      int height = storage_.getEssentialImageMetadata(axesPositions).height;
+      bounds[0] = bounds[0] - width;
+      bounds[1] = bounds[1] - height;
+      bounds[2] = bounds[2] + width;
+      bounds[3] = bounds[3] + 2 * height;
+      return bounds;
    }
 
    @Override
@@ -386,7 +396,6 @@ public class MagellanAcqUIAndStorage
       return acq_.getPixelStageTranslator().getStageCoordsFromPixelCoords(
               (long) (display_.getViewOffset().x + display_.getFullResSourceDataSize().x / 2),
               (long) (display_.getViewOffset().y + display_.getFullResSourceDataSize().y / 2));
-
    }
 
    public void update() {
