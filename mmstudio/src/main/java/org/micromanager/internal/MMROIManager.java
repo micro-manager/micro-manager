@@ -71,8 +71,18 @@ public class MMROIManager {
             if (studio_.core().getNumberOfCameraChannels() < 2) {
                studio_.app().setROI(updateROI(studio_.core().getCameraDevice(), roi));
             } else {
-               for (int c = 0; c < studio_.core().getNumberOfCameraChannels(); c++) {
-                  studio_.app().setROI(updateROI(studio_.core().getCameraChannelName(c), roi));
+               studio_.live().setSuspended(true);
+               try {
+                  for (int c = 0; c < studio_.core().getNumberOfCameraChannels(); c++) {
+                     Rectangle r = updateROI(studio_.core().getCameraChannelName(c), roi);
+                     studio_.core().setROI(studio_.core().getCameraChannelName(c),
+                             r.x, r.y, r.width, r.height);
+                  }
+               } catch (Exception e) {
+                  studio_.logs().showError(e);
+               } finally {
+                  studio_.cache().refreshValues();
+                  studio_.live().setSuspended(false);
                }
             }
          } catch (Exception e) {
@@ -81,6 +91,8 @@ public class MMROIManager {
          }
          return;
       }
+
+
       // Dealing with multiple ROIs; this may not be supported.
       try {
          if (!(roi instanceof ShapeRoi && studio_.core().isMultiROISupported())) {
@@ -138,8 +150,8 @@ public class MMROIManager {
             // Find the image that matches the requested camera
             Image image = findImageTakenWithCamera(images, camera);
             if (image == null) {
-               studio_.logs().showError("Internal error: "
-                       + "unable to find image taken with camera " + camera);
+               studio_.logs().logMessage(
+                        "Unable to find image taken with camera " + camera);
                return r;
             }
             Metadata metadata = image.getMetadata();
