@@ -82,7 +82,7 @@ CPLogic::CPLogic(const char* name) :
    AddAllowedValue(g_PLogicModePropertyName, g_PLogicModediSPIMShutter);
    AddAllowedValue(g_PLogicModePropertyName, g_PLogicMode4ChShutter);
    AddAllowedValue(g_PLogicModePropertyName, g_PLogicMode7ChShutter);
-   AddAllowedValue(g_PLogicModePropertyName, g_PLogicMode7ChTTL1Shutter);
+   AddAllowedValue(g_PLogicModePropertyName, g_PLogicMode7ChTTLShutter);
 }
 
 int CPLogic::Initialize()
@@ -466,7 +466,7 @@ int CPLogic::OnPLogicMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          useAs4ChShutter_ = false;
          useAs7ChShutter_ = true;
       }
-      else if (tmpstr.compare(g_PLogicMode7ChTTL1Shutter) == 0)
+      else if (tmpstr.compare(g_PLogicMode7ChTTLShutter) == 0)
       {
          useAsdiSPIMShutter_ = true;
          useAs4ChShutter_ = false;
