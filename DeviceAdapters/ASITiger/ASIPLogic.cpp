@@ -82,6 +82,7 @@ CPLogic::CPLogic(const char* name) :
    AddAllowedValue(g_PLogicModePropertyName, g_PLogicModediSPIMShutter);
    AddAllowedValue(g_PLogicModePropertyName, g_PLogicMode4ChShutter);
    AddAllowedValue(g_PLogicModePropertyName, g_PLogicMode7ChShutter);
+   AddAllowedValue(g_PLogicModePropertyName, g_PLogicMode7ChTTL1Shutter);
 }
 
 int CPLogic::Initialize()
@@ -157,7 +158,7 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode2, 2);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode3, 3);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode4, 4);
-   if (useAs4ChShutter_)  // includes useAsdiSPIMShutter_
+   if (useAs4ChShutter_)
    {
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode5, 5);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode6, 6);
@@ -382,21 +383,23 @@ int CPLogic::Initialize()
       SetOpen(false);                                         // always start shutter in closed state
    }
 
-   if (useAsdiSPIMShutter_) {
-      // set up card up for diSPIM shutter
-      // this sets up all 8 BNC outputs including 4 lasers
-      SetProperty(g_SetCardPresetPropertyName, g_PresetCode14);
-
-      // set to be triggered by micro-mirror card for diSPIM case
+   if (useAsdiSPIMShutter_) {  // true if it is triggered by backplane TTL1 like in diSPIM
+      // set PLC clock/trigger source to be micro-mirror card
       SetProperty(g_TriggerSourcePropertyName, g_TriggerSourceCode1);
-   }
 
-   // things for shutter when not a diSPIM
-   if ((useAs4ChShutter_ || useAs7ChShutter_) && !useAsdiSPIMShutter_) {
-      // sets up 4 lasers triggered by cell 10
-      SetProperty(g_SetCardPresetPropertyName, g_PresetCode12);
+      if (useAs4ChShutter_) { // original diSPIM use case
+         // set up card up for diSPIM shutter
+         // this sets up all 8 BNC outputs including 4 lasers, sets cell 10 as the "hardware shutter open" indicator, etc.
+         SetProperty(g_SetCardPresetPropertyName, g_PresetCode14);
+      }
 
-      // make it ignore the TTL backplane signal usually from the micro-mirror card
+      if (useAs7ChShutter_) {
+         // sets cell 10 as the "hardware shutter open" indicator combining the TTL1 line and cell 8 which is "software shutter open"
+         SetProperty(g_SetCardPresetPropertyName, g_PresetCode12);
+      }
+
+   } else if ((useAs4ChShutter_ || useAs7ChShutter_)) {  // things for shutter when a shutter but not TTL1-triggered
+      // make it ignore the TTL1 backplane signal usually from the micro-mirror card
       if (FirmwareVersionAtLeast(3.27)) {
          SetProperty(g_SetCardPresetPropertyName, g_PresetCode36);
       } else {
@@ -419,6 +422,7 @@ int CPLogic::SetOpen(bool open)
    {
       ostringstream command; command.str("");
       shutterOpen_ = open;
+      // sets cell 8 which is "software shutter open" indicator via preset 11 (sets high) or preset 10 (sets low)
       if (open) {
          SetProperty(g_SetCardPresetPropertyName, g_PresetCode11);
       } else {
@@ -459,6 +463,12 @@ int CPLogic::OnPLogicMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       else if (tmpstr.compare(g_PLogicMode7ChShutter) == 0)
       {
          useAsdiSPIMShutter_ = false;
+         useAs4ChShutter_ = false;
+         useAs7ChShutter_ = true;
+      }
+      else if (tmpstr.compare(g_PLogicMode7ChTTL1Shutter) == 0)
+      {
+         useAsdiSPIMShutter_ = true;
          useAs4ChShutter_ = false;
          useAs7ChShutter_ = true;
       }

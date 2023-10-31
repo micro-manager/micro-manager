@@ -82,7 +82,7 @@ private:
    unsigned int numCells_;
    unsigned int currentPosition_;  // cached value of current position
 //   static const int NUM_CELLS = 16;
-   bool useAsdiSPIMShutter_;  // super-set of useAs4ChShutter_
+   bool useAsdiSPIMShutter_;  // used together with either useAs4ChShutter_ or useAs7ChShutter_, takes into account address 41 backplane (TTL1)
    bool useAs4ChShutter_;
    bool useAs7ChShutter_;
    bool shutterOpen_;
