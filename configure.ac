@@ -20,14 +20,6 @@ MM_GMOCK([$srcdir/testing/googletest], [\$(top_srcdir)/testing/googletest])
 AM_CONDITIONAL([BUILD_CPP_TESTS], [test "x$have_gmock" = xyes])
 
 
-# AppleHost dependencies
-case $host in
-   *apple-darwin*) MMCORE_APPLEHOST_LDFLAGS="-framework CoreFoundation -framework IOKit" ;;
-   *) MMCORE_APPLEHOST_LDFLAGS="" ;;
-esac
-AC_SUBST([MMCORE_APPLEHOST_LDFLAGS])
-
-
 # TODO Make conditional
 can_build_mmcore=yes
 
