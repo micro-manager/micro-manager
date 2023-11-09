@@ -352,31 +352,33 @@ int CPLogic::Initialize()
       // special masked preset selector for shutter channel
       pAct = new CPropertyAction (this, &CPLogic::OnSetShutterChannel);
       CreateProperty(g_SetChannelPropertyName, g_7ChannelNone, MM::String, false, pAct);
-      // use (CCA X) card presets here, just under a different name
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly1, 37);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly2, 38);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly3, 39);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly4, 40);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly5, 41);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly6, 42);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly7, 43);
-      AddAllowedValue(g_SetChannelPropertyName, g_Channel2And4, 44);
-      AddAllowedValue(g_SetChannelPropertyName, g_Channel3And5, 45);
-      AddAllowedValue(g_SetChannelPropertyName, g_Channel4And6, 46);
-      AddAllowedValue(g_SetChannelPropertyName, g_Channel5And7, 47);
-      AddAllowedValue(g_SetChannelPropertyName, g_Channel1And3And5, 48);
-      AddAllowedValue(g_SetChannelPropertyName, g_Channel2And4And6, 49);
-      AddAllowedValue(g_SetChannelPropertyName, g_7ChannelNone, 50);
-      if (FirmwareVersionAtLeast(3.35)) {
-         AddAllowedValue(g_SetChannelPropertyName, g_Channel1And6, 53);
-         AddAllowedValue(g_SetChannelPropertyName, g_Channel1And4And6, 54);
-      }
-      if (FirmwareVersionAtLeast(3.37)) {
-         AddAllowedValue(g_SetChannelPropertyName, g_Channel1And4, 55);
-         AddAllowedValue(g_SetChannelPropertyName, g_Channel2And5, 56);
-         AddAllowedValue(g_SetChannelPropertyName, g_Channel3And6, 57);
-         AddAllowedValue(g_SetChannelPropertyName, g_Channel1And5, 58);
-         AddAllowedValue(g_SetChannelPropertyName, g_Channel2And6, 59);
+      if (FirmwareVersionAtLeast(3.29)) {
+         // use (CCA X) card presets here, just under a different name
+         AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly1, 37);
+         AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly2, 38);
+         AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly3, 39);
+         AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly4, 40);
+         AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly5, 41);
+         AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly6, 42);
+         AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly7, 43);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel2And4, 44);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel3And5, 45);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel4And6, 46);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel5And7, 47);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel1And3And5, 48);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel2And4And6, 49);
+         AddAllowedValue(g_SetChannelPropertyName, g_7ChannelNone, 50);
+         if (FirmwareVersionAtLeast(3.35)) {
+            AddAllowedValue(g_SetChannelPropertyName, g_Channel1And6, 53);
+            AddAllowedValue(g_SetChannelPropertyName, g_Channel1And4And6, 54);
+         }
+         if (FirmwareVersionAtLeast(3.37)) {
+            AddAllowedValue(g_SetChannelPropertyName, g_Channel1And4, 55);
+            AddAllowedValue(g_SetChannelPropertyName, g_Channel2And5, 56);
+            AddAllowedValue(g_SetChannelPropertyName, g_Channel3And6, 57);
+            AddAllowedValue(g_SetChannelPropertyName, g_Channel1And5, 58);
+            AddAllowedValue(g_SetChannelPropertyName, g_Channel2And6, 59);
+         }
       }
       UpdateProperty(g_SetChannelPropertyName);               // doesn't do anything right now
       SetProperty(g_SetChannelPropertyName, g_7ChannelNone);  // makes sure card actually gets initialized
@@ -390,12 +392,18 @@ int CPLogic::Initialize()
       if (useAs4ChShutter_) { // original diSPIM use case
          // set up card up for diSPIM shutter
          // this sets up all 8 BNC outputs including 4 lasers, sets cell 10 as the "hardware shutter open" indicator, etc.
+         // NB this sets up camera and laser triggers too
          SetProperty(g_SetCardPresetPropertyName, g_PresetCode14);
       }
 
       if (useAs7ChShutter_) {
          // sets cell 10 as the "hardware shutter open" indicator combining the TTL1 line and cell 8 which is "software shutter open"
          SetProperty(g_SetCardPresetPropertyName, g_PresetCode12);
+
+         // set output #8 to be Camera0 trigger which is on internal TTL0 line
+         SetProperty(g_PointerPositionPropertyName, "40");
+         SetProperty(g_EditCellTypePropertyName, g_IOTypeCode2);
+         SetProperty(g_EditCellConfigPropertyName, "41");
       }
 
    } else if ((useAs4ChShutter_ || useAs7ChShutter_)) {  // things for shutter when a shutter but not TTL1-triggered
