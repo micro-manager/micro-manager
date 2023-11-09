@@ -232,11 +232,13 @@ public class ControllerUtils {
 
          // configure PLC output #3 to be the sync signal from XY stage (maybe in future this could be wired on backpanel
          //   but for now requires connecting BNC from PLC #3 to TTLin trigger of Z axis card
-         final Devices.Keys plcDevice = Devices.Keys.PLOGIC;
-         final int PLOGIC_OUTPUT_3_ADDR = 35;
-         final int PLOGIC_XYSTAGE_SYNC_ADDR = 46;
-         props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_POINTER_POSITION, PLOGIC_OUTPUT_3_ADDR);
-         props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, PLOGIC_XYSTAGE_SYNC_ADDR);
+         if (!devices_.isSingle7ChPLogic()) {
+            final Devices.Keys plcDevice = Devices.Keys.PLOGIC;
+            final int PLOGIC_OUTPUT_3_ADDR = 35;
+            final int PLOGIC_XYSTAGE_SYNC_ADDR = 46;
+            props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_POINTER_POSITION, PLOGIC_OUTPUT_3_ADDR);
+            props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, PLOGIC_XYSTAGE_SYNC_ADDR);
+         }
       }
       
       return true;
@@ -375,6 +377,11 @@ public class ControllerUtils {
                return false;
             }
             
+            if (devices_.isSingle7ChPLogic()) {
+               MyDialogUtils.showError("Supplemental stage step not compatible with 7 channel laser trigger");
+               return false;
+            }
+            
             // cell 2 will be rising edge whenever laser on goes low
             props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
                   Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_CLOCK_LASER, true);
@@ -455,6 +462,11 @@ public class ControllerUtils {
             } else {
                MyDialogUtils.showError("Supplemental stage " + devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X).toString()
                      + " is not supported for stage scanning.");
+               return false;
+            }
+            
+            if (devices_.isSingle7ChPLogic()) {
+               MyDialogUtils.showError("Supplemental stage scan not compatible with 7 channel laser trigger");
                return false;
             }
             
@@ -549,6 +561,11 @@ public class ControllerUtils {
       
       if (settings.spimMode == AcquisitionModes.Keys.EXT_TRIG_ACQ) {
          
+         if (devices_.isSingle7ChPLogic()) {
+            MyDialogUtils.showError("Externally-triggered acquisition not compatible with 7 channel laser trigger");
+            return false;
+         }
+         
          // assume external trigger connected to PLC input #3
          // the jumper from the XY card should be removed so it isn't contending for the same wire
          //   (the PLC can be pull-down but the XY card is push-pull)
@@ -564,10 +581,9 @@ public class ControllerUtils {
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_IO_OUT_OPENDRAIN);
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerInAddr);
       }
-
-      // sets PLogic "acquisition running" flag
-      props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
-            Properties.Keys.PLOGIC_PRESET,Properties.Values.PLOGIC_PRESET_3, true);
+      
+      // sets PLogic "acquisition running" flag in the "main" PLOGIC device
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_3, true);
       
       ReportingUtils.logMessage("Finished preparing controller for acquisition with offset " + channelOffset +
             " with mode " + settings.spimMode.toString() + " and settings " + settings.toString());
@@ -1098,10 +1114,19 @@ public class ControllerUtils {
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterMSBAddr);
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
       }
+
       
-      if (props_.getPropValueString(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_MODE).
-            equals(Properties.Values.SHUTTER_7CHANNEL.toString())) {
-         // special 7-channel case
+      // there are 2 separate 7-channel cases different in the property value for PLOGIC_MODE "PLogicMode"
+      // 1. (original) with 7-channel laser on own PLogic card, seems to have some odd things that I won't change including only uses 6 lasers
+      // 2. (newer) with 7-channel TTL-triggered on PLogic card shared with single camera trigger output (i.e. not dual-view system)
+      // however they share some things like using cells 17-24 and building a 3-input LUT which code is just copy/paste right now
+      
+      final boolean sevenChannelorig = props_.getPropValueString(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_MODE).
+            equals(Properties.Values.SHUTTER_7CHANNEL.toString());
+      final boolean sevenChannelttl = props_.getPropValueString(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_MODE).
+            equals(Properties.Values.SPIM_7CH_SHUTTER.toString());
+      
+      if (sevenChannelorig) {  // original special 7-channel case
          
          if(props_.getPropValueInteger(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_NUMCLOGICELLS) < 24) {
             // restore update setting
@@ -1133,7 +1158,43 @@ public class ControllerUtils {
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, laserTriggerAddress);
          }
 
-      } else { // original 4-channel case
+      } else if(sevenChannelttl) {  // new 7-channel case with camera trigger on BNC #8
+         
+         if(props_.getPropValueInteger(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_NUMCLOGICELLS) < 24) {
+            // restore update setting
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+            MyDialogUtils.showError("Require 24-cell PLC firmware to use hardware channel swiching with 7-channel shutter", hideErrors);
+            return false;
+         }
+         
+         // set cells 17-24 to control BNCs 1-8, but then immediately change BNC8 to reflect camera (firmware ensures all are set to push-pull outputs)
+         // note that the device adapter should have already set BNC8 to be the camera so this is just resetting it 
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_BNC1_8_ON_17_24);
+         final int addrFrontPanel8 = 40;
+         final int addrInternalTTLCameraA = 41;
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, addrFrontPanel8);  // address 40 is front panel #8
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_IO_OUT_PUSHPULL);
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, addrInternalTTLCameraA);  // address 41 is internal TTL0 signal for CameraA
+         
+         // now set cells 17-23 so they reflect the counter state used to track state as well as the global laser trigger
+         for (int laserNum = 1; laserNum <= 7; ++laserNum) {
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, laserNum + 16);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_LUT3);
+            int lutValue = 0;
+            // populate a 3-input lookup table with the combinations of lasers present
+            // the LUT "MSB" is the laserTrigger, then the counter MSB, then the counter LSB
+            for (int channelNum = 0; channelNum < settings.numChannels; ++channelNum) {
+               if (doesPLogicChannelIncludeLaser(laserNum, settings.channels[channelNum], settings.channelGroup)) {
+                  lutValue += Math.pow(2, channelNum + 4);  // LUT adds 2^(code in decimal) for each setting, but trigger is MSB of this code
+               }
+            }
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, lutValue);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, counterLSBAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, counterMSBAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, laserTriggerAddress);
+         }
+         
+      } else { // original 4-channel case with camera triggers on 1/2, side select on 4, laser on 5-8
 
          // initialize cells 13-16 which control BNCs 5-8
          for (int cellNum=13; cellNum<=16; cellNum++) {
@@ -1237,6 +1298,9 @@ public class ControllerUtils {
       return true;
    }
   
+   
+   // TODO modify this so that it works with 7-channel TTL as well
+   
    /**
     * Gets the associated PLogic BNC from the channel (containing preset name) 
     * @param channel
@@ -1244,8 +1308,7 @@ public class ControllerUtils {
     */
    private int getPLogicOutputFromChannel(ChannelSpec channel, String channelGroup) {
       try {
-         Configuration configData = core_.getConfigData(
-                 channelGroup, channel.config_);
+         Configuration configData = core_.getConfigData(channelGroup, channel.config_);
          if (!configData.isPropertyIncluded(devices_.getMMDevice(Devices.Keys.PLOGIC_LASER), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString())) {
             MyDialogUtils.showError("Must include PLogic \"OutputChannel\" in preset for hardware switching");
             return 0;
@@ -1269,14 +1332,14 @@ public class ControllerUtils {
       }
    }
    
+   // TODO check whether this works after renaming the presets
    /**
     * Checks to see whether the PLogic channel includes the specified laser number
     * Checks based on string contents of channel property value which we hardcode in device adapter to include laser numbers  
     */
    private boolean doesPLogicChannelIncludeLaser(int laserNum, ChannelSpec channel, String channelGroup) {
       try {
-         Configuration configData = core_.getConfigData(
-               channelGroup, channel.config_);
+         Configuration configData = core_.getConfigData(channelGroup, channel.config_);
          if (!configData.isPropertyIncluded(devices_.getMMDevice(Devices.Keys.PLOGIC_LASER), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString())) {
             MyDialogUtils.showError("Must include PLogic \"OutputChannel\" in preset for hardware switching");
             return false;

@@ -370,6 +370,7 @@ public class Properties {
       DO_IT("Do it"),
       DO_SSZ("Z - save settings to card (partial)"),
       DISPIM_SHUTTER("diSPIM Shutter"),
+      SPIM_7CH_SHUTTER("Seven-channel TTL shutter"),
       SHUTTER_7CHANNEL("Seven-channel shutter"),
       PLOGIC_TRIGGER_MMIRROR("1 - Micro-mirror card"),
       PLOGIC_PRESET_2("2 - cell 1 low"),

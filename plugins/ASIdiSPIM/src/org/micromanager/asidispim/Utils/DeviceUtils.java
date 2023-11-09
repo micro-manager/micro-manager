@@ -230,10 +230,11 @@ public class DeviceUtils {
             // would like to do below line but we need to change pre-init value and reload config
             // checkPropertyValueEquals(key, Properties.Keys.PLOGIC_MODE, Properties.Values.DISPIM_SHUTTER);
             String mode = props_.getPropValueString(key, Properties.Keys.PLOGIC_MODE);
-            if (! mode.equals(Properties.Values.DISPIM_SHUTTER.toString())) {
+            if (! ( mode.equals(Properties.Values.DISPIM_SHUTTER.toString())
+                  || mode.equals(Properties.Values.SPIM_7CH_SHUTTER.toString()) ) ) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                      + ": need to set pre-initialization property PLogicMode to "
-                     + "diSPIM Shutter (use Hardware Config Wizard, then edit device "
+                     + "diSPIM Shutter or Seven-channel TTL1 shutter (use Hardware Config Wizard, then edit device "
                      + devices_.getMMDevice(key) + " on Step 2). Then reload the "
                      + " changed configuration and restart the diSPIM plugin.");
             }

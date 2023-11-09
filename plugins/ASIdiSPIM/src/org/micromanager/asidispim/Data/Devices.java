@@ -483,6 +483,26 @@ public class Devices {
             && getMMDevice(Devices.Keys.PLOGIC_LASER) != null
             && getMMDevice(Devices.Keys.PLOGIC) != getMMDevice(Devices.Keys.PLOGIC_LASER));
    }
+   
+   /**
+    * 
+    * @return true if it is the same device for main (camera) PLogic and the laser PLogic card
+    *                   AND
+    *         the single PLogic card is configured for 7-channel shutter (in which case we don't do some other TTL things)
+    */
+   public boolean isSingle7ChPLogic() {
+      boolean result = false;
+      try {
+         result = getMMDevice(Devices.Keys.PLOGIC) != null
+               && getMMDevice(Devices.Keys.PLOGIC_LASER) != null
+               && getMMDevice(Devices.Keys.PLOGIC) == getMMDevice(Devices.Keys.PLOGIC_LASER)
+               && (core_.getProperty(getMMDevice(Devices.Keys.PLOGIC), "PLogicMode").equals("Seven-channel shutter") 
+                     || core_.getProperty(getMMDevice(Devices.Keys.PLOGIC), "PLogicMode").equals("Seven-channel TTL shutter"));
+      } catch (Exception ex) {
+         MyDialogUtils.showError(ex);
+      }
+      return result;
+   }
 
    /**
     * @param key from Devices.Keys
