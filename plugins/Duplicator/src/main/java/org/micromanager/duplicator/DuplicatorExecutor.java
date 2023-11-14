@@ -198,8 +198,20 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          }
       }
 
-      int width = roi == null ? oldMetadata.getImageWidth() : roi.getBounds().width;
-      int height = roi == null ? oldMetadata.getImageHeight() : roi.getBounds().height;
+      Integer width = oldMetadata.getImageWidth();
+      if (roi != null) {
+         width = roi.getBounds().width;
+      }
+      Integer height = oldMetadata.getImageHeight();
+      if (roi != null) {
+         height = roi.getBounds().height;
+      }
+      //int width = roi == null ? oldMetadata.getImageWidth() : roi.getBounds().width;
+      //int height = roi == null ? oldMetadata.getImageHeight() : roi.getBounds().height;
+
+      if (width == null || height == null) {
+         throw new DuplicatorException("Width and/or height is unexpectedly null");
+      }
 
       SummaryMetadata metadata = oldMetadata.copyBuilder()
               .channelNames(channelNames)
