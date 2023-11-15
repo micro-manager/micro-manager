@@ -206,8 +206,6 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       if (roi != null) {
          height = roi.getBounds().height;
       }
-      //int width = roi == null ? oldMetadata.getImageWidth() : roi.getBounds().width;
-      //int height = roi == null ? oldMetadata.getImageHeight() : roi.getBounds().height;
 
       CloseViewerListener closeListener = null;
 
