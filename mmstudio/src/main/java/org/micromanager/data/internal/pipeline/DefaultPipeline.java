@@ -91,12 +91,12 @@ public final class DefaultPipeline implements Pipeline {
          // Ignore it.
          return;
       }
-      if (exceptions_.size() > 0) {
+      if (!exceptions_.isEmpty()) {
          for (Exception ex : exceptions_) {
             ReportingUtils.logError(ex);
          }
          // Currently in an error state.
-         throw new PipelineErrorException();
+         throw new PipelineErrorException(exceptions_.get(0).getMessage());
       }
       haveInsertedImages_ = true;
       // Manually check for frozen; otherwise for asynchronous pipelines,
@@ -105,7 +105,7 @@ public final class DefaultPipeline implements Pipeline {
       if (store_.isFrozen()) {
          throw new DatastoreFrozenException();
       }
-      if (contexts_.size() > 0) {
+      if (!contexts_.isEmpty()) {
          contexts_.get(0).insertImage(new ImageWrapper(image));
       } else {
          // Empty "pipeline".
