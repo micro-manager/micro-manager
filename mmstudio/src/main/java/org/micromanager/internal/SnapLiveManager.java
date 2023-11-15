@@ -809,7 +809,10 @@ public final class SnapLiveManager extends DataViewerListener
          try {
             store_.setSummaryMetadata(store_.getSummaryMetadata().copyBuilder()
                   .channelGroup(core_.getChannelGroup())
-                  .channelNames(channelNames).build());
+                  .channelNames(channelNames)
+                  .imageWidth((int) core_.getImageWidth())
+                  .imageHeight((int) core_.getImageHeight())
+                  .build());
          } catch (DatastoreFrozenException e) {
             ReportingUtils.logError(e,
                   "Unable to update store summary metadata");

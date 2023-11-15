@@ -198,18 +198,31 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          }
       }
 
-      int width = roi == null ? oldMetadata.getImageWidth() : roi.getBounds().width;
-      int height = roi == null ? oldMetadata.getImageHeight() : roi.getBounds().height;
-
-      SummaryMetadata metadata = oldMetadata.copyBuilder()
-              .channelNames(channelNames)
-              .imageWidth(width)
-              .imageHeight(height)
-              .intendedDimensions(newSizeCoordsBuilder.build())
-              .build();
+      Integer width = oldMetadata.getImageWidth();
+      if (roi != null) {
+         width = roi.getBounds().width;
+      }
+      Integer height = oldMetadata.getImageHeight();
+      if (roi != null) {
+         height = roi.getBounds().height;
+      }
+      //int width = roi == null ? oldMetadata.getImageWidth() : roi.getBounds().width;
+      //int height = roi == null ? oldMetadata.getImageHeight() : roi.getBounds().height;
 
       CloseViewerListener closeListener = null;
+
       try {
+         if (width == null || height == null) {
+            throw new DuplicatorException("Width and/or height is unexpectedly null");
+         }
+
+         SummaryMetadata metadata = oldMetadata.copyBuilder()
+                 .channelNames(channelNames)
+                 .imageWidth(width)
+                 .imageHeight(height)
+                 .intendedDimensions(newSizeCoordsBuilder.build())
+                 .build();
+
          newStore.setSummaryMetadata(metadata);
          // The implementations of the store set SummaryMetadata on another thread.
          // This can lead to disasters, so we have to poll to make sure SummaryMetadata is
