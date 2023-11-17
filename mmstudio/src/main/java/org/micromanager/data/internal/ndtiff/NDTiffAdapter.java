@@ -222,30 +222,28 @@ public class NDTiffAdapter implements Storage {
       };
    }
 
+   /**
+    * This implementation only check for an exact match. It does not actually return a list
+    * of all images that match the given coordinates, as I am not quite sure how to implement that.
+    *
+    * @param coords Coordinates specifying images to match
+    * @return List of images matching the coordinates
+    * @throws IOException can always happen.
+    */
    @Override
    public List<Image> getImagesMatching(Coords coords) throws IOException {
+      List<Image> imageList = new LinkedList<>();
       if (storage_ == null) {
-         return new LinkedList<Image>();
+         return imageList;
       }
-      Stream<HashMap<String, Object>> axesStream = storage_.getAxesSet().stream();
-      axesStream = axesStream.filter(stringIntegerHashMap -> {
-         for (String axis : coords.getAxes()) {
-            if (!stringIntegerHashMap.containsKey(axis)) {
-               return false;
-            } else if ((Integer) stringIntegerHashMap.get(axis) != coords.getIndex(axis)) {
-               return false;
-            }
-         }
-         return true;
-      });
-      return axesStream.map(new Function<HashMap<String, Object>, Image>() {
-         @Override
-         public Image apply(HashMap<String, Object> axes) {
-            TaggedImage ti = addEssentialImageMetadata(storage_.getImage(axes), axes);
-            return new DefaultImage(ti, hashMapToCoords(axes),
-                    studioMetadataFromJSON(ti.tags));
-         }
-      }).collect(Collectors.toList());
+      HashMap<String, Object> ndTiffCoords = coordsToHashMap(coords);
+      if (storage_.hasImage(ndTiffCoords)) {
+         TaggedImage ti = addEssentialImageMetadata(storage_.getImage(ndTiffCoords), ndTiffCoords);
+         Image img = new DefaultImage(ti, hashMapToCoords(ndTiffCoords),
+                 studioMetadataFromJSON(ti.tags));
+         imageList.add(img);
+      }
+      return imageList;
    }
 
    @Override
@@ -258,7 +256,7 @@ public class NDTiffAdapter implements Storage {
 
    @Override
    public int getMaxIndex(String axis) {
-      if (storage_ == null || storage_.getAxesSet() == null || storage_.getAxesSet().size() == 0) {
+      if (storage_ == null || storage_.getAxesSet() == null || storage_.getAxesSet().isEmpty()) {
          return -1;
       }
       return storage_.getAxesSet().stream().map(new Function<HashMap<String, Object>, Integer>() {
