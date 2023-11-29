@@ -225,8 +225,12 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          SummaryMetadata summaryMetadata =  DefaultSummaryMetadata.fromPropertyMap(
                   NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
                            summaryMetadataJSON_.toString()));
-         summaryMetadata = summaryMetadata.copyBuilder().sequenceSettings(
-                  acquisitionSettings).stagePositions(posListToUse.getPositions()).build();
+         SummaryMetadata.Builder smb = summaryMetadata.copyBuilder().sequenceSettings(
+                  acquisitionSettings);
+         if (posListToUse != null) {
+            smb.stagePositions(posListToUse.getPositions());
+         }
+         summaryMetadata = smb.build();
          MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
                acquisitionSettings);
          curStore_ = acq.getDatastore();
@@ -1192,6 +1196,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
    @Override
    public boolean abortRequest() {
+      if (curStore_ == null) {
+         stop(true);
+         return true;
+      }
       if (isAcquisitionRunning()) {
          String[] options = {"Abort", "Cancel"};
          List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) curStore_);
