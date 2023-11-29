@@ -390,6 +390,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine,
 
    @Override
    public boolean abortRequest() {
+      if (curStore_ == null) {
+         stop(true);
+         return true;
+      }
       if (isAcquisitionRunning()) {
          String[] options = {"Abort", "Cancel"};
          List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) curStore_);

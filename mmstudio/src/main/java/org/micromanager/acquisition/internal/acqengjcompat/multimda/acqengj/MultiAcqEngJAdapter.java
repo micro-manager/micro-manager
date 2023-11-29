@@ -672,19 +672,21 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          boolean abortCancelled = false;
          String[] options = {"Abort", "Cancel"};
          for (Datastore store : stores_) {
-            List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) store);
-            Component parentComponent = null;
-            if (displays != null && !displays.isEmpty()) {
-               parentComponent = displays.get(0).getWindow();
-            }
-            int result = JOptionPane.showOptionDialog(parentComponent,
-                  "Abort current acquisition task?",
-                  "Micro-Manager",
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.QUESTION_MESSAGE, null,
-                  options, options[1]);
-            if (result != 0) {
-               abortCancelled = true;
+            if (store != null) {
+               List<DisplayWindow> displays = studio_.displays().getDisplays((DataProvider) store);
+               Component parentComponent = null;
+               if (displays != null && !displays.isEmpty()) {
+                  parentComponent = displays.get(0).getWindow();
+               }
+               int result = JOptionPane.showOptionDialog(parentComponent,
+                       "Abort current acquisition task?",
+                       "Micro-Manager",
+                       JOptionPane.DEFAULT_OPTION,
+                       JOptionPane.QUESTION_MESSAGE, null,
+                       options, options[1]);
+               if (result != 0) {
+                  abortCancelled = true;
+               }
             }
          }
          if (!abortCancelled) {
