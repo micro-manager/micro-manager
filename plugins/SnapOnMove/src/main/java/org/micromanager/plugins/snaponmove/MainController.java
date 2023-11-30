@@ -72,27 +72,23 @@ class MainController {
    // Although we frequently search for matching MonitoredItem, we just
    // use a list since the number of items is small and order preservation
    // is important.
-   private final List<ChangeCriterion> changeCriteria_ =
-         new ArrayList<ChangeCriterion>();
+   private final List<ChangeCriterion> changeCriteria_ = new ArrayList<>();
 
    // The most recent known values. For asynchonously notified items, the last
    // notified value. For polled items, the last polled value.
    // Synchronized by its own monitor, since it is accessed from notification
    // handlers.
-   private final Map<MonitoredItem, MonitoredValue> latestValues_ =
-         new HashMap<MonitoredItem, MonitoredValue>();
+   private final Map<MonitoredItem, MonitoredValue> latestValues_ = new HashMap<>();
 
    // Values at the time of the last snap, for use as a basis for detecting
    // movement. Only accessed from monitoring thread while monitoring thread
    // is running.
-   private final Map<MonitoredItem, MonitoredValue> lastSnapValues_ =
-         new HashMap<MonitoredItem, MonitoredValue>();
+   private final Map<MonitoredItem, MonitoredValue> lastSnapValues_ = new HashMap<>();
 
    // Use string elements (stage device name) for prototype; should change to
    // objects
    private final LinkedBlockingQueue<Map.Entry<MonitoredItem, MonitoredValue>>
-         eventQueue_ =
-         new LinkedBlockingQueue<Map.Entry<MonitoredItem, MonitoredValue>>();
+         eventQueue_ = new LinkedBlockingQueue<>();
 
    // The monitoring thread; null when not running (disabled)
    private Thread monitorThread_;
@@ -121,8 +117,8 @@ class MainController {
          PropertyMap listPm = null;
          try {
             listPm = PropertyMapJSONSerializer.fromJSON(criteriaJSON);
-         } catch (IOException ignore) {
-            studio.logs().logError(ignore);
+         } catch (IOException ioe) {
+            studio.logs().logError(ioe);
          }
          if (listPm != null) {
             for (int i = 0; ; ++i) {
@@ -285,7 +281,7 @@ class MainController {
       long remainingMs = Math.max(0, deadlineMs - System.currentTimeMillis());
       do {
          final Map<MonitoredItem, MonitoredValue> events =
-               new HashMap<MonitoredItem, MonitoredValue>();
+               new HashMap<>();
 
          Map.Entry<MonitoredItem, MonitoredValue> event =
                eventQueue_.poll(remainingMs, TimeUnit.MILLISECONDS);
@@ -401,7 +397,7 @@ class MainController {
          synchronized (latestValues_) {
             latestValues_.put(item, value);
          }
-         eventQueue_.put(new AbstractMap.SimpleEntry<MonitoredItem, MonitoredValue>(item, value));
+         eventQueue_.put(new AbstractMap.SimpleEntry<>(item, value));
       } catch (InterruptedException unexpected) {
          Thread.currentThread().interrupt();
       }
@@ -425,7 +421,7 @@ class MainController {
          synchronized (latestValues_) {
             latestValues_.put(item, value);
          }
-         eventQueue_.put(new AbstractMap.SimpleEntry<MonitoredItem, MonitoredValue>(item, value));
+         eventQueue_.put(new AbstractMap.SimpleEntry<>(item, value));
       } catch (InterruptedException unexpected) {
          Thread.currentThread().interrupt();
       }
