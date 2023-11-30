@@ -1,4 +1,4 @@
-// Snap-on-Move Preview for Micro-Manager
+// Snap-on-Move for Micro-Manager
 //
 // Author: Mark A. Tsuchida
 //
@@ -76,14 +76,12 @@ final class ConfigFrame extends JFrame {
 
    public ConfigFrame(final MainController controller) {
 
-      setTitle("Snap-on-Move Preview");
+      setTitle("Snap-on-Move");
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("fill",
             "[]rel[]rel[grow, fill]rel[]", "[]rel[]unrel[]unrel[]rel[grow, fill]"));
 
-      add(new JLabel("Make sure to stop before starting MDA!"), "span 2, wrap");
-
-      add(new JLabel("Snap-on-Move Preview: "));
+      add(new JLabel("Snap-on-Move: "));
 
       final JButton enableButton = new JButton(ENABLE_BUTTON);
       enableButton.setText(controller.isEnabled() ? DISABLE_BUTTON : ENABLE_BUTTON);
