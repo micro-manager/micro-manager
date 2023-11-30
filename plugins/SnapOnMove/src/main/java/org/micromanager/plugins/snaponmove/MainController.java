@@ -52,8 +52,7 @@ import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-import org.micromanager.internal.propertymap.DefaultPropertyMap;
-import org.micromanager.internal.propertymap.MM1JSONSerializer;
+import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
 
 /**
  * The main control code for Snap-on-Move.
@@ -121,7 +120,7 @@ class MainController {
       if (criteriaJSON != null) {
          PropertyMap listPm = null;
          try {
-            listPm = MM1JSONSerializer.fromJSON(criteriaJSON);
+            listPm = PropertyMapJSONSerializer.fromJSON(criteriaJSON);
          } catch (IOException ignore) {
             studio.logs().logError(ignore);
          }
@@ -167,14 +166,13 @@ class MainController {
          cc.serialize(pmb);
          listPmb.putPropertyMap(Integer.toString(i), pmb.build());
       }
-      // TODO We shouldn't use internal class DefaultPropertyMap
-      String json = ((DefaultPropertyMap) listPmb.build()).toJSON();
+      String json = listPmb.build().toJSON();
       studio_.profile().getSettings(this.getClass()).putString(
             PROFILE_KEY_CHANGE_CRITERIA, json);
    }
 
    synchronized List<ChangeCriterion> getChangeCriteria() {
-      return new ArrayList<ChangeCriterion>(changeCriteria_);
+      return new ArrayList<>(changeCriteria_);
    }
 
    synchronized void setEnabled(boolean f) {
