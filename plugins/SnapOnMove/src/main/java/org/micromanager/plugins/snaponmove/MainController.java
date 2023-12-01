@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import mmcorej.CMMCore;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -95,7 +96,7 @@ class MainController {
    // The monitoring thread; null when not running (disabled)
    private Thread monitorThread_;
 
-   private boolean pausedForAcquisition_ = false;
+   private AtomicBoolean pausedForAcquisition_ = new AtomicBoolean(false);
    private final Object pauseLock_ = new Object();
 
    private UpdatableAlert statusAlert_;
@@ -234,11 +235,11 @@ class MainController {
             }
             doSnap();
             waitForChange();
-            synchronized (pauseLock_) {
-               while (pausedForAcquisition_) {
+            while (pausedForAcquisition_.get()) {
+               synchronized (pauseLock_) {
                   pauseLock_.wait();
-                  waitForChange();
                }
+               waitForChange();
             }
          }
       } catch (InterruptedException shouldExit) {
@@ -392,7 +393,7 @@ class MainController {
 
    @Subscribe
    public void onZMoved(StagePositionChangedEvent e) {
-      if (pausedForAcquisition_) {
+      if (pausedForAcquisition_.get()) {
          return;
       }
       MonitoredItem item = MonitoredItem.createZItem(e.getDeviceName());
@@ -419,7 +420,7 @@ class MainController {
 
    @Subscribe
    public void onXYMoved(XYStagePositionChangedEvent e) {
-      if (pausedForAcquisition_) {
+      if (pausedForAcquisition_.get()) {
          return;
       }
       MonitoredItem item = MonitoredItem.createXYItem(e.getDeviceName());
@@ -453,15 +454,15 @@ class MainController {
 
    @Subscribe
    public void onAcquisitionStarted(AcquisitionStartedEvent e) {
-      pausedForAcquisition_ = true;
+      pausedForAcquisition_.set(true);
    }
 
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent e) {
+      pausedForAcquisition_.set(false);
       synchronized (pauseLock_) {
          pauseLock_.notify();
       }
-      pausedForAcquisition_ = false;
    }
 
    CMMCore getCore() {
