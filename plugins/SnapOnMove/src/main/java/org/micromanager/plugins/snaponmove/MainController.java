@@ -77,7 +77,7 @@ class MainController {
    // is important.
    private final List<ChangeCriterion> changeCriteria_ = new ArrayList<>();
 
-   // The most recent known values. For asynchonously notified items, the last
+   // The most recent known values. For asynchronously notified items, the last
    // notified value. For polled items, the last polled value.
    // Synchronized by its own monitor, since it is accessed from notification
    // handlers.
@@ -96,7 +96,8 @@ class MainController {
    // The monitoring thread; null when not running (disabled)
    private Thread monitorThread_;
 
-   private AtomicBoolean pausedForAcquisition_ = new AtomicBoolean(false);
+   private final AtomicBoolean pausedForAcquisition_ = new AtomicBoolean(false);
+   private boolean monitorEnabled_ = false;
    private final Object pauseLock_ = new Object();
 
    private UpdatableAlert statusAlert_;
@@ -139,6 +140,7 @@ class MainController {
             }
          }
       }
+      studio_.events().registerForEvents(this);
    }
 
    synchronized void setPollingIntervalMs(long intervalMs) {
@@ -178,10 +180,16 @@ class MainController {
    }
 
    synchronized void setEnabled(boolean f) {
+      monitorEnabled_ = f;
+      if (!pausedForAcquisition_.get()) {
+         handleMonitorThread(f);
+      }
+   }
+
+   synchronized void handleMonitorThread(boolean f) {
       if (f == (monitorThread_ != null)) {
          return;
       }
-
       if (f) {
          monitorThread_ = new Thread("SnapOnMove Monitor Thread") {
             @Override
@@ -190,9 +198,7 @@ class MainController {
             }
          };
          monitorThread_.start();
-         studio_.events().registerForEvents(this);
       } else {
-         studio_.events().unregisterForEvents(this);
          monitorThread_.interrupt();
          try {
             monitorThread_.join();
@@ -209,7 +215,7 @@ class MainController {
    }
 
    synchronized boolean isEnabled() {
-      return monitorThread_ != null;
+      return monitorEnabled_;
    }
 
    private void doSnap() throws InterruptedException {
@@ -233,14 +239,12 @@ class MainController {
             synchronized (latestValues_) {
                lastSnapValues_.putAll(latestValues_);
             }
-            doSnap();
-            waitForChange();
-            while (pausedForAcquisition_.get()) {
-               synchronized (pauseLock_) {
-                  pauseLock_.wait();
-               }
-               waitForChange();
+            if (!pausedForAcquisition_.get()) {
+               doSnap();
+            } else {
+               pausedForAcquisition_.set(false);
             }
+            waitForChange();
          }
       } catch (InterruptedException shouldExit) {
          if (statusAlert_ != null) {
@@ -393,9 +397,6 @@ class MainController {
 
    @Subscribe
    public void onZMoved(StagePositionChangedEvent e) {
-      if (pausedForAcquisition_.get()) {
-         return;
-      }
       MonitoredItem item = MonitoredItem.createZItem(e.getDeviceName());
       boolean itemIsMonitored = false;
       for (ChangeCriterion cc : changeCriteria_) {
@@ -420,9 +421,6 @@ class MainController {
 
    @Subscribe
    public void onXYMoved(XYStagePositionChangedEvent e) {
-      if (pausedForAcquisition_.get()) {
-         return;
-      }
       MonitoredItem item = MonitoredItem.createXYItem(e.getDeviceName());
       boolean itemIsMonitored = false;
       for (ChangeCriterion cc : changeCriteria_) {
@@ -450,18 +448,26 @@ class MainController {
       if (!e.isCanceled()) {
          setEnabled(false);
       }
+      studio_.events().unregisterForEvents(this);
    }
 
    @Subscribe
    public void onAcquisitionStarted(AcquisitionStartedEvent e) {
-      pausedForAcquisition_.set(true);
+      synchronized (this) {
+         if (monitorEnabled_) {
+            handleMonitorThread(false);
+         }
+         pausedForAcquisition_.set(true);
+      }
    }
 
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent e) {
-      pausedForAcquisition_.set(false);
-      synchronized (pauseLock_) {
-         pauseLock_.notify();
+      synchronized (this) {
+         if (monitorEnabled_) {
+            // pausedForAcquisition_ is set to false in monitorLoop()
+            handleMonitorThread(true);
+         }
       }
    }
 
