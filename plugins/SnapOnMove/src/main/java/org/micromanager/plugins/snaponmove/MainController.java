@@ -48,12 +48,13 @@ import mmcorej.CMMCore;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionStartedEvent;
 import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-import org.micromanager.internal.propertymap.DefaultPropertyMap;
-import org.micromanager.internal.propertymap.MM1JSONSerializer;
+import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
 
 /**
  * The main control code for Snap-on-Move.
@@ -73,30 +74,31 @@ class MainController {
    // Although we frequently search for matching MonitoredItem, we just
    // use a list since the number of items is small and order preservation
    // is important.
-   private final List<ChangeCriterion> changeCriteria_ =
-         new ArrayList<ChangeCriterion>();
+   private final List<ChangeCriterion> changeCriteria_ = new ArrayList<>();
 
-   // The most recent known values. For asynchonously notified items, the last
+   // The most recent known values. For asynchronously notified items, the last
    // notified value. For polled items, the last polled value.
    // Synchronized by its own monitor, since it is accessed from notification
    // handlers.
-   private final Map<MonitoredItem, MonitoredValue> latestValues_ =
-         new HashMap<MonitoredItem, MonitoredValue>();
+   private final Map<MonitoredItem, MonitoredValue> latestValues_ = new HashMap<>();
 
    // Values at the time of the last snap, for use as a basis for detecting
    // movement. Only accessed from monitoring thread while monitoring thread
    // is running.
-   private final Map<MonitoredItem, MonitoredValue> lastSnapValues_ =
-         new HashMap<MonitoredItem, MonitoredValue>();
+   private final Map<MonitoredItem, MonitoredValue> lastSnapValues_ = new HashMap<>();
 
    // Use string elements (stage device name) for prototype; should change to
    // objects
    private final LinkedBlockingQueue<Map.Entry<MonitoredItem, MonitoredValue>>
-         eventQueue_ =
-         new LinkedBlockingQueue<Map.Entry<MonitoredItem, MonitoredValue>>();
+         eventQueue_ = new LinkedBlockingQueue<>();
 
-   // The monitoring thread; null when not running (disabled)
+   // The monitoring thread; null when stopped or paused
    private Thread monitorThread_;
+
+   private boolean pausedForAcquisition_ = false;
+
+   // Whether monitoring is "enabled" (whether running or paused)
+   private boolean monitorEnabled_ = false;
 
    private UpdatableAlert statusAlert_;
 
@@ -121,9 +123,9 @@ class MainController {
       if (criteriaJSON != null) {
          PropertyMap listPm = null;
          try {
-            listPm = MM1JSONSerializer.fromJSON(criteriaJSON);
-         } catch (IOException ignore) {
-            studio.logs().logError(ignore);
+            listPm = PropertyMapJSONSerializer.fromJSON(criteriaJSON);
+         } catch (IOException ioe) {
+            studio.logs().logError(ioe);
          }
          if (listPm != null) {
             for (int i = 0; ; ++i) {
@@ -138,6 +140,7 @@ class MainController {
             }
          }
       }
+      studio_.events().registerForEvents(this);
    }
 
    synchronized void setPollingIntervalMs(long intervalMs) {
@@ -167,21 +170,26 @@ class MainController {
          cc.serialize(pmb);
          listPmb.putPropertyMap(Integer.toString(i), pmb.build());
       }
-      // TODO We shouldn't use internal class DefaultPropertyMap
-      String json = ((DefaultPropertyMap) listPmb.build()).toJSON();
+      String json = listPmb.build().toJSON();
       studio_.profile().getSettings(this.getClass()).putString(
             PROFILE_KEY_CHANGE_CRITERIA, json);
    }
 
    synchronized List<ChangeCriterion> getChangeCriteria() {
-      return new ArrayList<ChangeCriterion>(changeCriteria_);
+      return new ArrayList<>(changeCriteria_);
    }
 
    synchronized void setEnabled(boolean f) {
+      monitorEnabled_ = f;
+      if (!pausedForAcquisition_) {
+         handleMonitorThread(f);
+      }
+   }
+
+   private synchronized void handleMonitorThread(boolean f) {
       if (f == (monitorThread_ != null)) {
          return;
       }
-
       if (f) {
          monitorThread_ = new Thread("SnapOnMove Monitor Thread") {
             @Override
@@ -190,9 +198,7 @@ class MainController {
             }
          };
          monitorThread_.start();
-         studio_.events().registerForEvents(this);
       } else {
-         studio_.events().unregisterForEvents(this);
          monitorThread_.interrupt();
          try {
             monitorThread_.join();
@@ -209,7 +215,7 @@ class MainController {
    }
 
    synchronized boolean isEnabled() {
-      return monitorThread_ != null;
+      return monitorEnabled_;
    }
 
    private void doSnap() throws InterruptedException {
@@ -233,7 +239,16 @@ class MainController {
             synchronized (latestValues_) {
                lastSnapValues_.putAll(latestValues_);
             }
-            doSnap();
+
+            boolean skipSnap = false;
+            synchronized (this) {
+               // Skip the first snap after resuming from pause.
+               skipSnap = pausedForAcquisition_;
+               pausedForAcquisition_ = false;
+            }
+            if (!skipSnap) {
+               doSnap();
+            }
             waitForChange();
          }
       } catch (InterruptedException shouldExit) {
@@ -287,7 +302,7 @@ class MainController {
       long remainingMs = Math.max(0, deadlineMs - System.currentTimeMillis());
       do {
          final Map<MonitoredItem, MonitoredValue> events =
-               new HashMap<MonitoredItem, MonitoredValue>();
+               new HashMap<>();
 
          Map.Entry<MonitoredItem, MonitoredValue> event =
                eventQueue_.poll(remainingMs, TimeUnit.MILLISECONDS);
@@ -403,7 +418,7 @@ class MainController {
          synchronized (latestValues_) {
             latestValues_.put(item, value);
          }
-         eventQueue_.put(new AbstractMap.SimpleEntry<MonitoredItem, MonitoredValue>(item, value));
+         eventQueue_.put(new AbstractMap.SimpleEntry<>(item, value));
       } catch (InterruptedException unexpected) {
          Thread.currentThread().interrupt();
       }
@@ -427,7 +442,7 @@ class MainController {
          synchronized (latestValues_) {
             latestValues_.put(item, value);
          }
-         eventQueue_.put(new AbstractMap.SimpleEntry<MonitoredItem, MonitoredValue>(item, value));
+         eventQueue_.put(new AbstractMap.SimpleEntry<>(item, value));
       } catch (InterruptedException unexpected) {
          Thread.currentThread().interrupt();
       }
@@ -437,6 +452,22 @@ class MainController {
    public void onShutdownCommencing(ShutdownCommencingEvent e) {
       if (!e.isCanceled()) {
          setEnabled(false);
+      }
+      studio_.events().unregisterForEvents(this);
+   }
+
+   @Subscribe
+   public synchronized void onAcquisitionStarted(AcquisitionStartedEvent e) {
+      handleMonitorThread(false);
+      pausedForAcquisition_ = true;
+   }
+
+   @Subscribe
+   public synchronized void onAcquisitionEnded(AcquisitionEndedEvent e) {
+      if (monitorEnabled_) {
+         // Leave pausedForAcquisition_ set here; it is cleared in
+         // monitorLoop() after skipping the first snap after resuming.
+         handleMonitorThread(true);
       }
    }
 
