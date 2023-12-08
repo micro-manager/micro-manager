@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import mmcorej.CMMCore;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -93,12 +92,13 @@ class MainController {
    private final LinkedBlockingQueue<Map.Entry<MonitoredItem, MonitoredValue>>
          eventQueue_ = new LinkedBlockingQueue<>();
 
-   // The monitoring thread; null when not running (disabled)
+   // The monitoring thread; null when stopped or paused
    private Thread monitorThread_;
 
-   private final AtomicBoolean pausedForAcquisition_ = new AtomicBoolean(false);
+   private boolean pausedForAcquisition_ = false;
+
+   // Whether monitoring is "enabled" (whether running or paused)
    private boolean monitorEnabled_ = false;
-   private final Object pauseLock_ = new Object();
 
    private UpdatableAlert statusAlert_;
 
@@ -181,12 +181,12 @@ class MainController {
 
    synchronized void setEnabled(boolean f) {
       monitorEnabled_ = f;
-      if (!pausedForAcquisition_.get()) {
+      if (!pausedForAcquisition_) {
          handleMonitorThread(f);
       }
    }
 
-   synchronized void handleMonitorThread(boolean f) {
+   private synchronized void handleMonitorThread(boolean f) {
       if (f == (monitorThread_ != null)) {
          return;
       }
@@ -239,10 +239,15 @@ class MainController {
             synchronized (latestValues_) {
                lastSnapValues_.putAll(latestValues_);
             }
-            if (!pausedForAcquisition_.get()) {
+
+            boolean skipSnap = false;
+            synchronized (this) {
+               // Skip the first snap after resuming from pause.
+               skipSnap = pausedForAcquisition_;
+               pausedForAcquisition_ = false;
+            }
+            if (!skipSnap) {
                doSnap();
-            } else {
-               pausedForAcquisition_.set(false);
             }
             waitForChange();
          }
@@ -452,22 +457,17 @@ class MainController {
    }
 
    @Subscribe
-   public void onAcquisitionStarted(AcquisitionStartedEvent e) {
-      synchronized (this) {
-         if (monitorEnabled_) {
-            handleMonitorThread(false);
-         }
-         pausedForAcquisition_.set(true);
-      }
+   public synchronized void onAcquisitionStarted(AcquisitionStartedEvent e) {
+      handleMonitorThread(false);
+      pausedForAcquisition_ = true;
    }
 
    @Subscribe
-   public void onAcquisitionEnded(AcquisitionEndedEvent e) {
-      synchronized (this) {
-         if (monitorEnabled_) {
-            // pausedForAcquisition_ is set to false in monitorLoop()
-            handleMonitorThread(true);
-         }
+   public synchronized void onAcquisitionEnded(AcquisitionEndedEvent e) {
+      if (monitorEnabled_) {
+         // Leave pausedForAcquisition_ set here; it is cleared in
+         // monitorLoop() after skipping the first snap after resuming.
+         handleMonitorThread(true);
       }
    }
 
