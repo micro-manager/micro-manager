@@ -48,9 +48,9 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**
- * DataProcessor that splits images as instructed in SplitViewFrame.
+ * DataProcessor that creates a ration image as instructed in the UI.
  *
- * @author nico, heavily updated by Chris Weisiger
+ * @author nico
  */
 public class RatioImagingProcessor implements Processor {
 
@@ -83,13 +83,28 @@ public class RatioImagingProcessor implements Processor {
       int bc1Constant = 0;
       int bc2Constant = 0;
       try {
-         factor = NumberUtils.displayStringToInt(
-              settings_.getString(RatioImagingFrame.FACTOR, "1"));
-         bc1Constant = NumberUtils.displayStringToInt(
-              settings_.getString(RatioImagingFrame.BACKGROUND1CONSTANT, "0"));
-         bc2Constant = NumberUtils.displayStringToInt(
-              settings_.getString(RatioImagingFrame.BACKGROUND2CONSTANT, "0"));
-      } catch (ParseException pe) { // What to do? 
+         if (settings_.containsString(RatioImagingFrame.FACTOR)) {
+            factor = NumberUtils.displayStringToInt(
+                    settings_.getString(RatioImagingFrame.FACTOR, "1"));
+         }
+      } catch (ParseException pe) {
+         studio_.logs().logError(pe);
+      }
+      try {
+         if (settings_.containsString(RatioImagingFrame.BACKGROUND1CONSTANT)) {
+            bc1Constant = NumberUtils.displayStringToInt(
+                    settings_.getString(RatioImagingFrame.BACKGROUND1CONSTANT, "0"));
+         }
+      } catch (ParseException pe) {
+         studio_.logs().logError(pe);
+      }
+      try {
+         if (settings_.containsString(RatioImagingFrame.BACKGROUND2CONSTANT)) {
+            bc2Constant = NumberUtils.displayStringToInt(
+                    settings_.getString(RatioImagingFrame.BACKGROUND2CONSTANT, "0"));
+         }
+      } catch (ParseException pe) {
+         studio_.logs().logError(pe);
       }
       bc1Path_ = settings_.getString(RatioImagingFrame.BACKGROUND1, "");
       bc2Path_ = settings_.getString(RatioImagingFrame.BACKGROUND2, "");
@@ -126,8 +141,6 @@ public class RatioImagingProcessor implements Processor {
          process_ = false;
          return summary;
       }
-      
-
       
       String[] newNames = new String[chNames.size() + 1];
       for (int i = 0; i < chNames.size(); i++) {
@@ -202,8 +215,7 @@ public class RatioImagingProcessor implements Processor {
          resultProcessor.convertToShortProcessor(false);
       }
       resultProcessor.setRoi(roi);
-      ImagePlus newIp = new ImagePlus("", resultProcessor.crop());
-      return newIp;
+      return new ImagePlus("", resultProcessor.crop());
    }
    
 

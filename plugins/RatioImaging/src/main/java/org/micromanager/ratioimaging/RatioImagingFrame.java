@@ -48,6 +48,8 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.events.ChannelGroupChangedEvent;
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
@@ -78,8 +80,8 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
 
    private final Studio studio_;
    private final CMMCore core_;
-   private final JComboBox ch1Combo_;
-   private final JComboBox ch2Combo_;
+   private final JComboBox<String> ch1Combo_;
+   private final JComboBox<String> ch2Combo_;
    private final MutablePropertyMapView settings_;
    private final JTextField background1TextField_;
    private final JTextField background2TextField_;
@@ -161,6 +163,7 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
               getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
+      studio_.displays().registerForEvents(this);
       
    }
 
@@ -226,6 +229,7 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
     * @param cBox The comboBox to be populated.
     */
    private void populateWithChannels(JComboBox<String> cBox) {
+      final String selectedItem = (String) cBox.getSelectedItem();
       cBox.removeAllItems();
       String channelGroup = core_.getChannelGroup();
       StrVector channels = core_.getAvailableConfigs(channelGroup);
@@ -253,11 +257,17 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
             cBox.addItem(camera);
          }
       }
+      // also add channels from images that are open.  This allows the user to
+      // select channels that are not in the channel group.
+      for (DisplayWindow dw : studio_.displays().getAllImageWindows()) {
+         for (String ch : dw.getDataProvider().getSummaryMetadata().getChannelNameList()) {
+            cBox.addItem(ch);
+         }
+      }
+      cBox.setSelectedItem(selectedItem);
    }
    
-   final JTextField darkFieldTextField = new JTextField(50);
-   
-   private JTextField createBackgroundTextField(MutablePropertyMapView settings, 
+   private JTextField createBackgroundTextField(MutablePropertyMapView settings,
            String prefKey) {
       
       final JTextField backgroundTextField = new JTextField(20);
@@ -328,6 +338,20 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       populateWithChannels(ch2Combo_);
       pack();
    }
+
+   /**
+    * Called when a new display opens.  Use this event to update the cannel
+    * list in the UI.
+    *
+    * @param dae Event signalling a new display was added.
+    */
+   @Subscribe
+   public void onDisplayAdded(DataViewerAddedEvent dae) {
+      populateWithChannels(ch1Combo_);
+      populateWithChannels(ch2Combo_);
+      pack();
+   }
+
 
    private class TextFieldUpdater implements DocumentListener {
 
