@@ -133,7 +133,9 @@ Ubuntu: `sudo apt install libboost-all-dev`
 
 To build MMCoreJ and the Java application (Micro-Manager Studio), you will need
 a Java Development Kit (JDK). Micro-Manager Java code is written in Java 8
-(a.k.a. Java 1.8).
+(a.k.a. Java 1.8). With JDK 17, error may occur as ` 
+Unable to make field int java.awt.Color.value accessible: module java.desktop
+does not "opens java.awt" to unnamed module @38a8f1a9`.(ref issue: #1429)
 
 On macOS, install Temurin or Zulu JDK 8, and set `JAVA_HOME`:
 
