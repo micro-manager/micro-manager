@@ -308,9 +308,7 @@ AC_CONFIG_FILES(m4_strip([
    buildscripts/AntExtensions/Makefile
    testing/Makefile
    mmCoreAndDevices/MMDevice/Makefile
-   mmCoreAndDevices/MMDevice/unittest/Makefile
    mmCoreAndDevices/MMCore/Makefile
-   mmCoreAndDevices/MMCore/unittest/Makefile
    mmCoreAndDevices/MMCoreJ_wrap/Makefile
    mmstudio/Makefile
    acqEngine/Makefile
