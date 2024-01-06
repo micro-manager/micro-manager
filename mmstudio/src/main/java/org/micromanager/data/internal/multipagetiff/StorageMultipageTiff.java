@@ -49,7 +49,6 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImagesDifferInSizeException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
@@ -107,11 +106,12 @@ public final class StorageMultipageTiff implements Storage {
    private final ConcurrentHashMap<Coords, Image> coordsToPendingImage_ =
          new ConcurrentHashMap<>();
 
-   //map of position indices to objects associated with each
+   // Map of position indices to objects associated with each
    private HashMap<Integer, FileSet> positionToFileSet_;
 
-   //Map of image labels to file 
+   // Map of image Coords to files
    private Map<Coords, MultipageTiffReader> coordsToReader_;
+   private Map<Coords, List<Coords>> coordsIndexedMissingC_;
    // Cache the axes that are in use
    private final Set<String> axesInUse_;
    // Keeps track of our maximum extent along each axis.
@@ -306,9 +306,15 @@ public final class StorageMultipageTiff implements Storage {
          }
          Set<Coords> readerCoords = reader.getIndexKeys();
          if (readerCoords != null) {
+            coordsIndexedMissingC_ = new HashMap<>();
             for (Coords coords : readerCoords) {
                coordsToReader_.put(coords, reader);
                axesInUse_.addAll(coords.getAxes());
+               final Coords coordsNoC = coords.copyRemovingAxes(Coords.C);
+               if (!coordsIndexedMissingC_.containsKey(coordsNoC)) {
+                  coordsIndexedMissingC_.put(coordsNoC, new ArrayList<>(ALLOWED_AXES.size()));
+               }
+               coordsIndexedMissingC_.get(coordsNoC).add(coords);
                lastFrameOpenedDataSet_ = Math.max(coords.getT(),
                      lastFrameOpenedDataSet_);
                if (firstImage_ == null) {
@@ -347,6 +353,12 @@ public final class StorageMultipageTiff implements Storage {
       } catch (MMException | InterruptedException | ExecutionException | IOException e) {
          ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
       }
+      // index the coords
+      Coords coordsNoC = image.getCoords().copyRemovingAxes(Coords.C);
+      if (!coordsIndexedMissingC_.containsKey(coordsNoC)) {
+         coordsIndexedMissingC_.put(coordsNoC, new ArrayList<>(ALLOWED_AXES.size()));
+      }
+      coordsIndexedMissingC_.get(coordsNoC).add(image.getCoords());
    }
 
    @Override
@@ -358,10 +370,7 @@ public final class StorageMultipageTiff implements Storage {
          throws MMException, InterruptedException, ExecutionException, IOException {
       writeImage(image);
       if (waitForWritingToFinish) {
-         Future f = writingExecutor_.submit(new Runnable() {
-            @Override
-            public void run() {
-            }
+         Future<?> f = writingExecutor_.submit(() -> {
          });
          f.get();
       }
@@ -388,12 +397,9 @@ public final class StorageMultipageTiff implements Storage {
 
       startWritingTask(image);
 
-      writingExecutor_.submit(new Runnable() {
-         @Override
-         public void run() {
-            synchronized (coordsToPendingImage_) {
-               coordsToPendingImage_.remove(coords);
-            }
+      writingExecutor_.submit(() -> {
+         synchronized (coordsToPendingImage_) {
+            coordsToPendingImage_.remove(coords);
          }
       });
    }
@@ -595,7 +601,18 @@ public final class StorageMultipageTiff implements Storage {
       summaryMetadataString_ = NonPropertyMapJSONFormats.summaryMetadata()
             .toJSON(summary.toPropertyMap());
 
-      // TODO What does the following have to do with summary metadata?
+      // setSummaryMetadata must be called before adding images to the store, so use this moment
+      // to smartly initialize several HashMaps
+      Coords dims = summaryMetadata_.getIntendedDimensions();
+      int nrImagesNoC = 1;
+      for (String axis : dims.getAxes()) {
+         if (!axis.equals(Coords.CHANNEL)) {
+            nrImagesNoC *= dims.getIndex(axis);
+         }
+      }
+      coordsIndexedMissingC_ = new HashMap<>(nrImagesNoC);
+
+      // TODO: under what circumstances can coordsToReader_ already contain data?
       Map<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
       coordsToReader_ = new HashMap<>();
       if (showProgress && !GraphicsEnvironment.isHeadless()) {
@@ -953,12 +970,22 @@ public final class StorageMultipageTiff implements Storage {
       if (!haveIgnoredAxes) {
          result.add(coordsToReader_.get(coords).readImage(coords));
       } else {
-         for (Coords imageCoords : coordsToReader_.keySet()) {
-            if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
-               try {
-                  result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
-               } catch (IOException ex) {
-                  ReportingUtils.logError("Failed to read image at " + imageCoords);
+         // special case: if the ignored axis is C, use a special index to find the Coords
+         // otherwise, the search will be very expensive (which will  be the case for other
+         // axes) and result in noticaeble slowodwns with large datasetsz
+         if (ignoreTheseAxes[0].equals(Coords.CHANNEL)
+               && coordsIndexedMissingC_.containsKey(coords)) {
+            for (Coords tmpCoords : coordsIndexedMissingC_.get(coords)) {
+               result.add(coordsToReader_.get(tmpCoords).readImage(tmpCoords));
+            }
+         } else {
+            for (Coords imageCoords : coordsToReader_.keySet()) {
+               if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
+                  try {
+                     result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
+                  } catch (IOException ex) {
+                     ReportingUtils.logError("Failed to read image at " + imageCoords);
+                  }
                }
             }
          }

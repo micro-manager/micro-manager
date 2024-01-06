@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.micromanager.data.Coords;
@@ -47,6 +48,7 @@ import org.micromanager.data.SummaryMetadata;
  */
 public final class StorageRAM implements RewritableStorage {
    private HashMap<Coords, Image> coordsToImage_;
+   private Map<Coords, List<Coords>> coordsIndexedMissingC_;
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;
    private final Set<String> axesInUse_;
@@ -77,8 +79,15 @@ public final class StorageRAM implements RewritableStorage {
       } else {
          ImageSizeChecker.checkImageSizeInSummary(summaryMetadata_, image);
       }
+      // index the coords
       Coords coords = image.getCoords();
       coordsToImage_.put(coords, image);
+      Coords coordsNoC = image.getCoords().copyRemovingAxes(Coords.C);
+      if (!coordsIndexedMissingC_.containsKey(coordsNoC)) {
+         coordsIndexedMissingC_.put(coordsNoC, new ArrayList<>(4));
+      }
+      coordsIndexedMissingC_.get(coordsNoC).add(image.getCoords());
+
       for (String axis : coords.getAxes()) {
          axesInUse_.add(axis);
          if (maxIndex_.getIndex(axis) < coords.getIndex(axis)) {
@@ -164,11 +173,20 @@ public final class StorageRAM implements RewritableStorage {
       }
       if (!haveIgnoredAxes) {
          result.add(coordsToImage_.get(coords));
-      } else {  // could not optimize, traverse our HashMap
-         for (Image image : coordsToImage_.values()) {
-            Coords imCoord = image.getCoords().copyRemovingAxes(ignoreTheseAxes);
-            if (imCoord.equals(coords)) {
-               result.add(image);
+      } else {
+         // special case: if the ignored axis is C, use a special index to find the Coords
+         // otherwise, the search will be very expensive (which will  be the case for other
+         // axes) and result in noticaeble slowodwns with large datasetsz
+         if (ignoreTheseAxes[0].equals(Coords.CHANNEL)) {
+            for (Coords tmpCoords : coordsIndexedMissingC_.get(coords)) {
+               result.add(coordsToImage_.get(tmpCoords));
+            }
+         } else { // brute force it.  This will be slow with large data sets
+            for (Image image : coordsToImage_.values()) {
+               Coords imCoord = image.getCoords().copyRemovingAxes(ignoreTheseAxes);
+               if (imCoord.equals(coords)) {
+                  result.add(image);
+               }
             }
          }
       }
@@ -206,9 +224,26 @@ public final class StorageRAM implements RewritableStorage {
       return summaryMetadata_;
    }
 
+   /**
+    * Recieve the new summary through an event.  This is guaranteed to happen before
+    * putImage is called.
+    *
+    * @param event this gives use the summary metadata
+    */
    @Subscribe
    public void onNewSummary(DataProviderHasNewSummaryMetadataEvent event) {
       summaryMetadata_ = event.getSummaryMetadata();
+
+      // setSummaryMetadata must be called before adding images to the store, so use this moment
+      // to smartly initialize several HashMaps
+      Coords dims = summaryMetadata_.getIntendedDimensions();
+      int nrImagesNoC = 1;
+      for (String axis : dims.getAxes()) {
+         if (!axis.equals(Coords.CHANNEL)) {
+            nrImagesNoC *= dims.getIndex(axis);
+         }
+      }
+      coordsIndexedMissingC_ = new HashMap<>(nrImagesNoC);
    }
 
    @Override
@@ -227,5 +262,6 @@ public final class StorageRAM implements RewritableStorage {
    @Override
    public void close() {
       coordsToImage_ = null;
+      coordsIndexedMissingC_ = null;
    }
 }
