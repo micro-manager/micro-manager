@@ -932,13 +932,11 @@ public final class StorageMultipageTiff implements Storage {
             }
          }
       }
-      for (Coords imageCoords : coordsToReader_.keySet()) {
-         if (imageCoords.equals(coords)) {
-            try {
-               result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
-            } catch (IOException ex) {
-               ReportingUtils.logError("Failed to read image at " + imageCoords);
-            }
+      if (coordsToReader_.containsKey(coords)) {
+         try {
+            result.add(coordsToReader_.get(coords).readImage(coords));
+         } catch (IOException ex) {
+            ReportingUtils.logError("Failed to read image at " + coords);
          }
       }
       return new ArrayList<>(result);
@@ -964,7 +962,7 @@ public final class StorageMultipageTiff implements Storage {
       for (String axis : ignoreTheseAxes) {
          if (axesInUse_.contains(axis)) {
             haveIgnoredAxes = true;
-            continue;
+            break;
          }
       }
       if (!haveIgnoredAxes) {

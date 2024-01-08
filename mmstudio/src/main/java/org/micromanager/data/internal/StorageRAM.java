@@ -131,12 +131,8 @@ public final class StorageRAM implements RewritableStorage {
          return null;
       }
       List<Image> results = new ArrayList<>();
-      for (Image image : coordsToImage_.values()) {
-         // TODO figure out why subSpace was used and fix problems by not doing it
-         //  if (image.getCoords().isSubspaceCoordsOf(coords)) {
-         if (image.getCoords().equals(coords)) {
-            results.add(image);
-         }
+      if (coordsToImage_.containsKey(coords)) {
+         results.add(coordsToImage_.get(coords));
       }
       return results;
    }
