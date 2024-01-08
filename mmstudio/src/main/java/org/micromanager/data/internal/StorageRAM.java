@@ -35,6 +35,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.ImagesDifferInSizeException;
 import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -130,11 +131,12 @@ public final class StorageRAM implements RewritableStorage {
       if (coordsToImage_ == null) {
          return null;
       }
-      List<Image> results = new ArrayList<>();
-      if (coordsToImage_.containsKey(coords)) {
-         results.add(coordsToImage_.get(coords));
+      try {
+         return getImagesIgnoringAxes(coords, coords.getAxes().toArray(new String[0]));
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex, "Failed to read image at " + coords);
+         return null;
       }
-      return results;
    }
 
    /**

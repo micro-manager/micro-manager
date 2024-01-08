@@ -924,22 +924,12 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public List<Image> getImagesMatching(Coords coords) {
-      HashSet<Image> result = new HashSet<>();
-      synchronized (coordsToPendingImage_) {
-         for (Coords imageCoords : coordsToPendingImage_.keySet()) {
-            if (imageCoords.equals(coords)) {
-               result.add(coordsToPendingImage_.get(imageCoords));
-            }
-         }
+      try {
+         return getImagesIgnoringAxes(coords, coords.getAxes().toArray(new String[0]));
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex, "Failed to read image at " + coords);
+         return null;
       }
-      if (coordsToReader_.containsKey(coords)) {
-         try {
-            result.add(coordsToReader_.get(coords).readImage(coords));
-         } catch (IOException ex) {
-            ReportingUtils.logError("Failed to read image at " + coords);
-         }
-      }
-      return new ArrayList<>(result);
    }
 
    @Override
