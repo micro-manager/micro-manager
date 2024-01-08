@@ -50,6 +50,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -84,8 +86,10 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    private boolean isDatasetWritable_;
    private SummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
    private final ConcurrentHashMap<Coords, String> coordsToFilename_;
+   private Map<Coords, List<Coords>> coordsIndexedMissingC_;
    private final HashMap<Integer, String> positionIndexToName_;
    private final ArrayList<String> orderedChannelNames_;
+   private final Set<String> axesInUse_;
    private Coords maxIndices_;
    private boolean isMultiPosition_;
    private Image firstImage_;
@@ -115,6 +119,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       metadataStreams_ = new HashMap<>();
       positionIndexToName_ = new HashMap<>();
       orderedChannelNames_ = new ArrayList<>();
+      axesInUse_ = new TreeSet<>();
       maxIndices_ = new DefaultCoords.Builder().build();
       amLoading_ = false;
       isMultiPosition_ = true;
@@ -210,14 +215,22 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          writeFrameMetadata(image, metadataJSON, fileName);
       }
 
+      // Update our Coords indices
       Coords coords = image.getCoords();
       if (!coordsToFilename_.containsKey(coords)) {
          // TODO: is this in fact always the correct fileName? What if it
          // isn't?  See the above code that branches based on amLoading_.
          coordsToFilename_.put(coords, fileName);
       }
+      Coords coordsNoC = image.getCoords().copyRemovingAxes(Coords.C);
+      if (!coordsIndexedMissingC_.containsKey(coordsNoC)) {
+         coordsIndexedMissingC_.put(coordsNoC, new ArrayList<>(4));
+      }
+      coordsIndexedMissingC_.get(coordsNoC).add(image.getCoords());
+
       // Update our tracking of the max index along each axis.
       for (String axis : coords.getAxes()) {
+         axesInUse_.add(axis);
          if (coords.getIndex(axis) > maxIndices_.getIndex(axis)) {
             maxIndices_ = maxIndices_.copyBuilder().index(
                   axis, coords.getIndex(axis)).build();
@@ -333,11 +346,39 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    @Override
    public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
          throws IOException {
-      ArrayList<Image> result = new ArrayList<>();
-      for (Coords altCoords : coordsToFilename_.keySet()) {
-         Coords strippedAltCoords = altCoords.copyRemovingAxes(ignoreTheseAxes);
-         if (coords.equals(strippedAltCoords)) {
-            result.add(getImage(altCoords));
+      if (coordsToFilename_ == null) {
+         return null;
+      }
+      // Optimization: traversing large HashMaps is costly, so avoid that when there is no need
+      // without this, there is noticeable slowdown for one axis data > ~10,000 images.
+      // An alternative optimization approach is to keep collections of coords
+      // for all possible ignoredAxes.  There is more upfront work involved but may be
+      // needed for fast multi-camera imaging.
+      List<Image> result = new ArrayList<>();
+      boolean haveIgnoredAxes = false;
+      for (String axis : ignoreTheseAxes) {
+         if (axesInUse_.contains(axis)) {
+            haveIgnoredAxes = true;
+            break;
+         }
+      }
+      if (!haveIgnoredAxes) {
+         result.add(getImage(coords));
+      } else {
+         // special case: if the ignored axis is C, use a special index to find the Coords
+         // otherwise, the search will be very expensive (which will  be the case for other
+         // axes) and result in noticaeble slowodwns with large datasetsz
+         if (ignoreTheseAxes[0].equals(Coords.CHANNEL)) {
+            for (Coords tmpCoords : coordsIndexedMissingC_.get(coords)) {
+               result.add(getImage(tmpCoords));
+            }
+         } else { // brute force it.  This will be slow with large data sets
+            for (Coords altCoords : coordsToFilename_.keySet()) {
+               Coords strippedAltCoords = altCoords.copyRemovingAxes(ignoreTheseAxes);
+               if (coords.equals(strippedAltCoords)) {
+                  result.add(getImage(altCoords));
+               }
+            }
          }
       }
       return result;
@@ -808,11 +849,22 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    @Subscribe
    public void onNewSummaryMetadata(DataProviderHasNewSummaryMetadataEvent event) {
       summaryMetadata_ = event.getSummaryMetadata();
+
+      // setSummaryMetadata must be called before adding images to the store, so use this moment
+      // to smartly initialize several HashMaps
+      Coords dims = summaryMetadata_.getIntendedDimensions();
+      int nrImagesNoC = 1;
+      for (String axis : dims.getAxes()) {
+         if (!axis.equals(Coords.CHANNEL)) {
+            nrImagesNoC *= dims.getIndex(axis);
+         }
+      }
+      coordsIndexedMissingC_ = new HashMap<>(nrImagesNoC);
    }
 
    @Override
    public void close() {
       saveComments();
-      // We don't maintain any state that needs to be cleaned up.
+      coordsIndexedMissingC_ = null;
    }
 }

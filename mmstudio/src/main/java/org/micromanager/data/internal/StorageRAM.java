@@ -166,7 +166,7 @@ public final class StorageRAM implements RewritableStorage {
       for (String axis : ignoreTheseAxes) {
          if (axesInUse_.contains(axis)) {
             haveIgnoredAxes = true;
-            continue;
+            break;
          }
       }
       if (!haveIgnoredAxes) {
