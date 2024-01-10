@@ -128,11 +128,14 @@ public final class StorageRAM implements RewritableStorage {
 
    @Override
    public synchronized List<Image> getImagesMatching(Coords coords) {
-      if (coordsToImage_ == null) {
-         return null;
+      List<String> ignoredAxes = new ArrayList<>();
+      for (String axis : axesInUse_) {
+         if (!coords.getAxes().contains(axis)) {
+            ignoredAxes.add(axis);
+         }
       }
       try {
-         return getImagesIgnoringAxes(coords, coords.getAxes().toArray(new String[0]));
+         return getImagesIgnoringAxes(coords, ignoredAxes.toArray(new String[0]));
       } catch (IOException ex) {
          ReportingUtils.logError(ex, "Failed to read image at " + coords);
          return null;
