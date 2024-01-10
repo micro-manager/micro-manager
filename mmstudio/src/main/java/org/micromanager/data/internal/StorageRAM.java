@@ -23,6 +23,7 @@ package org.micromanager.data.internal;
 import com.google.common.eventbus.Subscribe;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -182,12 +183,20 @@ public final class StorageRAM implements RewritableStorage {
             for (Coords tmpCoords : coordsIndexedMissingC_.get(coords)) {
                result.add(coordsToImage_.get(tmpCoords));
             }
-         } else { // brute force it.  This will be slow with large data sets
-            for (Image image : coordsToImage_.values()) {
-               Coords imCoord = image.getCoords().copyRemovingAxes(ignoreTheseAxes);
-               if (imCoord.equals(coords)) {
-                  result.add(image);
+         } else {
+            // Brute force it.  This will be slow with large data sets
+            // Note that coordsToReader_ can be modified at the same time,
+            // catch ConcurrentModificationException rather than incur the cost
+            // of a lock that could slow down insertions
+            try {
+               for (Image image : coordsToImage_.values()) {
+                  Coords imCoord = image.getCoords().copyRemovingAxes(ignoreTheseAxes);
+                  if (imCoord.equals(coords)) {
+                     result.add(image);
+                  }
                }
+            } catch (ConcurrentModificationException cme) {
+               ReportingUtils.logError(cme, "coordsToReader_ was modified while iterating");
             }
          }
       }

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -973,14 +974,22 @@ public final class StorageMultipageTiff implements Storage {
                result.add(coordsToReader_.get(tmpCoords).readImage(tmpCoords));
             }
          } else {
-            for (Coords imageCoords : coordsToReader_.keySet()) {
-               if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
-                  try {
-                     result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
-                  } catch (IOException ex) {
-                     ReportingUtils.logError("Failed to read image at " + imageCoords);
+            // Brute force it.  This will be slow with large data sets
+            // Note that coordsToReader_ can be modified at the same time,
+            // catch ConcurrentModificationException rather than incur the cost
+            // of a lock that could slow down insertions
+            try {
+               for (Coords imageCoords : coordsToReader_.keySet()) {
+                  if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
+                     try {
+                        result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
+                     } catch (IOException ex) {
+                        ReportingUtils.logError("Failed to read image at " + imageCoords);
+                     }
                   }
                }
+            } catch (ConcurrentModificationException cme) {
+               ReportingUtils.logError(cme, "coordsToReader_ was modified while iterating");
             }
          }
       }
