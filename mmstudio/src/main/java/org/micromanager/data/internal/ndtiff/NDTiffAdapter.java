@@ -249,7 +249,7 @@ public class NDTiffAdapter implements Storage {
    @Override
    public List<Image> getImagesIgnoringAxes(
            Coords coords, String... ignoreTheseAxes) throws IOException {
-      // I don't see how this should do anything different than the above one...
+      // This is obviously wrong, but not quite sure what to do at this point....
 
       return getImagesMatching(coords);
    }
