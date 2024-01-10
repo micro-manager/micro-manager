@@ -104,10 +104,11 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
                   }
                }
             }
-            iPlus = new ImagePlus(dp.getName() + "-ij");
+            iPlus = new ImagePlus();
             iPlus.setOpenAsHyperStack(true);
             iPlus.setStack(imgStack, dp.getNextIndex(Coords.C),
                   dp.getNextIndex(Coords.Z), dp.getNextIndex(Coords.T));
+            iPlus.setTitle(dp.getName() + "-ij");
 
             int displayMode;
             switch (display.getDisplaySettings().getColorMode()) {
