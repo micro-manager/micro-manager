@@ -165,6 +165,10 @@ public class CliJDeskewProcessor implements Processor {
             studio_.logs().showError(e);
          }
       }
+
+      if (keepOriginals_) {
+         context.outputImage(image);
+      }
       // TODO: freeze all stores at the end...
    }
 
@@ -183,27 +187,34 @@ public class CliJDeskewProcessor implements Processor {
       double depthScale = pxDepth / pxMin;
 
       // destination image size
-      int newWidth = (int) Math.ceil(xyScale * image.getWidth());
+      int newWidth = Math.abs((int) Math.ceil(xyScale * image.getWidth()));
       int newHeight = (int) Math.ceil(xyScale * image.getHeight() * Math.cos(theta_)
                + imDepth * depthScale / Math.sin(theta_));
-      int newDepth = (int) Math.ceil(xyScale * image.getHeight() * Math.sin(theta_));
+      int newDepth = Math.abs((int) Math.ceil(xyScale * image.getHeight() * Math.sin(theta_)));
 
       newDepth_ = newDepth;
       newZSizeUm_ = pxDepth;
 
       // do the clij stuff
       ImagePlus imp = new ImagePlus("test", stack);
-      ClearCLBuffer gpuInputImage = clij2_.push(imp);
-      ClearCLBuffer gpuOutputImage = clij2_.create(new long[] {newWidth, newHeight, newDepth},
-               gpuInputImage.getNativeType());
-      String transform = "shearYZ=-" + deskewStep + " scaleX=" + xyScale
-               + " scaleY=" + xyScale + " scaleZ=" + depthScale
-               + " rotateX=-" + Math.toDegrees(theta_)
-               + " translateZ=-" + newDepth
-               + " rotateX=180 translateZ=-" + newDepth + " translateY=-" + newHeight;
+      ClearCLBuffer gpuInputImage = null;
+      ClearCLBuffer gpuOutputImage = null;
+      try {
+         gpuInputImage = clij2_.push(imp);
+         gpuOutputImage = clij2_.create(new long[]{newWidth, newHeight, newDepth},
+                 gpuInputImage.getNativeType());
+         String transform = "shearYZ=-" + deskewStep + " scaleX=" + xyScale
+                 + " scaleY=" + xyScale + " scaleZ=" + depthScale
+                 + " rotateX=-" + Math.toDegrees(theta_)
+                 + " translateZ=-" + newDepth
+                 + " rotateX=180 translateZ=-" + newDepth + " translateY=-" + newHeight;
 
-      clij2_.affineTransform3D(gpuInputImage, gpuOutputImage, transform);
-      clij2_.release(gpuInputImage);
+         clij2_.affineTransform3D(gpuInputImage, gpuOutputImage, transform);
+      } finally {
+         if (gpuInputImage != null) {
+            clij2_.release(gpuInputImage);
+         }
+      }
 
       return gpuOutputImage;
    }
