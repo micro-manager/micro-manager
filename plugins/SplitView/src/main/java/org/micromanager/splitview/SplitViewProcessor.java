@@ -84,7 +84,20 @@ public class SplitViewProcessor implements Processor {
             newNames[i * numSplits_ + j] = base + channelSuffixes_.get(j);
          }
       }
-      return summary.copyBuilder().channelNames(newNames).build();
+      SummaryMetadata.Builder sb = summary.copyBuilder().channelNames(newNames);
+
+      if (summary.getImageWidth() != null && summary.getImageHeight() != null) {
+         int width = summary.getImageWidth();
+         int height = summary.getImageHeight();
+         if (orientation_.equals(SplitViewFrame.TB)) {
+            height /= numSplits_;
+         } else {
+            width /= numSplits_;
+         }
+         sb.imageWidth(width).imageHeight(height);
+      }
+
+      return sb.build();
    }
 
    @Override
