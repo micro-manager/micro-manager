@@ -139,7 +139,7 @@ public final class MMAcquisition extends DataViewerListener {
          try {
             String acqDirectory = createAcqDirectory(acquisitionSettings.root(),
                      acquisitionSettings.prefix());
-            // summaryMetadata.put("Prefix", acqDirectory);
+            summaryMetadata =  summaryMetadata.copyBuilder().prefix(acqDirectory).build();
             String acqPath = acquisitionSettings.root() + File.separator + acqDirectory;
             store_.setStorage(getAppropriateStorage(studio_, store_, acqPath, true));
          } catch (Exception e) {
