@@ -88,7 +88,11 @@ public final class StorageRAM implements RewritableStorage {
       if (!coordsIndexedMissingC_.containsKey(coordsNoC)) {
          coordsIndexedMissingC_.put(coordsNoC, new ArrayList<>(4));
       }
-      coordsIndexedMissingC_.get(coordsNoC).add(image.getCoords());
+      // since we can insert the same coords multiple times in a rewriteable RAMStore
+      // we need to check if this coord was already present
+      if (!coordsIndexedMissingC_.get(coordsNoC).contains(image.getCoords())) {
+         coordsIndexedMissingC_.get(coordsNoC).add(image.getCoords());
+      }
 
       for (String axis : coords.getAxes()) {
          axesInUse_.add(axis);
