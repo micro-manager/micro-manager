@@ -79,7 +79,7 @@ public class MyNumberUtils {
     * @param place the number of decimal places
     * @return the rounded value
     */
-   public static double roundDoubleToPlace(double d, int place) {
+   public static double roundDoubleToPlace(double value, int place) {
         return Precision.round(value, place, BigDecimal.ROUND_HALF_UP);
    }
    
