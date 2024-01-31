@@ -23,6 +23,7 @@ package org.micromanager.asidispim.Utils;
 
 import org.apache.commons.math3.util.Precision;
 
+import java.math.BigDecimal;
 
 /**
  * @author Jon
@@ -59,30 +60,27 @@ public class MyNumberUtils {
       return Precision.equals(f1, f2, 100);
    }
    
+
    /**
+    * Return the float value rounded to the number of decimal places.
     * 
-    * @param f
-    * @param place number of places after decimal point, between 0 and 9
-    * @return
+    * @param value the value to round
+    * @param place the number of decimal places
+    * @return the rounded value
     */
-   public static float roundFloatToPlace(float f, int place) {
-      if (place < 0) throw new IllegalArgumentException();
-      if (place > 9) throw new IllegalArgumentException();
-      long factor = (long) Math.pow(10, place);
-      return ((float) Math.round(f * factor)) / factor;
+   public static float roundFloatToPlace(float value, int place) {
+        return Precision.round(value, place, BigDecimal.ROUND_HALF_UP);
    }
    
    /**
+    * Return the double value rounded to the number of decimal places.
     * 
-    * @param f
-    * @param place number of places after decimal point, between 0 and 9
-    * @return
+    * @param value the value to round
+    * @param place the number of decimal places
+    * @return the rounded value
     */
    public static double roundDoubleToPlace(double d, int place) {
-      if (place < 0) throw new IllegalArgumentException();
-      if (place > 9) throw new IllegalArgumentException();
-      long factor = (long) Math.pow(10, place);
-      return ((double) Math.round(d * factor)) / factor;
+        return Precision.round(value, place, BigDecimal.ROUND_HALF_UP);
    }
    
    /**
