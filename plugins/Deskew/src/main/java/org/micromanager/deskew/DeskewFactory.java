@@ -34,10 +34,10 @@ public class DeskewFactory implements ProcessorFactory {
    public Processor createProcessor() {
       try {
          String gpuName = settings_.getString(DeskewFrame.GPU, CLIJ2.getInstance().getGPUName());
-         double theta = NumberUtils.displayStringToDouble(settings_.getString(
-                  DeskewFrame.THETA, "0.0"));
+         double theta = Math.toRadians(NumberUtils.displayStringToDouble(settings_.getString(
+                  DeskewFrame.DEGREE, "60.0")));
          if (theta == 0.0) {
-            studio_.logs().showError("Can not deskew LighSheet data with an angle of 0.0 radians");
+            studio_.logs().showError("Can not deskew LighSheet data with an angle of 0.0 degrees");
          }
          boolean doFullVolume = settings_.getBoolean(DeskewFrame.FULL_VOLUME, true);
          boolean doXYProjections = settings_.getBoolean(DeskewFrame.XY_PROJECTION, false);
@@ -99,11 +99,17 @@ public class DeskewFactory implements ProcessorFactory {
             displaySettings = dv.getDisplaySettings();
          }
       }
-      DisplayWindow display = studio.displays().createDisplay(store);
-      if (displaySettings != null) {
-         display.setDisplaySettings(displaySettings);
+      if ((settings.containsKey(DeskewFrame.SHOW) && settings.getBoolean(DeskewFrame.SHOW, false))
+              || (settings.containsKey(DeskewFrame.OUTPUT_OPTION)
+              && (settings.getString(DeskewFrame.OUTPUT_OPTION, "").equals(DeskewFrame.OPTION_RAM)
+                     || settings.getString(DeskewFrame.OUTPUT_OPTION, "")
+                           .equals(DeskewFrame.OPTION_REWRITABLE_RAM)))) {
+         DisplayWindow display = studio.displays().createDisplay(store);
+         if (displaySettings != null) {
+            display.setDisplaySettings(displaySettings);
+         }
+         display.show();
       }
-      display.show();
       return store;
    }
 

@@ -62,6 +62,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    // keys to store settings in MutablePropertyMap
    static final String THETA = "Theta";
+   static final String DEGREE = "Degree";
    static final String FULL_VOLUME = "Create Full Volume";
    static final String XY_PROJECTION = "Do XY Projection";
    static final String XY_PROJECTION_MODE = "XY Projection Mode";
@@ -96,7 +97,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
    public DeskewFrame(PropertyMap configuratorSettings, Studio studio) {
       studio_ = studio;
       settings_ = studio_.profile().getSettings(this.getClass());
-      copySettings(settings_, configuratorSettings);
       clij2_ = CLIJ2.getInstance();
       studio_.logs().logMessage(CLIJ2.clinfo());
       studio_.logs().logMessage(clij2_.getGPUName());
@@ -121,6 +121,7 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
    @Override
    public PropertyMap getSettings() {
+      settings_.putBoolean(KEEP_ORIGINAL, true);
       return settings_.toPropertyMap();
    }
 
@@ -160,13 +161,13 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       add(gpuComboBox, "wrap");
       add(new JSeparator(), "span 4, growx, wrap");
 
-      add(new JLabel("Sheet angle (_\\) in radians:"), "alignx left");
-      final JTextField thetaTextField = new JTextField(5);
-      thetaTextField.setText(settings_.getString(THETA, "20"));
-      thetaTextField.getDocument().addDocumentListener(
-              new TextFieldUpdater(thetaTextField, THETA, 0.0, settings_));
-      settings_.putString(THETA, thetaTextField.getText());
-      add(thetaTextField, "wrap");
+      add(new JLabel("Sheet angle (_\\) in degrees:"), "alignx left");
+      final JTextField degreeTextField = new JTextField(5);
+      degreeTextField.setText(settings_.getString(DEGREE, "20"));
+      degreeTextField.getDocument().addDocumentListener(
+              new TextFieldUpdater(degreeTextField, DEGREE, 0.0, settings_));
+      settings_.putString(DEGREE, degreeTextField.getText());
+      add(degreeTextField, "wrap");
 
       add(createCheckBox(FULL_VOLUME, true), "span 2, wrap");
       add(createCheckBox(XY_PROJECTION, true), "span 2");
@@ -177,7 +178,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       buttons = projectionModeUI(ORTHOGONAL_PROJECTIONS_MODE);
       add(buttons.get(0));
       add(buttons.get(1), "wrap");
-      add(createCheckBox(KEEP_ORIGINAL, true), "span 2, wrap");
 
       add(new JSeparator(), "span 5, growx, wrap");
       add(new JLabel("Output format:"), "spanx, alignx left, wrap");
@@ -279,6 +279,9 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
       showDisplay.setToolTipText("Display the processed data in a new image window");
       showDisplay.setSelected(settings_.getBoolean(SHOW, true));
       add(showDisplay, "spanx, alignx right, wrap");
+      showDisplay.addActionListener(e -> {
+         settings_.putBoolean(SHOW, showDisplay.isSelected());
+      });
 
       add(new JSeparator(), "span 5, growx, wrap");
 
@@ -293,10 +296,6 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
 
       pack();
-   }
-
-   private void copySettings(MutablePropertyMapView settings, PropertyMap configuratorSettings) {
-      settings.putString(THETA, configuratorSettings.getString(THETA, "0"));
    }
 
    private JCheckBox createCheckBox(String key, boolean initialValue) {
@@ -437,6 +436,8 @@ public class DeskewFrame extends JFrame implements ProcessorConfigurator {
 
       Datastore destination = studio_.data().createRAMDatastore();
       List<ProcessorFactory> factories = new ArrayList<>();
+
+      settings_.putBoolean(KEEP_ORIGINAL, false);
       factories.add(new DeskewFactory(studio_, settings_.toPropertyMap()));
       Pipeline pipeline = studio_.data().createPipeline(factories, destination, true);
       try {
