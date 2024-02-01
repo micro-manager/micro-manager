@@ -122,6 +122,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       axesInUse_ = new TreeSet<>();
       maxIndices_ = new DefaultCoords.Builder().build();
       amLoading_ = false;
+      coordsIndexedMissingC_ = new HashMap<>();
       isMultiPosition_ = true;
 
       // Note: this will throw an error if there is no existing data set
