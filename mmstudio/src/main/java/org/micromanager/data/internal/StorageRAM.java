@@ -65,6 +65,7 @@ public final class StorageRAM implements RewritableStorage {
       maxIndex_ = new DefaultCoords.Builder().build();
       axesInUse_ = new TreeSet<>();
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
+      coordsIndexedMissingC_ = new HashMap<>();
       // It is imperative that we be notified of new images before anyone who
       // wants to retrieve the images from the store is notified.
       ((DefaultDatastore) store).registerForEvents(this, 0);
