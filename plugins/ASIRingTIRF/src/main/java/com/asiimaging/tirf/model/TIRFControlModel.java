@@ -201,8 +201,9 @@ public class TIRFControlModel {
    public void calibrateFastCircles(final int nImages, final float startSize,
                                     final float radiusIncrement) {
       final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+         
          final float originalRadius = scanner.getFastCirclesRadius();
-
+         
          @Override
          protected Void doInBackground() throws Exception {
             studio.logs().logMessage("Calibration Started");
@@ -210,7 +211,6 @@ public class TIRFControlModel {
             Image image;
             final double exposure = camera.getExposure();
             final double fastCirclesHz = (1.0 / exposure) * 1000.0;
-
             scanner.setFastCirclesRate((float) fastCirclesHz);
 
             SwingUtilities.invokeLater(() -> {
@@ -249,15 +249,22 @@ public class TIRFControlModel {
 
                scanner.setFastCirclesState(Scanner.Values.FastCirclesState.OFF);
             }
-
-            scanner.setFastCirclesStateRestart();
+            
             return null;
          }
 
          @Override
          protected void done() {
-            studio.logs().logMessage("Calibration Finished");
+            // turn off fast circles and the scanner beam
+            scanner.setFastCirclesState(Scanner.Values.FastCirclesState.OFF);
+            scanner.setBeamEnabled(false);
+
+            if (camera.isSupported()) {
+               camera.setTriggerModeInternal();
+            }
+
             scanner.setFastCirclesRadius(originalRadius); // restore radius
+            studio.logs().logMessage("Calibration Finished");
          }
 
       };
@@ -362,7 +369,7 @@ public class TIRFControlModel {
 
          @Override
          protected void done() {
-            // turn on fast circles and the scanner beam
+            // turn off fast circles and the scanner beam
             scanner.setFastCirclesState(Scanner.Values.FastCirclesState.OFF);
             scanner.setBeamEnabled(false);
 

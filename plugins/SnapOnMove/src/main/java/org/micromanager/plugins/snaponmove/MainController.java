@@ -95,6 +95,7 @@ class MainController {
    // The monitoring thread; null when stopped or paused
    private Thread monitorThread_;
 
+   private final Object pausedLock_ = new Object();
    private boolean pausedForAcquisition_ = false;
 
    // Whether monitoring is "enabled" (whether running or paused)
@@ -181,8 +182,10 @@ class MainController {
 
    synchronized void setEnabled(boolean f) {
       monitorEnabled_ = f;
-      if (!pausedForAcquisition_) {
-         handleMonitorThread(f);
+      synchronized (pausedLock_) {
+         if (!pausedForAcquisition_) {
+            handleMonitorThread(f);
+         }
       }
    }
 
@@ -241,7 +244,7 @@ class MainController {
             }
 
             boolean skipSnap = false;
-            synchronized (this) {
+            synchronized (pausedLock_) {
                // Skip the first snap after resuming from pause.
                skipSnap = pausedForAcquisition_;
                pausedForAcquisition_ = false;
@@ -459,7 +462,9 @@ class MainController {
    @Subscribe
    public synchronized void onAcquisitionStarted(AcquisitionStartedEvent e) {
       handleMonitorThread(false);
-      pausedForAcquisition_ = true;
+      synchronized (pausedLock_) {
+         pausedForAcquisition_ = true;
+      }
    }
 
    @Subscribe
