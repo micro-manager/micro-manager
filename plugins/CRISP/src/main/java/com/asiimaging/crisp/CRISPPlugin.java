@@ -18,10 +18,9 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class CRISPPlugin implements MenuPlugin, SciJavaPlugin {
 
-   public static final String copyright =
-           "Applied Scientific Instrumentation (ASI), 2014-2024";
+   public static final String copyright = "Applied Scientific Instrumentation (ASI), 2014-2024";
    public static final String description =
-           "An interface to control the ASI CRISP Autofocus system.";
+           "An interface to control the ASI CRISP Autofocus device.";
    public static final String menuName = "ASI CRISP Control";
    public static final String version = "2.5.2";
 

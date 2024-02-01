@@ -117,24 +117,25 @@ public class SpinnerPanel extends Panel {
       // spinner tooltips
       // "Property:" is the associated Micro-Manager property name
       // "Serial command:" is the serial command sent to the controller
-      lblLEDIntensity.setToolTipText("<html>Set the intensity of the LED.<br>" +
-              "Property: <b>LED Intensity</b><br>Serial command: <b>UL X</b></html>");
-      lblObjectiveNA.setToolTipText("<html>Set the objective numerical aperture.<br>" +
-              "Property: <b>Objective NA</b><br>Serial command: <b>LR Y</b></html>");
-      lblLoopGain.setToolTipText("<html>Set the loop gain.<br>" +
-              "Property: <b>GainMultiplier</b><br>Serial command: <b>LR T</b></html>");
-      lblNumAverages.setToolTipText("<html>Set the number of averages.<br>" +
-              "Property: <b>Number of Averages</b><br>Serial command: <b>RT F</b></html>");
-      lblUpdateRateMs.setToolTipText("<html>Set the trajectory update rate in milliseconds.<br>" +
-              "Property: <b>Number of Skips</b><br>Serial command: <b>UL Y</b></html>");
-      lblLockRange.setToolTipText("<html>Set the max focus lock range in millimeters.<br>" +
-              "Property: <b>Max Lock Range(mm)</b><br>Serial command: <b>LR Z</b></html>");
+      lblLEDIntensity.setToolTipText("<html>Set the intensity of the LED.<br>"
+              + "Property: <b>LED Intensity</b><br>Serial command: <b>UL X</b></html>");
+      lblObjectiveNA.setToolTipText("<html>Set the objective numerical aperture.<br>"
+              + "Property: <b>Objective NA</b><br>Serial command: <b>LR Y</b></html>");
+      lblLoopGain.setToolTipText("<html>Set the loop gain.<br>"
+              + "Property: <b>GainMultiplier</b><br>Serial command: <b>LR T</b></html>");
+      lblNumAverages.setToolTipText("<html>Set the number of averages.<br>"
+              + "Property: <b>Number of Averages</b><br>Serial command: <b>RT F</b></html>");
+      lblUpdateRateMs.setToolTipText("<html>Set the trajectory update rate in milliseconds.<br>"
+              + "Property: <b>Number of Skips</b><br>Serial command: <b>UL Y</b></html>");
+      lblLockRange.setToolTipText("<html>Set the max focus lock range in millimeters.<br>"
+              + "Property: <b>Max Lock Range(mm)</b><br>Serial command: <b>LR Z</b></html>");
 
       lblPollRate.setToolTipText(
               "The rate in milliseconds that the device is polled to update the status text.");
 
       // software settings profiles tooltips
-      lblSelectSettings.setToolTipText("The software settings profiles are saved in the plugin settings.");
+      lblSelectSettings.setToolTipText(
+              "The software settings profiles are saved in the plugin settings.");
       cmbSelectSettings.setToolTipText("Select the software settings profile.");
       btnAddNewSettings.setToolTipText("Add a new software settings profile.");
       btnRemoveSettings.setToolTipText("Remove the last software settings profile.");
@@ -250,8 +251,7 @@ public class SpinnerPanel extends Panel {
 
    /**
     * Remove the last software settings profile.
-    *
-    * <p>This method will not remove the last settings object.
+    * This method will not remove the last settings object.
     */
    private void removeSoftwareSettings() {
       // if the last item is selected and the remove button is clicked that will

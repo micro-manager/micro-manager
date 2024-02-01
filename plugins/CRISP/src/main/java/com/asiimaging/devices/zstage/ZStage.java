@@ -24,7 +24,8 @@ public class ZStage {
       deviceName = "";
    }
 
-   // TODO: check if device found and prevent Tiger focus curve if no zstage device in hardware configuration
+   // TODO: check if device found and prevent Tiger focus curve if
+   //   no zstage device in hardware configuration
    public void findDevice() {
       deviceName = core.getFocusDevice();
       //System.out.println(deviceName);

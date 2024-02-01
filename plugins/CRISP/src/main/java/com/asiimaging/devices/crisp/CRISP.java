@@ -278,7 +278,8 @@ public class CRISP {
             final String v = version.split("-")[1];
             try {
                firmwareVersion = Double.parseDouble(v);
-               firmwareVersionLetter = 'z'; // TODO: find a better way to deal with this in the future
+               // TODO: find a better way to deal with this in the future
+               firmwareVersionLetter = 'z';
                //System.out.println("new firmware versioning system");
             } catch (Exception e) {
                firmwareVersion = Double.parseDouble(v.substring(0, v.length() - 2));

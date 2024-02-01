@@ -60,8 +60,10 @@ public class PlotPanel extends Panel {
 
       final JLabel lblVersion = new JLabel("v" + CRISPPlugin.version);
 
-      btnPlot.setToolTipText("Run the focus curve routine and view a plot of the focus curve data.");
-      btnView.setToolTipText("View a plot of focus curve data loaded from a .csv file.");
+      btnPlot.setToolTipText(
+              "Run the focus curve routine and view a plot of the focus curve data.");
+      btnView.setToolTipText(
+              "View a plot of focus curve data loaded from a .csv file.");
 
       // add components to panel
       add(btnPlot, "gapleft 30");

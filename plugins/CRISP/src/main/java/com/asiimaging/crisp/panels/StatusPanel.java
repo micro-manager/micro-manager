@@ -57,18 +57,18 @@ public class StatusPanel extends Panel {
       // tooltips for labels
       // "Property:" is the associated Micro-Manager property name
       // "Serial command:" is the serial command sent to the controller
-      lblState.setToolTipText("<html>The state of the device.<br>" +
-              "Property: <b>CRISP State</b><br>Serial command: <b>LK X?</b></html>");
-      lblError.setToolTipText("<html>The focus error.<br>" +
-              "Property: <b>Dither Error</b><br>Serial command: <b>LK Y?</b></html>");
-      lblSNR.setToolTipText("<html>The signal-to-noise ratio in decibels.<br>" +
-              "Property: <b>Signal Noise Ratio</b><br>Serial command: <b>EXTRA Y?</b></html>");
-      lblAGC.setToolTipText("<html>AGC<br>" +
-              "Property: <b>LogAmpAGC</b><br>Serial command: <b>AL X?</b></html>");
-      lblSum.setToolTipText("<html>Sum<br>" +
-              "Property: <b>Sum</b><br>Serial command: <b>LK T?</b></html>");
-      lblOffset.setToolTipText("<html>Offset<br>" +
-              "Property: <b>Lock Offset</b><br>Serial command: <b>LK Z?</b></html>");
+      lblState.setToolTipText("<html>The state of the device.<br>"
+              + "Property: <b>CRISP State</b><br>Serial command: <b>LK X?</b></html>");
+      lblError.setToolTipText("<html>The focus error.<br>"
+              + "Property: <b>Dither Error</b><br>Serial command: <b>LK Y?</b></html>");
+      lblSNR.setToolTipText("<html>The signal-to-noise ratio in decibels.<br>"
+              + "Property: <b>Signal Noise Ratio</b><br>Serial command: <b>EXTRA Y?</b></html>");
+      lblAGC.setToolTipText("<html>AGC<br>"
+              + "Property: <b>LogAmpAGC</b><br>Serial command: <b>AL X?</b></html>");
+      lblSum.setToolTipText("<html>Sum<br>"
+              + "Property: <b>Sum</b><br>Serial command: <b>LK T?</b></html>");
+      lblOffset.setToolTipText("<html>Offset<br>"
+              + "Property: <b>Lock Offset</b><br>Serial command: <b>LK Z?</b></html>");
 
       // prevent text labels from jumping around during calibration
       lblStateValue.setMinimumSize(new Dimension(95, 10));

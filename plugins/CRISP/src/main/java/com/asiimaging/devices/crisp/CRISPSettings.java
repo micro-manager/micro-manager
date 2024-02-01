@@ -56,9 +56,10 @@ public class CRISPSettings {
    @Override
    public String toString() {
       return String.format(
-            "%s[name=\"%s\", gain=%s, ledIntensity=%s, updateRateMs=%s, numAverages=%s, objectiveNA=%s, lockRange=%s]",
-            getClass().getSimpleName(), name, gain, ledIntensity, updateRateMs, numAverages,
-            objectiveNA, lockRange
+            "%s[name=\"%s\", gain=%s, ledIntensity=%s, updateRateMs=%s,"
+                    + " numAverages=%s, objectiveNA=%s, lockRange=%s]",
+              getClass().getSimpleName(),
+              name, gain, ledIntensity, updateRateMs, numAverages, objectiveNA, lockRange
       );
    }
 
