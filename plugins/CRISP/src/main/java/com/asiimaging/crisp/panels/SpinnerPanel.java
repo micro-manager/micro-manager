@@ -72,14 +72,14 @@ public class SpinnerPanel extends Panel {
       lblPollRate = new JLabel("Polling Rate [ms]");
 
       // get property limits
-      final int lowerLimitLED = (int)crisp.getPropertyLowerLimit(PropName.LED_INTENSITY);
-      final int upperLimitLED = (int)crisp.getPropertyUpperLimit(PropName.LED_INTENSITY);
-      final int lowerLimitGain = (int)crisp.getPropertyLowerLimit(PropName.GAIN);
-      final int upperLimitGain = (int)crisp.getPropertyUpperLimit(PropName.GAIN);
-      final int lowerLimitUpdateRate = (int)crisp.getPropertyLowerLimit(PropName.UPDATE_RATE_MS);
-      final int upperLimitUpdateRate = (int)crisp.getPropertyUpperLimit(PropName.UPDATE_RATE_MS);
-      final int lowerLimitAverages = (int)crisp.getPropertyLowerLimit(PropName.NUMBER_OF_AVERAGES);
-      final int upperLimitAverages = (int)crisp.getPropertyUpperLimit(PropName.NUMBER_OF_AVERAGES);
+      final int lowerLimitLED = (int) crisp.getPropertyLowerLimit(PropName.LED_INTENSITY);
+      final int upperLimitLED = (int) crisp.getPropertyUpperLimit(PropName.LED_INTENSITY);
+      final int lowerLimitGain = (int) crisp.getPropertyLowerLimit(PropName.GAIN);
+      final int upperLimitGain = (int) crisp.getPropertyUpperLimit(PropName.GAIN);
+      final int lowerLimitUpdateRate = (int) crisp.getPropertyLowerLimit(PropName.UPDATE_RATE_MS);
+      final int upperLimitUpdateRate = (int) crisp.getPropertyUpperLimit(PropName.UPDATE_RATE_MS);
+      final int lowerLimitAverages = (int) crisp.getPropertyLowerLimit(PropName.NUMBER_OF_AVERAGES);
+      final int upperLimitAverages = (int) crisp.getPropertyUpperLimit(PropName.NUMBER_OF_AVERAGES);
       final double lowerLimitObjNA = crisp.getPropertyLowerLimit(PropName.OBJECTIVE_NA);
       final double upperLimitObjNA = crisp.getPropertyUpperLimit(PropName.OBJECTIVE_NA);
 
