@@ -1,6 +1,6 @@
 BSD 3-Clause License
 
-Copyright (c) 2021, Applied Scientific Instrumentation
+Copyright (c) 2014-2024, Applied Scientific Instrumentation
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

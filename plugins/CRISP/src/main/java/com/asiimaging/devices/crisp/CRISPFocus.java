@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.devices.crisp;
@@ -42,7 +42,7 @@ public class CRISPFocus {
       final double originalPosition = zStage.getPosition();
 
       // turn off backlash move
-      final float backlash = zStage.getBacklash();
+      final double backlash = zStage.getBacklash();
       zStage.setBacklash(0.0f);
 
       // move to initial position

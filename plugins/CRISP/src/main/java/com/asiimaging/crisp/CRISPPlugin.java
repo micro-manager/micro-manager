@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.crisp;
@@ -17,10 +17,11 @@ import org.scijava.plugin.SciJavaPlugin;
 // and then once again rewritten by the current maintainer.
 @Plugin(type = MenuPlugin.class)
 public class CRISPPlugin implements MenuPlugin, SciJavaPlugin {
-   public static final String copyright = "Applied Scientific Instrumentation (ASI), 2014-2021";
-   public static final String description = "Interface to control ASIs CRISP Autofocus system.";
+
+   public static final String copyright = "Applied Scientific Instrumentation (ASI), 2014-2024";
+   public static final String description = "An interface to control the ASI CRISP Autofocus system.";
    public static final String menuName = "ASI CRISP Control";
-   public static final String version = "2.5.1";
+   public static final String version = "2.5.2";
 
    private Studio studio;
    private CRISPFrame frame;

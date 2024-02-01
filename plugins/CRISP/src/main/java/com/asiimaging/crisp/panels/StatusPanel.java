@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.crisp.panels;
@@ -31,10 +31,10 @@ public class StatusPanel extends Panel {
    public StatusPanel(final CRISP crisp, final MigLayout layout) {
       super(layout);
       this.crisp = Objects.requireNonNull(crisp);
-      init();
+      createUserInterface();
    }
 
-   private void init() {
+   private void createUserInterface() {
       // labels to display the names of value labels
       final JLabel lblState = new JLabel("CRISP State:");
       final JLabel lblError = new JLabel("Error #:");
@@ -50,6 +50,25 @@ public class StatusPanel extends Panel {
       lblAGCValue = new JLabel("###");
       lblSumValue = new JLabel("###");
       lblOffsetValue = new JLabel("###");
+
+      // TODO: finish tooltips for agc, sum, and offset
+      //   (tooltips based on firmware version? extra x vs lk t for example)
+
+      // tooltips for labels
+      // "Property:" is the associated Micro-Manager property name
+      // "Serial command:" is the serial command sent to the controller
+      lblState.setToolTipText("<html>The state of the device.<br>" +
+              "Property: <b>CRISP State</b><br>Serial command: <b>LK X?</b></html>");
+      lblError.setToolTipText("<html>The focus error.<br>" +
+              "Property: <b>Dither Error</b><br>Serial command: <b>LK Y?</b></html>");
+      lblSNR.setToolTipText("<html>The signal-to-noise ratio in decibels.<br>" +
+              "Property: <b>Signal Noise Ratio</b><br>Serial command: <b>EXTRA Y?</b></html>");
+      lblAGC.setToolTipText("<html>AGC<br>" +
+              "Property: <b>LogAmpAGC</b><br>Serial command: <b>AL X?</b></html>");
+      lblSum.setToolTipText("<html>Sum<br>" +
+              "Property: <b>Sum</b><br>Serial command: <b>LK T?</b></html>");
+      lblOffset.setToolTipText("<html>Offset<br>" +
+              "Property: <b>Lock Offset</b><br>Serial command: <b>LK Z?</b></html>");
 
       // prevent text labels from jumping around during calibration
       lblStateValue.setMinimumSize(new Dimension(95, 10));

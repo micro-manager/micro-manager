@@ -2,17 +2,17 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.crisp.panels;
 
 import com.asiimaging.crisp.data.Defaults;
-import com.asiimaging.crisp.data.Ranges;
 import com.asiimaging.crisp.utils.DialogUtils;
 import com.asiimaging.devices.crisp.CRISP;
 import com.asiimaging.devices.crisp.CRISPSettings;
 import com.asiimaging.devices.crisp.CRISPTimer;
+import com.asiimaging.devices.crisp.PropName;
 import com.asiimaging.ui.Button;
 import com.asiimaging.ui.CheckBox;
 import com.asiimaging.ui.ComboBox;
@@ -53,10 +53,14 @@ public class SpinnerPanel extends Panel {
    public SpinnerPanel(final CRISP crisp, final CRISPTimer timer) {
       this.crisp = Objects.requireNonNull(crisp);
       this.timer = Objects.requireNonNull(timer);
-      init();
+      createUserInterface();
+      createEventHandlers();
    }
 
-   private void init() {
+   /**
+    * Create the user interface.
+    */
+   private void createUserInterface() {
       // spinner labels
       lblDeviceAxis = new JLabel("Axis");
       lblLEDIntensity = new JLabel("LED Intensity [%]");
@@ -67,85 +71,73 @@ public class SpinnerPanel extends Panel {
       lblLockRange = new JLabel("Lock Range [mm]");
       lblPollRate = new JLabel("Polling Rate [ms]");
 
-      // spinners to change CRISP values
+      // get property limits
+      final int lowerLimitLED = (int)crisp.getPropertyLowerLimit(PropName.LED_INTENSITY);
+      final int upperLimitLED = (int)crisp.getPropertyUpperLimit(PropName.LED_INTENSITY);
+      final int lowerLimitGain = (int)crisp.getPropertyLowerLimit(PropName.GAIN);
+      final int upperLimitGain = (int)crisp.getPropertyUpperLimit(PropName.GAIN);
+      final int lowerLimitUpdateRate = (int)crisp.getPropertyLowerLimit(PropName.UPDATE_RATE_MS);
+      final int upperLimitUpdateRate = (int)crisp.getPropertyUpperLimit(PropName.UPDATE_RATE_MS);
+      final int lowerLimitAverages = (int)crisp.getPropertyLowerLimit(PropName.NUMBER_OF_AVERAGES);
+      final int upperLimitAverages = (int)crisp.getPropertyUpperLimit(PropName.NUMBER_OF_AVERAGES);
+      final double lowerLimitObjNA = crisp.getPropertyLowerLimit(PropName.OBJECTIVE_NA);
+      final double upperLimitObjNA = crisp.getPropertyUpperLimit(PropName.OBJECTIVE_NA);
+
+      // spinners to change CRISP state
       spnLEDIntensity = Spinner.createIntegerSpinner(
-            Defaults.LED_INTENSITY,
-            Ranges.MIN_LED_INTENSITY,
-            Ranges.MAX_LED_INTENSITY,
-            1
-      );
-
+              Defaults.LED_INTENSITY, lowerLimitLED, upperLimitLED, 1);
       spnLoopGain = Spinner.createIntegerSpinner(
-            Defaults.LOOP_GAIN,
-            Ranges.MIN_LOOP_GAIN,
-            Ranges.MAX_LOOP_GAIN,
-            1
-      );
-
+              Defaults.LOOP_GAIN, lowerLimitGain, upperLimitGain, 1);
       spnUpdateRateMs = Spinner.createIntegerSpinner(
-            Defaults.UPDATE_RATE_MS,
-            Ranges.MIN_UPDATE_RATE_MS,
-            Ranges.MAX_UPDATE_RATE_MS,
-            1
-      );
-
+              Defaults.UPDATE_RATE_MS, lowerLimitUpdateRate, upperLimitUpdateRate, 1);
       spnNumAverages = Spinner.createIntegerSpinner(
-            Defaults.NUM_AVERAGES,
-            Ranges.MIN_NUM_AVERAGES,
-            Ranges.MAX_NUM_AVERAGES,
-            1
-      );
+              Defaults.NUM_AVERAGES, lowerLimitAverages, upperLimitAverages, 1);
+      spnObjectiveNA = Spinner.createDoubleSpinner(
+              Defaults.OBJECTIVE_NA, lowerLimitObjNA, upperLimitObjNA, 0.01);
 
-      spnObjectiveNA = Spinner.createFloatSpinner(
-            Defaults.OBJECTIVE_NA,
-            Ranges.MIN_OBJECTIVE_NA,
-            Ranges.MAX_OBJECTIVE_NA,
-            0.01f
-      );
+      // Note: no property limits in the Device Adapter
+      spnLockRange = Spinner.createDoubleSpinner(Defaults.LOCK_RANGE, 0.0, 2.0, 0.05);
 
-      spnLockRange = Spinner.createFloatSpinner(
-            Defaults.LOCK_RANGE,
-            Ranges.MIN_LOCK_RANGE,
-            Ranges.MAX_LOCK_RANGE,
-            0.05f
-      );
-
-      spnPollRate = Spinner.createIntegerSpinner(
-            Defaults.POLL_RATE_MS,
-            Ranges.MIN_POLL_RATE_MS,
-            Ranges.MAX_POLL_RATE_MS,
-            50
-      );
+      // poll rate in milliseconds
+      spnPollRate = Spinner.createIntegerSpinner(Defaults.POLL_RATE_MS, 50, 5000, 50);
 
       // enable or disable the CRISP polling timer
       chkEnablePolling = new CheckBox("Polling Enabled", true);
-      chkEnablePolling.setToolTipText("Enable or disable updating CRISP values.");
+      chkEnablePolling.setToolTipText("Check to enable updating the status text.");
 
       // select the settings to use
       lblSelectSettings = new JLabel("Settings:");
       final String[] labels = {CRISPSettings.DEFAULT_PROFILE_NAME};
       cmbSelectSettings = new ComboBox(labels, labels[0], 100, 20);
 
-      // increase and decrease number of software settings
+      // increase and decrease number of software settings profiles
       btnAddNewSettings = new Button("+", 40, 20);
       btnRemoveSettings = new Button("-", 40, 20);
 
-      // TODO: better tooltips
-      // tooltips for the spinners
+      // spinner tooltips
+      // "Property:" is the associated Micro-Manager property name
+      // "Serial command:" is the serial command sent to the controller
+      lblLEDIntensity.setToolTipText("<html>Set the intensity of the LED.<br>" +
+              "Property: <b>LED Intensity</b><br>Serial command: <b>UL X</b></html>");
+      lblObjectiveNA.setToolTipText("<html>Set the objective numerical aperture.<br>" +
+              "Property: <b>Objective NA</b><br>Serial command: <b>LR Y</b></html>");
+      lblLoopGain.setToolTipText("<html>Set the loop gain.<br>" +
+              "Property: <b>GainMultiplier</b><br>Serial command: <b>LR T</b></html>");
+      lblNumAverages.setToolTipText("<html>Set the number of averages.<br>" +
+              "Property: <b>Number of Averages</b><br>Serial command: <b>RT F</b></html>");
+      lblUpdateRateMs.setToolTipText("<html>Set the trajectory update rate in milliseconds.<br>" +
+              "Property: <b>Number of Skips</b><br>Serial command: <b>UL Y</b></html>");
+      lblLockRange.setToolTipText("<html>Set the max focus lock range in millimeters.<br>" +
+              "Property: <b>Max Lock Range(mm)</b><br>Serial command: <b>LR Z</b></html>");
+
       lblPollRate.setToolTipText(
-            "The rate in milliseconds that CRISP is polled to update the status text.");
-      lblObjectiveNA.setToolTipText("The numerical aperture of the objective.");
-      lblLoopGain.setToolTipText("");
-      lblNumAverages.setToolTipText("");
-      lblUpdateRateMs.setToolTipText("Set the update rate for CRISP trajectory.");
-      lblLockRange.setToolTipText("The range of the focus lock.");
-      lblLEDIntensity.setToolTipText("The intensity of the LED.");
+              "The rate in milliseconds that the device is polled to update the status text.");
 
-      btnAddNewSettings.setToolTipText("Add new software settings profile.");
-      btnRemoveSettings.setToolTipText("Delete the last software settings profile.");
-
-      // init event handlers
-      registerEventHandlers();
+      // software settings profiles tooltips
+      lblSelectSettings.setToolTipText("The software settings profiles are saved in the plugin settings.");
+      cmbSelectSettings.setToolTipText("Select the software settings profile.");
+      btnAddNewSettings.setToolTipText("Add a new software settings profile.");
+      btnRemoveSettings.setToolTipText("Remove the last software settings profile.");
 
       // add components to panel
       add(lblDeviceAxis, "right, span 2, wrap");
@@ -173,12 +165,19 @@ public class SpinnerPanel extends Panel {
    /**
     * Create the event handlers for Spinner objects.
     */
-   private void registerEventHandlers() {
+   private void createEventHandlers() {
       // changes the LED intensity
       spnLEDIntensity.registerListener(event -> {
          final int ledIntensity = spnLEDIntensity.getInt();
          crisp.getSettings().setLEDIntensity(ledIntensity);
          crisp.setLEDIntensity(ledIntensity);
+      });
+
+      // set this value to the objective numerical aperture
+      spnObjectiveNA.registerListener(event -> {
+         final double objectiveNA = spnObjectiveNA.getDouble();
+         crisp.getSettings().setObjectiveNA(objectiveNA);
+         crisp.setObjectiveNA(objectiveNA);
       });
 
       // changes the gain multiplier
@@ -188,13 +187,6 @@ public class SpinnerPanel extends Panel {
          crisp.setGain(gain);
       });
 
-      // changes the update rate in milliseconds
-      spnUpdateRateMs.registerListener(event -> {
-         final int updateRateMs = spnUpdateRateMs.getInt();
-         crisp.getSettings().setUpdateRateMs(updateRateMs);
-         crisp.setUpdateRateMs(updateRateMs);
-      });
-
       // changes the number of samples to average
       spnNumAverages.registerListener(event -> {
          final int numAverages = spnNumAverages.getInt();
@@ -202,92 +194,107 @@ public class SpinnerPanel extends Panel {
          crisp.setNumAverages(numAverages);
       });
 
-      // set this value to the objective numerical aperture
-      spnObjectiveNA.registerListener(event -> {
-         final float objectiveNA = spnObjectiveNA.getFloat();
-         crisp.getSettings().setObjectiveNA(objectiveNA);
-         crisp.setObjectiveNA(objectiveNA);
+      // changes the update rate in milliseconds
+      spnUpdateRateMs.registerListener(event -> {
+         final int updateRateMs = spnUpdateRateMs.getInt();
+         crisp.getSettings().setUpdateRateMs(updateRateMs);
+         crisp.setUpdateRateMs(updateRateMs);
       });
 
       // changes the CRISP lock range
       spnLockRange.registerListener(event -> {
-         final float lockRange = spnLockRange.getFloat();
+         final double lockRange = spnLockRange.getDouble();
          crisp.getSettings().setLockRange(lockRange);
          crisp.setLockRange(lockRange);
       });
 
-      // changes the polling rate for CRISP to update values
-      spnPollRate.registerListener(event -> {
-         timer.setPollRateMs(spnPollRate.getInt());
-      });
+      // changes the polling rate to update values on the StatusPanel
+      spnPollRate.registerListener(event ->
+              timer.setPollRateMs(spnPollRate.getInt()));
 
       // check this box to update the status panel with CRISP values
-      chkEnablePolling.registerListener(event -> {
-         timer.setPollState(chkEnablePolling.isSelected());
-      });
+      chkEnablePolling.registerListener(event ->
+              timer.setPollState(chkEnablePolling.isSelected()));
 
-      // select which software settings to use
-      cmbSelectSettings.registerListener(event -> {
-         final int index = cmbSelectSettings.getSelectedIndex();
-         crisp.setSettingsIndex(index);
-         updateSpinnersFromSettings(crisp.getSettingsByIndex(index));
-         // System.out.println(index);
-         // System.out.println(crisp.getSettingsByIndex(index));
-         // System.out.println(crisp.getSettingsFromDevice());
-      });
+      // select the software settings profile
+      cmbSelectSettings.registerListener(event ->
+              setSoftwareSettings(cmbSelectSettings.getSelectedIndex()));
 
-      // increase the number of available software settings
-      btnAddNewSettings.registerListener(event -> {
-         final String name = crisp.addSettings();
-         cmbSelectSettings.addItem(name);
-      });
+      // add a new software settings profile
+      btnAddNewSettings.registerListener(event -> addSoftwareSettings());
 
       // remove the last software settings profile
-      btnRemoveSettings.registerListener(event -> {
-         // if the last item is selected and the remove button is clicked that will
-         // cause the ComboBox to automatically select the item above it which will
-         // fire the ActionListener of cmbSelectSettings and change CRISP settings
+      btnRemoveSettings.registerListener(event -> removeSoftwareSettings());
+   }
 
-         final int numSettings = crisp.getNumSettings();
-         final int selectedIndex = cmbSelectSettings.getSelectedIndex();
-         final String lastProfileName =
-               cmbSelectSettings.getItemAt(cmbSelectSettings.getItemCount() - 1);
+   /**
+    * Select the software settings profile by index.
+    *
+    * @param index the profile index
+    */
+   private void setSoftwareSettings(final int index) {
+      crisp.setSettingsIndex(index);
+      updateSpinnersFromSettings(crisp.getSettingsByIndex(index));
+      // System.out.println(index);
+      // System.out.println(crisp.getSettingsByIndex(index));
+      // System.out.println(crisp.getSettingsFromDevice());
+   }
 
-         // prompt the user and make sure it's ok to change settings
-         if (numSettings > 1 && numSettings == selectedIndex + 1) {
-            // if the last item is selected and we click remove
-            final int result = DialogUtils.showConfirmDialog(
-                  btnRemoveSettings, "Settings",
-                  "Are you sure you want to remove \"" + lastProfileName + "\"? \n\n"
-                        + "This will cause the settings profile to change."
-            );
-            if (result == 1) {
-               return; // no button pressed => early exit
-            }
-         } else if (numSettings > 1) {
-            // if we click remove and have more than one profile
-            final int result = DialogUtils.showConfirmDialog(
-                  btnRemoveSettings, "Settings",
-                  "Are you sure you want to remove \"" + lastProfileName + "\"?"
-            );
-            if (result == 1) {
-               return; // no button pressed => early exit
-            }
+   /**
+    * Increase the number of software settings profiles.
+    */
+   private void addSoftwareSettings() {
+      final String name = crisp.addSettings();
+      cmbSelectSettings.addItem(name);
+   }
+
+   /**
+    * Remove the last software settings profile.
+    *
+    * <p>This method will not remove the last settings object.
+    */
+   private void removeSoftwareSettings() {
+      // if the last item is selected and the remove button is clicked that will
+      // cause the ComboBox to automatically select the item above it which will
+      // fire the ActionListener of cmbSelectSettings and change CRISP settings
+
+      final int numSettings = crisp.getNumSettings();
+      final int selectedIndex = cmbSelectSettings.getSelectedIndex();
+      final String lastProfileName =
+              cmbSelectSettings.getItemAt(cmbSelectSettings.getItemCount() - 1);
+
+      // prompt the user and make sure it's ok to change settings
+      if (numSettings > 1 && numSettings == selectedIndex + 1) {
+         // if the last item is selected and we click remove
+         final int result = DialogUtils.showConfirmDialog(
+                 btnRemoveSettings, "Settings",
+                 "Are you sure you want to remove \"" + lastProfileName + "\"? \n\n"
+                         + "This will cause the settings profile to change."
+         );
+         if (result == 1) {
+            return; // no button pressed => early exit
          }
-
-         // make sure we don't delete the last CRISPSettings object
-         if (crisp.removeSettings()) {
-            cmbSelectSettings.removeItemAt(crisp.getNumSettings());
-         } else {
-            DialogUtils.showMessage(
-                  btnRemoveSettings,
-                  "Settings",
-                  "Unable to delete the default settings."
-            );
+      } else if (numSettings > 1) {
+         // if we click remove and have more than one profile
+         final int result = DialogUtils.showConfirmDialog(
+                 btnRemoveSettings, "Settings",
+                 "Are you sure you want to remove \"" + lastProfileName + "\"?"
+         );
+         if (result == 1) {
+            return; // no button pressed => early exit
          }
+      }
 
-      });
-
+      // make sure we don't delete the last CRISPSettings object
+      if (crisp.removeSettings()) {
+         cmbSelectSettings.removeItemAt(crisp.getNumSettings());
+      } else {
+         DialogUtils.showMessage(
+                 btnRemoveSettings,
+                 "Settings",
+                 "Unable to delete the default settings."
+         );
+      }
    }
 
    /**
@@ -312,8 +319,8 @@ public class SpinnerPanel extends Panel {
       spnLEDIntensity.setInt(crisp.getLEDIntensity());
       spnUpdateRateMs.setInt(crisp.getUpdateRateMs());
       spnNumAverages.setInt(crisp.getNumAverages());
-      spnObjectiveNA.setFloat(crisp.getObjectiveNA());
-      spnLockRange.setFloat(crisp.getLockRange());
+      spnObjectiveNA.setDouble(crisp.getObjectiveNA());
+      spnLockRange.setDouble(crisp.getLockRange());
    }
 
    /**
@@ -328,8 +335,8 @@ public class SpinnerPanel extends Panel {
       spnLEDIntensity.setInt(settings.getLEDIntensity());
       spnUpdateRateMs.setInt(settings.getUpdateRateMs());
       spnNumAverages.setInt(settings.getNumAverages());
-      spnObjectiveNA.setFloat(settings.getObjectiveNA());
-      spnLockRange.setFloat(settings.getLockRange());
+      spnObjectiveNA.setDouble(settings.getObjectiveNA());
+      spnLockRange.setDouble(settings.getLockRange());
    }
 
    /**
@@ -364,7 +371,8 @@ public class SpinnerPanel extends Panel {
 
    /**
     * Enable or disable the UpdateRateMs spinner.
-    * Firmware version 3.38 is required for Tiger.
+    * <p>Firmware versions required:
+    * <p>Tiger v3.38 and MS2000 v9.2n
     *
     * @param state true or false
     */

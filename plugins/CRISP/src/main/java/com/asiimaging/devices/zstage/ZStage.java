@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.devices.zstage;
@@ -24,6 +24,7 @@ public class ZStage {
       deviceName = "";
    }
 
+   // TODO: check if device found and prevent Tiger focus curve if no zstage device in hardware configuration
    public void findDevice() {
       deviceName = core.getFocusDevice();
       //System.out.println(deviceName);
@@ -63,17 +64,17 @@ public class ZStage {
       }
    }
 
-   public float getBacklash() {
-      float result = 0.0f;
+   public double getBacklash() {
+      double result = 0.0;
       try {
-         result = Float.parseFloat(core.getProperty(deviceName, "Backlash-B(um)"));
+         result = Double.parseDouble(core.getProperty(deviceName, "Backlash-B(um)"));
       } catch (Exception e) {
          studio.logs().logError("ZStage: could not get the backlash value!");
       }
       return result;
    }
 
-   public void setBacklash(final float backlash) {
+   public void setBacklash(final double backlash) {
       try {
          core.setProperty(deviceName, "Backlash-B(um)", backlash);
       } catch (Exception e) {

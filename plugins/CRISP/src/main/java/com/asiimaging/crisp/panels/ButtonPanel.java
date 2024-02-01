@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.crisp.panels;
@@ -35,10 +35,11 @@ public class ButtonPanel extends Panel {
       this.crisp = Objects.requireNonNull(crisp);
       this.timer = Objects.requireNonNull(timer);
       this.panel = Objects.requireNonNull(panel);
-      init();
+      createUserInterface();
+      createEventHandlers();
    }
 
-   private void init() {
+   private void createUserInterface() {
       // CRISP control buttons
       Button.setDefaultSize(120, 30);
       btnIdle = new Button("1: Idle");
@@ -53,9 +54,6 @@ public class ButtonPanel extends Panel {
       btnUnlock = new Button("Unlock");
       btnLock.setBoldFont(14);
       btnUnlock.setBoldFont(14);
-
-      // handle user events
-      registerEventHandlers();
 
       // add components to panel
       add(btnIdle, "wrap");
@@ -78,7 +76,7 @@ public class ButtonPanel extends Panel {
    /**
     * Creates the event handlers for Button objects.
     */
-   private void registerEventHandlers() {
+   private void createEventHandlers() {
 
       // step 1 in the calibration routine
       btnIdle.registerListener(event -> {
@@ -87,24 +85,20 @@ public class ButtonPanel extends Panel {
       });
 
       // step 2 in the calibration routine
-      btnLogCal.registerListener(event -> {
-         crisp.setStateLogCal(timer);
-      });
+      btnLogCal.registerListener(event ->
+              crisp.setStateLogCal(timer));
 
       // step 3 in the calibration routine
-      btnDither.registerListener(event -> {
-         crisp.setStateDither();
-      });
+      btnDither.registerListener(event ->
+              crisp.setStateDither());
 
       // step 4 in the calibration routine
-      btnSetGain.registerListener(event -> {
-         crisp.setStateGainCal();
-      });
+      btnSetGain.registerListener(event ->
+              crisp.setStateGainCal());
 
       // reset the focus offset to zero for the present position
-      btnReset.registerListener(event -> {
-         crisp.setResetOffsets();
-      });
+      btnReset.registerListener(event ->
+              crisp.setResetOffsets());
 
       // locks the focal position
       btnLock.registerListener(event -> {
@@ -121,9 +115,7 @@ public class ButtonPanel extends Panel {
       });
 
       // saves all CRISP related settings
-      btnSave.registerListener(event -> {
-         crisp.save();
-      });
+      btnSave.registerListener(event -> crisp.save());
    }
 }
 

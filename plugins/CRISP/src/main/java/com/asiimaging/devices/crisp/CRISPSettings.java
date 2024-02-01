@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.devices.crisp;
@@ -19,8 +19,8 @@ public class CRISPSettings {
    private int ledIntensity;
    private int updateRateMs;
    private int numAverages;
-   private float objectiveNA;
-   private float lockRange;
+   private double objectiveNA;
+   private double lockRange;
 
    public static final String NAME_PREFIX = "Profile";
    public static final String SETTINGS_NOT_FOUND = "No Settings";
@@ -32,8 +32,8 @@ public class CRISPSettings {
       this.ledIntensity = 50;
       this.updateRateMs = 10;
       this.numAverages = 1;
-      this.objectiveNA = 0.65f;
-      this.lockRange = 1.0f;
+      this.objectiveNA = 0.65;
+      this.lockRange = 1.0;
    }
 
    public CRISPSettings(
@@ -42,8 +42,8 @@ public class CRISPSettings {
          final int ledIntensity,
          final int updateRateMs,
          final int numAverages,
-         final float objectiveNA,
-         final float lockRange) {
+         final double objectiveNA,
+         final double lockRange) {
       this.name = name;
       this.gain = gain;
       this.ledIntensity = ledIntensity;
@@ -56,8 +56,7 @@ public class CRISPSettings {
    @Override
    public String toString() {
       return String.format(
-            "%s[name=\"%s\", gain=%s, ledIntensity=%s, updateRateMs=%s, numAverages=%s, "
-            + "objectiveNA=%s, lockRange=%s]",
+            "%s[name=\"%s\", gain=%s, ledIntensity=%s, updateRateMs=%s, numAverages=%s, objectiveNA=%s, lockRange=%s]",
             getClass().getSimpleName(), name, gain, ledIntensity, updateRateMs, numAverages,
             objectiveNA, lockRange
       );
@@ -79,11 +78,11 @@ public class CRISPSettings {
       return numAverages;
    }
 
-   public float getObjectiveNA() {
+   public double getObjectiveNA() {
       return objectiveNA;
    }
 
-   public float getLockRange() {
+   public double getLockRange() {
       return lockRange;
    }
 
@@ -107,11 +106,11 @@ public class CRISPSettings {
       numAverages = n;
    }
 
-   public void setObjectiveNA(final float n) {
+   public void setObjectiveNA(final double n) {
       objectiveNA = n;
    }
 
-   public void setLockRange(final float n) {
+   public void setLockRange(final double n) {
       lockRange = n;
    }
 
