@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.crisp.panels;
@@ -49,21 +49,21 @@ public class PlotPanel extends Panel {
             false,
             "csv"
       );
-      init();
+      createUserInterface();
+      createEventHandlers();
    }
 
-   private void init() {
+   private void createUserInterface() {
       Button.setDefaultSize(140, 30);
       btnPlot = new Button("Focus Curve Plot");
       btnView = new Button("View Data");
 
       final JLabel lblVersion = new JLabel("v" + CRISPPlugin.version);
 
-      // handle user events
-      registerEventHandlers();
-
-      btnPlot.setToolTipText("Plot the focus curve.");
-      btnView.setToolTipText("View a plot of CRISP focus curve data stored in a csv file.");
+      btnPlot.setToolTipText(
+              "Run the focus curve routine and view a plot of the focus curve data.");
+      btnView.setToolTipText(
+              "View a plot of focus curve data loaded from a .csv file.");
 
       // add components to panel
       add(btnPlot, "gapleft 30");
@@ -92,7 +92,7 @@ public class PlotPanel extends Panel {
    /**
     * Creates the event handlers for Button objects.
     */
-   private void registerEventHandlers() {
+   private void createEventHandlers() {
       // plot the focus curve and show the plot
       btnPlot.registerListener(event -> {
          // disable polling while getting focus curve data
@@ -106,9 +106,7 @@ public class PlotPanel extends Panel {
       });
 
       // select a file and open a data viewer frame
-      btnView.registerListener(event -> {
-         showFocusCurvePlot();
-      });
+      btnView.registerListener(event -> showFocusCurvePlot());
    }
 
    /**
@@ -140,7 +138,7 @@ public class PlotPanel extends Panel {
                data
          );
       } catch (Exception e) {
-         studio.logs().showError("could not open the file: " + file.toString());
+         studio.logs().showError("could not open the file: " + file);
       }
    }
 
@@ -155,7 +153,7 @@ public class PlotPanel extends Panel {
          FocusDataSet data;
 
          @Override
-         protected Void doInBackground() throws Exception {
+         protected Void doInBackground() {
             if (frame.getCRISP().getDeviceType() == ControllerType.TIGER) {
                data = CRISPFocus.getFocusCurveData(frame.getCRISP(), frame.getZStage());
             } else {
@@ -171,7 +169,7 @@ public class PlotPanel extends Panel {
                PlotFrame.createPlotWindow(
                      "CRISP Data Plot",
                      "Focus Curve",
-                     "Position (\u00B5m)", // U+00B5 MICRO SIGN
+                     "Position (µm)", // U+00B5 MICRO SIGN
                      "Error",
                      data
                );

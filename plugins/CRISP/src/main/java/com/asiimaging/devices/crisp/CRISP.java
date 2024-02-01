@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.devices.crisp;
@@ -216,6 +216,12 @@ public class CRISP {
       return found;
    }
 
+   // TODO: impl control of multiple CRISP devices
+   public boolean detectDevices() {
+      boolean found = false;
+      return found;
+   }
+
    public boolean isTiger() {
       return deviceType == ControllerType.TIGER;
    }
@@ -270,8 +276,16 @@ public class CRISP {
          } else { // MS2000
             final String version = core.getProperty(deviceName, "Version");
             final String v = version.split("-")[1];
-            firmwareVersion = Double.parseDouble(v.substring(0, v.length() - 2));
-            firmwareVersionLetter = v.charAt(v.length() - 2);
+            try {
+               firmwareVersion = Double.parseDouble(v);
+               // TODO: find a better way to deal with this in the future
+               firmwareVersionLetter = 'z';
+               //System.out.println("new firmware versioning system");
+            } catch (Exception e) {
+               firmwareVersion = Double.parseDouble(v.substring(0, v.length() - 2));
+               firmwareVersionLetter = v.charAt(v.length() - 2);
+               ///System.out.println("old firmware versioning system");
+            }
          }
       } catch (Exception e) {
          studio.logs().showError("could not get the firmware version!");
@@ -316,7 +330,7 @@ public class CRISP {
    }
 
    /**
-    * Returns all of the focus curve data available.
+    * Returns all focus curve data available.
     *
     * @return the focus curve data concatenated into a {@code String}
     */
@@ -417,9 +431,9 @@ public class CRISP {
    }
 
    /**
-    * Returns the signal to noise ratio.
+    * Returns the signal-to-noise ratio.
     *
-    * @return the signal to noise ratio
+    * @return the signal-to-noise ratio
     */
    public String getSNR() {
       String result = "";
@@ -556,10 +570,10 @@ public class CRISP {
     *
     * @return the objective's NA
     */
-   public float getObjectiveNA() {
-      float result = 0.0f;
+   public double getObjectiveNA() {
+      double result = 0.0;
       try {
-         result = Float.parseFloat(core.getProperty(deviceName, PropName.OBJECTIVE_NA));
+         result = Double.parseDouble(core.getProperty(deviceName, PropName.OBJECTIVE_NA));
       } catch (Exception e) {
          //studio.logs().showError("CRISP: Failed to read the Objective NA.");
       }
@@ -574,7 +588,7 @@ public class CRISP {
    public int getUpdateRateMs() {
       int result = 0;
       try {
-         result = Integer.parseInt(core.getProperty(deviceName, PropName.NUMBER_OF_SKIPS));
+         result = Integer.parseInt(core.getProperty(deviceName, PropName.UPDATE_RATE_MS));
       } catch (Exception e) {
          //studio.logs().showError("CRISP: Failed to read the Number of Skips.");
       }
@@ -586,10 +600,10 @@ public class CRISP {
     *
     * @return the lock range
     */
-   public float getLockRange() {
-      float result = 0.0f;
+   public double getLockRange() {
+      double result = 0.0;
       try {
-         result = Float.parseFloat(core.getProperty(deviceName, PropName.MAX_LOCK_RANGE));
+         result = Double.parseDouble(core.getProperty(deviceName, PropName.MAX_LOCK_RANGE));
       } catch (Exception e) {
          //studio.logs().showError("CRISP: Failed to read the Lock Range.");
       }
@@ -653,7 +667,7 @@ public class CRISP {
     *
     * @param value the objective NA
     */
-   public void setObjectiveNA(final float value) {
+   public void setObjectiveNA(final double value) {
       try {
          core.setProperty(deviceName, PropName.OBJECTIVE_NA, value);
       } catch (Exception e) {
@@ -666,7 +680,7 @@ public class CRISP {
     *
     * @param value the new lock range in millimeters
     */
-   public void setLockRange(final float value) {
+   public void setLockRange(final double value) {
       try {
          core.setProperty(deviceName, PropName.MAX_LOCK_RANGE, value);
       } catch (Exception e) {
@@ -789,6 +803,28 @@ public class CRISP {
    }
 
    // TODO: put these methods into a base class
+   public double getPropertyLowerLimit(final String propName) {
+      double result = 0;
+      try {
+         result = core.getPropertyLowerLimit(deviceName, propName);
+      } catch (Exception e) {
+         studio.logs().logError(deviceName + ": could not get lower limit for the "
+                 + propName + " property.");
+      }
+      return result;
+   }
+
+   public double getPropertyUpperLimit(final String propName) {
+      double result = 0;
+      try {
+         result = core.getPropertyUpperLimit(deviceName, propName);
+      } catch (Exception e) {
+         studio.logs().logError(deviceName + ": could not get upper limit for the "
+                 + propName + " property.");
+      }
+      return result;
+   }
+
    public void setOnlySendSerialCommandOnChange(final boolean state) {
       try {
          core.setProperty("TigerCommHub", "OnlySendSerialCommandOnChange", state ? "Yes" : "No");

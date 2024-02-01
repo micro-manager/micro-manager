@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.crisp;
@@ -26,6 +26,7 @@ import java.awt.event.WindowEvent;
 import java.util.Objects;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.ToolTipManager;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
@@ -76,6 +77,7 @@ public class CRISPFrame extends JFrame {
       // save/load window position
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), this.getClass().getSimpleName());
 
+      // detect the device
       if (!crisp.detectDevice()) {
          createErrorInterface(); // report error to user
       } else {
@@ -83,7 +85,7 @@ public class CRISPFrame extends JFrame {
          init(); // called after ui is created because it updates the panels
 
          // window closing handler => only needed on device detection (error otherwise)
-         registerWindowEventHandlers();
+         createWindowClosingEventHandler();
       }
    }
 
@@ -260,6 +262,9 @@ public class CRISPFrame extends JFrame {
       add(rightPanel, "wrap");
       add(plotPanel, "span 2");
 
+      // delay in milliseconds for tooltips to appear
+      ToolTipManager.sharedInstance().setInitialDelay(500);
+
       pack(); // set the window size automatically
       setIconImage(Icons.MICROSCOPE.getImage());
 
@@ -271,7 +276,7 @@ public class CRISPFrame extends JFrame {
     * This method is called when the main frame closes.
     * It stops the timer from polling and saves settings.
     */
-   private void registerWindowEventHandlers() {
+   private void createWindowClosingEventHandler() {
       Objects.requireNonNull(timer);
       Objects.requireNonNull(settings);
       addWindowListener(new WindowAdapter() {

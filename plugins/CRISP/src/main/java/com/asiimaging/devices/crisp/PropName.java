@@ -2,7 +2,7 @@
  * Project: ASI CRISP Control
  * License: BSD 3-clause, see LICENSE.md
  * Author: Brandon Simpson (brandon@asiimaging.com)
- * Copyright (c) 2014-2021, Applied Scientific Instrumentation
+ * Copyright (c) 2014-2024, Applied Scientific Instrumentation
  */
 
 package com.asiimaging.devices.crisp;
@@ -26,7 +26,15 @@ public class PropName {
    public static final String LED_INTENSITY = "LED Intensity";
    public static final String OBJECTIVE_NA = "Objective NA";
    public static final String NUMBER_OF_SKIPS = "Number of Skips";
+
+   /**
+    * The "Number of Skips" property is also used for the
+    * update rate in milliseconds in later firmware versions.
+    */
+   public static final String UPDATE_RATE_MS = "Number of Skips";
+
    public static final String NUMBER_OF_AVERAGES = "Number of Averages";
+
    public static final String MAX_LOCK_RANGE = "Max Lock Range(mm)";
    public static final String DITHER_ERROR = "Dither Error";
 
