@@ -371,8 +371,8 @@ public class SpinnerPanel extends Panel {
 
    /**
     * Enable or disable the UpdateRateMs spinner.
-    * <p>Firmware versions required:
-    * <p>Tiger v3.38 and MS2000 v9.2n
+    * Firmware versions required:
+    * Tiger v3.38 and MS2000 v9.2n
     *
     * @param state true or false
     */
