@@ -190,11 +190,11 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          if (curStore_ == null) {
             curStore_ = new DefaultRewritableDatastore((MMStudio) studio_);
+            curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
             curStore_.setStorage(new StorageRAM(curStore_));
             curStore_.setSummaryMetadata(summaryMetadata);
             DisplayWindow display = studio_.displays().createDisplay(curStore_, null);
          }
-         curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
          //MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
          //        acquisitionSettings);
 

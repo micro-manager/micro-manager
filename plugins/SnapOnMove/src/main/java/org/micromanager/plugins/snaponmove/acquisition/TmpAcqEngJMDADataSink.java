@@ -80,10 +80,10 @@ public final class TmpAcqEngJMDADataSink implements AcqEngJDataSink {
 
    @Override
    public void finish() {
-      pipeline_.halt();
-      studioEvents_.post(
-              new DefaultAcquisitionEndedEvent(store_, Engine.getInstance()));
-      finished_ = true;
+      //pipeline_.halt();
+      //studioEvents_.post(
+      //        new DefaultAcquisitionEndedEvent(store_, Engine.getInstance()));
+      //finished_ = true;
    }
 
    @Override
