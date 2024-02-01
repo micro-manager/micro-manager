@@ -35,20 +35,20 @@ import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.acquisition.internal.DefaultAcquisitionSettingsChangedEvent;
 import org.micromanager.acquisition.internal.DefaultAcquisitionStartedEvent;
-import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
-import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJMDADataSink;
 import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
@@ -104,7 +104,7 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private Datastore curStore_;
    private Pipeline curPipeline_;
    private long nextWakeTime_ = -1;
-   private ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
+   private final ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
 
    private class RunnablePlusIndices {
       int channel_;
@@ -138,54 +138,9 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    // this is where the work happens
    private Datastore runAcquisition(SequenceSettings sequenceSettings) {
       SequenceSettings.Builder sb = sequenceSettings.copyBuilder();
-      //Make sure computer can write to selected location and there is enough space to do so
-      if (sequenceSettings.save()) {
-         File root = new File(sequenceSettings.root());
-         if (!root.canWrite()) {
-            int result = JOptionPane.showConfirmDialog(null,
-                    "The specified root directory\n" + root.getAbsolutePath()
-                            + "\ndoes not exist. Create it?", "Directory not found.",
-                    JOptionPane.YES_NO_OPTION);
-            if (result == JOptionPane.YES_OPTION) {
-               if (!root.mkdirs() || !root.canWrite()) {
-                  studio_.logs().showError(
-                          "Unable to save data to selected location: check that "
-                                  + "location exists.\nAcquisition canceled.");
-                  return null;
-               }
-            } else {
-               studio_.logs().showMessage("Acquisition canceled.");
-               return null;
-            }
-         } else if (!this.enoughDiskSpace()) {
-            studio_.logs().showError(
-                    "Not enough space on disk to save the requested image set; "
-                            + "acquisition canceled.");
-            return null;
-         }
+      sb.useFrames(false).usePositionList(false).save(false);
+      sb.numFrames(0);
 
-         DefaultDatastore.setPreferredSaveMode(studio_, sequenceSettings.saveMode());
-      }
-
-      // manipulate positionlist
-      PositionList posListToUse = posList_;
-      if (posList_ == null && sequenceSettings_.usePositionList()) {
-         posListToUse = studio_.positions().getPositionList();
-      }
-      posList_ = posListToUse;
-
-      // The clojure acquisition engine always uses numFrames, and customIntervals
-      // unless they are null.
-      if (sequenceSettings.useCustomIntervals()) {
-         sb.numFrames(sequenceSettings.customIntervalsMs().size());
-      } else {
-         sb.customIntervalsMs(null);
-      }
-
-      // Several "translations" for the Clojure engine may now be superfluous:
-      if (!sequenceSettings.useFrames()) {
-         sb.numFrames(0);
-      }
       if (!sequenceSettings.useChannels()) {
          sb.channels(null);
       }
@@ -231,14 +186,18 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                          summaryMetadataJSON_.toString()));
          SummaryMetadata.Builder smb = summaryMetadata.copyBuilder().sequenceSettings(
                  acquisitionSettings);
-         if (posListToUse != null) {
-            smb.stagePositions(posListToUse.getPositions());
-         }
          summaryMetadata = smb.build();
-         MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
-                 acquisitionSettings);
-         curStore_ = acq.getDatastore();
-         curPipeline_ = acq.getPipeline();
+
+         if (curStore_ == null) {
+            curStore_ = new DefaultRewritableDatastore((MMStudio) studio_);
+            curStore_.setStorage(new StorageRAM(curStore_));
+            curStore_.setSummaryMetadata(summaryMetadata);
+            DisplayWindow display = studio_.displays().createDisplay(curStore_, null);
+         }
+         curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
+         //MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
+         //        acquisitionSettings);
+
          sink.setDatastore(curStore_);
          sink.setPipeline(curPipeline_);
 
@@ -1624,10 +1583,10 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
       if (event.getStore().equals(curStore_)) {
-         curStore_ = null;
-         curPipeline_ = null;
-         currentAcquisition_ = null;
-         studio_.events().unregisterForEvents(this);
+         //curStore_ = null;
+         //curPipeline_ = null;
+         //currentAcquisition_ = null;
+         //studio_.events().unregisterForEvents(this);
       }
    }
 

@@ -50,7 +50,10 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.WindowPositioning;
+import org.micromanager.plugins.snaponmove.acquisition.TmpAcqJAdapter;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
@@ -74,7 +77,7 @@ final class ConfigFrame extends JFrame {
    private final JButton removeButton_;
    private final JButton editButton_;
 
-   public ConfigFrame(final MainController controller) {
+   public ConfigFrame(final Studio studio, final MainController controller) {
 
       setTitle("Snap-on-Move");
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -205,6 +208,18 @@ final class ConfigFrame extends JFrame {
       criteriaButtonPanel.add(removeButton_);
       criteriaButtonPanel.add(editButton_);
       add(criteriaButtonPanel, "wrap");
+
+      TmpAcqJAdapter adapter = new TmpAcqJAdapter(studio);
+      JButton acqButton = new JButton("Acquire");
+      acqButton.addActionListener(e -> {
+         adapter.setSequenceSettings(studio.acquisitions().getAcquisitionSettings());
+         try {
+            adapter.acquire();
+         } catch (MMException ex) {
+            throw new RuntimeException(ex);
+         }
+      });
+      add(acqButton, "wrap");
 
       setMinimumSize(new Dimension(360, 210));
       pack();
