@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Henry Pinkard, Nico Stuurman
+//
+// COPYRIGHT:    Photomics Inc, 2022, Altos Labs, 2023
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.plugins.snaponmove.acquisition;
 
 import com.google.common.eventbus.Subscribe;
@@ -39,13 +59,16 @@ import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
 import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.data.internal.StorageRAM;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
@@ -53,28 +76,6 @@ import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
-//
-// AUTHOR:       Henry Pinkard, Nico Stuurman
-//
-// COPYRIGHT:    Photomics Inc, 2022, Altos Labs, 2023
-//
-// LICENSE:      This file is distributed under the BSD license.
-//               License text is included with the source distribution.
-//
-//               This file is distributed in the hope that it will be useful,
-//               but WITHOUT ANY WARRANTY; without even the implied warranty
-//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//
-//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
 
@@ -102,6 +103,7 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private SequenceSettings sequenceSettings_;
    protected JSONObject summaryMetadataJSON_;
    private Datastore curStore_;
+   private DisplayWindow displayWindow_;
    private Pipeline curPipeline_;
    private long nextWakeTime_ = -1;
    private final ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
@@ -188,15 +190,50 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                  acquisitionSettings);
          summaryMetadata = smb.build();
 
+         // instead of a complicated statement use a boolean variable
+         boolean createStoreAndDisplay = false;
          if (curStore_ == null) {
-            curStore_ = new DefaultRewritableDatastore((MMStudio) studio_);
-            curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
-            curStore_.setStorage(new StorageRAM(curStore_));
-            curStore_.setSummaryMetadata(summaryMetadata);
-            DisplayWindow display = studio_.displays().createDisplay(curStore_, null);
+            createStoreAndDisplay = true;
+         } else {
+            Image img = curStore_.getAnyImage();
+            if (img != null) {
+               if (img.getHeight() != studio_.core().getImageHeight()
+                       || img.getWidth() != studio_.core().getImageWidth()
+                       || img.getBytesPerPixel() != studio_.core().getBytesPerPixel()) {
+                  createStoreAndDisplay = true;
+               }
+            }
          }
-         //MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata, this,
-         //        acquisitionSettings);
+         if (displayWindow_.isClosed() || !displayWindow_.isVisible()) {
+            createStoreAndDisplay = true;
+         }
+
+         if (createStoreAndDisplay) {
+            if (displayWindow_ != null) {
+               displayWindow_.close();
+            }
+            if (curStore_ != null) {
+               curStore_.freeze();
+               curStore_.close();
+            }
+            curStore_ = new DefaultRewritableDatastore((MMStudio) studio_);
+            curStore_.setStorage(new StorageRAM(curStore_));
+            curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
+            curPipeline_.insertSummaryMetadata(summaryMetadata);
+            // curStore_.setSummaryMetadata(summaryMetadata);
+            displayWindow_ = studio_.displays().createDisplay(curStore_, null);
+         }
+
+         // Use settings of last closed acquisition viewer
+         DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
+                 studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         if (dsTmp == null) {
+            dsTmp = DefaultDisplaySettings.getStandardSettings(
+                    PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         }
+         if (createStoreAndDisplay) {
+            displayWindow_.setDisplaySettings(dsTmp);
+         }
 
          sink.setDatastore(curStore_);
          sink.setPipeline(curPipeline_);
@@ -1212,8 +1249,7 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       // Even after the acquisition finishes, if the pipeline is still "live",
       // we should consider the acquisition to be running.
       if (currentAcquisition_ != null) {
-         return (!currentAcquisition_.areEventsFinished()
-                 || (curPipeline_ != null && !curPipeline_.isHalted()));
+         return (!currentAcquisition_.areEventsFinished());
       } else {
          return false;
       }

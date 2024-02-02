@@ -11,11 +11,8 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngJDataSink;
-import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
-import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
-import org.micromanager.acquisition.internal.acqengjcompat.AcqEngJAdapter;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
@@ -98,7 +95,7 @@ public final class TmpAcqEngJMDADataSink implements AcqEngJDataSink {
          return null;
       }
       try {
-         AcqEngJAdapter.addMMImageMetadata(tagged.tags);
+         TmpAcqJAdapter.addMMImageMetadata(tagged.tags);
          DefaultImage image = new DefaultImage(tagged);
 
          HashMap<String, Object> axisNames = AcqEngMetadata.getAxes(tagged.tags);
@@ -108,7 +105,7 @@ public final class TmpAcqEngJMDADataSink implements AcqEngJDataSink {
                     @Override
                     public boolean test(String s) {
                        String[] standardAxes = new String[]{AcqEngMetadata.TIME_AXIS,
-                               AcqEngMetadata.Z_AXIS, AcqEngMetadata.CHANNEL_AXIS, "position"};
+                             AcqEngMetadata.Z_AXIS, AcqEngMetadata.CHANNEL_AXIS, "position"};
                        return !Arrays.asList(standardAxes).contains(s);
                     }
                  }).collect(Collectors.toList());
