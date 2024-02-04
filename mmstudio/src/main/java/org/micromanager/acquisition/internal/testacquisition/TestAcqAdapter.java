@@ -93,6 +93,7 @@ import org.micromanager.internal.utils.NumberUtils;
 public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCallbacks {
 
    public static final String ACQ_IDENTIFIER = "Acq_Identifier";
+   private static final String TITLE = "Test-Acquisition";
    private static final SimpleDateFormat DATE_FORMATTER =
            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
    private Acquisition currentAcquisition_;
@@ -222,6 +223,7 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
             curPipeline_.insertSummaryMetadata(summaryMetadata);
             // curStore_.setSummaryMetadata(summaryMetadata);
             displayWindow_ = studio_.displays().createDisplay(curStore_, null);
+            displayWindow_.setCustomTitle(TITLE);
          }
 
          // Use settings of last closed acquisition viewer
@@ -231,6 +233,7 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
             dsTmp = DefaultDisplaySettings.getStandardSettings(
                     PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
+         displayWindow_.getWindow().toFront();
          if (createStoreAndDisplay) {
             displayWindow_.setDisplaySettings(dsTmp);
          }
