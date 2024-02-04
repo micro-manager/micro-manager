@@ -194,6 +194,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private boolean disableGUItoSettings_ = false;
    private final FocusListener focusListener_;
    private MultiMDAFrame multiMDAFrame_;
+   private final TestAcqAdapter testAcqAdapter_;
 
    /**
     * Acquisition control dialog box.
@@ -207,6 +208,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       mmStudio_ = mmStudio;
       profile_ = mmStudio_.getUserProfile();
       settings_ = profile_.getSettings(this.getClass());
+      testAcqAdapter_ = new TestAcqAdapter(mmStudio_);
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             MMStudio.class.getResource(
@@ -894,10 +896,17 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
+   public void runTestAcquisition(SequenceSettings sequenceSettings) {
+      testAcqAdapter_.setSequenceSettings(sequenceSettings);
+      try {
+         testAcqAdapter_.acquire();
+      } catch (MMException ex) {
+         throw new RuntimeException(ex);
+      }
+   }
 
    private JPanel createFancyMDAButtons() {
       final JPanel result = new JPanel(new MigLayout("flowy, insets 0, gapx 0, gapy 2"));
-      final TestAcqAdapter adapter = new TestAcqAdapter(mmStudio_);
 
       final JButton testAcquisitionButton = new JButton("Test Acquisition");
       testAcquisitionButton.setToolTipText(
@@ -905,12 +914,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       testAcquisitionButton.setFont(DEFAULT_FONT);
       testAcquisitionButton.setMargin(new Insets(-5, -5, -5, -5));
       testAcquisitionButton.addActionListener((ActionEvent e) -> {
-         adapter.setSequenceSettings(mmStudio_.acquisitions().getAcquisitionSettings());
-         try {
-            adapter.acquire();
-         } catch (MMException ex) {
-            throw new RuntimeException(ex);
-         }
+         runTestAcquisition(mmStudio_.acquisitions().getAcquisitionSettings());
       });
       result.add(testAcquisitionButton, BUTTON_SIZE);
 

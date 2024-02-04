@@ -51,6 +51,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.acquisition.internal.testacquisition.TestAcqAdapter;
@@ -209,15 +210,11 @@ final class ConfigFrame extends JFrame {
       criteriaButtonPanel.add(editButton_);
       add(criteriaButtonPanel, "wrap");
 
-      TestAcqAdapter adapter = new TestAcqAdapter(studio);
       JButton acqButton = new JButton("Acquire");
       acqButton.addActionListener(e -> {
-         adapter.setSequenceSettings(studio.acquisitions().getAcquisitionSettings());
-         try {
-            adapter.acquire();
-         } catch (MMException ex) {
-            throw new RuntimeException(ex);
-         }
+         // I believe the AcqControlDlg is always available in MMStudio
+         ((MMStudio) studio).uiManager().getAcquisitionWindow()
+                 .runTestAcquisition(studio.acquisitions().getAcquisitionSettings());
       });
       add(acqButton, "wrap");
 
