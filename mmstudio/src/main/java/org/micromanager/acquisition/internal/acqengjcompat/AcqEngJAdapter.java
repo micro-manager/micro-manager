@@ -786,7 +786,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             try {
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
-                  if (event.isZSequenced() || event.getZIndex() == 0) {
+                  if (event.getZIndex() == 0) {
                      if (!event.isZSequenced() && sequenceSettings.useChannels()
                              && (sequenceSettings.acqOrderMode()
                                        == AcqOrderMode.TIME_POS_SLICE_CHANNEL
@@ -799,7 +799,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                      zStagePositionBefore_ = core_.getPosition();
                   }
                } else if (when == AcquisitionAPI.AFTER_EXPOSURE_HOOK) {
-                  if (event.isZSequenced() && event.getZIndex() != null
+                  if (event.getZIndex() != null
                         && event.getZIndex() == sequenceSettings.slices().size() - 1) {
                      if (!event.isZSequenced() && sequenceSettings.useChannels()
                              && (sequenceSettings.acqOrderMode()
