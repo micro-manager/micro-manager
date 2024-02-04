@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.plugins.snaponmove.acquisition;
+package org.micromanager.acquisition.internal.testacquisition;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
@@ -90,7 +90,7 @@ import org.micromanager.internal.utils.NumberUtils;
  * - The axes of the acquisition are limited to channel, slice, frame, and position
  * - The number of images and other parameters are all known at the start of acquisition
  */
-public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCallbacks {
+public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCallbacks {
 
    public static final String ACQ_IDENTIFIER = "Acq_Identifier";
    private static final SimpleDateFormat DATE_FORMATTER =
@@ -129,7 +129,7 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     *
     * @param studio Always there!
     */
-   public TmpAcqJAdapter(Studio studio) {
+   public TestAcqAdapter(Studio studio) {
       // Create AcqEngJ
       studio_ = studio;
       core_ = studio_.core();
@@ -175,7 +175,7 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
 
-         TmpAcqEngJMDADataSink sink = new TmpAcqEngJMDADataSink(studio_.events(), this);
+         TestAcqDataSink sink = new TestAcqDataSink(studio_.events(), this);
          currentAcquisition_ = new Acquisition(sink);
          currentAcquisition_.setDebugMode(core_.debugLogEnabled());
 
@@ -204,7 +204,7 @@ public class TmpAcqJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                }
             }
          }
-         if (displayWindow_.isClosed() || !displayWindow_.isVisible()) {
+         if (displayWindow_ == null || displayWindow_.isClosed() || !displayWindow_.isVisible()) {
             createStoreAndDisplay = true;
          }
 

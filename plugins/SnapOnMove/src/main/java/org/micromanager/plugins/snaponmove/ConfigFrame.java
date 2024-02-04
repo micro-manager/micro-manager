@@ -53,7 +53,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.plugins.snaponmove.acquisition.TmpAcqJAdapter;
+import org.micromanager.acquisition.internal.testacquisition.TestAcqAdapter;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
@@ -209,7 +209,7 @@ final class ConfigFrame extends JFrame {
       criteriaButtonPanel.add(editButton_);
       add(criteriaButtonPanel, "wrap");
 
-      TmpAcqJAdapter adapter = new TmpAcqJAdapter(studio);
+      TestAcqAdapter adapter = new TestAcqAdapter(studio);
       JButton acqButton = new JButton("Acquire");
       acqButton.addActionListener(e -> {
          adapter.setSequenceSettings(studio.acquisitions().getAcquisitionSettings());

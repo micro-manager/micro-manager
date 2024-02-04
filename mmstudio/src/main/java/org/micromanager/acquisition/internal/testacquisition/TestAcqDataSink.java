@@ -1,4 +1,4 @@
-package org.micromanager.plugins.snaponmove.acquisition;
+package org.micromanager.acquisition.internal.testacquisition;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -33,16 +33,16 @@ import org.micromanager.internal.utils.ReportingUtils;
  * <p>This class is analagous to DefaultTaggedImageSink, which serves the same
  * function for the Clojure engine.
  */
-public final class TmpAcqEngJMDADataSink implements AcqEngJDataSink {
+public final class TestAcqDataSink implements AcqEngJDataSink {
 
    private Datastore store_;
    private Pipeline pipeline_;
    private final EventManager studioEvents_;
    private boolean somethingAcquired_ = false;
    private boolean finished_ = false;
-   private final TmpAcqJAdapter engine_;
+   private final TestAcqAdapter engine_;
 
-   public TmpAcqEngJMDADataSink(EventManager studioEvents, TmpAcqJAdapter engine) {
+   public TestAcqDataSink(EventManager studioEvents, TestAcqAdapter engine) {
       studioEvents_ = studioEvents;
       engine_ = engine;
    }
@@ -95,7 +95,7 @@ public final class TmpAcqEngJMDADataSink implements AcqEngJDataSink {
          return null;
       }
       try {
-         TmpAcqJAdapter.addMMImageMetadata(tagged.tags);
+         TestAcqAdapter.addMMImageMetadata(tagged.tags);
          DefaultImage image = new DefaultImage(tagged);
 
          HashMap<String, Object> axisNames = AcqEngMetadata.getAxes(tagged.tags);
