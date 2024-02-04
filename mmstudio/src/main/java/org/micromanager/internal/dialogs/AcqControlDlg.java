@@ -89,6 +89,7 @@ import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.internal.acqengjcompat.multimda.MultiMDAFrame;
+import org.micromanager.acquisition.internal.testacquisition.TestAcqAdapter;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
@@ -255,7 +256,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       topRightPanel.add(createCloseButton(), BUTTON_SIZE);
       topRightPanel.add(createRunButtons());
       topRightPanel.add(createSaveButtons());
-      topRightPanel.add(createMultiMDAButton());
+      topRightPanel.add(createFancyMDAButtons());
 
       JPanel topPanel = new JPanel(new MigLayout(
             "fill, insets 0",
@@ -895,20 +896,33 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
 
-   private JPanel createMultiMDAButton() {
+   private JPanel createFancyMDAButtons() {
       final JPanel result = new JPanel(new MigLayout("flowy, insets 0, gapx 0, gapy 2"));
+      final TestAcqAdapter adapter = new TestAcqAdapter(mmStudio_);
+
+      final JButton testAcquisitionButton = new JButton("Test Acquisition");
+      testAcquisitionButton.setToolTipText("Test Acquisition of Z and Channels only, and does not save");
+      testAcquisitionButton.setFont(DEFAULT_FONT);
+      testAcquisitionButton.setMargin(new Insets(-5, -5, -5, -5));
+      testAcquisitionButton.addActionListener((ActionEvent e) -> {
+         adapter.setSequenceSettings(mmStudio_.acquisitions().getAcquisitionSettings());
+         try {
+            adapter.acquire();
+         } catch (MMException ex) {
+            throw new RuntimeException(ex);
+         }
+      });
+      result.add(testAcquisitionButton, BUTTON_SIZE);
+
       final JButton multiMDAButton = new JButton("Multi MDA");
       multiMDAButton.setToolTipText("Different Settings at different locations");
       multiMDAButton.setFont(DEFAULT_FONT);
       multiMDAButton.setMargin(new Insets(-5, -5, -5, -5));
-      multiMDAButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (multiMDAFrame_ == null) {
-               multiMDAFrame_ = new MultiMDAFrame(mmStudio_);
-            }
-            multiMDAFrame_.setVisible(true);
+      multiMDAButton.addActionListener(e -> {
+         if (multiMDAFrame_ == null) {
+            multiMDAFrame_ = new MultiMDAFrame(mmStudio_);
          }
+         multiMDAFrame_.setVisible(true);
       });
       result.add(multiMDAButton, BUTTON_SIZE);
 
