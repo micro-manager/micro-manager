@@ -11,8 +11,10 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngJDataSink;
+import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.Acquisition;
+import org.micromanager.acquisition.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
@@ -78,9 +80,9 @@ public final class TestAcqDataSink implements AcqEngJDataSink {
    @Override
    public void finish() {
       //pipeline_.halt();
-      //studioEvents_.post(
-      //        new DefaultAcquisitionEndedEvent(store_, Engine.getInstance()));
-      //finished_ = true;
+      studioEvents_.post(
+              new DefaultAcquisitionEndedEvent(store_, Engine.getInstance()));
+      finished_ = true;
    }
 
    @Override
