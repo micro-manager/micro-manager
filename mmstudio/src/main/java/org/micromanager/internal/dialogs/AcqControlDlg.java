@@ -140,7 +140,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private static final String BUTTON_SIZE = "width 80!, height 22!";
    private static final String PANEL_CONSTRAINT = "fillx, gap 2, insets 2";
 
-   protected JButton listButton_;
    private JSpinner afSkipInterval_;
    private JComboBox<AcqOrderMode> acqOrderBox_;
    private JTextArea acquisitionOrderText_;
@@ -187,7 +186,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    private JPanel customTimesPanel_;
    private final CheckBoxPanel channelsPanel_;
    private CheckBoxPanel slicesPanel_;
-   protected CheckBoxPanel positionsPanel_;
+   private CheckBoxPanel positionsPanel_;
    private JPanel acquisitionOrderPanel_;
    private CheckBoxPanel afPanel_;
    private CheckBoxPanel savePanel_;
@@ -377,7 +376,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
     *
     * @return the table with channels.
     */
-   public final JTable createChannelTable() {
+   public JTable createChannelTable() {
       model_ = new ChannelTableModel(mmStudio_, getAcquisitionEngine());
       model_.addTableModelListener(this);
 
@@ -535,16 +534,16 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       positionsPanel_ = createCheckBoxPanel("Multiple Positions (XY)");
       positionsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT,
             "[grow]", "[grow, fill]"));
-      listButton_ = new JButton("Edit Position List...");
-      listButton_.setToolTipText("Open XY list dialog");
-      listButton_.setIcon(IconLoader.getIcon(
+      final JButton listButton = new JButton("Edit Position List...");
+      listButton.setToolTipText("Open XY list dialog");
+      listButton.setIcon(IconLoader.getIcon(
             "/org/micromanager/icons/application_view_list.png"));
-      listButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      listButton_.addActionListener((ActionEvent e) -> mmStudio_.app().showPositionList());
+      listButton.setFont(new Font("Dialog", Font.PLAIN, 10));
+      listButton.addActionListener((ActionEvent e) -> mmStudio_.app().showPositionList());
 
       // Not sure why 'span' is needed to prevent second column from appearing
       // (interaction with CheckBoxPanel layout??)
-      positionsPanel_.add(listButton_, "span, alignx center");
+      positionsPanel_.add(listButton, "span, alignx center");
       return positionsPanel_;
    }
 
@@ -901,7 +900,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       final TestAcqAdapter adapter = new TestAcqAdapter(mmStudio_);
 
       final JButton testAcquisitionButton = new JButton("Test Acquisition");
-      testAcquisitionButton.setToolTipText("Test Acquisition of Z and Channels only, and does not save");
+      testAcquisitionButton.setToolTipText(
+              "Test Acquisition of Z and Channels only, and does not save");
       testAcquisitionButton.setFont(DEFAULT_FONT);
       testAcquisitionButton.setMargin(new Insets(-5, -5, -5, -5));
       testAcquisitionButton.addActionListener((ActionEvent e) -> {
@@ -1029,15 +1029,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       helpButton.setText("<HTML><font color=\"#70A3CC\" size = \"3\">Which to use?</font></HTML>");
       helpButton.setBorderPainted(false);
       helpButton.setOpaque(false);
-      helpButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               Desktop.getDesktop().browse(new URL(
-                       "https://micro-manager.org/Micro-Manager_File_Formats").toURI());
-            } catch (IOException | URISyntaxException ex) {
-               ReportingUtils.logError(ex);
-            }
+      helpButton.addActionListener(e -> {
+         try {
+            Desktop.getDesktop().browse(new URL(
+                    "https://micro-manager.org/Micro-Manager_File_Formats").toURI());
+         } catch (IOException | URISyntaxException ex) {
+            ReportingUtils.logError(ex);
          }
       });
       helpButton.addMouseListener(new MouseAdapter() {
@@ -1130,7 +1127,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Subscribe
    public void onChannelExposure(ChannelExposureEvent event) {
       String channel = event.getChannel();
-      if (!channel.equals("") && getShouldSyncExposure()) {
+      if (!channel.isEmpty() && getShouldSyncExposure()) {
          String channelGroup = event.getChannelGroup();
          double exposure = event.getNewExposureTime();
          model_.setChannelExposureTime(channelGroup, channel, exposure);
@@ -1226,7 +1223,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    /**
     * Updates the channel group drop down box.
     */
-   public final void updateGroupsCombo() {
+   public void updateGroupsCombo() {
       String[] groups = getAcquisitionEngine().getAvailableGroups();
       if (groups.length != 0) {
          channelGroupCombo_.setModel(new DefaultComboBoxModel<>(groups));
@@ -1276,7 +1273,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
-   public final void updateGUIContents() {
+   public void updateGUIContents() {
       SequenceSettings sequenceSettings = getAcquisitionEngine().getSequenceSettings();
       updateGUIFromSequenceSettings(sequenceSettings);
    }
@@ -1454,7 +1451,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return null;
    }
 
-   protected void setRootDirectory() {
+   private void setRootDirectory() {
       File result = FileDialogs.openDir(this,
             "Please choose a directory root for image data",
             FileDialogs.MM_DATA_SET);
@@ -1479,7 +1476,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
-   protected void setBottomPosition() {
+   private void setBottomPosition() {
       try {
          double z = mmStudio_.core().getPosition();
          zBottom_.setText(NumberUtils.doubleToDisplayString(z));
@@ -1490,7 +1487,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
-   protected void loadAcqSettingsFromFile() {
+   private void loadAcqSettingsFromFile() {
       File f = FileDialogs.openFile(this,
             "Load acquisition settings", FileDialogs.ACQ_SETTINGS_FILE);
       if (f != null) {
@@ -1523,7 +1520,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
    }
 
-   protected void saveAcqSettingsToFile() {
+   private void saveAcqSettingsToFile() {
       saveAcqSettingsToProfile();
       File file = FileDialogs.save(this, "Save the acquisition settings file",
             FileDialogs.ACQ_SETTINGS_FILE);
@@ -1540,8 +1537,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    /**
     * Asks acqEngine to estimate memory usage.
-    * Use this method only after
-    * settings have been send to acqEngine.
+    * Use this method only after settings were sent to acqEngine.
     * Prompt the user if there may not be enough memory.
     *
     * @return true if user chooses to cancel after being prompted.
@@ -1556,7 +1552,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          return true;
       }
 
-      // get memory than can be used within JVM:
+      // get memory that can be used within JVM:
       // https://stackoverflow.com/questions/12807797/java-get-available-memory
       long allocatedMemory = (Runtime.getRuntime().totalMemory()
             - Runtime.getRuntime().freeMemory());
@@ -1582,7 +1578,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
                + "Available memory (approximate estimate: " + availableMemoryMB
                + " MB) may not be sufficient. "
                + "Once memory is full, the acquisition may slow down or fail.</p>"
-               + "<p width='400'>See <a style=\"" + style + ""
+               + "<p width='400'>See <a style=\"" + style
                +
                "\" href=https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Memory_Settings> "
                + " the configuration guide</a> for ways to make more memory available.</p>"
@@ -1725,6 +1721,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       return -1;
    }
 
+   /**
+    * Callback that is called when sequence settings were changed.  Used to keep the UI in sync.
+    *
+    * @param event Event signaling that the settings have changed
+    *              (also contains those new settings).
+    */
    @Subscribe
    public void onSettingsChanged(AcquisitionSettingsChangedEvent event) {
       if (this.isDisplayable()) {
