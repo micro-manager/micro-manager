@@ -49,14 +49,9 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.acquisition.internal.testacquisition.TestAcqAdapter;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 // Imports for MMStudio internal packages
