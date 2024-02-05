@@ -221,10 +221,10 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
             curStore_.setStorage(new StorageRAM(curStore_));
             curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
             curPipeline_.insertSummaryMetadata(summaryMetadata);
-            // curStore_.setSummaryMetadata(summaryMetadata);
             displayWindow_ = studio_.displays().createDisplay(curStore_, null);
             displayWindow_.setCustomTitle(TITLE);
          }
+
 
          // Use settings of last closed acquisition viewer
          DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
