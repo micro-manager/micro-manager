@@ -57,6 +57,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.acquisition.internal.testacquisition.TestAcqAdapter;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
@@ -74,6 +75,8 @@ final class ConfigFrame extends JFrame {
    private static final String ENABLE_BUTTON = "Start";
    private static final String DISABLE_BUTTON = "Stop";
 
+   private static final String USESNAP = "UseSnap";
+   private static final String USETESTACQ = "UseTestAcq";
 
    private final JTable criteriaTable_;
    private final JButton addButton_;
@@ -82,6 +85,7 @@ final class ConfigFrame extends JFrame {
 
    public ConfigFrame(final Studio studio, final MainController controller) {
 
+      final MutablePropertyMapView settings = studio.profile().getSettings(this.getClass());
       setTitle("Snap-on-Move");
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("fill",
@@ -91,24 +95,32 @@ final class ConfigFrame extends JFrame {
 
       final JButton enableButton = new JButton(ENABLE_BUTTON);
       enableButton.setText(controller.isEnabled() ? DISABLE_BUTTON : ENABLE_BUTTON);
-      enableButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            boolean shouldEnable = enableButton.getText().equals(ENABLE_BUTTON);
-            controller.setEnabled(shouldEnable);
-            enableButton.setText(controller.isEnabled() ? DISABLE_BUTTON : ENABLE_BUTTON);
-            updateButtonStates();
-         }
+      enableButton.addActionListener(e -> {
+         boolean shouldEnable = enableButton.getText().equals(ENABLE_BUTTON);
+         controller.setEnabled(shouldEnable);
+         enableButton.setText(controller.isEnabled() ? DISABLE_BUTTON : ENABLE_BUTTON);
+         updateButtonStates();
       });
       add(enableButton, "wrap");
 
       final JRadioButton selectSnap = new JRadioButton("Snap");
       final JRadioButton selectTestAcq = new JRadioButton(("Test acquisition"));
+      selectSnap.setSelected(settings.getBoolean(USESNAP, true));
+      selectTestAcq.setSelected(settings.getBoolean(USETESTACQ, false));
+      if (selectSnap.isSelected()) {
+         controller.useSnap();
+      } else if (selectTestAcq.isSelected()) {
+         controller.useTestAcq();
+      }
       final ActionListener al = e -> {
          if (selectSnap.isSelected()) {
             controller.useSnap();
+            settings.putBoolean(USESNAP, true);
+            settings.putBoolean(USETESTACQ, false);
          } else if (selectTestAcq.isSelected()) {
             controller.useTestAcq();
+            settings.putBoolean(USESNAP, false);
+            settings.putBoolean(USETESTACQ, true);
          }
       };
       selectSnap.addActionListener(al);
@@ -148,12 +160,7 @@ final class ConfigFrame extends JFrame {
       criteriaTable_ = new JTable(new CriteriaTableModel(controller));
       criteriaTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       criteriaTable_.getSelectionModel().addListSelectionListener(
-            new ListSelectionListener() {
-               @Override
-               public void valueChanged(ListSelectionEvent e) {
-                  updateButtonStates();
-               }
-            });
+              e -> updateButtonStates());
       final JScrollPane criteriaPane = new JScrollPane(criteriaTable_,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -161,63 +168,54 @@ final class ConfigFrame extends JFrame {
       add(criteriaPane, "span 3, grow");
 
       addButton_ = new JButton("Add...");
-      addButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            final CriterionDialog dialog =
-                  new CriterionDialog(controller, ConfigFrame.this);
-            dialog.setVisible(true);
-            ChangeCriterion criterion = dialog.getResult();
-            if (criterion != null) {
-               List<ChangeCriterion> criteria = controller.getChangeCriteria();
-               criteria.add(criterion);
-               controller.setChangeCriteria(criteria);
-               ((CriteriaTableModel) criteriaTable_.getModel())
-                     .fireTableRowsInserted(criteria.size(),
-                           criteria.size() + 1);
-               criteriaTable_.setRowSelectionInterval(criteria.size(),
-                     criteria.size() + 1);
-               updateButtonStates();
-            }
-         }
-      });
-
-      removeButton_ = new JButton("Remove");
-      removeButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int row = criteriaTable_.getSelectedRow();
-            if (row < 0) {
-               return; // None selected
-            }
+      addButton_.addActionListener(e -> {
+         final CriterionDialog dialog =
+               new CriterionDialog(controller, ConfigFrame.this);
+         dialog.setVisible(true);
+         ChangeCriterion criterion = dialog.getResult();
+         if (criterion != null) {
             List<ChangeCriterion> criteria = controller.getChangeCriteria();
-            criteria.remove(row);
+            criteria.add(criterion);
             controller.setChangeCriteria(criteria);
-            ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsDeleted(row, row + 1);
+            ((CriteriaTableModel) criteriaTable_.getModel())
+                  .fireTableRowsInserted(criteria.size(),
+                        criteria.size() + 1);
+            criteriaTable_.setRowSelectionInterval(criteria.size(),
+                  criteria.size() + 1);
             updateButtonStates();
          }
       });
 
+      removeButton_ = new JButton("Remove");
+      removeButton_.addActionListener(e -> {
+         int row = criteriaTable_.getSelectedRow();
+         if (row < 0) {
+            return; // None selected
+         }
+         List<ChangeCriterion> criteria = controller.getChangeCriteria();
+         criteria.remove(row);
+         controller.setChangeCriteria(criteria);
+         ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsDeleted(row, row + 1);
+         updateButtonStates();
+      });
+
       editButton_ = new JButton("Edit...");
-      editButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int row = criteriaTable_.getSelectedRow();
-            if (row < 0) {
-               return; // None selected
-            }
-            List<ChangeCriterion> criteria = controller.getChangeCriteria();
-            ChangeCriterion criterion = criteria.get(row);
-            final CriterionDialog dialog =
-                  new CriterionDialog(controller, criterion, ConfigFrame.this);
-            dialog.setVisible(true);
-            criterion = dialog.getResult();
-            if (criterion != null) {
-               criteria.set(row, criterion);
-               controller.setChangeCriteria(criteria);
-               ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsUpdated(row, row + 1);
-               updateButtonStates();
-            }
+      editButton_.addActionListener(e -> {
+         int row = criteriaTable_.getSelectedRow();
+         if (row < 0) {
+            return; // None selected
+         }
+         List<ChangeCriterion> criteria = controller.getChangeCriteria();
+         ChangeCriterion criterion = criteria.get(row);
+         final CriterionDialog dialog =
+               new CriterionDialog(controller, criterion, ConfigFrame.this);
+         dialog.setVisible(true);
+         criterion = dialog.getResult();
+         if (criterion != null) {
+            criteria.set(row, criterion);
+            controller.setChangeCriteria(criteria);
+            ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsUpdated(row, row + 1);
+            updateButtonStates();
          }
       });
 
