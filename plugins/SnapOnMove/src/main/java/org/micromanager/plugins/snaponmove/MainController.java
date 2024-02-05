@@ -54,6 +54,7 @@ import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
 
 /**
@@ -100,6 +101,8 @@ class MainController {
 
    // Whether monitoring is "enabled" (whether running or paused)
    private boolean monitorEnabled_ = false;
+   private boolean useSnap_ = true;
+   private boolean useTestAcq_ = false;
 
    private UpdatableAlert statusAlert_;
 
@@ -189,6 +192,16 @@ class MainController {
       }
    }
 
+   synchronized void useSnap() {
+      useSnap_ = true;
+      useTestAcq_ = false;
+   }
+
+   synchronized void useTestAcq() {
+      useSnap_ = false;
+      useTestAcq_ = true;
+   }
+
    private synchronized void handleMonitorThread(boolean f) {
       if (f == (monitorThread_ != null)) {
          return;
@@ -222,7 +235,12 @@ class MainController {
    }
 
    private void doSnap() throws InterruptedException {
-      studio_.live().snap(true);
+      if (useSnap_) {
+         studio_.live().snap(true);
+      } else if (useTestAcq_) {
+         ((MMStudio) studio_).uiManager().getAcquisitionWindow()
+                 .runTestAcquisition(studio_.acquisitions().getAcquisitionSettings());
+      }
       if (statusAlert_ != null) {
          SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
          String time = sdf.format(Calendar.getInstance().getTime());

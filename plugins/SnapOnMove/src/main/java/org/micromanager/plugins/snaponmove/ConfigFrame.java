@@ -37,10 +37,12 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
@@ -99,6 +101,23 @@ final class ConfigFrame extends JFrame {
          }
       });
       add(enableButton, "wrap");
+
+      final JRadioButton selectSnap = new JRadioButton("Snap");
+      final JRadioButton selectTestAcq = new JRadioButton(("Test acquisition"));
+      final ActionListener al = e -> {
+         if (selectSnap.isSelected()) {
+            controller.useSnap();
+         } else if (selectTestAcq.isSelected()) {
+            controller.useTestAcq();
+         }
+      };
+      selectSnap.addActionListener(al);
+      selectTestAcq.addActionListener(al);
+      ButtonGroup bg = new ButtonGroup();
+      bg.add(selectSnap);
+      bg.add(selectTestAcq);
+      add(selectSnap, "span 4, split 2");
+      add(selectTestAcq, "wrap");
 
       add(new JSeparator(), "span 4, grow, wrap");
 
@@ -209,14 +228,6 @@ final class ConfigFrame extends JFrame {
       criteriaButtonPanel.add(removeButton_);
       criteriaButtonPanel.add(editButton_);
       add(criteriaButtonPanel, "wrap");
-
-      JButton acqButton = new JButton("Acquire");
-      acqButton.addActionListener(e -> {
-         // I believe the AcqControlDlg is always available in MMStudio
-         ((MMStudio) studio).uiManager().getAcquisitionWindow()
-                 .runTestAcquisition(studio.acquisitions().getAcquisitionSettings());
-      });
-      add(acqButton, "wrap");
 
       setMinimumSize(new Dimension(360, 210));
       pack();
