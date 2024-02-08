@@ -50,9 +50,7 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.propertymap.MutablePropertyMapView;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
@@ -70,17 +68,13 @@ final class ConfigFrame extends JFrame {
    private static final String ENABLE_BUTTON = "Start";
    private static final String DISABLE_BUTTON = "Stop";
 
-   private static final String USESNAP = "UseSnap";
-   private static final String USETESTACQ = "UseTestAcq";
-
    private final JTable criteriaTable_;
    private final JButton addButton_;
    private final JButton removeButton_;
    private final JButton editButton_;
 
-   public ConfigFrame(final Studio studio, final MainController controller) {
+   public ConfigFrame(final MainController controller) {
 
-      final MutablePropertyMapView settings = studio.profile().getSettings(this.getClass());
       setTitle("Snap-on-Move");
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       setLayout(new MigLayout("fill",
@@ -100,8 +94,8 @@ final class ConfigFrame extends JFrame {
 
       final JRadioButton selectSnap = new JRadioButton("Snap");
       final JRadioButton selectTestAcq = new JRadioButton(("Test acquisition"));
-      selectSnap.setSelected(settings.getBoolean(USESNAP, true));
-      selectTestAcq.setSelected(settings.getBoolean(USETESTACQ, false));
+      selectSnap.setSelected(controller.isUsingSnap());
+      selectTestAcq.setSelected(controller.isUsingTestAcq());
       if (selectSnap.isSelected()) {
          controller.useSnap();
       } else if (selectTestAcq.isSelected()) {
@@ -110,12 +104,8 @@ final class ConfigFrame extends JFrame {
       final ActionListener al = e -> {
          if (selectSnap.isSelected()) {
             controller.useSnap();
-            settings.putBoolean(USESNAP, true);
-            settings.putBoolean(USETESTACQ, false);
          } else if (selectTestAcq.isSelected()) {
             controller.useTestAcq();
-            settings.putBoolean(USESNAP, false);
-            settings.putBoolean(USETESTACQ, true);
          }
       };
       selectSnap.addActionListener(al);

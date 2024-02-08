@@ -66,7 +66,7 @@ public class SnapOnMovePlugin implements SciJavaPlugin, MenuPlugin {
       }
 
       if (frame_ == null) {
-         frame_ = new ConfigFrame(studio_, controller_);
+         frame_ = new ConfigFrame(controller_);
          frame_.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {

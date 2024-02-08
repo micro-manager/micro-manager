@@ -56,6 +56,7 @@ import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * The main control code for Snap-on-Move.
@@ -115,12 +116,16 @@ class MainController {
          "Polling interval in milliseconds";
    private static final String PROFILE_KEY_CHANGE_CRITERIA =
          "Criteria for movement detection";
+   private static final String USE_SNAP = "Use snap";
+   private static final String USE_TEST_ACQ = "Use test acquisition";
 
    MainController(Studio studio) {
       studio_ = studio;
 
       pollingIntervalMs_ = studio_.profile().getSettings(this.getClass())
                   .getLong(PROFILE_KEY_POLLING_INTERVAL_MS, 100L);
+      useSnap_ = studio_.profile().getSettings(this.getClass()).getBoolean(USE_SNAP, true);
+      useTestAcq_ = studio_.profile().getSettings(this.getClass()).getBoolean(USE_TEST_ACQ, false);
 
       String criteriaJSON = studio_.profile().getSettings(this.getClass())
                   .getString(PROFILE_KEY_CHANGE_CRITERIA, null);
@@ -195,11 +200,26 @@ class MainController {
    synchronized void useSnap() {
       useSnap_ = true;
       useTestAcq_ = false;
+      storeSnapTestAcq();
    }
 
    synchronized void useTestAcq() {
       useSnap_ = false;
       useTestAcq_ = true;
+      storeSnapTestAcq();
+   }
+
+   private void storeSnapTestAcq() {
+      studio_.profile().getSettings(this.getClass()).putBoolean(USE_SNAP, useSnap_);
+      studio_.profile().getSettings(this.getClass()).putBoolean(USE_TEST_ACQ, useTestAcq_);
+   }
+
+   public boolean isUsingSnap() {
+      return useSnap_;
+   }
+
+   public boolean isUsingTestAcq() {
+      return useTestAcq_;
    }
 
    private synchronized void handleMonitorThread(boolean f) {
