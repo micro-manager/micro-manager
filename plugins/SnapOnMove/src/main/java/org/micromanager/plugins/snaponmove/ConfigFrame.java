@@ -37,18 +37,18 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.internal.utils.WindowPositioning;
 
@@ -68,7 +68,6 @@ final class ConfigFrame extends JFrame {
    private static final String ENABLE_BUTTON = "Start";
    private static final String DISABLE_BUTTON = "Stop";
 
-
    private final JTable criteriaTable_;
    private final JButton addButton_;
    private final JButton removeButton_;
@@ -85,16 +84,37 @@ final class ConfigFrame extends JFrame {
 
       final JButton enableButton = new JButton(ENABLE_BUTTON);
       enableButton.setText(controller.isEnabled() ? DISABLE_BUTTON : ENABLE_BUTTON);
-      enableButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            boolean shouldEnable = enableButton.getText().equals(ENABLE_BUTTON);
-            controller.setEnabled(shouldEnable);
-            enableButton.setText(controller.isEnabled() ? DISABLE_BUTTON : ENABLE_BUTTON);
-            updateButtonStates();
-         }
+      enableButton.addActionListener(e -> {
+         boolean shouldEnable = enableButton.getText().equals(ENABLE_BUTTON);
+         controller.setEnabled(shouldEnable);
+         enableButton.setText(controller.isEnabled() ? DISABLE_BUTTON : ENABLE_BUTTON);
+         updateButtonStates();
       });
       add(enableButton, "wrap");
+
+      final JRadioButton selectSnap = new JRadioButton("Snap");
+      final JRadioButton selectTestAcq = new JRadioButton(("Test acquisition"));
+      selectSnap.setSelected(controller.isUsingSnap());
+      selectTestAcq.setSelected(controller.isUsingTestAcq());
+      if (selectSnap.isSelected()) {
+         controller.useSnap();
+      } else if (selectTestAcq.isSelected()) {
+         controller.useTestAcq();
+      }
+      final ActionListener al = e -> {
+         if (selectSnap.isSelected()) {
+            controller.useSnap();
+         } else if (selectTestAcq.isSelected()) {
+            controller.useTestAcq();
+         }
+      };
+      selectSnap.addActionListener(al);
+      selectTestAcq.addActionListener(al);
+      ButtonGroup bg = new ButtonGroup();
+      bg.add(selectSnap);
+      bg.add(selectTestAcq);
+      add(selectSnap, "span 4, split 2");
+      add(selectTestAcq, "wrap");
 
       add(new JSeparator(), "span 4, grow, wrap");
 
@@ -125,12 +145,7 @@ final class ConfigFrame extends JFrame {
       criteriaTable_ = new JTable(new CriteriaTableModel(controller));
       criteriaTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       criteriaTable_.getSelectionModel().addListSelectionListener(
-            new ListSelectionListener() {
-               @Override
-               public void valueChanged(ListSelectionEvent e) {
-                  updateButtonStates();
-               }
-            });
+              e -> updateButtonStates());
       final JScrollPane criteriaPane = new JScrollPane(criteriaTable_,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -138,63 +153,54 @@ final class ConfigFrame extends JFrame {
       add(criteriaPane, "span 3, grow");
 
       addButton_ = new JButton("Add...");
-      addButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            final CriterionDialog dialog =
-                  new CriterionDialog(controller, ConfigFrame.this);
-            dialog.setVisible(true);
-            ChangeCriterion criterion = dialog.getResult();
-            if (criterion != null) {
-               List<ChangeCriterion> criteria = controller.getChangeCriteria();
-               criteria.add(criterion);
-               controller.setChangeCriteria(criteria);
-               ((CriteriaTableModel) criteriaTable_.getModel())
-                     .fireTableRowsInserted(criteria.size(),
-                           criteria.size() + 1);
-               criteriaTable_.setRowSelectionInterval(criteria.size(),
-                     criteria.size() + 1);
-               updateButtonStates();
-            }
-         }
-      });
-
-      removeButton_ = new JButton("Remove");
-      removeButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int row = criteriaTable_.getSelectedRow();
-            if (row < 0) {
-               return; // None selected
-            }
+      addButton_.addActionListener(e -> {
+         final CriterionDialog dialog =
+               new CriterionDialog(controller, ConfigFrame.this);
+         dialog.setVisible(true);
+         ChangeCriterion criterion = dialog.getResult();
+         if (criterion != null) {
             List<ChangeCriterion> criteria = controller.getChangeCriteria();
-            criteria.remove(row);
+            criteria.add(criterion);
             controller.setChangeCriteria(criteria);
-            ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsDeleted(row, row + 1);
+            ((CriteriaTableModel) criteriaTable_.getModel())
+                  .fireTableRowsInserted(criteria.size(),
+                        criteria.size() + 1);
+            criteriaTable_.setRowSelectionInterval(criteria.size(),
+                  criteria.size() + 1);
             updateButtonStates();
          }
       });
 
+      removeButton_ = new JButton("Remove");
+      removeButton_.addActionListener(e -> {
+         int row = criteriaTable_.getSelectedRow();
+         if (row < 0) {
+            return; // None selected
+         }
+         List<ChangeCriterion> criteria = controller.getChangeCriteria();
+         criteria.remove(row);
+         controller.setChangeCriteria(criteria);
+         ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsDeleted(row, row + 1);
+         updateButtonStates();
+      });
+
       editButton_ = new JButton("Edit...");
-      editButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int row = criteriaTable_.getSelectedRow();
-            if (row < 0) {
-               return; // None selected
-            }
-            List<ChangeCriterion> criteria = controller.getChangeCriteria();
-            ChangeCriterion criterion = criteria.get(row);
-            final CriterionDialog dialog =
-                  new CriterionDialog(controller, criterion, ConfigFrame.this);
-            dialog.setVisible(true);
-            criterion = dialog.getResult();
-            if (criterion != null) {
-               criteria.set(row, criterion);
-               controller.setChangeCriteria(criteria);
-               ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsUpdated(row, row + 1);
-               updateButtonStates();
-            }
+      editButton_.addActionListener(e -> {
+         int row = criteriaTable_.getSelectedRow();
+         if (row < 0) {
+            return; // None selected
+         }
+         List<ChangeCriterion> criteria = controller.getChangeCriteria();
+         ChangeCriterion criterion = criteria.get(row);
+         final CriterionDialog dialog =
+               new CriterionDialog(controller, criterion, ConfigFrame.this);
+         dialog.setVisible(true);
+         criterion = dialog.getResult();
+         if (criterion != null) {
+            criteria.set(row, criterion);
+            controller.setChangeCriteria(criteria);
+            ((CriteriaTableModel) criteriaTable_.getModel()).fireTableRowsUpdated(row, row + 1);
+            updateButtonStates();
          }
       });
 
