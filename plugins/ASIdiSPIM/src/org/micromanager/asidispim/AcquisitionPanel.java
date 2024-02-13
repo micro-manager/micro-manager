@@ -1322,6 +1322,55 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
+    * Special case for different settings for single-objective
+    * @param showWarnings true to warn user about needing to change slice period
+    * @return
+    */
+   private SliceTiming getTimingSingleObjective(boolean showWarnings) {
+      SliceTiming s = new SliceTiming();
+      final float cameraResetTime = computeCameraResetTime();      // recalculate for safety, 0 for light sheet
+      final float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety, 0 for overlap
+      final float cameraTotalTime = MyNumberUtils.ceilToQuarterMs(cameraResetTime + cameraReadoutTime);  
+      final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
+      final float laserDuration = MyNumberUtils.roundToQuarterMs(acqSettings.desiredLightExposure);
+      final float slicePeriod = Math.max( Math.max(laserDuration, cameraTotalTime),
+            acqSettings.minimizeSlicePeriod ? 0 : acqSettings.desiredSlicePeriod );
+      final float sliceDeadTime = MyNumberUtils.roundToQuarterMs(slicePeriod - laserDuration);
+      
+      switch (acqSettings.cameraMode) {
+      case PSEUDO_OVERLAP:  // e.g. Kinetix
+         s.scanNum = 1;
+         s.scanDelay = 0.f;
+         s.scanPeriod = 0.25f;
+         s.cameraDelay = 0.25f;
+         s.cameraDuration = 0.25f;
+         s.cameraExposure = laserDuration;
+         s.laserDelay = sliceDeadTime;
+         s.laserDuration = laserDuration;
+         break;
+      case OVERLAP:  // e.g. Fusion
+      case EDGE:
+         s.scanNum = 1;
+         s.scanDelay = 0.f;
+         s.scanPeriod = 1.0f;
+         s.cameraDelay = 0.f;
+         s.cameraDuration = 1.0f;
+         s.cameraExposure = 1.0f;
+         s.laserDelay = sliceDeadTime;
+         s.laserDuration = laserDuration;
+         break;
+      default:
+         if (showWarnings) {
+            MyDialogUtils.showError("Invalid camera mode");
+         }
+         s.valid = false;
+      }
+      // update the slice duration based on our new values
+      s.sliceDuration = getSliceDuration(s);
+      return s;
+   }
+   
+   /**
     * @param showWarnings true to warn user about needing to change slice period
     * @return
     */
@@ -1423,26 +1472,26 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
          s.cameraExposure = 1;  // doesn't really matter, controlled by interval between triggers
          break;
-         case PSEUDO_OVERLAP:  // PCO or Photometrics, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
-            s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
-            if (null != camLibrary) {
-               switch (camLibrary) {
-                  case PCOCAM:
-                     s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms for PCO
-                     break;
-                  case PVCAM:
-                     s.cameraExposure = cameraExposure;
-                     break;
-                  default:
-                     MyDialogUtils.showError("Unknown camera library for pseudo-overlap calculations");
-                     break;
-               }
+      case PSEUDO_OVERLAP:  // PCO or Photometrics, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
+         s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
+         if (null != camLibrary) {
+            switch (camLibrary) {
+            case PCOCAM:
+               s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms for PCO
+               break;
+            case PVCAM:
+               s.cameraExposure = cameraExposure;
+               break;
+            default:
+               MyDialogUtils.showError("Unknown camera library for pseudo-overlap calculations");
+               break;
             }
-            if (s.cameraDelay < 0.24f) {
-               MyDialogUtils.showError("Camera delay should be at least 0.25ms for pseudo-overlap mode.");
-            }
-            break;
-         case LIGHT_SHEET:
+         }
+         if (s.cameraDelay < 0.24f) {
+            MyDialogUtils.showError("Camera delay should be at least 0.25ms for pseudo-overlap mode.");
+         }
+         break;
+      case LIGHT_SHEET:
          // each slice period goes like this:
          // 1. scan reset time (use to add any extra settling time to the start of each slice)
          // 2. start scan, wait scan settle time
@@ -1546,7 +1595,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (advancedSliceTimingCB_.isSelected()) {
          return;
       }
-      sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);
+      if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), Properties.Keys.PLUGIN_SINGLE_OBJECTIVE, false) ) {
+         sliceTiming_ = getTimingSingleObjective(showWarnings);
+      } else {
+         sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);
+      }
       PanelUtils.setSpinnerFloatValue(delayScan_, sliceTiming_.scanDelay);
       numScansPerSlice_.setValue(sliceTiming_.scanNum);
       PanelUtils.setSpinnerFloatValue(lineScanDuration_, sliceTiming_.scanPeriod);
@@ -3719,7 +3772,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // check if we are raising the SPIM head to the load position between every acquisition
             final boolean raiseSPIMHead = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), 
-            Properties.Keys.PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS, false);
+                  Properties.Keys.PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS, false);
             
             // Loop over all the times we trigger the controller's acquisition
             //  (although if multi-channel with volume switching is selected there

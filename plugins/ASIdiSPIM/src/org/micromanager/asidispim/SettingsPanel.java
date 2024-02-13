@@ -79,6 +79,7 @@ public class SettingsPanel extends ListeningJPanel {
    
    private final JCheckBox acqFailQuietly_;
    private final JCheckBox raiseSPIMHead_;
+   private final JCheckBox singleObjective_;
    private final JCheckBox usePathGroupAcquisition_;
    private final JCheckBox acqBothCamerasSimult_;
 
@@ -209,7 +210,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel acqusitionPanel = new JPanel(new MigLayout(
             "",
             "[left]",
-            "[]4[]"));
+            "[]2[]"));
       acqusitionPanel.setBorder(PanelUtils.makeTitledBorder("Acquisition"));
 
       final JCheckBox acqSettingsWrite = pu.makeCheckBox("Write file with acquisition settings",
@@ -227,6 +228,10 @@ public class SettingsPanel extends ListeningJPanel {
       raiseSPIMHead_ = pu.makeCheckBox("Raise SPIM head between acquisitions",
               Properties.Keys.PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS, panelName_, false);
       acqusitionPanel.add(raiseSPIMHead_, "wrap");
+      
+      singleObjective_ = pu.makeCheckBox("Single-objective setup",
+            Properties.Keys.PLUGIN_SINGLE_OBJECTIVE, panelName_, false);
+      acqusitionPanel.add(singleObjective_, "wrap");
       
       // end acquisiton panel
       
