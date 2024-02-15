@@ -79,7 +79,6 @@ public class SettingsPanel extends ListeningJPanel {
    
    private final JCheckBox acqFailQuietly_;
    private final JCheckBox raiseSPIMHead_;
-   private final JCheckBox singleObjective_;
    private final JCheckBox usePathGroupAcquisition_;
    private final JCheckBox acqBothCamerasSimult_;
 
@@ -229,10 +228,6 @@ public class SettingsPanel extends ListeningJPanel {
               Properties.Keys.PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS, panelName_, false);
       acqusitionPanel.add(raiseSPIMHead_, "wrap");
       
-      singleObjective_ = pu.makeCheckBox("Single-objective setup",
-            Properties.Keys.PLUGIN_SINGLE_OBJECTIVE, panelName_, false);
-      acqusitionPanel.add(singleObjective_, "wrap");
-      
       // end acquisiton panel
       
       
@@ -317,7 +312,7 @@ public class SettingsPanel extends ListeningJPanel {
          stageScanPanel.add(new JLabel("Path A stage/objective angle [\u00B0]:"));
          final JSpinner stageAnglePathA = pu.makeSpinnerFloat(1, 89, 1,
                Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA,
-               ASIdiSPIM.oSPIM ? 60 : 45);
+               ASIdiSPIM.SCOPE ? 50.0 : (ASIdiSPIM.oSPIM ? 60 : 45));
          stageAnglePathA.setToolTipText("for Path A, e.g. 60 for oSPIM and 45 for symmetric diSPIM");
          stageScanPanel.add(stageAnglePathA, "wrap");
          

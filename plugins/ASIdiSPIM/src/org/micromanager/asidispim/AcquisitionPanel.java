@@ -1595,7 +1595,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (advancedSliceTimingCB_.isSelected()) {
          return;
       }
-      if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), Properties.Keys.PLUGIN_SINGLE_OBJECTIVE, false) ) {
+      if (ASIdiSPIM.SCOPE) {
          sliceTiming_ = getTimingSingleObjective(showWarnings);
       } else {
          sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);

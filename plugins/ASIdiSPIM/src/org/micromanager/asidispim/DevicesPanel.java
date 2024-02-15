@@ -59,6 +59,7 @@ public class DevicesPanel extends ListeningJPanel {
     * @param devices - instance of class that holds information about devices
     * @param props
     */
+   @SuppressWarnings("unused")
    public DevicesPanel(ScriptInterface gui, Devices devices, Properties props, Prefs prefs) {
       super(MyStrings.PanelNames.DEVICES.toString(), 
             new MigLayout(
@@ -121,7 +122,7 @@ public class DevicesPanel extends ListeningJPanel {
          add(boxUpperZ_, "span 2, center, wrap");
       }
       
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.oSPIM || ASIdiSPIM.SCOPE) {
 
       } else {
          add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERHDRIVE) + ":"));

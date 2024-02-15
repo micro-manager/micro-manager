@@ -37,10 +37,11 @@ import org.micromanager.utils.ReportingUtils;
 
 public class ASIdiSPIM implements MMPlugin {
    
-   public static final boolean oSPIM = false;
+   public static final boolean oSPIM = false;  // mostly just means "single-view" but a few exceptions
    public static final boolean doubleXYZ = false;
+   public static final boolean SCOPE = false;
    
-   public final static String menuName = "ASI " + (oSPIM ? "oSPIM" : "diSPIM") + (doubleXYZ ? " double" : "");
+   public final static String menuName = "ASI " + (SCOPE ? "SCOPE" : (oSPIM ? "oSPIM" : "diSPIM") ) + (doubleXYZ ? " double" : "");
    public final static String rmiName = "ASIdiSPIM_API";
    public final static String tooltipDescription = "Control the " + menuName;
    public final static Color borderColor = Color.gray;

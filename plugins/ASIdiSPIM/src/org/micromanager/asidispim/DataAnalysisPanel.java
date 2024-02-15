@@ -663,7 +663,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                    // this is only used to display the angle
                    scanAngle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);
                    if (scanAngle < 1) {  // case when property not defined
-                       scanAngle = ASIdiSPIM.oSPIM ? 60.0 : 45.0; 
+                       scanAngle = ASIdiSPIM.SCOPE ? 50.0 : (ASIdiSPIM.oSPIM ? 60.0 : 45.0); 
                    }
                    // actual computation is here
                    geometricShiftFactor = du.getStageGeometricShiftFactor(firstSideIsA);

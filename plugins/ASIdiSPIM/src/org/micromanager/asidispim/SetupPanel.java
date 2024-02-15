@@ -105,6 +105,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final JFormattedTextField piezoDeltaField_;
    private final JFormattedTextField offsetField_;
    private final JFormattedTextField rateField_;
+   private final JFormattedTextField galvoOffsetField_; // only for SCOPE 
    private Devices.Keys piezoImagingDeviceKey_;       // assigned in constructor based on side, can be updated by deviceChange event
    private Devices.Keys piezoIlluminationDeviceKey_;  // assigned in constructor based on side, can be updated by deviceChange event
    private Devices.Keys micromirrorDeviceKey_;        // assigned in constructor based on side, can be updated by deviceChange event
@@ -183,7 +184,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             "[]8[]"));
       
       offsetField_ = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET.toString(), 0, 5);  
+            Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET.toString(), 0, 5);
       rateField_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), 100, 5);
       piezoDeltaField_ = pu.makeFloatEntryField(panelName_, 
@@ -212,11 +213,34 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          }
       });
       
-      calibrationPanel.add(new JLabel("<html><u>Piezo/Slice Calibration</u></html>"), "span 5, center");
-      calibrationPanel.add(new JSeparator(SwingConstants.VERTICAL), "span 1 3, growy, shrinkx, center");
-      calibrationPanel.add(new JLabel("<html><u>Step</u></html>"), "wrap");
+
+      if(ASIdiSPIM.SCOPE) {
+         offsetField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                  try {
+                     setImagingCenter((Double) offsetField_.getValue());
+                  } catch (ASIdiSPIMException e) {
+                     e.printStackTrace();
+                  }
+            }
+         });
+      }
       
-      calibrationPanel.add(new JLabel("Slope:"));
+      if(!ASIdiSPIM.SCOPE) {
+         calibrationPanel.add(new JLabel("<html><u>Piezo/Slice Calibration</u></html>"), "span 5, center");
+         calibrationPanel.add(new JSeparator(SwingConstants.VERTICAL), "span 1 3, growy, shrinkx, center");
+         calibrationPanel.add(new JLabel("<html><u>Step</u></html>"), "wrap");
+      } else {
+         calibrationPanel.add(new JLabel("<html><u>Galvo Piezo Calibration</u></html>"), "span 5, center");
+         calibrationPanel.add(new JLabel(""), "wrap");
+      }
+
+      if(!ASIdiSPIM.SCOPE) {
+         calibrationPanel.add(new JLabel("Slope:"));
+      } else {
+         calibrationPanel.add(new JLabel("Galvo constant:"));
+      }
       calibrationPanel.add(rateField_, "span 2, right");
       // TODO consider making calibration be in degrees instead of um
       // originally thought it was best, now not sure because um gives
@@ -233,11 +257,22 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          }
       });
       tmp_but.setBackground(Color.green);
+      if(ASIdiSPIM.SCOPE) {
+         tmp_but.setEnabled(false);
+      }
       calibrationPanel.add(tmp_but);
 
-      calibrationPanel.add(upButton, "growy, wrap");
+      if(!ASIdiSPIM.SCOPE) {
+         calibrationPanel.add(upButton, "growy, wrap");
+      } else {
+         calibrationPanel.add(new JLabel(""), "growy, wrap");
+      }
       
-      calibrationPanel.add(new JLabel("Offset:"));
+      if(!ASIdiSPIM.SCOPE) {
+         calibrationPanel.add(new JLabel("Offset:"));
+      } else {
+         calibrationPanel.add(new JLabel("Piezo offset:"));
+      }
       calibrationPanel.add(offsetField_, "span 2, right");
       // calibrationPanel.add(new JLabel("\u00B0"));
       calibrationPanel.add(new JLabel("\u00B5m"));
@@ -253,7 +288,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.setBackground(Color.green);
       calibrationPanel.add(tmp_but);
       
-      calibrationPanel.add(downButton, "growy, wrap");
+      if(!ASIdiSPIM.SCOPE) {
+         calibrationPanel.add(downButton, "growy, wrap");
+      } else {
+         calibrationPanel.add(new JLabel(""), "growy, wrap");
+      }
       
       tmp_but = new JButton("Run Autofocus");
       tmp_but.setMargin(new Insets(4,8,4,8));
@@ -267,9 +306,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       calibrationPanel.add(tmp_but, "center, span 4");
       
-      calibrationPanel.add(new JLabel("Step size: "), "right, span 2");
-      calibrationPanel.add(piezoDeltaField_, "split 2");
-      calibrationPanel.add(new JLabel("\u00B5m"));
+      if(!ASIdiSPIM.SCOPE) {
+         calibrationPanel.add(new JLabel("Step size: "), "right, span 2");
+         calibrationPanel.add(piezoDeltaField_, "split 2");
+         calibrationPanel.add(new JLabel("\u00B5m"));
+      } else {
+         calibrationPanel.add(new JLabel(""), "growy, wrap");
+      }
       
       // start 2-point calibration frame
       // this frame is separate from main plugin window
@@ -465,6 +508,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
+      if(ASIdiSPIM.SCOPE) {
+         tmp_but.setEnabled(false);
+      }
       slicePanel.add(tmp_but, "wrap");
       
       JButton testAcqButton = new JButton("Test Acquisition");
@@ -518,52 +564,59 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             "",
             "[" + labelWidth + "px!,right]8[" + positionWidth + "px!,center]8[center]8[center]",
             "[]2[]2[]"));
-      
-      tmp_lbl = new JLabel("Illum. piezo:", JLabel.RIGHT);
-      tmp_lbl.setMaximumSize(new Dimension(labelWidth, 20));
-      tmp_lbl.setMinimumSize(new Dimension(labelWidth, 20));
-      sheetPanelNormal_.add(tmp_lbl, "center");
-      illuminationPiezoPositionLabel_ = new JLabel("");
-      illuminationPiezoPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
-      illuminationPiezoPositionLabel_.setMinimumSize(new Dimension(positionWidth, 20));
-      sheetPanelNormal_.add(illuminationPiezoPositionLabel_);
-      sheetPanelNormal_.add(pu.makeSetPositionField(piezoIlluminationDeviceKey_,
-            Directions.NONE, positions_));
+      if (!ASIdiSPIM.oSPIM) {  // don't need illum piezo on oSPIM or SCOPE
+         tmp_lbl = new JLabel("Illum. piezo:", JLabel.RIGHT);
+         tmp_lbl.setMaximumSize(new Dimension(labelWidth, 20));
+         tmp_lbl.setMinimumSize(new Dimension(labelWidth, 20));
+         sheetPanelNormal_.add(tmp_lbl, "center");
+         illuminationPiezoPositionLabel_ = new JLabel("");
+         illuminationPiezoPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+         illuminationPiezoPositionLabel_.setMinimumSize(new Dimension(positionWidth, 20));
+         sheetPanelNormal_.add(illuminationPiezoPositionLabel_);
+         sheetPanelNormal_.add(pu.makeSetPositionField(piezoIlluminationDeviceKey_,
+               Directions.NONE, positions_));
 
-      tmp_but = new JButton("Set home");
-      tmp_but.setMargin(new Insets(4,4,4,4));
-      tmp_but.setToolTipText("During SPIM, illumination piezo is moved to home position");
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
-               props_.setPropValue(piezoIlluminationDeviceKey_,
-                     Properties.Keys.SET_HOME_HERE, Properties.Values.DO_IT);
-            }
-         }
-      });
-      sheetPanelNormal_.add(tmp_but);
-
-      tmp_but = new JButton("Go home");
-      tmp_but.setMargin(new Insets(4,4,4,4));
-      tmp_but.setToolTipText("During SPIM, illumination piezo is moved to home position");
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
-               try {
-                  gui_.getMMCore().home(devices_.getMMDevice(piezoIlluminationDeviceKey_));
-               } catch (Exception e1) {
-                  ReportingUtils.showError(e1, "Could not move piezo to home");
+         tmp_but = new JButton("Set home");
+         tmp_but.setMargin(new Insets(4,4,4,4));
+         tmp_but.setToolTipText("During SPIM, illumination piezo is moved to home position");
+         tmp_but.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               if (devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
+                  props_.setPropValue(piezoIlluminationDeviceKey_,
+                        Properties.Keys.SET_HOME_HERE, Properties.Values.DO_IT);
                }
             }
-         }
-      });
-      sheetPanelNormal_.add(tmp_but);
+         });
+         sheetPanelNormal_.add(tmp_but);
 
-      illumPiezoHomeEnable_ = pu.makeCheckBox("Go home on tab activate",
-            Properties.Keys.PREFS_ENABLE_ILLUM_PIEZO_HOME, panelName_, true); 
-      sheetPanelNormal_.add(illumPiezoHomeEnable_, "span 3, wrap");
+         tmp_but = new JButton("Go home");
+         tmp_but.setMargin(new Insets(4,4,4,4));
+         tmp_but.setToolTipText("During SPIM, illumination piezo is moved to home position");
+         tmp_but.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               if (devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
+                  try {
+                     gui_.getMMCore().home(devices_.getMMDevice(piezoIlluminationDeviceKey_));
+                  } catch (Exception e1) {
+                     ReportingUtils.showError(e1, "Could not move piezo to home");
+                  }
+               }
+            }
+         });
+         sheetPanelNormal_.add(tmp_but);
+
+         illumPiezoHomeEnable_ = pu.makeCheckBox("Go home on tab activate",
+               Properties.Keys.PREFS_ENABLE_ILLUM_PIEZO_HOME, panelName_, true); 
+         sheetPanelNormal_.add(illumPiezoHomeEnable_, "span 3, wrap");
+      } else {
+         // just to prevent errors create elements but don't add them
+         illuminationPiezoPositionLabel_ = new JLabel("");
+         illumPiezoHomeEnable_ = pu.makeCheckBox("Go home on tab activate",
+               Properties.Keys.PREFS_ENABLE_ILLUM_PIEZO_HOME, panelName_, true);
+      }
+     
       
       // TODO calibrate the sheet axis and then set according to ROI and Bessel filter
       sheetPanelNormal_.add(new JLabel("Sheet width:"));
@@ -627,45 +680,68 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             PanelUtils.componentsSetEnabled(manualSheetWidthComponents, !autoSheetWidth_.isSelected());
          }
       });
-
-      sheetPanelNormal_.add(new JLabel("Sheet offset:"));
-      sheetPanelNormal_.add(new JLabel(""), "span 3");   // TODO update this label with current value and/or allow user to directly enter value
-      tmp_but = new JButton("Center");
-      tmp_but.setMargin(new Insets(4,8,4,8));
-      final Properties.Keys offsetProp = (side == Devices.Sides.A) ?
-            Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_A : Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_B;
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            props_.setPropValue(Devices.Keys.PLUGIN, offsetProp, 0f, true);
-            props_.callListeners();  // update plot
+      
+      if(ASIdiSPIM.SCOPE) {
+         if (!autoSheetWidth_.isSelected()) {
+            autoSheetWidth_.doClick();
          }
-      });
-      sheetPanelNormal_.add(tmp_but);
-      sheetPanelNormal_.add(makeIncrementButton(Devices.Keys.PLUGIN,
-            offsetProp, "-", (float)-0.01), "split 2");
-      sheetPanelNormal_.add(makeIncrementButton(Devices.Keys.PLUGIN,
-            offsetProp, "+", (float)0.01));
-      // make sure our internal-use property is initialized
-      if (props_.getPropValueFloat(Devices.Keys.PLUGIN, offsetProp) == 0) {
-       props_.setPropValue(Devices.Keys.PLUGIN, offsetProp,
-             props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG));  
+         sheetWidthSlope_.setText("0");
       }
-      sheetOffsetSlider_ = pu.makeSlider(
-              props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X)/4, // min value
-              props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X)/4, // max value
-              1000, // the scale factor between internal integer representation and float representation
-              Devices.Keys.PLUGIN, offsetProp);
-      pu.addListenerLast(sheetOffsetSlider_, new ChangeListener() {  // make sure to update the controller value whenever the slider is changed
-         @Override
-         public void stateChanged(ChangeEvent ce) {
-            JSlider source = (JSlider) ce.getSource();
-            if(!source.getValueIsAdjusting()) {
+
+      if(!ASIdiSPIM.SCOPE) {
+         sheetPanelNormal_.add(new JLabel("Sheet offset:"));
+         sheetPanelNormal_.add(new JLabel(""), "span 3");   // TODO update this label with current value and/or allow user to directly enter value
+         tmp_but = new JButton("Center");
+         tmp_but.setMargin(new Insets(4,8,4,8));
+         final Properties.Keys offsetProp = (side == Devices.Sides.A) ?
+               Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_A : Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_B;
+         tmp_but.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               props_.setPropValue(Devices.Keys.PLUGIN, offsetProp, 0f, true);
+               props_.callListeners();  // update plot
+            }
+         });
+         sheetPanelNormal_.add(tmp_but);
+         sheetPanelNormal_.add(makeIncrementButton(Devices.Keys.PLUGIN,
+               offsetProp, "-", (float)-0.01), "split 2");
+         sheetPanelNormal_.add(makeIncrementButton(Devices.Keys.PLUGIN,
+               offsetProp, "+", (float)0.01));
+         // make sure our internal-use property is initialized
+         if (props_.getPropValueFloat(Devices.Keys.PLUGIN, offsetProp) == 0) {
+            props_.setPropValue(Devices.Keys.PLUGIN, offsetProp,
+                  props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG));  
+         }
+         sheetOffsetSlider_ = pu.makeSlider(
+               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X)/4, // min value
+               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X)/4, // max value
+               1000, // the scale factor between internal integer representation and float representation
+               Devices.Keys.PLUGIN, offsetProp);
+         pu.addListenerLast(sheetOffsetSlider_, new ChangeListener() {  // make sure to update the controller value whenever the slider is changed
+            @Override
+            public void stateChanged(ChangeEvent ce) {
+               JSlider source = (JSlider) ce.getSource();
+               if(!source.getValueIsAdjusting()) {
+                  updateSheetOffset();
+               }
+            }
+         });
+         sheetPanelNormal_.add(sheetOffsetSlider_, "span 4, growx, center");
+         galvoOffsetField_ = null;
+      } else {  // SCOPE
+         sheetOffsetSlider_ = null;
+         sheetPanelNormal_.add(new JLabel("Galvo offset:"));
+         galvoOffsetField_ = pu.makeFloatEntryField(panelName_, 
+               Properties.Keys.PLUGIN_SCOPE_GALVO_OFFSET.toString(), 0, 5);
+         galvoOffsetField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
                updateSheetOffset();
             }
-         }
-      });
-      sheetPanelNormal_.add(sheetOffsetSlider_, "span 4, growx, center");
+         });
+         sheetPanelNormal_.add(galvoOffsetField_, "span 6, wrap");
+      }
+      
 
       // end "normal" or original sheet controls
       
@@ -848,6 +924,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             offsetField_.setValue((Double) newOffset);
             ReportingUtils.logMessage("updated offset for side " + side_ + "; new value is " + newOffset +
                   " (with channel offset of " + channelOffset + ")");
+            if(ASIdiSPIM.SCOPE) {
+               setImagingCenter(newOffset);
+            }
          }
       } catch (Exception ex) {
          MyDialogUtils.showError(ex);
@@ -988,9 +1067,17 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     * (slider setting for "normal" mode, ROI and slope for light sheet mode
     */
    private void updateSheetOffset() {
-      CameraModes.Keys key = getSPIMCameraMode();
-      float offset = controller_.getSheetOffset(key, side_);
-      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offset, true);  // ignore missing device
+      if (!ASIdiSPIM.SCOPE) {
+         CameraModes.Keys key = getSPIMCameraMode();
+         float offset = controller_.getSheetOffset(key, side_);
+         props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offset, true);  // ignore missing device
+      } else {
+         Double offsetD = (Double) galvoOffsetField_.getValue();
+         props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offsetD.floatValue(), true);  // ignore missing device
+         String letter = props_.getPropValueString(micromirrorDeviceKey_, Properties.Keys.AXIS_LETTER_X);
+         props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, 
+               "HM " + letter + "=" + offsetD.toString());
+      }
    }
    
    /**

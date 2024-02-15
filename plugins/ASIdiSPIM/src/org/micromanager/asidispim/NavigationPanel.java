@@ -113,6 +113,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     * @param cameras
     * @param posUpdater Class that will continuously update the stage positions
     */
+   @SuppressWarnings("unused")
    public NavigationPanel(ScriptInterface gui, Devices devices, Properties props, 
            Joystick joystick, Positions positions, Prefs prefs, Cameras cameras,
            StagePositionUpdater posUpdater) {    
@@ -417,7 +418,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          }
       }
       
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.oSPIM || ASIdiSPIM.SCOPE) {
       } else {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.UPPERHDRIVE) + ":"));
          navPanel.add(upperHPositionLabel_);
