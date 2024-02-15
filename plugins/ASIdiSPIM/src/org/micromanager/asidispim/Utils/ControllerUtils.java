@@ -792,6 +792,17 @@ public class ControllerUtils {
       sliceAmplitude = MyNumberUtils.roundFloatToPlace(sliceAmplitude, 4);
       sliceCenter = MyNumberUtils.roundFloatToPlace(sliceCenter, 4);
       
+      final float sliceMax = sliceCenter + ((sliceAmplitude > 0) ? sliceAmplitude/2 : -1*sliceAmplitude/2);
+      final float sliceMin = sliceCenter - ((sliceAmplitude > 0) ? sliceAmplitude/2 : -1*sliceAmplitude/2);
+      if (sliceMax > props_.getPropValueFloat(galvoDevice, Properties.Keys.SCANNER_MAX_LIMIT_Y)) {
+         MyDialogUtils.showError("Scanner will exceed allowed range in positive direction.");
+         return false;
+      }
+      if (sliceMin < props_.getPropValueFloat(galvoDevice, Properties.Keys.SCANNER_MIN_LIMIT_Y)) {
+         MyDialogUtils.showError("Scanner will exceed allowed range in negative direction.");
+         return false;
+      }
+      
       if (offsetOnly) {
          props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
                sliceCenter, skipScannerWarnings);
