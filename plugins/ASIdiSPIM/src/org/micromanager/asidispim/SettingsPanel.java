@@ -319,6 +319,7 @@ public class SettingsPanel extends ListeningJPanel {
          final JCheckBox scanFromStart = pu.makeCheckBox("Scan from current position instead of center",
                Properties.Keys.PLUGIN_SCAN_FROM_START_POSITION, panelName_, false);
          stageScanPanel.add(scanFromStart, "span 2, wrap, alignx left");
+
          final JCheckBox scanNegativeDirection = pu.makeCheckBox("Scan negative direction",
                Properties.Keys.PLUGIN_SCAN_NEGATIVE_DIRECTION, panelName_, false);
          stageScanPanel.add(scanNegativeDirection, "span 2, wrap, alignx left");
@@ -326,7 +327,6 @@ public class SettingsPanel extends ListeningJPanel {
          final JCheckBox restoreOriginalPosition = pu.makeCheckBox("Return to original position after scan",
                Properties.Keys.PLUGIN_RETURN_TO_ORIGINAL_POSITION_AFTER_STAGESCAN, panelName_, false);
          stageScanPanel.add(restoreOriginalPosition, "wrap");
-         
       } else {
          stageScanPanel.add(new JLabel("Stage scanning not supported by your"), "left, wrap");
          stageScanPanel.add(new JLabel("Tiger firmware.  See http://dispim.org"), "left, wrap");

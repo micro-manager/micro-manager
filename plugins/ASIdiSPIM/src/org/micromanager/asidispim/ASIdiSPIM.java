@@ -37,7 +37,7 @@ import org.micromanager.utils.ReportingUtils;
 
 public class ASIdiSPIM implements MMPlugin {
    
-   public static final boolean oSPIM = false;  // mostly just means "single-view" but a few exceptions
+   public static final boolean oSPIM = false;  // mostly just means "single-view" but a few exceptions, set true for SCOPE too
    public static final boolean doubleXYZ = false;
    public static final boolean SCOPE = false;
    

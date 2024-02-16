@@ -29,6 +29,7 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 
@@ -56,7 +57,8 @@ public class AcquisitionModes {
       STAGE_SCAN_UNIDIRECTIONAL("Stage scan unidirectional", 7),  // path A and B scanning same direction
       STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL("Stage step supplemental", 8),
       STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL("Stage scan supplemental", 9),
-      SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),
+      SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),  // uncomment for usual
+//      SLICE_SCAN_ONLY( "Galvo scan", 2),  // uncomment for SCOPE
       PIEZO_SCAN_ONLY("Piezo scan only (unusual)", 6),
       EXT_TRIG_ACQ("External trig per acq", 10),
       NONE(            "None", 0);
@@ -183,21 +185,31 @@ public class AcquisitionModes {
        */
       private List<Keys> getValidModeKeys() {
          List<Keys> keyList = new ArrayList<Keys>();
-         keyList.add(Keys.PIEZO_SLICE_SCAN);
-         keyList.add(Keys.NO_SCAN);
-         if (devices_.isValidMMDevice(Devices.Keys.XYSTAGE)
-               && devices_.getMMDeviceLibrary(Devices.Keys.XYSTAGE) == Devices.Libraries.ASITIGER) {
-            keyList.add(Keys.STAGE_SCAN);
-            keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
-            keyList.add(Keys.STAGE_SCAN_UNIDIRECTIONAL);
+         if (!ASIdiSPIM.SCOPE) {
+            keyList.add(Keys.PIEZO_SLICE_SCAN);
+            keyList.add(Keys.NO_SCAN);
+            if (devices_.isValidMMDevice(Devices.Keys.XYSTAGE)
+                  && devices_.getMMDeviceLibrary(Devices.Keys.XYSTAGE) == Devices.Libraries.ASITIGER) {
+               keyList.add(Keys.STAGE_SCAN);
+               keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
+               keyList.add(Keys.STAGE_SCAN_UNIDIRECTIONAL);
+            }
+            if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
+               keyList.add(Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL);
+               keyList.add(Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL);
+            }
+            keyList.add(Keys.SLICE_SCAN_ONLY);
+            keyList.add(Keys.PIEZO_SCAN_ONLY);
+            keyList.add(Keys.EXT_TRIG_ACQ);
+         } else {
+            keyList.add(Keys.NO_SCAN);
+            if (devices_.isValidMMDevice(Devices.Keys.XYSTAGE)
+                  && devices_.getMMDeviceLibrary(Devices.Keys.XYSTAGE) == Devices.Libraries.ASITIGER) {
+               keyList.add(Keys.STAGE_SCAN);
+            }
+            keyList.add(Keys.SLICE_SCAN_ONLY);
+            keyList.add(Keys.PIEZO_SCAN_ONLY);
          }
-         if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
-            keyList.add(Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL);
-            keyList.add(Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL);
-         }
-         keyList.add(Keys.SLICE_SCAN_ONLY);
-         keyList.add(Keys.PIEZO_SCAN_ONLY);
-         keyList.add(Keys.EXT_TRIG_ACQ);
          return keyList;
       }
 
