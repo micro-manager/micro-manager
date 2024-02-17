@@ -734,7 +734,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                         || (Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == 0)
                   && (event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == null
                         || (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0)) {
-               if (event.getTIndex() != null && event.getTIndex() % skipFrames != 0) {
+               if (event.getTIndex() != null && skipFrames != 0
+                       && event.getTIndex() % skipFrames != 0) {
                   return event;
                }
                try {
