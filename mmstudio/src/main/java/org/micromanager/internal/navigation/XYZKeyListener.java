@@ -18,7 +18,6 @@
 
 package org.micromanager.internal.navigation;
 
-import org.micromanager.internal.dialogs.StageControlFrame;
 import static org.micromanager.internal.dialogs.StageControlFrame.MEDIUM_MOVEMENT_Z;
 import static org.micromanager.internal.dialogs.StageControlFrame.SELECTED_Z_DRIVE;
 import static org.micromanager.internal.dialogs.StageControlFrame.SMALL_MOVEMENT_Z;
@@ -30,6 +29,7 @@ import java.awt.event.KeyEvent;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayKeyPressEvent;
+import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 
