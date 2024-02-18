@@ -249,6 +249,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       DisplayUIController instance = new DisplayUIController(studio, parent,
             controlsFactory, animationController);
       parent.registerForEvents(instance);
+      parent.registerForEvents(new DisplayUIKeyListener(instance));
       studio.events().registerForEvents(instance);
       instance.frame_.addWindowListener(instance);
       return instance;
