@@ -107,7 +107,7 @@ public final class StageControlFrame extends JFrame {
    private static final String CURRENT_Z_DRIVE = "CURRENTZDRIVE";
 
    private static final String REFRESH = "REFRESH";
-   private static final String SNAP = "SNAP_AFTER_MOVE";
+   public static final String SNAP = "SNAP_AFTER_MOVE";
    private static final String NR_Z_PANELS = "NRZPANELS";
 
    private static StageControlFrame staticFrame_;

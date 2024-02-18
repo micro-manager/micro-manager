@@ -29,6 +29,7 @@ import java.awt.event.KeyEvent;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayKeyPressEvent;
+import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 
@@ -38,6 +39,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * @author Nico Stuurman
  */
 public final class XYZKeyListener {
+   private final Studio studio_;
    private final CMMCore core_;
    private final MutablePropertyMapView settings_;
    private final ZNavigator zNavigator_;
@@ -64,6 +66,7 @@ public final class XYZKeyListener {
     * @param zNavigator  Object that manages communication to Z Stages.
     */
    public XYZKeyListener(Studio studio, XYNavigator xyNavigator, ZNavigator zNavigator) {
+      studio_ = studio;
       core_ = studio.getCMMCore();
       xyNavigator_ = xyNavigator;
       zNavigator_ = zNavigator;
@@ -161,6 +164,14 @@ public final class XYZKeyListener {
             break;
       }
       if (consumed) {
+         if (settings_.getBoolean(StageControlFrame.SNAP, false)) {
+            try {
+               core_.waitForSystem();
+               studio_.live().snap(true);
+            } catch (Exception ex) {
+               studio_.logs().showError(ex, "Error waiting for the system");
+            }
+         }
          dkpe.consume();
       }
    }
@@ -173,7 +184,7 @@ public final class XYZKeyListener {
    public void incrementZ(double micron) {
       // Get needed info from core
       String zStage = settings_.getString(SELECTED_Z_DRIVE, core_.getFocusDevice());
-      if (zStage == null || zStage.length() == 0) {
+      if (zStage == null || zStage.isEmpty()) {
          return;
       }
 
