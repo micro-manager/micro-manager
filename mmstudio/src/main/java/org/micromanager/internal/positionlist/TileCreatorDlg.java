@@ -68,9 +68,10 @@ public final class TileCreatorDlg extends JDialog {
    private final JLabel labelBottom_ = new JLabel();
    private final JLabel labelWidth_ = new JLabel();
    private final JLabel labelWidthUmPx_ = new JLabel();
-   private static int prefix_ = 0;
+   private static int numericPrefix_ = 0;
 
    private static final String OVERLAP_PREF = "overlap";
+   private static final String PREFIX_PREF = "prefix";
    private static final String GRID_SELECTED = "grid_selected";
 
    /**
@@ -89,7 +90,7 @@ public final class TileCreatorDlg extends JDialog {
 
       core_ = core;
       studio_ = studio;
-      tileCreator_ = new TileCreator(core_);
+      tileCreator_ = new TileCreator(core_, this.getRootPane());
       positionListDlg_ = positionListDlg;
       positionListDlg_.activateAxisTable(false);
       endPosition_ = new MultiStagePosition[4];
@@ -256,21 +257,6 @@ public final class TileCreatorDlg extends JDialog {
       labelWidthUmPx_.setBounds(129, 108, 93, 14);
       super.getContentPane().add(labelWidthUmPx_);
 
-      final JLabel overlapLabel = new JLabel();
-      overlapLabel.setFont(plainFont10);
-      overlapLabel.setText("Overlap");
-      overlapLabel.setBounds(20, 189, 80, 14);
-      super.getContentPane().add(overlapLabel);
-
-      overlapField_ = new JTextField();
-      overlapField_.setBounds(70, 186, 50, 20);
-      overlapField_.setFont(plainFont10);
-      overlapField_.setText(settings.getString(OVERLAP_PREF, "0"));
-      overlapField_.addActionListener(arg0 -> {
-         settings.putString(OVERLAP_PREF, overlapField_.getText());
-         updateCenteredSizeLabel();
-      });
-      super.getContentPane().add(overlapField_);
 
       final JComponent[] lineDisableComponents = {
             goToBottomButton, goToTopButton, labelTop_,
@@ -310,6 +296,22 @@ public final class TileCreatorDlg extends JDialog {
       buttonGroup.add(gridButton);
       buttonGroup.add(lineButton);
 
+      final JLabel overlapLabel = new JLabel();
+      overlapLabel.setFont(plainFont10);
+      overlapLabel.setText("Overlap");
+      overlapLabel.setBounds(5, 189, 40, 14);
+      super.getContentPane().add(overlapLabel);
+
+      overlapField_ = new JTextField();
+      overlapField_.setBounds(45, 186, 40, 20);
+      overlapField_.setFont(plainFont10);
+      overlapField_.setText(settings.getString(OVERLAP_PREF, "0"));
+      overlapField_.addActionListener(arg0 -> {
+         settings.putString(OVERLAP_PREF, overlapField_.getText());
+         updateCenteredSizeLabel();
+      });
+      super.getContentPane().add(overlapField_);
+
       String[] unitStrings = {"um", "px", "%"};
       JComboBox<String> overlapUnitsCombo = new JComboBox<>(unitStrings);
       overlapUnitsCombo.setSelectedIndex(0);
@@ -318,27 +320,40 @@ public final class TileCreatorDlg extends JDialog {
          overlapUnit_ = TileCreator.OverlapUnitEnum.values()[cb.getSelectedIndex()];
          updateCenteredSizeLabel();
       });
-      overlapUnitsCombo.setBounds(125, 186, 75, 20);
+      overlapUnitsCombo.setBounds(90, 186, 40, 20);
       super.getContentPane().add(overlapUnitsCombo);
 
       final JLabel pixelSizeLabel = new JLabel();
       pixelSizeLabel.setFont(plainFont10);
       pixelSizeLabel.setText("Pixel Size [um]");
-      pixelSizeLabel.setBounds(205, 189, 80, 14);
+      pixelSizeLabel.setBounds(140, 189, 80, 14);
       super.getContentPane().add(pixelSizeLabel);
 
       pixelSizeField_ = new JTextField();
       pixelSizeField_.setFont(plainFont10);
-      pixelSizeField_.setBounds(280, 186, 50, 20);
+      pixelSizeField_.setBounds(215, 186, 35, 20);
       pixelSizeField_.setText(NumberUtils.doubleToDisplayString(core_.getPixelSizeUm()));
       pixelSizeField_.addActionListener(arg0 -> updateCenteredSizeLabel());
       super.getContentPane().add(pixelSizeField_);
+
+      final JLabel prefixLabel = new JLabel();
+      prefixLabel.setFont(plainFont10);
+      prefixLabel.setText("Prefix");
+      prefixLabel.setBounds(260, 189, 30, 14);
+      super.getContentPane().add(prefixLabel);
+
+      JTextField prefixField = new JTextField();
+      prefixField.setBounds(290, 186, 40, 20);
+      prefixField.setFont(plainFont10);
+      prefixField.setText(settings.getString(PREFIX_PREF, "Pos"));
+      super.getContentPane().add(prefixField);
 
       final JButton okButton = new JButton();
       okButton.setFont(plainFont10);
       okButton.setText("OK");
       okButton.addActionListener(arg0 -> {
          settings.putString(OVERLAP_PREF, overlapField_.getText());
+         settings.putString(PREFIX_PREF, prefixField.getText());
          addToPositionList();
       });
       okButton.setBounds(20, 216, 93, 23);
@@ -409,7 +424,7 @@ public final class TileCreatorDlg extends JDialog {
             msp.add(sp);
          }
       } catch (Exception e) {
-         ReportingUtils.showError(e);
+         ReportingUtils.showError(e, this);
       }
 
       endPosition_[location] = msp;
@@ -543,7 +558,7 @@ public final class TileCreatorDlg extends JDialog {
                sb.append(sp.getVerbose()).append("\n");
             }
          } catch (Exception e) {
-            ReportingUtils.showError(e);
+            ReportingUtils.showError(e, this);
          }
 
          endPosition_[location] = msp;
@@ -605,20 +620,21 @@ public final class TileCreatorDlg extends JDialog {
       if (xyStage == null) {
          return;
       }
-      prefix_ += 1;
+      numericPrefix_ += 1;
       double overlap = getOverlap();
       double pixelSizeUm;
       try {
          pixelSizeUm = getPixelSizeUm();
       } catch (TileCreatorDlg.TileCreatorException ex) {
-         ReportingUtils.showError(ex);
+         ReportingUtils.showError(ex, this);
          return;
       }
+      final MutablePropertyMapView settings = studio_.profile().getSettings(TileCreatorDlg.class);
       StrVector zStages = positionListDlg_.get1DAxes();
       PositionList posList;
       final PositionList endPoints = new PositionList();
-      if (studio_.profile().getSettings(TileCreatorDlg.class).getBoolean(
-            GRID_SELECTED, true)) {
+      String prefix = settings.getString(PREFIX_PREF, "Pos");
+      if (settings.getBoolean(GRID_SELECTED, true)) {
          for (MultiStagePosition multiStagePosition : endPosition_) {
             // We don't want to send null positions to the tile creator.
             if (multiStagePosition != null) {
@@ -626,23 +642,29 @@ public final class TileCreatorDlg extends JDialog {
             }
          }
          posList = tileCreator_.createTiles(overlap, overlapUnit_,
-               endPoints.getPositions(), pixelSizeUm, Integer.toString(prefix_),
+               endPoints.getPositions(), pixelSizeUm, prefix + "-" + numericPrefix_,
                xyStage, zStages, ZGenerator.Type.SHEPINTERPOLATE);
       } else {
+         if (endPosition_[1] == null || endPosition_[3] == null) {
+            studio_.logs().showError("Please set the left and right positions", this);
+            return;
+         }
          endPoints.addPosition(endPosition_[3]); // left
          endPoints.addPosition(endPosition_[1]); // right
          posList = tileCreator_.createLine(overlap, overlapUnit_,
-               endPoints.getPositions(), pixelSizeUm, Integer.toString(prefix_),
+               endPoints.getPositions(), pixelSizeUm, prefix + "-" + numericPrefix_,
                xyStage, zStages, ZGenerator.Type.SHEPINTERPOLATE);
       }
       // Add to position list
       // Increment prefix for these positions
-      MultiStagePosition[] msps = posList.getPositions();
-      for (MultiStagePosition msp : msps) {
-         positionListDlg_.addPosition(msp, msp.getLabel());
+      if (posList != null) {
+         MultiStagePosition[] msps = posList.getPositions();
+         for (MultiStagePosition msp : msps) {
+            positionListDlg_.addPosition(msp, msp.getLabel());
+         }
+         positionListDlg_.activateAxisTable(true);
+         dispose();
       }
-      positionListDlg_.activateAxisTable(true);
-      dispose();
    }
 
    /**

@@ -22,6 +22,7 @@
 
 package org.micromanager.internal.positionlist.utils;
 
+import java.awt.Component;
 import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -40,6 +41,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public final class TileCreator {
    private final CMMCore core_;
+   private final Component dialog_;
 
    /**
     * Units used for the overlap.
@@ -49,8 +51,9 @@ public final class TileCreator {
 
    private static final DecimalFormat FMT_POS = new DecimalFormat("000");
 
-   public TileCreator(CMMCore core) {
+   public TileCreator(CMMCore core, Component dialog) {
       core_ = core;
+      dialog_ = dialog;
    }
 
    /**
@@ -74,14 +77,15 @@ public final class TileCreator {
                                    ZGenerator.Type zType) {
       // Make sure at least two corners were set
       if (endPoints.length < 2) {
-         ReportingUtils.showError("At least two corners should be set");
+         ReportingUtils.showError("At least two corners should be set", dialog_);
          return null;
       }
       //Make sure all Points have the same stage
       for (int i = 1; i < endPoints.length; i++) {
          if (!xyStage.equals(endPoints[i].getDefaultXYStage())) {
             ReportingUtils
-                  .showError("All positions given to TileCreator must use the same xy stage");
+                  .showError("All positions given to TileCreator must use the same xy stage",
+                          dialog_);
             return null;
          }
       }
@@ -135,7 +139,7 @@ public final class TileCreator {
 
       if (nrImagesX < 1 || nrImagesY < 1) {
          ReportingUtils.showError("Zero or negative number of images requested. "
-               + "Is the overlap larger than the Image Width or Height?");
+               + "Is the overlap larger than the Image Width or Height?", dialog_);
          return null;
       }
 
@@ -184,7 +188,7 @@ public final class TileCreator {
             }
 
             // Add 'metadata'
-            msp.setLabel(labelPrefix + "-Pos" + FMT_POS.format(tmpX) + "_" + FMT_POS.format(y));
+            msp.setLabel(labelPrefix + "-" + FMT_POS.format(tmpX) + "_" + FMT_POS.format(y));
             msp.setGridCoordinates(y, tmpX);
             msp.setProperty("Source", "TileCreator");
 
@@ -230,14 +234,14 @@ public final class TileCreator {
                                    ZGenerator.Type zType) {
       // Make sure two corners were set
       if (endPoints.length != 2) {
-         ReportingUtils.showError("Two endpoints should be set");
+         ReportingUtils.showError("Two endpoints should be set", dialog_);
          return null;
       }
       // Make sure all Points have the same stage
       for (int i = 1; i < endPoints.length; i++) {
          if (!xyStage.equals(endPoints[i].getDefaultXYStage())) {
             ReportingUtils
-                  .showError("All positions given to TileCreator must use the same xy stage");
+                  .showError("All positions given to TileCreator must use the same xy stage", dialog_);
             return null;
          }
       }
@@ -246,7 +250,7 @@ public final class TileCreator {
       if (zStages == null) {
          zStages = new StrVector();
       }
-      if (zStages.size() > 0) {
+      if (!zStages.isEmpty()) {
          PositionList posList = new PositionList();
          posList.setPositions(endPoints);
          switch (zType) {
@@ -293,7 +297,7 @@ public final class TileCreator {
       final int nrImages = nrImagesX > nrImagesY ? nrImagesX : nrImagesY;
       if (nrImages < 1) {
          ReportingUtils.showError("Zero or negative number of images requested. "
-               + "Is the overlap larger than the Image Width or Height?");
+               + "Is the overlap larger than the Image Width or Height?", dialog_);
          return null;
       }
 
@@ -330,7 +334,7 @@ public final class TileCreator {
          }
 
          // Add 'metadata'
-         msp.setLabel(labelPrefix + "-Pos" + FMT_POS.format(i));
+         msp.setLabel(labelPrefix + "-" + FMT_POS.format(i));
          msp.setProperty("Source", "LineCreator");
 
          if (overlapUnit == OverlapUnitEnum.UM || overlapUnit == OverlapUnitEnum.PX) {
@@ -369,7 +373,7 @@ public final class TileCreator {
          tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
          transposeXY = !tmp.equals("0");
       } catch (Exception exc) {
-         ReportingUtils.showError(exc);
+         ReportingUtils.showError(exc, dialog_);
          return false;
       }
       return !correction && transposeXY;
