@@ -237,11 +237,16 @@ public final class TileCreator {
          ReportingUtils.showError("Two endpoints should be set", dialog_);
          return null;
       }
+      boolean invert = endPoints[0].get(xyStage).get2DPositionX()
+              - endPoints[1].get(xyStage).get2DPositionX()
+              + endPoints[0].get(xyStage).get2DPositionY()
+              - endPoints[1].get(xyStage).get2DPositionY() > 0;
       // Make sure all Points have the same stage
       for (int i = 1; i < endPoints.length; i++) {
          if (!xyStage.equals(endPoints[i].getDefaultXYStage())) {
             ReportingUtils
-                  .showError("All positions given to TileCreator must use the same xy stage", dialog_);
+                  .showError("All positions given to TileCreator must use the same xy stage",
+                          dialog_);
             return null;
          }
       }
@@ -272,13 +277,13 @@ public final class TileCreator {
       double maxY = coords[1].get2DPositionY();
       double minY = coords[0].get2DPositionY();
 
-      double[] ans = getImageSize(pixelSizeUm);
-      double imageSizeXUm = ans[0];
-      double imageSizeYUm = ans[1];
+      double[] imageSizeInMicrons = getImageSize(pixelSizeUm);
+      double imageSizeXUm = imageSizeInMicrons[0];
+      double imageSizeYUm = imageSizeInMicrons[1];
 
-      ans = getTileSize(overlap, overlapUnit, pixelSizeUm);
-      final double tileSizeXUm = ans[0];
-      final double tileSizeYUm = ans[1];
+      double[] tileSizeInMicrons = getTileSize(overlap, overlapUnit, pixelSizeUm);
+      final double tileSizeXUm = tileSizeInMicrons[0];
+      final double tileSizeYUm = tileSizeInMicrons[1];
 
       double overlapXUm = imageSizeXUm - tileSizeXUm;
       double overlapYUm = imageSizeYUm - tileSizeYUm;
@@ -294,17 +299,15 @@ public final class TileCreator {
 
       // since we are moving a line, the number of images to take is the larger
       // of X and Y
-      final int nrImages = nrImagesX > nrImagesY ? nrImagesX : nrImagesY;
+      final int nrImages = Math.max(nrImagesX, nrImagesY);
       if (nrImages < 1) {
          ReportingUtils.showError("Zero or negative number of images requested. "
                + "Is the overlap larger than the Image Width or Height?", dialog_);
          return null;
       }
 
-      double totalSizeXUm = nrImages * tileSizeXUm > boundingXUm ? boundingXUm :
-            nrImages * tileSizeXUm;
-      double totalSizeYUm = nrImagesY * tileSizeYUm > boundingYUm ? boundingYUm :
-            nrImages * tileSizeYUm;
+      double totalSizeXUm = Math.min(nrImages * tileSizeXUm, boundingXUm);
+      double totalSizeYUm = Math.min(nrImagesY * tileSizeYUm, boundingYUm);
 
       final double xStepSize = (totalSizeXUm - tileSizeXUm) / (nrImages - 1);
       final double yStepSize = (totalSizeYUm - tileSizeYUm) / (nrImages - 1);
@@ -313,12 +316,13 @@ public final class TileCreator {
       // todo handle mirrorX mirrorY
       for (int i = 0; i < nrImages; i++) {
          MultiStagePosition msp = new MultiStagePosition();
+         int j = invert ? nrImages - i - 1 : i;
 
          // Add XY position
          // xyStage is not null; we've checked above.
          msp.setDefaultXYStage(xyStage);
-         double dx = minX + (i * xStepSize);
-         double dy = minY + (i * yStepSize);
+         double dx = minX + (j * xStepSize);
+         double dy = minY + (j * yStepSize);
          StagePosition spXY = StagePosition.create2D(xyStage, dx, dy);
          msp.add(spXY);
 
@@ -358,7 +362,7 @@ public final class TileCreator {
    }
 
    private boolean isSwappedXY() {
-      // Returns true if the the camera device adapter indicates that it's x and y axis
+      // Returns true if the camera device adapter indicates that its x and y axis
       // should be swapped.
       boolean correction;
       boolean transposeXY;

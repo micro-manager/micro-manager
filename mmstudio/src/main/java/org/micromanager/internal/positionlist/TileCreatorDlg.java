@@ -50,6 +50,9 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
+/**
+ * Makes the Dialog that creates Position Lists with Grids or lines.
+ */
 public final class TileCreatorDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private final CMMCore core_;
@@ -385,6 +388,11 @@ public final class TileCreatorDlg extends JDialog {
       super.dispose();
    }
 
+   /**
+    * Handles event that signals that Micro-Manager is shutting down.
+    *
+    * @param se the event.
+    */
    @Subscribe
    public void shuttingDown(ShutdownCommencingEvent se) {
       if (se.isCanceled()) {
@@ -698,6 +706,11 @@ public final class TileCreatorDlg extends JDialog {
       }
    }
 
+   /**
+    * Handles the event signalling that the pixel size changed.
+    *
+    * @param event the event.
+    */
    @Subscribe
    public void onPixelSizeChanged(PixelSizeChangedEvent event) {
       pixelSizeField_.setText(NumberUtils.doubleToDisplayString(
