@@ -518,6 +518,16 @@ public class DefaultDatastore implements Datastore {
          ds.execute();
       }
    }
+   
+   @Override
+   public void save(Datastore.SaveMode mode, String path, boolean blocking, boolean closeOnSave) throws IOException {
+      DefaultDataSaver ds = new DefaultDataSaver(studio_, this, mode, path, closeOnSave);
+      if (blocking) {
+         ds.doInBackground();
+      } else {
+         ds.execute();
+      }
+   }
 
    protected Map<String, Annotation> getAnnotations() {
       return annotations_;
