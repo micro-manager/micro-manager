@@ -68,6 +68,11 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
 
    }
    
+   /**
+    * Same as constructor above with closeOnSave parameter
+    * 
+    * @param closeOnSave when true, will close datastore after saving.
+    */
    public DefaultDataSaver(Studio studio,
                            DefaultDatastore store,
                            Datastore.SaveMode mode,
