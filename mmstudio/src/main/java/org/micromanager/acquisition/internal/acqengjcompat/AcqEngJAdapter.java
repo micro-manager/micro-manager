@@ -271,6 +271,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
 
          // These hooks implement Autofocus
+         // TODO: does this give the correct behavior?  This should run after the XY stage
+         // reaches its new position, but before the z stage is moved from its current position
          if (sequenceSettings_.useAutofocus()) {
             currentAcquisition_.addHook(autofocusHookBefore(sequenceSettings_.skipAutofocusCount()),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
@@ -730,8 +732,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (!event.isAcquisitionFinishedEvent()
                   && (event.getZIndex() == null || event.getZIndex() == 0)
-                  && (event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null
-                        || (Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == 0)
                   && (event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == null
                         || (Integer) event.getAxisPosition(AcqEngMetadata.CHANNEL_AXIS) == 0)) {
                if (event.getTIndex() != null && skipFrames != 0
