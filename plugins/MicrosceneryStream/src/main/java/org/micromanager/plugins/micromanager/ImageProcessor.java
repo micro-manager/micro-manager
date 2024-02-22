@@ -13,6 +13,8 @@ import java.nio.ByteOrder;
 public class ImageProcessor implements Processor {
     private final MicrosceneryContext mmContext;
 
+    private long lastImage = 0;
+
     public ImageProcessor(MicrosceneryContext mmContext) {
         this.mmContext = mmContext;
     }
@@ -20,6 +22,15 @@ public class ImageProcessor implements Processor {
     @Override
     public void processImage(Image image, ProcessorContext context) {
         Metadata meta = image.getMetadata();
+
+        float imgRate = mmContext.msSettings.get("Stream.imageRateLimitPerSec",Float.MAX_VALUE);
+        long timeBetweenImages = (long) (1000 / imgRate);
+        long now = System.currentTimeMillis();
+        if (lastImage + timeBetweenImages > now){
+            context.outputImage(image);
+            return;
+        }
+        lastImage = now;
 
         String cam = mmContext.msSettings.get("Stream.Camera","any");
         if (!cam.equals("any") && !image.getMetadata().getCamera().equals(cam)){
