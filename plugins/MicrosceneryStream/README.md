@@ -14,8 +14,11 @@ For orginal readme see parent repo.
 #### Build with Idea
 
 - copy "C:\Users\JanCasus\repos\micro-manager\dependencies\artifacts\compile\iconloader-GIT.jar" also into "'\dependencies\artifacts\compile'"
-- point IDE to "\dependencies\artifacts\compile" for libraries (or not?)
-- point IDE to "C:\Program Files\Micro-Manager-2.0gamma\plugins\MicroManager"
+- install ant plugin
+- create ant config targeting "jar"
+- point IDE to "\dependencies\artifacts\compile" for libraries
+- point IDE to "C:\Program Files\Micro-Manager-2.0"
+- point IDE to "C:\Program Files\Micro-Manager-2.0\plugins\MicroManager"
 - delete old protobuff dependency (2.x) from "\dependencies\artifacts\compile"
 
 ### Prepare a MicroManger Installation for the plugin
