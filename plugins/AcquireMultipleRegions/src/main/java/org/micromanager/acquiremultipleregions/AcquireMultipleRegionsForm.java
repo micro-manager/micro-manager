@@ -53,7 +53,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
       rlm_ = new RegionListModel();
       gui_ = gui;
       mmc_ = gui_.core();
-      tileCreator_ = new TileCreator(mmc_);
+      tileCreator_ = new TileCreator(mmc_, this.getRootPane());
       initComponents();
       currentRegion_ =
             new Region(new PositionList(), directoryText.getText(), filenameText.getText());
