@@ -74,17 +74,15 @@ public class ProjectorControlExecution {
     * Sets the Channel Group to the targeting channel, if it exists.
     *
     * @param targetingChannel
-    * @return the channel group in effect before calling this function
+    * @return the channel group setting in effect before calling this function
     */
-   public Configuration prepareChannel(final String targetingChannel) {
-      Configuration originalConfig = null;
+   public String prepareChannel(final String targetingChannel) {
+      String originalConfig = null;
       String channelGroup = studio_.core().getChannelGroup();
       try {
-         if (targetingChannel != null && targetingChannel.length() > 0) {
-            originalConfig = studio_.core().getConfigGroupState(channelGroup);
-            if (studio_.core().isConfigDefined(channelGroup, targetingChannel)
-                  && !originalConfig.isConfigurationIncluded(studio_.core()
-                        .getConfigData(channelGroup, targetingChannel))) {
+         if (targetingChannel != null && !targetingChannel.isEmpty()) {
+            originalConfig = studio_.core().getCurrentConfig(channelGroup);
+            if (studio_.core().isConfigDefined(channelGroup, targetingChannel)) {
                if (studio_.acquisitions().isAcquisitionRunning()) {
                   studio_.acquisitions().setPause(true);
                }
@@ -104,10 +102,10 @@ public class ProjectorControlExecution {
     *
     * @param originalConfig Configuration to return to
     */
-   public void returnChannel(Configuration originalConfig) {
+   public void returnChannel(String originalConfig) {
       if (originalConfig != null) {
          try {
-            studio_.core().setSystemState(originalConfig);
+            studio_.core().setConfig(studio_.core().getChannelGroup(), originalConfig);
             if (studio_.acquisitions().isAcquisitionRunning() && studio_.acquisitions()
                   .isPaused()) {
                studio_.acquisitions().setPause(false);
@@ -175,7 +173,7 @@ public class ProjectorControlExecution {
          return;
       }
       boolean isGalvo = dev instanceof Galvo;
-      final Configuration originalConfig = prepareChannel(targetingChannel);
+      final String originalConfig = prepareChannel(targetingChannel);
       boolean originalShutterState = prepareShutter(targetingShutter);
       dev.runPolygons();
       if (!isGalvo) {

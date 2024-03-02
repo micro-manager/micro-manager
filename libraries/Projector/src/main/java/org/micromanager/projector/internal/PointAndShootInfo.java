@@ -15,7 +15,7 @@ public class PointAndShootInfo {
 
    private final ProjectionDevice dev_;
    private final Point2D.Double devPoint_;
-   private final Configuration originalConfig_;
+   private final String originalConfig_;
    private final Point canvasPoint_;
    private final boolean stop_;
 
@@ -23,7 +23,7 @@ public class PointAndShootInfo {
 
       private ProjectionDevice dev_;
       private Point2D.Double devPoint_;
-      private Configuration originalConfig_;
+      private String originalConfig_;
       private Point canvasPoint_;
       private boolean stop_ = false;
 
@@ -38,7 +38,7 @@ public class PointAndShootInfo {
       }
 
 
-      public Builder originalConfig(Configuration config) {
+      public Builder originalConfig(String config) {
          originalConfig_ = config;
          return this;
       }
@@ -65,7 +65,7 @@ public class PointAndShootInfo {
 
    private PointAndShootInfo(ProjectionDevice dev,
          Point2D.Double devPoint,
-         Configuration originalConfig,
+         String originalConfig,
          Point canvasPoint,
          boolean stop) {
       dev_ = dev;
@@ -83,7 +83,7 @@ public class PointAndShootInfo {
       return devPoint_;
    }
 
-   public Configuration getOriginalConfig() {
+   public String getOriginalConfig() {
       return originalConfig_;
    }
 

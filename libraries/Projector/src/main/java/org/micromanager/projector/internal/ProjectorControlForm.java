@@ -442,12 +442,12 @@ public class ProjectorControlForm extends JFrame {
          return;
       }
       if ((dme.getEvent().getID() == MouseEvent.MOUSE_PRESSED)
-            && dme.getEvent().isShiftDown()
-            && dme.getEvent().getButton() == 1) {
-         if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().isLiveModeOn()) {
+                && dme.getEvent().isShiftDown()
+                && dme.getEvent().getButton() == 1) {
+        // if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().isLiveModeOn()) {
             Point2D p2D = dme.getCenterLocation();
             addPointToPointAndShootQueue(p2D);
-         }
+        // }
       }
    }
 
@@ -472,7 +472,7 @@ public class ProjectorControlForm extends JFrame {
       final Point2D.Double devP = ProjectorActions.transformPoint(
             MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap()),
             new Point2D.Double(p.getX(), p.getY()), roi, binning);
-      final Configuration originalConfig
+      final String originalConfig
             = projectorControlExecution_.prepareChannel(targetingChannel_);
       PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
       PointAndShootInfo psi = psiBuilder.projectionDevice(dev_)
@@ -1352,7 +1352,7 @@ public class ProjectorControlForm extends JFrame {
     * @deprecated - Use ProjectorControlExecution.prepareChannel() instead
     */
    @Deprecated
-   public Configuration prepareChannel() {
+   public String prepareChannel() {
       return projectorControlExecution_.prepareChannel(targetingChannel_);
    }
 
@@ -1364,7 +1364,7 @@ public class ProjectorControlForm extends JFrame {
     * @deprecated - Use ProjectorControlExecution.returnChannel() instead
     */
    @Deprecated
-   public void returnChannel(Configuration originalConfig) {
+   public void returnChannel(String originalConfig) {
       projectorControlExecution_.returnChannel(originalConfig);
    }
 
