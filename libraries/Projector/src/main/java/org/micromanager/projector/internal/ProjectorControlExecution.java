@@ -124,7 +124,7 @@ public class ProjectorControlExecution {
     */
    public boolean prepareShutter(final String targetingShutter) {
       try {
-         if (targetingShutter != null && targetingShutter.length() > 0) {
+         if (targetingShutter != null && !targetingShutter.isEmpty()) {
             boolean originallyOpen = studio_.core().getShutterOpen(targetingShutter);
             if (!originallyOpen) {
                studio_.core().setShutterOpen(targetingShutter, true);
@@ -148,7 +148,7 @@ public class ProjectorControlExecution {
    public void returnShutter(final String targetingShutter, final boolean originallyOpen) {
       try {
          if (targetingShutter != null
-               && (targetingShutter.length() > 0)
+               && (!targetingShutter.isEmpty())
                && !originallyOpen) {
             studio_.core().setShutterOpen(targetingShutter, false);
             studio_.core().waitForDevice(targetingShutter);

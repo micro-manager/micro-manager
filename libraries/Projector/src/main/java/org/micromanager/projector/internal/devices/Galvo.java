@@ -59,9 +59,12 @@ public class Galvo implements ProjectionDevice {
          try {
             if (externalShutter_ != null) {
                mmc_.setGalvoPosition(galvo_, x, y);
+               final boolean shutterState = mmc_.getShutterOpen(externalShutter_);
                mmc_.setShutterOpen(externalShutter_, true);
                Thread.sleep(getExposure() / 1000);
-               mmc_.setShutterOpen(externalShutter_, false);
+               if (!shutterState) {
+                  mmc_.setShutterOpen(externalShutter_, false);
+               }
             } else {
                mmc_.pointGalvoAndFire(galvo_, x, y, Galvo.this.getExposure());
             }
