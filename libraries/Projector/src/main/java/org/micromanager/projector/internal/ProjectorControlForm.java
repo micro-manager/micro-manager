@@ -381,7 +381,7 @@ public class ProjectorControlForm extends JFrame {
          try {
             studio_.core().setShutterDevice(desiredShutter);
          } catch (Exception ex) {
-            originalShutterT= "";
+            originalShutterT = "";
          }
       }
       final String originalShutter = originalShutterT;

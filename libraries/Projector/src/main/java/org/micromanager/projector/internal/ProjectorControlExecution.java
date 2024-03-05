@@ -33,6 +33,8 @@ import org.micromanager.projector.internal.devices.Galvo;
 
 
 /**
+ * Abstraction of the Projector hardware calls.
+ *
  * @author nico
  */
 public class ProjectorControlExecution {
@@ -51,10 +53,10 @@ public class ProjectorControlExecution {
     * particular firstFrame and, if repeat is true, thereafter again every frameRepeatInterval
     * frames.
     *
-    * @param firstFrame
-    * @param repeat
-    * @param frameRepeatInterval
-    * @param runPolygons
+    * @param firstFrame first frame after which the phototargeting ROIS will execute
+    * @param repeat    whether to repeat the phototargeting ROIs
+    * @param frameRepeatInterval interval between repeated phototargeting ROIs
+    * @param runPolygons Runnable that executes the ROIS
     */
    public void attachRoisToMDA(int firstFrame, boolean repeat,
          int frameRepeatInterval, Runnable runPolygons) {
@@ -73,7 +75,7 @@ public class ProjectorControlExecution {
    /**
     * Sets the Channel Group to the targeting channel, if it exists.
     *
-    * @param targetingChannel
+    * @param targetingChannel Channel in the channel group to use for targeting
     * @return the channel group setting in effect before calling this function
     */
    public String prepareChannel(final String targetingChannel) {
@@ -142,8 +144,8 @@ public class ProjectorControlExecution {
     * Closes a targeting shutter if it exists and if it was originally closed. Should be called with
     * the value returned by prepareShutter.
     *
-    * @param targetingShutter
-    * @param originallyOpen   - whether or not the shutter was originally open
+    * @param targetingShutter Shutter to use with phototargeting (can be null)
+    * @param originallyOpen   - whether the shutter was originally open
     */
    public void returnShutter(final String targetingShutter, final boolean originallyOpen) {
       try {
@@ -161,9 +163,9 @@ public class ProjectorControlExecution {
    /**
     * Illuminate the polygons ROIs that have been previously uploaded to phototargeter.
     *
-    * @param dev
-    * @param targetingChannel
-    * @param targetingShutter
+    * @param dev phototargetting device (Galvo or SLM)
+    * @param targetingChannel Channel to use for targeting (can be null)
+    * @param targetingShutter Shutter to use with phototargeting (can be null)
     * @param rois             Rois as they appear on the camera.  Only used to records with the
     *                         images
     */
@@ -345,10 +347,10 @@ public class ProjectorControlExecution {
 
 
    /**
-    * Ugly internal stuff to see if this IJ IMageCanvas is the MM active window
+    * Ugly internal stuff to see if this IJ ImageCanvas is the MM active window.
     *
-    * @param canvas
-    * @return
+    * @param canvas IMageJ ImageCanvas
+    * @return DataProvider for the active window
     */
    DataProvider getDataProvider(ImageCanvas canvas) {
       if (canvas == null) {

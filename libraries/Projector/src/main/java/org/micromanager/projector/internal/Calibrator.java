@@ -28,6 +28,9 @@ import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
+ * Calibration of phototargetting devices (Galvos and SLMs).
+ *
+ *
  * @author nico
  */
 public class Calibrator {
