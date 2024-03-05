@@ -367,10 +367,24 @@ public class ProjectorControlForm extends JFrame {
     */
    public void runCalibration(boolean blocking) {
       settings_.putString(Terms.DELAY, delayField_.getText());
+      settings_.putString(Terms.PTCHANNEL, (String) channelComboBox_.getSelectedItem());
+      final String desiredShutter = (String) shutterComboBox_.getSelectedItem();
+      settings_.putString(Terms.PTSHUTTER, desiredShutter);
       if (calibrator_ != null && calibrator_.isCalibrating()) {
          return;
       }
       calibrator_ = new Calibrator(studio_, dev_, settings_);
+      final String originalChannel = projectorControlExecution_.prepareChannel(
+              settings_.getString(Terms.PTCHANNEL, ""));
+      String originalShutterT = studio_.core().getShutterDevice();
+      if (!desiredShutter.isEmpty()) {
+         try {
+            studio_.core().setShutterDevice(desiredShutter);
+         } catch (Exception ex) {
+            originalShutterT= "";
+         }
+      }
+      final String originalShutter = originalShutterT;
       Future<Boolean> runCalibration = calibrator_.runCalibration();
       Thread t = new Thread() {
          @Override
@@ -383,6 +397,16 @@ public class ProjectorControlForm extends JFrame {
             }
             if (success) {
                mapping_ = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
+            }
+            if (!originalShutter.isEmpty()) {
+               try {
+                  studio_.core().setShutterDevice(originalShutter);
+               } catch (Exception ex) {
+                  studio_.logs().logError("Failed to reset shutter in Projector calibration");
+               }
+            }
+            if (!originalChannel.isEmpty()) {
+               projectorControlExecution_.returnChannel(originalChannel);
             }
             studio_.alerts().postAlert("Projector Calibration", this.getClass(),
                   "Calibration " + (success ? "succeeded." : "failed."));
@@ -1043,7 +1067,6 @@ public class ProjectorControlForm extends JFrame {
       pointAndShootOnButton.setMinimumSize(new Dimension(75, 23));
       pointAndShootOnButton.setPreferredSize(new Dimension(75, 23));
       pointAndShootOnButton.addActionListener((ActionEvent evt) -> {
-         dev_.turnOff();
          try {
             updatePointAndShoot(true);
             IJ.setTool(Toolbar.HAND);
