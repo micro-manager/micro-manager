@@ -367,10 +367,24 @@ public class ProjectorControlForm extends JFrame {
     */
    public void runCalibration(boolean blocking) {
       settings_.putString(Terms.DELAY, delayField_.getText());
+      settings_.putString(Terms.PTCHANNEL, (String) channelComboBox_.getSelectedItem());
+      final String desiredShutter = (String) shutterComboBox_.getSelectedItem();
+      settings_.putString(Terms.PTSHUTTER, desiredShutter);
       if (calibrator_ != null && calibrator_.isCalibrating()) {
          return;
       }
       calibrator_ = new Calibrator(studio_, dev_, settings_);
+      final String originalChannel = projectorControlExecution_.prepareChannel(
+              settings_.getString(Terms.PTCHANNEL, ""));
+      String originalShutterT = studio_.core().getShutterDevice();
+      if (!desiredShutter.isEmpty()) {
+         try {
+            studio_.core().setShutterDevice(desiredShutter);
+         } catch (Exception ex) {
+            originalShutterT = "";
+         }
+      }
+      final String originalShutter = originalShutterT;
       Future<Boolean> runCalibration = calibrator_.runCalibration();
       Thread t = new Thread() {
          @Override
@@ -383,6 +397,16 @@ public class ProjectorControlForm extends JFrame {
             }
             if (success) {
                mapping_ = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
+            }
+            if (!originalShutter.isEmpty()) {
+               try {
+                  studio_.core().setShutterDevice(originalShutter);
+               } catch (Exception ex) {
+                  studio_.logs().logError("Failed to reset shutter in Projector calibration");
+               }
+            }
+            if (!originalChannel.isEmpty()) {
+               projectorControlExecution_.returnChannel(originalChannel);
             }
             studio_.alerts().postAlert("Projector Calibration", this.getClass(),
                   "Calibration " + (success ? "succeeded." : "failed."));
@@ -442,12 +466,10 @@ public class ProjectorControlForm extends JFrame {
          return;
       }
       if ((dme.getEvent().getID() == MouseEvent.MOUSE_PRESSED)
-            && dme.getEvent().isShiftDown()
-            && dme.getEvent().getButton() == 1) {
-         if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().isLiveModeOn()) {
-            Point2D p2D = dme.getCenterLocation();
-            addPointToPointAndShootQueue(p2D);
-         }
+                && dme.getEvent().isShiftDown()
+                && dme.getEvent().getButton() == 1) {
+         Point2D p2D = dme.getCenterLocation();
+         addPointToPointAndShootQueue(p2D);
       }
    }
 
@@ -472,12 +494,9 @@ public class ProjectorControlForm extends JFrame {
       final Point2D.Double devP = ProjectorActions.transformPoint(
             MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap()),
             new Point2D.Double(p.getX(), p.getY()), roi, binning);
-      final Configuration originalConfig
-            = projectorControlExecution_.prepareChannel(targetingChannel_);
       PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
       PointAndShootInfo psi = psiBuilder.projectionDevice(dev_)
             .devPoint(devP)
-            .originalConfig(originalConfig)
             .canvasPoint(new Point((int) p2D.getX(), (int) p2D.getY()))
             .build();
       pointAndShootQueue_.add(psi);
@@ -498,14 +517,19 @@ public class ProjectorControlForm extends JFrame {
                      return;
                   }
                   try {
-                     if (psi.getDevice() != null) {
-                        ProjectorActions.displaySpot(
-                              psi.getDevice(),
-                              psi.getDevPoint().x,
-                              psi.getDevPoint().y);
+                     final String originalConfig
+                             = projectorControlExecution_.prepareChannel(targetingChannel_);
+                     while (psi != null) {
+                        if (psi.getDevice() != null) {
+                           ProjectorActions.displaySpot(
+                                   psi.getDevice(),
+                                   psi.getDevPoint().x,
+                                   psi.getDevPoint().y);
+                           logPoint(psi.getCanvasPoint());
+                        }
+                        psi = pointAndShootQueue_.poll();
                      }
-                     projectorControlExecution_.returnChannel(psi.getOriginalConfig());
-                     logPoint(psi.getCanvasPoint());
+                     projectorControlExecution_.returnChannel(originalConfig);
                   } catch (Exception e) {
                      studio_.logs().showError(e);
                   }
@@ -1014,30 +1038,35 @@ public class ProjectorControlForm extends JFrame {
       setTitle("Projector Controls");
       setResizable(false);
 
+      // On/Off buttons in the always visible first row
       onButton.setText("On");
       onButton.addActionListener((ActionEvent evt) -> {
-         dev_.turnOn();
          targetingShutterOriginallyOpen_ =
                projectorControlExecution_.prepareShutter(targetingShutter_);
+         dev_.turnOn();
          updatePointAndShoot(false);
+         onButton.setSelected(true);
+         offButton.setSelected(false);
       });
 
       offButton.setText("Off");
       offButton.setSelected(true);
       offButton.addActionListener((ActionEvent evt) -> {
-         dev_.turnOff();
          projectorControlExecution_.returnShutter(targetingShutter_,
                targetingShutterOriginallyOpen_);
+         dev_.turnOff();
+         onButton.setSelected(false);
+         offButton.setSelected(true);
       });
 
       mainTabbedPane.addChangeListener((ChangeEvent evt) -> updatePointAndShoot(false));
 
+      // On/Off button in the point and shoot pane
       pointAndShootOnButton.setText("On");
       pointAndShootOnButton.setMaximumSize(new Dimension(75, 23));
       pointAndShootOnButton.setMinimumSize(new Dimension(75, 23));
       pointAndShootOnButton.setPreferredSize(new Dimension(75, 23));
       pointAndShootOnButton.addActionListener((ActionEvent evt) -> {
-         dev_.turnOff();
          try {
             updatePointAndShoot(true);
             IJ.setTool(Toolbar.HAND);
@@ -1045,7 +1074,6 @@ public class ProjectorControlForm extends JFrame {
             studio_.logs().showError(e);
          }
       });
-
       pointAndShootOffButton_.setText("Off");
       pointAndShootOffButton_.setPreferredSize(new Dimension(75, 23));
       pointAndShootOffButton_.addActionListener((ActionEvent evt) -> updatePointAndShoot(false));
@@ -1352,7 +1380,7 @@ public class ProjectorControlForm extends JFrame {
     * @deprecated - Use ProjectorControlExecution.prepareChannel() instead
     */
    @Deprecated
-   public Configuration prepareChannel() {
+   public String prepareChannel() {
       return projectorControlExecution_.prepareChannel(targetingChannel_);
    }
 
@@ -1364,7 +1392,7 @@ public class ProjectorControlForm extends JFrame {
     * @deprecated - Use ProjectorControlExecution.returnChannel() instead
     */
    @Deprecated
-   public void returnChannel(Configuration originalConfig) {
+   public void returnChannel(String originalConfig) {
       projectorControlExecution_.returnChannel(originalConfig);
    }
 

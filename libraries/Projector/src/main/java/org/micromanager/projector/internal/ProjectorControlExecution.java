@@ -33,6 +33,8 @@ import org.micromanager.projector.internal.devices.Galvo;
 
 
 /**
+ * Abstraction of the Projector hardware calls.
+ *
  * @author nico
  */
 public class ProjectorControlExecution {
@@ -51,10 +53,10 @@ public class ProjectorControlExecution {
     * particular firstFrame and, if repeat is true, thereafter again every frameRepeatInterval
     * frames.
     *
-    * @param firstFrame
-    * @param repeat
-    * @param frameRepeatInterval
-    * @param runPolygons
+    * @param firstFrame first frame after which the phototargeting ROIS will execute
+    * @param repeat    whether to repeat the phototargeting ROIs
+    * @param frameRepeatInterval interval between repeated phototargeting ROIs
+    * @param runPolygons Runnable that executes the ROIS
     */
    public void attachRoisToMDA(int firstFrame, boolean repeat,
          int frameRepeatInterval, Runnable runPolygons) {
@@ -73,18 +75,16 @@ public class ProjectorControlExecution {
    /**
     * Sets the Channel Group to the targeting channel, if it exists.
     *
-    * @param targetingChannel
-    * @return the channel group in effect before calling this function
+    * @param targetingChannel Channel in the channel group to use for targeting
+    * @return the channel group setting in effect before calling this function
     */
-   public Configuration prepareChannel(final String targetingChannel) {
-      Configuration originalConfig = null;
+   public String prepareChannel(final String targetingChannel) {
+      String originalConfig = null;
       String channelGroup = studio_.core().getChannelGroup();
       try {
-         if (targetingChannel != null && targetingChannel.length() > 0) {
-            originalConfig = studio_.core().getConfigGroupState(channelGroup);
-            if (studio_.core().isConfigDefined(channelGroup, targetingChannel)
-                  && !originalConfig.isConfigurationIncluded(studio_.core()
-                        .getConfigData(channelGroup, targetingChannel))) {
+         if (targetingChannel != null && !targetingChannel.isEmpty()) {
+            originalConfig = studio_.core().getCurrentConfig(channelGroup);
+            if (studio_.core().isConfigDefined(channelGroup, targetingChannel)) {
                if (studio_.acquisitions().isAcquisitionRunning()) {
                   studio_.acquisitions().setPause(true);
                }
@@ -104,10 +104,10 @@ public class ProjectorControlExecution {
     *
     * @param originalConfig Configuration to return to
     */
-   public void returnChannel(Configuration originalConfig) {
+   public void returnChannel(String originalConfig) {
       if (originalConfig != null) {
          try {
-            studio_.core().setSystemState(originalConfig);
+            studio_.core().setConfig(studio_.core().getChannelGroup(), originalConfig);
             if (studio_.acquisitions().isAcquisitionRunning() && studio_.acquisitions()
                   .isPaused()) {
                studio_.acquisitions().setPause(false);
@@ -126,7 +126,7 @@ public class ProjectorControlExecution {
     */
    public boolean prepareShutter(final String targetingShutter) {
       try {
-         if (targetingShutter != null && targetingShutter.length() > 0) {
+         if (targetingShutter != null && !targetingShutter.isEmpty()) {
             boolean originallyOpen = studio_.core().getShutterOpen(targetingShutter);
             if (!originallyOpen) {
                studio_.core().setShutterOpen(targetingShutter, true);
@@ -144,13 +144,13 @@ public class ProjectorControlExecution {
     * Closes a targeting shutter if it exists and if it was originally closed. Should be called with
     * the value returned by prepareShutter.
     *
-    * @param targetingShutter
-    * @param originallyOpen   - whether or not the shutter was originally open
+    * @param targetingShutter Shutter to use with phototargeting (can be null)
+    * @param originallyOpen   - whether the shutter was originally open
     */
    public void returnShutter(final String targetingShutter, final boolean originallyOpen) {
       try {
          if (targetingShutter != null
-               && (targetingShutter.length() > 0)
+               && (!targetingShutter.isEmpty())
                && !originallyOpen) {
             studio_.core().setShutterOpen(targetingShutter, false);
             studio_.core().waitForDevice(targetingShutter);
@@ -163,9 +163,9 @@ public class ProjectorControlExecution {
    /**
     * Illuminate the polygons ROIs that have been previously uploaded to phototargeter.
     *
-    * @param dev
-    * @param targetingChannel
-    * @param targetingShutter
+    * @param dev phototargetting device (Galvo or SLM)
+    * @param targetingChannel Channel to use for targeting (can be null)
+    * @param targetingShutter Shutter to use with phototargeting (can be null)
     * @param rois             Rois as they appear on the camera.  Only used to records with the
     *                         images
     */
@@ -175,7 +175,7 @@ public class ProjectorControlExecution {
          return;
       }
       boolean isGalvo = dev instanceof Galvo;
-      final Configuration originalConfig = prepareChannel(targetingChannel);
+      final String originalConfig = prepareChannel(targetingChannel);
       boolean originalShutterState = prepareShutter(targetingShutter);
       dev.runPolygons();
       if (!isGalvo) {
@@ -347,10 +347,10 @@ public class ProjectorControlExecution {
 
 
    /**
-    * Ugly internal stuff to see if this IJ IMageCanvas is the MM active window
+    * Ugly internal stuff to see if this IJ ImageCanvas is the MM active window.
     *
-    * @param canvas
-    * @return
+    * @param canvas IMageJ ImageCanvas
+    * @return DataProvider for the active window
     */
    DataProvider getDataProvider(ImageCanvas canvas) {
       if (canvas == null) {
