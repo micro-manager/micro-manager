@@ -180,7 +180,7 @@ public class ProjectorControlExecution {
       dev.runPolygons();
       if (isGalvo) {
          dev.waitForDevice();
-      } else { // SLM: TODO evaluate if this is needed or waitForDevice can be used.
+      } else { // SLM devices do not wait after displaying the image.
          try {
             Thread.sleep(dev.getExposure() / 1000);
          } catch (InterruptedException ex) {
