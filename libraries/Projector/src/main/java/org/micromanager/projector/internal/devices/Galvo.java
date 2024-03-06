@@ -258,7 +258,6 @@ public class Galvo implements ProjectionDevice {
             app_.logs().showError(ex);
          }
       });
-
    }
 
    @Override
