@@ -178,7 +178,9 @@ public class ProjectorControlExecution {
       final String originalConfig = prepareChannel(targetingChannel);
       boolean originalShutterState = prepareShutter(targetingShutter);
       dev.runPolygons();
-      if (!isGalvo) {
+      if (isGalvo) {
+         dev.waitForDevice();
+      } else { // SLM devices do not wait after displaying the image.
          try {
             Thread.sleep(dev.getExposure() / 1000);
          } catch (InterruptedException ex) {
