@@ -3671,7 +3671,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName_, "Position_SPIM_Head",
                   positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
             gui_.setAcquisitionProperty(acqName_, "SPIMAcqSettings", acqSettingsJSON);
-            gui_.setAcquisitionProperty(acqName_, "SPIMtype", ASIdiSPIM.oSPIM ? "oSPIM" : "diSPIM");
+            gui_.setAcquisitionProperty(acqName_, "SPIMtype", ASIdiSPIM.oSPIM ? (ASIdiSPIM.SCOPE ? "SCOPE": "oSPIM") : "diSPIM");
             gui_.setAcquisitionProperty(acqName_, "AcquisitionName", acqName_);
             gui_.setAcquisitionProperty(acqName_, "Prefix", acqName_);
             gui_.setAcquisitionProperty(acqName_, MMTags.Summary.SLICES_FIRST, Boolean.TRUE.toString());  // whether slices are inner loop compared to channel; not sure why but Nico had this set to true forever so leaving it

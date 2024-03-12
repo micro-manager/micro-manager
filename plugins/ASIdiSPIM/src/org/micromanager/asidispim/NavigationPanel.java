@@ -167,7 +167,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       });
 
       
-      if (!ASIdiSPIM.doubleXYZ) {  // normal case
+      if (!ASIdiSPIM.doubleXYZ && !ASIdiSPIM.SCOPE) {  // normal case
          boolean sampleOnZ = prefs_.getBoolean(
                MyStrings.PanelNames.SETTINGS.toString(),  
                Properties.Keys.PREFS_SAMPLE_ON_ZSTAGE, false);
@@ -190,7 +190,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             loadPanel.add(headDownGo, "wrap");
             loadPanel.add(new JLabel("Start Hunting"));
          }
-      } else { // if ASIdiSPIM.doubleXYZ is true
+      } else { // if ASIdiSPIM.doubleXYZ is true or ASIdiSPIM.SCOPE is true
          headUpPosition_ = pu.makeFloatEntryField(panelName_, "never used", 0, 5);
          headDownPosition_ = pu.makeFloatEntryField(panelName_, "never used", 0, 5);
       }
@@ -505,7 +505,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Directions.Y), "wrap");
       }
       
-      if (!ASIdiSPIM.doubleXYZ) {
+      if (!ASIdiSPIM.doubleXYZ && !ASIdiSPIM.SCOPE) {
          if (!ASIdiSPIM.oSPIM) {
             navPanel.add(loadPanel, "cell 7 4, span 2 6, center, wrap");
          } else {

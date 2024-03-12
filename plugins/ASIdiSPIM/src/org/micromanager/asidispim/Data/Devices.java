@@ -758,10 +758,17 @@ public class Devices {
       case XYSTAGE:
          return new DeviceData(key, "XY Stage", Sides.NONE, true);
       case LOWERZDRIVE:
-         return new DeviceData(key, "Lower Z Height", Sides.NONE,
-               true);
+         if (!ASIdiSPIM.SCOPE) {
+            return new DeviceData(key, "Lower Z Height", Sides.NONE, true);
+         } else {
+            return new DeviceData(key, "Light Sheet Tilt", Sides.NONE, true);
+         }
       case UPPERZDRIVE:
-         return new DeviceData(key, "SPIM Head Height", Sides.NONE, true);
+         if (!ASIdiSPIM.SCOPE) {
+            return new DeviceData(key, "SPIM Head Height", Sides.NONE, true);
+         } else {
+            return new DeviceData(key, "Sample Height", Sides.NONE, true);
+         }
       case UPPERHDRIVE:
          return new DeviceData(key, "SPIM Head Horzntl", Sides.NONE, true);
       case SUPPLEMENTAL_X:
