@@ -216,7 +216,8 @@ public class SettingsPanel extends ListeningJPanel {
             Properties.Keys.PLUGIN_WRITE_ACQ_SETTINGS_FILE, panelName_, false);
       acqusitionPanel.add(acqSettingsWrite, "wrap");
       
-      acqBothCamerasSimult_ = pu.makeCheckBox("Acquire from both cameras simultaneously",
+      // note there is another feature added later for two cameras on same side
+      acqBothCamerasSimult_ = pu.makeCheckBox("Acquire from both sides simultaneously",
             Properties.Keys.PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT, panelName_, false);
       acqusitionPanel.add(acqBothCamerasSimult_, "wrap");
 

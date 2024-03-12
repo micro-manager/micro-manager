@@ -96,7 +96,7 @@ public final class BeamSubPanel extends ListeningJPanel {
       otherSide_ = Devices.getOppositeSide(side);
       // NB: "A" and "B" in names doesn't necessarily mean path A and path B anymore
       // beamABox_ and scanBBox associated with the side passed as a parameter
-      beamABox_ = pu.makeCheckBox("Beam",
+      beamABox_ = pu.makeCheckBox((ASIdiSPIM.SCOPE ? "Sheet" : "Beam"),
             Properties.Values.NO, Properties.Values.YES,
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
             Properties.Keys.BEAM_ENABLED, instanceLabel_, Prefs.Keys.SHEET_BEAM_ENABLED);
@@ -118,8 +118,12 @@ public final class BeamSubPanel extends ListeningJPanel {
             add(new JLabel("Path A:"));
             add(beamABox_);
             pu.checkboxInitByTwoClicks(beamABox_);
-            add(sheetABox_, "wrap");
-            pu.checkboxInitByTwoClicks(sheetABox_);
+            if (!ASIdiSPIM.SCOPE) {
+               add(sheetABox_, "wrap");
+               pu.checkboxInitByTwoClicks(sheetABox_);
+            } else {
+               add(new JLabel(""), "wrap");
+            }
             if (!ASIdiSPIM.oSPIM) {
                add(new JLabel("Path B:"));
                add(beamBBox_);
@@ -131,8 +135,12 @@ public final class BeamSubPanel extends ListeningJPanel {
          add(new JLabel("Excitation:"));
          add(beamABox_);
          pu.checkboxInitByTwoClicks(beamABox_);
-         add(sheetABox_, "wrap");
-         pu.checkboxInitByTwoClicks(sheetABox_);
+         if (!ASIdiSPIM.SCOPE) {
+            add(sheetABox_, "wrap");
+            pu.checkboxInitByTwoClicks(sheetABox_);
+         } else {
+            add(new JLabel(""), "wrap");
+         }
          if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
                Properties.Keys.PLUGIN_SHOW_EPI_CB, false)) {
             if (!ASIdiSPIM.oSPIM) {

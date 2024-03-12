@@ -728,9 +728,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          });
          sheetPanelNormal_.add(sheetOffsetSlider_, "span 4, growx, center");
          galvoOffsetField_ = null;
-      } else {  // SCOPE
+      } else {  // SCOPE only
          sheetOffsetSlider_ = null;
-         sheetPanelNormal_.add(new JLabel("Galvo offset:"));
+         sheetPanelNormal_.add(new JLabel("Galvo offset * 1000:"), "span 3, center");
          galvoOffsetField_ = pu.makeFloatEntryField(panelName_, 
                Properties.Keys.PLUGIN_SCOPE_GALVO_OFFSET.toString(), 0, 5);
          galvoOffsetField_.addPropertyChangeListener("value", new PropertyChangeListener() {
@@ -739,7 +739,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                updateSheetOffset();
             }
          });
-         sheetPanelNormal_.add(galvoOffsetField_, "span 6, wrap");
+         sheetPanelNormal_.add(galvoOffsetField_, "span 6, left, wrap");
       }
       
 
@@ -1073,10 +1073,17 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offset, true);  // ignore missing device
       } else {
          Double offsetD = (Double) galvoOffsetField_.getValue();
-         props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offsetD.floatValue(), true);  // ignore missing device
+         float offset = offsetD.floatValue()/1000;
+         float maxScanner = props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SCANNER_MAX_LIMIT_X);
+         float minScanner = props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SCANNER_MIN_LIMIT_X);
+         // make sure they aren't too far
+         if (offset > maxScanner) { offset = maxScanner; }
+         if (offset < minScanner) { offset = minScanner; }
+         props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offset, true);  // ignore missing device
          String letter = props_.getPropValueString(micromirrorDeviceKey_, Properties.Keys.AXIS_LETTER_X);
          props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, 
-               "HM " + letter + "=" + offsetD.toString());
+               "HM " + letter + "=" + offset);
+         positions_.setPosition(micromirrorDeviceKey_, Directions.X, offset);
       }
    }
    
