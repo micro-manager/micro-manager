@@ -668,6 +668,15 @@ public class ControllerUtils {
       Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       Devices.Keys cameraDevice = Devices.getSideSpecificKey(Devices.Keys.CAMERAA, side);
       
+      // if ignore piezo is checked then pretend we don't have a piezo unless acquisition mode requires it 
+      if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), 
+            Properties.Keys.PLUGIN_PIEZO_IGNORE_STAGE_SLICE_SCAN, false)
+            && 
+            !(settings.spimMode == AcquisitionModes.Keys.PIEZO_SLICE_SCAN || 
+            settings.spimMode == AcquisitionModes.Keys.PIEZO_SCAN_ONLY)) {
+         piezoDevice = Devices.Keys.NONE;
+      }
+      
       boolean skipScannerWarnings = getSkipScannerWarnings(galvoDevice);
       
       if (!offsetOnly) {

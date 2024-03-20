@@ -57,8 +57,8 @@ public class AcquisitionModes {
       STAGE_SCAN_UNIDIRECTIONAL("Stage scan unidirectional", 7),  // path A and B scanning same direction
       STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL("Stage step supplemental", 8),
       STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL("Stage scan supplemental", 9),
-//      SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),  // uncomment for usual
-      SLICE_SCAN_ONLY( "Galvo scan", 2),  // uncomment for SCOPE
+      SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),  // uncomment for usual
+//      SLICE_SCAN_ONLY( "Galvo scan", 2),  // uncomment for SCOPE
       PIEZO_SCAN_ONLY("Piezo scan only (unusual)", 6),
       EXT_TRIG_ACQ("External trig per acq", 10),
       NONE(            "None", 0);

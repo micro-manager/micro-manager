@@ -79,6 +79,7 @@ public class SettingsPanel extends ListeningJPanel {
    
    private final JCheckBox acqFailQuietly_;
    private final JCheckBox raiseSPIMHead_;
+   private final JCheckBox piezoIgnore_;
    private final JCheckBox usePathGroupAcquisition_;
    private final JCheckBox acqBothCamerasSimult_;
 
@@ -228,6 +229,10 @@ public class SettingsPanel extends ListeningJPanel {
       raiseSPIMHead_ = pu.makeCheckBox("Raise SPIM head between acquisitions",
               Properties.Keys.PLUGIN_RAISE_SPIM_HEAD_BETWEEN_ACQS, panelName_, false);
       acqusitionPanel.add(raiseSPIMHead_, "wrap");
+      
+      piezoIgnore_ = pu.makeCheckBox("Ignore piezo for stage/slice scan acq",
+            Properties.Keys.PLUGIN_PIEZO_IGNORE_STAGE_SLICE_SCAN, panelName_, false);
+      acqusitionPanel.add(piezoIgnore_, "wrap");
       
       // end acquisiton panel
       
