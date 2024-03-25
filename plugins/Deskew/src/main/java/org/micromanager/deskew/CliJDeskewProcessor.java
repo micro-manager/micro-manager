@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
+import net.haesleinhuepf.clij.clearcl.exceptions.OpenCLException;
 import net.haesleinhuepf.clij2.CLIJ2;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -34,8 +35,6 @@ public class CliJDeskewProcessor implements Processor {
    private Datastore fullVolumeStore_;
    private Datastore xyProjectionStore_;
    private Datastore orthogonalStore_;
-   private DisplaySettings displaySettings_;
-
    private SummaryMetadata inputSummaryMetadata_;
    private final Map<Coords, ImageStack> stacks_ = new HashMap<>();
    private final PropertyMap settings_;
@@ -62,15 +61,8 @@ public class CliJDeskewProcessor implements Processor {
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata source) {
       inputSummaryMetadata_ = source;
-
-      // complicated way to find the viewer that had this data
-      List<DataViewer> dataViewers = studio_.displays().getAllDataViewers();
-      for (DataViewer dv : dataViewers) {
-         DataProvider provider = dv.getDataProvider();
-         if (provider != null && provider.getSummaryMetadata() == source) {
-            displaySettings_ = dv.getDisplaySettings();
-         }
-      }
+      // previously the code would find the viewer to this data to make a copy of the
+      // displaysettings, but these were not being used...
       return source;
    }
 
@@ -210,7 +202,12 @@ public class CliJDeskewProcessor implements Processor {
                  + " rotateX=180 translateZ=-" + newDepth + " translateY=-" + newHeight;
 
          clij2_.affineTransform3D(gpuInputImage, gpuOutputImage, transform);
-      } finally {
+      }  catch (OpenCLException oe) {
+         studio_.logs().showError(oe.getMessage());
+         if (gpuOutputImage != null) {
+            clij2_.release(gpuOutputImage);
+         }
+      }  finally {
          if (gpuInputImage != null) {
             clij2_.release(gpuInputImage);
          }
