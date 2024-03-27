@@ -54,8 +54,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.assembledata.AssembleDataForm;
-import org.micromanager.assembledata.DragDropListener;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
@@ -104,7 +102,7 @@ public class MistFrame extends JFrame {
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 12);
       buttonSize_ = new Dimension(70, 21);
       profileSettings_ =
-              studio_.profile().getSettings(AssembleDataForm.class);
+              studio_.profile().getSettings(MistFrame.class);
       channelCheckBoxes_ = new ArrayList<>();
 
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
