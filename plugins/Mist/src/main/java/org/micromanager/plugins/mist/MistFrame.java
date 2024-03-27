@@ -46,7 +46,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
@@ -63,31 +63,41 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 
-
+/**
+ * Code for the GUI of the Mist plugin.
+ * Also contains the code assembling the data.
+ */
 public class MistFrame extends JFrame {
 
-   private Studio studio_;
+   private final Studio studio_;
    private final Font arialSmallFont_;
    private final MutablePropertyMapView profileSettings_;
    private static final String CHOOSEDIR = "ChooseDir";
    private static final String DIRNAME = "DirName";
    private final Dimension buttonSize_;
    private final JComboBox<String> dataSetBox_;
+   private final JComboBox<String> saveFormat_;
+   private final List<JCheckBox> channelCheckBoxes_;
+   private final JCheckBox shouldDisplay_;
+   private final JTextField savePath_;
+   private final JButton browseButton_;
    private static final String DATAVIEWER = "DataViewer";
+   private static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
+   private static final String MULTIPAGE_TIFF = "Image Stack File";
+   private static final String RAM = "RAM only";
    private JTextField userText_;
 
 
+   /**
+    * Constructor for the MistFrame class.
+    *
+    * @param studio The Studio object.
+    */
    public MistFrame(Studio studio) {
       super("Mist Plugin");
       studio_ = studio;
@@ -95,6 +105,7 @@ public class MistFrame extends JFrame {
       buttonSize_ = new Dimension(70, 21);
       profileSettings_ =
               studio_.profile().getSettings(AssembleDataForm.class);
+      channelCheckBoxes_ = new ArrayList<>();
 
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
 
@@ -136,24 +147,80 @@ public class MistFrame extends JFrame {
 
       dataSetBox_ = new JComboBox<>();
       setupDataViewerBox(dataSetBox_, DATAVIEWER);
-      super.add(new JLabel("Data Set:"));
+      super.add(new JLabel("Input Data Set:"));
       super.add(dataSetBox_, "wrap");
 
+      super.add(new JSeparator(), "span, growx, wrap");
 
+      super.add(new JLabel("Output Save format: "));
+      String[] formats = new String[] {RAM, MULTIPAGE_TIFF, SINGLEPLANE_TIFF_SERIES};
+      saveFormat_ = new JComboBox<>(formats);
+      saveFormat_.setSelectedItem(
+              profileSettings_.getString("format", RAM));
+      saveFormat_.addActionListener((ActionEvent e) -> {
+         profileSettings_.putString("format", (String) saveFormat_.getSelectedItem());
+         updateControls();
+      });
+      super.add(saveFormat_, "wrap");
+
+      shouldDisplay_ = new JCheckBox("Display saved images in new window");
+      shouldDisplay_.setSelected(
+              profileSettings_.getBoolean("shouldDisplay", true));
+      shouldDisplay_.addActionListener((ActionEvent e) -> {
+         profileSettings_.putBoolean("shouldDisplay", shouldDisplay_.isSelected());
+      });
+      super.add(shouldDisplay_, "span 2, wrap");
+
+      super.add(new JLabel("Save path: "), "span 3, split");
+      savePath_ = new JTextField(35);
+      savePath_.setText(profileSettings_.getString("savePath", System.getProperty("user.home")));
+      savePath_.setEnabled(saveFormat_.getSelectedIndex() != 0);
+      savePath_.setHorizontalAlignment(JTextField.LEFT);
+      super.add(savePath_);
+      browseButton_ = makeButton(buttonSize_, arialSmallFont_);
+      browseButton_.setText("...");
+      browseButton_.addActionListener((ActionEvent e) -> {
+         // Pop up a browse dialog.
+         File path = FileDialogs.save(this,
+                 "Please choose a name to save to assembled data to",
+                 FileDialogs.MM_DATA_SET);
+         if (path != null) {
+            savePath_.setText(path.getAbsolutePath());
+            profileSettings_.putString("savePath", path.getAbsolutePath());
+         }
+      });
+      browseButton_.setEnabled(saveFormat_.getSelectedIndex() != 0);
+      super.add(browseButton_, "wrap");
 
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener((ActionEvent e) -> {
          new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
                  "https://micro-manager.org/wiki/MistData")).start();
       });
-      super.add(helpButton, "span 2, split 2");
+      super.add(helpButton, "span 3, split 2, center");
 
       final JButton assembleButton =  new JButton("Assemble");
       assembleButton.addActionListener((ActionEvent e) -> {
-         Runnable runnable =
-                 () -> assembleData(locationsField.getText(),
-                         (String) dataSetBox_.getSelectedItem());
-         new Thread(runnable).start();
+         try {
+            Datastore store = null;
+            if (saveFormat_.getSelectedItem().equals(RAM)) {
+               store = studio_.data().createRAMDatastore();
+            } else if (saveFormat_.getSelectedItem().equals(MULTIPAGE_TIFF)) {
+               // TODO: read booleans from options
+               store = studio_.data().createMultipageTIFFDatastore(savePath_.getText(), true, true);
+            } else if (saveFormat_.getSelectedItem().equals(SINGLEPLANE_TIFF_SERIES)) {
+               store = studio_.data().createSinglePlaneTIFFSeriesDatastore(savePath_.getText());
+            }
+            final Datastore finalStore = store;
+            Runnable runnable =
+                    () -> assembleData(locationsField.getText(),
+                            (String) dataSetBox_.getSelectedItem(),
+                         finalStore);
+            new Thread(runnable).start();
+         } catch (IOException ioe) {
+            studio_.logs().showError("Error creating new data store: " + ioe.getMessage());
+            return;
+         }
       });
       super.add(assembleButton, "wrap");
 
@@ -202,8 +269,25 @@ public class MistFrame extends JFrame {
       box.addActionListener((java.awt.event.ActionEvent evt) -> {
          profileSettings_.putString(key, (String)
                  box.getSelectedItem());
+         for (DataViewer dv : studio_.displays().getAllDataViewers()) {
+            if (dv.getName().equals((String) box.getSelectedItem())) {
+               addAxisSliders(dv);
+            }
+         }
       });
       super.pack();
+   }
+
+   private void updateControls() {
+      // Toggle availability of the save path controls.
+      boolean isRAM = saveFormat_.getSelectedIndex() == 0;
+      if (isRAM) {
+         // Can't not display RAM data.
+         shouldDisplay_.setSelected(true);
+      }
+      shouldDisplay_.setEnabled(!isRAM);
+      savePath_.setEnabled(!isRAM);
+      browseButton_.setEnabled(!isRAM);
    }
 
    @Subscribe
@@ -217,7 +301,8 @@ public class MistFrame extends JFrame {
    }
 
 
-   private void addAxisSliders(DataProvider dp, DataViewer dw) {
+   private void addAxisSliders(DataViewer dv) {
+      DataProvider dp = dv.getDataProvider();
       List<String> axes = dp.getAxes();
       // Note: MM uses 0-based indices in the code, but 1-based indices
       // for the UI.  To avoid confusion, this storage of the desired
@@ -225,7 +310,6 @@ public class MistFrame extends JFrame {
       // in the UI code
       final Map<String, Integer> mins = new HashMap<>();
       final Map<String, Integer> maxes = new HashMap<>();
-      final List<JCheckBox> channelCheckBoxes = new ArrayList<>();
       boolean usesChannels = false;
       for (final String axis : axes) {
          if (axis.equals(Coords.CHANNEL)) {
@@ -234,7 +318,6 @@ public class MistFrame extends JFrame {
          }
       }
       int nrNoChannelAxes = axes.size();
-      ;
       if (usesChannels) {
          nrNoChannelAxes = nrNoChannelAxes - 1;
          List<String> channelNameList = dp.getSummaryMetadata().getChannelNameList();
@@ -245,10 +328,10 @@ public class MistFrame extends JFrame {
          for (int i = 0; i < channelNameList.size(); i++) {
             String channelName = channelNameList.get(i);
             JCheckBox checkBox = new JCheckBox(channelName);
-           // if (!settings.getStringList(UNSELECTED_CHANNELS, "").contains(channelName)) {
-           //    checkBox.setSelected(true);
-           // }
-            channelCheckBoxes.add(checkBox);
+            // if (!settings.getStringList(UNSELECTED_CHANNELS, "").contains(channelName)) {
+            //    checkBox.setSelected(true);
+            // }
+            channelCheckBoxes_.add(checkBox);
             if (i == 0) {
                if (channelNameList.size() > 1) {
                   super.add(checkBox, "span 3, split " + channelNameList.size());
@@ -293,9 +376,9 @@ public class MistFrame extends JFrame {
                   }
                   mins.put(axis, (Integer) minSpinner.getValue() - 1);
                   try {
-                     Coords coord = dw.getDisplayedImages().get(0).getCoords();
+                     Coords coord = dv.getDisplayedImages().get(0).getCoords();
                      coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
-                     dw.setDisplayPosition(coord);
+                     dv.setDisplayPosition(coord);
                   } catch (IOException ioe) {
                      studio_.logs().logError(ioe, "IOException in DuplicatorPlugin");
                   }
@@ -316,9 +399,9 @@ public class MistFrame extends JFrame {
                   }
                   maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
                   try {
-                     Coords coord = dw.getDisplayedImages().get(0).getCoords();
+                     Coords coord = dv.getDisplayedImages().get(0).getCoords();
                      coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
-                     dw.setDisplayPosition(coord);
+                     dv.setDisplayPosition(coord);
                   } catch (IOException ioe) {
                      studio_.logs().logError(ioe, "IOException in DuplcatorPlugin");
                   }
@@ -329,8 +412,8 @@ public class MistFrame extends JFrame {
       }
 
       super.add(new JLabel("name"));
-    //  final JTextField nameField = new JTextField(shortName);
-     // super.add(nameField, "span2, grow, wrap");
+      //  final JTextField nameField = new JTextField(shortName);
+      // super.add(nameField, "span2, grow, wrap");
 
       final JCheckBox saveBox = new JCheckBox("Save");
       final JLabel fileField = new JLabel("");
@@ -340,7 +423,7 @@ public class MistFrame extends JFrame {
          fileField.setEnabled(saveBox.isSelected());
          chooserButton.setEnabled(saveBox.isSelected());
          if (saveBox.isSelected()) {
-     //       chooseDataLocation(ourFrame, fileField, saveMethod);
+            //       chooseDataLocation(ourFrame, fileField, saveMethod);
          } else {
             saveMethod.setText("Memory");
          }
@@ -356,13 +439,14 @@ public class MistFrame extends JFrame {
       super.add(fileField, "wmin 420, span 2, grow");
    }
 
-   private void assembleData(String locationsFile, String dataViewerName) {
+   private void assembleData(String locationsFile, String dataViewerName, Datastore newStore) {
       List<MistGlobalData> mistEntries = new ArrayList<>();
       DataViewer dataViewer = null;
 
       File mistFile = new File(locationsFile);
       if (!mistFile.exists()) {
-         studio_.logs().showError("Mist global positions file not found: " + mistFile.getAbsolutePath());
+         studio_.logs().showError("Mist global positions file not found: "
+                 + mistFile.getAbsolutePath());
          return;
       }
       try {
@@ -435,8 +519,8 @@ public class MistFrame extends JFrame {
 
       try {
          // create datastore to hold the result
-         Datastore newStore = studio_.data().createRAMDatastore();
-         int newNrP = dp.getSummaryMetadata().getIntendedDimensions().getP() / mistEntries.size();
+         final int newNrP = dp.getSummaryMetadata().getIntendedDimensions().getP()
+                 / mistEntries.size();
          Coords dims = dp.getSummaryMetadata().getIntendedDimensions();
          Coords.Builder cb = dims.copyBuilder().p(newNrP);
          newStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().imageHeight(newHeight)
@@ -447,11 +531,12 @@ public class MistFrame extends JFrame {
          for (int c = 0; c < 1; c++) {
             for (int t = 0; t < 1; t++) {
                for (int z = 0; z < 1; z++) {
-                  for (int newP = 0; newP < 1; newP++) {
+                  for (int newP = 0; newP < newNrP; newP++) {
                      ImagePlus newImgPlus = IJ.createImage(
                              "Stitched image-" + newP, "16-bit black", newWidth, newHeight, 2);
-                     for (int p = 0; p < newNrP; p++) {
-                        Image img = dp.getImage(imgCb.c(c).t(t).z(z).p(newP * mistEntries.size() + p)
+                     for (int p = 0; p < mistEntries.size(); p++) {
+                        Image img = dp.getImage(imgCb.c(c).t(t).z(z)
+                                .p(newP * mistEntries.size() + p)
                                 .build());
                         if (img != null) {
                            String posName = img.getMetadata().getPositionName("");
@@ -461,7 +546,8 @@ public class MistFrame extends JFrame {
                               if (entry.getSiteNr() == siteNr) {
                                  int x = entry.getPositionX();
                                  int y = entry.getPositionY();
-                                 ImageProcessor ip = studio_.data().getImageJConverter().createProcessor(img);
+                                 ImageProcessor ip = studio_.data().getImageJConverter()
+                                         .createProcessor(img);
                                  newImgPlus.getProcessor().insert(ip, x, y);
                               }
                            }
