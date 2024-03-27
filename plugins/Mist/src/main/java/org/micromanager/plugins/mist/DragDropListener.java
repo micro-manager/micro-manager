@@ -31,6 +31,7 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import javax.swing.JTextField;
 
 /**
@@ -73,7 +74,7 @@ public class DragDropListener implements DropTargetListener {
          for (DataFlavor flavor : flavors) {
             if (flavor.isFlavorJavaFileListType()) {
                dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-               java.util.List<File> list = (java.util.List<File>) tr.getTransferData(flavor);
+               List<File> list = (List<File>) tr.getTransferData(flavor);
                // we expect only one file.  for now, just use the last one
                for (int j = 0; j < list.size(); j++) {
                   File f = list.get(j);
