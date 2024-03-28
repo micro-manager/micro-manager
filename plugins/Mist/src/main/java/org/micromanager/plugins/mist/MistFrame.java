@@ -49,7 +49,9 @@ import javax.swing.JLabel;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.ProgressMonitor;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
@@ -75,7 +77,6 @@ public class MistFrame extends JFrame {
    private final Studio studio_;
    private final Font arialSmallFont_;
    private final MutablePropertyMapView profileSettings_;
-   private static final String CHOOSEDIR = "ChooseDir";
    private static final String DIRNAME = "DirName";
    private final Dimension buttonSize_;
    private final JComboBox<String> dataSetBox_;
@@ -84,11 +85,11 @@ public class MistFrame extends JFrame {
    private final JCheckBox shouldDisplay_;
    private final JTextField savePath_;
    private final JButton browseButton_;
+   private final JButton assembleButton_;
    private static final String DATAVIEWER = "DataViewer";
    private static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
    private static final String MULTIPAGE_TIFF = "Image Stack File";
    private static final String RAM = "RAM only";
-   private JTextField userText_;
 
 
    /**
@@ -123,7 +124,6 @@ public class MistFrame extends JFrame {
       super.add(locationsField);
 
       DragDropListener dragDropListener = new DragDropListener(locationsField);
-      new DropTarget(this, dragDropListener);
       new DropTarget(locationsField, dragDropListener);
 
       final JButton locationsFieldButton =  makeButton(buttonSize_, arialSmallFont_);
@@ -164,9 +164,8 @@ public class MistFrame extends JFrame {
       shouldDisplay_ = new JCheckBox("Display saved images in new window");
       shouldDisplay_.setSelected(
               profileSettings_.getBoolean("shouldDisplay", true));
-      shouldDisplay_.addActionListener((ActionEvent e) -> {
-         profileSettings_.putBoolean("shouldDisplay", shouldDisplay_.isSelected());
-      });
+      shouldDisplay_.addActionListener((ActionEvent e) ->
+              profileSettings_.putBoolean("shouldDisplay", shouldDisplay_.isSelected()));
       super.add(shouldDisplay_, "span 2, wrap");
 
       super.add(new JLabel("Save path: "), "span 3, split");
@@ -191,15 +190,16 @@ public class MistFrame extends JFrame {
       super.add(browseButton_, "wrap");
 
       JButton helpButton = new JButton("Help");
-      helpButton.addActionListener((ActionEvent e) -> {
-         new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
-                 "https://micro-manager.org/wiki/MistData")).start();
-      });
-      super.add(helpButton, "span 3, split 2, center");
+      helpButton.addActionListener((ActionEvent e) ->
+            new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
+                 "https://micro-manager.org/wiki/MistData")).start());
+      super.add(helpButton, "span 2, split 2, center");
 
-      final JButton assembleButton =  new JButton("Assemble");
-      assembleButton.addActionListener((ActionEvent e) -> {
+      assembleButton_ =  new JButton("Assemble");
+      assembleButton_.addActionListener((ActionEvent e) -> {
          try {
+            profileSettings_.putString(DIRNAME, locationsField.getText());
+            profileSettings_.putString("savePath", savePath_.getText());
             Datastore store = null;
             if (saveFormat_.getSelectedItem().equals(RAM)) {
                store = studio_.data().createRAMDatastore();
@@ -217,10 +217,9 @@ public class MistFrame extends JFrame {
             new Thread(runnable).start();
          } catch (IOException ioe) {
             studio_.logs().showError("Error creating new data store: " + ioe.getMessage());
-            return;
          }
       });
-      super.add(assembleButton, "wrap");
+      super.add(assembleButton_);
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -240,7 +239,7 @@ public class MistFrame extends JFrame {
       studio_.displays().registerForEvents(this);
    }
 
-   private final JButton makeButton(Dimension buttonSize, Font font) {
+   private JButton makeButton(Dimension buttonSize, Font font) {
       JButton button = new JButton();
       button.setPreferredSize(buttonSize);
       button.setMinimumSize(buttonSize);
@@ -321,7 +320,6 @@ public class MistFrame extends JFrame {
          List<String> channelNameList = dp.getSummaryMetadata().getChannelNameList();
          if (channelNameList.size() > 0) {
             super.add(new JLabel(Coords.C));
-            ;
          }
          for (int i = 0; i < channelNameList.size(); i++) {
             String channelName = channelNameList.get(i);
@@ -437,6 +435,13 @@ public class MistFrame extends JFrame {
       super.add(fileField, "wmin 420, span 2, grow");
    }
 
+   /**
+    * THis function can take a long, long time to execute.  Make sure not to call it on the EDT.
+    *
+    * @param locationsFile Output file from the Mist stitching plugin.  "img-global-positions-0"
+    * @param dataViewerName Micro-Manager dataViewer containing the input data/
+    * @param newStore Datastore to write the stitched images to.
+    */
    private void assembleData(String locationsFile, String dataViewerName, Datastore newStore) {
       List<MistGlobalData> mistEntries = new ArrayList<>();
       DataViewer dataViewer = null;
@@ -497,6 +502,11 @@ public class MistFrame extends JFrame {
          studio_.logs().showError("No Micro-Manager data set selected");
          return;
       }
+
+      SwingUtilities.invokeLater(() -> {
+         assembleButton_.setEnabled(false);
+      });
+
       // calculate new image dimensions
       DataProvider dp = dataViewer.getDataProvider();
       int imWidth = dp.getSummaryMetadata().getImageWidth();
@@ -526,15 +536,32 @@ public class MistFrame extends JFrame {
                  .build());
          DataViewer dv = studio_.displays().createDisplay(newStore);
          Coords intendedDimensions = dp.getSummaryMetadata().getIntendedDimensions();
+         int maxNumImages = (intendedDimensions.getC()) * (intendedDimensions.getT()) * (intendedDimensions.getZ())
+                 * newNrP;
+         ProgressMonitor monitor = new ProgressMonitor(this,
+                    "Stitching images...", null, 0, maxNumImages);
          Coords.Builder imgCb = studio_.data().coordsBuilder();
+         int nrImages = 0;
          for (int c = 0; c < intendedDimensions.getC(); c++) {
             for (int t = 0; t < intendedDimensions.getT(); t++) {
-               for (int z = 0; intendedDimensions.getZ() < 1; z++) {
+               for (int z = 0; z < intendedDimensions.getZ(); z++) {
                   for (int newP = 0; newP < newNrP; newP++) {
+                     if (monitor.isCanceled()) {
+                        SwingUtilities.invokeLater(() -> {
+                           assembleButton_.setEnabled(true);
+                        });
+                        return;
+                     }
                      ImagePlus newImgPlus = IJ.createImage(
                              "Stitched image-" + newP, "16-bit black", newWidth, newHeight, 2);
                      boolean imgAdded = false;
                      for (int p = 0; p < mistEntries.size(); p++) {
+                        if (monitor.isCanceled()) {
+                           SwingUtilities.invokeLater(() -> {
+                              assembleButton_.setEnabled(true);
+                           });
+                           return;
+                        }
                         Image img = dp.getImage(imgCb.c(c).t(t).z(z)
                                 .p(newP * mistEntries.size() + p)
                                 .build());
@@ -560,6 +587,9 @@ public class MistFrame extends JFrame {
                                 dp.getImage(imgCb.c(c).t(t).z(z).p(newP * mistEntries.size())
                                         .build()).getMetadata().copyBuilderWithNewUUID().build());
                         newStore.putImage(newImg);
+                        nrImages++;
+                        final int count = nrImages;
+                        SwingUtilities.invokeLater(() -> monitor.setProgress(count));
                      }
                   }
                }
@@ -567,7 +597,9 @@ public class MistFrame extends JFrame {
          }
       } catch (IOException e) {
          studio_.logs().showError("Error creating new data store: " + e.getMessage());
-         return;
       }
+      SwingUtilities.invokeLater(() -> {
+         assembleButton_.setEnabled(true);
+      });
    }
 }
