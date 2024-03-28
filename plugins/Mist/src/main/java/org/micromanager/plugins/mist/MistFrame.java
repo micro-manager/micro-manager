@@ -536,7 +536,9 @@ public class MistFrame extends JFrame {
                  .build());
          DataViewer dv = studio_.displays().createDisplay(newStore);
          Coords intendedDimensions = dp.getSummaryMetadata().getIntendedDimensions();
-         int maxNumImages = (intendedDimensions.getC()) * (intendedDimensions.getT()) * (intendedDimensions.getZ())
+         int maxNumImages = (intendedDimensions.getC())
+                 * (intendedDimensions.getT())
+                 * (intendedDimensions.getZ())
                  * newNrP;
          ProgressMonitor monitor = new ProgressMonitor(this,
                     "Stitching images...", null, 0, maxNumImages);
