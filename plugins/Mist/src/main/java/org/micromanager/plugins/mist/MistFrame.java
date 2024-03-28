@@ -525,18 +525,21 @@ public class MistFrame extends JFrame {
                  .imageWidth(newWidth).intendedDimensions(cb.build())
                  .build());
          DataViewer dv = studio_.displays().createDisplay(newStore);
+         Coords intendedDimensions = dp.getSummaryMetadata().getIntendedDimensions();
          Coords.Builder imgCb = studio_.data().coordsBuilder();
-         for (int c = 0; c < 1; c++) {
-            for (int t = 0; t < 1; t++) {
-               for (int z = 0; z < 1; z++) {
+         for (int c = 0; c < intendedDimensions.getC(); c++) {
+            for (int t = 0; t < intendedDimensions.getT(); t++) {
+               for (int z = 0; intendedDimensions.getZ() < 1; z++) {
                   for (int newP = 0; newP < newNrP; newP++) {
                      ImagePlus newImgPlus = IJ.createImage(
                              "Stitched image-" + newP, "16-bit black", newWidth, newHeight, 2);
+                     boolean imgAdded = false;
                      for (int p = 0; p < mistEntries.size(); p++) {
                         Image img = dp.getImage(imgCb.c(c).t(t).z(z)
                                 .p(newP * mistEntries.size() + p)
                                 .build());
                         if (img != null) {
+                           imgAdded = true;
                            String posName = img.getMetadata().getPositionName("");
                            int siteNr = Integer.parseInt(posName.substring(posName.lastIndexOf('_')
                                    + 1));
@@ -551,11 +554,13 @@ public class MistFrame extends JFrame {
                            }
                         }
                      }
-                     Image newImg = studio_.data().ij().createImage(newImgPlus.getProcessor(),
-                             imgCb.c(c).t(t).z(z).p(newP).build(),
-                             dp.getImage(imgCb.c(c).t(t).z(z).p(newP * mistEntries.size())
-                                     .build()).getMetadata().copyBuilderWithNewUUID().build());
-                     newStore.putImage(newImg);
+                     if (imgAdded) {
+                        Image newImg = studio_.data().ij().createImage(newImgPlus.getProcessor(),
+                                imgCb.c(c).t(t).z(z).p(newP).build(),
+                                dp.getImage(imgCb.c(c).t(t).z(z).p(newP * mistEntries.size())
+                                        .build()).getMetadata().copyBuilderWithNewUUID().build());
+                        newStore.putImage(newImg);
+                     }
                   }
                }
             }
