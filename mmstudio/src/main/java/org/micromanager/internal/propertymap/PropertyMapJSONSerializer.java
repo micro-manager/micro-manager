@@ -917,6 +917,9 @@ public final class PropertyMapJSONSerializer {
 
    public static PropertyMap fromJSON(String json) throws IOException {
       try {
+         if (json.isEmpty()) {
+            return PropertyMaps.emptyPropertyMap();
+         }
          return fromJSONImpl(json);
       } catch (IOException e) {
          throw e;
