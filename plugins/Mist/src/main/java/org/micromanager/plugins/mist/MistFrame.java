@@ -534,8 +534,17 @@ public class MistFrame extends JFrame {
          newStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().imageHeight(newHeight)
                  .imageWidth(newWidth).intendedDimensions(cb.build())
                  .build());
-         DataViewer dv = studio_.displays().createDisplay(newStore);
-         Coords intendedDimensions = dp.getSummaryMetadata().getIntendedDimensions();
+         if (profileSettings_.getBoolean("shouldDisplay", true)) {
+            DataViewer dv = studio_.displays().createDisplay(newStore);
+         }
+         Coords id = dp.getSummaryMetadata().getIntendedDimensions();
+         Coords.Builder intendedDimensionsB = dp.getSummaryMetadata().getIntendedDimensions().copyBuilder();
+         for (String axis : new String[] {Coords.C, Coords.P, Coords.T, Coords.C}) {
+            if (!id.hasAxis(axis)) {
+               intendedDimensionsB.index(axis, 1);
+            }
+         }
+         Coords intendedDimensions = intendedDimensionsB.build();
          int maxNumImages = (intendedDimensions.getC())
                  * (intendedDimensions.getT())
                  * (intendedDimensions.getZ())
