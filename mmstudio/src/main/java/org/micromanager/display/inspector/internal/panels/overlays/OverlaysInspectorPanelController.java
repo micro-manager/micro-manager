@@ -45,6 +45,7 @@ public final class OverlaysInspectorPanelController
    private static final String CONFIGPMAPKEY = "OverlayConfig";
    private static final String VISIBLEPMAPKEY = "OverlayVisible";
    private static final String TITLEPMAPKEY = "OverlayTitle";
+   private static final String OVERLAYDEFAULT = "OverlayDefault";
 
 
    private static boolean expanded_ = false;
@@ -105,8 +106,12 @@ public final class OverlaysInspectorPanelController
    private void loadSettings(DisplayWindow viewer) {
       //Load the overlays from the profile.
       String providerName = viewer.getDataProvider().getName();
+      // first look for settings for this display, if not found, revert to DEFAULT settings
+      // which is the last saved settings
       List<PropertyMap> settings = profile_.getSettings(this.getClass())
-            .getPropertyMapList(providerName, (PropertyMap[]) null);
+            .getPropertyMapList(providerName,
+                    profile_.getSettings(this.getClass()).getPropertyMapList(
+                            OVERLAYDEFAULT, (PropertyMap[]) null));
       if (settings == null) {
          return;
       }
@@ -141,6 +146,7 @@ public final class OverlaysInspectorPanelController
       }
       String providerName = viewer.getDataProvider().getName();
       profile_.getSettings(this.getClass()).putPropertyMapList(providerName, configList);
+      profile_.getSettings(this.getClass()).putPropertyMapList(OVERLAYDEFAULT, configList);
    }
 
    private void handleAddOverlay(OverlayPlugin plugin) {
