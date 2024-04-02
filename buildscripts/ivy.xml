@@ -40,7 +40,7 @@
       <dependency org="org.jfree" name="jcommon" rev="1.0.24"/>
       <dependency org="org.jfree" name="jfreechart" rev="1.5.0"/>
       <dependency org="org.scijava" name="scijava-common" rev="2.83.3"/>
-      <!-- Pycro-!manager dependencies -->
+      <!-- Pycro-manager dependencies -->
       <!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
       <dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
       <dependency org="org.micro-manager.pyjavaz" name="PyJavaZ" rev="1.0.0">
