@@ -99,9 +99,9 @@ import org.micromanager.internal.utils.HotKeys;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
-import org.micromanager.pyjavaz.ZMQServer;
 import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
+import org.micromanager.pyjavaz.ZMQServer;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 
