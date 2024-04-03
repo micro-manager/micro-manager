@@ -787,7 +787,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             try {
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
-                  if (event.getZIndex() == 0) {
+                  if (event.getZIndex() != null && event.getZIndex() == 0) {
                      if (!event.isZSequenced() && sequenceSettings.useChannels()
                              && (sequenceSettings.acqOrderMode()
                                        == AcqOrderMode.TIME_POS_SLICE_CHANNEL
