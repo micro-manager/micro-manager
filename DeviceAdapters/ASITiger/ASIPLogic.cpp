@@ -74,8 +74,10 @@ CPLogic::CPLogic(const char* name) :
    CPropertyAction* pAct;
 
    // pre-init property to say how PLogic card is used
-   // original option is have shutter functionality for diSPIM (laser controls on BNCs 5-8)
-   // second option to have similar function with laser controls on BNCs 5-8 but not use diSPIM beam enable
+   // diSPIM Shutter have shutter functionality for diSPIM (laser controls on BNCs 5-8)
+   // 4-channel shutter has similar function with laser controls on BNCs 5-8 but not use diSPIM beam enable
+   // 7-channel shutter has laser controls on BNCs 1-7
+   // 7-channel TTL shutter has laser controls on BNCs 1-7 and single camera control on BNC 8
    pAct = new CPropertyAction (this, &CPLogic::OnPLogicMode);
    CreateProperty(g_PLogicModePropertyName, g_PLogicModeNone, MM::String, false, pAct, true);
    AddAllowedValue(g_PLogicModePropertyName, g_PLogicModeNone);
@@ -825,6 +827,8 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          advancedPropsEnabled_ = true;
 
+         initialized_ = false;  // make sure the new properties are initialized, set to true af the end of creating them
+
          // force-on refresh
          char refreshPropValsStr[MM::MaxStrLength];
          GetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
@@ -903,6 +907,8 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          // restore refresh setting
          SetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
+
+         initialized_ = true;
       }
    }
    return DEVICE_OK;
