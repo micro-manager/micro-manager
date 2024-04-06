@@ -28,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import javax.swing.JOptionPane;
 import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.acqj.internal.AffineTransformUtils;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.XYTiledAcquisition;
@@ -153,7 +154,7 @@ public class MagellanAcquisitionsManager {
 
    }
 
-   public ExploreAcquisition createExploreAcquisition(Studio studio, boolean useZ, double zStep,
+   public ExploreAcquisition createExploreAcquisition(boolean useZ, double zStep,
                                                       double overlap, String dir, String name,
                                                       String cGroup, boolean start) {
       if (!AffineTransformUtils.isAffineTransformDefined()) {
@@ -178,8 +179,13 @@ public class MagellanAcquisitionsManager {
       int xOverlap = (int) (Engine.getCore().getImageWidth() * overlap / 100.);
       int yOverlap = (int) (Engine.getCore().getImageHeight() * overlap / 100.);
 
-      ChannelGroupSettings channels = new ChannelGroupSettings(cGroup, studio.core(),
-              studio.profile());
+      UserProfile userProfile = null;
+      if (studio_ != null) {
+         userProfile = studio_.profile();
+      }
+
+      ChannelGroupSettings channels = new ChannelGroupSettings(cGroup, Engine.getCore(),
+              userProfile);
       MagellanAcqUIAndStorage adapter = new MagellanAcqUIAndStorage(dir, name, useZ, channels,
               true);
       try {

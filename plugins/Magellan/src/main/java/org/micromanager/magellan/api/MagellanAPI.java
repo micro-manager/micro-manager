@@ -19,14 +19,13 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator
 public class MagellanAPI {
 
    MagellanAcquisitionsManager acqManager_;
-   private final Studio studio_;
 
-   public MagellanAPI(Studio studio) {
+   public MagellanAPI() {
       //make sure Magellan GUI showing
-      studio_ = studio;
       (new Magellan()).onPluginSelected();
       acqManager_ = MagellanAcquisitionsManager.getInstance();
    }
+
 
    public AcquisitionAPI createAcquisition(int index, boolean start) throws IOException {
       return acqManager_.createAcquisition(index, start);
@@ -39,7 +38,7 @@ public class MagellanAPI {
       String dir = GUI.getInstance().getSavingDir();
       String name = GUI.getInstance().getExploreSavingName();
       String cGroup = GUI.getInstance().getExploreChannelGroup();
-      return acqManager_.createExploreAcquisition(studio_, useZ, zStep, overlap,
+      return acqManager_.createExploreAcquisition(useZ, zStep, overlap,
               dir, name, cGroup, start);
    }
    
