@@ -23,6 +23,7 @@ package org.micromanager.data.internal;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -98,9 +99,11 @@ public final class DefaultAnnotation implements Annotation {
       }
       File file = new File(store_.getSavePath() + File.separator + filename_);
       if (!file.exists()) {
-         file.createNewFile();
+         if (!file.createNewFile()) {
+            throw new IOException("Can not save Annotation.  File does not exist and can not be created.");
+         }
       }
-      if (!file.canWrite()) {
+      if (!Files.isWritable(file.toPath())) {
          throw new IOException("Can not save Annotation.  File is not writeable.");
       }
       PropertyMap.Builder builder = PropertyMaps.builder();
