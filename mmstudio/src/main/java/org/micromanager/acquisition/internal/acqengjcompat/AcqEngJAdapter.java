@@ -262,7 +262,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
-         // These hooks make sure that continuousfocus is off when running a Z stack.
+         // These hooks make sure that continuous-focus is off when running a Z stack.
          if (studio_.core().isContinuousFocusEnabled()) {
             currentAcquisition_.addHook(continuousFocusHookBefore(acquisitionSettings),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
@@ -270,9 +270,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
-         // These hooks implement Autofocus
-         // TODO: does this give the correct behavior?  This should run after the XY stage
-         // reaches its new position, but before the z stage is moved from its current position
+         // These hooks implement Autofocus.
+         // This runs after the XY stage reaches its new position, but before the z stage
+         // is moved from its current position (tested on hardware).
          if (sequenceSettings_.useAutofocus()) {
             currentAcquisition_.addHook(autofocusHookBefore(sequenceSettings_.skipAutofocusCount()),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
@@ -1622,6 +1622,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       if (event.getStore().equals(curStore_)) {
          curStore_ = null;
          curPipeline_ = null;
+         if (currentAcquisition_ != null) {
+            try {
+               currentAcquisition_.checkForExceptions();
+            } catch (Exception ex) {
+               studio_.logs().logError(ex);
+               studio_.logs().showMessage("Acquisition problem: " + ex.getMessage());
+            }
+         }
          currentAcquisition_ = null;
          studio_.events().unregisterForEvents(this);
       }
