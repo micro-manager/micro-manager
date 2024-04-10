@@ -607,22 +607,23 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                  || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
-                  && event.getAxisPosition("position") != null) {
-               if (startTime_ == 0) {
-                  startTime_ = System.currentTimeMillis();
-               }
-
-               int thisPosition = (int) event.getAxisPosition("position");
-               if (thisPosition != lastPositionIndex_) {
-                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  lastPositionIndex_ = (int) event.getAxisPosition("position");
-                  positionMoved_ = true;
-               }
-               if (positionMoved_) {
-                  long relativeStartTime = relativePositionStartTime_
-                        + event.getMinimumStartTimeAbsolute() - startTime_;
-                  event.setMinimumStartTime(relativeStartTime);
+                  || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
+               Object pPos = event.getAxisPosition("position");
+               if (pPos != null && pPos instanceof Integer) {
+                  if (startTime_ == 0) {
+                     startTime_ = System.currentTimeMillis();
+                  }
+                  int thisPosition = (int) event.getAxisPosition("position");
+                  if (thisPosition != lastPositionIndex_) {
+                     relativePositionStartTime_ = System.currentTimeMillis() - startTime_;
+                     lastPositionIndex_ = (int) event.getAxisPosition("position");
+                     positionMoved_ = true;
+                  }
+                  if (positionMoved_ && event.getMinimumStartTimeAbsolute() != null) {
+                     long relativeStartTime = relativePositionStartTime_
+                             + event.getMinimumStartTimeAbsolute() - startTime_;
+                     event.setMinimumStartTime(relativeStartTime);
+                  }
                }
             }
             if (event.getMinimumStartTimeAbsolute() != null) {
