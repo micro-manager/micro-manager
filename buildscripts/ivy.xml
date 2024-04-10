@@ -46,7 +46,7 @@
       <dependency org="org.micro-manager.pyjavaz" name="PyJavaZ" rev="1.0.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-      <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.35.1">
+      <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.36.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.10.2">
@@ -55,7 +55,7 @@
 		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.16.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.46.1">
+		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.46.2">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 
