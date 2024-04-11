@@ -27,10 +27,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -40,7 +37,9 @@ import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -72,6 +71,7 @@ import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -271,8 +271,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
 
          // These hooks implement Autofocus.
-         // This runs after the XY stage reaches its new position, but before the z stage
-         // is moved from its current position (tested on hardware).
+         // Autofocus needs to run after the XY stage and opional other stages have been set to
+         // the correct position, but before the Z-drive moves to its first position of a Z stack.
+         // AcqEngJ does not have hooks for this, so move the XY stage and other stages in the positionlist
+         // ourselves inside the autofocusHookBefore function.
          if (sequenceSettings_.useAutofocus()) {
             currentAcquisition_.addHook(autofocusHookBefore(sequenceSettings_.skipAutofocusCount()),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
@@ -292,7 +294,38 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             String channelGroup = core_.getChannelGroup();
             String channel = core_.getCurrentConfig(channelGroup);
             currentAcquisition_.addHook(restoreChannelHook(channelGroup, channel),
-                  AcquisitionAPI.AFTER_HARDWARE_HOOK);
+                  AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+         }
+
+         // Return all stages used to their current positions
+         if (sequenceSettings.usePositionList()) {
+            MultiStagePosition msp = new MultiStagePosition();
+            String xyStageDevice = core_.getXYStageDevice();
+            if (xyStageDevice != null && !xyStageDevice.isEmpty()) {
+               msp.add(StagePosition.create2D(xyStageDevice, core_.getXPosition(xyStageDevice),
+                       core_.getYPosition(xyStageDevice)));
+            }
+            String zDevice = core_.getFocusDevice();
+            if (zDevice != null && !zDevice.isEmpty()) {
+               msp.add(StagePosition.create1D(zDevice, core_.getPosition(zDevice)));
+            }
+            // assume that all positions in the list use the same stages, we eventually could go through all of them
+            // to pick up unique stages, but lets keep it simpler for now
+            MultiStagePosition msp0 = posList_.getPosition(0);
+            for (int i = 0;i < msp.size(); i++) {
+               StagePosition sp = msp0.get(0);
+               String stageDevice = sp.getStageDeviceLabel();
+               if (sp.is1DStagePosition() && !stageDevice.equals(zDevice)) {
+                  msp.add(StagePosition.create1D(stageDevice, core_.getPosition(stageDevice)));
+               }
+               // Multiple XY stages are not supported yet by the acq engine.  Add them here to avoid
+               // forgetting about it in the future.
+               if (sp.is2DStagePosition() && !stageDevice.equals(xyStageDevice)) {
+                  msp.add(StagePosition.create2D(stageDevice, core_.getXPosition(stageDevice),
+                          core_.getYPosition(stageDevice)));
+               }
+            }
+            currentAcquisition_.addHook(restorePositionHook(msp), AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
          // Read for events
@@ -744,7 +777,18 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   if (event.getXPosition() != null && event.getYPosition() != null) {
                      studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
                   }
+                  // Also move all other devices listed in the position list
+                  if (event.getStageDeviceNames() != null) {
+                     for (String stage : event.getStageDeviceNames()) {
+                        if (!stage.equals(core_.getXYStageDevice())) {
+                           double pos = event.getStageSingleAxisStagePosition(stage);
+                           core_.setPosition(stage, pos);
+                        }
+                     }
+                  }
                   studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
+                  // TODO: Read back the position of the focus drive, and somehow perpetuate it back
+                  // to the StagePositionList that is in use.
                } catch (Exception ex) {
                   studio_.logs().logError(ex, "Failed to autofocus.");
                }
@@ -935,7 +979,26 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public void close() {
+         }
+      };
+   }
 
+   private AcquisitionHook restorePositionHook(MultiStagePosition msp) {
+      return new AcquisitionHook() {
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.isAcquisitionFinishedEvent() && msp != null) {
+               try {
+                  MultiStagePosition.goToPosition(msp, core_);
+               } catch (Exception e) {
+                  ReportingUtils.showError(e);
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
          }
       };
    }
