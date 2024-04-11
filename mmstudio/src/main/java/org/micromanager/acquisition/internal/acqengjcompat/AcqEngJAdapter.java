@@ -271,13 +271,13 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
 
          // These hooks implement Autofocus.
-         // Autofocus needs to run after the XY stage and opional other stages have been set to
+         // Autofocus needs to run after the XY stage and optionally other stages have been set to
          // the correct position, but before the Z-drive moves to its first position of a Z stack.
          // AcqEngJ does not have hooks for this, so move the XY stage and other stages in the positionlist
          // ourselves inside the autofocusHookBefore function.
          if (sequenceSettings_.useAutofocus()) {
             currentAcquisition_.addHook(autofocusHookBefore(sequenceSettings_.skipAutofocusCount()),
-                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+                  AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
          }
 
          // Hooks to keep shutter open between channel and/or slices if desired
@@ -771,21 +771,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   return event;
                }
                try {
-                  // this hook is called before the engine changes the hardware
-                  // since we want to leave the system in a focussed state, first
-                  // move the XY stage to where we want to image, then autofocus.
-                  if (event.getXPosition() != null && event.getYPosition() != null) {
-                     studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
-                  }
-                  // Also move all other devices listed in the position list
-                  if (event.getStageDeviceNames() != null) {
-                     for (String stage : event.getStageDeviceNames()) {
-                        if (!stage.equals(core_.getXYStageDevice())) {
-                           double pos = event.getStageSingleAxisStagePosition(stage);
-                           core_.setPosition(stage, pos);
-                        }
-                     }
-                  }
                   studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
                   // TODO: Read back the position of the focus drive, and somehow perpetuate it back
                   // to the StagePositionList that is in use.
