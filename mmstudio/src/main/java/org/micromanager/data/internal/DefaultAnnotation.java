@@ -100,7 +100,8 @@ public final class DefaultAnnotation implements Annotation {
       File file = new File(store_.getSavePath() + File.separator + filename_);
       if (!file.exists()) {
          if (!file.createNewFile()) {
-            throw new IOException("Can not save Annotation.  File does not exist and can not be created.");
+            throw new IOException(
+                    "Can not save Annotation.  File does not exist and can not be created.");
          }
       }
       if (!Files.isWritable(file.toPath())) {
