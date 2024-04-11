@@ -94,6 +94,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private CMMCore core_;
    protected Studio studio_;
    private PositionList posList_;
+   private HashMap<String, MultiStagePosition> positionMap_;
    private String zStage_;
    private SequenceSettings sequenceSettings_;
    protected JSONObject summaryMetadataJSON_;
@@ -169,6 +170,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          posListToUse = studio_.positions().getPositionList();
       }
       posList_ = posListToUse;
+      positionMap_ = new HashMap<>(posList_.getNumberOfPositions());
 
       // The clojure acquisition engine always uses numFrames, and customIntervals
       // unless they are null.
@@ -276,8 +278,11 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // AcqEngJ does not have hooks for this, so move the XY stage and other stages in the positionlist
          // ourselves inside the autofocusHookBefore function.
          if (sequenceSettings_.useAutofocus()) {
-            currentAcquisition_.addHook(autofocusHookBefore(sequenceSettings_.skipAutofocusCount()),
+            currentAcquisition_.addHook(autofocusHook(sequenceSettings_.skipAutofocusCount()),
                   AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
+            // add a hook to update the Z drive positions based on the position found in the previous round
+            // after autofocussing.
+            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
          // Hooks to keep shutter open between channel and/or slices if desired
@@ -757,7 +762,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     *
     * @return The Hook.
     */
-   protected AcquisitionHook autofocusHookBefore(int skipFrames) {
+   protected AcquisitionHook autofocusHook(int skipFrames) {
       return new AcquisitionHook() {
 
          @Override
@@ -772,6 +777,15 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                }
                try {
                   studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
+                  String posName = event.getTags().get(AcqEngMetadata.POS_NAME);
+                  if (posName != null) {
+                     MultiStagePosition msp = new MultiStagePosition();
+                     msp.setLabel(posName);
+                     for (String deviceName : event.getStageDeviceNames()) {
+                        msp.add(StagePosition.create1D(deviceName, core_.getPosition(deviceName)));
+                     }
+                     positionMap_.put(posName, msp);
+                  }
                   // TODO: Read back the position of the focus drive, and somehow perpetuate it back
                   // to the StagePositionList that is in use.
                } catch (Exception ex) {
@@ -784,6 +798,41 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          @Override
          public void close() {
             // nothing to do here
+         }
+      };
+   }
+
+   /**
+    * Hook function that updates the stagePositions in this event with the stage positions last set
+    * by autofocus.  Will only run if autofocus is enabled.  Look for the positionLabel in the event's
+    * tags, see if we have that in our positionMap_, and if so, update the stage positions in the event
+    */
+   public AcquisitionHook adjustZDrivesHook() {
+      return new AcquisitionHook() {
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            // If we do not have previous positions, there is no point in running this code.
+            if (positionMap_.isEmpty()) {
+               return event;
+            }
+            String posName = event.getTags().get(AcqEngMetadata.POS_NAME);
+            if (posName != null) {
+               MultiStagePosition msp = positionMap_.get(posName);
+               if (msp != null) {
+                  for (int i = 0; i < msp.size(); i++) {
+                     StagePosition sp = msp.get(i);
+                     if (sp != null && sp.is1DStagePosition()) {
+                        event.setStageCoordinate(sp.getStageDeviceLabel(), sp.get1DPosition());
+                     }
+                  }
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // nothing to do
          }
       };
    }

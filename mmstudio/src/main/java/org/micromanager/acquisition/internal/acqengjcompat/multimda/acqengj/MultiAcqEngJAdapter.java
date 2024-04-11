@@ -255,7 +255,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
 
          // These hooks implement Autofocus
          if (basicSettings.useAutofocus()) {
-            currentMultiMDA_.addHook(autofocusHookBefore(basicSettings.skipAutofocusCount()),
+            currentMultiMDA_.addHook(autofocusHook(basicSettings.skipAutofocusCount()),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 

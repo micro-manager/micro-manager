@@ -237,11 +237,7 @@ public class MDAAcqEventModules {
                         // API does not handle non-default XY stages
                      }
                   } else {
-                     //if (sp.getStageDeviceLabel().equals(core.getFocusDevice())) {
-                     //   posEvent.setZ(null, sp.get1DPosition());
-                     //} else {
                      posEvent.setStageCoordinate(sp.getStageDeviceLabel(), sp.get1DPosition());
-                     //}
                   }
                }
                HashMap<String, String> tags = posEvent.getTags();
