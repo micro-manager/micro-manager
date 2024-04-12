@@ -27,7 +27,11 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -275,13 +279,13 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // These hooks implement Autofocus.
          // Autofocus needs to run after the XY stage and optionally other stages have been set to
          // the correct position, but before the Z-drive moves to its first position of a Z stack.
-         // AcqEngJ does not have hooks for this, so move the XY stage and other stages in the positionlist
-         // ourselves inside the autofocusHookBefore function.
+         // AcqEngJ does not have hooks for this, so move the XY stage and other stages in the
+         // positionlist ourselves inside the autofocusHookBefore function.
          if (sequenceSettings_.useAutofocus()) {
             currentAcquisition_.addHook(autofocusHook(sequenceSettings_.skipAutofocusCount()),
                   AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
-            // add a hook to update the Z drive positions based on the position found in the previous round
-            // after autofocussing.
+            // add a hook to update the Z drive positions based on the position found in the i
+            // previous round after autofocussing.
             currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
@@ -314,23 +318,24 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             if (zDevice != null && !zDevice.isEmpty()) {
                msp.add(StagePosition.create1D(zDevice, core_.getPosition(zDevice)));
             }
-            // assume that all positions in the list use the same stages, we eventually could go through all of them
-            // to pick up unique stages, but lets keep it simpler for now
+            // assume that all positions in the list use the same stages, we eventually could go
+            // through all of them to pick up unique stages, but lets keep it simpler for now
             MultiStagePosition msp0 = posList_.getPosition(0);
-            for (int i = 0;i < msp.size(); i++) {
+            for (int i = 0; i < msp.size(); i++) {
                StagePosition sp = msp0.get(0);
                String stageDevice = sp.getStageDeviceLabel();
                if (sp.is1DStagePosition() && !stageDevice.equals(zDevice)) {
                   msp.add(StagePosition.create1D(stageDevice, core_.getPosition(stageDevice)));
                }
-               // Multiple XY stages are not supported yet by the acq engine.  Add them here to avoid
-               // forgetting about it in the future.
+               // Multiple XY stages are not supported yet by the acq engine.  Add them here to
+               // avoid forgetting about it in the future.
                if (sp.is2DStagePosition() && !stageDevice.equals(xyStageDevice)) {
                   msp.add(StagePosition.create2D(stageDevice, core_.getXPosition(stageDevice),
                           core_.getYPosition(stageDevice)));
                }
             }
-            currentAcquisition_.addHook(restorePositionHook(msp), AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+            currentAcquisition_.addHook(restorePositionHook(msp),
+                    AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
          // Read for events
@@ -804,8 +809,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
    /**
     * Hook function that updates the stagePositions in this event with the stage positions last set
-    * by autofocus.  Will only run if autofocus is enabled.  Look for the positionLabel in the event's
-    * tags, see if we have that in our positionMap_, and if so, update the stage positions in the event
+    * by autofocus.  Will only run if autofocus is enabled.  Look for the positionLabel in the
+    * event's tags, see if we have that in our positionMap_, and if so, update the stage
+    * positions in the event.
     */
    public AcquisitionHook adjustZDrivesHook() {
       return new AcquisitionHook() {
