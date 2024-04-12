@@ -61,6 +61,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.FileDialogs;
@@ -75,11 +76,12 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public class MistFrame extends JFrame {
 
    private final Studio studio_;
+   private final DisplayWindow ourWindow_;
+   private final DataProvider ourProvider_;
    private final Font arialSmallFont_;
    private final MutablePropertyMapView profileSettings_;
    private static final String DIRNAME = "DirName";
    private final Dimension buttonSize_;
-   private final JComboBox<String> dataSetBox_;
    private final JComboBox<String> saveFormat_;
    private final List<JCheckBox> channelCheckBoxes_;
    private final JCheckBox shouldDisplay_;
@@ -90,6 +92,7 @@ public class MistFrame extends JFrame {
    private static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
    private static final String MULTIPAGE_TIFF = "Image Stack File";
    private static final String RAM = "RAM only";
+   private static final String UNSELECTED_CHANNELS = "UnselectedChannels";
 
 
    /**
@@ -97,9 +100,11 @@ public class MistFrame extends JFrame {
     *
     * @param studio The Studio object.
     */
-   public MistFrame(Studio studio) {
+   public MistFrame(Studio studio, DisplayWindow ourWindow) {
       super("Mist Plugin");
       studio_ = studio;
+      ourWindow_ = ourWindow;
+      ourProvider_ = ourWindow.getDataProvider();
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 12);
       buttonSize_ = new Dimension(70, 21);
       profileSettings_ =
@@ -143,10 +148,120 @@ public class MistFrame extends JFrame {
       });
       super.add(locationsFieldButton, "wrap");
 
-      dataSetBox_ = new JComboBox<>();
-      setupDataViewerBox(dataSetBox_, DATAVIEWER);
-      super.add(new JLabel("Input Data Set:"));
-      super.add(dataSetBox_, "wrap");
+      //dataSetBox_ = new JComboBox<>();
+      //setupDataViewerBox(dataSetBox_, DATAVIEWER);
+      //super.add(new JLabel("Input Data Set:"));
+      //super.add(dataSetBox_, "wrap");
+
+      List<String> axes = ourProvider_.getAxes();
+      // Note: MM uses 0-based indices in the code, but 1-based indices
+      // for the UI.  To avoid confusion, this storage of the desired
+      // limits for each axis is 0-based, and translation to 1-based is made
+      // in the UI code
+      final Map<String, Integer> mins = new HashMap<>();
+      final Map<String, Integer> maxes = new HashMap<>();
+      final List<JCheckBox> channelCheckBoxes = new ArrayList<>();
+      boolean usesChannels = false;
+      for (final String axis : axes) {
+         if (axis.equals(Coords.CHANNEL)) {
+            usesChannels = true;
+            break;
+         }
+      }
+      int nrNoChannelAxes = axes.size();
+      ;
+      if (usesChannels) {
+         nrNoChannelAxes = nrNoChannelAxes - 1;
+         List<String> channelNameList = ourProvider_.getSummaryMetadata().getChannelNameList();
+         if (channelNameList.size() > 0) {
+            super.add(new JLabel(Coords.C));
+            ;
+         }
+         for (int i = 0; i < channelNameList.size(); i++) {
+            String channelName = channelNameList.get(i);
+            JCheckBox checkBox = new JCheckBox(channelName);
+            if (!profileSettings_.getStringList(UNSELECTED_CHANNELS, "").contains(channelName)) {
+               checkBox.setSelected(true);
+            }
+            channelCheckBoxes.add(checkBox);
+            if (i == 0) {
+               if (channelNameList.size() > 1) {
+                  super.add(checkBox, "span 3, split " + channelNameList.size());
+               } else {
+                  super.add(checkBox, "wrap");
+               }
+            } else if (i == channelNameList.size() - 1) {
+               super.add(checkBox, "wrap");
+            } else {
+               super.add(checkBox);
+            }
+         }
+      }
+
+
+      if (nrNoChannelAxes > 0) {
+         super.add(new JLabel(" "));
+         super.add(new JLabel("min"));
+         super.add(new JLabel("max"), "wrap");
+
+         for (final String axis : axes) {
+            if (axis.equals(Coords.CHANNEL)) {
+               continue;
+            }
+            if (ourProvider_.getNextIndex(axis) > 1) {
+               mins.put(axis, 1);
+               maxes.put(axis, ourProvider_.getNextIndex(axis));
+
+               super.add(new JLabel(axis));
+               SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
+                       (int) ourProvider_.getNextIndex(axis), 1);
+               mins.put(axis, 0);
+               final JSpinner minSpinner = new JSpinner(model);
+               JFormattedTextField field =
+                       (JFormattedTextField) minSpinner.getEditor().getComponent(0);
+               DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
+               formatter.setCommitsOnValidEdit(true);
+               minSpinner.addChangeListener((ChangeEvent ce) -> {
+                  // check to stay below max, this could be annoying at times
+                  if ((Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
+                     minSpinner.setValue(maxes.get(axis) + 1);
+                  }
+                  mins.put(axis, (Integer) minSpinner.getValue() - 1);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     studio_.logs().logError(ioe, "IOException in DuplicatorPlugin");
+                  }
+               });
+               super.add(minSpinner, "wmin 60");
+
+               model = new SpinnerNumberModel((int) ourProvider_.getNextIndex(axis),
+                       1, (int) ourProvider_.getNextIndex(axis), 1);
+               maxes.put(axis, ourProvider_.getNextIndex(axis) - 1);
+               final JSpinner maxSpinner = new JSpinner(model);
+               field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
+               formatter = (DefaultFormatter) field.getFormatter();
+               formatter.setCommitsOnValidEdit(true);
+               maxSpinner.addChangeListener((ChangeEvent ce) -> {
+                  // check to stay above min
+                  if ((Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
+                     maxSpinner.setValue(mins.get(axis) + 1);
+                  }
+                  maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     studio_.logs().logError(ioe, "IOException in DuplcatorPlugin");
+                  }
+               });
+               super.add(maxSpinner, "wmin 60, wrap");
+            }
+         }
+      }
 
       super.add(new JSeparator(), "span, growx, wrap");
 
@@ -212,7 +327,7 @@ public class MistFrame extends JFrame {
             final Datastore finalStore = store;
             Runnable runnable =
                     () -> assembleData(locationsField.getText(),
-                            (String) dataSetBox_.getSelectedItem(),
+                            ourWindow_,
                          finalStore);
             new Thread(runnable).start();
          } catch (IOException ioe) {
@@ -228,13 +343,6 @@ public class MistFrame extends JFrame {
 
       super.pack();
 
-      // Registering this class for events means that its event handlers
-      // (that is, methods with the @Subscribe annotation) will be invoked when
-      // an event occurs. You need to call the right registerForEvents() method
-      // to get events; this one is for the application-wide event bus, but
-      // there's also Datastore.registerForEvents() for events specific to one
-      // Datastore, and DisplayWindow.registerForEvents() for events specific
-      // to one image display window.
       studio_.events().registerForEvents(this);
       studio_.displays().registerForEvents(this);
    }
@@ -289,12 +397,14 @@ public class MistFrame extends JFrame {
 
    @Subscribe
    public void onDataViewerAddedEvent(DataViewerAddedEvent event) {
-      setupDataViewerBox(dataSetBox_, DATAVIEWER);
+      //setupDataViewerBox(dataSetBox_, DATAVIEWER);
    }
 
    @Subscribe
    public void onDataViewerClosing(DataViewerWillCloseEvent event) {
-      setupDataViewerBox(dataSetBox_, DATAVIEWER);
+      if (event.getDataViewer().equals(ourWindow_)) {
+         dispose();
+      }
    }
 
 
@@ -439,12 +549,11 @@ public class MistFrame extends JFrame {
     * THis function can take a long, long time to execute.  Make sure not to call it on the EDT.
     *
     * @param locationsFile Output file from the Mist stitching plugin.  "img-global-positions-0"
-    * @param dataViewerName Micro-Manager dataViewer containing the input data/
+    * @param dataViewer Micro-Manager dataViewer containing the input data/
     * @param newStore Datastore to write the stitched images to.
     */
-   private void assembleData(String locationsFile, String dataViewerName, Datastore newStore) {
+   private void assembleData(String locationsFile, final DataViewer dataViewer, Datastore newStore) {
       List<MistGlobalData> mistEntries = new ArrayList<>();
-      DataViewer dataViewer = null;
 
       File mistFile = new File(locationsFile);
       if (!mistFile.exists()) {
@@ -493,11 +602,6 @@ public class MistFrame extends JFrame {
          return;
       }
 
-      for (DataViewer dv : studio_.displays().getAllDataViewers()) {
-         if (dv.getName().equals(dataViewerName)) {
-            dataViewer = dv;
-         }
-      }
       if (dataViewer == null) {
          studio_.logs().showError("No Micro-Manager data set selected");
          return;
