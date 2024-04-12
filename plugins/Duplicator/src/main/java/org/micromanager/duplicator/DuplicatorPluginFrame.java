@@ -49,6 +49,8 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.DefaultFormatter;
+
+import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
@@ -60,6 +62,7 @@ import org.micromanager.display.DisplayWindow;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -322,7 +325,15 @@ public class DuplicatorPluginFrame extends JDialog {
       super.setLocation(xCenter - super.getWidth() / 2,
             yCenter - super.getHeight());
 
+      studio_.displays().registerForEvents(this);
       super.setVisible(true);
+   }
+
+   @Subscribe
+   public void onDataViewerClosing(DataViewerWillCloseEvent event) {
+      if (event.getDataViewer().equals(ourWindow_)) {
+         dispose();
+      }
    }
 
    private void chooseDataLocation(DuplicatorPluginFrame ourFrame, JLabel fileField,
