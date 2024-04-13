@@ -30,7 +30,6 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -39,7 +38,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -158,8 +156,6 @@ public class MistFrame extends JFrame {
       // for the UI.  To avoid confusion, this storage of the desired
       // limits for each axis is 0-based, and translation to 1-based is made
       // in the UI code
-      final Map<String, Integer> mins = new HashMap<>();
-      final Map<String, Integer> maxes = new HashMap<>();
       final List<JCheckBox> channelCheckBoxes = new ArrayList<>();
       boolean usesChannels = false;
       for (final String axis : axes) {
@@ -175,7 +171,6 @@ public class MistFrame extends JFrame {
          List<String> channelNameList = ourProvider_.getSummaryMetadata().getChannelNameList();
          if (channelNameList.size() > 0) {
             super.add(new JLabel(Coords.C));
-            ;
          }
          for (int i = 0; i < channelNameList.size(); i++) {
             String channelName = channelNameList.get(i);
@@ -199,6 +194,8 @@ public class MistFrame extends JFrame {
       }
 
 
+      final Map<String, Integer> mins = new HashMap<>();
+      final Map<String, Integer> maxes = new HashMap<>();
       if (nrNoChannelAxes > 0) {
          super.add(new JLabel(" "));
          super.add(new JLabel("min"));
@@ -324,11 +321,20 @@ public class MistFrame extends JFrame {
             } else if (saveFormat_.getSelectedItem().equals(SINGLEPLANE_TIFF_SERIES)) {
                store = studio_.data().createSinglePlaneTIFFSeriesDatastore(savePath_.getText());
             }
+            List<String> channelList = new ArrayList<>();
+            for (JCheckBox checkBox : channelCheckBoxes) {
+               if (checkBox.isSelected()) {
+                  channelList.add(checkBox.getText());
+               }
+            }
             final Datastore finalStore = store;
             Runnable runnable =
                     () -> assembleData(locationsField.getText(),
                             ourWindow_,
-                         finalStore);
+                            finalStore,
+                            channelList,
+                            mins,
+                            maxes);
             new Thread(runnable).start();
          } catch (IOException ioe) {
             studio_.logs().showError("Error creating new data store: " + ioe.getMessage());
@@ -357,31 +363,6 @@ public class MistFrame extends JFrame {
       return button;
    }
 
-   private void setupDataViewerBox(final JComboBox<String> box, final String key) {
-      List<DataViewer> allDataViewers = studio_.displays().getAllDataViewers();
-      String[] dataViewers = new String[allDataViewers.size()];
-      for (int i = 0; i < allDataViewers.size(); i++) {
-         dataViewers[i] = allDataViewers.get(i).getName();
-      }
-      for (ActionListener al : box.getActionListeners()) {
-         box.removeActionListener(al);
-      }
-      box.setModel(new DefaultComboBoxModel<>(
-              dataViewers));
-      String dataViewer = profileSettings_.getString(key, "");
-      box.setSelectedItem(dataViewer);
-      profileSettings_.putString(key, (String) box.getSelectedItem());
-      box.addActionListener((java.awt.event.ActionEvent evt) -> {
-         profileSettings_.putString(key, (String)
-                 box.getSelectedItem());
-         for (DataViewer dv : studio_.displays().getAllDataViewers()) {
-            if (dv.getName().equals((String) box.getSelectedItem())) {
-               addAxisSliders(dv);
-            }
-         }
-      });
-      super.pack();
-   }
 
    private void updateControls() {
       // Toggle availability of the save path controls.
@@ -408,143 +389,6 @@ public class MistFrame extends JFrame {
    }
 
 
-   private void addAxisSliders(DataViewer dv) {
-      DataProvider dp = dv.getDataProvider();
-      List<String> axes = dp.getAxes();
-      // Note: MM uses 0-based indices in the code, but 1-based indices
-      // for the UI.  To avoid confusion, this storage of the desired
-      // limits for each axis is 0-based, and translation to 1-based is made
-      // in the UI code
-      final Map<String, Integer> mins = new HashMap<>();
-      final Map<String, Integer> maxes = new HashMap<>();
-      boolean usesChannels = false;
-      for (final String axis : axes) {
-         if (axis.equals(Coords.CHANNEL)) {
-            usesChannels = true;
-            break;
-         }
-      }
-      int nrNoChannelAxes = axes.size();
-      if (usesChannels) {
-         nrNoChannelAxes = nrNoChannelAxes - 1;
-         List<String> channelNameList = dp.getSummaryMetadata().getChannelNameList();
-         if (channelNameList.size() > 0) {
-            super.add(new JLabel(Coords.C));
-         }
-         for (int i = 0; i < channelNameList.size(); i++) {
-            String channelName = channelNameList.get(i);
-            JCheckBox checkBox = new JCheckBox(channelName);
-            // if (!settings.getStringList(UNSELECTED_CHANNELS, "").contains(channelName)) {
-            //    checkBox.setSelected(true);
-            // }
-            channelCheckBoxes_.add(checkBox);
-            if (i == 0) {
-               if (channelNameList.size() > 1) {
-                  super.add(checkBox, "span 3, split " + channelNameList.size());
-               } else {
-                  super.add(checkBox, "wrap");
-               }
-            } else if (i == channelNameList.size() - 1) {
-               super.add(checkBox, "wrap");
-            } else {
-               super.add(checkBox);
-            }
-         }
-      }
-
-
-      if (nrNoChannelAxes > 0) {
-         super.add(new JLabel(" "));
-         super.add(new JLabel("min"));
-         super.add(new JLabel("max"), "wrap");
-
-         for (final String axis : axes) {
-            if (axis.equals(Coords.CHANNEL)) {
-               continue;
-            }
-            if (dp.getNextIndex(axis) > 1) {
-               mins.put(axis, 1);
-               maxes.put(axis, dp.getNextIndex(axis));
-
-               super.add(new JLabel(axis));
-               SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
-                       dp.getNextIndex(axis), 1);
-               mins.put(axis, 0);
-               final JSpinner minSpinner = new JSpinner(model);
-               JFormattedTextField field =
-                       (JFormattedTextField) minSpinner.getEditor().getComponent(0);
-               DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
-               formatter.setCommitsOnValidEdit(true);
-               minSpinner.addChangeListener((ChangeEvent ce) -> {
-                  // check to stay below max, this could be annoying at times
-                  if ((Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
-                     minSpinner.setValue(maxes.get(axis) + 1);
-                  }
-                  mins.put(axis, (Integer) minSpinner.getValue() - 1);
-                  try {
-                     Coords coord = dv.getDisplayedImages().get(0).getCoords();
-                     coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
-                     dv.setDisplayPosition(coord);
-                  } catch (IOException ioe) {
-                     studio_.logs().logError(ioe, "IOException in DuplicatorPlugin");
-                  }
-               });
-               super.add(minSpinner, "wmin 60");
-
-               model = new SpinnerNumberModel(dp.getNextIndex(axis),
-                       1, dp.getNextIndex(axis), 1);
-               maxes.put(axis, dp.getNextIndex(axis) - 1);
-               final JSpinner maxSpinner = new JSpinner(model);
-               field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
-               formatter = (DefaultFormatter) field.getFormatter();
-               formatter.setCommitsOnValidEdit(true);
-               maxSpinner.addChangeListener((ChangeEvent ce) -> {
-                  // check to stay above min
-                  if ((Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
-                     maxSpinner.setValue(mins.get(axis) + 1);
-                  }
-                  maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
-                  try {
-                     Coords coord = dv.getDisplayedImages().get(0).getCoords();
-                     coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
-                     dv.setDisplayPosition(coord);
-                  } catch (IOException ioe) {
-                     studio_.logs().logError(ioe, "IOException in DuplcatorPlugin");
-                  }
-               });
-               super.add(maxSpinner, "wmin 60, wrap");
-            }
-         }
-      }
-
-      super.add(new JLabel("name"));
-      //  final JTextField nameField = new JTextField(shortName);
-      // super.add(nameField, "span2, grow, wrap");
-
-      final JCheckBox saveBox = new JCheckBox("Save");
-      final JLabel fileField = new JLabel("");
-      final JButton chooserButton = new JButton("...");
-      final JLabel saveMethod = new JLabel("Memory");
-      saveBox.addActionListener(e -> {
-         fileField.setEnabled(saveBox.isSelected());
-         chooserButton.setEnabled(saveBox.isSelected());
-         if (saveBox.isSelected()) {
-            //       chooseDataLocation(ourFrame, fileField, saveMethod);
-         } else {
-            saveMethod.setText("Memory");
-         }
-      });
-      saveBox.setSelected(false);
-      fileField.setEnabled(saveBox.isSelected());
-      chooserButton.setEnabled(saveBox.isSelected());
-      chooserButton.addActionListener(e -> {
-      //   chooseDataLocation(ourFrame, fileField, saveMethod);
-      });
-
-      super.add(saveBox);
-      super.add(fileField, "wmin 420, span 2, grow");
-   }
-
    /**
     * THis function can take a long, long time to execute.  Make sure not to call it on the EDT.
     *
@@ -552,7 +396,8 @@ public class MistFrame extends JFrame {
     * @param dataViewer Micro-Manager dataViewer containing the input data/
     * @param newStore Datastore to write the stitched images to.
     */
-   private void assembleData(String locationsFile, final DataViewer dataViewer, Datastore newStore) {
+   private void assembleData(String locationsFile, final DataViewer dataViewer, Datastore newStore,
+                             List<String> channelList, Map<String, Integer> mins, Map<String, Integer> maxes) {
       List<MistGlobalData> mistEntries = new ArrayList<>();
 
       File mistFile = new File(locationsFile);
@@ -658,8 +503,11 @@ public class MistFrame extends JFrame {
          Coords.Builder imgCb = studio_.data().coordsBuilder();
          int nrImages = 0;
          for (int c = 0; c < intendedDimensions.getC(); c++) {
-            for (int t = 0; t < intendedDimensions.getT(); t++) {
-               for (int z = 0; z < intendedDimensions.getZ(); z++) {
+            if (!channelList.contains(dp.getSummaryMetadata().getChannelNameList().get(c))) {
+               break;
+            }
+            for (int t = mins.get(Coords.T); t <= maxes.get(Coords.T); t++) {
+               for (int z = mins.get(Coords.Z); z <= maxes.get(Coords.Z); z++) {
                   for (int newP = 0; newP < newNrP; newP++) {
                      if (monitor.isCanceled()) {
                         SwingUtilities.invokeLater(() -> {
@@ -698,7 +546,8 @@ public class MistFrame extends JFrame {
                      }
                      if (imgAdded) {
                         Image newImg = studio_.data().ij().createImage(newImgPlus.getProcessor(),
-                                imgCb.c(c).t(t).z(z).p(newP).build(),
+                                imgCb.c(c).t(t - mins.get(Coords.T)).z(z - mins.get(Coords.Z))
+                                        .p(newP).build(),
                                 dp.getImage(imgCb.c(c).t(t).z(z).p(newP * mistEntries.size())
                                         .build()).getMetadata().copyBuilderWithNewUUID().build());
                         newStore.putImage(newImg);
@@ -710,6 +559,7 @@ public class MistFrame extends JFrame {
                }
             }
          }
+         SwingUtilities.invokeLater(() -> monitor.setProgress(maxNumImages));
       } catch (IOException e) {
          studio_.logs().showError("Error creating new data store: " + e.getMessage());
       }
