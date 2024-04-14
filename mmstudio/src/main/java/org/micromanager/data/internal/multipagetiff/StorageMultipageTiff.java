@@ -1044,11 +1044,17 @@ public final class StorageMultipageTiff implements Storage {
          }
       }
       // For files we read from disk.
+      int errorCounter = 0;
       for (MultipageTiffReader reader : coordsToReader_.values()) {
          try {
             reader.close();
          } catch (IOException e) {
+            errorCounter++;
             ReportingUtils.logError(e, "Error cleaning up open file descriptor");
+            if (errorCounter > 10) {
+               ReportingUtils.logError("Too many errors closing file descriptors");
+               return;
+            }
          }
       }
    }

@@ -583,8 +583,13 @@ public final class MultipageTiffReader {
          raFile_ = null;
       }
       if (masterStorage_ != null) {
-         CommentsHelper.saveComments(masterStorage_.getDatastore());
-         masterStorage_ = null;
+         try {
+            CommentsHelper.saveComments(masterStorage_.getDatastore());
+         } catch (IOException e) {
+            throw e;
+         } finally {
+            masterStorage_ = null;
+         }
       }
    }
 
