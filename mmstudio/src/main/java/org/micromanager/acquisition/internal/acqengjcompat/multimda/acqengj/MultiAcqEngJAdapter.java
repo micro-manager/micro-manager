@@ -255,7 +255,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
 
          // These hooks implement Autofocus
          if (basicSettings.useAutofocus()) {
-            currentMultiMDA_.addHook(autofocusHookBefore(basicSettings.skipAutofocusCount()),
+            currentMultiMDA_.addHook(autofocusHook(basicSettings.skipAutofocusCount()),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
@@ -361,10 +361,6 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          SequenceSettings acquisitionSettings, PositionList positionList, int acqIndex,
          int timeIndex, long minimumStartTime)
          throws Exception {
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
-
       // Select channels that we are actually using
       List<ChannelSpec> chSpecs = new ArrayList<>();
       for (ChannelSpec chSpec : acquisitionSettings.channels()) {
@@ -376,9 +372,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       HashMap<String, String> tag = new HashMap<>(1);
       tag.put(ACQ_IDENTIFIER, String.valueOf(acqIndex));
 
-      ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions =
-            new ArrayList<>();
-
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
          if (acquisitionSettings.relativeZSlice()) {
@@ -392,6 +386,7 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
                tag);
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
       if (acquisitionSettings.useChannels()) {
          Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
          channels = MDAAcqEventModules.channels(chSpecs, middleSliceIndex, tag);
@@ -400,10 +395,13 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
          //TODO: z stack off for channel
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
       if (acquisitionSettings.usePositionList()) {
-         positions = MDAAcqEventModules.positions(positionList, tag);
+         positions = MDAAcqEventModules.positions(positionList, tag, core_);
       }
 
+      ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions =
+              new ArrayList<>();
       if (acquisitionSettings.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE) {
          if (acquisitionSettings.usePositionList()) {
             acqFunctions.add(positions);
@@ -541,6 +539,12 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return numPositions;
    }
 
+   /**
+    * Returns the number of slices in this acquisition.
+    *
+    * @param sequenceSettings The settings for the acquisition
+    * @return Number of slices in this acquisition.
+    */
    public static int getNumSlices(SequenceSettings sequenceSettings) {
       if (!sequenceSettings.useSlices()) {
          return 1;
@@ -699,6 +703,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return true;
    }
 
+   /**
+    * Check if an abort has been requested.
+    *
+    * @return true if an abort has been requested, false otherwise
+    */
    public boolean abortRequested() {
       if (currentMultiMDA_ != null) {
          return currentMultiMDA_.isAbortRequested();
@@ -710,6 +719,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       stop(true);
    }
 
+   /**
+    * Pause the acquisition.
+    *
+    * @param state true to pause, false to resume
+    */
    public void setPause(boolean state) {
       if (currentMultiMDA_ != null) {
          currentMultiMDA_.setPaused(state);
@@ -717,6 +731,12 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    }
 
    //// State Queries /////////////////////////////////////////////////////
+
+   /**
+    * Check if the acquisition is running.
+    *
+    * @return true if the acquisition is running, false otherwise
+    */
    public boolean isAcquisitionRunning() {
       // Even after the acquisition finishes, if the pipeline is still "live",
       // we should consider the acquisition to be running.
@@ -735,6 +755,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       }
    }
 
+   /**
+    * Checks if the acquisition is finished.
+    *
+    * @return true if the acquisition is finished, false otherwise
+    */
    public boolean isFinished() {
       if (currentMultiMDA_ != null) {
          return currentMultiMDA_.areEventsFinished();
@@ -759,6 +784,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       posList_ = posList;
    }
 
+   /**
+    * Adds the Studio object.
+    *
+    * @param parent The Studio object
+    */
    public void setParentGUI(Studio parent) {
       studio_ = parent;
       core_ = studio_.core();
@@ -871,6 +901,12 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
    }
 
 
+   /**
+    * Creates a human-readable summary of the acquisition.
+    *
+    * @param sequenceSettings The settings for the acquisition
+    * @return A human-readable summary of the acquisition
+    */
    public String getVerboseSummary(SequenceSettings sequenceSettings) {
       final int numFrames = getNumFrames(sequenceSettings);
       final int numSlices = getNumSlices(sequenceSettings);
@@ -996,6 +1032,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return false;
    }
 
+   /**
+    * Returns the available preset groups.
+    *
+    * @return Array with the available preset groups
+    */
    public String[] getAvailableGroups() {
       StrVector groups;
       try {
@@ -1014,6 +1055,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return strGroups.toArray(new String[0]);
    }
 
+   /**
+    * Returns the current Z position.
+    *
+    * @return The current Z position
+    */
    public double getCurrentZPos() {
       if (isFocusStageAvailable()) {
          double z = 0.0;
@@ -1029,6 +1075,11 @@ public class MultiAcqEngJAdapter extends AcqEngJAdapter {
       return 0;
    }
 
+   /**
+    * Queries if the acquisition is currenly paused.
+    *
+    * @return true if the acquisition is paused, false otherwise
+    */
    public boolean isPaused() {
       if (currentMultiMDA_ != null) {
          return currentMultiMDA_.isPaused();

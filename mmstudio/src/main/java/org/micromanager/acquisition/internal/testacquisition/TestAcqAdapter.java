@@ -471,14 +471,6 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
     */
    private Iterator<AcquisitionEvent> createAcqEventIterator(SequenceSettings acquisitionSettings)
            throws Exception {
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
-
-      ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
-              = new ArrayList<>();
-
       // Select channels that we are actually using
       List<ChannelSpec> chSpecs = new ArrayList<>();
       for (ChannelSpec chSpec : acquisitionSettings.channels()) {
@@ -487,6 +479,7 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
          if (acquisitionSettings.relativeZSlice()) {
@@ -500,6 +493,7 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
                  null);
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
       if (acquisitionSettings.useChannels()) {
          if (chSpecs.size() > 0) {
             Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
@@ -507,8 +501,9 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
       if (acquisitionSettings.usePositionList()) {
-         positions = MDAAcqEventModules.positions(posList_, null);
+         positions = MDAAcqEventModules.positions(posList_, null, core_);
          // TODO: is acq engine supposed to move multiple stages?
          // Yes: when moving to a new position, all stages in the MultiStagePosition instance
          // should be moved to the desired location
@@ -517,12 +512,15 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // whatever is asked to do.
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
       if (acquisitionSettings.useFrames()) {
          timelapse = MDAAcqEventModules.timelapse(acquisitionSettings.numFrames(),
                  acquisitionSettings.intervalMs(), null);
          // TODO custom time intervals
       }
 
+      ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
+              = new ArrayList<>();
       if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
          if (acquisitionSettings.usePositionList()) {
             acqFunctions.add(positions);
