@@ -58,6 +58,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.internal.DefaultImageJConverter;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
@@ -537,8 +538,8 @@ public class MistFrame extends JFrame {
                               if (entry.getSiteNr() == siteNr) {
                                  int x = entry.getPositionX();
                                  int y = entry.getPositionY();
-                                 ImageProcessor ip = studio_.data().getImageJConverter()
-                                         .createProcessor(img);
+                                 ImageProcessor ip = DefaultImageJConverter.createProcessor(img, false);
+                                         //.createProcessor(img);
                                  newImgPlus.getProcessor().insert(ip, x, y);
                               }
                            }
@@ -562,9 +563,12 @@ public class MistFrame extends JFrame {
          SwingUtilities.invokeLater(() -> monitor.setProgress(maxNumImages));
       } catch (IOException e) {
          studio_.logs().showError("Error creating new data store: " + e.getMessage());
+      } catch (NullPointerException npe) {
+         studio_.logs().showError("Coding error in Mist plugin: " + npe.getMessage());
+      } finally {
+         SwingUtilities.invokeLater(() -> {
+            assembleButton_.setEnabled(true);
+         });
       }
-      SwingUtilities.invokeLater(() -> {
-         assembleButton_.setEnabled(true);
-      });
    }
 }
