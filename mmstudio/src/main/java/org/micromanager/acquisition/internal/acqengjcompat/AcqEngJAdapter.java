@@ -174,7 +174,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          posListToUse = studio_.positions().getPositionList();
       }
       posList_ = posListToUse;
-      positionMap_ = new HashMap<>(posList_.getNumberOfPositions());
+      positionMap_ = new HashMap<>(posList_ == null ? 0 : posList_.getNumberOfPositions());
 
       // The clojure acquisition engine always uses numFrames, and customIntervals
       // unless they are null.
@@ -321,17 +321,19 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             // assume that all positions in the list use the same stages, we eventually could go
             // through all of them to pick up unique stages, but lets keep it simpler for now
             MultiStagePosition msp0 = posList_.getPosition(0);
-            for (int i = 0; i < msp.size(); i++) {
-               StagePosition sp = msp0.get(0);
-               String stageDevice = sp.getStageDeviceLabel();
-               if (sp.is1DStagePosition() && !stageDevice.equals(zDevice)) {
-                  msp.add(StagePosition.create1D(stageDevice, core_.getPosition(stageDevice)));
-               }
-               // Multiple XY stages are not supported yet by the acq engine.  Add them here to
-               // avoid forgetting about it in the future.
-               if (sp.is2DStagePosition() && !stageDevice.equals(xyStageDevice)) {
-                  msp.add(StagePosition.create2D(stageDevice, core_.getXPosition(stageDevice),
-                          core_.getYPosition(stageDevice)));
+            if (msp0 != null) {
+               for (int i = 0; i < msp0.size(); i++) {
+                  StagePosition sp = msp0.get(i);
+                  String stageDevice = sp.getStageDeviceLabel();
+                  if (sp.is1DStagePosition() && !stageDevice.equals(zDevice)) {
+                     msp.add(StagePosition.create1D(stageDevice, core_.getPosition(stageDevice)));
+                  }
+                  // Multiple XY stages are not supported yet by the acq engine.  Add them here to
+                  // avoid forgetting about it in the future.
+                  if (sp.is2DStagePosition() && !stageDevice.equals(xyStageDevice)) {
+                     msp.add(StagePosition.create2D(stageDevice, core_.getXPosition(stageDevice),
+                             core_.getYPosition(stageDevice)));
+                  }
                }
             }
             currentAcquisition_.addHook(restorePositionHook(msp),
