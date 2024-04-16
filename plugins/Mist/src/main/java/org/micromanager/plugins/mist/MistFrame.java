@@ -507,8 +507,10 @@ public class MistFrame extends JFrame {
             if (!channelList.contains(dp.getSummaryMetadata().getChannelNameList().get(c))) {
                break;
             }
-            for (int t = mins.get(Coords.T); t <= maxes.get(Coords.T); t++) {
-               for (int z = mins.get(Coords.Z); z <= maxes.get(Coords.Z); z++) {
+            for (int t = mins.getOrDefault(Coords.T, 0);
+                     t <= maxes.getOrDefault(Coords.T, 0); t++) {
+               for (int z = mins.getOrDefault(Coords.Z, 0); z <= maxes.getOrDefault(Coords.Z, 0);
+                     z++) {
                   for (int newP = 0; newP < newNrP; newP++) {
                      if (monitor.isCanceled()) {
                         SwingUtilities.invokeLater(() -> {
