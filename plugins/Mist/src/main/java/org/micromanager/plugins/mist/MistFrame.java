@@ -577,7 +577,6 @@ public class MistFrame extends JFrame {
                         nrImages++;
                         final int count = nrImages;
                         SwingUtilities.invokeLater(() -> monitor.setProgress(count));
-                        System.gc();
                         int processTime = (int) ((System.currentTimeMillis() - startTime) / 1000);
                         updatableAlert.setText("Processed " + nrImages + " images of " + maxNumImages
                                 + " in " + processTime + " seconds");
