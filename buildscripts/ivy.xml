@@ -40,10 +40,13 @@
       <dependency org="org.jfree" name="jcommon" rev="1.0.24"/>
       <dependency org="org.jfree" name="jfreechart" rev="1.5.0"/>
       <dependency org="org.scijava" name="scijava-common" rev="2.83.3"/>
-      <!-- Magellan dependencies -->
+      <!-- Pycro-manager dependencies -->
       <!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
       <dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
-      <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.34.2">
+      <dependency org="org.micro-manager.pyjavaz" name="PyJavaZ" rev="1.0.0">
+         <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
+      </dependency>
+      <dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.37.3">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.10.2">
@@ -52,7 +55,7 @@
 		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="2.16.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.44.9">
+		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.46.5">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 

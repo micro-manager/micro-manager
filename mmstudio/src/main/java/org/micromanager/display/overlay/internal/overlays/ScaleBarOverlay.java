@@ -235,7 +235,9 @@ public final class ScaleBarOverlay extends AbstractOverlay {
 
       final int lengthPx = (int) Math.round(lengthUm / umPerScreenPixel);
       final int x = atRight ? screenRect.width - xOffset_ - lengthPx : xOffset_;
-      final int y = atBottom ? screenRect.height - yOffset_ - thickness_ : yOffset_;
+      final int y = atBottom
+              ? screenRect.height - yOffset_ - thickness_ - metrics.getMaxAscent() - 2
+              : yOffset_ + metrics.getMaxAscent() + 2;
 
       if (drawLabel_) {
          final String labelText;
@@ -245,8 +247,7 @@ public final class ScaleBarOverlay extends AbstractOverlay {
             labelText = String.format("%d nm", (int) Math.round(lengthUm * 1000.0));
          }
          final int labelX = x + (lengthPx - metrics.stringWidth(labelText)) / 2;
-         final int labelY = atBottom ? y - metrics.getMaxDescent() - 2 :
-               y + thickness_ + metrics.getMaxAscent() + 2;
+         final int labelY = atBottom ? y + thickness_ + metrics.getMaxAscent() : y - thickness_;
          g.drawString(labelText, labelX, labelY);
       }
       if (fillBar_) {

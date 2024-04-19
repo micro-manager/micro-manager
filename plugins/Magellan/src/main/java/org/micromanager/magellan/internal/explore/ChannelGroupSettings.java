@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.UserProfile;
@@ -29,7 +30,8 @@ public class ChannelGroupSettings {
 
    protected ArrayList<ChannelSetting> channels_;
    private final CMMCore core_;
-   private final MutablePropertyMapView settings_;
+   private MutablePropertyMapView settings_;
+   private Preferences prefs_;
    protected String group_;
    private static final String PREF_EXPOSURE = "EXPOSURE";
 
@@ -41,7 +43,11 @@ public class ChannelGroupSettings {
    public ChannelGroupSettings(String channelGroup, CMMCore core, UserProfile profile) {
       group_ = channelGroup;
       core_ = core;
-      settings_ = profile.getSettings(this.getClass());
+      if (profile != null) {
+         settings_ = profile.getSettings(this.getClass());
+      } else {
+         prefs_ = Preferences.systemNodeForPackage(ChannelGroupSettings.class);
+      }
       updateChannelGroup(channelGroup);
    }
 
@@ -152,26 +158,41 @@ public class ChannelGroupSettings {
    private void setValuesFromPrefs(ChannelSetting setting) {
       String prefix = "CHANNELGROUP"
               + setting.group_ + "CHANNELNAME" + setting.config_;
-
-      try {
-         setting.exposure_ = settings_.getDouble(
-                 prefix + PREF_EXPOSURE, Engine.getCore().getExposure());
-      } catch (Exception ex) {
-         ex.printStackTrace();
+      if (settings_ != null) {
+         try {
+            setting.exposure_ = settings_.getDouble(
+                    prefix + PREF_EXPOSURE, Engine.getCore().getExposure());
+         } catch (Exception ex) {
+            ex.printStackTrace();
+         }
+         setting.offset_ = settings_.getDouble(prefix + PREF_OFFSET, 0.0);
+         setting.use_ = settings_.getBoolean(prefix + PREF_USE, true);
+      } else {
+         try {
+            setting.exposure_ = prefs_.getDouble(
+                         prefix + PREF_EXPOSURE, Engine.getCore().getExposure());
+         } catch (Exception ex) {
+            ex.printStackTrace();
+         }
+         setting.offset_ = prefs_.getDouble(prefix + PREF_OFFSET, 0.0);
+         setting.use_ = prefs_.getBoolean(prefix + PREF_USE, true);
       }
-
-      setting.offset_ = settings_.getDouble(prefix + PREF_OFFSET, 0.0);
-      setting.use_ = settings_.getBoolean(prefix + PREF_USE, true);
    }
 
    public void storeValuesInPrefs() {
       for (ChannelSetting setting : channels_) {
          String prefix =
                   "CHANNELGROUP" + setting.group_ + "CHANNELNAME" + setting.config_;
-         settings_.putBoolean(prefix + PREF_USE, setting.use_);
-         settings_.putDouble(prefix + PREF_EXPOSURE, setting.exposure_);
+         if (settings_ != null) {
+            settings_.putBoolean(prefix + PREF_USE, setting.use_);
+            settings_.putDouble(prefix + PREF_EXPOSURE, setting.exposure_);
 
-         settings_.putDouble(prefix + PREF_OFFSET, setting.offset_);
+            settings_.putDouble(prefix + PREF_OFFSET, setting.offset_);
+         } else {
+            prefs_.putBoolean(prefix + PREF_USE, setting.use_);
+            prefs_.putDouble(prefix + PREF_EXPOSURE, setting.exposure_);
+            prefs_.putDouble(prefix + PREF_OFFSET, setting.offset_);
+         }
       }
    }
 

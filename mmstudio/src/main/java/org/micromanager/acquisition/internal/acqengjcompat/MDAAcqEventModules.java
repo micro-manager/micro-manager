@@ -7,8 +7,10 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import mmcorej.CMMCore;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 import org.micromanager.acqj.internal.Engine;
 import org.micromanager.acqj.main.AcqEngMetadata;
 import org.micromanager.acqj.main.AcquisitionEvent;
@@ -71,7 +73,7 @@ public class MDAAcqEventModules {
                Integer chIndex = (Integer) event.getAxisPosition("channel");
                if (chIndex != null) {
                   if (!chSpecs.get(chIndex).doZStack()) {
-                     zPos = zOrigin + (stopSliceIndex - startSliceIndex) / 2 * zStep;
+                     zPos = zOrigin + ((stopSliceIndex - startSliceIndex) / 2) * zStep;
                   }
                }
                AcquisitionEvent sliceEvent = event.copy();
@@ -133,7 +135,7 @@ public class MDAAcqEventModules {
     *                    the channels that are actually used.
     * @param middleSliceIndex Only used when use ZStack is not checked, indicates index
     *                         of the middle slice
-    * @return
+    * @return Function with AcquisitionEvent and Iterator
     */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(
          List<ChannelSpec> channelList, Integer middleSliceIndex,
@@ -210,10 +212,10 @@ public class MDAAcqEventModules {
     *
     * @param positionList MM PositionList used in this acquisition
     * @param extraTags - Key Value pairs that will be added to Image Metadata
-    * @return
+    * @return Function with AcquisitionEvent and Iterator
     */
    public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions(
-         PositionList positionList, HashMap<String, String> extraTags) {
+         PositionList positionList, HashMap<String, String> extraTags, CMMCore core) {
       return (AcquisitionEvent event) -> {
          Stream.Builder<AcquisitionEvent> builder = Stream.builder();
          if (positionList == null || positionList.getNumberOfPositions() == 0) {
@@ -223,8 +225,21 @@ public class MDAAcqEventModules {
                AcquisitionEvent posEvent = event.copy();
 
                MultiStagePosition msp = positionList.getPosition(index);
-               posEvent.setX(msp.getX());
-               posEvent.setY(msp.getY());
+               for (int s = 0; s < msp.size(); s++) {
+                  StagePosition sp = msp.get(s);
+                  if (sp.is2DStagePosition()) {
+                     // we will run into trouble when there is more than 1 XY stage.
+                     // for now, assume it is always the core XY stage
+                     if (sp.getStageDeviceLabel().equals(core.getXYStageDevice())) {
+                        posEvent.setX(msp.getX());
+                        posEvent.setY(msp.getY());
+                     } else {
+                        // API does not handle non-default XY stages
+                     }
+                  } else {
+                     posEvent.setStageCoordinate(sp.getStageDeviceLabel(), sp.get1DPosition());
+                  }
+               }
                HashMap<String, String> tags = posEvent.getTags();
                tags.put(AcqEngMetadata.POS_NAME, msp.getLabel());
                if (extraTags != null) {

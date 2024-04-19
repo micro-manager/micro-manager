@@ -29,6 +29,7 @@ import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -40,7 +41,9 @@ import mmcorej.StrVector;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.acqj.api.AcquisitionHook;
@@ -72,6 +75,7 @@ import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -94,6 +98,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private CMMCore core_;
    protected Studio studio_;
    private PositionList posList_;
+   private HashMap<String, MultiStagePosition> positionMap_;
    private String zStage_;
    private SequenceSettings sequenceSettings_;
    protected JSONObject summaryMetadataJSON_;
@@ -133,7 +138,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
    // this is where the work happens
    private Datastore runAcquisition(SequenceSettings sequenceSettings) {
-      SequenceSettings.Builder sb = sequenceSettings.copyBuilder();
+      final SequenceSettings.Builder sb = sequenceSettings.copyBuilder();
       //Make sure computer can write to selected location and there is enough space to do so
       if (sequenceSettings.save()) {
          File root = new File(sequenceSettings.root());
@@ -169,6 +174,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          posListToUse = studio_.positions().getPositionList();
       }
       posList_ = posListToUse;
+      positionMap_ = new HashMap<>(posList_ == null ? 0 : posList_.getNumberOfPositions());
 
       // The clojure acquisition engine always uses numFrames, and customIntervals
       // unless they are null.
@@ -262,7 +268,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
-         // These hooks make sure that continuousfocus is off when running a Z stack.
+         // These hooks make sure that continuous-focus is off when running a Z stack.
          if (studio_.core().isContinuousFocusEnabled()) {
             currentAcquisition_.addHook(continuousFocusHookBefore(acquisitionSettings),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
@@ -270,12 +276,17 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
-         // These hooks implement Autofocus
-         // TODO: does this give the correct behavior?  This should run after the XY stage
-         // reaches its new position, but before the z stage is moved from its current position
+         // These hooks implement Autofocus.
+         // Autofocus needs to run after the XY stage and optionally other stages have been set to
+         // the correct position, but before the Z-drive moves to its first position of a Z stack.
+         // AcqEngJ does not have hooks for this, so move the XY stage and other stages in the
+         // positionlist ourselves inside the autofocusHookBefore function.
          if (sequenceSettings_.useAutofocus()) {
-            currentAcquisition_.addHook(autofocusHookBefore(sequenceSettings_.skipAutofocusCount()),
-                  AcquisitionAPI.BEFORE_HARDWARE_HOOK);
+            currentAcquisition_.addHook(autofocusHook(sequenceSettings_.skipAutofocusCount()),
+                  AcquisitionAPI.BEFORE_Z_DRIVE_HOOK);
+            // add a hook to update the Z drive positions based on the position found in the i
+            // previous round after autofocussing.
+            currentAcquisition_.addHook(adjustZDrivesHook(), AcquisitionAPI.BEFORE_HARDWARE_HOOK);
          }
 
          // Hooks to keep shutter open between channel and/or slices if desired
@@ -292,7 +303,41 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             String channelGroup = core_.getChannelGroup();
             String channel = core_.getCurrentConfig(channelGroup);
             currentAcquisition_.addHook(restoreChannelHook(channelGroup, channel),
-                  AcquisitionAPI.AFTER_HARDWARE_HOOK);
+                  AcquisitionAPI.AFTER_EXPOSURE_HOOK);
+         }
+
+         // Return all stages used to their current positions
+         if (sequenceSettings.usePositionList()) {
+            MultiStagePosition msp = new MultiStagePosition();
+            String xyStageDevice = core_.getXYStageDevice();
+            if (xyStageDevice != null && !xyStageDevice.isEmpty()) {
+               msp.add(StagePosition.create2D(xyStageDevice, core_.getXPosition(xyStageDevice),
+                       core_.getYPosition(xyStageDevice)));
+            }
+            String zDevice = core_.getFocusDevice();
+            if (zDevice != null && !zDevice.isEmpty()) {
+               msp.add(StagePosition.create1D(zDevice, core_.getPosition(zDevice)));
+            }
+            // assume that all positions in the list use the same stages, we eventually could go
+            // through all of them to pick up unique stages, but lets keep it simpler for now
+            MultiStagePosition msp0 = posList_.getPosition(0);
+            if (msp0 != null) {
+               for (int i = 0; i < msp0.size(); i++) {
+                  StagePosition sp = msp0.get(i);
+                  String stageDevice = sp.getStageDeviceLabel();
+                  if (sp.is1DStagePosition() && !stageDevice.equals(zDevice)) {
+                     msp.add(StagePosition.create1D(stageDevice, core_.getPosition(stageDevice)));
+                  }
+                  // Multiple XY stages are not supported yet by the acq engine.  Add them here to
+                  // avoid forgetting about it in the future.
+                  if (sp.is2DStagePosition() && !stageDevice.equals(xyStageDevice)) {
+                     msp.add(StagePosition.create2D(stageDevice, core_.getXPosition(stageDevice),
+                             core_.getYPosition(stageDevice)));
+                  }
+               }
+            }
+            currentAcquisition_.addHook(restorePositionHook(msp),
+                    AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
          // Read for events
@@ -470,14 +515,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     */
    private Iterator<AcquisitionEvent> createAcqEventIterator(SequenceSettings acquisitionSettings)
          throws Exception {
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
-      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
-
-      ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
-            = new ArrayList<>();
-
       // Select channels that we are actually using
       List<ChannelSpec> chSpecs = new ArrayList<>();
       for (ChannelSpec chSpec : acquisitionSettings.channels()) {
@@ -486,6 +523,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack = null;
       if (acquisitionSettings.useSlices()) {
          double origin = acquisitionSettings.slices().get(0);
          if (acquisitionSettings.relativeZSlice()) {
@@ -499,6 +537,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                null);
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels = null;
       if (acquisitionSettings.useChannels()) {
          if (chSpecs.size() > 0) {
             Integer middleSliceIndex = (acquisitionSettings.slices().size() - 1) / 2;
@@ -506,8 +545,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions = null;
       if (acquisitionSettings.usePositionList()) {
-         positions = MDAAcqEventModules.positions(posList_, null);
+         positions = MDAAcqEventModules.positions(posList_, null, core_);
          // TODO: is acq engine supposed to move multiple stages?
          // Yes: when moving to a new position, all stages in the MultiStagePosition instance
          // should be moved to the desired location
@@ -516,12 +556,15 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          // whatever is asked to do.
       }
 
+      Function<AcquisitionEvent, Iterator<AcquisitionEvent>> timelapse = null;
       if (acquisitionSettings.useFrames()) {
          timelapse = MDAAcqEventModules.timelapse(acquisitionSettings.numFrames(),
                acquisitionSettings.intervalMs(), null);
          // TODO custom time intervals
       }
 
+      ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
+              = new ArrayList<>();
       if (acquisitionSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
          if (acquisitionSettings.usePositionList()) {
             acqFunctions.add(positions);
@@ -609,22 +652,23 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
             if (sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE
-                  || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL
-                  && event.getAxisPosition("position") != null) {
-               if (startTime_ == 0) {
-                  startTime_ = System.currentTimeMillis();
-               }
-
-               int thisPosition = (int) event.getAxisPosition("position");
-               if (thisPosition != lastPositionIndex_) {
-                  relativePositionStartTime_ =  System.currentTimeMillis() - startTime_;
-                  lastPositionIndex_ = (int) event.getAxisPosition("position");
-                  positionMoved_ = true;
-               }
-               if (positionMoved_) {
-                  long relativeStartTime = relativePositionStartTime_
-                        + event.getMinimumStartTimeAbsolute() - startTime_;
-                  event.setMinimumStartTime(relativeStartTime);
+                  || sequenceSettings.acqOrderMode() == AcqOrderMode.POS_TIME_SLICE_CHANNEL) {
+               Object pPos = event.getAxisPosition("position");
+               if (pPos != null && pPos instanceof Integer) {
+                  if (startTime_ == 0) {
+                     startTime_ = System.currentTimeMillis();
+                  }
+                  int thisPosition = (int) event.getAxisPosition("position");
+                  if (thisPosition != lastPositionIndex_) {
+                     relativePositionStartTime_ = System.currentTimeMillis() - startTime_;
+                     lastPositionIndex_ = (int) event.getAxisPosition("position");
+                     positionMoved_ = true;
+                  }
+                  if (positionMoved_ && event.getMinimumStartTimeAbsolute() != null) {
+                     long relativeStartTime = relativePositionStartTime_
+                             + event.getMinimumStartTimeAbsolute() - startTime_;
+                     event.setMinimumStartTime(relativeStartTime);
+                  }
                }
             }
             if (event.getMinimumStartTimeAbsolute() != null) {
@@ -725,7 +769,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
     *
     * @return The Hook.
     */
-   protected AcquisitionHook autofocusHookBefore(int skipFrames) {
+   protected AcquisitionHook autofocusHook(int skipFrames) {
       return new AcquisitionHook() {
 
          @Override
@@ -739,13 +783,18 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                   return event;
                }
                try {
-                  // this hook is called before the engine changes the hardware
-                  // since we want to leave the system in a focussed state, first
-                  // move the XY stage to where we want to image, then autofocus.
-                  if (event.getXPosition() != null && event.getYPosition() != null) {
-                     studio_.core().setXYPosition(event.getXPosition(), event.getYPosition());
-                  }
                   studio_.getAutofocusManager().getAutofocusMethod().fullFocus();
+                  String posName = event.getTags().get(AcqEngMetadata.POS_NAME);
+                  if (posName != null) {
+                     MultiStagePosition msp = new MultiStagePosition();
+                     msp.setLabel(posName);
+                     for (String deviceName : event.getStageDeviceNames()) {
+                        msp.add(StagePosition.create1D(deviceName, core_.getPosition(deviceName)));
+                     }
+                     positionMap_.put(posName, msp);
+                  }
+                  // TODO: Read back the position of the focus drive, and somehow perpetuate it back
+                  // to the StagePositionList that is in use.
                } catch (Exception ex) {
                   studio_.logs().logError(ex, "Failed to autofocus.");
                }
@@ -756,6 +805,42 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          @Override
          public void close() {
             // nothing to do here
+         }
+      };
+   }
+
+   /**
+    * Hook function that updates the stagePositions in this event with the stage positions last set
+    * by autofocus.  Will only run if autofocus is enabled.  Look for the positionLabel in the
+    * event's tags, see if we have that in our positionMap_, and if so, update the stage
+    * positions in the event.
+    */
+   public AcquisitionHook adjustZDrivesHook() {
+      return new AcquisitionHook() {
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            // If we do not have previous positions, there is no point in running this code.
+            if (positionMap_.isEmpty()) {
+               return event;
+            }
+            String posName = event.getTags().get(AcqEngMetadata.POS_NAME);
+            if (posName != null) {
+               MultiStagePosition msp = positionMap_.get(posName);
+               if (msp != null) {
+                  for (int i = 0; i < msp.size(); i++) {
+                     StagePosition sp = msp.get(i);
+                     if (sp != null && sp.is1DStagePosition()) {
+                        event.setStageCoordinate(sp.getStageDeviceLabel(), sp.get1DPosition());
+                     }
+                  }
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+            // nothing to do
          }
       };
    }
@@ -787,7 +872,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             try {
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
-                  if (event.getZIndex() == 0) {
+                  if (event.getZIndex() != null && event.getZIndex() == 0) {
                      if (!event.isZSequenced() && sequenceSettings.useChannels()
                              && (sequenceSettings.acqOrderMode()
                                        == AcqOrderMode.TIME_POS_SLICE_CHANNEL
@@ -936,7 +1021,26 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public void close() {
+         }
+      };
+   }
 
+   private AcquisitionHook restorePositionHook(MultiStagePosition msp) {
+      return new AcquisitionHook() {
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.isAcquisitionFinishedEvent() && msp != null) {
+               try {
+                  MultiStagePosition.goToPosition(msp, core_);
+               } catch (Exception e) {
+                  ReportingUtils.showError(e);
+               }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
          }
       };
    }
@@ -1623,6 +1727,14 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
       if (event.getStore().equals(curStore_)) {
          curStore_ = null;
          curPipeline_ = null;
+         if (currentAcquisition_ != null) {
+            try {
+               currentAcquisition_.checkForExceptions();
+            } catch (Exception ex) {
+               studio_.logs().logError(ex);
+               studio_.logs().showMessage("Acquisition problem: " + ex.getMessage());
+            }
+         }
          currentAcquisition_ = null;
          studio_.events().unregisterForEvents(this);
       }

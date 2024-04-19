@@ -49,7 +49,7 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.internal.zmq.ZMQSocketWrapper;
+import org.micromanager.pyjavaz.ZMQSocketWrapper;
 
 /**
  * Options dialog for MMStudio.
@@ -260,7 +260,8 @@ public final class OptionsDlg extends JDialog {
             AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected()));
 
       final JCheckBox runServer = new JCheckBox();
-      runServer.setText("Run server on port " + ZMQSocketWrapper.STARTING_PORT_NUMBER);
+      runServer.setText("Run pycro-manager server on port "
+              + ZMQSocketWrapper.STARTING_PORT_NUMBER);
       runServer.setSelected(mmStudio.settings().getShouldRunZMQServer());
       runServer.addActionListener((ActionEvent arg0) -> {
          if (runServer.isSelected()) {
