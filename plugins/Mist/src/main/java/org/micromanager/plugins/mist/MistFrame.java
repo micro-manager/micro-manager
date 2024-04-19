@@ -100,7 +100,7 @@ public class MistFrame extends JFrame {
     * @param studio The Studio object.
     */
    public MistFrame(Studio studio, DisplayWindow ourWindow) {
-      super("Mist Plugin");
+      super("Mist Plugin for " + ourWindow.getName());
       studio_ = studio;
       ourWindow_ = ourWindow;
       ourProvider_ = ourWindow.getDataProvider();
@@ -478,11 +478,12 @@ public class MistFrame extends JFrame {
       final int newNrP = dp.getSummaryMetadata().getIntendedDimensions().getP()
               / mistEntries.size();
       int maxNumImages = (channelList.size())
-              * (maxes.getOrDefault(Coords.T, 0) - mins.getOrDefault(Coords.T, 0))
-              * (maxes.getOrDefault(Coords.Z, 0) - mins.getOrDefault(Coords.Z, 0))
+              * (maxes.getOrDefault(Coords.T, 0) - mins.getOrDefault(Coords.T, 0) + 1)
+              * (maxes.getOrDefault(Coords.Z, 0) - mins.getOrDefault(Coords.Z, 0) + 1)
               * newNrP;
       ProgressMonitor monitor = new ProgressMonitor(this,
               "Stitching images...", null, 0, maxNumImages);
+      DataViewer newDataViewer = null;
       try {
          // create datastore to hold the result
          Coords dims = dp.getSummaryMetadata().getIntendedDimensions();
@@ -491,7 +492,7 @@ public class MistFrame extends JFrame {
                  .imageWidth(newWidth).intendedDimensions(cb.build())
                  .build());
          if (profileSettings_.getBoolean("shouldDisplay", true)) {
-            DataViewer dv = studio_.displays().createDisplay(newStore);
+            newDataViewer = studio_.displays().createDisplay(newStore);
          }
          Coords id = dp.getSummaryMetadata().getIntendedDimensions();
          Coords.Builder intendedDimensionsB = dp.getSummaryMetadata().getIntendedDimensions().copyBuilder();
@@ -513,6 +514,10 @@ public class MistFrame extends JFrame {
                      z++) {
                   for (int newP = 0; newP < newNrP; newP++) {
                      if (monitor.isCanceled()) {
+                        newStore.freeze();
+                        if (newDataViewer == null) {
+                           newStore.close();
+                        }
                         SwingUtilities.invokeLater(() -> {
                            assembleButton_.setEnabled(true);
                         });
@@ -523,14 +528,22 @@ public class MistFrame extends JFrame {
                      boolean imgAdded = false;
                      for (int p = 0; p < mistEntries.size(); p++) {
                         if (monitor.isCanceled()) {
+                           newStore.freeze();
+                           if (newDataViewer == null) {
+                              newStore.close();
+                           }
                            SwingUtilities.invokeLater(() -> {
                               assembleButton_.setEnabled(true);
                            });
                            return;
                         }
-                        Image img = dp.getImage(imgCb.c(c).t(t).z(z)
+                        Image img = null;
+                        Coords coords = imgCb.c(c).t(t).z(z)
                                 .p(newP * mistEntries.size() + p)
-                                .build());
+                                .build();
+                        if (dp.hasImage(coords)) {
+                           img = dp.getImage(coords);
+                        }
                         if (img != null) {
                            imgAdded = true;
                            String posName = img.getMetadata().getPositionName("");
@@ -567,6 +580,15 @@ public class MistFrame extends JFrame {
       } catch (NullPointerException npe) {
          studio_.logs().showError("Coding error in Mist plugin: " + npe.getMessage());
       } finally {
+         try {
+            newStore.freeze();
+            if (newDataViewer == null) {
+               newStore.close();
+            }
+         } catch (IOException ioe) {
+            studio_.logs().logError(ioe, "IO Error while freezing DataProvider");
+         }
+
          SwingUtilities.invokeLater(() -> {
             SwingUtilities.invokeLater(() -> monitor.setProgress(maxNumImages));
             assembleButton_.setEnabled(true);
