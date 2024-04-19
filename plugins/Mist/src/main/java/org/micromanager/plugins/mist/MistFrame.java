@@ -475,10 +475,16 @@ public class MistFrame extends JFrame {
       int newWidth = maxX + imWidth;
       int newHeight = maxY + imHeight;
 
+      final int newNrP = dp.getSummaryMetadata().getIntendedDimensions().getP()
+              / mistEntries.size();
+      int maxNumImages = (channelList.size())
+              * (maxes.getOrDefault(Coords.T, 0) - mins.getOrDefault(Coords.T, 0))
+              * (maxes.getOrDefault(Coords.Z, 0) - mins.getOrDefault(Coords.Z, 0))
+              * newNrP;
+      ProgressMonitor monitor = new ProgressMonitor(this,
+              "Stitching images...", null, 0, maxNumImages);
       try {
          // create datastore to hold the result
-         final int newNrP = dp.getSummaryMetadata().getIntendedDimensions().getP()
-                 / mistEntries.size();
          Coords dims = dp.getSummaryMetadata().getIntendedDimensions();
          Coords.Builder cb = dims.copyBuilder().p(newNrP);
          newStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().imageHeight(newHeight)
@@ -495,12 +501,6 @@ public class MistFrame extends JFrame {
             }
          }
          Coords intendedDimensions = intendedDimensionsB.build();
-         int maxNumImages = (intendedDimensions.getC())
-                 * (intendedDimensions.getT())
-                 * (intendedDimensions.getZ())
-                 * newNrP;
-         ProgressMonitor monitor = new ProgressMonitor(this,
-                    "Stitching images...", null, 0, maxNumImages);
          Coords.Builder imgCb = studio_.data().coordsBuilder();
          int nrImages = 0;
          for (int c = 0; c < intendedDimensions.getC(); c++) {
@@ -562,13 +562,13 @@ public class MistFrame extends JFrame {
                }
             }
          }
-         SwingUtilities.invokeLater(() -> monitor.setProgress(maxNumImages));
       } catch (IOException e) {
          studio_.logs().showError("Error creating new data store: " + e.getMessage());
       } catch (NullPointerException npe) {
          studio_.logs().showError("Coding error in Mist plugin: " + npe.getMessage());
       } finally {
          SwingUtilities.invokeLater(() -> {
+            SwingUtilities.invokeLater(() -> monitor.setProgress(maxNumImages));
             assembleButton_.setEnabled(true);
          });
       }
