@@ -54,6 +54,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
@@ -407,6 +408,7 @@ public class MistFrame extends JFrame {
                  + mistFile.getAbsolutePath());
          return;
       }
+      UpdatableAlert updatableAlert = studio_.alerts().postUpdatableAlert("Mist", "Started processing");
       try {
          // parse global position file into MistGlobalData objects
          BufferedReader br
@@ -475,19 +477,22 @@ public class MistFrame extends JFrame {
       int newWidth = maxX + imWidth;
       int newHeight = maxY + imHeight;
 
+      final int newNrC = channelList.size();
+      final int newNrT = (maxes.getOrDefault(Coords.T, 0) - mins.getOrDefault(Coords.T, 0)
+              + 1);
+      final int newNrZ = (maxes.getOrDefault(Coords.Z, 0) - mins.getOrDefault(Coords.Z, 0)
+              + 1);
       final int newNrP = dp.getSummaryMetadata().getIntendedDimensions().getP()
               / mistEntries.size();
-      int maxNumImages = (channelList.size())
-              * (maxes.getOrDefault(Coords.T, 0) - mins.getOrDefault(Coords.T, 0) + 1)
-              * (maxes.getOrDefault(Coords.Z, 0) - mins.getOrDefault(Coords.Z, 0) + 1)
-              * newNrP;
+      int maxNumImages = newNrC * newNrT * newNrZ * newNrP;
       ProgressMonitor monitor = new ProgressMonitor(this,
               "Stitching images...", null, 0, maxNumImages);
       DataViewer newDataViewer = null;
+      long startTime = System.currentTimeMillis();
       try {
          // create datastore to hold the result
          Coords dims = dp.getSummaryMetadata().getIntendedDimensions();
-         Coords.Builder cb = dims.copyBuilder().p(newNrP);
+         Coords.Builder cb = dims.copyBuilder().c(newNrC).t(newNrT).z(newNrZ).p(newNrP);
          newStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().imageHeight(newHeight)
                  .imageWidth(newWidth).intendedDimensions(cb.build())
                  .build());
@@ -504,10 +509,12 @@ public class MistFrame extends JFrame {
          Coords intendedDimensions = intendedDimensionsB.build();
          Coords.Builder imgCb = studio_.data().coordsBuilder();
          int nrImages = 0;
+         int tmpC = -1;
          for (int c = 0; c < intendedDimensions.getC(); c++) {
             if (!channelList.contains(dp.getSummaryMetadata().getChannelNameList().get(c))) {
                break;
             }
+            tmpC++;
             for (int t = mins.getOrDefault(Coords.T, 0);
                      t <= maxes.getOrDefault(Coords.T, 0); t++) {
                for (int z = mins.getOrDefault(Coords.Z, 0); z <= maxes.getOrDefault(Coords.Z, 0);
@@ -562,7 +569,7 @@ public class MistFrame extends JFrame {
                      }
                      if (imgAdded) {
                         Image newImg = studio_.data().ij().createImage(newImgPlus.getProcessor(),
-                                imgCb.c(c).t(t - mins.get(Coords.T)).z(z - mins.get(Coords.Z))
+                                imgCb.c(tmpC).t(t - mins.get(Coords.T)).z(z - mins.get(Coords.Z))
                                         .p(newP).build(),
                                 dp.getImage(imgCb.c(c).t(t).z(z).p(newP * mistEntries.size())
                                         .build()).getMetadata().copyBuilderWithNewUUID().build());
@@ -570,6 +577,10 @@ public class MistFrame extends JFrame {
                         nrImages++;
                         final int count = nrImages;
                         SwingUtilities.invokeLater(() -> monitor.setProgress(count));
+                        System.gc();
+                        int processTime = (int) ((System.currentTimeMillis() - startTime) / 1000);
+                        updatableAlert.setText("Processed " + nrImages + " images of " + maxNumImages
+                                + " in " + processTime + " seconds");
                      }
                   }
                }
