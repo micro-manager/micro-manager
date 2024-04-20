@@ -320,6 +320,7 @@ public final class MultipageTiffWriter {
       return allocateByteBuffer(capacity);
    }
 
+
    private static void tryRecycleLargeBuffer(ByteBuffer b) {
       // Keep up to BUFFER_POOL_SIZE direct buffers of the current size
       if (BUFFER_POOL_SIZE == 0 || !b.isDirect()) {
@@ -437,6 +438,13 @@ public final class MultipageTiffWriter {
       ByteBuffer indexMapNumEntries = allocateByteBuffer(4);
       indexMapNumEntries.putInt(0, numImages);
       fileChannelWrite(indexMapNumEntries, indexMapFirstEntry_ - 4);
+      // no more data will be written, clear the buffers to free up memory.
+      if (BUFFER_POOL_SIZE == 0) {
+         return;
+      }
+      synchronized (MultipageTiffWriter.class) {
+         pooledBuffers_.clear();
+      }
    }
 
    /**
