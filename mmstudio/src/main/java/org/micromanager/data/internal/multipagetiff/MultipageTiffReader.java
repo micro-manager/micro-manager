@@ -89,6 +89,7 @@ public final class MultipageTiffReader {
    private PropertyMap imageFormatReadFromSummary_;
 
    private HashMap<Coords, Long> coordsToOffset_;
+   private ImageByteBuffer imageByteBuffer_;
 
    /**
     * This constructor is used for a file that is currently being written.
@@ -421,8 +422,8 @@ public final class MultipageTiffReader {
       return (DefaultImage) readImage(data);
    }
 
-   private Image readImage(IFDData data) throws IOException {
-      ByteBuffer pixelBuffer = ByteBuffer.allocate((int) data.bytesPerImage).order(byteOrder_);
+   private synchronized Image readImage(IFDData data) throws IOException {
+      ByteBuffer pixelBuffer = getByteBuffer((int) data.bytesPerImage, byteOrder_);
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
       fileChannel_.read(mdBuffer, data.mdOffset);
@@ -518,6 +519,17 @@ public final class MultipageTiffReader {
          // can be thrown when meatadata are bad, todo: report
          return null;
       }
+   }
+
+   private ByteBuffer getByteBuffer(int length, ByteOrder byteOrder) {
+      if (imageByteBuffer_ != null
+              && imageByteBuffer_.getSize() == length
+              && imageByteBuffer_.getByteOrder() == byteOrder) {
+         return imageByteBuffer_.getBuffer();
+      } else {
+         imageByteBuffer_ = new ImageByteBuffer(length, byteOrder);
+      }
+      return imageByteBuffer_.getBuffer();
    }
 
    private IFDEntry readDirectoryEntry(int offset, ByteBuffer buffer) throws IOException {
