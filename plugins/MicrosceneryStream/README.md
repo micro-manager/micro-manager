@@ -27,6 +27,7 @@ For orginal readme see parent repo.
   - or './gradlew build' should work, too
 - run './gradlew copyRuntimeLibs' in microscenery and copy '/microsceneryDependencies' to "mm/plugins"
 - delete "mmCore.jar" from microsceneryDependencies
+- delete "miglayout-3.7.4.jar" from microsceneryDependencies
 - delete "protobuf-java-.." from "mm\plugins\Micro-Manager"
 - run 'ant jar' here
 - copy the content from '\build\Java\plugins' to '..\Micro-Manager-2.0gamma\plugins\Micro-Manager' or the actual mmplugin folder.
