@@ -510,7 +510,8 @@ public class MistFrame extends JFrame {
          Coords.Builder imgCb = studio_.data().coordsBuilder();
          int nrImages = 0;
          int tmpC = -1;
-         for (int c = 0; c < intendedDimensions.getC(); c++) {
+         for (int newP = 0; newP < newNrP; newP++) {
+            for (int c = 0; c < intendedDimensions.getC(); c++) {
             if (!channelList.contains(dp.getSummaryMetadata().getChannelNameList().get(c))) {
                break;
             }
@@ -519,7 +520,6 @@ public class MistFrame extends JFrame {
                      t <= maxes.getOrDefault(Coords.T, 0); t++) {
                for (int z = mins.getOrDefault(Coords.Z, 0); z <= maxes.getOrDefault(Coords.Z, 0);
                      z++) {
-                  for (int newP = 0; newP < newNrP; newP++) {
                      if (monitor.isCanceled()) {
                         newStore.freeze();
                         if (newDataViewer == null) {
