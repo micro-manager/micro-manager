@@ -569,7 +569,8 @@ public class MistFrame extends JFrame {
                      }
                      if (imgAdded) {
                         Image newImg = studio_.data().ij().createImage(newImgPlus.getProcessor(),
-                                imgCb.c(tmpC).t(t - mins.get(Coords.T)).z(z - mins.get(Coords.Z))
+                                imgCb.c(tmpC).t(t - mins.getOrDefault(Coords.T, 0))
+                                        .z(z - mins.getOrDefault(Coords.Z, 0))
                                         .p(newP).build(),
                                 dp.getImage(imgCb.c(c).t(t).z(z).p(newP * mistEntries.size())
                                         .build()).getMetadata().copyBuilderWithNewUUID().build());
