@@ -9,7 +9,6 @@ import microscenery.Util;
 import microscenery.hardware.micromanagerConnection.MMCoreConnector;
 import microscenery.hardware.micromanagerConnection.MicromanagerWrapper;
 import microscenery.signals.AblationResults;
-import microscenery.signals.ClientSignal;
 import net.miginfocom.swing.MigLayout;
 import org.joml.Vector3f;
 import org.micromanager.Studio;
@@ -154,7 +153,9 @@ public class AblationPanel extends JPanel {
         int[] ya = polygon.ypoints;
         double pixelSize = this.studio.core().getPixelSizeUm();
 
-        Vector3f precision = Objects.requireNonNull(Util.getVector3(msSettings, "Ablation.precision")).div((float) pixelSize);
+        Vector3f ablationPrecisionSetting = Util.getVector3(msSettings, "Ablation.precision");
+        if (ablationPrecisionSetting == null) {ablationPrecisionSetting = new Vector3f(1f);}
+        Vector3f precision = ablationPrecisionSetting.div((float) pixelSize);
 
         // points to sample in image space
         List<Vector3f> samplePointsIS = new ArrayList<>();
