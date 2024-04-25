@@ -213,7 +213,7 @@ public class MistFrame extends JFrame {
 
                super.add(new JLabel(axis));
                SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
-                       (int) ourProvider_.getNextIndex(axis), 1);
+                       ourProvider_.getNextIndex(axis), 1);
                mins.put(axis, 0);
                final JSpinner minSpinner = new JSpinner(model);
                JFormattedTextField field =
@@ -236,8 +236,8 @@ public class MistFrame extends JFrame {
                });
                super.add(minSpinner, "wmin 60");
 
-               model = new SpinnerNumberModel((int) ourProvider_.getNextIndex(axis),
-                       1, (int) ourProvider_.getNextIndex(axis), 1);
+               model = new SpinnerNumberModel(ourProvider_.getNextIndex(axis),
+                       1, ourProvider_.getNextIndex(axis), 1);
                maxes.put(axis, ourProvider_.getNextIndex(axis) - 1);
                final JSpinner maxSpinner = new JSpinner(model);
                field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
