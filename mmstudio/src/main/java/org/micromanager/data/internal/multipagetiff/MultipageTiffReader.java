@@ -422,19 +422,8 @@ public final class MultipageTiffReader {
       return (DefaultImage) readImage(data);
    }
 
-   private ByteBuffer getByteBuffer(int length, ByteOrder byteOrder) {
-      if (imageByteBuffer_ != null
-            && imageByteBuffer_.getSize() == length
-            && imageByteBuffer_.getByteOrder() == byteOrder) {
-      return imageByteBuffer_.getBuffer();
-      } else {
-         imageByteBuffer_ = new ImageByteBuffer(length, byteOrder);
-         return imageByteBuffer_.getBuffer();
-      }
-   }
-
    private Image readImage(IFDData data) throws IOException {
-      ByteBuffer pixelBuffer = getByteBuffer((int)data.bytesPerImage, byteOrder_);
+      ByteBuffer pixelBuffer = getByteBuffer((int) data.bytesPerImage, byteOrder_);
       pixelBuffer.rewind();
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
@@ -530,6 +519,17 @@ public final class MultipageTiffReader {
 
          // can be thrown when meatadata are bad, todo: report
          return null;
+      }
+   }
+
+   private ByteBuffer getByteBuffer(int length, ByteOrder byteOrder) {
+      if (imageByteBuffer_ != null
+              && imageByteBuffer_.getSize() == length
+              && imageByteBuffer_.getByteOrder() == byteOrder) {
+         return imageByteBuffer_.getBuffer();
+      } else {
+         imageByteBuffer_ = new ImageByteBuffer(length, byteOrder);
+         return imageByteBuffer_.getBuffer();
       }
    }
 
