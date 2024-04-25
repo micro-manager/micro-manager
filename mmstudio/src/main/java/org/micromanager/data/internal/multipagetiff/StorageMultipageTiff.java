@@ -1011,7 +1011,7 @@ public final class StorageMultipageTiff implements Storage {
       }
       try {
          MultipageTiffReader mptReader = coordsToReader_.get(coords);
-         if (lastReader_ != null && mptReader != lastReader_) {
+         if (!amInWriteMode_ && lastReader_ != null && mptReader != lastReader_) {
             // this could be optional.  Not doing it can result in large memory leaks.
             lastReader_.pause();
          }
