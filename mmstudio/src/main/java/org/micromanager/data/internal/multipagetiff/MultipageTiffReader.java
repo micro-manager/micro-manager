@@ -89,6 +89,7 @@ public final class MultipageTiffReader {
    private PropertyMap imageFormatReadFromSummary_;
 
    private HashMap<Coords, Long> coordsToOffset_;
+   private long maxImageOffset_ = Long.MAX_VALUE;
    private ImageByteBuffer imageByteBuffer_;
 
    /**
@@ -107,6 +108,11 @@ public final class MultipageTiffReader {
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
    }
 
+   /**
+    * Called by MultipageTiffWriter.
+    *
+    * @param indexMap Relation between coords and indices.
+    */
    public void setIndexMap(HashMap<Coords, Long> indexMap) {
       coordsToOffset_ = indexMap;
    }
@@ -333,14 +339,15 @@ public final class MultipageTiffReader {
       return unsignInt(buffer1.getInt(4));
    }
 
-   private void readIndexMap() throws IOException, InvalidIndexMapException {
+   private void readIndexMap() throws IOException {
       long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.INDEX_MAP_OFFSET_HEADER, 8);
       ByteBuffer header = readIntoBuffer(offset, 8);
       if (header.getInt(0) != MultipageTiffWriter.INDEX_MAP_HEADER) {
          throw new InvalidIndexMapException();
       }
       int numMappings = header.getInt(4);
-      coordsToOffset_ = new HashMap<Coords, Long>();
+      coordsToOffset_ = new HashMap<>();
+      maxImageOffset_ = 0;
       ByteBuffer mapBuffer = readIntoBuffer(offset + 8, 20 * numMappings);
       for (int i = 0; i < numMappings; i++) {
          int channel = mapBuffer.getInt(i * 20);
@@ -351,8 +358,11 @@ public final class MultipageTiffReader {
          if (imageOffset == 0) {
             break; // end of index map reached
          }
-         //If a duplicate label is read, forget about the previous one
-         //if data has been intentionally overwritten, this gives the most current version
+         if (imageOffset > maxImageOffset_) {
+            maxImageOffset_ = imageOffset;
+         }
+         // If a duplicate label is read, forget about the previous one
+         // if data has been intentionally overwritten, this gives the most current version
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
          builder.channel(channel)
                .z(slice)
@@ -412,17 +422,21 @@ public final class MultipageTiffReader {
          // writing it?
          return null;
       }
+      long byteOffset = coordsToOffset_.get(coords);
+      if (raFile_ == null) {
+         createFileChannel(false);
+      }
+
       if (fileChannel_ == null) {
          ReportingUtils.logError("Attempted to read image on FileChannel that is null");
          return null;
       }
-      long byteOffset = coordsToOffset_.get(coords);
 
       IFDData data = readIFD(byteOffset);
-      return (DefaultImage) readImage(data);
+      return (DefaultImage) readImage(data, byteOffset >= maxImageOffset_);
    }
 
-   private Image readImage(IFDData data) throws IOException {
+   private Image readImage(IFDData data, boolean closeFile) throws IOException {
       ByteBuffer pixelBuffer = getByteBuffer((int) data.bytesPerImage, byteOrder_);
       pixelBuffer.rewind();
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
@@ -478,6 +492,23 @@ public final class MultipageTiffReader {
             }
             formatPmap = formatPmap.copyBuilder().putEnumAsString(
                   PropertyKey.PIXEL_TYPE.key(), pixelType).build();
+         }
+
+         // We are closing because the current JVM we use (8) holds on to all memory
+         // touched by the filechannel.  This is release when closing the file.  We close
+         // the file when the last image in it is read.  This does not mean that user-code
+         // will not try to read other images in this file.  Better approaches are welcome
+         // but for the time being this is the only way I can think off not to run out of
+         // RAMM when virtually reading large data sets.
+         if (closeFile) {
+            if (fileChannel_ != null) {
+               fileChannel_.close();
+               fileChannel_ = null;
+             }
+            if (raFile_ != null) {
+               raFile_.close();
+               raFile_ = null;
+            }
          }
 
          // TODO We should avoid converting to Java array and back, instead using
@@ -633,7 +664,7 @@ public final class MultipageTiffReader {
             if (data.nextIFD == 0) {
                break;
             }
-            Image image = readImage(data);
+            Image image = readImage(data, false);
             if (((DefaultMetadata) image.getMetadata()).toPropertyMap().equals(
                   new DefaultMetadata.Builder().build())) {
                //Blank placeholder image, dont add to index map
