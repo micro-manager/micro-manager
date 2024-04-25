@@ -433,10 +433,10 @@ public final class MultipageTiffReader {
       }
 
       IFDData data = readIFD(byteOffset);
-      return (DefaultImage) readImage(data, byteOffset >= maxImageOffset_);
+      return (DefaultImage) readImage(data);
    }
 
-   private Image readImage(IFDData data, boolean closeFile) throws IOException {
+   private Image readImage(IFDData data) throws IOException {
       ByteBuffer pixelBuffer = getByteBuffer((int) data.bytesPerImage, byteOrder_);
       pixelBuffer.rewind();
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
@@ -494,22 +494,6 @@ public final class MultipageTiffReader {
                   PropertyKey.PIXEL_TYPE.key(), pixelType).build();
          }
 
-         // We are closing because the current JVM we use (8) holds on to all memory
-         // touched by the filechannel.  This is release when closing the file.  We close
-         // the file when the last image in it is read.  This does not mean that user-code
-         // will not try to read other images in this file.  Better approaches are welcome
-         // but for the time being this is the only way I can think off not to run out of
-         // RAMM when virtually reading large data sets.
-         if (closeFile) {
-            if (fileChannel_ != null) {
-               fileChannel_.close();
-               fileChannel_ = null;
-             }
-            if (raFile_ != null) {
-               raFile_.close();
-               raFile_ = null;
-            }
-         }
 
          // TODO We should avoid converting to Java array and back, instead using
          // a nio buffer directly as the Image storage (even better if memory
@@ -613,11 +597,17 @@ public final class MultipageTiffReader {
    }
 
    /**
-    * Closes this MultipageTIffReader. Saves comments.
+    * Closes the fileChannel and file.  Needed (on Windows) to release memory.
+    * We are closing because the current JVM we use (8) holds on to all memory
+    * touched by the filechannel.  This is released when closing the file.  We close
+    * the file when the StorageMultipageTiff swicthes to a differen reader.  This does
+    * not mean that user-code will not try to read other images in this file.
+    * Better approaches are welcome but for the time being this is the only way I
+    * can think off not to run out of RAMM when virtually reading large data sets.
     *
-    * @throws IOException Accessing disk can cause these.
+    * @throws IOException Accessing disk can cause these
     */
-   public void close() throws IOException {
+   void pause() throws IOException {
       if (fileChannel_ != null) {
          fileChannel_.close();
          fileChannel_ = null;
@@ -626,6 +616,14 @@ public final class MultipageTiffReader {
          raFile_.close();
          raFile_ = null;
       }
+   }
+   /**
+    * Closes this MultipageTIffReader. Saves comments.
+    *
+    * @throws IOException Accessing disk can cause these.
+    */
+   public void close() throws IOException {
+      pause();
       if (masterStorage_ != null) {
          try {
             CommentsHelper.saveComments(masterStorage_.getDatastore());
@@ -664,7 +662,7 @@ public final class MultipageTiffReader {
             if (data.nextIFD == 0) {
                break;
             }
-            Image image = readImage(data, false);
+            Image image = readImage(data);
             if (((DefaultMetadata) image.getMetadata()).toPropertyMap().equals(
                   new DefaultMetadata.Builder().build())) {
                //Blank placeholder image, dont add to index map

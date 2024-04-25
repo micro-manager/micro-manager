@@ -112,6 +112,7 @@ public final class StorageMultipageTiff implements Storage {
 
    // Map of image Coords to files
    private Map<Coords, MultipageTiffReader> coordsToReader_;
+   private MultipageTiffReader lastReader_;
    private Map<Coords, List<Coords>> coordsIndexedMissingC_;
    // Cache the axes that are in use
    private final Set<String> axesInUse_;
@@ -1009,7 +1010,13 @@ public final class StorageMultipageTiff implements Storage {
          return null;
       }
       try {
-         return coordsToReader_.get(coords).readImage(coords);
+         MultipageTiffReader mptReader = coordsToReader_.get(coords);
+         if (lastReader_ != null && mptReader != lastReader_) {
+            // this could be optional.  Not doing it can result in large memory leaks.
+            lastReader_.pause();
+         }
+         lastReader_ = mptReader;
+         return mptReader.readImage(coords);
       } catch (IOException ex) {
          ReportingUtils.logError(ex, "Failed to read image at " + coords);
          return null;
