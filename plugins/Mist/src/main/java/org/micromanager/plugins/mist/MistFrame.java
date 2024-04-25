@@ -399,7 +399,8 @@ public class MistFrame extends JFrame {
     * @param newStore Datastore to write the stitched images to.
     */
    private void assembleData(String locationsFile, final DataViewer dataViewer, Datastore newStore,
-                             List<String> channelList, Map<String, Integer> mins, Map<String, Integer> maxes) {
+                             List<String> channelList, Map<String, Integer> mins,
+                             Map<String, Integer> maxes) {
       List<MistGlobalData> mistEntries = new ArrayList<>();
 
       File mistFile = new File(locationsFile);
@@ -408,7 +409,8 @@ public class MistFrame extends JFrame {
                  + mistFile.getAbsolutePath());
          return;
       }
-      UpdatableAlert updatableAlert = studio_.alerts().postUpdatableAlert("Mist", "Started processing");
+      UpdatableAlert updatableAlert = studio_.alerts().postUpdatableAlert("Mist",
+              "Started processing");
       try {
          // parse global position file into MistGlobalData objects
          BufferedReader br
@@ -500,7 +502,8 @@ public class MistFrame extends JFrame {
             newDataViewer = studio_.displays().createDisplay(newStore);
          }
          Coords id = dp.getSummaryMetadata().getIntendedDimensions();
-         Coords.Builder intendedDimensionsB = dp.getSummaryMetadata().getIntendedDimensions().copyBuilder();
+         Coords.Builder intendedDimensionsB = dp.getSummaryMetadata().getIntendedDimensions()
+                 .copyBuilder();
          for (String axis : new String[] {Coords.C, Coords.P, Coords.T, Coords.C}) {
             if (!id.hasAxis(axis)) {
                intendedDimensionsB.index(axis, 1);
@@ -509,17 +512,17 @@ public class MistFrame extends JFrame {
          Coords intendedDimensions = intendedDimensionsB.build();
          Coords.Builder imgCb = studio_.data().coordsBuilder();
          int nrImages = 0;
-         int tmpC = -1;
          for (int newP = 0; newP < newNrP; newP++) {
+            int tmpC = -1;
             for (int c = 0; c < intendedDimensions.getC(); c++) {
-            if (!channelList.contains(dp.getSummaryMetadata().getChannelNameList().get(c))) {
-               break;
-            }
-            tmpC++;
-            for (int t = mins.getOrDefault(Coords.T, 0);
-                     t <= maxes.getOrDefault(Coords.T, 0); t++) {
-               for (int z = mins.getOrDefault(Coords.Z, 0); z <= maxes.getOrDefault(Coords.Z, 0);
-                     z++) {
+               if (!channelList.contains(dp.getSummaryMetadata().getChannelNameList().get(c))) {
+                  break;
+               }
+               tmpC++;
+               for (int t = mins.getOrDefault(Coords.T, 0);
+                        t <= maxes.getOrDefault(Coords.T, 0); t++) {
+                  for (int z = mins.getOrDefault(Coords.Z, 0); z <= maxes.getOrDefault(Coords.Z, 0);
+                        z++) {
                      if (monitor.isCanceled()) {
                         newStore.freeze();
                         if (newDataViewer == null) {
@@ -560,8 +563,8 @@ public class MistFrame extends JFrame {
                               if (entry.getSiteNr() == siteNr) {
                                  int x = entry.getPositionX();
                                  int y = entry.getPositionY();
-                                 ImageProcessor ip = DefaultImageJConverter.createProcessor(img, false);
-                                         //.createProcessor(img);
+                                 ImageProcessor ip = DefaultImageJConverter.createProcessor(img,
+                                         false);
                                  newImgPlus.getProcessor().insert(ip, x, y);
                               }
                            }
@@ -579,8 +582,8 @@ public class MistFrame extends JFrame {
                         final int count = nrImages;
                         SwingUtilities.invokeLater(() -> monitor.setProgress(count));
                         int processTime = (int) ((System.currentTimeMillis() - startTime) / 1000);
-                        updatableAlert.setText("Processed " + nrImages + " images of " + maxNumImages
-                                + " in " + processTime + " seconds");
+                        updatableAlert.setText("Processed " + nrImages + " images of "
+                                + maxNumImages + " in " + processTime + " seconds");
                      }
                   }
                }
