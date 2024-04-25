@@ -1,1 +1,1 @@
-xcopy /y "D:\repos\micro-manager-microscenery-plugin\build\Java\plugins\MicrosceneryStream.jar" "C:\Program Files\Micro-Manager-2.0\plugins\MicrosceneryStream.jar"
+xcopy /y "E:\repos\micro-manager-microscenery-plugin\build\Java\plugins\MicrosceneryStream.jar" "C:\Program Files\Micro-Manager-2.0\plugins\MicrosceneryStream.jar"
