@@ -216,12 +216,6 @@ public final class DefaultDataManager implements DataManager {
       if (!dirFile.isDirectory()) {
          directory = dirFile.getParent();
       }
-      // when stored with multiple positions, we need to go one level up
-      // check by looking for a comments file
-      File tmpDirFile = new File(directory);
-      if ((new File(tmpDirFile.getParent() + File.separator + "comments.txt")).exists()) {
-         directory = tmpDirFile.getParent();
-      }
 
       DefaultDatastore result = new DefaultDatastore(studio_);
       // TODO: future additional file formats will need to be handled here.
