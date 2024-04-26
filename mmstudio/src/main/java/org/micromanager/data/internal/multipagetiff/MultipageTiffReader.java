@@ -423,7 +423,7 @@ public final class MultipageTiffReader {
          return null;
       }
       long byteOffset = coordsToOffset_.get(coords);
-      if (raFile_ == null) {
+      if (fileChannel_ == null) {
          createFileChannel(false);
       }
 
