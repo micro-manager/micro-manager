@@ -18,7 +18,7 @@ public final class ImageByteBuffer {
     * @param byteOrder The byte order of the buffer.
     */
    public ImageByteBuffer(int size, ByteOrder byteOrder) {
-      buffer_ = ByteBuffer.allocateDirect(size).order(byteOrder);
+      buffer_ = ByteBuffer.allocate(size).order(byteOrder);
       size_ = size;
       byteOrder_ = byteOrder;
    }
