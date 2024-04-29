@@ -617,6 +617,7 @@ public final class MultipageTiffReader {
          raFile_ = null;
       }
    }
+
    /**
     * Closes this MultipageTIffReader. Saves comments.
     *
