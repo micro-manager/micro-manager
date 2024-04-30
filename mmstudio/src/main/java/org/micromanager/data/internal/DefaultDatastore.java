@@ -40,6 +40,7 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.ndtiff.NDTiffAdapter;
 import org.micromanager.internal.UserCancelledException;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.PrioritizedEventBus;
@@ -529,6 +530,13 @@ public class DefaultDatastore implements Datastore {
          return storage_.getNumImages();
       }
       return -1;
+   }
+
+
+   public void increaseZoomLevel(int maxZoomLevel) {
+      if (storage_ instanceof NDTiffAdapter) {
+         ((NDTiffAdapter) storage_).increaseZoomLevel(maxZoomLevel);
+      }
    }
 
    /**

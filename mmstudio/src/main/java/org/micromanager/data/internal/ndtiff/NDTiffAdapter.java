@@ -10,12 +10,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
@@ -33,6 +31,7 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.ndtiffstorage.EssentialImageMetadata;
+import org.micromanager.ndtiffstorage.MultiresNDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffAPI;
 import org.micromanager.ndtiffstorage.NDTiffStorage;
 
@@ -47,7 +46,7 @@ public class NDTiffAdapter implements Storage {
 
    private static final int SAVING_QUEUE_SIZE = 40;
 
-   private NDTiffAPI storage_;
+   private MultiresNDTiffAPI storage_;
    private DefaultDatastore store_;
    private SummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
 
@@ -321,6 +320,10 @@ public class NDTiffAdapter implements Storage {
    @Override
    public void close() throws IOException {
       storage_.close();
+   }
+
+   public void increaseZoomLevel(int newMaxResolutionLevel) {
+      storage_.increaseMaxResolutionLevel(newMaxResolutionLevel);
    }
 
    /**
