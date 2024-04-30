@@ -19,7 +19,7 @@ public class MicrosceneryContext {
     public MicrosceneryContext(Studio studio) {
         mmCon = new MMCoreConnector(studio.core());
         try {
-            micromanagerWrapper = new MicromanagerWrapper(mmCon, new MMStudioConnector(studio),200,false);
+            micromanagerWrapper = new MicromanagerWrapper(mmCon, new MMStudioConnector(studio),200);
         } catch (IllegalStateException e){
             studio.alerts().postAlert("Microscoscenery: Illegal state", null, e.getMessage());
             throw e;

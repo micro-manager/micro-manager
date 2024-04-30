@@ -1,2 +1,2 @@
 xcopy /y "E:\repos\microscenery\core\build\libs\microscenery-core-1.0-SNAPSHOT.jar" "C:\Program Files\Micro-Manager-2.0\plugins\microscenery-core-1.0-SNAPSHOT.jar"
-xcopy /y "E:\repos\microscenery\core\build\libs\microscenery-core-1.0-SNAPSHOT.jar" "E:\repos\micro-manager\dependencies\artifacts\compile\microscenery-core-1.0-SNAPSHOT.jar"
+xcopy /y "E:\repos\microscenery\core\build\libs\microscenery-core-1.0-SNAPSHOT.jar" "E:\repos\micro-manager-microscenery-plugin\dependencies\artifacts\compile\microscenery-core-1.0-SNAPSHOT.jar"

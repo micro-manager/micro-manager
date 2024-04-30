@@ -18,7 +18,6 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class AblationPanel extends JPanel {
@@ -153,8 +152,7 @@ public class AblationPanel extends JPanel {
         int[] ya = polygon.ypoints;
         double pixelSize = this.studio.core().getPixelSizeUm();
 
-        Vector3f ablationPrecisionSetting = Util.getVector3(msSettings, "Ablation.precision");
-        if (ablationPrecisionSetting == null) {ablationPrecisionSetting = new Vector3f(1f);}
+        Vector3f ablationPrecisionSetting = Util.getVector3(msSettings, "Ablation.precision", new Vector3f(1f));
         Vector3f precision = ablationPrecisionSetting.div((float) pixelSize);
 
         // points to sample in image space
