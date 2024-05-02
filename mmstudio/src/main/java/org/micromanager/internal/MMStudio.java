@@ -1213,6 +1213,8 @@ public final class MMStudio implements Studio {
             + "before they are written to disk";
       private static final String SHOULD_USE_ACQENGJ
               = "Use new Acquisition Engine";
+      private static final String UNLOCK_AUTOFOCUS_DURING_Z_STACK
+              = "Unlock autofocus during Z stack";
 
       public boolean getShouldDeleteOldCoreLogs() {
          return profile().getSettings(MMStudio.class).getBoolean(
@@ -1271,6 +1273,16 @@ public final class MMStudio implements Studio {
          profile().getSettings(MMStudio.class).putBoolean(
                  SHOULD_USE_ACQENGJ, use);
          acquisitions().setAcquisitionSettings(acqSettings);
+      }
+
+      public boolean getUnlockAutofocusDuringZStack() {
+         return profile().getSettings(MMStudio.class).getBoolean(
+                 UNLOCK_AUTOFOCUS_DURING_Z_STACK, true);
+      }
+
+      public void setUnlockAutofocusDuringZStack(boolean use) {
+         profile().getSettings(MMStudio.class).putBoolean(
+                 UNLOCK_AUTOFOCUS_DURING_Z_STACK, use);
       }
    }
 }
