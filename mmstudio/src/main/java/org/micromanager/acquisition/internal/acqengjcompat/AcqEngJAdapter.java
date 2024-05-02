@@ -271,7 +271,7 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          // These hooks make sure that continuous-focus is off when running a Z stack.
          if (studio_.core().isContinuousFocusEnabled()
-                 && ((MMStudio) studio_).settings().getUnlockAutofocusInZStack()) {
+                 && ((MMStudio) studio_).settings().getUnlockAutofocusDuringZStack()) {
             currentAcquisition_.addHook(continuousFocusHookBefore(acquisitionSettings),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
             currentAcquisition_.addHook(continuousFocusHookAfter(acquisitionSettings),
