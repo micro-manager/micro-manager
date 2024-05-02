@@ -71,6 +71,7 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.MMException;
@@ -269,7 +270,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          }
 
          // These hooks make sure that continuous-focus is off when running a Z stack.
-         if (studio_.core().isContinuousFocusEnabled()) {
+         if (studio_.core().isContinuousFocusEnabled()
+                 && ((MMStudio) studio_).settings().getUnlockAutofocusDuringZStack()) {
             currentAcquisition_.addHook(continuousFocusHookBefore(acquisitionSettings),
                   AcquisitionAPI.BEFORE_HARDWARE_HOOK);
             currentAcquisition_.addHook(continuousFocusHookAfter(acquisitionSettings),
