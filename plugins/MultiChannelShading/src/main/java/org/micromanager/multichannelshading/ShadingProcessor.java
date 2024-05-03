@@ -65,6 +65,7 @@ public class ShadingProcessor implements Processor {
    private ClearCL ccl_;
    private ClearCLContext cclContext_;
    private ClearCLProgram cclProgram_;
+   private Boolean isAcqRunning_ = false;
 
    private final Set<Class<?>> alertSet_ = new HashSet<>();
 
@@ -151,14 +152,19 @@ public class ShadingProcessor implements Processor {
 
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata source) {
+      isAcqRunning_ = studio_.acquisitions().isAcquisitionRunning();
       summaryMetadata_ = source;
       match_ = false;
       if (channelGroup_.equals(summaryMetadata_.getChannelGroup())) {
-         for (String imagePreset : summaryMetadata_.getChannelNameList()) {
-            for (String preset : presets_) {
-               if (preset.equals(imagePreset)) {
-                  match_ = true;
-                  break;
+         if (!isAcqRunning_) {
+            match_ = true;
+         } else {
+            for (String imagePreset : summaryMetadata_.getChannelNameList()) {
+               for (String preset : presets_) {
+                  if (preset.equals(imagePreset)) {
+                     match_ = true;
+                     break;
+                  }
                }
             }
          }
@@ -172,8 +178,10 @@ public class ShadingProcessor implements Processor {
          if (!channelList.isEmpty()) {
             presetB.append(channelList.get(channelList.size() - 1));
          }
-         studio_.logs().showError("No matching channel and group found.  Add group "
-               + summaryMetadata_.getChannelGroup() + " and preset(s): " + presetB.toString());
+         String msg = "No matching channel and group found.  Add group "
+               + summaryMetadata_.getChannelGroup() + " and preset(s): " + presetB.toString();
+         studio_.logs().logError(msg);
+         studio_.alerts().postAlert(MultiChannelShading.MENUNAME, this.getClass(), msg);
       }
       return source;
    }
@@ -401,7 +409,7 @@ public class ShadingProcessor implements Processor {
       for (String preset : presets_) {
          // summary metadata is set when using an existing datastore, but not for
          // snap/live.
-         if (summaryMetadata_ != null) {
+         if (isAcqRunning_) {
             String imageChannelGroup = summaryMetadata_.getChannelGroup();
             String imagePreset =
                   summaryMetadata_.getSafeChannelName(image.getCoords().getChannel());
@@ -409,7 +417,7 @@ public class ShadingProcessor implements Processor {
                try {
                   return imageCollection_.getFlatField(preset, binning, rect);
                } catch (ShadingException e) {
-                  studio_.logs().logError("Failed to find flatfield image for "
+                  studio_.logs().logError("No flatfield image defined for "
                         + imageChannelGroup + "-" + imagePreset);
                }
             }
@@ -421,7 +429,7 @@ public class ShadingProcessor implements Processor {
                   try {
                      return imageCollection_.getFlatField(preset, binning, rect);
                   } catch (ShadingException e) {
-                     studio_.logs().logError("Failed to find flatfield image for "
+                     studio_.logs().logError("No flatfield image defined for "
                            + channelGroup + "-" + preset);
                   }
                }
