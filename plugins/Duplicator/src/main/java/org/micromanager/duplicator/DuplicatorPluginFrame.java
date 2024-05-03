@@ -24,6 +24,7 @@ package org.micromanager.duplicator;
 import static org.micromanager.data.internal.DefaultDatastore.getPreferredSaveMode;
 import static org.micromanager.data.internal.DefaultDatastore.setPreferredSaveMode;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -49,8 +50,6 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.DefaultFormatter;
-
-import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;

@@ -1,5 +1,8 @@
 package org.micromanager.plugins.mist;
 
+/**
+ * Helper class to store global data for the MIST plugin.
+ */
 public class MistGlobalData {
    private final String fileName_;
    private final int siteNr_;
@@ -9,7 +12,8 @@ public class MistGlobalData {
    private final int rowNr_;
    private final int colNr_;
 
-   public MistGlobalData(String fileName, int siteNr, String well, int positionX, int positionY, int rowNr, int colNr) {
+   public MistGlobalData(String fileName, int siteNr, String well, int positionX,
+                         int positionY, int rowNr, int colNr) {
       fileName_ = fileName;
       siteNr_ = siteNr;
       well_ = well;
