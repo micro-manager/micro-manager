@@ -24,6 +24,7 @@ package org.micromanager.duplicator;
 import static org.micromanager.data.internal.DefaultDatastore.getPreferredSaveMode;
 import static org.micromanager.data.internal.DefaultDatastore.setPreferredSaveMode;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -60,6 +61,7 @@ import org.micromanager.display.DisplayWindow;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -322,7 +324,15 @@ public class DuplicatorPluginFrame extends JDialog {
       super.setLocation(xCenter - super.getWidth() / 2,
             yCenter - super.getHeight());
 
+      studio_.displays().registerForEvents(this);
       super.setVisible(true);
+   }
+
+   @Subscribe
+   public void onDataViewerClosing(DataViewerWillCloseEvent event) {
+      if (event.getDataViewer().equals(ourWindow_)) {
+         dispose();
+      }
    }
 
    private void chooseDataLocation(DuplicatorPluginFrame ourFrame, JLabel fileField,
