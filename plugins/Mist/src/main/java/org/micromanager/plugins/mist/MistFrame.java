@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -60,9 +59,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImageJConverter;
-import org.micromanager.data.internal.ndtiff.NDTiffAdapter;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
@@ -80,9 +77,13 @@ public class MistFrame extends JFrame {
 
    private final Studio studio_;
    private final DisplayWindow ourWindow_;
+   private final DataProvider ourProvider_;
+   private final Font arialSmallFont_;
    private final MutablePropertyMapView profileSettings_;
    private static final String DIRNAME = "DirName";
+   private final Dimension buttonSize_;
    private final JComboBox<String> saveFormat_;
+   private final List<JCheckBox> channelCheckBoxes_;
    private final JCheckBox shouldDisplay_;
    private final JTextField savePath_;
    private final JButton browseButton_;
@@ -90,7 +91,6 @@ public class MistFrame extends JFrame {
    private static final String DATAVIEWER = "DataViewer";
    private static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
    private static final String MULTIPAGE_TIFF = "Image Stack File";
-   private static final String ND_TIFF = "ND Tiff File";
    private static final String RAM = "RAM only";
    private static final String UNSELECTED_CHANNELS = "UnselectedChannels";
 
@@ -104,12 +104,12 @@ public class MistFrame extends JFrame {
       super("Mist Plugin for " + ourWindow.getName());
       studio_ = studio;
       ourWindow_ = ourWindow;
-      final JFrame thisFrame = this;
-      final DataProvider ourProvider = ourWindow.getDataProvider();
-      final Font arialSmallFont = new Font("Arial", Font.PLAIN, 12);
-      final Dimension buttonSize = new Dimension(70, 21);
+      ourProvider_ = ourWindow.getDataProvider();
+      arialSmallFont_ = new Font("Arial", Font.PLAIN, 12);
+      buttonSize_ = new Dimension(70, 21);
       profileSettings_ =
               studio_.profile().getSettings(MistFrame.class);
+      channelCheckBoxes_ = new ArrayList<>();
 
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
 
@@ -121,7 +121,7 @@ public class MistFrame extends JFrame {
       super.add(mistFileLabel, "span3, split");
 
       final JTextField locationsField = new JTextField(35);
-      locationsField.setFont(arialSmallFont);
+      locationsField.setFont(arialSmallFont_);
       locationsField.setText(profileSettings_.getString(DIRNAME,
               profileSettings_.getString(DIRNAME,
                       System.getProperty("user.home") + "/img-global-positions-0.txt")));
@@ -131,7 +131,7 @@ public class MistFrame extends JFrame {
       DragDropListener dragDropListener = new DragDropListener(locationsField);
       new DropTarget(locationsField, dragDropListener);
 
-      final JButton locationsFieldButton =  makeButton(buttonSize, arialSmallFont);
+      final JButton locationsFieldButton =  makeButton(buttonSize_, arialSmallFont_);
       locationsFieldButton.setText("...");
       locationsFieldButton.addActionListener((ActionEvent evt) -> {
          File f = FileDialogs.openFile(this, "Mist Global Positions File",
@@ -153,7 +153,7 @@ public class MistFrame extends JFrame {
       //super.add(new JLabel("Input Data Set:"));
       //super.add(dataSetBox_, "wrap");
 
-      List<String> axes = ourProvider.getAxes();
+      List<String> axes = ourProvider_.getAxes();
       // Note: MM uses 0-based indices in the code, but 1-based indices
       // for the UI.  To avoid confusion, this storage of the desired
       // limits for each axis is 0-based, and translation to 1-based is made
@@ -170,7 +170,7 @@ public class MistFrame extends JFrame {
       ;
       if (usesChannels) {
          nrNoChannelAxes = nrNoChannelAxes - 1;
-         List<String> channelNameList = ourProvider.getSummaryMetadata().getChannelNameList();
+         List<String> channelNameList = ourProvider_.getSummaryMetadata().getChannelNameList();
          if (channelNameList.size() > 0) {
             super.add(new JLabel(Coords.C));
          }
@@ -207,13 +207,13 @@ public class MistFrame extends JFrame {
             if (axis.equals(Coords.CHANNEL)) {
                continue;
             }
-            if (ourProvider.getNextIndex(axis) > 1) {
+            if (ourProvider_.getNextIndex(axis) > 1) {
                mins.put(axis, 1);
-               maxes.put(axis, ourProvider.getNextIndex(axis));
+               maxes.put(axis, ourProvider_.getNextIndex(axis));
 
                super.add(new JLabel(axis));
                SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
-                       ourProvider.getNextIndex(axis), 1);
+                       ourProvider_.getNextIndex(axis), 1);
                mins.put(axis, 0);
                final JSpinner minSpinner = new JSpinner(model);
                JFormattedTextField field =
@@ -236,9 +236,9 @@ public class MistFrame extends JFrame {
                });
                super.add(minSpinner, "wmin 60");
 
-               model = new SpinnerNumberModel(ourProvider.getNextIndex(axis),
-                       1, ourProvider.getNextIndex(axis), 1);
-               maxes.put(axis, ourProvider.getNextIndex(axis) - 1);
+               model = new SpinnerNumberModel(ourProvider_.getNextIndex(axis),
+                       1, ourProvider_.getNextIndex(axis), 1);
+               maxes.put(axis, ourProvider_.getNextIndex(axis) - 1);
                final JSpinner maxSpinner = new JSpinner(model);
                field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
                formatter = (DefaultFormatter) field.getFormatter();
@@ -265,7 +265,7 @@ public class MistFrame extends JFrame {
       super.add(new JSeparator(), "span, growx, wrap");
 
       super.add(new JLabel("Output Save format: "));
-      String[] formats = new String[] {RAM, MULTIPAGE_TIFF, SINGLEPLANE_TIFF_SERIES, ND_TIFF};
+      String[] formats = new String[] {RAM, MULTIPAGE_TIFF, SINGLEPLANE_TIFF_SERIES};
       saveFormat_ = new JComboBox<>(formats);
       saveFormat_.setSelectedItem(
               profileSettings_.getString("format", RAM));
@@ -288,7 +288,7 @@ public class MistFrame extends JFrame {
       savePath_.setEnabled(saveFormat_.getSelectedIndex() != 0);
       savePath_.setHorizontalAlignment(JTextField.LEFT);
       super.add(savePath_);
-      browseButton_ = makeButton(buttonSize, arialSmallFont);
+      browseButton_ = makeButton(buttonSize_, arialSmallFont_);
       browseButton_.setText("...");
       browseButton_.addActionListener((ActionEvent e) -> {
          // Pop up a browse dialog.
@@ -312,19 +312,15 @@ public class MistFrame extends JFrame {
       assembleButton_ =  new JButton("Assemble");
       assembleButton_.addActionListener((ActionEvent e) -> {
          try {
-            if (ourWindow.isClosed()) {
-               studio_.logs().showError("No Micro-Manager data set selected");
-               return;
-            }
             profileSettings_.putString(DIRNAME, locationsField.getText());
             profileSettings_.putString("savePath", savePath_.getText());
             Datastore store = null;
-            if (Objects.equals(saveFormat_.getSelectedItem(), RAM)) {
+            if (saveFormat_.getSelectedItem().equals(RAM)) {
                store = studio_.data().createRAMDatastore();
-            } else if (Objects.equals(saveFormat_.getSelectedItem(), MULTIPAGE_TIFF)) {
+            } else if (saveFormat_.getSelectedItem().equals(MULTIPAGE_TIFF)) {
                // TODO: read booleans from options
                store = studio_.data().createMultipageTIFFDatastore(savePath_.getText(), true, true);
-            } else if (Objects.equals(saveFormat_.getSelectedItem(), SINGLEPLANE_TIFF_SERIES)) {
+            } else if (saveFormat_.getSelectedItem().equals(SINGLEPLANE_TIFF_SERIES)) {
                store = studio_.data().createSinglePlaneTIFFSeriesDatastore(savePath_.getText());
             }
             List<String> channelList = new ArrayList<>();
@@ -333,38 +329,14 @@ public class MistFrame extends JFrame {
                   channelList.add(checkBox.getText());
                }
             }
-            if (Objects.equals(saveFormat_.getSelectedItem(), null)) {
-               studio_.logs().showError("No output format selected");
-               return;
-            }
             final Datastore finalStore = store;
             Runnable runnable =
-                    () -> {
-                       SwingUtilities.invokeLater(() ->
-                             assembleButton_.setEnabled(false));
-                       DataAssembler assembler = new DataAssembler(studio_);
-                       if (Objects.equals(saveFormat_.getSelectedItem(), ND_TIFF)) {
-                          assembler.assembleDataToNDTiff(locationsField.getText(),
-                                  ourWindow_,
-                                  savePath_.getText(),
-                                  channelList,
-                                  mins,
-                                  maxes,
-                                  profileSettings_,
-                                  thisFrame);
-                       } else {
-                          assembler.assembleData(locationsField.getText(),
-                                  ourWindow_,
-                                  finalStore,
-                                  channelList,
-                                  mins,
-                                  maxes,
-                                  profileSettings_,
-                                  thisFrame);
-                       }
-                       SwingUtilities.invokeLater(() ->
-                               assembleButton_.setEnabled(true));
-                    };
+                    () -> assembleData(locationsField.getText(),
+                            ourWindow_,
+                            finalStore,
+                            channelList,
+                            mins,
+                            maxes);
             new Thread(runnable).start();
          } catch (IOException ioe) {
             studio_.logs().showError("Error creating new data store: " + ioe.getMessage());
@@ -418,4 +390,223 @@ public class MistFrame extends JFrame {
       }
    }
 
+
+   /**
+    * THis function can take a long, long time to execute.  Make sure not to call it on the EDT.
+    *
+    * @param locationsFile Output file from the Mist stitching plugin.  "img-global-positions-0"
+    * @param dataViewer Micro-Manager dataViewer containing the input data/
+    * @param newStore Datastore to write the stitched images to.
+    */
+   private void assembleData(String locationsFile, final DataViewer dataViewer, Datastore newStore,
+                             List<String> channelList, Map<String, Integer> mins,
+                             Map<String, Integer> maxes) {
+      List<MistGlobalData> mistEntries = new ArrayList<>();
+
+      File mistFile = new File(locationsFile);
+      if (!mistFile.exists()) {
+         studio_.logs().showError("Mist global positions file not found: "
+                 + mistFile.getAbsolutePath());
+         return;
+      }
+      UpdatableAlert updatableAlert = studio_.alerts().postUpdatableAlert("Mist",
+              "Started processing");
+      try {
+         // parse global position file into MistGlobalData objects
+         BufferedReader br
+                 = new BufferedReader(new FileReader(mistFile));
+         String line;
+         while ((line = br.readLine()) != null) {
+            if (!line.startsWith("file: ")) {
+               continue;
+            }
+            int fileNameEnd = line.indexOf(';');
+            String fileName = line.substring(6, fileNameEnd);
+            int siteNr = Integer.parseInt(fileName.substring(fileName.lastIndexOf('_') + 1,
+                    fileName.length() - 8));
+            int index = fileName.indexOf("MMStack_");
+            int end = fileName.substring(index).indexOf("-") + index;
+            String well = fileName.substring(index + 8, end);
+            // x, y
+            int posStart = line.indexOf("position: ") + 11;
+            String lineEnd = line.substring(posStart);
+            String xy = lineEnd.substring(0, lineEnd.indexOf(')'));
+            String[] xySplit = xy.split(",");
+            int positionX = Integer.parseInt(xySplit[0]);
+            int positionY = Integer.parseInt(xySplit[1].trim());
+            // row, column
+            int gridStart = line.indexOf("grid: ") + 7;
+            lineEnd = line.substring(gridStart);
+            String rowCol = lineEnd.substring(0, lineEnd.indexOf(')'));
+            String[] rowColSplit = rowCol.split(",");
+            int row = Integer.parseInt(rowColSplit[0]);
+            int col = Integer.parseInt(rowColSplit[1].trim());
+            mistEntries.add(new MistGlobalData(
+                    fileName, siteNr, well, positionX, positionY, row, col));
+         }
+      } catch (IOException e) {
+         studio_.logs().showError("Error reading Mist global positions file: " + e.getMessage());
+         return;
+      } catch (NumberFormatException e) {
+         studio_.logs().showError("Error parsing Mist global positions file: " + e.getMessage());
+         return;
+      }
+
+      if (dataViewer == null) {
+         studio_.logs().showError("No Micro-Manager data set selected");
+         return;
+      }
+
+      SwingUtilities.invokeLater(() -> {
+         assembleButton_.setEnabled(false);
+      });
+
+      // calculate new image dimensions
+      DataProvider dp = dataViewer.getDataProvider();
+      int imWidth = dp.getSummaryMetadata().getImageWidth();
+      int imHeight = dp.getSummaryMetadata().getImageHeight();
+      int maxX = 0;
+      int maxY = 0;
+      for (MistGlobalData entry : mistEntries) {
+         if (entry.getPositionX() > maxX) {
+            maxX = entry.getPositionX();
+         }
+         if (entry.getPositionY() > maxY) {
+            maxY = entry.getPositionY();
+         }
+      }
+
+      int newWidth = maxX + imWidth;
+      int newHeight = maxY + imHeight;
+
+      final int newNrC = channelList.size();
+      final int newNrT = (maxes.getOrDefault(Coords.T, 0) - mins.getOrDefault(Coords.T, 0)
+              + 1);
+      final int newNrZ = (maxes.getOrDefault(Coords.Z, 0) - mins.getOrDefault(Coords.Z, 0)
+              + 1);
+      final int newNrP = dp.getSummaryMetadata().getIntendedDimensions().getP()
+              / mistEntries.size();
+      int maxNumImages = newNrC * newNrT * newNrZ * newNrP;
+      ProgressMonitor monitor = new ProgressMonitor(this,
+              "Stitching images...", null, 0, maxNumImages);
+      DataViewer newDataViewer = null;
+      long startTime = System.currentTimeMillis();
+      try {
+         // create datastore to hold the result
+         Coords dims = dp.getSummaryMetadata().getIntendedDimensions();
+         Coords.Builder cb = dims.copyBuilder().c(newNrC).t(newNrT).z(newNrZ).p(newNrP);
+         newStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().imageHeight(newHeight)
+                 .imageWidth(newWidth).intendedDimensions(cb.build())
+                 .build());
+         if (profileSettings_.getBoolean("shouldDisplay", true)) {
+            newDataViewer = studio_.displays().createDisplay(newStore);
+         }
+         Coords id = dp.getSummaryMetadata().getIntendedDimensions();
+         Coords.Builder intendedDimensionsB = dp.getSummaryMetadata().getIntendedDimensions()
+                 .copyBuilder();
+         for (String axis : new String[] {Coords.C, Coords.P, Coords.T, Coords.C}) {
+            if (!id.hasAxis(axis)) {
+               intendedDimensionsB.index(axis, 1);
+            }
+         }
+         Coords intendedDimensions = intendedDimensionsB.build();
+         Coords.Builder imgCb = studio_.data().coordsBuilder();
+         int nrImages = 0;
+         for (int newP = 0; newP < newNrP; newP++) {
+            int tmpC = -1;
+            for (int c = 0; c < intendedDimensions.getC(); c++) {
+               if (!channelList.contains(dp.getSummaryMetadata().getChannelNameList().get(c))) {
+                  break;
+               }
+               tmpC++;
+               for (int t = mins.getOrDefault(Coords.T, 0);
+                        t <= maxes.getOrDefault(Coords.T, 0); t++) {
+                  for (int z = mins.getOrDefault(Coords.Z, 0); z <= maxes.getOrDefault(Coords.Z, 0);
+                        z++) {
+                     if (monitor.isCanceled()) {
+                        newStore.freeze();
+                        if (newDataViewer == null) {
+                           newStore.close();
+                        }
+                        SwingUtilities.invokeLater(() -> {
+                           assembleButton_.setEnabled(true);
+                        });
+                        return;
+                     }
+                     ImagePlus newImgPlus = IJ.createImage(
+                             "Stitched image-" + newP, "16-bit black", newWidth, newHeight, 2);
+                     boolean imgAdded = false;
+                     for (int p = 0; p < mistEntries.size(); p++) {
+                        if (monitor.isCanceled()) {
+                           newStore.freeze();
+                           if (newDataViewer == null) {
+                              newStore.close();
+                           }
+                           SwingUtilities.invokeLater(() -> {
+                              assembleButton_.setEnabled(true);
+                           });
+                           return;
+                        }
+                        Image img = null;
+                        Coords coords = imgCb.c(c).t(t).z(z)
+                                .p(newP * mistEntries.size() + p)
+                                .build();
+                        if (dp.hasImage(coords)) {
+                           img = dp.getImage(coords);
+                        }
+                        if (img != null) {
+                           imgAdded = true;
+                           String posName = img.getMetadata().getPositionName("");
+                           int siteNr = Integer.parseInt(posName.substring(posName.lastIndexOf('_')
+                                   + 1));
+                           for (MistGlobalData entry : mistEntries) {
+                              if (entry.getSiteNr() == siteNr) {
+                                 int x = entry.getPositionX();
+                                 int y = entry.getPositionY();
+                                 ImageProcessor ip = DefaultImageJConverter.createProcessor(img,
+                                         false);
+                                 newImgPlus.getProcessor().insert(ip, x, y);
+                              }
+                           }
+                        }
+                     }
+                     if (imgAdded) {
+                        Image newImg = studio_.data().ij().createImage(newImgPlus.getProcessor(),
+                                imgCb.c(tmpC).t(t - mins.getOrDefault(Coords.T, 0))
+                                        .z(z - mins.getOrDefault(Coords.Z, 0))
+                                        .p(newP).build(),
+                                dp.getImage(imgCb.c(c).t(t).z(z).p(newP * mistEntries.size())
+                                        .build()).getMetadata().copyBuilderWithNewUUID().build());
+                        newStore.putImage(newImg);
+                        nrImages++;
+                        final int count = nrImages;
+                        SwingUtilities.invokeLater(() -> monitor.setProgress(count));
+                        int processTime = (int) ((System.currentTimeMillis() - startTime) / 1000);
+                        updatableAlert.setText("Processed " + nrImages + " images of "
+                                + maxNumImages + " in " + processTime + " seconds");
+                     }
+                  }
+               }
+            }
+         }
+      } catch (IOException e) {
+         studio_.logs().showError("Error creating new data store: " + e.getMessage());
+      } catch (NullPointerException npe) {
+         studio_.logs().showError("Coding error in Mist plugin: " + npe.getMessage());
+      } finally {
+         try {
+            newStore.freeze();
+            if (newDataViewer == null) {
+               newStore.close();
+            }
+         } catch (IOException ioe) {
+            studio_.logs().logError(ioe, "IO Error while freezing DataProvider");
+         }
+
+         SwingUtilities.invokeLater(() -> {
+            SwingUtilities.invokeLater(() -> monitor.setProgress(maxNumImages));
+            assembleButton_.setEnabled(true);
+         });
+      }
+   }
 }
