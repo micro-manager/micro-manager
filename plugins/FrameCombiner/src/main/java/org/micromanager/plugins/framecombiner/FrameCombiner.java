@@ -23,7 +23,8 @@ public class FrameCombiner implements Processor {
 
    private final String processorAlgo_;
    private final String processorDimension_;
-   private final int numerOfImagesToProcess_;
+   private final boolean useWholeStack_;
+   private int numberOfImagesToProcess_;
    private final List<Integer> channelsToAvoid_;
 
    private boolean imageNotProcessedFirstTime_ = true;
@@ -32,14 +33,16 @@ public class FrameCombiner implements Processor {
    private HashMap<Coords, SingleCombinationProcessor> singleAquisitions_;
 
    public FrameCombiner(Studio studio, String processorDimension, String processorAlgo,
-                        int numerOfImagesToProcess, String channelsToAvoidString) {
+                        boolean useWholeStack, int numberOfImagesToProcess,
+                        String channelsToAvoidString) {
 
       studio_ = studio;
       log_ = studio_.logs();
 
       processorAlgo_ = processorAlgo;
+      useWholeStack_ = useWholeStack;
       processorDimension_ = processorDimension;
-      numerOfImagesToProcess_ = numerOfImagesToProcess;
+      numberOfImagesToProcess_ = numberOfImagesToProcess;
 
       // Check whether channelsToAvoidString is correctly formated
       if (!channelsToAvoidString.isEmpty() && !isValidIntRangeInput(channelsToAvoidString)) {
@@ -68,7 +71,7 @@ public class FrameCombiner implements Processor {
          context.outputImage(image);
          return;
       }
-      // when live mode is on and user selected to do z proejct => do nothing
+      // when live mode is on and user selected to do z project => do nothing
       if (studio_.live().isLiveModeOn()
             && processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
          context.outputImage(image);
@@ -76,7 +79,7 @@ public class FrameCombiner implements Processor {
       }
       // when running MDA without z stack and user want FrameCombiner
       // to combine z frames => do nothing
-      if (studio_.getAcquisitionManager().getAcquisitionSettings().slices().size() == 0
+      if (studio_.getAcquisitionManager().getAcquisitionSettings().slices().isEmpty()
             && processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
          context.outputImage(image);
          return;
@@ -97,14 +100,13 @@ public class FrameCombiner implements Processor {
       SingleCombinationProcessor singleAcquProc;
       if (!singleAquisitions_.containsKey(coords)) {
 
-         // Check whether this combinations of coords are allowed to be processed
-         boolean processCombinations = true;
-         if (channelsToAvoid_.contains(coords.getChannel()) && !studio_.live().isLiveModeOn()) {
-            processCombinations = false;
-         }
+         // Check whether this combination of coords are allowed to be processed
+         boolean processCombinations =
+                 !channelsToAvoid_.contains(coords.getChannel())
+                 || studio_.live().isLiveModeOn();
 
          singleAcquProc = new SingleCombinationProcessor(coords, studio_,
-               processorAlgo_, processorDimension_, numerOfImagesToProcess_,
+               processorAlgo_, processorDimension_, numberOfImagesToProcess_,
                processCombinations, !channelsToAvoid_.isEmpty());
          singleAquisitions_.put(coords, singleAcquProc);
       } else {
@@ -117,18 +119,21 @@ public class FrameCombiner implements Processor {
 
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
-      if (summary.getIntendedDimensions() != null) {
+      if (summary.getIntendedDimensions() != null && channelsToAvoid_.isEmpty()) {
          Coords.CoordsBuilder coordsBuilder = summary.getIntendedDimensions().copyBuilder();
          SummaryMetadata.Builder builder = summary.copyBuilder();
          // Calculate new number of corresponding dimension number
          int newIntendedDimNumber;
          if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
             newIntendedDimNumber =
-                  summary.getIntendedDimensions().getTime() / numerOfImagesToProcess_;
+                  summary.getIntendedDimensions().getT() / numberOfImagesToProcess_;
             builder.intendedDimensions(coordsBuilder.time(newIntendedDimNumber).build());
          } else if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
+            if (useWholeStack_) {
+               numberOfImagesToProcess_ = summary.getIntendedDimensions().getZ();
+            }
             newIntendedDimNumber =
-                  summary.getIntendedDimensions().getZ() / numerOfImagesToProcess_;
+                  summary.getIntendedDimensions().getZ() / numberOfImagesToProcess_;
             builder.intendedDimensions(coordsBuilder.z(newIntendedDimNumber).build());
          }
          return builder.build();
@@ -141,7 +146,7 @@ public class FrameCombiner implements Processor {
     * Check if the image can be processed or not.
     *
     * @param image the image to process.
-    * @return whether or not the image is good to process
+    * @return whether the image is good to process
     */
    private boolean imageGoodToProcess(Image image) {
 
