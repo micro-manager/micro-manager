@@ -33,7 +33,6 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImagesDifferInSizeException;
 import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -185,8 +184,10 @@ public final class StorageRAM implements RewritableStorage {
          // otherwise, the search will be very expensive (which will  be the case for other
          // axes) and result in noticaeble slowodwns with large datasetsz
          if (ignoreTheseAxes[0].equals(Coords.CHANNEL)) {
-            for (Coords tmpCoords : coordsIndexedMissingC_.get(coords)) {
-               result.add(coordsToImage_.get(tmpCoords));
+            if (coordsIndexedMissingC_.get(coords) != null) {
+               for (Coords tmpCoords : coordsIndexedMissingC_.get(coords)) {
+                  result.add(coordsToImage_.get(tmpCoords));
+               }
             }
          } else {
             // Brute force it.  This will be slow with large data sets

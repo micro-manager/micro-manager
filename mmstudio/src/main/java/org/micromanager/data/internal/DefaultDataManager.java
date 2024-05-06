@@ -216,6 +216,7 @@ public final class DefaultDataManager implements DataManager {
       if (!dirFile.isDirectory()) {
          directory = dirFile.getParent();
       }
+
       DefaultDatastore result = new DefaultDatastore(studio_);
       // TODO: future additional file formats will need to be handled here.
       // For now we just choose between StorageMultipageTiff and
