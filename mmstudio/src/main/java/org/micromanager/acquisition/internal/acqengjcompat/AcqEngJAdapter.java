@@ -342,6 +342,12 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                     AcquisitionAPI.AFTER_EXPOSURE_HOOK);
          }
 
+         // This hook is used to update the time of the next wake up call
+         if (sequenceSettings.useFrames()) {
+            currentAcquisition_.addHook(updateNextWakeHook(acquisitionSettings),
+                  AcquisitionAPI.AFTER_HARDWARE_HOOK);
+         }
+
          // Read for events
          currentAcquisition_.start();
 
@@ -629,20 +635,11 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
    }
 
-   /**
-    * This function monitors acquisition events as they are dynamically created.
-    *
-    * @return Monitor function.
-    */
    protected Function<AcquisitionEvent, AcquisitionEvent> acqEventMonitor(
-         SequenceSettings settings) {
-      return event -> {
-         if (event != null && event.getMinimumStartTimeAbsolute() != null) {
-            nextWakeTime_ = event.getMinimumStartTimeAbsolute();
-         }
-         return event;
-      };
+           SequenceSettings acquisitionSettings) {
+      return null;
    }
+
 
    private AcquisitionHook timeLapseHook(SequenceSettings sequenceSettings) {
       return new AcquisitionHook() {
@@ -672,9 +669,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                      event.setMinimumStartTime(relativeStartTime);
                   }
                }
-            }
-            if (event.getMinimumStartTimeAbsolute() != null) {
-               nextWakeTime_ = event.getMinimumStartTimeAbsolute();
             }
             return event;
          }
@@ -1037,6 +1031,25 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                } catch (Exception e) {
                   ReportingUtils.showError(e);
                }
+            }
+            return event;
+         }
+
+         @Override
+         public void close() {
+         }
+      };
+   }
+
+   private AcquisitionHook updateNextWakeHook(SequenceSettings sequenceSettings) {
+      return new AcquisitionHook() {
+         @Override
+         public AcquisitionEvent run(AcquisitionEvent event) {
+            if (event.getMinimumStartTimeAbsolute() != null) {
+               // Note that nanoTime() and currentTimeMillis() are not guaranteed to have
+               // the same offset (0).
+               nextWakeTime_ = System.nanoTime() / 1000000L
+                       + (long) (sequenceSettings.intervalMs());
             }
             return event;
          }
