@@ -497,6 +497,9 @@ public final class MMAcquisition extends DataViewerListener {
 
    private void setNextImageAlert(MMAcquistionControlCallbacks eng) {
       if (imagesExpected_ > 0) {
+         // Calculate time until next frame (in seconds)
+         // Note that the engine nextWakTime should have a base identical to
+         // System.nanoTime()
          int s = (int) ((eng.getNextWakeTime() - System.nanoTime() / 1000000.0) / 1000.0);
          String text = "Next frame in " + s + " sec";
          if (nextImageAlert_ == null) {
