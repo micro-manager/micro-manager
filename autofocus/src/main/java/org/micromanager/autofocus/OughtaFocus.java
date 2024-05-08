@@ -72,12 +72,15 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    private Studio studio_;
    private static final String AF_DEVICE_NAME = "OughtaFocus";
+   private static final String OPTIMIZER_STRATEGY = "OptimizerStrategy";
+   private static final String[] OPTIMIZERS = {"Brent", "Z-Stack"};
    private static final String SEARCH_RANGE = "SearchRange_um";
    private static final String TOLERANCE = "Tolerance_um";
    private static final String CROP_FACTOR = "CropFactor";
    private static final String CHANNEL = "Channel";
    private static final String EXPOSURE = "Exposure";
    private static final String SHOW_IMAGES = "ShowImages";
+   private static final String SHOW_GRAPH = "ShowGraph";
    private static final String SCORING_METHOD = "Maximize";
    private static final String[] SHOWVALUES = {"Yes", "No"};
    private static final String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
@@ -89,29 +92,33 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private String channel_ = "";
    private double exposure_ = 100;
    private boolean displayImages_ = false;
+   private boolean displayGraph_ = false;
    private double cropFactor_ = 1;
+   private String optimizer_ = OPTIMIZERS[0];
 
 
    public OughtaFocus() {
       afOptimizer_ = new BrentFocusOptimizer(
-            fcsAnalysis_::compute
+              fcsAnalysis_::compute
       );
-      
+
+      super.createProperty(OPTIMIZER_STRATEGY, OPTIMIZERS[0], OPTIMIZERS);
       super.createProperty(SEARCH_RANGE,
-            NumberUtils.doubleToDisplayString(afOptimizer_.getSearchRange()));
+              NumberUtils.doubleToDisplayString(afOptimizer_.getSearchRange()));
       super.createProperty(TOLERANCE,
-            NumberUtils.doubleToDisplayString(afOptimizer_.getAbsoluteTolerance()));
+              NumberUtils.doubleToDisplayString(afOptimizer_.getAbsoluteTolerance()));
       super.createProperty(CROP_FACTOR,
-            NumberUtils.doubleToDisplayString(cropFactor_));
+              NumberUtils.doubleToDisplayString(cropFactor_));
       super.createProperty(EXPOSURE,
-            NumberUtils.doubleToDisplayString(exposure_));
+              NumberUtils.doubleToDisplayString(exposure_));
       super.createProperty(FFT_LOWER_CUTOFF,
-            NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTLowerCutoff()));
+              NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTLowerCutoff()));
       super.createProperty(FFT_UPPER_CUTOFF,
-            NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTUpperCutoff()));
+              NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTUpperCutoff()));
       super.createProperty(SHOW_IMAGES, SHOWVALUES[1], SHOWVALUES);
-      super.createProperty(SCORING_METHOD, 
-              fcsAnalysis_.getComputationMethod().name(), 
+      super.createProperty(SHOW_GRAPH, SHOWVALUES[1], SHOWVALUES);
+      super.createProperty(SCORING_METHOD,
+              fcsAnalysis_.getComputationMethod().name(),
               ImgSharpnessAnalysis.Method.getNames()
       );
       super.createProperty(CHANNEL, "");
@@ -120,24 +127,26 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    @Override
    public void applySettings() {
       try {
+         optimizer_ = getPropertyValue(OPTIMIZER_STRATEGY);
          afOptimizer_.setSearchRange(
-               NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE)));
+                 NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE)));
          afOptimizer_.setAbsoluteTolerance(
-               NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE)));
+                 NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE)));
          cropFactor_ = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
          cropFactor_ = clip(0.01, cropFactor_, 1.0);
          channel_ = getPropertyValue(CHANNEL);
          exposure_ = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
          double fftLowerCutoff =
-               NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
+                 NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
          fftLowerCutoff = clip(0.0, fftLowerCutoff, 100.0);
          double fftUpperCutoff =
-               NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
+                 NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
          fftUpperCutoff = clip(0.0, fftUpperCutoff, 100.0);
          fcsAnalysis_.setFFTCutoff(fftLowerCutoff, fftUpperCutoff);
          fcsAnalysis_.setComputationMethod(
-               ImgSharpnessAnalysis.Method.valueOf(getPropertyValue(SCORING_METHOD)));
+                 ImgSharpnessAnalysis.Method.valueOf(getPropertyValue(SCORING_METHOD)));
          displayImages_ = getPropertyValue(SHOW_IMAGES).contentEquals("Yes");
+         displayGraph_ = getPropertyValue(SHOW_GRAPH).contentEquals("Yes");
          afOptimizer_.setDisplayImages(displayImages_);
       } catch (MMException | ParseException ex) {
          studio_.logs().logError(ex);
@@ -170,7 +179,13 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       final double oldExposure = core.getExposure();
       core.setExposure(exposure_);
 
-      final double z = afOptimizer_.runAutofocusAlgorithm();
+      double z = 0.0;
+      if (optimizer_.equals(OPTIMIZERS[0])) {
+         z = afOptimizer_.runAutofocusAlgorithm();
+      } else {
+         // Z-Stack autofocus
+         throw new UnsupportedOperationException("Z-Stack autofocus not implemented.");
+      }
 
       if (cropFactor_ < 1.0) {
          studio_.app().setROI(oldROI);
@@ -221,12 +236,12 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       }
       return score;
    }
-   
+
    @Override
    public double computeScore(final ImageProcessor proc) {
       return fcsAnalysis_.compute(proc);
    }
-   
+
    @Override
    public void setContext(Studio app) {
       studio_ = app;
@@ -352,8 +367,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
        * The constructor takes a function that calculates a focus score.
        *
        * @param imgScoringFunction A function that takes an ImageJ `ImageProcessor`
-       *     and returns a double indicating a measure of the images sharpness. A large
-       *     value indicates a sharper image.
+       *                           and returns a double indicating a measure of the images sharpness. A large
+       *                           value indicates a sharper image.
        */
       public BrentFocusOptimizer(Function<ImageProcessor, Double> imgScoringFunction) {
          imgScoringFunction_ = imgScoringFunction;
@@ -510,4 +525,58 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          }
       }
    }
+
+   private static class zStackFocusOptimizer {
+      private final Function<ImageProcessor, Double> imgScoringFunction_;
+      private Studio studio_;
+      private boolean displayImages_ = false;
+      private double searchRangeUm_ = 10.0; //
+      private int imageCount_;
+
+      /**
+       * The constructor takes a function that calculates a focus score.
+       *
+       * @param imgScoringFunction A function that takes an ImageJ `ImageProcessor`
+       *                           and returns a double indicating a measure of the images sharpness. A large
+       *                           value indicates a sharper image.
+       */
+      public zStackFocusOptimizer(Function<ImageProcessor, Double> imgScoringFunction) {
+         imgScoringFunction_ = imgScoringFunction;
+      }
+
+      public void setContext(Studio studio) {
+         studio_ = studio;
+      }
+
+      /**
+       * Setter for Display Image flag.
+       *
+       * @param display If `true` then the images taken by the focuser will be displayed in
+       *                real-time.
+       */
+      public void setDisplayImages(boolean display) {
+         displayImages_ = display;
+      }
+
+      public boolean getDisplayImages() {
+         return displayImages_;
+      }
+
+      public int getImageCount() {
+         return imageCount_;
+      }
+
+      public void setSearchRange(double searchRangeUm) {
+         searchRangeUm_ = searchRangeUm;
+      }
+
+      public double getSearchRange() {
+         return searchRangeUm_;
+      }
+
+      public void setAbsoluteTolerance(double tolerance) {
+      }
+
+   }
+
 }

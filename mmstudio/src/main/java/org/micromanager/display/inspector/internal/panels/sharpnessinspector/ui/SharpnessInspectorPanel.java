@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.sharpnessinspector.ui;
+package org.micromanager.display.inspector.internal.panels.sharpnessinspector.ui;
 
 import java.awt.Color;
 import java.beans.PropertyChangeListener;
@@ -44,9 +44,9 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.micromanager.display.inspector.internal.panels.sharpnessinspector.SharpnessInspectorController;
+import org.micromanager.display.inspector.internal.panels.sharpnessinspector.SharpnessInspectorPlugin;
 import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
-import org.micromanager.sharpnessinspector.SharpnessInspectorController;
-import org.micromanager.sharpnessinspector.SharpnessInspectorPlugin;
 
 /**
  *

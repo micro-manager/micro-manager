@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.sharpnessinspector;
+package org.micromanager.display.inspector.internal.panels.sharpnessinspector;
 
 import ij.process.ImageProcessor;
 import java.awt.Rectangle;
