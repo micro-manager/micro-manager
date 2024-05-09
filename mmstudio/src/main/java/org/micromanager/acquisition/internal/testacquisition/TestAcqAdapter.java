@@ -92,7 +92,8 @@ import org.micromanager.internal.utils.NumberUtils;
  * - The axes of the acquisition are limited to channel, slice, frame, and position
  * - The number of images and other parameters are all known at the start of acquisition
  */
-public class TestAcqAdapter extends DataViewerListener implements AcquisitionEngine, MMAcquistionControlCallbacks {
+public class TestAcqAdapter extends DataViewerListener implements
+        AcquisitionEngine, MMAcquistionControlCallbacks {
 
    public static final String ACQ_IDENTIFIER = "Acq_Identifier";
    private static final String TITLE = "Test-Acquisition";
