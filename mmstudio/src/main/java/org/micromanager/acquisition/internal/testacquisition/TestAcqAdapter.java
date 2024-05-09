@@ -66,6 +66,8 @@ import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.data.internal.StorageRAM;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplaySettings;
@@ -81,7 +83,7 @@ import org.micromanager.internal.utils.NumberUtils;
 
 /**
  * This class provides a compatibility layer between AcqEngJ and the
- * AcquisitionEngine interface. It is analagous to AcquisitionWrapperEngine.java,
+ * AcquisitionEngine interface. It is analogous to AcquisitionWrapperEngine.java,
  * which does the same thing for the clojure acquisition engine
  *
  * <p>AcquisitionEngine implements a subset of the functionality of AcqEngJ,
@@ -90,7 +92,8 @@ import org.micromanager.internal.utils.NumberUtils;
  * - The axes of the acquisition are limited to channel, slice, frame, and position
  * - The number of images and other parameters are all known at the start of acquisition
  */
-public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCallbacks {
+public class TestAcqAdapter extends DataViewerListener implements
+        AcquisitionEngine, MMAcquistionControlCallbacks {
 
    public static final String ACQ_IDENTIFIER = "Acq_Identifier";
    private static final String TITLE = "Test-Acquisition";
@@ -108,6 +111,17 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
    private Pipeline curPipeline_;
    private long nextWakeTime_ = -1;
    private final ArrayList<RunnablePlusIndices> runnables_ = new ArrayList<>();
+
+   @Override
+   public boolean canCloseViewer(DataViewer viewer) {
+      if (viewer.equals(displayWindow_)) {
+         if (currentAcquisition_ != null && currentAcquisition_.isStarted()) {
+            currentAcquisition_.abort(new InterruptedException(
+                    "Test Acquisition aborted since user closed Windows"));
+         }
+      }
+      return true;
+   }
 
    private class RunnablePlusIndices {
       int channel_;
@@ -237,6 +251,7 @@ public class TestAcqAdapter implements AcquisitionEngine, MMAcquistionControlCal
          if (createStoreAndDisplay) {
             displayWindow_.setDisplaySettings(dsTmp);
          }
+         displayWindow_.addListener(this, 1);
 
          sink.setDatastore(curStore_);
          sink.setPipeline(curPipeline_);
