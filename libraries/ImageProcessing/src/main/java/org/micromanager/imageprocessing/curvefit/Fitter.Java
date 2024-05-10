@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.autofocusutils.fit;
+package org.micromanager.imageprocessing.curvefit;
 
 import org.apache.commons.math3.analysis.function.Gaussian;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;

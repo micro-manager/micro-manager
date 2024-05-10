@@ -1,4 +1,4 @@
-package org.micromanager.autofocusutils.fit;
+package org.micromanager.imageprocessing.curvefit;
 
 
 import java.util.ArrayList;
