@@ -65,12 +65,12 @@ export SDKROOT=$MM_MACOSX_SDKROOT
 mkdir -p "$MM_DEPS_PREFIX"/downloads
 cd "$MM_DEPS_PREFIX"/downloads
 if [ "$do_download" = yes ]; then
-   [ -f boost_1_77_0.tar.bz2 ] || curl -LO https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.bz2
+   [ -f boost_1_85_0.tar.bz2 ] || curl -LO https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.tar.bz2
    [ -f libusb-1.0.18.tar.bz2 ] || curl -LO http://sourceforge.net/projects/libusb/files/libusb-1.0/libusb-1.0.18/libusb-1.0.18.tar.bz2
    [ -f libusb-compat-0.1.5.tar.bz2 ] || curl -LO http://sourceforge.net/projects/libusb/files/libusb-compat-0.1/libusb-compat-0.1.5/libusb-compat-0.1.5.tar.bz2
    [ -f hidapi-0.8.0-rc1.tar.gz ] || curl -LO https://github.com/signal11/hidapi/archive/hidapi-0.8.0-rc1.tar.gz
    [ -f libexif-0.6.21.tar.bz2 ] || curl -L -o libexif-0.6.21.tar.bz2 http://sourceforge.net/projects/libexif/files/libexif/0.6.21/libexif-0.6.21.tar.bz2/download
-   [ -f libtool-2.4.2.tar.gz ] || curl -LO https://ftpmirror.gnu.org/libtool/libtool-2.4.2.tar.gz
+   [ -f libtool-2.4.7.tar.gz ] || curl -LO https://ftpmirror.gnu.org/libtool/libtool-2.4.7.tar.gz
    [ -f libgphoto2-2.5.2.tar.bz2 ] || curl -L -o libgphoto2-2.5.2.tar.bz2 http://sourceforge.net/projects/gphoto/files/libgphoto/2.5.2/libgphoto2-2.5.2.tar.bz2/download
    [ -f FreeImage3154.zip ] || curl -LO http://downloads.sourceforge.net/freeimage/FreeImage3154.zip
    [ -f libdc1394-2.2.1.tar.gz ] || curl -L -o libdc1394-2.2.1.tar.gz http://sourceforge.net/projects/libdc1394/files/libdc1394-2/2.2.1/libdc1394-2.2.1.tar.gz/download
@@ -79,12 +79,12 @@ if [ "$do_download" = yes ]; then
 fi
 
 cat >sha1sums <<EOF
-0cb4f947d094fc311e13ffacaff00418130ef5ef  boost_1_77_0.tar.bz2
+ed58c632befe0d299b39f9e23de1fc20d03870d7  boost_1_85_0.tar.bz2
 5f7bbf42a4d6e6b88d5e7666958c80f8455ee915  libusb-1.0.18.tar.bz2
 062319276d913c753a4b1341036e6a2e42abccc9  libusb-compat-0.1.5.tar.bz2
 5e72a4c7add8b85c8abcdd360ab8b1e1421da468  hidapi-0.8.0-rc1.tar.gz
 a52219b12dbc8d33fc096468591170fda71316c0  libexif-0.6.21.tar.bz2
-22b71a8b5ce3ad86e1094e7285981cae10e6ff88  libtool-2.4.2.tar.gz
+d3f2d5399f4bf5cbd974b812ebaca28d6492ca65  libtool-2.4.7.tar.gz
 6b70ff6feec62a955bef1fc9a2b16dd07f0e277a  libgphoto2-2.5.2.tar.bz2
 1d30057a127b2016cf9b4f0f8f2ba92547670f96  FreeImage3154.zip
 b92c9670b68c4e5011148f16c87532bef2e5b808  libdc1394-2.2.1.tar.gz
@@ -105,8 +105,8 @@ cd "$MM_DEPS_PREFIX"/src
 # Boost
 #
 
-tar xjf ../downloads/boost_1_77_0.tar.bz2
-pushd boost_1_77_0
+tar xf ../downloads/boost_1_85_0.tar.bz2
+pushd boost_1_85_0
 ./bootstrap.sh
 cat >project-config.jam <<EOF
 import option ;
@@ -189,8 +189,8 @@ popd
 # libtool
 #
 
-tar xzf ../downloads/libtool-2.4.2.tar.gz
-pushd libtool-2.4.2
+tar xzf ../downloads/libtool-2.4.7.tar.gz
+pushd libtool-2.4.7
 eval ./configure $MM_DEPS_CONFIGUREFLAGS --enable-shared --disable-static --enable-ltdl-install
 make $MM_PARALLELMAKEFLAG
 make install
