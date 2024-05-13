@@ -1,68 +1,14 @@
-///////////////////////////////////////////////////////////////////////////////
-//FILE:          Fitter.java
-//PROJECT:       Micro-Manager
-//-----------------------------------------------------------------------------
-//
-// AUTHOR:       Nico Stuurman, Jon Daniels
-//
-// COPYRIGHT:    University of California, San Francisco, & ASI, 2015
-//
-// LICENSE:      This file is distributed under the BSD license.
-//               License text is included with the source distribution.
-//
-//               This file is distributed in the hope that it will be useful,
-//               but WITHOUT ANY WARRANTY; without even the implied warranty
-//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//
-//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-
 package org.micromanager.imageprocessing.curvefit;
 
 import org.apache.commons.math3.analysis.function.Gaussian;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.jfree.data.xy.XYSeries;
 
-/**
- *
- * @author nico
- * @author Jon
- */
 public class Fitter {
+   static final String NOFIT = "No fit (take max)";
+   static final String GAUSSIAN = "Gaussian";
 
-   private static final String NOFIT = "No fit (take max)";
-   private static final String GAUSSIAN = "Gaussian";
-
-   public static enum FunctionType {NoFit, Gaussian};
-   public static enum Algorithm {
-      NONE("None", 0),
-      EDGES("Edges", 1),
-      STD_DEV("StdDev", 2),
-      MEAN("Mean", 3),
-      NORM_VARIANCE("NormalizedVariance", 4),
-      SHARP_EDGES("SharpEdges", 5),
-      REDONDO("Redondo", 6),
-      VOLATH("Volath", 7),
-      VOLATH5("Volath5", 8),
-      MEDIAN_EDGES("MedianEdges", 9),
-      FFT_BANDPASS("FFTBandpass", 10),
-      TENENGRAD("Tenengrad", 11),
-      ;
-      private final String text;
-      private final int prefCode;
-      Algorithm(String text, int prefCode) {
-         this.text = text;
-         this.prefCode = prefCode;
-      }
-      @Override
-      public String toString() {
-         return text;
-      }
-      public int getPrefCode() {
-         return prefCode;
-      };
-   };
+   public enum FunctionType {NoFit, Gaussian};
 
    /**
     * Utility to facilitate fitting data plotted in JFreeChart
@@ -83,9 +29,9 @@ public class Fitter {
     *          Use the function getXYSeries to retrieve the XYDataset predicted
     *          by this fit
     */
-   public static double[] fit(XYSeries data, FunctionType type, double[] guess) {
+   public static double[] fit(XYSeries data, Fitter.FunctionType type, double[] guess) {
 
-      if (type == FunctionType.NoFit) {
+      if (type == Fitter.FunctionType.NoFit) {
          return null;
       }
       // create the commons math data object from the JFreeChart data object
@@ -122,7 +68,7 @@ public class Fitter {
     *
     * @return JFreeChart dataset with original x values and fitted y values.
     */
-   public static XYSeries getFittedSeries(XYSeries data, FunctionType type,
+   public static XYSeries getFittedSeries(XYSeries data, Fitter.FunctionType type,
                                           double[] parms) {
       XYSeries result = new XYSeries(data.getItemCount() * 10);
       double minRange = data.getMinX();
@@ -159,13 +105,13 @@ public class Fitter {
     *
     * @param type one of the Fitter.FunctionType predefined functions
     * @param parms parameters describing the function.  These need to match the
-    *             selected function or an IllegalArgumentEception will be thrown
+    *             selected function or an IllegalArgumentException will be thrown
     * @param data JFreeChart series, used to bracket the range in which the
     *             maximum will be found
     *
     * @return x value corresponding to the maximum function value
     */
-   public static double getXofMaxY(XYSeries data, FunctionType type, double[] parms) {
+   public static double getXofMaxY(XYSeries data, Fitter.FunctionType type, double[] parms) {
       double xAtMax = 0.0;
       double minX = data.getMinX();
       double maxX = data.getMaxX();
@@ -202,7 +148,7 @@ public class Fitter {
     *
     * @param data data in XYSeries format
     * @param searchValue x value that we try to get close to
-    * @return index into data with x value closest to searhValue
+    * @return index into data with x value closest to searchValue
     */
    public static int getIndex (XYSeries data, double searchValue) {
       int index = 0;
@@ -216,6 +162,7 @@ public class Fitter {
       }
       return index;
    }
+
    /**
     * helper function for getIndex
     *
@@ -223,7 +170,7 @@ public class Fitter {
     * @param val
     * @return
     */
-   private static double dataDiff(Number num, double val) {
+   static double dataDiff(Number num, double val) {
       double diff = num.doubleValue() - val;
       return Math.sqrt(diff * diff);
    }
@@ -242,7 +189,7 @@ public class Fitter {
     * @param parms function parameters derived in the fit
     * @return
     */
-   public static double getRSquare(XYSeries data, FunctionType type,
+   public static double getRSquare(XYSeries data, Fitter.FunctionType type,
                                    double[] parms) {
 
       // calculate SStot
@@ -287,7 +234,7 @@ public class Fitter {
     * @param parms function parameters (for instance, as return from the fit function
     * @return
     */
-   public static double getFunctionValue(double xValue, FunctionType type,
+   public static double getFunctionValue(double xValue, Fitter.FunctionType type,
                                          double[] parms) {
       switch (type) {
          case NoFit: {
@@ -303,7 +250,7 @@ public class Fitter {
       return 0.0;
    }
 
-   private static void checkParms(FunctionType type, double[] parms) {
+   static void checkParms(Fitter.FunctionType type, double[] parms) {
       switch (type) {
          case Gaussian:
             if (parms.length != 4) {
@@ -316,7 +263,7 @@ public class Fitter {
       }
    }
 
-   public static String getFunctionTypeAsString(FunctionType key) {
+   public static String getFunctionTypeAsString(Fitter.FunctionType key) {
       switch (key) {
          case NoFit: return NOFIT;
          case Gaussian : return GAUSSIAN;
@@ -324,53 +271,16 @@ public class Fitter {
       return "";
    }
 
-   public static FunctionType getFunctionTypeAsType(String key) {
+   public static Fitter.FunctionType getFunctionTypeAsType(String key) {
       if (key.equals(NOFIT))
-         return FunctionType.NoFit;
+         return Fitter.FunctionType.NoFit;
       if (key.equals(GAUSSIAN))
-         return FunctionType.Gaussian;
-      return FunctionType.NoFit;
+         return Fitter.FunctionType.Gaussian;
+      return Fitter.FunctionType.NoFit;
    }
 
    public static String[] getFunctionTypes() {
       return new String[] {NOFIT, GAUSSIAN};
-   }
-
-   public static Algorithm getAlgorithmFromPrefCode(int prefCode) {
-      for (Algorithm k : Algorithm.values()) {
-         if (k.getPrefCode() == prefCode) {
-            return k;
-         }
-      }
-      return null;
-   }
-
-   public static Algorithm getAlgorithmFromString(String key) {
-      for (Algorithm k : Algorithm.values()) {
-         if (k.toString().equals(key)) {
-            return k;
-         }
-      }
-      return Algorithm.NONE;
-   }
-
-   public static int getPrefCodeFromString(String key) {
-      return Fitter.getAlgorithmFromString(key).getPrefCode();
-   }
-
-   public static String[] getAlgorithms() {
-      return new String[] {
-              Algorithm.EDGES.toString(),
-              Algorithm.STD_DEV.toString(),
-              Algorithm.MEAN.toString(),
-              Algorithm.NORM_VARIANCE.toString(),
-              Algorithm.SHARP_EDGES.toString(),
-              Algorithm.REDONDO.toString(),
-              Algorithm.VOLATH.toString(),
-              Algorithm.VOLATH5.toString(),
-              Algorithm.MEDIAN_EDGES.toString(),
-              Algorithm.FFT_BANDPASS.toString(),
-      };
    }
 
 }
