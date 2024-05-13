@@ -208,6 +208,7 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       }
 
       CloseViewerListener closeListener = null;
+      int nrCopied = 0;
 
       try {
          if (width == null || height == null) {
@@ -271,7 +272,6 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
             }
          });
 
-         int nrCopied = 0;
          for (Coords oldCoord : orderedImageCoords) {
             List<String> oldAxes = oldStore.getAxes();
             boolean copy = !oldAxes.contains(Coords.CHANNEL);
@@ -347,6 +347,9 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
                
             }
          }
+         if (nrCopied == 0) {
+            copyDisplay.close();
+         }
       } catch (DatastoreFrozenException ex) {
          studio_.logs().showError("Can not add data to frozen datastore");
       } catch (DatastoreRewriteException ex) {
@@ -362,6 +365,10 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          newStore.freeze();
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "IOException freezing store in Duplicator plugin");
+      }
+      if (nrCopied == 0) {
+         studio_.logs().showError("Found no images in the requested range", theWindow_.getWindow());
+         return null;
       }
       studio_.displays().manage(newStore);
       return null;

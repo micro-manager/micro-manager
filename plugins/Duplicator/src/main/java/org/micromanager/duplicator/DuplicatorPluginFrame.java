@@ -232,11 +232,14 @@ public class DuplicatorPluginFrame extends JDialog {
                   }
                   maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
                   try {
+                     if (ourWindow_.getDisplayedImages().isEmpty()) {
+                        return;
+                     }
                      Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
                      coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
                      ourWindow_.setDisplayPosition(coord);
                   } catch (IOException ioe) {
-                     studio_.logs().logError(ioe, "IOException in DuplcatorPlugin");
+                     studio_.logs().logError(ioe, "IOException in DuplicatorPlugin");
                   }
                });
                super.add(maxSpinner, "wmin 60, wrap");
