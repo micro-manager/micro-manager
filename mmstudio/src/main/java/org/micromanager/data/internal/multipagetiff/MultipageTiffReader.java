@@ -445,8 +445,9 @@ public final class MultipageTiffReader {
 
       String mdJSON = getString(mdBuffer);
       String tmp = mdJSON.substring(mdJSON.length() - 3);
-      if (!tmp.substring(0,2).equals("\"}")) {
-         mdJSON = (new StringBuilder(mdJSON.substring(0, mdJSON.length() -3))).append("\"}").toString();
+      if (!tmp.substring(0, 2).equals("\"}")) {
+         mdJSON = (new StringBuilder(mdJSON.substring(0, mdJSON.length() - 3))).append("\"}")
+                 .toString();
       }
       JsonParser parser = new JsonParser();
       JsonReader reader = new JsonReader(new StringReader(mdJSON));
