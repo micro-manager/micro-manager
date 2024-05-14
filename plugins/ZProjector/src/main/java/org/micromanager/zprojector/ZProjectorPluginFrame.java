@@ -59,7 +59,6 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public class ZProjectorPluginFrame extends JDialog {
    private final Studio studio_;
    private final DisplayWindow ourWindow_;
-   private final DataProvider ourProvider_;
    private final MutablePropertyMapView settings_;
    
    public ZProjectorPluginFrame(Studio studio, DisplayWindow window) {
@@ -70,22 +69,20 @@ public class ZProjectorPluginFrame extends JDialog {
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       
       ourWindow_ = window;
-      ourProvider_ = ourWindow_.getDataProvider();
+      DataProvider ourProvider = ourWindow_.getDataProvider();
 
       // Not sure if this is needed, be safe for now
-      if (ourProvider_ instanceof Datastore) {
-         if (!((Datastore) ourProvider_).isFrozen()) {
-            studio_.logs().showMessage("Can not Project ongoing acquisitions",
-                    window.getWindow());
-            return;
-         }
-      }      
-      
+      if (!(ourProvider).isFrozen()) {
+         studio_.logs().showMessage("Can not Project ongoing acquisitions",
+                 window.getWindow());
+         return;
+      }
+
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
-      String shortName = ourProvider_.getName();
+      String shortName = ourProvider.getName();
       super.setTitle(ZProjectorPlugin.MENUNAME + shortName);
       
-      List<String> axes = ourProvider_.getAxes();
+      List<String> axes = ourProvider.getAxes();
       ButtonGroup bg = new ButtonGroup();
       
       // Note: MM uses 0-based indices in the code, but 1-based indices
@@ -95,13 +92,13 @@ public class ZProjectorPluginFrame extends JDialog {
       final Map<String, Integer> mins = new HashMap<>();
       final Map<String, Integer> maxes = new HashMap<>();
 
-      if (axes.size() > 0) {
+      if (!axes.isEmpty()) {
          super.add(new JLabel(" "));
          super.add(new JLabel("min"));
          super.add(new JLabel("max"), "wrap");
 
          for (final String axis : axes) {
-            if (ourProvider_.getNextIndex(axis) > 1) {
+            if (ourProvider.getNextIndex(axis) > 1) {
                
                // add radio buttons
                JRadioButton axisRB = new JRadioButton(axis);
@@ -110,10 +107,10 @@ public class ZProjectorPluginFrame extends JDialog {
                super.add(axisRB);
                
                mins.put(axis, 1);
-               maxes.put(axis, ourProvider_.getNextIndex(axis));
+               maxes.put(axis, ourProvider.getNextIndex(axis));
 
                SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
-                       (int) ourProvider_.getNextIndex(axis), 1);
+                       (int) ourProvider.getNextIndex(axis), 1);
                mins.put(axis, 0);
                final JSpinner minSpinner = new JSpinner(model);
                JFormattedTextField field = (JFormattedTextField) minSpinner.getEditor()
@@ -136,9 +133,9 @@ public class ZProjectorPluginFrame extends JDialog {
                });
                super.add(minSpinner, "wmin 60");
 
-               model = new SpinnerNumberModel((int) ourProvider_.getNextIndex(axis),
-                       1, (int) ourProvider_.getNextIndex(axis), 1);
-               maxes.put(axis, ourProvider_.getNextIndex(axis) - 1);
+               model = new SpinnerNumberModel((int) ourProvider.getNextIndex(axis),
+                       1, (int) ourProvider.getNextIndex(axis), 1);
+               maxes.put(axis, ourProvider.getNextIndex(axis) - 1);
                final JSpinner maxSpinner = new JSpinner(model);
                field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
                formatter = (DefaultFormatter) field.getFormatter();
@@ -154,7 +151,7 @@ public class ZProjectorPluginFrame extends JDialog {
                      coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
                      ourWindow_.setDisplayPosition(coord);
                   } catch (IOException ioe) {
-                     ReportingUtils.logError(ioe, "IOException in DuplcatorPlugin");
+                     ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
                   }
                });
                super.add(maxSpinner, "wmin 60, wrap");
@@ -184,8 +181,9 @@ public class ZProjectorPluginFrame extends JDialog {
       
       // Note: Median and Std.Dev. yield 32-bit images
       // Those would need to be converted to 16-bit to be shown...
-      final String[] projectionMethods = new String[] {"Max", "Min", "Avg", "Median", "Std.Dev"};
-      final JComboBox methodBox = new JComboBox(projectionMethods);
+      final String[] projectionMethods = new String[] {"Max", "Min", "Avg", "Median",
+            "Std.Dev", "Sharpness"};
+      final JComboBox<String> methodBox = new JComboBox<>(projectionMethods);
       methodBox.setSelectedItem(settings_.getString(
                                     ZProjectorPlugin.PROJECTION_METHOD, "Max"));
       methodBox.addActionListener((ActionEvent e) -> {
@@ -211,7 +209,7 @@ public class ZProjectorPluginFrame extends JDialog {
          String axis = bg.getSelection().getActionCommand();
          ZProjectorPluginExecutor zp = new ZProjectorPluginExecutor(studio_, ourWindow_);
          int projectionMethod = ZProjector.MAX_METHOD;
-         if (null != (String) methodBox.getSelectedItem()) {
+         if (null !=  methodBox.getSelectedItem()) {
             switch ((String) methodBox.getSelectedItem()) {
                case "Max":
                   projectionMethod = ZProjector.MAX_METHOD;
@@ -227,6 +225,9 @@ public class ZProjectorPluginFrame extends JDialog {
                   break;
                case "Std.Dev":
                   projectionMethod = ZProjector.SD_METHOD;
+                  break;
+               case "Sharpness":
+                  projectionMethod = ZProjectorPlugin.SHARPNESS_METHOD;
                   break;
                default:
                   break;
