@@ -150,7 +150,7 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
       int numberOfImagesToProcess =  studio_.profile().getSettings(FrameCombinerConfigurator.class)
               .getInteger(NUMBER_TO_PROCESS, 10);
       numberOfImagesToProcessField_.setText(Integer.toString(settings_.getInteger(
-            "numerOfImagesToProcess", numberOfImagesToProcess)));
+            "numberOfImagesToProcess", numberOfImagesToProcess)));
       String channelsToAvoid = studio_.profile().getSettings(FrameCombinerConfigurator.class)
               .getString(CHANNEL_TO_AVOID, "");
       channelsToAvoidField_.setText(settings_.getString(
@@ -187,7 +187,7 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
       builder.putString("processorDimension", (String) processorDimensionBox_.getSelectedItem());
       builder.putBoolean("useWholeStack", useWholeStackCheckBox_.isSelected());
       builder.putString("processorAlgo", (String) processorAlgoBox_.getSelectedItem());
-      builder.putInteger("numerOfImagesToProcess",
+      builder.putInteger("numberOfImagesToProcess",
             Integer.parseInt(numberOfImagesToProcessField_.getText()));
       builder.putString("channelsToAvoid", channelsToAvoidField_.getText());
       return builder.build();

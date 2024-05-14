@@ -1,5 +1,6 @@
 package org.micromanager.plugins.framecombiner;
 
+import java.util.Arrays;
 import org.micromanager.LogManager;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -8,13 +9,15 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.ProcessorContext;
 
+/**
+ * This class processes a single combination of Z, T, Channel, Stage Position.
+ * It buffers the images and processes them when the buffer is full.
+ * The single, "projected" processed image is then outputted.
+ */
 public class SingleCombinationProcessor {
 
    private final Studio studio_;
    private final LogManager log_;
-
-   private final Coords coords_;
-   private Image processedImage_;
 
    private final String processorAlgo_;
    private final String processorDimension_;
@@ -27,7 +30,6 @@ public class SingleCombinationProcessor {
    private int currentFrameIndex;
    private int processedFrameIndex;
    private Image[] bufferImages_;
-   private int currentBufferIndex_;
 
    public SingleCombinationProcessor(Coords coords, Studio studio, String processorAlgo,
                                      String processorDimension,
@@ -36,8 +38,6 @@ public class SingleCombinationProcessor {
 
       studio_ = studio;
       log_ = studio_.logs();
-
-      coords_ = coords;
 
       processorAlgo_ = processorAlgo;
       processorDimension_ = processorDimension;
@@ -52,16 +52,8 @@ public class SingleCombinationProcessor {
       for (int i = 0; i < numberOfImagesToProcess_; i++) {
          bufferImages_[i] = null;
       }
-
-      processedImage_ = null;
-
    }
 
-   public void logMe() {
-      log_.logMessage("Z : " + Integer.toString(coords_.getZ())
-            + " | Channel : " + Integer.toString(coords_.getChannel())
-            + " | Stage Position : " + Integer.toString(coords_.getStagePosition()));
-   }
 
    void addImage(Image image, ProcessorContext context) {
 
@@ -70,16 +62,20 @@ public class SingleCombinationProcessor {
          return;
       }
 
-      currentBufferIndex_ = currentFrameIndex % numberOfImagesToProcess_;
-      bufferImages_[currentBufferIndex_] = image;
+      int currentBufferIndex = currentFrameIndex % numberOfImagesToProcess_;
+      bufferImages_[currentBufferIndex] = image;
 
-      if (currentBufferIndex_ == (numberOfImagesToProcess_ - 1)) {
-
+      Image processedImage = null;
+      if (currentBufferIndex == (numberOfImagesToProcess_ - 1)) {
          try {
-            // Process last `numerOfImagesToProcess_` images
-            processBufferImages();
+            // Process last `numberOfImagesToProcess_` images
+            processedImage = processBufferImages();
          } catch (Exception ex) {
             log_.logError(ex);
+         }
+
+         if (processedImage == null) {
+            return;
          }
 
          // Clean buffered images
@@ -88,7 +84,7 @@ public class SingleCombinationProcessor {
          }
 
          // Add metadata to the processed image
-         Metadata metadata = processedImage_.getMetadata();
+         Metadata metadata = processedImage.getMetadata();
          PropertyMap userData = metadata.getUserData();
          if (userData != null) {
             userData = userData.copyBuilder().putBoolean("FrameProcessed", true).build();
@@ -100,31 +96,31 @@ public class SingleCombinationProcessor {
                   .build();
             metadata = metadata.copyBuilderPreservingUUID().userData(userData).build();
          }
-         processedImage_ = processedImage_.copyWithMetadata(metadata);
+         processedImage = processedImage.copyWithMetadata(metadata);
 
          // Add correct metadata if in acquisition mode
          if (studio_.acquisitions().isAcquisitionRunning() && !isAnyChannelToAvoid_) {
-            Coords.CoordsBuilder builder = processedImage_.getCoords().copy();
+            Coords.CoordsBuilder builder = processedImage.getCoords().copy();
             if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
                builder.time(processedFrameIndex);
             } else if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
                builder.z(processedFrameIndex);
             }
-            processedImage_ = processedImage_.copyAtCoords(builder.build());
+            processedImage = processedImage.copyAtCoords(builder.build());
             processedFrameIndex += 1;
          }
 
          // Output processed image
-         context.outputImage(processedImage_);
-
-         // Clean processed image
-         processedImage_ = null;
+         context.outputImage(processedImage);
       }
 
       currentFrameIndex += 1;
 
    }
 
+   /**
+    * Clear the buffer.
+    */
    public void clear() {
       for (int i = 0; i < numberOfImagesToProcess_; i++) {
          bufferImages_[i] = null;
@@ -132,16 +128,22 @@ public class SingleCombinationProcessor {
       bufferImages_ = null;
    }
 
-   public void processBufferImages() throws Exception {
+   /**
+    * Process the images in the buffer and return the processed image.
+    *
+    * @return The processed image.
+    * @throws Exception If the processing fails.
+    */
+   public Image processBufferImages() throws Exception {
 
       if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_MEAN)) {
-         meanProcessImages(false);
+         return meanProcessImages(false);
       } else if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_SUM)) {
-         meanProcessImages(true);
+         return meanProcessImages(true);
       } else if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_MAX)) {
-         extremaProcessImages("max");
+         return extremaProcessImages("max");
       } else if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_MIN)) {
-         extremaProcessImages("min");
+         return extremaProcessImages("min");
       } else {
          throw new Exception("FrameCombiner : Algorithm called " + processorAlgo_
                + " is not implemented or not found.");
@@ -149,11 +151,16 @@ public class SingleCombinationProcessor {
 
    }
 
-   public void meanProcessImages(boolean onlySum) {
+   /**
+    * Process the images in the buffer and return the processed image.
+    *
+    * @param onlySum If `true` then only the sum of the images will be calculated.
+    * @return The processed image.
+    */
+   public Image meanProcessImages(boolean onlySum) {
 
       // Could be moved outside processImage() ?
       Image img = bufferImages_[0];
-      int bitDepth = img.getMetadata().getBitDepth();
       int width = img.getWidth();
       int height = img.getHeight();
       int bytesPerPixel = img.getBytesPerPixel();
@@ -226,16 +233,22 @@ public class SingleCombinationProcessor {
       }
 
       // Create the processed image
-      processedImage_ = studio_.data().createImage(resultPixels, width, height,
+      return studio_.data().createImage(resultPixels, width, height,
             bytesPerPixel, numComponents, coords, metadata);
 
    }
 
-   public void extremaProcessImages(String extremaType) throws Exception {
+   /**
+    * Process the images in the buffer and return the processed image.
+    *
+    * @param extremaType The type of extrema to calculate (max or min).
+    * @return The processed image.
+    * @throws Exception If the processing fails.
+    */
+   public Image extremaProcessImages(String extremaType) throws Exception {
 
       // Could be moved outside processImage() ?
       Image img = bufferImages_[0];
-      int bitDepth = img.getMetadata().getBitDepth();
       int width = img.getWidth();
       int height = img.getHeight();
       int bytesPerPixel = img.getBytesPerPixel();
@@ -254,22 +267,13 @@ public class SingleCombinationProcessor {
          float currentValue;
          float actualValue;
 
-         // Init the new array
-         if (extremaType.equals("max")) {
-            for (int i = 0; i < newPixels.length; i++) {
-               newPixels[i] = 0;
-            }
-         } else if (extremaType.equals("min")) {
-            for (int i = 0; i < newPixels.length; i++) {
-               newPixels[i] = Byte.MAX_VALUE;
-            }
-         } else {
-            throw new Exception("FrameCombiner : Wrong extremaType " + extremaType);
+         // Init the new array (already zero, so no need to set for max)
+         if (extremaType.equals("min")) {
+            Arrays.fill(newPixels, Byte.MAX_VALUE);
          }
 
          // Iterate over all frames
          for (int i = 0; i < numberOfImagesToProcess_; i++) {
-
             // Get current frame pixels
             img = bufferImages_[i];
             short[] imgPixels = (short[]) img.getRawPixels();
@@ -280,11 +284,9 @@ public class SingleCombinationProcessor {
                actualValue = (float) newPixels[index];
 
                if (extremaType.equals("max")) {
-                  newPixels[index] = (float) Math.max(currentValue, actualValue);
-               } else if (extremaType.equals("min")) {
-                  newPixels[index] = (float) Math.min(currentValue, actualValue);
-               } else {
-                  throw new Exception("FrameCombiner : Wrong extremaType " + extremaType);
+                  newPixels[index] =  Math.max(currentValue, actualValue);
+               } else { // min
+                  newPixels[index] = Math.min(currentValue, actualValue);
                }
             }
          }
@@ -306,16 +308,9 @@ public class SingleCombinationProcessor {
          float actualValue;
 
          // Init the new array
-         if (extremaType.equals("max")) {
-            for (int i = 0; i < newPixels.length; i++) {
-               newPixels[i] = 0;
-            }
-         } else if (extremaType.equals("min")) {
-            for (int i = 0; i < newPixels.length; i++) {
-               newPixels[i] = Byte.MAX_VALUE;
-            }
-         } else {
-            throw new Exception("FrameCombiner : Wrong extremaType " + extremaType);
+         // if (extremaType.equals("max")) { // no need to set new array to zero in Java
+         if (extremaType.equals("min")) {
+            Arrays.fill(newPixels, Byte.MAX_VALUE);
          }
 
          // Iterate over all frames
@@ -331,11 +326,9 @@ public class SingleCombinationProcessor {
                actualValue = (float) newPixels[index];
 
                if (extremaType.equals("max")) {
-                  newPixels[index] = (float) Math.max(currentValue, actualValue);
-               } else if (extremaType.equals("min")) {
-                  newPixels[index] = (float) Math.min(currentValue, actualValue);
+                  newPixels[index] = Math.max(currentValue, actualValue);
                } else {
-                  throw new Exception("FrameCombiner : Wrong extremaType " + extremaType);
+                  newPixels[index] =  Math.min(currentValue, actualValue);
                }
             }
          }
@@ -350,7 +343,7 @@ public class SingleCombinationProcessor {
       }
 
       // Create the processed image
-      processedImage_ = studio_.data().createImage(resultPixels, width, height,
+      return studio_.data().createImage(resultPixels, width, height,
             bytesPerPixel, numComponents, coords, metadata);
 
    }
