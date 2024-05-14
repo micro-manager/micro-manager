@@ -184,12 +184,15 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
               .putString(CHANNEL_TO_AVOID, channelsToAvoidField_.getText());
 
       PropertyMap.Builder builder = PropertyMaps.builder();
-      builder.putString("processorDimension", (String) processorDimensionBox_.getSelectedItem());
-      builder.putBoolean("useWholeStack", useWholeStackCheckBox_.isSelected());
-      builder.putString("processorAlgo", (String) processorAlgoBox_.getSelectedItem());
-      builder.putInteger("numberOfImagesToProcess",
+      builder.putString(FrameCombinerPlugin.PREF_PROCESSOR_DIMENSION,
+              (String) processorDimensionBox_.getSelectedItem());
+      builder.putBoolean(FrameCombinerPlugin.PREF_USE_WHOLE_STACK,
+              useWholeStackCheckBox_.isSelected());
+      builder.putString(FrameCombinerPlugin.PREF_PROCESSOR_ALGO, (String) processorAlgoBox_.getSelectedItem());
+      builder.putInteger(FrameCombinerPlugin.PREF_NUMBER_OF_IMAGES_TO_PROCESS,
             Integer.parseInt(numberOfImagesToProcessField_.getText()));
-      builder.putString("channelsToAvoid", channelsToAvoidField_.getText());
+      builder.putString(FrameCombinerPlugin.PREF_CHANNELS_TO_AVOID,
+              channelsToAvoidField_.getText());
       return builder.build();
    }
 

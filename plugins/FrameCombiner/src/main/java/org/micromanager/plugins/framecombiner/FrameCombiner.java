@@ -2,6 +2,7 @@ package org.micromanager.plugins.framecombiner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,7 +18,6 @@ import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
 
 public class FrameCombiner implements Processor {
-
    private final Studio studio_;
    private final LogManager log_;
 
@@ -26,7 +26,6 @@ public class FrameCombiner implements Processor {
    private final boolean useWholeStack_;
    private int numberOfImagesToProcess_;
    private final List<Integer> channelsToAvoid_;
-
    private boolean imageNotProcessedFirstTime_ = true;
    private boolean imageCanBeProcessed_ = true;
 
@@ -43,12 +42,15 @@ public class FrameCombiner implements Processor {
       useWholeStack_ = useWholeStack;
       processorDimension_ = processorDimension;
       numberOfImagesToProcess_ = numberOfImagesToProcess;
+      if (useWholeStack_) {
+         numberOfImagesToProcess_ = studio_.acquisitions().getAcquisitionSettings().slices().size();
+      }
 
-      // Check whether channelsToAvoidString is correctly formated
+      // Check whether channelsToAvoidString is correctly formatted
       if (!channelsToAvoidString.isEmpty() && !isValidIntRangeInput(channelsToAvoidString)) {
          log_.showError("\"Channels to avoid\" settings is not valid and will be ignored : "
                + channelsToAvoidString);
-         channelsToAvoid_ = Arrays.asList(new Integer[0]);
+         channelsToAvoid_ = Collections.emptyList();
       } else {
          channelsToAvoid_ = convertToList(channelsToAvoidString);
       }
@@ -60,7 +62,7 @@ public class FrameCombiner implements Processor {
       //      + channelsToAvoid_.toString() + " (during MDA)");
       // Initialize a hashmap of all combinations of the different acquisitions
       // Each index will be a combination of Z, Channel and StagePosition
-      singleAquisitions_ = new HashMap();
+      singleAquisitions_ = new HashMap<>();
 
    }
 
@@ -227,7 +229,7 @@ public class FrameCombiner implements Processor {
       }
 
       // Remove duplicate entries
-      channelsToAvoid = new ArrayList<Integer>(new LinkedHashSet<Integer>(channelsToAvoid));
+      channelsToAvoid = new ArrayList<>(new LinkedHashSet<>(channelsToAvoid));
 
       return channelsToAvoid;
    }

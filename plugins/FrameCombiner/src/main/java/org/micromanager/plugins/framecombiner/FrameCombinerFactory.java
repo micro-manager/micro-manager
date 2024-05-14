@@ -1,5 +1,6 @@
 package org.micromanager.plugins.framecombiner;
 
+import java.awt.Frame;
 import org.micromanager.LogManager;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -10,22 +11,28 @@ public class FrameCombinerFactory implements ProcessorFactory {
 
    private final Studio studio_;
    private final PropertyMap settings_;
-   private final LogManager log_;
 
+   /**
+    * Factory to create the pipeline processor.
+    *
+    * @param studio Always present
+    * @param settings Settings for the processor
+    */
    public FrameCombinerFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;
       settings_ = settings;
-      log_ = studio_.logs();
    }
 
    @Override
    public Processor createProcessor() {
 
       return new FrameCombiner(studio_,
-            settings_.getString("processorDimension", FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME),
-            settings_.getString("processorAlgo", FrameCombinerPlugin.PROCESSOR_ALGO_MEAN),
-            settings_.getBoolean("useWholeStack", false),
-            settings_.getInteger("numerOfImagesToProcess", 10),
-            settings_.getString("channelsToAvoid", ""));
+            settings_.getString(FrameCombinerPlugin.PREF_PROCESSOR_DIMENSION,
+                    FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME),
+            settings_.getString(FrameCombinerPlugin.PREF_PROCESSOR_ALGO,
+                    FrameCombinerPlugin.PROCESSOR_ALGO_MEAN),
+            settings_.getBoolean(FrameCombinerPlugin.PREF_USE_WHOLE_STACK, false),
+            settings_.getInteger(FrameCombinerPlugin.PREF_NUMBER_OF_IMAGES_TO_PROCESS, 10),
+            settings_.getString(FrameCombinerPlugin.PREF_CHANNELS_TO_AVOID, ""));
    }
 }
