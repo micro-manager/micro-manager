@@ -14,6 +14,12 @@ import org.micromanager.data.Image;
 import org.micromanager.imageprocessing.curvefit.Fitter;
 import org.micromanager.imageprocessing.curvefit.PlotUtils;
 
+/**
+ * This class uses a Z-stack of images to perform autofocus. The Z position with the highest focus
+ * score is returned. The focus score is calculated using the `imgScoringFunction` provided in the
+ * constructor. The Z-stack is acquired using the MMCore's Z-stage and camera.
+
+ */
 public class ZStackFocusOptimizer implements FocusOptimizer {
    private final Function<ImageProcessor, Double> imgScoringFunction_;
    private Studio studio_;
@@ -156,7 +162,8 @@ public class ZStackFocusOptimizer implements FocusOptimizer {
       double[] fit = Fitter.fit(xySeries, Fitter.FunctionType.Gaussian, guess);
       double newZ = Fitter.getXofMaxY(xySeries, Fitter.FunctionType.Gaussian, fit);
       if (displayGraph_) {
-         XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries, Fitter.FunctionType.Gaussian, fit);
+         XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries,
+                 Fitter.FunctionType.Gaussian, fit);
          XYSeries[] data = {xySeries, xySeriesFitted};
          boolean[] shapes = {true, false};
          PlotUtils pu = new PlotUtils(studio_);

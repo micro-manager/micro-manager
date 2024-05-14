@@ -54,11 +54,9 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  */
 public class PlotUtils {
    private final Studio studio_;
-   private final MutablePropertyMapView prefs_;
 
    public PlotUtils(Studio studio) {
       studio_ = studio;
-      prefs_ = studio_.profile().getSettings(PlotUtils.class);
    }
 
    /**
@@ -191,7 +189,7 @@ public class PlotUtils {
 
       final MyChartFrame graphFrame = new MyChartFrame(title, chart);
       // weird: pack() resizes the window, so remember here and later set it back.
-      Dimension size = graphFrame.getSize();
+      final Dimension size = graphFrame.getSize();
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
       graphFrame.pack();
       graphFrame.addWindowListener(new WindowAdapter() {
@@ -200,7 +198,6 @@ public class PlotUtils {
             graphFrame.dispose();
          }
       });
-
       graphFrame.setSize(size);
       graphFrame.setVisible(true);
 
