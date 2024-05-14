@@ -18,7 +18,7 @@ public class SingleCombinationProcessor {
 
    private final String processorAlgo_;
    private final String processorDimension_;
-   private final int numerOfImagesToProcess_;
+   private final int numberOfImagesToProcess_;
 
    // Do we want to enable processing for this combinations of Z, Channel, Stage Position ?
    private final boolean processCombinations_;
@@ -31,7 +31,7 @@ public class SingleCombinationProcessor {
 
    public SingleCombinationProcessor(Coords coords, Studio studio, String processorAlgo,
                                      String processorDimension,
-                                     int numerOfImagesToProcess, boolean processCombinations,
+                                     int numberOfImagesToProcess, boolean processCombinations,
                                      boolean isAnyChannelToAvoid) {
 
       studio_ = studio;
@@ -41,15 +41,15 @@ public class SingleCombinationProcessor {
 
       processorAlgo_ = processorAlgo;
       processorDimension_ = processorDimension;
-      numerOfImagesToProcess_ = numerOfImagesToProcess;
+      numberOfImagesToProcess_ = numberOfImagesToProcess;
       processCombinations_ = processCombinations;
       isAnyChannelToAvoid_ = isAnyChannelToAvoid;
 
       currentFrameIndex = 0;
       processedFrameIndex = 0;
-      bufferImages_ = new Image[numerOfImagesToProcess_];
+      bufferImages_ = new Image[numberOfImagesToProcess_];
 
-      for (int i = 0; i < numerOfImagesToProcess_; i++) {
+      for (int i = 0; i < numberOfImagesToProcess_; i++) {
          bufferImages_[i] = null;
       }
 
@@ -70,10 +70,10 @@ public class SingleCombinationProcessor {
          return;
       }
 
-      currentBufferIndex_ = currentFrameIndex % numerOfImagesToProcess_;
+      currentBufferIndex_ = currentFrameIndex % numberOfImagesToProcess_;
       bufferImages_[currentBufferIndex_] = image;
 
-      if (currentBufferIndex_ == (numerOfImagesToProcess_ - 1)) {
+      if (currentBufferIndex_ == (numberOfImagesToProcess_ - 1)) {
 
          try {
             // Process last `numerOfImagesToProcess_` images
@@ -83,7 +83,7 @@ public class SingleCombinationProcessor {
          }
 
          // Clean buffered images
-         for (int i = 0; i < numerOfImagesToProcess_; i++) {
+         for (int i = 0; i < numberOfImagesToProcess_; i++) {
             bufferImages_[i] = null;
          }
 
@@ -91,12 +91,14 @@ public class SingleCombinationProcessor {
          Metadata metadata = processedImage_.getMetadata();
          PropertyMap userData = metadata.getUserData();
          if (userData != null) {
-            userData = userData.copy().putBoolean("FrameProcessed", true).build();
+            userData = userData.copyBuilder().putBoolean("FrameProcessed", true).build();
             userData =
-                  userData.copy().putString("FrameProcessed-Operation", processorAlgo_).build();
-            userData = userData.copy().putInt("FrameProcessed-StackNumber", numerOfImagesToProcess_)
+                  userData.copyBuilder().putString(
+                          "FrameProcessed-Operation", processorAlgo_).build();
+            userData = userData.copyBuilder().putInteger(
+                    "FrameProcessed-StackNumber", numberOfImagesToProcess_)
                   .build();
-            metadata = metadata.copy().userData(userData).build();
+            metadata = metadata.copyBuilderPreservingUUID().userData(userData).build();
          }
          processedImage_ = processedImage_.copyWithMetadata(metadata);
 
@@ -124,7 +126,7 @@ public class SingleCombinationProcessor {
    }
 
    public void clear() {
-      for (int i = 0; i < numerOfImagesToProcess_; i++) {
+      for (int i = 0; i < numberOfImagesToProcess_; i++) {
          bufferImages_[i] = null;
       }
       bufferImages_ = null;
@@ -168,7 +170,7 @@ public class SingleCombinationProcessor {
          byte[] newPixelsFinal = new byte[width * height];
 
          // Sum up all pixels from bufferImages
-         for (int i = 0; i < numerOfImagesToProcess_; i++) {
+         for (int i = 0; i < numberOfImagesToProcess_; i++) {
 
             // Get current frame pixels
             img = bufferImages_[i];
@@ -185,7 +187,7 @@ public class SingleCombinationProcessor {
             if (onlySum) {
                newPixelsFinal[index] = (byte) (int) (newPixels[index]);
             } else {
-               newPixelsFinal[index] = (byte) (int) (newPixels[index] / numerOfImagesToProcess_);
+               newPixelsFinal[index] = (byte) (int) (newPixels[index] / numberOfImagesToProcess_);
             }
          }
 
@@ -198,7 +200,7 @@ public class SingleCombinationProcessor {
          short[] newPixelsFinal = new short[width * height];
 
          // Sum up all pixels from bufferImages
-         for (int i = 0; i < numerOfImagesToProcess_; i++) {
+         for (int i = 0; i < numberOfImagesToProcess_; i++) {
 
             // Get current frame pixels
             img = bufferImages_[i];
@@ -215,7 +217,7 @@ public class SingleCombinationProcessor {
             if (onlySum) {
                newPixelsFinal[index] = (short) (int) (newPixels[index]);
             } else {
-               newPixelsFinal[index] = (short) (int) (newPixels[index] / numerOfImagesToProcess_);
+               newPixelsFinal[index] = (short) (int) (newPixels[index] / numberOfImagesToProcess_);
             }
          }
 
@@ -266,7 +268,7 @@ public class SingleCombinationProcessor {
          }
 
          // Iterate over all frames
-         for (int i = 0; i < numerOfImagesToProcess_; i++) {
+         for (int i = 0; i < numberOfImagesToProcess_; i++) {
 
             // Get current frame pixels
             img = bufferImages_[i];
@@ -317,7 +319,7 @@ public class SingleCombinationProcessor {
          }
 
          // Iterate over all frames
-         for (int i = 0; i < numerOfImagesToProcess_; i++) {
+         for (int i = 0; i < numberOfImagesToProcess_; i++) {
 
             // Get current frame pixels
             img = bufferImages_[i];
