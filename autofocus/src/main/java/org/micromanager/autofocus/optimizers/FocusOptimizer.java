@@ -15,6 +15,13 @@ public interface FocusOptimizer {
    void setContext(Studio studio);
 
    /**
+    * Sets the Z drive to be used for autofoussing.
+    *
+    * @param driveName Valid MM name for the Z(Focus) drive.
+    */
+   void setZDrive(String driveName);
+
+   /**
     * Setter for Display Image flag.
     *
     * @param display If `true` then the images taken by the focuser will be displayed in

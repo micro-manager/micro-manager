@@ -22,6 +22,7 @@
 package org.micromanager.imageprocessing.curvefit;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Shape;
 import java.awt.event.WindowAdapter;
@@ -34,6 +35,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
@@ -90,10 +92,12 @@ public class PlotUtils {
     * @param yTitle Title of the Y axis
     * @param showShapes whether to draw shapes at the data points
     * @param annotation to be shown in plot
+    * @param markerPosition Optional position of marker on the x-axis (leave null if undesired)
     * @return Frame that displays the data
     */
    public Frame plotDataN(String title, XYSeries[] data, String xTitle,
-                          String yTitle, boolean[] showShapes, String annotation) {
+                          String yTitle, boolean[] showShapes, String annotation,
+                          Double markerPosition) {
 
       // if we already have a plot open with this title, close it, but remember
       // its position
@@ -179,7 +183,15 @@ public class PlotUtils {
 
       renderer.setUseFillPaint(true);
 
+      if (markerPosition != null) {
+         ValueMarker marker = new ValueMarker(markerPosition);  // position is the value on the axis
+         marker.setPaint(Color.black);
+         ((XYPlot) chart.getPlot()).addDomainMarker(marker);
+      }
+
       final MyChartFrame graphFrame = new MyChartFrame(title, chart);
+      // weird: pack() resizes the window, so remember here and later set it back.
+      Dimension size = graphFrame.getSize();
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
       graphFrame.pack();
       graphFrame.addWindowListener(new WindowAdapter() {
@@ -189,6 +201,7 @@ public class PlotUtils {
          }
       });
 
+      graphFrame.setSize(size);
       graphFrame.setVisible(true);
 
       return graphFrame;

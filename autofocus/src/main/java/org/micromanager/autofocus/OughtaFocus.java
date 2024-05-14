@@ -36,6 +36,7 @@ import java.awt.Rectangle;
 import java.text.ParseException;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.micromanager.AutofocusPlugin;
@@ -64,6 +65,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private static final String AF_DEVICE_NAME = "OughtaFocus";
    private static final String OPTIMIZER_STRATEGY = "OptimizerStrategy";
    private static final String[] OPTIMIZERS = {"Brent", "Z-Stack"};
+   private static final String FOCUSDRIVE = "FocusDrive";
    private static final String SEARCH_RANGE = "SearchRange_um";
    private static final String TOLERANCE = "Tolerance_um";
    private static final String CROP_FACTOR = "CropFactor";
@@ -82,6 +84,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private FocusOptimizer focusOptimizer_;
 
    private String channel_ = "";
+   private String zDrive_ = "";
    private double exposure_ = 100;
    private boolean displayImages_ = false;
    private boolean displayGraph_ = false;
@@ -101,6 +104,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       focusOptimizer_ = brentFocusOptimizer_;
 
       super.createProperty(OPTIMIZER_STRATEGY, OPTIMIZERS[0], OPTIMIZERS);
+      super.createProperty(FOCUSDRIVE, "");
       super.createProperty(SEARCH_RANGE,
               NumberUtils.doubleToDisplayString(focusOptimizer_.getSearchRange()));
       super.createProperty(TOLERANCE,
@@ -132,6 +136,11 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
             focusOptimizer_ = zStackFocusOptimizer_;
          }
          focusOptimizer_.setContext(studio_);
+         zDrive_ = getPropertyValue(FOCUSDRIVE);
+         if (zDrive_.isEmpty()) {
+            zDrive_ = studio_.core().getFocusDevice();
+         }
+         focusOptimizer_.setZDrive(zDrive_);
          focusOptimizer_.setSearchRange(
                  NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE)));
          focusOptimizer_.setAbsoluteTolerance(
@@ -195,7 +204,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          core.setSystemState(oldState);
       }
       core.setExposure(oldExposure);
-      core.waitForDevice(core.getFocusDevice());
+      core.waitForDevice(zDrive_);
       return z;
    }
 
@@ -219,7 +228,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       CMMCore core = studio_.getCMMCore();
       double score = 0.0;
       try {
-         final double z = core.getPosition(core.getFocusDevice());
+         final double z = core.getPosition(zDrive_);
          core.waitForDevice(core.getCameraDevice());
          core.snapImage();
          TaggedImage img = core.getTaggedImage();
@@ -270,6 +279,24 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
             p.value = allowedChannels[0];
          }
          setProperty(p);
+
+         PropertyItem drive = getProperty(FOCUSDRIVE);
+         StrVector drives = core.getLoadedDevicesOfType(DeviceType.StageDevice);
+         String[] availableDrives = new String[(int) drives.size() + 1];
+         availableDrives[0] = "";
+         found = false;
+         for (int i = 0; i < drives.size(); i++) {
+            availableDrives[i + 1] = drives.get(i);
+            if (drive.value.equals(drives.get(i))) {
+               found = true;
+            }
+         }
+         drive.allowed = availableDrives;
+         if (!found) {
+            drive.value = availableDrives[0];
+         }
+         setProperty(drive);
+
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

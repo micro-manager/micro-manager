@@ -68,6 +68,7 @@ public class BrentFocusOptimizer implements FocusOptimizer {
    private static final double BRENT_RELATIVE_TOLERANCE = 1e-9;
    private int imageCount_;
    private Studio studio_;
+   private String zDrive_;
    private long startTimeMs_;
    private boolean displayImages_ = false;
    private double searchRange_ = 10;
@@ -89,36 +90,48 @@ public class BrentFocusOptimizer implements FocusOptimizer {
       studio_ = studio;
    }
 
+   @Override
+   public void setZDrive(String driveName) {
+      zDrive_ = driveName;
+   }
+
    /**
     * Setter for Display Image flag.
     *
     * @param display If `true` then the images taken by the focuser will be displayed in
     *                real-time.
     */
+   @Override
    public void setDisplayImages(boolean display) {
       displayImages_ = display;
    }
 
+   @Override
    public boolean getDisplayImages() {
       return displayImages_;
    }
 
+   @Override
    public int getImageCount() {
       return imageCount_;
    }
 
+   @Override
    public void setSearchRange(double searchRange) {
       searchRange_ = searchRange;
    }
 
+   @Override
    public double getSearchRange() {
       return searchRange_;
    }
 
+   @Override
    public void setAbsoluteTolerance(double tolerance) {
       absoluteTolerance_ = tolerance;
    }
 
+   @Override
    public double getAbsoluteTolerance() {
       return absoluteTolerance_;
    }
@@ -129,13 +142,21 @@ public class BrentFocusOptimizer implements FocusOptimizer {
     * @return Optimal Z stage position.
     * @throws Exception A common exception is failure to set the Z position in the hardware
     */
+   @Override
    public double runAutofocusAlgorithm() throws Exception {
+      if (studio_ == null)  {
+         throw new Exception("Programming error: Studio is not set.");
+      }
+      if (zDrive_.isEmpty()) {
+         zDrive_ = studio_.getCMMCore().getFocusDevice();
+      }
+
       startTimeMs_ = System.currentTimeMillis();
 
       UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(
               (double d) -> {
                  try {
-                    return measureFocusScore(d);
+                    return measureFocusScore(zDrive_, d);
                  } catch (Exception e) {
                     throw new RuntimeException(e);
                  }
@@ -147,8 +168,7 @@ public class BrentFocusOptimizer implements FocusOptimizer {
 
       imageCount_ = 0;
 
-      CMMCore core = studio_.getCMMCore();
-      double z = core.getPosition(core.getFocusDevice());
+      double z = studio_.core().getPosition(zDrive_);
 
       UnivariatePointValuePair result = brentOptimizer.optimize(uof,
               GoalType.MAXIMIZE,
@@ -161,12 +181,12 @@ public class BrentFocusOptimizer implements FocusOptimizer {
       return result.getPoint();
    }
 
-   private double measureFocusScore(double z) throws Exception {
+   private double measureFocusScore(String zDrive, double z) throws Exception {
       CMMCore core = studio_.getCMMCore();
       long start = System.currentTimeMillis();
       try {
-         core.setPosition(z);
-         core.waitForDevice(core.getFocusDevice());
+         core.setPosition(zDrive, z);
+         core.waitForDevice(zDrive);
          final long tZ = System.currentTimeMillis() - start;
          core.waitForDevice(core.getCameraDevice());
          final Image img = studio_.live().snap(displayImages_).get(0);

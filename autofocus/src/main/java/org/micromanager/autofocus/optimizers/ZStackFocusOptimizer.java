@@ -17,12 +17,12 @@ import org.micromanager.imageprocessing.curvefit.PlotUtils;
 public class ZStackFocusOptimizer implements FocusOptimizer {
    private final Function<ImageProcessor, Double> imgScoringFunction_;
    private Studio studio_;
+   private String zDrive_;
    private boolean displayImages_ = false;
    private boolean displayGraph_ = false;
    private double searchRangeUm_ = 10.0; //
    private double absoluteToleranceUm_ = 1.0; // abuse the tolerance setting as Z step size
    private int imageCount_ = 0;
-   private long startTimeMs_;
 
    /**
     * The constructor takes a function that calculates a focus score.
@@ -38,6 +38,11 @@ public class ZStackFocusOptimizer implements FocusOptimizer {
    @Override
    public void setContext(Studio studio) {
       studio_ = studio;
+   }
+
+   @Override
+   public void setZDrive(String driveName) {
+      zDrive_ = driveName;
    }
 
    @Override
@@ -89,13 +94,15 @@ public class ZStackFocusOptimizer implements FocusOptimizer {
     */
    @Override
    public double runAutofocusAlgorithm() throws Exception {
-      startTimeMs_ = System.currentTimeMillis();
 
       imageCount_ = 0;
 
       CMMCore core = studio_.getCMMCore();
+      if (zDrive_.isEmpty()) {
+         zDrive_ = core.getFocusDevice();
+      }
       // start position
-      double z = core.getPosition(core.getFocusDevice());
+      double z = core.getPosition(zDrive_);
       double dz = searchRangeUm_ / 2;
       int nrZ = (int) (searchRangeUm_ / absoluteToleranceUm_);
       core.setPosition(z - dz);
@@ -105,10 +112,10 @@ public class ZStackFocusOptimizer implements FocusOptimizer {
       }
       SortedMap<Double, Double> focusScoreMap = new TreeMap<>();
 
-      if (core.isStageSequenceable(core.getFocusDevice())) {
-         core.loadStageSequence(core.getFocusDevice(), positions);
+      if (core.isStageSequenceable(zDrive_)) {
+         core.loadStageSequence(zDrive_, positions);
          core.startSequenceAcquisition(nrZ, 0, true);
-         core.waitForDevice(core.getFocusDevice());
+         core.waitForDevice(zDrive_);
          core.waitForDevice(core.getCameraDevice());
          while (core.isSequenceRunning() || core.getRemainingImageCount() > 0) {
             if (!(core.getRemainingImageCount() > 0)) {
@@ -128,8 +135,8 @@ public class ZStackFocusOptimizer implements FocusOptimizer {
          }
       } else {
          for (int i = 0; i < nrZ; i++) {
-            core.setPosition(core.getFocusDevice(), positions.get(i));
-            core.waitForDevice(core.getFocusDevice());
+            core.setPosition(zDrive_, positions.get(i));
+            core.waitForDevice(zDrive_);
             Image img = studio_.live().snap(displayImages_).get(0);
             if (img == null) {
                throw new Exception("Failed to acquire image.");
@@ -147,14 +154,15 @@ public class ZStackFocusOptimizer implements FocusOptimizer {
       focusScoreMap.forEach(xySeries::add);
       double[] guess = {z, focusScoreMap.get(positions.get(imageCount_ / 2))};
       double[] fit = Fitter.fit(xySeries, Fitter.FunctionType.Gaussian, guess);
-      XYSeries[] data = {xySeries};
-      boolean[] shapes = {false};
+      double newZ = Fitter.getXofMaxY(xySeries, Fitter.FunctionType.Gaussian, fit);
       if (displayGraph_) {
-         // display the graph
+         XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries, Fitter.FunctionType.Gaussian, fit);
+         XYSeries[] data = {xySeries, xySeriesFitted};
+         boolean[] shapes = {true, false};
          PlotUtils pu = new PlotUtils(studio_);
-         pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes, "");
+         pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes, "", newZ);
       }
-      return Fitter.getXofMaxY(xySeries, Fitter.FunctionType.Gaussian, fit);
+      return newZ;
    }
 
 }
