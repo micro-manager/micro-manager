@@ -39,6 +39,10 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
    private JComboBox<String> processorDimensionBox_;
    private JCheckBox useWholeStackCheckBox_;
    private JFormattedTextField numberOfImagesToProcessField_;
+   private JLabel numberOfImagesToProcessLabel_;
+   private JLabel useWholeStackLabel_;
+   private JLabel sharpnessAlgoLabel_;
+   private JLabel sharpnessShowGraphLabel_;
    private JComboBox<String> processorAlgoBox_;
    private JComboBox<String> sharpnessAlgoBox_;
    private JCheckBox sharpnessShowGraphCheckBox_;
@@ -84,36 +88,23 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
       jPanel1.setLayout(new MigLayout("flowx, fill, insets 8, gapy 15"));
 
       jPanel1.add(new JLabel("Dimension to process"));
-      JLabel useWholeStackLabel = new JLabel("Use whole stack");
-      JLabel numberOfImagesToProcessLabel = new JLabel("Number of images to process");
+      useWholeStackLabel_ = new JLabel("Use whole stack");
+      numberOfImagesToProcessLabel_ = new JLabel("Number of images to process");
 
       processorDimensionBox_.addItem(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME);
       processorDimensionBox_.addItem(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z);
       processorDimensionBox_.addActionListener(e -> {
-         if (Objects.equals(processorDimensionBox_.getSelectedItem(),
-                 FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
-            useWholeStackCheckBox_.setEnabled(false);
-            useWholeStackLabel.setEnabled(false);
-            numberOfImagesToProcessField_.setEnabled(true);
-            numberOfImagesToProcessLabel.setEnabled(true);
-         } else if (Objects.equals(processorDimensionBox_.getSelectedItem(),
-                 FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
-            useWholeStackCheckBox_.setEnabled(true);
-            useWholeStackLabel.setEnabled(true);
-            numberOfImagesToProcessField_.setEnabled(!useWholeStackCheckBox_.isSelected());
-            numberOfImagesToProcessLabel.setEnabled(useWholeStackCheckBox_.isSelected());
-         }
+         updateUISelectedItems();
       });
       jPanel1.add(processorDimensionBox_, "wrap");
 
-      jPanel1.add(useWholeStackLabel);
+      jPanel1.add(useWholeStackLabel_);
       useWholeStackCheckBox_.addActionListener(e -> {
-         numberOfImagesToProcessField_.setEnabled(!useWholeStackCheckBox_.isSelected());
-         numberOfImagesToProcessLabel.setEnabled(!useWholeStackCheckBox_.isSelected());
+         updateUISelectedItems();
       });
       jPanel1.add(useWholeStackCheckBox_, "wrap");
 
-      jPanel1.add(numberOfImagesToProcessLabel);
+      jPanel1.add(numberOfImagesToProcessLabel_);
       numberOfImagesToProcessField_.setName("_");
       jPanel1.add(numberOfImagesToProcessField_, "growx, wrap");
 
@@ -125,40 +116,57 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
       jPanel1.add(channelsToAvoidField_, "growx, wrap");
 
       jPanel1.add(new JLabel("Algorithm to apply on image stack"));
-      final JLabel sharpnessAlgoLabel = new JLabel("Sharpness algorithm");
-      final JLabel sharpnessShowGraphLabel = new JLabel("Show graph");
+      sharpnessAlgoLabel_ = new JLabel("Sharpness algorithm");
+      sharpnessShowGraphLabel_ = new JLabel("Show graph");
       processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MEAN);
       processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_SUM);
       processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MAX);
       processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MIN);
       processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_SHARPEST);
       processorAlgoBox_.addActionListener(e -> {
-         if (Objects.equals(processorAlgoBox_.getSelectedItem(),
-                 FrameCombinerPlugin.PROCESSOR_ALGO_SHARPEST)) {
-            sharpnessAlgoBox_.setEnabled(true);
-            sharpnessAlgoLabel.setEnabled(true);
-            sharpnessShowGraphCheckBox_.setEnabled(true);
-            sharpnessShowGraphLabel.setEnabled(true);
-         } else {
-            sharpnessAlgoBox_.setEnabled(false);
-            sharpnessAlgoLabel.setEnabled(false);
-            sharpnessShowGraphCheckBox_.setEnabled(false);
-            sharpnessShowGraphLabel.setEnabled(false);
-         }
+         updateUISelectedItems();
       });
       jPanel1.add(processorAlgoBox_, "wrap");
 
-      jPanel1.add(sharpnessAlgoLabel);
+      jPanel1.add(sharpnessAlgoLabel_);
       for (ImgSharpnessAnalysis.Method method : ImgSharpnessAnalysis.Method.values()) {
          sharpnessAlgoBox_.addItem(method.name());
       }
       jPanel1.add(sharpnessAlgoBox_, "wrap");
 
-      jPanel1. add(sharpnessShowGraphLabel);
+      jPanel1. add(sharpnessShowGraphLabel_);
       jPanel1.add(sharpnessShowGraphCheckBox_, "wrap");
 
       super.add(jPanel1, "wrap");
       pack();
+   }
+
+   private void updateUISelectedItems() {
+      if (Objects.equals(processorDimensionBox_.getSelectedItem(),
+              FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
+         useWholeStackCheckBox_.setEnabled(false);
+         useWholeStackLabel_.setEnabled(false);
+         numberOfImagesToProcessField_.setEnabled(true);
+         numberOfImagesToProcessLabel_.setEnabled(true);
+      } else if (Objects.equals(processorDimensionBox_.getSelectedItem(),
+              FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
+         useWholeStackCheckBox_.setEnabled(true);
+         useWholeStackLabel_.setEnabled(true);
+         numberOfImagesToProcessField_.setEnabled(!useWholeStackCheckBox_.isSelected());
+         numberOfImagesToProcessLabel_.setEnabled(!useWholeStackCheckBox_.isSelected());
+      }
+      if (Objects.equals(processorAlgoBox_.getSelectedItem(),
+              FrameCombinerPlugin.PROCESSOR_ALGO_SHARPEST)) {
+         sharpnessAlgoBox_.setEnabled(true);
+         sharpnessAlgoLabel_.setEnabled(true);
+         sharpnessShowGraphCheckBox_.setEnabled(true);
+         sharpnessShowGraphLabel_.setEnabled(true);
+      } else {
+         sharpnessAlgoBox_.setEnabled(false);
+         sharpnessAlgoLabel_.setEnabled(false);
+         sharpnessShowGraphCheckBox_.setEnabled(false);
+         sharpnessShowGraphLabel_.setEnabled(false);
+      }
    }
 
 
@@ -192,6 +200,7 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
                .getBoolean(FrameCombinerPlugin.PREF_SHARPNESS_SHOW_GRAPH, false);
       sharpnessShowGraphCheckBox_.setSelected(settings_.getBoolean(
                FrameCombinerPlugin.PREF_SHARPNESS_SHOW_GRAPH, sharpnessShowGraph));
+      updateUISelectedItems();
    }
 
    @Override
