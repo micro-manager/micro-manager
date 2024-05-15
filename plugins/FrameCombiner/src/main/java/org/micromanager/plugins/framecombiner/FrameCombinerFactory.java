@@ -6,6 +6,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorFactory;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 
 public class FrameCombinerFactory implements ProcessorFactory {
 
@@ -29,10 +30,13 @@ public class FrameCombinerFactory implements ProcessorFactory {
       return new FrameCombiner(studio_,
             settings_.getString(FrameCombinerPlugin.PREF_PROCESSOR_DIMENSION,
                     FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME),
-            settings_.getString(FrameCombinerPlugin.PREF_PROCESSOR_ALGO,
-                    FrameCombinerPlugin.PROCESSOR_ALGO_MEAN),
             settings_.getBoolean(FrameCombinerPlugin.PREF_USE_WHOLE_STACK, false),
             settings_.getInteger(FrameCombinerPlugin.PREF_NUMBER_OF_IMAGES_TO_PROCESS, 10),
-            settings_.getString(FrameCombinerPlugin.PREF_CHANNELS_TO_AVOID, ""));
+            settings_.getString(FrameCombinerPlugin.PREF_CHANNELS_TO_AVOID, ""),
+            settings_.getString(FrameCombinerPlugin.PREF_PROCESSOR_ALGO,
+                      FrameCombinerPlugin.PROCESSOR_ALGO_MEAN),
+            settings_.getString(FrameCombinerPlugin.PREF_SHARPNESS_ALGO,
+                   ImgSharpnessAnalysis.Method.Redondo.name()),
+            settings_.getBoolean(FrameCombinerPlugin.PREF_SHARPNESS_SHOW_GRAPH, false));
    }
 }

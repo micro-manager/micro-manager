@@ -16,6 +16,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 
 public class FrameCombiner implements Processor {
    private final Studio studio_;
@@ -28,17 +29,23 @@ public class FrameCombiner implements Processor {
    private final List<Integer> channelsToAvoid_;
    private boolean imageNotProcessedFirstTime_ = true;
    private boolean imageCanBeProcessed_ = true;
+   private final ImgSharpnessAnalysis.Method sharpnessMethod_;
+   private final boolean showGraph_;
 
    private HashMap<Coords, SingleCombinationProcessor> singleAquisitions_;
 
-   public FrameCombiner(Studio studio, String processorDimension, String processorAlgo,
-                        boolean useWholeStack, int numberOfImagesToProcess,
-                        String channelsToAvoidString) {
+   public FrameCombiner(Studio studio,
+                        String processorDimension,
+                        boolean useWholeStack,
+                        int numberOfImagesToProcess,
+                        String channelsToAvoidString,
+                        String processorAlgo,
+                        String sharpnessMethodsName,
+                        boolean showGraph) {
 
       studio_ = studio;
       log_ = studio_.logs();
 
-      processorAlgo_ = processorAlgo;
       useWholeStack_ = useWholeStack;
       processorDimension_ = processorDimension;
       numberOfImagesToProcess_ = numberOfImagesToProcess;
@@ -54,16 +61,13 @@ public class FrameCombiner implements Processor {
       } else {
          channelsToAvoid_ = convertToList(channelsToAvoidString);
       }
+      processorAlgo_ = processorAlgo;
+      sharpnessMethod_ = ImgSharpnessAnalysis.Method.valueOf(sharpnessMethodsName);
+      showGraph_ = showGraph;
 
-      // log_.logMessage("FrameCombiner : Algorithm applied on stack image is " + processorAlgo_);
-      //      log_.logMessage("FrameCombiner : Number of frames to process "
-      //            + Integer.toString(numerOfImagesToProcess));
-      //      log_.logMessage("FrameCombiner : Channels avoided are "
-      //      + channelsToAvoid_.toString() + " (during MDA)");
       // Initialize a hashmap of all combinations of the different acquisitions
       // Each index will be a combination of Z, Channel and StagePosition
       singleAquisitions_ = new HashMap<>();
-
    }
 
    @Override
@@ -107,9 +111,9 @@ public class FrameCombiner implements Processor {
                  !channelsToAvoid_.contains(coords.getChannel())
                  || studio_.live().isLiveModeOn();
 
-         singleAcquProc = new SingleCombinationProcessor(coords, studio_,
+         singleAcquProc = new SingleCombinationProcessor(studio_,
                processorAlgo_, processorDimension_, numberOfImagesToProcess_,
-               processCombinations, !channelsToAvoid_.isEmpty());
+               processCombinations, !channelsToAvoid_.isEmpty(), sharpnessMethod_, showGraph_);
          singleAquisitions_.put(coords, singleAcquProc);
       } else {
          singleAcquProc = singleAquisitions_.get(coords);

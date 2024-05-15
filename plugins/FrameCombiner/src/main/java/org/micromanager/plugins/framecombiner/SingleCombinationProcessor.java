@@ -1,6 +1,11 @@
 package org.micromanager.plugins.framecombiner;
 
+import ij.process.ImageProcessor;
 import java.util.Arrays;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import net.imglib2.img.Img;
+import org.jfree.data.xy.XYSeries;
 import org.micromanager.LogManager;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -8,6 +13,9 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.ProcessorContext;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
+import org.micromanager.imageprocessing.curvefit.Fitter;
+import org.micromanager.imageprocessing.curvefit.PlotUtils;
 
 /**
  * This class processes a single combination of Z, T, Channel, Stage Position.
@@ -26,15 +34,29 @@ public class SingleCombinationProcessor {
    // Do we want to enable processing for this combinations of Z, Channel, Stage Position ?
    private final boolean processCombinations_;
    private final boolean isAnyChannelToAvoid_;
-
+   private final ImgSharpnessAnalysis.Method sharpnessMethod_;
+   private final boolean showGraph_;
    private int currentFrameIndex;
    private int processedFrameIndex;
    private Image[] bufferImages_;
 
-   public SingleCombinationProcessor(Coords coords, Studio studio, String processorAlgo,
+   /**
+    * Constructor for the SingleCombinationProcessor.
+    *
+    * @param studio The Micro-Manager Studio.
+    * @param processorAlgo The algorithm to use for processing.
+    * @param processorDimension The dimension to process (Z or T).
+    * @param numberOfImagesToProcess The number of images to process.
+    * @param processCombinations Whether to process the combinations.
+    * @param isAnyChannelToAvoid Whether to avoid any channel.
+    */
+   public SingleCombinationProcessor(Studio studio, String processorAlgo,
                                      String processorDimension,
-                                     int numberOfImagesToProcess, boolean processCombinations,
-                                     boolean isAnyChannelToAvoid) {
+                                     int numberOfImagesToProcess,
+                                     boolean processCombinations,
+                                     boolean isAnyChannelToAvoid,
+                                     ImgSharpnessAnalysis.Method sharpnessMethod,
+                                     boolean showGraph) {
 
       studio_ = studio;
       log_ = studio_.logs();
@@ -44,11 +66,12 @@ public class SingleCombinationProcessor {
       numberOfImagesToProcess_ = numberOfImagesToProcess;
       processCombinations_ = processCombinations;
       isAnyChannelToAvoid_ = isAnyChannelToAvoid;
+      sharpnessMethod_ = sharpnessMethod;
+      showGraph_ = showGraph;
 
       currentFrameIndex = 0;
       processedFrameIndex = 0;
       bufferImages_ = new Image[numberOfImagesToProcess_];
-
       for (int i = 0; i < numberOfImagesToProcess_; i++) {
          bufferImages_[i] = null;
       }
@@ -100,7 +123,7 @@ public class SingleCombinationProcessor {
 
          // Add correct metadata if in acquisition mode
          if (studio_.acquisitions().isAcquisitionRunning() && !isAnyChannelToAvoid_) {
-            Coords.CoordsBuilder builder = processedImage.getCoords().copy();
+            Coords.CoordsBuilder builder = processedImage.getCoords().copyBuilder();
             if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
                builder.time(processedFrameIndex);
             } else if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
@@ -144,6 +167,8 @@ public class SingleCombinationProcessor {
          return extremaProcessImages("max");
       } else if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_MIN)) {
          return extremaProcessImages("min");
+      } else if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_SHARPEST)) {
+         return sharpestProcessImages(sharpnessMethod_, showGraph_);
       } else {
          throw new Exception("FrameCombiner : Algorithm called " + processorAlgo_
                + " is not implemented or not found.");
@@ -346,5 +371,43 @@ public class SingleCombinationProcessor {
       return studio_.data().createImage(resultPixels, width, height,
             bytesPerPixel, numComponents, coords, metadata);
 
+   }
+
+   /**
+    * Determines the sharpest image in the stack and return that one.
+    *
+    * @return The sharpest image.
+    */
+   public Image sharpestProcessImages(ImgSharpnessAnalysis.Method method, boolean displayGraph) {
+      ImgSharpnessAnalysis imgScoringFunction = new ImgSharpnessAnalysis();
+      imgScoringFunction.setComputationMethod(method);
+      SortedMap<Integer, Double> focusScoreMap = new TreeMap<>();
+      for (int i = 0; i < numberOfImagesToProcess_; i++) {
+         Image img = bufferImages_[i];
+         ImageProcessor proc = studio_.data().ij().createProcessor(img);
+         focusScoreMap.put(i, imgScoringFunction.compute(proc));
+      }
+      XYSeries xySeries = new XYSeries("Focus Score");
+      focusScoreMap.forEach(xySeries::add);
+      double[] guess = {(double) numberOfImagesToProcess_ / 2.0,
+              focusScoreMap.get(numberOfImagesToProcess_ / 2)};
+      double[] fit = Fitter.fit(xySeries, Fitter.FunctionType.Gaussian, guess);
+      int bestIndex  = (int) Math.round(Fitter.getXofMaxY(xySeries,
+              Fitter.FunctionType.Gaussian, fit));
+      if (displayGraph) {
+         XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries,
+                 Fitter.FunctionType.Gaussian, fit);
+         XYSeries[] data = {xySeries, xySeriesFitted};
+         boolean[] shapes = {true, false};
+         PlotUtils pu = new PlotUtils(studio_);
+         pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes,
+                 "", (double) bestIndex);
+      }
+      if (bestIndex < 0) {
+         bestIndex = 0;
+      } else if (bestIndex >= numberOfImagesToProcess_) {
+         bestIndex = numberOfImagesToProcess_ - 1;
+      }
+      return bufferImages_[bestIndex];
    }
 }
