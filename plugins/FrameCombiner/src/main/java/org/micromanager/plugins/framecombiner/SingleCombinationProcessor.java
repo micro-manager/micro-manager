@@ -4,7 +4,6 @@ import ij.process.ImageProcessor;
 import java.util.Arrays;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import net.imglib2.img.Img;
 import org.jfree.data.xy.XYSeries;
 import org.micromanager.LogManager;
 import org.micromanager.PropertyMap;
@@ -78,7 +77,7 @@ public class SingleCombinationProcessor {
    }
 
 
-   void addImage(Image image, ProcessorContext context) {
+   void addImage(Image image, ProcessorContext context, boolean snapLive) {
 
       if (!processCombinations_) {
          context.outputImage(image);
@@ -122,7 +121,7 @@ public class SingleCombinationProcessor {
          processedImage = processedImage.copyWithMetadata(metadata);
 
          // Add correct metadata if in acquisition mode
-         if (studio_.acquisitions().isAcquisitionRunning() && !isAnyChannelToAvoid_) {
+         if (!snapLive) {
             Coords.CoordsBuilder builder = processedImage.getCoords().copyBuilder();
             if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
                builder.time(processedFrameIndex);

@@ -1,7 +1,5 @@
 package org.micromanager.plugins.framecombiner;
 
-import java.awt.Frame;
-import org.micromanager.LogManager;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Processor;
@@ -26,11 +24,13 @@ public class FrameCombinerFactory implements ProcessorFactory {
 
    @Override
    public Processor createProcessor() {
+      String dimension = settings_.getString(FrameCombinerPlugin.PREF_PROCESSOR_DIMENSION,
+              FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME);
 
       return new FrameCombiner(studio_,
-            settings_.getString(FrameCombinerPlugin.PREF_PROCESSOR_DIMENSION,
-                    FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME),
-            settings_.getBoolean(FrameCombinerPlugin.PREF_USE_WHOLE_STACK, false),
+            dimension,
+            dimension.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)
+                    && settings_.getBoolean(FrameCombinerPlugin.PREF_USE_WHOLE_STACK, false),
             settings_.getInteger(FrameCombinerPlugin.PREF_NUMBER_OF_IMAGES_TO_PROCESS, 10),
             settings_.getString(FrameCombinerPlugin.PREF_CHANNELS_TO_AVOID, ""),
             settings_.getString(FrameCombinerPlugin.PREF_PROCESSOR_ALGO,

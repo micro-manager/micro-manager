@@ -1,7 +1,6 @@
 package org.micromanager.plugins.framecombiner;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -31,6 +30,7 @@ public class FrameCombiner implements Processor {
    private boolean imageCanBeProcessed_ = true;
    private final ImgSharpnessAnalysis.Method sharpnessMethod_;
    private final boolean showGraph_;
+   private boolean snapLive_ = false;
 
    private HashMap<Coords, SingleCombinationProcessor> singleAquisitions_;
 
@@ -120,12 +120,18 @@ public class FrameCombiner implements Processor {
       }
 
       // This method will output the processed image if needed
-      singleAcquProc.addImage(image, context);
+      singleAcquProc.addImage(image, context, snapLive_);
    }
 
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
-      if (summary.getIntendedDimensions() != null && channelsToAvoid_.isEmpty()) {
+      Coords intendedDimensions = summary.getIntendedDimensions();
+      if (intendedDimensions == null
+              || intendedDimensions.equals(studio_.data().coordsBuilder().build())) {
+         snapLive_ = true;
+         return summary;
+      }
+      if (channelsToAvoid_.isEmpty()) {
          Coords.CoordsBuilder coordsBuilder = summary.getIntendedDimensions().copyBuilder();
          SummaryMetadata.Builder builder = summary.copyBuilder();
          // Calculate new number of corresponding dimension number
