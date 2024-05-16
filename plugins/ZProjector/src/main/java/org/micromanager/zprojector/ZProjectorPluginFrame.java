@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -42,12 +43,14 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
+import net.imglib2.img.Img;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -60,7 +63,13 @@ public class ZProjectorPluginFrame extends JDialog {
    private final Studio studio_;
    private final DisplayWindow ourWindow_;
    private final MutablePropertyMapView settings_;
-   
+
+   /**
+    * Constructor. Draws the UI.
+    *
+    * @param studio The Micro-Manager Studio Object
+    * @param window The DataViewer that we are working on
+    */
    public ZProjectorPluginFrame(Studio studio, DisplayWindow window) {
       studio_ = studio;
       settings_ = studio_.profile().getSettings(ZProjectorPlugin.class);
@@ -178,20 +187,45 @@ public class ZProjectorPluginFrame extends JDialog {
       if (bg.getSelection() == null) {
          bg.getElements().nextElement().setSelected(true);
       }
-      
+
+      final JLabel sharpnessMethodLabel = new JLabel("sharpness method");
+      final JComboBox<String> sharpnessMethodBox =
+              new JComboBox<>(ImgSharpnessAnalysis.Method.getNames());
+      sharpnessMethodBox.addActionListener((ActionEvent e) ->
+              settings_.putString(ZProjectorPlugin.SHARPNESS,
+                     (String) sharpnessMethodBox.getSelectedItem()));
+      sharpnessMethodBox.setSelectedItem(settings_.getString(
+               ZProjectorPlugin.SHARPNESS, ImgSharpnessAnalysis.Method.getNames()[0]));
+      final JCheckBox showGraphBox = new JCheckBox("show graph");
+      showGraphBox.setSelected(settings_.getBoolean(ZProjectorPlugin.SHOW_SHARPNESS_GRAPH, false));
+      showGraphBox.addActionListener((ActionEvent e) ->
+              settings_.putBoolean(ZProjectorPlugin.SHOW_SHARPNESS_GRAPH,
+                      showGraphBox.isSelected()));
+
       // Note: Median and Std.Dev. yield 32-bit images
       // Those would need to be converted to 16-bit to be shown...
       final String[] projectionMethods = new String[] {"Max", "Min", "Avg", "Median",
-            "Std.Dev", "Sharpness"};
+            "Std.Dev", "Sharpest Frame"};
       final JComboBox<String> methodBox = new JComboBox<>(projectionMethods);
       methodBox.setSelectedItem(settings_.getString(
                                     ZProjectorPlugin.PROJECTION_METHOD, "Max"));
+      boolean sharpestSelected = Objects.equals(methodBox.getSelectedItem(), "Sharpest Frame");
+      sharpnessMethodLabel.setEnabled(sharpestSelected);
+      sharpnessMethodBox.setEnabled(sharpestSelected);
+      showGraphBox.setEnabled(sharpestSelected);
       methodBox.addActionListener((ActionEvent e) -> {
          settings_.putString(ZProjectorPlugin.PROJECTION_METHOD,
                  (String) methodBox.getSelectedItem());
+         boolean showSharpness = Objects.equals(methodBox.getSelectedItem(), "Sharpest Frame");
+         sharpnessMethodLabel.setEnabled(showSharpness);
+         sharpnessMethodBox.setEnabled(showSharpness);
+         showGraphBox.setEnabled(showSharpness);
       });
       super.add(new JLabel("method"));
       super.add(methodBox, "span2, grow, wrap");
+      super.add(sharpnessMethodLabel);
+      super.add(sharpnessMethodBox, "span2, grow, wrap");
+      super.add(showGraphBox, "span3, grow, wrap");
 
       super.add(new JLabel("name"));
       final JTextField nameField = new JTextField(shortName);
@@ -226,19 +260,20 @@ public class ZProjectorPluginFrame extends JDialog {
                case "Std.Dev":
                   projectionMethod = ZProjector.SD_METHOD;
                   break;
-               case "Sharpness":
+               case "Sharpest Frame":
                   projectionMethod = ZProjectorPlugin.SHARPNESS_METHOD;
                   break;
                default:
                   break;
             }
          }
+         ImgSharpnessAnalysis.Method method = ImgSharpnessAnalysis.Method
+                 .valueOf((String) sharpnessMethodBox.getSelectedItem());
+         ZProjectorData zpd = new ZProjectorData(axis, mins.get(axis),
+                 maxes.get(axis), projectionMethod, method, showGraphBox.isSelected());
          zp.project(saveBox.isSelected(),
-                 nameField.getText(), 
-                 axis, 
-                 mins.get(axis), 
-                 maxes.get(axis), 
-                 projectionMethod);
+                 nameField.getText(),
+                 zpd);
          cpFrame.dispose();
       });
       super.add(okButton, "span 3, split 2, tag ok, wmin button");
