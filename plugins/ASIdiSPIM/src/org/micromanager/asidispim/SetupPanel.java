@@ -1072,7 +1072,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          float offset = controller_.getSheetOffset(key, side_);
          props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offset, true);  // ignore missing device
       } else {
-         Double offsetD = (Double) galvoOffsetField_.getValue();
+         Double offsetD = (Double) galvoOffsetField_.getValue();  // mechanical offset calibration put into the plugin
          float offset = offsetD.floatValue()/1000;
          float maxScanner = props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SCANNER_MAX_LIMIT_X);
          float minScanner = props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SCANNER_MIN_LIMIT_X);

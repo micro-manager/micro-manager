@@ -1359,6 +1359,47 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          s.laserDelay = sliceDeadTime;
          s.laserDuration = laserDuration;
          break;
+      
+      // TODO this requires some thinking through, here is a mostly complete update but I don't want to adjust now
+//      case PSEUDO_OVERLAP:  // e.g. Kinetix
+//         // laser on for requested duration, with laser delay to make the total slice time as requested
+//         // camera exposure starts just before laser
+//         // scan period set very fast (it shouldn't matter)
+//         s.scanNum = 1;
+//         s.scanDelay = 0.f;
+//         s.scanPeriod = 0.25f;
+//         s.cameraDelay = sliceDeadTime;
+//         s.cameraDuration = 0.25f;
+//         s.cameraExposure = laserDuration;
+//         s.laserDelay = sliceDeadTime;
+//         s.laserDuration = laserDuration;
+//         break;
+//      case OVERLAP:  // e.g. Fusion, trigger sets start/stop of camera readout
+//         // 0.25ms camera trigger with 0 delay
+//         // camera exposure setting doesn't matter
+//         // laser on for requested duration, with laser delay to make the total slice time as requested
+//         // scan period set very fast (it shouldn't matter)
+//         s.scanNum = 1;
+//         s.scanDelay = 0.f;
+//         s.scanPeriod = 0.25f;
+//         s.cameraDelay = sliceDeadTime;
+//         s.cameraDuration = 0.25f;
+//         s.cameraExposure = laserDuration;
+//         s.laserDelay = sliceDeadTime;
+//         s.laserDuration = laserDuration;
+//         break;
+//      case EDGE:  // trigger sets start of camera exposure, readout when exposure time is over
+//         // 0.25ms camera trigger with 0 delay
+//         // camera exposure time the same as the laser duration
+//         s.scanNum = 1;
+//         s.scanDelay = 0.25f;
+//         s.scanPeriod = 1.0f;
+//         s.cameraDelay = 0.f;
+//         s.cameraDuration = 0.25f;
+//         s.cameraExposure = laserDuration - MyNumberUtils.roundToQuarterMs(cameraReadoutTime));
+//         s.laserDelay = sliceDeadTime;
+//         s.laserDuration = laserDuration;
+//         break;
       default:
          if (showWarnings) {
             MyDialogUtils.showError("Invalid camera mode");
@@ -3677,7 +3718,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName_, MMTags.Summary.SLICES_FIRST, Boolean.TRUE.toString());  // whether slices are inner loop compared to channel; not sure why but Nico had this set to true forever so leaving it
             gui_.setAcquisitionProperty(acqName_, MMTags.Summary.TIME_FIRST, Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName_, "StageScanAnglePathA", // used in deskew routine
-                    Float.toString(props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA))); 
+                    Float.toString(props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA)));
             //Boolean.toString(acqSimultSideA));   // whether timepoints are inner loop compared to position; false for all diSPIM use cases except simultaneous on PathA where we use timepoints as "channels"
                       
             // get circular buffer ready

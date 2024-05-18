@@ -813,8 +813,10 @@ public class ControllerUtils {
       }
       
       if (offsetOnly) {
-         props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
-               sliceCenter, skipScannerWarnings);
+         if (!ASIdiSPIM.SCOPE) {
+            props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
+                  sliceCenter, skipScannerWarnings);
+         }
       } else {  // normal case
 
          // only do alternating scan directions if the user is using advanced timing
@@ -836,8 +838,10 @@ public class ControllerUtils {
                settings.sliceTiming.scanPeriod, skipScannerWarnings);
          props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_Y_DEG,
                sliceAmplitude, skipScannerWarnings);
-         props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
-               sliceCenter, skipScannerWarnings);
+         if (!ASIdiSPIM.SCOPE) {  // for single-objective we don't want to touch the galvo offset
+            props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
+                  sliceCenter, skipScannerWarnings);
+         }
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES,
                numSlicesHW, skipScannerWarnings);
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SIDES,
@@ -937,8 +941,11 @@ public class ControllerUtils {
             // width should be increased by ratio (1 + settle_fraction) 
             sheetWidth += (sheetWidth * settleTime/readoutTime);
          }
-         props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
-         props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
+         
+         if (!ASIdiSPIM.SCOPE) {  // for SCOPE don't want to touch settings for galvo's X which we use for static offset
+            props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
+            props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
+         }
 
       } // end else (offsetOnly == true)
       
