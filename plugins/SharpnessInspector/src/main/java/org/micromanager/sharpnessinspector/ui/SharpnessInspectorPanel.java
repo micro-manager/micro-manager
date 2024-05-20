@@ -252,10 +252,10 @@ public class SharpnessInspectorPanel extends JPanel {
 
    public void setPlotMode(SharpnessInspectorController.PlotMode mode) {
       switch (mode) {
-         case Time:
+         case PlotMode.Time:
             this.chartPanel.setChart(tChart);
             break;
-         case Z:
+         case PlotMode.Z:
             this.chartPanel.setChart(zChart);
             break;
          default:
