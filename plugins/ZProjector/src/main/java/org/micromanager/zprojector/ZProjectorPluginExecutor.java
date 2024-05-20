@@ -272,12 +272,15 @@ public class ZProjectorPluginExecutor {
             stack.addSlice(ip);
          }
       }
+      //ImagePlus s = new ImagePlus("Test", stack);
+      //s.show();
       if (stack.getSize() > 0 && imgMetadata != null) {
          if (zpd.projectionMethod_ == ZProjectorPlugin.SHARPNESS_METHOD) {
             // need to get these from UI input
 
             ImgSharpnessAnalysis imgScoringFunction = new ImgSharpnessAnalysis();
             imgScoringFunction.setComputationMethod(zpd.sharpnessMethod_);
+            imgScoringFunction.allowInPlaceModification(true);
             SortedMap<Integer, Double> focusScoreMap = new TreeMap<>();
             int nrSlices = stack.getSize();
             for (int i = 0; i < nrSlices; i++) {
@@ -304,9 +307,9 @@ public class ZProjectorPluginExecutor {
             } else if (bestIndex >= stack.size()) {
                bestIndex = stack.size() - 1;
             }
-            Image outImg = studio_.data().getImageJConverter().createImage(
-                    stack.getProcessor(bestIndex + 1), cbp.index(zpd.projectionAxis_, 0).build(),
-                    imgMetadata.copyBuilderWithNewUUID().build());
+            Image img = oldProvider_.getImage(cbp.index(zpd.projectionAxis_, bestIndex).build());
+            Image outImg = img.copyWith(cbp.index(zpd.projectionAxis_, 0).build(),
+                    img.getMetadata().copyBuilderWithNewUUID().build());
             newStore.putImage(outImg);
          } else {
             ImagePlus tmp = new ImagePlus("tmp", stack);
