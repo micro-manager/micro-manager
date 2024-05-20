@@ -42,7 +42,6 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 /**

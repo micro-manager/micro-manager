@@ -49,6 +49,9 @@ public class ImgSharpnessAnalysis {
    private Method method_ = Method.Edges;
    private boolean allowInPlaceModification_ = false;
 
+   /**
+    * Utility class making it easy to select a sharpness algorithm.
+    */
    public enum Method {
       Edges, StdDev, Mean,
       NormalizedVariance, SharpEdges, Redondo, Volath, Volath5,
@@ -99,8 +102,8 @@ public class ImgSharpnessAnalysis {
    /**
     * Compute the sharpness of `proc` using the current `Method` set with `setComputationMethod`.
     *
-    * @param proc
-    * @return
+    * @param proc Input image pixels.
+    * @return The sharpness value.
     */
    public double compute(ImageProcessor proc) {
       switch (method_) {
@@ -163,7 +166,7 @@ public class ImgSharpnessAnalysis {
     */
    public static double computeSharpEdges(ImageProcessor proc, boolean allowInPlaceModification) {
       // mean intensity for the original image
-      double meanIntensity = proc.getStatistics().mean;
+      final double meanIntensity = proc.getStatistics().mean;
       ImageProcessor proc1 = proc;
       if (!allowInPlaceModification) {
          proc1 = proc.duplicate();
@@ -256,9 +259,8 @@ public class ImgSharpnessAnalysis {
     * @return The sum of the square of the gradient of the image.
     */
    public static double computeTenengrad(ImageProcessor proc, boolean allowInPlaceModification) {
-      int h = proc.getHeight();
-      int w = proc.getWidth();
-      double sum = 0.0;
+      final int h = proc.getHeight();
+      final int w = proc.getWidth();
       int[] ken1 = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
       int[] ken2 = {1, 2, 1, 0, 0, 0, -1, -2, -1};
       ImageProcessor proc1 = proc;
@@ -269,6 +271,7 @@ public class ImgSharpnessAnalysis {
       ImageProcessor proc2 = proc.duplicate();
       proc1.convolve3x3(ken1);
       proc2.convolve3x3(ken2);
+      double sum = 0.0;
       for (int i = 0; i < w; i++) {
          for (int j = 0; j < h; j++) {
             sum += Math.pow(proc1.getPixel(i, j), 2) + Math.pow(proc2.getPixel(i, j), 2);
@@ -336,9 +339,8 @@ public class ImgSharpnessAnalysis {
    public static double computeMedianEdges(ImageProcessor proc, boolean allowInPlaceModification) {
       final int h = proc.getHeight();
       final int w = proc.getWidth();
-      double sum = 0.0;
-      int[] ken1 = {2, 1, 0, 1, 0, -1, 0, -1, -2};
-      int[] ken2 = {0, 1, 2, -1, 0, 1, -2, -1, 0};
+      final int[] ken1 = {2, 1, 0, 1, 0, -1, 0, -1, -2};
+      final int[] ken2 = {0, 1, 2, -1, 0, 1, -2, -1, 0};
       ImageProcessor proc1 = proc;
       if (!allowInPlaceModification) {
          proc1 = proc.duplicate();
@@ -348,6 +350,7 @@ public class ImgSharpnessAnalysis {
       ImageProcessor proc2 = proc1.duplicate();
       proc1.convolve3x3(ken1);
       proc2.convolve3x3(ken2);
+      double sum = 0.0;
       for (int i = 0; i < w; i++) {
          for (int j = 0; j < h; j++) {
             sum += Math.sqrt(Math.pow(proc1.getPixel(i, j), 2) + Math.pow(proc2.getPixel(i, j), 2));

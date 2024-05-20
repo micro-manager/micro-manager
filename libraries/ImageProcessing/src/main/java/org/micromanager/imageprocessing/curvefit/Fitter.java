@@ -8,23 +8,23 @@ public class Fitter {
    static final String NOFIT = "No fit (take max)";
    static final String GAUSSIAN = "Gaussian";
 
-   public enum FunctionType {NoFit, Gaussian};
+   public enum FunctionType {
+      NoFit, Gaussian
+   }
 
    /**
-    * Utility to facilitate fitting data plotted in JFreeChart
+    * Utility to facilitate fitting data plotted in JFreeChart.
     * Provide data in JFReeChart format (XYSeries), and retrieve univariate
     * function parameters that best fit (using least squares) the data. All data
     * points will be weighted equally.
-    *
     * TODO: investigate whether weighting (possibly automatic weighting) can
     * improve accuracy
     *
     * @param data xy series in JFReeChart format
     * @param type one of the Fitter.FunctionType predefined functions
     * @param guess initial guess for the fit.  The number and meaning of these
-   parameters depends on the FunctionType.  Implemented:
-   Gaussian: 0: Normalization, 1: Mean 2: Sigma
-
+    *              parameters depends on the FunctionType.  Implemented:
+    *              Gaussian: 0: Normalization, 1: Mean 2: Sigma
     * @return array with parameters, whose meaning depends on the FunctionType.
     *          Use the function getXYSeries to retrieve the XYDataset predicted
     *          by this fit
@@ -59,7 +59,7 @@ public class Fitter {
    /**
     * Given a JFreeChart dataset and a commons math function, return a JFreeChart
     * dataset in which the original x values are now accompanied by the y values
-    * predicted by the function
+    * predicted by the function.
     *
     * @param data input JFreeChart data set
     * @param type one of the Fitter.FunctionType predefined functions
@@ -94,6 +94,8 @@ public class Fitter {
                result.add(x, y);
             }
             break;
+         default:
+            throw new RuntimeException("Unknown function type");
       }
 
       return result;
@@ -133,24 +135,31 @@ public class Fitter {
             // note that this may be outside our range of X values, but
             // this will be caught by our sanity checks below
             xAtMax = parms[1];
+            break;
+         default:
+            throw new RuntimeException("Unknown function type");
       }
 
       // sanity checks
-      if (xAtMax > maxX) xAtMax = maxX;
-      if (xAtMax < minX) xAtMax = minX;
+      if (xAtMax > maxX) {
+         xAtMax = maxX;
+      }
+      if (xAtMax < minX) {
+         xAtMax = minX;
+      }
 
       return xAtMax;
    }
 
    /**
     * Find the index in the data series with an x value closest to the given
-    * searchValue
+    * searchValue.
     *
     * @param data data in XYSeries format
     * @param searchValue x value that we try to get close to
     * @return index into data with x value closest to searchValue
     */
-   public static int getIndex (XYSeries data, double searchValue) {
+   public static int getIndex(XYSeries data, double searchValue) {
       int index = 0;
       double diff = dataDiff(data.getX(0), searchValue);
       for (int i = 1; i < data.getItemCount(); i++) {
@@ -164,11 +173,11 @@ public class Fitter {
    }
 
    /**
-    * helper function for getIndex
+    * Helper function for getIndex.
     *
-    * @param num
-    * @param val
-    * @return
+    * @param num number to compare
+    * @param val value to compare to
+    * @return difference between the number and the value
     */
    static double dataDiff(Number num, double val) {
       double diff = num.doubleValue() - val;
@@ -187,7 +196,7 @@ public class Fitter {
     * @param data input data (raw data that were fitted
     * @param type function type used for fitting
     * @param parms function parameters derived in the fit
-    * @return
+    * @return R^2 value
     */
    public static double getRSquare(XYSeries data, Fitter.FunctionType type,
                                    double[] parms) {
@@ -209,11 +218,12 @@ public class Fitter {
 
       }
 
-      return 1.0 - (ssRes/ssTot);
+      return 1.0 - (ssRes / ssTot);
    }
 
    /**
-    * Returns the average of the ys in a XYSeries
+    * Returns the average of the ys in a XYSeries.
+    *
     * @param data input data
     * @return y average
     */
@@ -227,12 +237,13 @@ public class Fitter {
    }
 
    /**
-    * Calculate the y value for a given function and x value
+    * Calculate the y value for a given function and x value.
     * Throws an IllegalArgumentException if the pars do not match the function
+    *
     * @param xValue xValue to be used in the function
     * @param type function type
     * @param parms function parameters (for instance, as return from the fit function
-    * @return
+    * @return y value
     */
    public static double getFunctionValue(double xValue, Fitter.FunctionType type,
                                          double[] parms) {
@@ -246,8 +257,9 @@ public class Fitter {
             double[] parms2 = new double[3];
             System.arraycopy(parms, 0, parms2, 0, 3);
             return gf.value(xValue, parms2) + parms[3];
+         default:
+            throw new RuntimeException("Unknown function type");
       }
-      return 0.0;
    }
 
    static void checkParms(Fitter.FunctionType type, double[] parms) {
@@ -266,16 +278,17 @@ public class Fitter {
    public static String getFunctionTypeAsString(Fitter.FunctionType key) {
       switch (key) {
          case NoFit: return NOFIT;
-         case Gaussian : return GAUSSIAN;
+         case Gaussian: return GAUSSIAN;
+         default: throw new RuntimeException("Unknown function type");
       }
-      return "";
    }
 
    public static Fitter.FunctionType getFunctionTypeAsType(String key) {
-      if (key.equals(NOFIT))
+      if (key.equals(NOFIT)) {
          return Fitter.FunctionType.NoFit;
-      if (key.equals(GAUSSIAN))
+      } else if (key.equals(GAUSSIAN)) {
          return Fitter.FunctionType.Gaussian;
+      }
       return Fitter.FunctionType.NoFit;
    }
 
