@@ -36,10 +36,10 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
+import org.micromanager.display.inspector.internal.panels.sharpnessinspector.ui.SharpnessInspectorPanel;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 import org.micromanager.internal.utils.MustCallOnEDT;
-import org.micromanager.display.inspector.internal.panels.sharpnessinspector.ui.SharpnessInspectorPanel;
 
 /**
  *
