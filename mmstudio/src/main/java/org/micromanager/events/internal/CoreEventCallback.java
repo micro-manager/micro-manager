@@ -26,7 +26,7 @@ import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.MMEventCallback;
 import org.micromanager.Studio;
-import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
+import org.micromanager.acquisition.AcquisitionManager;
 
 /**
  * Callback to update Java layer when a change happens in the MMCore. This
@@ -37,7 +37,7 @@ public final class CoreEventCallback extends MMEventCallback {
 
    private final CMMCore core_;
    private final Studio studio_;
-   private final AcquisitionWrapperEngine engine_;
+   private final AcquisitionManager acquisitionManager_;
    private volatile boolean ignoreCoreEvents_;
 
    /**
@@ -46,21 +46,21 @@ public final class CoreEventCallback extends MMEventCallback {
     * ignoreEvents_ flag.
     *
     * @param studio Our main Studio object (usually a singleton)
-    * @param engine Acquisition engine object
+    * @param acquisitionManager Acquisition manager abstracts access to engine object
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public CoreEventCallback(Studio studio, AcquisitionWrapperEngine engine) {
+   public CoreEventCallback(Studio studio, AcquisitionManager acquisitionManager) {
       super();
       studio_ = studio;
       core_ = studio.core();
-      engine_ = engine;
+      acquisitionManager_ = acquisitionManager;
       core_.registerCallback(this);
    }
 
    @Override
    public void onPropertiesChanged() {
       // TODO: remove test once acquisition engine is fully multithreaded
-      if (engine_ != null && engine_.isAcquisitionRunning()) {
+      if (acquisitionManager_ != null && acquisitionManager_.isAcquisitionRunning()) {
          core_.logMessage("Notification from MMCore ignored because acquisition is running!", true);
       } else if (ignoreCoreEvents_) {
          core_.logMessage("Notification from MMCore ignored", true);

@@ -391,9 +391,6 @@ public final class MMStudio implements Studio {
 
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
 
-      // This entity is a class property to avoid garbage collection.
-      coreCallback_ = new CoreEventCallback(studio_, acqEngineClojure_);
-
       // Load hardware configuration
       // Note that this also initializes Autofocus plugins.
       if (sysConfigFile_ != null) {  // we do allow running Micro-Manager without a config file!
@@ -405,6 +402,9 @@ public final class MMStudio implements Studio {
 
       acquisitionManager_ = new DefaultAcquisitionManager(
             this, ui_.getAcquisitionWindow());
+
+      // This entity is a class property to avoid garbage collection.
+      coreCallback_ = new CoreEventCallback(studio_, acquisitionManager_);
 
       try {
          core_.setCircularBufferMemoryFootprint(settings().getCircularBufferSize());
@@ -875,13 +875,17 @@ public final class MMStudio implements Studio {
       }
 
       try {
-         if (sysConfigFile_ != null && sysConfigFile_.length() > 0) {
+         if (sysConfigFile_ != null && !sysConfigFile_.isEmpty()) {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
-            coreCallback_.setIgnoring(true);
+            if (coreCallback_ != null) {
+               coreCallback_.setIgnoring(true);
+            }
             HardwareConfigurationManager.create(profile(), this)
                   .loadHardwareConfiguration(sysConfigFile_);
-            coreCallback_.setIgnoring(false);
+            if (coreCallback_ != null) {
+               coreCallback_.setIgnoring(false);
+            }
             GUIUtils.preventDisplayAdapterChangeExceptions();
             // in case 3rdparties use this deprecated code:
             events().post(new AutofocusPluginShouldInitializeEvent());
