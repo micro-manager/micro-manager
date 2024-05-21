@@ -752,7 +752,7 @@ public class ControllerUtils {
 
       // if we set piezoAmplitude to 0 here then sliceAmplitude will also be 0
       float piezoAmplitude;
-      if (settings.isStageScanning || settings.spimMode == AcquisitionModes.Keys.NO_SCAN) {
+      if (settings.isStageScanning || (settings.spimMode == AcquisitionModes.Keys.NO_SCAN)) {
          piezoAmplitude = 0.0f;
       } else {
          piezoAmplitude = (settings.numSlices - 1) * settings.stepSizeUm;
@@ -892,7 +892,7 @@ public class ControllerUtils {
          // TODO figure out what we should do with piezo illumination/center position during stage scan
 
          // set up stage scan parameters if necessary
-         if (settings.isStageScanning) {
+         if (settings.isStageScanning && !ASIdiSPIM.SCOPE) {  // for SCOPE leave piezo the way it is
             // TODO update UI to hide image center control for stage scanning
             // for interleaved stage scanning there will never be "home" pulse and for normal stage scanning
             //   the first side piezo will never get moved into position either so do both manually (for
@@ -1038,6 +1038,8 @@ public class ControllerUtils {
       // make sure SPIM state machine is stopped; device adapter takes care of querying
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
                Properties.Values.SPIM_IDLE, true);
+      props_.setPropValue(piezoDevice, Properties.Keys.SPIM_STATE,
+            Properties.Values.SPIM_IDLE, true);
       
       Properties.Keys widthProp = (side == Devices.Sides.A) ?
             Properties.Keys.PLUGIN_SHEET_WIDTH_A : Properties.Keys.PLUGIN_SHEET_WIDTH_B;

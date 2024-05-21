@@ -1343,7 +1343,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          s.scanDelay = 0.f;
          s.scanPeriod = 0.25f;
          s.cameraDelay = 0.25f;
-         s.cameraDuration = 0.25f;
+         s.cameraDuration = laserDuration;
          s.cameraExposure = laserDuration;
          s.laserDelay = sliceDeadTime;
          s.laserDuration = laserDuration;
