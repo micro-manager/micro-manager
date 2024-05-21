@@ -18,7 +18,6 @@ import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 import org.micromanager.internal.utils.WindowPositioning;
-import org.micromanager.multichannelshading.MultiChannelShading;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
@@ -64,7 +63,7 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
 
    private void initComponents() {
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
-      super.setTitle(MultiChannelShading.MENUNAME);
+      super.setTitle(FrameCombinerPlugin.MENU_NAME);
       setTitle("FrameCombiner");
 
       final JPanel jPanel1 = new JPanel();
