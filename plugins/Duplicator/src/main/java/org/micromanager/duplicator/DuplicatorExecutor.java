@@ -186,14 +186,14 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
       }
       newSizeCoordsBuilder.channel(channelNames.size());
       float  nrToBeCopied = 1;
-      if (channels_ != null && channels_.size() > 0) {
+      if (channels_ != null && !channels_.isEmpty()) {
          nrToBeCopied *= channels_.size();
       }
       for (String axis : oldStore.getAxes()) {
          if (mins_.containsKey(axis)) {
             int min = mins_.get(axis);
             int max = maxes_.get(axis);
-            newSizeCoordsBuilder.index(axis, max - min);
+            newSizeCoordsBuilder.index(axis, max - min + 1);
             nrToBeCopied *= (max - min + 1);
          }
       }

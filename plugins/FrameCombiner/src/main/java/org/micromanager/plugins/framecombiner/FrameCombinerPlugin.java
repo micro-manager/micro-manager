@@ -21,8 +21,17 @@ public class FrameCombinerPlugin implements ProcessorPlugin, SciJavaPlugin {
    public static final String PROCESSOR_ALGO_SUM = "Sum";
    public static final String PROCESSOR_ALGO_MAX = "Max";
    public static final String PROCESSOR_ALGO_MIN = "Min";
+   public static final String PROCESSOR_ALGO_SHARPEST = "Sharpest";
    public static final String PROCESSOR_DIMENSION_TIME = "Time";
    public static final String PROCESSOR_DIMENSION_Z = "Z";
+   public static String PREF_PROCESSOR_DIMENSION = "processorDimension";
+   public static String PREF_USE_WHOLE_STACK = "useWholeStack";
+   public static String PREF_PROCESSOR_ALGO = "processorAlgo";
+   public static String PREF_SHARPNESS_ALGO = "sharpnessAlgo";
+   public static String PREF_SHARPNESS_SHOW_GRAPH = "sharpnessShowGraph";
+   public static String PREF_NUMBER_OF_IMAGES_TO_PROCESS = "numberOfImagesToProcess";
+   public static String PREF_CHANNELS_TO_AVOID = "channelsToAvoid";
+
 
    private Studio studio_;
 

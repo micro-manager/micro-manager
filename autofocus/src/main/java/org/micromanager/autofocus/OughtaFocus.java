@@ -31,30 +31,21 @@
 
 package org.micromanager.autofocus;
 
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 import java.awt.Rectangle;
-import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.util.function.Function;
-import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
-import mmcorej.org.json.JSONException;
-import org.apache.commons.math3.optim.MaxEval;
-import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
-import org.apache.commons.math3.optim.univariate.BrentOptimizer;
-import org.apache.commons.math3.optim.univariate.SearchInterval;
-import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
-import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
+import org.micromanager.autofocus.optimizers.BrentFocusOptimizer;
+import org.micromanager.autofocus.optimizers.FocusOptimizer;
+import org.micromanager.autofocus.optimizers.ZStackFocusOptimizer;
 import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 import org.micromanager.internal.utils.AutofocusBase;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
@@ -72,46 +63,64 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    private Studio studio_;
    private static final String AF_DEVICE_NAME = "OughtaFocus";
+   private static final String OPTIMIZER_STRATEGY = "OptimizerStrategy";
+   private static final String[] OPTIMIZERS = {"Brent", "Z-Stack"};
+   private static final String FOCUSDRIVE = "FocusDrive";
    private static final String SEARCH_RANGE = "SearchRange_um";
    private static final String TOLERANCE = "Tolerance_um";
    private static final String CROP_FACTOR = "CropFactor";
    private static final String CHANNEL = "Channel";
    private static final String EXPOSURE = "Exposure";
    private static final String SHOW_IMAGES = "ShowImages";
+   private static final String SHOW_GRAPH = "ShowGraph";
    private static final String SCORING_METHOD = "Maximize";
    private static final String[] SHOWVALUES = {"Yes", "No"};
    private static final String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
    private static final String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
 
    private final ImgSharpnessAnalysis fcsAnalysis_ = new ImgSharpnessAnalysis();
-   private final BrentFocusOptimizer afOptimizer_;
+   private final BrentFocusOptimizer brentFocusOptimizer_;
+   private final ZStackFocusOptimizer zStackFocusOptimizer_;
+   private FocusOptimizer focusOptimizer_;
 
    private String channel_ = "";
+   private String zDrive_ = "";
    private double exposure_ = 100;
    private boolean displayImages_ = false;
+   private boolean displayGraph_ = false;
    private double cropFactor_ = 1;
+   private String optimizer_ = OPTIMIZERS[0];
 
 
+   /**
+    * Constructor for the OughtaFocus class. This is the most versatible autofocus plugin.
+    * Originally written by Arthur using the Brent optimizer to use the minimum number of images
+    * to establish best focus, later added were options to do a Z series and graph
+    * the focus curves.  Image analysis code is done in the ImageProcessing library.
+    */
    public OughtaFocus() {
-      afOptimizer_ = new BrentFocusOptimizer(
-            fcsAnalysis_::compute
-      );
-      
+      brentFocusOptimizer_ = new BrentFocusOptimizer(fcsAnalysis_::compute);
+      zStackFocusOptimizer_  = new ZStackFocusOptimizer(fcsAnalysis_::compute);
+      focusOptimizer_ = brentFocusOptimizer_;
+
+      super.createProperty(OPTIMIZER_STRATEGY, OPTIMIZERS[0], OPTIMIZERS);
+      super.createProperty(FOCUSDRIVE, "");
       super.createProperty(SEARCH_RANGE,
-            NumberUtils.doubleToDisplayString(afOptimizer_.getSearchRange()));
+              NumberUtils.doubleToDisplayString(focusOptimizer_.getSearchRange()));
       super.createProperty(TOLERANCE,
-            NumberUtils.doubleToDisplayString(afOptimizer_.getAbsoluteTolerance()));
+              NumberUtils.doubleToDisplayString(focusOptimizer_.getAbsoluteTolerance()));
       super.createProperty(CROP_FACTOR,
-            NumberUtils.doubleToDisplayString(cropFactor_));
+              NumberUtils.doubleToDisplayString(cropFactor_));
       super.createProperty(EXPOSURE,
-            NumberUtils.doubleToDisplayString(exposure_));
+              NumberUtils.doubleToDisplayString(exposure_));
       super.createProperty(FFT_LOWER_CUTOFF,
-            NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTLowerCutoff()));
+              NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTLowerCutoff()));
       super.createProperty(FFT_UPPER_CUTOFF,
-            NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTUpperCutoff()));
+              NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTUpperCutoff()));
       super.createProperty(SHOW_IMAGES, SHOWVALUES[1], SHOWVALUES);
-      super.createProperty(SCORING_METHOD, 
-              fcsAnalysis_.getComputationMethod().name(), 
+      super.createProperty(SHOW_GRAPH, SHOWVALUES[1], SHOWVALUES);
+      super.createProperty(SCORING_METHOD,
+              fcsAnalysis_.getComputationMethod().name(),
               ImgSharpnessAnalysis.Method.getNames()
       );
       super.createProperty(CHANNEL, "");
@@ -120,25 +129,40 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    @Override
    public void applySettings() {
       try {
-         afOptimizer_.setSearchRange(
-               NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE)));
-         afOptimizer_.setAbsoluteTolerance(
-               NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE)));
+         optimizer_ = getPropertyValue(OPTIMIZER_STRATEGY);
+         if (optimizer_.equals(OPTIMIZERS[0])) {
+            focusOptimizer_ = brentFocusOptimizer_;
+         } else {
+            focusOptimizer_ = zStackFocusOptimizer_;
+         }
+         focusOptimizer_.setContext(studio_);
+         zDrive_ = getPropertyValue(FOCUSDRIVE);
+         if (zDrive_.isEmpty()) {
+            zDrive_ = studio_.core().getFocusDevice();
+         }
+         focusOptimizer_.setZDrive(zDrive_);
+         focusOptimizer_.setSearchRange(
+                 NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE)));
+         focusOptimizer_.setAbsoluteTolerance(
+                 NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE)));
          cropFactor_ = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
          cropFactor_ = clip(0.01, cropFactor_, 1.0);
          channel_ = getPropertyValue(CHANNEL);
          exposure_ = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
          double fftLowerCutoff =
-               NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
+                 NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
          fftLowerCutoff = clip(0.0, fftLowerCutoff, 100.0);
          double fftUpperCutoff =
-               NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
+                 NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
          fftUpperCutoff = clip(0.0, fftUpperCutoff, 100.0);
          fcsAnalysis_.setFFTCutoff(fftLowerCutoff, fftUpperCutoff);
          fcsAnalysis_.setComputationMethod(
-               ImgSharpnessAnalysis.Method.valueOf(getPropertyValue(SCORING_METHOD)));
+                 ImgSharpnessAnalysis.Method.valueOf(getPropertyValue(SCORING_METHOD)));
          displayImages_ = getPropertyValue(SHOW_IMAGES).contentEquals("Yes");
-         afOptimizer_.setDisplayImages(displayImages_);
+         displayGraph_ = getPropertyValue(SHOW_GRAPH).contentEquals("Yes");
+         // Only the zStack optimizer can display a graph
+         zStackFocusOptimizer_.setDisplayGraph(displayGraph_);
+         focusOptimizer_.setDisplayImages(displayImages_);
       } catch (MMException | ParseException ex) {
          studio_.logs().logError(ex);
       }
@@ -150,9 +174,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       CMMCore core = studio_.getCMMCore();
       Rectangle oldROI = core.getROI();
 
-
       Configuration oldState = null;
-      if (channel_.length() > 0) {
+      if (!channel_.isEmpty()) {
          String chanGroup = core.getChannelGroup();
          oldState = core.getConfigGroupState(chanGroup);
          core.setConfig(chanGroup, channel_);
@@ -170,7 +193,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       final double oldExposure = core.getExposure();
       core.setExposure(exposure_);
 
-      final double z = afOptimizer_.runAutofocusAlgorithm();
+      final double z = focusOptimizer_.runAutofocusAlgorithm();
+      core.setPosition(z);
 
       if (cropFactor_ < 1.0) {
          studio_.app().setROI(oldROI);
@@ -180,8 +204,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          core.setSystemState(oldState);
       }
       core.setExposure(oldExposure);
-      core.setPosition(z);
-      core.waitForDevice(core.getFocusDevice());
+      core.waitForDevice(zDrive_);
       return z;
    }
 
@@ -192,7 +215,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    @Override
    public int getNumberOfImages() {
-      return afOptimizer_.getImageCount();
+      return brentFocusOptimizer_.getImageCount();
    }
 
    @Override
@@ -205,7 +228,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       CMMCore core = studio_.getCMMCore();
       double score = 0.0;
       try {
-         final double z = core.getPosition(core.getFocusDevice());
+         final double z = core.getPosition(zDrive_);
          core.waitForDevice(core.getCameraDevice());
          core.snapImage();
          TaggedImage img = core.getTaggedImage();
@@ -221,17 +244,17 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       }
       return score;
    }
-   
+
    @Override
    public double computeScore(final ImageProcessor proc) {
       return fcsAnalysis_.compute(proc);
    }
-   
+
    @Override
    public void setContext(Studio app) {
       studio_ = app;
       studio_.events().registerForEvents(this);
-      afOptimizer_.setContext(studio_);
+      brentFocusOptimizer_.setContext(studio_);
    }
 
    @Override
@@ -256,6 +279,24 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
             p.value = allowedChannels[0];
          }
          setProperty(p);
+
+         PropertyItem drive = getProperty(FOCUSDRIVE);
+         StrVector drives = core.getLoadedDevicesOfType(DeviceType.StageDevice);
+         String[] availableDrives = new String[(int) drives.size() + 1];
+         availableDrives[0] = "";
+         found = false;
+         for (int i = 0; i < drives.size(); i++) {
+            availableDrives[i + 1] = drives.get(i);
+            if (drive.value.equals(drives.get(i))) {
+               found = true;
+            }
+         }
+         drive.allowed = availableDrives;
+         if (!found) {
+            drive.value = availableDrives[0];
+         }
+         setProperty(drive);
+
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -288,226 +329,4 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    }
 
 
-   /**
-    * This class uses the Brent Method alongside control of MMStudio's default camera
-    * and Z-stage to perform autofocusing. The Brent Method optimizer will try to maximize
-    * the value returned by the `imgScoringFunction` so this function should return
-    * larger values as the image sharpness increases.
-    *
-    * @author Nick Anthony
-    */
-   private static class BrentFocusOptimizer {
-      // Note on the tolerance settings for the Brent optimizer:
-      //
-      // The reason BrentOptimizer needs both a relative and absolute tolerance
-      // (the _rel_ and _abs_ arguments to the constructor) is that it is
-      // designed for use with arbitrary floating-point numbers. A given
-      // floating point type (e.g. double) always has a certain relative
-      // precision, but larger values have less absolute precision (e.g.
-      // 1.0e100 + 1.0 == 1.0e100).
-      //
-      // So if the result of the optimization is a large FP number, having just
-      // an absolute tolerance (say, 0.01) would result in the algorithm
-      // never terminating (or failing when it reaches the max iterations
-      // constraint, if any). Using a reasonable relative tolerance can prevent
-      // this and allow the optimization to finish when it reaches the
-      // nearly-best-achievable optimum given the FP type.
-      //
-      // Z stage positions, of course, don't have this property and behave like
-      // a fixed-point data type, so only the absolute tolerance is important.
-      // As long as we have a value of _abs_ that is greater than the stage's
-      // minimum step size, the optimizer should always converge (barring other
-      // issues, such as a pathological target function (=focus score)), as
-      // long as we don't run into the FP data type limitations.
-      //
-      // So here we need to select _rel_ to be large enough for
-      // the `double` type and small enough to be negligible in terms of stage
-      // position values. Since we don't expect huge values for the stage
-      // position, we can be relatively conservative and use a value that is
-      // much larger than the recommended minimum (2 x epsilon).
-      //
-      // For the user, it remains important to set a reasonable absolute
-      // tolerance.
-      //
-      // 1.0e-9 is a reasonable relative tolerance to use here, since it
-      // translates to 1 nm when the stage position is 1 m (1e6 um). Thinking
-      // of piezo stages, a generous position of 1000 um would give relative
-      // tolerance of 1 pm, again small enough to be negligible.
-      //
-      // The machine epsilon for double is 2e-53, so we could use a much
-      // smaller value (down to 2e-27 or so) if we wanted to, but OughtaFocus
-      // has been tested for quite some time with _rel_ = 1e-9 (the default
-      // relative tolerance in commons-math 2) and appeared to function
-      // correctly.
-      private static final double BRENT_RELATIVE_TOLERANCE = 1e-9;
-      private int imageCount_;
-      private Studio studio_;
-      private long startTimeMs_;
-      private boolean displayImages_ = false;
-      private double searchRange_ = 10;
-      private double absoluteTolerance_ = 1.0;
-      private final Function<ImageProcessor, Double> imgScoringFunction_;
-
-      /**
-       * The constructor takes a function that calculates a focus score.
-       *
-       * @param imgScoringFunction A function that takes an ImageJ `ImageProcessor`
-       *     and returns a double indicating a measure of the images sharpness. A large
-       *     value indicates a sharper image.
-       */
-      public BrentFocusOptimizer(Function<ImageProcessor, Double> imgScoringFunction) {
-         imgScoringFunction_ = imgScoringFunction;
-      }
-
-      public void setContext(Studio studio) {
-         studio_ = studio;
-      }
-
-      /**
-       * Setter for Display Image flag.
-       *
-       * @param display If `true` then the images taken by the focuser will be displayed in
-       *                real-time.
-       */
-      public void setDisplayImages(boolean display) {
-         displayImages_ = display;
-      }
-
-      public boolean getDisplayImages() {
-         return displayImages_;
-      }
-
-      public int getImageCount() {
-         return imageCount_;
-      }
-
-      public void setSearchRange(double searchRange) {
-         searchRange_ = searchRange;
-      }
-
-      public double getSearchRange() {
-         return searchRange_;
-      }
-
-      public void setAbsoluteTolerance(double tolerance) {
-         absoluteTolerance_ = tolerance;
-      }
-
-      public double getAbsoluteTolerance() {
-         return absoluteTolerance_;
-      }
-
-      /**
-       * Runs the actual algorithm.
-       *
-       * @return Focus Score.
-       * @throws Exception A common exception is failure to set the Z position in the hardware
-       */
-      public double runAutofocusAlgorithm() throws Exception {
-         startTimeMs_ = System.currentTimeMillis();
-
-         UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(
-                 (double d) -> {
-                    try {
-                       return measureFocusScore(d);
-                    } catch (Exception e) {
-                       throw new RuntimeException(e);
-                    }
-                 }
-         );
-
-         BrentOptimizer brentOptimizer =
-                 new BrentOptimizer(BRENT_RELATIVE_TOLERANCE, absoluteTolerance_);
-
-         imageCount_ = 0;
-
-         CMMCore core = studio_.getCMMCore();
-         double z = core.getPosition(core.getFocusDevice());
-
-         UnivariatePointValuePair result = brentOptimizer.optimize(uof,
-                 GoalType.MAXIMIZE,
-                 new MaxEval(100),
-                 new SearchInterval(z - searchRange_ / 2, z + searchRange_ / 2));
-         studio_.logs().logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
-                 + ", z=" + TextUtils.FMT2.format(result.getPoint())
-                 + ", dz=" + TextUtils.FMT2.format(result.getPoint() - z)
-                 + ", t=" + (System.currentTimeMillis() - startTimeMs_));
-         return result.getPoint();
-      }
-
-      private double measureFocusScore(double z) throws Exception {
-         CMMCore core = studio_.getCMMCore();
-         long start = System.currentTimeMillis();
-         try {
-            core.setPosition(z);
-            core.waitForDevice(core.getFocusDevice());
-            final long tZ = System.currentTimeMillis() - start;
-
-            TaggedImage img;
-            core.waitForDevice(core.getCameraDevice());
-            core.snapImage();
-            final TaggedImage img1 = core.getTaggedImage();
-            img = img1;
-            if (displayImages_) {
-               SwingUtilities.invokeLater(() -> {
-                  try {
-                     studio_.live().displayImage(studio_.data().convertTaggedImage(img1));
-                  } catch (JSONException | IllegalArgumentException e) {
-                     studio_.logs().showError(e);
-                  }
-               });
-            }
-
-            long tI = System.currentTimeMillis() - start - tZ;
-            ImageProcessor proc = makeMonochromeProcessor(core, getMonochromePixels(img));
-            double score = imgScoringFunction_.apply(proc);
-            long tC = System.currentTimeMillis() - start - tZ - tI;
-            studio_.logs().logMessage("OughtaFocus: image=" + imageCount_++
-                    + ", t=" + (System.currentTimeMillis() - startTimeMs_)
-                    + ", z=" + TextUtils.FMT2.format(z)
-                    + ", score=" + TextUtils.FMT2.format(score)
-                    + ", Tz=" + tZ + ", Ti=" + tI + ", Tc=" + tC);
-            return score;
-         } catch (Exception e) {
-            String zString = new DecimalFormat("0.00#").format(z);
-            throw new Exception(e.getMessage() + ". Position: " + zString, e);
-         }
-      }
-
-
-      private static ImageProcessor makeMonochromeProcessor(CMMCore core, Object pixels) {
-         //TODO replace these methods with studio_.data().getImageJConverter().toProcessor()
-         int w = (int) core.getImageWidth();
-         int h = (int) core.getImageHeight();
-         if (pixels instanceof byte[]) {
-            return new ByteProcessor(w, h, (byte[]) pixels, null);
-         } else if (pixels instanceof short[]) {
-            return new ShortProcessor(w, h, (short[]) pixels, null);
-         } else {
-            return null;
-         }
-      }
-
-      private static Object getMonochromePixels(TaggedImage image) throws Exception {
-         if (MDUtils.isRGB32(image)) {
-            final byte[][] planes = ImageUtils.getColorPlanesFromRGB32((byte[]) image.pix);
-            final int numPixels = planes[0].length;
-            byte[] monochrome = new byte[numPixels];
-            for (int j = 0; j < numPixels; ++j) {
-               monochrome[j] = (byte) ((planes[0][j] + planes[1][j] + planes[2][j]) / 3);
-            }
-            return monochrome;
-         } else if (MDUtils.isRGB64(image)) {
-            final short[][] planes = ImageUtils.getColorPlanesFromRGB64((short[]) image.pix);
-            final int numPixels = planes[0].length;
-            short[] monochrome = new short[numPixels];
-            for (int j = 0; j < numPixels; ++j) {
-               monochrome[j] = (short) ((planes[0][j] + planes[1][j] + planes[2][j]) / 3);
-            }
-            return monochrome;
-         } else {
-            return image.pix;  // Presumably already a gray image.
-         }
-      }
-   }
 }

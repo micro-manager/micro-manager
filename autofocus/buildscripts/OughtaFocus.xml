@@ -1,4 +1,7 @@
 <project name="MMOughtaFocus" default="jar">
+    <property name="sourcefile" value="src/main/java/org/micromanager/autofocus/optimizers/FocusOptimizer.java"/>
+    <property name="sourcefile" value="src/main/java/org/micromanager/autofocus/optimizers/BrentFocusOptimizer.java"/>
+    <property name="sourcefile" value="src/main/java/org/micromanager/autofocus/optimizers/ZStackFocusOptimizer.java"/>
     <property name="sourcefile" value="src/main/java/org/micromanager/autofocus/OughtaFocus.java"/>
 	<import file="autofocusbuild.xml"/>
 </project>

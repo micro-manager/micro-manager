@@ -41,8 +41,12 @@ public class ZProjectorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Project...";
    public static final String AXISKEY = "AxisKey";
    public static final String PROJECTION_METHOD = "ProjectionMethod";
+   public static final String SHARPNESS = "SharpnessMethod";
    public static final String SAVE = "Save";
-   
+   // to be used in conjunction with "Methods" in IJ ZProjector
+   public static final int SHARPNESS_METHOD = 10;
+   public static final String SHOW_SHARPNESS_GRAPH = "ShowSharpnessGraph";
+
    private Studio studio_;
 
    @Override

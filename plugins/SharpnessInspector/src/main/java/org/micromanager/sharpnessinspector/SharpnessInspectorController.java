@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.sharpnessinspector;
+package org.micromanager.display.inspector.internal.panels.sharpnessinspector;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
@@ -36,10 +36,10 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
+import org.micromanager.display.inspector.internal.panels.sharpnessinspector.ui.SharpnessInspectorPanel;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 import org.micromanager.internal.utils.MustCallOnEDT;
-import org.micromanager.sharpnessinspector.ui.SharpnessInspectorPanel;
 
 /**
  *

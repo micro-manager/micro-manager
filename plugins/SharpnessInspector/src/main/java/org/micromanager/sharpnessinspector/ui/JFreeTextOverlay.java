@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.sharpnessinspector.ui;
+package org.micromanager.display.inspector.internal.panels.sharpnessinspector.ui;
 
 import java.awt.Font;
 import java.awt.FontMetrics;

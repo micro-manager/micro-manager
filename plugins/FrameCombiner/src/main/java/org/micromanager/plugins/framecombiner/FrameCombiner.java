@@ -1,7 +1,7 @@
 package org.micromanager.plugins.framecombiner;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -15,50 +15,59 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 
 public class FrameCombiner implements Processor {
-
    private final Studio studio_;
    private final LogManager log_;
 
    private final String processorAlgo_;
    private final String processorDimension_;
-   private final int numerOfImagesToProcess_;
+   private final boolean useWholeStack_;
+   private int numberOfImagesToProcess_;
    private final List<Integer> channelsToAvoid_;
-
    private boolean imageNotProcessedFirstTime_ = true;
    private boolean imageCanBeProcessed_ = true;
+   private final ImgSharpnessAnalysis.Method sharpnessMethod_;
+   private final boolean showGraph_;
+   private boolean snapLive_ = false;
 
    private HashMap<Coords, SingleCombinationProcessor> singleAquisitions_;
 
-   public FrameCombiner(Studio studio, String processorDimension, String processorAlgo,
-                        int numerOfImagesToProcess, String channelsToAvoidString) {
+   public FrameCombiner(Studio studio,
+                        String processorDimension,
+                        boolean useWholeStack,
+                        int numberOfImagesToProcess,
+                        String channelsToAvoidString,
+                        String processorAlgo,
+                        String sharpnessMethodsName,
+                        boolean showGraph) {
 
       studio_ = studio;
       log_ = studio_.logs();
 
-      processorAlgo_ = processorAlgo;
+      useWholeStack_ = useWholeStack;
       processorDimension_ = processorDimension;
-      numerOfImagesToProcess_ = numerOfImagesToProcess;
+      numberOfImagesToProcess_ = numberOfImagesToProcess;
+      if (useWholeStack_) {
+         numberOfImagesToProcess_ = studio_.acquisitions().getAcquisitionSettings().slices().size();
+      }
 
-      // Check whether channelsToAvoidString is correctly formated
+      // Check whether channelsToAvoidString is correctly formatted
       if (!channelsToAvoidString.isEmpty() && !isValidIntRangeInput(channelsToAvoidString)) {
          log_.showError("\"Channels to avoid\" settings is not valid and will be ignored : "
                + channelsToAvoidString);
-         channelsToAvoid_ = Arrays.asList(new Integer[0]);
+         channelsToAvoid_ = Collections.emptyList();
       } else {
          channelsToAvoid_ = convertToList(channelsToAvoidString);
       }
+      processorAlgo_ = processorAlgo;
+      sharpnessMethod_ = ImgSharpnessAnalysis.Method.valueOf(sharpnessMethodsName);
+      showGraph_ = showGraph;
 
-      // log_.logMessage("FrameCombiner : Algorithm applied on stack image is " + processorAlgo_);
-      //      log_.logMessage("FrameCombiner : Number of frames to process "
-      //            + Integer.toString(numerOfImagesToProcess));
-      //      log_.logMessage("FrameCombiner : Channels avoided are "
-      //      + channelsToAvoid_.toString() + " (during MDA)");
       // Initialize a hashmap of all combinations of the different acquisitions
       // Each index will be a combination of Z, Channel and StagePosition
-      singleAquisitions_ = new HashMap();
-
+      singleAquisitions_ = new HashMap<>();
    }
 
    @Override
@@ -68,7 +77,7 @@ public class FrameCombiner implements Processor {
          context.outputImage(image);
          return;
       }
-      // when live mode is on and user selected to do z proejct => do nothing
+      // when live mode is on and user selected to do z project => do nothing
       if (studio_.live().isLiveModeOn()
             && processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
          context.outputImage(image);
@@ -76,7 +85,7 @@ public class FrameCombiner implements Processor {
       }
       // when running MDA without z stack and user want FrameCombiner
       // to combine z frames => do nothing
-      if (studio_.getAcquisitionManager().getAcquisitionSettings().slices().size() == 0
+      if (studio_.getAcquisitionManager().getAcquisitionSettings().slices().isEmpty()
             && processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
          context.outputImage(image);
          return;
@@ -97,38 +106,46 @@ public class FrameCombiner implements Processor {
       SingleCombinationProcessor singleAcquProc;
       if (!singleAquisitions_.containsKey(coords)) {
 
-         // Check whether this combinations of coords are allowed to be processed
-         boolean processCombinations = true;
-         if (channelsToAvoid_.contains(coords.getChannel()) && !studio_.live().isLiveModeOn()) {
-            processCombinations = false;
-         }
+         // Check whether this combination of coords are allowed to be processed
+         boolean processCombinations =
+                 !channelsToAvoid_.contains(coords.getChannel())
+                 || studio_.live().isLiveModeOn();
 
-         singleAcquProc = new SingleCombinationProcessor(coords, studio_,
-               processorAlgo_, processorDimension_, numerOfImagesToProcess_,
-               processCombinations, !channelsToAvoid_.isEmpty());
+         singleAcquProc = new SingleCombinationProcessor(studio_,
+               processorAlgo_, processorDimension_, numberOfImagesToProcess_,
+               processCombinations, !channelsToAvoid_.isEmpty(), sharpnessMethod_, showGraph_);
          singleAquisitions_.put(coords, singleAcquProc);
       } else {
          singleAcquProc = singleAquisitions_.get(coords);
       }
 
       // This method will output the processed image if needed
-      singleAcquProc.addImage(image, context);
+      singleAcquProc.addImage(image, context, snapLive_);
    }
 
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
-      if (summary.getIntendedDimensions() != null) {
+      Coords intendedDimensions = summary.getIntendedDimensions();
+      if (intendedDimensions == null
+              || intendedDimensions.equals(studio_.data().coordsBuilder().build())) {
+         snapLive_ = true;
+         return summary;
+      }
+      if (channelsToAvoid_.isEmpty()) {
          Coords.CoordsBuilder coordsBuilder = summary.getIntendedDimensions().copyBuilder();
          SummaryMetadata.Builder builder = summary.copyBuilder();
          // Calculate new number of corresponding dimension number
          int newIntendedDimNumber;
          if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
             newIntendedDimNumber =
-                  summary.getIntendedDimensions().getTime() / numerOfImagesToProcess_;
+                  summary.getIntendedDimensions().getT() / numberOfImagesToProcess_;
             builder.intendedDimensions(coordsBuilder.time(newIntendedDimNumber).build());
          } else if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
+            if (useWholeStack_) {
+               numberOfImagesToProcess_ = summary.getIntendedDimensions().getZ();
+            }
             newIntendedDimNumber =
-                  summary.getIntendedDimensions().getZ() / numerOfImagesToProcess_;
+                  summary.getIntendedDimensions().getZ() / numberOfImagesToProcess_;
             builder.intendedDimensions(coordsBuilder.z(newIntendedDimNumber).build());
          }
          return builder.build();
@@ -141,7 +158,7 @@ public class FrameCombiner implements Processor {
     * Check if the image can be processed or not.
     *
     * @param image the image to process.
-    * @return whether or not the image is good to process
+    * @return whether the image is good to process
     */
    private boolean imageGoodToProcess(Image image) {
 
@@ -222,7 +239,7 @@ public class FrameCombiner implements Processor {
       }
 
       // Remove duplicate entries
-      channelsToAvoid = new ArrayList<Integer>(new LinkedHashSet<Integer>(channelsToAvoid));
+      channelsToAvoid = new ArrayList<>(new LinkedHashSet<>(channelsToAvoid));
 
       return channelsToAvoid;
    }
