@@ -5,17 +5,17 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.AcqEngJDataSink;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
@@ -50,6 +50,12 @@ public class NDTiffAdapter implements Storage {
    private NDTiffAPI storage_;
    private DefaultDatastore store_;
    private SummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
+   // ShadowList of Coords in the datastore.  In read mode derived from the storage, in write mode
+   // added whenever an image is added
+   private final List<Coords> coords_;
+   // ShadowList of Coords indexed by Coords missing channel.
+   // In read mode derived from the storage, in write mode added whenever an image is added
+   private final Map<Coords, List<Coords>> coordsIndexedMissingC_;
 
    /**
     * Constructor of NDTiffAdapter.
@@ -68,12 +74,23 @@ public class NDTiffAdapter implements Storage {
 
       store_.setSavePath(dir);
       store_.setName(new File(dir).getName());
+      coords_ = new ArrayList<>();
+      coordsIndexedMissingC_ = new HashMap<>();
 
-      if (amInWriteMode) {
-         // Wait until summary metadata set to create storage
-      } else {
+      // If not writing, wait until summary metadata set to create storage
+      if (!amInWriteMode) {
          storage_ = new NDTiffStorage(dir);
+         getUnorderedImageCoords().forEach(this::addCoordsToIndex);
       }
+   }
+
+   private void addCoordsToIndex(Coords coords) {
+      coords_.add(coords);
+      Coords coordMissingC = coords.copyRemovingAxes(Coords.C);
+      if (!coordsIndexedMissingC_.containsKey(coordMissingC)) {
+         coordsIndexedMissingC_.put(coordMissingC, new LinkedList<>());
+      }
+      coordsIndexedMissingC_.get(coordMissingC).add(coords);
    }
 
    public static boolean isNDTiffDataSet(String dir) {
@@ -87,7 +104,6 @@ public class NDTiffAdapter implements Storage {
          axes.put(s, coords.getIndex(s));
       }
       // Axes with a value of 0 aren't explicitly encoded
-      SummaryMetadata summaryMetadata = getSummaryMetadata();
       for (String s : getSummaryMetadata().getOrderedAxes()) {
          if (!axes.containsKey(s)) {
             axes.put(s, 0);
@@ -181,6 +197,7 @@ public class NDTiffAdapter implements Storage {
       int bitDepth = image.getBytesPerPixel() * 8;
       storage_.putImage(image.getRawPixels(), json, axes, rgb, bitDepth,
               image.getHeight(), image.getWidth());
+      addCoordsToIndex(image.getCoords());
    }
 
    @Override
@@ -204,7 +221,7 @@ public class NDTiffAdapter implements Storage {
 
    @Override
    public Image getAnyImage() {
-      if (storage_.getAxesSet().size() == 0) {
+      if (storage_.getAxesSet().isEmpty()) {
          return null;
       }
       HashMap<String, Object> axes = storage_.getAxesSet().iterator().next();
@@ -250,8 +267,35 @@ public class NDTiffAdapter implements Storage {
    public List<Image> getImagesIgnoringAxes(
            Coords coords, String... ignoreTheseAxes) throws IOException {
       // This is obviously wrong, but not quite sure what to do at this point....
-
-      return getImagesMatching(coords);
+      if (ignoreTheseAxes.length == 0) {
+         return getImagesMatching(coords);
+      } else if (ignoreTheseAxes.length == 1 && ignoreTheseAxes[0].equals(Coords.C)) {
+         Coords matchCoord = coords.copyRemovingAxes(Coords.C);
+         List<Coords> coords1 = coordsIndexedMissingC_.get(matchCoord);
+         final List<Image> result = new ArrayList<>();
+         coords1.forEach(coords2 -> {
+            try {
+               result.add(getImagesMatching(coords2).get(0));
+            } catch (IOException e) {
+               throw new RuntimeException(e);
+            }
+         });
+         return result;
+      } else {
+         Coords matchCoord = coords.copyRemovingAxes(ignoreTheseAxes);
+         final List<Image> result = new ArrayList<>();
+         getUnorderedImageCoords().iterator().forEachRemaining(
+               coords1 -> {
+                  if (coords1.copyRemovingAxes(ignoreTheseAxes).equals(matchCoord)) {
+                     try {
+                        result.add(getImage(coords1));
+                     } catch (IOException e) {
+                        throw new RuntimeException(e);
+                     }
+                  }
+               });
+         return result;
+      }
    }
 
    @Override
