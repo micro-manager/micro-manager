@@ -146,10 +146,10 @@ public class PlatePanel extends JPanel {
          int siteOffsetY = siteIndicator_.height / 2;
 
          for (int j = 0; j < sites_.getNumberOfPositions(); j++) {
-            siteIndicator_.x = (int) (sites_.getPosition(j).getX() * params_.xFactor + params_.xTopLeft
-                  - siteOffsetX + 0.5);
-            siteIndicator_.y = (int) (sites_.getPosition(j).getY() * params_.yFactor + params_.yTopLeft
-                  - siteOffsetY + 0.5);
+            siteIndicator_.x = (int) (sites_.getPosition(j).getX()
+                    * params_.xFactor + params_.xTopLeft - siteOffsetX + 0.5);
+            siteIndicator_.y = (int) (sites_.getPosition(j).getY()
+                    * params_.yFactor + params_.yTopLeft - siteOffsetY + 0.5);
             g.draw(siteIndicator_);
          }
 
@@ -190,8 +190,6 @@ public class PlatePanel extends JPanel {
       long height = studio_.core().getImageHeight();
       cameraXFieldOfView_ = studio_.core().getPixelSizeUm() * width;
       cameraYFieldOfView_ = studio_.core().getPixelSizeUm() * height;
-      // TODO: adjust the size of the stage pointer and site indicator to be proportional to the image
-      // and well size.
       stagePointer_ = new Rectangle(3, 3);
       siteIndicator_ = new Rectangle(4, 4);
       wellMap_ = new Hashtable<>();
@@ -289,7 +287,8 @@ public class PlatePanel extends JPanel {
             }
             xyStagePos_ = studio_.getCMMCore().getXYStagePosition();
             zStagePos_ = studio_.getCMMCore().getPosition(plateGui_.getZStageName());
-            plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+            plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_,
+                    well, "undefined");
             refreshStagePosition();
             repaint();
          } catch (Exception e2) {
@@ -810,6 +809,12 @@ public class PlatePanel extends JPanel {
       plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
    }
 
+   /**
+    * Gets the current stage position from the hardware and draws the current position
+    * on the plate picture.
+    *
+    * @throws HCSException thrown when the stage position cannot be retrieved.
+    */
    @Subscribe
    public void xyStagePositionChanged(XYStagePositionChangedEvent xyStagePositionChangedEvent) {
       if (plateGui_.isCalibratedXY()) {
@@ -821,12 +826,19 @@ public class PlatePanel extends JPanel {
             return;
          }
          String well = plate_.getWellLabel(pt.x, pt.y);
-         plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+         plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_,
+                 well, "undefined");
          drawStagePointer(g);
          repaint();
       }
    }
 
+   /**
+    * Gets the current stage position from the hardware and draws the current position
+    * on the plate picture.
+    *
+    * @throws HCSException thrown when the stage position cannot be retrieved.
+    */
    @Subscribe
    public void stagePositionChanged(StagePositionChangedEvent stagePositionChangedEvent) {
       zStagePos_ = stagePositionChangedEvent.getPos();
@@ -835,6 +847,12 @@ public class PlatePanel extends JPanel {
       plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
    }
 
+   /**
+    * Updates the size of the position indicators based on the current camera field of
+    * view.
+    *
+    * @throws HCSException thrown when the stage position cannot be retrieved.
+    */
    @Subscribe
    public void pixelSizeChanged(PixelSizeChangedEvent psz) {
       updateCameraFieldOfView();
