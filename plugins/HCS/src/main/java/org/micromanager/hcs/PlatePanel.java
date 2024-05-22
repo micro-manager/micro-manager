@@ -25,9 +25,11 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import mmcorej.DeviceType;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 
@@ -47,8 +49,11 @@ public class PlatePanel extends JPanel {
    private Hashtable<String, Integer> wellMap_;
    private WellBox[] wellBoxes_;
    private Rectangle activeRect_;
-   private Rectangle stagePointer_;
+   private final Rectangle stagePointer_;
+   private final Rectangle siteIndicator_;
    private Point2D.Double xyStagePos_;
+   private double cameraXFieldOfView_;
+   private double cameraYFieldOfView_;
 
    /**
     * Tool, either Select or Move.
@@ -58,9 +63,9 @@ public class PlatePanel extends JPanel {
    }
 
    private Tool mode_;
-   private Studio app_;
+   private Studio studio_;
    private boolean lockAspect_;
-   private final ParentPlateGUI gui_;
+   private final ParentPlateGUI plateGui_;
    private Point anchor_;
    private Point previous_;
 
@@ -75,7 +80,6 @@ public class PlatePanel extends JPanel {
       public Color activeColor;
       public Rectangle wellBoundingRect;
       public Rectangle wellRect;
-      public Rectangle siteRect;
       public boolean circular;
       public boolean selected;
       public boolean active;
@@ -89,8 +93,6 @@ public class PlatePanel extends JPanel {
          activeColor = LIGHT_YELLOW;
          wellBoundingRect = new Rectangle(0, 0, 100, 100);
          wellRect = new Rectangle(10, 10, 80, 80);
-         siteRect = new Rectangle(4, 4);
-         stagePointer_ = new Rectangle(3, 3);
          selected = false;
          active = false;
          params_ = new DrawingParams();
@@ -140,15 +142,15 @@ public class PlatePanel extends JPanel {
          }
 
          // draw sites
-         int siteOffsetX = siteRect.width / 2;
-         int siteOffsetY = siteRect.height / 2;
+         int siteOffsetX = siteIndicator_.width / 2;
+         int siteOffsetY = siteIndicator_.height / 2;
 
          for (int j = 0; j < sites_.getNumberOfPositions(); j++) {
-            siteRect.x = (int) (sites_.getPosition(j).getX() * params_.xFactor + params_.xTopLeft
+            siteIndicator_.x = (int) (sites_.getPosition(j).getX() * params_.xFactor + params_.xTopLeft
                   - siteOffsetX + 0.5);
-            siteRect.y = (int) (sites_.getPosition(j).getY() * params_.yFactor + params_.yTopLeft
+            siteIndicator_.y = (int) (sites_.getPosition(j).getY() * params_.yFactor + params_.yTopLeft
                   - siteOffsetY + 0.5);
-            g.draw(siteRect);
+            g.draw(siteIndicator_);
          }
 
          g.setPaint(oldPaint);
@@ -175,25 +177,31 @@ public class PlatePanel extends JPanel {
     *
     * @param plate Which plate to draw
     * @param pl PositionList
-    * @param gui plugin GUI
-    * @param app MM Studio application
+    * @param plateGUI plugin GUI
+    * @param studio MM Studio application
     */
-   public PlatePanel(SBSPlate plate, PositionList pl, ParentPlateGUI gui,
-         Studio app) {
-      gui_ = gui;
-      app_ = app;
+   public PlatePanel(SBSPlate plate, PositionList pl, ParentPlateGUI plateGUI, Studio studio) {
+      plateGui_ = plateGUI;
+      studio_ = studio;
       plate_ = plate;
       mode_ = PlatePanel.Tool.SELECT;
       lockAspect_ = true;
+      long width = studio_.core().getImageWidth();
+      long height = studio_.core().getImageHeight();
+      cameraXFieldOfView_ = studio_.core().getPixelSizeUm() * width;
+      cameraYFieldOfView_ = studio_.core().getPixelSizeUm() * height;
+      // TODO: adjust the size of the stage pointer and site indicator to be proportional to the image
+      // and well size.
       stagePointer_ = new Rectangle(3, 3);
+      siteIndicator_ = new Rectangle(4, 4);
       wellMap_ = new Hashtable<>();
       xyStagePos_ = new Point2D.Double(0.0, 0.0);
       zStagePos_ = 0.0;
       
       if (pl == null) {
-         wells_ = plate_.generatePositions(gui_.getXYStageName());
+         wells_ = plate_.generatePositions(plateGui_.getXYStageName());
       } else {
-         wells_ = plate_.generatePositions(gui_.getXYStageName(), pl);
+         wells_ = plate_.generatePositions(plateGui_.getXYStageName(), pl);
       }
 
       super.addMouseListener(new MouseAdapter() {
@@ -202,7 +210,7 @@ public class PlatePanel extends JPanel {
             try {
                onMouseClicked(e);
             } catch (HCSException e1) {
-               gui_.displayError(e1.getMessage());
+               plateGui_.displayError(e1.getMessage());
             }
          }
 
@@ -244,7 +252,7 @@ public class PlatePanel extends JPanel {
          wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), i);
       }
 
-      app_.events().registerForEvents(this);
+      studio_.events().registerForEvents(this);
    }
 
    private String getWellKey(int row, int column) {
@@ -255,7 +263,7 @@ public class PlatePanel extends JPanel {
       Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
       if (mode_ == Tool.MOVE) {
-         if (app_ == null) {
+         if (studio_ == null) {
             return;
          }
          if (!plate_.isPointWithin(pt.x, pt.y)) {
@@ -263,25 +271,25 @@ public class PlatePanel extends JPanel {
          }
 
          try {
-            pt = gui_.applyOffset(pt);
-            app_.getCMMCore().setXYPosition(pt.x, pt.y);
+            pt = plateGui_.applyOffset(pt);
+            studio_.getCMMCore().setXYPosition(pt.x, pt.y);
             // wait for the stage to stop moving before updating the gui.
-            app_.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
-            if (gui_.useThreePtAF() && gui_.getThreePointZPos(pt.x, pt.y) != null) {
+            studio_.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
+            if (plateGui_.useThreePtAF() && plateGui_.getThreePointZPos(pt.x, pt.y) != null) {
                // This is a bit of a hack, but this is essential for the Nikon PFS
-               boolean continuousFocusOn = app_.getCMMCore().isContinuousFocusEnabled();
+               boolean continuousFocusOn = studio_.getCMMCore().isContinuousFocusEnabled();
                if (continuousFocusOn) {
-                  app_.getCMMCore().enableContinuousFocus(false);
+                  studio_.getCMMCore().enableContinuousFocus(false);
                }
-               app_.getCMMCore().setPosition(gui_.getZStageName(),
-                     gui_.getThreePointZPos(pt.x, pt.y));
+               studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
+                     plateGui_.getThreePointZPos(pt.x, pt.y));
                if (continuousFocusOn) {
-                  app_.getCMMCore().enableContinuousFocus(true);
+                  studio_.getCMMCore().enableContinuousFocus(true);
                }
             }
-            xyStagePos_ = app_.getCMMCore().getXYStagePosition();
-            zStagePos_ = app_.getCMMCore().getPosition(gui_.getZStageName());
-            gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+            xyStagePos_ = studio_.getCMMCore().getXYStagePosition();
+            zStagePos_ = studio_.getCMMCore().getPosition(plateGui_.getZStageName());
+            plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
             refreshStagePosition();
             repaint();
          } catch (Exception e2) {
@@ -351,12 +359,12 @@ public class PlatePanel extends JPanel {
    }
 
    private void onMouseMove(MouseEvent e) {
-      if (gui_ == null) {
+      if (plateGui_ == null) {
          return;
       }
       Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
-      gui_.updatePointerXYPosition(pt.x, pt.y, well, "");
+      plateGui_.updatePointerXYPosition(pt.x, pt.y, well, "");
    }
    
    private Point2D.Double scalePixelToDevice(int x, int y) {
@@ -369,7 +377,7 @@ public class PlatePanel extends JPanel {
    }
    
    private Point scaleDeviceToPixel(double x, double y) {
-      Point2D.Double offset = gui_.getOffset();
+      Point2D.Double offset = plateGui_.getOffset();
       int pixX = (int) ((x - offset.getX()) * drawingParams_.xFactor + activeRect_.x + 0.5);
       int pixY = (int) ((y - offset.getY()) * drawingParams_.yFactor + activeRect_.y + 0.5);
       
@@ -455,6 +463,13 @@ public class PlatePanel extends JPanel {
       drawingParams_.yOffset = plate_.getTopLeftY() * drawingParams_.yFactor;
       drawingParams_.xTopLeft = activeRect_.x;
       drawingParams_.yTopLeft = activeRect_.y;
+
+      int imageWidthPixels = (int) Math.round(
+              cameraXFieldOfView_ / plate_.getXSize() * activeRect_.getWidth());
+      int imageHeightPixels = (int) Math.round(
+              cameraYFieldOfView_ / plate_.getYSize() * activeRect_.getHeight());
+      stagePointer_.setSize(imageWidthPixels, imageHeightPixels);
+      siteIndicator_.setSize(imageWidthPixels, imageHeightPixels);
    }
 
    private void drawWells(Graphics2D g) {
@@ -517,7 +532,6 @@ public class PlatePanel extends JPanel {
          Point2D.Double ptStart = new Point2D.Double(xStartHor, yStart);
          Point2D.Double ptEnd = new Point2D.Double(xEndHor, yEnd);
          g.draw(new Line2D.Double(ptStart, ptEnd));      
-
       }
 
       double yStartV = box.getY() + yOffset;
@@ -528,7 +542,6 @@ public class PlatePanel extends JPanel {
          Point2D.Double ptStart = new Point2D.Double(xStart, yStartV);
          Point2D.Double ptEnd = new Point2D.Double(xEnd, yEndV);
          g.draw(new Line2D.Double(ptStart, ptEnd));      
-
       }
    }
 
@@ -561,7 +574,7 @@ public class PlatePanel extends JPanel {
 
       FontRenderContext frc = g.getFontRenderContext();
       Font f = new Font("Helvetica", Font.BOLD, fontSizePt_);
-      g.setColor(app_.app().skin().getEnabledTextColor());
+      g.setColor(studio_.app().skin().getEnabledTextColor());
       for (int i = 0; i < plate_.getNumColumns(); i++) {
          labelBoxX.x = (int) (i * wellX + 0.5 + xMargin_ + xOffset);
          TextLayout tl = new TextLayout(plate_.getColumnLabel(i + 1), f, frc);
@@ -594,6 +607,8 @@ public class PlatePanel extends JPanel {
          xyStagePos_ = new Point2D.Double(0.0, 0.0);
       }
       Point pt = scaleDeviceToPixel(xyStagePos_.x, xyStagePos_.y);
+      pt.x = pt.x - stagePointer_.width / 2;
+      pt.y = pt.y - stagePointer_.height / 2;
 
       stagePointer_.setLocation(pt);
       
@@ -613,11 +628,11 @@ public class PlatePanel extends JPanel {
          return;
       }
       
-      if (!gui_.useThreePtAF()) {
+      if (!plateGui_.useThreePtAF()) {
          return;
       }
       
-      PositionList plist = gui_.getThreePointList();
+      PositionList plist = plateGui_.getThreePointList();
       if (plist == null || plist.getNumberOfPositions() != 3) {
          return;
       }
@@ -639,6 +654,7 @@ public class PlatePanel extends JPanel {
     * @throws HCSException happens
     */
    public void refreshImagingSites(PositionList sites) throws HCSException {
+      updateCameraFieldOfView();
       rescale();
       
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, sites);
@@ -747,10 +763,10 @@ public class PlatePanel extends JPanel {
     * @throws HCSException happens
     */
    public void setApp(Studio app) throws HCSException {
-      app_ = app;
+      studio_ = app;
       xyStagePos_ = null;
       zStagePos_ = 0.0;
-      if (app_ == null) {
+      if (studio_ == null) {
          return;
       }
       
@@ -764,7 +780,7 @@ public class PlatePanel extends JPanel {
    }
 
    private Point2D.Double offsetCorrectedXYPosition(Point2D.Double xyStagePos) {
-      Point2D.Double offset = gui_.getOffset();
+      Point2D.Double offset = plateGui_.getOffset();
       return new Point2D.Double(xyStagePos.x - offset.getX(), xyStagePos.y - offset.getY());
    }
 
@@ -775,10 +791,10 @@ public class PlatePanel extends JPanel {
     * @throws HCSException thrown when the stage position cannot be retrieved.
     */
    public void refreshStagePosition() throws HCSException {
-      if (app_ != null) {
+      if (studio_ != null) {
          try {
-            xyStagePos_ = app_.getCMMCore().getXYStagePosition();
-            zStagePos_ = app_.getCMMCore().getPosition(gui_.getZStageName());
+            xyStagePos_ = studio_.getCMMCore().getXYStagePosition();
+            zStagePos_ = studio_.getCMMCore().getPosition(plateGui_.getZStageName());
          } catch (Exception e) {
             throw new HCSException(e);
          }
@@ -791,12 +807,12 @@ public class PlatePanel extends JPanel {
       drawStagePointer(g);
       Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);
       String well = plate_.getWellLabel(pt.x, pt.y);
-      gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+      plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
    }
 
    @Subscribe
    public void xyStagePositionChanged(XYStagePositionChangedEvent xyStagePositionChangedEvent) {
-      if (gui_.isCalibratedXY()) {
+      if (plateGui_.isCalibratedXY()) {
          final Graphics2D g = (Graphics2D) getGraphics();
          xyStagePos_.x = xyStagePositionChangedEvent.getXPos();
          xyStagePos_.y = xyStagePositionChangedEvent.getYPos();
@@ -805,7 +821,7 @@ public class PlatePanel extends JPanel {
             return;
          }
          String well = plate_.getWellLabel(pt.x, pt.y);
-         gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+         plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
          drawStagePointer(g);
          repaint();
       }
@@ -816,7 +832,23 @@ public class PlatePanel extends JPanel {
       zStagePos_ = stagePositionChangedEvent.getPos();
       Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);
       String well = plate_.getWellLabel(pt.x, pt.y);
-      gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+      plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
+   }
+
+   @Subscribe
+   public void pixelSizeChanged(PixelSizeChangedEvent psz) {
+      updateCameraFieldOfView();
+      SwingUtilities.invokeLater(() -> {
+         rescale();
+         repaint();
+      });
+   }
+
+   private void updateCameraFieldOfView() {
+      long width = studio_.core().getImageWidth();
+      long height = studio_.core().getImageHeight();
+      cameraXFieldOfView_ = studio_.core().getPixelSizeUm() * width;
+      cameraYFieldOfView_ = studio_.core().getPixelSizeUm() * height;
    }
 
 }
