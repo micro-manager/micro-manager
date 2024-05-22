@@ -28,6 +28,7 @@ import javax.swing.JPanel;
 import mmcorej.DeviceType;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 
 
@@ -542,8 +543,8 @@ public class PlatePanel extends JPanel {
          }
       }
 
-      double xOffset = plate_.getTopLeftX() * xFact;
-      double yOffset = plate_.getTopLeftY() * yFact;
+      final double xOffset = plate_.getTopLeftX() * xFact;
+      final double yOffset = plate_.getTopLeftY() * yFact;
       double wellX = plate_.getWellSpacingX() * xFact;
 
       Rectangle labelBoxX = new Rectangle();
@@ -762,11 +763,16 @@ public class PlatePanel extends JPanel {
       rescale();
    }
 
+   private Point2D.Double offsetCorrectedXYPosition(Point2D.Double xyStagePos) {
+      Point2D.Double offset = gui_.getOffset();
+      return new Point2D.Double(xyStagePos.x - offset.getX(), xyStagePos.y - offset.getY());
+   }
+
    /**
     * Gets the current stage position from the hardware and draws the current position
     * on the plate picture.
     *
-    * @throws HCSException
+    * @throws HCSException thrown when the stage position cannot be retrieved.
     */
    public void refreshStagePosition() throws HCSException {
       if (app_ != null) {
@@ -783,29 +789,34 @@ public class PlatePanel extends JPanel {
      
       Graphics2D g = (Graphics2D) getGraphics();
       drawStagePointer(g);
-      String well = plate_.getWellLabel(xyStagePos_.x, xyStagePos_.y);
+      Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);
+      String well = plate_.getWellLabel(pt.x, pt.y);
       gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
    }
 
    @Subscribe
    public void xyStagePositionChanged(XYStagePositionChangedEvent xyStagePositionChangedEvent) {
       if (gui_.isCalibratedXY()) {
-         try {
-            zStagePos_ = app_.getCMMCore().getPosition(gui_.getZStageName());
-         } catch (Exception e) {
-            app_.logs().logError(e);
-         }
          final Graphics2D g = (Graphics2D) getGraphics();
          xyStagePos_.x = xyStagePositionChangedEvent.getXPos();
          xyStagePos_.y = xyStagePositionChangedEvent.getYPos();
-         if (!plate_.isPointWithin(xyStagePos_.x, xyStagePos_.y)) {
+         Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);
+         if (!plate_.isPointWithin(pt.x, pt.y)) {
             return;
          }
-         String well = plate_.getWellLabel(xyStagePos_.x, xyStagePos_.y);
+         String well = plate_.getWellLabel(pt.x, pt.y);
          gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
          drawStagePointer(g);
          repaint();
       }
+   }
+
+   @Subscribe
+   public void stagePositionChanged(StagePositionChangedEvent stagePositionChangedEvent) {
+      zStagePos_ = stagePositionChangedEvent.getPos();
+      Point2D.Double pt = offsetCorrectedXYPosition(xyStagePos_);
+      String well = plate_.getWellLabel(pt.x, pt.y);
+      gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
    }
 
 }
