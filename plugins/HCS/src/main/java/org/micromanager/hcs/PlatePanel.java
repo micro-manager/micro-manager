@@ -617,7 +617,8 @@ public class PlatePanel extends JPanel {
       g.setStroke(new BasicStroke((float) 1));
       g.setPaint(Color.RED);
       g.draw(stagePointer_);
-      
+      g.fillRect(stagePointer_.x, stagePointer_.y, stagePointer_.width, stagePointer_.height);
+
       g.setPaint(oldPaint);
       g.setStroke(oldStroke);    
    }
