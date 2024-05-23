@@ -492,14 +492,20 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          currentAcquisition_.addHook(new AcquisitionHook() {
             @Override
             public AcquisitionEvent run(AcquisitionEvent event) {
-               boolean zMatch = event.getZIndex() == null || event.getZIndex() == r.slice_;
-               boolean tMatch = event.getTIndex() == null || event.getTIndex() == r.frame_;
-               boolean cMatch = event.getConfigPreset() == null
+               if (event.isAcquisitionFinishedEvent()) {
+                  return event;
+               }
+               boolean zMatch = r.slice_ < 0 || event.getZIndex() == null
+                       || event.getZIndex() == r.slice_;
+               boolean tMatch = r.frame_ < 0 || event.getTIndex() == null
+                       || event.getTIndex() == r.frame_;
+               boolean cMatch = r.channel_ < 0 || event.getConfigPreset() == null
                      || acquisitionSettings.channels().get(r.channel_).config()
                            .equals(event.getConfigPreset());
-               boolean pMatch = event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null
-                     || ((Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS))
-                       == r.position_;
+               boolean pMatch = r.position_ < 0
+                       || event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null
+                       || ((Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS))
+                          == r.position_;
                if (pMatch && zMatch && tMatch && cMatch) {
                   r.runnable_.run();
                }
