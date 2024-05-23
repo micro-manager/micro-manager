@@ -495,18 +495,27 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                if (event.isAcquisitionFinishedEvent()) {
                   return event;
                }
-               boolean zMatch = r.slice_ < 0 || event.getZIndex() == null
-                       || event.getZIndex() == r.slice_;
-               boolean tMatch = r.frame_ < 0 || event.getTIndex() == null
-                       || event.getTIndex() == r.frame_;
-               boolean cMatch = r.channel_ < 0 || event.getConfigPreset() == null
-                     || acquisitionSettings.channels().get(r.channel_).config()
-                           .equals(event.getConfigPreset());
-               boolean pMatch = r.position_ < 0
-                       || event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null
-                       || ((Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS))
-                          == r.position_;
+               int t = event.getTIndex() == null ? 0 : event.getTIndex();
+               boolean tMatch = r.frame_ < 0 || r.frame_ == t;
+               int p = event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS) == null ? 0 :
+                       (Integer) event.getAxisPosition(MDAAcqEventModules.POSITION_AXIS);
+               boolean pMatch = r.position_ < 0 || r.position_ == p;
+               boolean cMatch = r.channel_ < 0;
+               if (r.channel_ >= 0) {
+                  String channelPreset = acquisitionSettings.channels().get(r.channel_).config();
+                  if (channelPreset != null) {
+                     cMatch = channelPreset.equals(event.getConfigPreset());
+                  }
+               }
+               int z = event.getZIndex() == null ? 0 : event.getZIndex();
+               boolean zMatch = r.slice_ < 0 || r.slice_ == z;
                if (pMatch && zMatch && tMatch && cMatch) {
+                  // useful for logging, keep it
+                  // studio_.scripter().message("Running runnable for "
+                  //        + r.frame_ + " ("  + t + ") "
+                  //        + r.position_ + "( " + p + ") "
+                  //        + r.channel_ + "( " + event.getConfigPreset() + ") "
+                  //        + r.slice_ + "( " + z + ")");
                   r.runnable_.run();
                }
                return event;
