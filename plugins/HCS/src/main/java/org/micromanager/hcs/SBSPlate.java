@@ -496,18 +496,38 @@ public class SBSPlate {
       return numColumns_;
    }
 
+   /**
+    * Width of the complete plate in microns.
+    *
+    * @return Width of the complete plate in microns.
+    */
    public double getXSize() {
       return sizeXUm_;
    }
 
+   /**
+    * Height of the complete plate in microns.
+    *
+    * @return Height of the complete plate in microns.
+    */
    public double getYSize() {
       return sizeYUm_;
    }
 
+   /**
+    * Top left X position (in microns).
+    *
+    * @return Top left X position (in microns).
+    */
    public double getTopLeftX() {
       return firstWellX_ - wellSpacingX_ / 2.0;
    }
 
+   /**
+    * Top left Y position (in microns).
+    *
+    * @return Top left Y position (in microns).
+    */
    public double getTopLeftY() {
       return firstWellY_ - wellSpacingY_ / 2.0;
    }
