@@ -239,7 +239,6 @@ public final class StorageMultipageTiff implements Storage {
       MultipageTiffReader reader = null;
       File dir = new File(directory_);
 
-      ProgressBar tmpProgressBar = null;
       // Allow operation in headless mode.
       File[] listFiles = dir.listFiles();
       ProgressBar progressBar = null;
@@ -254,7 +253,7 @@ public final class StorageMultipageTiff implements Storage {
       if (listFiles != null) {
          for (File f : listFiles) {
             // Heuristics to only read tiff files, and not files created by the
-            // OS (starting with ".")
+            // OS (starting with "._")
             String fileName = f.getName();
             if (fileName.endsWith(".tif") || fileName.endsWith(".TIF")) {
                if (!fileName.startsWith("._")) {
@@ -484,14 +483,14 @@ public final class StorageMultipageTiff implements Storage {
       }
       ProgressBar progressBar = null;
       if (!GraphicsEnvironment.isHeadless()) {
-         // progressBar = new ProgressBar(parent_, "Finishing Files", 0,
-         //        positionToFileSet_.size());
+         progressBar = new ProgressBar(parent_,
+                 "Important: do not close Micro-Manager until files are finished writing.",
+                 0, positionToFileSet_.size());
       }
       try {
          int count = 0;
          if (progressBar != null) {
             progressBar.setProgress(count);
-            progressBar.setVisible(true);
          }
          for (FileSet p : positionToFileSet_.values()) {
             p.finishAbortedAcqIfNeeded();
@@ -526,9 +525,6 @@ public final class StorageMultipageTiff implements Storage {
                p.finished(fullOMEXMLMetadata, ijDescription);
                master = p;
                count++;
-               if (progressBar != null) {
-                  progressBar.setProgress(count);
-               }
                break;
             }
          }
@@ -557,10 +553,10 @@ public final class StorageMultipageTiff implements Storage {
                progressBar.setProgress(count);
             }
          }
-         //shut down writing executor--pause here until all tasks have finished
-         //writing so that no attempt is made to close the dataset (and thus
-         //the FileChannel) before everything has finished writing mkae sure
-         //all images have finished writing if they are on seperate thread
+         // shut down writing executor--pause here until all tasks have finished
+         // writing so that no attempt is made to close the dataset (and thus
+         // the FileChannel) before everything has finished writing make sure
+         // all images have finished writing if they are on separate thread
          if (writingExecutor_ != null && !writingExecutor_.isShutdown()) {
             writingExecutor_.shutdown();
             try {
@@ -580,7 +576,8 @@ public final class StorageMultipageTiff implements Storage {
          ReportingUtils.logError(ex);
       } finally {
          if (progressBar != null) {
-            progressBar.setVisible(false);
+            final ProgressBar pb = progressBar;
+            SwingUtilities.invokeLater(() -> pb.setVisible(false));
          }
          // release resources
          omeMetadata_ = null;

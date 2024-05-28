@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.UUID;
+import javax.swing.SwingUtilities;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
@@ -38,6 +39,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
+import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
