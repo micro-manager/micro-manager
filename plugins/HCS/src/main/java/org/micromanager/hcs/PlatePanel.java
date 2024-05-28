@@ -464,9 +464,9 @@ public class PlatePanel extends JPanel {
       drawingParams_.yTopLeft = activeRect_.y;
 
       int imageWidthPixels = (int) Math.round(
-              cameraXFieldOfView_ / plate_.getXSize() * activeRect_.getWidth());
+              cameraXFieldOfView_ * drawingParams_.xFactor);
       int imageHeightPixels = (int) Math.round(
-              cameraYFieldOfView_ / plate_.getYSize() * activeRect_.getHeight());
+               cameraYFieldOfView_ * drawingParams_.yFactor);
       stagePointer_.setSize(imageWidthPixels, imageHeightPixels);
       siteIndicator_.setSize(imageWidthPixels, imageHeightPixels);
    }
