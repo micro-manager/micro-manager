@@ -524,7 +524,6 @@ public final class StorageMultipageTiff implements Storage {
                filename = p.getCurrentFilename();
                p.finished(fullOMEXMLMetadata, ijDescription);
                master = p;
-               count++;
                break;
             }
          }
