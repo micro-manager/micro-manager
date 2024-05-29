@@ -82,8 +82,8 @@ public final class MMPositionListDlg extends PositionListDlg {
 
    @Subscribe
    public void onNewPositionList(NewPositionListEvent nple) {
-      PositionList pl = nple.getPositionList();
-      if (this.getPositionList() != pl) { // Without this check we will enter an infinite loop.
+      // Without this check we will enter an infinite loop.
+      if (this.getPositionList() != nple.getPositionList()) {
          this.setPositionList(nple.getPositionList());
       }
    }
