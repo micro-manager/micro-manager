@@ -25,11 +25,13 @@ public final class DefaultPositionListManager implements PositionListManager {
     * Replaces the list in the PositionList Window
     * It will open a position list dialog if it was not already open.
     *
-    * @param pl PosiionLIst to be made the current one
+    * @param pl PosiionList to be made the current one
     */
    @Override
    public void setPositionList(PositionList pl) {
-      // use serialization to clone the PositionList object
+      if (posList_ == pl) {
+         return;
+      }
       posList_ = pl;
       studio_.events().post(new DefaultNewPositionListEvent(posList_));
    }
