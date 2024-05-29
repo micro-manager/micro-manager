@@ -520,6 +520,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
       try {
          if (studio_ != null) {
+            if (platePl.getNumberOfPositions() == 0) {
+               studio_.logs().showMessage("No sites selected");
+            }
             studio_.positions().setPositionList(platePl);
             studio_.app().showPositionList();
          }
@@ -821,6 +824,10 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private void regenerate() {
       updateXySpacing();
       PositionList sites = generateSitesInWell();
+      List<WellPositionList> selectedWells = null;
+      if (plate_.getID().equals(plateIDCombo_.getSelectedItem())) {
+         selectedWells = platePanel_.getSelectedWellPositions();
+      }
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
       try {
          platePanel_.refreshImagingSites(sites);
@@ -828,7 +835,9 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
          displayError(e.getMessage());
       }
 
-      platePanel_.setSelectedWells(platePanel_.getSelectedWellPositions());
+      if (selectedWells != null) {
+         platePanel_.setSelectedWells(selectedWells);
+      }
       platePanel_.repaint();
    }
 
