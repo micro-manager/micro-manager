@@ -34,8 +34,7 @@ import javax.swing.SwingUtilities;
 /**
  * Utility class to show a ProgressBar.
  * Construction of the ProgressBar is done on the EDT, on the first call of
- * SetProgress.  Thus, it is safe to call this class from any thread, with the
- * possible exception of a call to setVisible(false) from a non-EDT thread.
+ * SetProgress.  Thus, it is safe to call this class from any thread.
  */
 public final class ProgressBar extends JPanel {
    private static final long serialVersionUID = 1L;
@@ -122,7 +121,12 @@ public final class ProgressBar extends JPanel {
          });
          return;
       }
-      frame_.setVisible(visible);
+      if (visible && frame_ == null) {
+         initialize();
+      }
+      if (frame_ != null) {
+         frame_.setVisible(visible);
+      }
    }
 
    public void setRange(int min, int max) {

@@ -21,6 +21,7 @@
 
 package org.micromanager.data.internal.multipagetiff;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -38,6 +39,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
+import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -112,9 +114,20 @@ class FileSet {
       // only need to finish last one here because previous ones in set are finished
       // as they fill up with images
       tiffWriters_.getLast().finish();
-      //  close all
+      //  close all, this can be time-consuming ,so use a ProgressBar
+      ProgressBar pb = null;
+      if (!GraphicsEnvironment.isHeadless() && tiffWriters_.size() > 4) {
+         pb = new ProgressBar(null, "Closing files", 0, tiffWriters_.size());
+      }
+      int count = 0;
       for (MultipageTiffWriter w : tiffWriters_) {
          w.close(omeXML, ijDescription);
+         if (pb != null) {
+            pb.setProgress(count++);
+         }
+      }
+      if (pb != null) {
+         pb.setVisible(false);
       }
       omeMetadata_ = null;
       masterStorage_ = null;
