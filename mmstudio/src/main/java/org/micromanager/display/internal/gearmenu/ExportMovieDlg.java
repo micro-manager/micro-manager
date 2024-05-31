@@ -78,10 +78,11 @@ public final class ExportMovieDlg extends JDialog {
    private static final String FORMAT_PNG = "PNG";
    private static final String FORMAT_JPEG = "JPEG";
    private static final String FORMAT_AVI = "AVI";
+   private static final String FORMAT_GIF = "GIF";
    private static final String FORMAT_IMAGEJ = "ImageJ stack window";
    private static final String FORMAT_SYSTEM_CLIPBOARD = "System Clipboard";
    private static final String[] OUTPUT_FORMATS = {
-         FORMAT_PNG, FORMAT_JPEG, FORMAT_AVI, FORMAT_IMAGEJ, FORMAT_SYSTEM_CLIPBOARD
+         FORMAT_PNG, FORMAT_JPEG, FORMAT_AVI, FORMAT_GIF, FORMAT_IMAGEJ, FORMAT_SYSTEM_CLIPBOARD
    };
    private static final String DEFAULT_USE_LABEL = "Use Label";
    private static final Boolean USE_LABEL = true;
@@ -183,7 +184,7 @@ public final class ExportMovieDlg extends JDialog {
       }
 
       public void setAxis(String axis) {
-         int axisLen = store_.getNextIndex(axis);
+         final int axisLen = store_.getNextIndex(axis);
          String curAxis = (String) axisSelector_.getSelectedItem();
          if (curAxis.equals(axis) && minModel_ != null) {
             // Already set properly and spinner models exist.
@@ -391,12 +392,15 @@ public final class ExportMovieDlg extends JDialog {
       }  else if (mode.contentEquals(FORMAT_AVI)) {
          format = ImageExporter.OutputFormat.OUTPUT_AVI;
          suffix = "avi";
+      }  else if (mode.contentEquals(FORMAT_GIF)) {
+         format = ImageExporter.OutputFormat.OUTPUT_GIF;
+         suffix = "gif";
       } else if (mode.contentEquals(FORMAT_IMAGEJ)) {
          format = ImageExporter.OutputFormat.OUTPUT_IMAGEJ;
       } else if (mode.contentEquals(FORMAT_SYSTEM_CLIPBOARD)) {
          format = ImageExporter.OutputFormat.OUTPUT_CLIPBOARD;
       }
-      String[] fss = {suffix};
+      final String[] fss = {suffix};
       exporter.setOutputFormat(format);
       exporter.setUseLabel(useLabel);
 
@@ -435,9 +439,10 @@ public final class ExportMovieDlg extends JDialog {
             studio_.logs().showError(e, "Unable to save to that directory");
             return;
          }
-      } else if (mode.equals(FORMAT_AVI)) {
+      } else if (mode.equals(FORMAT_AVI) || mode.equals(FORMAT_GIF)) {
+         String title = mode. equals(FORMAT_AVI) ? "Save AVI as" : "Save GIF as";
          File output = FileDialogs.promptForFile(this,
-                  "Save AVI as",
+                  title,
                   path,
                   false,     // select directories
                   false,   // load
@@ -449,11 +454,15 @@ public final class ExportMovieDlg extends JDialog {
             return;
          }
          try {
+            if (output.exists()) {
+               studio_.logs().showMessage("File already exists", this);
+               return;
+            }
             String directory = output.getParent();
             studio_.profile().getSettings(ExportMovieDlg.class)
                      .putString(EXPORT_LOCATION, directory);
             String fileName = output.getName();
-            if (fileName.endsWith(".avi")) {
+            if (fileName.endsWith(".avi") || fileName.endsWith(".gif")) {
                fileName = fileName.substring(0, fileName.length() - 4);
             }
             exporter.setSaveInfo(directory, fileName);
@@ -525,8 +534,8 @@ public final class ExportMovieDlg extends JDialog {
     * new axis is represented in any other panel, it must be swapped with the
     * old one.
     *
-    * @param oldAxis
-    * @param newAxis
+    * @param oldAxis Axis we are changing from
+    * @param newAxis Axis we are changing to
     */
    public void changeAxis(String oldAxis, String newAxis) {
       for (AxisPanel panel : axisPanels_) {
@@ -541,7 +550,7 @@ public final class ExportMovieDlg extends JDialog {
     * passed into this method is responsible for removing the following panels
     * from the GUI.
     *
-    * @param last
+    * @param last Specified AxisPanel
     */
    public void deleteFollowing(AxisPanel last) {
       boolean shouldRemove = false;
@@ -573,7 +582,7 @@ public final class ExportMovieDlg extends JDialog {
     * Return the available axes (that exist in the datastore and have nonzero
     * length).
     *
-    * @return
+    * @return Axes present in the Datastore with non zero length
     */
    public ArrayList<String> getNonZeroAxes() {
       ArrayList<String> result = new ArrayList<>();
@@ -591,7 +600,7 @@ public final class ExportMovieDlg extends JDialog {
     * Return the number of axes that are not currently being used and that
     * have a nonzero length.
     *
-    * @return
+    * @return Number of axes that are not currently being used and that have a nonzero length
     */
    public int getNumSpareAxes() {
       return getNonZeroAxes().size() - axisPanels_.size();

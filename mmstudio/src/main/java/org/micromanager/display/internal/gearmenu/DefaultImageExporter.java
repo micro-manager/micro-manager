@@ -24,6 +24,7 @@ package org.micromanager.display.internal.gearmenu;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.plugin.GifWriter;
 import ij.plugin.filter.AVI_Writer;
 import ij.process.ColorProcessor;
 import java.awt.Dimension;
@@ -255,7 +256,9 @@ public final class DefaultImageExporter implements ImageExporter {
 
                // Display just finished painting to currentGraphics_, so export
                // now.
-               if (format_ == OutputFormat.OUTPUT_IMAGEJ || format_ == OutputFormat.OUTPUT_AVI) {
+               if (format_ == OutputFormat.OUTPUT_IMAGEJ
+                       || format_ == OutputFormat.OUTPUT_GIF
+                       || format_ == OutputFormat.OUTPUT_AVI) {
                   if (stack_ == null) {
                      // Create the ImageJ stack object to add images to.
                      stack_ = new ImageStack(currentImage_.getWidth(),
@@ -404,6 +407,7 @@ public final class DefaultImageExporter implements ImageExporter {
       String suffix = "jpg";
       suffix = (format_ == OutputFormat.OUTPUT_PNG) ? "png" : suffix;
       suffix = (format_ == OutputFormat.OUTPUT_AVI) ? "avi" : suffix;
+      suffix = (format_ == OutputFormat.OUTPUT_GIF) ? "gif" : suffix;
       return String.format("%s/%s%s.%s", directory_, prefix_, label, suffix);
    }
 
@@ -521,8 +525,7 @@ public final class DefaultImageExporter implements ImageExporter {
             if (format_ == OutputFormat.OUTPUT_IMAGEJ) {
                ImagePlus plus = new ImagePlus(imageJName_, stack_);
                plus.show();
-            } else if (format_ == OutputFormat.OUTPUT_AVI) {
-               AVI_Writer writer = new AVI_Writer();
+            } else if (format_ == OutputFormat.OUTPUT_AVI || format_ == OutputFormat.OUTPUT_GIF) {
                try {
                   if (directory_ == null || prefix_ == null) {
                      // Can't save.
@@ -537,12 +540,17 @@ public final class DefaultImageExporter implements ImageExporter {
                   }
                   ImagePlus imp = new ImagePlus(shortName + "MM-export", stack_);
                   imp.getCalibration().fps = display_.getPlaybackSpeedFps();
-                  writer.writeImage(imp, getOutputFilename(""),
-                           AVI_Writer.JPEG_COMPRESSION, jpegQuality_);
+                  if (format_ == OutputFormat.OUTPUT_AVI) {
+                     AVI_Writer writer = new AVI_Writer();
+                     writer.writeImage(imp, getOutputFilename(""),
+                             AVI_Writer.JPEG_COMPRESSION, jpegQuality_);
+                  } else if (format_ == OutputFormat.OUTPUT_GIF) {
+                     GifWriter.save(imp, getOutputFilename(""));
+                  }
                } catch (IllegalArgumentException e) {
                   logManager_.showError(e.getMessage());
                } catch (IOException e) {
-                  logManager_.showError(e, "Error writing AVI file");
+                  logManager_.showError(e, "Error writing file");
                }
             }
          }

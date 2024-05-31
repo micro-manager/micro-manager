@@ -53,6 +53,10 @@ public interface ImageExporter {
        */
       OUTPUT_AVI,
       /**
+       * Output as a GIF.
+       */
+      OUTPUT_GIF,
+      /**
        * Output as an ImageJ stack, which will open in a new window; this
        * "format" does not create any files on disk.
        */
