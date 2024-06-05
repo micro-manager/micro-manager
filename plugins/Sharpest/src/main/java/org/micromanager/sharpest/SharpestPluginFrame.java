@@ -1,0 +1,299 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          SharpestPluginFrame.java
+//PROJECT:       Micro-Manager 
+//SUBSYSTEM:     Sharpest plugin
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman
+//
+// COPYRIGHT:    Alsto Labs, 2024
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
+package org.micromanager.sharpest;
+
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.text.DefaultFormatter;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.propertymap.MutablePropertyMapView;
+
+/**
+ * UI of the Sharpest plugin.
+ *
+ * @author nico
+ */
+public class SharpestPluginFrame extends JDialog {
+   private final Studio studio_;
+   private final DisplayWindow ourWindow_;
+   private final MutablePropertyMapView settings_;
+
+   /**
+    * Constructor. Draws the UI.
+    *
+    * @param studio The Micro-Manager Studio Object
+    * @param window The DataViewer that we are working on
+    */
+   public SharpestPluginFrame(Studio studio, DisplayWindow window) {
+      studio_ = studio;
+      settings_ = studio_.profile().getSettings(SharpestPlugin.class);
+      final SharpestPluginFrame cpFrame = this;
+      
+      super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      
+      ourWindow_ = window;
+      DataProvider ourProvider = ourWindow_.getDataProvider();
+
+      // Not sure if this is needed, be safe for now
+      if (!(ourProvider).isFrozen()) {
+         studio_.logs().showMessage("Can not Project ongoing acquisitions",
+                 window.getWindow());
+         return;
+      }
+
+      super.setLayout(new MigLayout("flowx, fill, insets 8"));
+      String shortName = ourProvider.getName();
+      super.setTitle(SharpestPlugin.MENUNAME + shortName);
+      
+      List<String> axes = ourProvider.getAxes();
+      ButtonGroup bg = new ButtonGroup();
+      
+      // Note: MM uses 0-based indices in the code, but 1-based indices
+      // for the UI.  To avoid confusion, this storage of the desired
+      // limits for each axis is 0-based, and translation to 1-based is made
+      // in the UI code
+      final Map<String, Integer> mins = new HashMap<>();
+      final Map<String, Integer> maxes = new HashMap<>();
+
+      if (!axes.isEmpty()) {
+         super.add(new JLabel(" "));
+         super.add(new JLabel("min"));
+         super.add(new JLabel("max"), "wrap");
+
+         for (final String axis : axes) {
+            if (ourProvider.getNextIndex(axis) > 1) {
+               
+               // add radio buttons
+               JRadioButton axisRB = new JRadioButton(axis);
+               axisRB.setActionCommand(axis);
+               bg.add(axisRB);               
+               super.add(axisRB);
+               
+               mins.put(axis, 1);
+               maxes.put(axis, ourProvider.getNextIndex(axis));
+
+               SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
+                       (int) ourProvider.getNextIndex(axis), 1);
+               mins.put(axis, 0);
+               final JSpinner minSpinner = new JSpinner(model);
+               JFormattedTextField field = (JFormattedTextField) minSpinner.getEditor()
+                     .getComponent(0);
+               DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
+               formatter.setCommitsOnValidEdit(true);
+               minSpinner.addChangeListener((ChangeEvent ce) -> {
+                  // check to stay below max, this could be annoying at times
+                  if ((Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
+                     minSpinner.setValue(maxes.get(axis) + 1);
+                  }
+                  mins.put(axis, (Integer) minSpinner.getValue() - 1);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
+                  }
+               });
+               super.add(minSpinner, "wmin 60");
+
+               model = new SpinnerNumberModel((int) ourProvider.getNextIndex(axis),
+                       1, (int) ourProvider.getNextIndex(axis), 1);
+               maxes.put(axis, ourProvider.getNextIndex(axis) - 1);
+               final JSpinner maxSpinner = new JSpinner(model);
+               field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
+               formatter = (DefaultFormatter) field.getFormatter();
+               formatter.setCommitsOnValidEdit(true);
+               maxSpinner.addChangeListener((ChangeEvent ce) -> {
+                  // check to stay above min
+                  if ((Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
+                     maxSpinner.setValue(mins.get(axis) + 1);
+                  }
+                  maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
+                  }
+               });
+               super.add(maxSpinner, "wmin 60, wrap");
+               
+               minSpinner.setEnabled(false);
+               maxSpinner.setEnabled(false);
+               
+               axisRB.addChangeListener((ChangeEvent ce) -> {
+                  if (axisRB.isSelected()) {
+                     minSpinner.setEnabled(true);
+                     maxSpinner.setEnabled(true);
+                     settings_.putString(SharpestPlugin.AXISKEY, axis);
+                  } else {
+                     minSpinner.setEnabled(false);
+                     maxSpinner.setEnabled(false);
+                  }
+               });
+               
+               axisRB.setSelected(axis.equals(settings_.getString(SharpestPlugin.AXISKEY, null)));
+            }
+         }
+      }
+
+      if (bg.getSelection() == null) {
+         bg.getElements().nextElement().setSelected(true);
+      }
+
+      final JLabel sharpnessMethodLabel = new JLabel("sharpness method");
+      final JComboBox<String> sharpnessMethodBox =
+              new JComboBox<>(ImgSharpnessAnalysis.Method.getNames());
+      sharpnessMethodBox.addActionListener((ActionEvent e) ->
+              settings_.putString(SharpestPlugin.SHARPNESS,
+                     (String) sharpnessMethodBox.getSelectedItem()));
+      sharpnessMethodBox.setSelectedItem(settings_.getString(
+               SharpestPlugin.SHARPNESS, ImgSharpnessAnalysis.Method.getNames()[0]));
+      final JCheckBox showGraphBox = new JCheckBox("show graph");
+      showGraphBox.setSelected(settings_.getBoolean(SharpestPlugin.SHOW_SHARPNESS_GRAPH, false));
+      showGraphBox.addActionListener((ActionEvent e) ->
+              settings_.putBoolean(SharpestPlugin.SHOW_SHARPNESS_GRAPH,
+                      showGraphBox.isSelected()));
+
+      // Note: Median and Std.Dev. yield 32-bit images
+      // Those would need to be converted to 16-bit to be shown...
+      final String[] projectionMethods = new String[] {"Max", "Min", "Avg", "Median",
+            "Std.Dev", "Sharpest Frame"};
+      final JComboBox<String> methodBox = new JComboBox<>(projectionMethods);
+      methodBox.setSelectedItem(settings_.getString(
+                                    SharpestPlugin.PROJECTION_METHOD, "Max"));
+      boolean sharpestSelected = Objects.equals(methodBox.getSelectedItem(), "Sharpest Frame");
+      sharpnessMethodLabel.setEnabled(sharpestSelected);
+      sharpnessMethodBox.setEnabled(sharpestSelected);
+      showGraphBox.setEnabled(sharpestSelected);
+      methodBox.addActionListener((ActionEvent e) -> {
+         settings_.putString(SharpestPlugin.PROJECTION_METHOD,
+                 (String) methodBox.getSelectedItem());
+         boolean showSharpness = Objects.equals(methodBox.getSelectedItem(), "Sharpest Frame");
+         sharpnessMethodLabel.setEnabled(showSharpness);
+         sharpnessMethodBox.setEnabled(showSharpness);
+         showGraphBox.setEnabled(showSharpness);
+      });
+      super.add(new JLabel("method"));
+      super.add(methodBox, "span2, grow, wrap");
+      super.add(sharpnessMethodLabel);
+      super.add(sharpnessMethodBox, "span2, grow, wrap");
+      super.add(showGraphBox, "span3, grow, wrap");
+
+      super.add(new JLabel("name"));
+      final JTextField nameField = new JTextField(shortName);
+      super.add(nameField, "span2, grow, wrap");
+     
+      final JCheckBox saveBox = new JCheckBox("save result");
+      saveBox.setSelected(settings_.getBoolean(SharpestPlugin.SAVE, false));
+      saveBox.addActionListener((ActionEvent e) -> {
+         settings_.putBoolean(SharpestPlugin.SAVE, saveBox.isSelected());
+      });
+      super.add(saveBox, "span3, grow, wrap");
+      
+      JButton okButton = new JButton("OK");
+      okButton.addActionListener((ActionEvent ae) -> {
+         String axis = bg.getSelection().getActionCommand();
+         SharpestPluginExecutor zp = new SharpestPluginExecutor(studio_, ourWindow_);
+         /*
+         int projectionMethod = Sharpest.MAX_METHOD;
+         if (null !=  methodBox.getSelectedItem()) {
+            switch ((String) methodBox.getSelectedItem()) {
+               case "Max":
+                  projectionMethod = Sharpest.MAX_METHOD;
+                  break;
+               case "Min":
+                  projectionMethod = Sharpest.MIN_METHOD;
+                  break;
+               case "Avg":
+                  projectionMethod = Sharpest.AVG_METHOD;
+                  break;
+               case "Median":
+                  projectionMethod = Sharpest.MEDIAN_METHOD;
+                  break;
+               case "Std.Dev":
+                  projectionMethod = Sharpest.SD_METHOD;
+                  break;
+               case "Sharpest Frame":
+                  projectionMethod = SharpestPlugin.SHARPNESS_METHOD;
+                  break;
+               default:
+                  break;
+            }
+         }
+         */
+         ImgSharpnessAnalysis.Method method = ImgSharpnessAnalysis.Method
+                 .valueOf((String) sharpnessMethodBox.getSelectedItem());
+         SharpestData zpd = new SharpestData(axis, mins.get(axis),
+                 maxes.get(axis), 0, method, showGraphBox.isSelected());
+         zp.project(saveBox.isSelected(),
+                 nameField.getText(),
+                 zpd);
+         cpFrame.dispose();
+      });
+      super.add(okButton, "span 3, split 2, tag ok, wmin button");
+      
+      JButton cancelButton = new JButton("Cancel");
+      cancelButton.addActionListener((ActionEvent ae) -> {
+         cpFrame.dispose();
+      });
+      super.add(cancelButton, "tag cancel, wrap");
+      
+      super.pack();
+      
+      Window w = ourWindow_.getWindow();
+      int xCenter = w.getX() + w.getWidth() / 2;
+      int yCenter = w.getY() + w.getHeight() / 2;
+      super.setLocation(xCenter - super.getWidth() / 2, 
+              yCenter - super.getHeight());
+      
+      super.setVisible(true);
+      
+      
+   }
+   
+}

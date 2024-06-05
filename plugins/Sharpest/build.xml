@@ -1,0 +1,3 @@
+<project name="Sharpest" default="jar">
+	<import file="../javapluginbuild.xml"/>
+</project>
