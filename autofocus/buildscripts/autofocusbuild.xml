@@ -38,6 +38,10 @@
 		<mkdir dir="${intdir}"/>
 		<mm-javac srcdir="${srcdir}" destdir="${intdir}">
 			<include name="${sourcefile}"/>
+			<include name="${sourcefile1}"/>
+			<include name="${sourcefile2}"/>
+			<include name="${sourcefile3}"/>
+			<include name="${sourcefile4}"/>
 			<classpath refid="project.classpath"/>
 		</mm-javac>
 	</target>
