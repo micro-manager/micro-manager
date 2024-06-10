@@ -102,9 +102,9 @@ public class SharpestPluginExecutor {
     */
    public final void project(final boolean save, final String newName, SharpestData zpd) {
 
-      class ZProjectTask extends SwingWorker<Void, Void> {
+      class SharpestProjectTask extends SwingWorker<Void, Void> {
 
-         ZProjectTask() {
+         SharpestProjectTask() {
          }
 
          @Override
@@ -141,7 +141,7 @@ public class SharpestPluginExecutor {
          }
       }
 
-      (new ZProjectTask()).execute();
+      (new SharpestProjectTask()).execute();
    }
 
    /**
@@ -154,24 +154,18 @@ public class SharpestPluginExecutor {
     */
    public Datastore project(final Datastore newStore, final boolean show,
                             final String newName, final SharpestData zpd) throws Exception {
-      CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
-      for (String axis : oldProvider_.getAxes()) {
-         if (!axis.equals(zpd.projectionAxis_)) {
-            newSizeCoordsBuilder.index(axis, oldProvider_.getNextIndex(axis));
-         } else {
-            newSizeCoordsBuilder.index(axis, 0);
-         }
-      }
-      SummaryMetadata metadata = oldProvider_.getSummaryMetadata();
+      SummaryMetadata oldMetadata = oldProvider_.getSummaryMetadata();
+      CoordsBuilder newSizeCoordsBuilder = oldMetadata.getIntendedDimensions().copyBuilder();
+      newSizeCoordsBuilder.z(zpd.nrPlanes_);
 
-      metadata = metadata.copyBuilder()
+      SummaryMetadata newMetadata = oldMetadata.copyBuilder()
             .intendedDimensions(newSizeCoordsBuilder.build())
             .build();
       Coords.CoordsBuilder cb = Coordinates.builder();
       try {
-         newStore.setSummaryMetadata(metadata);
+         newStore.setSummaryMetadata(newMetadata);
          List<String> axes = oldProvider_.getAxes();
-         axes.remove(zpd.projectionAxis_);
+         axes.remove(Coords.Z);
          axes.sort(new CoordsComparator());
          if (show) {
             DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
@@ -251,7 +245,7 @@ public class SharpestPluginExecutor {
     */
    private void executeProjection(Datastore newStore, Coords.CoordsBuilder cbp,  SharpestData zpd)
            throws IOException {
-      cbp.index(zpd.projectionAxis_, zpd.firstFrame_);
+      cbp.index(Coords.Z, 0);
       Image tmpImg = oldProvider_.getAnyImage();
       if (tmpImg == null) {
          studio_.alerts().postAlert("Projection problem", this.getClass(),
@@ -261,8 +255,8 @@ public class SharpestPluginExecutor {
       ImageStack stack = new ImageStack(
                tmpImg.getWidth(), tmpImg.getHeight());
       Metadata imgMetadata = null;
-      for (int i = zpd.firstFrame_; i <= zpd.lastFrame_; i++) {
-         Image img = oldProvider_.getImage(cbp.index(zpd.projectionAxis_, i).build());
+      for (int z = 0; z < oldProvider_.getNextIndex(Coords.Z); z++) {
+         Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
          if (img != null) {  // null happens when this image was skipped
             if (imgMetadata == null) {
                imgMetadata = img.getMetadata().copyBuilderWithNewUUID().build();
@@ -272,64 +266,54 @@ public class SharpestPluginExecutor {
             stack.addSlice(ip);
          }
       }
-      //ImagePlus s = new ImagePlus("Test", stack);
-      //s.show();
       if (stack.getSize() > 0 && imgMetadata != null) {
-         if (zpd.projectionMethod_ == SharpestPlugin.SHARPNESS_METHOD) {
-            // need to get these from UI input
-
-            ImgSharpnessAnalysis imgScoringFunction = new ImgSharpnessAnalysis();
-            imgScoringFunction.setComputationMethod(zpd.sharpnessMethod_);
-            imgScoringFunction.allowInPlaceModification(true);
-            SortedMap<Integer, Double> focusScoreMap = new TreeMap<>();
-            int nrSlices = stack.getSize();
-            for (int i = 0; i < nrSlices; i++) {
-               focusScoreMap.put(i, imgScoringFunction.compute(stack.getProcessor(i + 1)));
-            }
-            XYSeries xySeries = new XYSeries("Focus Score");
-            focusScoreMap.forEach(xySeries::add);
-            double[] guess = {(double) nrSlices / 2.0,
-                    focusScoreMap.get(nrSlices / 2)};
-            double[] fit = Fitter.fit(xySeries, Fitter.FunctionType.Gaussian, guess);
-            int bestIndex  = (int) Math.round(Fitter.getXofMaxY(xySeries,
-                    Fitter.FunctionType.Gaussian, fit));
-            if (zpd.showGraph_) {
-               XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries,
-                       Fitter.FunctionType.Gaussian, fit);
-               XYSeries[] data = {xySeries, xySeriesFitted};
-               boolean[] shapes = {true, false};
-               PlotUtils pu = new PlotUtils(studio_);
-               pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes,
-                       "", (double) bestIndex);
-            }
-            if (bestIndex < 0) {
-               bestIndex = 0;
-            } else if (bestIndex >= stack.size()) {
-               bestIndex = stack.size() - 1;
-            }
-            Image img = oldProvider_.getImage(cbp.index(zpd.projectionAxis_, bestIndex).build());
-            Image outImg = img.copyWith(cbp.index(zpd.projectionAxis_, 0).build(),
+         ImgSharpnessAnalysis imgScoringFunction = new ImgSharpnessAnalysis();
+         imgScoringFunction.setComputationMethod(zpd.sharpnessMethod_);
+         imgScoringFunction.allowInPlaceModification(true);
+         SortedMap<Integer, Double> focusScoreMap = new TreeMap<>();
+         int nrSlices = stack.getSize();
+         for (int i = 0; i < nrSlices; i++) {
+            focusScoreMap.put(i, imgScoringFunction.compute(stack.getProcessor(i + 1)));
+         }
+         XYSeries xySeries = new XYSeries("Focus Score");
+         focusScoreMap.forEach(xySeries::add);
+         double[] guess = {(double) nrSlices / 2.0,
+                 focusScoreMap.get(nrSlices / 2)};
+         double[] fit = Fitter.fit(xySeries, Fitter.FunctionType.Gaussian, guess);
+         int bestIndex  = (int) Math.round(Fitter.getXofMaxY(xySeries,
+                 Fitter.FunctionType.Gaussian, fit));
+         if (zpd.showGraph_) {
+            XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries,
+                    Fitter.FunctionType.Gaussian, fit);
+            XYSeries[] data = {xySeries, xySeriesFitted};
+            boolean[] shapes = {true, false};
+            PlotUtils pu = new PlotUtils(studio_);
+            pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes,
+                    "", (double) bestIndex);
+         }
+         if (bestIndex < 0) {
+            bestIndex = 0;
+         } else if (bestIndex >= stack.size()) {
+            bestIndex = stack.size() - 1;
+         }
+         int start = bestIndex;
+         int end = bestIndex;
+         if (zpd.nrPlanes_ > 1) {
+            start = bestIndex - (zpd.nrPlanes_ - 1) / 2;
+            end = bestIndex + (zpd.nrPlanes_ - 1) / 2;
+         }
+         if (start < 0) {
+            start = 0;
+            end = zpd.nrPlanes_ - 1;
+         }
+         if (end >= stack.size()) {
+            end = stack.size() - 1;
+            start = end - zpd.nrPlanes_ + 1;
+         }
+         for (int z = start; z <= end; z++) {
+            Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
+            Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
                     img.getMetadata().copyBuilderWithNewUUID().build());
-            newStore.putImage(outImg);
-         } else {
-            ImagePlus tmp = new ImagePlus("tmp", stack);
-            ZProjector zp = new ZProjector(tmp);
-            zp.setMethod(zpd.projectionMethod_);
-            zp.doProjection();
-            ImagePlus projection = zp.getProjection();
-            if (projection.getBytesPerPixel() > 2) {
-               if (tmp.getBytesPerPixel() == 1) {
-                  projection.setProcessor(projection.getProcessor().convertToByte(false));
-               } else if (tmp.getBytesPerPixel() == 2) {
-                  projection.setProcessor(projection.getProcessor().convertToShort(false));
-               }
-            }
-            // TODO: adjust the metadata with the little knowledge we have about the
-            // projection axis (for instance, if z, set z position to the mean of the
-            // z positions of all images?
-            Image outImg = studio_.data().getImageJConverter().createImage(
-                    projection.getProcessor(), cbp.index(zpd.projectionAxis_, 0).build(),
-                    imgMetadata.copyBuilderWithNewUUID().build());
             newStore.putImage(outImg);
          }
       } else {

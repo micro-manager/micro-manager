@@ -29,16 +29,14 @@ import org.scijava.plugin.SciJavaPlugin;
 
 
 /**
- * Plugin that projects Micro-Manager datasets along a selected axis.
- * Usually, this is a projection along the z-axis (but others such as t, can 
- * be useful as well).
+ * Plugin that selects the sharpest image along the z axis.
  *
  * @author nico
  */
 // to make the code show up in the gearmenu when running under Netbeans
 @Plugin(type = DisplayGearMenuPlugin.class)
 public class SharpestPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
-   public static final String MENUNAME = "Project...";
+   public static final String MENUNAME = "Sharpest...";
    public static final String AXISKEY = "AxisKey";
    public static final String PROJECTION_METHOD = "ProjectionMethod";
    public static final String SHARPNESS = "SharpnessMethod";
@@ -46,6 +44,7 @@ public class SharpestPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    // to be used in conjunction with "Methods" in IJ ZProjector
    public static final int SHARPNESS_METHOD = 10;
    public static final String SHOW_SHARPNESS_GRAPH = "ShowSharpnessGraph";
+   public static final String KEEP_PLANES = "KeepPlanes";
 
    private Studio studio_;
 
@@ -72,17 +71,17 @@ public class SharpestPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
 
    @Override
    public String getHelpText() {
-      return "Generates a Projection of a Micro-Manager datasets along the selected axis";
+      return "Selects the Sharpest image of a Micro-Manager datasets along the Z axis";
    }
 
    @Override
    public String getVersion() {
-      return "Version 0.2";
+      return "Version 0.1";
    }
 
    @Override
    public String getCopyright() {
-      return "Regents of the University of California, 2017-2019";
+      return "Altos Labs, 2024, based on code copyright UCSF, 2017-2019";
    }
 
 
