@@ -21,9 +21,7 @@
 
 package org.micromanager.sharpest;
 
-import ij.ImagePlus;
 import ij.ImageStack;
-import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import java.io.File;
 import java.io.IOException;
@@ -80,17 +78,6 @@ public class SharpestPluginExecutor {
       studio_ = studio;
       window_ = window;
       oldProvider_ = window.getDataProvider();
-   }
-
-   /**
-    * Constructs this plugin's executor.
-    *
-    * @param studio Omnipresent Micro-Manager Studio object.
-    * @param oldProvider DataProvider to be projected.
-    */
-   public SharpestPluginExecutor(Studio studio, DataProvider oldProvider) {
-      studio_ = studio;
-      oldProvider_ = oldProvider;
    }
 
    /**
@@ -162,13 +149,18 @@ public class SharpestPluginExecutor {
             .intendedDimensions(newSizeCoordsBuilder.build())
             .build();
       Coords.CoordsBuilder cb = Coordinates.builder();
+      int sharpestChannelCoordinate = -1;
       try {
          newStore.setSummaryMetadata(newMetadata);
          List<String> axes = oldProvider_.getAxes();
          axes.remove(Coords.Z);
          if (!zpd.sharpenAllChannels_) {
             axes.remove(Coords.C);
-            
+            for (int c = 0; c < oldMetadata.getChannelNameList().size(); c++) {
+               if (oldMetadata.getChannelNameList().get(c).equals(zpd.channel_)) {
+                  sharpestChannelCoordinate = c;
+               }
+            }
          }
          axes.sort(new CoordsComparator());
          if (show) {
@@ -191,7 +183,7 @@ public class SharpestPluginExecutor {
             }
          }
 
-         findAllProjections(newStore, axes, cb, zpd);
+         findAllProjections(newStore, axes, cb, zpd, sharpestChannelCoordinate);
 
       } catch (DatastoreFrozenException ex) {
          studio_.logs().showError("Can not add data to frozen datastore");
@@ -221,7 +213,7 @@ public class SharpestPluginExecutor {
     * @throws IOException Can arise when saving to disk
     */
    private void findAllProjections(Datastore newStore, List<String> remainingAxes, 
-           Coords.CoordsBuilder cbp, SharpestData zpd) throws IOException {
+           Coords.CoordsBuilder cbp, SharpestData zpd, int channelIndex) throws IOException {
       String currentAxis = remainingAxes.get(0);
       List<String> rcAxes = new ArrayList<>(remainingAxes);
       rcAxes.remove(currentAxis);
@@ -234,12 +226,10 @@ public class SharpestPluginExecutor {
                progressBar_.setProgress(projectionNr_); 
             }
          } else {
-            if (!zpd.sharpenAllChannels_ && zpd.channel_ != null) {
-               for ()
-               zpd.channel_
-               cbp.index(Coords.C, zpd.channel_);
+            if (!zpd.sharpenAllChannels_ && zpd.channel_ != null && channelIndex >= 0) {
+               cbp.index(Coords.C, channelIndex);
             }
-            findAllProjections(newStore, rcAxes, cbp, zpd);
+            findAllProjections(newStore, rcAxes, cbp, zpd, channelIndex);
          }
       }
    }
@@ -321,11 +311,13 @@ public class SharpestPluginExecutor {
          }
          for (int z = start; z <= end; z++) {
             if (!zpd.sharpenAllChannels_) {
-               Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
-               Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
-                       img.getMetadata().copyBuilderWithNewUUID().build());
-               newStore.putImage(outImg);
-
+               for (int c = 0; c < oldProvider_.getSummaryMetadata().getIntendedDimensions().getC();
+                     c++) {
+                  Image img = oldProvider_.getImage(cbp.z(z).channel(c).build());
+                  Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
+                          img.getMetadata().copyBuilderWithNewUUID().build());
+                  newStore.putImage(outImg);
+               }
             } else {
                Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
                Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),

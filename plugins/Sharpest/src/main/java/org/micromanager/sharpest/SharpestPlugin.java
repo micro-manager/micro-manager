@@ -37,12 +37,8 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = DisplayGearMenuPlugin.class)
 public class SharpestPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Sharpest...";
-   public static final String AXISKEY = "AxisKey";
-   public static final String PROJECTION_METHOD = "ProjectionMethod";
    public static final String SHARPNESS = "SharpnessMethod";
    public static final String SAVE = "Save";
-   // to be used in conjunction with "Methods" in IJ ZProjector
-   public static final int SHARPNESS_METHOD = 10;
    public static final String SHOW_SHARPNESS_GRAPH = "ShowSharpnessGraph";
    public static final String KEEP_PLANES = "KeepPlanes";
    public static final String EACH_CHANNEL = "EachChannel";

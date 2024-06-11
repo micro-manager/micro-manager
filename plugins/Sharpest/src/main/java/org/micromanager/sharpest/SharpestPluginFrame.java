@@ -23,7 +23,6 @@ package org.micromanager.sharpest;
 
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
