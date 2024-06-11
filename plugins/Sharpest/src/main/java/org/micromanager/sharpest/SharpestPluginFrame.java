@@ -85,11 +85,6 @@ public class SharpestPluginFrame extends JDialog {
                      (String) sharpnessMethodBox.getSelectedItem()));
       sharpnessMethodBox.setSelectedItem(settings_.getString(
                SharpestPlugin.SHARPNESS, ImgSharpnessAnalysis.Method.getNames()[0]));
-      final JCheckBox showGraphBox = new JCheckBox("show graph");
-      showGraphBox.setSelected(settings_.getBoolean(SharpestPlugin.SHOW_SHARPNESS_GRAPH, false));
-      showGraphBox.addActionListener((ActionEvent e) ->
-              settings_.putBoolean(SharpestPlugin.SHOW_SHARPNESS_GRAPH,
-                      showGraphBox.isSelected()));
 
       final JLabel keepPlanesLabel = new JLabel("keep planes");
       final JComboBox<Integer> keepPlanesBox = new JComboBox<>();
@@ -100,10 +95,46 @@ public class SharpestPluginFrame extends JDialog {
       keepPlanesBox.addActionListener((ActionEvent e) ->
               settings_.putInteger(SharpestPlugin.KEEP_PLANES,
                       (Integer) keepPlanesBox.getSelectedItem()));
+
+      boolean showChannelSelectors = false;
+      List<String> channelNames = ourProvider.getSummaryMetadata().getChannelNameList();
+      if (channelNames != null && channelNames.size() > 1) {
+         showChannelSelectors = true;
+      }
+      final JCheckBox eachChannelBox = new JCheckBox("Select sharpest for each channel");
+      final JLabel selectChannelLabel = new JLabel("Channel to sharpen");
+      final JComboBox<String> channelBox = new JComboBox<>();
+      if (channelNames != null) {
+         for (String channelName : channelNames) {
+            channelBox.addItem(channelName);
+         }
+      }
+      channelBox.setSelectedItem(settings_.getString(SharpestPlugin.CHANNEL, ""));
+      channelBox.addActionListener((ActionEvent e) ->
+              settings_.putString(SharpestPlugin.CHANNEL,
+                      (String) channelBox.getSelectedItem()));
+      eachChannelBox.addActionListener((ActionEvent e) -> {
+         channelBox.setEnabled(!eachChannelBox.isSelected());
+         settings_.putBoolean(SharpestPlugin.EACH_CHANNEL, eachChannelBox.isSelected());
+      });
+      eachChannelBox.setSelected(settings_.getBoolean(SharpestPlugin.EACH_CHANNEL, false));
+      channelBox.setEnabled(!eachChannelBox.isSelected());
+
+      final JCheckBox showGraphBox = new JCheckBox("show graph");
+      showGraphBox.setSelected(settings_.getBoolean(SharpestPlugin.SHOW_SHARPNESS_GRAPH, false));
+      showGraphBox.addActionListener((ActionEvent e) ->
+              settings_.putBoolean(SharpestPlugin.SHOW_SHARPNESS_GRAPH,
+                      showGraphBox.isSelected()));
+
       super.add(sharpnessMethodLabel);
       super.add(sharpnessMethodBox, "span2, grow, wrap");
       super.add(keepPlanesLabel);
       super.add(keepPlanesBox, "span2, grow, wrap");
+      if (showChannelSelectors) {
+         super.add(eachChannelBox, "span3, grow, wrap");
+         super.add(selectChannelLabel);
+         super.add(channelBox, "span2, grow, wrap");
+      }
       super.add(showGraphBox, "span3, grow, wrap");
 
       super.add(new JLabel("name"));
@@ -127,7 +158,8 @@ public class SharpestPluginFrame extends JDialog {
          if (selectedItem instanceof Integer) {
             nrPlanes = (Integer) selectedItem;
          }
-         SharpestData zpd = new SharpestData(method,  showGraphBox.isSelected(), nrPlanes);
+         SharpestData zpd = new SharpestData(method,  showGraphBox.isSelected(), nrPlanes,
+                 eachChannelBox.isSelected(), (String) channelBox.getSelectedItem());
          zp.project(saveBox.isSelected(),
                  nameField.getText(),
                  zpd);

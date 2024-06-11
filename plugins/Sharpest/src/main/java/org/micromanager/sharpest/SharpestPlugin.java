@@ -45,6 +45,8 @@ public class SharpestPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public static final int SHARPNESS_METHOD = 10;
    public static final String SHOW_SHARPNESS_GRAPH = "ShowSharpnessGraph";
    public static final String KEEP_PLANES = "KeepPlanes";
+   public static final String EACH_CHANNEL = "EachChannel";
+   public static final String CHANNEL = "Channel";
 
    private Studio studio_;
 

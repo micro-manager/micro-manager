@@ -166,6 +166,10 @@ public class SharpestPluginExecutor {
          newStore.setSummaryMetadata(newMetadata);
          List<String> axes = oldProvider_.getAxes();
          axes.remove(Coords.Z);
+         if (!zpd.sharpenAllChannels_) {
+            axes.remove(Coords.C);
+            
+         }
          axes.sort(new CoordsComparator());
          if (show) {
             DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
@@ -230,6 +234,11 @@ public class SharpestPluginExecutor {
                progressBar_.setProgress(projectionNr_); 
             }
          } else {
+            if (!zpd.sharpenAllChannels_ && zpd.channel_ != null) {
+               for ()
+               zpd.channel_
+               cbp.index(Coords.C, zpd.channel_);
+            }
             findAllProjections(newStore, rcAxes, cbp, zpd);
          }
       }
@@ -311,10 +320,18 @@ public class SharpestPluginExecutor {
             start = end - zpd.nrPlanes_ + 1;
          }
          for (int z = start; z <= end; z++) {
-            Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
-            Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
-                    img.getMetadata().copyBuilderWithNewUUID().build());
-            newStore.putImage(outImg);
+            if (!zpd.sharpenAllChannels_) {
+               Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
+               Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
+                       img.getMetadata().copyBuilderWithNewUUID().build());
+               newStore.putImage(outImg);
+
+            } else {
+               Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
+               Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
+                       img.getMetadata().copyBuilderWithNewUUID().build());
+               newStore.putImage(outImg);
+            }
          }
       } else {
          studio_.alerts().postAlert("Projection problem", this.getClass(), 
