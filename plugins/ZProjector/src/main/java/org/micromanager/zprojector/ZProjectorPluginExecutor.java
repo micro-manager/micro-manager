@@ -275,63 +275,25 @@ public class ZProjectorPluginExecutor {
       //ImagePlus s = new ImagePlus("Test", stack);
       //s.show();
       if (stack.getSize() > 0 && imgMetadata != null) {
-         if (zpd.projectionMethod_ == ZProjectorPlugin.SHARPNESS_METHOD) {
-            // need to get these from UI input
-
-            ImgSharpnessAnalysis imgScoringFunction = new ImgSharpnessAnalysis();
-            imgScoringFunction.setComputationMethod(zpd.sharpnessMethod_);
-            imgScoringFunction.allowInPlaceModification(true);
-            SortedMap<Integer, Double> focusScoreMap = new TreeMap<>();
-            int nrSlices = stack.getSize();
-            for (int i = 0; i < nrSlices; i++) {
-               focusScoreMap.put(i, imgScoringFunction.compute(stack.getProcessor(i + 1)));
+         ImagePlus tmp = new ImagePlus("tmp", stack);
+         ZProjector zp = new ZProjector(tmp);
+         zp.setMethod(zpd.projectionMethod_);
+         zp.doProjection();
+         ImagePlus projection = zp.getProjection();
+         if (projection.getBytesPerPixel() > 2) {
+            if (tmp.getBytesPerPixel() == 1) {
+               projection.setProcessor(projection.getProcessor().convertToByte(false));
+            } else if (tmp.getBytesPerPixel() == 2) {
+               projection.setProcessor(projection.getProcessor().convertToShort(false));
             }
-            XYSeries xySeries = new XYSeries("Focus Score");
-            focusScoreMap.forEach(xySeries::add);
-            double[] guess = {(double) nrSlices / 2.0,
-                    focusScoreMap.get(nrSlices / 2)};
-            double[] fit = Fitter.fit(xySeries, Fitter.FunctionType.Gaussian, guess);
-            int bestIndex  = (int) Math.round(Fitter.getXofMaxY(xySeries,
-                    Fitter.FunctionType.Gaussian, fit));
-            if (zpd.showGraph_) {
-               XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries,
-                       Fitter.FunctionType.Gaussian, fit);
-               XYSeries[] data = {xySeries, xySeriesFitted};
-               boolean[] shapes = {true, false};
-               PlotUtils pu = new PlotUtils(studio_);
-               pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes,
-                       "", (double) bestIndex);
-            }
-            if (bestIndex < 0) {
-               bestIndex = 0;
-            } else if (bestIndex >= stack.size()) {
-               bestIndex = stack.size() - 1;
-            }
-            Image img = oldProvider_.getImage(cbp.index(zpd.projectionAxis_, bestIndex).build());
-            Image outImg = img.copyWith(cbp.index(zpd.projectionAxis_, 0).build(),
-                    img.getMetadata().copyBuilderWithNewUUID().build());
-            newStore.putImage(outImg);
-         } else {
-            ImagePlus tmp = new ImagePlus("tmp", stack);
-            ZProjector zp = new ZProjector(tmp);
-            zp.setMethod(zpd.projectionMethod_);
-            zp.doProjection();
-            ImagePlus projection = zp.getProjection();
-            if (projection.getBytesPerPixel() > 2) {
-               if (tmp.getBytesPerPixel() == 1) {
-                  projection.setProcessor(projection.getProcessor().convertToByte(false));
-               } else if (tmp.getBytesPerPixel() == 2) {
-                  projection.setProcessor(projection.getProcessor().convertToShort(false));
-               }
-            }
-            // TODO: adjust the metadata with the little knowledge we have about the
-            // projection axis (for instance, if z, set z position to the mean of the
-            // z positions of all images?
-            Image outImg = studio_.data().getImageJConverter().createImage(
-                    projection.getProcessor(), cbp.index(zpd.projectionAxis_, 0).build(),
-                    imgMetadata.copyBuilderWithNewUUID().build());
-            newStore.putImage(outImg);
          }
+         // TODO: adjust the metadata with the little knowledge we have about the
+         // projection axis (for instance, if z, set z position to the mean of the
+         // z positions of all images?
+         Image outImg = studio_.data().getImageJConverter().createImage(
+                 projection.getProcessor(), cbp.index(zpd.projectionAxis_, 0).build(),
+                 imgMetadata.copyBuilderWithNewUUID().build());
+         newStore.putImage(outImg);
       } else {
          studio_.alerts().postAlert("Projection problem", this.getClass(), 
                                              "No images found while projecting");
