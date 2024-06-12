@@ -854,10 +854,11 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
       // check if this location is outside the actual well
       if (plate_.isPointWithinWell(x, y)) {
-         MultiStagePosition mps = new MultiStagePosition();
+         MultiStagePosition msp = new MultiStagePosition();
          StagePosition sp = StagePosition.create2D("", x, y);
-         mps.add(sp);
-         return mps;
+         msp.add(sp);
+         msp.setGridCoordinates(row, col);
+         return msp;
       }
       return null;
    }

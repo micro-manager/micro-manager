@@ -420,6 +420,7 @@ public class SBSPlate {
                   final MultiStagePosition mps = sites.getPosition(k);
                   final MultiStagePosition absMps = new MultiStagePosition();
                   absMps.setLabel(METADATA_SITE_PREFIX + "_" + k);
+                  absMps.setGridCoordinates(mps.getGridRow(), mps.getGridColumn());
                   wpl.setGridCoordinates(i, colIndex - 1);
                   absMps.setDefaultXYStage(xyStageName);
                   // TODO: make sure we get the right XY stage not just the first one
