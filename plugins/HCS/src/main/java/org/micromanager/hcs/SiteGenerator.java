@@ -623,6 +623,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             if (platePl.getNumberOfPositions() == 0) {
                studio_.logs().showMessage("No sites selected");
             }
+            platePl.setIsPlate(true);
+            platePl.setPlateName("Test");
             studio_.positions().setPositionList(platePl);
             studio_.app().showPositionList();
          }

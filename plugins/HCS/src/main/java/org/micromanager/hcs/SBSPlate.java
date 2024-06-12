@@ -81,6 +81,7 @@ public class SBSPlate {
    public static final String LOAD_CUSTOM = "Load custom...";
    public static final String CUSTOM = "Custom";
    private static final String METADATA_SITE_PREFIX = "Site";
+   private static final String WELL_KEY = "Well";
 
    public static final FileDialogs.FileType PLATE_FILE = new FileDialogs.FileType(
          "PLATE_FILE", "High-Content Screening plate definition files",
@@ -420,6 +421,7 @@ public class SBSPlate {
                   final MultiStagePosition mps = sites.getPosition(k);
                   final MultiStagePosition absMps = new MultiStagePosition();
                   absMps.setLabel(METADATA_SITE_PREFIX + "_" + k);
+                  absMps.setProperty(WELL_KEY, wellLabel);
                   absMps.setGridCoordinates(mps.getGridRow(), mps.getGridColumn());
                   wpl.setGridCoordinates(i, colIndex - 1);
                   absMps.setDefaultXYStage(xyStageName);
