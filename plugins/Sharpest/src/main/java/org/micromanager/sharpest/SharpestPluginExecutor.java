@@ -1,12 +1,12 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ZProjectorPluginExecutor.java
+//FILE:          SharpestPluginExecutor.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ZProjector plugin
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
-// COPYRIGHT:    Regents of the University of California 2019
+// COPYRIGHT:    Altos Labs, 2024
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -19,11 +19,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.zprojector;
+package org.micromanager.sharpest;
 
-import ij.ImagePlus;
 import ij.ImageStack;
-import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +60,7 @@ import org.micromanager.internal.utils.ProgressBar;
  *
  * @author nico
  */
-public class ZProjectorPluginExecutor {
+public class SharpestPluginExecutor {
 
    private final Studio studio_;
    private DisplayWindow window_;
@@ -76,21 +74,10 @@ public class ZProjectorPluginExecutor {
     * @param studio Omnipresent Micro-Manager Studio object.
     * @param window DisplayWindow whose data we will project.
     */
-   public ZProjectorPluginExecutor(Studio studio, DisplayWindow window) {
+   public SharpestPluginExecutor(Studio studio, DisplayWindow window) {
       studio_ = studio;
       window_ = window;
       oldProvider_ = window.getDataProvider();
-   }
-
-   /**
-    * Constructs this plugin's executor.
-    *
-    * @param studio Omnipresent Micro-Manager Studio object.
-    * @param oldProvider DataProvider to be projected.
-    */
-   public ZProjectorPluginExecutor(Studio studio, DataProvider oldProvider) {
-      studio_ = studio;
-      oldProvider_ = oldProvider;
    }
 
    /**
@@ -100,11 +87,11 @@ public class ZProjectorPluginExecutor {
     * @param newName  Name for the copy
     * @param zpd ZProjectorData object with projection parameters
     */
-   public final void project(final boolean save, final String newName, ZProjectorData zpd) {
+   public final void project(final boolean save, final String newName, SharpestData zpd) {
 
-      class ZProjectTask extends SwingWorker<Void, Void> {
+      class SharpestProjectTask extends SwingWorker<Void, Void> {
 
-         ZProjectTask() {
+         SharpestProjectTask() {
          }
 
          @Override
@@ -141,7 +128,7 @@ public class ZProjectorPluginExecutor {
          }
       }
 
-      (new ZProjectTask()).execute();
+      (new SharpestProjectTask()).execute();
    }
 
    /**
@@ -153,25 +140,28 @@ public class ZProjectorPluginExecutor {
     * @param zpd ZProjectorData object with projection parameters
     */
    public Datastore project(final Datastore newStore, final boolean show,
-                            final String newName, final ZProjectorData zpd) throws Exception {
-      CoordsBuilder newSizeCoordsBuilder = studio_.data().coordsBuilder();
-      for (String axis : oldProvider_.getAxes()) {
-         if (!axis.equals(zpd.projectionAxis_)) {
-            newSizeCoordsBuilder.index(axis, oldProvider_.getNextIndex(axis));
-         } else {
-            newSizeCoordsBuilder.index(axis, 0);
-         }
-      }
-      SummaryMetadata metadata = oldProvider_.getSummaryMetadata();
+                            final String newName, final SharpestData zpd) throws Exception {
+      SummaryMetadata oldMetadata = oldProvider_.getSummaryMetadata();
+      CoordsBuilder newSizeCoordsBuilder = oldMetadata.getIntendedDimensions().copyBuilder();
+      newSizeCoordsBuilder.z(zpd.nrPlanes_);
 
-      metadata = metadata.copyBuilder()
+      SummaryMetadata newMetadata = oldMetadata.copyBuilder()
             .intendedDimensions(newSizeCoordsBuilder.build())
             .build();
       Coords.CoordsBuilder cb = Coordinates.builder();
+      int sharpestChannelCoordinate = -1;
       try {
-         newStore.setSummaryMetadata(metadata);
+         newStore.setSummaryMetadata(newMetadata);
          List<String> axes = oldProvider_.getAxes();
-         axes.remove(zpd.projectionAxis_);
+         axes.remove(Coords.Z);
+         if (!zpd.sharpenAllChannels_) {
+            axes.remove(Coords.C);
+            for (int c = 0; c < oldMetadata.getChannelNameList().size(); c++) {
+               if (oldMetadata.getChannelNameList().get(c).equals(zpd.channel_)) {
+                  sharpestChannelCoordinate = c;
+               }
+            }
+         }
          axes.sort(new CoordsComparator());
          if (show) {
             DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
@@ -193,7 +183,7 @@ public class ZProjectorPluginExecutor {
             }
          }
 
-         findAllProjections(newStore, axes, cb, zpd);
+         findAllProjections(newStore, axes, cb, zpd, sharpestChannelCoordinate);
 
       } catch (DatastoreFrozenException ex) {
          studio_.logs().showError("Can not add data to frozen datastore");
@@ -223,7 +213,7 @@ public class ZProjectorPluginExecutor {
     * @throws IOException Can arise when saving to disk
     */
    private void findAllProjections(Datastore newStore, List<String> remainingAxes, 
-           Coords.CoordsBuilder cbp, ZProjectorData zpd) throws IOException {
+           Coords.CoordsBuilder cbp, SharpestData zpd, int channelIndex) throws IOException {
       String currentAxis = remainingAxes.get(0);
       List<String> rcAxes = new ArrayList<>(remainingAxes);
       rcAxes.remove(currentAxis);
@@ -236,7 +226,10 @@ public class ZProjectorPluginExecutor {
                progressBar_.setProgress(projectionNr_); 
             }
          } else {
-            findAllProjections(newStore, rcAxes, cbp, zpd);
+            if (!zpd.sharpenAllChannels_ && zpd.channel_ != null && channelIndex >= 0) {
+               cbp.index(Coords.C, channelIndex);
+            }
+            findAllProjections(newStore, rcAxes, cbp, zpd, channelIndex);
          }
       }
    }
@@ -249,9 +242,9 @@ public class ZProjectorPluginExecutor {
     * @param zpd ZProjectorData object with projection parameters
     * @throws IOException Can arise when saving to disk
     */
-   private void executeProjection(Datastore newStore, Coords.CoordsBuilder cbp,  ZProjectorData zpd)
+   private void executeProjection(Datastore newStore, Coords.CoordsBuilder cbp,  SharpestData zpd)
            throws IOException {
-      cbp.index(zpd.projectionAxis_, zpd.firstFrame_);
+      cbp.index(Coords.Z, 0);
       Image tmpImg = oldProvider_.getAnyImage();
       if (tmpImg == null) {
          studio_.alerts().postAlert("Projection problem", this.getClass(),
@@ -261,8 +254,8 @@ public class ZProjectorPluginExecutor {
       ImageStack stack = new ImageStack(
                tmpImg.getWidth(), tmpImg.getHeight());
       Metadata imgMetadata = null;
-      for (int i = zpd.firstFrame_; i <= zpd.lastFrame_; i++) {
-         Image img = oldProvider_.getImage(cbp.index(zpd.projectionAxis_, i).build());
+      for (int z = 0; z < oldProvider_.getNextIndex(Coords.Z); z++) {
+         Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
          if (img != null) {  // null happens when this image was skipped
             if (imgMetadata == null) {
                imgMetadata = img.getMetadata().copyBuilderWithNewUUID().build();
@@ -272,28 +265,66 @@ public class ZProjectorPluginExecutor {
             stack.addSlice(ip);
          }
       }
-      //ImagePlus s = new ImagePlus("Test", stack);
-      //s.show();
       if (stack.getSize() > 0 && imgMetadata != null) {
-         ImagePlus tmp = new ImagePlus("tmp", stack);
-         ZProjector zp = new ZProjector(tmp);
-         zp.setMethod(zpd.projectionMethod_);
-         zp.doProjection();
-         ImagePlus projection = zp.getProjection();
-         if (projection.getBytesPerPixel() > 2) {
-            if (tmp.getBytesPerPixel() == 1) {
-               projection.setProcessor(projection.getProcessor().convertToByte(false));
-            } else if (tmp.getBytesPerPixel() == 2) {
-               projection.setProcessor(projection.getProcessor().convertToShort(false));
+         ImgSharpnessAnalysis imgScoringFunction = new ImgSharpnessAnalysis();
+         imgScoringFunction.setComputationMethod(zpd.sharpnessMethod_);
+         imgScoringFunction.allowInPlaceModification(true);
+         SortedMap<Integer, Double> focusScoreMap = new TreeMap<>();
+         int nrSlices = stack.getSize();
+         for (int i = 0; i < nrSlices; i++) {
+            focusScoreMap.put(i, imgScoringFunction.compute(stack.getProcessor(i + 1)));
+         }
+         XYSeries xySeries = new XYSeries("Focus Score");
+         focusScoreMap.forEach(xySeries::add);
+         double[] guess = {(double) nrSlices / 2.0,
+                 focusScoreMap.get(nrSlices / 2)};
+         double[] fit = Fitter.fit(xySeries, Fitter.FunctionType.Gaussian, guess);
+         int bestIndex  = (int) Math.round(Fitter.getXofMaxY(xySeries,
+                 Fitter.FunctionType.Gaussian, fit));
+         if (zpd.showGraph_) {
+            XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries,
+                    Fitter.FunctionType.Gaussian, fit);
+            XYSeries[] data = {xySeries, xySeriesFitted};
+            boolean[] shapes = {true, false};
+            PlotUtils pu = new PlotUtils(studio_);
+            pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes,
+                    "", (double) bestIndex);
+         }
+         if (bestIndex < 0) {
+            bestIndex = 0;
+         } else if (bestIndex >= stack.size()) {
+            bestIndex = stack.size() - 1;
+         }
+         int start = bestIndex;
+         int end = bestIndex;
+         if (zpd.nrPlanes_ > 1) {
+            start = bestIndex - (zpd.nrPlanes_ - 1) / 2;
+            end = bestIndex + (zpd.nrPlanes_ - 1) / 2;
+         }
+         if (start < 0) {
+            start = 0;
+            end = zpd.nrPlanes_ - 1;
+         }
+         if (end >= stack.size()) {
+            end = stack.size() - 1;
+            start = end - zpd.nrPlanes_ + 1;
+         }
+         for (int z = start; z <= end; z++) {
+            if (!zpd.sharpenAllChannels_) {
+               for (int c = 0; c < oldProvider_.getSummaryMetadata().getIntendedDimensions().getC();
+                     c++) {
+                  Image img = oldProvider_.getImage(cbp.z(z).channel(c).build());
+                  Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
+                          img.getMetadata().copyBuilderWithNewUUID().build());
+                  newStore.putImage(outImg);
+               }
+            } else {
+               Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
+               Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
+                       img.getMetadata().copyBuilderWithNewUUID().build());
+               newStore.putImage(outImg);
             }
          }
-         // TODO: adjust the metadata with the little knowledge we have about the
-         // projection axis (for instance, if z, set z position to the mean of the
-         // z positions of all images?
-         Image outImg = studio_.data().getImageJConverter().createImage(
-                 projection.getProcessor(), cbp.index(zpd.projectionAxis_, 0).build(),
-                 imgMetadata.copyBuilderWithNewUUID().build());
-         newStore.putImage(outImg);
       } else {
          studio_.alerts().postAlert("Projection problem", this.getClass(), 
                                              "No images found while projecting");
