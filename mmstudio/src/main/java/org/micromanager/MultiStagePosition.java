@@ -104,6 +104,8 @@ public final class MultiStagePosition {
       mps.label_ = aMps.label_;
       mps.defaultXYStage_ = aMps.defaultXYStage_;
       mps.defaultZStage_ = aMps.defaultZStage_;
+      mps.gridCol_ = aMps.gridCol_;
+      mps.gridRow_ = aMps.gridRow_;
       mps.properties_.putAll(aMps.properties_);
       for (StagePosition sp : aMps.stagePosList_) {
          mps.add(StagePosition.newInstance(sp));
