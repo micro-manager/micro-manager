@@ -1100,6 +1100,8 @@ public enum PropertyKey {
 
    POSITION_LIST__ID("ID", PositionList.class),
    POSITION_LIST__VERSION("VERSION", PositionList.class),
+   POSITION_LIST__IS_PLATE("IsPlate", PositionList.class),
+   POSITION_LIST__PLATE_NAME("PlateName", PositionList.class),
 
    POSITION_NAME("PositionName", "Position", Metadata.class) {
       @Override

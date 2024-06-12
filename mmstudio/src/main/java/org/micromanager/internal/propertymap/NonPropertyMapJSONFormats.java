@@ -42,6 +42,8 @@ import static org.micromanager.data.internal.PropertyKey.PIXEL_TYPE;
 import static org.micromanager.data.internal.PropertyKey.POSITIONS;
 import static org.micromanager.data.internal.PropertyKey.POSITION_INDEX;
 import static org.micromanager.data.internal.PropertyKey.POSITION_LIST__ID;
+import static org.micromanager.data.internal.PropertyKey.POSITION_LIST__IS_PLATE;
+import static org.micromanager.data.internal.PropertyKey.POSITION_LIST__PLATE_NAME;
 import static org.micromanager.data.internal.PropertyKey.POSITION_LIST__VERSION;
 import static org.micromanager.data.internal.PropertyKey.POSITION_NAME;
 import static org.micromanager.data.internal.PropertyKey.PREFIX;
@@ -350,6 +352,8 @@ public abstract class NonPropertyMapJSONFormats {
          for (PropertyKey key : ImmutableList.of(
                POSITION_LIST__ID,
                POSITION_LIST__VERSION,
+               POSITION_LIST__IS_PLATE,
+               POSITION_LIST__PLATE_NAME,
                STAGE_POSITIONS)) {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
          }

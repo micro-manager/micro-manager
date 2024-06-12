@@ -45,7 +45,10 @@ import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
  * Used for multi site acquisition support.
  */
 public class PositionList implements Iterable<MultiStagePosition> {
+   private static final int VERSION = 2;
    private final ArrayList<MultiStagePosition> positions_;
+   private boolean isPlate_;
+   private String plateName_;
 
    private final HashSet<ChangeListener> listeners_ = new HashSet<>();
 
@@ -54,6 +57,8 @@ public class PositionList implements Iterable<MultiStagePosition> {
     */
    public PositionList() {
       positions_ = new ArrayList<>();
+      isPlate_ = false;
+      plateName_ = "";
    }
 
    /**
@@ -263,6 +268,9 @@ public class PositionList implements Iterable<MultiStagePosition> {
       }
       return PropertyMaps.builder()
             .putPropertyMapList(PropertyKey.STAGE_POSITIONS.key(), msps)
+            .putBoolean(PropertyKey.POSITION_LIST__IS_PLATE.key(), isPlate_)
+            .putString(PropertyKey.POSITION_LIST__PLATE_NAME.key(), plateName_)
+            .putInteger(PropertyKey.POSITION_LIST__VERSION.key(), VERSION)
             .build();
    }
 
@@ -390,6 +398,22 @@ public class PositionList implements Iterable<MultiStagePosition> {
    @Override
    public Iterator<MultiStagePosition> iterator() {
       return new PosListIterator(this);
+   }
+
+   public boolean isPlate() {
+      return isPlate_;
+   }
+
+   public void setIsPlate(boolean plate) {
+      isPlate_ = plate;
+   }
+
+   public String getPlateName() {
+      return plateName_;
+   }
+
+   public void setPlateName(String plateName) {
+      plateName_ = plateName;
    }
 
    /**
