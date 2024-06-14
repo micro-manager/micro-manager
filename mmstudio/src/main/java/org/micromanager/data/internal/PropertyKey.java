@@ -552,10 +552,6 @@ public enum PropertyKey {
 
    GAMMA("Gamma", ComponentDisplaySettings.class),
 
-   GRID_COLUMN("GridColumn", "gridColumn"),
-
-   GRID_ROW("GridRow", "gridRow"),
-
    HEIGHT("Height") {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
@@ -797,6 +793,18 @@ public enum PropertyKey {
       }
    },
 
+   MULTI_STAGE_POSITION__DEVICE("Device", MultiStagePosition.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putString(key(), je.getAsString());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         return new JsonPrimitive(pmap.getString(key(), null));
+      }
+   },
+
    MULTI_STAGE_POSITION__GRID_ROW("GridRow", "GRID_ROW", "gridRow", "GridRowIndex",
          MultiStagePosition.class) {
       @Override
@@ -852,15 +860,18 @@ public enum PropertyKey {
       }
    },
 
-   MULTI_STAGE_POSITION__DEVICE("Device", MultiStagePosition.class) {
+   MULTI_STAGE_POSITION__PROPERTY_WELL("Well", MultiStagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
 
       @Override
-      protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getString(key(), ""));
+         }
+         return null;
       }
    },
 

@@ -27,6 +27,8 @@ import static org.micromanager.data.internal.PropertyKey.ELAPSED_TIME_MS;
 import static org.micromanager.data.internal.PropertyKey.EXPOSURE_MS;
 import static org.micromanager.data.internal.PropertyKey.FILE_NAME;
 import static org.micromanager.data.internal.PropertyKey.IMAGE_NUMBER;
+import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN;
+import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__PROPERTY_WELL;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_ASPECT;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_AFFINE;
 import static org.micromanager.data.internal.PropertyKey.PIXEL_SIZE_UM;
@@ -87,6 +89,12 @@ public final class DefaultMetadata implements Metadata {
       }
 
       @Override
+      public Metadata.Builder well(String wellName) {
+         b_.putString(MULTI_STAGE_POSITION__PROPERTY_WELL.key(), wellName);
+         return this;
+      }
+
+      @Override
       public Builder bitDepth(Integer bitDepth) {
          b_.putInteger(BIT_DEPTH.key(), bitDepth);
          return this;
@@ -95,6 +103,18 @@ public final class DefaultMetadata implements Metadata {
       @Override
       public Builder exposureMs(Double exposureMs) {
          b_.putDouble(EXPOSURE_MS.key(), exposureMs);
+         return this;
+      }
+
+      @Override
+      public Metadata.Builder gridRow(Integer gridRow) {
+         b_.putInteger(MULTI_STAGE_POSITION__GRID_COLUMN.key(), gridRow);
+         return this;
+      }
+
+      @Override
+      public Metadata.Builder gridColumn(Integer gridColumn) {
+         b_.putInteger(MULTI_STAGE_POSITION__GRID_COLUMN.key(), gridColumn);
          return this;
       }
 
@@ -331,6 +351,23 @@ public final class DefaultMetadata implements Metadata {
    @Override
    public boolean hasPositionName() {
       return pmap_.containsKey(POSITION_NAME.key());
+   }
+
+   @Override
+   public String getWell() {
+      return pmap_.getString(MULTI_STAGE_POSITION__PROPERTY_WELL.key(), null);
+   }
+
+   @Override
+   public Integer getGridRow() {
+      return pmap_.containsKey(MULTI_STAGE_POSITION__GRID_COLUMN.key())
+              ? pmap_.getInteger(MULTI_STAGE_POSITION__GRID_COLUMN.key(), 0) : null;
+   }
+
+   @Override
+   public Integer getGridColumn() {
+      return pmap_.containsKey(MULTI_STAGE_POSITION__GRID_COLUMN.key())
+            ? pmap_.getInteger(MULTI_STAGE_POSITION__GRID_COLUMN.key(), 0) : null;
    }
 
    @Override
