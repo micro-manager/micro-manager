@@ -126,6 +126,12 @@
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
        "FrameIndex" (:frame-index event)
+       "GridCol" (when-lets [pos (:position event)
+                                  msp (get-msp (state :position-list) pos)]
+                                 (.getGridColumn msp))
+       "GridRow" (when-lets [pos (:position event)
+                                  msp (get-msp (state :position-list) pos)]
+                                 (.getGridRow msp))
        "Height" (state :init-height)
        "NextFrame" (:next-frame-index event)
        "PixelSizeUm" (state :pixel-size-um)
@@ -143,6 +149,9 @@
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
        "WaitInterval" (:wait-time-ms event)
+       "Well" (when-lets [pos (:position event)
+                    msp (get-msp (state :position-list) pos)]
+                    (if (.hasProperty msp "Well") (.getProperty msp "Well") ""))
        "Width"  (state :init-width)
        "XPositionUm" x
        "YPositionUm" y
@@ -899,6 +908,7 @@
                   grid-col (.getGridColumn msp)
                   default-xy (.getDefaultXYStage msp)
                   default-z(.getDefaultZStage msp)
+                  well(if (.hasProperty msp "Well") (.getProperty msp "Well") "")
                   device-positions (:axes (MultiStagePosition-to-map msp))]]
         (let [json-positions (JSONObject.
                                (into {}
@@ -909,6 +919,7 @@
                         "GridColumnIndex" grid-col
                         "DefaultXYStage" default-xy
                         "DefaultZStage" default-z
+                        "Well" well
                         "DeviceCoordinatesUm" json-positions}))))))
 
 (defn generate-axis-order [settings]
