@@ -1387,7 +1387,8 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          return (!currentAcquisition_.areEventsFinished()
                || (curPipeline_ != null && !curPipeline_.isHalted()));
       } else {
-         return false;
+         // check if AcqEngJ is running acquisition aside from MM MDA (e.g. pycro-manager, plugin)
+         return AcquisitionAPI.anyAcquisitionsRunning();
       }
    }
 
