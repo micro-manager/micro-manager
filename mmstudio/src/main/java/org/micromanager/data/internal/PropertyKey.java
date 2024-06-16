@@ -709,7 +709,7 @@ public enum PropertyKey {
       }
    },
 
-   MDA_SETTINGS("MdaSettings", SequenceSettings.class){
+   MDA_SETTINGS("MdaSettings", SequenceSettings.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
