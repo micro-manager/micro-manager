@@ -24,6 +24,7 @@ import static org.micromanager.data.internal.PropertyKey.INTENDED_DIMENSIONS;
 import static org.micromanager.data.internal.PropertyKey.INTERVAL_MS;
 import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS;
 import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_SLICES;
+import static org.micromanager.data.internal.PropertyKey.MDA_SETTINGS;
 import static org.micromanager.data.internal.PropertyKey.METADATA_VERSION;
 import static org.micromanager.data.internal.PropertyKey.MICRO_MANAGER_VERSION;
 import static org.micromanager.data.internal.PropertyKey.MULTI_STAGE_POSITION__DEFAULT_XY_STAGE;
@@ -275,6 +276,7 @@ public abstract class NonPropertyMapJSONFormats {
                STAGE_POSITIONS,
                KEEP_SHUTTER_OPEN_SLICES,
                KEEP_SHUTTER_OPEN_CHANNELS,
+               MDA_SETTINGS,
                PIXEL_TYPE, // Needed due to MultipageTiffReader design
                USER_DATA)) {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
@@ -309,6 +311,7 @@ public abstract class NonPropertyMapJSONFormats {
                STAGE_POSITIONS,
                KEEP_SHUTTER_OPEN_SLICES,
                KEEP_SHUTTER_OPEN_CHANNELS,
+               MDA_SETTINGS,
                PIXEL_TYPE, // compat
                WIDTH, // compat
                HEIGHT, // compat

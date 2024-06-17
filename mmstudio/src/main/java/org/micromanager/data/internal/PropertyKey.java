@@ -709,7 +709,20 @@ public enum PropertyKey {
       }
    },
 
-   MDA_SETTINGS("MdaSettings", SequenceSettings.class),
+   MDA_SETTINGS("MdaSettings", SequenceSettings.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putString(key(), je.getAsString());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getString(key(), null));
+         }
+         return null;
+      }
+   },
 
    METADATA_VERSION("MetadataVersion", SummaryMetadata.class) {
       @Override
