@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigurator {
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final String version = "Add to pos list";
+    private final String version = "live image position fix";
 
     private final JLabel statusLabel_;
     private final JLabel portLabel_;

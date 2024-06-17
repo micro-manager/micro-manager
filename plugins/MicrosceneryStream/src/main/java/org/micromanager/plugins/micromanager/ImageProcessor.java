@@ -38,10 +38,15 @@ public class ImageProcessor implements Processor {
             return;
         }
 
-        Vector3f pos = new Vector3f(
-                meta.getXPositionUm().floatValue(),
-                meta.getYPositionUm().floatValue(),
-                meta.getZPositionUm().floatValue());
+        Vector3f pos;
+        if (mmContext.msSettings.get("MMMicroscope.useImageMetadataPosition",false) ){
+            pos = new Vector3f(
+                    meta.getXPositionUm().floatValue(),
+                    meta.getYPositionUm().floatValue(),
+                    meta.getZPositionUm().floatValue());
+        } else {
+            pos = mmContext.mmCon.getStagePosition();
+        }
 
         ByteBuffer buf = MemoryUtil.memAlloc(image.getWidth()*image.getHeight()*image.getBytesPerPixel());
         buf.order(ByteOrder.LITTLE_ENDIAN);
