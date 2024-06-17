@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
+import org.micromanager.MultiStagePosition;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -136,8 +137,6 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
 
    @Override
    protected Void doInBackground() {
-      
-      // TODO: provide options for disk-backed datastores
       DataProvider oldStore = theWindow_.getDataProvider();
       Datastore tmpStore = null;
       try {
@@ -184,7 +183,6 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
          channelNames = chNameList;
          newDisplaySettingsBuilder.channels(channelDisplaySettings);
       }
-      newSizeCoordsBuilder.channel(channelNames.size());
       float  nrToBeCopied = 1;
       if (channels_ != null && !channels_.isEmpty()) {
          nrToBeCopied *= channels_.size();
@@ -215,14 +213,27 @@ public class DuplicatorExecutor extends SwingWorker<Void, Void> {
             throw new DuplicatorException("Width and/or height is unexpectedly null");
          }
 
-         SummaryMetadata metadata = oldMetadata.copyBuilder()
+         // assemble SummaryMetadata for the new store
+         SummaryMetadata.Builder metadataBuilder = oldMetadata.copyBuilder();
+         // Copy only the relevant stage positions
+         if (oldMetadata.getStagePositionList() != null
+                 && !oldMetadata.getStagePositionList().isEmpty()) {
+            if (mins_.containsKey(Coords.P) && maxes_.containsKey(Coords.P)) {
+               List<MultiStagePosition> newStagePositionList = new ArrayList<>();
+               for (int p = mins_.get(Coords.P); p <= maxes_.get(Coords.P); p++) {
+                  newStagePositionList.add(oldMetadata.getStagePositionList().get(p));
+               }
+               metadataBuilder.stagePositions(newStagePositionList);
+            }
+         }
+         newSizeCoordsBuilder.channel(channelNames.size());
+         metadataBuilder
                  .channelNames(channelNames)
                  .imageWidth(width)
                  .imageHeight(height)
-                 .intendedDimensions(newSizeCoordsBuilder.build())
-                 .build();
+                 .intendedDimensions(newSizeCoordsBuilder.build());
+         newStore.setSummaryMetadata(metadataBuilder.build());
 
-         newStore.setSummaryMetadata(metadata);
          // The implementations of the store set SummaryMetadata on another thread.
          // This can lead to disasters, so we have to poll to make sure SummaryMetadata is
          // there.   Copied from DefaultDataSaver.
