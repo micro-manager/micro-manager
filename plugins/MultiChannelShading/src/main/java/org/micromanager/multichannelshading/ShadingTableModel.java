@@ -50,8 +50,8 @@ public class ShadingTableModel extends AbstractTableModel {
          imageCollection) {
       gui_ = gui;
       imageCollection_ = imageCollection;
-      presetList_ = new ArrayList<String>();
-      fileList_ = new ArrayList<String>();
+      presetList_ = new ArrayList<>();
+      fileList_ = new ArrayList<>();
    }
 
 
@@ -123,10 +123,8 @@ public class ShadingTableModel extends AbstractTableModel {
       try {
          // first save our settings
          if (channelGroup_ != null) {
-            String[] channels = presetList_.toArray(
-                  new String[presetList_.size()]);
-            String[] files = fileList_.toArray(
-                  new String[fileList_.size()]);
+            String[] channels = presetList_.toArray(new String[0]);
+            String[] files = fileList_.toArray(new String[0]);
             gui_.profile().getSettings(this.getClass()).putStringList(
                   channelGroup_ + "-channels", channels);
             gui_.profile().getSettings(this.getClass()).putStringList(
@@ -139,7 +137,7 @@ public class ShadingTableModel extends AbstractTableModel {
          fileList_.clear();
          presetList_.clear();
          // Strange workaround since we can not pass null as default
-         List<String> emptyList = new ArrayList<String>(0);
+         List<String> emptyList = new ArrayList<>(0);
          List<String> channels = gui_.profile().getSettings(this.getClass())
                      .getStringList(channelGroup_ + "-channels", emptyList);
          List<String> files = gui_.profile().getSettings(this.getClass())
@@ -172,8 +170,16 @@ public class ShadingTableModel extends AbstractTableModel {
       // TODO: handle error 
    }
 
+   /**
+    * Discovers the unused presets in the current channel group.
+    *
+    * @return Array of unused presets
+    */
    public String[] getAvailablePresets() {
-      String[] presets = gui_.getCMMCore().getAvailableConfigs(channelGroup_).toArray();
+      String[] presets = {"Default"};
+      if (!channelGroup_.isEmpty()) {
+         presets = gui_.getCMMCore().getAvailableConfigs(channelGroup_).toArray();
+      }
       String[] usedPresets = getUsedPresets();
       String[] availablePresets = new String[presets.length - usedPresets.length];
       for (String preset : presets) {
@@ -213,6 +219,9 @@ public class ShadingTableModel extends AbstractTableModel {
    }
 
    public int getNumberOfPresetsInCurrentGroup() {
+      if (channelGroup_.isEmpty()) {
+         return 1;
+      }
       return (int) gui_.getCMMCore().getAvailableConfigs(channelGroup_).size();
    }
 

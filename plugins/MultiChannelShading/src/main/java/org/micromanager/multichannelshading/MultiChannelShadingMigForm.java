@@ -55,6 +55,7 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -153,23 +154,16 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
       JCheckBox useOpenCLCheckBox = new JCheckBox("Use GPU");
       useOpenCLCheckBox.setSelected(profileSettings_.getBoolean(USEOPENCL, false));
-      useOpenCLCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            profileSettings_.putBoolean(USEOPENCL, useOpenCLCheckBox.isSelected());
-            studio_.data().notifyPipelineChanged();
-         }
+      useOpenCLCheckBox.addActionListener(e -> {
+         profileSettings_.putBoolean(USEOPENCL, useOpenCLCheckBox.isSelected());
+         studio_.data().notifyPipelineChanged();
       });
       super.add(useOpenCLCheckBox, "skip 2");
 
       JButton helpButton = new JButton("Help");
-      helpButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
-                  "https://micro-manager.org/wiki/Flat-Field_Correction")).start();
-         }
-      });
+      helpButton.addActionListener(e ->
+              new Thread(GUIUtils.makeURLRunnable(
+            "https://micro-manager.org/wiki/Flat-Field_Correction")).start());
       super.add(helpButton, "wrap");
 
       JLabel darkImageLabel = new JLabel("Dark Image (common):");
@@ -206,16 +200,13 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
       final JButton darkFieldButton = mcsButton(buttonSize_, arialSmallFont_);
       darkFieldButton.setText("...");
-      darkFieldButton.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            File f = FileDialogs.openFile(mcsPluginWindow, "Dark image",
-                  new FileDialogs.FileType("MMAcq", "Dark image",
-                        backgroundFileName_, true, imageSuffixes));
-            if (f != null) {
-               processBackgroundImage(f.getAbsolutePath());
-               darkFieldTextField.setText(backgroundFileName_);
-            }
+      darkFieldButton.addActionListener(evt -> {
+         File f = FileDialogs.openFile(mcsPluginWindow, "Dark image",
+               new FileDialogs.FileType("MMAcq", "Dark image",
+                     backgroundFileName_, true, imageSuffixes));
+         if (f != null) {
+            processBackgroundImage(f.getAbsolutePath());
+            darkFieldTextField.setText(backgroundFileName_);
          }
       });
       super.add(darkFieldButton, "wrap");
@@ -244,12 +235,9 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       addButton.setFont(arialSmallFont_);
       addButton.setIcon(new ImageIcon(getClass().getResource(
             "/org/micromanager/icons/plus.png")));
-      addButton.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            shadingTableModel_.addRow();
-            updateAddAndRemoveButtons(addButton, removeButton);
-         }
+      addButton.addActionListener(evt -> {
+         shadingTableModel_.addRow();
+         updateAddAndRemoveButtons(addButton, removeButton);
       });
       buttonPanel.add(addButton, "wrap");
 
@@ -350,11 +338,11 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
    }
 
    /**
-    * Processes background image
+    * Processes background image.
     * Return filename if successful, empty string otherwise
     *
-    * @param fileName
-    * @return fileName
+    * @param fileName - name of the background image file to process
+    * @return fileName - filename if successful, empty string otherwise
     */
    private String processBackgroundImage(String fileName) {
       if (EMPTY_FILENAME_INDICATOR.equals(fileName)) {
@@ -377,7 +365,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
    }
 
    /**
-    * Helper function for the individual buttons
+    * Helper function for the individual buttons.
     *
     * @param rowNumber Table row associated with action Event
     */
