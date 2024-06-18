@@ -34,6 +34,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -75,7 +77,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
    private String groupName_;
    private String statusMessage_;
    private final Font arialSmallFont_;
-   private final JComboBox groupComboBox_;
+   private final JComboBox<String> groupComboBox_;
    private final ShadingTableModel shadingTableModel_;
    private final Dimension buttonSize_;
    private final JLabel statusLabel_;
@@ -128,16 +130,17 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       super.add(channelGroupLabel);
 
       //populate group ComboBox
-      groupComboBox_ = new JComboBox();
-      String[] channelGroups = mmc_.getAvailableConfigGroups().toArray();
-      groupComboBox_.setModel(new javax.swing.DefaultComboBoxModel(
-            channelGroups));
+      groupComboBox_ = new JComboBox<>();
+      groupComboBox_.addItem("");
+      for (String group : mmc_.getAvailableConfigGroups()) {
+         groupComboBox_.addItem(group);
+      }
       groupName_ = settings_.getString(CHANNELGROUP,
             profileSettings_.getString(CHANNELGROUP, ""));
       groupComboBox_.setSelectedItem(groupName_);
-      groupComboBox_.addActionListener(new java.awt.event.ActionListener() {
+      groupComboBox_.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
+         public void actionPerformed(ActionEvent evt) {
             groupName_ = (String) groupComboBox_.getSelectedItem();
             shadingTableModel_.setChannelGroup(groupName_);
             updateAddAndRemoveButtons(addButton, removeButton);
