@@ -194,7 +194,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       core.setExposure(exposure_);
 
       final double z = focusOptimizer_.runAutofocusAlgorithm();
-      core.setPosition(z);
+      core.setPosition(zDrive_, z);
 
       if (cropFactor_ < 1.0) {
          studio_.app().setROI(oldROI);
