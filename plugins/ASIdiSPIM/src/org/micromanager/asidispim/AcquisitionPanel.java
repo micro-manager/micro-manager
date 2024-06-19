@@ -1336,6 +1336,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       final float slicePeriod = Math.max( Math.max(laserDuration, cameraTotalTime),
             acqSettings.minimizeSlicePeriod ? 0 : acqSettings.desiredSlicePeriod );
       final float sliceDeadTime = MyNumberUtils.roundToQuarterMs(slicePeriod - laserDuration);
+      final float sliceLaserInterleaved = (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW ? 0.25f : 0.f);  // extra quarter millisecond to make sure interleaved slices works (otherwise laser signal never goes low)
       
       switch (acqSettings.cameraMode) {
       case PSEUDO_OVERLAP:  // e.g. Kinetix
@@ -1356,7 +1357,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          s.cameraDelay = 0.f;
          s.cameraDuration = 1.0f;
          s.cameraExposure = 1.0f;
-         s.laserDelay = sliceDeadTime;
+         s.laserDelay = sliceDeadTime+sliceLaserInterleaved;
          s.laserDuration = laserDuration;
          break;
       
