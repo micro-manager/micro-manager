@@ -4214,7 +4214,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            }
 
                            // grab all the images from the cameras, put them into the acquisition
-                           int[] imagesToSkip = new int[4];  // hardware timepoints have to drop spurious images with overlap mode
+                           int[] imagesToSkip = new int[2*acqSettings.numChannels];  // hardware timepoints have to drop spurious images with overlap mode
                            final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
                            boolean done = false;
                            long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
@@ -4419,7 +4419,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                           // if we are interleaving by slice then next nrChannel images will be from extra slice position
                                           // any other configuration we will just drop the next image
                                           if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-                                             imagesToSkip[channelIndex] = acqSettings.numChannels;
+                                             imagesToSkip[channelIndex] = 1; // was acqSettings.numChannels; from r16355 (2019-04-19) but I think that is incorrect because the extra images will be one per channel. Seeing missing frames at MBL.  Changed 2024-06-19. 
                                           } else {
                                              imagesToSkip[channelIndex] = 1;
                                           }
