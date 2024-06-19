@@ -526,7 +526,11 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
       this.add(joystickPanel_);
       
-      this.add(navPanel, "aligny top, span 1 3, wrap");
+      if (ASIdiSPIM.SCOPE) {
+         this.add(navPanel, "aligny top, span 1 2, wrap");
+      } else {
+         this.add(navPanel, "aligny top, span 1 3, wrap");
+      }
       
       beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
       this.add(beamPanel_, "wrap");
@@ -534,6 +538,64 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
             Devices.Sides.NONE, prefs_);
       this.add(cameraPanel_);
+      
+      if (ASIdiSPIM.SCOPE) {
+         JPanel pathPanel = new JPanel(new MigLayout(
+               "",
+               "[]8[]",
+               "[]4[]"));
+         pathPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+         
+         // could check core_.getAvailableConfigs()
+         
+         JButton buttonTransPreview = new JButton("Transmitted Preview");
+         buttonTransPreview.setMargin(new Insets(4,8,4,8));
+         buttonTransPreview.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               try {
+                  core_.setConfig("Path Select", "Transmitted Preview");
+               } catch (Exception e1) {
+                  // do nothing
+               }
+               gui_.refreshGUI();
+            }
+         });
+         
+         JButton buttonLightSheet = new JButton("Light Sheet");
+         buttonLightSheet.setMargin(new Insets(4,8,4,8));
+         buttonLightSheet.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               try {
+                  core_.setConfig("Path Select", "Light Sheet");
+               } catch (Exception e1) {
+                  // do nothing
+               }
+               gui_.refreshGUI();
+            }
+         });
+         
+         JButton buttonEpiWidefield = new JButton("Epi Widefield");
+         buttonEpiWidefield.setMargin(new Insets(4,8,4,8));
+         buttonEpiWidefield.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               try {
+                  core_.setConfig("Path Select", "Epi Widefield");
+               } catch (Exception e1) {
+                  // do nothing
+               }
+               gui_.refreshGUI();
+            }
+         });
+         
+         pathPanel.add(buttonTransPreview);
+         pathPanel.add(buttonLightSheet);
+         pathPanel.add(buttonEpiWidefield);
+         this.add(pathPanel, "growx");
+      }
+      
       
       xPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
       yPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
