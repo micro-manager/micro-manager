@@ -37,12 +37,12 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 
 /**
+ * Responsible for the table with channel presets and flatfield files.
+ *
  * @author nico
  */
-
 public class ShadingTable extends JTable {
-
-   private final Studio gui_;
+   private final Studio studio_;
 
    private static final String BUTTONCELLLAYOUTCONSTRAINTS =
          "insets 0, align center, center";
@@ -75,22 +75,20 @@ public class ShadingTable extends JTable {
 
    private class LoadFileButtonCellEditor extends AbstractCellEditor
          implements TableCellEditor, ActionListener {
-
       private int row_;
       private final MultiChannelShadingMigForm form_;
       private final JPanel panel_ = new JPanel();
-      private final JButton button_;
 
       @SuppressWarnings("LeakingThisInConstructor")
       public LoadFileButtonCellEditor(MultiChannelShadingMigForm form) {
          form_ = form;
-         button_ = form_.mcsButton(form_.getButtonDimension(),
+         JButton button = form_.mcsButton(form_.getButtonDimension(),
                form_.getButtonFont());
-         button_.setText("...");
+         button.setText("...");
          row_ = -1;
          panel_.setLayout(new MigLayout(BUTTONCELLLAYOUTCONSTRAINTS));
-         panel_.add(button_, "gapx push");
-         button_.addActionListener(this);
+         panel_.add(button, "gapx push");
+         button.addActionListener(this);
       }
 
       @Override
@@ -143,7 +141,7 @@ public class ShadingTable extends JTable {
          row_ = row;
          String[] presets = {"Default"};
          if (!model_.getChannelGroup().isEmpty()) {
-            presets = gui_.getCMMCore().getAvailableConfigs(
+            presets = studio_.getCMMCore().getAvailableConfigs(
                     model_.getChannelGroup()).toArray();
          }
          // remove presets that are already in use
@@ -184,7 +182,7 @@ public class ShadingTable extends JTable {
 
    ShadingTable(Studio gui, ShadingTableModel model, MultiChannelShadingMigForm form) {
       super(model);
-      gui_ = gui;
+      studio_ = gui;
 
       super.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 

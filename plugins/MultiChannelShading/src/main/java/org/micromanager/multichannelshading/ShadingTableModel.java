@@ -34,7 +34,7 @@ import org.micromanager.Studio;
  */
 @SuppressWarnings("serial")
 public class ShadingTableModel extends AbstractTableModel {
-   private final Studio gui_;
+   private final Studio studio_;
    public final String[] columnNames_ = new String[] {
          "Preset",
          "Image File",
@@ -48,12 +48,12 @@ public class ShadingTableModel extends AbstractTableModel {
    /**
     * Constructor.
     *
-    * @param gui Stdio
+    * @param studio Studio
     * @param imageCollection Collection of background and flatfield images
     */
-   public ShadingTableModel(Studio gui, ImageCollection
+   public ShadingTableModel(Studio studio, ImageCollection
          imageCollection) {
-      gui_ = gui;
+      studio_ = studio;
       imageCollection_ = imageCollection;
       presetList_ = new ArrayList<>();
       fileList_ = new ArrayList<>();
@@ -130,9 +130,9 @@ public class ShadingTableModel extends AbstractTableModel {
          if (channelGroup_ != null) {
             String[] channels = presetList_.toArray(new String[0]);
             String[] files = fileList_.toArray(new String[0]);
-            gui_.profile().getSettings(this.getClass()).putStringList(
+            studio_.profile().getSettings(this.getClass()).putStringList(
                   channelGroup_ + "-channels", channels);
-            gui_.profile().getSettings(this.getClass()).putStringList(
+            studio_.profile().getSettings(this.getClass()).putStringList(
                   channelGroup_ + "-files", files);
          }
          imageCollection_.clearFlatFields();
@@ -143,9 +143,9 @@ public class ShadingTableModel extends AbstractTableModel {
          presetList_.clear();
          // Strange workaround since we can not pass null as default
          List<String> emptyList = new ArrayList<>(0);
-         List<String> channels = gui_.profile().getSettings(this.getClass())
+         List<String> channels = studio_.profile().getSettings(this.getClass())
                      .getStringList(channelGroup_ + "-channels", emptyList);
-         List<String> files = gui_.profile().getSettings(this.getClass())
+         List<String> files = studio_.profile().getSettings(this.getClass())
                      .getStringList(channelGroup_ + "-files", emptyList);
          if (channels != null && files != null) {
             for (int i = 0; i < channels.size() && i < files.size(); i++) {
@@ -156,7 +156,7 @@ public class ShadingTableModel extends AbstractTableModel {
          }
 
       } catch (ShadingException ex) {
-         gui_.logs().showError(ex);
+         studio_.logs().showError(ex);
       }
       fireTableDataChanged();
    }
@@ -183,7 +183,7 @@ public class ShadingTableModel extends AbstractTableModel {
    public String[] getAvailablePresets() {
       String[] presets = {"Default"};
       if (!channelGroup_.isEmpty()) {
-         presets = gui_.getCMMCore().getAvailableConfigs(channelGroup_).toArray();
+         presets = studio_.getCMMCore().getAvailableConfigs(channelGroup_).toArray();
       }
       String[] usedPresets = getUsedPresets();
       String[] availablePresets = new String[presets.length - usedPresets.length];
@@ -227,7 +227,7 @@ public class ShadingTableModel extends AbstractTableModel {
       if (channelGroup_.isEmpty()) {
          return 1;
       }
-      return (int) gui_.getCMMCore().getAvailableConfigs(channelGroup_).size();
+      return (int) studio_.getCMMCore().getAvailableConfigs(channelGroup_).size();
    }
 
    public int getUnusedNumberOfPresetsInCurrentGroup() {
@@ -278,9 +278,9 @@ public class ShadingTableModel extends AbstractTableModel {
             try {
                imageCollection_.addFlatField(preset, fileList_.get(row));
             } catch (ShadingException ex) {
-               gui_.logs().showError(ex);
+               studio_.logs().showError(ex);
             }
-            gui_.profile().getSettings(this.getClass()).putString(preset, fileList_.get(row));
+            studio_.profile().getSettings(this.getClass()).putString(preset, fileList_.get(row));
          }
       }
 

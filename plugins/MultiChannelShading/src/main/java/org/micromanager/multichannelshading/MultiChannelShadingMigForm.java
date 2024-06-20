@@ -60,6 +60,8 @@ import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
+ * Creates the dialog.
+ *
  * @author nico
  */
 public class MultiChannelShadingMigForm extends JDialog implements ProcessorConfigurator {
@@ -86,10 +88,10 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
 
    /**
-    * Creates new form MultiChannelShadingForm
+    * Creates new form MultiChannelShadingForm.
     *
-    * @param settings
-    * @param studio
+    * @param settings PropertyMap Settings
+    * @param studio Studio object
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MultiChannelShadingMigForm(PropertyMap settings, Studio studio) {
@@ -176,12 +178,8 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       darkFieldTextField.setText(settings_.getString(DARKFIELDFILENAME,
             profileSettings_.getString(DARKFIELDFILENAME, "")));
       darkFieldTextField.setHorizontalAlignment(JTextField.RIGHT);
-      darkFieldTextField.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            processBackgroundImage(darkFieldTextField.getText());
-         }
-      });
+      darkFieldTextField.addActionListener(evt ->
+              processBackgroundImage(darkFieldTextField.getText()));
       darkFieldTextField.addFocusListener(new FocusListener() {
          @Override
          public void focusGained(FocusEvent fe) {
@@ -246,13 +244,10 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       removeButton.setFont(arialSmallFont_);
       removeButton.setIcon(new ImageIcon(getClass().getResource(
             "/org/micromanager/icons/minus.png")));
-      removeButton.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            shadingTable.stopCellEditing();
-            shadingTableModel_.removeRow(shadingTable.getSelectedRows());
-            updateAddAndRemoveButtons(addButton, removeButton);
-         }
+      removeButton.addActionListener(evt -> {
+         shadingTable.stopCellEditing();
+         shadingTableModel_.removeRow(shadingTable.getSelectedRows());
+         updateAddAndRemoveButtons(addButton, removeButton);
       });
       buttonPanel.add(removeButton);
 
@@ -285,7 +280,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       builder.putStringList("Presets", shadingTableModel_.getUsedPresets());
       builder.putString(DARKFIELDFILENAME, imageCollection_.getBackgroundFile());
       builder.putBoolean(USEOPENCL, profileSettings_.getBoolean(USEOPENCL, false));
-      ArrayList<String> files = new ArrayList<String>();
+      ArrayList<String> files = new ArrayList<>();
       for (String preset : shadingTableModel_.getUsedPresets()) {
          files.add(imageCollection_.getFileForPreset(preset));
       }
@@ -320,13 +315,10 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
    public synchronized void setStatus(final String status) {
       statusMessage_ = status;
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            // update the statusLabel from this thread
-            if (status != null) {
-               statusLabel_.setText(status);
-            }
+      SwingUtilities.invokeLater(() -> {
+         // update the statusLabel from this thread
+         if (status != null) {
+            statusLabel_.setText(status);
          }
       });
    }
@@ -389,9 +381,13 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent channelGroupChangedEvent) {
-      String[] channelGroups = mmc_.getAvailableConfigGroups().toArray();
-      groupComboBox_.setModel(new javax.swing.DefaultComboBoxModel(
-            channelGroups));
+      List<String> channelGroups  = new ArrayList<>();
+      channelGroups.add("");
+      for (String group : mmc_.getAvailableConfigGroups()) {
+         channelGroups.add(group);
+      }
+      groupComboBox_.setModel(new DefaultComboBoxModel<String>(channelGroups.toArray(
+              new String[]{""})));
       groupComboBox_.setSelectedItem(channelGroupChangedEvent.getNewChannelGroup());
    }
 
