@@ -34,6 +34,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -53,10 +55,13 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
+ * Creates the dialog.
+ *
  * @author nico
  */
 public class MultiChannelShadingMigForm extends JDialog implements ProcessorConfigurator {
@@ -75,7 +80,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
    private String groupName_;
    private String statusMessage_;
    private final Font arialSmallFont_;
-   private final JComboBox groupComboBox_;
+   private final JComboBox<String> groupComboBox_;
    private final ShadingTableModel shadingTableModel_;
    private final Dimension buttonSize_;
    private final JLabel statusLabel_;
@@ -83,10 +88,10 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
 
    /**
-    * Creates new form MultiChannelShadingForm
+    * Creates new form MultiChannelShadingForm.
     *
-    * @param settings
-    * @param studio
+    * @param settings PropertyMap Settings
+    * @param studio Studio object
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MultiChannelShadingMigForm(PropertyMap settings, Studio studio) {
@@ -128,16 +133,17 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       super.add(channelGroupLabel);
 
       //populate group ComboBox
-      groupComboBox_ = new JComboBox();
-      String[] channelGroups = mmc_.getAvailableConfigGroups().toArray();
-      groupComboBox_.setModel(new javax.swing.DefaultComboBoxModel(
-            channelGroups));
+      groupComboBox_ = new JComboBox<>();
+      groupComboBox_.addItem("");
+      for (String group : mmc_.getAvailableConfigGroups()) {
+         groupComboBox_.addItem(group);
+      }
       groupName_ = settings_.getString(CHANNELGROUP,
             profileSettings_.getString(CHANNELGROUP, ""));
       groupComboBox_.setSelectedItem(groupName_);
-      groupComboBox_.addActionListener(new java.awt.event.ActionListener() {
+      groupComboBox_.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
+         public void actionPerformed(ActionEvent evt) {
             groupName_ = (String) groupComboBox_.getSelectedItem();
             shadingTableModel_.setChannelGroup(groupName_);
             updateAddAndRemoveButtons(addButton, removeButton);
@@ -150,23 +156,16 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
       JCheckBox useOpenCLCheckBox = new JCheckBox("Use GPU");
       useOpenCLCheckBox.setSelected(profileSettings_.getBoolean(USEOPENCL, false));
-      useOpenCLCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            profileSettings_.putBoolean(USEOPENCL, useOpenCLCheckBox.isSelected());
-            studio_.data().notifyPipelineChanged();
-         }
+      useOpenCLCheckBox.addActionListener(e -> {
+         profileSettings_.putBoolean(USEOPENCL, useOpenCLCheckBox.isSelected());
+         studio_.data().notifyPipelineChanged();
       });
       super.add(useOpenCLCheckBox, "skip 2");
 
       JButton helpButton = new JButton("Help");
-      helpButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
-                  "https://micro-manager.org/wiki/Flat-Field_Correction")).start();
-         }
-      });
+      helpButton.addActionListener(e ->
+              new Thread(GUIUtils.makeURLRunnable(
+            "https://micro-manager.org/wiki/Flat-Field_Correction")).start());
       super.add(helpButton, "wrap");
 
       JLabel darkImageLabel = new JLabel("Dark Image (common):");
@@ -179,12 +178,8 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       darkFieldTextField.setText(settings_.getString(DARKFIELDFILENAME,
             profileSettings_.getString(DARKFIELDFILENAME, "")));
       darkFieldTextField.setHorizontalAlignment(JTextField.RIGHT);
-      darkFieldTextField.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            processBackgroundImage(darkFieldTextField.getText());
-         }
-      });
+      darkFieldTextField.addActionListener(evt ->
+              processBackgroundImage(darkFieldTextField.getText()));
       darkFieldTextField.addFocusListener(new FocusListener() {
          @Override
          public void focusGained(FocusEvent fe) {
@@ -203,16 +198,13 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
       final JButton darkFieldButton = mcsButton(buttonSize_, arialSmallFont_);
       darkFieldButton.setText("...");
-      darkFieldButton.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            File f = FileDialogs.openFile(mcsPluginWindow, "Dark image",
-                  new FileDialogs.FileType("MMAcq", "Dark image",
-                        backgroundFileName_, true, imageSuffixes));
-            if (f != null) {
-               processBackgroundImage(f.getAbsolutePath());
-               darkFieldTextField.setText(backgroundFileName_);
-            }
+      darkFieldButton.addActionListener(evt -> {
+         File f = FileDialogs.openFile(mcsPluginWindow, "Dark image",
+               new FileDialogs.FileType("MMAcq", "Dark image",
+                     backgroundFileName_, true, imageSuffixes));
+         if (f != null) {
+            processBackgroundImage(f.getAbsolutePath());
+            darkFieldTextField.setText(backgroundFileName_);
          }
       });
       super.add(darkFieldButton, "wrap");
@@ -241,12 +233,9 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       addButton.setFont(arialSmallFont_);
       addButton.setIcon(new ImageIcon(getClass().getResource(
             "/org/micromanager/icons/plus.png")));
-      addButton.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            shadingTableModel_.addRow();
-            updateAddAndRemoveButtons(addButton, removeButton);
-         }
+      addButton.addActionListener(evt -> {
+         shadingTableModel_.addRow();
+         updateAddAndRemoveButtons(addButton, removeButton);
       });
       buttonPanel.add(addButton, "wrap");
 
@@ -255,13 +244,10 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       removeButton.setFont(arialSmallFont_);
       removeButton.setIcon(new ImageIcon(getClass().getResource(
             "/org/micromanager/icons/minus.png")));
-      removeButton.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            shadingTable.stopCellEditing();
-            shadingTableModel_.removeRow(shadingTable.getSelectedRows());
-            updateAddAndRemoveButtons(addButton, removeButton);
-         }
+      removeButton.addActionListener(evt -> {
+         shadingTable.stopCellEditing();
+         shadingTableModel_.removeRow(shadingTable.getSelectedRows());
+         updateAddAndRemoveButtons(addButton, removeButton);
       });
       buttonPanel.add(removeButton);
 
@@ -294,7 +280,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       builder.putStringList("Presets", shadingTableModel_.getUsedPresets());
       builder.putString(DARKFIELDFILENAME, imageCollection_.getBackgroundFile());
       builder.putBoolean(USEOPENCL, profileSettings_.getBoolean(USEOPENCL, false));
-      ArrayList<String> files = new ArrayList<String>();
+      ArrayList<String> files = new ArrayList<>();
       for (String preset : shadingTableModel_.getUsedPresets()) {
          files.add(imageCollection_.getFileForPreset(preset));
       }
@@ -329,13 +315,10 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
    public synchronized void setStatus(final String status) {
       statusMessage_ = status;
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            // update the statusLabel from this thread
-            if (status != null) {
-               statusLabel_.setText(status);
-            }
+      SwingUtilities.invokeLater(() -> {
+         // update the statusLabel from this thread
+         if (status != null) {
+            statusLabel_.setText(status);
          }
       });
    }
@@ -347,11 +330,11 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
    }
 
    /**
-    * Processes background image
+    * Processes background image.
     * Return filename if successful, empty string otherwise
     *
-    * @param fileName
-    * @return fileName
+    * @param fileName - name of the background image file to process
+    * @return fileName - filename if successful, empty string otherwise
     */
    private String processBackgroundImage(String fileName) {
       if (EMPTY_FILENAME_INDICATOR.equals(fileName)) {
@@ -374,7 +357,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
    }
 
    /**
-    * Helper function for the individual buttons
+    * Helper function for the individual buttons.
     *
     * @param rowNumber Table row associated with action Event
     */
@@ -398,9 +381,13 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
 
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent channelGroupChangedEvent) {
-      String[] channelGroups = mmc_.getAvailableConfigGroups().toArray();
-      groupComboBox_.setModel(new javax.swing.DefaultComboBoxModel(
-            channelGroups));
+      List<String> channelGroups  = new ArrayList<>();
+      channelGroups.add("");
+      for (String group : mmc_.getAvailableConfigGroups()) {
+         channelGroups.add(group);
+      }
+      groupComboBox_.setModel(new DefaultComboBoxModel<String>(channelGroups.toArray(
+              new String[]{""})));
       groupComboBox_.setSelectedItem(channelGroupChangedEvent.getNewChannelGroup());
    }
 

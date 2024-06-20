@@ -25,6 +25,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.AbstractCellEditor;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
@@ -36,12 +37,12 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 
 /**
+ * Responsible for the table with channel presets and flatfield files.
+ *
  * @author nico
  */
-
 public class ShadingTable extends JTable {
-
-   private final Studio gui_;
+   private final Studio studio_;
 
    private static final String BUTTONCELLLAYOUTCONSTRAINTS =
          "insets 0, align center, center";
@@ -74,28 +75,27 @@ public class ShadingTable extends JTable {
 
    private class LoadFileButtonCellEditor extends AbstractCellEditor
          implements TableCellEditor, ActionListener {
-
       private int row_;
       private final MultiChannelShadingMigForm form_;
       private final JPanel panel_ = new JPanel();
-      private final JButton button_;
 
       @SuppressWarnings("LeakingThisInConstructor")
       public LoadFileButtonCellEditor(MultiChannelShadingMigForm form) {
          form_ = form;
-         button_ = form_.mcsButton(form_.getButtonDimension(),
+         JButton button = form_.mcsButton(form_.getButtonDimension(),
                form_.getButtonFont());
-         button_.setText("...");
+         button.setText("...");
          row_ = -1;
          panel_.setLayout(new MigLayout(BUTTONCELLLAYOUTCONSTRAINTS));
-         panel_.add(button_, "gapx push");
-         button_.addActionListener(this);
+         panel_.add(button, "gapx push");
+         button.addActionListener(this);
       }
 
       @Override
       public void actionPerformed(ActionEvent e) {
          form_.flatFieldButtonActionPerformed(row_);
          fireEditingStopped();
+         selectionModel.clearSelection();
       }
 
       @Override
@@ -116,7 +116,7 @@ public class ShadingTable extends JTable {
    private class PresetCellEditor extends AbstractCellEditor
          implements TableCellEditor, ActionListener {
       private final JPanel panel_ = new JPanel();
-      private final JComboBox comboBox_ = new JComboBox();
+      private final JComboBox<String> comboBox_ = new JComboBox<>();
       private final ShadingTableModel model_;
       private int row_;
       private String selectedPreset_;
@@ -139,8 +139,11 @@ public class ShadingTable extends JTable {
       public Component getTableCellEditorComponent(JTable table, Object value,
                                                    boolean isSelected, int row, int column) {
          row_ = row;
-         String[] presets = gui_.getCMMCore().getAvailableConfigs(
-               model_.getChannelGroup()).toArray();
+         String[] presets = {"Default"};
+         if (!model_.getChannelGroup().isEmpty()) {
+            presets = studio_.getCMMCore().getAvailableConfigs(
+                    model_.getChannelGroup()).toArray();
+         }
          // remove presets that are already in use
          String[] usedPresets = model_.getUsedPresets(row);
          String[] comboPresets = new String[presets.length - usedPresets.length];
@@ -157,7 +160,7 @@ public class ShadingTable extends JTable {
                index++;
             }
          }
-         comboBox_.setModel(new javax.swing.DefaultComboBoxModel(comboPresets));
+         comboBox_.setModel(new DefaultComboBoxModel<String>(comboPresets));
          String preset = (String) model_.getValueAt(row, column);
          comboBox_.setSelectedItem(preset);
          return panel_;
@@ -168,6 +171,7 @@ public class ShadingTable extends JTable {
          selectedPreset_ = (String) comboBox_.getSelectedItem();
          if (selectedPreset_ != null) {
             model_.setValueAt(selectedPreset_, row_, 0);
+            selectionModel.clearSelection();
             fireEditingStopped();
          }
       }
@@ -176,10 +180,9 @@ public class ShadingTable extends JTable {
    private final PresetCellEditor presetCellEditor_;
    private final LoadFileButtonCellEditor loadFileButtonCellEditor_;
 
-   ShadingTable(Studio gui, ShadingTableModel model,
-                MultiChannelShadingMigForm form) {
+   ShadingTable(Studio gui, ShadingTableModel model, MultiChannelShadingMigForm form) {
       super(model);
-      gui_ = gui;
+      studio_ = gui;
 
       super.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 

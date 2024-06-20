@@ -28,14 +28,13 @@ import javax.swing.table.AbstractTableModel;
 import org.micromanager.Studio;
 
 /**
+ * Model for the table representing channel presets and flatfield files.
+ *
  * @author nico
  */
 @SuppressWarnings("serial")
 public class ShadingTableModel extends AbstractTableModel {
-   private final Studio gui_;
-   public final int preset_ = 0;
-   public final int imageFile_ = 1;
-   public final int loadButton_ = 2;
+   private final Studio studio_;
    public final String[] columnNames_ = new String[] {
          "Preset",
          "Image File",
@@ -46,12 +45,18 @@ public class ShadingTableModel extends AbstractTableModel {
    private List<String> fileList_;
    private final ImageCollection imageCollection_;
 
-   public ShadingTableModel(Studio gui, ImageCollection
+   /**
+    * Constructor.
+    *
+    * @param studio Studio
+    * @param imageCollection Collection of background and flatfield images
+    */
+   public ShadingTableModel(Studio studio, ImageCollection
          imageCollection) {
-      gui_ = gui;
+      studio_ = studio;
       imageCollection_ = imageCollection;
-      presetList_ = new ArrayList<String>();
-      fileList_ = new ArrayList<String>();
+      presetList_ = new ArrayList<>();
+      fileList_ = new ArrayList<>();
    }
 
 
@@ -123,13 +128,11 @@ public class ShadingTableModel extends AbstractTableModel {
       try {
          // first save our settings
          if (channelGroup_ != null) {
-            String[] channels = presetList_.toArray(
-                  new String[presetList_.size()]);
-            String[] files = fileList_.toArray(
-                  new String[fileList_.size()]);
-            gui_.profile().getSettings(this.getClass()).putStringList(
+            String[] channels = presetList_.toArray(new String[0]);
+            String[] files = fileList_.toArray(new String[0]);
+            studio_.profile().getSettings(this.getClass()).putStringList(
                   channelGroup_ + "-channels", channels);
-            gui_.profile().getSettings(this.getClass()).putStringList(
+            studio_.profile().getSettings(this.getClass()).putStringList(
                   channelGroup_ + "-files", files);
          }
          imageCollection_.clearFlatFields();
@@ -139,10 +142,10 @@ public class ShadingTableModel extends AbstractTableModel {
          fileList_.clear();
          presetList_.clear();
          // Strange workaround since we can not pass null as default
-         List<String> emptyList = new ArrayList<String>(0);
-         List<String> channels = gui_.profile().getSettings(this.getClass())
+         List<String> emptyList = new ArrayList<>(0);
+         List<String> channels = studio_.profile().getSettings(this.getClass())
                      .getStringList(channelGroup_ + "-channels", emptyList);
-         List<String> files = gui_.profile().getSettings(this.getClass())
+         List<String> files = studio_.profile().getSettings(this.getClass())
                      .getStringList(channelGroup_ + "-files", emptyList);
          if (channels != null && files != null) {
             for (int i = 0; i < channels.size() && i < files.size(); i++) {
@@ -153,7 +156,7 @@ public class ShadingTableModel extends AbstractTableModel {
          }
 
       } catch (ShadingException ex) {
-         gui_.logs().showError(ex);
+         studio_.logs().showError(ex);
       }
       fireTableDataChanged();
    }
@@ -172,8 +175,16 @@ public class ShadingTableModel extends AbstractTableModel {
       // TODO: handle error 
    }
 
+   /**
+    * Discovers the unused presets in the current channel group.
+    *
+    * @return Array of unused presets
+    */
    public String[] getAvailablePresets() {
-      String[] presets = gui_.getCMMCore().getAvailableConfigs(channelGroup_).toArray();
+      String[] presets = {"Default"};
+      if (!channelGroup_.isEmpty()) {
+         presets = studio_.getCMMCore().getAvailableConfigs(channelGroup_).toArray();
+      }
       String[] usedPresets = getUsedPresets();
       String[] availablePresets = new String[presets.length - usedPresets.length];
       for (String preset : presets) {
@@ -213,7 +224,10 @@ public class ShadingTableModel extends AbstractTableModel {
    }
 
    public int getNumberOfPresetsInCurrentGroup() {
-      return (int) gui_.getCMMCore().getAvailableConfigs(channelGroup_).size();
+      if (channelGroup_.isEmpty()) {
+         return 1;
+      }
+      return (int) studio_.getCMMCore().getAvailableConfigs(channelGroup_).size();
    }
 
    public int getUnusedNumberOfPresetsInCurrentGroup() {
@@ -228,8 +242,8 @@ public class ShadingTableModel extends AbstractTableModel {
    }
 
    /**
-    * Removes selected rows from the tablemodel
-    * calls fireTableDataChanged to update the UI
+    * Removes selected rows from the tablemodel.
+    * Calls fireTableDataChanged to update the UI.
     *
     * @param selectedRows - array containing selected row numbers
     */
@@ -264,9 +278,9 @@ public class ShadingTableModel extends AbstractTableModel {
             try {
                imageCollection_.addFlatField(preset, fileList_.get(row));
             } catch (ShadingException ex) {
-               gui_.logs().showError(ex);
+               studio_.logs().showError(ex);
             }
-            gui_.profile().getSettings(this.getClass()).putString(preset, fileList_.get(row));
+            studio_.profile().getSettings(this.getClass()).putString(preset, fileList_.get(row));
          }
       }
 
