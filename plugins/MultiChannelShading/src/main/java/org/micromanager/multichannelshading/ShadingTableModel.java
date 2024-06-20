@@ -28,14 +28,13 @@ import javax.swing.table.AbstractTableModel;
 import org.micromanager.Studio;
 
 /**
+ * Model for the table representing channel presets and flatfield files.
+ *
  * @author nico
  */
 @SuppressWarnings("serial")
 public class ShadingTableModel extends AbstractTableModel {
    private final Studio gui_;
-   public final int preset_ = 0;
-   public final int imageFile_ = 1;
-   public final int loadButton_ = 2;
    public final String[] columnNames_ = new String[] {
          "Preset",
          "Image File",
@@ -46,6 +45,12 @@ public class ShadingTableModel extends AbstractTableModel {
    private List<String> fileList_;
    private final ImageCollection imageCollection_;
 
+   /**
+    * Constructor.
+    *
+    * @param gui Stdio
+    * @param imageCollection Collection of background and flatfield images
+    */
    public ShadingTableModel(Studio gui, ImageCollection
          imageCollection) {
       gui_ = gui;
@@ -237,8 +242,8 @@ public class ShadingTableModel extends AbstractTableModel {
    }
 
    /**
-    * Removes selected rows from the tablemodel
-    * calls fireTableDataChanged to update the UI
+    * Removes selected rows from the tablemodel.
+    * Calls fireTableDataChanged to update the UI.
     *
     * @param selectedRows - array containing selected row numbers
     */
