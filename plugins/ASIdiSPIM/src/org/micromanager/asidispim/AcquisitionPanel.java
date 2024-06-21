@@ -1322,7 +1322,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * Special case for different settings for single-objective
+    * Special case for different settings for single-objective light sheet (or really any time we have static sheet instead of scanned beam)
     * @param showWarnings true to warn user about needing to change slice period
     * @return
     */
@@ -1330,7 +1330,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       SliceTiming s = new SliceTiming();
       final float cameraResetTime = computeCameraResetTime();      // recalculate for safety, 0 for light sheet
       final float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety, 0 for overlap
-      final float cameraTotalTime = MyNumberUtils.ceilToQuarterMs(cameraResetTime + cameraReadoutTime);  
+
+      // copied this bit from the original getTimingFromPeriodAndLightExposure()
+      final Devices.Keys camKey = Devices.Keys.CAMERAA;  // only camera for single-objective is
+      final Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
+      final float actualCameraResetTime = (camLibrary == Devices.Libraries.PVCAM
+            && (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME) 
+                  || props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.KINETIX_CHIPNAME)))
+            ? (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f
+            : cameraResetTime; // everything but Photometrics Prime 95B and Kinetix
+
+      final float cameraTotalTime = MyNumberUtils.ceilToQuarterMs(cameraResetTime + cameraReadoutTime);
       final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
       final float laserDuration = MyNumberUtils.roundToQuarterMs(acqSettings.desiredLightExposure);
       final float slicePeriod = Math.max( Math.max(laserDuration, cameraTotalTime),
@@ -1350,13 +1360,37 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          s.laserDuration = laserDuration;
          break;
       case OVERLAP:  // e.g. Fusion
+         if (acqSettings.useChannels && acqSettings.numChannels > 1 && acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
+            // for interleaved slices we should illuminate during global exposure but not during readout/reset time after each trigger
+            s.scanNum = 1;
+            s.scanDelay = 0.f;
+            s.scanPeriod = 1.0f;
+            s.cameraDelay = 0.f;
+            s.cameraDuration = 1.0f;
+            s.cameraExposure = 1.0f;
+            s.laserDelay = sliceDeadTime+cameraResetTime;
+            s.laserDuration = laserDuration;
+         } else {
+            // the usual case
+            s.scanNum = 1;
+            s.scanDelay = 0.f;
+            s.scanPeriod = 1.0f;
+            s.cameraDelay = 0.f;
+            s.cameraDuration = 1.0f;
+            s.cameraExposure = 1.0f;
+            s.laserDelay = sliceDeadTime+sliceLaserInterleaved;
+            s.laserDuration = laserDuration;
+         }
+         break;
       case EDGE:
+         // should illuminate during the entire exposure (or as much as needed) => will be exposing during camera reset and readout too
+         // note that this may be faster than overlap for interleaved channels
          s.scanNum = 1;
          s.scanDelay = 0.f;
          s.scanPeriod = 1.0f;
-         s.cameraDelay = 0.f;
+         s.cameraDelay = sliceLaserInterleaved;
          s.cameraDuration = 1.0f;
-         s.cameraExposure = 1.0f;
+         s.cameraExposure = laserDuration - MyNumberUtils.ceilToQuarterMs(actualCameraResetTime + cameraReadoutTime);
          s.laserDelay = sliceDeadTime+sliceLaserInterleaved;
          s.laserDuration = laserDuration;
          break;
