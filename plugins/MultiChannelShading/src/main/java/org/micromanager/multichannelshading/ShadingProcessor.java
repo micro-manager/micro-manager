@@ -425,6 +425,9 @@ public class ShadingProcessor implements Processor {
             String channelGroup = studio_.core().getChannelGroup();
             try {
                String corePreset = studio_.core().getCurrentConfig(channelGroup);
+               if (channelGroup_.isEmpty() && corePreset.isEmpty()) {
+                  corePreset = "Default";
+               }
                if (corePreset.equals(preset)) {
                   try {
                      return imageCollection_.getFlatField(preset, binning, rect);
