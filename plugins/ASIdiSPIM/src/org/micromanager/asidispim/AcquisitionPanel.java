@@ -2490,6 +2490,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         if (counter >= nrImages) {
                            done = true;
                         }
+                        
+                        // add som extra per-image delay for demo cam
+                        if (usingDemoCam) {
+                           Thread.sleep((long)sliceTiming_.sliceDuration);
+                        }
+                        
                      } else { // no image ready yet
                         done = cancelAcquisition_.get();
                         Thread.sleep(1);
@@ -2932,7 +2938,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // set up channels
       int nrChannelsSoftware = acqSettings.numChannels;  // how many times we trigger the controller per stack
-      int nrSlicesSoftware = acqSettings.numSlices;
+      int nrSlicesSoftware = acqSettings.numSlices;      // how many images we receive from the camera
       String originalChannelConfig = "";
       boolean changeChannelPerVolumeSoftware = false;
       boolean changeChannelPerVolumeDoneFirst = false;
@@ -2979,16 +2985,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       if (acqSettings.hardwareTimepoints) {
-         // in hardwareTimepoints case we trigger controller once for all timepoints => need to
-         //   adjust number of frames we expect back from the camera during MM's SequenceAcquisition
          if (acqSettings.cameraMode == CameraModes.Keys.OVERLAP) {
-            // For overlap mode we are send one extra trigger per channel per side for volume-switching (both PLogic and not)
-            // This holds for all multi-channel modes, just the order in which the extra trigger comes varies
-            // Very last trigger won't ever return a frame so subtract 1.
-            nrSlicesSoftware = ((acqSettings.numSlices + 1) * acqSettings.numChannels * acqSettings.numTimepoints);
+            // in hardwareTimepoints case we trigger controller once for all timepoints => need to
+            //   adjust number of frames we expect back from the camera during MM's SequenceAcquisition
+            //   (we will drop some of them, see checkForSkips code below)
+            // conceptually we just need a single extra trigger, but the firmware accepts a number of slice repeats (NR R)
+            //   and so we have to provide numChannel triggers which is (numChannel-1) "extra"
+            // then it doesn't matter for this calculation whether we are using interleaved or volume-by-volume
+            nrSlicesSoftware = acqSettings.numTimepoints * ((acqSettings.numSlices + 1) * acqSettings.numChannels);
             if (twoSided && acqBothCameras) {
                nrSlicesSoftware *= 2;
             }
+            // the very last trigger won't ever return a frame so subtract 1
             nrSlicesSoftware -= 1;
          } else {
             // we get back one image per trigger for all trigger modes other than OVERLAP
@@ -4212,10 +4220,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               }
                               throw new Exception(msg);
                            }
-
-                           // grab all the images from the cameras, put them into the acquisition
-                           int[] imagesToSkip = new int[2*acqSettings.numChannels];  // hardware timepoints have to drop spurious images with overlap mode
+                           
+                           // if hardware timepoints and overlap mode then we have to drop spurious images (in both multi-channel and single-channel)
                            final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
+                           int[] imagesToSkip = new int[2*acqSettings.numChannels];  // only used if checkForSkips is true
+                           
+                           // grab all the images from the cameras, put them into the acquisition
                            boolean done = false;
                            long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
                            totalImages = 0;
@@ -4405,7 +4415,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     cameraImageNr[cameraIndex]++;
 
                                     // for hardware timepoints then we only send one trigger and manually keep track of which channel/timepoint comes next
-                                    // here we check to see if we moved onto next timepoint in harware timepoints mode and if so take appropriate actions
+                                    // here we check to see if we moved onto next timepoint in hardware timepoints mode and if so take appropriate actions
                                     if (acqSettings.hardwareTimepoints
                                           && channelImageNr[channelIndex] >= acqSettings.numSlices) {  // only do this if we are done with the slices in this MM channel
 
@@ -4413,16 +4423,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                        channelImageNr[channelIndex] = 0;
                                        tpNumber[channelIndex]++;
                                        
-                                       // see if we are supposed to skip next image
+                                       // determine whether to drop the next image
+                                       // only happens for hardware timepoints and overlap camera mode
                                        if (checkForSkips) {
-                                          // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected)
-                                          // if we are interleaving by slice then next nrChannel images will be from extra slice position
-                                          // any other configuration we will just drop the next image
-                                          if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-                                             imagesToSkip[channelIndex] = 1; // was acqSettings.numChannels; from r16355 (2019-04-19) but I think that is incorrect because the extra images will be one per channel. Seeing missing frames at MBL.  Changed 2024-06-19. 
-                                          } else {
-                                             imagesToSkip[channelIndex] = 1;
-                                          }
+                                          // there is always one extra image per MM channel with hardware timepoints with overlap camera mode
+                                          // obviously true for single channel and multi-channel with volume switching
+                                          // for interleaved channels we have to provide numChannels * (numSlices + 1) triggers so we have more extra than we need
+                                          imagesToSkip[channelIndex] = 1;
                                        }
 
                                        
@@ -4456,6 +4463,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     }
 
                                     last = now;  // keep track of last image timestamp
+                                    
+                                    // add som extra per-image delay for demo cam
+                                    if (usingDemoCam) {
+                                       Thread.sleep((long)sliceTiming_.sliceDuration);
+                                    }
 
                                  } else {  // no image ready yet
                                     done = cancelAcquisition_.get();
