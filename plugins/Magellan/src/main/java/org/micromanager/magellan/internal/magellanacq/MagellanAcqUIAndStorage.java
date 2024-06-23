@@ -177,32 +177,37 @@ public class MagellanAcqUIAndStorage
    }
 
    public Object putImage(final TaggedImage taggedImg) {
-      HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
-      final Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
-              AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
-              AcqEngMetadata.getHeight(taggedImg.tags), AcqEngMetadata.getWidth(taggedImg.tags));
+      try {
+         HashMap<String, Object> axes = AcqEngMetadata.getAxes(taggedImg.tags);
+         final Future added = storage_.putImageMultiRes(taggedImg.pix, taggedImg.tags, axes,
+                 AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getBitDepth(taggedImg.tags),
+                 AcqEngMetadata.getHeight(taggedImg.tags), AcqEngMetadata.getWidth(taggedImg.tags));
 
-      if (showDisplay_) {
-         //put on different thread to not slow down acquisition
-         displayCommunicationExecutor_.submit(() -> {
-            try {
-               added.get();
-               HashMap<String, Object> axes1 = AcqEngMetadata.getAxes(taggedImg.tags);
-               //Display doesn't know about these in tiled layout
-               axes1.remove(AcqEngMetadata.AXES_GRID_ROW);
-               axes1.remove(AcqEngMetadata.AXES_GRID_COL);
-               //  String channelName = MagellanMD.getChannelName(taggedImg.tags);
-               display_.newImageArrived(axes1);
-               for (Consumer<HashMap<String, Object>> displayHook : displayUpdateOnImageHooks_) {
-                  displayHook.accept(axes1);
+         if (showDisplay_) {
+            //put on different thread to not slow down acquisition
+            displayCommunicationExecutor_.submit(() -> {
+               try {
+                  added.get();
+                  HashMap<String, Object> axes1 = AcqEngMetadata.getAxes(taggedImg.tags);
+                  //Display doesn't know about these in tiled layout
+                  axes1.remove(AcqEngMetadata.AXES_GRID_ROW);
+                  axes1.remove(AcqEngMetadata.AXES_GRID_COL);
+                  //  String channelName = MagellanMD.getChannelName(taggedImg.tags);
+                  display_.newImageArrived(axes1);
+                  for (Consumer<HashMap<String, Object>> displayHook : displayUpdateOnImageHooks_) {
+                     displayHook.accept(axes1);
+                  }
+               } catch (Exception e) {
+                  e.printStackTrace();
+                  ;
+                  throw new RuntimeException(e);
                }
-            } catch (Exception e) {
-               e.printStackTrace();;
-               throw new RuntimeException(e);
-            }
-         });
+            });
+         }
+         return added.get();
+      } catch (Exception e) {
+         throw new RuntimeException(e);
       }
-      return added;
    }
 
    @Override
