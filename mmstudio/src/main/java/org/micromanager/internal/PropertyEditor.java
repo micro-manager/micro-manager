@@ -89,6 +89,8 @@ public final class PropertyEditor extends JFrame {
       createTable();
       createComponents();
 
+      studio_.events().registerForEvents(this);
+
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 550, 600);
@@ -288,4 +290,5 @@ public final class PropertyEditor extends JFrame {
 
       }
    }
+
 }
