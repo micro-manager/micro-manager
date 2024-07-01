@@ -17,15 +17,15 @@ public class MicrosceneryContext {
     final EventListener eventListener;
 
     public MicrosceneryContext(Studio studio) {
+        msSettings  = Util.getMicroscenerySettings();
         mmCon = new MMCoreConnector(studio.core());
         try {
-            micromanagerWrapper = new MicromanagerWrapper(mmCon, new MMStudioConnector(studio),200);
+            micromanagerWrapper = new MicromanagerWrapper(mmCon, new MMStudioConnector(studio, this));
         } catch (IllegalStateException e){
             studio.alerts().postAlert("Microscoscenery: Illegal state", null, e.getMessage());
             throw e;
         }
         server = new RemoteMicroscopeServer(micromanagerWrapper, zContext);
-        msSettings  = Util.getMicroscenerySettings();
         eventListener = new EventListener(studio, micromanagerWrapper);
     }
 }

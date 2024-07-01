@@ -163,7 +163,7 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
         updateLabels(new ActualMicroscopeSignal(micromanagerWrapper.status()));
 
         for (String s : (new String[]{"Stage.minX","Stage.maxX", "Stage.minY", "Stage.maxY", "Stage.minZ", "Stage.maxZ"})) {
-            msSettings.addUpdateRoutine(s,() -> {
+            msSettings.addUpdateRoutine(s,false,() -> {
                 stageLimitsPanel.updateValues();
                 return null;
             });
