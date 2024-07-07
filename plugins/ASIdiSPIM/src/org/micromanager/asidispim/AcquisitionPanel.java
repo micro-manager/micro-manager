@@ -1343,10 +1343,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       final float cameraTotalTime = MyNumberUtils.ceilToQuarterMs(cameraResetTime + cameraReadoutTime);
       final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
       final float laserDuration = MyNumberUtils.roundToQuarterMs(acqSettings.desiredLightExposure);
-      final float slicePeriod = Math.max( Math.max(laserDuration, cameraTotalTime),
-            acqSettings.minimizeSlicePeriod ? 0 : acqSettings.desiredSlicePeriod );
-      final float sliceDeadTime = MyNumberUtils.roundToQuarterMs(slicePeriod - laserDuration);
+      final float slicePeriodMin = Math.max(laserDuration, cameraTotalTime);   // max of laser on time (for static light sheet) and total camera reset/readout time; will add excess later
+      final float sliceDeadTime = MyNumberUtils.roundToQuarterMs(slicePeriodMin - laserDuration);
       final float sliceLaserInterleaved = (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW ? 0.25f : 0.f);  // extra quarter millisecond to make sure interleaved slices works (otherwise laser signal never goes low)
+      final Color foregroundColorOK = Color.BLACK;
+      final Color foregroundColorError = Color.RED;
+      final Component elementToColor  = desiredSlicePeriod_.getEditor().getComponent(0);
       
       switch (acqSettings.cameraMode) {
       case PSEUDO_OVERLAP:  // e.g. Kinetix
@@ -1367,8 +1369,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             s.scanPeriod = 1.0f;
             s.cameraDelay = 0.f;
             s.cameraDuration = 1.0f;
-            s.cameraExposure = 1.0f;
-            s.laserDelay = sliceDeadTime+cameraResetTime;
+            s.cameraExposure = 0.25f;
+            s.laserDelay = sliceDeadTime+MyNumberUtils.ceilToQuarterMs(cameraResetTime);
             s.laserDuration = laserDuration;
          } else {
             // the usual case
@@ -1377,7 +1379,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             s.scanPeriod = 1.0f;
             s.cameraDelay = 0.f;
             s.cameraDuration = 1.0f;
-            s.cameraExposure = 1.0f;
+            s.cameraExposure = 0.25f;
             s.laserDelay = sliceDeadTime+sliceLaserInterleaved;
             s.laserDuration = laserDuration;
          }
@@ -1441,6 +1443,37 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          s.valid = false;
       }
+      
+      // if a specific slice period was requested, add corresponding delay to scan/laser/camera
+      elementToColor.setForeground(foregroundColorOK);
+      if (!acqSettings.minimizeSlicePeriod) {
+         float globalDelay = acqSettings.desiredSlicePeriod - getSliceDuration(s);  // both should be in 0.25ms increments // TODO fix;
+         if (acqSettings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+            globalDelay = 0;
+         }
+         if (globalDelay < 0) {
+            globalDelay = 0;
+            if (showWarnings) {  // only true when user has specified period that is unattainable
+                  MyDialogUtils.showError(
+                        "Increasing slice period to meet laser exposure constraint\n"
+                              + "(time required for camera readout; readout time depends on ROI).");
+                  elementToColor.setForeground(foregroundColorError);
+            }
+         }
+         s.scanDelay += globalDelay;
+         s.cameraDelay += globalDelay;
+         s.laserDelay += globalDelay;
+      }
+
+      // fix corner case of (exposure time + readout time) being greater than the slice duration
+      // most of the time the slice duration is already larger
+      float globalDelay = MyNumberUtils.ceilToQuarterMs((s.cameraExposure + cameraReadoutTime) - getSliceDuration(s));
+      if (globalDelay > 0) {
+         s.scanDelay += globalDelay;
+         s.cameraDelay += globalDelay;
+         s.laserDelay += globalDelay;
+      }
+      
       // update the slice duration based on our new values
       s.sliceDuration = getSliceDuration(s);
       return s;
