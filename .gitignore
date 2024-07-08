@@ -87,3 +87,6 @@ bin
 .vs/
 .vscode/
 
+# macOS packaging (with the nightly script)
+/*.dmg
+/*.sparseimage
