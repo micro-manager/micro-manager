@@ -418,8 +418,7 @@ public class MagellanAcqUIAndStorage
             }
          }
       }
-      display_.initializeViewerToLoaded(channelNames, storage_.getDisplaySettings(),
-            axisMins, axisMaxs);
+      display_.initializeViewerToLoaded(storage_.getDisplaySettings());
    }
 
    public Set<HashMap<String, Object>> getAxesSet() {
