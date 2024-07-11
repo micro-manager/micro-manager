@@ -169,7 +169,19 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
          DefaultDatastore.setPreferredSaveMode(studio_, sequenceSettings.saveMode());
       }
 
-      // manipulate positionlist
+      // AcquisitionEngineJ has very rigid ideas about stepSize direction. Correct here.
+      if (sequenceSettings.useSlices()) {
+         double zStep = sequenceSettings.sliceZStepUm();
+         if (zStep < 0.0) {
+            zStep = Math.abs(zStep);
+         }
+         if (sequenceSettings.sliceZBottomUm() > sequenceSettings.sliceZTopUm()) {
+            zStep = -zStep;
+         }
+         sb.sliceZStepUm(zStep);
+      }
+
+      // Manipulate the Positionlist
       PositionList posListToUse = posList_;
       if (posList_ == null && sequenceSettings_.usePositionList()) {
          posListToUse = studio_.positions().getPositionList();
