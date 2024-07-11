@@ -872,9 +872,6 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
 
          @Override
          public AcquisitionEvent run(AcquisitionEvent event) {
-            if (event.isAcquisitionFinishedEvent()) {
-               return event;
-            }
             // do nothing if this is not our acquisition
             if (acqIndex != null
                   && event.getTags().containsKey(ACQ_IDENTIFIER)
@@ -882,6 +879,10 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
                return event;
             }
             try {
+               if (event.isAcquisitionFinishedEvent()) {
+                  core_.setPosition(sequenceSettings.zReference());
+                  return event;
+               }
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
                   if (event.getZIndex() != null && event.getZIndex() == 0) {
                      if (!event.isZSequenced() && sequenceSettings.useChannels()
