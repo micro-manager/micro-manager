@@ -880,7 +880,9 @@ public class AcqEngJAdapter implements AcquisitionEngine, MMAcquistionControlCal
             }
             try {
                if (event.isAcquisitionFinishedEvent()) {
-                  core_.setPosition(sequenceSettings.zReference());
+                  if (sequenceSettings_.useSlices()) {
+                     core_.setPosition(sequenceSettings.zReference());
+                  }
                   return event;
                }
                if (when == AcquisitionAPI.BEFORE_HARDWARE_HOOK) {
