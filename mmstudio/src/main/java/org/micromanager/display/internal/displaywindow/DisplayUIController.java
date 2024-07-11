@@ -748,15 +748,19 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       for (Coords c : coords) {
          for (String axis : c.getAxes()) {
-            int index = c.getIndex(axis);
-            int axisIndex = displayedAxes_.indexOf(axis);
-            if (axisIndex == -1) {
-               displayedAxes_.add(axis);
-               displayedAxisLengths_.add(index + 1);
+            if (axis != null) {
+               int index = c.getIndex(axis);
+               int axisIndex = displayedAxes_.indexOf(axis);
+               if (axisIndex == -1) {
+                  displayedAxes_.add(axis);
+                  displayedAxisLengths_.add(index + 1);
+               } else {
+                  int oldLength = displayedAxisLengths_.get(axisIndex);
+                  int newLength = Math.max(oldLength, index + 1);
+                  displayedAxisLengths_.set(axisIndex, newLength);
+               }
             } else {
-               int oldLength = displayedAxisLengths_.get(axisIndex);
-               int newLength = Math.max(oldLength, index + 1);
-               displayedAxisLengths_.set(axisIndex, newLength);
+               studio_.logs().logError("Null axis in Coords: " + c);
             }
          }
       }
