@@ -205,7 +205,8 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
    }
 
    /**
-    * Returns an optional ExternalIdentifier of the Plate.
+    * Returns an optional ExternalIdentifier of the Plate. The ExternalIdentifier
+    * attribute may contain a reference to an external database.
     *
     * @return an optional ExternalIdentifier of the Plate
     */
@@ -226,6 +227,15 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
 
    /**
     * Returns a human-readable name of the plate.
+    * The Name identifies the plate to the user.
+    *             It is used much like the ID, and so must be
+    *             unique within the document.
+    *             If a plate name is not available when one is needed
+    *             it will be constructed by OME/OMERO in the following order:
+    *             1. If name is available use it.
+    *             2. If not use "Start time - End time"
+    *             (NOTE: Not a subtraction! A string representation
+    *             of the two times separated by a dash.)
     *
     * @return a human-readable name of the plate
     */
@@ -255,7 +265,9 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
    }
 
    /**
-    * Returns the status of the plate.
+    * Returns the status of the plate, i.e. a textual annotation of the current
+    * state of the plate with respect to the experiment work-flow; e.g.
+    * 1. Seed cell: done; 2. Transfection: done;  3. Gel doc: todo.
     *
     * @return the status of the plate
     */
@@ -265,8 +277,13 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
    }
 
    /**
-    * Returns the origin for the well sample positions in the well.  It is unclear to me
-    * how this number is defined.  We will returns this is in microns, but relative to what?
+    * This defines the X position to use for the origin of the
+    *             fields (individual images) taken in a well. It is used
+    *             with the X in the WellSample to display the fields
+    *             in the correct position relative to each other. Each Well
+    *             in the plate has the same well origin. We use microns as the unit.
+    *             In the OMERO clients by convention we display the WellOrigin
+    *             in the center of the view.
     *
     * @return the origin for the well sample positions in the well
     */
@@ -276,8 +293,13 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
    }
 
    /**
-    * Returns the origin for the well sample positions in the well.  It is unclear to me
-    * how this number is defined.  We will returns this is in microns, but relative to what?
+    * This defines the Y position to use for the origin of the
+    *             fields (individual images) taken in a well. It is used
+    *             with the Y in the WellSample to display the fields
+    *             in the correct position relative to each other. Each Well
+    *             in the plate has the same well origin. We use microns as the unit.
+    *             In the OMERO clients by convention we display the WellOrigin
+    *             in the center of the view.
     *
     * @return the origin for the well sample positions in the well
     */

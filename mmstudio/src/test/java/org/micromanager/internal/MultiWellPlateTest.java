@@ -21,6 +21,8 @@ public class MultiWellPlateTest {
            MultiWellPlate.WellNamingConvention.LETTER;
    MultiWellPlate.WellNamingConvention plateColumnNamingConvention =
            MultiWellPlate.WellNamingConvention.NUMBER;
+   double wellOriginX = 8.0;
+   double wellOriginY = -28.0;
 
 
    @Test
@@ -35,6 +37,9 @@ public class MultiWellPlateTest {
       mwpb.plateStatus(plateStatus);
       mwpb.plateRowNamingConvention(plateRowNamingConvention);
       mwpb.plateColumnNamingConvention(plateColumnNamingConvention);
+      mwpb.plateWellOriginX(wellOriginX);
+      mwpb.plateWellOriginY(wellOriginY);
+
       MultiWellPlate mwp = mwpb.build();
 
       PropertyMap mwpPropertyMap = mwp.toPropertyMap();
@@ -49,7 +54,7 @@ public class MultiWellPlateTest {
       assertEquals(mwp.getPlateStatus(), mwp2.getPlateStatus());
       assertEquals(mwp.getPlateRowNamingConvention(), mwp2.getPlateRowNamingConvention());
       assertEquals(mwp.getPlateColumnNamingConvention(), mwp2.getPlateColumnNamingConvention());
-
-
+      assertEquals(mwp.getPlateWellOriginX(), mwp2.getPlateWellOriginX(), 0.0001);
+      assertEquals(mwp.getPlateWellOriginY(), mwp2.getPlateWellOriginY(), 0.0001);
    }
 }
