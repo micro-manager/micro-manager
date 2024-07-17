@@ -12,7 +12,7 @@ public interface MultiWellPlate {
       NUMBER
    }
 
-   interface PropertyMapBuilder {
+   interface FromPropertyMapBuilder {
       MultiWellPlate build(PropertyMap map);
    }
 
@@ -45,6 +45,13 @@ public interface MultiWellPlate {
       MultiWellPlate build();
    }
 
+   /**
+    * Returns a deep copy of the MultiWellPlate.
+    *
+    * @param origin the MultiWellPlate to copy
+    * @return a deep copy of the MultiWellPlate
+    */
+   MultiWellPlate copyDeep(MultiWellPlate origin);
 
    /**
     * Get the number of Columns of the Plate.

@@ -24,7 +24,7 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
    /**
     * Utility class to restore MultiWellPlate from a PropertyMap.
     */
-   public static class PropertyMapBuilder implements MultiWellPlate.PropertyMapBuilder {
+   public static class FromPropertyMapBuilder implements MultiWellPlate.FromPropertyMapBuilder {
 
       @Override
       public MultiWellPlate build(PropertyMap map) {
@@ -171,6 +171,22 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
       plateStatus_ = plateStatus;
       plateWellOriginX_ = plateWellOriginX;
       plateWellOriginY_ = plateWellOriginY;
+   }
+
+   @Override
+   public MultiWellPlate copyDeep(MultiWellPlate origin) {
+      return new DefaultMultiWellPlate(
+              origin.getPlateColumnNamingConvention(),
+              origin.getPlateColumns(),
+              origin.getPlateDescription(),
+              origin.getPlateExternalIdentifier(),
+              origin.getPlateID(),
+              origin.getPlateName(),
+              origin.getPlateRowNamingConvention(),
+              origin.getPlateRows(),
+              origin.getPlateStatus(),
+              origin.getPlateWellOriginX(),
+              origin.getPlateWellOriginY());
    }
 
 
