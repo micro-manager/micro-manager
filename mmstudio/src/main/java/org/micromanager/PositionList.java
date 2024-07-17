@@ -38,17 +38,21 @@ import java.util.NoSuchElementException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.internal.DefaultMultiWellPlate;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 
 /**
  * Navigation list of positions for the Stages.
  * Used for multi site acquisition support.
+ * Consists of a list of MultiStagePositions and an Optional instance of MultiWellPlate.
+ *
+ * TODO: Change into an interface and make a default implementation
  */
 public class PositionList implements Iterable<MultiStagePosition> {
    private static final int VERSION = 2;
    private final ArrayList<MultiStagePosition> positions_;
-   private boolean isPlate_;
-   private String plateName_;
+   // we could need to make this final, but I can imagine instances where we would want to change it
+   private MultiWellPlate plate_;
 
    private final HashSet<ChangeListener> listeners_ = new HashSet<>();
 
@@ -57,18 +61,24 @@ public class PositionList implements Iterable<MultiStagePosition> {
     */
    public PositionList() {
       positions_ = new ArrayList<>();
-      isPlate_ = false;
-      plateName_ = "";
+   }
+
+   public PositionList(MultiWellPlate plate) {
+      this();
+      plate_ = plate;
    }
 
    /**
     * This looks like a static copy constructor.
     *
-    * @param aPl input positionlist
+    * @param aPl input Positionlist
     * @return new instance of a PositionList with identical positions to the input
     */
    public static PositionList newInstance(PositionList aPl) {
-      PositionList pl = new PositionList();
+      if (aPl == null) {
+         return null;
+      }
+      PositionList pl = new PositionList(aPl.getPlate());
       for (MultiStagePosition multiStagePosition : aPl.positions_) {
          pl.addPosition(MultiStagePosition.newInstance(multiStagePosition));
       }
@@ -268,8 +278,8 @@ public class PositionList implements Iterable<MultiStagePosition> {
       }
       return PropertyMaps.builder()
             .putPropertyMapList(PropertyKey.STAGE_POSITIONS.key(), msps)
-            .putBoolean(PropertyKey.POSITION_LIST__IS_PLATE.key(), isPlate_)
-            .putString(PropertyKey.POSITION_LIST__PLATE_NAME.key(), plateName_)
+            .putPropertyMap(PropertyKey.MULTI_WELL_PLATE.key(),
+                    plate_ == null ? null : plate_.toPropertyMap())
             .putInteger(PropertyKey.POSITION_LIST__VERSION.key(), VERSION)
             .build();
    }
@@ -283,6 +293,12 @@ public class PositionList implements Iterable<MultiStagePosition> {
     */
    public void replaceWithPropertyMap(PropertyMap map) throws IOException {
       positions_.clear();
+      if (map.containsPropertyMap(PropertyKey.MULTI_WELL_PLATE.key())) {
+         MultiWellPlate.FromPropertyMapBuilder fpmb =
+                 new DefaultMultiWellPlate.FromPropertyMapBuilder();
+         PropertyMap plateMap = map.getPropertyMap(PropertyKey.MULTI_WELL_PLATE.key(), null);
+         plate_ = fpmb.build(plateMap);
+      }
       if (!map.containsPropertyMapList(PropertyKey.STAGE_POSITIONS.key())) {
          notifyChangeListeners();
          return;
@@ -400,20 +416,13 @@ public class PositionList implements Iterable<MultiStagePosition> {
       return new PosListIterator(this);
    }
 
-   public boolean isPlate() {
-      return isPlate_;
+
+   public void setPlate(MultiWellPlate plate) {
+      plate_ = plate;
    }
 
-   public void setIsPlate(boolean plate) {
-      isPlate_ = plate;
-   }
-
-   public String getPlateName() {
-      return plateName_;
-   }
-
-   public void setPlateName(String plateName) {
-      plateName_ = plateName;
+   public MultiWellPlate getPlate() {
+      return plate_;
    }
 
    /**

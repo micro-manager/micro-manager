@@ -31,6 +31,7 @@ import javax.swing.border.LineBorder;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MultiStagePosition;
+import org.micromanager.MultiWellPlate;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
@@ -39,6 +40,7 @@ import org.micromanager.Studio;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
+import org.micromanager.internal.DefaultMultiWellPlate;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
 import org.micromanager.internal.utils.WindowPositioning;
@@ -581,6 +583,22 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
       } else {
          platePl = studio_.positions().getPositionList();
       }
+      // add Plate Metadata to PositionList.  This could be optional.  We can later provide a UI
+      // for some of these fields.
+      MultiWellPlate.Builder mwpb = new DefaultMultiWellPlate.Builder();
+      mwpb.plateColumns(plate_.getNumColumns());
+      mwpb.plateRows(plate_.getNumRows());
+      mwpb.plateID(plate_.getID());
+      mwpb.plateName("PlateName"); // TODO: get from user
+      mwpb.plateDescription("PlateDescription"); // TODO: get from user
+      mwpb.plateExternalIdentifier("ExternalIdentifier"); // TODO: get from user
+      mwpb.plateStatus("PlateStatus"); // TODO: get from user
+      mwpb.plateRowNamingConvention(MultiWellPlate.WellNamingConvention.LETTER);
+      mwpb.plateColumnNamingConvention(MultiWellPlate.WellNamingConvention.NUMBER);
+      mwpb.plateWellOriginX(0.0);
+      mwpb.plateWellOriginY(0.0);
+      platePl.setPlate(mwpb.build());
+
       for (WellPositionList wpl1 : wpl) {
          PositionList pl = PositionList.newInstance(wpl1.getSitePositions());
          for (int j = 0; j < pl.getNumberOfPositions(); j++) {
@@ -623,8 +641,6 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
             if (platePl.getNumberOfPositions() == 0) {
                studio_.logs().showMessage("No sites selected");
             }
-            platePl.setIsPlate(true);
-            platePl.setPlateName("Test");
             studio_.positions().setPositionList(platePl);
             studio_.app().showPositionList();
          }

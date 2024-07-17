@@ -42,7 +42,6 @@ import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.quantity.Time;
 import ome.xml.model.enums.NamingConvention;
-import ome.xml.model.enums.handlers.NamingConventionEnumHandler;
 import ome.xml.model.primitives.NonNegativeInteger;
 import ome.xml.model.primitives.PositiveInteger;
 import ome.xml.model.primitives.Timestamp;
@@ -68,7 +67,7 @@ public final class OMEMetadata {
    private class Indices {
       //specific to each series independent of file
       int tiffDataIndex_ = -1;
-      //specific to each series indpeendent of file
+      //specific to each series independent of file
       int planeIndex_ = 0;
    }
 
@@ -86,20 +85,25 @@ public final class OMEMetadata {
          return;
       }
       int plateID = 789;
-      metadata_.setPlateID("Plate" + i, plateID);
-      metadata_.setPlateName("Plate" + i, plateID);
+      metadata_.setPlateID("Plate-" + plateID, plateID);
+      metadata_.setPlateName("Plate-" + plateID, plateID);
       metadata_.setPlateRows(new PositiveInteger(1), plateID);
       metadata_.setPlateColumns(new PositiveInteger(1), plateID);
       metadata_.setPlateRowNamingConvention(NamingConvention.LETTER, plateID);
       metadata_.setPlateColumnNamingConvention(NamingConvention.NUMBER, plateID);
+      metadata_.setPlateWellOriginX(new Length(0, UNITS.MICROM), plateID);
+      metadata_.setPlateWellOriginY(new Length(0, UNITS.MICROM), plateID);
       for (int i = 0; i < positions.size(); i++) {
-         metadata_.setWellID("A1", position);
-         metadata_.setWellRow(positions., position);
+
+         /*
+         metadata_.setWellID(positions.get(i).getWell(), plateID, i);
+         metadata_.setWellRow(positions.get(i).., position);
          metadata_.setWellColumn(new PositiveInteger(1), position);
          metadata_.setWellSampleIndex(new PositiveInteger(1), position);
          metadata_.setWellSampleID("Sample1", position);
          metadata_.setWellSamplePositionX(new Length(0, UNITS.MICROM), position);
          metadata_.setWellSamplePositionY(new Length(0, UNITS.MICROM), position);
+          */
       }
    }
 
@@ -413,7 +417,7 @@ public final class OMEMetadata {
       if (!positionName.isEmpty()) {
          metadata_.setStageLabelName(positionName, position);
       }
-      metadata_.setWellID();
+      //metadata_.setWellID();
 
       indices.planeIndex_++;
       indices.tiffDataIndex_++;

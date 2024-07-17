@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import org.micromanager.Album;
 import org.micromanager.MultiStagePosition;
+import org.micromanager.MultiWellPlate;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -959,6 +960,8 @@ public enum PropertyKey {
       }
    },
 
+   MULTI_WELL_PLATE("MultiWellPlate", SequenceSettings.class),
+
    NEXT_FRAME("NextFrame"),
 
    PIXEL_ASPECT("PixelAspect", "pixelAspect", Metadata.class) {
@@ -1112,6 +1115,7 @@ public enum PropertyKey {
    POSITION_LIST__ID("ID", PositionList.class),
    POSITION_LIST__VERSION("VERSION", PositionList.class),
    POSITION_LIST__IS_PLATE("IsPlate", PositionList.class),
+   POSITION_LIST__PLATE_ID("PlateID", PositionList.class),
    POSITION_LIST__PLATE_NAME("PlateName", PositionList.class),
 
    POSITION_NAME("PositionName", "Position", Metadata.class) {
@@ -1679,6 +1683,19 @@ public enum PropertyKey {
    },
 
    VISIBLE("Visible", ChannelDisplaySettings.class),
+
+
+   WELL_PLATE_COLUMN_NAMING_CONVENTION("WellPlateColumnNamingConvention", MultiWellPlate.class),
+   WELL_PLATE_COLUMNS("WellPlateColumns", MultiWellPlate.class),
+   WELL_PLATE_DESCRIPTION("WellPlateDescription", MultiWellPlate.class),
+   WELL_PLATE_EXTERNAL_IDENTIFIER("WellPlateExternalIdentifier", MultiWellPlate.class),
+   WELL_PLATE_ID("WellPlateID", MultiWellPlate.class),
+   WELL_PLATE_NAME("plateName", MultiWellPlate.class),
+   WELL_PLATE_ROW_NAMING_CONVENTION("WellPlateRowNamingConvention", MultiWellPlate.class),
+   WELL_PLATE_ROWS("WellPlateRows", MultiWellPlate.class),
+   WELL_PLATE_STATUS("WellPlateStatus", MultiWellPlate.class),
+   WELL_PLATE_WELL_ORIGIN_X("WellPlateWellOriginX", MultiWellPlate.class),
+   WELL_PLATE_WELL_ORIGIN_Y("WellPlateWellOriginY", MultiWellPlate.class),
 
    WIDTH("Width", Image.class) {
       @Override

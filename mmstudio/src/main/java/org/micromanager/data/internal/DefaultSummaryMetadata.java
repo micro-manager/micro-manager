@@ -20,6 +20,7 @@
 
 package org.micromanager.data.internal;
 
+import org.micromanager.MultiWellPlate;
 import static org.micromanager.data.internal.PropertyKey.AXIS_ORDER;
 import static org.micromanager.data.internal.PropertyKey.CHANNEL_GROUP;
 import static org.micromanager.data.internal.PropertyKey.CHANNEL_NAMES;
@@ -35,6 +36,7 @@ import static org.micromanager.data.internal.PropertyKey.KEEP_SHUTTER_OPEN_SLICE
 import static org.micromanager.data.internal.PropertyKey.MDA_SETTINGS;
 import static org.micromanager.data.internal.PropertyKey.METADATA_VERSION;
 import static org.micromanager.data.internal.PropertyKey.MICRO_MANAGER_VERSION;
+import static org.micromanager.data.internal.PropertyKey.MULTI_WELL_PLATE;
 import static org.micromanager.data.internal.PropertyKey.PREFIX;
 import static org.micromanager.data.internal.PropertyKey.PROFILE_NAME;
 import static org.micromanager.data.internal.PropertyKey.STAGE_POSITIONS;
@@ -57,6 +59,7 @@ import org.micromanager.UserProfile;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.DefaultMultiWellPlate;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -70,7 +73,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
     * without changing the version number as long as care is taken to ensure
     * that keys used in the past are avoided.
     */
-   public static final String CURRENT_METADATA_VERSION = "12.0.0";
+   public static final String CURRENT_METADATA_VERSION = "13.0.0";
 
    // TODO This shouldn't live here. Move to DataManager.
    public static SummaryMetadata getStandardSummaryMetadata() {
@@ -269,6 +272,12 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
+      public Builder multiWellPlate(MultiWellPlate plate) {
+         b_.putPropertyMap(MULTI_WELL_PLATE.key(), plate.toPropertyMap());
+         return this;
+      }
+
+      @Override
       public Builder imageWidth(Integer width) {
          b_.putInteger(WIDTH.key(), width);
          return this;
@@ -323,6 +332,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          getIntendedDimensions();
          getStartDate();
          getStagePositionList();
+         getMultiWellPlate();
          getKeepShutterOpenSlices();
          getKeepShutterOpenChannels();
          getUserData();
@@ -457,6 +467,13 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          ret.add(MultiStagePosition.fromPropertyMap(mspPmap));
       }
       return ret;
+   }
+
+   public MultiWellPlate getMultiWellPlate() {
+      MultiWellPlate.FromPropertyMapBuilder builder = new DefaultMultiWellPlate
+              .FromPropertyMapBuilder();
+      return builder.build(pmap_.getPropertyMap(MULTI_WELL_PLATE.key(),
+              PropertyMaps.emptyPropertyMap()));
    }
 
    @Override

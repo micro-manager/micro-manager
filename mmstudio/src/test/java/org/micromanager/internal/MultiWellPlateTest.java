@@ -43,7 +43,8 @@ public class MultiWellPlateTest {
       MultiWellPlate mwp = mwpb.build();
 
       PropertyMap mwpPropertyMap = mwp.toPropertyMap();
-      MultiWellPlate mwp2 = new DefaultMultiWellPlate.PropertyMapBuilder().build(mwpPropertyMap);
+      MultiWellPlate mwp2 = new DefaultMultiWellPlate.FromPropertyMapBuilder()
+              .build(mwpPropertyMap);
 
       assertEquals(mwp.getPlateColumns(), mwp2.getPlateColumns());
       assertEquals(mwp.getPlateRows(), mwp2.getPlateRows());
