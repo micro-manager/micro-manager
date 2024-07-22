@@ -22,7 +22,7 @@ public class CRISPPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String description =
            "An interface to control the ASI CRISP Autofocus device.";
    public static final String menuName = "ASI CRISP Control";
-   public static final String version = "2.5.2";
+   public static final String version = "2.5.3";
 
    private Studio studio;
    private CRISPFrame frame;
