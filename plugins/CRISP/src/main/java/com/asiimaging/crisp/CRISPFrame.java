@@ -236,7 +236,7 @@ public class CRISPFrame extends JFrame {
       leftPanel = Panel.createFromMigLayout(
             "",
             "[]10[]",
-            "[]50[]"
+            "[]10[]"
       );
       rightPanel = Panel.createFromMigLayout(
             "",
