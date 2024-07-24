@@ -249,6 +249,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final List<Runnable> runnablesStartPosition_;
    private final List<Runnable> runnablesEndPosition_;
    public String acqName_;
+   private boolean updatingTiming_;  // when true don't update timing to avoid recursion with recalculateTimingDisplayCL and recalculateTimingDisplayAL
    
    private static final int XYSTAGETIMEOUT = 20000;
    
@@ -296,6 +297,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       runnablesStartPosition_ = new ArrayList<Runnable>();
       runnablesEndPosition_ = new ArrayList<Runnable>();
       
+      updatingTiming_ = false;
+      
       final AcquisitionTableFrame playlistFrame = new AcquisitionTableFrame(gui_, prefs_, this);
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
@@ -305,11 +308,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       ChangeListener recalculateTimingDisplayCL = new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
-            if (advancedSliceTimingCB_.isSelected()) {
-               // need to update sliceTiming_ from property values
-               sliceTiming_ = getTimingFromAdvancedSettings();
+            if (!updatingTiming_) {
+               if (advancedSliceTimingCB_.isSelected()) {
+                  // need to update sliceTiming_ from property values
+                  sliceTiming_ = getTimingFromAdvancedSettings();
+               }
+               updateDurationLabels();
             }
-            updateDurationLabels();
          }
       };
       
@@ -318,7 +323,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       ActionListener recalculateTimingDisplayAL = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            updateDurationLabels();
+            if (!updatingTiming_) {
+               updateDurationLabels();
+            }
          }
       };
       
@@ -1693,10 +1700,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Re-calculate the controller's timing settings for "easy timing" mode.
     * Changes panel variable sliceTiming_.
     * The controller's properties will be set as needed
+    * Change/action listers are short-circuited here 
     * @param showWarnings will show warning if the user-specified slice period too short
     *                      or if cameras aren't assigned
     */
    private void recalculateSliceTiming(boolean showWarnings) {
+      updatingTiming_ = true;
       if(!checkCamerasAssigned(showWarnings)) {
          return;
       }
@@ -1717,6 +1726,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       PanelUtils.setSpinnerFloatValue(delayCamera_, sliceTiming_.cameraDelay);
       PanelUtils.setSpinnerFloatValue(durationCamera_, sliceTiming_.cameraDuration );
       PanelUtils.setSpinnerFloatValue(exposureCamera_, sliceTiming_.cameraExposure );
+      updatingTiming_ = false;
    }
    
    /**
