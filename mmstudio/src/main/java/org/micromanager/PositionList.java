@@ -37,8 +37,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.micromanager.data.MultiWellPlate;
 import org.micromanager.data.internal.PropertyKey;
-import org.micromanager.internal.DefaultMultiWellPlate;
+import org.micromanager.data.internal.DefaultMultiWellPlate;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 
 /**

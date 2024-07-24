@@ -20,7 +20,7 @@
 
 package org.micromanager.data.internal;
 
-import org.micromanager.MultiWellPlate;
+import org.micromanager.data.MultiWellPlate;
 import static org.micromanager.data.internal.PropertyKey.AXIS_ORDER;
 import static org.micromanager.data.internal.PropertyKey.CHANNEL_GROUP;
 import static org.micromanager.data.internal.PropertyKey.CHANNEL_NAMES;
@@ -59,7 +59,6 @@ import org.micromanager.UserProfile;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.internal.DefaultMultiWellPlate;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 

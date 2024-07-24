@@ -3,8 +3,9 @@ package org.micromanager.internal;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.micromanager.MultiWellPlate;
+import org.micromanager.data.MultiWellPlate;
 import org.micromanager.PropertyMap;
+import org.micromanager.data.internal.DefaultMultiWellPlate;
 
 /**
  * Test class for MultiWellPlate.

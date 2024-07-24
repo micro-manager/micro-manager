@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import org.micromanager.Album;
 import org.micromanager.MultiStagePosition;
-import org.micromanager.MultiWellPlate;
+import org.micromanager.data.MultiWellPlate;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;

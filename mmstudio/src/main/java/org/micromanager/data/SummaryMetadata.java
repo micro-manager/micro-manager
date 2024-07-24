@@ -22,7 +22,6 @@ package org.micromanager.data;
 
 import java.util.List;
 import org.micromanager.MultiStagePosition;
-import org.micromanager.MultiWellPlate;
 import org.micromanager.PropertyMap;
 import org.micromanager.acquisition.SequenceSettings;
 

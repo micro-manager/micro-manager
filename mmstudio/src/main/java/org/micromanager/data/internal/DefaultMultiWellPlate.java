@@ -1,9 +1,8 @@
-package org.micromanager.internal;
+package org.micromanager.data.internal;
 
-import org.micromanager.MultiWellPlate;
+import org.micromanager.data.MultiWellPlate;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
-import org.micromanager.data.internal.PropertyKey;
 
 /**
  * Metadata describing a multi-well plate.

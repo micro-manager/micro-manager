@@ -31,7 +31,7 @@ import javax.swing.border.LineBorder;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MultiStagePosition;
-import org.micromanager.MultiWellPlate;
+import org.micromanager.data.MultiWellPlate;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
@@ -40,7 +40,7 @@ import org.micromanager.Studio;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.DefaultMultiWellPlate;
+import org.micromanager.data.internal.DefaultMultiWellPlate;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
 import org.micromanager.internal.utils.WindowPositioning;

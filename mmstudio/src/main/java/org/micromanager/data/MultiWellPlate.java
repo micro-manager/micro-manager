@@ -1,6 +1,7 @@
-package org.micromanager;
+package org.micromanager.data;
 
 
+import org.micromanager.PropertyMap;
 
 /**
  * Metadata describing a multi-well plate
