@@ -213,23 +213,24 @@ public class SharpestPluginExecutor {
     * @throws IOException Can arise when saving to disk
     */
    private void findAllProjections(Datastore newStore, List<String> remainingAxes, 
-           Coords.CoordsBuilder cbp, SharpestData zpd, int channelIndex) throws IOException {
+           Coords.CoordsBuilder cbp, SharpestData zpd, int sharpestChannelIndex)
+           throws IOException {
       String currentAxis = remainingAxes.get(0);
       List<String> rcAxes = new ArrayList<>(remainingAxes);
       rcAxes.remove(currentAxis);
       for (int i = 0; i < oldProvider_.getNextIndex(currentAxis); i++) {
          cbp.index(currentAxis, i);
          if (rcAxes.isEmpty()) {
+            if (!zpd.sharpenAllChannels_ && zpd.channel_ != null && sharpestChannelIndex >= 0) {
+               cbp.index(Coords.C, sharpestChannelIndex);
+            }
             executeProjection(newStore, cbp, zpd);
             projectionNr_++;
             if (progressBar_ != null) {
-               progressBar_.setProgress(projectionNr_); 
+               progressBar_.setProgress(projectionNr_);
             }
          } else {
-            if (!zpd.sharpenAllChannels_ && zpd.channel_ != null && channelIndex >= 0) {
-               cbp.index(Coords.C, channelIndex);
-            }
-            findAllProjections(newStore, rcAxes, cbp, zpd, channelIndex);
+            findAllProjections(newStore, rcAxes, cbp, zpd, sharpestChannelIndex);
          }
       }
    }
@@ -313,10 +314,19 @@ public class SharpestPluginExecutor {
             if (!zpd.sharpenAllChannels_) {
                for (int c = 0; c < oldProvider_.getSummaryMetadata().getIntendedDimensions().getC();
                      c++) {
-                  Image img = oldProvider_.getImage(cbp.z(z).channel(c).build());
-                  Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
-                          img.getMetadata().copyBuilderWithNewUUID().build());
-                  newStore.putImage(outImg);
+                  Image img = null;
+                  if (oldProvider_.hasImage(cbp.z(z).channel(c).build())) {
+                     img = oldProvider_.getImage(cbp.z(z).channel(c).build());
+                  } else {
+                     if (oldProvider_.hasImage(cbp.z(0).channel(c).build())) {
+                        img = oldProvider_.getImage(cbp.z(0).channel(c).build());
+                     }
+                  }
+                  if (img != null) {
+                     Image outImg = img.copyWith(cbp.index(Coords.Z, z - start).build(),
+                             img.getMetadata().copyBuilderWithNewUUID().build());
+                     newStore.putImage(outImg);
+                  }
                }
             } else {
                Image img = oldProvider_.getImage(cbp.index(Coords.Z, z).build());
