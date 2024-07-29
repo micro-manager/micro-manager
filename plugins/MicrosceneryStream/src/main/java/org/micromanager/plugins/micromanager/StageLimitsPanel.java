@@ -11,7 +11,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Locale;
 
 class StageLimitsPanel extends JPanel {
 
@@ -40,19 +39,20 @@ class StageLimitsPanel extends JPanel {
 
         String[] dims = {"X", "Y", "Z"};
         String[] dirs = {"Min", "Max"};
-        for (int dimIndex = 0; dimIndex < 3; dimIndex++) {
+        String[] settingsBase = {microscenery.Settings.Stage.Limits.Min, microscenery.Settings.Stage.Limits.Max};
 
+        for (int dimIndex = 0; dimIndex < 3; dimIndex++) {
             String dim = dims[dimIndex];
             JLabel xLabel = new JLabel(dim);
             xLabel.setFont(bold);
             stageLimitsPanel.add(xLabel, "wrap");
 
-            for (String dir : dirs) {
-                stageLimitsPanel.add(new JLabel(dir));
+            for (int i = 0; i < dirs.length; i++) {
+                stageLimitsPanel.add(new JLabel(dirs[i]));
 
                 JTextField valueField = new JTextField(10);
                 stageLimitsPanel.add(valueField);
-                String settingName = "Stage." + dir.toLowerCase(Locale.ROOT) + dim.toUpperCase();
+                String settingName = settingsBase[i] + dim.toUpperCase();
                 Float value = msSettings.getOrNull(settingName);
                 if (value == null) value = mmcon.getStagePosition().get(dimIndex);
                 valueField.setText(value + "");
@@ -86,7 +86,7 @@ class StageLimitsPanel extends JPanel {
         JButton applyStageLimitsButton = new JButton("Apply stage limits");
         applyStageLimitsButton.addActionListener(e -> {
             for (StageLimitContainer tf : stageLimits) {
-                if (MicrosceneryStreamFrame.validFloat(tf.field)) return;
+                if (!MicrosceneryStreamFrame.validFloat(tf.field)) return;
             }
             for (StageLimitContainer container : stageLimits) {
                 applyingStageLimits = true;
@@ -95,7 +95,7 @@ class StageLimitsPanel extends JPanel {
             }
 
             try {
-                wrapper.updateHardwareDimensions();
+                wrapper.updateStageLimitsFromSettings();
                 notAppliedWarningLabel.setText("");
             } catch (IllegalArgumentException exception){
                 if(exception.getMessage().equals("Min allowed stage area parameters need to be smaller than max values")){
@@ -124,7 +124,7 @@ class StageLimitsPanel extends JPanel {
         }
     }
 
-    public void updateValues() {
+    public void updateValuesFromSetting() {
         if (applyingStageLimits) return;
         for (StageLimitContainer container : stageLimits) {
             Float value = msSettings.getOrNull(container.settingName);

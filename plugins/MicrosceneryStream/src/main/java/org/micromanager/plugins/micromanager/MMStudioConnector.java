@@ -41,10 +41,10 @@ public class MMStudioConnector implements microscenery.hardware.micromanagerConn
 
     @Override
     public StageLimitErrorResolves askForStageLimitErrorResolve() {
-        fromScenery.Settings msSettings = Util.getMicroscenerySettings();
+        fromScenery.Settings msSettings = context.msSettings;
         String stagePos = Util.toReadableString(context.mmCon.getStagePosition());
-        String limitMin = Util.toReadableString(msSettings.get(Settings.Stage.Limits.Min, new Vector3f()));
-        String limitMax = Util.toReadableString(msSettings.get(Settings.Stage.Limits.Max, new Vector3f()));
+        String limitMin = Util.toReadableString(Util.getVector3(msSettings,Settings.Stage.Limits.Min, new Vector3f(0f)));
+        String limitMax = Util.toReadableString(Util.getVector3(msSettings,Settings.Stage.Limits.Max, new Vector3f(0f)));
         String text = "Stage "+ stagePos+" not in allowed area from "+limitMin + " to "+  limitMax;
 
         Object[] options = {"Reset limits to stage position",
