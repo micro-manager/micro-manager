@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigurator {
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final String version = "live image position fix";
+    private final String version = "fesh stage limits 2";
 
     private final JLabel statusLabel_;
     private final JLabel portLabel_;
@@ -104,7 +104,7 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
 
         miscContainer.add(new JLabel("Vertex size"));
         JTextField vertexSizeText = new JTextField(
-                msSettings.get("MMConnection.vertexDiameter",1.0f).toString()
+                msSettings.get(microscenery.Settings.MMMicroscope.VertexDiameter,1.0f).toString()
                 ,10);
         vertexSizeText.addActionListener(e -> {
             if (validFloat(vertexSizeText)){
@@ -162,9 +162,19 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
         updateLabels(server.getStatus());
         updateLabels(new ActualMicroscopeSignal(micromanagerWrapper.status()));
 
-        for (String s : (new String[]{"Stage.minX","Stage.maxX", "Stage.minY", "Stage.maxY", "Stage.minZ", "Stage.maxZ"})) {
+        String[] settingsBase = {microscenery.Settings.Stage.Limits.Min, microscenery.Settings.Stage.Limits.Max};
+        String[] stageLimitSettings = new String[]{
+                settingsBase[0] + "X",
+                settingsBase[0] + "Y",
+                settingsBase[0] + "Z",
+                settingsBase[1] + "X",
+                settingsBase[1] + "Y",
+                settingsBase[1] + "Z", //screw java 8 >:(
+        };
+
+        for (String s : stageLimitSettings) {
             msSettings.addUpdateRoutine(s,false,() -> {
-                stageLimitsPanel.updateValues();
+                stageLimitsPanel.updateValuesFromSetting();
                 return null;
             });
         }
@@ -208,9 +218,9 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
             JOptionPane.showMessageDialog(null,
                     tf.getText()+ "Is not a valid floating point number", "Invalid number",
                     JOptionPane.ERROR_MESSAGE);
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     @Override
