@@ -129,6 +129,17 @@ public class MicrosceneryStreamFrame extends JFrame implements ProcessorConfigur
         watchStagePosCheckbox.addChangeListener(e -> msContext.eventListener.listenToStage = watchStagePosCheckbox.isSelected());
         miscContainer.add(watchStagePosCheckbox,"wrap");
 
+        miscContainer.add(new JLabel("Stream rate limit"));
+        JTextField streamRateLimitText = new JTextField(
+                msSettings.get(microscenery.Settings.MMMicroscope.Stream.ImageRateLimitPerSec,0.0f).toString()
+                ,10);
+        streamRateLimitText.addActionListener(e -> {
+            if (validFloat(streamRateLimitText)){
+                msSettings.set(microscenery.Settings.MMMicroscope.Stream.ImageRateLimitPerSec,Float.parseFloat(streamRateLimitText.getText()));
+            }
+        });
+        miscContainer.add(streamRateLimitText, "wrap");
+
         JButton settingsButton = new JButton("Settings");
         settingsButton.addActionListener(e -> new SettingsEditor(msSettings,new JFrame("org.micromanager.plugins.micromanager.SettingsEditor"),480, 500));
         miscContainer.add(settingsButton, "wrap");

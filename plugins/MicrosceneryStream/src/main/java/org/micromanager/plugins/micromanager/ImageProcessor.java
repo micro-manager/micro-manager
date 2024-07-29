@@ -1,5 +1,6 @@
 package org.micromanager.plugins.micromanager;
 
+import microscenery.Settings;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 import org.micromanager.data.Image;
@@ -23,7 +24,8 @@ public class ImageProcessor implements Processor {
     public void processImage(Image image, ProcessorContext context) {
         Metadata meta = image.getMetadata();
 
-        float imgRate = mmContext.msSettings.get("Stream.imageRateLimitPerSec",Float.MAX_VALUE);
+        float imgRate = mmContext.msSettings.get(Settings.MMMicroscope.Stream.ImageRateLimitPerSec,Float.MAX_VALUE);
+        if (imgRate <= 0.0) imgRate = Float.MAX_VALUE;
         long timeBetweenImages = (long) (1000 / imgRate);
         long now = System.currentTimeMillis();
         if (lastImage + timeBetweenImages > now){
@@ -32,14 +34,14 @@ public class ImageProcessor implements Processor {
         }
         lastImage = now;
 
-        String cam = mmContext.msSettings.get("Stream.Camera","any");
+        String cam = mmContext.msSettings.get(Settings.MMMicroscope.Stream.Camera,"any");
         if (!cam.equals("any") && !image.getMetadata().getCamera().equals(cam)){
             context.outputImage(image);
             return;
         }
 
         Vector3f pos;
-        if (mmContext.msSettings.get("MMMicroscope.useImageMetadataPosition",false) ){
+        if (mmContext.msSettings.get(Settings.MMMicroscope.UseImageMetadataPosition,false) ){
             pos = new Vector3f(
                     meta.getXPositionUm().floatValue(),
                     meta.getYPositionUm().floatValue(),
