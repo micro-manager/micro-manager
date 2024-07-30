@@ -18,7 +18,6 @@ import java.util.Objects;
  */
 public class ButtonPanel extends Panel {
 
-   private Button btnIdle;
    private Button btnLogCal;
    private Button btnDither;
    private Button btnSetGain;
@@ -42,11 +41,10 @@ public class ButtonPanel extends Panel {
    private void createUserInterface() {
       // CRISP control buttons
       Button.setDefaultSize(120, 30);
-      btnIdle = new Button("1: Idle");
-      btnLogCal = new Button("2: Log Cal");
-      btnDither = new Button("3: Dither");
-      btnSetGain = new Button("4: Set Gain");
-      btnReset = new Button("Reset Offsets");
+      btnLogCal = new Button("1: Log Cal");
+      btnDither = new Button("2: Dither");
+      btnSetGain = new Button("3: Set Gain");
+      btnReset = new Button("Reset Offset");
       btnSave = new Button("Save Settings");
 
       Button.setDefaultSize(120, 60);
@@ -55,19 +53,46 @@ public class ButtonPanel extends Panel {
       btnLock.setBoldFont(14);
       btnUnlock.setBoldFont(14);
 
+      // set tooltips
+      btnLogCal.setToolTipText("<html>Step 1 in the calibration routine.<br>"
+              + "Property: <b>CRISP State</b><br>Property Value: <b>loG_cal</b><br>"
+              + "Serial command: <b>LK F=72</b></html>");
+      btnDither.setToolTipText("<html>Step 2 in the calibration routine.<br>"
+              + "Property: <b>CRISP State</b><br>Property Value: <b>Dither</b><br>"
+              + "Serial command: <b>LK F=102</b></html>");
+      btnSetGain.setToolTipText("<html>Step 3 in the calibration routine.<br>"
+              + "Property: <b>CRISP State</b><br>Property Value: <b>gain_Cal</b><br>"
+              + "Serial command: <b>LK F=67</b></html>");
+      btnReset.setToolTipText("<html>Reset the focus offset.<br>"
+              + "Property: <b>CRISP State</b><br>Value: <b>Reset Focus Offset</b><br>"
+              + "Serial command: <b>LK F=111</b></html>");
+      btnSave.setToolTipText("<html>Save settings to the controller.<br>"
+              + "Property: <b>CRISP State</b><br>Value: <b>Save to Controller</b><br>"
+              + "Serial command: <b>SS Z</b></html>");
+
+      btnLock.setToolTipText("<html>Focus lock.<br>"
+              + "Property: <b>CRISP State</b><br>Property Value: <b>Lock</b><br>"
+              + "Serial command: <b>LK F=83</b></html>");
+      btnUnlock.setToolTipText("<html>Unlock focus.<br>"
+              + "Property: <b>CRISP State</b><br>Property Value: <b>Unlock</b><br>"
+              + "Serial command: <b>UL</b></html>");
+
       // add components to panel
-      add(btnIdle, "wrap");
       add(btnLogCal, "wrap");
       add(btnDither, "wrap");
       add(btnSetGain, "wrap");
       add(btnReset, "wrap");
       add(btnSave, "wrap");
-      add(btnLock, "gaptop 60, wrap");
-      add(btnUnlock, "wrap");
+      add(btnLock, "gaptop 100, wrap");
+      add(btnUnlock, "");
    }
 
+   /**
+    * Enable or disable the calibration routine buttons.
+    *
+    * @param state true to enable components
+    */
    public void setCalibrationButtonStates(final boolean state) {
-      btnIdle.setEnabled(state);
       btnLogCal.setEnabled(state);
       btnDither.setEnabled(state);
       btnSetGain.setEnabled(state);
@@ -79,20 +104,14 @@ public class ButtonPanel extends Panel {
    private void createEventHandlers() {
 
       // step 1 in the calibration routine
-      btnIdle.registerListener(event -> {
-         crisp.setStateIdle();
-         panel.setEnabledFocusLockSpinners(true);
-      });
-
-      // step 2 in the calibration routine
       btnLogCal.registerListener(event ->
               crisp.setStateLogCal(timer));
 
-      // step 3 in the calibration routine
+      // step 2 in the calibration routine
       btnDither.registerListener(event ->
               crisp.setStateDither());
 
-      // step 4 in the calibration routine
+      // step 3 in the calibration routine
       btnSetGain.registerListener(event ->
               crisp.setStateGainCal());
 
@@ -118,4 +137,3 @@ public class ButtonPanel extends Panel {
       btnSave.registerListener(event -> crisp.save());
    }
 }
-
