@@ -23,7 +23,8 @@ public class DialogUtils {
          final JComponent component,
          final String title,
          final String message) {
-      return JOptionPane.showConfirmDialog(component, message, title, JOptionPane.YES_NO_OPTION) == 0;
+      return JOptionPane.showConfirmDialog(component, message, title,
+            JOptionPane.YES_NO_OPTION) == 0;
    }
 
 }

@@ -68,7 +68,7 @@ public class ComboBox extends JComboBox<String> {
 
    public void registerListener(final Method method) {
       addActionListener(event -> {
-         selected = (String)getSelectedItem();
+         selected = (String) getSelectedItem();
          method.run(event);
       });
    }

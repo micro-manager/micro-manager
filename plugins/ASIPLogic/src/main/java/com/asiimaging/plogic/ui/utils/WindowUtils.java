@@ -39,7 +39,9 @@ public final class WindowUtils {
     * @param frame the frame to register the listener
     * @param method the method to run on the window closing event
     */
-   public static void registerWindowClosingEvent(final JFrame frame, final WindowEventMethod method) {
+   public static void registerWindowClosingEvent(
+         final JFrame frame,
+         final WindowEventMethod method) {
       frame.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(final WindowEvent event) {

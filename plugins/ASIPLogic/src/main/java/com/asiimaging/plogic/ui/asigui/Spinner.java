@@ -44,7 +44,7 @@ public class Spinner extends JSpinner {
 
    public void setColumnSize(final int width) {
       final JComponent editor = getEditor();
-      final JFormattedTextField textField = ((NumberEditor)editor).getTextField();
+      final JFormattedTextField textField = ((NumberEditor) editor).getTextField();
       textField.setColumns(width);
    }
 
@@ -53,11 +53,11 @@ public class Spinner extends JSpinner {
    }
 
    public int getInt() {
-      return (Integer)getValue();
+      return (Integer) getValue();
    }
 
    public double getDouble() {
-      return (Double)getValue();
+      return (Double) getValue();
    }
 
    public void setInt(final int n) {

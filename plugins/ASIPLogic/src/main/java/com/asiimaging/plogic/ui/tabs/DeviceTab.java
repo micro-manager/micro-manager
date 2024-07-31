@@ -185,7 +185,7 @@ public class DeviceTab extends Panel {
       // edit cell updates automatically
       cbxEditCellUpdateAuto_.registerListener(e -> {
          if (!cbxEditCellUpdateAuto_.isSelected()) {
-            DialogUtils.showMessage(cbxEditCellUpdateAuto_,"Information",
+            DialogUtils.showMessage(cbxEditCellUpdateAuto_, "Information",
                   "This should always be checked to update the cells correctly.");
          } else {
             model_.plc().isAutoUpdateCellsOn(true);

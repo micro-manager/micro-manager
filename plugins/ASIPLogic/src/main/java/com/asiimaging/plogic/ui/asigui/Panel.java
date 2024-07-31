@@ -68,7 +68,10 @@ public class Panel extends JPanel {
       setLayout(new MigLayout(layout, cols, rows));
    }
 
-   public static void setMigLayoutDefault(final String layout, final String cols, final String rows) {
+   public static void setMigLayoutDefault(
+         final String layout,
+         final String cols,
+         final String rows) {
       Panel.defaultLayout = layout;
       Panel.defaultCols = cols;
       Panel.defaultRows = rows;

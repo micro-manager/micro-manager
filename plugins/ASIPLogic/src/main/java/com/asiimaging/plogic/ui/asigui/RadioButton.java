@@ -77,8 +77,8 @@ public class RadioButton extends JPanel {
 
    private void setLayoutStyle(final int type, final int alignment) {
       layoutStyle = (type == RadioButton.VERTICAL) ? "wrap" : "";
-      layoutStyle = (alignment == RadioButton.LEFT) ?
-            "left, " + layoutStyle : "right, " + layoutStyle;
+      layoutStyle = (alignment == RadioButton.LEFT)
+            ? "left, " + layoutStyle : "right, " + layoutStyle;
    }
 
    public void setSelected(final String text, final boolean state) {

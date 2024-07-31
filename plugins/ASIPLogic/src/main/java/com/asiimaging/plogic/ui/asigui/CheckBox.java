@@ -34,7 +34,11 @@ public class CheckBox extends JCheckBox {
       setFocusPainted(false);
    }
 
-   public CheckBox(final String text, final int fontSize, final boolean defaultState, final int constant) {
+   public CheckBox(
+         final String text,
+         final int fontSize,
+         final boolean defaultState,
+         final int constant) {
       super(text, defaultState);
       setFont(new Font(Font.SANS_SERIF, Font.PLAIN, fontSize));
       setHorizontalTextPosition(constant);

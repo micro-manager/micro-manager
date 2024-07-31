@@ -275,7 +275,7 @@ public class ASIPLogic extends ASITigerBase {
       OR4("11 - 4-input OR", 4, "", "A", "B", "C", "D", false),
       D_FLOP_SYNC("12 - D flop (sync)", 4, "", "Din", "Clock", "Reset", "Preset", true),
       JK_FLOP("13 - JK flop", 3, "", "J", "K", "Clock", "", true),
-      ONE_SHOT_NRT("14 - one shot (NRT)", 3, "Duration","Trigger", "Clock", "Reset", "", true),
+      ONE_SHOT_NRT("14 - one shot (NRT)", 3, "Duration", "Trigger", "Clock", "Reset", "", true),
       DELAY_NRT("15 - delay (NRT)", 3, "Delay", "Trigger", "Clock", "Reset", "", true);
 
       private final String propertyName_;
