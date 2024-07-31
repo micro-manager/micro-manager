@@ -159,7 +159,8 @@ public class DeviceTab extends Panel {
             requestFocusInWindow();
             // TODO: fix focus issue, need to click buttons twice
             final boolean clickedYes = DialogUtils.showConfirmDialog(cmbSelectDevice_,
-                  "Reload Settings", "Would you like to reload the cells for " + deviceName + "?");
+                  "Reload Settings", "Would you like to reload the cells for "
+                        + deviceName + "?");
             if (!clickedYes) {
                return; // early exit => clicked "No" to avoid reloading the cells
             }
@@ -197,7 +198,8 @@ public class DeviceTab extends Panel {
             model_.plc().isRefreshPropertyValuesOn(cbxRefreshProperties_.isSelected()));
 
       // buttons
-      btnClearLogicCells_.registerListener(e -> model_.plc().preset(ASIPLogic.Preset.ALL_CELLS_ZERO));
+      btnClearLogicCells_.registerListener(
+            e -> model_.plc().preset(ASIPLogic.Preset.ALL_CELLS_ZERO));
       btnClearCellStates_.registerListener(e -> model_.plc().clearAllCellStates());
       btnSaveSettings_.registerListener(e -> model_.plc().saveSettings());
 
