@@ -18,8 +18,8 @@ package com.asiimaging.plogic.model;
  */
 public class ScriptGenerator {
 
-    public static void createScript() {
-        // TODO: impl this feature
-    }
+   public static void createScript() {
+      // TODO: impl this feature
+   }
 
 }

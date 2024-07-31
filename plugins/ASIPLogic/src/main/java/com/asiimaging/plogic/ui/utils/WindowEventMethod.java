@@ -11,5 +11,5 @@ import java.util.EventObject;
 
 @FunctionalInterface
 public interface WindowEventMethod {
-    void run(EventObject event);
+   void run(EventObject event);
 }

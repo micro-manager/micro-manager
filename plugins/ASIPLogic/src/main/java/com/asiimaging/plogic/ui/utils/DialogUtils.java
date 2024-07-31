@@ -12,12 +12,12 @@ import javax.swing.JOptionPane;
 
 public class DialogUtils {
 
-    public static void showMessage(final JComponent component, final String title, final String message) {
-        JOptionPane.showMessageDialog(component, message, title, JOptionPane.INFORMATION_MESSAGE);
-    }
+   public static void showMessage(final JComponent component, final String title, final String message) {
+      JOptionPane.showMessageDialog(component, message, title, JOptionPane.INFORMATION_MESSAGE);
+   }
 
-    public static boolean showConfirmDialog(final JComponent component, final String title, final String message) {
-        return JOptionPane.showConfirmDialog(component, message, title, JOptionPane.YES_NO_OPTION) == 0;
-    }
+   public static boolean showConfirmDialog(final JComponent component, final String title, final String message) {
+      return JOptionPane.showConfirmDialog(component, message, title, JOptionPane.YES_NO_OPTION) == 0;
+   }
 
 }
