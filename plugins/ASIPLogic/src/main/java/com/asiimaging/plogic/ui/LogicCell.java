@@ -69,7 +69,7 @@ public class LogicCell extends Panel {
 
       // init input rows
       for (int i = 0; i < 4; i++) {
-         inputs_[i] = new LogicInputRow(plc_, cellNum_,i + 1);
+         inputs_[i] = new LogicInputRow(plc_, cellNum_, i + 1);
       }
 
       final String[] cellTypes = ASIPLogic.CellType.toArray();
@@ -83,7 +83,9 @@ public class LogicCell extends Panel {
 
       radConfig_ = new RadioButton(new String[]{"Low", "High"}, "Low");
       radConfig_.setMigLayout("insets 0 0 0 0", "", "");
-      radConfig_.setMinimumSize(new Dimension(186, 20)); // width chosen to prevent cells from moving
+
+      // width chosen to prevent cells from moving
+      radConfig_.setMinimumSize(new Dimension(186, 20));
 
       add(lblTitle, "");
       add(cmbCellType_, "span 3, align left, wrap");

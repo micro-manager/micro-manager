@@ -63,7 +63,8 @@ public class DeviceBase {
       try {
          core_.setProperty(deviceName_, propertyName, propertyValue);
       } catch (Exception e) {
-         studio_.logs().logError("Could not set the \"" + propertyName + "\" property to " + propertyValue + ".");
+         studio_.logs().logError("Could not set the \"" + propertyName
+               + "\" property to " + propertyValue + ".");
       }
    }
 
@@ -72,7 +73,8 @@ public class DeviceBase {
       try {
          result = Integer.parseInt(core_.getProperty(deviceName_, propertyName));
       } catch (Exception e) {
-         studio_.logs().logError("Could not get the \"" + propertyName + "\" property as an integer.");
+         studio_.logs().logError("Could not get the \"" + propertyName
+               + "\" property as an integer.");
       }
       return result;
    }
@@ -81,7 +83,8 @@ public class DeviceBase {
       try {
          core_.setProperty(deviceName_, propertyName, propertyValue);
       } catch (Exception e) {
-         studio_.logs().logError("Could not set the \"" + propertyName + "\" property to " + propertyValue + ".");
+         studio_.logs().logError("Could not set the \"" + propertyName
+               + "\" property to " + propertyValue + ".");
       }
    }
 
@@ -92,7 +95,8 @@ public class DeviceBase {
       try {
          result = Double.parseDouble(core_.getProperty(deviceName_, propertyName));
       } catch (Exception e) {
-         studio_.logs().logError("could not get the \"" + propertyName + "\" property as a double.");
+         studio_.logs().logError("could not get the \"" + propertyName
+               + "\" property as a double.");
       }
       return result;
    }
@@ -101,7 +105,8 @@ public class DeviceBase {
       try {
          core_.setProperty(deviceName_, propertyName, propertyValue);
       } catch (Exception e) {
-         studio_.logs().logError("could not set the \"" + propertyName + "\" property to " + propertyValue + ".");
+         studio_.logs().logError("could not set the \"" + propertyName
+               + "\" property to " + propertyValue + ".");
       }
    }
 

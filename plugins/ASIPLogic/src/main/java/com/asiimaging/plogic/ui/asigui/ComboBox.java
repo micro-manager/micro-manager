@@ -26,7 +26,10 @@ public class ComboBox extends JComboBox<String> {
       init(defaultWidth, defaultHeight);
    }
 
-   public ComboBox(final String[] labels, final String selected, final int width, final int height) {
+   public ComboBox(final String[] labels,
+                   final String selected,
+                   final int width,
+                   final int height) {
       super(labels);
       this.labels = labels;
       this.selected = selected;

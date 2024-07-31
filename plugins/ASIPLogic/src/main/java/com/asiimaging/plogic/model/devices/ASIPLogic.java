@@ -153,7 +153,7 @@ public class ASIPLogic extends ASITigerBase {
 
       public static final String EDIT_CELL_TYPE = "EditCellCellType";
       public static final String EDIT_CELL_CONFIG = "EditCellConfig";
-      public static final String EDIT_CELL_INPUT = "EditCellInput"; // EditCellInput1 - EditCellInput4
+      public static final String EDIT_CELL_INPUT = "EditCellInput"; // EditCellInput 1 - 4
 
       public static final String OUTPUT_CHANNEL = "OutputChannel";
       public static final String PLOGIC_MODE = "PLogicMode";
@@ -262,21 +262,21 @@ public class ASIPLogic extends ASITigerBase {
 
    public enum CellType {
       CONSTANT("0 - constant", 0, "Configuration", "", "", "", "", false),
-      D_FLOP("1 - D flop", 4, "","Din", "Clock", "Reset", "Preset", true),
-      LUT2("2 - 2-input LUT", 2, "LUT Value","A", "B", "", "", false),
-      LUT3("3 - 3-input LUT", 3, "LUT Value","A", "B", "C", "", false),
-      LUT4("4 - 4-input LUT", 4, "LUT Value","A", "B", "C", "D", false),
-      AND2("5 - 2-input AND", 2, "","A", "B", "", "", false),
-      OR2("6 - 2-input OR", 2, "","A", "B", "", "", false),
-      XOR2("7 - 2-input XOR", 2, "","A", "B", "", "", false),
-      ONE_SHOT("8 - one shot", 3, "Duration","Trigger", "Clock", "Reset", "", true),
-      DELAY("9 - delay", 3, "Delay","Trigger", "Clock", "Reset", "", true),
-      AND4("10 - 4-input AND", 4, "","A", "B", "C", "D", false),
-      OR4("11 - 4-input OR", 4, "","A", "B", "C", "D", false),
-      D_FLOP_SYNC("12 - D flop (sync)", 4, "","Din", "Clock", "Reset", "Preset", true),
-      JK_FLOP("13 - JK flop", 3, "","J", "K", "Clock", "", true),
+      D_FLOP("1 - D flop", 4, "", "Din", "Clock", "Reset", "Preset", true),
+      LUT2("2 - 2-input LUT", 2, "LUT Value", "A", "B", "", "", false),
+      LUT3("3 - 3-input LUT", 3, "LUT Value", "A", "B", "C", "", false),
+      LUT4("4 - 4-input LUT", 4, "LUT Value", "A", "B", "C", "D", false),
+      AND2("5 - 2-input AND", 2, "", "A", "B", "", "", false),
+      OR2("6 - 2-input OR", 2, "", "A", "B", "", "", false),
+      XOR2("7 - 2-input XOR", 2, "", "A", "B", "", "", false),
+      ONE_SHOT("8 - one shot", 3, "Duration", "Trigger", "Clock", "Reset", "", true),
+      DELAY("9 - delay", 3, "Delay", "Trigger", "Clock", "Reset", "", true),
+      AND4("10 - 4-input AND", 4, "", "A", "B", "C", "D", false),
+      OR4("11 - 4-input OR", 4, "", "A", "B", "C", "D", false),
+      D_FLOP_SYNC("12 - D flop (sync)", 4, "", "Din", "Clock", "Reset", "Preset", true),
+      JK_FLOP("13 - JK flop", 3, "", "J", "K", "Clock", "", true),
       ONE_SHOT_NRT("14 - one shot (NRT)", 3, "Duration","Trigger", "Clock", "Reset", "", true),
-      DELAY_NRT("15 - delay (NRT)", 3, "Delay","Trigger", "Clock", "Reset", "", true);
+      DELAY_NRT("15 - delay (NRT)", 3, "Delay", "Trigger", "Clock", "Reset", "", true);
 
       private final String propertyName_;
       private final int numInputs_;

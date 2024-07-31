@@ -102,16 +102,19 @@ public class DeviceTab extends Panel {
             + "This will query the controller and update the tabs.</html>");
       cmbTriggerSource_.setToolTipText("<html>Set the <b>" + ASIPLogic.Properties.TRIGGER_SOURCE
             + "</b> property to the selected item.</html>");
-      cbxRefreshProperties_.setToolTipText("<html>Set the <b>" + ASIPLogic.Properties.EDIT_CELL_UPDATE_AUTO
-            + "</b> property to <b>" + ASIPLogic.Values.YES + "</b> or <b>" + ASIPLogic.Values.NO + "</b>.</html>");
-      cbxRefreshProperties_.setToolTipText("<html>Set the <b>" + ASIPLogic.Properties.REFRESH_PROPERTY_VALUES
-            + "</b> property to <b>" + ASIPLogic.Values.YES + "</b> or <b>" + ASIPLogic.Values.NO + "</b>.</html>");
+      cbxRefreshProperties_.setToolTipText("<html>Set the <b>"
+            + ASIPLogic.Properties.EDIT_CELL_UPDATE_AUTO + "</b> property to <b>"
+            + ASIPLogic.Values.YES + "</b> or <b>" + ASIPLogic.Values.NO + "</b>.</html>");
+      cbxRefreshProperties_.setToolTipText("<html>Set the <b>"
+            + ASIPLogic.Properties.REFRESH_PROPERTY_VALUES + "</b> property to <b>"
+            + ASIPLogic.Values.YES + "</b> or <b>" + ASIPLogic.Values.NO + "</b>.</html>");
       btnSaveSettings_.setToolTipText("<html>Set the <b>" + ASIPLogic.Properties.SAVE_CARD_SETTINGS
             + "</b> property to <b>" + ASIPLogic.SaveSettings.Z + "</b>.</html>");
       btnClearLogicCells_.setToolTipText("<html>Set the <b>" + ASIPLogic.Properties.SET_CARD_PRESET
             + "</b> property to <b>" + ASIPLogic.Preset.ALL_CELLS_ZERO + "</b>.</html>");
-      btnClearCellStates_.setToolTipText("<html>Set the <b>" + ASIPLogic.Properties.CLEAR_ALL_CELL_STATES
-            + "</b> property to <b>" + ASIPLogic.Values.DO_IT + "</b>.</html>");
+      btnClearCellStates_.setToolTipText("<html>Set the <b>"
+            + ASIPLogic.Properties.CLEAR_ALL_CELL_STATES + "</b> property to <b>"
+            + ASIPLogic.Values.DO_IT + "</b>.</html>");
 
       // update ui with values from the controller
       refreshUserInterface();

@@ -36,7 +36,10 @@ public class RadioButton extends JPanel {
       setSelected(selected, true);
    }
 
-   public RadioButton(final String[] names, final String selected, final int type, final int alignment) {
+   public RadioButton(final String[] names,
+                      final String selected,
+                      final int type,
+                      final int alignment) {
       setMigLayout("", "", "");
       buttonGroup = new ButtonGroup();
       buttons = new ArrayList<>();
@@ -54,6 +57,7 @@ public class RadioButton extends JPanel {
          button.setEnabled(state);
       }
    }
+
    private void addRadioButton(final String text) {
       final JRadioButton button = new JRadioButton(text);
       final Font font = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
@@ -73,7 +77,8 @@ public class RadioButton extends JPanel {
 
    private void setLayoutStyle(final int type, final int alignment) {
       layoutStyle = (type == RadioButton.VERTICAL) ? "wrap" : "";
-      layoutStyle = (alignment == RadioButton.LEFT) ? "left, " + layoutStyle : "right, " + layoutStyle;
+      layoutStyle = (alignment == RadioButton.LEFT) ?
+            "left, " + layoutStyle : "right, " + layoutStyle;
    }
 
    public void setSelected(final String text, final boolean state) {

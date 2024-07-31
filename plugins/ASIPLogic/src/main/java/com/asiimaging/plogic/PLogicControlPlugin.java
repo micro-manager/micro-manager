@@ -16,10 +16,10 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class PLogicControlPlugin implements MenuPlugin, SciJavaPlugin {
 
-   public final static String copyright = "Applied Scientific Instrumentation (ASI), 2024";
-   public final static String description = "An interface for the Tiger Programmable Logic Card (TGPLC).";
-   public final static String menuName = "ASI PLogic Control";
-   public final static String version = "0.1.0";
+   public static final String copyright = "Applied Scientific Instrumentation (ASI), 2024";
+   public static final String description = "An interface for the Tiger Programmable Logic Card.";
+   public static final String menuName = "ASI PLogic Control";
+   public static final String version = "0.1.0";
 
    private Studio studio_;
    private PLogicControlFrame frame_;

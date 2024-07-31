@@ -64,11 +64,13 @@ public class PLogicControlFrame extends JFrame {
       final JLabel lblTitle = new JLabel(PLogicControlPlugin.menuName + ": Error");
       lblTitle.setFont(new Font(Font.MONOSPACED, Font.BOLD, 20));
 
-      final JLabel lblError = new JLabel("This plugin requires a Tiger controller with a PLogic card.");
+      final JLabel lblError = new JLabel(
+            "This plugin requires a Tiger controller with a PLogic card.");
       lblError.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
 
-      final JLabel lblHelp = new JLabel("<html>Add the <b>PLogic</b> device from <b>TigerCommHub</b> in the "
-            + "<b>ASITiger</b><br> device adapter using the <u>Hardware Configuration Wizard</u>.</html>");
+      final JLabel lblHelp = new JLabel("<html>Add the <b>PLogic</b> device from <" +
+            "b>TigerCommHub</b> in the <b>ASITiger</b><br> device adapter using the " +
+            "<u>Hardware Configuration Wizard</u>.</html>");
       lblHelp.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
 
       final Button btnManual = new Button("Manual", 120, 30);

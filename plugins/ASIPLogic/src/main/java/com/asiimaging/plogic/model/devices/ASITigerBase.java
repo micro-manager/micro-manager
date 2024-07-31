@@ -94,7 +94,8 @@ public abstract class ASITigerBase extends DeviceBase {
 
    public void isRefreshPropertyValuesOn(final boolean state) {
       try {
-         core_.setProperty(deviceName_, Properties.REFRESH_PROPERTY_VALUES, state ? Values.YES : Values.NO);
+         core_.setProperty(deviceName_, Properties.REFRESH_PROPERTY_VALUES,
+               state ? Values.YES : Values.NO);
       } catch (Exception e) {
          studio_.logs().logError("setRefreshPropertyValues failed.");
       }
@@ -102,7 +103,8 @@ public abstract class ASITigerBase extends DeviceBase {
 
    public boolean isRefreshPropertyValuesOn() {
       try {
-         return core_.getProperty(deviceName_, Properties.REFRESH_PROPERTY_VALUES).equals(Values.YES);
+         return core_.getProperty(deviceName_,
+               Properties.REFRESH_PROPERTY_VALUES).equals(Values.YES);
       } catch (Exception e) {
          studio_.logs().logError("getRefreshPropertyValues failed.");
       }

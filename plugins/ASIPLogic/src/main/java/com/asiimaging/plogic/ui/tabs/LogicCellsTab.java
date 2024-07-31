@@ -34,7 +34,7 @@ public class LogicCellsTab extends Panel {
    private void createUserInterface() {
       // init logic cells (always init all 24 cells)
       for (int i = 0; i < 24; i++) {
-         cells_[i] = new LogicCell(model_.plc(), i+1);
+         cells_[i] = new LogicCell(model_.plc(), i + 1);
       }
 
       refreshUserInterface();
@@ -58,8 +58,8 @@ public class LogicCellsTab extends Panel {
 
       // add logic cells to panel
       for (int i = 0; i < numCells; i++) {
-         String constraints = ((i+1) % factor == 0) ? "wrap" : "";
-         if (i == cells_.length-1) {
+         String constraints = ((i + 1) % factor == 0) ? "wrap" : "";
+         if (i == cells_.length - 1) {
             constraints = "";
          }
          add(cells_[i], "aligny top, " + constraints);

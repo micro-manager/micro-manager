@@ -57,6 +57,7 @@ public class PLogicControlModel {
 
    /**
     * Return true if any PLogic devices are found.
+    *
     * <p>Set device to first in list as default.
     *
     * @return true if any devices found
