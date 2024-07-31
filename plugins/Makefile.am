@@ -10,6 +10,7 @@ endif
 nobase_mmplugin_DATA = \
 	$(MAGELLAN_JAR) \
 	ASIdiSPIM.jar \
+	ASIPLogic.jar \
 	Assemble.jar \
 	AcquireMultipleRegions.jar \
 	AutoLase.jar \
