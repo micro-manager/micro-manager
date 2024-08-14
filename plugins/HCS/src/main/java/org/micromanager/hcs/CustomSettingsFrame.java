@@ -26,6 +26,8 @@ public class CustomSettingsFrame extends JFrame {
    private final JTextField wellSpacingY_;
    private final JTextField sizeXUm_;
    private final JTextField sizeYUm_;
+   private final JTextField wellSizeXUm_;
+   private final JTextField wellSizeYUm_;
    private final JTextField firstWellX_;
    private final JTextField firstWellY_;
    private final JCheckBox circular_;
@@ -61,6 +63,9 @@ public class CustomSettingsFrame extends JFrame {
 
       sizeXUm_ = createText("<html>Total width (&#956;m): </html>", 10, false);
       sizeYUm_ = createText("<html>Total height (&#956;m): </html>", 10, true);
+
+      wellSizeXUm_ = createText("<html>Well width (&#956;m): </html>", 10, false);
+      wellSizeYUm_ = createText("<html>Well height (&#956;m): </html>", 10, true);
 
       firstWellX_ = createText("<html>First well X-offset (&#956;m): </html>", 10, false);
       firstWellY_ = createText("<html>First well Y-offset (&#956;m): </html>", 10, true);
@@ -107,6 +112,8 @@ public class CustomSettingsFrame extends JFrame {
                   id_.getText(), description_.getText(),
                   Double.parseDouble(firstWellX_.getText()),
                   Double.parseDouble(firstWellY_.getText()),
+                  Double.parseDouble(wellSizeXUm_.getText()),
+                  Double.parseDouble(wellSizeYUm_.getText()),
                   circular_.isSelected()));
          }
          dispose();

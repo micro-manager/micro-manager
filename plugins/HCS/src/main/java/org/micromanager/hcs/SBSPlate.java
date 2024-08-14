@@ -59,6 +59,8 @@ public class SBSPlate {
    private static final String WELL_SPACING_Y = "well_spacing_Y";
    private static final String PLATE_SIZE_X = "plate_size_X";
    private static final String PLATE_SIZE_Y = "plate_size_Y";
+   private static final String WELL_SIZE_X = "well_size_X";
+   private static final String WELL_SIZE_Y = "well_size_Y";
    private static final String ID = "id";
    private static final String DESCRIPTION = "description";
    private static final String FIRST_WELL_X = "first_well_x";
@@ -291,13 +293,14 @@ public class SBSPlate {
    public String serialize() throws HCSException {
       return serialize(numRows_, numColumns_, wellSpacingX_, wellSpacingY_,
             sizeXUm_, sizeYUm_, id_, description_, firstWellX_, firstWellY_,
-            circular_);
+            wellSizeX_, wellSizeY_, circular_);
    }
 
    public static String serialize(int numRows, int numColumns,
                                   double wellSpacingX, double wellSpacingY, double sizeXUm,
                                   double sizeYUm, String id, String description, double firstWellX,
-                                  double firstWellY, boolean circular) throws HCSException {
+                                  double firstWellY, double wellSizeX, double wellSizeY,
+                                  boolean circular) throws HCSException {
       JSONObject plate = new JSONObject();
       try {
          plate.put(ROWS, numRows);
@@ -311,6 +314,8 @@ public class SBSPlate {
          plate.put(FIRST_WELL_X, firstWellX);
          plate.put(FIRST_WELL_Y, firstWellY);
          plate.put(CIRCULAR, circular);
+         plate.put(WELL_SIZE_X, wellSizeX);
+         plate.put(WELL_SIZE_Y, wellSizeY);
          return plate.toString(3);
       } catch (JSONException e) {
          throw new HCSException(e);
@@ -332,6 +337,12 @@ public class SBSPlate {
          firstWellX_ = plate.getDouble(FIRST_WELL_X);
          firstWellY_ = plate.getDouble(FIRST_WELL_Y);
          circular_ = plate.getBoolean(CIRCULAR);
+         if (plate.has(WELL_SIZE_X)) {
+            wellSizeX_ = plate.getDouble(WELL_SIZE_X);
+         }
+         if (plate.has(WELL_SIZE_Y)) {
+            wellSizeY_ = plate.getDouble(WELL_SIZE_Y);
+         }
       } catch (JSONException e) {
          throw new HCSException(e);
       }
