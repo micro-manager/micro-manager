@@ -35,6 +35,7 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.MultiWellPlateWell;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
@@ -1694,6 +1695,9 @@ public enum PropertyKey {
    WELL_PLATE_ROW_NAMING_CONVENTION("WellPlateRowNamingConvention", MultiWellPlate.class),
    WELL_PLATE_ROWS("WellPlateRows", MultiWellPlate.class),
    WELL_PLATE_STATUS("WellPlateStatus", MultiWellPlate.class),
+   WELL_PLATE_WELL_COLUMN("WellPlateWellColumn", MultiWellPlateWell.class),
+   WELL_PLATE_WELL_ID("WellPlateWellId", MultiWellPlateWell.class),
+   WELL_PLATE_WELL_ROW("WellPlateWellRow", MultiWellPlateWell.class),
    WELL_PLATE_WELL_ORIGIN_X("WellPlateWellOriginX", MultiWellPlate.class),
    WELL_PLATE_WELL_ORIGIN_Y("WellPlateWellOriginY", MultiWellPlate.class),
 

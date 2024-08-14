@@ -45,7 +45,7 @@ public class DefaultMultiWellPlate implements MultiWellPlate {
                  map.getInteger(PropertyKey.WELL_PLATE_ROWS.key(), 0),
                  map.getString(PropertyKey.WELL_PLATE_STATUS.key(), ""),
                  map.getDouble(PropertyKey.WELL_PLATE_WELL_ORIGIN_X.key(), 0.0),
-                 map.getDouble(PropertyKey.WELL_PLATE_WELL_ORIGIN_Y.key(), 0.0) );
+                 map.getDouble(PropertyKey.WELL_PLATE_WELL_ORIGIN_Y.key(), 0.0));
       }
    }
 
