@@ -67,9 +67,13 @@ public class AcquisitionSettings {
       this.hardwareTimepoints = orig.hardwareTimepoints;
       this.separateTimepoints = orig.separateTimepoints;
       this.usePathPresets = orig.usePathPresets;
+      this.useAdvancedSliceTiming = orig.useAdvancedSliceTiming;
       this.numSimultCameras = orig.numSimultCameras;
       this.saveDirectoryRoot = orig.saveDirectoryRoot;
       this.saveNamePrefix = orig.saveNamePrefix;
+      this.durationSliceMs = orig.durationSliceMs;
+      this.durationVolumeMs = orig.durationVolumeMs;
+      this.durationTotalSec = orig.durationTotalSec;
    }
 
    // piezo scanning, vibration, stage scanning, i.e. what is 
@@ -176,4 +180,13 @@ public class AcquisitionSettings {
    
    // the name prefix when saving acquisition data
    public String saveNamePrefix;
+   
+   // computed slice duration
+   public float durationSliceMs;
+   
+   // computed volume duration
+   public float durationVolumeMs;
+   
+   // computed total duration
+   public float durationTotalSec;
 }

@@ -1215,6 +1215,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.useAdvancedSliceTiming = advancedSliceTimingCB_.isSelected();
       acqSettings.saveDirectoryRoot = rootField_.getText();
       acqSettings.saveNamePrefix = prefixField_.getText();
+      // missing from this init:
+      // durationSlice
+      // durationVolume
+      // durationTotal
       return acqSettings;
    }
    
@@ -1705,7 +1709,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     *                      or if cameras aren't assigned
     */
    private void recalculateSliceTiming(boolean showWarnings) {
-      updatingTiming_ = true;
       if(!checkCamerasAssigned(showWarnings)) {
          return;
       }
@@ -1713,6 +1716,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (advancedSliceTimingCB_.isSelected()) {
          return;
       }
+      updatingTiming_ = true;
       if (ASIdiSPIM.SCOPE) {
          sliceTiming_ = getTimingSingleObjective(showWarnings);
       } else {
@@ -2808,6 +2812,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          
       }
       
+      
       double volumeDuration = computeActualVolumeDuration(acqSettingsOrig);
       double timepointDuration = computeTimepointDuration();
       long timepointIntervalMs = Math.round(acqSettingsOrig.timepointInterval*1000);
@@ -2896,6 +2901,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             acqSettingsOrig.usePathPresets = false;
          }
       }
+      
+      acqSettingsOrig.durationSliceMs = (float)getSliceDuration(acqSettingsOrig.sliceTiming);
+      acqSettingsOrig.durationVolumeMs = (float)volumeDuration;
+      acqSettingsOrig.durationTotalSec = (float)computeActualTimeLapseDuration();
       
       // now acqSettings should be read-only
       final AcquisitionSettings acqSettings = new AcquisitionSettings(acqSettingsOrig);
@@ -3305,7 +3314,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // the circular buffer, which is used by both cameras, can only have one image size setting
-      //    => require same image height and width for both cameras if both are used 
+      //    => require same image height and width for both cameras if both are used
       if (acqSimultSideA) {
          try {
             Rectangle roi_1 = core_.getROI(cameraA1);
@@ -3806,7 +3815,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName_, "StageScanAnglePathA", // used in deskew routine
                     Float.toString(props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA)));
             //Boolean.toString(acqSimultSideA));   // whether timepoints are inner loop compared to position; false for all diSPIM use cases except simultaneous on PathA where we use timepoints as "channels"
-                      
+            gui_.setAcquisitionProperty(acqName_, "AcquisitionName", acqName_);
+            
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
             core_.initializeCircularBuffer();  // superset of clearCircularBuffer()
@@ -4485,6 +4495,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                              actualTimePoint, channelIndex,
                                              channelImageNr[channelIndex], positionNum,
                                              now - acqStart, timg, bq);
+                                       
+                                       // for troubleshooting record the images coming in
+                                       ReportingUtils.logDebugMessage("added image: camera index " + channelIndex + " to timepoint " + actualTimePoint 
+                                             + " in frame " + channelImageNr[channelIndex] + " in position " + positionNum
+                                             + " with free capacity " + core_.getBufferFreeCapacity());
                                     }
 
                                     // update our counters to be ready for next image
@@ -4872,7 +4887,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // want to do this, even with demo cameras, so we can test everything else
       // TODO figure out if we really want to return piezos to 0 position (maybe center position,
       //   maybe not at all since we move when we switch to setup tab, something else??)
-      controller_.cleanUpControllerAfterAcquisition(acqSettings, true);
+      // importantly do not move the piezo for SCOPE
+      controller_.cleanUpControllerAfterAcquisition(acqSettings, (ASIdiSPIM.SCOPE ? false : true) );
       
       // if we did stage scanning restore its position and speed
       if (acqSettings.isStageScanning) {
