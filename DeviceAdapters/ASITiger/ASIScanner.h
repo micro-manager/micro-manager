@@ -122,6 +122,7 @@ public:
    int OnSPIMPiezoHomeDisable (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMInterleaveSidesEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMAlternateDirectionsEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMSmoothSliceEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMModeByte         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumRepeats       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);

@@ -547,6 +547,15 @@ int CScanner::Initialize()
          UpdateProperty(g_SPIMScanDurationPropertyName);
       }
 
+      if (FirmwareVersionAtLeast(3.5)) {
+         // in 3.50 added bit 7 of SPIM mode for smooth slice (e.g. constant galvo scan for SCOPE)
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMSmoothSliceEnable);
+         CreateProperty(g_SPIMSmoothSliceEnable, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_SPIMSmoothSliceEnable, g_YesState);
+         AddAllowedValue(g_SPIMSmoothSliceEnable, g_NoState);
+         UpdateProperty(g_SPIMSmoothSliceEnable);
+      }
+
    } // adding SPIM properties
 
    // add ring buffer properties if supported (starting 2.81)
@@ -3251,7 +3260,7 @@ int CScanner::OnSPIMAlternateDirectionsEnable(MM::PropertyBase* pProp, MM::Actio
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = tmp >> 5;   // shift left to get bits 5 in position of LSB
-      tmp &= (0x01);    // mask off all but what used to be bit 4
+      tmp &= (0x01);    // mask off all but what used to be bit 5
       switch (tmp)
       {
          case 0: success = pProp->Set(g_NoState); break;
@@ -3278,6 +3287,56 @@ int CScanner::OnSPIMAlternateDirectionsEnable(MM::PropertyBase* pProp, MM::Actio
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
       tmp += (tmp2 & (0xDF));  // keep bit 5 from tmp, all others use current setting
+      if (tmp == tmp2)
+         return DEVICE_OK;  // don't need to set value if it's already correct
+      command.str(""); command << addressChar_ << "NR Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMSmoothSliceEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   bool success;
+
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp >> 7;   // shift left to get bits 7 in position of LSB
+      tmp &= (0x01);    // mask off all but what used to be bit 7
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_NoState); break;
+         case 1: success = pProp->Set(g_YesState); break;
+         default: success = 0;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_NoState) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_YesState) == 0)
+         tmp = 1;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      tmp = tmp << 7;  // right shift to get the value to bit 7
+      command << addressChar_ << "NR Z?";
+      long tmp2;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+      tmp += (tmp2 & (0x7F));  // keep bit 7 from tmp, all others use current setting
       if (tmp == tmp2)
          return DEVICE_OK;  // don't need to set value if it's already correct
       command.str(""); command << addressChar_ << "NR Z=" << tmp;

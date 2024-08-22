@@ -393,6 +393,7 @@ const char* const g_SPIMPiezoHomeDisable = "SPIMPiezoHomeDisable";
 const char* const g_SPIMScannerHomeDisable = "SPIMScannerHomeDisable";
 const char* const g_SPIMInterleaveSidesEnable = "SPIMInterleaveSidesEnable";
 const char* const g_SPIMAlternateDirectionsEnable = "SPIMAlternateDirectionsEnable";
+const char* const g_SPIMSmoothSliceEnable = "SPIMSmoothSliceEnable";
 const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
 const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
 const char* const g_SPIMStatePropertyName = "SPIMState";
