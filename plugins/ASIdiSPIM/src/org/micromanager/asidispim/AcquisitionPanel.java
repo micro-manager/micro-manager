@@ -2137,7 +2137,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             acquisitionRequested_.set(true);
             updateStartButton();
             final boolean hideErrors = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), 
-                  Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, true);
+                  Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false);
             AcquisitionStatus success = runAcquisitionPrivate(true, side, hideErrors);
             if (success == AcquisitionStatus.FATAL_ERROR) {
                ReportingUtils.logError("Fatal error running test diSPIM acquisition.");
@@ -3816,6 +3816,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     Float.toString(props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA)));
             //Boolean.toString(acqSimultSideA));   // whether timepoints are inner loop compared to position; false for all diSPIM use cases except simultaneous on PathA where we use timepoints as "channels"
             gui_.setAcquisitionProperty(acqName_, "AcquisitionName", acqName_);
+            if (ASIdiSPIM.SCOPE) {
+               gui_.setAcquisitionProperty(acqName_, "GalvoCalibration", NumberUtils.doubleToCoreString(prefs_.getFloat(
+                     MyStrings.PanelNames.SETUP.toString() + Sides.A.toString(), 
+                     Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, 100)));
+            }
             
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
