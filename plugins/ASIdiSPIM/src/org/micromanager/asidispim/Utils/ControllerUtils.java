@@ -819,6 +819,11 @@ public class ControllerUtils {
          }
       } else {  // normal case
 
+         final boolean smoothSlicePlugin = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_SMOOTH_SLICE_SCAN, false);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_SMOOTH_SLICE_ENABLE, 
+               smoothSlicePlugin ? Properties.Values.YES : Properties.Values.NO, true); // ignore error
+         
          // only do alternating scan directions if the user is using advanced timing
          //    and user has option enabled on the advanced timing panel
          final boolean oppositeDirections = prefs_.getBoolean(

@@ -82,6 +82,7 @@ public class SettingsPanel extends ListeningJPanel {
    private final JCheckBox piezoIgnore_;
    private final JCheckBox usePathGroupAcquisition_;
    private final JCheckBox acqBothCamerasSimult_;
+   private final JCheckBox smoothSliceScan_;
 
    /**
     * 
@@ -210,7 +211,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel acqusitionPanel = new JPanel(new MigLayout(
             "",
             "[left]",
-            "[]2[]"));
+            "[]1[]"));
       acqusitionPanel.setBorder(PanelUtils.makeTitledBorder("Acquisition"));
 
       final JCheckBox acqSettingsWrite = pu.makeCheckBox("Write file with acquisition settings",
@@ -221,7 +222,7 @@ public class SettingsPanel extends ListeningJPanel {
       acqBothCamerasSimult_ = pu.makeCheckBox("Acquire from both sides simultaneously",
             Properties.Keys.PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT, panelName_, false);
       acqusitionPanel.add(acqBothCamerasSimult_, "wrap");
-
+      
       acqFailQuietly_ = pu.makeCheckBox("Acquisition failures are quiet",
             Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, panelName_, false);
       acqusitionPanel.add(acqFailQuietly_, "wrap");
@@ -234,7 +235,11 @@ public class SettingsPanel extends ListeningJPanel {
             Properties.Keys.PLUGIN_PIEZO_IGNORE_STAGE_SLICE_SCAN, panelName_, false);
       acqusitionPanel.add(piezoIgnore_, "wrap");
       
-      // end acquisiton panel
+      smoothSliceScan_ = pu.makeCheckBox("Smooth slice scan (blurs)",
+            Properties.Keys.PLUGIN_SMOOTH_SLICE_SCAN, panelName_, false);
+      acqusitionPanel.add(smoothSliceScan_, "wrap");
+      
+      // end acquisition panel
       
       
       // start test acquisition panel
