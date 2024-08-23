@@ -839,8 +839,14 @@ public class ControllerUtils {
             props_.setPropValue(galvoDevice, Properties.Keys.SPIM_ALTERTATE_DIRECTIONS, 
                   Properties.Values.NO, skipScannerWarnings);
          }
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DURATION_SCAN,
-               settings.sliceTiming.scanPeriod, skipScannerWarnings);
+         if (ASIdiSPIM.SCOPE) {
+            // for galvo scan we don't move the scan axis, but this is needed for smooth scanning case
+            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DURATION_SCAN,
+                  settings.sliceTiming.sliceDuration-settings.sliceTiming.scanDelay, skipScannerWarnings);
+         } else {
+            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DURATION_SCAN,
+                  settings.sliceTiming.scanPeriod, skipScannerWarnings);
+         }
          props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_Y_DEG,
                sliceAmplitude, skipScannerWarnings);
          if (!ASIdiSPIM.SCOPE) {  // for single-objective we don't want to touch the galvo offset
