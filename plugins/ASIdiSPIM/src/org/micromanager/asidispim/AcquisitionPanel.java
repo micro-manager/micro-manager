@@ -1215,6 +1215,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.useAdvancedSliceTiming = advancedSliceTimingCB_.isSelected();
       acqSettings.saveDirectoryRoot = rootField_.getText();
       acqSettings.saveNamePrefix = prefixField_.getText();
+      acqSettings.pluginVersion = ASIdiSPIM.menuName;
       // missing from this init:
       // durationSlice
       // durationVolume

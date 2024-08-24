@@ -74,6 +74,7 @@ public class AcquisitionSettings {
       this.durationSliceMs = orig.durationSliceMs;
       this.durationVolumeMs = orig.durationVolumeMs;
       this.durationTotalSec = orig.durationTotalSec;
+      this.pluginVersion = orig.pluginVersion;
    }
 
    // piezo scanning, vibration, stage scanning, i.e. what is 
@@ -189,4 +190,6 @@ public class AcquisitionSettings {
    
    // computed total duration
    public float durationTotalSec;
+   
+   public String pluginVersion;
 }
