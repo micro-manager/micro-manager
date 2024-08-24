@@ -681,12 +681,10 @@ public class Cameras {
       } else {
          Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
          
-         // TODO Confirm that the Kinetix camera is like the Prime 95B
-         
-         // Photometrics Prime 95B is very different from other cameras so handle it as special case
+         // Photometrics cameras are very different from others so handle  as special case
          if (camLibrary == Devices.Libraries.PVCAM 
-               && (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)
-                     || props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.KINETIX_CHIPNAME))) {
+               && (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME.toString())
+                     || props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.KINETIX_CHIPNAME.toString()))) {
             int trigToGlobal = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_POST_TIME)
                   + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
             // it appears as of end-May 2017 that the clearing time is actually rolled into the post-trigger
@@ -726,7 +724,7 @@ public class Cameras {
                resetTimeMs = camReadoutTime;
                break;
             case PVCAM:
-               resetTimeMs = 14.25f;  // strange number just to make it easy to find later; I think the original Prime needs to be added
+               resetTimeMs = 123.25f;  // strange number just to make it easy to find later; I think the original Prime needs to be added
                break;
             default:
                break;
@@ -765,8 +763,8 @@ public class Cameras {
             readoutTimeMs = 0.25f;
             break;
          case PVCAM:
-            if (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)
-                  || props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.KINETIX_CHIPNAME)) {
+            if (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME.toString())
+                  || props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.KINETIX_CHIPNAME.toString())) {
                int preTime = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME);
                readoutTimeMs = (float) preTime / 1e6f;
                // for safety we make sure to wait at least a quarter millisecond to trigger
@@ -783,7 +781,7 @@ public class Cameras {
          }
          break;
       case LIGHT_SHEET:
-         if (camLibrary == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
+         if (camLibrary == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3.toString())) {
             readoutTimeMs = 10000;  // absurdly large, light sheet mode over USB3 isn't supported by Flash4 but we are set up to decide available modes by device library and not a property
          } else if (camLibrary == Devices.Libraries.PVCAM) {
             readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
@@ -807,7 +805,7 @@ public class Cameras {
 
          switch (camLibrary) {
          case HAMCAM:
-            if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
+            if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3.toString())) {
                // trust the device adapter's calculation for USB3
                readoutTimeMs = props_.getPropValueFloat(camKey, Properties.Keys.READOUTTIME)*1000f;
             } else {
