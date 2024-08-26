@@ -3645,6 +3645,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                throw new IllegalMonitorStateException("User stopped the acquisition");
             }
 
+            // removing this error dump because it seems to have outlived its purpose, but still keep post-acquisition dump without clearing
+            /**
             // dump errors and then clear them; the serial traffic will appear in the corelog if we need them
             // hardcode addresses 1, 2, 3, and 6 which are almost always present
             props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "1 DU Y");
@@ -3655,11 +3657,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "3 DU X");
             props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "6 DU Y");
             props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "6 DU X");
+            **/
             
             // flag that we are actually running acquisition now
             acquisitionRunning_.set(true);
             
             ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName_ + " with following settings: " + acqSettingsJSON);
+            ReportingUtils.logMessage("Position list: " + positionList.serialize());
             
             final int numMMChannels;
             if (acqSimultSideA) {
@@ -4818,6 +4822,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      writer.close();
                   } catch (Exception ex) {
                      MyDialogUtils.showError(ex, "Could not save acquisition settings to file as requested to path " + path, hideErrors);
+                  }
+                  try {
+                     // also write position list if it was used
+                     if (acqSettings.useMultiPositions) {
+                        path = lastAcquisitionPath_ + File.separator + "PositionList.txt";
+                        PrintWriter writer = new PrintWriter(path);
+                        writer.println(positionList.serialize());
+                        writer.flush();
+                        writer.close();
+                     }
+                  } catch (Exception ex) {
+                     MyDialogUtils.showError(ex, "Could not save position list to file as requested to path " + path, hideErrors);
                   }
                }
                
