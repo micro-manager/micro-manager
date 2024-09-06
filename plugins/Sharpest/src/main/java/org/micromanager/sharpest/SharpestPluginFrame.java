@@ -24,11 +24,13 @@ package org.micromanager.sharpest;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.List;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
@@ -119,6 +121,22 @@ public class SharpestPluginFrame extends JDialog {
       eachChannelBox.setSelected(settings_.getBoolean(SharpestPlugin.EACH_CHANNEL, false));
       channelBox.setEnabled(!eachChannelBox.isSelected());
 
+      final JRadioButton useFitBox = new JRadioButton("use fit");
+      final JRadioButton useMaxBox = new JRadioButton("use max");
+      useFitBox.setSelected(settings_.getBoolean(SharpestPlugin.USE_FIT, true));
+      useMaxBox.setSelected(!useFitBox.isSelected());
+      final ButtonGroup bg = new ButtonGroup();
+      bg.add(useFitBox);
+      bg.add(useMaxBox);
+      useFitBox.addActionListener((ActionEvent e) -> {
+         settings_.putBoolean(SharpestPlugin.USE_FIT, useFitBox.isSelected());
+         useMaxBox.setSelected(!useFitBox.isSelected());
+      });
+      useMaxBox.addActionListener((ActionEvent e) -> {
+         settings_.putBoolean(SharpestPlugin.USE_FIT, useFitBox.isSelected());
+         useMaxBox.setSelected(!useFitBox.isSelected());
+      });
+
       final JCheckBox showGraphBox = new JCheckBox("show graph");
       showGraphBox.setSelected(settings_.getBoolean(SharpestPlugin.SHOW_SHARPNESS_GRAPH, false));
       showGraphBox.addActionListener((ActionEvent e) ->
@@ -134,6 +152,8 @@ public class SharpestPluginFrame extends JDialog {
          super.add(selectChannelLabel);
          super.add(channelBox, "span2, grow, wrap");
       }
+      super.add(useFitBox);
+      super.add(useMaxBox, "wrap");
       super.add(showGraphBox, "span3, grow, wrap");
 
       super.add(new JLabel("name"));
@@ -157,7 +177,8 @@ public class SharpestPluginFrame extends JDialog {
          if (selectedItem instanceof Integer) {
             nrPlanes = (Integer) selectedItem;
          }
-         SharpestData zpd = new SharpestData(method,  showGraphBox.isSelected(), nrPlanes,
+         SharpestData zpd = new SharpestData(method,  useFitBox.isSelected(),
+                 showGraphBox.isSelected(), nrPlanes,
                  eachChannelBox.isSelected(), (String) channelBox.getSelectedItem());
          zp.project(saveBox.isSelected(),
                  nameField.getText(),

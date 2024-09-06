@@ -272,24 +272,35 @@ public class SharpestPluginExecutor {
          imgScoringFunction.allowInPlaceModification(true);
          SortedMap<Integer, Double> focusScoreMap = new TreeMap<>();
          int nrSlices = stack.getSize();
+         double maxScore = Double.NEGATIVE_INFINITY;
+         int bestIndex = 0;
          for (int i = 0; i < nrSlices; i++) {
-            focusScoreMap.put(i, imgScoringFunction.compute(stack.getProcessor(i + 1)));
+            double score = imgScoringFunction.compute(stack.getProcessor(i + 1));
+            if (score > maxScore) {
+               maxScore = score;
+               bestIndex = i;
+            }
+            focusScoreMap.put(i, score);
          }
-         XYSeries xySeries = new XYSeries("Focus Score");
-         focusScoreMap.forEach(xySeries::add);
-         double[] guess = {(double) nrSlices / 2.0,
-                 focusScoreMap.get(nrSlices / 2)};
-         double[] fit = Fitter.fit(xySeries, Fitter.FunctionType.Gaussian, guess);
-         int bestIndex  = (int) Math.round(Fitter.getXofMaxY(xySeries,
-                 Fitter.FunctionType.Gaussian, fit));
-         if (zpd.showGraph_) {
-            XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries,
-                    Fitter.FunctionType.Gaussian, fit);
-            XYSeries[] data = {xySeries, xySeriesFitted};
-            boolean[] shapes = {true, false};
-            PlotUtils pu = new PlotUtils(studio_);
-            pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes,
-                    "", (double) bestIndex);
+         if (zpd.showGraph_ || zpd.useFit_) {
+            XYSeries xySeries = new XYSeries("Focus Score");
+            focusScoreMap.forEach(xySeries::add);
+            double[] guess = {(double) nrSlices / 2.0,
+                    focusScoreMap.get(nrSlices / 2)};
+            double[] fit = Fitter.fit(xySeries, Fitter.FunctionType.Gaussian, guess);
+            if (zpd.useFit_) {
+               bestIndex = (int) Math.round(Fitter.getXofMaxY(xySeries,
+                       Fitter.FunctionType.Gaussian, fit));
+            }
+            if (zpd.showGraph_) {
+               XYSeries xySeriesFitted = Fitter.getFittedSeries(xySeries,
+                       Fitter.FunctionType.Gaussian, fit);
+               XYSeries[] data = {xySeries, xySeriesFitted};
+               boolean[] shapes = {true, false};
+               PlotUtils pu = new PlotUtils(studio_);
+               pu.plotDataN("Focus Score", data, "z position", "Focus Score", shapes,
+                       "", (double) bestIndex);
+            }
          }
          if (bestIndex < 0) {
             bestIndex = 0;
