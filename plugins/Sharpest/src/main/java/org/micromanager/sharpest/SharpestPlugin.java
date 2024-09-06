@@ -43,6 +43,7 @@ public class SharpestPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public static final String KEEP_PLANES = "KeepPlanes";
    public static final String EACH_CHANNEL = "EachChannel";
    public static final String CHANNEL = "Channel";
+   public static final String USE_FIT = "UseFit";
 
    private Studio studio_;
 
