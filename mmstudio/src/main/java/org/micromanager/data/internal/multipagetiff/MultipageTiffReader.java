@@ -36,6 +36,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -70,7 +72,6 @@ public final class MultipageTiffReader {
    private static final long BIGGEST_INT_BIT = (long) Math.pow(2, 31);
    private static final char STRIP_OFFSETS = MultipageTiffWriter.STRIP_OFFSETS;
    private static final char STRIP_BYTE_COUNTS = MultipageTiffWriter.STRIP_BYTE_COUNTS;
-
    private static final char MM_METADATA = MultipageTiffWriter.MM_METADATA;
 
    // Note: ordering of axes here matches that in MDUtils.getLabel().
@@ -91,6 +92,83 @@ public final class MultipageTiffReader {
    private HashMap<Coords, Long> coordsToOffset_;
    private long maxImageOffset_ = Long.MAX_VALUE;
    private ImageByteBuffer imageByteBuffer_;
+
+   //
+   // Buffer allocation and recycling, copied from MultipageTiffWriter
+   //
+
+   // The idea here is to recycle the direct buffers for image pixels, because
+   // allocation is slow. We do not need a large pool,
+   // because the only aim is to avoid situations where allocation is limiting
+   // at steady state. If writing is, on average, faster than incoming images,
+   // the pool should always have a buffer ready for a new request.
+   // Ideally we would also evict unused buffers after a timeout, so as not to
+   // leak memory after writing has concluded.
+   // Increasing the number of buffers becomes a problem when saving MDAs with many
+   // positions and using one MultipageTiffWriter per position, leading to excessive
+   // memory usage by allocating many Direct Byte buffers.
+
+   private static final int BUFFER_DIRECT_THRESHOLD = 1024;
+
+   private static ByteBuffer allocateByteBuffer(int capacity, ByteOrder byteOrder) {
+      ByteBuffer b = capacity >= BUFFER_DIRECT_THRESHOLD
+            ? ByteBuffer.allocateDirect(capacity) : ByteBuffer.allocate(capacity);
+      return b.order(byteOrder);
+   }
+
+   private static final int BUFFER_POOL_SIZE =
+         System.getProperty("sun.arch.data.model").equals("32") ? 0 : 3;
+   private static final Deque<ByteBuffer> pooledBuffers_;
+
+   static {
+      if (BUFFER_POOL_SIZE > 0) {
+         pooledBuffers_ = new ArrayDeque<>(BUFFER_POOL_SIZE);
+      } else {
+         pooledBuffers_ = null;
+      }
+   }
+
+   private static int pooledBufferCapacity_ = 0;
+   private static ByteOrder pooledBufferByteOrder_ = null;
+
+   private static ByteBuffer getLargeBuffer(int capacity, ByteOrder byteOrder) {
+      if (BUFFER_POOL_SIZE == 0) {
+         return allocateByteBuffer(capacity, byteOrder);
+      }
+
+      synchronized (MultipageTiffWriter.class) {
+         if (capacity != pooledBufferCapacity_ || byteOrder != pooledBufferByteOrder_) {
+            pooledBuffers_.clear();
+            pooledBufferCapacity_ = capacity;
+            pooledBufferByteOrder_ = byteOrder;
+         }
+
+         // Recycle in LIFO order (smaller images may still be in L3 cache)
+         ByteBuffer b = pooledBuffers_.pollFirst();
+         if (b != null) {
+            // Ensure correct byte order in case recycled from other source
+            b.order(pooledBufferByteOrder_).clear();
+            return b;
+         }
+      }
+      return allocateByteBuffer(capacity, byteOrder);
+   }
+
+
+   private static void tryRecycleLargeBuffer(ByteBuffer b) {
+      // Keep up to BUFFER_POOL_SIZE direct buffers of the current size
+      if (BUFFER_POOL_SIZE == 0 || !b.isDirect()) {
+         return;
+      }
+      synchronized (MultipageTiffWriter.class) {
+         if (b.capacity() == pooledBufferCapacity_) {
+            if (pooledBuffers_.size() == BUFFER_POOL_SIZE) {
+               pooledBuffers_.removeLast(); // Discard oldest
+            }
+            pooledBuffers_.addFirst(b);
+         }
+      }
+   }
 
    /**
     * This constructor is used for a file that is currently being written.
@@ -437,7 +515,7 @@ public final class MultipageTiffReader {
    }
 
    private Image readImage(IFDData data) throws IOException {
-      ByteBuffer pixelBuffer = getByteBuffer((int) data.bytesPerImage, byteOrder_);
+      ByteBuffer pixelBuffer = getLargeBuffer((int) data.bytesPerImage, byteOrder_);
       pixelBuffer.rewind();
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
