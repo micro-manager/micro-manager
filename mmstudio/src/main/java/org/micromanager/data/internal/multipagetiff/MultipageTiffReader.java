@@ -582,16 +582,22 @@ public final class MultipageTiffReader {
          // a nio buffer directly as the Image storage (even better if memory
          // mapped).
          switch (pixelType) {
-            case GRAY8:
-               return new DefaultImage(pixelBuffer.array(), formatPmap,
+            case GRAY8: {
+               Image img = new DefaultImage(pixelBuffer.array(), formatPmap,
                      coords, metadata);
-            case GRAY16:
+               tryRecycleLargeBuffer(pixelBuffer);
+               return img;
+            }
+            case GRAY16: {
                short[] pixels16 = new short[pixelBuffer.capacity() / 2];
                for (int i = 0; i < pixels16.length; i++) {
                   pixels16[i] = pixelBuffer.getShort(i * 2);
                }
-               return new DefaultImage(pixels16, formatPmap, coords, metadata);
-            case RGB32:
+               Image img = new DefaultImage(pixels16, formatPmap, coords, metadata);
+               tryRecycleLargeBuffer(pixelBuffer);
+               return img;
+            }
+            case RGB32: {
                byte[] pixelsARGB = new byte[(int) (4 * data.bytesPerImage / 3)];
                int i = 0;
                for (byte b : pixelBuffer.array()) {
@@ -609,7 +615,10 @@ public final class MultipageTiffReader {
                      i++;
                   }
                }
-               return new DefaultImage(pixelsARGB, formatPmap, coords, metadata);
+               Image img = new DefaultImage(pixelsARGB, formatPmap, coords, metadata);
+               tryRecycleLargeBuffer(pixelBuffer);
+               return img;
+            }
             default:
                throw new IOException("Unknown pixel type: " + pixelType.name());
          }
