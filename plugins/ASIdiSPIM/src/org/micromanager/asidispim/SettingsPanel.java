@@ -237,7 +237,9 @@ public class SettingsPanel extends ListeningJPanel {
       
       smoothSliceScan_ = pu.makeCheckBox("Smooth slice scan (blurs)",
             Properties.Keys.PLUGIN_SMOOTH_SLICE_SCAN, panelName_, false);
-      acqusitionPanel.add(smoothSliceScan_, "wrap");
+      if (props_.hasProperty(Devices.Keys.GALVOA, Properties.Keys.SPIM_SMOOTH_SLICE_ENABLE)) {
+         acqusitionPanel.add(smoothSliceScan_, "wrap");
+      }
       
       // end acquisition panel
       
