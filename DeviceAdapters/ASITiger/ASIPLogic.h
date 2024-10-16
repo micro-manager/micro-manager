@@ -81,18 +81,21 @@ private:
    string axisLetter_;
    unsigned int numCells_;
    unsigned int currentPosition_;  // cached value of current position
-//   static const int NUM_CELLS = 16;
-   bool useAsdiSPIMShutter_;  // used together with either useAs4ChShutter_ or useAs7ChShutter_, takes into account address 41 backplane (TTL0 for CameraA)
+   
+   // PLogic Mode (pre-init property)
+   bool useAsdiSPIMShutter_;
    bool useAs4ChShutter_;
    bool useAs7ChShutter_;
-   bool shutterOpen_;
-   bool advancedPropsEnabled_;
-   bool editCellUpdates_;
+   // useAsdiSPIMShutter_ used together with either useAs4ChShutter_ or useAs7ChShutter_, 
+   // takes into account address 41 backplane (TTL0 for CameraA)
 
-   int SetShutterChannel();
+   bool shutterOpen_;
+   bool editCellUpdates_;
+   bool advancedPropsEnabled_;
+
    int SetPositionDirectly(unsigned int position);
-   int GetCellPropertyName(long index, string suffix, char* name);
-   int GetIOPropertyName(long index, string suffix, char* name);
+   int GetCellPropertyName(long index, const string& suffix, char* name);
+   int GetIOPropertyName(long index, const string& suffix, char* name);
    int RefreshAdvancedCellPropertyValues(long index);
    int RefreshCurrentPosition();
    int RefreshEditCellPropertyValues();

@@ -290,6 +290,10 @@ int CPLogic::Initialize()
    AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode13, 13);
    AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode14, 14);
    AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode15, 15);
+   if (FirmwareVersionAtLeast(3.50)) {
+       AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode16, 16);
+       AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode17, 17);
+   }
    AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode0, 100);
    AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode1, 101);
    AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode2, 102);
@@ -594,14 +598,14 @@ int CPLogic::OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "PM " << axisLetter_ << "?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), axisLetter_) );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-      bool success = 0;
+      bool success = false;
       switch (tmp) {
          case 0: success = pProp->Set(g_TriggerSourceCode0); break;
          case 1: success = pProp->Set(g_TriggerSourceCode1); break;
          case 2: success = pProp->Set(g_TriggerSourceCode2); break;
          case 3: success = pProp->Set(g_TriggerSourceCode3); break;
          case 4: success = pProp->Set(g_TriggerSourceCode4); break;
-         default: success=0;
+         default: break;
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -790,7 +794,7 @@ int CPLogic::OnEditCellUpdates(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CPLogic::GetCellPropertyName(long index, string suffix, char* name)
+int CPLogic::GetCellPropertyName(long index, const string& suffix, char* name)
 {
    ostringstream os;
    os << "PCell_" << setw(2) << setfill('0') << index << suffix;
@@ -798,7 +802,7 @@ int CPLogic::GetCellPropertyName(long index, string suffix, char* name)
    return DEVICE_OK;
 }
 
-int CPLogic::GetIOPropertyName(long index, string suffix, char* name)
+int CPLogic::GetIOPropertyName(long index, const string& suffix, char* name)
 {
    ostringstream os;
    if (index < PLOGIC_BACKPLANE_START_ADDRESS) {  // front panel
@@ -856,6 +860,10 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
             AddAllowedValue(propName, g_CellTypeCode13, 13);
             AddAllowedValue(propName, g_CellTypeCode14, 14);
             AddAllowedValue(propName, g_CellTypeCode15, 15);
+            if (FirmwareVersionAtLeast(3.50)) {
+                AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode16, 16);
+                AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode17, 17);
+            }
             UpdateProperty(propName);
 
             // logic cell CCA Z code
@@ -976,12 +984,13 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
       command << addressChar_ << "CCA Y?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-      bool success = 0;
+      bool success = false;
       if (currentPosition_ > numCells_) {
          switch (tmp) {
          case 0: success = pProp->Set(g_IOTypeCode0); break;
          case 1: success = pProp->Set(g_IOTypeCode1); break;
          case 2: success = pProp->Set(g_IOTypeCode2); break;
+         default: break;
          }
       } else {
          switch (tmp) {
@@ -1001,7 +1010,7 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
          case 13:success = pProp->Set(g_CellTypeCode13); break;
          case 14:success = pProp->Set(g_CellTypeCode14); break;
          case 15:success = pProp->Set(g_CellTypeCode15); break;
-         default: success=0;
+         default: break;
          }
       }
       if (!success)
@@ -1139,12 +1148,12 @@ int CPLogic::OnIOType(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
       command << addressChar_ << "CCA Y?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-      bool success = 0;
+      bool success = false;
       switch (tmp) {
          case 0: success = pProp->Set(g_IOTypeCode0); break;
          case 1: success = pProp->Set(g_IOTypeCode1); break;
          case 2: success = pProp->Set(g_IOTypeCode2); break;
-         default: success=0;
+         default: break;
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
