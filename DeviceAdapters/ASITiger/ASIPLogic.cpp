@@ -530,7 +530,7 @@ int CPLogic::OnPLogicOutputState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
    {
       // always read
-      command << addressChar_ << "RDADC Z?";
+      command << addressChar_ << "RA Z?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
       if (!pProp->Set((long)val))
@@ -546,7 +546,7 @@ int CPLogic::OnPLogicOutputStateUpper(MM::PropertyBase* pProp, MM::ActionType eA
    if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
    {
       // always read
-      command << addressChar_ << "RDADC F?";
+      command << addressChar_ << "RA F?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
       if (!pProp->Set((long)val))
@@ -562,7 +562,7 @@ int CPLogic::OnFrontpanelOutputState(MM::PropertyBase* pProp, MM::ActionType eAc
    if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
    {
       // always read
-      command << addressChar_ << "RDADC X?";
+      command << addressChar_ << "RA X?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
       if (!pProp->Set((long)val))
@@ -578,7 +578,7 @@ int CPLogic::OnBackplaneOutputState(MM::PropertyBase* pProp, MM::ActionType eAct
    if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
    {
       // always read
-      command << addressChar_ << "RDADC Y?";
+      command << addressChar_ << "RA Y?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
       if (!pProp->Set((long)val))
