@@ -1010,6 +1010,8 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
          case 13:success = pProp->Set(g_CellTypeCode13); break;
          case 14:success = pProp->Set(g_CellTypeCode14); break;
          case 15:success = pProp->Set(g_CellTypeCode15); break;
+         case 16:success = pProp->Set(g_CellTypeCode16); break;
+         case 17:success = pProp->Set(g_CellTypeCode17); break;
          default: break;
          }
       }
