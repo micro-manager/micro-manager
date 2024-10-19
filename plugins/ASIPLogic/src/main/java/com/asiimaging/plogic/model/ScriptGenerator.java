@@ -18,11 +18,12 @@ package com.asiimaging.plogic.model;
  *
  * <p>pycromanager - generate a Python script that uses the pycromanager package.
  *
+ * <p>serial - generate a Python script that sends serial commands using pyserial.
  */
 public class ScriptGenerator {
 
    public static void createScript() {
-      // TODO: impl this feature
+      // TODO: impl this feature; this feature should also document the pre-init settings for the PLogic device
    }
 
 }

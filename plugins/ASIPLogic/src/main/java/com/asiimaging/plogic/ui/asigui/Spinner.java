@@ -14,16 +14,16 @@ import javax.swing.SpinnerNumberModel;
 
 public class Spinner extends JSpinner {
 
-   private static int defaultSize = 5;
+   private static int defaultSize_ = 5;
 
    private Spinner(final Integer start, final Integer min, final Integer max, final Integer step) {
       super(new SpinnerNumberModel(start, min, max, step));
-      setColumnSize(defaultSize);
+      setColumnSize(defaultSize_);
    }
 
    private Spinner(final Double start, final Double min, final Double max, final Double step) {
       super(new SpinnerNumberModel(start, min, max, step));
-      setColumnSize(defaultSize);
+      setColumnSize(defaultSize_);
    }
 
    public static Spinner createIntegerSpinner(
@@ -49,7 +49,7 @@ public class Spinner extends JSpinner {
    }
 
    public static void setDefaultSize(final int width) {
-      defaultSize = width;
+      defaultSize_ = width;
    }
 
    public int getInt() {

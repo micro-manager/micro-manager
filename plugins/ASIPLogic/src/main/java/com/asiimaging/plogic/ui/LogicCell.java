@@ -7,6 +7,7 @@
 
 package com.asiimaging.plogic.ui;
 
+import com.asiimaging.plogic.PLogicControlModel;
 import com.asiimaging.plogic.model.devices.ASIPLogic;
 import com.asiimaging.plogic.ui.asigui.ComboBox;
 import com.asiimaging.plogic.ui.asigui.Panel;
@@ -15,6 +16,7 @@ import com.asiimaging.plogic.ui.asigui.Spinner;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.Arrays;
 import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -22,24 +24,21 @@ import javax.swing.SwingConstants;
 
 public class LogicCell extends Panel {
 
-   public static boolean UPDATE;
+   private static String[] cellTypes_ = new String[]{""};
+   private static boolean isUpdatingEnabled_ = true;
 
    private ComboBox cmbCellType_;
-
-   private LogicInputRow[] inputs_;
-
-   // standard display for cell configuration
-   private Spinner spnConfig_;
-
-   // only used for CellType.CONSTANT cells
-   private RadioButton radConfig_;
+   private Spinner spnConfig_; // standard display for cell configuration
+   private RadioButton radConfig_; // only used for CellType.CONSTANT configuration
+   private final LogicInputRow[] inputs_; // inputs 1-4
 
    private final int cellNum_;
    private final String title_;
-   private final ASIPLogic plc_;
 
-   public LogicCell(final ASIPLogic plc, final int cellNum) {
-      plc_ = Objects.requireNonNull(plc);
+   private final PLogicControlModel model_;
+
+   public LogicCell(final PLogicControlModel model, final int cellNum) {
+      model_ = Objects.requireNonNull(model);
       title_ = "Cell " + cellNum;
       cellNum_ = cellNum;
       inputs_ = new LogicInputRow[4];
@@ -69,11 +68,10 @@ public class LogicCell extends Panel {
 
       // init input rows
       for (int i = 0; i < 4; i++) {
-         inputs_[i] = new LogicInputRow(plc_, cellNum_, i + 1);
+         inputs_[i] = new LogicInputRow(model_, cellNum_, i + 1);
       }
 
-      final String[] cellTypes = ASIPLogic.CellType.toArray();
-      cmbCellType_ = new ComboBox(cellTypes, cellTypes[0], 150, 22);
+      cmbCellType_ = new ComboBox(cellTypes_, cellTypes_[0], 150, 22);
 
       final JLabel lblConfig = new JLabel("Configuration:");
       lblConfig.setMinimumSize(new Dimension(70, 20));
@@ -96,7 +94,7 @@ public class LogicCell extends Panel {
       add(lblEdge, "");
       add(lblValue, "wrap");
       for (final LogicInputRow input : inputs_) {
-         input.addToComponent(this);
+         input.addToPanel(this);
       }
    }
 
@@ -108,10 +106,16 @@ public class LogicCell extends Panel {
       cmbCellType_.registerListener(e -> {
          final ASIPLogic.CellType cellType =
                ASIPLogic.CellType.fromString(cmbCellType_.getSelected());
-         refreshUserInterface(cellType);
-         if (UPDATE) {
-            plc_.pointerPosition(cellNum_);
-            plc_.cellType(cellType);
+         refreshUI(cellType);
+         if (isUpdatingEnabled_) {
+            // Note: setting the cell type clears the config and inputs
+            model_.plc().pointerPosition(cellNum_);
+            model_.plc().cellType(cellType);
+            // clear the config and inputs in the ui
+            if (cellType == ASIPLogic.CellType.CONSTANT) {
+               radConfig_.setSelected("Low", true);
+            }
+            spnConfig_.setInt(0);
             for (final LogicInputRow input : inputs_) {
                input.clearInput();
             }
@@ -119,22 +123,45 @@ public class LogicCell extends Panel {
       });
 
       spnConfig_.registerListener(e -> {
-         if (UPDATE) {
-            plc_.pointerPosition(cellNum_);
-            plc_.cellConfig(spnConfig_.getInt());
+         if (isUpdatingEnabled_) {
+            model_.plc().pointerPosition(cellNum_);
+            model_.plc().cellConfig(spnConfig_.getInt());
          }
       });
 
-      // Note: no update guard => radConfig_.setSelected() does not trigger an ActionEvent
+      // Note: no update guard (UPDATES_ENABLED) =>
+      // radConfig_.setSelected() does not trigger an ActionEvent
       radConfig_.registerListener(e -> {
          final String selected = radConfig_.getSelectedButtonText();
-         plc_.pointerPosition(cellNum_);
-         plc_.cellConfig(selected.equals("High") ? 1 : 0);
+         model_.plc().pointerPosition(cellNum_);
+         model_.plc().cellConfig(selected.equals("High") ? 1 : 0);
       });
 
    }
 
-   private void refreshUserInterface(final ASIPLogic.CellType cellType) {
+   /**
+    * Update the {@code ComboBox} item labels to match available cell types
+    * in the current firmware version.
+    */
+   public void updateCellTypeComboBox() {
+      // always at least 16 types for even the oldest firmware
+      int maxIndex = 15;
+      final String[] cellTypes = ASIPLogic.CellType.toArray();
+      if (model_.plc().firmwareVersion() >= 3.5) {
+         maxIndex = 17;
+      }
+      // array used for all logic cells
+      cellTypes_ = Arrays.copyOf(cellTypes, maxIndex + 1);
+      cmbCellType_.updateItems(cellTypes_); // update ui
+   }
+
+   /**
+    * Update the user interface to reflect the cell type.
+    * Called when a cell type {@code ComboBox} item is selected.
+    *
+    * @param cellType the type of cell
+    */
+   private void refreshUI(final ASIPLogic.CellType cellType) {
       removeAll(); // clear components
 
       final JLabel lblTitle = new JLabel(title_);
@@ -144,12 +171,13 @@ public class LogicCell extends Panel {
       lblConfig.setHorizontalAlignment(SwingConstants.CENTER);
       lblConfig.setMinimumSize(new Dimension(70, 20));
       if (cellType == ASIPLogic.CellType.CONSTANT) {
+         // constant logic cells use the radio button
          add(lblTitle, "");
          add(cmbCellType_, "span 3, align left, wrap");
          add(lblConfig, "");
          add(radConfig_, "");
       } else {
-         // all other cell types
+         // all other cell types use spinners
          final JLabel lblInvert = new JLabel("Invert?");
          final JLabel lblEdge = new JLabel("Edge?");
          final JLabel lblValue = new JLabel("Value");
@@ -159,7 +187,9 @@ public class LogicCell extends Panel {
 
          // set the input labels
          for (int i = 0; i < cellType.numInputs(); i++) {
-            inputs_[i].setInputLabel(cellType.inputName(i + 1));
+            final String inputName = cellType.inputName(i + 1);
+            inputs_[i].setEdgeSensitive(inputName.startsWith("Trigger") || inputName.equals("Clock"));
+            inputs_[i].setInputLabel(inputName);
          }
 
          add(lblConfig, "");
@@ -175,11 +205,36 @@ public class LogicCell extends Panel {
 
       // add inputs
       for (int i = 0; i < cellType.numInputs(); i++) {
-         inputs_[i].addToComponent(this);
+         inputs_[i].addToPanel(this);
       }
 
       setMinimumSize(new Dimension(281, 174));
       updateUI();
+      repaint();
+   }
+
+   /**
+    * Initialize the logic cell using {@code PLogicState}.
+    */
+   public void initLogicCell() {
+      final ASIPLogic.CellType cellType = model_.plc().state().cell(cellNum_).type();
+      final int config = model_.plc().state().cell(cellNum_).config();
+      // calls the event handler for cell type
+      cmbCellType_.setSelected(cellType.toString());
+      if (cellType == ASIPLogic.CellType.CONSTANT) {
+         // configuration
+         final String buttonName = (config == 1) ? "High" : "Low";
+         radConfig_.setSelected(buttonName, true); // Note: does not trigger and ActionEvent
+      } else {
+         // configuration
+         if (!cellType.configName().isEmpty()) {
+            spnConfig_.setInt(config);
+         }
+         // input rows
+         for (int i = 0; i < cellType.numInputs(); i++) {
+            inputs_[i].initInputRow();
+         }
+      }
    }
 
    /**
@@ -191,26 +246,21 @@ public class LogicCell extends Panel {
       updateUI();
    }
 
-   public void initCell() {
-      plc_.pointerPosition(cellNum_);
-      final ASIPLogic.CellType cellType = plc_.cellType();
-      // calls the event handler for cell type
-      cmbCellType_.setSelected(cellType.toString());
-      if (cellType == ASIPLogic.CellType.CONSTANT) {
-         // configuration
-         final String buttonName = (plc_.cellConfig() == 1) ? "High" : "Low";
-         radConfig_.setSelected(buttonName, true); // Note: does not trigger and ActionEvent
-      } else {
-         // configuration
-         if (!cellType.configName().isEmpty()) {
-            final int config = plc_.cellConfig();
-            spnConfig_.setInt(config);
-         }
-         // input rows
-         for (int i = 0; i < cellType.numInputs(); i++) {
-            inputs_[i].initRow();
-         }
-      }
+   /**
+    * Reset the cell after the "Clear Logic Cells" button is pressed.
+    * Only update the radio button because we are using the constant cell type.
+    */
+   public void clearToConstant() {
+      radConfig_.setSelected("Low", true);
+      cmbCellType_.setSelected(ASIPLogic.CellType.CONSTANT.toString());
+   }
+
+   public static void isUpdatingEnabled(final boolean state) {
+      isUpdatingEnabled_ = state;
+   }
+
+   public static boolean isUpdatingEnabled() {
+      return isUpdatingEnabled_;
    }
 
 }

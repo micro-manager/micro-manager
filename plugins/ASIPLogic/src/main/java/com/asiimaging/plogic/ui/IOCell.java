@@ -32,8 +32,6 @@ public class IOCell extends Panel {
    private CheckBox cbxEdge_;
    private JLabel lblValue_;
 
-   // I/O cell data
-   private final int cellNum_;
    private final int cellAddr_;
    private final String title_;
 
@@ -41,12 +39,12 @@ public class IOCell extends Panel {
 
    public IOCell(final ASIPLogic plc, final int cellNum) {
       plc_ = Objects.requireNonNull(plc);
-      cellNum_ = cellNum;
+      // I/O cell data
       cellAddr_ = cellNum + 32; // BNC1 starts at address 33
       if (cellNum <= 8) {
-         title_ = "BNC" + cellNum_;
+         title_ = "BNC" + cellNum;
       } else {
-         title_ = "TTL" + (cellNum_ - 9);
+         title_ = "TTL" + (cellNum - 9);
       }
       createUserInterface();
       createEventHandlers();
@@ -172,7 +170,8 @@ public class IOCell extends Panel {
       final boolean isEdge = cbxEdge_.isSelected();
       final int value = spnSourceAddr_.getInt() + (isInverted ? 64 : 0) + (isEdge ? 128 : 0);
       plc_.pointerPosition(cellAddr_);
-      plc_.cellConfig(value);
+      plc_.sourceAddress(value);
+      //plc_.cellConfig(value);
       lblValue_.setText(String.valueOf(value));
    }
 
@@ -189,20 +188,26 @@ public class IOCell extends Panel {
     * Set pointer position to cell; set UI to configuration and I/O type.
     */
    public void initCell() {
-      plc_.pointerPosition(cellAddr_);
+      //plc_.pointerPosition(cellAddr_);
       // I/O type
-      final ASIPLogic.IOType ioType = plc_.ioType();
+      //final ASIPLogic.IOType ioType = plc_.ioType();
+      final ASIPLogic.IOType ioType = plc_.state().io(cellAddr_).type();
       cmbIOType_.setSelected(ioType.toString());
       // source address
-      final int sourceAddr = plc_.cellConfig();
+      //final int sourceAddr = plc_.cellConfig();
+      final int sourceAddr = plc_.state().io(cellAddr_).sourceAddress();
       int sourceAddrTemp = sourceAddr;
-      if (sourceAddrTemp > 128) {
+      if (sourceAddrTemp >= 128) {
          sourceAddrTemp -= 128;
          cbxEdge_.setSelected(true);
+      } else {
+         cbxEdge_.setSelected(false);
       }
-      if (sourceAddrTemp > 64) {
+      if (sourceAddrTemp >= 64) {
          sourceAddrTemp -= 64;
          cbxInvert_.setSelected(true);
+      } else {
+         cbxInvert_.setSelected(false);
       }
       spnSourceAddr_.setInt(sourceAddrTemp);
       lblValue_.setText(String.valueOf(sourceAddr));
