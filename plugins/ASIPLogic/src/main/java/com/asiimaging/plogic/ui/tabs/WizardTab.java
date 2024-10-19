@@ -1,11 +1,11 @@
 package com.asiimaging.plogic.ui.tabs;
 
 import com.asiimaging.plogic.PLogicControlModel;
-import com.asiimaging.plogic.ui.wizards.SquareWaveConfigPanel;
-import com.asiimaging.plogic.ui.wizards.SquareWaveDisplayPanel;
 import com.asiimaging.plogic.ui.asigui.Button;
 import com.asiimaging.plogic.ui.asigui.Panel;
 import com.asiimaging.plogic.ui.utils.DialogUtils;
+import com.asiimaging.plogic.ui.wizards.SquareWaveConfigPanel;
+import com.asiimaging.plogic.ui.wizards.SquareWaveDisplayPanel;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -82,8 +82,8 @@ public class WizardTab extends Panel {
       btnCreateProgram_.registerListener(e -> {
          if (displayPanels_.isEmpty()) {
             DialogUtils.showMessage(btnCreateProgram_,
-                  "Add Pattern", "No square wave signal generator.\n" +
-                        "Click Add to the left.");
+                  "Add Pattern", "No square wave signal generator.\n"
+                        + "Click Add to the left.");
             return; // early exit => no signal generator
          }
          if (model_.isUpdating()) {

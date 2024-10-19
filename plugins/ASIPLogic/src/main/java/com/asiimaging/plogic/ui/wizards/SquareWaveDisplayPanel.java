@@ -76,7 +76,7 @@ public class SquareWaveDisplayPanel extends Panel {
       g2d.translate(0, 50);
 
       for (int i = 0; i < data_.size() - 1; i++) {
-         g2d.draw(new Line2D.Double(data_.get(i), data_.get(i+1)));
+         g2d.draw(new Line2D.Double(data_.get(i), data_.get(i + 1)));
       }
 
    }
@@ -161,8 +161,8 @@ public class SquareWaveDisplayPanel extends Panel {
 
    /**
     * Return the logic cell used to output this square wave pattern.<br>
-    * <p>
-    * Output Cells:<br>
+    *
+    * <p>Output Cells:<br>
     * 1 and 3 cells used: first logic cell<br>
     * 2 and 4 cells used: second logic cell
     *
@@ -174,10 +174,10 @@ public class SquareWaveDisplayPanel extends Panel {
 
    /**
     * Create a PLogic program for the square wave parameters.
-    * <p>
-    * This can be anywhere from 1 to 4 logic cells in complexity.
-    * <p>
-    * Types:<br>
+    *
+    * <p>This can be anywhere from 1 to 4 logic cells in complexity.
+    *
+    * <p>Types:<br>
     * 1 cell: one pulse<br>
     * 2 cells: one pulse with start delay<br>
     * 3 cells: multiple pulses<br>
