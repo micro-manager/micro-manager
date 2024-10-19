@@ -53,8 +53,8 @@ public class SquareWaveDisplayPanel extends Panel {
       data_.clear();
       data_.add(new Point2D.Double(0, 0)); // time = 0 ms
       for (int i = 0; i < numPulses_; i++) {
-         final double risingEdgeX = startDelay_ + i*pulseDuration_ + i*pulseDelay_;
-         final double fallingEdgeX = startDelay_ + (i+1)*pulseDuration_ + i*pulseDelay_;
+         final double risingEdgeX = startDelay_ + (i * pulseDuration_) + (i * pulseDelay_);
+         final double fallingEdgeX = startDelay_ + ((i + 1) * pulseDuration_) + (i * pulseDelay_);
          data_.add(new Point2D.Double(risingEdgeX, 0));
          data_.add(new Point2D.Double(risingEdgeX, scaleFactor));
          data_.add(new Point2D.Double(fallingEdgeX, scaleFactor));
@@ -75,7 +75,7 @@ public class SquareWaveDisplayPanel extends Panel {
       g2d.setColor(Color.LIGHT_GRAY);
       g2d.translate(0, 50);
 
-      for (int i = 0; i < data_.size()-1; i++) {
+      for (int i = 0; i < data_.size() - 1; i++) {
          g2d.draw(new Line2D.Double(data_.get(i), data_.get(i+1)));
       }
 
