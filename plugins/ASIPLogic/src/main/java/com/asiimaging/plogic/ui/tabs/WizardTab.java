@@ -91,6 +91,13 @@ public class WizardTab extends Panel {
                   "Updating", "Please wait for updates to complete.");
             return; // early exit => wait for serial traffic to end
          }
+         final SquareWaveDisplayPanel panel = configPanels_.get(0).getSquareWavePanel();
+         final int lastCell = panel.startCell() + panel.numCellsUsed() - 1;
+         if (lastCell > model_.plc().numCells()) {
+            DialogUtils.showMessage(btnCreateProgram_,
+                  "Not Enough Cells", "PLogic program would end at cell " + lastCell + ".");
+            return; // early exit => would write beyond number of logic cells
+         }
          createProgramThread();
       });
    }
