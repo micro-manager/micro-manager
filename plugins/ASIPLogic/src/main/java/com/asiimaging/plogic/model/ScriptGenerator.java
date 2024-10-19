@@ -23,7 +23,8 @@ package com.asiimaging.plogic.model;
 public class ScriptGenerator {
 
    public static void createScript() {
-      // TODO: impl this feature; this feature should also document the pre-init settings for the PLogic device
+      // TODO: impl this feature; this feature should also document
+      //  the pre-init settings for the PLogic device
    }
 
 }

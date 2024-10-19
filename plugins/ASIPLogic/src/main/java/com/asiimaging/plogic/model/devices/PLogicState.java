@@ -49,8 +49,8 @@ public class PLogicState {
    public PLogicCell cell(final int cellNum) {
       if (cellNum < 1 || cellNum > numCells_) {
          throw new IllegalArgumentException(
-               "Logic Cell pointer positions are 1-" + numCells_ + ".\n" +
-                     "The input was " + cellNum + ".");
+               "Logic Cell pointer positions are 1-" + numCells_ + ".\n"
+                     + "The input was " + cellNum + ".");
       }
       return cells_[cellNum - 1]; // remap 1-16 to 0-15
    }
@@ -58,8 +58,8 @@ public class PLogicState {
    public PLogicIO io(final int cellNum) {
       if (cellNum < IO_START_ADDR || cellNum > IO_MAX_ADDR) {
          throw new IllegalArgumentException(
-               "Physical I/O pointer positions are 33-" + IO_MAX_ADDR + ".\n" +
-                     "The input was " + cellNum + ".");
+               "Physical I/O pointer positions are 33-" + IO_MAX_ADDR + ".\n"
+                     + "The input was " + cellNum + ".");
       }
       return io_[cellNum - IO_START_ADDR]; // remap 33-48 to 0-15
    }

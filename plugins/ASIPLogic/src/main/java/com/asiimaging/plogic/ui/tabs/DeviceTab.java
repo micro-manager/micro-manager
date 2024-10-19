@@ -149,8 +149,8 @@ public class DeviceTab extends Panel {
             "Save the Physical I/O and Logic Cells of the selected PLogic device to JSON.");
       btnLoadJson_.setToolTipText(
             "Load settings from a JSON files and send serial commands to the controller.");
-      btnRefresh_.setToolTipText("Send serial commands to the controller to update the " +
-            "Logic Cells and Physical I/O tabs.");
+      btnRefresh_.setToolTipText("Send serial commands to the controller to update the "
+            + "Logic Cells and Physical I/O tabs.");
 
       // update ui with values from the controller
       updateTabFromController();
@@ -259,8 +259,8 @@ public class DeviceTab extends Panel {
          // ask to stop updates or prevent from switching devices
          if (model_.isUpdating()) {
             final boolean clickedYes = DialogUtils.showConfirmDialog(cmbSelectDevice_,
-                  "Updating", "Wait for updates to stop and try again. " +
-                        "Stop updates?");
+                  "Updating", "Wait for updates to stop and try again. "
+                        + "Stop updates?");
             if (clickedYes) {
                model_.isUpdating(false);
                model_.studio().logs().logMessage("Stop Updates From Device Selection ComboBox");
@@ -364,8 +364,8 @@ public class DeviceTab extends Panel {
          final String json = FileUtils.readFile(file.toString(), "json");
          // ask to overwrite settings
          final boolean result = DialogUtils.showConfirmDialog(btnLoadJson_,
-               "Load Settings", "This will update the current PLogic settings, " +
-                     "do you want to continue?");
+               "Load Settings", "This will update the current PLogic settings, "
+                     + "do you want to continue?");
          if (result) {
             loadJsonThread(json);
          }
@@ -433,8 +433,8 @@ public class DeviceTab extends Panel {
     */
    private void openBrowserToManual() {
       final boolean result = DialogUtils.showConfirmDialog(btnOpenManual_,
-            "Open Browser", "Open the default browser and navigate to the " +
-                  "Tiger Programmable Logic Card Manual?");
+            "Open Browser", "Open the default browser and navigate to the "
+                  + "Tiger Programmable Logic Card Manual?");
       if (result) {
          BrowserUtils.openWebsite(model_.studio(),
                "https://asiimaging.com/docs/tiger_programmable_logic_card");

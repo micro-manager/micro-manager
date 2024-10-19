@@ -188,7 +188,8 @@ public class LogicCell extends Panel {
          // set the input labels
          for (int i = 0; i < cellType.numInputs(); i++) {
             final String inputName = cellType.inputName(i + 1);
-            inputs_[i].setEdgeSensitive(inputName.startsWith("Trigger") || inputName.equals("Clock"));
+            inputs_[i].setEdgeSensitive(
+                  inputName.startsWith("Trigger") || inputName.equals("Clock"));
             inputs_[i].setInputLabel(inputName);
          }
 
