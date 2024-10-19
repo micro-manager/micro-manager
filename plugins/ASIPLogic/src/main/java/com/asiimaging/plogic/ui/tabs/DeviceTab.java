@@ -15,8 +15,16 @@ import com.asiimaging.plogic.ui.asigui.ComboBox;
 import com.asiimaging.plogic.ui.asigui.Panel;
 import com.asiimaging.plogic.ui.utils.BrowserUtils;
 import com.asiimaging.plogic.ui.utils.DialogUtils;
+import com.asiimaging.plogic.ui.utils.FileUtils;
+import java.awt.EventQueue;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import javax.swing.JLabel;
+import javax.swing.SwingWorker;
+import org.micromanager.internal.utils.FileDialogs;
 
 public class DeviceTab extends Panel {
 
@@ -38,12 +46,26 @@ public class DeviceTab extends Panel {
    private Button btnClearCellStates_;
    private Button btnOpenManual_;
 
-   private final PLogicControlModel model_;
+   private Button btnSaveJson_;
+   private Button btnLoadJson_;
+
+   private Button btnRefresh_;
+
    private final TabPanel tab_;
+   private final PLogicControlModel model_;
+
+   private final FileDialogs.FileType jsonFileType;
 
    public DeviceTab(final PLogicControlModel model, final TabPanel tab) {
       model_ = Objects.requireNonNull(model);
       tab_ = Objects.requireNonNull(tab);
+      jsonFileType = new FileDialogs.FileType(
+            "PLogic Settings",
+            "PLogic Settings (.json)",
+            "plogic_settings",
+            false,
+            "json"
+      );
       createUserInterface();
       createEventHandlers();
    }
@@ -59,7 +81,7 @@ public class DeviceTab extends Panel {
       );
 
       // number of PLogic devices
-      final int numDevices = model_.getPLogicDevices().length;
+      final int numDevices = model_.getNumDevices();
       final JLabel lblNumDevices = new JLabel("Number of Devices: " + numDevices);
 
       // init objects here - update text later
@@ -97,6 +119,11 @@ public class DeviceTab extends Panel {
       btnClearCellStates_ = new Button("Clear Cell States", 120, 30);
       btnOpenManual_ = new Button("Open Manual...", 120, 30);
 
+      btnSaveJson_ = new Button("Save To Json", 120, 30);
+      btnLoadJson_ = new Button("Load From Json", 120, 30);
+
+      btnRefresh_ = new Button("Refresh Cells", 120, 30);
+
       // tooltips
       cmbSelectDevice_.setToolTipText("<html>Select the current PLogic device.<br>"
             + "This will query the controller and update the tabs.</html>");
@@ -116,8 +143,17 @@ public class DeviceTab extends Panel {
             + ASIPLogic.Properties.CLEAR_ALL_CELL_STATES + "</b> property to <b>"
             + ASIPLogic.Values.DO_IT + "</b>.</html>");
 
+      btnOpenManual_.setToolTipText(
+            "Open the default browser and navigate to the online manual.");
+      btnSaveJson_.setToolTipText(
+            "Save the Physical I/O and Logic Cells of the selected PLogic device to JSON.");
+      btnLoadJson_.setToolTipText(
+            "Load settings from a JSON files and send serial commands to the controller.");
+      btnRefresh_.setToolTipText("Send serial commands to the controller to update the " +
+            "Logic Cells and Physical I/O tabs.");
+
       // update ui with values from the controller
-      refreshUserInterface();
+      updateTabFromController();
 
       final Panel selectPanel = new Panel();
       selectPanel.add(lblNumDevices, "span 2, wrap");
@@ -144,44 +180,26 @@ public class DeviceTab extends Panel {
       add(btnClearLogicCells_, "split 2");
       add(btnClearCellStates_, "wrap");
       add(btnSaveSettings_, "split 2");
-      add(btnOpenManual_, "");
+      add(btnOpenManual_, "wrap");
+
+      add(new JLabel("Save or load settings file:"), "wrap");
+      add(btnSaveJson_, "split 2");
+      add(btnLoadJson_, "wrap");
+      add(new JLabel("Refresh the Logic Cells and Physical I/O tabs:"), "wrap");
+      add(btnRefresh_, "");
    }
 
    /**
     * Create the event handlers.
     */
    private void createEventHandlers() {
-      // combo boxes
-      cmbSelectDevice_.registerListener(e -> {
-         final String selected = cmbSelectDevice_.getSelected();
-         final String deviceName = model_.plc().deviceName();
-         if (deviceName.equals(selected)) {
-            requestFocusInWindow();
-            // TODO: fix focus issue, need to click buttons twice
-            final boolean clickedYes = DialogUtils.showConfirmDialog(cmbSelectDevice_,
-                  "Reload Settings", "Would you like to reload the cells for "
-                        + deviceName + "?");
-            if (!clickedYes) {
-               return; // early exit => clicked "No" to avoid reloading the cells
-            }
-         }
-         tab_.stopUpdateCells(); // stop current update to update cells from new card
-         // compare the number of cells, so we can change the ui if necessary
-         final int numCellsA = model_.plc().numCells();
-         model_.plc().deviceName(selected);
-         final int numCellsB = model_.plc().numCells();
-         // update the logic cells tab based on the number of cells
-         // only if the number of cells has changed, PLOGIC_16 => PLOGIC_24
-         if (numCellsA != numCellsB) {
-            tab_.getLogicCellsTab().refreshUserInterface();
-            tab_.updateFrame();
-         }
-         refreshUserInterface(); // update this tab
-         tab_.updateCells(); // update logic and I/O cells
-      });
+      // select the PLogic device
+      cmbSelectDevice_.registerListener(e -> selectDevice());
 
+      // select the trigger source
       cmbTriggerSource_.registerListener(e ->
-            model_.plc().triggerSource(cmbTriggerSource_.getSelected()));
+            model_.plc().triggerSource(
+                  ASIPLogic.TriggerSource.fromString(cmbTriggerSource_.getSelected())));
 
       // edit cell updates automatically
       cbxEditCellUpdateAuto_.registerListener(e -> {
@@ -197,26 +215,90 @@ public class DeviceTab extends Panel {
       cbxRefreshProperties_.registerListener(e ->
             model_.plc().isRefreshPropertyValuesOn(cbxRefreshProperties_.isSelected()));
 
-      // buttons
-      btnClearLogicCells_.registerListener(
-            e -> model_.plc().preset(ASIPLogic.Preset.ALL_CELLS_ZERO));
+      // clear all cells and ui
+      btnClearLogicCells_.registerListener(e -> {
+         model_.plc().preset(ASIPLogic.Preset.ALL_CELLS_ZERO);
+         tab_.getLogicCellsTab().clearLogicCellsFromButton();
+      });
+
       btnClearCellStates_.registerListener(e -> model_.plc().clearAllCellStates());
       btnSaveSettings_.registerListener(e -> model_.plc().saveSettings());
 
-      btnOpenManual_.registerListener(e -> {
-         final boolean result = DialogUtils.showConfirmDialog(btnOpenManual_,
-               "Open Browser", "Navigate to the Tiger Programmable Logic Card Manual?");
-         if (result) {
-            BrowserUtils.openWebsite(model_.studio(),
-                  "https://asiimaging.com/docs/tiger_programmable_logic_card");
+      // open the default web browser
+      btnOpenManual_.registerListener(e -> openBrowserToManual());
+
+      // save and load json
+      btnSaveJson_.registerListener(e -> {
+         if (model_.isUpdating()) {
+            DialogUtils.showMessage(btnSaveJson_,
+                  "Updating", "Wait for updates to finish.");
+         } else {
+            saveJsonFile();
          }
+      });
+      btnLoadJson_.registerListener(e -> {
+         if (model_.isUpdating()) {
+            DialogUtils.showMessage(btnLoadJson_,
+                  "Updating", "Wait for updates to finish.");
+         } else {
+            loadJsonFile();
+         }
+      });
+
+      // update plc cells
+      btnRefresh_.registerListener(e -> refreshCells());
+
+   }
+
+   /**
+    * Select the device.
+    */
+   private void selectDevice() {
+      // use invokeLater to prevent having to click the dialog twice
+      EventQueue.invokeLater(() -> {
+         // ask to stop updates or prevent from switching devices
+         if (model_.isUpdating()) {
+            final boolean clickedYes = DialogUtils.showConfirmDialog(cmbSelectDevice_,
+                  "Updating", "Wait for updates to stop and try again. " +
+                        "Stop updates?");
+            if (clickedYes) {
+               model_.isUpdating(false);
+               model_.studio().logs().logMessage("Stop Updates From Device Selection ComboBox");
+            }
+            return; // early exit => need to stop updates
+         }
+         // ask to reload the plc state for this device
+         final String deviceName = model_.plc().deviceName();
+         if (deviceName.equals(cmbSelectDevice_.getSelected())) {
+            final boolean clickedYes = DialogUtils.showConfirmDialog(cmbSelectDevice_,
+                  "Reload Settings", "Would you like to reload the data for "
+                        + deviceName + "?");
+            if (!clickedYes) {
+               return; // early exit => clicked "No" to avoid reloading the cells
+            }
+         }
+         // compare the number of cells, so we can change the ui if necessary
+         final int numCellsA = model_.plc().numCells();
+         model_.selectedIndex(cmbSelectDevice_.getSelectedIndex());
+         final int numCellsB = model_.plc().numCells();
+         // update the logic cells tab based on the number of cells only
+         // if the number of cells has changed, PLOGIC_16 => PLOGIC_24
+         if (numCellsA != numCellsB) {
+            tab_.getLogicCellsTab().refreshTab();
+            tab_.packFrame();
+         }
+         // available cells types will match the selected firmware
+         tab_.getLogicCellsTab().updateCellTypeComboBoxes();
+         // update tabs by sending serial commands to the controller
+         updateTabFromController();
+         tab_.updateTabsFromController();
       });
    }
 
    /**
     * Updates the user interface with values from the controller.
     */
-   public void refreshUserInterface() {
+   private void  updateTabFromController() {
       final ASIPLogic plc = model_.plc();
 
       // get values from controller
@@ -227,17 +309,148 @@ public class DeviceTab extends Panel {
       final ASIPLogic.ShutterMode plcMode = plc.shutterMode();
       final String axisLetter = plc.axisLetter();
 
+      // format firmware version double to 3.50 from 3.5
+      DecimalFormat df = new DecimalFormat("0.00");
+
       // update labels
-      lblFirmwareVersion_.setText("Version: " + version);
+      lblFirmwareVersion_.setText("Version: " + df.format(version));
       lblFirmwareBuild_.setText("Build Name: " + build);
       lblFirmwareDate_.setText("Compile Date: " + compileDate);
       lblPLogicMode_.setText("PLogic Mode: " + plcMode + " (pre-init)");
       lblNumCells_.setText("Number of Cells: " + numCells);
       lblAxisLetter_.setText("Axis Letter: " + axisLetter);
 
-      cmbTriggerSource_.setSelected(model_.plc().triggerSource().toString());
-      cbxEditCellUpdateAuto_.setSelected(model_.plc().isAutoUpdateCellsOn());
-      cbxRefreshProperties_.setSelected(model_.plc().isRefreshPropertyValuesOn());
+      cmbTriggerSource_.setSelected(plc.triggerSource().toString());
+      cbxEditCellUpdateAuto_.setSelected(plc.isAutoUpdateCellsOn());
+      cbxRefreshProperties_.setSelected(plc.isRefreshPropertyValuesOn());
+   }
+
+   /**
+    * Opens a file browser to save the PLogic settings to a json file.
+    */
+   private void saveJsonFile() {
+      // open a file browser
+      final File file = FileDialogs.save(
+            null,
+            "Save the settings file...",
+            jsonFileType
+      );
+      if (file == null) {
+         return; // early exit => no selection
+      }
+      // convert PLogicState to json and save to file
+      final String json = model_.plc().state().toPrettyJson();
+      try {
+         FileUtils.saveFile(json, file.toString(), "json");
+      } catch (IOException ex) {
+         model_.studio().logs().logError("could not save PLogic settings to json!");
+      }
+   }
+
+   /**
+    * Opens a file browser to load the PLogic settings from a json file.
+    */
+   private void loadJsonFile() {
+      final File file = FileDialogs.openFile(
+            null,
+            "Load the settings file...",
+            jsonFileType
+      );
+      if (file == null) {
+         return; // early exit => no selection
+      }
+      // load the file and set PLogicState
+      try {
+         final String json = FileUtils.readFile(file.toString(), "json");
+         // ask to overwrite settings
+         final boolean result = DialogUtils.showConfirmDialog(btnLoadJson_,
+               "Load Settings", "This will update the current PLogic settings, " +
+                     "do you want to continue?");
+         if (result) {
+            loadJsonThread(json);
+         }
+      } catch (IOException ex) {
+         model_.studio().logs().logError("could not load PLogic settings from json!");
+      }
+   }
+
+   /**
+    * Load the json into the plc state and then send serial commands
+    * to update the controller. Update the UI with the new values.
+    *
+    * <p>Note: This happens on a separate thread.
+    *
+    * @param json the json as a {@code String}
+    */
+   private void loadJsonThread(final String json) {
+      SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+         @Override
+         protected Void doInBackground() {
+            model_.studio().logs().logMessage("Finished Sending PLogic Program");
+            model_.isUpdating(true);
+
+            // set plc state from json
+            model_.plc().state(json);
+
+            // clear ui
+            tab_.getLogicCellsTab().clearLogicCells();
+            tab_.getIOCellsTab().clearIOCells();
+
+            // send serial commands to plc (updates plc state)
+            model_.plc().state().updateDevice(model_);
+
+            // update ui from plc state
+            cmbTriggerSource_.setSelected(
+                  model_.plc().state().triggerSource().toString());
+            tab_.getLogicCellsTab().initLogicCells();
+            tab_.getIOCellsTab().initIOCells();
+
+            model_.isUpdating(false);
+            model_.studio().logs().logMessage("Finished Sending PLogic Program");
+            return null;
+         }
+
+         @Override
+         protected void done() {
+            // Note: need to do this to catch exceptions
+            try {
+               get();
+            } catch (final InterruptedException ex) {
+               throw new RuntimeException(ex);
+            } catch (final ExecutionException ex) {
+               throw new RuntimeException(ex.getCause());
+            }
+         }
+
+      };
+
+      worker.execute();
+   }
+
+   /**
+    * Open a confirmation dialog and ask to navigate to the PLogic manual.
+    */
+   private void openBrowserToManual() {
+      final boolean result = DialogUtils.showConfirmDialog(btnOpenManual_,
+            "Open Browser", "Open the default browser and navigate to the " +
+                  "Tiger Programmable Logic Card Manual?");
+      if (result) {
+         BrowserUtils.openWebsite(model_.studio(),
+               "https://asiimaging.com/docs/tiger_programmable_logic_card");
+      }
+   }
+
+   /**
+    * Refresh the Logic Cells and Physical I/O tabs.
+    */
+   private void refreshCells() {
+      if (model_.isUpdating()) {
+         DialogUtils.showMessage(btnRefresh_, "Warning",
+               "The cells are currently being updated.");
+      } else {
+         tab_.updateTabsFromController();
+      }
    }
 
    public CheckBox getEditCellUpdatesCheckBox() {

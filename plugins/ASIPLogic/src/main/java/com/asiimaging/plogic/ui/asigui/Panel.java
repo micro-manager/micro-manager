@@ -17,16 +17,18 @@ import org.micromanager.internal.dialogs.ComponentTitledBorder;
 
 public class Panel extends JPanel {
 
-   private static String defaultLayout = "";
-   private static String defaultCols = "";
-   private static String defaultRows = "";
+   public static final int BORDER_LEFT = TitledBorder.LEFT;
+
+   private static String defaultLayout_ = "";
+   private static String defaultCols_ = "";
+   private static String defaultRows_ = "";
 
    public Panel() {
-      setMigLayout(defaultLayout, defaultCols, defaultRows);
+      setMigLayout(defaultLayout_, defaultCols_, defaultRows_);
    }
 
    public Panel(final String text) {
-      setMigLayout(defaultLayout, defaultCols, defaultRows);
+      setMigLayout(defaultLayout_, defaultCols_, defaultRows_);
       final TitledBorder titledBorder = BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.gray), text);
       titledBorder.setTitleJustification(TitledBorder.CENTER);
@@ -35,7 +37,7 @@ public class Panel extends JPanel {
    }
 
    public Panel(final String text, int side) { // side = TitledBorder.CENTER, etc
-      setMigLayout(defaultLayout, defaultCols, defaultRows);
+      setMigLayout(defaultLayout_, defaultCols_, defaultRows_);
       final TitledBorder titledBorder = BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.gray), text);
       titledBorder.setTitleJustification(side);
@@ -44,14 +46,14 @@ public class Panel extends JPanel {
    }
 
    public Panel(final boolean border) {
-      setMigLayout(defaultLayout, defaultCols, defaultRows);
+      setMigLayout(defaultLayout_, defaultCols_, defaultRows_);
       if (border) {
          setBorder(BorderFactory.createLineBorder(Color.gray));
       }
    }
 
    public Panel(final CheckBox checkBox) {
-      setMigLayout(defaultLayout, defaultCols, defaultRows);
+      setMigLayout(defaultLayout_, defaultCols_, defaultRows_);
       final ComponentTitledBorder border = new ComponentTitledBorder(checkBox, this,
             BorderFactory.createLineBorder(Color.gray));
       setBorder(border);
@@ -72,9 +74,9 @@ public class Panel extends JPanel {
          final String layout,
          final String cols,
          final String rows) {
-      Panel.defaultLayout = layout;
-      Panel.defaultCols = cols;
-      Panel.defaultRows = rows;
+      Panel.defaultLayout_ = layout;
+      Panel.defaultCols_ = cols;
+      Panel.defaultRows_ = rows;
    }
 
 }

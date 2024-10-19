@@ -56,6 +56,16 @@ public abstract class ASITigerBase extends DeviceBase {
       return result;
    }
 
+   public String description(final String deviceName) {
+      String result = "";
+      try {
+         result = core_.getProperty(deviceName, Properties.DESCRIPTION);
+      } catch (Exception e) {
+         studio_.logs().logError("could not get the description property");
+      }
+      return result;
+   }
+
    public String firmwareBuildName() {
       try {
          return core_.getProperty(deviceName_, Properties.FIRMWARE_BUILD);
