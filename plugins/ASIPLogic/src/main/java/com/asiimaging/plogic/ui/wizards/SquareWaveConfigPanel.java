@@ -44,8 +44,8 @@ public class SquareWaveConfigPanel extends Panel {
       lblOutputCell_ = new JLabel("");
       updateLabels();
 
-      spnStartAddr_ = Spinner.createIntegerSpinner(1, 1 ,16, 1);
-      spnSourceAddr_ = Spinner.createIntegerSpinner(0, 0 ,48, 1);
+      spnStartAddr_ = Spinner.createIntegerSpinner(1, 1, 16, 1);
+      spnSourceAddr_ = Spinner.createIntegerSpinner(0, 0, 48, 1);
 
       final int maxValue = 65535;
       spnNumPulses_ = Spinner.createIntegerSpinner(1, 1, maxValue, 1);
