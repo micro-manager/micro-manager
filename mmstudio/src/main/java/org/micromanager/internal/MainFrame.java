@@ -674,8 +674,7 @@ public final class MainFrame extends JFrame {
       }
    }
 
-   public void updateAutofocusButtons(boolean isEnabled) {
-      autofocusConfigureButton_.setEnabled(isEnabled);
+   public void updateAutofocusButton(boolean isEnabled) {
       autofocusNowButton_.setEnabled(isEnabled);
    }
 

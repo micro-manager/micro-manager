@@ -289,7 +289,7 @@ public class MMUIManager {
             frame_.setBinSize(binSize);
          }
 
-         frame_.updateAutofocusButtons(studio_.getAutofocusManager().getAutofocusMethod() != null);
+         frame_.updateAutofocusButton(studio_.getAutofocusManager().getAutofocusMethod() != null);
 
          ConfigGroupPad pad = frame_.getConfigPad();
          // state devices
@@ -353,7 +353,7 @@ public class MMUIManager {
 
          if (frame_ != null) {
             configureBinningCombo();
-            frame_.updateAutofocusButtons(
+            frame_.updateAutofocusButton(
                   studio_.getAutofocusManager().getAutofocusMethod() != null);
             updateGUI(true);
          }
