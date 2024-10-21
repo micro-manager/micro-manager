@@ -787,12 +787,16 @@ public final class StageControlFrame extends JFrame {
       uiMovesStageManager_.getXYNavigator().moveSampleUm(x, y);
       if (settings_.getBoolean(SNAP, false)) {
          try {
-            core_.waitForDevice(core_.getXYStageDevice());
+            uiMovesStageManager_.getXYNavigator().waitForBusy(core_.getXYStageDevice(), 2000);
             // ASI stages report not busy, and then become busy again.  Add an extra wait
             // to avoid motion blur with such stages.
             // A similar issue (movement during the Snap) is seen with the Nikon Ti2 stage.
             // That prompted to make the extraWait_ variable settable through static functions.
             // If all of this can be resolved in the device adapters, this wait could go.
+            // 2024-10-21: turns out the code we were using for waitingw as incorrected.
+            // Since the moveSampleUm function was executed on another thread (using an executor)
+            // it was quite possible that the waitForDevice happened before the actual move
+            // command was send.  Possible this extraWait_ workaround is no longer needed.
             Thread.sleep(extraWait_);
             studio_.live().snap(true);
          } catch (Exception ex) {
@@ -807,7 +811,7 @@ public final class StageControlFrame extends JFrame {
       uiMovesStageManager_.getZNavigator().setPosition(curDrive, z);
       if (settings_.getBoolean(SNAP, false)) {
          try {
-            core_.waitForDevice(curDrive);
+            uiMovesStageManager_.getZNavigator().waitForBusy(curDrive, 2000);
             studio_.live().snap(true);
          } catch (Exception ex) {
             studio_.logs().showError(ex, "Error while waiting for stage: " + curDrive);

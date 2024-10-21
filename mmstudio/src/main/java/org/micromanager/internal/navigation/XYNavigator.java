@@ -5,9 +5,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.swing.JOptionPane;
 import mmcorej.MMCoreJ;
 import org.micromanager.Studio;
@@ -143,7 +146,7 @@ public class XYNavigator {
     */
    public void moveSampleUm(final double tmpXUm, final double tmpYUm) {
       String xyStage = studio_.core().getXYStageDevice();
-      if (xyStage == null || xyStage.equals("")) {
+      if (xyStage == null || xyStage.isEmpty()) {
          return;
       }
       double pixSizeUm = studio_.core().getPixelSizeUm(true);
@@ -172,7 +175,7 @@ public class XYNavigator {
          return;
       }
       String xyStage = studio_.core().getXYStageDevice();
-      if (xyStage == null || xyStage.equals("")) {
+      if (xyStage == null || xyStage.isEmpty()) {
          return;
       }
       // It is a bit funny to calculate back to pixels and then receive
@@ -202,7 +205,7 @@ public class XYNavigator {
          return;
       }
       String xyStage = studio_.core().getXYStageDevice();
-      if (xyStage == null || xyStage.equals("")) {
+      if (xyStage == null || xyStage.isEmpty()) {
          return;
       }
       Point2D stagePos = toStageSpace(pixSizeUm, tmpXPixels,
@@ -228,6 +231,21 @@ public class XYNavigator {
       }
       // if a
       xyStageMoverMap_.get(xyStage).setPosition(xRel, yRel);
+   }
+
+   /**
+    * Waits until the stage tasks have all been completed.
+    *
+    * @param xyStage  Stage that we are waiting for
+    * @param timeoutMs Wait no more than this time (in ms)
+    * @return false if device was not busy, or we waited until it was not busy,
+    *          true if still busy after the timeout
+    */
+   public boolean waitForBusy(String xyStage, long timeoutMs) {
+      if (xyStageMoverMap_.containsKey(xyStage)) {
+         return xyStageMoverMap_.get(xyStage).waitForBusy(timeoutMs);
+      }
+      return false;
    }
 
    /**
@@ -263,6 +281,19 @@ public class XYNavigator {
          if (future_ == null || future_.isDone()) {
             future_ = executorService_.submit(this);
          }
+      }
+
+      public boolean waitForBusy(long timeOutMs) {
+         if (future_ == null || future_.isDone()) {
+            return false;
+         } else {
+            try {
+               future_.get(timeOutMs, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+               return true;
+            }
+         }
+         return false;
       }
 
       @Override
