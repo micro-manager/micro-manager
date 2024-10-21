@@ -87,7 +87,6 @@ public final class XYZKeyListener {
    @Subscribe
    public void keyPressed(DisplayKeyPressEvent dkpe) {
       final KeyEvent e = dkpe.getKeyEvent();
-      boolean consumed = false;
       for (int i = 0; i < xMovesMicron_.length; ++i) {
          xMovesMicron_[i] = settings_.getDouble(X_MOVEMENTS[i], xMovesMicron_[i]);
       }
@@ -96,6 +95,7 @@ public final class XYZKeyListener {
       }
       zMovesMicron_[0] = settings_.getDouble(SMALL_MOVEMENT_Z, 1.1);
       zMovesMicron_[1] = settings_.getDouble(MEDIUM_MOVEMENT_Z, 11.1);
+      boolean consumed = false;
 
       switch (e.getKeyCode()) {
          case KeyEvent.VK_LEFT:
