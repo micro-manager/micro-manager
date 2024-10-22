@@ -24,6 +24,9 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import mmcorej.DeviceType;
@@ -54,6 +57,7 @@ public class PlatePanel extends JPanel {
    private Point2D.Double xyStagePos_;
    private double cameraXFieldOfView_;
    private double cameraYFieldOfView_;
+   private ExecutorService executorService_;
 
    /**
     * Tool, either Select or Move.
@@ -184,6 +188,7 @@ public class PlatePanel extends JPanel {
       plateGui_ = plateGUI;
       studio_ = studio;
       plate_ = plate;
+      executorService_ = Executors.newFixedThreadPool(2);
       mode_ = PlatePanel.Tool.SELECT;
       lockAspect_ = true;
       long width = studio_.core().getImageWidth();
@@ -195,7 +200,7 @@ public class PlatePanel extends JPanel {
       wellMap_ = new Hashtable<>();
       xyStagePos_ = new Point2D.Double(0.0, 0.0);
       zStagePos_ = 0.0;
-      
+
       if (pl == null) {
          wells_ = plate_.generatePositions(plateGui_.getXYStageName());
       } else {
@@ -258,7 +263,7 @@ public class PlatePanel extends JPanel {
    }
 
    protected void onMouseClicked(MouseEvent e) throws HCSException {
-      Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
+      final Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
       if (mode_ == Tool.MOVE) {
          if (studio_ == null) {
@@ -267,33 +272,45 @@ public class PlatePanel extends JPanel {
          if (!plate_.isPointWithin(pt.x, pt.y)) {
             return;
          }
-
-         try {
-            pt = plateGui_.applyOffset(pt);
-            studio_.getCMMCore().setXYPosition(pt.x, pt.y);
-            // wait for the stage to stop moving before updating the gui.
-            studio_.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
-            if (plateGui_.useThreePtAF() && plateGui_.getThreePointZPos(pt.x, pt.y) != null) {
-               // This is a bit of a hack, but this is essential for the Nikon PFS
-               boolean continuousFocusOn = studio_.getCMMCore().isContinuousFocusEnabled();
-               if (continuousFocusOn) {
-                  studio_.getCMMCore().enableContinuousFocus(false);
-               }
-               studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
-                     plateGui_.getThreePointZPos(pt.x, pt.y));
-               if (continuousFocusOn) {
-                  studio_.getCMMCore().enableContinuousFocus(true);
+         Future ft = executorService_.submit(new Runnable() {
+            public void run() {
+               try {
+                  final Point2D.Double pt2 = plateGui_.applyOffset(pt);
+                  studio_.getCMMCore().setXYPosition(pt2.x, pt2.y);
+                  // wait for the stage to stop moving before updating the gui.
+                  studio_.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
+                  if (plateGui_.useThreePtAF()
+                          && plateGui_.getThreePointZPos(pt2.x, pt2.y) != null) {
+                     // This is a bit of a hack, but this is essential for the Nikon PFS
+                     boolean continuousFocusOn = studio_.getCMMCore().isContinuousFocusEnabled();
+                     if (continuousFocusOn) {
+                        studio_.getCMMCore().enableContinuousFocus(false);
+                     }
+                     studio_.getCMMCore().setPosition(plateGui_.getZStageName(),
+                             plateGui_.getThreePointZPos(pt2.x, pt2.y));
+                     if (continuousFocusOn) {
+                        studio_.getCMMCore().enableContinuousFocus(true);
+                     }
+                  }
+                  xyStagePos_ = studio_.getCMMCore().getXYStagePosition();
+                  zStagePos_ = studio_.getCMMCore().getPosition(plateGui_.getZStageName());
+                  SwingUtilities.invokeLater(new Runnable() {
+                     public void run() {
+                        plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_,
+                                well, "undefined");
+                        try {
+                           refreshStagePosition();
+                        } catch (HCSException e1) {
+                           studio_.logs().logError(e1.getMessage());
+                        }
+                        repaint();
+                     }
+                  });
+               } catch (Exception e2) {
+                  studio_.logs().logError(e2.getMessage());
                }
             }
-            xyStagePos_ = studio_.getCMMCore().getXYStagePosition();
-            zStagePos_ = studio_.getCMMCore().getPosition(plateGui_.getZStageName());
-            plateGui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_,
-                    well, "undefined");
-            refreshStagePosition();
-            repaint();
-         } catch (Exception e2) {
-            throw new HCSException(e2.getMessage());
-         }
+         });
       } else {
          int row = plate_.getWellRow(pt.y);
          int col = plate_.getWellColumn(pt.x);
