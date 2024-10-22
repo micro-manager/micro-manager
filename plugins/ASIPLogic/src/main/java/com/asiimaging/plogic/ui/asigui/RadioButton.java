@@ -23,14 +23,14 @@ public class RadioButton extends JPanel {
    public static final int LEFT = SwingConstants.LEFT;
    public static final int RIGHT = SwingConstants.RIGHT;
 
-   private String layoutStyle;
-   private final ButtonGroup buttonGroup;
-   private final ArrayList<JRadioButton> buttons;
+   private String layoutStyle_;
+   private final ButtonGroup buttonGroup_;
+   private final ArrayList<JRadioButton> buttons_;
 
    public RadioButton(final String[] names, final String selected) {
       setMigLayout("", "", "");
-      buttonGroup = new ButtonGroup();
-      buttons = new ArrayList<>();
+      buttonGroup_ = new ButtonGroup();
+      buttons_ = new ArrayList<>();
       setLayoutStyle(HORIZONTAL, LEFT);
       addButtons(names);
       setSelected(selected, true);
@@ -41,8 +41,8 @@ public class RadioButton extends JPanel {
                       final int type,
                       final int alignment) {
       setMigLayout("", "", "");
-      buttonGroup = new ButtonGroup();
-      buttons = new ArrayList<>();
+      buttonGroup_ = new ButtonGroup();
+      buttons_ = new ArrayList<>();
       setLayoutStyle(type, alignment);
       addButtons(names);
       setSelected(selected, true);
@@ -53,7 +53,7 @@ public class RadioButton extends JPanel {
    }
 
    public void setEnabled(final boolean state) {
-      for (final JRadioButton button : buttons) {
+      for (final JRadioButton button : buttons_) {
          button.setEnabled(state);
       }
    }
@@ -63,26 +63,26 @@ public class RadioButton extends JPanel {
       final Font font = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
       button.setFocusPainted(false); // remove focus highlight when clicked
       button.setFont(font);
-      buttonGroup.add(button);
-      buttons.add(button);
-      add(button, layoutStyle);
+      buttonGroup_.add(button);
+      buttons_.add(button);
+      add(button, layoutStyle_);
    }
 
    private void addButtons(final String[] names) {
       for (final String name : names) {
          addRadioButton(name);
       }
-      buttons.trimToSize();
+      buttons_.trimToSize();
    }
 
    private void setLayoutStyle(final int type, final int alignment) {
-      layoutStyle = (type == RadioButton.VERTICAL) ? "wrap" : "";
-      layoutStyle = (alignment == RadioButton.LEFT)
-            ? "left, " + layoutStyle : "right, " + layoutStyle;
+      layoutStyle_ = (type == RadioButton.VERTICAL) ? "wrap" : "";
+      layoutStyle_ = (alignment == RadioButton.LEFT)
+            ? "left, " + layoutStyle_ : "right, " + layoutStyle_;
    }
 
    public void setSelected(final String text, final boolean state) {
-      for (final JRadioButton button : buttons) {
+      for (final JRadioButton button : buttons_) {
          if (button.getText().equals(text)) {
             button.setSelected(state);
          }
@@ -90,7 +90,7 @@ public class RadioButton extends JPanel {
    }
 
    public String getSelectedButtonText() {
-      for (final JRadioButton button : buttons) {
+      for (final JRadioButton button : buttons_) {
          if (button.isSelected()) {
             return button.getText();
          }
@@ -99,7 +99,7 @@ public class RadioButton extends JPanel {
    }
 
    public void registerListener(final Method method) {
-      for (final JRadioButton button : buttons) {
+      for (final JRadioButton button : buttons_) {
          button.addActionListener(method::run);
       }
    }

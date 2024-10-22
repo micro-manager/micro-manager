@@ -24,7 +24,6 @@ public class IOCellsTab extends Panel {
    public IOCellsTab(final PLogicControlModel model) {
       model_ = Objects.requireNonNull(model);
       createUserInterface();
-      createEventHandlers();
    }
 
    private void createUserInterface() {
@@ -42,13 +41,6 @@ public class IOCellsTab extends Panel {
    }
 
    /**
-    * Create the event handlers.
-    */
-   private void createEventHandlers() {
-
-   }
-
-   /**
     * Remove all components from the cell.
     */
    public void clearIOCells() {
@@ -63,9 +55,6 @@ public class IOCellsTab extends Panel {
    public void initIOCells() {
       IOCell.UPDATE = false;
       for (final IOCell cell : cells_) {
-         if (!model_.isUpdating()) {
-            return;
-         }
          cell.initCell();
       }
       IOCell.UPDATE = true;

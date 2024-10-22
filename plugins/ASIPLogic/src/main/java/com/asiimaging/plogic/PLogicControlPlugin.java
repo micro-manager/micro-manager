@@ -19,7 +19,7 @@ public class PLogicControlPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String copyright = "Applied Scientific Instrumentation (ASI), 2024";
    public static final String description = "An interface for the Tiger Programmable Logic Card.";
    public static final String menuName = "ASI PLogic Control";
-   public static final String version = "0.1.0";
+   public static final String version = "0.2.0";
 
    private Studio studio_;
    private PLogicControlFrame frame_;
@@ -28,11 +28,6 @@ public class PLogicControlPlugin implements MenuPlugin, SciJavaPlugin {
    @Override
    public void setContext(final Studio studio) {
       studio_ = studio;
-   }
-
-   @Override
-   public String getSubMenu() {
-      return "Device Control";
    }
 
    @Override
@@ -53,6 +48,11 @@ public class PLogicControlPlugin implements MenuPlugin, SciJavaPlugin {
             studio_.logs().showError(e);
          }
       }
+   }
+
+   @Override
+   public String getSubMenu() {
+      return "Device Control";
    }
 
    @Override

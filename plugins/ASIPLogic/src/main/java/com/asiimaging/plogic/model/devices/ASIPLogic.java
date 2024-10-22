@@ -7,6 +7,8 @@
 
 package com.asiimaging.plogic.model.devices;
 
+import com.asiimaging.plogic.PLogicControlModel;
+import com.asiimaging.plogic.ui.utils.DialogUtils;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,10 +24,66 @@ import org.micromanager.Studio;
 public class ASIPLogic extends ASITigerBase {
 
    public static final String DEVICE_LIBRARY = "ASITiger";
+   public static final String DEVICE_DESC_PREFIX = "ASI Programmable Logic";
+
+   private int pointerPosition_;
+   private PLogicState state_;
+   private boolean isRefreshed_;
 
    public ASIPLogic(final Studio studio, final String deviceName) {
       super(studio, deviceName);
+      state_ = new PLogicState(numCells());
+      // always init to false, this will be true when all cells
+      // have been updated from the controller
+      isRefreshed_ = false;
+      // cache initial pointer position
+      pointerPosition_ = pointerPosition();
    }
+
+   public PLogicState state() {
+      return state_;
+   }
+
+   /**
+    * Set the {@code PLogicState} created from a json {@code String}.
+    *
+    * @param json the state as json {@code String}
+    */
+   public void state(final String json) {
+      final PLogicState state = PLogicState.fromJson(json);
+      // validate that the data works with the firmware build
+      final int stateNumCells = state.numCells();
+      if (numCells() != stateNumCells) {
+         DialogUtils.showMessage(null, "Number of Cells Mismatch",
+               "The loaded data is for a " + stateNumCells
+                     + " cell PLogic build, but you have a " + numCells() + " cell build.");
+      } else {
+         state_ = state;
+      }
+   }
+
+   /**
+    * Return {@code true} if all cells have been queried through serial commands. This ensures that
+    * the internal state representation and the {@code ASIPLogic} state are in sync and the object
+    * can be serialized. The {@code updateState()} method sets this state to {@code true}.
+    *
+    * @return {@code true} if in a serializable state
+    */
+   public boolean isRefreshed() {
+      return isRefreshed_;
+   }
+
+   /**
+    * Query the controller with serial commands, updating the internal state representation for
+    * the PLogic device. The {@code isRefreshed()} method queries if this method has been run
+    * at least once for this device.
+    */
+   public void updateState(final PLogicControlModel model) {
+      state_.updateCells(model);
+      isRefreshed_ = true;
+   }
+
+   // Read-only properties
 
    public int numCells() {
       return getPropertyInt(Properties.ReadOnly.NUM_LOGIC_CELLS);
@@ -33,10 +91,6 @@ public class ASIPLogic extends ASITigerBase {
 
    public String axisLetter() {
       return getProperty(Properties.ReadOnly.AXIS_LETTER);
-   }
-
-   public void saveSettings() {
-      setProperty(Properties.SAVE_CARD_SETTINGS, ASIPLogic.SaveSettings.Z.toString());
    }
 
    public int backplaneOutputState() {
@@ -51,52 +105,85 @@ public class ASIPLogic extends ASITigerBase {
       return getPropertyInt(Properties.ReadOnly.PLOGIC_OUTPUT_STATE);
    }
 
+   // Properties
+
+   public void saveSettings() {
+      setProperty(Properties.SAVE_CARD_SETTINGS, ASIPLogic.SaveSettings.Z.toString());
+   }
+
    public void clearAllCellStates() {
       setProperty(Properties.CLEAR_ALL_CELL_STATES, Values.DO_IT);
    }
 
-   public void triggerSource(final String source) {
-      setProperty(Properties.TRIGGER_SOURCE, source);
+   public void triggerSource(final TriggerSource triggerSource) {
+      setProperty(Properties.TRIGGER_SOURCE, triggerSource.toString());
+      state_.triggerSource(triggerSource);
    }
 
    public TriggerSource triggerSource() {
-      return TriggerSource.fromString(getProperty(Properties.TRIGGER_SOURCE));
+      final TriggerSource source = TriggerSource.fromString(getProperty(Properties.TRIGGER_SOURCE));
+      state_.triggerSource(source);
+      return source;
    }
 
    public void pointerPosition(final int position) {
       setPropertyInt(Properties.POINTER_POSITION, position);
+      pointerPosition_ = position;
    }
 
    public int pointerPosition() {
-      return getPropertyInt(Properties.POINTER_POSITION);
+      final int pointerPosition = getPropertyInt(Properties.POINTER_POSITION);
+      pointerPosition_ = pointerPosition;
+      return pointerPosition;
    }
 
-   public void cellType(final CellType cellType) {
-      setProperty(Properties.EDIT_CELL_TYPE, cellType.toString());
+   public void cellType(final CellType type) {
+      setProperty(Properties.EDIT_CELL_TYPE, type.toString());
+      state_.cell(pointerPosition_).type(type);
    }
 
    public CellType cellType() {
-      return CellType.fromString(getProperty(Properties.EDIT_CELL_TYPE));
+      final CellType type = CellType.fromString(getProperty(Properties.EDIT_CELL_TYPE));
+      state_.cell(pointerPosition_).type(type);
+      return type;
    }
 
-   public void ioType(final IOType ioType) {
-      setProperty(Properties.EDIT_CELL_TYPE, ioType.toString());
+   public void ioType(final IOType type) {
+      setProperty(Properties.EDIT_CELL_TYPE, type.toString());
+      state_.io(pointerPosition_).type(type);
    }
 
    public IOType ioType() {
-      return IOType.fromString(getProperty(Properties.EDIT_CELL_TYPE));
+      final IOType type = IOType.fromString(getProperty(Properties.EDIT_CELL_TYPE));
+      state_.io(pointerPosition_).type(type);
+      return type;
    }
 
+   // TODO: track this? make it a setting?
    public OutputChannel outputChannel() {
       return OutputChannel.fromString(getProperty(Properties.OUTPUT_CHANNEL));
    }
 
+   public void sourceAddress(final int value) {
+      setPropertyInt(Properties.EDIT_CELL_CONFIG, value);
+      state_.io(pointerPosition_).sourceAddress(value);
+   }
+
+   public int sourceAddress() {
+      final int sourceAddr = getPropertyInt(Properties.EDIT_CELL_CONFIG);
+      state_.io(pointerPosition_).sourceAddress(sourceAddr);
+      return sourceAddr;
+   }
+
    public void cellConfig(final int value) {
       setPropertyInt(Properties.EDIT_CELL_CONFIG, value);
+      state_.cell(pointerPosition_).config(value);
    }
 
    public int cellConfig() {
-      return getPropertyInt(Properties.EDIT_CELL_CONFIG);
+      final int config = getPropertyInt(Properties.EDIT_CELL_CONFIG);
+      state_.cell(pointerPosition_).config(config);
+      return config;
    }
 
    public void isAutoUpdateCellsOn(final boolean state) {
@@ -111,8 +198,14 @@ public class ASIPLogic extends ASITigerBase {
       setProperty(Properties.SET_CARD_PRESET, Preset.fromCode(code));
    }
 
+   // TODO: presets besides ALL_CELLS_ZERO will not update the internal PLogicState,
+   //   it may be complicated because you have to know how to update the state unless
+   //   you want to query the controller, which is slow.
    public void preset(final Preset preset) {
       setProperty(Properties.SET_CARD_PRESET, preset.toString());
+      if (preset == Preset.ALL_CELLS_ZERO) {
+         state_.clearLogicCells();
+      }
    }
 
    public Preset preset() {
@@ -123,26 +216,30 @@ public class ASIPLogic extends ASITigerBase {
       return Preset.fromString(getProperty(Properties.SET_CARD_PRESET)).toCode();
    }
 
-   public void cellInput(final int input, final int value) {
-      if (input < 1 || input > 4) {
+   public void cellInput(final int num, final int address) {
+      if (num < 1 || num > 4) {
          throw new IllegalArgumentException("Each cell only has inputs 1-4.");
       }
-      setPropertyInt(Properties.EDIT_CELL_INPUT + input, value);
+      setPropertyInt(Properties.EDIT_CELL_INPUT + num, address);
+      state_.cell(pointerPosition_).input(num, address);
    }
 
    public int cellInput(final int input) {
       if (input < 1 || input > 4) {
          throw new IllegalArgumentException("Each cell only has inputs 1-4.");
       }
-      return getPropertyInt(Properties.EDIT_CELL_INPUT + input);
+      final int value = getPropertyInt(Properties.EDIT_CELL_INPUT + input);
+      state_.cell(pointerPosition_).input(input, value);
+      return value;
    }
 
    public ShutterMode shutterMode() {
       return ShutterMode.fromString(getProperty(Properties.PLOGIC_MODE));
    }
 
-   // Device Properties
+   // Properties Names
    public static class Properties extends ASITigerBase.Properties {
+      public static final String PLOGIC_MODE = "PLogicMode"; // pre-init property
 
       public static final String CLEAR_ALL_CELL_STATES = "ClearAllCellStates";
       public static final String EDIT_CELL_UPDATE_AUTO = "EditCellUpdateAutomatically";
@@ -150,13 +247,10 @@ public class ASIPLogic extends ASITigerBase {
       public static final String TRIGGER_SOURCE = "TriggerSource";
       public static final String SET_CARD_PRESET = "SetCardPreset";
       public static final String SAVE_CARD_SETTINGS = "SaveCardSettings";
-
+      public static final String OUTPUT_CHANNEL = "OutputChannel";
       public static final String EDIT_CELL_TYPE = "EditCellCellType";
       public static final String EDIT_CELL_CONFIG = "EditCellConfig";
       public static final String EDIT_CELL_INPUT = "EditCellInput"; // EditCellInput 1 - 4
-
-      public static final String OUTPUT_CHANNEL = "OutputChannel";
-      public static final String PLOGIC_MODE = "PLogicMode";
 
       public static class ReadOnly {
          public static final String BACKPLANE_OUTPUT_STATE = "BackplaneOutputState";
@@ -167,16 +261,15 @@ public class ASIPLogic extends ASITigerBase {
       }
    }
 
+   // Property Values
    public static class Values extends ASITigerBase.Values {
-
       public static final String NO = "No";
       public static final String YES = "Yes";
-
       public static final String DO_IT = "Do it";
    }
 
    public enum Preset {
-      NO_PRESET("no preset", -1), // TODO: is code correct? does this make sense?
+      NO_PRESET("no preset", -1),
       ALL_CELLS_ZERO("0 - cells all 0", 0),
       ORIGINAL_SPIM_TTL_CARD("1 - original SPIM TTL card", 1),
       CELL_1_LOW("2 - cell 1 low", 2),
@@ -224,7 +317,7 @@ public class ASIPLogic extends ASITigerBase {
             Stream.of(values()).collect(Collectors.toMap(Object::toString, e -> e));
 
       private static final Map<Integer, String> presets =
-            Stream.of(values()).collect(Collectors.toMap(Preset::getPresetCode, Object::toString));
+            Stream.of(values()).collect(Collectors.toMap(Preset::toCode, Object::toString));
 
       Preset(final String text, final int code) {
          text_ = text;
@@ -240,17 +333,12 @@ public class ASIPLogic extends ASITigerBase {
          return code_;
       }
 
-      public int getPresetCode() {
-         return code_;
-      }
-
       public static String[] toArray() {
          return Arrays.stream(values())
                .map(Preset::toString)
                .toArray(String[]::new);
       }
 
-      // TODO: handle errors without getOrDefault?
       public static Preset fromString(final String symbol) {
          return stringToEnum.getOrDefault(symbol, Preset.NO_PRESET);
       }
@@ -261,22 +349,44 @@ public class ASIPLogic extends ASITigerBase {
    }
 
    public enum CellType {
-      CONSTANT("0 - constant", 0, "Configuration", "", "", "", "", false),
-      D_FLOP("1 - D flop", 4, "", "Din", "Clock", "Reset", "Preset", true),
-      LUT2("2 - 2-input LUT", 2, "LUT Value", "A", "B", "", "", false),
-      LUT3("3 - 3-input LUT", 3, "LUT Value", "A", "B", "C", "", false),
-      LUT4("4 - 4-input LUT", 4, "LUT Value", "A", "B", "C", "D", false),
-      AND2("5 - 2-input AND", 2, "", "A", "B", "", "", false),
-      OR2("6 - 2-input OR", 2, "", "A", "B", "", "", false),
-      XOR2("7 - 2-input XOR", 2, "", "A", "B", "", "", false),
-      ONE_SHOT("8 - one shot", 3, "Duration", "Trigger", "Clock", "Reset", "", true),
-      DELAY("9 - delay", 3, "Delay", "Trigger", "Clock", "Reset", "", true),
-      AND4("10 - 4-input AND", 4, "", "A", "B", "C", "D", false),
-      OR4("11 - 4-input OR", 4, "", "A", "B", "C", "D", false),
-      D_FLOP_SYNC("12 - D flop (sync)", 4, "", "Din", "Clock", "Reset", "Preset", true),
-      JK_FLOP("13 - JK flop", 3, "", "J", "K", "Clock", "", true),
-      ONE_SHOT_NRT("14 - one shot (NRT)", 3, "Duration", "Trigger", "Clock", "Reset", "", true),
-      DELAY_NRT("15 - delay (NRT)", 3, "Delay", "Trigger", "Clock", "Reset", "", true);
+      CONSTANT(
+            "0 - constant", 0, "Configuration", "", "", "", "", false),
+      D_FLOP(
+            "1 - D flop", 4, "", "Din", "Clock", "Reset", "Preset", true),
+      LUT2(
+            "2 - 2-input LUT", 2, "LUT Value", "A", "B", "", "", false),
+      LUT3(
+            "3 - 3-input LUT", 3, "LUT Value", "A", "B", "C", "", false),
+      LUT4(
+            "4 - 4-input LUT", 4, "LUT Value", "A", "B", "C", "D", false),
+      AND2(
+            "5 - 2-input AND", 2, "", "A", "B", "", "", false),
+      OR2(
+            "6 - 2-input OR", 2, "", "A", "B", "", "", false),
+      XOR2(
+            "7 - 2-input XOR", 2, "", "A", "B", "", "", false),
+      ONE_SHOT(
+            "8 - one shot", 3, "Duration", "Trigger", "Clock", "Reset", "", true),
+      DELAY(
+            "9 - delay", 3, "Delay", "Trigger", "Clock", "Reset", "", true),
+      AND4(
+            "10 - 4-input AND", 4, "", "A", "B", "C", "D", false),
+      OR4(
+            "11 - 4-input OR", 4, "", "A", "B", "C", "D", false),
+      D_FLOP_SYNC(
+            "12 - D flop (sync)", 4, "", "Din", "Clock", "Reset", "Preset", true),
+      JK_FLOP(
+            "13 - JK flop", 3, "", "J", "K", "Clock", "", true),
+      ONE_SHOT_NRT(
+            "14 - one shot (NRT)", 3, "Duration", "Trigger", "Clock", "Reset", "", true),
+      DELAY_NRT(
+            "15 - delay (NRT)", 3, "Delay", "Trigger", "Clock", "Reset", "", true),
+      ONE_SHOT_OR2_NRT(
+            "16 - one shot OR2 (NRT)",
+            4, "Duration", "Trigger A", "Clock", "Reset", "Trigger B", true),
+      DELAY_OR2_NRT(
+            "17 - delay OR2 (NRT)",
+            4, "Delay", "Trigger A", "Clock", "Reset", "Trigger B", true);
 
       private final String propertyName_;
       private final int numInputs_;

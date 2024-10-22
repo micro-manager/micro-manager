@@ -41,7 +41,7 @@ public class PLogicControlFrame extends JFrame {
 
       if (isDeviceFound) {
          createUserInterface();
-         tabPanel_.updateCells();
+         tabPanel_.updateTabsFromController();
       } else {
          createErrorInterface();
       }
@@ -76,7 +76,8 @@ public class PLogicControlFrame extends JFrame {
       final Button btnManual = new Button("Manual", 120, 30);
       btnManual.registerListener(e -> {
          final boolean result = DialogUtils.showConfirmDialog(btnManual,
-               "Open Browser", "Navigate to the Tiger Programmable Logic Card Manual?");
+               "Open Browser", "Open the default browser and navigate to the "
+                     + "Tiger Programmable Logic Card Manual?");
          if (result) {
             BrowserUtils.openWebsite(studio_, "https://asiimaging.com/docs/tiger_programmable_logic_card");
          }
@@ -128,8 +129,10 @@ public class PLogicControlFrame extends JFrame {
       // register for micro-manager events
       studio_.events().registerForEvents(this);
 
-      WindowUtils.registerWindowClosingEvent(this,
-            event -> studio_.logs().logMessage("window closed"));
+      WindowUtils.registerWindowClosingEvent(this, event -> {
+         model_.isUpdating(false);
+         studio_.logs().logMessage("window closed");
+      });
    }
 
 }

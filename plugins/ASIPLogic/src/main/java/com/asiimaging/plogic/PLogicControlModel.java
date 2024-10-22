@@ -9,6 +9,7 @@ package com.asiimaging.plogic;
 
 import com.asiimaging.plogic.model.devices.ASIPLogic;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import mmcorej.CMMCore;
@@ -24,17 +25,15 @@ public class PLogicControlModel {
    private final Studio studio_;
    private final CMMCore core_;
 
-   private final ASIPLogic plc_;
-   private final ArrayList<String> devices_;
-
+   private int selectedIndex_;
+   private final List<ASIPLogic> devices_;
    private final AtomicBoolean isUpdating_;
 
    public PLogicControlModel(final Studio studio) {
       studio_ = Objects.requireNonNull(studio);
       core_ = studio_.core();
+      selectedIndex_ = 0;
       devices_ = new ArrayList<>();
-      // set initial deviceName in findDevices()
-      plc_ = new ASIPLogic(studio_, "");
       isUpdating_ = new AtomicBoolean(false);
    }
 
@@ -46,36 +45,31 @@ public class PLogicControlModel {
       isUpdating_.set(state);
    }
 
-   /**
-    * Return an array of available PLogic devices.
-    *
-    * @return an array of available devices
-    */
+   public int getNumDevices() {
+      return devices_.size();
+   }
+
    public String[] getPLogicDevices() {
-      return devices_.toArray(new String[0]);
+      return devices_
+            .stream()
+            .map(ASIPLogic::deviceName)
+            .toArray(String[]::new);
    }
 
    /**
-    * Return true if any PLogic devices are found.
+    * Return if any PLogic devices are found. Add all devices to the device list.
     *
-    * <p>Set device to first in list as default.
-    *
-    * @return true if any devices found
+    * @return {@code true} if a device is found
     */
    public boolean findDevices() {
-      boolean found = false;
       final StrVector devices = core_.getLoadedDevicesOfType(DeviceType.ShutterDevice);
       for (String device : devices) {
-         if (getDeviceLibrary(device).equals(ASIPLogic.DEVICE_LIBRARY)) {
-            devices_.add(device);
-            found = true;
+         if (getDeviceLibrary(device).equals(ASIPLogic.DEVICE_LIBRARY)
+               && getDeviceDescription(device).startsWith(ASIPLogic.DEVICE_DESC_PREFIX)) {
+            devices_.add(new ASIPLogic(studio_, device));
          }
       }
-      if (found) {
-         // set device to first in list
-         plc_.deviceName(devices_.get(0));
-      }
-      return found;
+      return !devices_.isEmpty();
    }
 
    private String getDeviceLibrary(final String deviceName) {
@@ -88,13 +82,42 @@ public class PLogicControlModel {
       return deviceLibrary;
    }
 
+   private String getDeviceDescription(final String deviceName) {
+      String description;
+      try {
+         description = core_.getProperty(deviceName, "Description");
+      } catch (Exception e) {
+         description = ""; // return empty String if error
+      }
+      return description;
+   }
+
    /**
-    * Returns the PLogic device.
+    * Set the selected {@code ASIPLogic} device by index.
+    * Used to make model.plc() get the correct device.
+    *
+    * @param index the index of the device
+    */
+   public void selectedIndex(final int index) {
+      selectedIndex_ = index;
+   }
+
+   /**
+    * Return the selected index.
+    *
+    * @return the selected index
+    */
+   public int selectedIndex() {
+      return selectedIndex_;
+   }
+
+   /**
+    * Returns the currently selected PLogic device.
     *
     * @return the PLogic device
     */
    public ASIPLogic plc() {
-      return plc_;
+      return devices_.get(selectedIndex_);
    }
 
    public Studio studio() {
