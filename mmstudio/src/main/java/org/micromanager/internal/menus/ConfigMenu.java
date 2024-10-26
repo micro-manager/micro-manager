@@ -57,7 +57,6 @@ public final class ConfigMenu {
             "Reload the current hardware configuration and initialize device control",
             () -> {
                mmStudio_.loadSystemConfiguration();
-               // TODO: this is redundant.
                mmStudio_.uiManager().initializeGUI();
             });
 
