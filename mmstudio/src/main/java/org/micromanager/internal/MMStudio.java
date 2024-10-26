@@ -398,7 +398,7 @@ public final class MMStudio implements Studio {
       coreCallback_ = new CoreEventCallback(studio_, acquisitionManager_);
 
       // Load hardware configuration
-      // Note that this also initializes Autofocus plugins.
+      // Note that this also initializes Autofocus plugins, and updates the system cache.
       if (sysConfigFile_ != null) {  // we do allow running Micro-Manager without a config file!
          if (!loadSystemConfiguration()) {
             ReportingUtils.showErrorOn(false);
@@ -443,7 +443,9 @@ public final class MMStudio implements Studio {
       // loaded before creating the GUI, so we need to reissue the event.)
       events().post(new DefaultSystemConfigurationLoadedEvent());
       executeStartupScript();
-      ui_.updateGUI(true);
+
+      // since the core already updated the cache, no need to do it again here.
+      ui_.updateGUI(true, true);
 
       // Give plugins a chance to initialize their state
       events().post(new DefaultStartupCompleteEvent());
@@ -881,6 +883,7 @@ public final class MMStudio implements Studio {
             if (coreCallback_ != null) {
                coreCallback_.setIgnoring(true);
             }
+            // Note: the core will update its cache after loading the hardware config
             HardwareConfigurationManager.create(profile(), this)
                   .loadHardwareConfiguration(sysConfigFile_);
             if (coreCallback_ != null) {
@@ -906,8 +909,6 @@ public final class MMStudio implements Studio {
          }
 
       }
-
-      ui_.initializeGUI();
 
       return result;
    }
