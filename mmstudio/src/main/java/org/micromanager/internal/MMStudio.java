@@ -39,6 +39,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import mmcorej.CMMCore;
@@ -547,10 +548,34 @@ public final class MMStudio implements Studio {
     * @param newFile path to system configuration file.
     */
    public void setSysConfigFile(String newFile) {
+      setSysConfigFile(newFile, true);
+   }
+
+   /**
+    * Given a path to a file, will set the file as the
+    * new system configuration file.
+    * Set load to false when saving an already loaded configuration to
+    * another file.
+    *
+    * @param newFile path to system configuration file.
+    * @param load whether to load this configuraton file.
+    */
+   public void setSysConfigFile(String newFile, boolean load) {
       sysConfigFile_ = newFile;
       configChanged_ = false;
       ui_.frame().setConfigSaveButtonStatus(configChanged_);
-      loadSystemConfiguration();
+      if (load) {
+         loadSystemConfiguration();
+      }
+      // make sure everyone knows we are basing ourselves of a new file,
+      // even if we did not actually load it (to save time).
+      HardwareConfigurationManager.create(profile(), this)
+            .setNewConfiguration(sysConfigFile_);
+      FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
+      // only to update display of currently used config file
+      uiManager().updateGUI(true, true);
+      SwingUtilities.invokeLater(() -> studio_.events().post(
+               new DefaultSystemConfigurationLoadedEvent()));
    }
 
    protected void changeBinning(String mode) {

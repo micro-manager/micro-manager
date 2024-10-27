@@ -262,7 +262,7 @@ public class MMUIManager {
    /**
     * Updates the GUI with the hardware state.
     *
-    * @param updateConfigPadStructure Whether or not to update the Config Pad.
+    * @param updateConfigPadStructure Whether to update the Config Pad.
     * @param fromCache                When true, use the cache in the core, otherwise, ask
     *                                 the hardware (which will update the cache).
     */

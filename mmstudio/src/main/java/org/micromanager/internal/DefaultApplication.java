@@ -183,7 +183,9 @@ public class DefaultApplication implements Application {
          model.createSetupConfigsFromHardware(studio_.core());
          model.createResolutionsFromHardware(studio_.core());
          model.saveToFile(path);
-         ((MMStudio) studio_).setSysConfigFile(path);
+         // MM used to reload the config file here.  That takes time and I can not
+         // think of a good reason to do this (other than to fail fast).
+         ((MMStudio) studio_).setSysConfigFile(path, false);
          ((MMStudio) studio_).setConfigChanged(false);
       } catch (MMConfigFileException e) {
          ReportingUtils.showError(e);

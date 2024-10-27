@@ -20,10 +20,12 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 
+/**
+ * Implements the Main Window menu item "Devices".
+ */
 public final class ConfigMenu {
 
    private final JMenu switchConfigurationMenu_;
-
    private final MMStudio mmStudio_;
    private final CMMCore core_;
 
@@ -90,7 +92,7 @@ public final class ConfigMenu {
       File configFile = FileDialogs.openFile(mmStudio_.uiManager().frame(),
             "Load a Configuration File", FileDialogs.MM_CONFIG_FILE);
       if (configFile != null) {
-         mmStudio_.setSysConfigFile(configFile.getAbsolutePath());
+         mmStudio_.setSysConfigFile(configFile.getAbsolutePath(), true);
       }
    }
 
@@ -145,7 +147,7 @@ public final class ConfigMenu {
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
          // re-initialize the system with the new configuration file
-         mmStudio_.setSysConfigFile(cfg.getFileName());
+         mmStudio_.setSysConfigFile(cfg.getFileName(), true);
 
          GUIUtils.preventDisplayAdapterChangeExceptions();
       } catch (Exception e) {
@@ -177,7 +179,7 @@ public final class ConfigMenu {
          }
          GUIUtils.addMenuItem(switchConfigurationMenu_,
                label, null,
-               () -> mmStudio_.setSysConfigFile(configFile));
+               () -> mmStudio_.setSysConfigFile(configFile, true));
          seenConfigs.add(configFile);
       }
    }
