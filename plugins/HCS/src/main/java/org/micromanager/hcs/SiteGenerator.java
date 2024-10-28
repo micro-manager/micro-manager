@@ -100,7 +100,6 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
    private double xSpacing_ = 0.0;
    private double ySpacing_ = 0.0;
    
-   private CalibrationFrame calFrame_ = null;
    private final JToggleButton moveStage_;
    private final JToggleButton selectWells_;
    private final JRadioButton overWriteMMList_;

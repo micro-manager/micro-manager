@@ -34,6 +34,7 @@ import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
+import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 
 
@@ -850,6 +851,25 @@ public class PlatePanel extends JPanel {
          repaint();
       }
    }
+
+   /**
+    * Updates the stage positions when the config file gets reloaded.
+    * Especially useful for systems that home.
+    *
+    * @param systemConfigurationLoadedEvent Event signaling the configuration reloaded.
+    */
+   @Subscribe
+   public void systemConfigurationLoaded(
+           SystemConfigurationLoadedEvent systemConfigurationLoadedEvent) {
+      if (plateGui_.isCalibratedXY()) {
+         try {
+            refreshStagePosition();
+         } catch (HCSException hcse) {
+            studio_.logs().logError(hcse, "HCS-PlatePanel");
+         }
+      }
+   }
+
 
    /**
     * Gets the current stage position from the hardware and draws the current position
