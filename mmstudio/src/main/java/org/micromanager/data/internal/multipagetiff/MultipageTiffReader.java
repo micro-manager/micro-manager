@@ -91,7 +91,6 @@ public final class MultipageTiffReader {
 
    private HashMap<Coords, Long> coordsToOffset_;
    private long maxImageOffset_ = Long.MAX_VALUE;
-   private ImageByteBuffer imageByteBuffer_;
 
    //
    // Buffer allocation and recycling, copied from MultipageTiffWriter
@@ -136,7 +135,7 @@ public final class MultipageTiffReader {
          return allocateByteBuffer(capacity, byteOrder);
       }
 
-      synchronized (MultipageTiffWriter.class) {
+      synchronized (MultipageTiffReader.class) {
          if (capacity != pooledBufferCapacity_ || byteOrder != pooledBufferByteOrder_) {
             pooledBuffers_.clear();
             pooledBufferCapacity_ = capacity;
@@ -160,7 +159,7 @@ public final class MultipageTiffReader {
       if (BUFFER_POOL_SIZE == 0 || !b.isDirect()) {
          return;
       }
-      synchronized (MultipageTiffWriter.class) {
+      synchronized (MultipageTiffReader.class) {
          if (b.capacity() == pooledBufferCapacity_) {
             if (pooledBuffers_.size() == BUFFER_POOL_SIZE) {
                pooledBuffers_.removeLast(); // Discard oldest
@@ -581,21 +580,30 @@ public final class MultipageTiffReader {
          // TODO We should avoid converting to Java array and back, instead using
          // a nio buffer directly as the Image storage (even better if memory
          // mapped).
+         Image img = null;
          switch (pixelType) {
             case GRAY8: {
-               Image img = new DefaultImage(pixelBuffer.array(), formatPmap,
-                     coords, metadata);
-               tryRecycleLargeBuffer(pixelBuffer);
-               return img;
+               // make a copy of the array so that ByteBuffer can be recycled
+               Object pixels;
+               if (pixelBuffer.hasArray()) {
+                  pixels = pixelBuffer.array().clone();
+               } else {
+                  byte[] pixels8 = new byte[pixelBuffer.capacity()];
+                  for (int i = 0; i < pixelBuffer.capacity(); i++) {
+                     pixels8[i] = pixelBuffer.get(i);
+                  }
+                  pixels = pixels8;
+               }
+               img = new DefaultImage(pixels, formatPmap, coords, metadata);
+               break;
             }
             case GRAY16: {
                short[] pixels16 = new short[pixelBuffer.capacity() / 2];
                for (int i = 0; i < pixels16.length; i++) {
                   pixels16[i] = pixelBuffer.getShort(i * 2);
                }
-               Image img = new DefaultImage(pixels16, formatPmap, coords, metadata);
-               tryRecycleLargeBuffer(pixelBuffer);
-               return img;
+               img = new DefaultImage(pixels16, formatPmap, coords, metadata);
+               break;
             }
             case RGB32: {
                byte[] pixelsARGB = new byte[(int) (4 * data.bytesPerImage / 3)];
@@ -615,30 +623,21 @@ public final class MultipageTiffReader {
                      i++;
                   }
                }
-               Image img = new DefaultImage(pixelsARGB, formatPmap, coords, metadata);
-               tryRecycleLargeBuffer(pixelBuffer);
-               return img;
+               img = new DefaultImage(pixelsARGB, formatPmap, coords, metadata);
+               break;
             }
             default:
                throw new IOException("Unknown pixel type: " + pixelType.name());
          }
+         tryRecycleLargeBuffer(pixelBuffer);
+         return img;
       } catch (IllegalStateException ise) {
 
-         // can be thrown when meatadata are bad, todo: report
+         // can be thrown when metadata are bad, todo: report
          return null;
       }
    }
 
-   private ByteBuffer getByteBuffer(int length, ByteOrder byteOrder) {
-      if (imageByteBuffer_ != null
-              && imageByteBuffer_.getSize() == length
-              && imageByteBuffer_.getByteOrder() == byteOrder) {
-         return imageByteBuffer_.getBuffer();
-      } else {
-         imageByteBuffer_ = new ImageByteBuffer(length, byteOrder);
-         return imageByteBuffer_.getBuffer();
-      }
-   }
 
    private IFDEntry readDirectoryEntry(int offset, ByteBuffer buffer) throws IOException {
       char tag = buffer.getChar(offset);
