@@ -861,6 +861,12 @@ public class PlatePanel extends JPanel {
    @Subscribe
    public void systemConfigurationLoaded(
            SystemConfigurationLoadedEvent systemConfigurationLoadedEvent) {
+      // assume that pixel size changed too
+      updateCameraFieldOfView();
+      SwingUtilities.invokeLater(() -> {
+         rescale();
+         repaint();
+      });
       if (plateGui_.isCalibratedXY()) {
          try {
             refreshStagePosition();
