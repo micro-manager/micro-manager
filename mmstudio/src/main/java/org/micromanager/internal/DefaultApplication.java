@@ -59,40 +59,16 @@ public class DefaultApplication implements Application {
    private final JFrame backgroundFrame_;
 
 
+   /**
+    * Constructs the implementation of the Application interface.
+    *
+    * @param studio Always needed studio object.
+    * @param daynight Provides access to the ApplicationSkin
+    */
    public DefaultApplication(Studio studio, ApplicationSkin daynight) {
       studio_ = studio;
       daytimeNighttimeManager_ = daynight;
-      backgroundFrame_ = new JFrame();
-      // This removes the title bar, but also hides the Windows taskbar, which I do not want
-      //backgroundFrame_.setUndecorated(false); // Remove window decorations
-      backgroundFrame_.setExtendedState(JFrame.MAXIMIZED_BOTH);
-      backgroundFrame_.setFocusableWindowState(false);
-      backgroundFrame_.toBack();
-      backgroundFrame_.setIconImage(Toolkit.getDefaultToolkit().getImage(
-            getClass().getResource("/org/micromanager/icons/microscope.gif")));
-      backgroundFrame_.setTitle(String.format("%s %s", MICRO_MANAGER_TITLE,
-            MMVersion.VERSION_STRING));
-      backgroundFrame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-      backgroundFrame_.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowActivated(WindowEvent event) {
-               backgroundFrame_.setMenuBar(null);
-               backgroundFrame_.setJMenuBar(backgroundFrame_.getJMenuBar());
-            }
-
-            @Override
-            public void windowClosing(WindowEvent event) {
-               if (((MMStudio) studio_).closeSequence(false)) {
-                 //if (exitOnClose_) {
-                 //   System.exit(0);
-                 //} else {
-                 //   dispose();
-                // }
-               }
-            }
-         });
-
-      backgroundFrame_.setEnabled(true);
+      backgroundFrame_ = new BackgroundFrame(studio);
       backgroundFrame_.setVisible(((MMStudio) studio_).settings().getShowBackgroundWindow());
    }
 
