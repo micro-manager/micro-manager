@@ -1204,7 +1204,7 @@ public final class MMStudio implements Studio {
    }
 
    /**
-    * Class taht holds some of the settings displayed in the Options dialog.
+    * Class that holds some of the settings displayed in the Options dialog.
     */
    public class MMSettings {
       private static final String SHOULD_DELETE_OLD_CORE_LOGS
@@ -1220,6 +1220,8 @@ public final class MMStudio implements Studio {
               = "Use new Acquisition Engine";
       private static final String UNLOCK_AUTOFOCUS_DURING_Z_STACK
               = "Unlock autofocus during Z stack";
+      private static final String SHOW_BACKGROUND_WINDOW
+              = "Show background window";
 
       public boolean getShouldDeleteOldCoreLogs() {
          return profile().getSettings(MMStudio.class).getBoolean(
@@ -1288,6 +1290,16 @@ public final class MMStudio implements Studio {
       public void setUnlockAutofocusDuringZStack(boolean use) {
          profile().getSettings(MMStudio.class).putBoolean(
                  UNLOCK_AUTOFOCUS_DURING_Z_STACK, use);
+      }
+
+      public boolean getShowBackgroundWindow() {
+         return profile().getSettings(MMStudio.class).getBoolean(
+                 SHOW_BACKGROUND_WINDOW, false);
+      }
+
+      public void setShowBackgroundWindow(boolean show) {
+         profile().getSettings(MMStudio.class).putBoolean(
+                 SHOW_BACKGROUND_WINDOW, show);
       }
    }
 }

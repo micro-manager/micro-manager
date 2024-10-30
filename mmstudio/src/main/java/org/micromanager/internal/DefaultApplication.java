@@ -31,7 +31,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package org.micromanager.internal;
 
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JFrame;
@@ -52,11 +56,21 @@ public class DefaultApplication implements Application {
    private final Studio studio_;
    private static final String EXPOSURE_KEY = "Exposure_";
    private final ApplicationSkin daytimeNighttimeManager_;
+   private final JFrame backgroundFrame_;
 
 
    public DefaultApplication(Studio studio, ApplicationSkin daynight) {
       studio_ = studio;
       daytimeNighttimeManager_ = daynight;
+      backgroundFrame_ = new JFrame();
+      // This removes the title bar, but also hides the Windows taskbar, which I do not want
+      //backgroundFrame_.setUndecorated(false); // Remove window decorations
+      backgroundFrame_.setExtendedState(JFrame.MAXIMIZED_BOTH);
+      backgroundFrame_.setFocusableWindowState(false);
+      backgroundFrame_.toBack();
+
+      backgroundFrame_.setEnabled(false);
+      backgroundFrame_.setVisible(((MMStudio) studio_).settings().getShowBackgroundWindow());
    }
 
 
@@ -234,5 +248,12 @@ public class DefaultApplication implements Application {
    @Override
    public ApplicationSkin getApplicationSkin() {
       return skin();
+   }
+
+   @Override
+   public void showBackgroundWindow(boolean show) {
+      backgroundFrame_.toBack();
+      backgroundFrame_.setVisible(show);
+
    }
 }

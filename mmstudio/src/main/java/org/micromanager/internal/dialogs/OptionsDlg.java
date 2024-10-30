@@ -279,6 +279,14 @@ public final class OptionsDlg extends JDialog {
          mmStudio_.settings().setShouldUseAcqEngJ(acqEngJ.isSelected());
       });
 
+      final JCheckBox showBackgroundWindow = new JCheckBox();
+      showBackgroundWindow.setText("Show background window");
+      showBackgroundWindow.setSelected(mmStudio.settings().getShowBackgroundWindow());
+      showBackgroundWindow.addActionListener((ActionEvent arg0) -> {
+         mmStudio.settings().setShowBackgroundWindow(showBackgroundWindow.isSelected());
+         mmStudio.app().showBackgroundWindow(showBackgroundWindow.isSelected());
+      });
+
 
       final JButton closeButton = new JButton();
       closeButton.setText("Close");
@@ -290,6 +298,7 @@ public final class OptionsDlg extends JDialog {
 
       super.add(new JLabel("Display Background:"), "split 2, gapright push");
       super.add(comboDisplayBackground_, "wrap");
+      super.add(showBackgroundWindow, "wrap");
 
       super.add(new JSeparator(), "wrap");
 

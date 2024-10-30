@@ -147,4 +147,10 @@ public interface Application {
     * @return ApplicationSkin instance.
     */
    ApplicationSkin getApplicationSkin();
+
+   /**
+    * Shows a background window, that hides potentially cluttered desktops and
+    * provides a better look for the applictions
+    */
+   void showBackgroundWindow(boolean show);
 }
