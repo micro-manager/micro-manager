@@ -31,11 +31,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package org.micromanager.internal;
 
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowFocusListener;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JFrame;
@@ -53,6 +52,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Implementation of the Application interface.
  */
 public class DefaultApplication implements Application {
+   private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
    private final Studio studio_;
    private static final String EXPOSURE_KEY = "Exposure_";
    private final ApplicationSkin daytimeNighttimeManager_;
@@ -68,8 +68,31 @@ public class DefaultApplication implements Application {
       backgroundFrame_.setExtendedState(JFrame.MAXIMIZED_BOTH);
       backgroundFrame_.setFocusableWindowState(false);
       backgroundFrame_.toBack();
+      backgroundFrame_.setIconImage(Toolkit.getDefaultToolkit().getImage(
+            getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      backgroundFrame_.setTitle(String.format("%s %s", MICRO_MANAGER_TITLE,
+            MMVersion.VERSION_STRING));
+      backgroundFrame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      backgroundFrame_.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowActivated(WindowEvent event) {
+               backgroundFrame_.setMenuBar(null);
+               backgroundFrame_.setJMenuBar(backgroundFrame_.getJMenuBar());
+            }
 
-      backgroundFrame_.setEnabled(false);
+            @Override
+            public void windowClosing(WindowEvent event) {
+               if (((MMStudio) studio_).closeSequence(false)) {
+                 //if (exitOnClose_) {
+                 //   System.exit(0);
+                 //} else {
+                 //   dispose();
+                // }
+               }
+            }
+         });
+
+      backgroundFrame_.setEnabled(true);
       backgroundFrame_.setVisible(((MMStudio) studio_).settings().getShowBackgroundWindow());
    }
 
