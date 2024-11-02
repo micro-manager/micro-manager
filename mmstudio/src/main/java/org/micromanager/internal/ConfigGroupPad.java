@@ -111,6 +111,9 @@ public final class ConfigGroupPad extends JScrollPane {
       if (data_ != null) {
          data_.rebuildModel(fromCache);
          data_.fireTableStructureChanged();
+         if (table_.getCellEditor() != null) {
+            table_.getCellEditor().stopCellEditing();
+         }
          table_.repaint();
       }
    }

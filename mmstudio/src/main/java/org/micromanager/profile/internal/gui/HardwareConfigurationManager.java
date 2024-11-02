@@ -128,6 +128,19 @@ public class HardwareConfigurationManager {
       loadConfigImpl(file);
    }
 
+   /**
+    * Used when saving a config file where it is not needed to reload.
+    * Ensures that we remember the new config file.
+    *
+    * @param filename Full path to the new config file.
+    */
+   public void setNewConfiguration(String filename) {
+      File file = new File(filename);
+      if (file.exists()) {
+         rememberLoadedConfig(file);
+      }
+   }
+
    public void reloadHardwareConfiguration() throws Exception {
       File file = currentConfiguration_;
       rememberLoadedConfig(file);

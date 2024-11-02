@@ -612,7 +612,7 @@ public final class MainFrame extends JFrame {
    /**
     * Bit superfluous.  Sets the exit strategy.
     *
-    * @param exitOnClose whether or not to quit the app when closing the window.
+    * @param exitOnClose whether to quit the app when closing the window.
     *                    When running as a Fiji plugin it is strange to exit the app,
     *                    whereas Micro-Manager users are used to it.
     */
