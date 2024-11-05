@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-package org.micromanager.internal.dialogs;
+package org.micromanager.internal.dialogs.introdialogparts;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.base.Functions;
