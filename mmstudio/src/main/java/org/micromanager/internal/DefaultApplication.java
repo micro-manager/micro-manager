@@ -32,9 +32,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.micromanager.internal;
 
 import java.awt.Rectangle;
-import java.awt.Toolkit;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JFrame;
@@ -56,7 +53,7 @@ public class DefaultApplication implements Application {
    private final Studio studio_;
    private static final String EXPOSURE_KEY = "Exposure_";
    private final ApplicationSkin daytimeNighttimeManager_;
-   private final JFrame backgroundFrame_;
+   private final Background background_;
 
 
    /**
@@ -68,8 +65,8 @@ public class DefaultApplication implements Application {
    public DefaultApplication(Studio studio, ApplicationSkin daynight) {
       studio_ = studio;
       daytimeNighttimeManager_ = daynight;
-      backgroundFrame_ = new BackgroundFrame(studio);
-      backgroundFrame_.setVisible(((MMStudio) studio_).settings().getShowBackgroundWindow());
+      background_ = new Background(studio);
+      background_.setVisible(((MMStudio) studio_).settings().getShowBackgroundWindow());
    }
 
 
@@ -251,8 +248,8 @@ public class DefaultApplication implements Application {
 
    @Override
    public void showBackgroundWindow(boolean show) {
-      backgroundFrame_.toBack();
-      backgroundFrame_.setVisible(show);
+      background_.toBack();
+      background_.setVisible(show);
 
    }
 }
