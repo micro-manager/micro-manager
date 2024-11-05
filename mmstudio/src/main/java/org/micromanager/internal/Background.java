@@ -1,6 +1,7 @@
 package org.micromanager.internal;
 
 
+import java.awt.Frame;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
@@ -59,6 +60,7 @@ public class Background {
          @Override
          public void windowDeiconified(WindowEvent event) {
             for (JFrame f : frames_) {
+               f.setState(Frame.NORMAL);
                f.toBack();
             }
          }
@@ -66,7 +68,7 @@ public class Background {
          @Override
          public void windowIconified(WindowEvent event) {
             for (JFrame f : frames_) {
-               frame.toBack();
+               f.setState(Frame.ICONIFIED);
             }
          }
 
