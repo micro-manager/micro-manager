@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package org.micromanager.internal.dialogs;
+package org.micromanager.internal.dialogs.introdialogparts;
 
 import java.awt.Dimension;
 import java.awt.Window;

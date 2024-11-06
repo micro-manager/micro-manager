@@ -52,6 +52,9 @@ import org.micromanager.IntroPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.StartupSettings;
+import org.micromanager.internal.dialogs.introdialogparts.ConfigSelectionUIController;
+import org.micromanager.internal.dialogs.introdialogparts.FastInitializationUIController;
+import org.micromanager.internal.dialogs.introdialogparts.ProfileSelectionUIController;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.UserProfileAdmin;
@@ -102,7 +105,7 @@ public final class IntroDlg extends JDialog {
       Map<String, IntroPlugin> plugins = studio == null
             ? Collections.emptyMap() : studio.plugins().getIntroPlugins();
       IntroPlugin plugin = null;
-      if (plugins.size() > 0) {
+      if (!plugins.isEmpty()) {
          // Take the alphabetically first intro plugin we see.
          ArrayList<String> names = new ArrayList<>(plugins.keySet());
          Collections.sort(names);
@@ -163,6 +166,14 @@ public final class IntroDlg extends JDialog {
 
          configController_ = ConfigSelectionUIController.create(admin_);
          contentsPanel.add(configController_.getUI(), new CC().growX().gapRight("5").wrap());
+
+         FastInitializationUIController fastInitializationUIController =
+                  FastInitializationUIController.create(admin_);
+         if (fastInitializationUIController.getUI() != null) {
+            contentsPanel.add(fastInitializationUIController.getUI(), new CC().gapLeft("5").wrap());
+         }
+
+
       } catch (IOException e) {
          ReportingUtils.showError(e,
                "There was an error accessing the user profiles.");
