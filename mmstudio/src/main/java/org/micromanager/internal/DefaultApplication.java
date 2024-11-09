@@ -49,14 +49,24 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Implementation of the Application interface.
  */
 public class DefaultApplication implements Application {
+   private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
    private final Studio studio_;
    private static final String EXPOSURE_KEY = "Exposure_";
    private final ApplicationSkin daytimeNighttimeManager_;
+   private final Background background_;
 
 
+   /**
+    * Constructs the implementation of the Application interface.
+    *
+    * @param studio Always needed studio object.
+    * @param daynight Provides access to the ApplicationSkin
+    */
    public DefaultApplication(Studio studio, ApplicationSkin daynight) {
       studio_ = studio;
       daytimeNighttimeManager_ = daynight;
+      background_ = new Background(studio);
+      background_.setVisible(((MMStudio) studio_).settings().getShowBackgroundWindow());
    }
 
 
@@ -236,5 +246,12 @@ public class DefaultApplication implements Application {
    @Override
    public ApplicationSkin getApplicationSkin() {
       return skin();
+   }
+
+   @Override
+   public void showBackgroundWindow(boolean show) {
+      background_.toBack();
+      background_.setVisible(show);
+
    }
 }
