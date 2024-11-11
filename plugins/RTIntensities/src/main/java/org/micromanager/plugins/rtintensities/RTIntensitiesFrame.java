@@ -31,7 +31,12 @@ import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
-import java.text.SimpleDateFormat;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -52,6 +57,7 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionStartedEvent;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
+import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
 import org.micromanager.events.LiveModeEvent;
@@ -63,7 +69,6 @@ public class RTIntensitiesFrame extends JFrame {
    private final Studio studio_;
    // A reference to the event handling (only?) instance
    private static Object RThandler_ = null;
-   private final SimpleDateFormat dateFormat_;
    private DataProvider dataProvider_;
    // Only one chart for the time being
    private ChartFrame graphFrame_ = null;
@@ -106,7 +111,6 @@ public class RTIntensitiesFrame extends JFrame {
       if (RThandler_ == null) {
          RThandler_ = this;
       }
-      dateFormat_ = new SimpleDateFormat(ABSOLUTE_FORMAT_STRING);
       super.setLocation(100, 100); // Default location
       WindowPositioning.setUpLocationMemory(this, RTIntensitiesFrame.class, "Main");
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
@@ -352,8 +356,6 @@ public class RTIntensitiesFrame extends JFrame {
       // do not process images at more than 100 Hz
       if (missing_ > 0 || elapsedTimeMs - lastElapsedTimeMs_ >= minPeriod_) {
          lastElapsedTimeMs_ = elapsedTimeMs;
-         double v;
-         double bg = 0;
          int channel = image.getCoords().getChannel(); // 0..(n-1)
          if (channel >= channels_) {
             return;
@@ -368,6 +370,8 @@ public class RTIntensitiesFrame extends JFrame {
 
          ImageProcessor processor = studio_.data().ij().createProcessor(image);
 
+         double v;
+         double bg = 0;
          if (backgroundeq_ >= 0) {
             int points = 0;
             for (int i = 0; i < rois_; i++) {
@@ -442,7 +446,6 @@ public class RTIntensitiesFrame extends JFrame {
       );
       XYPlot plot = (XYPlot) chart.getPlot();
       int series = dataset.getSeriesCount();
-      Paint paint;
       // Specific background series treatment
       if (bg >= 0) {
          series -= plots;
@@ -455,6 +458,7 @@ public class RTIntensitiesFrame extends JFrame {
       renderer.setSeriesFillPaint(0, Color.white);
       Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
       // Shape square = new Rectangle2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
+      Paint paint;
       for (int i = 0; i < series; i++) {
          paint = plot.getDrawingSupplier().getNextPaint();
          renderer.setSeriesPaint(i, paint);
@@ -505,4 +509,31 @@ public class RTIntensitiesFrame extends JFrame {
       graphFrame.setVisible(true);
       return graphFrame;
    }
+
+   public void saveToFile() {
+      final boolean append = false;
+      String filePath = "";
+      if (dataProvider_ instanceof Datastore) {
+         Datastore store = (Datastore) dataProvider_;
+         filePath = store.getSavePath();
+      } else {
+         // prompt user for location?
+      }
+      String csv = XYSeriesConverter.toCSV(data_);
+
+      Path path = Paths.get(filePath);  // Java 8 uses Paths.get() instead of Path.of()
+
+      // Write the content
+      StandardOpenOption[] options = append
+            ? new StandardOpenOption[] {StandardOpenOption.CREATE, StandardOpenOption.APPEND}
+            : new StandardOpenOption[] {StandardOpenOption.CREATE,
+                                        StandardOpenOption.TRUNCATE_EXISTING};
+
+      try {
+         Files.write(path, csv.getBytes(StandardCharsets.UTF_8), options);
+      } catch (IOException e) {
+         studio_.logs().showError("Failed to save plotted data");
+      }
+   }
+
 }
