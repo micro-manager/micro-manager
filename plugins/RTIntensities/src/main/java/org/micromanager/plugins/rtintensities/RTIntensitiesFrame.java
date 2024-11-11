@@ -31,9 +31,7 @@ import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -70,7 +68,7 @@ public class RTIntensitiesFrame extends JFrame {
    // Only one chart for the time being
    private ChartFrame graphFrame_ = null;
    private double lastElapsedTimeMs_ = 0.0;
-   private Date firstImageDate_;
+   private Double firstImageElapsedTimeMs_;
    // autoStart on new active window
    private boolean autoStart_ = false;
    // acquisition plot start on first image delivered.
@@ -345,18 +343,12 @@ public class RTIntensitiesFrame extends JFrame {
       if (graphFrame_ == null) {
          return;
       }
-      Date imgTime;
-      try {
-         imgTime = dateFormat_.parse(image.getMetadata().getReceivedTime());
-      } catch (ParseException pe) {
-         studio_.logs().logError(pe);
-         return;
-      }
+      Double elapsedTimeMs = 10.0;
+      elapsedTimeMs = image.getMetadata().getElapsedTimeMs(elapsedTimeMs);
       if (imagesReceived_ == 0) {
-         firstImageDate_ = imgTime;
+         firstImageElapsedTimeMs_ = elapsedTimeMs;
          lastElapsedTimeMs_ = -minPeriod_; // process first
       }
-      double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
       // do not process images at more than 100 Hz
       if (missing_ > 0 || elapsedTimeMs - lastElapsedTimeMs_ >= minPeriod_) {
          lastElapsedTimeMs_ = elapsedTimeMs;
@@ -410,7 +402,7 @@ public class RTIntensitiesFrame extends JFrame {
                      channel = 0;
                      v = last_[i] / (v + 0.000001); //Check!
                   }
-                  data_[channel + idx * plots_].add(elapsedTimeMs, v, idx >= rois_ - 1);
+                  data_[channel + idx * plots_].add((double) elapsedTimeMs, v, idx >= rois_ - 1);
                   idx++; // Background ROIs do not have data series, just one at the end
                }
             }
@@ -418,7 +410,7 @@ public class RTIntensitiesFrame extends JFrame {
                if (ratio_) {
                   bg = last_[backgroundeq_] / (bg + 0.000001); //Check!
                }
-               data_[channel + idx * plots_].add(elapsedTimeMs, bg, true);
+               data_[channel + idx * plots_].add((double) elapsedTimeMs, bg, true);
             }
          }
       }
@@ -426,7 +418,7 @@ public class RTIntensitiesFrame extends JFrame {
    }
 
    /**
-    * Create a frame with a plot of the data given in XYSeries
+    * Create a frame with a plot of the data given in XYSeries.
     *
     * @param title     Title of the plot
     * @param dataset   Data to be plotted
@@ -499,7 +491,8 @@ public class RTIntensitiesFrame extends JFrame {
          }
       }
 
-      ChartFrame graphFrame = new ChartFrame(title, chart);
+      MMChartFrame graphFrame = new MMChartFrame(title, chart, dataset);
+      graphFrame.modifyPopupMenu();
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
       graphFrame.pack();
       graphFrame.setLocation(xLocation, yLocation);
