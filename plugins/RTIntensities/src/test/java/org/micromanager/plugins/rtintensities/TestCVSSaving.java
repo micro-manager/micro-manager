@@ -11,51 +11,6 @@ import java.util.Map;
 public class TestCVSSaving {
 
    /**
-    * Example usage demonstrating round-trip conversion
-    */
-   @Test
-   public void testRoundTripXYSeries() throws IOException {
-      // Create sample XYSeries
-      XYSeries[] input = { new XYSeries("Temperature"), new XYSeries("Humidity") };
-      input[0].add(1.0, 20.5);
-      input[0].add(2.0, 21.3);
-
-      input[1].add(1.0, 65.0);
-      input[1].add(2.0, 63.2);
-
-      // Convert to CSV
-      String csv = XYSeriesConverter.toCSV(
-            input,
-            "Location", "Weather Station A",
-            "Units", "Celsius, %"
-      );
-
-      System.out.println("Original CSV:");
-      System.out.println(csv);
-
-      // Parse back into XYSeries
-      XYSeriesConverter.CSVParseResult result = XYSeriesConverter.fromCSV(csv);
-
-      System.out.println("\nParsed Metadata:");
-      for (Map.Entry<String, String> entry : result.getMetadata().entrySet()) {
-         System.out.printf("%s: %s%n", entry.getKey(), entry.getValue());
-      }
-
-      System.out.println("\nParsed Series:");
-      for (int i = 0; i < result.getSeries().length; i++) {
-         XYSeries series = result.getSeries()[i];
-         System.out.printf("%s: %d points%n", series.getKey(), series.getItemCount());
-         for (int j = 0; j < series.getItemCount(); j++) {
-            System.out.printf("  (%.1f, %.1f)%n",
-                  series.getX(j).doubleValue(),
-                  series.getY(j).doubleValue());
-            Assert.assertEquals(series.getX(j).doubleValue(), input[i].getX(j).doubleValue(), 0.0000001);
-            Assert.assertEquals(series.getY(j).doubleValue(), input[i].getY(j).doubleValue(), 0.0000001);
-         }
-      }
-   }
-
-   /**
     * Comprehensive roundtrip testing.
     */
    @Test

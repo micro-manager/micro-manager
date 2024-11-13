@@ -431,8 +431,13 @@ public class RTIntensitiesFrame extends JFrame {
     * @param xLocation Window location on the screen (x)
     * @param yLocation Window Location on the screen (y)
     */
-   public static ChartFrame plotData(String title, XYSeriesCollection dataset, String xTitle,
-                                     String yTitle, int plots, int bg, int xLocation,
+   public ChartFrame plotData(String title,
+                                     XYSeriesCollection dataset,
+                                     String xTitle,
+                                     String yTitle,
+                                     int plots,
+                                     int bg,
+                                     int xLocation,
                                      int yLocation) {
       // JFreeChart code
       JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
@@ -495,7 +500,8 @@ public class RTIntensitiesFrame extends JFrame {
          }
       }
 
-      MMChartFrame graphFrame = new MMChartFrame(title, chart, dataset);
+      MMChartFrame graphFrame = new MMChartFrame(title, chart, dataset, studio_, dataProvider_,
+            this);
       graphFrame.modifyPopupMenu();
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
       graphFrame.pack();
@@ -510,30 +516,8 @@ public class RTIntensitiesFrame extends JFrame {
       return graphFrame;
    }
 
-   public void saveToFile() {
-      final boolean append = false;
-      String filePath = "";
-      if (dataProvider_ instanceof Datastore) {
-         Datastore store = (Datastore) dataProvider_;
-         filePath = store.getSavePath();
-      } else {
-         // prompt user for location?
-      }
-      String csv = XYSeriesConverter.toCSV(data_);
-
-      Path path = Paths.get(filePath);  // Java 8 uses Paths.get() instead of Path.of()
-
-      // Write the content
-      StandardOpenOption[] options = append
-            ? new StandardOpenOption[] {StandardOpenOption.CREATE, StandardOpenOption.APPEND}
-            : new StandardOpenOption[] {StandardOpenOption.CREATE,
-                                        StandardOpenOption.TRUNCATE_EXISTING};
-
-      try {
-         Files.write(path, csv.getBytes(StandardCharsets.UTF_8), options);
-      } catch (IOException e) {
-         studio_.logs().showError("Failed to save plotted data");
-      }
+   public void setTile(String title) {
+      title_.setText(title);
    }
 
 }

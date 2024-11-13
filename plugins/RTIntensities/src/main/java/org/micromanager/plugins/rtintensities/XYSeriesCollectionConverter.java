@@ -31,14 +31,16 @@ public class XYSeriesCollectionConverter {
       StringBuilder csv = new StringBuilder();
 
       // Add metadata section
-      csv.append("# Generated: ").append(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)).append("\n");
+      csv.append("# Generated: ").append(LocalDateTime.now()
+                  .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)).append("\n");
       csv.append("# Number of series: ").append(collection.getSeriesCount()).append("\n");
 
       // Add custom metadata if provided
       if (metadata != null) {
          for (int i = 0; i < metadata.length; i += 2) {
             if (i + 1 < metadata.length) {
-               csv.append("# ").append(metadata[i]).append(": ").append(metadata[i + 1]).append("\n");
+               csv.append("# ").append(metadata[i]).append(": ").append(metadata[i + 1])
+                     .append("\n");
             }
          }
       }
@@ -54,7 +56,7 @@ public class XYSeriesCollectionConverter {
       }
 
       // Create header row with series names
-      csv.append("X");
+      csv.append("Time(ms)");
       for (int i = 0; i < collection.getSeriesCount(); i++) {
          csv.append(",").append(collection.getSeries(i).getKey());
       }
