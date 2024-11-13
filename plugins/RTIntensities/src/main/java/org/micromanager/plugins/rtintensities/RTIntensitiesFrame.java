@@ -31,12 +31,6 @@ import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -57,15 +51,14 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionStartedEvent;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
-import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
 import org.micromanager.events.LiveModeEvent;
 import org.micromanager.internal.utils.WindowPositioning;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 public class RTIntensitiesFrame extends JFrame {
    private static final int MAX_ROIS = 100;
-
    private final Studio studio_;
    // A reference to the event handling (only?) instance
    private static Object RThandler_ = null;
@@ -73,41 +66,49 @@ public class RTIntensitiesFrame extends JFrame {
    // Only one chart for the time being
    private ChartFrame graphFrame_ = null;
    private double lastElapsedTimeMs_ = 0.0;
-   private Double firstImageElapsedTimeMs_;
    // autoStart on new active window
-   private boolean autoStart_ = false;
+   private boolean autoStart_;
    // acquisition plot start on first image delivered.
    private boolean delayedStart_ = false;
    // Ratio plot memory
-   private boolean ratio_ = false;
-   private double[] last_ = new double[MAX_ROIS];
+   private boolean ratio_;
+   private final double[] last_ = new double[MAX_ROIS];
    // This is our local cache ...
    private int rois_ = 0;
-   private Roi[] roi_ = new Roi[MAX_ROIS];
+   private final Roi[] roi_ = new Roi[MAX_ROIS];
    // of the manager kept ROIs
    private RoiManager manager_;
    private int imagesReceived_ = 0;
-   static final long serialVersionUID = 1;
+   private static final long serialVersionUID = 1;
    // How many channels does the image have ? 
    private int channels_ = 0;
    // how many series do we plot ?
    private int plots_ = 0;
    // how many extra data do we need for a time point
    private int missing_ = 0;
-   private JLabel title_;
+   private final JLabel title_;
    XYSeries[] data_ = null;
    // Doing background "equalization" ?
-   private int backgroundeq_ = -1;
+   private int backgroundEq_ = -1;
    // Min refresh time (ms)
-   private int minPeriod_ = 10;
+   private int minPeriod_;
    // Max plot points
-   private int maxPoints_ = 200;
+   private int maxPoints_;
 
-   private static final String ABSOLUTE_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss.SSS Z";
+   private static final String MIN_PERIOD = "min_period";
+   private static final String MAX_POINTS = "max_points";
+   private static final String RATIO = "ratio";
+   private static final String AUTOSTART = "autostart";
 
    public RTIntensitiesFrame(Studio studio) {
       super("Real time intensity GUI");
       studio_ = studio;
+      final MutablePropertyMapView prefs = studio.profile().getSettings(this.getClass());
+      minPeriod_ = prefs.getInteger(MIN_PERIOD, 10);
+      maxPoints_ = prefs.getInteger(MAX_POINTS, 200);
+      ratio_ = prefs.getBoolean(RATIO, false);
+      autoStart_ = prefs.getBoolean(AUTOSTART, false);
+
       if (RThandler_ == null) {
          RThandler_ = this;
       }
@@ -191,9 +192,13 @@ public class RTIntensitiesFrame extends JFrame {
                "Plot settings", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
             minPeriod_ = new Integer(period.getText());
+            prefs.putInteger(MIN_PERIOD, minPeriod_);
             maxPoints_ = new Integer(maxPoints.getText());
+            prefs.putInteger(MAX_POINTS, maxPoints_);
             ratio_ = ratioPlot.isSelected();
+            prefs.putBoolean(RATIO, ratio_);
             autoStart_ = autoPlot.isSelected();
+            prefs.putBoolean(AUTOSTART, autoStart_);
          }
       });
       settingsButton.setEnabled(true);
@@ -258,8 +263,8 @@ public class RTIntensitiesFrame extends JFrame {
       for (int i = 0; i < rois_; i++) {
          roi_[i] = (Roi) managerRois[i].clone();
          if (roi_[i].getName() != null && roi_[i].getName().startsWith("bg")) {
-            if (backgroundeq_ < 0) {
-               backgroundeq_ = i; // keep track of first one (series plot)
+            if (backgroundEq_ < 0) {
+               backgroundEq_ = i; // keep track of first one (series plot)
             }
             roi_[i].setIsCursor(true); //our local mark
          } else {
@@ -282,7 +287,7 @@ public class RTIntensitiesFrame extends JFrame {
       } else {
          plots_ = 1;
       }
-      if (backgroundeq_ >= 0) {
+      if (backgroundEq_ >= 0) {
          plotmode += " (BG eq)";
       }
 
@@ -300,12 +305,12 @@ public class RTIntensitiesFrame extends JFrame {
             }
          }
       }
-      if (backgroundeq_ >= 0) {
+      if (backgroundEq_ >= 0) {
          for (int p = 0; p < plots_; p++) {
-            data_[backgroundeq_ * plots_ + p] = new XYSeries("bg"
+            data_[backgroundEq_ * plots_ + p] = new XYSeries("bg"
                   + ((plots_ > 1) ? ("c" + (p + 1)) : ""));
-            data_[backgroundeq_ * plots_ + p].setMaximumItemCount(maxPoints_);
-            dataset.addSeries(data_[backgroundeq_ * plots_ + p]);
+            data_[backgroundEq_ * plots_ + p].setMaximumItemCount(maxPoints_);
+            dataset.addSeries(data_[backgroundEq_ * plots_ + p]);
          }
       }
       if (graphFrame_ != null) {
@@ -313,7 +318,7 @@ public class RTIntensitiesFrame extends JFrame {
          graphFrame_.dispose();
       }
       graphFrame_ = plotData(plotmode + " of " + dataProvider_.getName(),
-            dataset, "Time(ms)", "Value", plots_, backgroundeq_, 100, 100);
+            dataset, "Time(ms)", "Value", plots_, backgroundEq_, 100, 100);
       graphFrame_.addWindowListener(new WindowAdapter() {
          public void windowClosing(WindowEvent e) {
             graphFrame_ = null;
@@ -350,7 +355,6 @@ public class RTIntensitiesFrame extends JFrame {
       Double elapsedTimeMs = 10.0;
       elapsedTimeMs = image.getMetadata().getElapsedTimeMs(elapsedTimeMs);
       if (imagesReceived_ == 0) {
-         firstImageElapsedTimeMs_ = elapsedTimeMs;
          lastElapsedTimeMs_ = -minPeriod_; // process first
       }
       // do not process images at more than 100 Hz
@@ -372,7 +376,7 @@ public class RTIntensitiesFrame extends JFrame {
 
          double v;
          double bg = 0;
-         if (backgroundeq_ >= 0) {
+         if (backgroundEq_ >= 0) {
             int points = 0;
             for (int i = 0; i < rois_; i++) {
                if (roi_[i].isCursor()) {
@@ -392,8 +396,8 @@ public class RTIntensitiesFrame extends JFrame {
                   last_[i] = processor.getStats().mean - bg;
                }
             }
-            if (backgroundeq_ >= 0) {
-               last_[backgroundeq_] = bg;
+            if (backgroundEq_ >= 0) {
+               last_[backgroundEq_] = bg;
             }
          } else {
             int idx = 0; // follow series order with background gaps
@@ -410,9 +414,9 @@ public class RTIntensitiesFrame extends JFrame {
                   idx++; // Background ROIs do not have data series, just one at the end
                }
             }
-            if (backgroundeq_ >= 0) {
+            if (backgroundEq_ >= 0) {
                if (ratio_) {
-                  bg = last_[backgroundeq_] / (bg + 0.000001); //Check!
+                  bg = last_[backgroundEq_] / (bg + 0.000001); //Check!
                }
                data_[channel + idx * plots_].add((double) elapsedTimeMs, bg, true);
             }
