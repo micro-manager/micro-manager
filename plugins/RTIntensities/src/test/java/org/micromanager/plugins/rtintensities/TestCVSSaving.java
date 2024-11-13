@@ -1,11 +1,11 @@
 package org.micromanager.plugins.rtintensities;
 
+import java.io.IOException;
+import java.util.Map;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.junit.Assert;
 import org.junit.Test;
-import java.io.IOException;
-import java.util.Map;
 
 
 public class TestCVSSaving {
@@ -18,7 +18,7 @@ public class TestCVSSaving {
       System.out.println("Starting roundtrip test...\n");
 
       // Create test data with various edge cases
-      XYSeriesCollection originalCollection = new XYSeriesCollection();
+      final XYSeriesCollection originalCollection = new XYSeriesCollection();
 
       // Series 1: Regular data points
       XYSeries series1 = new XYSeries("Temperature");
@@ -52,7 +52,7 @@ public class TestCVSSaving {
 
       // Parse back into XYSeriesCollection
       XYSeriesCollectionConverter.CSVParseResult result = XYSeriesCollectionConverter.fromCSV(csv);
-      XYSeriesCollection parsedCollection = result.getCollection();
+      final XYSeriesCollection parsedCollection = result.getCollection();
 
       // Verify metadata
       System.out.println("\nParsed Metadata:");
