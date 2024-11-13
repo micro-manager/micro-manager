@@ -293,8 +293,8 @@ public final class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public double getElapsedTimeMs(double exposureMs) {
-      return pmap_.getDouble(ELAPSED_TIME_MS.key(), exposureMs);
+   public double getElapsedTimeMs(double elapsedTimeMs) {
+      return pmap_.getDouble(ELAPSED_TIME_MS.key(), elapsedTimeMs);
    }
 
    @Override
