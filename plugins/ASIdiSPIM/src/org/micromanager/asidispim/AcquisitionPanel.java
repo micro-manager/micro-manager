@@ -1339,7 +1339,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return
     */
    private SliceTiming getTimingSingleObjective(boolean showWarnings) {
+      
+      final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
+      
+      // temporary measure: use diSPIM-like settings unless we are doing stage scanning
+      if (!acqSettings.isStageScanning) {
+         return getTimingFromPeriodAndLightExposure(showWarnings);
+      }
+      
       SliceTiming s = new SliceTiming();
+      
       final float cameraResetTime = computeCameraResetTime();      // recalculate for safety, 0 for light sheet
       final float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety, 0 for overlap
 
@@ -1353,7 +1362,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             : cameraResetTime; // everything but Photometrics Prime 95B and Kinetix
 
       final float cameraTotalTime = MyNumberUtils.ceilToQuarterMs(cameraResetTime + cameraReadoutTime);
-      final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
       final float laserDuration = MyNumberUtils.roundToQuarterMs(acqSettings.desiredLightExposure);
       final float slicePeriodMin = Math.max(laserDuration, cameraTotalTime);   // max of laser on time (for static light sheet) and total camera reset/readout time; will add excess later
       final float sliceDeadTime = MyNumberUtils.roundToQuarterMs(slicePeriodMin - laserDuration);
