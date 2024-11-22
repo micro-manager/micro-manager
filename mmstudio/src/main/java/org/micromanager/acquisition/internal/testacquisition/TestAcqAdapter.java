@@ -59,7 +59,6 @@ import org.micromanager.acquisition.internal.MMAcquistionControlCallbacks;
 import org.micromanager.acquisition.internal.acqengjcompat.MDAAcqEventModules;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultRewritableDatastore;
@@ -71,6 +70,7 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
@@ -205,40 +205,20 @@ public class TestAcqAdapter extends DataViewerListener implements
                  acquisitionSettings);
          summaryMetadata = smb.build();
 
-         // instead of a complicated statement use a boolean variable
-         boolean createStoreAndDisplay = false;
-         if (curStore_ == null) {
-            createStoreAndDisplay = true;
-         } else {
-            Image img = curStore_.getAnyImage();
-            if (img != null) {
-               if (img.getHeight() != studio_.core().getImageHeight()
-                       || img.getWidth() != studio_.core().getImageWidth()
-                       || img.getBytesPerPixel() != studio_.core().getBytesPerPixel()) {
-                  createStoreAndDisplay = true;
-               }
-            }
+         // Re-using an existing store seems to lead to all kinds of issues.  Don't.
+         if (displayWindow_ != null) {
+            displayWindow_.close();
          }
-         if (displayWindow_ == null || displayWindow_.isClosed() || !displayWindow_.isVisible()) {
-            createStoreAndDisplay = true;
+         if (curStore_ != null) {
+            curStore_.freeze();
+            curStore_.close();
          }
-
-         if (createStoreAndDisplay) {
-            if (displayWindow_ != null) {
-               displayWindow_.close();
-            }
-            if (curStore_ != null) {
-               curStore_.freeze();
-               curStore_.close();
-            }
-            curStore_ = new DefaultRewritableDatastore((MMStudio) studio_);
-            curStore_.setStorage(new StorageRAM(curStore_));
-            curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
-            curPipeline_.insertSummaryMetadata(summaryMetadata);
-            displayWindow_ = studio_.displays().createDisplay(curStore_, null);
-            displayWindow_.setCustomTitle(TITLE);
-         }
-
+         curStore_ = new DefaultRewritableDatastore((MMStudio) studio_);
+         curStore_.setStorage(new StorageRAM(curStore_));
+         curPipeline_ = studio_.data().copyApplicationPipeline(curStore_, false);
+         curPipeline_.insertSummaryMetadata(summaryMetadata);
+         displayWindow_ = studio_.displays().createDisplay(curStore_, null);
+         displayWindow_.setCustomTitle(TITLE);
 
          // Use settings of last closed acquisition viewer
          DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
@@ -247,10 +227,27 @@ public class TestAcqAdapter extends DataViewerListener implements
             dsTmp = DefaultDisplaySettings.getStandardSettings(
                     PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
-         displayWindow_.getWindow().toFront();
-         if (createStoreAndDisplay) {
-            displayWindow_.setDisplaySettings(dsTmp);
+         DisplaySettings.Builder displaySettingsBuilder = dsTmp.copyBuilder();
+         final int nrChannels = summaryMetadata.getChannelNameList().size();
+         if (nrChannels > 0) {
+            // the do-while loop is a way to set display settings in a thread
+            // safe way.  See docs to compareAndSetDisplaySettings.
+            if (nrChannels == 1) {
+               displaySettingsBuilder.colorModeGrayscale();
+            } else {
+               displaySettingsBuilder.colorModeComposite();
+            }
+            for (int channelIndex = 0; channelIndex < nrChannels
+                     && channelIndex < acquisitionSettings.channels().size(); channelIndex++) {
+               displaySettingsBuilder.channel(channelIndex,
+                        RememberedDisplaySettings.loadChannel(studio_,
+                                 summaryMetadata.getChannelGroup(),
+                                 summaryMetadata.getChannelNameList().get(channelIndex),
+                                 acquisitionSettings.channels().get(channelIndex).color()));
+            }
          }
+         displayWindow_.getWindow().toFront();
+         displayWindow_.setDisplaySettings(displaySettingsBuilder.build());
          displayWindow_.addListener(this, 1);
 
          sink.setDatastore(curStore_);
