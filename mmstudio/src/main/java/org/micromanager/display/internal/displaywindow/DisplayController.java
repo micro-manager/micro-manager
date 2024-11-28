@@ -73,7 +73,6 @@ import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunna
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
-import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 
 /**
  * Main controller for the standard image viewer.
@@ -135,8 +134,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    private PerformanceMonitor perfMon_
          = PerformanceMonitor.createWithTimeConstantMs(1000.0);
-   private final PerformanceMonitorUI perfMonUI_
-         = PerformanceMonitorUI.create(perfMon_, "Display Performance");
 
 
    //This static counter makes sure that each object has it's own unique id during runtime.
@@ -1120,10 +1117,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          // attempt to save Display Settings
          // TODO: Are there problems with multiple viewers on one Datastore?
          if (dataProvider_ instanceof Datastore) {
-            Datastore ds = (Datastore) dataProvider_;
-            if (ds.getSavePath() != null) {
-               ((DefaultDisplaySettings) getDisplaySettings()).save(ds.getSavePath());
+            Datastore store = (Datastore) dataProvider_;
+            if (store.getSavePath() != null) {
+               ((DefaultDisplaySettings) getDisplaySettings()).save(store.getSavePath());
             }
+            // Since every change in ChannelDisplaySettings is already stored in
+            // RememberedDisplaySettings we do not need to do it again here
          }
          dataProvider_.unregisterForEvents(this);
          try {

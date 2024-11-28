@@ -296,14 +296,15 @@ public final class MMAcquisition extends DataViewerListener {
          ReportingUtils.logError("MMAcquisition: received callback from unknown viewer");
          return true;
       }
+      // NS 20241128: I do not understand the logic here.
+      // If this is not out Datastore or viewer, why deal with it?
       if (callbacks_.getAcquisitionDatastore() != viewer.getDataProvider()) {
          if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-            ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
-                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+            DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
+            ds.saveToProfile(studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
          }
          display_.removeListener(this);
          display_ = null;
-         // not our problem;)
          return true;
       }
       boolean result = callbacks_.abortRequest();
@@ -311,8 +312,8 @@ public final class MMAcquisition extends DataViewerListener {
          if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
             // saving settings (again) may not be needed
             if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-               ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
-                     studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+               DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
+               ds.saveToProfile(studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
             }
             display_.removeListener(this);
             display_ = null;

@@ -900,12 +900,6 @@ public final class SnapLiveManager extends DataViewerListener
       if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
          DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
          ds.saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
-         for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
-            RememberedDisplaySettings.storeChannel(mmStudio_,
-                  store_.getSummaryMetadata().getChannelGroup(),
-                  store_.getSummaryMetadata().getSafeChannelName(ch),
-                  ds.getChannelSettings(ch));
-         }
       }
    }
 
