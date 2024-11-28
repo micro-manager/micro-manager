@@ -1056,7 +1056,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             RememberedDisplaySettings.storeChannel(studio_,
                   channelSettings.getGroupName(),
                   channelSettings.getName(),
-                  rememberedSettings.copyBuilder().color(channelSettings.getColor()).build());
+                  channelSettings);
 
             ComponentDisplaySettings componentSettings =
                   channelSettings.getComponentSettings(0);
