@@ -72,7 +72,6 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
-import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 
 /**
@@ -129,12 +128,10 @@ public final class SnapLiveManager extends DataViewerListener
 
    private final PerformanceMonitor perfMon_ =
          PerformanceMonitor.createWithTimeConstantMs(1000.0);
-   private final PerformanceMonitorUI pmUI_ =
-         PerformanceMonitorUI.create(perfMon_, "SnapLiveManager Performance");
    private DisplayInfo displayInfo_;
    private final Object displayInfoLock_;
 
-   private class DisplayInfo {
+   private static class DisplayInfo {
       private int width_;
       private int height_;
       private int numComponents_;
@@ -513,22 +510,6 @@ public final class SnapLiveManager extends DataViewerListener
                      Color.white)).build();
       }
 
-      // NS 2020-09-07: channeldisplaysettings remembered in SNAP/Live displaysetting
-      // are replaced by channel specific display settings.  It is a bit unclear
-      // how this is supposed to work, but at the very least, these settings should
-      // also be saved when closing the Snap/Live display.
-      // For now, it seems simpler to not do this, revisit when this code is
-      // thoroughly examined
-      /*
-      for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
-         ds = ds.copyBuilderWithChannelSettings(ch, 
-                 RememberedSettings.loadChannel(mmStudio_, 
-                         store_.getSummaryMetadata().getChannelGroup(), 
-                         store_.getSummaryMetadata().getChannelNameList().get(ch),
-                         null)).
-                 build();
-      }
-       */
       display_.setDisplaySettings(ds);
       mmStudio_.displays().addViewer(display_);
 
@@ -538,7 +519,9 @@ public final class SnapLiveManager extends DataViewerListener
       if (mmStudio_.uiManager().menubar().getToolsMenu().getMouseMovesStage() && display_ != null) {
          uiMovesStageManager_.activate(display_);
       }
-      display_.show();
+      if (display_ != null) {
+         display_.show();
+      }
 
       synchronized (lastImageForEachChannel_) {
          lastImageForEachChannel_.clear();
@@ -550,9 +533,7 @@ public final class SnapLiveManager extends DataViewerListener
 
       try {
          pipeline_.insertSummaryMetadata(store_.getSummaryMetadata());
-      } catch (IOException e) {
-         mmStudio_.logs().logError(e);
-      } catch (PipelineErrorException e) {
+      } catch (IOException | PipelineErrorException e) {
          mmStudio_.logs().logError(e);
       }
 
@@ -644,13 +625,16 @@ public final class SnapLiveManager extends DataViewerListener
    public void displayImage(final Image image) {
 
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            displayImage(image);
-         });
+         SwingUtilities.invokeLater(() -> displayImage(image));
          return;
       }
 
       boolean shouldReset = shouldForceReset_;
+      if (display_ == null || display_.isClosed()) {
+         shouldReset = true;
+         store_ = null;
+      }
+      // NS-20241128: not quite sure if this serves any function anymore.  Delete?
       if (store_ != null && !store_.isFrozen()) {
          List<String> channelNames = store_.getSummaryMetadata().getChannelNameList();
          String curChannel = "";
@@ -722,18 +706,6 @@ public final class SnapLiveManager extends DataViewerListener
 
          if (shouldReset) {
             createOrResetDatastoreAndDisplay();
-         } else if (display_ == null || display_.isClosed()) {
-            // Check for display having been closed on us by the user.
-            createDisplay();
-            int numComponents = image.getNumComponents();
-            if (numComponents > 1) {
-               DisplaySettings ds = display_.getDisplaySettings();
-               ChannelDisplaySettings.Builder cb = ds.getChannelSettings(0).copyBuilder();
-               for (int i = 0; i < numComponents; i++) {
-                  cb.component(i);
-               }
-               display_.setDisplaySettings(ds.copyBuilder().channel(0, cb.build()).build());
-            }
          }
 
          synchronized (displayInfoLock_) {
@@ -926,8 +898,14 @@ public final class SnapLiveManager extends DataViewerListener
 
    private void saveDisplaySettings() {
       if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) display_.getDisplaySettings())
-               .saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+         DefaultDisplaySettings ds = (DefaultDisplaySettings) display_.getDisplaySettings();
+         ds.saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+         for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
+            RememberedDisplaySettings.storeChannel(mmStudio_,
+                  store_.getSummaryMetadata().getChannelGroup(),
+                  store_.getSummaryMetadata().getSafeChannelName(ch),
+                  ds.getChannelSettings(ch));
+         }
       }
    }
 
