@@ -16,7 +16,6 @@ public class LightSheetControl implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Light Sheet Control";
    public static final String tooltipDescription =
          "Controls AZ100-based light sheet microscope at the Nikon Imaging Center";
-   private CMMCore core_;
    private Studio studio_;
    private LightSheetControlForm myFrame_;
 
@@ -35,8 +34,7 @@ public class LightSheetControl implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public void setContext(Studio studio) {
-      studio_ = (Studio) studio;
-      core_ = studio.getCMMCore();
+      studio_ = studio;
    }
 
    @Override
