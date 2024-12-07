@@ -142,7 +142,7 @@
 				$SavePwd = pwd
 
 				# We require exactly Visual Studio 2019 (16.x); 2022 may fail.
-				$VsInstPath = &amp; 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' '-version' '[16.0,17.0)' '-property' 'installationPath'
+				$VsInstPath = &amp; 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' '-version' '[16.0,18.0)' '-property' 'installationPath'
 				if (-not $VsInstPath) {
 					echo 'Cannot find Visual Studio 2019 installation path'
 					exit 1
