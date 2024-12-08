@@ -6,6 +6,14 @@
 package org.micromanager.lightsheetcontrol;
 
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
 import javax.swing.AbstractListModel;
 import javax.swing.GroupLayout;
@@ -13,13 +21,17 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.LayoutStyle;
 import javax.swing.WindowConstants;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
+import net.miginfocom.swing.MigLayout;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.WindowPositioning;
 
 
@@ -120,6 +132,10 @@ public class LightSheetControlFrame extends JFrame {
          this.rpList = new ReferencePointList();
          fireIntervalAdded(this, 0, 0);
       }
+
+      public void updateDisplay() {
+         fireContentsChanged(this, 0, rpList.getNumberOfPoints());
+      }
    }
     
    private void updateStageRelation() {
@@ -130,7 +146,7 @@ public class LightSheetControlFrame extends JFrame {
          int np = rpm_.getSize();
          for (int n = 0; n < np; n++) {
             ReferencePoint rp = rpm_.getReferencePoint(n);
-            sr.addData(rp.stage1Position, rp.stage2Position);
+            sr.addData(rp.getStagePosition1(), rp.getStagePosition2());
          }
          try {
             studio_.core().setProperty(multiStageName_, "Scaling-2", sr.getSlope());
@@ -148,88 +164,56 @@ public class LightSheetControlFrame extends JFrame {
     */
 
    private void initComponents() {
-      rpList_ = new JList<>();
-      JScrollPane jScrollPane1 = new JScrollPane();
-      final JButton goToPosButton = new JButton();
-      final JButton delAllButton = new JButton();
-      final JButton delRPButton = new JButton();
-      final JButton updRPButton = new JButton();
-      final JButton addRPButton = new JButton();
-      final JLabel jLabel1 = new JLabel();
-
-      setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-
-      rpList_.setModel(rpm_);
-      jScrollPane1.setViewportView(rpList_);
-      rpList_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-
-      //setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", "[top]"));
-      //setMinimumSize(new Dimension(275, 365));
-      //super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-      //      getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 362, 595);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      this.setLayout(new MigLayout());
 
-      goToPosButton.setText("Go to Position");
-      goToPosButton.addActionListener(this::goToPosButtonActionPerformed);
+      rpList_ = new JList<>();
+      rpList_.setModel(rpm_);
+      rpList_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 
-      delAllButton.setText("Delete All");
-      delAllButton.addActionListener(this::delAllButtonActionPerformed);
+      final JPanel buttonPanel = new JPanel();
+      buttonPanel.setLayout(new MigLayout());
 
-      delRPButton.setText("Delete Reference Point");
-      delRPButton.addActionListener(this::delRPButtonActionPerformed);
-
-      updRPButton.setText("Update Reference Point");
-      updRPButton.addActionListener(this::updRPButtonActionPerformed);
-
-      addRPButton.setText("Add Reference Point");
+      final JButton addRPButton = new JButton("Add Reference Point");
       addRPButton.addActionListener(this::addRPButtonActionPerformed);
+      buttonPanel.add(addRPButton, "grow x, wrap");
 
-      jLabel1.setText("Reference Points (1st Stage / 2nd Stage)");
+      final JButton delRPButton = new JButton("Delete Reference Point");
+      delRPButton.addActionListener(this::delRPButtonActionPerformed);
+      buttonPanel.add(delRPButton, "grow x, wrap");
 
-      GroupLayout layout = new GroupLayout(getContentPane());
-      getContentPane().setLayout(layout);
-      layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-            .addContainerGap(23, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(goToPosButton)
-                .addComponent(updRPButton)
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                          .addComponent(addRPButton)
-                          .addGap(12, 12, 12))
-                      .addComponent(delRPButton, GroupLayout.Alignment.TRAILING))
-                  .addComponent(delAllButton))
-              .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-              .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                  .addComponent(jLabel1)
-                  .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-              .addContainerGap())
-      );
-      layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1)
-                .addGap(4, 4, 4)
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE,
-                          227, GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(addRPButton)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(delRPButton)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(updRPButton)
-                        .addGap(7, 7, 7)
-                        .addComponent(delAllButton)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(goToPosButton)))
-                .addContainerGap(25, Short.MAX_VALUE))
-      );
+      final JButton updRPButton = new JButton("Update Reference Point");
+      updRPButton.addActionListener(this::updRPButtonActionPerformed);
+      buttonPanel.add(updRPButton, "grow x, wrap");
+
+      final JButton delAllButton = new JButton("Delete All");
+      delAllButton.addActionListener(this::delAllButtonActionPerformed);
+      buttonPanel.add(delAllButton, "grow x, wrap");
+
+      final JButton goToPosButton = new JButton("Go to Position");
+      goToPosButton.addActionListener(this::goToPosButtonActionPerformed);
+      buttonPanel.add(goToPosButton, "grow x, wrap");
+
+      final JButton loadButton = new JButton("Load from File");
+      loadButton.addActionListener(this::loadButtonActionPerformed);
+      buttonPanel.add(loadButton, "grow x, wrap");
+
+      final JButton saveButton = new JButton("Save to File");
+      saveButton.addActionListener(this::saveButtonActionPerformed);
+      buttonPanel.add(saveButton, "grow x, wrap");
+
+      final JPanel pointsPanel = new JPanel();
+      pointsPanel.setLayout(new MigLayout());
+      final JLabel refPointLabel = new JLabel("Reference Points (1st Stage / 2nd Stage)");
+      pointsPanel.add(refPointLabel, "wrap");
+      final JScrollPane jScrollPane1 = new JScrollPane();
+      jScrollPane1.setViewportView(rpList_);
+      pointsPanel.add(jScrollPane1, "grow, wrap");
+
+      this.add(buttonPanel);
+      this.add(pointsPanel, "wrap");
 
       pack();
    }
@@ -272,13 +256,60 @@ public class LightSheetControlFrame extends JFrame {
    private void goToPosButtonActionPerformed(ActionEvent evt) {
       ReferencePoint rp = rpm_.getReferencePoint(rpList_.getSelectedIndex());
       try {
-         studio_.core().setPosition(stage1_, rp.stage1Position);
-         studio_.core().setPosition(stage2_, rp.stage2Position);
+         studio_.core().setPosition(stage1_, rp.getStagePosition1());
+         studio_.core().setPosition(stage2_, rp.getStagePosition2());
       } catch (Exception ex) {
          studio_.logs().logError(ex, "Error when setting stage positions");
       }
    }
 
-   // Variables declaration - do not modify//GEN-BEGIN:variables
-   // End of variables declaration//GEN-END:variables
+   public static final FileDialogs.FileType LIGHT_SHEET_CONTROL_FILE = new FileDialogs.FileType(
+         "LIGHT_SHEET_CONTROL_FILE",
+         "LightSheetControl points",
+         System.getProperty("user.home") + "/LightSheetControl.txt",
+         true, "txt");
+
+   private void loadButtonActionPerformed(ActionEvent evt) {
+      File f = FileDialogs.openFile(this, "Load LightSheetControl file", LIGHT_SHEET_CONTROL_FILE);
+      if (f != null) {
+         String fileName = f.getPath();
+         try (FileInputStream fis = new FileInputStream(fileName);
+               ObjectInputStream ois = new ObjectInputStream(fis);) {
+            rpm_.rpList = (ReferencePointList) ois.readObject();
+         } catch (IOException ioe) {
+            studio_.logs().showError(ioe, "Error while reading data from: " + fileName, this);
+            return;
+         } catch (ClassNotFoundException c) {
+            studio_.logs().showError(c, "Data do not match expectation", this);
+            return;
+         }
+         rpm_.updateDisplay();
+         updateStageRelation();
+      }
+   }
+
+   private void saveButtonActionPerformed(ActionEvent evt) {
+      File f = FileDialogs.openFile(this, "Load LightSheetControl file", LIGHT_SHEET_CONTROL_FILE);
+      if (f != null) {
+         if (f.exists()) {
+            int response = JOptionPane.showConfirmDialog(this,
+                  "File already exists. Overwrite?",
+                  "Confirm Overwrite",
+                  JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+               return;
+            }
+         }
+         String fileName = f.getPath();
+         try (FileOutputStream fos = new FileOutputStream(fileName);
+               ObjectOutputStream oos = new ObjectOutputStream(fos);) {
+            oos.writeObject(rpm_.rpList);
+         } catch (FileNotFoundException e) {
+            studio_.logs().showError(e, "File " + fileName + " not found : ", this);
+         } catch (IOException ioe) {
+            studio_.logs().showError(ioe, "Error while writing data to: " + fileName, this);
+         }
+      }
+   }
+
 }

@@ -5,9 +5,11 @@
 
 package org.micromanager.lightsheetcontrol;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-class ReferencePointList {
+public class ReferencePointList implements Serializable {
+   private static final long serialVersionUID = 1;
 
    private final ArrayList<ReferencePoint> referencePoints_;
     
@@ -45,5 +47,6 @@ class ReferencePointList {
    public void replacePoint(int idx, ReferencePoint rp) {
       referencePoints_.set(idx, rp);
    }
-    
+
+
 }
